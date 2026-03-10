@@ -28,7 +28,8 @@ run.py              # entrypoint, init-db, seed-dev-user
 ## Setup
 
 1. **Prerequisites:** Python 3.10+, pip.
-2. **Install:** `pip install -r requirements.txt`
+2. **Install:** `pip install -r requirements.txt`  
+   `requirements.txt` uses version ranges (not exact pins) so dependency updates and security fixes are picked up. For reproducible builds use `pip freeze > requirements.lock` and install with `pip install -r requirements.lock`.
 3. **Environment:** Copy `.env.example` to `.env` and set at least:
    - `SECRET_KEY` and `JWT_SECRET_KEY` (required; no default secrets in production).
    - For local dev only: `DEV_SECRETS_OK=1` to allow dev fallback secrets and `flask seed-dev-user`.
@@ -68,7 +69,7 @@ Example:
 ```bash
 curl -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin"}'
+  -d '{"username":"admin","password":"Admin123"}'
 ```
 
 ## Known limitations
