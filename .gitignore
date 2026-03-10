@@ -2,12 +2,26 @@
 .idea
 WorldOfShadows.code-workspace
 instance/
+<<<<<<< Updated upstream
 *.db
 .env
+=======
+instance/*.db
+>>>>>>> Stashed changes
 __pycache__/
 *.pyc
 *.pyo
-.pytest_cache
+.env
+instance/
+*.db
 .coverage
 htmlcov/
+<<<<<<< Updated upstream
 /mvps
+=======
+.pytest_cache/
+temp_tests_backup/
+*.egg-info/
+dist/
+build/
+>>>>>>> Stashed changes
