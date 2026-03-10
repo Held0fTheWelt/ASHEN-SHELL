@@ -6,7 +6,9 @@ All notable changes to the World of Shadows project are documented in this file.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **Config:** Single `TestingConfig`; removed duplicate. Central `env_bool(name, default)` for boolean env (1/true/yes/on only). `DEV_SECRETS_OK` and `PREFER_HTTPS`/`FLASK_DEBUG` use `env_bool`. Base/Development/Testing roles clarified; JWT_SECRET_KEY fallback to SECRET_KEY documented.
 
 ---
 
