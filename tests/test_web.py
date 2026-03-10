@@ -121,6 +121,21 @@ def test_register_get_returns_200(client):
     assert b"password" in response.data.lower()
 
 
+def test_register_post_missing_email_shows_error(client):
+    """POST /register without email shows error."""
+    response = client.post(
+        "/register",
+        data={
+            "username": "noemail",
+            "password": "Secret123",
+            "password_confirm": "Secret123",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 200
+    assert b"Email is required" in response.data or b"error" in response.data.lower()
+
+
 def test_register_post_success_redirects_to_login(client):
     """POST /register with valid data redirects to /login."""
     response = client.post(
@@ -143,6 +158,7 @@ def test_register_post_password_mismatch_shows_error(client):
         "/register",
         data={
             "username": "mismatchuser",
+            "email": "mismatch@example.com",
             "password": "Alice123",
             "password_confirm": "Alice456",
         },
@@ -159,6 +175,7 @@ def test_register_post_duplicate_username_shows_error(client, test_user):
         "/register",
         data={
             "username": user.username,
+            "email": "other@example.com",
             "password": "Otherpass1",
             "password_confirm": "Otherpass1",
         },
@@ -174,6 +191,7 @@ def test_register_post_weak_password_shows_error(client):
         "/register",
         data={
             "username": "weakuser",
+            "email": "weak@example.com",
             "password": "short",
             "password_confirm": "short",
         },
@@ -189,6 +207,7 @@ def test_register_preserves_username_on_error(client):
         "/register",
         data={
             "username": "prefilluser",
+            "email": "prefill@example.com",
             "password": "weak",
             "password_confirm": "weak",
         },
