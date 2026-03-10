@@ -84,3 +84,18 @@ def db_session(app):
     yield db.session
     db.session.rollback()
     db.session.remove()
+
+
+@pytest.fixture
+def test_user_with_email(app):
+    """Test user with email set; returns (user, password)."""
+    with app.app_context():
+        user = User(
+            username="emailuser",
+            email="emailuser@example.com",
+            password_hash=generate_password_hash("Testpass1"),
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        return user, "Testpass1"
