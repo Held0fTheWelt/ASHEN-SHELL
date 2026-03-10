@@ -6,18 +6,31 @@ List:  GET /api/v1/news?q=&sort=published_at&direction=desc&page=1&limit=20&cate
 
 Detail: GET /api/v1/news/<id>
   Response: single object same shape as list item, or { "error": "Not found" } 404.
+
+Write (all require Authorization: Bearer <JWT>; 401 if missing/invalid):
+  POST   /api/v1/news             -> create (body: title, slug, content; optional summary, is_published, cover_image, category)
+  PUT    /api/v1/news/<id>        -> update (body: optional title, slug, summary, content, cover_image, category)
+  DELETE /api/v1/news/<id>        -> delete
+  POST   /api/v1/news/<id>/publish   -> set published
+  POST   /api/v1/news/<id>/unpublish -> set unpublished
 """
 from datetime import datetime, timezone
 
 from flask import jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
 from app.extensions import limiter
 from app.services.news_service import (
     SORT_FIELDS,
     SORT_ORDERS,
+    create_news,
+    delete_news,
     get_news_by_id,
     list_news,
+    publish_news,
+    unpublish_news,
+    update_news,
 )
 
 
@@ -84,4 +97,118 @@ def news_detail(news_id):
     now = datetime.now(timezone.utc)
     if news.published_at and news.published_at > now:
         return jsonify({"error": "Not found"}), 404
+    return jsonify(news.to_dict()), 200
+
+
+# --- Protected write endpoints (JWT required) ---
+
+
+@api_v1_bp.route("/news", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def news_create():
+    """
+    Create a news article. Requires JWT. Body: title, slug, content; optional summary, is_published, cover_image, category.
+    author_id is set from JWT identity.
+    """
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    title = (data.get("title") or "").strip()
+    slug = (data.get("slug") or "").strip()
+    content = (data.get("content") or "").strip()
+    if not title or not slug or not content:
+        return jsonify({"error": "title, slug, and content are required"}), 400
+    try:
+        author_id = int(get_jwt_identity())
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid token"}), 401
+    summary = data.get("summary")
+    if summary is not None:
+        summary = (summary or "").strip() or None
+    is_published = bool(data.get("is_published", False))
+    cover_image = data.get("cover_image")
+    if cover_image is not None:
+        cover_image = (cover_image or "").strip() or None
+    category = data.get("category")
+    if category is not None:
+        category = (category or "").strip() or None
+
+    news, err = create_news(
+        title=title,
+        slug=slug,
+        content=content,
+        summary=summary,
+        author_id=author_id,
+        is_published=is_published,
+        cover_image=cover_image,
+        category=category,
+    )
+    if err:
+        status = 409 if err == "Slug already in use" else 400
+        return jsonify({"error": err}), status
+    return jsonify(news.to_dict()), 201
+
+
+@api_v1_bp.route("/news/<int:news_id>", methods=["PUT"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def news_update(news_id):
+    """
+    Update a news article. Requires JWT. Body: optional title, slug, summary, content, cover_image, category.
+    """
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    kwargs = {}
+    if "title" in data:
+        kwargs["title"] = (data.get("title") or "").strip() or None
+    if "slug" in data:
+        kwargs["slug"] = (data.get("slug") or "").strip() or None
+    if "summary" in data:
+        kwargs["summary"] = (data.get("summary") or "").strip() or None
+    if "content" in data:
+        kwargs["content"] = (data.get("content") or "").strip() or None
+    if "cover_image" in data:
+        kwargs["cover_image"] = (data.get("cover_image") or "").strip() or None
+    if "category" in data:
+        kwargs["category"] = (data.get("category") or "").strip() or None
+
+    news, err = update_news(news_id, **kwargs)
+    if err:
+        status = 409 if err == "Slug already in use" else (404 if err == "News not found" else 400)
+        return jsonify({"error": err}), status
+    return jsonify(news.to_dict()), 200
+
+
+@api_v1_bp.route("/news/<int:news_id>", methods=["DELETE"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def news_delete(news_id):
+    """Delete a news article. Requires JWT."""
+    ok, err = delete_news(news_id)
+    if err:
+        return jsonify({"error": err}), 404
+    return jsonify({"message": "Deleted"}), 200
+
+
+@api_v1_bp.route("/news/<int:news_id>/publish", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def news_publish(news_id):
+    """Set article as published. Requires JWT."""
+    news, err = publish_news(news_id)
+    if err:
+        return jsonify({"error": err}), 404
+    return jsonify(news.to_dict()), 200
+
+
+@api_v1_bp.route("/news/<int:news_id>/unpublish", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def news_unpublish(news_id):
+    """Set article as unpublished. Requires JWT."""
+    news, err = unpublish_news(news_id)
+    if err:
+        return jsonify({"error": err}), 404
     return jsonify(news.to_dict()), 200
