@@ -7,7 +7,7 @@ List:  GET /api/v1/news?q=&sort=published_at&direction=desc&page=1&limit=20&cate
 Detail: GET /api/v1/news/<id>
   Response: single object same shape as list item, or { "error": "Not found" } 404.
 
-Write (all require Authorization: Bearer <JWT>; 401 if missing/invalid):
+Write (all require Authorization: Bearer <JWT> and editor/admin role; 401 if missing/invalid token, 403 if forbidden):
   POST   /api/v1/news             -> create (body: title, slug, content; optional summary, is_published, cover_image, category)
   PUT    /api/v1/news/<id>        -> update (body: optional title, slug, summary, content, cover_image, category)
   DELETE /api/v1/news/<id>        -> delete
@@ -20,6 +20,7 @@ from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
+from app.auth import current_user_can_write_news
 from app.extensions import limiter
 from app.services.news_service import (
     SORT_FIELDS,
@@ -108,9 +109,11 @@ def news_detail(news_id):
 @jwt_required()
 def news_create():
     """
-    Create a news article. Requires JWT. Body: title, slug, content; optional summary, is_published, cover_image, category.
+    Create a news article. Requires JWT and editor/admin role. Body: title, slug, content; optional summary, is_published, cover_image, category.
     author_id is set from JWT identity.
     """
+    if not current_user_can_write_news():
+        return jsonify({"error": "Forbidden"}), 403
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
@@ -155,8 +158,10 @@ def news_create():
 @jwt_required()
 def news_update(news_id):
     """
-    Update a news article. Requires JWT. Body: optional title, slug, summary, content, cover_image, category.
+    Update a news article. Requires JWT and editor/admin role. Body: optional title, slug, summary, content, cover_image, category.
     """
+    if not current_user_can_write_news():
+        return jsonify({"error": "Forbidden"}), 403
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
@@ -185,7 +190,9 @@ def news_update(news_id):
 @limiter.limit("30 per minute")
 @jwt_required()
 def news_delete(news_id):
-    """Delete a news article. Requires JWT."""
+    """Delete a news article. Requires JWT and editor/admin role."""
+    if not current_user_can_write_news():
+        return jsonify({"error": "Forbidden"}), 403
     ok, err = delete_news(news_id)
     if err:
         return jsonify({"error": err}), 404
@@ -196,7 +203,9 @@ def news_delete(news_id):
 @limiter.limit("30 per minute")
 @jwt_required()
 def news_publish(news_id):
-    """Set article as published. Requires JWT."""
+    """Set article as published. Requires JWT and editor/admin role."""
+    if not current_user_can_write_news():
+        return jsonify({"error": "Forbidden"}), 403
     news, err = publish_news(news_id)
     if err:
         return jsonify({"error": err}), 404
@@ -207,7 +216,9 @@ def news_publish(news_id):
 @limiter.limit("30 per minute")
 @jwt_required()
 def news_unpublish(news_id):
-    """Set article as unpublished. Requires JWT."""
+    """Set article as unpublished. Requires JWT and editor/admin role."""
+    if not current_user_can_write_news():
+        return jsonify({"error": "Forbidden"}), 403
     news, err = unpublish_news(news_id)
     if err:
         return jsonify({"error": err}), 404

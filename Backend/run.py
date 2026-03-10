@@ -59,7 +59,11 @@ def seed_dev_user(username, password, generate):
         if User.query.filter_by(username=u_name).first():
             print(f"User {u_name} already exists.")
             return
-        u = User(username=u_name, password_hash=generate_password_hash(u_pass))
+        u = User(
+            username=u_name,
+            password_hash=generate_password_hash(u_pass),
+            role=User.ROLE_EDITOR,
+        )
         db.session.add(u)
         db.session.commit()
         print(f"Created dev user: {u_name}")
