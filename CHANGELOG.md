@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.0.4]
 
+### Security
+
+- **Open redirect:** Login no longer redirects to external URLs. `is_safe_redirect()` in `app/web/auth.py` allows only path-only URLs (no scheme, no netloc). `next` query param is ignored when unsafe; fallback to dashboard.
+
 ### Changed
 
 - **Config:** Single `TestingConfig` only; removed duplicate class. Testing uses in-memory DB, fixed test secrets, CSRF disabled, high rate limit.
