@@ -17,6 +17,7 @@ All notable changes to the World of Shadows project are documented in this file.
 
 ### Changed
 
+- **Backend stabilization (post-move):** When running from `Backend/`, config now also loads `.env` from repo root so a single `.env` at project root works. Documented that the database instance path is `Backend/instance` when run from Backend. Imports, migration path, pytest discovery, and Docker/startup unchanged and verified; all 45 tests pass from `Backend/`.
 - **Config:** Single `TestingConfig`; removed duplicate. Central `env_bool(name, default)` for boolean env (1/true/yes/on only). `DEV_SECRETS_OK` and `PREFER_HTTPS`/`FLASK_DEBUG` use `env_bool`. Base/Development/Testing roles clarified; JWT_SECRET_KEY fallback to SECRET_KEY documented.
 
 ---
