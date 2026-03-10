@@ -57,10 +57,8 @@ _Nothing yet._
 
 ### Added
 
-- **Test suite:** Pytest tests for web and API (19 tests), in-memory DB config, pytest.ini, pytest and pytest-cov in requirements.
-- **Planning docs:** Milestone list and execution prompts for staged rebuild (no code changes).
-- Test suite: Pytest tests for web and API, in-memory DB config, pytest.ini, pytest and pytest-cov in requirements.
-- Planning docs: Milestone list and execution prompts for staged rebuild (no code changes).
+- **Test suite:** Pytest tests for web and API (19 tests), in-memory DB via TestingConfig, pytest.ini, pytest and pytest-cov in requirements.
+- **Development workflow docs:** Index and prompt files for planning and step-by-step execution of the server rebuild; no application code changes, documentation and task-index only.
 
 ---
 
@@ -96,11 +94,5 @@ _Nothing yet._
 
 ### Technical notes
 
-- No movie or blog domain logic; foundation only.
-- Code and identifiers in English.
-- `.gitignore` updated (instance/, *.db, .env, __pycache__, etc.).
-- Server foundation: Flask app factory, config, extensions (db, jwt, limiter, CORS), single entrypoint run.py.
-- Database: SQLite default, User model, flask init-db.
-- Web: Blueprint with home, health, login, logout; session auth; templates and static.
-- API: /api/v1 health, auth (register, login, me), protected test route; JWT and rate limiting.
-- Tooling and docs: requirements.txt, .env.example, Postman collection for API testing.
+- Foundation is generic only: no movie, blog, or other domain logic; code and identifiers in English.
+- `.gitignore` excludes instance/, *.db, .env, __pycache__, and similar local artifacts.
