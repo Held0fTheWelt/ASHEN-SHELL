@@ -12,14 +12,15 @@ All notable changes to the World of Shadows project are documented in this file.
 - **Backend/Frontend restructure:** Repository split into `Backend/` and `Frontend/`. Backend now contains `app/`, `migrations/`, `tests/`, `run.py`, `requirements.txt`, `requirements-dev.txt`, `Dockerfile`, `pytest.ini`, `.dockerignore`; run and test from `Backend/` with `FLASK_APP=run:app`. New `Frontend/` has `frontend_app.py`, `templates/`, `static/` (placeholder only). Root keeps `README.md`, `CHANGELOG.md`, `docker-compose.yml`, `docs/`, `.env.example`. Docker build context is `Backend/`; compose mounts `Backend/instance`. No news system yet; structure only.
 - **Frontend application:** Lightweight Flask public frontend in `Frontend/`: `frontend_app.py` with home (`/`), news list (`/news`), news detail (`/news/<id>`); templates `base.html`, `index.html`, `news.html`, `news_detail.html`; static `styles.css`, `main.js`, `news.js`. Config via `BACKEND_API_URL` (default `http://127.0.0.1:5000`) for login/wiki/community links and for JS to call backend API. No database; news data will be loaded by JS from backend API (graceful empty/404 until news API exists). Styling aligned with World of Shadows (void/violet, Inter, JetBrains Mono). Run from `Frontend/` with `python frontend_app.py` (port 5001).
 
+### Changed
+
+- **Routing responsibility split:** Backend serves only auth and internal flows (login, register, forgot/reset-password, dashboard, game-menu, wiki/community placeholders). When `FRONTEND_URL` is set, backend redirects `GET /` and `GET /news` to the frontend so the public home and news are served only by the frontend; logout redirects to frontend home. Backend keeps legacy `home.html`/`news.html` when `FRONTEND_URL` is unset (e.g. tests, backend-only deployment). No duplicate public news; config documented in `.env.example` and `docs/architecture/FrontendBackendRestructure.md`.
+- **Backend stabilization (post-move):** When running from `Backend/`, config now also loads `.env` from repo root so a single `.env` at project root works. Documented that the database instance path is `Backend/instance` when run from Backend. Imports, migration path, pytest discovery, and Docker/startup unchanged and verified; all 45 tests pass from `Backend/`.
+- **Config:** Single `TestingConfig`; removed duplicate. `FRONTEND_URL` (optional) for redirecting public home/news to frontend.
+
 ### Security
 
 - **Open redirect:** Login no longer redirects to external URLs. `is_safe_redirect()` in `app/web/auth.py` allows only path-only URLs (no scheme, no netloc). `next` query param is ignored when unsafe; fallback to dashboard.
-
-### Changed
-
-- **Backend stabilization (post-move):** When running from `Backend/`, config now also loads `.env` from repo root so a single `.env` at project root works. Documented that the database instance path is `Backend/instance` when run from Backend. Imports, migration path, pytest discovery, and Docker/startup unchanged and verified; all 45 tests pass from `Backend/`.
-- **Config:** Single `TestingConfig`; removed duplicate. Central `env_bool(name, default)` for boolean env (1/true/yes/on only). `DEV_SECRETS_OK` and `PREFER_HTTPS`/`FLASK_DEBUG` use `env_bool`. Base/Development/Testing roles clarified; JWT_SECRET_KEY fallback to SECRET_KEY documented.
 
 ---
 

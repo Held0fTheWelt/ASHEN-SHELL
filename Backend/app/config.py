@@ -80,6 +80,9 @@ class Config:
         "MAIL_DEFAULT_SENDER", "noreply@worldofshadows.local"
     )
 
+    # Public frontend URL (no trailing slash). When set, GET / and GET /news redirect there.
+    FRONTEND_URL = os.environ.get("FRONTEND_URL", "").strip() or None
+
 
 class DevelopmentConfig(Config):
     """Dev-only: fallback secrets when DEV_SECRETS_OK is explicitly 1/true/yes/on.

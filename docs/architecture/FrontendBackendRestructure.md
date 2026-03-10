@@ -142,3 +142,17 @@ WorldOfShadows/
 4. Update run scripts, docker-compose, and docs (e.g. ServerArchitecture.md, README) to describe two processes (Backend + Frontend) and the API boundary.
 
 This document is the result of an audit of the current repository and the MasterBlogAPI reference; no file moves were performed in this step.
+
+---
+
+## 7. Routing responsibility split (implemented)
+
+| Responsibility | Backend (port 5000) | Frontend (port 5001) |
+|----------------|--------------------|----------------------|
+| **Public home** | When `FRONTEND_URL` is set: redirect `GET /` → frontend. Else: serve legacy `home.html`. | `GET /` – public landing (hero, links to backend login/register). |
+| **Public news** | When `FRONTEND_URL` is set: redirect `GET /news` → frontend. Else: serve legacy `news.html`. | `GET /news` (list), `GET /news/<id>` (detail); data via JS from backend API. |
+| **Auth & internal** | `GET/POST /login`, `POST /logout`, `GET/POST /register`, `GET/POST /forgot-password`, `GET/POST /reset-password/<token>`, `GET /dashboard` (protected), `GET /game-menu` (protected). All session-rendered. | No auth; “Log in” / “Get started” link to backend URL. |
+| **Placeholders** | `GET /wiki`, `GET /community` – backend placeholders (frontend header links to backend for these). | — |
+| **API** | All `GET/POST ... /api/v1/*` (health, auth, future news). | Consumes API only via JS; no server-side API. |
+
+**Config:** Backend `FRONTEND_URL` (no trailing slash). When set, logout also redirects to `FRONTEND_URL/`. No duplicate public news: backend does not serve a competing news page when frontend is in use.
