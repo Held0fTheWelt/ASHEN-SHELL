@@ -2,7 +2,7 @@
 from functools import wraps
 from urllib.parse import urlparse
 
-from flask import flash, redirect, session, url_for
+from flask import flash, redirect, session, url_for, current_app
 
 from app.models import User
 from app.extensions import db
@@ -22,7 +22,9 @@ def is_safe_redirect(url: str) -> bool:
 
 
 def _user_needs_verification(user) -> bool:
-    """True if user has email but is not yet verified."""
+    """True if user has email but is not yet verified and verification is enabled."""
+    if not current_app.config.get("EMAIL_VERIFICATION_ENABLED", False):
+        return False
     return bool(user and user.email and user.email_verified_at is None)
 
 

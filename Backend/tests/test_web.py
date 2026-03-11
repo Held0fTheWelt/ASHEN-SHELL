@@ -399,13 +399,14 @@ def test_activate_valid_token_redirects_to_login(client, app):
     assert b"invalid" in response.data.lower() or b"expired" in response.data.lower()
 
 
-def test_login_blocked_for_unverified_user(client, app):
-    """User with email but no email_verified_at cannot log in (web)."""
+def test_login_blocked_for_unverified_user_when_verification_enabled(client, app):
+    """User with email but no email_verified_at cannot log in (web) when verification is enabled."""
     from app.extensions import db
     from app.models import Role, User
     from werkzeug.security import generate_password_hash
 
     with app.app_context():
+        app.config["EMAIL_VERIFICATION_ENABLED"] = True
         role = Role.query.filter_by(name=Role.NAME_USER).first()
         user = User(
             username="unverifieduser",

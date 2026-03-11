@@ -85,9 +85,12 @@ class Config:
     # Registration: require email and verification (set to False to allow registration without email)
     REGISTRATION_REQUIRE_EMAIL = env_bool("REGISTRATION_REQUIRE_EMAIL", False)
 
-    # Email verification (0.0.7): base URL for activation links (no trailing slash)
+    # Email verification (0.0.7): base URL for activation links (no trailing slash).
+    # EMAIL_VERIFICATION_ENABLED gates whether verification is enforced; when False,
+    # users can log in without verifying and new accounts are treated as verified.
     APP_PUBLIC_BASE_URL = os.environ.get("APP_PUBLIC_BASE_URL", "").strip() or None
     EMAIL_VERIFICATION_TTL_HOURS = int(os.environ.get("EMAIL_VERIFICATION_TTL_HOURS", "24"))
+    EMAIL_VERIFICATION_ENABLED = env_bool("EMAIL_VERIFICATION_ENABLED", False)
 
     # Public frontend URL (no trailing slash). When set, GET / and GET /news redirect there.
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "").strip() or None

@@ -54,7 +54,11 @@ def login():
                 tags=["web"],
             )
             return redirect(url_for("web.blocked"))
-        if user.email and user.email_verified_at is None:
+        if (
+            current_app.config.get("EMAIL_VERIFICATION_ENABLED", False)
+            and user.email
+            and user.email_verified_at is None
+        ):
             log_activity(
                 actor=user,
                 category="auth",

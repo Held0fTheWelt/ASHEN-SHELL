@@ -111,13 +111,14 @@ def test_login_invalid_returns_401(client):
     assert "error" in response.get_json()
 
 
-def test_login_unverified_email_returns_403(client, app):
-    """POST /api/v1/auth/login with valid credentials but unverified email returns 403."""
+def test_login_unverified_email_returns_403_when_verification_enabled(client, app):
+    """POST /api/v1/auth/login with valid credentials but unverified email returns 403 when verification is enabled."""
     from app.extensions import db
     from app.models import Role, User
     from werkzeug.security import generate_password_hash
 
     with app.app_context():
+        app.config["EMAIL_VERIFICATION_ENABLED"] = True
         role = Role.query.filter_by(name=Role.NAME_USER).first()
         user = User(
             username="apiverify",

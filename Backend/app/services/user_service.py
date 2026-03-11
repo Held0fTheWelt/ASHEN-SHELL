@@ -141,6 +141,10 @@ def create_user(username, password, email=None):
         password_hash=generate_password_hash(password),
         role_id=default_role.id,
     )
+    # When email verification is disabled, treat accounts as verified on creation.
+    email_verification_enabled = current_app.config.get("EMAIL_VERIFICATION_ENABLED", False)
+    if email_val and not email_verification_enabled:
+        user.email_verified_at = datetime.now(timezone.utc)
     db.session.add(user)
     db.session.commit()
     logger.info("User created: id=%s username=%r", user.id, user.username)
