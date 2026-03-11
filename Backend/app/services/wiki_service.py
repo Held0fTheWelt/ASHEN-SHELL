@@ -220,6 +220,10 @@ def upsert_wiki_page_translation(
             trans.slug = new_slug
         if content_markdown is not None:
             trans.content_markdown = content_markdown
+        # When this translation's content/title/slug changes, it becomes the new source; mark others outdated.
+        if content_markdown is not None or title is not None or slug is not None:
+            trans.source_version = _utc_now().isoformat()
+            mark_wiki_translations_outdated(page_id, exclude_language=lang)
         db.session.commit()
         return trans, None
     if not title or not slug:

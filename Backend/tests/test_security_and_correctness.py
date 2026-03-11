@@ -171,3 +171,40 @@ def test_news_update_marks_translations_outdated(app, moderator_headers, client,
         ).first()
         assert en_trans is not None
         assert en_trans.translation_status == "outdated"
+
+
+def test_wiki_update_marks_other_translations_outdated(app, moderator_headers, client):
+    """Updating one wiki translation (content/title/slug) marks other languages outdated and sets source_version."""
+    r1 = client.post(
+        "/api/v1/wiki-admin/pages",
+        json={"key": "outdated-test-page"},
+        headers=moderator_headers,
+    )
+    assert r1.status_code == 201
+    page_id = r1.get_json()["id"]
+    r2 = client.put(
+        f"/api/v1/wiki-admin/pages/{page_id}/translations/de",
+        json={"title": "De Title", "slug": "outdated-test-de", "content_markdown": "De content."},
+        headers=moderator_headers,
+    )
+    assert r2.status_code == 200
+    r3 = client.put(
+        f"/api/v1/wiki-admin/pages/{page_id}/translations/en",
+        json={"title": "En Title", "slug": "outdated-test-en", "content_markdown": "En content."},
+        headers=moderator_headers,
+    )
+    assert r3.status_code == 200
+    r4 = client.put(
+        f"/api/v1/wiki-admin/pages/{page_id}/translations/de",
+        json={"title": "De Title Updated", "slug": "outdated-test-de", "content_markdown": "De content updated."},
+        headers=moderator_headers,
+    )
+    assert r4.status_code == 200
+    with app.app_context():
+        from app.models import WikiPageTranslation
+        de_trans = WikiPageTranslation.query.filter_by(page_id=page_id, language_code="de").first()
+        en_trans = WikiPageTranslation.query.filter_by(page_id=page_id, language_code="en").first()
+        assert de_trans is not None
+        assert en_trans is not None
+        assert de_trans.source_version is not None
+        assert en_trans.translation_status == "outdated"

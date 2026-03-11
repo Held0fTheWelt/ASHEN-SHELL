@@ -16,8 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Security headers:** Backend and frontend set `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, and `Content-Security-Policy`. Optional `Strict-Transport-Security` when `ENFORCE_HTTPS` is set (backend).
 - **CSV formula injection hardening:** Activity log CSV export uses `csv_safe_cell()` so cells starting with `=`, `+`, `-`, or `@` are prefixed and treated as text in spreadsheets.
 - **Wiki slug uniqueness:** Unique constraint and service validation so slug is unique per language across all wiki pages. Migration 013. Duplicate slug in the same language returns a clear error.
-- **Translation outdated handling:** When source (default-language) news article or wiki translation content is updated, other-language translations are marked outdated and `source_version` is set.
-- **Regression tests:** `tests/test_security_and_correctness.py` for wiki sanitizer, password change, generic user update ignoring password, news slug detail, CSV formula neutralization, security headers, wiki slug uniqueness, and translation outdated marking.
+- **Translation outdated handling:** When source (default-language) news article or wiki translation content is updated, other-language translations are marked outdated and `source_version` is set. Wiki: `upsert_wiki_page_translation` update path now sets `source_version` on the edited translation and marks all other languages for that page outdated (deterministic, regression-tested).
+- **Regression tests:** `tests/test_security_and_correctness.py` for wiki sanitizer, password change, generic user update ignoring password, news slug detail, CSV formula neutralization, security headers, wiki slug uniqueness, translation outdated marking, and wiki update marking other translations outdated.
 
 ### Changed
 
