@@ -388,10 +388,29 @@ def _get_wiki_html(lang=None):
 
 
 @web_bp.route("/wiki")
-def wiki():
-    """Wiki view: render Markdown from DB (default page) or Backend/content/wiki.md."""
-    wiki_html = _get_wiki_html()
-    return render_template("wiki.html", wiki_html=wiki_html)
+@web_bp.route("/wiki/<path:slug>")
+def wiki(slug=None):
+    """Wiki view: slug=None shows default page (index); slug set loads page by slug from DB."""
+    lang = request.args.get("lang") or session.get("lang")
+    if slug:
+        from app.services.wiki_service import get_wiki_page_by_slug
+        from app.utils.html_sanitizer import sanitize_wiki_html
+        page, trans = get_wiki_page_by_slug(slug, lang=lang)
+        if not page or not trans:
+            return render_template("wiki.html", wiki_html=None, wiki_title=None), 404
+        text = trans.content_markdown or ""
+        if not text.strip():
+            wiki_html = None
+        else:
+            try:
+                raw = markdown.markdown(text, extensions=["extra"])
+                wiki_html = sanitize_wiki_html(raw) if raw else None
+            except Exception:
+                wiki_html = None
+        title = (trans.title or slug).strip() or "Wiki"
+        return render_template("wiki.html", wiki_html=wiki_html, wiki_title=title)
+    wiki_html = _get_wiki_html(lang=lang)
+    return render_template("wiki.html", wiki_html=wiki_html, wiki_title=None)
 
 
 @web_bp.route("/community")
@@ -413,7 +432,11 @@ def dashboard():
     """Protected page; requires logged-in session. Admin section only visible to admins."""
     uid = session.get("user_id")
     user = db.session.get(User, int(uid)) if uid else None
-    return render_template("dashboard.html", is_admin=user.is_admin if user else False)
+    return render_template(
+        "dashboard.html",
+        is_admin=user.is_admin if user else False,
+        current_user=user,
+    )
 
 
 @web_bp.route("/dashboard/api/metrics")

@@ -15,7 +15,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [0.0.14] - (unreleased)
+## [0.0.15] - 2026-03-11
+
+### Added
+
+- **User data: Created and Last seen:** User API and dashboards now expose `created_at` and `last_seen_at` (ISO 8601). `User.to_dict()` includes both; list and detail endpoints return them.
+- **Backend dashboard – User Settings:** Profile section shows read-only **Created** and **Last seen** (UTC) for the current user.
+- **Frontend manage users:** Users table has **Created** and **Last seen** columns; user detail form shows **Created** and **Last seen** (locale-formatted).
+
+### Changed
+
+- **API:** `GET /api/v1/users` and `GET /api/v1/users/<id>` responses now include `created_at` and `last_seen_at`.
+
+---
+
+## [0.0.14] - 2026-03-11
 
 ### Fixed (frontend only)
 

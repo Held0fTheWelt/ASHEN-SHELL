@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Dashboard – World of Shadows{% endblock %}
+{% block title %}Dashboard – BLACKVEIN{% endblock %}
 {% block body_class %}dashboard{% endblock %}
 
 {% block site_main %}
@@ -52,7 +52,7 @@
                 <h1 class="dash-title-main mono">// METRICS</h1>
             </div>
             <div class="dash-subtitle">
-                <p class="mono">Metrics about the website.</p>
+                <p class="mono" >Metrics about the website.</p>
             </div>            
             <div class="dash-topbar">
                 <h1 class="dash-title mono">// USERS</h1>
@@ -200,6 +200,12 @@
             </div>
             <div class="dash-settings-card">
                 <p class="chart-title mono">// PROFILE</p>
+                {% if current_user %}
+                <div class="dash-user-meta" style="margin-bottom:1rem;">
+                    <p class="mono" style="font-size:0.85rem; color:var(--text-muted); margin:0 0 0.25rem 0;"><span class="mono">Created</span> {{ current_user.created_at.strftime('%Y-%m-%d %H:%M UTC') if current_user.created_at else '—' }}</p>
+                    <p class="mono" style="font-size:0.85rem; color:var(--text-muted); margin:0;"><span class="mono">Last seen</span> {{ current_user.last_seen_at.strftime('%Y-%m-%d %H:%M UTC') if current_user.last_seen_at else '—' }}</p>
+                </div>
+                {% endif %}
                 <form id="form-user-settings" class="dash-settings-form" method="post" action="">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">

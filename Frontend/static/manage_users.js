@@ -6,6 +6,14 @@
     var apiRef = null; // set at init from ManageAuth.apiFetchWithAuth
     function $(id) { return document.getElementById(id); }
 
+    function formatDateTime(iso) {
+        if (!iso) return "—";
+        try {
+            var d = new Date(iso);
+            return isNaN(d.getTime()) ? "—" : d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+        } catch (e) { return "—"; }
+    }
+
     var state = {
         page: 1,
         total: 0,
@@ -87,13 +95,17 @@
                 if (state.selectedId === u.id) tr.classList.add("selected");
                 var banText = u.is_banned ? "Yes" : "No";
                 var lang = (u.preferred_language || "").replace(/</g, "&lt;") || "—";
+                var created = formatDateTime(u.created_at);
+                var lastSeen = formatDateTime(u.last_seen_at);
                 tr.innerHTML =
                     "<td>" + (u.id || "") + "</td>" +
                     "<td>" + (u.username || "").replace(/</g, "&lt;") + "</td>" +
                     "<td>" + (u.email || "").replace(/</g, "&lt;") + "</td>" +
                     "<td>" + (u.role || "").replace(/</g, "&lt;") + "</td>" +
                     "<td>" + lang + "</td>" +
-                    "<td>" + banText + "</td>";
+                    "<td>" + banText + "</td>" +
+                    "<td>" + created + "</td>" +
+                    "<td>" + lastSeen + "</td>";
                 tr.addEventListener("click", function() { selectUser(u.id); });
                 tbody.appendChild(tr);
             });
@@ -162,6 +174,10 @@
                     if (banBtn) banBtn.hidden = false;
                     if (unbanBtn) unbanBtn.hidden = true;
                 }
+                var createdEl = $("manage-users-created");
+                var lastSeenEl = $("manage-users-last-seen");
+                if (createdEl) createdEl.textContent = formatDateTime(user.created_at);
+                if (lastSeenEl) lastSeenEl.textContent = formatDateTime(user.last_seen_at);
                 ($("manage-users-editor-title") || {}).textContent = "Edit user";
             })
             .catch(function(e) {

@@ -59,6 +59,8 @@ class User(db.Model):
         out = {"id": self.id, "username": self.username, "role": self.role}
         if self.preferred_language is not None:
             out["preferred_language"] = self.preferred_language
+        out["created_at"] = self.created_at.isoformat() if self.created_at else None
+        out["last_seen_at"] = self.last_seen_at.isoformat() if self.last_seen_at else None
         if include_email:
             out["email"] = self.email
         if include_ban:
