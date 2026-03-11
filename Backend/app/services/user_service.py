@@ -327,12 +327,13 @@ def update_user(
     username: str | None = None,
     email: str | None = None,
     role: str | None = None,
+    role_level: int | None = None,
     preferred_language: str | None = None,
 ) -> tuple[User | None, str | None]:
     """
     Update a user by id. Returns (user, None) or (None, error_message).
     Does not accept password changes; use change_password() for self-service password change.
-    role may only be set by admin (enforced in route).
+    role and role_level may only be set by admin (hierarchy enforced in route).
     """
     user = get_user_by_id(user_id)
     if not user:
@@ -371,6 +372,19 @@ def update_user(
         if not role_obj:
             return None, "Invalid role"
         user.role_id = role_obj.id
+        # When changing role, set role_level to role's default if present
+        default_lvl = getattr(role_obj, "default_role_level", None)
+        if default_lvl is not None:
+            user.role_level = int(default_lvl)
+
+    if role_level is not None:
+        try:
+            lvl = int(role_level)
+            if lvl < 0 or lvl > 9999:
+                return None, "role_level must be between 0 and 9999"
+            user.role_level = lvl
+        except (TypeError, ValueError):
+            return None, "role_level must be an integer"
 
     if preferred_language is not None:
         from flask import current_app
@@ -415,9 +429,9 @@ ALLOWED_ROLE_NAMES = (Role.NAME_USER, Role.NAME_QA, Role.NAME_MODERATOR, Role.NA
 
 def assign_role(user_id: int, role_name: str, *, actor_id: int | None = None) -> tuple[User | None, str | None]:
     """
-    Set a user's role (admin only). role_name must be user, moderator, or admin.
-    Returns (user, None) or (None, error_message).
-    actor_id: optional caller user id (e.g. to prevent self-demotion; not enforced here).
+    Set a user's role (admin only). role_name must be user, qa, moderator, or admin.
+    Sets user.role_level to the role's default_role_level when present.
+    Returns (user, None) or (None, error_message). Hierarchy must be enforced in route.
     """
     user = get_user_by_id(user_id)
     if not user:
@@ -429,6 +443,9 @@ def assign_role(user_id: int, role_name: str, *, actor_id: int | None = None) ->
     if not role_obj:
         return None, "Invalid role"
     user.role_id = role_obj.id
+    default_lvl = getattr(role_obj, "default_role_level", None)
+    if default_lvl is not None:
+        user.role_level = int(default_lvl)
     db.session.commit()
     db.session.refresh(user)
     logger.info("User role assigned: user_id=%s role=%s", user_id, name)

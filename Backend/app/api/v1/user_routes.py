@@ -5,7 +5,15 @@ from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
-from app.auth.permissions import current_user_is_admin, get_current_user, require_jwt_admin
+from app.auth.permissions import (
+    admin_may_assign_role_level,
+    admin_may_assign_role_with_level,
+    admin_may_edit_target,
+    current_user_is_admin,
+    current_user_is_super_admin,
+    get_current_user,
+    require_jwt_admin,
+)
 from app.extensions import limiter
 from app.services import log_activity
 from app.services.user_service import (
@@ -137,14 +145,22 @@ def users_change_password(user_id):
 @jwt_required()
 def users_update(user_id):
     """
-    Update a user. Admin can update any user and set role; user can only update self (no role).
-    Body: optional username, email, preferred_language, role (admin only). Password changes are not accepted; use PUT /users/<id>/password.
+    Update a user. Admin can update users with strictly lower role_level; user can only update self (no role/role_level).
+    Body: optional username, email, preferred_language, role (admin only), role_level (admin only, hierarchy rules).
     """
     current = get_current_user()
     if current is None:
         return jsonify({"error": "User not found"}), 404
-    if current.id != user_id and not current_user_is_admin():
-        return jsonify({"error": "Forbidden"}), 403
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({"error": "User not found"}), 404
+    if current.id != user_id:
+        if not current_user_is_admin():
+            return jsonify({"error": "Forbidden"}), 403
+        actor_level = getattr(current, "role_level", 0) or 0
+        target_level = getattr(target, "role_level", 0) or 0
+        if not admin_may_edit_target(actor_level, target_level):
+            return jsonify({"error": "Forbidden. You may only edit users with a lower role level."}), 403
 
     data = request.get_json(silent=True)
     if data is None:
@@ -161,9 +177,41 @@ def users_update(user_id):
         kwargs["email"] = data.get("email")
     if "preferred_language" in data:
         kwargs["preferred_language"] = data.get("preferred_language")
-    # Password fields are explicitly ignored; use PUT /users/<id>/password for password change.
-    if "role" in data and current_user_is_admin():
-        kwargs["role"] = data.get("role")
+    if current.id != user_id and current_user_is_admin():
+        if "role" in data:
+            role_name = (data.get("role") or "").strip().lower()
+            if role_name:
+                from app.models import Role
+                role_obj = Role.query.filter_by(name=role_name).first()
+                if not role_obj:
+                    return jsonify({"error": "Invalid role"}), 400
+                actor_level = getattr(current, "role_level", 0) or 0
+                target_level = getattr(target, "role_level", 0) or 0
+                new_default = getattr(role_obj, "default_role_level", None)
+                if not admin_may_assign_role_with_level(actor_level, target_level, new_default):
+                    return jsonify({"error": "Forbidden. Cannot assign that role (would exceed your role level)."}), 403
+            kwargs["role"] = data.get("role")
+        if "role_level" in data:
+            try:
+                new_level = int(data.get("role_level"))
+            except (TypeError, ValueError):
+                return jsonify({"error": "role_level must be an integer"}), 400
+            actor_level = getattr(current, "role_level", 0) or 0
+            target_level = getattr(target, "role_level", 0) or 0
+            if not admin_may_assign_role_level(actor_level, user_id, new_level, current.id):
+                return jsonify({"error": "Forbidden. You may not assign a role level higher than or equal to your own."}), 403
+            kwargs["role_level"] = new_level
+    elif current.id == user_id and "role_level" in data:
+        if not current_user_is_super_admin():
+            return jsonify({"error": "Forbidden. Only SuperAdmin may change their own role level."}), 403
+        try:
+            new_level = int(data.get("role_level"))
+        except (TypeError, ValueError):
+            return jsonify({"error": "role_level must be an integer"}), 400
+        from app.models.user import SUPERADMIN_THRESHOLD
+        if new_level < SUPERADMIN_THRESHOLD:
+            return jsonify({"error": "Forbidden. SuperAdmin may only set own role level to at least 100."}), 403
+        kwargs["role_level"] = new_level
 
     user, err = update_user_service(user_id, **kwargs)
     if err:
@@ -204,10 +252,16 @@ def users_update(user_id):
 @limiter.limit("30 per minute")
 @jwt_required()
 def users_delete(user_id):
-    """Delete a user (admin only)."""
+    """Delete a user (admin only). Admin may only delete users with strictly lower role_level."""
     if not current_user_is_admin():
         return jsonify({"error": "Forbidden"}), 403
     target_user = get_user_by_id(user_id)
+    if not target_user:
+        return jsonify({"error": "User not found"}), 404
+    actor_level = getattr(get_current_user(), "role_level", 0) or 0
+    target_level = getattr(target_user, "role_level", 0) or 0
+    if not admin_may_edit_target(actor_level, target_level):
+        return jsonify({"error": "Forbidden. You may only delete users with a lower role level."}), 403
     ok, err = delete_user_service(user_id)
     if not ok:
         return jsonify({"error": err or "User not found"}), 404
@@ -229,7 +283,7 @@ def users_delete(user_id):
 @limiter.limit("30 per minute")
 @require_jwt_admin
 def users_assign_role(user_id):
-    """Assign role to a user (admin only). Body: role (user, moderator, or admin)."""
+    """Assign role to a user (admin only). Admin may only assign to users with strictly lower role_level; new role's default_level must be below your level. Body: role (user, qa, moderator, admin)."""
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
@@ -237,6 +291,20 @@ def users_assign_role(user_id):
     if role_name is None:
         return jsonify({"error": "role is required"}), 400
     current = get_current_user()
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({"error": "User not found"}), 404
+    actor_level = getattr(current, "role_level", 0) or 0
+    target_level = getattr(target, "role_level", 0) or 0
+    if not admin_may_edit_target(actor_level, target_level):
+        return jsonify({"error": "Forbidden. You may only assign roles to users with a lower role level."}), 403
+    from app.models import Role
+    role_obj = Role.query.filter_by(name=(role_name or "").strip().lower()).first()
+    if not role_obj:
+        return jsonify({"error": "Invalid role"}), 400
+    new_default = getattr(role_obj, "default_role_level", None)
+    if not admin_may_assign_role_with_level(actor_level, target_level, new_default):
+        return jsonify({"error": "Forbidden. Cannot assign that role (its default level would exceed or match your level)."}), 403
     user, err = assign_role_service(user_id, role_name, actor_id=current.id if current else None)
     if err:
         status = 404 if err == "User not found" else 400
@@ -260,12 +328,19 @@ def users_assign_role(user_id):
 @limiter.limit("30 per minute")
 @require_jwt_admin
 def users_ban(user_id):
-    """Ban a user (admin only). Body: optional reason."""
+    """Ban a user (admin only). Admin may only ban users with strictly lower role_level. Body: optional reason."""
+    current = get_current_user()
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({"error": "User not found"}), 404
+    actor_level = getattr(current, "role_level", 0) or 0
+    target_level = getattr(target, "role_level", 0) or 0
+    if not admin_may_edit_target(actor_level, target_level):
+        return jsonify({"error": "Forbidden. You may only ban users with a lower role level."}), 403
     data = request.get_json(silent=True) or {}
     reason = data.get("reason") if isinstance(data.get("reason"), str) else None
     if reason is not None:
         reason = reason.strip() or None
-    current = get_current_user()
     user, err = ban_user_service(user_id, reason=reason, actor_id=current.id if current else None)
     if err:
         status = 404 if err == "User not found" else 400
@@ -288,8 +363,15 @@ def users_ban(user_id):
 @limiter.limit("30 per minute")
 @require_jwt_admin
 def users_unban(user_id):
-    """Unban a user (admin only)."""
+    """Unban a user (admin only). Admin may only unban users with strictly lower role_level."""
     current = get_current_user()
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({"error": "User not found"}), 404
+    actor_level = getattr(current, "role_level", 0) or 0
+    target_level = getattr(target, "role_level", 0) or 0
+    if not admin_may_edit_target(actor_level, target_level):
+        return jsonify({"error": "Forbidden. You may only unban users with a lower role level."}), 403
     user, err = unban_user_service(user_id)
     if err:
         status = 404 if err == "User not found" else 400
