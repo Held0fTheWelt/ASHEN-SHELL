@@ -22,9 +22,9 @@ pytest tests/test_admin_logs.py -v
 
 ## Layout
 
-- **conftest.py** – Fixtures: `app`, `client`, `runner`, `test_user` (role=user), `auth_headers`, `editor_user`, `editor_headers`, `admin_user`, `admin_headers`, `test_user_with_email`, `sample_news`.
+- **conftest.py** – Fixtures: `app`, `client`, `runner`, `test_user` (role=user), `auth_headers`, `moderator_user`, `moderator_headers`, `admin_user`, `admin_headers`, `test_user_with_email`, `sample_news`.
 - **test_api.py** – API v1: health, register, login, me, test/protected; status codes, JSON, CORS.
-- **test_news_api.py** – News CRUD: list/detail (public + editor drafts), search/sort/pagination/category; write 401/403/201/200; publish/unpublish/delete.
+- **test_news_api.py** – News CRUD: list/detail (public + moderator drafts), search/sort/pagination/category; write 401/403/201/200; publish/unpublish/delete.
 - **test_users_api.py** – Users CRUD: list (admin 200, non-admin 403), get (self/admin/other), update (self/admin/403), delete (admin/403/404); 401 without token. Aligned with Postman Users folder.
 - **test_roles.py** – Roles CRUD: list/get/create/update/delete (admin only); 403/401/404/400/409 as applicable.
 - **test_admin_logs.py** – Admin logs API (401/403/200), filters, dashboard logs, CSV export; role helpers; activity log on login.

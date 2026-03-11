@@ -77,14 +77,14 @@ def seed_dev_user(username, password, generate):
             print(f"User {u_name} already exists.")
             return
         from app.models import Role
-        editor_role = Role.query.filter_by(name=Role.NAME_EDITOR).first()
-        if not editor_role:
-            print("Editor role not found. Run migrations or ensure roles are seeded.")
+        moderator_role = Role.query.filter_by(name=Role.NAME_MODERATOR).first()
+        if not moderator_role:
+            print("Moderator role not found. Run migrations or ensure roles are seeded.")
             return
         u = User(
             username=u_name,
             password_hash=generate_password_hash(u_pass),
-            role_id=editor_role.id,
+            role_id=moderator_role.id,
         )
         db.session.add(u)
         db.session.commit()
@@ -187,7 +187,7 @@ def seed_news():
                 "title": "News System Live",
                 "slug": "news-system-live",
                 "summary": "The public news list and detail pages are now live, with search, sorting, and category filter.",
-                "content": "You can browse published news on the frontend. The list supports search, sort by date or title, category filter, and pagination. Each article has a detail page with full content, author, and category. Editorial write access is restricted to editor and admin roles.",
+                "content": "You can browse published news on the frontend. The list supports search, sort by date or title, category filter, and pagination. Each article has a detail page with full content, author, and category. Editorial write access is restricted to moderator and admin roles.",
                 "category": "Features",
                 "is_published": True,
             },

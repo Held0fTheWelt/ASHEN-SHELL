@@ -48,15 +48,31 @@ def test_register_validation_returns_400(client):
     assert "error" in response.get_json()
 
 
-def test_register_missing_email_returns_400(client):
-    """POST /api/v1/auth/register without email returns 400."""
+def test_register_without_email_returns_201_when_email_optional(client):
+    """POST /api/v1/auth/register without email returns 201 when REGISTRATION_REQUIRE_EMAIL is False (default)."""
     response = client.post(
         "/api/v1/auth/register",
         json={"username": "noman", "password": "Secret123"},
         content_type="application/json",
     )
+    assert response.status_code == 201
+    data = response.get_json()
+    assert data["username"] == "noman"
+    assert "id" in data
+
+
+def test_register_missing_email_returns_400_when_email_required(client):
+    """POST /api/v1/auth/register without email returns 400 when REGISTRATION_REQUIRE_EMAIL is True."""
+    client.application.config["REGISTRATION_REQUIRE_EMAIL"] = True
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"username": "noman2", "password": "Secret123"},
+        content_type="application/json",
+    )
     assert response.status_code == 400
     assert response.get_json().get("error") == "Email is required"
+
+
 def test_register_duplicate_username_returns_409(client, test_user):
     """POST /api/v1/auth/register with existing username returns 409."""
     user, password = test_user

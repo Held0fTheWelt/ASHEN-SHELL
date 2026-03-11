@@ -24,7 +24,7 @@ def current_user_is_admin() -> bool:
 
 def current_user_can_write_news() -> bool:
     """
-    True if the current JWT identity belongs to a user with editor or admin role.
+    True if the current JWT identity belongs to a user with moderator or admin role.
     Call only from routes that already applied @jwt_required().
     """
     try:

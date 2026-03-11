@@ -111,25 +111,25 @@ def test_user_with_email(app):
 
 
 @pytest.fixture
-def editor_user(app):
-    """Create a user with editor role; returns (user, password). Used for news write API tests."""
+def moderator_user(app):
+    """Create a user with moderator role; returns (user, password). Used for news write API tests."""
     with app.app_context():
-        role = Role.query.filter_by(name=Role.NAME_EDITOR).first()
+        role = Role.query.filter_by(name=Role.NAME_MODERATOR).first()
         user = User(
-            username="editoruser",
-            password_hash=generate_password_hash("Editorpass1"),
+            username="moderatoruser",
+            password_hash=generate_password_hash("Modpass1"),
             role_id=role.id,
         )
         db.session.add(user)
         db.session.commit()
         db.session.refresh(user)
-        return user, "Editorpass1"
+        return user, "Modpass1"
 
 
 @pytest.fixture
-def editor_headers(editor_user, client):
-    """Return headers with valid JWT for editor_user (for API write requests)."""
-    user, password = editor_user
+def moderator_headers(moderator_user, client):
+    """Return headers with valid JWT for moderator_user (for API write requests)."""
+    user, password = moderator_user
     response = client.post(
         "/api/v1/auth/login",
         json={"username": user.username, "password": password},

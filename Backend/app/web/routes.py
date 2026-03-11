@@ -122,21 +122,23 @@ def register():
     if session.get("user_id"):
         return redirect(url_for("web.dashboard"))
     if request.method == "GET":
-        return render_template("register.html")
+        require_email = current_app.config.get("REGISTRATION_REQUIRE_EMAIL", False)
+        return render_template("register.html", require_email=require_email)
     username = (request.form.get("username") or "").strip()
     email = (request.form.get("email") or "").strip().lower()
     password = request.form.get("password") or ""
     password_confirm = request.form.get("password_confirm") or ""
-    if not email:
+    require_email = current_app.config.get("REGISTRATION_REQUIRE_EMAIL", False)
+    if require_email and not email:
         flash("Email is required.", "error")
-        return render_template("register.html", username=username, email="")
+        return render_template("register.html", username=username, email="", require_email=require_email)
     if password != password_confirm:
         flash("Passwords do not match.", "error")
-        return render_template("register.html", username=username, email=email)
-    user, err = create_user(username, password, email)
+        return render_template("register.html", username=username, email=email, require_email=require_email)
+    user, err = create_user(username, password, email or None)
     if err:
         flash(err, "error")
-        return render_template("register.html", username=username, email=email)
+        return render_template("register.html", username=username, email=email, require_email=require_email)
     log_activity(
         actor=user,
         category="auth",
@@ -147,21 +149,24 @@ def register():
         method=request.method,
         tags=["web"],
     )
-    ttl = current_app.config.get("EMAIL_VERIFICATION_TTL_HOURS", 24)
-    raw_token = create_email_verification_token(user, ttl_hours=ttl)
-    send_verification_email(user, raw_token)
-    log_activity(
-        actor=user,
-        category="auth",
-        action="verification_email_sent",
-        status="success",
-        message="Verification email sent",
-        route=request.path,
-        method=request.method,
-        tags=["web", "email"],
-    )
-    flash("Account created. Check your email to verify your address, then log in.", "success")
-    return redirect(url_for("web.register_pending"))
+    if user.email:
+        ttl = current_app.config.get("EMAIL_VERIFICATION_TTL_HOURS", 24)
+        raw_token = create_email_verification_token(user, ttl_hours=ttl)
+        send_verification_email(user, raw_token)
+        log_activity(
+            actor=user,
+            category="auth",
+            action="verification_email_sent",
+            status="success",
+            message="Verification email sent",
+            route=request.path,
+            method=request.method,
+            tags=["web", "email"],
+        )
+        flash("Account created. Check your email to verify your address, then log in.", "success")
+        return redirect(url_for("web.register_pending"))
+    flash("Account created. You can log in now.", "success")
+    return redirect(url_for("web.login"))
 
 
 @web_bp.route("/register/pending", methods=["GET"])

@@ -21,7 +21,7 @@ The backend API is served under the prefix **`/api/v1`**. All responses are JSON
 
 **`POST /api/v1/auth/register`**
 
-Creates a new user. Email is required. After registration an email verification token is created and a verification email is sent (or only logged in dev when `MAIL_ENABLED` is off). The user can log in only after clicking the activation link.
+Creates a new user. When `REGISTRATION_REQUIRE_EMAIL` is **False** (default), email is optional; users without email can log in immediately. When **True**, email is required and a verification email is sent after registration; the user can log in only after clicking the activation link (or when MAIL_ENABLED is off, the link is logged in dev).
 
 - **Rate limit:** 10 per minute  
 - **Auth:** None  
@@ -31,7 +31,7 @@ Creates a new user. Email is required. After registration an email verification 
 | Field      | Type   | Required | Description                          |
 |------------|--------|----------|--------------------------------------|
 | `username` | string | yes      | Unique, 2–80 chars, `a-zA-Z0-9_-`     |
-| `email`    | string | yes      | Unique, valid format                 |
+| `email`    | string | no*      | Unique, valid format; *required when REGISTRATION_REQUIRE_EMAIL=1 |
 | `password` | string | yes      | Min. 8 chars, upper/lowercase, digit |
 
 **Response:**
@@ -46,7 +46,7 @@ Creates a new user. Email is required. After registration an email verification 
 
 **`POST /api/v1/auth/login`**
 
-Authenticates with username and password and returns a JWT and user data. Only possible if the user's email is verified (see 0.0.7).
+Authenticates with username and password and returns a JWT and user data. If the user has an email and it is not yet verified, login returns 403 (email verification required). Users without email can log in immediately.
 
 - **Rate limit:** 20 per minute  
 - **Auth:** None  

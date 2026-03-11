@@ -88,23 +88,23 @@ def test_news_detail_draft_returns_404(client, sample_news):
     assert response.get_json().get("error") == "Not found"
 
 
-def test_news_detail_draft_with_editor_returns_200(client, editor_headers, sample_news):
-    """GET /api/v1/news/<id> for draft with editor JWT returns 200 (CRUD read for drafts)."""
+def test_news_detail_draft_with_moderator_returns_200(client, moderator_headers, sample_news):
+    """GET /api/v1/news/<id> for draft with moderator JWT returns 200 (CRUD read for drafts)."""
     _pub1, _pub2, draft = sample_news
-    response = client.get("/api/v1/news/{}".format(draft.id), headers=editor_headers)
+    response = client.get("/api/v1/news/{}".format(draft.id), headers=moderator_headers)
     assert response.status_code == 200
     data = response.get_json()
     assert data["id"] == draft.id
     assert data["is_published"] is False
 
 
-def test_news_list_include_drafts_with_editor(client, editor_headers, sample_news):
-    """GET /api/v1/news?published_only=0 with editor JWT returns all items including drafts."""
+def test_news_list_include_drafts_with_moderator(client, moderator_headers, sample_news):
+    """GET /api/v1/news?published_only=0 with moderator JWT returns all items including drafts."""
     _pub1, _pub2, draft = sample_news
     response = client.get(
         "/api/v1/news",
         query_string={"published_only": "0", "limit": "20"},
-        headers=editor_headers,
+        headers=moderator_headers,
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -112,10 +112,10 @@ def test_news_list_include_drafts_with_editor(client, editor_headers, sample_new
     assert draft.id in ids
 
 
-def test_news_list_without_drafts_param_unchanged(client, editor_headers, sample_news):
+def test_news_list_without_drafts_param_unchanged(client, moderator_headers, sample_news):
     """GET /api/v1/news without published_only=0 still returns only published (backward compatible)."""
     _pub1, _pub2, draft = sample_news
-    response = client.get("/api/v1/news", headers=editor_headers)
+    response = client.get("/api/v1/news", headers=moderator_headers)
     assert response.status_code == 200
     data = response.get_json()
     ids = [i["id"] for i in data["items"]]
@@ -234,58 +234,58 @@ def test_news_put_with_user_role_returns_403(client, auth_headers, sample_news):
     assert response.status_code == 403
 
 
-# --- Editor write access (201/200) ---
+# --- Moderator write access (201/200) ---
 
 
-def test_news_post_with_editor_returns_201(client, editor_headers):
-    """POST /api/v1/news with editor JWT returns 201 and creates article."""
+def test_news_post_with_moderator_returns_201(client, moderator_headers):
+    """POST /api/v1/news with moderator JWT returns 201 and creates article."""
     response = client.post(
         "/api/v1/news",
-        headers=editor_headers,
+        headers=moderator_headers,
         json={
-            "title": "New by Editor",
-            "slug": "new-by-editor",
+            "title": "New by Moderator",
+            "slug": "new-by-moderator",
             "content": "Content here.",
         },
         content_type="application/json",
     )
     assert response.status_code == 201
     data = response.get_json()
-    assert data["title"] == "New by Editor"
-    assert data["slug"] == "new-by-editor"
+    assert data["title"] == "New by Moderator"
+    assert data["slug"] == "new-by-moderator"
     assert "id" in data
 
 
-def test_news_put_with_editor_returns_200(client, editor_headers, sample_news):
-    """PUT /api/v1/news/<id> with editor JWT returns 200 and updates article."""
+def test_news_put_with_moderator_returns_200(client, moderator_headers, sample_news):
+    """PUT /api/v1/news/<id> with moderator JWT returns 200 and updates article."""
     pub1, _pub2, _draft = sample_news
     response = client.put(
         "/api/v1/news/{}".format(pub1.id),
-        headers=editor_headers,
-        json={"title": "Updated Title by Editor"},
+        headers=moderator_headers,
+        json={"title": "Updated Title by Moderator"},
         content_type="application/json",
     )
     assert response.status_code == 200
     data = response.get_json()
-    assert data["title"] == "Updated Title by Editor"
+    assert data["title"] == "Updated Title by Moderator"
 
 
-def test_news_publish_with_editor_returns_200(client, editor_headers, sample_news):
-    """POST /api/v1/news/<id>/publish with editor JWT returns 200."""
+def test_news_publish_with_moderator_returns_200(client, moderator_headers, sample_news):
+    """POST /api/v1/news/<id>/publish with moderator JWT returns 200."""
     _pub1, _pub2, draft = sample_news
     response = client.post(
         "/api/v1/news/{}".format(draft.id) + "/publish",
-        headers=editor_headers,
+        headers=moderator_headers,
     )
     assert response.status_code == 200
     data = response.get_json()
     assert data["is_published"] is True
 
 
-def test_news_delete_with_editor_returns_200(client, editor_headers, sample_news):
-    """DELETE /api/v1/news/<id> with editor JWT returns 200 and removes article."""
+def test_news_delete_with_moderator_returns_200(client, moderator_headers, sample_news):
+    """DELETE /api/v1/news/<id> with moderator JWT returns 200 and removes article."""
     _pub1, pub2, _draft = sample_news
-    response = client.delete("/api/v1/news/{}".format(pub2.id), headers=editor_headers)
+    response = client.delete("/api/v1/news/{}".format(pub2.id), headers=moderator_headers)
     assert response.status_code == 200
     get_resp = client.get("/api/v1/news/{}".format(pub2.id))
     assert get_resp.status_code == 404

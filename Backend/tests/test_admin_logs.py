@@ -19,17 +19,17 @@ def test_registered_user_has_role_user(client, app):
         assert user.role == "user"
 
 
-def test_user_role_helpers(test_user, editor_user, admin_user):
+def test_user_role_helpers(test_user, moderator_user, admin_user):
     """User has_role, is_admin, is_moderator_or_admin behave correctly."""
     u, _ = test_user
-    e, _ = editor_user
+    m, _ = moderator_user
     a, _ = admin_user
     assert u.has_role("user") is True
     assert u.has_role("admin") is False
     assert u.is_admin is False
     assert u.is_moderator_or_admin is False
-    assert e.has_role("editor") is True
-    assert e.is_admin is False
+    assert m.has_role("moderator") is True
+    assert m.is_admin is False
     assert a.has_role("admin") is True
     assert a.is_admin is True
     assert a.is_moderator_or_admin is True

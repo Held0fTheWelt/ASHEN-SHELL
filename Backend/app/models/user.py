@@ -2,7 +2,7 @@ from app.extensions import db
 
 
 class User(db.Model):
-    """User for auth (web session and API JWT). Primary role via Role model."""
+    """User for auth (web session and API JWT). Primary role via Role model. Supports ban state."""
 
     __tablename__ = "users"
 
@@ -12,12 +12,14 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
     email_verified_at = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
+    is_banned = db.Column(db.Boolean(), nullable=False, default=False)
+    banned_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    ban_reason = db.Column(db.String(512), nullable=True)
 
     role_rel = db.relationship("Role", backref="users", lazy="joined")
 
     ROLE_USER = "user"
     ROLE_MODERATOR = "moderator"
-    ROLE_EDITOR = "editor"
     ROLE_ADMIN = "admin"
 
     @property
@@ -44,15 +46,19 @@ class User(db.Model):
         """True if this user has moderator or admin role."""
         return self.has_any_role((self.ROLE_MODERATOR, self.ROLE_ADMIN))
 
-    def to_dict(self, include_email: bool = False):
+    def to_dict(self, include_email: bool = False, include_ban: bool = False):
         out = {"id": self.id, "username": self.username, "role": self.role}
         if include_email:
             out["email"] = self.email
+        if include_ban:
+            out["is_banned"] = self.is_banned
+            out["banned_at"] = self.banned_at.isoformat() if self.banned_at else None
+            out["ban_reason"] = self.ban_reason
         return out
 
     def can_write_news(self):
-        """True if this user may create/update/delete/publish news."""
-        return self.role in (self.ROLE_EDITOR, self.ROLE_ADMIN)
+        """True if this user may create/update/delete/publish news (moderator or admin)."""
+        return self.has_any_role((self.ROLE_MODERATOR, self.ROLE_ADMIN))
 
     def __repr__(self):
         return f"<User id={self.id} username={self.username!r}>"

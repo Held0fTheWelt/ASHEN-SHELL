@@ -7,7 +7,7 @@ List:  GET /api/v1/news?q=&sort=published_at&direction=desc&page=1&limit=20&cate
 Detail: GET /api/v1/news/<id>
   Response: single object same shape as list item, or { "error": "Not found" } 404.
 
-Write (all require Authorization: Bearer <JWT> and editor/admin role; 401 if missing/invalid token, 403 if forbidden):
+Write (all require Authorization: Bearer <JWT> and moderator/admin role; 401 if missing/invalid token, 403 if forbidden):
   POST   /api/v1/news             -> create (body: title, slug, content; optional summary, is_published, cover_image, category)
   PUT    /api/v1/news/<id>        -> update (body: optional title, slug, summary, content, cover_image, category)
   DELETE /api/v1/news/<id>        -> delete
@@ -53,7 +53,7 @@ def _parse_int(value, default, min_val=None, max_val=None):
 
 
 def _request_wants_include_drafts():
-    """True if request has valid JWT with editor/admin and query published_only=0 or include_drafts=1."""
+    """True if request has valid JWT with moderator/admin and query published_only=0 or include_drafts=1."""
     try:
         from flask_jwt_extended import get_jwt_identity
         raw = get_jwt_identity()
@@ -77,7 +77,7 @@ def _request_wants_include_drafts():
 @jwt_required(optional=True)
 def news_list():
     """
-    List news. By default only published. With JWT (editor/admin) and published_only=0 or include_drafts=1, includes drafts.
+    List news. By default only published. With JWT (moderator/admin) and published_only=0 or include_drafts=1, includes drafts.
     Query params: q (search), sort, direction, page, limit, category, published_only (0 to include drafts).
     Response: { "items": [...], "total": N, "page": P, "per_page": L }.
     """
@@ -116,13 +116,13 @@ def news_list():
 def news_detail(news_id):
     """
     Get a single news article by id. Public: only published articles; 404 for draft.
-    With JWT (editor/admin): returns article even if draft (so they can view/edit).
+    With JWT (moderator/admin): returns article even if draft (so they can view/edit).
     Response: single news object (id, title, slug, summary, content, author_id, author_name, ...).
     """
     news = get_news_by_id(news_id)
     if not news:
         return jsonify({"error": "Not found"}), 404
-    # Editor/admin can read drafts
+    # Moderator/admin can read drafts
     if not news.is_published:
         try:
             from flask_jwt_extended import get_jwt_identity
@@ -149,7 +149,7 @@ def news_detail(news_id):
 @jwt_required()
 def news_create():
     """
-    Create a news article. Requires JWT and editor/admin role. Body: title, slug, content; optional summary, is_published, cover_image, category.
+    Create a news article. Requires JWT and moderator/admin role. Body: title, slug, content; optional summary, is_published, cover_image, category.
     author_id is set from JWT identity.
     """
     if not current_user_can_write_news():
@@ -209,7 +209,7 @@ def news_create():
 @jwt_required()
 def news_update(news_id):
     """
-    Update a news article. Requires JWT and editor/admin role. Body: optional title, slug, summary, content, cover_image, category.
+    Update a news article. Requires JWT and moderator/admin role. Body: optional title, slug, summary, content, cover_image, category.
     """
     if not current_user_can_write_news():
         return jsonify({"error": "Forbidden"}), 403
@@ -252,7 +252,7 @@ def news_update(news_id):
 @limiter.limit("30 per minute")
 @jwt_required()
 def news_delete(news_id):
-    """Delete a news article. Requires JWT and editor/admin role."""
+    """Delete a news article. Requires JWT and moderator/admin role."""
     if not current_user_can_write_news():
         return jsonify({"error": "Forbidden"}), 403
     ok, err = delete_news(news_id)
@@ -276,7 +276,7 @@ def news_delete(news_id):
 @limiter.limit("30 per minute")
 @jwt_required()
 def news_publish(news_id):
-    """Set article as published. Requires JWT and editor/admin role."""
+    """Set article as published. Requires JWT and moderator/admin role."""
     if not current_user_can_write_news():
         return jsonify({"error": "Forbidden"}), 403
     news, err = publish_news(news_id)
@@ -300,7 +300,7 @@ def news_publish(news_id):
 @limiter.limit("30 per minute")
 @jwt_required()
 def news_unpublish(news_id):
-    """Set article as unpublished. Requires JWT and editor/admin role."""
+    """Set article as unpublished. Requires JWT and moderator/admin role."""
     if not current_user_can_write_news():
         return jsonify({"error": "Forbidden"}), 403
     news, err = unpublish_news(news_id)

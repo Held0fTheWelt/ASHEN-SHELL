@@ -135,12 +135,28 @@ def test_register_get_returns_200(client):
     assert b"password" in response.data.lower()
 
 
-def test_register_post_missing_email_shows_error(client):
-    """POST /register without email shows error."""
+def test_register_post_without_email_redirects_to_login_when_email_optional(client):
+    """POST /register without email redirects to login when REGISTRATION_REQUIRE_EMAIL is False (default)."""
     response = client.post(
         "/register",
         data={
             "username": "noemail",
+            "password": "Secret123",
+            "password_confirm": "Secret123",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    assert "login" in (response.headers.get("Location") or "")
+
+
+def test_register_post_missing_email_shows_error_when_email_required(client):
+    """POST /register without email shows error when REGISTRATION_REQUIRE_EMAIL is True."""
+    client.application.config["REGISTRATION_REQUIRE_EMAIL"] = True
+    response = client.post(
+        "/register",
+        data={
+            "username": "noemail2",
             "password": "Secret123",
             "password_confirm": "Secret123",
         },
