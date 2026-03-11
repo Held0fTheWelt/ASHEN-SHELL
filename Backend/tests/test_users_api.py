@@ -274,3 +274,85 @@ def test_users_get_as_admin_includes_ban_fields(client, admin_headers, banned_us
     assert data.get("is_banned") is True
     assert "banned_at" in data
     assert "ban_reason" in data
+
+
+def test_users_list_includes_role_level(client, admin_headers, test_user):
+    """GET /api/v1/users returns items with role_level."""
+    r = client.get("/api/v1/users?page=1&limit=20", headers=admin_headers)
+    assert r.status_code == 200
+    data = r.get_json()
+    assert "items" in data
+    user_item = next((u for u in data["items"] if u.get("id") == test_user[0].id), None)
+    assert user_item is not None
+    assert "role_level" in user_item
+
+
+def test_admin_cannot_edit_user_with_equal_role_level(client, app, admin_headers, admin_user_same_level):
+    """Admin (level 50) cannot PUT to another user with role_level 50."""
+    other, _ = admin_user_same_level
+    r = client.put(
+        f"/api/v1/users/{other.id}",
+        headers=admin_headers,
+        json={"username": "hacked"},
+        content_type="application/json",
+    )
+    assert r.status_code == 403
+    assert "lower" in (r.get_json().get("error") or "").lower()
+
+
+def test_admin_cannot_edit_user_with_higher_role_level(client, app, admin_headers, super_admin_user):
+    """Admin (level 50) cannot PUT to SuperAdmin (level 100)."""
+    super_admin, _ = super_admin_user
+    r = client.put(
+        f"/api/v1/users/{super_admin.id}",
+        headers=admin_headers,
+        json={"username": "hacked"},
+        content_type="application/json",
+    )
+    assert r.status_code == 403
+
+
+def test_admin_cannot_delete_user_with_equal_or_higher_role_level(client, app, admin_headers, admin_user_same_level):
+    """Admin (50) cannot DELETE another admin with same level (50)."""
+    other, _ = admin_user_same_level
+    r = client.delete(f"/api/v1/users/{other.id}", headers=admin_headers)
+    assert r.status_code == 403
+
+
+def test_admin_cannot_ban_user_with_higher_role_level(client, admin_headers, super_admin_user):
+    """Admin (50) cannot POST ban to SuperAdmin (100)."""
+    super_admin, _ = super_admin_user
+    r = client.post(
+        f"/api/v1/users/{super_admin.id}/ban",
+        headers=admin_headers,
+        json={"reason": "test"},
+        content_type="application/json",
+    )
+    assert r.status_code == 403
+
+
+def test_non_super_admin_cannot_increase_own_role_level(client, admin_headers, admin_user):
+    """Admin with role_level 50 cannot set own role_level to 100 via PUT."""
+    admin, _ = admin_user
+    r = client.put(
+        f"/api/v1/users/{admin.id}",
+        headers=admin_headers,
+        json={"role_level": 100},
+        content_type="application/json",
+    )
+    assert r.status_code == 403
+    assert "SuperAdmin" in (r.get_json().get("error") or "")
+
+
+def test_super_admin_may_increase_own_role_level(client, app, super_admin_headers, super_admin_user):
+    """SuperAdmin (100) may set own role_level to 101 via PUT."""
+    super_admin, _ = super_admin_user
+    r = client.put(
+        f"/api/v1/users/{super_admin.id}",
+        headers=super_admin_headers,
+        json={"role_level": 101},
+        content_type="application/json",
+    )
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data.get("role_level") == 101

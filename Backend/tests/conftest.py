@@ -119,6 +119,7 @@ def moderator_user(app):
             username="moderatoruser",
             password_hash=generate_password_hash("Modpass1"),
             role_id=role.id,
+            role_level=getattr(role, "default_role_level", None) or 10,
         )
         db.session.add(user)
         db.session.commit()
@@ -142,13 +143,14 @@ def moderator_headers(moderator_user, client):
 
 @pytest.fixture
 def admin_user(app):
-    """Create a user with admin role; returns (user, password)."""
+    """Create a user with admin role and role_level 50 so they may edit users with lower level (e.g. test_user with 0)."""
     with app.app_context():
         role = Role.query.filter_by(name=Role.NAME_ADMIN).first()
         user = User(
             username="adminuser",
             password_hash=generate_password_hash("Adminpass1"),
             role_id=role.id,
+            role_level=getattr(role, "default_role_level", None) or 50,
         )
         db.session.add(user)
         db.session.commit()
@@ -168,6 +170,54 @@ def admin_headers(admin_user, client):
     assert response.status_code == 200
     data = response.get_json()
     return {"Authorization": "Bearer " + data["access_token"]}
+
+
+@pytest.fixture
+def super_admin_user(app):
+    """Admin with role_level 100 (SuperAdmin). Used for hierarchy tests."""
+    with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_ADMIN).first()
+        user = User(
+            username="superadminuser",
+            password_hash=generate_password_hash("Superadmin1"),
+            role_id=role.id,
+            role_level=100,
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        return user, "Superadmin1"
+
+
+@pytest.fixture
+def super_admin_headers(super_admin_user, client):
+    """JWT headers for super_admin_user."""
+    user, password = super_admin_user
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": user.username, "password": password},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    return {"Authorization": "Bearer " + data["access_token"]}
+
+
+@pytest.fixture
+def admin_user_same_level(app):
+    """Second admin with role_level 50 (same as admin_user). For 'cannot edit equal level' test."""
+    with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_ADMIN).first()
+        user = User(
+            username="admin2user",
+            password_hash=generate_password_hash("Admin2pass1"),
+            role_id=role.id,
+            role_level=50,
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        return user, "Admin2pass1"
 
 
 @pytest.fixture
