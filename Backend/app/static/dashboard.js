@@ -1,173 +1,146 @@
 /**
- * Dashboard: metrics, charts, threshold alerts, activity table, CSV export.
+ * Dashboard: real user metrics (active now, registered, verified, banned),
+ * Active Users Over Time and User Growth charts from API. Activity log and CSV export.
  */
 (function () {
   'use strict';
 
-  var DEMO_METRICS = { revenue: 52340, users: 1847, sessions: 4210, conversion: 4.2 };
-
+  var METRICS_API = '/dashboard/api/metrics';
   var LOGS_API = '/dashboard/api/logs';
   var logsLoading = false;
   var logsError = null;
-
-  var STORAGE_KEY = 'wos-dashboard-thresholds';
-  var chartRevenue = null;
-  var chartUsers = null;
-
-  function loadThresholds() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var o = JSON.parse(raw);
-        setEl('#thresh-revenue', o.revenue);
-        setEl('#thresh-users', o.users);
-        setEl('#thresh-sessions', o.sessions);
-        setEl('#thresh-conversion', o.conversion);
-      }
-    } catch (e) {}
-  }
-
-  function saveThresholds() {
-    try {
-      var o = {
-        revenue: numEl('#thresh-revenue', 40000),
-        users: numEl('#thresh-users', 1200),
-        sessions: numEl('#thresh-sessions', 3000),
-        conversion: numEl('#thresh-conversion', 3)
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(o));
-    } catch (e) {}
-  }
-
-  function numEl(sel, def) {
-    var el = document.querySelector(sel);
-    if (!el) return def;
-    var n = parseFloat(el.value, 10);
-    return isNaN(n) ? def : n;
-  }
-
-  function setEl(sel, val) {
-    var el = document.querySelector(sel);
-    if (el) el.value = String(val);
-  }
-
-  function displayMetrics() {
-    setText('#metric-revenue', '$' + String(DEMO_METRICS.revenue));
-    setText('#metric-users', String(DEMO_METRICS.users));
-    setText('#metric-sessions', String(DEMO_METRICS.sessions));
-    setText('#metric-conversion', DEMO_METRICS.conversion + '%');
-  }
+  var chartActiveOverTime = null;
+  var chartUserGrowth = null;
 
   function setText(sel, text) {
     var el = document.querySelector(sel);
     if (el) el.textContent = text;
   }
 
-  function initCharts() {
-    if (typeof Chart === 'undefined') return;
-
-    var revenueCanvas = document.getElementById('chart-revenue');
-    if (revenueCanvas) {
-      var ctx = revenueCanvas.getContext('2d');
-      var months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
-      var values = [32, 38, 41, 44, 46, 48, 50, 49, 51, 50, 52, 52];
-      chartRevenue = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: months,
-          datasets: [{
-            label: 'Revenue',
-            data: values,
-            borderColor: '#7a5c9e',
-            backgroundColor: 'rgba(122, 92, 158, 0.2)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: {
-              grid: { color: 'rgba(42,42,50,0.8)' },
-              ticks: { color: '#9a9692' }
-            },
-            y: {
-              grid: { color: 'rgba(42,42,50,0.8)' },
-              ticks: { color: '#9a9692' }
-            }
-          }
-        }
-      });
-    }
-
-    var usersCanvas = document.getElementById('chart-users');
-    if (usersCanvas) {
-      var ctx2 = usersCanvas.getContext('2d');
-      var months2 = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
-      var values2 = [1200, 1280, 1350, 1420, 1520, 1580, 1650, 1720, 1780, 1820, 1840, 1847];
-      chartUsers = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: months2,
-          datasets: [{
-            label: 'Users',
-            data: values2,
-            backgroundColor: '#a07dcc',
-            borderColor: '#7a5c9e',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: { color: '#9a9692' }
-            },
-            y: {
-              grid: { color: 'rgba(42,42,50,0.8)' },
-              ticks: { color: '#9a9692' }
-            }
-          }
-        }
-      });
-    }
+  function getRange() {
+    var el = document.getElementById('metrics-range');
+    var v = el ? el.value : '24h';
+    return (v === '7d' || v === '30d' || v === '12m') ? v : '24h';
   }
 
-  function checkThresholds() {
-    var rev = numEl('#thresh-revenue', 40000);
-    var users = numEl('#thresh-users', 1200);
-    var sess = numEl('#thresh-sessions', 3000);
-    var conv = numEl('#thresh-conversion', 3);
-
-    var breach = 0;
-    setCardBreach('[data-metric="revenue"]', DEMO_METRICS.revenue < rev);
-    if (DEMO_METRICS.revenue < rev) breach++;
-    setCardBreach('[data-metric="users"]', DEMO_METRICS.users < users);
-    if (DEMO_METRICS.users < users) breach++;
-    setCardBreach('[data-metric="sessions"]', DEMO_METRICS.sessions < sess);
-    if (DEMO_METRICS.sessions < sess) breach++;
-    setCardBreach('[data-metric="conversion"]', DEMO_METRICS.conversion < conv);
-    if (DEMO_METRICS.conversion < conv) breach++;
-
-    var badge = document.getElementById('notif-badge');
-    if (badge) {
-      badge.textContent = String(breach);
-      if (breach > 0) badge.classList.remove('hidden');
-      else badge.classList.add('hidden');
-    }
+  function maxVal(arr) {
+    if (!arr || arr.length === 0) return 0;
+    var m = arr[0];
+    for (var i = 1; i < arr.length; i++) if (arr[i] > m) m = arr[i];
+    return m;
   }
 
-  function setCardBreach(sel, on) {
-    var card = document.querySelector('.metric-card' + sel);
-    if (card) {
-      if (on) card.classList.add('alert-breach');
-      else card.classList.remove('alert-breach');
-    }
+  function fetchAndDisplayMetrics() {
+    var range = getRange();
+    var url = METRICS_API + '?range=' + encodeURIComponent(range);
+    setText('#metric-active-now', '…');
+    setText('#metric-registered', '…');
+    setText('#metric-verified', '…');
+    setText('#metric-banned', '…');
+
+    fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (res) {
+        if (!res.ok) return res.json().then(function (j) { throw new Error(j.error || 'Failed to load metrics'); });
+        return res.json();
+      })
+      .then(function (data) {
+        setText('#metric-active-now', String(data.active_now != null ? data.active_now : '—'));
+        setText('#metric-registered', String(data.registered_total != null ? data.registered_total : '—'));
+        setText('#metric-verified', String(data.verified_total != null ? data.verified_total : '—'));
+        setText('#metric-banned', String(data.banned_total != null ? data.banned_total : '—'));
+
+        var labels = data.bucket_labels || [];
+        var activeSeries = data.active_users_over_time || [];
+        var growthSeries = data.user_growth_over_time || [];
+
+        var activeMax = maxVal(activeSeries);
+        var growthMax = maxVal(growthSeries);
+        if (growthMax === 0) growthMax = 1;
+
+        if (typeof Chart !== 'undefined') {
+          var activeCanvas = document.getElementById('chart-active-over-time');
+          if (activeCanvas) {
+            if (chartActiveOverTime) chartActiveOverTime.destroy();
+            var ctx = activeCanvas.getContext('2d');
+            chartActiveOverTime = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'Active users',
+                  data: activeSeries,
+                  borderColor: '#7a5c9e',
+                  backgroundColor: 'rgba(122, 92, 158, 0.2)',
+                  fill: true,
+                  tension: 0.3
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: {
+                    grid: { color: 'rgba(42,42,50,0.8)' },
+                    ticks: { color: '#9a9692', maxTicksLimit: 12 }
+                  },
+                  y: {
+                    min: 0,
+                    max: activeMax > 0 ? Math.ceil(activeMax * 1.1) : 1,
+                    grid: { color: 'rgba(42,42,50,0.8)' },
+                    ticks: { color: '#9a9692' }
+                  }
+                }
+              }
+            });
+          }
+
+          var growthCanvas = document.getElementById('chart-user-growth');
+          if (growthCanvas) {
+            if (chartUserGrowth) chartUserGrowth.destroy();
+            var ctx2 = growthCanvas.getContext('2d');
+            chartUserGrowth = new Chart(ctx2, {
+              type: 'bar',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'Cumulative users',
+                  data: growthSeries,
+                  backgroundColor: '#a07dcc',
+                  borderColor: '#7a5c9e',
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { color: '#9a9692', maxTicksLimit: 12 }
+                  },
+                  y: {
+                    min: 0,
+                    max: Math.ceil(growthMax * 1.05) || 1,
+                    grid: { color: 'rgba(42,42,50,0.8)' },
+                    ticks: { color: '#9a9692' }
+                  }
+                }
+              }
+            });
+          }
+        }
+      })
+      .catch(function (err) {
+        setText('#metric-active-now', '—');
+        setText('#metric-registered', '—');
+        setText('#metric-verified', '—');
+        setText('#metric-banned', '—');
+        if (chartActiveOverTime) { chartActiveOverTime.destroy(); chartActiveOverTime = null; }
+        if (chartUserGrowth) { chartUserGrowth.destroy(); chartUserGrowth = null; }
+        console.error('Metrics load failed:', err);
+      });
   }
 
   function getFilters() {
@@ -304,13 +277,6 @@
     window.location.href = url;
   }
 
-  function csvEscape(s) {
-    if (s == null) return '';
-    s = String(s);
-    if (/[,"\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-    return s;
-  }
-
   function setupDashboardNav() {
     document.querySelectorAll('.dash-nav-trigger[data-nav-trigger]').forEach(function (trigger) {
       var group = trigger.closest('[data-nav-group]');
@@ -343,6 +309,9 @@
   }
 
   function bindEvents() {
+    var rangeEl = document.getElementById('metrics-range');
+    if (rangeEl) rangeEl.addEventListener('change', fetchAndDisplayMetrics);
+
     var searchEl = document.getElementById('filter-search');
     if (searchEl) searchEl.addEventListener('input', filterAndRender);
     var catEl = document.getElementById('filter-category');
@@ -366,22 +335,6 @@
       });
     }
 
-    var configToggle = document.getElementById('config-panel-toggle');
-    var configPanel = document.getElementById('config-panel');
-    if (configToggle && configPanel) {
-      configToggle.addEventListener('click', function () {
-        configPanel.classList.toggle('hidden');
-      });
-    }
-
-    var configSave = document.getElementById('config-save');
-    if (configSave) {
-      configSave.addEventListener('click', function () {
-        saveThresholds();
-        checkThresholds();
-      });
-    }
-
     var exportBtn = document.getElementById('export-csv');
     if (exportBtn) exportBtn.addEventListener('click', exportCsv);
 
@@ -397,37 +350,12 @@
         }
       });
     }
-
-    var bell = document.getElementById('notif-bell');
-    if (bell) {
-      bell.addEventListener('click', function () {
-        var badge = document.getElementById('notif-badge');
-        var n = badge && !badge.classList.contains('hidden') ? badge.textContent : '0';
-        var msg = n === '0' ? 'No threshold alerts.' : n + ' metric(s) below threshold.';
-        bell.setAttribute('title', msg);
-        if (bell.getAttribute('aria-label')) bell.setAttribute('aria-label', 'Threshold alerts: ' + msg);
-        var live = document.getElementById('notif-live');
-        if (live) live.textContent = msg;
-        else if (typeof document.createElement('div').setAttribute === 'function') {
-          var el = document.createElement('div');
-          el.id = 'notif-live';
-          el.setAttribute('aria-live', 'polite');
-          el.className = 'sr-only';
-          el.textContent = msg;
-          bell.appendChild(el);
-          setTimeout(function () { el.remove(); }, 2000);
-        }
-      });
-    }
   }
 
   function init() {
     setupDashboardNav();
-    loadThresholds();
-    displayMetrics();
-    initCharts();
-    checkThresholds();
-    filterAndRender();
+    fetchAndDisplayMetrics();
+    fetchAndRenderLogs();
     bindEvents();
   }
 

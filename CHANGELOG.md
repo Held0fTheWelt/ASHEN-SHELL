@@ -7,6 +7,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.0.13] - 2026-03-11
+
+### Added
+
+- **Real dashboard metrics:** Admin Metrics view uses only real user data. Active Users = users with `last_seen_at` in the last 15 minutes; Registered, Verified, Banned totals from DB. Active Users Over Time and User Growth charts from `GET /dashboard/api/metrics?range=24h|7d|30d|12m` with hourly/daily/monthly bucketing. Chart scales derived from actual data maxima. Fake revenue, sessions, and conversion metrics removed.
+- **User activity tracking:** `last_seen_at` on User (migration 014), updated on web login and on JWT API requests (throttled to at most once per 5 minutes). `created_at` added for user growth series.
+
+### Changed
+
+- **Dashboard Metrics UI:** Metric cards are Active Users (last 15 min), Registered Users, Verified Users, Banned Users. Revenue Trend replaced by Active Users Over Time; User Growth shows cumulative registered users. Range selector 24h / 7d / 30d / 12m. Threshold-alert panel for fake metrics removed.
+
+---
+
 ## [0.0.12] - 2026-03-11
 
 ### Added
