@@ -677,7 +677,7 @@ body.dashboard { background: var(--void); }
 .dash-subtitle { margin-top: -2rem; font-size: .8rem; letter-spacing: 0.1em;}
 .dash-title { margin: 0; font-size: 1rem; letter-spacing: 0.1em; color: var(--violet-bright); }
 .dash-topbar-actions { display: flex; align-items: center; gap: 1rem; }
-.dash-metrics-toolbar { margin-bottom: 0.5rem; }
+.dash-metrics-toolbar { margin-bottom: 0.5rem; margin-top: -1rem;}
 
 .notif-bell {
     font-size: 1.3rem;
