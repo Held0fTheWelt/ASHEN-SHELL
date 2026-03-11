@@ -138,6 +138,12 @@ def manage_wiki():
     return render_template("manage/wiki.html")
 
 
+@app.route("/manage/slogans")
+def manage_slogans():
+    """Slogan management (moderator+): CRUD, activate/deactivate, placement resolution."""
+    return render_template("manage/slogans.html")
+
+
 def _backend_origin():
     """Origin (scheme + netloc) of BACKEND_API_URL for CSP connect-src in split frontend/backend setups."""
     parsed = urlparse(BACKEND_API_URL)
