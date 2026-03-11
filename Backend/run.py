@@ -14,8 +14,10 @@ app = create_app(
 
 @app.cli.command("init-db")
 def init_db():
-    """Create database tables. Does not create any users."""
+    """Create database tables and seed default roles. Does not create any users."""
+    from app.models.role import ensure_roles_seeded
     db.create_all()
+    ensure_roles_seeded()
     print("Database initialized.")
 
 
@@ -54,15 +56,23 @@ def seed_dev_user(username, password, generate):
             print(f"Password rejected: {pw_error}")
             return
 
+    from app.models.role import ensure_roles_seeded
+
     with app.app_context():
         db.create_all()
+        ensure_roles_seeded()
         if User.query.filter_by(username=u_name).first():
             print(f"User {u_name} already exists.")
+            return
+        from app.models import Role
+        editor_role = Role.query.filter_by(name=Role.NAME_EDITOR).first()
+        if not editor_role:
+            print("Editor role not found. Run migrations or ensure roles are seeded.")
             return
         u = User(
             username=u_name,
             password_hash=generate_password_hash(u_pass),
-            role=User.ROLE_EDITOR,
+            role_id=editor_role.id,
         )
         db.session.add(u)
         db.session.commit()

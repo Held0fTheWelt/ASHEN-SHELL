@@ -5,7 +5,8 @@ import pytest
 from app import create_app
 from app.config import TestingConfig
 from app.extensions import db
-from app.models import User
+from app.models import Role, User
+from app.models.role import ensure_roles_seeded
 from werkzeug.security import generate_password_hash
 
 
@@ -15,6 +16,7 @@ def app():
     application = create_app(TestingConfig)
     with application.app_context():
         db.create_all()
+        ensure_roles_seeded()
         yield application
 
 
@@ -34,9 +36,11 @@ def runner(app):
 def test_user(app):
     """Create a test user in the DB; returns (user, password)."""
     with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
         user = User(
             username="testuser",
             password_hash=generate_password_hash("Testpass1"),
+            role_id=role.id,
         )
         db.session.add(user)
         db.session.commit()
@@ -70,6 +74,7 @@ def app_csrf():
     application = create_app(TestingConfigWithCSRF)
     with application.app_context():
         db.create_all()
+        ensure_roles_seeded()
         yield application
 
 
@@ -91,11 +96,13 @@ def db_session(app):
 def test_user_with_email(app):
     """Test user with email set (verified); returns (user, password)."""
     with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
         user = User(
             username="emailuser",
             email="emailuser@example.com",
             password_hash=generate_password_hash("Testpass1"),
             email_verified_at=datetime.now(timezone.utc),
+            role_id=role.id,
         )
         db.session.add(user)
         db.session.commit()
@@ -107,10 +114,11 @@ def test_user_with_email(app):
 def editor_user(app):
     """Create a user with editor role; returns (user, password). Used for news write API tests."""
     with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_EDITOR).first()
         user = User(
             username="editoruser",
             password_hash=generate_password_hash("Editorpass1"),
-            role=User.ROLE_EDITOR,
+            role_id=role.id,
         )
         db.session.add(user)
         db.session.commit()

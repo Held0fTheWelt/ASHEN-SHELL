@@ -40,3 +40,22 @@ def require_web_login(f):
             return redirect(url_for("web.login"))
         return f(*args, **kwargs)
     return wrapped
+
+
+def require_web_admin(f):
+    """Require logged-in session and admin role. Use after or instead of require_web_login for admin-only routes."""
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        uid = session.get("user_id")
+        if not uid:
+            return redirect(url_for("web.login"))
+        user = db.session.get(User, int(uid))
+        if user is None or _user_needs_verification(user):
+            session.clear()
+            flash("Please verify your email to log in.", "error")
+            return redirect(url_for("web.login"))
+        if not user.is_admin:
+            flash("Access denied. Admin only.", "error")
+            return redirect(url_for("web.dashboard"))
+        return f(*args, **kwargs)
+    return wrapped

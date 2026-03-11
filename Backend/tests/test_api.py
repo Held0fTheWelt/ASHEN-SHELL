@@ -98,15 +98,17 @@ def test_login_invalid_returns_401(client):
 def test_login_unverified_email_returns_403(client, app):
     """POST /api/v1/auth/login with valid credentials but unverified email returns 403."""
     from app.extensions import db
-    from app.models import User
+    from app.models import Role, User
     from werkzeug.security import generate_password_hash
 
     with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
         user = User(
             username="apiverify",
             email="apiverify@example.com",
             password_hash=generate_password_hash("Apiverify1"),
             email_verified_at=None,
+            role_id=role.id,
         )
         db.session.add(user)
         db.session.commit()

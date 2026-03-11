@@ -19,7 +19,7 @@ def get_current_user():
 def current_user_is_admin() -> bool:
     """True if the current JWT identity belongs to a user with admin role."""
     user = get_current_user()
-    return user is not None and user.role == User.ROLE_ADMIN
+    return user is not None and user.is_admin
 
 
 def current_user_can_write_news() -> bool:

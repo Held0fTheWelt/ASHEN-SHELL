@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
-from app.models import User
+from app.models import Role, User
 from app.models.email_verification_token import EmailVerificationToken, PURPOSE_ACTIVATION
 
 logger = logging.getLogger(__name__)
@@ -123,11 +123,14 @@ def create_user(username, password, email):
     if get_user_by_email(email_val):
         return None, "Email already registered"
 
+    default_role = Role.query.filter_by(name=Role.NAME_USER).first()
+    if not default_role:
+        return None, "Default role not found; run migrations and ensure roles are seeded."
     user = User(
         username=username,
         email=email_val,
         password_hash=generate_password_hash(password),
-        role=User.ROLE_USER,
+        role_id=default_role.id,
     )
     db.session.add(user)
     db.session.commit()
@@ -298,10 +301,14 @@ def update_user(
         user.password_hash = generate_password_hash(new_password)
 
     if role is not None:
-        role = (role or "").strip() or User.ROLE_USER
-        if role not in (User.ROLE_USER, User.ROLE_EDITOR, User.ROLE_ADMIN):
+        role_name = (role or "").strip().lower() or User.ROLE_USER
+        valid_roles = (User.ROLE_USER, User.ROLE_MODERATOR, User.ROLE_EDITOR, User.ROLE_ADMIN)
+        if role_name not in valid_roles:
             return None, "Invalid role"
-        user.role = role
+        role_obj = Role.query.filter_by(name=role_name).first()
+        if not role_obj:
+            return None, "Invalid role"
+        user.role_id = role_obj.id
 
     db.session.commit()
     db.session.refresh(user)

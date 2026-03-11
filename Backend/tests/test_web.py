@@ -96,11 +96,18 @@ def test_dashboard_logged_in_returns_200(client, test_user):
 def test_login_post_without_csrf_rejected(client_csrf):
     """POST /login without valid CSRF token is rejected when CSRF is enabled."""
     from app.extensions import db
-    from app.models import User
+    from app.models import Role, User
+    from app.models.role import ensure_roles_seeded
     from werkzeug.security import generate_password_hash
     with client_csrf.application.app_context():
         db.create_all()
-        u = User(username="csrftest", password_hash=generate_password_hash("Csrfpass1"))
+        ensure_roles_seeded()
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
+        u = User(
+            username="csrftest",
+            password_hash=generate_password_hash("Csrfpass1"),
+            role_id=role.id,
+        )
         db.session.add(u)
         db.session.commit()
     response = client_csrf.post(
@@ -360,15 +367,17 @@ def test_activate_valid_token_redirects_to_login(client, app):
 def test_login_blocked_for_unverified_user(client, app):
     """User with email but no email_verified_at cannot log in (web)."""
     from app.extensions import db
-    from app.models import User
+    from app.models import Role, User
     from werkzeug.security import generate_password_hash
 
     with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
         user = User(
             username="unverifieduser",
             email="unverified@example.com",
             password_hash=generate_password_hash("Unverified1"),
             email_verified_at=None,
+            role_id=role.id,
         )
         db.session.add(user)
         db.session.commit()
