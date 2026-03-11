@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ t.nav_wiki | default('Wiki') }} – {{ t.site_name | default('World of Shadows') }}{% endblock %}
+{% block title %}{{ t.nav_wiki | default('Wiki') }} – {{ t.site_name | default('BLACKVEIN') }}{% endblock %}
 {% block body_class %}page-wiki{% endblock %}
 
 {% block content %}
@@ -33,7 +33,7 @@
             if (content && data.html) {
                 content.innerHTML = data.html;
                 content.hidden = false;
-                if (data.title) document.title = data.title + ' – ' + (window.__FRONTEND_CONFIG__ && window.__FRONTEND_CONFIG__.siteName ? window.__FRONTEND_CONFIG__.siteName : 'World of Shadows');
+                if (data.title) document.title = data.title + ' – ' + (window.__FRONTEND_CONFIG__ && window.__FRONTEND_CONFIG__.siteName ? window.__FRONTEND_CONFIG__.siteName : 'BLACKVEIN');
             } else {
                 if (content) { content.innerHTML = '<p>No content.</p>'; content.hidden = false; }
             }
