@@ -50,4 +50,5 @@ class WikiPageTranslation(db.Model):
 
     __table_args__ = (
         db.UniqueConstraint("page_id", "language_code", name="uq_wiki_page_translation_page_lang"),
+        db.UniqueConstraint("language_code", "slug", name="uq_wiki_page_translation_lang_slug"),
     )

@@ -1,10 +1,15 @@
 """Wiki: page and translation lookup. Supports DB-backed pages with fallback."""
 
+from datetime import datetime, timezone
+
 from flask import current_app
 
 from app.extensions import db
-from app.extensions import db
-from app.i18n import get_default_language, normalize_language
+from app.i18n import (
+    TRANSLATION_STATUS_OUTDATED,
+    get_default_language,
+    normalize_language,
+)
 from app.models import WikiPage, WikiPageTranslation
 
 
@@ -164,6 +169,29 @@ def get_wiki_page_translation(page_id: int, language_code: str):
     return WikiPageTranslation.query.filter_by(page_id=page_id, language_code=lang).first()
 
 
+def _utc_now():
+    return datetime.now(timezone.utc)
+
+
+def mark_wiki_translations_outdated(page_id: int, exclude_language: str | None = None):
+    """Mark all translations for the page as outdated except exclude_language. Caller must commit."""
+    q = WikiPageTranslation.query.filter_by(page_id=page_id)
+    if exclude_language:
+        q = q.filter(WikiPageTranslation.language_code != exclude_language)
+    q.update({"translation_status": TRANSLATION_STATUS_OUTDATED}, synchronize_session=False)
+
+
+def _wiki_slug_exists_for_lang(slug: str, language_code: str, exclude_translation_id: int | None = None) -> bool:
+    """True if another wiki translation already has this slug in this language."""
+    q = WikiPageTranslation.query.filter(
+        db.func.lower(WikiPageTranslation.slug) == slug.strip().lower(),
+        WikiPageTranslation.language_code == language_code,
+    )
+    if exclude_translation_id is not None:
+        q = q.filter(WikiPageTranslation.id != exclude_translation_id)
+    return q.first() is not None
+
+
 def upsert_wiki_page_translation(
     page_id: int,
     language_code: str,
@@ -173,7 +201,7 @@ def upsert_wiki_page_translation(
     content_markdown: str | None = None,
     translation_status: str | None = None,
 ):
-    """Create or update wiki page translation. Returns (translation, None) or (None, error_message)."""
+    """Create or update wiki page translation. Returns (translation, None) or (None, error_message). Slug is unique per language."""
     from app.i18n import TRANSLATION_STATUSES
     page = get_wiki_page_by_id(page_id)
     if not page:
@@ -186,23 +214,26 @@ def upsert_wiki_page_translation(
         if title is not None:
             trans.title = (title or "").strip() or trans.title
         if slug is not None:
-            trans.slug = (slug or "").strip().lower() or trans.slug
+            new_slug = (slug or "").strip().lower() or trans.slug
+            if _wiki_slug_exists_for_lang(new_slug, lang, exclude_translation_id=trans.id):
+                return None, "Slug already in use for this language"
+            trans.slug = new_slug
         if content_markdown is not None:
             trans.content_markdown = content_markdown
-        if translation_status is not None and translation_status in TRANSLATION_STATUSES:
-            trans.translation_status = translation_status
         db.session.commit()
         return trans, None
     if not title or not slug:
         return None, "title and slug required for new translation"
+    new_slug = (slug or "").strip().lower()
+    if _wiki_slug_exists_for_lang(new_slug, lang):
+        return None, "Slug already in use for this language"
     from app.i18n import TRANSLATION_STATUS_MACHINE_DRAFT
-    from datetime import datetime, timezone
     status = translation_status if translation_status in TRANSLATION_STATUSES else TRANSLATION_STATUS_MACHINE_DRAFT
     trans = WikiPageTranslation(
         page_id=page_id,
         language_code=lang,
         title=title.strip(),
-        slug=slug.strip().lower(),
+        slug=new_slug,
         content_markdown=(content_markdown or "").strip(),
         translation_status=status,
     )

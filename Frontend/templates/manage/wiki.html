@@ -2,6 +2,7 @@
 {% block title %}{{ t.manage_wiki | default('Wiki') }}{% endblock %}
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" crossorigin="anonymous"></script>
 {% endblock %}
 {% block content %}
 <div class="manage-wiki">

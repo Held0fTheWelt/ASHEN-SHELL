@@ -19,7 +19,15 @@ app = Flask(
     static_url_path="/static",
 )
 app.config["BACKEND_API_URL"] = BACKEND_API_URL
-app.secret_key = os.environ.get("SECRET_KEY", "dev-frontend-secret-change-in-production")
+_secret = os.environ.get("SECRET_KEY", "").strip()
+if not _secret:
+    import sys
+    if os.environ.get("FLASK_ENV") == "development" or os.environ.get("DEV_SECRETS_OK", "").lower() in ("1", "true", "yes", "on"):
+        _secret = os.urandom(32).hex()
+        print("Warning: SECRET_KEY not set; using random key for this run. Set SECRET_KEY for production.", file=sys.stderr)
+    else:
+        raise ValueError("SECRET_KEY must be set in environment for the frontend. Use .env or export.")
+app.secret_key = _secret
 
 
 def _load_translations(lang: str) -> dict:
@@ -127,6 +135,26 @@ def manage_users():
 def manage_wiki():
     """Wiki editor (markdown source, preview, save)."""
     return render_template("manage/wiki.html")
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self'; "
+        "connect-src 'self' https:; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+    return response
 
 
 if __name__ == "__main__":

@@ -262,19 +262,44 @@ def verify_email_with_token(raw_token: str):
 # --- User CRUD (list, get, update, delete) ---
 
 
+def change_password(
+    user_id: int,
+    *,
+    current_password: str,
+    new_password: str,
+) -> tuple[User | None, str | None]:
+    """
+    Change password for user (self-service only; caller must be the user). Requires current_password.
+    Returns (user, None) or (None, error_message).
+    """
+    user = get_user_by_id(user_id)
+    if not user:
+        return None, "User not found"
+    if not current_password:
+        return None, "Current password is required"
+    if not check_password_hash(user.password_hash, current_password):
+        return None, "Current password is incorrect"
+    pw_error = validate_password(new_password)
+    if pw_error:
+        return None, pw_error
+    user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+    db.session.refresh(user)
+    logger.info("Password changed: user_id=%s", user.id)
+    return user, None
+
+
 def update_user(
     user_id: int,
     *,
     username: str | None = None,
     email: str | None = None,
-    new_password: str | None = None,
     role: str | None = None,
-    current_password: str | None = None,
     preferred_language: str | None = None,
 ) -> tuple[User | None, str | None]:
     """
     Update a user by id. Returns (user, None) or (None, error_message).
-    When changing password, pass current_password if the caller is the user themselves (verified in route).
+    Does not accept password changes; use change_password() for self-service password change.
     role may only be set by admin (enforced in route).
     """
     user = get_user_by_id(user_id)
@@ -306,13 +331,7 @@ def update_user(
                 return None, "Email already registered"
         user.email = email_val
 
-    if new_password is not None:
-        if current_password is not None and not check_password_hash(user.password_hash, current_password):
-            return None, "Current password is incorrect"
-        pw_error = validate_password(new_password)
-        if pw_error:
-            return None, pw_error
-        user.password_hash = generate_password_hash(new_password)
+    # Password change is not supported via generic update; use change_password() instead.
 
     if role is not None:
         role_name = (role or "").strip().lower() or User.ROLE_USER

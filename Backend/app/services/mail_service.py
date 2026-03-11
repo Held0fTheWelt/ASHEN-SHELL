@@ -26,10 +26,9 @@ def send_verification_email(user, raw_token: str) -> bool:
     if current_app.config.get("TESTING") or not current_app.config.get("MAIL_ENABLED"):
         mode = "TESTING" if current_app.config.get("TESTING") else "MAIL_ENABLED=False"
         logger.warning(
-            "DEV email verification mode (%s). Activation URL for %r: %s",
+            "DEV email verification mode (%s). Activation link sent for user %r (token not logged).",
             mode,
             user.username,
-            url,
         )
         return True
     try:
@@ -63,7 +62,7 @@ def send_password_reset_email(user, raw_token: str) -> bool:
         current_app.config.get("MAIL_SERVER") == "localhost"
         and not current_app.config.get("MAIL_USERNAME")
     ):
-        logger.info("DEV: Password reset URL for %r: %s", user.username, reset_url)
+        logger.info("DEV: Password reset link sent for user %r (URL not logged).", user.username)
         return True
 
     try:

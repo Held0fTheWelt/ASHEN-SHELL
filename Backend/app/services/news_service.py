@@ -366,6 +366,11 @@ def update_news(
             article.default_language = lang_norm
 
     article.updated_at = _utc_now()
+    # Mark non-source translations outdated when source content changes
+    if any(x is not None for x in (title, slug, summary, content)):
+        source_version = _utc_now().isoformat()
+        trans.source_version = source_version
+        mark_article_translations_outdated(article.id, exclude_language=default_lang)
     db.session.commit()
     logger.info("News article updated: id=%s", article.id)
     return article, None
@@ -514,6 +519,11 @@ def upsert_article_translation(
             trans.seo_description = (seo_description or "").strip() or None
         if translation_status is not None and translation_status in TRANSLATION_STATUSES:
             trans.translation_status = translation_status
+        # When updating the source (default-language) translation content, mark others outdated
+        if content is not None or title is not None or summary is not None or slug is not None:
+            if article.default_language == lang:
+                trans.source_version = _utc_now().isoformat()
+                mark_article_translations_outdated(article_id, exclude_language=lang)
         db.session.commit()
         db.session.refresh(trans)
         return trans, None

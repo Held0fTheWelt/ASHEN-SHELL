@@ -11,6 +11,7 @@ from app.services import log_activity
 from app.services.user_service import (
     assign_role as assign_role_service,
     ban_user as ban_user_service,
+    change_password as change_password_service,
     get_user_by_id,
     list_users,
     unban_user as unban_user_service,
@@ -101,13 +102,43 @@ def users_preferences(user_id):
     return jsonify(user.to_dict(include_email=include_email, include_ban=include_ban)), 200
 
 
+@api_v1_bp.route("/users/<int:user_id>/password", methods=["PUT"])
+@limiter.limit("10 per minute")
+@jwt_required()
+def users_change_password(user_id):
+    """
+    Change password (self only). Body: current_password, new_password.
+    Requires valid current_password. Password changes are not available via generic user update.
+    """
+    current = get_current_user()
+    if current is None:
+        return jsonify({"error": "User not found"}), 404
+    if current.id != user_id:
+        return jsonify({"error": "Forbidden"}), 403
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+    if current_password is None or new_password is None:
+        return jsonify({"error": "current_password and new_password are required"}), 400
+    user, err = change_password_service(
+        user_id,
+        current_password=current_password,
+        new_password=new_password,
+    )
+    if err:
+        return jsonify({"error": err}), 400
+    return jsonify({"message": "Password updated"}), 200
+
+
 @api_v1_bp.route("/users/<int:user_id>", methods=["PUT"])
 @limiter.limit("30 per minute")
 @jwt_required()
 def users_update(user_id):
     """
     Update a user. Admin can update any user and set role; user can only update self (no role).
-    Body: optional username, email, password (new), current_password (required when changing own password), role (admin only).
+    Body: optional username, email, preferred_language, role (admin only). Password changes are not accepted; use PUT /users/<id>/password.
     """
     current = get_current_user()
     if current is None:
@@ -124,14 +155,10 @@ def users_update(user_id):
         kwargs["username"] = data.get("username")
     if "email" in data:
         kwargs["email"] = data.get("email")
-    if "password" in data:
-        kwargs["new_password"] = data.get("password")
-    if "current_password" in data:
-        kwargs["current_password"] = data.get("current_password")
     if "preferred_language" in data:
         kwargs["preferred_language"] = data.get("preferred_language")
-
-    if current_user_is_admin() and "role" in data:
+    # Password fields are explicitly ignored; use PUT /users/<id>/password for password change.
+    if "role" in data and current_user_is_admin():
         kwargs["role"] = data.get("role")
 
     user, err = update_user_service(user_id, **kwargs)
@@ -139,8 +166,6 @@ def users_update(user_id):
         status = 409 if err in ("Username already taken", "Email already registered") else 400
         if err == "User not found":
             status = 404
-        if err == "Current password is incorrect":
-            status = 400
         return jsonify({"error": err}), status
     log_activity(
         actor=current,

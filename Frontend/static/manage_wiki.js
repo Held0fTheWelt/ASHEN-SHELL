@@ -31,6 +31,16 @@
         if (el) el.hidden = true;
     }
 
+    function sanitizePreviewHtml(html) {
+        if (typeof DOMPurify !== "undefined") {
+            return DOMPurify.sanitize(html, {
+                ALLOWED_TAGS: ["p", "br", "hr", "div", "span", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "strong", "b", "em", "i", "u", "s", "code", "pre", "blockquote", "a", "table", "thead", "tbody", "tr", "th", "td"],
+                ALLOWED_ATTR: ["href", "title"]
+            });
+        }
+        return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "");
+    }
+
     function updatePreview() {
         var textarea = $("manage-wiki-content");
         var preview = $("manage-wiki-preview");
@@ -38,7 +48,8 @@
         var raw = textarea.value || "";
         if (typeof marked !== "undefined") {
             try {
-                preview.innerHTML = marked.parse(raw);
+                var parsed = marked.parse(raw);
+                preview.innerHTML = sanitizePreviewHtml(parsed);
             } catch (e) {
                 preview.textContent = raw || "(empty)";
             }

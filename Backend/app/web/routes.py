@@ -350,12 +350,14 @@ def news():
 
 
 def _get_wiki_html(lang=None):
-    """Load wiki Markdown: from DB (wiki_pages key=index) if present, else from content/wiki.md."""
+    """Load wiki Markdown: from DB (wiki_pages key=index) if present, else from content/wiki.md. Returns sanitized HTML."""
     from app.services.wiki_service import get_wiki_markdown_for_display
+    from app.utils.html_sanitizer import sanitize_wiki_html
     text = get_wiki_markdown_for_display(lang=lang)
     if text is not None and text != "":
         try:
-            return markdown.markdown(text, extensions=["extra"])
+            raw = markdown.markdown(text, extensions=["extra"])
+            return sanitize_wiki_html(raw) if raw else None
         except Exception:
             pass
     app_root = Path(current_app.root_path)
@@ -364,7 +366,8 @@ def _get_wiki_html(lang=None):
         return None
     try:
         text = wiki_path.read_text(encoding="utf-8")
-        return markdown.markdown(text, extensions=["extra"])
+        raw = markdown.markdown(text, extensions=["extra"])
+        return sanitize_wiki_html(raw) if raw else None
     except Exception:
         return None
 
@@ -470,14 +473,7 @@ def dashboard_api_logs_export():
         date_from=date_from, date_to=date_to,
     )
 
-    def csv_escape(s):
-        if s is None:
-            return ""
-        s = str(s)
-        if "\n" in s or "," in s or '"' in s:
-            return '"' + s.replace('"', '""') + '"'
-        return s
-
+    from app.utils.csv_safe import csv_safe_cell
     import json
     lines = [
         "id,created_at,actor_user_id,actor_username_snapshot,actor_role_snapshot,category,action,status,message,route,method,tags,meta,target_type,target_id"
@@ -486,23 +482,23 @@ def dashboard_api_logs_export():
         tags_str = ";".join(e.tags or [])
         meta_str = json.dumps(e.meta) if e.meta else ""
         row = [
-            e.id,
-            e.created_at.isoformat() if e.created_at else "",
-            e.actor_user_id or "",
-            e.actor_username_snapshot or "",
-            e.actor_role_snapshot or "",
-            e.category,
-            e.action,
-            e.status,
-            (e.message or "").replace("\n", " "),
-            e.route or "",
-            e.method or "",
-            tags_str,
-            meta_str,
-            e.target_type or "",
-            e.target_id or "",
+            csv_safe_cell(e.id),
+            csv_safe_cell(e.created_at.isoformat() if e.created_at else ""),
+            csv_safe_cell(e.actor_user_id),
+            csv_safe_cell(e.actor_username_snapshot),
+            csv_safe_cell(e.actor_role_snapshot),
+            csv_safe_cell(e.category),
+            csv_safe_cell(e.action),
+            csv_safe_cell(e.status),
+            csv_safe_cell((e.message or "").replace("\n", " ")),
+            csv_safe_cell(e.route),
+            csv_safe_cell(e.method),
+            csv_safe_cell(tags_str),
+            csv_safe_cell(meta_str),
+            csv_safe_cell(e.target_type),
+            csv_safe_cell(e.target_id),
         ]
-        lines.append(",".join(csv_escape(x) for x in row))
+        lines.append(",".join(row))
 
     return Response(
         "\n".join(lines),

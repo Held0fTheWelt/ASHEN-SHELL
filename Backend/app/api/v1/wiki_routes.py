@@ -5,6 +5,7 @@ import markdown
 from flask import current_app, jsonify, request
 
 from app.api.v1 import api_v1_bp
+from app.utils.html_sanitizer import sanitize_wiki_html
 from app.auth.permissions import get_current_user, require_jwt_moderator_or_admin
 from app.extensions import limiter
 from app.services import log_activity
@@ -26,7 +27,8 @@ def wiki_page_get(slug):
     if not page or not trans:
         return jsonify({"error": "Not found"}), 404
     try:
-        html = markdown.markdown(trans.content_markdown or "", extensions=["extra"])
+        raw_html = markdown.markdown(trans.content_markdown or "", extensions=["extra"])
+        html = sanitize_wiki_html(raw_html) if raw_html else None
     except Exception:
         html = None
     return jsonify({
@@ -54,7 +56,8 @@ def wiki_get():
     except OSError:
         return jsonify({"error": "Could not read wiki file"}), 500
     try:
-        html = markdown.markdown(text, extensions=["extra"])
+        raw_html = markdown.markdown(text, extensions=["extra"])
+        html = sanitize_wiki_html(raw_html) if raw_html else None
     except Exception:
         html = None
     return jsonify({"content": text, "html": html}), 200

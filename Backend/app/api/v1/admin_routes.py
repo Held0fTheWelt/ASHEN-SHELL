@@ -6,6 +6,7 @@ from app.api.v1 import api_v1_bp
 from app.auth.permissions import require_jwt_admin
 from app.extensions import limiter
 from app.services.activity_log_service import list_activity_logs
+from app.utils.csv_safe import csv_safe_cell
 
 
 def _parse_int(value, default, min_val=None, max_val=None):
@@ -77,14 +78,6 @@ def admin_logs_export():
         date_to=date_to,
     )
 
-    def csv_escape(s):
-        if s is None:
-            return ""
-        s = str(s)
-        if s and ("\n" in s or "," in s or '"' in s):
-            return '"' + s.replace('"', '""') + '"'
-        return s
-
     lines = [
         "id,created_at,actor_user_id,actor_username_snapshot,actor_role_snapshot,category,action,status,message,route,method,tags,meta,target_type,target_id"
     ]
@@ -92,23 +85,23 @@ def admin_logs_export():
         tags_str = ";".join(e.tags or [])
         meta_str = json.dumps(e.meta) if e.meta else ""
         row = [
-            e.id,
-            e.created_at.isoformat() if e.created_at else "",
-            e.actor_user_id or "",
-            e.actor_username_snapshot or "",
-            e.actor_role_snapshot or "",
-            e.category,
-            e.action,
-            e.status,
-            (e.message or "").replace("\n", " "),
-            e.route or "",
-            e.method or "",
-            tags_str,
-            meta_str,
-            e.target_type or "",
-            e.target_id or "",
+            csv_safe_cell(e.id),
+            csv_safe_cell(e.created_at.isoformat() if e.created_at else ""),
+            csv_safe_cell(e.actor_user_id),
+            csv_safe_cell(e.actor_username_snapshot),
+            csv_safe_cell(e.actor_role_snapshot),
+            csv_safe_cell(e.category),
+            csv_safe_cell(e.action),
+            csv_safe_cell(e.status),
+            csv_safe_cell((e.message or "").replace("\n", " ")),
+            csv_safe_cell(e.route),
+            csv_safe_cell(e.method),
+            csv_safe_cell(tags_str),
+            csv_safe_cell(meta_str),
+            csv_safe_cell(e.target_type),
+            csv_safe_cell(e.target_id),
         ]
-        lines.append(",".join(csv_escape(x) for x in row))
+        lines.append(",".join(row))
 
     return Response(
         "\n".join(lines),

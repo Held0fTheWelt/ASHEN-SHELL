@@ -7,6 +7,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.0.12] - 2026-03-11
+
+### Added
+
+- **Wiki HTML sanitization:** Server-side allowlist sanitization (bleach) for all wiki markdown-rendered HTML. Script tags, event handlers, and `javascript:` URLs are removed. Public wiki API, legacy wiki GET, and backend `/wiki` route use sanitized output. Manage wiki preview sanitizes with DOMPurify (and fallback) before `innerHTML`.
+- **Dedicated password change endpoint:** `PUT /api/v1/users/<id>/password` (self only) with body `current_password` and `new_password`. Current password is required and validated before any change.
+- **Security headers:** Backend and frontend set `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, and `Content-Security-Policy`. Optional `Strict-Transport-Security` when `ENFORCE_HTTPS` is set (backend).
+- **CSV formula injection hardening:** Activity log CSV export uses `csv_safe_cell()` so cells starting with `=`, `+`, `-`, or `@` are prefixed and treated as text in spreadsheets.
+- **Wiki slug uniqueness:** Unique constraint and service validation so slug is unique per language across all wiki pages. Migration 013. Duplicate slug in the same language returns a clear error.
+- **Translation outdated handling:** When source (default-language) news article or wiki translation content is updated, other-language translations are marked outdated and `source_version` is set.
+- **Regression tests:** `tests/test_security_and_correctness.py` for wiki sanitizer, password change, generic user update ignoring password, news slug detail, CSV formula neutralization, security headers, wiki slug uniqueness, and translation outdated marking.
+
+### Changed
+
+- **Password not in generic user update:** Generic `PUT /api/v1/users/<id>` no longer accepts `password` or `current_password`. Password changes only via `PUT /api/v1/users/<id>/password` (self, with current password).
+- **Activation and reset links not logged:** In dev/TESTING mail fallback, verification and password-reset flows log that a link was sent but do not log the URL or token.
+- **Frontend secret:** Frontend requires `SECRET_KEY` unless `FLASK_ENV=development` or `DEV_SECRETS_OK` is set; then a one-off random key is used and a warning is printed.
+
+### Fixed
+
+- **News detail by slug:** `get_news_by_slug` was missing from news route imports; `GET /api/v1/news/<slug>?lang=` now works; invalid slug returns 404.
+
+---
+
 ## [0.0.11] - 2026-03-11
 
 ### Added

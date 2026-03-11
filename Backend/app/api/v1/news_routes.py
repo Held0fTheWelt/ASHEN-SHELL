@@ -33,6 +33,7 @@ from app.services.news_service import (
     delete_news,
     get_article_translation,
     get_news_by_id,
+    get_news_by_slug,
     get_news_article_by_id,
     list_article_translations,
     list_news,
