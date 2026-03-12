@@ -7,6 +7,7 @@ from app.config import TestingConfig
 from app.extensions import db
 from app.models import Role, User
 from app.models.role import ensure_roles_seeded
+from app.models.area import ensure_areas_seeded
 from werkzeug.security import generate_password_hash
 
 
@@ -17,6 +18,7 @@ def app():
     with application.app_context():
         db.create_all()
         ensure_roles_seeded()
+        ensure_areas_seeded()
         yield application
 
 
@@ -75,6 +77,7 @@ def app_csrf():
     with application.app_context():
         db.create_all()
         ensure_roles_seeded()
+        ensure_areas_seeded()
         yield application
 
 
