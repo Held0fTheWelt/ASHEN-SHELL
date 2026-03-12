@@ -122,7 +122,7 @@ pytest
 # or: pytest tests/test_news_api.py tests/test_api.py -v
 ```
 
-Default pytest config: `pytest.ini` in backend (testpaths = tests, coverage on `app`).
+Default pytest config: `pytest.ini` in backend (testpaths = tests, coverage on `app`, 85% fail-under). See **docs/VERIFICATION.md** for exact commands, what they verify, and coverage gate.
 
 ## Docker (compose)
 
@@ -162,7 +162,7 @@ docker compose exec backend flask db upgrade
 - **Architecture:** `docs/architecture/FrontendBackendRestructure.md` – backend/administration-tool responsibilities.
 - **Runbook:** `docs/runbook.md` – Example flows.
 - **Security:** `docs/security.md` – Auth, CSRF, CORS, cookies.
-- **Backend tests:** `backend/tests/README.md` – Fixtures and test modules.
+- **Backend tests:** `backend/tests/README.md` – Fixtures and test modules. **Verification:** `docs/VERIFICATION.md` – Commands, coverage gate, and what counts as success.
 
 ## API (summary)
 
