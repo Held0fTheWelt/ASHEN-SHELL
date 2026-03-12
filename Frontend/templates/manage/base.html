@@ -19,6 +19,8 @@
                 <a href="{{ url_for('manage_news') }}" class="manage-nav-link" data-page="news">{{ t.manage_news | default('News') }}</a>
                 <a href="{{ url_for('manage_users') }}" class="manage-nav-link" data-page="users" id="manage-nav-users">{{ t.manage_users | default('Users') }}</a>
                 <a href="{{ url_for('manage_roles') }}" class="manage-nav-link" data-page="roles">Roles</a>
+                <a href="{{ url_for('manage_areas') }}" class="manage-nav-link" data-page="areas" id="manage-nav-areas">Areas</a>
+                <a href="{{ url_for('manage_feature_areas') }}" class="manage-nav-link" data-page="feature-areas" id="manage-nav-feature-areas">Feature access</a>
                 <a href="{{ url_for('manage_wiki') }}" class="manage-nav-link" data-page="wiki">{{ t.manage_wiki | default('Wiki') }}</a>
                 <a href="{{ url_for('manage_slogans') }}" class="manage-nav-link" data-page="slogans">Slogans</a>
             </nav>

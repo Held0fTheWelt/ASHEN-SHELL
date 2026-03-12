@@ -22,6 +22,7 @@
         selectedId: null,
         items: [],
         roles: [],
+        areas: [],
         currentUser: null,
     };
 
@@ -213,6 +214,28 @@
                 var lastSeenEl = $("manage-users-last-seen");
                 if (createdEl) createdEl.textContent = formatDateTime(user.created_at);
                 if (lastSeenEl) lastSeenEl.textContent = formatDateTime(user.last_seen_at);
+                var areasWrap = $("manage-users-areas-wrap");
+                var areasMulti = $("manage-users-areas-multi");
+                var saveAreasBtn = $("manage-users-save-areas");
+                if (areasWrap) areasWrap.style.display = canEdit ? "" : "none";
+                if (saveAreasBtn) saveAreasBtn.disabled = !canEdit;
+                function fillAreasMulti() {
+                    if (!areasMulti || !state.areas.length) return;
+                    areasMulti.innerHTML = "";
+                    var areaIds = user.area_ids || [];
+                    state.areas.forEach(function(a) {
+                        var opt = document.createElement("option");
+                        opt.value = a.id;
+                        opt.textContent = (a.slug || a.name || a.id);
+                        opt.selected = areaIds.indexOf(a.id) >= 0;
+                        areasMulti.appendChild(opt);
+                    });
+                }
+                if (state.areas.length) fillAreasMulti();
+                else apiRef("/api/v1/areas?limit=100").then(function(data) {
+                    state.areas = data.items || [];
+                    fillAreasMulti();
+                }).catch(function() {});
                 ($("manage-users-editor-title") || {}).textContent = "Edit user";
             })
             .catch(function(e) {
@@ -302,6 +325,31 @@
             });
     }
 
+    function onSaveAreas() {
+        var id = ($("manage-users-id") || {}).value;
+        if (!id) return;
+        var sel = $("manage-users-areas-multi");
+        var areaIds = [];
+        if (sel) {
+            for (var i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].selected) areaIds.push(parseInt(sel.options[i].value, 10));
+            }
+        }
+        var btn = $("manage-users-save-areas");
+        if (btn) btn.disabled = true;
+        apiRef("/api/v1/users/" + id + "/areas", { method: "PUT", body: JSON.stringify({ area_ids: areaIds }) })
+            .then(function() {
+                showFormSuccess("Areas updated.");
+                if (btn) btn.disabled = false;
+                selectUser(parseInt(id, 10));
+                fetchList();
+            })
+            .catch(function(e) {
+                showFormError(e.message || "Update areas failed.");
+                if (btn) btn.disabled = false;
+            });
+    }
+
     function onDelete() {
         var id = ($("manage-users-id") || {}).value;
         if (!id) return;
@@ -346,6 +394,8 @@
             if (e.key === "Enter") { e.preventDefault(); state.page = 1; fetchList(); }
         });
         if (form) form.addEventListener("submit", onSave);
+        var saveAreasBtn = $("manage-users-save-areas");
+        if (saveAreasBtn) saveAreasBtn.addEventListener("click", onSaveAreas);
         if (banBtn) banBtn.addEventListener("click", onBan);
         if (unbanBtn) unbanBtn.addEventListener("click", onUnban);
         if (delBtn) delBtn.addEventListener("click", onDelete);
@@ -376,7 +426,15 @@
                 })
                 .catch(function() {});
         }
+        function fetchAreas() {
+            apiRef("/api/v1/areas?limit=100")
+                .then(function(data) {
+                    state.areas = data.items || [];
+                })
+                .catch(function() {});
+        }
         fetchRoles();
+        fetchAreas();
         fetchList();
     }
 

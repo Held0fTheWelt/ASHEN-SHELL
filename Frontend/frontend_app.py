@@ -138,6 +138,18 @@ def manage_roles():
     return render_template("manage/roles.html")
 
 
+@app.route("/manage/areas")
+def manage_areas():
+    """Area management (admin only): list, create, edit, delete areas."""
+    return render_template("manage/areas.html")
+
+
+@app.route("/manage/feature-areas")
+def manage_feature_areas():
+    """Feature/view to area access mapping (admin only)."""
+    return render_template("manage/feature_areas.html")
+
+
 @app.route("/manage/wiki")
 def manage_wiki():
     """Wiki editor (markdown source, preview, save)."""

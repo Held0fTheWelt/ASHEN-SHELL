@@ -122,8 +122,12 @@
         var isAdmin = user && (user.role === "admin");
         var usersNav = document.getElementById("manage-nav-users");
         var usersCard = document.getElementById("manage-dashboard-users");
+        var areasNav = document.getElementById("manage-nav-areas");
+        var featureAreasNav = document.getElementById("manage-nav-feature-areas");
         if (usersNav) usersNav.style.display = isAdmin ? "" : "none";
         if (usersCard) usersCard.style.display = isAdmin ? "" : "none";
+        if (areasNav) areasNav.style.display = isAdmin ? "" : "none";
+        if (featureAreasNav) featureAreasNav.style.display = isAdmin ? "" : "none";
     }
 
     /**
