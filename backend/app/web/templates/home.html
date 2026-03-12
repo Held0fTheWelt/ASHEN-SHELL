@@ -3,16 +3,25 @@
 {% block body_class %}landing{% endblock %}
 
 {% block site_main %}
-<section class="hero" id="hero" data-preload>
+<section class="hero glitch-in-view" id="hero" data-preload>
   <div class="hero-content">
     <div class="hero-text">
       <p class="hero-eyebrow mono">// WORLD OF SHADOWS v1.0</p>
       <h1 class="hero-title" id="hero-title">
-        <span class="hero-title-line">Enter the World of</span><br><span class="hero-title-accent">BLACKVEIN.</span>
+        <span class="hero-title-inner">
+          <span class="hero-title-line">
+            <span class="hero-glitch-word hero-glitch-word--enter" data-splitting>Enter</span> <span>the</span> <span class="hero-glitch-word hero-glitch-word--world" data-splitting>World</span> <span>of</span>
+          </span><br>
+          <span class="hero-title-accent hero-glitch-word hero-glitch-word--accent" data-splitting>BLACKVEIN.</span>
+        </span>
       </h1>
-      <p class="hero-sub" id="hero-teaser-slogan">
-        Where power is automated, mercy is obsolete, and the future is no longer human.
-      </p>
+      <div class="hero-sub hero-teaser-wrap" id="hero-teaser-slogan-wrap" aria-live="polite">
+        <div class="hero-teaser-track" id="hero-teaser-track">
+          <p class="hero-teaser-item hero-sub" id="hero-teaser-slogan">
+            Where power is automated, mercy is obsolete, and the future is no longer human.
+          </p>
+        </div>
+      </div>
       <div class="hero-actions">
         <a href="{{ url_for('web.register') }}" class="btn btn-primary btn-lg">
           Get started
@@ -109,14 +118,25 @@
 <footer class="void-footer" id="void-footer" data-preload>
   <div class="void-footer-inner">
     <p class="void-eyebrow mono">// BLACKVEIN IS WAITING</p>
-    <h2 class="void-title">Ready to enter<br><span class="void-title-accent">the shadows?</span></h2>
+    <h2 class="void-title" id="void-title">
+      <span class="void-title-line">
+        <span class="void-glitch-word void-glitch-word--ready" data-splitting>Ready</span> <span>to</span> <span class="void-glitch-word void-glitch-word--enter" data-splitting>enter</span>
+      </span><br>
+      <span class="void-title-accent-line">
+        <span>the </span><span class="void-glitch-word void-glitch-word--shadows void-title-accent" data-splitting>shadows?</span>
+      </span>
+    </h2>
     <a href="{{ url_for('web.register') }}" class="btn btn-void-cta">
       Create your account
     </a>
   </div>
   <div class="void-footer-legal">
     <span class="mono">BLACKVEIN</span>
-    <span>Control is eternal.</span>
+    <div class="void-slogan-wrap" id="void-hero-slogan-wrap" aria-live="polite">
+      <div class="void-slogan-track" id="void-hero-slogan-track">
+        <span class="void-slogan-item" id="void-hero-slogan">Control is eternal.</span>
+      </div>
+    </div>
   </div>
   <div class="void-bg-orb" aria-hidden="true"></div>
 </footer>
@@ -137,31 +157,53 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="{{ url_for('static', filename='splitting.min.js') }}"></script>
 <script src="{{ url_for('static', filename='landing.js') }}" defer></script>
+<script>
+(function(){
+  function runSplitting() {
+    if (typeof Splitting !== "function") return;
+    var targets = document.querySelectorAll("#hero-title [data-splitting], #void-title [data-splitting]");
+    if (targets.length) Splitting({ target: targets });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", runSplitting);
+  } else {
+    runSplitting();
+  }
+  window.addEventListener("load", runSplitting);
+})();
+</script>
 <script>
 (function(){
   var lang = "de";
   var api = "/api/v1";
   var placement = "landing.teaser.primary";
   function start() {
-    var el = document.getElementById("hero-teaser-slogan");
-    if (!el) return;
-    var defaultText = el.innerHTML;
-    function setText(text) {
-      if (typeof text !== "string") return;
-      el.innerHTML = text.replace(/\n/g, "<br>");
-    }
+    var wrap = document.getElementById("hero-teaser-slogan-wrap");
+    var track = document.getElementById("hero-teaser-track");
+    var defaultEl = document.getElementById("hero-teaser-slogan");
+    if (!wrap || !track || !defaultEl) return;
+    var defaultText = defaultEl.innerHTML;
     function run(items, intervalSec, enabled) {
-      if (!items || !items.length) { if (defaultText) setText(defaultText); return; }
+      if (!items || !items.length) return;
       var minInterval = 5;
       var sec = (intervalSec != null && intervalSec > 0) ? Math.max(minInterval, intervalSec) : 60;
-      setText(items[0].text);
+      track.innerHTML = "";
+      items.forEach(function(item){
+        var p = document.createElement("p");
+        p.className = "hero-teaser-item hero-sub";
+        p.innerHTML = (item.text || "").replace(/\n/g, "<br>");
+        track.appendChild(p);
+      });
       if (items.length === 1 || !enabled) return;
       var idx = 0;
-      setInterval(function(){
+      function roll() {
         idx = (idx + 1) % items.length;
-        setText(items[idx].text);
-      }, sec * 1000);
+        var itemHeight = track.children[0].offsetHeight;
+        track.style.transform = "translateY(-" + (idx * itemHeight) + "px)";
+      }
+      setInterval(roll, sec * 1000);
     }
     Promise.all([
       fetch(api + "/site/slogans?placement=" + encodeURIComponent(placement) + "&lang=" + encodeURIComponent(lang), { credentials: "same-origin" }).then(function(r){ return r.ok ? r.json() : { items: [] }; }).catch(function(){ return { items: [] }; }),
@@ -171,7 +213,65 @@
       var settings = res[1] || {};
       var intervalSec = settings.slogan_rotation_interval_seconds;
       var enabled = settings.slogan_rotation_enabled !== false;
-      run(items, intervalSec, enabled);
+      if (items.length) {
+        run(items, intervalSec, enabled);
+      }
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
+  }
+})();
+</script>
+<script>
+(function(){
+  var lang = "de";
+  var api = "/api/v1";
+  var placement = "landing.hero.primary";
+  function start() {
+    var wrap = document.getElementById("void-hero-slogan-wrap");
+    var track = document.getElementById("void-hero-slogan-track");
+    if (!wrap || !track) return;
+    function run(items, intervalSec, enabled) {
+      if (!items || !items.length) return;
+      var minInterval = 5;
+      var sec = (intervalSec != null && intervalSec > 0) ? Math.max(minInterval, intervalSec) : 60;
+      track.innerHTML = "";
+      var reversed = items.slice().reverse();
+      reversed.forEach(function(item){
+        var span = document.createElement("span");
+        span.className = "void-slogan-item";
+        span.innerHTML = (item.text || "").replace(/\n/g, "<br>");
+        track.appendChild(span);
+      });
+      var n = items.length;
+      if (n > 1) {
+        var itemHeight = track.children[0].offsetHeight;
+        track.style.transform = "translateY(-" + (n - 1) * itemHeight + "px)";
+      }
+      if (items.length === 1 || !enabled) return;
+      var idx = 0;
+      function roll() {
+        idx = (idx + 1) % n;
+        var itemHeight = track.children[0].offsetHeight;
+        var y = -(n - 1 - idx) * itemHeight;
+        track.style.transform = "translateY(" + y + "px)";
+      }
+      setInterval(roll, sec * 1000);
+    }
+    Promise.all([
+      fetch(api + "/site/slogans?placement=" + encodeURIComponent(placement) + "&lang=" + encodeURIComponent(lang), { credentials: "same-origin" }).then(function(r){ return r.ok ? r.json() : { items: [] }; }).catch(function(){ return { items: [] }; }),
+      fetch(api + "/site/settings", { credentials: "same-origin" }).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; })
+    ]).then(function(res){
+      var items = (res[0].items || []);
+      var settings = res[1] || {};
+      var intervalSec = settings.slogan_rotation_interval_seconds;
+      var enabled = settings.slogan_rotation_enabled !== false;
+      if (items.length) {
+        run(items, intervalSec, enabled);
+      }
     });
   }
   if (document.readyState === "loading") {

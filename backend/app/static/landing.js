@@ -10,27 +10,6 @@
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   } catch (e) {}
 
-  function heroShear() {
-    var title = document.getElementById('hero-title');
-    if (!title || reducedMotion) return;
-
-    function onMove(e) {
-      var x = e.clientX != null ? e.clientX : e.touches && e.touches[0] && e.touches[0].clientX;
-      var w = window.innerWidth;
-      if (typeof x !== 'number' || !w) return;
-      var t = (x / w - 0.5) * 4;
-      title.style.transform = 'skewY(' + t + 'deg)';
-    }
-    function onLeave() {
-      title.style.transform = '';
-    }
-
-    title.addEventListener('mousemove', onMove, { passive: true });
-    title.addEventListener('touchmove', onMove, { passive: true });
-    title.addEventListener('mouseleave', onLeave);
-    title.addEventListener('touchend', onLeave);
-  }
-
   function featureReveal() {
     var els = document.querySelectorAll('[data-reveal]');
     if (!els.length) return;
@@ -46,6 +25,28 @@
     els.forEach(function (el) {
       observer.observe(el);
     });
+  }
+
+  /** Glitch-Animationen nur laufen lassen, wenn der Abschnitt sichtbar ist (Performance). */
+  function glitchWhenVisible() {
+    if (reducedMotion) return;
+    var hero = document.getElementById('hero');
+    var voidFooter = document.getElementById('void-footer');
+    if (!hero && !voidFooter) return;
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('glitch-in-view');
+          } else {
+            entry.target.classList.remove('glitch-in-view');
+          }
+        });
+      },
+      { rootMargin: '20% 0px', threshold: 0 }
+    );
+    if (hero) observer.observe(hero);
+    if (voidFooter) observer.observe(voidFooter);
   }
 
   function counters() {
@@ -134,7 +135,7 @@
   }
 
   function init() {
-    heroShear();
+    glitchWhenVisible();
     featureReveal();
     counters();
     dockScroll();

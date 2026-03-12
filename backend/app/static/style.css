@@ -212,6 +212,17 @@ body.landing {
 }
 body.landing main { padding: 0; max-width: 100%; }
 
+/*
+ * ========== Hero-Glitch: Zeiten selbst einstellen ==========
+ * Alle Werte unten in .hero { ... } anpassen.
+ *
+ * --hero-glitch-word-duration-enter     Einzelwort "Enter": Dauer einer Runde (Sekunden)
+ * --hero-glitch-word-duration-world     Einzelwort "World": Dauer einer Runde (Sekunden)
+ * --hero-glitch-word-duration-accent    Einzelwort "BLACKVEIN.": Dauer einer Runde (Sekunden)
+ * --hero-glitch-word-delay-world        Verzögerung für "World"
+ * --hero-glitch-word-delay-accent       Verzögerung für "BLACKVEIN."
+ * ==========
+ */
 .hero {
     min-height: 100vh;
     display: grid;
@@ -221,10 +232,28 @@ body.landing main { padding: 0; max-width: 100%; }
     position: relative;
     overflow: hidden;
     gap: 2rem;
+    /* Glitch: 3 Wörter */
+   --hero-glitch-word-duration-enter: 2.5s;
+   --hero-glitch-word-duration-world: 5s;
+   --hero-glitch-word-duration-accent: 2s;
+   --hero-glitch-word-delay-world: 0.15s;
+   --hero-glitch-word-delay-accent: 0.3s;
 }
 .hero-content { min-width: 0; }
 .hero-text { max-width: 42ch; }
-.hero-eyebrow { color: var(--violet-bright); margin: 0 0 1.5rem; font-size: 0.8rem; letter-spacing: 0.15em; }
+.hero-eyebrow {
+    color: var(--violet-bright);
+    margin: 0 0 1.5rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-shadow:
+        0 0 4px rgba(192, 132, 252, 1),
+        0 0 12px rgba(160, 125, 204, 0.95),
+        0 0 24px rgba(160, 125, 204, 0.85),
+        0 0 48px rgba(140, 100, 180, 0.6),
+        0 0 80px rgba(120, 80, 160, 0.4),
+        0 0 120px rgba(100, 60, 140, 0.25);
+}
 .hero-title {
     font-family: var(--display-font);
     font-size: clamp(3.5rem, 8vw, 8rem);
@@ -236,6 +265,75 @@ body.landing main { padding: 0; max-width: 100%; }
     transform-origin: left center;
     transition: transform 0.1s ease-out;
 }
+/* Glitch (CodePen jh3y/jOOQjYP glitch--3): nur auf Enter, World, BLACKVEIN. */
+/* Performance: Animation nur, wenn Hero sichtbar (landing.js setzt .glitch-in-view) */
+.hero .hero-glitch-word [data-char] { animation-play-state: paused; }
+.hero.glitch-in-view .hero-glitch-word [data-char] { animation-play-state: running; }
+.hero-title .char { display: inline-block; }
+.hero-glitch-word {
+    white-space: nowrap;
+}
+.hero-glitch-word [data-char] {
+    --split: 50;
+    color: transparent;
+    position: relative;
+    animation: hero-glitch-3 var(--hero-glitch-word-duration-enter) ease-in-out infinite alternate-reverse;
+}
+.hero-glitch-word--world [data-char] {
+    animation-duration: var(--hero-glitch-word-duration-world);
+    animation-delay: var(--hero-glitch-word-delay-world);
+}
+.hero-glitch-word--accent [data-char] {
+    animation-duration: var(--hero-glitch-word-duration-accent);
+    animation-delay: var(--hero-glitch-word-delay-accent);
+}
+.hero-glitch-word [data-char]::after,
+.hero-glitch-word [data-char]::before {
+    content: attr(data-char);
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    -webkit-clip-path: var(--clip);
+    clip-path: var(--clip);
+    pointer-events: none;
+}
+.hero-glitch-word [data-char]::after {
+    transform: translate(calc(var(--shift) * 1%), 0);
+    --clip: inset(0 0 calc(var(--split) * 1%) 0);
+    color: var(--text);
+    text-shadow: calc(var(--shadow) * 1px) calc(var(--shadow) * 1px) var(--violet-bright);
+}
+.hero-title-accent.hero-glitch-word [data-char]::after {
+    background: linear-gradient(135deg, var(--violet-bright), #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(calc(var(--shadow) * 1px) calc(var(--shadow) * 1px) var(--violet-bright));
+}
+.hero-glitch-word [data-char]::before {
+    --clip: inset(calc((95 - var(--split)) * 1%) 0 0 0);
+    color: var(--text);
+}
+.hero-title-accent.hero-glitch-word [data-char]::before {
+    background: linear-gradient(135deg, var(--violet-bright), #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+@keyframes hero-glitch-3 {
+    0% { --split: 20; --shift: 15; --shadow: -2; }
+    5% { --split: 30; --shift: 15; --shadow: -2; }
+    10% { --split: 80; --shift: 10; --shadow: -2; }
+    15% { --split: 55; --shift: 10; --shadow: -2; }
+    20%, 50% { --split: 0; --shift: 0; --shadow: 0; }
+    100% { --split: 0; --shift: 0; --shadow: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-glitch-word [data-char] { animation: none; }
+}
 .hero-title-line { white-space: nowrap; }
 .hero-title-accent {
     background: linear-gradient(135deg, var(--violet-bright), #c084fc);
@@ -244,6 +342,9 @@ body.landing main { padding: 0; max-width: 100%; }
     background-clip: text;
 }
 .hero-sub { font-size: 1.15rem; color: var(--text-muted); line-height: 1.7; margin: 0 0 2.5rem; max-width: 42ch; }
+.hero-teaser-wrap { overflow: hidden; height: 3.4em; font-size: 1.15rem; color: var(--text-muted); line-height: 1.7; }
+.hero-teaser-wrap .hero-teaser-track { transition: transform 0.45s ease-out; }
+.hero-teaser-wrap .hero-teaser-item { margin: 0; padding: 0; height: 3.4em; display: flex; align-items: flex-start; font-size: inherit; color: inherit; line-height: inherit; max-width: 42ch; }
 .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
 .btn-lg { padding: 0.85rem 1.75rem; font-size: 1rem; }
 .btn-ghost {
@@ -366,7 +467,19 @@ body.landing main { padding: 0; max-width: 100%; }
 
 .features { padding: 6rem 6vw; }
 .features-header { text-align: center; margin-bottom: 4rem; }
-.section-eyebrow { color: var(--violet-bright); font-size: 0.8rem; letter-spacing: 0.15em; margin: 0 0 1rem; }
+.section-eyebrow {
+    color: var(--violet-bright);
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    margin: 0 0 1rem;
+    text-shadow:
+        0 0 4px rgba(192, 132, 252, 1),
+        0 0 12px rgba(160, 125, 204, 0.95),
+        0 0 24px rgba(160, 125, 204, 0.85),
+        0 0 48px rgba(140, 100, 180, 0.6),
+        0 0 80px rgba(120, 80, 160, 0.4),
+        0 0 120px rgba(100, 60, 140, 0.25);
+}
 .section-title {
     font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 900;
@@ -419,13 +532,93 @@ body.landing main { padding: 0; max-width: 100%; }
     cursor: default;
 }
 .void-footer:hover { background: var(--violet-glow-strong); }
-.void-eyebrow { color: var(--violet-bright); font-size: 0.8rem; letter-spacing: 0.15em; margin: 0 0 1.5rem; }
+.void-footer {
+    --void-glitch-word-duration-ready: 2.5s;
+    --void-glitch-word-duration-enter: 5s;
+    --void-glitch-word-duration-shadows: 2s;
+    --void-glitch-word-delay-enter: 0.15s;
+    --void-glitch-word-delay-shadows: 0.3s;
+}
+.void-eyebrow {
+    color: var(--violet-bright);
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    margin: 0 0 1.5rem;
+    text-shadow:
+        0 0 4px rgba(192, 132, 252, 1),
+        0 0 12px rgba(160, 125, 204, 0.95),
+        0 0 24px rgba(160, 125, 204, 0.85),
+        0 0 48px rgba(140, 100, 180, 0.6),
+        0 0 80px rgba(120, 80, 160, 0.4),
+        0 0 120px rgba(100, 60, 140, 0.25);
+}
 .void-title {
     font-size: clamp(3rem, 8vw, 7rem);
     font-weight: 900;
     line-height: 1;
     letter-spacing: -0.03em;
     margin: 0 0 3rem;
+}
+/* Performance: Void-Glitch nur, wenn Footer sichtbar */
+.void-footer .void-glitch-word [data-char] { animation-play-state: paused; }
+.void-footer.glitch-in-view .void-glitch-word [data-char] { animation-play-state: running; }
+.void-title .char { display: inline-block; }
+.void-title-line { white-space: nowrap; }
+.void-glitch-word {
+    white-space: nowrap;
+}
+.void-glitch-word [data-char] {
+    --split: 50;
+    color: transparent;
+    position: relative;
+    animation: hero-glitch-3 var(--void-glitch-word-duration-ready) ease-in-out infinite alternate-reverse;
+}
+.void-glitch-word--enter [data-char] {
+    animation-duration: var(--void-glitch-word-duration-enter);
+    animation-delay: var(--void-glitch-word-delay-enter);
+}
+.void-glitch-word--shadows [data-char] {
+    animation-duration: var(--void-glitch-word-duration-shadows);
+    animation-delay: var(--void-glitch-word-delay-shadows);
+}
+.void-glitch-word [data-char]::after,
+.void-glitch-word [data-char]::before {
+    content: attr(data-char);
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    -webkit-clip-path: var(--clip);
+    clip-path: var(--clip);
+    pointer-events: none;
+}
+.void-glitch-word [data-char]::after {
+    transform: translate(calc(var(--shift) * 1%), 0);
+    --clip: inset(0 0 calc(var(--split) * 1%) 0);
+    color: var(--text);
+    text-shadow: calc(var(--shadow) * 1px) calc(var(--shadow) * 1px) var(--violet-bright);
+}
+.void-title-accent.void-glitch-word [data-char]::after {
+    background: linear-gradient(135deg, var(--violet-bright), #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(calc(var(--shadow) * 1px) calc(var(--shadow) * 1px) var(--violet-bright));
+}
+.void-glitch-word [data-char]::before {
+    --clip: inset(calc((95 - var(--split)) * 1%) 0 0 0);
+    color: var(--text);
+}
+.void-title-accent.void-glitch-word [data-char]::before {
+    background: linear-gradient(135deg, var(--violet-bright), #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+@media (prefers-reduced-motion: reduce) {
+    .void-glitch-word [data-char] { animation: none; }
 }
 .void-title-accent { color: var(--violet-bright); }
 .btn-void-cta {
@@ -451,7 +644,16 @@ body.landing main { padding: 0; max-width: 100%; }
     gap: 2rem;
     color: var(--text-muted);
     font-size: 0.8rem;
+    align-items: center;
 }
+.void-slogan-wrap {
+    overflow: hidden;
+    height: 1.5em;
+    font-size: inherit;
+    color: inherit;
+}
+.void-slogan-wrap .void-slogan-track { transition: transform 0.45s ease-out; }
+.void-slogan-wrap .void-slogan-item { margin: 0; min-height: 1.5em; display: flex; align-items: center; font-size: inherit; color: inherit; }
 .void-bg-orb {
     position: absolute;
     width: 600px; height: 600px;
