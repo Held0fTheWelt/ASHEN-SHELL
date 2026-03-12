@@ -2,7 +2,8 @@
 from flask import jsonify, request
 
 from app.api.v1 import api_v1_bp
-from app.auth.permissions import require_jwt_admin
+from app.auth.feature_registry import FEATURE_MANAGE_ROLES
+from app.auth.permissions import require_feature, require_jwt_admin
 from app.extensions import limiter
 from app.services.role_service import (
     create_role as create_role_service,
@@ -30,6 +31,7 @@ def _parse_int(value, default, min_val=None, max_val=None):
 @api_v1_bp.route("/roles", methods=["GET"])
 @limiter.limit("60 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_ROLES)
 def roles_list():
     """List roles (admin only). Query: page, limit, q (search name)."""
     page = _parse_int(request.args.get("page"), 1, min_val=1)
@@ -47,6 +49,7 @@ def roles_list():
 @api_v1_bp.route("/roles/<int:role_id>", methods=["GET"])
 @limiter.limit("60 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_ROLES)
 def roles_get(role_id):
     """Get one role by id (admin only)."""
     role = get_role_by_id(role_id)
@@ -58,6 +61,7 @@ def roles_get(role_id):
 @api_v1_bp.route("/roles", methods=["POST"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_ROLES)
 def roles_create():
     """Create a role (admin only). Body: name; optional description, default_role_level."""
     data = request.get_json(silent=True)
@@ -78,6 +82,7 @@ def roles_create():
 @api_v1_bp.route("/roles/<int:role_id>", methods=["PUT"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_ROLES)
 def roles_update(role_id):
     """Update a role (admin only). Body: optional name, description, default_role_level."""
     data = request.get_json(silent=True)
@@ -100,6 +105,7 @@ def roles_update(role_id):
 @api_v1_bp.route("/roles/<int:role_id>", methods=["DELETE"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_ROLES)
 def roles_delete(role_id):
     """Delete a role (admin only). Fails if any user has this role."""
     ok, err = delete_role_service(role_id)

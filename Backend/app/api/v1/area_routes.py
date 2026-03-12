@@ -2,8 +2,8 @@
 from flask import jsonify, request
 
 from app.api.v1 import api_v1_bp
-from app.auth.permissions import get_current_user, require_jwt_admin
-from app.auth.feature_registry import FEATURE_IDS
+from app.auth.permissions import get_current_user, require_feature, require_jwt_admin
+from app.auth.feature_registry import FEATURE_IDS, FEATURE_MANAGE_AREAS, FEATURE_MANAGE_FEATURE_AREAS
 from app.extensions import limiter
 from app.services.area_service import (
     create_area as create_area_service,
@@ -35,6 +35,7 @@ def _parse_int(value, default, min_val=None, max_val=None):
 @api_v1_bp.route("/areas", methods=["GET"])
 @limiter.limit("60 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_AREAS)
 def areas_list():
     """List areas (admin only). Query: page, limit, q (search name/slug)."""
     page = _parse_int(request.args.get("page"), 1, min_val=1)
@@ -52,6 +53,7 @@ def areas_list():
 @api_v1_bp.route("/areas/<int:area_id>", methods=["GET"])
 @limiter.limit("60 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_AREAS)
 def areas_get(area_id):
     """Get one area by id (admin only)."""
     area = get_area_by_id(area_id)
@@ -63,6 +65,7 @@ def areas_get(area_id):
 @api_v1_bp.route("/areas", methods=["POST"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_AREAS)
 def areas_create():
     """Create an area (admin only). Body: name; optional slug, description."""
     data = request.get_json(silent=True)
@@ -85,6 +88,7 @@ def areas_create():
 @api_v1_bp.route("/areas/<int:area_id>", methods=["PUT"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_AREAS)
 def areas_update(area_id):
     """Update an area (admin only). Body: optional name, slug, description. System 'all' protected."""
     data = request.get_json(silent=True)
@@ -109,6 +113,7 @@ def areas_update(area_id):
 @api_v1_bp.route("/areas/<int:area_id>", methods=["DELETE"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_AREAS)
 def areas_delete(area_id):
     """Delete an area (admin only). Fails for system area or if assigned to users/features."""
     ok, err = delete_area_service(area_id)
@@ -121,6 +126,7 @@ def areas_delete(area_id):
 @api_v1_bp.route("/users/<int:user_id>/areas", methods=["GET"])
 @limiter.limit("60 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_AREAS)
 def user_areas_list(user_id):
     """List areas assigned to a user (admin only)."""
     from app.auth.permissions import admin_may_edit_target
@@ -141,6 +147,7 @@ def user_areas_list(user_id):
 @api_v1_bp.route("/users/<int:user_id>/areas", methods=["PUT"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_AREAS)
 def user_areas_set(user_id):
     """Set areas for a user (admin only). Body: area_ids (array). Replaces existing. Hierarchy: target must have lower role_level."""
     from app.auth.permissions import admin_may_edit_target
@@ -170,6 +177,7 @@ def user_areas_set(user_id):
 @api_v1_bp.route("/feature-areas", methods=["GET"])
 @limiter.limit("60 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_FEATURE_AREAS)
 def feature_areas_list():
     """List all features and their assigned area ids/slugs (admin only)."""
     mapping = list_feature_areas_mapping()
@@ -179,6 +187,7 @@ def feature_areas_list():
 @api_v1_bp.route("/feature-areas/<path:feature_id>", methods=["GET"])
 @limiter.limit("60 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_FEATURE_AREAS)
 def feature_areas_get(feature_id):
     """Get area assignment for one feature (admin only)."""
     if feature_id not in FEATURE_IDS:
@@ -192,6 +201,7 @@ def feature_areas_get(feature_id):
 @api_v1_bp.route("/feature-areas/<path:feature_id>", methods=["PUT"])
 @limiter.limit("30 per minute")
 @require_jwt_admin
+@require_feature(FEATURE_MANAGE_FEATURE_AREAS)
 def feature_areas_set(feature_id):
     """Set areas for a feature (admin only). Body: area_ids (array). Replaces existing."""
     if feature_id not in FEATURE_IDS:

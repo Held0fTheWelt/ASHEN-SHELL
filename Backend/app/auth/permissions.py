@@ -107,6 +107,20 @@ def require_jwt_admin(f):
     return jwt_required()(wrapped)
 
 
+def require_feature(feature_id: str):
+    """Decorator: require valid JWT and area-based access to the feature. Use after @jwt_required() or with require_jwt_* that already applied jwt."""
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            from app.auth.feature_registry import user_can_access_feature
+            user = get_current_user()
+            if not user_can_access_feature(user, feature_id):
+                return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+
 def require_jwt_moderator_or_admin(f):
     """Decorator: require valid JWT and moderator or admin role (non-banned). Returns 403 otherwise."""
     @wraps(f)

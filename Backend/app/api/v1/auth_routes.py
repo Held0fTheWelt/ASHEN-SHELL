@@ -141,4 +141,8 @@ def me():
         return jsonify({"error": "User not found"}), 404
     if getattr(user, "is_banned", False):
         return jsonify({"error": "Account is restricted."}), 403
-    return jsonify(user.to_dict(include_email=True, include_areas=True)), 200
+    from app.auth.feature_registry import FEATURE_IDS, user_can_access_feature
+    allowed = [fid for fid in FEATURE_IDS if user_can_access_feature(user, fid)]
+    out = user.to_dict(include_email=True, include_areas=True)
+    out["allowed_features"] = allowed
+    return jsonify(out), 200

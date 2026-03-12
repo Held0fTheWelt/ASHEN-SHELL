@@ -119,15 +119,14 @@
         if (infoEl && user) {
             infoEl.textContent = (user.username || "") + (user.role ? " (" + user.role + ")" : "");
         }
-        var isAdmin = user && (user.role === "admin");
-        var usersNav = document.getElementById("manage-nav-users");
+        var allowed = user && user.allowed_features ? user.allowed_features : [];
+        var hasFeature = function(fid) { return allowed.indexOf(fid) >= 0; };
+        [].forEach.call(document.querySelectorAll(".manage-nav-link[data-feature]"), function(link) {
+            var fid = link.getAttribute("data-feature");
+            link.style.display = fid && hasFeature(fid) ? "" : "none";
+        });
         var usersCard = document.getElementById("manage-dashboard-users");
-        var areasNav = document.getElementById("manage-nav-areas");
-        var featureAreasNav = document.getElementById("manage-nav-feature-areas");
-        if (usersNav) usersNav.style.display = isAdmin ? "" : "none";
-        if (usersCard) usersCard.style.display = isAdmin ? "" : "none";
-        if (areasNav) areasNav.style.display = isAdmin ? "" : "none";
-        if (featureAreasNav) featureAreasNav.style.display = isAdmin ? "" : "none";
+        if (usersCard) usersCard.style.display = hasFeature("manage.users") ? "" : "none";
     }
 
     /**

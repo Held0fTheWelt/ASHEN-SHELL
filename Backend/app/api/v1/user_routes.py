@@ -5,6 +5,7 @@ from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
+from app.auth.feature_registry import FEATURE_MANAGE_USERS, user_can_access_feature
 from app.auth.permissions import (
     admin_may_assign_role_level,
     admin_may_edit_target,
@@ -50,6 +51,8 @@ def users_list():
     """List users (admin only). Query: page, limit, q (search username/email)."""
     if not current_user_is_admin():
         return jsonify({"error": "Forbidden"}), 403
+    if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
     page = _parse_int(request.args.get("page"), 1, min_val=1)
     limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
     search = request.args.get("q", "").strip() or None
@@ -72,6 +75,8 @@ def users_get(user_id):
         return jsonify({"error": "User not found"}), 404
     if current.id != user_id and not current_user_is_admin():
         return jsonify({"error": "Forbidden"}), 403
+    if current.id != user_id and not user_can_access_feature(current, FEATURE_MANAGE_USERS):
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
     user = get_user_by_id(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
@@ -158,6 +163,8 @@ def users_update(user_id):
     if current.id != user_id:
         if not current_user_is_admin():
             return jsonify({"error": "Forbidden"}), 403
+        if not user_can_access_feature(current, FEATURE_MANAGE_USERS):
+            return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
         actor_level = getattr(current, "role_level", 0) or 0
         target_level = getattr(target, "role_level", 0) or 0
         if not admin_may_edit_target(actor_level, target_level):
@@ -246,6 +253,8 @@ def users_delete(user_id):
     """Delete a user (admin only). Admin may only delete users with strictly lower role_level."""
     if not current_user_is_admin():
         return jsonify({"error": "Forbidden"}), 403
+    if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
     target_user = get_user_by_id(user_id)
     if not target_user:
         return jsonify({"error": "User not found"}), 404
@@ -274,7 +283,9 @@ def users_delete(user_id):
 @limiter.limit("30 per minute")
 @require_jwt_admin
 def users_assign_role(user_id):
-    """Assign role to a user (admin only). Admin may only assign to users with strictly lower role_level; new role's default_level must be below your level. Body: role (user, qa, moderator, admin)."""
+    """Assign role to a user (admin only). Admin may only assign to users with strictly lower role_level. Body: role (user, qa, moderator, admin)."""
+    if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
@@ -317,6 +328,8 @@ def users_assign_role(user_id):
 @require_jwt_admin
 def users_ban(user_id):
     """Ban a user (admin only). Admin may only ban users with strictly lower role_level. Body: optional reason."""
+    if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
     current = get_current_user()
     target = get_user_by_id(user_id)
     if not target:
@@ -352,6 +365,8 @@ def users_ban(user_id):
 @require_jwt_admin
 def users_unban(user_id):
     """Unban a user (admin only). Admin may only unban users with strictly lower role_level."""
+    if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
     current = get_current_user()
     target = get_user_by_id(user_id)
     if not target:
