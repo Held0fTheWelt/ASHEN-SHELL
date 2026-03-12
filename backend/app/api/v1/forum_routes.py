@@ -1363,8 +1363,18 @@ def notifications_list():
         if n.target_type == "forum_thread":
             thread = get_thread_by_id(n.target_id)
             d["thread_slug"] = thread.slug if thread and thread.deleted_at is None else None
+            d["target_post_id"] = None
+        elif n.target_type == "forum_post":
+            post = get_post_by_id(n.target_id)
+            if post and post.thread and post.thread.deleted_at is None:
+                d["thread_slug"] = post.thread.slug
+                d["target_post_id"] = post.id
+            else:
+                d["thread_slug"] = None
+                d["target_post_id"] = None
         else:
             d["thread_slug"] = None
+            d["target_post_id"] = None
         items_data.append(d)
 
     return jsonify({
@@ -1390,4 +1400,21 @@ def notification_mark_read(notification_id: int):
     n.read_at = _utc_now()
     db.session.commit()
     return jsonify(n.to_dict()), 200
+
+
+@api_v1_bp.route("/notifications/read-all", methods=["POST", "PUT"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def notifications_mark_all_read():
+    """Mark all notifications for the current user as read."""
+    user, err_resp = _require_user()
+    if err_resp:
+        return err_resp
+    now = _utc_now()
+    updated = Notification.query.filter_by(user_id=user.id, is_read=False).update(
+        {Notification.is_read: True, Notification.read_at: now},
+        synchronize_session=False,
+    )
+    db.session.commit()
+    return jsonify({"message": "Marked all as read", "updated": updated}), 200
 

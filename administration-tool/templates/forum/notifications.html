@@ -14,6 +14,9 @@
     <p class="forum-state error" id="forum-notifications-error" hidden role="alert"></p>
     <p class="forum-state empty" id="forum-notifications-empty" hidden role="status">{{ t.forum_no_notifications | default('No notifications.') }}</p>
     <p class="forum-login-hint" id="forum-notifications-login-hint" hidden>{{ t.forum_login_to_view_notifications | default('Please log in to view notifications.') }} <a href="{{ url_for('manage_login') }}?next={{ request.url | urlencode }}">{{ t.nav_login | default('Log in') }}</a></p>
+    <div id="forum-notifications-toolbar" class="forum-notifications-toolbar" hidden>
+        <button type="button" id="forum-notifications-mark-all-read" class="btn btn-outline btn-sm">{{ t.forum_mark_all_read | default('Mark all as read') }}</button>
+    </div>
     <ul id="forum-notifications-list" class="forum-notifications-list" hidden aria-live="polite"></ul>
     <nav class="forum-pagination" id="forum-notifications-pagination" hidden aria-label="Pagination">
         <span class="forum-pagination-info" id="forum-notifications-pagination-info"></span>

@@ -552,6 +552,7 @@
             var currentUserId = state.currentUserId;
             items.forEach(function(p) {
                 var post = document.createElement("article");
+                post.id = "post-" + p.id;
                 post.className = "forum-post";
                 post.dataset.postId = p.id;
                 var meta = document.createElement("div");
@@ -946,6 +947,8 @@
         var paginationInfo = document.getElementById("forum-notifications-pagination-info");
         var prevBtn = document.getElementById("forum-notifications-prev");
         var nextBtn = document.getElementById("forum-notifications-next");
+        var toolbar = document.getElementById("forum-notifications-toolbar");
+        var markAllReadBtn = document.getElementById("forum-notifications-mark-all-read");
         var hasToken = !!(window.ManageAuth && window.ManageAuth.getToken && window.ManageAuth.getToken());
         var state = { page: 1, total: 0, perPage: 20, totalPages: 0 };
 
@@ -954,6 +957,7 @@
             if (errEl) errEl.hidden = true;
             if (empty) empty.hidden = true;
             if (loginHint) loginHint.hidden = true;
+            if (toolbar) toolbar.hidden = true;
             if (list) list.hidden = true;
             if (pagination) pagination.hidden = true;
         }
@@ -977,6 +981,10 @@
             var url = (base ? base.replace(/\/$/, "") : "") + "/api/v1/notifications/" + id + "/read";
             return api(url, { method: "PATCH" });
         }
+        function markAllRead() {
+            var url = (base ? base.replace(/\/$/, "") : "") + "/api/v1/notifications/read-all";
+            return api(url, { method: "PUT" });
+        }
         function render(items, page, total, perPage) {
             hideAll();
             if (!list) return;
@@ -991,7 +999,9 @@
                 var li = document.createElement("li");
                 li.className = "forum-notification-item" + (n.is_read ? " forum-notification-read" : "");
                 var link = document.createElement("a");
-                link.href = n.thread_slug ? "/forum/threads/" + encodeURIComponent(n.thread_slug) : "#";
+                var href = n.thread_slug ? "/forum/threads/" + encodeURIComponent(n.thread_slug) : "#";
+                if (n.thread_slug && n.target_post_id) href += "#post-" + n.target_post_id;
+                link.href = href;
                 link.className = "forum-notification-link";
                 link.textContent = n.message || "Notification";
                 li.appendChild(link);
@@ -1019,6 +1029,7 @@
                 list.appendChild(li);
             });
             list.hidden = false;
+            if (toolbar) toolbar.hidden = false;
             if (pagination) {
                 pagination.hidden = state.totalPages <= 1;
                 if (paginationInfo) paginationInfo.textContent = "Page " + page + " of " + (state.totalPages || 1) + " (" + total + " total)";
@@ -1063,6 +1074,19 @@
                 var perPage = (data && typeof data.per_page === "number") ? data.per_page : state.perPage;
                 render(items, page, total, perPage);
             }).catch(function() { if (loading) loading.hidden = true; });
+        });
+        if (markAllReadBtn) markAllReadBtn.addEventListener("click", function() {
+            markAllReadBtn.disabled = true;
+            markAllRead().then(function() {
+                return fetchNotifications(1);
+            }).then(function(data) {
+                var items = (data && data.items) ? data.items : [];
+                var total = (data && typeof data.total === "number") ? data.total : 0;
+                var page = (data && typeof data.page === "number") ? data.page : 1;
+                var perPage = (data && typeof data.per_page === "number") ? data.per_page : state.perPage;
+                state.page = 1;
+                render(items, page, total, perPage);
+            }).catch(function() {}).then(function() { markAllReadBtn.disabled = false; });
         });
     }
 
