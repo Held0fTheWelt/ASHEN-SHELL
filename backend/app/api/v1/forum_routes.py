@@ -28,6 +28,7 @@ from app.models import (
     ForumTag,
 )
 from app.services import log_activity
+from app.services.activity_log_service import list_activity_logs
 from app.services.forum_service import (
     create_category,
     create_notifications_for_thread_reply,
@@ -1323,7 +1324,7 @@ def forum_report_get(report_id: int):
 def forum_report_update(report_id: int):
     """
     Update report status (moderator/admin only).
-    Body: status (open, reviewed, resolved, dismissed).
+    Body: status (open, reviewed, escalated, resolved, dismissed).
     """
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
@@ -1351,6 +1352,57 @@ def forum_report_update(report_id: int):
         target_id=str(report.id),
     )
     return jsonify(report.to_dict()), 200
+
+
+@api_v1_bp.route("/forum/reports/bulk-status", methods=["POST"])
+@limiter.limit("20 per minute")
+@jwt_required()
+def forum_reports_bulk_status():
+    """
+    Bulk update report status (moderator/admin only).
+    Body: { "report_ids": [int, ...], "status": "reviewed|escalated|resolved|dismissed" }
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    ids = data.get("report_ids") or []
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "report_ids must be a non-empty list"}), 400
+    try:
+        id_list = [int(x) for x in ids]
+    except (TypeError, ValueError):
+        return jsonify({"error": "report_ids must contain integers"}), 400
+    status = (data.get("status") or "").strip()
+    if status not in ("reviewed", "escalated", "resolved", "dismissed"):
+        return jsonify({"error": "Invalid status for bulk update"}), 400
+
+    updated_ids: list[int] = []
+    for rid in id_list:
+        report = get_report_by_id(rid)
+        if not report:
+            continue
+        try:
+            update_report_status(report, status=status, handled_by=user.id)
+        except ValueError:
+            continue
+        updated_ids.append(report.id)
+
+    if updated_ids:
+        log_activity(
+            actor=user,
+            category="forum",
+            action="reports_bulk_status_updated",
+            status="success",
+            message=f"Reports {updated_ids} status -> {status}",
+            route=request.path,
+            method=request.method,
+            target_type="forum_report",
+            target_id=",".join(str(x) for x in updated_ids),
+        )
+    return jsonify({"updated_ids": updated_ids, "status": status}), 200
 
 
 # --- Category admin -----------------------------------------------------------
@@ -1608,7 +1660,7 @@ def forum_moderation_recently_handled():
         return err_resp
     limit = _parse_int(request.args.get("limit"), 10, min_val=1, max_val=50)
     reports = (
-        ForumReport.query.filter(ForumReport.status.in_(["reviewed", "resolved", "dismissed"]))
+        ForumReport.query.filter(ForumReport.status.in_(["reviewed", "escalated", "resolved", "dismissed"]))
         .filter(ForumReport.handled_at.isnot(None))
         .order_by(ForumReport.handled_at.desc())
         .limit(limit)
@@ -1644,6 +1696,163 @@ def forum_moderation_locked_threads():
             "updated_at": t.updated_at.isoformat() if t.updated_at else None,
         })
     return jsonify({"items": items, "total": len(items)}), 200
+
+
+@api_v1_bp.route("/forum/moderation/bulk-threads/status", methods=["POST"])
+@limiter.limit("20 per minute")
+@jwt_required()
+def forum_moderation_bulk_threads_status():
+    """
+    Bulk lock/unlock/archive/unarchive threads.
+    Body: { "thread_ids": [int, ...], "lock": true/false (optional), "archive": true/false (optional) }.
+    Only moderators/admins with rights on the category may modify a thread.
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    ids = data.get("thread_ids") or []
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "thread_ids must be a non-empty list"}), 400
+    try:
+        thread_ids = [int(x) for x in ids]
+    except (TypeError, ValueError):
+        return jsonify({"error": "thread_ids must contain integers"}), 400
+    lock = data.get("lock")
+    archive = data.get("archive")
+    if lock is None and archive is None:
+        return jsonify({"error": "At least one of lock or archive must be provided"}), 400
+
+    updated: list[int] = []
+    for tid in thread_ids:
+        thread = get_thread_by_id(tid)
+        if not thread or not thread.category:
+            continue
+        # Ensure user can moderate this category
+        if not user_can_moderate_category(user, thread.category):
+            continue
+        if lock is not None:
+            thread = set_thread_lock(thread, bool(lock))
+        if archive is not None:
+            if archive:
+                thread = set_thread_archived(thread)
+            else:
+                thread = set_thread_unarchived(thread)
+        updated.append(thread.id)
+
+    if updated:
+        actions = []
+        if lock is not None:
+            actions.append(f"lock={bool(lock)}")
+        if archive is not None:
+            actions.append(f"archive={bool(archive)}")
+        log_activity(
+            actor=user,
+            category="forum",
+            action="threads_bulk_status_updated",
+            status="success",
+            message=f"Threads {updated} updated ({', '.join(actions)})",
+            route=request.path,
+            method=request.method,
+            target_type="forum_thread",
+            target_id=",".join(str(x) for x in updated),
+        )
+    return jsonify({"updated_ids": updated}), 200
+
+
+@api_v1_bp.route("/forum/moderation/bulk-posts/hide", methods=["POST"])
+@limiter.limit("20 per minute")
+@jwt_required()
+def forum_moderation_bulk_posts_hide():
+    """
+    Bulk hide/unhide posts.
+    Body: { "post_ids": [int, ...], "hidden": true/false }.
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    ids = data.get("post_ids") or []
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "post_ids must be a non-empty list"}), 400
+    try:
+        post_ids = [int(x) for x in ids]
+    except (TypeError, ValueError):
+        return jsonify({"error": "post_ids must contain integers"}), 400
+    hidden = data.get("hidden")
+    if hidden is None:
+        return jsonify({"error": "hidden must be provided"}), 400
+
+    updated: list[int] = []
+    for pid in post_ids:
+        post = get_post_by_id(pid)
+        if not post or not post.thread or not post.thread.category:
+            continue
+        if not user_can_moderate_category(user, post.thread.category):
+            continue
+        if hidden:
+            hide_post(post)
+        else:
+            unhide_post(post)
+        updated.append(post.id)
+
+    if updated:
+        log_activity(
+            actor=user,
+            category="forum",
+            action="posts_bulk_hidden" if hidden else "posts_bulk_unhidden",
+            status="success",
+            message=f"Posts {updated} {'hidden' if hidden else 'unhidden'}",
+            route=request.path,
+            method=request.method,
+            target_type="forum_post",
+            target_id=",".join(str(x) for x in updated),
+        )
+    return jsonify({"updated_ids": updated, "hidden": bool(hidden)}), 200
+
+
+@api_v1_bp.route("/forum/moderation/log", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_moderation_log():
+    """
+    Moderator/admin-visible moderation log for forum actions.
+    Thin wrapper around activity logs filtered by category=forum.
+
+    Query: q, status, date_from, date_to, page, limit.
+    """
+    user = get_current_user()
+    if not user or not current_user_is_moderator_or_admin():
+        return jsonify({"error": "Forbidden"}), 403
+
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    q = request.args.get("q", "").strip() or None
+    status = request.args.get("status", "").strip() or None
+    date_from = request.args.get("date_from", "").strip() or None
+    date_to = request.args.get("date_to", "").strip() or None
+
+    items, total = list_activity_logs(
+        page=page,
+        limit=limit,
+        q=q,
+        category="forum",
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    return jsonify(
+        {
+            "items": [e.to_dict() for e in items],
+            "total": total,
+            "page": page,
+            "limit": limit,
+        }
+    ), 200
 
 
 @api_v1_bp.route("/forum/moderation/pinned-threads", methods=["GET"])

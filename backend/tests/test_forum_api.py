@@ -243,6 +243,34 @@ def test_thread_bookmark_create_and_list(client, auth_headers):
     assert "bookmark-me" in slugs
 
 
+@pytest.mark.usefixtures("app")
+def test_reports_bulk_status_update(app, client, admin_headers):
+    """Bulk status update moves multiple reports to resolved."""
+    with app.app_context():
+        cat = ForumCategory(slug="rep-cat", title="RepCat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        thread = ForumThread(category_id=cat.id, slug="rep-thread", title="Reported thread", status="open")
+        db.session.add(thread)
+        db.session.flush()
+        # Create two open reports on the thread
+        r1 = ForumReport(target_type="thread", target_id=thread.id, reported_by=None, reason="R1", status="open")
+        r2 = ForumReport(target_type="thread", target_id=thread.id, reported_by=None, reason="R2", status="open")
+        db.session.add_all([r1, r2])
+        db.session.commit()
+        ids = [r1.id, r2.id]
+
+    resp = client.post(
+        "/api/v1/forum/reports/bulk-status",
+        json={"report_ids": ids, "status": "resolved"},
+        headers=admin_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert set(data["updated_ids"]) == set(ids)
+    assert data["status"] == "resolved"
+
+
 # ============= LIKE/UNLIKE TESTS =============
 
 def test_like_requires_visibility(app, client, auth_headers):

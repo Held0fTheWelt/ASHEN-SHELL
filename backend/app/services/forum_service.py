@@ -770,7 +770,7 @@ def list_reports(*, status: Optional[str] = None) -> List[ForumReport]:
 
 
 def update_report_status(report: ForumReport, *, status: str, handled_by: Optional[int]) -> ForumReport:
-    if status not in ("open", "reviewed", "resolved", "dismissed"):
+    if status not in ("open", "reviewed", "escalated", "resolved", "dismissed"):
         raise ValueError("Invalid report status")
     report.status = status
     report.handled_by = handled_by
