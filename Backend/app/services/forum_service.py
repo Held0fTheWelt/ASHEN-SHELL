@@ -138,6 +138,9 @@ def user_can_soft_delete_post(user: Optional[User], post: ForumPost) -> bool:
 def user_can_like_post(user: Optional[User], post: ForumPost) -> bool:
     if user is None or user.is_banned:
         return False
+    # Like is only allowed if the user may actually view the post (thread + category checks).
+    if not user_can_view_post(user, post):
+        return False
     if post.status in ("hidden", "deleted"):
         return False
     if post.thread and (post.thread.is_locked or post.thread.status in ("locked", "archived", "hidden", "deleted")):
@@ -367,8 +370,10 @@ def increment_thread_view(thread: ForumThread) -> None:
 
 
 def recalc_thread_counters(thread: ForumThread) -> None:
-    """Recalculate reply_count, last_post_at, last_post_id based on non-deleted posts."""
-    q = ForumPost.query.filter_by(thread_id=thread.id).filter(ForumPost.status != "deleted")
+    """Recalculate reply_count, last_post_at, last_post_id based on non-hidden, non-deleted posts."""
+    q = ForumPost.query.filter_by(thread_id=thread.id).filter(
+        ForumPost.status.notin_(("deleted", "hidden"))
+    )
     # Count posts excluding the first one as replies
     total_posts = q.count()
     thread.reply_count = max(0, total_posts - 1)
@@ -417,6 +422,23 @@ def create_post(*, thread: ForumThread, author_id: int | None, content: str, par
     content = (content or "").strip()
     if not content:
         return None, "content is required"
+
+    parent = None
+    if parent_post_id is not None:
+        # Validate that parent exists
+        parent = ForumPost.query.get(parent_post_id)
+        if not parent:
+            return None, "Parent post not found"
+        # Validate that parent belongs to the same thread
+        if parent.thread_id != thread.id:
+            return None, "Parent post must belong to the same thread"
+        # Enforce shallow reply depth (only one level of replies)
+        if parent.parent_post_id is not None:
+            return None, "Maximum reply depth exceeded"
+        # Do not allow replies to hidden/deleted posts
+        if parent.status in ("hidden", "deleted"):
+            return None, "Cannot reply to hidden or deleted post"
+
     now = _utc_now()
     post = ForumPost(
         thread_id=thread.id,
@@ -461,6 +483,8 @@ def hide_post(post: ForumPost) -> ForumPost:
     post.status = "hidden"
     post.updated_at = _utc_now()
     db.session.commit()
+    if post.thread:
+        recalc_thread_counters(post.thread)
     return post
 
 
@@ -469,6 +493,8 @@ def unhide_post(post: ForumPost) -> ForumPost:
         post.status = "visible"
         post.updated_at = _utc_now()
         db.session.commit()
+        if post.thread:
+            recalc_thread_counters(post.thread)
     return post
 
 
