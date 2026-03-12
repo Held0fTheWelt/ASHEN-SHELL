@@ -40,6 +40,7 @@ from app.services.forum_service import (
     list_reports,
     list_reports_for_target,
     list_threads_for_category,
+    merge_threads,
     move_thread,
     recalc_thread_counters,
     set_thread_archived,
@@ -953,6 +954,61 @@ def forum_thread_unarchive(thread_id: int):
         target_id=str(thread.id),
     )
     return jsonify(thread.to_dict()), 200
+
+
+@api_v1_bp.route("/forum/threads/<int:source_thread_id>/merge", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def forum_thread_merge(source_thread_id: int):
+    """
+    Merge a source thread into a target thread (moderator/admin only).
+
+    Body: { "target_thread_id": <int> }
+    """
+    source = get_thread_by_id(source_thread_id)
+    if not source or not source.category:
+        return jsonify({"error": "Source thread not found"}), 404
+    user, err_resp = _require_moderator_for_category(source.category)
+    if err_resp:
+        return err_resp
+
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    try:
+        target_thread_id = int(data.get("target_thread_id"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "target_thread_id must be an integer"}), 400
+
+    target = get_thread_by_id(target_thread_id)
+    if not target or not target.category:
+        return jsonify({"error": "Target thread not found"}), 404
+
+    # Ensure the user may moderate the target category as well.
+    _, err_resp_target = _require_moderator_for_category(target.category)
+    if err_resp_target:
+        return err_resp_target
+
+    err = merge_threads(source, target)
+    if err:
+        return jsonify({"error": err}), 400
+
+    log_activity(
+        actor=user,
+        category="forum",
+        action="thread_merged",
+        status="success",
+        message=f"Thread {source.id} merged into {target.id}",
+        route=request.path,
+        method=request.method,
+        target_type="forum_thread",
+        target_id=str(target.id),
+    )
+    data = target.to_dict()
+    data["author_username"] = target.author.username if target.author else None
+    if target.category:
+        data["category"] = target.category.to_dict()
+    return jsonify(data), 200
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>/hide", methods=["POST"])

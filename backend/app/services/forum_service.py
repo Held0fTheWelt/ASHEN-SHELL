@@ -394,6 +394,56 @@ def move_thread(thread: ForumThread, new_category: ForumCategory) -> Tuple[Forum
     return thread, None
 
 
+def merge_threads(source: ForumThread, target: ForumThread) -> Optional[str]:
+    """
+    Merge source thread into target thread.
+
+    Moves all posts and subscriptions from source into target, recalculates
+    counters for both threads, and archives the source thread for staff-only
+    visibility. Returns an error message string or None on success.
+    """
+    if not source or not target:
+        return "Source and target threads are required"
+    if source.id == target.id:
+        return "Cannot merge a thread into itself"
+    # Basic safety: do not merge already-deleted threads.
+    if source.status == "deleted":
+        return "Source thread is deleted and cannot be merged"
+
+    # Move posts: reassign thread_id for all posts belonging to source.
+    ForumPost.query.filter_by(thread_id=source.id).update(
+        {ForumPost.thread_id: target.id},
+        synchronize_session=False,
+    )
+
+    # Merge subscriptions: ensure all subscribers of source are subscribed to target.
+    source_subs = ForumThreadSubscription.query.filter_by(thread_id=source.id).all()
+    existing_target_user_ids = {
+        s.user_id for s in ForumThreadSubscription.query.filter_by(thread_id=target.id).all()
+    }
+    for sub in source_subs:
+        if sub.user_id not in existing_target_user_ids:
+            new_sub = ForumThreadSubscription(
+                thread_id=target.id,
+                user_id=sub.user_id,
+                created_at=_utc_now(),
+            )
+            db.session.add(new_sub)
+            existing_target_user_ids.add(sub.user_id)
+        db.session.delete(sub)
+
+    # Archive the source thread (staff-only visibility).
+    source.status = "archived"
+    source.updated_at = _utc_now()
+
+    db.session.commit()
+
+    # Recalculate counters for both threads after merge.
+    recalc_thread_counters(target)
+    recalc_thread_counters(source)
+    return None
+
+
 def increment_thread_view(thread: ForumThread) -> None:
     thread.view_count = (thread.view_count or 0) + 1
     thread.updated_at = _utc_now()

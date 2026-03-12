@@ -13,6 +13,7 @@ from app.models import (
     ForumThreadSubscription,
     Notification,
     User,
+    Role,
 )
 
 
@@ -861,6 +862,106 @@ def test_archive_unarchive_thread(app, client, moderator_headers):
     assert resp.status_code == 200
     assert resp.get_json().get("status") == "open"
 
+
+def test_thread_merge_moves_posts_and_updates_counters(app, client, moderator_headers):
+    """Merging a source thread into a target moves posts, updates counters, and archives source."""
+    with app.app_context():
+        cat = ForumCategory(slug="merge-cat", title="Merge Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        source = ForumThread(category_id=cat.id, slug="source-thread", title="Source", status="open")
+        target = ForumThread(category_id=cat.id, slug="target-thread", title="Target", status="open")
+        db.session.add_all([source, target])
+        db.session.flush()
+        # Two posts in source (first + reply), one post in target
+        src_p1 = ForumPost(thread_id=source.id, author_id=None, content="S1", status="visible")
+        src_p2 = ForumPost(thread_id=source.id, author_id=None, content="S2", parent_post_id=None, status="visible")
+        tgt_p1 = ForumPost(thread_id=target.id, author_id=None, content="T1", status="visible")
+        db.session.add_all([src_p1, src_p2, tgt_p1])
+        db.session.commit()
+        source_id = source.id
+        target_id = target.id
+
+    resp = client.post(
+        f"/api/v1/forum/threads/{source_id}/merge",
+        headers=moderator_headers,
+        json={"target_thread_id": target_id},
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["id"] == target_id
+    # All posts should now belong to target thread
+    with app.app_context():
+        posts_in_target = ForumPost.query.filter_by(thread_id=target_id).all()
+        assert len(posts_in_target) == 3
+        src_thread = ForumThread.query.get(source_id)
+        tgt_thread = ForumThread.query.get(target_id)
+        assert src_thread.status == "archived"
+        # reply_count: total visible posts - 1
+        assert tgt_thread.reply_count == max(0, len(posts_in_target) - 1)
+        assert tgt_thread.last_post_id is not None
+
+
+def test_thread_merge_requires_moderator_permissions(app, client, auth_headers):
+    """Non-moderator cannot merge threads."""
+    with app.app_context():
+        cat = ForumCategory(slug="merge-cat2", title="Merge Cat 2", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        source = ForumThread(category_id=cat.id, slug="source-thread2", title="Source2", status="open")
+        target = ForumThread(category_id=cat.id, slug="target-thread2", title="Target2", status="open")
+        db.session.add_all([source, target])
+        db.session.commit()
+        source_id = source.id
+        target_id = target.id
+
+    resp = client.post(
+        f"/api/v1/forum/threads/{source_id}/merge",
+        headers=auth_headers,
+        json={"target_thread_id": target_id},
+        content_type="application/json",
+    )
+    assert resp.status_code in (401, 403)
+
+
+def test_thread_merge_merges_subscriptions(app, client, moderator_headers):
+    """Subscriptions from source are merged into target without duplicates."""
+    with app.app_context():
+        cat = ForumCategory(slug="merge-cat3", title="Merge Cat 3", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        source = ForumThread(category_id=cat.id, slug="source-thread3", title="Source3", status="open")
+        target = ForumThread(category_id=cat.id, slug="target-thread3", title="Target3", status="open")
+        db.session.add_all([source, target])
+        db.session.flush()
+        user1 = User(username="merge_user1", password_hash="x", role_id=Role.query.filter_by(name=Role.NAME_USER).first().id)
+        user2 = User(username="merge_user2", password_hash="x", role_id=Role.query.filter_by(name=Role.NAME_USER).first().id)
+        db.session.add_all([user1, user2])
+        db.session.flush()
+        sub_source = ForumThreadSubscription(thread_id=source.id, user_id=user1.id)
+        sub_target = ForumThreadSubscription(thread_id=target.id, user_id=user2.id)
+        db.session.add_all([sub_source, sub_target])
+        db.session.commit()
+        source_id = source.id
+        target_id = target.id
+        user1_id = user1.id
+        user2_id = user2.id
+
+    resp = client.post(
+        f"/api/v1/forum/threads/{source_id}/merge",
+        headers=moderator_headers,
+        json={"target_thread_id": target_id},
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    with app.app_context():
+        subs_source = ForumThreadSubscription.query.filter_by(thread_id=source_id).all()
+        subs_target = ForumThreadSubscription.query.filter_by(thread_id=target_id).all()
+        assert len(subs_source) == 0
+        user_ids = {s.user_id for s in subs_target}
+        assert user1_id in user_ids
+        assert user2_id in user_ids
 
 def test_notifications_mark_all_read(app, client, auth_headers):
     """User can mark all notifications as read."""

@@ -501,10 +501,16 @@
             moveBtn.className = "btn btn-outline btn-sm forum-mod-move";
             moveBtn.textContent = "Move…";
             moveBtn.dataset.threadId = thread.id;
+            var mergeBtn = document.createElement("button");
+            mergeBtn.type = "button";
+            mergeBtn.className = "btn btn-outline btn-sm forum-mod-merge";
+            mergeBtn.textContent = "Merge…";
+            mergeBtn.dataset.threadId = thread.id;
             modBar.appendChild(lockBtn);
             modBar.appendChild(pinBtn);
             modBar.appendChild(archBtn);
             modBar.appendChild(moveBtn);
+            modBar.appendChild(mergeBtn);
             modBar.hidden = false;
             lockBtn.addEventListener("click", function() {
                 var tid = lockBtn.dataset.threadId;
@@ -596,6 +602,47 @@
                             wrap.remove();
                         }).catch(function() {}).then(function() { goBtn.disabled = false; });
                     });
+                });
+            });
+            mergeBtn.addEventListener("click", function() {
+                var tid = mergeBtn.dataset.threadId;
+                if (!tid) return;
+                var input = window.prompt("Enter target thread slug or ID to merge into:", "");
+                if (!input) return;
+                var targetIdPromise;
+                var num = parseInt(input, 10);
+                if (!isNaN(num)) {
+                    targetIdPromise = Promise.resolve(num);
+                } else {
+                    targetIdPromise = apiGet("threads/" + encodeURIComponent(input)).then(function(t) {
+                        return t && t.id;
+                    });
+                }
+                targetIdPromise.then(function(targetId) {
+                    if (!targetId) {
+                        alert("Target thread not found.");
+                        return;
+                    }
+                    if (String(targetId) === String(tid)) {
+                        alert("Cannot merge a thread into itself.");
+                        return;
+                    }
+                    if (!window.confirm("Merge this thread into target thread " + targetId + "? This cannot be undone.")) {
+                        return;
+                    }
+                    mergeBtn.disabled = true;
+                    apiPost("threads/" + tid + "/merge", { target_thread_id: targetId })
+                        .then(function(t) {
+                            var slug = (t && t.slug) || null;
+                            var url = slug ? ("/forum/threads/" + encodeURIComponent(slug)) : window.location.href;
+                            window.location.href = url;
+                        })
+                        .catch(function(err) {
+                            alert((err && err.message) || "Failed to merge threads.");
+                        })
+                        .then(function() { mergeBtn.disabled = false; });
+                }).catch(function() {
+                    alert("Failed to resolve target thread.");
                 });
             });
         }
