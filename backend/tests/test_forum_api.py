@@ -218,6 +218,31 @@ def test_hidden_posts_not_visible_to_normal_users(app, client, auth_headers):
     assert "hidden" not in contents
 
 
+@pytest.mark.usefixtures("app")
+def test_thread_bookmark_create_and_list(client, auth_headers):
+    """User can bookmark a thread and see it in /forum/bookmarks."""
+    with client.application.app_context():
+        user = User.query.filter_by(username="testuser").first()
+        cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        thread = ForumThread(category_id=cat.id, slug="bookmark-me", title="Bookmark me", status="open")
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Bookmark thread
+    resp = client.post(f"/api/v1/forum/threads/{thread_id}/bookmark", headers=auth_headers)
+    assert resp.status_code == 200
+
+    # List bookmarks
+    resp2 = client.get("/api/v1/forum/bookmarks", headers=auth_headers)
+    assert resp2.status_code == 200
+    data = resp2.get_json()
+    slugs = {t["slug"] for t in data["items"]}
+    assert "bookmark-me" in slugs
+
+
 # ============= LIKE/UNLIKE TESTS =============
 
 def test_like_requires_visibility(app, client, auth_headers):

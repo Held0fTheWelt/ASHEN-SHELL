@@ -17,6 +17,9 @@ from app.models import (
     ForumThreadSubscription,
     Notification,
     User,
+    ForumThreadBookmark,
+    ForumTag,
+    ForumThreadTag,
 )
 
 
@@ -795,6 +798,117 @@ def unsubscribe_thread(user: User, thread: ForumThread) -> None:
         return
     db.session.delete(existing)
     db.session.commit()
+
+
+def bookmark_thread(user: User, thread: ForumThread) -> ForumThreadBookmark:
+    """Create or return an existing bookmark for a thread."""
+    existing = ForumThreadBookmark.query.filter_by(thread_id=thread.id, user_id=user.id).first()
+    if existing:
+        return existing
+    bm = ForumThreadBookmark(thread_id=thread.id, user_id=user.id, created_at=_utc_now())
+    db.session.add(bm)
+    db.session.commit()
+    return bm
+
+
+def unbookmark_thread(user: User, thread: ForumThread) -> None:
+    """Remove a bookmark for a thread if it exists."""
+    existing = ForumThreadBookmark.query.filter_by(thread_id=thread.id, user_id=user.id).first()
+    if not existing:
+        return
+    db.session.delete(existing)
+    db.session.commit()
+
+
+def list_bookmarked_threads(user: User, *, page: int = 1, per_page: int = 20) -> Tuple[List[ForumThread], int]:
+    """Return visible bookmarked threads for a user with pagination."""
+    q = (
+        ForumThread.query.join(ForumThreadBookmark, ForumThreadBookmark.thread_id == ForumThread.id)
+        .filter(ForumThreadBookmark.user_id == user.id)
+        .filter(ForumThread.deleted_at.is_(None))
+    )
+    q = q.join(ForumCategory, ForumCategory.id == ForumThread.category_id)
+    q = q.filter(ForumCategory.is_active.is_(True))
+    total = q.count()
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    threads = (
+        q.order_by(ForumThread.is_pinned.desc(), ForumThread.last_post_at.desc().nullslast())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+    return threads, total
+
+
+def _normalize_tag_value(raw: str) -> Optional[str]:
+    if not raw or not isinstance(raw, str):
+        return None
+    s = raw.strip().lower()
+    s = re.sub(r"[^a-z0-9\\-_]+", "-", s)
+    s = re.sub(r"-{2,}", "-", s).strip("-")
+    return s or None
+
+
+def get_or_create_tags(values: List[str]) -> List[ForumTag]:
+    """Normalize tag strings, create missing ForumTag rows, and return tags."""
+    if not values:
+        return []
+    normalized: List[Tuple[str, str]] = []
+    for v in values:
+        slug = _normalize_tag_value(v)
+        if slug:
+            normalized.append((slug, v.strip()))
+    if not normalized:
+        return []
+    slug_to_label: dict[str, str] = {}
+    for slug, label in normalized:
+        if slug not in slug_to_label:
+            slug_to_label[slug] = label
+    existing_tags = ForumTag.query.filter(ForumTag.slug.in_(list(slug_to_label.keys()))).all()
+    existing_by_slug = {t.slug: t for t in existing_tags}
+    created: List[ForumTag] = []
+    for slug, label in slug_to_label.items():
+        if slug in existing_by_slug:
+            continue
+        tag = ForumTag(slug=slug, label=label[:64], created_at=_utc_now())
+        db.session.add(tag)
+        created.append(tag)
+    if created:
+        db.session.commit()
+        for t in created:
+            existing_by_slug[t.slug] = t
+    return list(existing_by_slug.values())
+
+
+def set_thread_tags(thread: ForumThread, *, tags: List[str]) -> List[ForumTag]:
+    """Replace all tags on a thread with the given tag values."""
+    tag_rows = get_or_create_tags(tags)
+    tag_ids = {t.id for t in tag_rows}
+
+    mappings = ForumThreadTag.query.filter_by(thread_id=thread.id).all()
+    existing_tag_ids = {m.tag_id for m in mappings}
+
+    for m in mappings:
+        if m.tag_id not in tag_ids:
+            db.session.delete(m)
+
+    for t in tag_rows:
+        if t.id not in existing_tag_ids:
+            db.session.add(ForumThreadTag(thread_id=thread.id, tag_id=t.id))
+
+    db.session.commit()
+    return tag_rows
+
+
+def list_tags_for_thread(thread: ForumThread) -> List[ForumTag]:
+    """Return all tags associated with a thread."""
+    return (
+        ForumTag.query.join(ForumThreadTag, ForumThreadTag.tag_id == ForumTag.id)
+        .filter(ForumThreadTag.thread_id == thread.id)
+        .order_by(ForumTag.slug.asc())
+        .all()
+    )
 
 
 def create_notifications_for_thread_reply(

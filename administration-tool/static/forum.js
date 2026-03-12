@@ -181,6 +181,10 @@
                 var parts = [];
                 if (t.reply_count != null) parts.push(t.reply_count + " replies");
                 if (t.last_post_at) parts.push(formatDate(t.last_post_at));
+                if (t.tags && t.tags.length) {
+                    var tagNames = t.tags.map(function(tag) { return tag.label || tag.slug; }).join(", ");
+                    if (tagNames) parts.push("Tags: " + tagNames);
+                }
                 meta.textContent = parts.join(" · ");
                 row.appendChild(link);
                 row.appendChild(meta);
@@ -197,10 +201,26 @@
             }
         }
 
+        var searchCategoryInput = document.getElementById("forum-search-category");
+        var searchTagInput = document.getElementById("forum-search-tag");
+
+        function buildSearchQuery(q, page, perPage) {
+            var params = [];
+            if (q) params.push("q=" + encodeURIComponent(q));
+            if (page) params.push("page=" + encodeURIComponent(String(page)));
+            if (perPage) params.push("limit=" + encodeURIComponent(String(perPage)));
+            if (searchCategoryInput && searchCategoryInput.value.trim()) {
+                params.push("category=" + encodeURIComponent(searchCategoryInput.value.trim()));
+            }
+            if (searchTagInput && searchTagInput.value.trim()) {
+                params.push("tag=" + encodeURIComponent(searchTagInput.value.trim().toLowerCase()));
+            }
+            return "search" + (params.length ? "?" + params.join("&") : "");
+        }
+
         if (searchForm) searchForm.addEventListener("submit", function(e) {
             e.preventDefault();
             var q = (searchInput && searchInput.value) ? searchInput.value.trim() : "";
-            if (!q) return;
             searchState.q = q;
             searchState.page = 1;
             if (loading) loading.hidden = true;
@@ -209,10 +229,10 @@
             if (errEl) errEl.hidden = true;
             if (searchResults) {
                 searchResults.hidden = false;
-                if (searchTitle) searchTitle.textContent = "Search: " + escapeHtml(q);
+                if (searchTitle) searchTitle.textContent = q ? "Search: " + escapeHtml(q) : "Search";
             }
             showSearchLoading(true);
-            apiGet("search?q=" + encodeURIComponent(q) + "&page=1&limit=" + searchState.perPage)
+            apiGet(buildSearchQuery(q, 1, searchState.perPage))
                 .then(function(data) {
                     var items = (data && data.items) ? data.items : [];
                     var total = (data && typeof data.total === "number") ? data.total : 0;
@@ -234,7 +254,7 @@
             if (searchState.page <= 1 || !searchState.q) return;
             searchState.page--;
             showSearchLoading(true);
-            apiGet("search?q=" + encodeURIComponent(searchState.q) + "&page=" + searchState.page + "&limit=" + searchState.perPage)
+            apiGet(buildSearchQuery(searchState.q, searchState.page, searchState.perPage))
                 .then(function(data) {
                     var items = (data && data.items) ? data.items : [];
                     var total = (data && typeof data.total === "number") ? data.total : 0;
@@ -247,7 +267,7 @@
             if (searchState.page >= searchState.totalPages || !searchState.q) return;
             searchState.page++;
             showSearchLoading(true);
-            apiGet("search?q=" + encodeURIComponent(searchState.q) + "&page=" + searchState.page + "&limit=" + searchState.perPage)
+            apiGet(buildSearchQuery(searchState.q, searchState.page, searchState.perPage))
                 .then(function(data) {
                     var items = (data && data.items) ? data.items : [];
                     var total = (data && typeof data.total === "number") ? data.total : 0;

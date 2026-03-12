@@ -197,3 +197,64 @@ class ForumThreadSubscription(db.Model):
 
     thread = db.relationship("ForumThread", backref="subscriptions")
 
+
+class ForumThreadBookmark(db.Model):
+    """User bookmark for a forum thread."""
+
+    __tablename__ = "forum_thread_bookmarks"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    thread_id = db.Column(
+        db.Integer,
+        db.ForeignKey("forum_threads.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now)
+
+    __table_args__ = (
+        db.UniqueConstraint("thread_id", "user_id", name="uq_forum_thread_bookmark_thread_user"),
+    )
+
+    thread = db.relationship("ForumThread", backref="bookmarks")
+
+
+class ForumTag(db.Model):
+    """Tag for threads (normalized slug + human label)."""
+
+    __tablename__ = "forum_tags"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    slug = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    label = db.Column(db.String(64), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now)
+
+
+class ForumThreadTag(db.Model):
+    """Many-to-many link between threads and tags."""
+
+    __tablename__ = "forum_thread_tags"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    thread_id = db.Column(
+        db.Integer,
+        db.ForeignKey("forum_threads.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tag_id = db.Column(
+        db.Integer,
+        db.ForeignKey("forum_tags.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint("thread_id", "tag_id", name="uq_forum_thread_tags_thread_tag"),
+    )
+
+

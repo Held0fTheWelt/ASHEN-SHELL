@@ -17,6 +17,9 @@ from app.models.forum import (
     ForumPostLike,
     ForumReport,
     ForumThreadSubscription,
+    ForumThreadBookmark,
+    ForumTag,
+    ForumThreadTag,
 )
 
 __all__ = [
@@ -43,4 +46,7 @@ __all__ = [
     "ForumPostLike",
     "ForumReport",
     "ForumThreadSubscription",
+    "ForumThreadBookmark",
+    "ForumTag",
+    "ForumThreadTag",
 ]

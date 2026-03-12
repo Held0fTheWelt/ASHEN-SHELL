@@ -17,7 +17,16 @@ from app.auth.permissions import (
     get_current_user,
 )
 from app.extensions import limiter, db
-from app.models import ForumCategory, ForumPostLike, ForumThread, ForumPost, ForumReport, ForumThreadSubscription, Notification
+from app.models import (
+    ForumCategory,
+    ForumPostLike,
+    ForumThread,
+    ForumPost,
+    ForumReport,
+    ForumThreadSubscription,
+    Notification,
+    ForumTag,
+)
 from app.services import log_activity
 from app.services.forum_service import (
     create_category,
@@ -69,6 +78,11 @@ from app.services.forum_service import (
     user_can_view_post,
     user_can_view_thread,
     _utc_now,
+    bookmark_thread,
+    unbookmark_thread,
+    list_bookmarked_threads,
+    set_thread_tags,
+    list_tags_for_thread,
 )
 
 
@@ -195,11 +209,16 @@ def forum_thread_detail(slug):
     data["author_username"] = thread.author.username if thread.author else None
     if thread.category:
         data["category"] = thread.category.to_dict()
+    sub = None
     if user and user.id:
         sub = ForumThreadSubscription.query.filter_by(thread_id=thread.id, user_id=user.id).first()
         data["subscribed_by_me"] = sub is not None
     else:
         data["subscribed_by_me"] = False
+    # Attach tags for community comfort layer
+    tags = list_tags_for_thread(thread)
+    if tags:
+        data["tags"] = [{"slug": t.slug, "label": t.label} for t in tags]
     return jsonify(data), 200
 
 
@@ -258,26 +277,60 @@ def forum_thread_posts(thread_id: int):
 @jwt_required(optional=True)
 def forum_search():
     """
-    Simple search over thread titles (and optionally post content).
-    Query: q, page, limit.
+    Simple search over thread titles (and optionally post content), with basic filters.
+    Query: q, page, limit, category (slug), status, tag, include_content=1.
     """
-    from app.models import ForumThread, ForumPost  # imported lazily to avoid cycles
+    from app.models import ForumThread, ForumPost, ForumCategory, ForumThreadTag  # imported lazily to avoid cycles
 
     user = _current_user_optional()
     q_raw = (request.args.get("q") or "").strip()
-    if not q_raw:
-        return jsonify({"items": [], "total": 0, "page": 1, "per_page": 20}), 200
     page = _parse_int(request.args.get("page"), 1, min_val=1)
     limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    category_slug = (request.args.get("category") or "").strip() or None
+    status_filter = (request.args.get("status") or "").strip() or None
+    tag_slug = (request.args.get("tag") or "").strip().lower() or None
+    include_content = (request.args.get("include_content", "").strip().lower() in ("1", "true", "yes"))
 
-    like_pattern = f"%{q_raw}%"
+    if not q_raw and not category_slug and not status_filter and not tag_slug:
+        # Explicitly handle empty/very broad queries: no filters means no results to avoid huge scans.
+        return jsonify({"items": [], "total": 0, "page": page, "per_page": limit}), 200
+    like_pattern = f"%{q_raw}%" if q_raw else None
     q = ForumThread.query.filter(ForumThread.status != "deleted")
-    q = q.filter(ForumThread.title.ilike(like_pattern))
-    # Restrict to categories the user may access
+    if like_pattern:
+        q = q.filter(ForumThread.title.ilike(like_pattern))
+
+    # Optional category filter (slug)
     q = q.join(ForumCategory).filter(ForumCategory.id == ForumThread.category_id)
+    if category_slug:
+        q = q.filter(ForumCategory.slug == category_slug)
+
+    # Optional status filter
+    if status_filter in ("open", "locked", "archived", "hidden"):
+        q = q.filter(ForumThread.status == status_filter)
+
+    # Optional tag filter
+    if tag_slug:
+        from app.models import ForumTag  # local import
+        q = q.join(ForumThreadTag, ForumThreadTag.thread_id == ForumThread.id).join(
+            ForumTag, ForumTag.id == ForumThreadTag.tag_id
+        ).filter(ForumTag.slug == tag_slug)
+
+    # Optional post content search (best-effort, limited to title-matched threads)
+    if include_content and like_pattern:
+        sub = (
+            ForumPost.query.with_entities(ForumPost.thread_id)
+            .filter(ForumPost.content.ilike(like_pattern))
+            .subquery()
+        )
+        q = q.filter(
+            db.or_(
+                ForumThread.title.ilike(like_pattern),
+                ForumThread.id.in_(sub),
+            )
+        )
 
     # Apply per-thread visibility rules in Python; for large data sets this could be optimized.
-    all_matches = q.order_by(ForumThread.is_pinned.desc(), ForumThread.last_post_at.desc().nullslast()).all()
+    all_matches = q.order_by(ForumThread.is_pinned.desc(), ForumThread.last_post_at.desc().nullslast(), ForumThread.id.asc()).all()
     visible = [t for t in all_matches if user_can_view_thread(user, t)]
     total = len(visible)
     page = max(1, page)
@@ -485,6 +538,96 @@ def forum_post_create(thread_id: int):
         target_id=str(post.id),
     )
     return jsonify(post.to_dict()), 201
+
+
+@api_v1_bp.route("/forum/threads/<int:thread_id>/bookmark", methods=["POST"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_thread_bookmark(thread_id: int):
+    """
+    Bookmark a thread for the current user.
+    """
+    user, err_resp = _require_user()
+    if err_resp:
+        return err_resp
+    thread = get_thread_by_id(thread_id)
+    if not thread or not user_can_view_thread(user, thread):
+        return jsonify({"error": "Thread not found"}), 404
+    bookmark_thread(user, thread)
+    return jsonify({"message": "Bookmarked"}), 200
+
+
+@api_v1_bp.route("/forum/threads/<int:thread_id>/bookmark", methods=["DELETE"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_thread_unbookmark(thread_id: int):
+    """
+    Remove bookmark for a thread for the current user.
+    """
+    user, err_resp = _require_user()
+    if err_resp:
+        return err_resp
+    thread = get_thread_by_id(thread_id)
+    if not thread:
+        return jsonify({"error": "Thread not found"}), 404
+    unbookmark_thread(user, thread)
+    return jsonify({"message": "Unbookmarked"}), 200
+
+
+@api_v1_bp.route("/forum/bookmarks", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_bookmarks_list():
+    """
+    List bookmarked threads for the current user.
+
+    Query: page, limit.
+    """
+    user, err_resp = _require_user()
+    if err_resp:
+        return err_resp
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    threads, total = list_bookmarked_threads(user, page=page, per_page=limit)
+    items = []
+    for t in threads:
+        d = t.to_dict()
+        d["author_username"] = t.author.username if t.author else None
+        if t.category:
+            d["category"] = t.category.to_dict()
+        tags = list_tags_for_thread(t)
+        if tags:
+            d["tags"] = [{"slug": tag.slug, "label": tag.label} for tag in tags]
+        items.append(d)
+    return jsonify({"items": items, "total": total, "page": page, "per_page": limit}), 200
+
+
+@api_v1_bp.route("/forum/threads/<int:thread_id>/tags", methods=["PUT"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def forum_thread_set_tags(thread_id: int):
+    """
+    Set tags for a thread. Moderator/admin or thread author only.
+    Body: { "tags": ["tag1", "tag2", ...] }
+    """
+    user, err_resp = _require_user()
+    if err_resp:
+        return err_resp
+    thread = get_thread_by_id(thread_id)
+    if not thread:
+        return jsonify({"error": "Thread not found"}), 404
+    if not (thread.author_id == user.id or current_user_is_moderator() or current_user_is_admin()):
+        return jsonify({"error": "Forbidden"}), 403
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    raw_tags = data.get("tags") or []
+    if not isinstance(raw_tags, list):
+        return jsonify({"error": "tags must be a list of strings"}), 400
+    tags = [str(t) for t in raw_tags if isinstance(t, (str, bytes))]
+    tag_rows = set_thread_tags(thread, tags=tags)
+    out = [{"slug": t.slug, "label": t.label} for t in tag_rows]
+    return jsonify({"tags": out}), 200
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>", methods=["PUT"])
