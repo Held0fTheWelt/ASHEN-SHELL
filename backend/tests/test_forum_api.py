@@ -4,7 +4,16 @@ from datetime import datetime, timezone
 import pytest
 
 from app.extensions import db
-from app.models import ForumCategory, ForumThread, ForumPost, ForumPostLike, ForumReport, User
+from app.models import (
+    ForumCategory,
+    ForumThread,
+    ForumPost,
+    ForumPostLike,
+    ForumReport,
+    ForumThreadSubscription,
+    Notification,
+    User,
+)
 
 
 # ============= CATEGORY VISIBILITY & ACCESS TESTS =============
@@ -629,3 +638,105 @@ def test_forum_search_includes_author_username(app, client, test_user):
     data = resp.get_json()
     assert len(data["items"]) > 0
     assert data["items"][0]["author_username"] == "testuser"
+
+
+# ============= SUBSCRIBE / UNSUBSCRIBE =============
+
+
+def test_subscribe_unsubscribe_flow(app, client, auth_headers):
+    """User can subscribe to a thread and then unsubscribe; thread detail returns subscribed_by_me."""
+    with app.app_context():
+        cat = ForumCategory(slug="sub-cat", title="Sub Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        thread = ForumThread(category_id=cat.id, slug="sub-thread", title="Sub Thread", status="open")
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Not subscribed initially
+    resp = client.get("/api/v1/forum/threads/sub-thread", headers=auth_headers)
+    assert resp.status_code == 200
+    assert resp.get_json().get("subscribed_by_me") is False
+
+    # Subscribe
+    resp = client.post("/api/v1/forum/threads/{}/subscribe".format(thread_id), headers=auth_headers)
+    assert resp.status_code == 200
+    resp = client.get("/api/v1/forum/threads/sub-thread", headers=auth_headers)
+    assert resp.get_json().get("subscribed_by_me") is True
+
+    # Unsubscribe
+    resp = client.delete("/api/v1/forum/threads/{}/subscribe".format(thread_id), headers=auth_headers)
+    assert resp.status_code == 200
+    resp = client.get("/api/v1/forum/threads/sub-thread", headers=auth_headers)
+    assert resp.get_json().get("subscribed_by_me") is False
+
+
+# ============= NOTIFICATIONS =============
+
+
+def test_notification_created_on_reply_for_subscribers(app, client, auth_headers, moderator_headers):
+    """When a user posts a reply in a thread, other subscribers (not the author) receive a notification."""
+    with app.app_context():
+        cat = ForumCategory(slug="notif-cat", title="Notif Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        thread = ForumThread(category_id=cat.id, slug="notif-thread", title="Notif Thread", status="open")
+        db.session.add(thread)
+        db.session.commit()
+        # Test user (subscriber) and moderator (will post)
+        subscriber = User.query.filter_by(username="testuser").first()
+        sub1 = ForumThreadSubscription(thread_id=thread.id, user_id=subscriber.id)
+        db.session.add(sub1)
+        db.session.commit()
+        thread_id = thread.id
+        subscriber_id = subscriber.id
+
+    # Moderator posts a reply; subscriber (testuser) should get a notification, not the author
+    resp = client.post(
+        "/api/v1/forum/threads/{}/posts".format(thread_id),
+        headers=moderator_headers,
+        json={"content": "A reply"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+
+    with app.app_context():
+        notifications = Notification.query.filter_by(target_type="forum_thread", target_id=thread_id).all()
+        assert len(notifications) == 1
+        assert notifications[0].user_id == subscriber_id
+        assert notifications[0].message
+
+
+def test_notifications_list_and_mark_read(app, client, auth_headers):
+    """User can list notifications and mark one as read."""
+    with app.app_context():
+        user = User.query.filter_by(username="testuser").first()
+        n = Notification(
+            user_id=user.id,
+            event_type="thread_reply",
+            target_type="forum_thread",
+            target_id=99,
+            message="Test notification",
+            is_read=False,
+        )
+        db.session.add(n)
+        db.session.commit()
+        nid = n.id
+
+    resp = client.get("/api/v1/notifications", headers=auth_headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert "items" in data
+    items = [i for i in data["items"] if i["id"] == nid]
+    assert len(items) == 1
+    assert items[0]["is_read"] is False
+
+    resp = client.patch("/api/v1/notifications/{}/read".format(nid), headers=auth_headers)
+    assert resp.status_code == 200
+    assert resp.get_json().get("is_read") is True
+
+    resp = client.get("/api/v1/notifications", headers=auth_headers)
+    items2 = [i for i in resp.get_json()["items"] if i["id"] == nid]
+    assert len(items2) == 1
+    assert items2[0]["is_read"] is True

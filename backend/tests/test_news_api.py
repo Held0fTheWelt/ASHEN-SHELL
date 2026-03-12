@@ -308,3 +308,49 @@ def test_news_delete_with_moderator_returns_200(client, moderator_headers, sampl
     assert response.status_code == 200
     get_resp = client.get("/api/v1/news/{}".format(pub2.id))
     assert get_resp.status_code == 404
+
+
+# --- Discussion link (link/unlink and public response) ---
+
+
+def test_news_discussion_link_unlink_and_public_response(app, client, moderator_headers, sample_news):
+    """Link a forum thread to a news article; public detail includes discussion_thread_slug; unlink clears it."""
+    from app.extensions import db
+    from app.models import ForumCategory, ForumThread
+
+    pub1_article, _pub2, _draft = sample_news
+    with app.app_context():
+        cat = ForumCategory(slug="news-discuss", title="News Discuss", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        thread = ForumThread(category_id=cat.id, slug="article-discussion", title="Article discussion", status="open")
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Link
+    resp = client.post(
+        "/api/v1/news/{}/discussion-thread".format(pub1_article.id),
+        headers=moderator_headers,
+        json={"discussion_thread_id": thread_id},
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data.get("discussion_thread_id") == thread_id
+
+    # Public detail includes discussion fields
+    get_resp = client.get("/api/v1/news/{}".format(pub1_article.id))
+    assert get_resp.status_code == 200
+    get_data = get_resp.get_json()
+    assert get_data.get("discussion_thread_id") == thread_id
+    assert get_data.get("discussion_thread_slug") == "article-discussion"
+
+    # Unlink
+    del_resp = client.delete("/api/v1/news/{}/discussion-thread".format(pub1_article.id), headers=moderator_headers)
+    assert del_resp.status_code == 200
+    get_resp2 = client.get("/api/v1/news/{}".format(pub1_article.id))
+    assert get_resp2.status_code == 200
+    get_data2 = get_resp2.get_json()
+    assert get_data2.get("discussion_thread_id") is None
+    assert get_data2.get("discussion_thread_slug") is None
