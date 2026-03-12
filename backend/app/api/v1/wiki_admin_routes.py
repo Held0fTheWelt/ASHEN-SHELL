@@ -22,7 +22,7 @@ from app.services.wiki_service import (
 
 
 def _page_to_dict(page):
-    return {
+    out = {
         "id": page.id,
         "key": page.key,
         "parent_id": page.parent_id,
@@ -30,7 +30,14 @@ def _page_to_dict(page):
         "is_published": page.is_published,
         "created_at": page.created_at.isoformat() if page.created_at else None,
         "updated_at": page.updated_at.isoformat() if page.updated_at else None,
+        "discussion_thread_id": page.discussion_thread_id,
     }
+    if page.discussion_thread_id is not None:
+        thread = db.session.get(ForumThread, page.discussion_thread_id)
+        out["discussion_thread_slug"] = thread.slug if thread and thread.deleted_at is None else None
+    else:
+        out["discussion_thread_slug"] = None
+    return out
 
 
 def _translation_to_dict(t):

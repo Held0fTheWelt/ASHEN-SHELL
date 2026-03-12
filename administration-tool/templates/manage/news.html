@@ -75,6 +75,15 @@
                         <label for="manage-news-cover">Cover image URL</label>
                         <input type="text" id="manage-news-cover" name="cover_image" class="form-input">
                     </div>
+                    <div class="form-group manage-news-discussion-group">
+                        <h4 class="manage-news-subsection-title">Discussion thread</h4>
+                        <p class="manage-news-discussion-current">Linked: <span id="manage-news-discussion-slug">—</span></p>
+                        <div class="manage-news-discussion-actions">
+                            <input type="number" id="manage-news-discussion-thread-id" class="form-input manage-news-input-inline" placeholder="Thread ID" min="1" aria-label="Thread ID to link">
+                            <button type="button" class="btn btn-ghost" id="manage-news-discussion-link">Link</button>
+                            <button type="button" class="btn btn-ghost" id="manage-news-discussion-unlink">Unlink</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="manage-news-translations">
                     <h3 class="manage-news-section-title">Translations</h3>

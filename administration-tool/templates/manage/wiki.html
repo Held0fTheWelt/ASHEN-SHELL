@@ -28,6 +28,15 @@
                     <button type="button" class="manage-news-tab" data-lang="en" role="tab">EN</button>
                 </div>
                 <div id="manage-wiki-translation-status" class="manage-news-translation-status"></div>
+                <div class="form-group manage-wiki-discussion-group">
+                    <h3 class="manage-news-subsection-title">Discussion thread</h3>
+                    <p class="manage-wiki-discussion-current">Linked: <span id="manage-wiki-discussion-slug">—</span></p>
+                    <div class="manage-wiki-discussion-actions">
+                        <input type="number" id="manage-wiki-discussion-thread-id" class="form-input manage-wiki-input-inline" placeholder="Thread ID" min="1" aria-label="Thread ID to link">
+                        <button type="button" class="btn btn-ghost" id="manage-wiki-discussion-link">Link</button>
+                        <button type="button" class="btn btn-ghost" id="manage-wiki-discussion-unlink">Unlink</button>
+                    </div>
+                </div>
                 <div class="manage-wiki-split">
                     <div class="manage-panel">
                         <h3>Markdown</h3>

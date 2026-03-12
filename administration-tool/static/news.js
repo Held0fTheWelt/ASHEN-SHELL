@@ -259,6 +259,15 @@
                 content.appendChild(summary);
             }
             content.appendChild(body);
+            if (article.discussion_thread_slug) {
+                var discussWrap = document.createElement('p');
+                discussWrap.className = 'news-detail-discussion';
+                var discussLink = document.createElement('a');
+                discussLink.href = '/forum/threads/' + encodeURIComponent(article.discussion_thread_slug);
+                discussLink.textContent = 'Discuss this article';
+                discussWrap.appendChild(discussLink);
+                content.appendChild(discussWrap);
+            }
             content.hidden = false;
         }
 

@@ -7,7 +7,8 @@ from flask import current_app, jsonify, request
 from app.api.v1 import api_v1_bp
 from app.utils.html_sanitizer import sanitize_wiki_html
 from app.auth.permissions import get_current_user, require_jwt_moderator_or_admin
-from app.extensions import limiter
+from app.extensions import db, limiter
+from app.models import ForumThread
 from app.services import log_activity
 from app.services.wiki_service import get_wiki_page_by_slug
 
@@ -31,13 +32,25 @@ def wiki_page_get(slug):
         html = sanitize_wiki_html(raw_html) if raw_html else None
     except Exception:
         html = None
-    return jsonify({
+    payload = {
         "title": trans.title,
         "slug": trans.slug,
         "content_markdown": trans.content_markdown,
         "html": html,
         "language_code": trans.language_code,
-    }), 200
+    }
+    if page.discussion_thread_id is not None:
+        thread = db.session.get(ForumThread, page.discussion_thread_id)
+        if thread and thread.deleted_at is None:
+            payload["discussion_thread_id"] = thread.id
+            payload["discussion_thread_slug"] = thread.slug
+        else:
+            payload["discussion_thread_id"] = None
+            payload["discussion_thread_slug"] = None
+    else:
+        payload["discussion_thread_id"] = None
+        payload["discussion_thread_slug"] = None
+    return jsonify(payload), 200
 
 
 @api_v1_bp.route("/wiki", methods=["GET"])

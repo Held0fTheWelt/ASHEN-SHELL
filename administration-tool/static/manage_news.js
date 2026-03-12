@@ -278,6 +278,7 @@
                 });
                 setTab(state.currentLang);
                 updateTranslationStatusDisplay();
+                updateDiscussionDisplay();
                 ($("manage-news-editor-title") || {}).textContent = "Edit article";
                 var pubBtn = $("manage-news-publish-btn");
                 var unpubBtn = $("manage-news-unpublish-btn");
@@ -286,6 +287,56 @@
             })
             .catch(function(e) {
                 showError(typeof e === "object" && e.message ? e.message : "Failed to load article.");
+            });
+    }
+
+    function updateDiscussionDisplay() {
+        var slugEl = $("manage-news-discussion-slug");
+        var unlinkBtn = $("manage-news-discussion-unlink");
+        var threadIdInput = $("manage-news-discussion-thread-id");
+        if (slugEl) slugEl.textContent = (state.article && state.article.discussion_thread_slug) ? state.article.discussion_thread_slug : "—";
+        if (unlinkBtn) unlinkBtn.hidden = !(state.article && state.article.discussion_thread_id);
+        if (threadIdInput) threadIdInput.value = "";
+    }
+
+    function onDiscussionLink() {
+        var id = ($("manage-news-id") || {}).value;
+        if (!id) return;
+        var threadIdInput = $("manage-news-discussion-thread-id");
+        var raw = threadIdInput && threadIdInput.value ? threadIdInput.value.trim() : "";
+        var tid = parseInt(raw, 10);
+        if (!raw || isNaN(tid) || tid < 1) {
+            showFormError("Enter a valid thread ID (integer ≥ 1).");
+            return;
+        }
+        apiRef("/api/v1/news/" + id + "/discussion-thread", { method: "POST", body: JSON.stringify({ discussion_thread_id: tid }) })
+            .then(function() {
+                showFormSuccess("Discussion thread linked.");
+                return apiRef("/api/v1/news/" + id);
+            })
+            .then(function(article) {
+                state.article = article;
+                updateDiscussionDisplay();
+            })
+            .catch(function(e) {
+                showFormError(typeof e === "object" && e.message ? e.message : "Link failed.");
+            });
+    }
+
+    function onDiscussionUnlink() {
+        var id = ($("manage-news-id") || {}).value;
+        if (!id) return;
+        apiRef("/api/v1/news/" + id + "/discussion-thread", { method: "DELETE" })
+            .then(function() {
+                showFormSuccess("Discussion thread unlinked.");
+                return apiRef("/api/v1/news/" + id);
+            })
+            .then(function(article) {
+                state.article = article;
+                updateDiscussionDisplay();
+            })
+            .catch(function(e) {
+                showFormError(typeof e === "object" && e.message ? e.message : "Unlink failed.");
             });
     }
 
@@ -308,6 +359,7 @@
         var empty = $("manage-news-editor-empty");
         if (form) form.hidden = true;
         if (empty) empty.hidden = false;
+        updateDiscussionDisplay();
         ($("manage-news-editor-title") || {}).textContent = "Create / Edit";
     }
 
@@ -574,6 +626,10 @@
         if (pubTransBtn) pubTransBtn.addEventListener("click", onPublishTranslation);
         if (autoBtn) autoBtn.addEventListener("click", onAutoTranslate);
         if (delBtn) delBtn.addEventListener("click", onDelete);
+        var discussionLinkBtn = $("manage-news-discussion-link");
+        var discussionUnlinkBtn = $("manage-news-discussion-unlink");
+        if (discussionLinkBtn) discussionLinkBtn.addEventListener("click", onDiscussionLink);
+        if (discussionUnlinkBtn) discussionUnlinkBtn.addEventListener("click", onDiscussionUnlink);
         if (prevBtn) prevBtn.addEventListener("click", function() {
             if (state.page > 1) { state.page--; fetchList(); }
         });
