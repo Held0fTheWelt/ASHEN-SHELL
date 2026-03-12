@@ -10,7 +10,11 @@ from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
-from app.auth.permissions import current_user_is_admin, get_current_user
+from app.auth.permissions import (
+    current_user_is_admin,
+    current_user_is_moderator_or_admin,
+    get_current_user,
+)
 from app.extensions import limiter, db
 from app.models import ForumCategory, ForumThread, ForumPost
 from app.services import log_activity
@@ -638,6 +642,13 @@ def _require_admin():
     return user, None
 
 
+def _require_moderator_or_admin():
+    user = get_current_user()
+    if not user or not current_user_is_moderator_or_admin():
+        return None, (jsonify({"error": "Forbidden"}), 403)
+    return user, None
+
+
 @api_v1_bp.route("/forum/threads/<int:thread_id>/lock", methods=["POST"])
 @limiter.limit("30 per minute")
 @jwt_required()
@@ -854,7 +865,7 @@ def forum_reports_list():
     List forum reports (moderator/admin only).
     Query: status (open, reviewed, resolved, dismissed).
     """
-    user, err_resp = _require_admin()
+    user, err_resp = _require_moderator_or_admin()
     if err_resp:
         # Allow moderators as well, but admin-only helper above already ensures admin;
         # to avoid introducing a new feature flag, we keep this simple.
@@ -868,8 +879,8 @@ def forum_reports_list():
 @limiter.limit("60 per minute")
 @jwt_required()
 def forum_report_get(report_id: int):
-    """Get single report (admin only)."""
-    user, err_resp = _require_admin()
+    """Get single report (moderator/admin only)."""
+    user, err_resp = _require_moderator_or_admin()
     if err_resp:
         return err_resp
     report = get_report_by_id(report_id)
@@ -883,10 +894,10 @@ def forum_report_get(report_id: int):
 @jwt_required()
 def forum_report_update(report_id: int):
     """
-    Update report status (admin only).
+    Update report status (moderator/admin only).
     Body: status (open, reviewed, resolved, dismissed).
     """
-    user, err_resp = _require_admin()
+    user, err_resp = _require_moderator_or_admin()
     if err_resp:
         return err_resp
     report = get_report_by_id(report_id)

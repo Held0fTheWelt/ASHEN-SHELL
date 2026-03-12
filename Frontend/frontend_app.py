@@ -188,6 +188,12 @@ def manage_data():
     return render_template("manage/data.html")
 
 
+@app.route("/manage/forum")
+def manage_forum():
+    """Forum management (moderation, categories, reports)."""
+    return render_template("manage/forum.html")
+
+
 def _backend_origin():
     """Origin (scheme + netloc) of BACKEND_API_URL for CSP connect-src in split frontend/backend setups."""
     parsed = urlparse(BACKEND_API_URL)

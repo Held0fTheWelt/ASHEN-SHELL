@@ -1,0 +1,145 @@
+{% extends "manage/base.html" %}
+{% block title %}Forum – Manage{% endblock %}
+
+{% block content %}
+<section class="manage-section">
+    <header class="manage-section-header">
+        <h1 class="manage-section-title mono">// FORUM</h1>
+        <p class="manage-section-subtitle">Moderation and category management.</p>
+    </header>
+
+    <div class="manage-grid-2">
+        <div class="manage-card" id="manage-forum-categories-card">
+            <div class="manage-card-header">
+                <h2 class="manage-card-title mono">// CATEGORIES</h2>
+                <button type="button" class="btn btn-primary btn-sm" id="manage-forum-category-new">New category</button>
+            </div>
+            <div class="manage-card-body">
+                <p class="manage-state" id="manage-forum-categories-loading" role="status">Loading…</p>
+                <p class="manage-state manage-state-error" id="manage-forum-categories-error" role="alert" hidden></p>
+                <p class="manage-state" id="manage-forum-categories-empty" hidden>No categories found.</p>
+                <div class="table-wrap" id="manage-forum-categories-table-wrap" hidden>
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Slug</th>
+                            <th>Sort</th>
+                            <th>Active</th>
+                            <th>Private</th>
+                            <th>Required role</th>
+                        </tr>
+                        </thead>
+                        <tbody id="manage-forum-categories-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="manage-card-footer" id="manage-forum-categories-footer" hidden>
+                <span id="manage-forum-categories-count" class="mono">0 categories</span>
+            </div>
+        </div>
+
+        <div class="manage-card" id="manage-forum-category-editor">
+            <div class="manage-card-header">
+                <h2 class="manage-card-title mono" id="manage-forum-category-editor-title">// CATEGORY</h2>
+            </div>
+            <div class="manage-card-body">
+                <p id="manage-forum-category-editor-empty" class="muted">Select a category on the left or create a new one.</p>
+                <form id="manage-forum-category-form" class="manage-form" hidden>
+                    <input type="hidden" id="manage-forum-category-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="manage-forum-category-title">Title</label>
+                            <input type="text" id="manage-forum-category-title" class="form-input" required maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label for="manage-forum-category-slug">Slug</label>
+                            <input type="text" id="manage-forum-category-slug" class="form-input" required maxlength="128">
+                            <p class="field-hint mono">Slug is set on create and cannot be changed later in this UI.</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="manage-forum-category-description">Description</label>
+                        <textarea id="manage-forum-category-description" class="form-textarea" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="manage-forum-category-sort">Sort order</label>
+                            <input type="number" id="manage-forum-category-sort" class="form-input" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="manage-forum-category-required-role">Required role (optional)</label>
+                            <select id="manage-forum-category-required-role" class="form-select">
+                                <option value="">Any</option>
+                                <option value="user">user</option>
+                                <option value="qa">qa</option>
+                                <option value="moderator">moderator</option>
+                                <option value="admin">admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group checkbox-group">
+                            <label><input type="checkbox" id="manage-forum-category-active" checked> Active</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label><input type="checkbox" id="manage-forum-category-private"> Private / staff only</label>
+                        </div>
+                    </div>
+                    <p id="manage-forum-category-form-error" class="manage-form-error" role="alert" hidden></p>
+                    <div class="manage-form-actions">
+                        <button type="submit" class="btn btn-primary" id="manage-forum-category-save">Save</button>
+                        <button type="button" class="btn btn-ghost" id="manage-forum-category-reset">Reset</button>
+                        <button type="button" class="btn btn-outline" id="manage-forum-category-delete">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="manage-card" id="manage-forum-reports-card">
+        <div class="manage-card-header">
+            <h2 class="manage-card-title mono">// REPORTS</h2>
+            <div class="table-filters">
+                <label for="manage-forum-report-status" class="visually-hidden">Status</label>
+                <select id="manage-forum-report-status" class="filter-select">
+                    <option value="">All</option>
+                    <option value="open">Open</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="dismissed">Dismissed</option>
+                </select>
+                <button type="button" class="btn btn-outline btn-sm" id="manage-forum-report-refresh">Refresh</button>
+            </div>
+        </div>
+        <div class="manage-card-body">
+            <p class="manage-state" id="manage-forum-reports-loading" role="status">Loading…</p>
+            <p class="manage-state manage-state-error" id="manage-forum-reports-error" role="alert" hidden></p>
+            <p class="manage-state" id="manage-forum-reports-empty" hidden>No reports.</p>
+            <div class="table-wrap" id="manage-forum-reports-table-wrap" hidden>
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Target</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="manage-forum-reports-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="manage-card-footer" id="manage-forum-reports-footer" hidden>
+            <span id="manage-forum-reports-count" class="mono">0 reports</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='manage_forum.js') }}"></script>
+{% endblock %}
+
