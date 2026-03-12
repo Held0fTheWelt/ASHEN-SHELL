@@ -19,11 +19,37 @@ All dashboard data is moderator-only; endpoints require JWT with moderator or ad
 |----------|--------|
 | `GET /api/v1/forum/moderation/metrics` | Counts for dashboard |
 | `GET /api/v1/forum/moderation/recent-reports?limit=10` | Open reports for action |
-| `GET /api/v1/forum/moderation/recently-handled?limit=10` | Recently handled reports |
+| `GET /api/v1/forum/moderation/recently-handled?limit=10` | Recently handled reports (status `reviewed` / `escalated` / `resolved` / `dismissed`) |
 | `GET /api/v1/forum/moderation/locked-threads` | List locked threads |
 | `GET /api/v1/forum/moderation/pinned-threads` | List pinned threads |
 | `GET /api/v1/forum/moderation/hidden-posts` | List hidden posts |
-| `PUT /api/v1/forum/reports/<id>` | Update report status (body: `{"status": "open"\|"reviewed"\|"resolved"\|"dismissed"}`) |
+| `PUT /api/v1/forum/reports/<id>` | Update report status (body: `{"status": "open"\|"reviewed"\|"escalated"\|"resolved"\|"dismissed"}`) |
+| `POST /api/v1/forum/reports/bulk-status` | Bulk update status for multiple reports (body: `{"report_ids": [<int>...], "status": "reviewed"\|"escalated"\|"resolved"\|"dismissed"}`) |
+| `GET /api/v1/forum/moderation/log` | Moderation/audit log for forum actions (`category=forum`), paginated |
+
+## Bulk moderation actions
+
+The moderation dashboard and admin tooling support a small set of safe bulk operations for staff:
+
+- **Bulk thread status (lock/archive):**
+  - Endpoint: `POST /api/v1/forum/moderation/bulk-threads/status`
+  - Who: moderators/admins with rights on the affected categories.
+  - Body: `{"thread_ids": [<int>...], "lock": true|false?, "archive": true|false?}`.
+  - Behavior: applies lock/unlock and/or archive/unarchive to each thread the caller may moderate; skips others. All changes reuse the existing per-thread helpers (`set_thread_lock`, `set_thread_archived`, `set_thread_unarchived`).
+
+- **Bulk post hide/unhide:**
+  - Endpoint: `POST /api/v1/forum/moderation/bulk-posts/hide`
+  - Who: moderators/admins with rights on the affected categories.
+  - Body: `{"post_ids": [<int>...], "hidden": true|false}`.
+  - Behavior: hides or unhides posts using the same rules as the single-post hide/unhide endpoints; counters and `last_post_*` are recalculated via the existing helpers.
+
+- **Bulk report triage:**
+  - Endpoint: `POST /api/v1/forum/reports/bulk-status`
+  - Who: moderators/admins.
+  - Body: `{"report_ids": [<int>...], "status": "reviewed"|"escalated"|"resolved"|"dismissed"}`.
+  - Behavior: updates each existing report to the given status and records `handled_by` / `handled_at`. Invalid or missing IDs are skipped.
+
+All bulk operations are logged via the central activity log (`category="forum"`) so they appear in both the admin logs and the dedicated forum moderation log.
 
 ## Thread moderation (public thread page)
 

@@ -67,9 +67,9 @@
         }
       ]
     },
-    {
-      "name": "News",
-      "item": [
+        {
+          "name": "News",
+          "item": [
         {
           "name": "List News",
           "request": {
@@ -268,28 +268,98 @@
             }
           }
         },
-        {
-          "name": "Unlink Discussion Thread",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/news/1/discussion-thread",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "news",
-                "1",
-                "discussion-thread"
-              ]
+            {
+              "name": "Unlink Discussion Thread",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/news/1/discussion-thread",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "news",
+                    "1",
+                    "discussion-thread"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "List Related Threads (Public)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/news/1/related-threads",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "news",
+                    "1",
+                    "related-threads"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Add Related Thread (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"thread_id\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/news/1/related-threads",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "news",
+                    "1",
+                    "related-threads"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Remove Related Thread (Moderator+)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/news/1/related-threads/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "news",
+                    "1",
+                    "related-threads",
+                    "1"
+                  ]
+                }
+              }
             }
-          }
-        }
-      ]
-    },
+          ]
+        },
     {
       "name": "Forum",
       "item": [
@@ -640,6 +710,112 @@
                   "path": ["api", "v1", "forum", "threads", "1", "split"]
                 }
               }
+            },
+            {
+              "name": "Bookmark Thread (User)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/threads/1/bookmark",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "bookmark"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Unbookmark Thread (User)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/threads/1/bookmark",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "bookmark"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "List Bookmarks (User)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/bookmarks?page=1&limit=20",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "bookmarks"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Set Thread Tags (Author or Moderator+)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tags\": [\"feature\", \"community\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/threads/1/tags",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "tags"
+                  ]
+                }
+              }
             }
           ]
         },
@@ -888,9 +1064,9 @@
               }
             },
             {
-              "name": "Update Report (Moderator+)",
+              "name": "Update Report Status (Moderator+)",
               "request": {
-                "method": "POST",
+                "method": "PUT",
                 "header": [
                   {
                     "key": "Content-Type",
@@ -899,7 +1075,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"resolved\",\n  \"notes\": \"Post was removed\"\n}"
+                  "raw": "{\n  \"status\": \"resolved\"\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/reports/1",
@@ -912,6 +1088,35 @@
                     "forum",
                     "reports",
                     "1"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Bulk Update Report Status (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"report_ids\": [1, 2, 3],\n  \"status\": \"resolved\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/reports/bulk-status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "reports",
+                    "bulk-status"
                   ]
                 }
               }
@@ -1110,6 +1315,96 @@
                   "query": [{"key": "limit", "value": "20"}]
                 }
               }
+            },
+            {
+              "name": "Bulk Thread Status (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"thread_ids\": [1, 2],\n  \"lock\": true,\n  \"archive\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/moderation/bulk-threads/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "moderation",
+                    "bulk-threads",
+                    "status"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Bulk Hide/Unhide Posts (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"post_ids\": [1, 2, 3],\n  \"hidden\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/moderation/bulk-posts/hide",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "moderation",
+                    "bulk-posts",
+                    "hide"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Forum Moderation Log (Moderator+)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/forum/moderation/log?page=1&limit=50",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "moderation",
+                    "log"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    }
+                  ]
+                }
+              }
             }
           ]
         }
@@ -1144,7 +1439,7 @@
           }
         },
         {
-          "name": "Link Discussion Thread",
+          "name": "Link Discussion Thread (Moderator+)",
           "request": {
             "method": "POST",
             "header": [
@@ -1173,7 +1468,7 @@
           }
         },
         {
-          "name": "Unlink Discussion Thread",
+          "name": "Unlink Discussion Thread (Moderator+)",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -1188,6 +1483,76 @@
                 "wiki",
                 "1",
                 "discussion-thread"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Related Threads (Moderator+)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wiki/1/related-threads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wiki",
+                "1",
+                "related-threads"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Related Thread (Moderator+)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"thread_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wiki/1/related-threads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wiki",
+                "1",
+                "related-threads"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove Related Thread (Moderator+)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wiki/1/related-threads/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wiki",
+                "1",
+                "related-threads",
+                "1"
               ]
             }
           }

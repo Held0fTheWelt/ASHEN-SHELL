@@ -17,6 +17,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.0.26] - 2026-03-12
+
+### Added
+
+- **News/Wiki–forum integration:** News detail responses now include a `related_threads` array (safe subset of public forum threads). New endpoints `GET /api/v1/news/<id>/related-threads`, `POST /api/v1/news/<id>/related-threads` and `DELETE /api/v1/news/<id>/related-threads/<thread_id>` allow moderators/admins to attach explicit related threads to articles. Wiki public responses include `related_threads` as well, with admin endpoints `GET/POST/DELETE /api/v1/wiki/<id>/related-threads` to manage them. All related-thread lists are restricted to threads in public categories and exclude deleted threads.
+- **Bookmarks / saved threads:** New `ForumThreadBookmark` model and endpoints `POST /api/v1/forum/threads/<id>/bookmark`, `DELETE /api/v1/forum/threads/<id>/bookmark`, and `GET /api/v1/forum/bookmarks` let authenticated users save threads and list their bookmarks. Bookmarked thread lists include author, category, and tags and respect existing visibility rules.
+- **Thread tags:** New `ForumTag` and `ForumThreadTag` models support normalized thread tags. Threads expose a `tags` array in `GET /api/v1/forum/threads/<slug>` and bookmarks. Moderators/admins or thread authors can set tags via `PUT /api/v1/forum/threads/<id>/tags` (body `{"tags": [...]}`); tags are normalized to slug form and reused across threads. Forum search gains a `tag` filter parameter.
+- **Forum search filters and content search:** `GET /api/v1/forum/search` now supports filters for `category` (slug), `status`, and `tag`, plus an `include_content=1` flag to include post content in the search. Empty queries with no filters return an empty result (to avoid unbounded scans); ordering is stable via pinned + `last_post_at` + id. Overly long search terms are truncated and post-content search only runs for queries of length ≥ 3.
+- **Bulk moderation actions:** Safe bulk operations for moderators/admins: `POST /api/v1/forum/moderation/bulk-threads/status` (lock/unlock and/or archive/unarchive multiple threads by id) and `POST /api/v1/forum/moderation/bulk-posts/hide` (hide/unhide multiple posts). Both reuse the existing per-item helpers and only affect threads/posts in categories the caller may moderate.
+- **Report workflow enhancements:** `ForumReport.status` now accepts `escalated` in addition to `open`, `reviewed`, `resolved`, and `dismissed`. New endpoint `POST /api/v1/forum/reports/bulk-status` allows moderators/admins to move multiple reports to `reviewed`/`escalated`/`resolved`/`dismissed` in one operation. The moderation dashboard’s "recently handled" view includes escalated reports as a handled state.
+- **Forum moderation log:** Dedicated moderator/admin-visible log for forum actions at `GET /api/v1/forum/moderation/log`, backed by the existing activity log (`category="forum"`). Supports text, status, and date filters and is used to audit merge/split, bulk actions, report updates, and other forum moderation events.
+- **Indexes for moderation and search:** Added indexes on `forum_reports(status, created_at)` and `forum_threads(category_id, is_pinned, last_post_at)` to support moderation dashboards and thread listings/search. Earlier waves added indexes for discussion-related tables, bookmarks, and tags.
+
+### Changed
+
+- **Forum search behavior:** Empty or trivial search requests without filters now return no results instead of scanning all threads. Post-content search is limited to reasonable query lengths and combined with title-based search, keeping queries index-friendly.
+- **Moderation docs and Postman:** `docs/forum/ModerationWorkflow.md` now documents escalation, bulk actions, and the forum moderation log. `postman/WorldOfShadows_API.postman_collection.json` has been extended with examples for related threads (News/Wiki), bookmarks, tags, bulk moderation operations, and the moderation log so staff can exercise the new APIs directly.
+
+---
+
 ## [0.0.25] - 2026-03-12
 
 ### Added
