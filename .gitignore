@@ -1,5 +1,6 @@
 .venv
 .idea
+.claude
 WorldOfShadows.code-workspace
 instance/
 instance/*.db
