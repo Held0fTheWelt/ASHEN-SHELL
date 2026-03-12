@@ -112,7 +112,7 @@ def test_hidden_threads_not_listed_for_normal_user(client):
     with client.application.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
-        db.session.commit()
+        db.session.flush()
         visible_thread = ForumThread(category_id=cat.id, slug="visible", title="Visible", status="open")
         hidden_thread = ForumThread(category_id=cat.id, slug="hidden", title="Hidden", status="hidden")
         db.session.add_all([visible_thread, hidden_thread])
@@ -131,7 +131,7 @@ def test_deleted_threads_not_visible_to_normal_users(client):
     with client.application.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
-        db.session.commit()
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="deleted-thread", title="Will be deleted", status="deleted")
         db.session.add(thread)
         db.session.commit()
@@ -147,7 +147,7 @@ def test_post_creation_requires_auth(app, client):
     with app.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
-        db.session.commit()
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
         db.session.add(thread)
         db.session.commit()
@@ -162,16 +162,18 @@ def test_post_creation_requires_auth(app, client):
 
 def test_post_author_username_in_response(app, client, auth_headers):
     """Post responses include author_username."""
+    thread_id = None
     with app.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
-        db.session.commit()
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
         db.session.add(thread)
         db.session.commit()
+        thread_id = thread.id
 
     resp = client.post(
-        f"/api/v1/forum/threads/{thread.id}/posts",
+        f"/api/v1/forum/threads/{thread_id}/posts",
         json={"content": "My post"},
         headers=auth_headers,
     )
@@ -182,21 +184,23 @@ def test_post_author_username_in_response(app, client, auth_headers):
 
 def test_hidden_posts_not_visible_to_normal_users(app, client, auth_headers):
     """Hidden posts should not appear in thread listings for normal users."""
+    thread_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
-        db.session.commit()
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
         db.session.add(thread)
-        db.session.commit()
+        db.session.flush()
 
         visible_post = ForumPost(thread_id=thread.id, author_id=user.id, content="visible", status="visible")
         hidden_post = ForumPost(thread_id=thread.id, author_id=user.id, content="hidden", status="hidden")
         db.session.add_all([visible_post, hidden_post])
         db.session.commit()
+        thread_id = thread.id
 
-    resp = client.get(f"/api/v1/forum/threads/{thread.id}/posts", headers=auth_headers)
+    resp = client.get(f"/api/v1/forum/threads/{thread_id}/posts", headers=auth_headers)
     assert resp.status_code == 200
     data = resp.get_json()
     contents = {p["content"] for p in data["items"]}
@@ -211,10 +215,10 @@ def test_like_requires_visibility(app, client, auth_headers):
     with app.app_context():
         cat = ForumCategory(slug="private", title="Private", is_active=True, is_private=True)
         db.session.add(cat)
-        db.session.commit()
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="private-thread", title="Private", status="open")
         db.session.add(thread)
-        db.session.commit()
+        db.session.flush()
         user = User.query.filter_by(username="testuser").first()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="secret", status="visible")
         db.session.add(post)
@@ -227,12 +231,17 @@ def test_like_requires_visibility(app, client, auth_headers):
 
 def test_like_post_increments_counter(app, client, auth_headers):
     """Liking a post increments like_count and sets liked_by_me."""
+    post_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible", like_count=0)
-        db.session.add_all([cat, thread, post])
+        db.session.add(post)
         db.session.commit()
         post_id = post.id
 
@@ -245,15 +254,20 @@ def test_like_post_increments_counter(app, client, auth_headers):
 
 def test_unlike_post_decrements_counter(app, client, auth_headers):
     """Unliking a post decrements like_count."""
+    post_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible", like_count=1)
-        like = ForumPostLike(post_id=None, user_id=user.id)
-        db.session.add_all([cat, thread, post, like])
-        db.session.commit()
-        like.post_id = post.id
+        db.session.add(post)
+        db.session.flush()
+        like = ForumPostLike(post_id=post.id, user_id=user.id)
+        db.session.add(like)
         db.session.commit()
         post_id = post.id
 
@@ -266,12 +280,17 @@ def test_unlike_post_decrements_counter(app, client, auth_headers):
 
 def test_duplicate_like_prevention(app, client, auth_headers):
     """Liking same post twice should not increment counter twice."""
+    post_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible", like_count=0)
-        db.session.add_all([cat, thread, post])
+        db.session.add(post)
         db.session.commit()
         post_id = post.id
 
@@ -287,24 +306,32 @@ def test_duplicate_like_prevention(app, client, auth_headers):
 
 def test_liked_by_me_flag_in_post_list(app, client, auth_headers):
     """Post list includes liked_by_me flag."""
+    thread_id = None
+    post_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible", like_count=0)
-        db.session.add_all([cat, thread, post])
+        db.session.add(post)
         db.session.commit()
 
         # Like the post
         client.post(f"/api/v1/forum/posts/{post.id}/like", headers=auth_headers)
+        thread_id = thread.id
+        post_id = post.id
 
     # Fetch post list and check flag
-    resp = client.get(f"/api/v1/forum/threads/{thread.id}/posts", headers=auth_headers)
+    resp = client.get(f"/api/v1/forum/threads/{thread_id}/posts", headers=auth_headers)
     assert resp.status_code == 200
     data = resp.get_json()
     posts = {p["id"]: p for p in data["items"]}
-    assert post.id in posts
-    assert posts[post.id]["liked_by_me"] is True
+    assert post_id in posts
+    assert posts[post_id]["liked_by_me"] is True
 
 
 # ============= REPORT TESTS =============
@@ -314,9 +341,13 @@ def test_report_submission(app, client, auth_headers):
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible")
-        db.session.add_all([cat, thread, post])
+        db.session.add(post)
         db.session.commit()
         post_id = post.id
 
@@ -333,17 +364,21 @@ def test_report_submission(app, client, auth_headers):
     assert data["status"] == "open"
 
 
-def test_report_status_update(app, client, moderator_headers):
+def test_report_status_update(app, client, test_user, moderator_headers):
     """Moderators can update report status."""
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible")
-        report = ForumReport(target_type="post", target_id=None, reported_by=user.id, reason="Spam", status="open")
-        db.session.add_all([cat, thread, post, report])
-        db.session.commit()
-        report.target_id = post.id
+        db.session.add(post)
+        db.session.flush()
+        report = ForumReport(target_type="post", target_id=post.id, reported_by=user.id, reason="Spam", status="open")
+        db.session.add(report)
         db.session.commit()
         report_id = report.id
 
@@ -361,10 +396,13 @@ def test_report_status_update(app, client, moderator_headers):
 
 def test_lock_unlock_thread(app, client, moderator_headers):
     """Moderators can lock/unlock threads."""
+    thread_id = None
     with app.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open", is_locked=False)
-        db.session.add_all([cat, thread])
+        db.session.add(thread)
         db.session.commit()
         thread_id = thread.id
 
@@ -383,10 +421,13 @@ def test_lock_unlock_thread(app, client, moderator_headers):
 
 def test_pin_unpin_thread(app, client, moderator_headers):
     """Moderators can pin/unpin threads."""
+    thread_id = None
     with app.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open", is_pinned=False)
-        db.session.add_all([cat, thread])
+        db.session.add(thread)
         db.session.commit()
         thread_id = thread.id
 
@@ -403,14 +444,19 @@ def test_pin_unpin_thread(app, client, moderator_headers):
     assert data["is_pinned"] is False
 
 
-def test_hide_unhide_post(app, client, moderator_headers):
+def test_hide_unhide_post(app, client, test_user, moderator_headers):
     """Moderators can hide/unhide posts."""
+    post_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible")
-        db.session.add_all([cat, thread, post])
+        db.session.add(post)
         db.session.commit()
         post_id = post.id
 
@@ -429,12 +475,17 @@ def test_hide_unhide_post(app, client, moderator_headers):
 
 def test_own_post_edit(app, client, auth_headers):
     """Authors can edit their own posts."""
+    post_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="original", status="visible")
-        db.session.add_all([cat, thread, post])
+        db.session.add(post)
         db.session.commit()
         post_id = post.id
 
@@ -451,12 +502,17 @@ def test_own_post_edit(app, client, auth_headers):
 
 def test_own_post_delete(app, client, auth_headers):
     """Authors can soft-delete their own posts."""
+    post_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
+        db.session.add(thread)
+        db.session.flush()
         post = ForumPost(thread_id=thread.id, author_id=user.id, content="post", status="visible")
-        db.session.add_all([cat, thread, post])
+        db.session.add(post)
         db.session.commit()
         post_id = post.id
 
@@ -466,11 +522,13 @@ def test_own_post_delete(app, client, auth_headers):
 
 # ============= COUNTER & METADATA TESTS =============
 
-def test_counters_after_hide_unhide(app, client, moderator_headers):
+def test_counters_after_hide_unhide(app, client, test_user, moderator_headers):
     """reply_count and last_post metadata follow visible posts when hiding/unhiding."""
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(
             category_id=cat.id,
             slug="counter-thread",
@@ -479,9 +537,11 @@ def test_counters_after_hide_unhide(app, client, moderator_headers):
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
+        db.session.add(thread)
+        db.session.flush()
         p1 = ForumPost(thread_id=thread.id, author_id=user.id, content="first", status="visible")
         p2 = ForumPost(thread_id=thread.id, author_id=user.id, content="second", status="visible")
-        db.session.add_all([cat, thread, p1, p2])
+        db.session.add_all([p1, p2])
         db.session.commit()
 
         from app.services.forum_service import recalc_thread_counters, hide_post, unhide_post
@@ -504,18 +564,28 @@ def test_counters_after_hide_unhide(app, client, moderator_headers):
 
 def test_parent_post_validation_same_thread_only(app, client, auth_headers):
     """parent_post_id must belong to same thread."""
+    t1_id = None
+    t2_id = None
+    p1_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         t1 = ForumThread(category_id=cat.id, slug="t1", title="T1", status="open")
         t2 = ForumThread(category_id=cat.id, slug="t2", title="T2", status="open")
+        db.session.add_all([t1, t2])
+        db.session.flush()
         p1 = ForumPost(thread_id=t1.id, author_id=user.id, content="p1", status="visible")
-        db.session.add_all([cat, t1, t2, p1])
+        db.session.add(p1)
         db.session.commit()
+        t1_id = t1.id
+        t2_id = t2.id
+        p1_id = p1.id
 
     resp = client.post(
-        f"/api/v1/forum/threads/{t2.id}/posts",
-        json={"content": "reply", "parent_post_id": p1.id},
+        f"/api/v1/forum/threads/{t2_id}/posts",
+        json={"content": "reply", "parent_post_id": p1_id},
         headers=auth_headers,
     )
     assert resp.status_code == 400
@@ -528,9 +598,11 @@ def test_forum_search_returns_visible_threads(app, client):
     """Forum search returns only visible threads."""
     with app.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         visible = ForumThread(category_id=cat.id, slug="visible-search", title="Findme", status="open")
         hidden = ForumThread(category_id=cat.id, slug="hidden-search", title="Findme Hidden", status="hidden")
-        db.session.add_all([cat, visible, hidden])
+        db.session.add_all([visible, hidden])
         db.session.commit()
 
     resp = client.get("/api/v1/forum/search?q=Findme")
@@ -541,13 +613,15 @@ def test_forum_search_returns_visible_threads(app, client):
     assert "hidden-search" not in slugs
 
 
-def test_forum_search_includes_author_username(app, client):
+def test_forum_search_includes_author_username(app, client, test_user):
     """Search results include author_username."""
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
         thread = ForumThread(category_id=cat.id, slug="search-test", title="Searchable", status="open", author_id=user.id)
-        db.session.add_all([cat, thread])
+        db.session.add(thread)
         db.session.commit()
 
     resp = client.get("/api/v1/forum/search?q=Searchable")
@@ -555,4 +629,3 @@ def test_forum_search_includes_author_username(app, client):
     data = resp.get_json()
     assert len(data["items"]) > 0
     assert data["items"][0]["author_username"] == "testuser"
-

@@ -119,6 +119,7 @@ class ForumPost(db.Model):
             "id": self.id,
             "thread_id": self.thread_id,
             "author_id": self.author_id,
+            "author_username": self.author.username if self.author else None,
             "parent_post_id": self.parent_post_id,
             "content": self.content,
             "status": self.status,

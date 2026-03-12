@@ -47,6 +47,7 @@ from app.services.forum_service import (
     soft_delete_thread,
     subscribe_thread,
     unsubscribe_thread,
+    unhide_post,
     unlike_post,
     update_category,
     update_post,
