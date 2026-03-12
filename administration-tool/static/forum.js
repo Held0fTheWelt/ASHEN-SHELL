@@ -794,6 +794,12 @@
                     if (thread.created_at) parts.push(formatDate(thread.created_at));
                     meta.textContent = parts.join(" · ");
                     header.appendChild(meta);
+                    if (thread.status === "archived") {
+                        var archivedHint = document.createElement("p");
+                        archivedHint.className = "forum-thread-status-hint";
+                        archivedHint.textContent = "This thread is archived and visible to staff only. It may be the result of a merge.";
+                        header.appendChild(archivedHint);
+                    }
                     if (thread.category && thread.category.slug) {
                         setBackLink("/forum/categories/" + encodeURIComponent(thread.category.slug));
                     }
