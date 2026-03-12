@@ -300,8 +300,18 @@
 
     function init() {
         if (!window.ManageAuth) return;
-        window.ManageAuth.ensureAuth().then(function() {
-            initCategories();
+        window.ManageAuth.ensureAuth().then(function(user) {
+            var isAdmin = user && (user.role === "admin" || (user.allowed_features && user.allowed_features.indexOf("manage.users") >= 0));
+            var categoriesCard = $("manage-forum-categories-card");
+            var categoryEditor = $("manage-forum-category-editor");
+            if (!isAdmin) {
+                if (categoriesCard) categoriesCard.style.display = "none";
+                if (categoryEditor) categoryEditor.style.display = "none";
+            } else {
+                if (categoriesCard) categoriesCard.style.display = "";
+                if (categoryEditor) categoryEditor.style.display = "";
+            }
+            if (isAdmin) initCategories();
             initReports();
         }).catch(function() {});
     }

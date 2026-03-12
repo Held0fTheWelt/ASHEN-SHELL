@@ -12,11 +12,12 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.api.v1 import api_v1_bp
 from app.auth.permissions import (
     current_user_is_admin,
+    current_user_is_moderator,
     current_user_is_moderator_or_admin,
     get_current_user,
 )
 from app.extensions import limiter, db
-from app.models import ForumCategory, ForumThread, ForumPost
+from app.models import ForumCategory, ForumPostLike, ForumThread, ForumPost
 from app.services import log_activity
 from app.services.forum_service import (
     create_category,
@@ -179,6 +180,7 @@ def forum_thread_detail(slug):
         return jsonify({"error": "Thread not found"}), 404
     increment_thread_view(thread)
     data = thread.to_dict()
+    data["author_username"] = thread.author.username if thread.author else None
     if thread.category:
         data["category"] = thread.category.to_dict()
     return jsonify(data), 200
@@ -214,9 +216,19 @@ def forum_thread_posts(thread_id: int):
         include_hidden=include_hidden,
         include_deleted=include_deleted,
     )
+    current_user_id = user.id if user else None
+    post_list = []
+    for p in items:
+        d = p.to_dict()
+        d["author_username"] = p.author.username if p.author else None
+        d["liked_by_me"] = (
+            bool(ForumPostLike.query.filter_by(post_id=p.id, user_id=current_user_id).first())
+            if current_user_id else False
+        )
+        post_list.append(d)
     return jsonify(
         {
-            "items": [p.to_dict() for p in items],
+            "items": post_list,
             "total": total,
             "page": page,
             "per_page": limit,
@@ -529,7 +541,7 @@ def forum_post_like(post_id: int):
     like, err = like_post(user, post)
     if err:
         return jsonify({"error": err}), 400
-    return jsonify({"message": "Liked", "like_count": post.like_count}), 200
+    return jsonify({"message": "Liked", "like_count": post.like_count, "liked_by_me": True}), 200
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>/like", methods=["DELETE"])
@@ -546,7 +558,7 @@ def forum_post_unlike(post_id: int):
     if not post:
         return jsonify({"error": "Post not found"}), 404
     unlike_post(user, post)
-    return jsonify({"message": "Unliked", "like_count": post.like_count}), 200
+    return jsonify({"message": "Unliked", "like_count": post.like_count, "liked_by_me": False}), 200
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/subscribe", methods=["POST"])

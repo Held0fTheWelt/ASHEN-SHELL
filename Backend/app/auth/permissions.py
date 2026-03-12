@@ -75,6 +75,11 @@ def admin_may_assign_role_level(actor_level: int, target_user_id: int, new_level
     return new_level < actor_level
 
 
+def current_user_is_moderator() -> bool:
+    """True if the current JWT user has moderator role (and is not banned)."""
+    return current_user_has_role(User.ROLE_MODERATOR)
+
+
 def current_user_is_moderator_or_admin() -> bool:
     """True if the current JWT user has moderator or admin role (and is not banned)."""
     return current_user_has_any_role((User.ROLE_MODERATOR, User.ROLE_ADMIN))

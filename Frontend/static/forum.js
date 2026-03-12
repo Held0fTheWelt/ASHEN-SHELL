@@ -44,6 +44,24 @@
         });
     }
 
+    function apiPut(path, body) {
+        var url = "/api/v1/forum" + (path.indexOf("/") === 0 ? path : "/" + path);
+        var opts = { method: "PUT", body: typeof body === "string" ? body : JSON.stringify(body || {}) };
+        if (!(window.ManageAuth && window.ManageAuth.getToken && window.ManageAuth.getToken())) {
+            return Promise.reject({ status: 401, message: "Please log in." });
+        }
+        return window.ManageAuth.apiFetchWithAuth(url, opts);
+    }
+
+    function apiDelete(path) {
+        var url = "/api/v1/forum" + (path.indexOf("/") === 0 ? path : "/" + path);
+        var opts = { method: "DELETE" };
+        if (!(window.ManageAuth && window.ManageAuth.getToken && window.ManageAuth.getToken())) {
+            return Promise.reject({ status: 401, message: "Please log in." });
+        }
+        return window.ManageAuth.apiFetchWithAuth(url, opts);
+    }
+
     function formatDate(iso) {
         if (!iso) return "";
         try {
@@ -114,6 +132,126 @@
                 } else showList(items);
             })
             .catch(function(e) { showError(typeof e === "string" ? e : (e && e.message) || "Failed to load."); });
+
+        var searchForm = document.getElementById("forum-search-form");
+        var searchInput = document.getElementById("forum-search-input");
+        var searchResults = document.getElementById("forum-search-results");
+        var searchTitle = document.getElementById("forum-search-results-title");
+        var searchLoading = document.getElementById("forum-search-loading");
+        var searchEmpty = document.getElementById("forum-search-empty");
+        var searchThreads = document.getElementById("forum-search-threads");
+        var searchPagination = document.getElementById("forum-search-pagination");
+        var searchPaginationInfo = document.getElementById("forum-search-pagination-info");
+        var searchPrev = document.getElementById("forum-search-prev");
+        var searchNext = document.getElementById("forum-search-next");
+        var searchState = { q: "", page: 1, total: 0, perPage: 20, totalPages: 0 };
+
+        function showSearchLoading(show) {
+            if (searchLoading) searchLoading.hidden = !show;
+            if (searchEmpty) searchEmpty.hidden = true;
+            if (searchThreads) searchThreads.hidden = true;
+        }
+        function renderSearchResults(items, page, total, perPage) {
+            if (searchLoading) searchLoading.hidden = true;
+            if (searchEmpty) searchEmpty.hidden = items.length > 0;
+            if (!searchThreads) return;
+            searchThreads.innerHTML = "";
+            items.forEach(function(t) {
+                var row = document.createElement("div");
+                row.className = "forum-thread-row";
+                var link = document.createElement("a");
+                link.href = "/forum/threads/" + encodeURIComponent(t.slug || "");
+                link.className = "forum-thread-link";
+                var title = document.createElement("span");
+                title.className = "forum-thread-title";
+                title.textContent = t.title || "Untitled";
+                if (t.is_pinned) {
+                    var pin = document.createElement("span");
+                    pin.className = "forum-badge forum-badge-pinned";
+                    pin.textContent = "Pinned";
+                    link.appendChild(pin);
+                }
+                link.appendChild(title);
+                var meta = document.createElement("span");
+                meta.className = "forum-thread-meta muted";
+                var parts = [];
+                if (t.reply_count != null) parts.push(t.reply_count + " replies");
+                if (t.last_post_at) parts.push(formatDate(t.last_post_at));
+                meta.textContent = parts.join(" · ");
+                row.appendChild(link);
+                row.appendChild(meta);
+                searchThreads.appendChild(row);
+            });
+            searchThreads.hidden = false;
+            searchState.total = total;
+            searchState.totalPages = perPage > 0 ? Math.ceil(total / perPage) : 0;
+            if (searchPagination) {
+                searchPagination.hidden = searchState.totalPages <= 1;
+                if (searchPaginationInfo) searchPaginationInfo.textContent = "Page " + page + " of " + (searchState.totalPages || 1) + " (" + total + " total)";
+                if (searchPrev) searchPrev.disabled = page <= 1;
+                if (searchNext) searchNext.disabled = page >= searchState.totalPages;
+            }
+        }
+
+        if (searchForm) searchForm.addEventListener("submit", function(e) {
+            e.preventDefault();
+            var q = (searchInput && searchInput.value) ? searchInput.value.trim() : "";
+            if (!q) return;
+            searchState.q = q;
+            searchState.page = 1;
+            if (loading) loading.hidden = true;
+            if (content) content.hidden = true;
+            if (empty) empty.hidden = true;
+            if (errEl) errEl.hidden = true;
+            if (searchResults) {
+                searchResults.hidden = false;
+                if (searchTitle) searchTitle.textContent = "Search: " + escapeHtml(q);
+            }
+            showSearchLoading(true);
+            apiGet("search?q=" + encodeURIComponent(q) + "&page=1&limit=" + searchState.perPage)
+                .then(function(data) {
+                    var items = (data && data.items) ? data.items : [];
+                    var total = (data && typeof data.total === "number") ? data.total : 0;
+                    var page = (data && typeof data.page === "number") ? data.page : 1;
+                    var perPage = (data && typeof data.per_page === "number") ? data.per_page : searchState.perPage;
+                    searchState.page = page;
+                    if (items.length === 0) {
+                        if (searchLoading) searchLoading.hidden = true;
+                        if (searchEmpty) searchEmpty.hidden = false;
+                    } else renderSearchResults(items, page, total, perPage);
+                })
+                .catch(function(err) {
+                    if (searchLoading) searchLoading.hidden = true;
+                    if (searchEmpty) { searchEmpty.textContent = (err && err.message) || "Search failed."; searchEmpty.hidden = false; }
+                });
+        });
+
+        if (searchPrev) searchPrev.addEventListener("click", function() {
+            if (searchState.page <= 1 || !searchState.q) return;
+            searchState.page--;
+            showSearchLoading(true);
+            apiGet("search?q=" + encodeURIComponent(searchState.q) + "&page=" + searchState.page + "&limit=" + searchState.perPage)
+                .then(function(data) {
+                    var items = (data && data.items) ? data.items : [];
+                    var total = (data && typeof data.total === "number") ? data.total : 0;
+                    var page = (data && typeof data.page === "number") ? data.page : searchState.page;
+                    var perPage = (data && typeof data.per_page === "number") ? data.per_page : searchState.perPage;
+                    renderSearchResults(items, page, total, perPage);
+                }).catch(function() { if (searchLoading) searchLoading.hidden = true; });
+        });
+        if (searchNext) searchNext.addEventListener("click", function() {
+            if (searchState.page >= searchState.totalPages || !searchState.q) return;
+            searchState.page++;
+            showSearchLoading(true);
+            apiGet("search?q=" + encodeURIComponent(searchState.q) + "&page=" + searchState.page + "&limit=" + searchState.perPage)
+                .then(function(data) {
+                    var items = (data && data.items) ? data.items : [];
+                    var total = (data && typeof data.total === "number") ? data.total : 0;
+                    var page = (data && typeof data.page === "number") ? data.page : searchState.page;
+                    var perPage = (data && typeof data.per_page === "number") ? data.per_page : searchState.perPage;
+                    renderSearchResults(items, page, total, perPage);
+                }).catch(function() { if (searchLoading) searchLoading.hidden = true; });
+        });
     }
 
     // --- Category: threads list + new thread modal ---
@@ -323,7 +461,63 @@
         var replyError = document.getElementById("forum-reply-error");
         var replyContent = document.getElementById("forum-reply-content");
         var replySubmit = document.getElementById("forum-reply-submit");
-        var state = { thread: null, page: 1, total: 0, perPage: 20, totalPages: 0 };
+        var hasToken = !!(window.ManageAuth && window.ManageAuth.getToken && window.ManageAuth.getToken());
+        var state = {
+            thread: null,
+            page: 1,
+            total: 0,
+            perPage: 20,
+            totalPages: 0,
+            hasToken: hasToken,
+            currentUserId: (window.ManageAuth && window.ManageAuth.getStoredUser && window.ManageAuth.getStoredUser()) ? (window.ManageAuth.getStoredUser().id) : null,
+            canModerate: false
+        };
+        function renderThreadModBarIfNeeded() {
+            if (!state.canModerate || !state.thread) return;
+            var modBar = document.getElementById("forum-thread-mod-actions");
+            if (!modBar || modBar.children.length > 0) return;
+            var thread = state.thread;
+            var lockBtn = document.createElement("button");
+            lockBtn.type = "button";
+            lockBtn.className = "btn btn-outline btn-sm forum-mod-lock";
+            lockBtn.textContent = thread.is_locked ? "Unlock thread" : "Lock thread";
+            lockBtn.dataset.threadId = thread.id;
+            var pinBtn = document.createElement("button");
+            pinBtn.type = "button";
+            pinBtn.className = "btn btn-outline btn-sm forum-mod-pin";
+            pinBtn.textContent = thread.is_pinned ? "Unpin" : "Pin";
+            pinBtn.dataset.threadId = thread.id;
+            modBar.appendChild(lockBtn);
+            modBar.appendChild(pinBtn);
+            modBar.hidden = false;
+            lockBtn.addEventListener("click", function() {
+                var tid = lockBtn.dataset.threadId;
+                if (!tid) return;
+                lockBtn.disabled = true;
+                apiPost("threads/" + tid + "/" + (thread.is_locked ? "unlock" : "lock"), {}).then(function() {
+                    state.thread.is_locked = !thread.is_locked;
+                    thread.is_locked = state.thread.is_locked;
+                    lockBtn.textContent = state.thread.is_locked ? "Unlock thread" : "Lock thread";
+                }).catch(function() {}).then(function() { lockBtn.disabled = false; });
+            });
+            pinBtn.addEventListener("click", function() {
+                var tid = pinBtn.dataset.threadId;
+                if (!tid) return;
+                pinBtn.disabled = true;
+                apiPost("threads/" + tid + "/" + (thread.is_pinned ? "unpin" : "pin"), {}).then(function() {
+                    state.thread.is_pinned = !thread.is_pinned;
+                    thread.is_pinned = state.thread.is_pinned;
+                    pinBtn.textContent = state.thread.is_pinned ? "Unpin" : "Pin";
+                }).catch(function() {}).then(function() { pinBtn.disabled = false; });
+            });
+        }
+        if (hasToken && window.ManageAuth && window.ManageAuth.getMe) {
+            window.ManageAuth.getMe().then(function(u) {
+                if (u && u.id) state.currentUserId = u.id;
+                state.canModerate = !!(u && (u.role === "moderator" || u.role === "admin"));
+                renderThreadModBarIfNeeded();
+            }).catch(function() {});
+        }
 
         var backCategory = document.getElementById("forum-thread-back-category");
         var backCategoryBottom = document.getElementById("forum-thread-back-category-bottom");
@@ -355,19 +549,74 @@
             if (errEl) errEl.hidden = true;
             if (!content) return;
             content.innerHTML = "";
+            var currentUserId = state.currentUserId;
             items.forEach(function(p) {
                 var post = document.createElement("article");
                 post.className = "forum-post";
                 post.dataset.postId = p.id;
                 var meta = document.createElement("div");
                 meta.className = "forum-post-meta";
-                meta.innerHTML = "<span class=\"forum-post-date\">" + escapeHtml(formatDate(p.created_at)) + "</span>";
-                if (p.edited_at) meta.innerHTML += " <span class=\"muted\">(edited " + escapeHtml(formatDate(p.edited_at)) + ")</span>";
+                var metaParts = [];
+                if (p.author_username) metaParts.push("<span class=\"forum-post-author\">" + escapeHtml(p.author_username) + "</span>");
+                metaParts.push("<span class=\"forum-post-date\">" + escapeHtml(formatDate(p.created_at)) + "</span>");
+                if (p.edited_at) metaParts.push("<span class=\"muted\">(edited " + escapeHtml(formatDate(p.edited_at)) + ")</span>");
+                meta.innerHTML = metaParts.join(" · ");
                 var body = document.createElement("div");
                 body.className = "forum-post-body";
                 body.textContent = p.content || "";
                 post.appendChild(meta);
+                if (p.status === "hidden" && state.canModerate) {
+                    var hiddenBadge = document.createElement("span");
+                    hiddenBadge.className = "forum-badge forum-badge-hidden";
+                    hiddenBadge.textContent = "Hidden";
+                    post.insertBefore(hiddenBadge, body);
+                }
                 post.appendChild(body);
+                var actions = document.createElement("div");
+                actions.className = "forum-post-actions";
+                var likeCount = document.createElement("span");
+                likeCount.className = "forum-post-like-count";
+                likeCount.textContent = (p.like_count || 0) + " like" + ((p.like_count || 0) === 1 ? "" : "s");
+                actions.appendChild(likeCount);
+                if (state.hasToken) {
+                    var likeBtn = document.createElement("button");
+                    likeBtn.type = "button";
+                    likeBtn.className = "btn btn-ghost forum-btn-like";
+                    likeBtn.textContent = p.liked_by_me ? "Unlike" : "Like";
+                    likeBtn.dataset.postId = p.id;
+                    likeBtn.dataset.liked = p.liked_by_me ? "1" : "0";
+                    actions.appendChild(likeBtn);
+                    var reportBtn = document.createElement("button");
+                    reportBtn.type = "button";
+                    reportBtn.className = "btn btn-ghost forum-btn-report";
+                    reportBtn.textContent = "Report";
+                    reportBtn.dataset.postId = p.id;
+                    actions.appendChild(reportBtn);
+                    if (currentUserId && p.author_id === currentUserId) {
+                        var editBtn = document.createElement("button");
+                        editBtn.type = "button";
+                        editBtn.className = "btn btn-ghost forum-btn-edit";
+                        editBtn.textContent = "Edit";
+                        editBtn.dataset.postId = p.id;
+                        actions.appendChild(editBtn);
+                        var delBtn = document.createElement("button");
+                        delBtn.type = "button";
+                        delBtn.className = "btn btn-ghost forum-btn-delete";
+                        delBtn.textContent = "Delete";
+                        delBtn.dataset.postId = p.id;
+                        actions.appendChild(delBtn);
+                    }
+                    if (state.canModerate) {
+                        var hideBtn = document.createElement("button");
+                        hideBtn.type = "button";
+                        hideBtn.className = "btn btn-ghost forum-btn-hide";
+                        hideBtn.textContent = p.status === "hidden" ? "Unhide" : "Hide";
+                        hideBtn.dataset.postId = p.id;
+                        hideBtn.dataset.hidden = p.status === "hidden" ? "1" : "0";
+                        actions.appendChild(hideBtn);
+                    }
+                }
+                post.appendChild(actions);
                 content.appendChild(post);
             });
             content.hidden = false;
@@ -395,6 +644,7 @@
                     var meta = document.createElement("p");
                     meta.className = "forum-thread-meta muted";
                     var parts = [];
+                    if (thread.author_username) parts.push("by " + thread.author_username);
                     if (thread.reply_count != null) parts.push(thread.reply_count + " replies");
                     if (thread.view_count != null) parts.push(thread.view_count + " views");
                     if (thread.created_at) parts.push(formatDate(thread.created_at));
@@ -403,6 +653,12 @@
                     if (thread.category && thread.category.slug) {
                         setBackLink("/forum/categories/" + encodeURIComponent(thread.category.slug));
                     }
+                    var modBar = document.createElement("div");
+                    modBar.id = "forum-thread-mod-actions";
+                    modBar.className = "forum-thread-mod-actions";
+                    modBar.hidden = true;
+                    header.appendChild(modBar);
+                    renderThreadModBarIfNeeded();
                     header.hidden = false;
                 }
                 var threadId = thread.id;
@@ -424,7 +680,9 @@
             .catch(function(e) { showError(typeof e === "string" ? e : (e && e.message) || "Failed to load."); });
 
         function fetchPosts(page) {
-            return apiGet("threads/" + state.thread.id + "/posts?page=" + page + "&limit=" + state.perPage);
+            var url = "threads/" + state.thread.id + "/posts?page=" + page + "&limit=" + state.perPage;
+            if (state.canModerate) url += "&include_hidden=true";
+            return apiGet(url);
         }
         if (prevBtn) prevBtn.addEventListener("click", function() {
             if (state.page <= 1 || !state.thread) return;
@@ -449,9 +707,8 @@
             }).catch(function(e) { showError(e && e.message); });
         });
 
-        var hasToken = window.ManageAuth && window.ManageAuth.getToken && window.ManageAuth.getToken();
-        if (replyLoginHint) replyLoginHint.hidden = !!hasToken;
-        if (replyForm) replyForm.hidden = !hasToken;
+        if (replyLoginHint) replyLoginHint.hidden = !!state.hasToken;
+        if (replyForm) replyForm.hidden = !state.hasToken;
 
         if (replyForm) replyForm.addEventListener("submit", function(e) {
             e.preventDefault();
@@ -486,6 +743,173 @@
                     if (replySubmit) replySubmit.disabled = false;
                 });
         });
+
+        content.addEventListener("click", function(e) {
+            var likeBtn = e.target && e.target.closest && e.target.closest(".forum-btn-like");
+            var reportBtn = e.target && e.target.closest && e.target.closest(".forum-btn-report");
+            var editBtn = e.target && e.target.closest && e.target.closest(".forum-btn-edit");
+            var delBtn = e.target && e.target.closest && e.target.closest(".forum-btn-delete");
+            var hideBtn = e.target && e.target.closest && e.target.closest(".forum-btn-hide");
+            if (likeBtn) {
+                var postId = likeBtn.dataset.postId;
+                if (!postId || !state.thread) return;
+                likeBtn.disabled = true;
+                var isLiked = likeBtn.dataset.liked === "1";
+                var promise = isLiked ? apiDelete("posts/" + postId + "/like") : apiPost("posts/" + postId + "/like", {});
+                promise.then(function(res) {
+                    var cnt = res.like_count != null ? res.like_count : 0;
+                    likeBtn.textContent = res.liked_by_me ? "Unlike" : "Like";
+                    likeBtn.dataset.liked = res.liked_by_me ? "1" : "0";
+                    var countEl = likeBtn.parentElement && likeBtn.parentElement.querySelector(".forum-post-like-count");
+                    if (countEl) countEl.textContent = cnt + " like" + (cnt === 1 ? "" : "s");
+                }).catch(function() {}).then(function() { likeBtn.disabled = false; });
+            }
+            if (reportBtn) {
+                var postId = reportBtn.dataset.postId;
+                if (!postId) return;
+                var modal = document.getElementById("forum-report-modal");
+                var targetInput = document.getElementById("forum-report-target-id");
+                var typeInput = document.getElementById("forum-report-target-type");
+                var reasonInput = document.getElementById("forum-report-reason");
+                if (modal && typeInput && targetInput) {
+                    typeInput.value = "post";
+                    targetInput.value = postId;
+                    if (reasonInput) reasonInput.value = "";
+                    modal.hidden = false;
+                }
+            }
+            if (editBtn) {
+                var postId = editBtn.dataset.postId;
+                if (!postId) return;
+                var article = editBtn.closest && editBtn.closest(".forum-post");
+                if (!article) return;
+                var bodyEl = article.querySelector(".forum-post-body");
+                if (!bodyEl) return;
+                var currentContent = bodyEl.textContent || "";
+                var textarea = document.createElement("textarea");
+                textarea.className = "forum-edit-textarea";
+                textarea.rows = 4;
+                textarea.value = currentContent;
+                var wrap = document.createElement("div");
+                wrap.className = "forum-edit-wrap";
+                var saveBtn = document.createElement("button");
+                saveBtn.type = "button";
+                saveBtn.className = "btn btn-primary forum-edit-save";
+                saveBtn.textContent = "Save";
+                var cancelBtn = document.createElement("button");
+                cancelBtn.type = "button";
+                cancelBtn.className = "btn btn-ghost forum-edit-cancel";
+                cancelBtn.textContent = "Cancel";
+                bodyEl.replaceWith(wrap);
+                wrap.appendChild(textarea);
+                wrap.appendChild(saveBtn);
+                wrap.appendChild(cancelBtn);
+                function restore() {
+                    var newBody = document.createElement("div");
+                    newBody.className = "forum-post-body";
+                    newBody.textContent = textarea.value;
+                    wrap.replaceWith(newBody);
+                }
+                cancelBtn.addEventListener("click", restore);
+                saveBtn.addEventListener("click", function() {
+                    var newContent = (textarea.value || "").trim();
+                    if (!newContent) return;
+                    saveBtn.disabled = true;
+                    apiPut("posts/" + postId, { content: newContent })
+                        .then(function() {
+                            var newBody = document.createElement("div");
+                            newBody.className = "forum-post-body";
+                            newBody.textContent = newContent;
+                            wrap.replaceWith(newBody);
+                        })
+                        .catch(function(err) {
+                            alert((err && err.message) || "Failed to update.");
+                        })
+                        .then(function() { saveBtn.disabled = false; });
+                });
+            }
+            if (delBtn) {
+                var postId = delBtn.dataset.postId;
+                if (!postId || !state.thread) return;
+                if (!confirm("Delete this post?")) return;
+                delBtn.disabled = true;
+                apiDelete("posts/" + postId)
+                    .then(function() {
+                        return fetchPosts(state.page);
+                    })
+                    .then(function(data) {
+                        var items = (data && data.items) ? data.items : [];
+                        var total = (data && typeof data.total === "number") ? data.total : Math.max(0, state.total - 1);
+                        var page = (data && typeof data.page === "number") ? data.page : state.page;
+                        var perPage = (data && typeof data.per_page === "number") ? data.per_page : state.perPage;
+                        state.total = total;
+                        renderPosts(items, page, total, perPage);
+                    })
+                    .catch(function() { delBtn.disabled = false; });
+            }
+        });
+
+        var reportModal = document.getElementById("forum-report-modal");
+        var reportForm = document.getElementById("forum-report-form");
+        var reportError = document.getElementById("forum-report-error");
+        var reportSuccess = document.getElementById("forum-report-success");
+        if (reportForm) reportForm.addEventListener("submit", function(e) {
+            e.preventDefault();
+            var typeInput = document.getElementById("forum-report-target-type");
+            var targetInput = document.getElementById("forum-report-target-id");
+            var reasonInput = document.getElementById("forum-report-reason");
+            var reason = (reasonInput && reasonInput.value) ? reasonInput.value.trim() : "";
+            if (!reason) {
+                if (reportError) { reportError.textContent = "Please enter a reason."; reportError.hidden = false; }
+                if (reportSuccess) reportSuccess.hidden = true;
+                return;
+            }
+            if (!typeInput || !targetInput) return;
+            var targetId = parseInt(targetInput.value, 10);
+            if (isNaN(targetId)) return;
+            if (reportError) reportError.hidden = true;
+            if (reportSuccess) reportSuccess.hidden = true;
+            apiPost("reports", { target_type: typeInput.value, target_id: targetId, reason: reason })
+                .then(function() {
+                    if (reportModal) reportModal.hidden = true;
+                    if (reportSuccess) { reportSuccess.textContent = "Report submitted."; reportSuccess.hidden = false; }
+                    setTimeout(function() { if (reportSuccess) reportSuccess.hidden = true; }, 3000);
+                })
+                .catch(function(err) {
+                    if (reportError) { reportError.textContent = (err && err.message) || "Failed to submit report."; reportError.hidden = false; }
+                });
+        });
+        var reportCancel = document.getElementById("forum-report-cancel");
+        if (reportCancel) reportCancel.addEventListener("click", function() {
+            if (reportModal) reportModal.hidden = true;
+        });
+
+            if (hideBtn) {
+                var postId = hideBtn.dataset.postId;
+                if (!postId || !state.thread) return;
+                var isHidden = hideBtn.dataset.hidden === "1";
+                hideBtn.disabled = true;
+                var path = "posts/" + postId + "/" + (isHidden ? "unhide" : "hide");
+                apiPost(path, {}).then(function() {
+                    hideBtn.textContent = isHidden ? "Hide" : "Unhide";
+                    hideBtn.dataset.hidden = isHidden ? "0" : "1";
+                    var article = hideBtn.closest && hideBtn.closest(".forum-post");
+                    if (article) {
+                        var badge = article.querySelector(".forum-badge-hidden");
+                        if (isHidden) {
+                            if (badge) badge.remove();
+                        } else {
+                            if (!badge) {
+                                var b = document.createElement("span");
+                                b.className = "forum-badge forum-badge-hidden";
+                                b.textContent = "Hidden";
+                                var bodyEl = article.querySelector(".forum-post-body");
+                                if (bodyEl) article.insertBefore(b, bodyEl);
+                            }
+                        }
+                    }
+                }).catch(function() {}).then(function() { hideBtn.disabled = false; });
+            }
     }
 
     window.ForumApp = {
