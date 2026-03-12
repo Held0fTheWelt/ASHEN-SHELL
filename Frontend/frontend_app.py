@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 from flask import Flask, request, session, render_template
 
 # Backend API base URL (no trailing slash). Used for login link and for frontend JS.
+# IMPORTANT: Defaults to production URL (held0fthewelt.pythonanywhere.com) for live testing.
+# For local development: set BACKEND_API_URL=http://127.0.0.1:5000 or uncomment the localhost line below.
 # BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "http://127.0.0.1:5000").rstrip("/") # LOCALHOST
 BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "https://held0fthewelt.pythonanywhere.com").rstrip("/")
 SUPPORTED_LANGUAGES = ["de", "en"]

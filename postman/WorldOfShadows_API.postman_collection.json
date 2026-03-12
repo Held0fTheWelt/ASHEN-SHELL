@@ -1,8 +1,7 @@
 {
   "info": {
-    "_postman_id": "world-of-shadows-api-v1",
     "name": "World of Shadows API",
-    "description": "REST API v1: Auth, System, Users (CRUD + assign role, ban, unban), Roles (CRUD), News, Admin Logs, Slogans, Site.\n\n**Roles:** user, moderator, admin. News write (create/update/delete/publish) requires moderator or admin. Role assignment and ban/unban are admin-only. Slogan CRUD requires moderator or admin. Site slogan (placement resolution) is public.\n\n**Test Environment:** Select an environment with `baseUrl`, `username`, `password`, `email`. Run **Login** to save `access_token` and `user_id`; protected requests use the token automatically. For **Users** (list, delete, assign role, ban, unban), **Roles**, and **Admin Logs** use an admin account (role=admin). For **News** and **Slogans** write use moderator or admin.\n\n**Collection Runner:** All requests include test scripts (status codes and response body assertions). Users List sets `target_user_id` to another user for Delete/Assign role/Ban/Unban (admin only). Slogan Create sets `slogan_id` for Activate/Deactivate.",
+    "description": "Complete API collection for World of Shadows backend. Includes authentication, news, forum, users, roles, and more.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -10,1551 +9,586 @@
     "bearer": [
       {
         "key": "token",
-        "value": "{{access_token}}",
+        "value": "{{jwt_token}}",
         "type": "string"
       }
     ]
   },
-  "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5000" },
-    { "key": "remoteUrl", "value": "https://held0fthewelt.pythonanywhere.com/" },
-    { "key": "apiPath", "value": "/api/v1" },
-    { "key": "access_token", "value": "" },
-    { "key": "username", "value": "admin" },
-    { "key": "password", "value": "Admin123" },
-    { "key": "email", "value": "admin@example.com" },
-    { "key": "user_id", "value": "" },
-    { "key": "news_id", "value": "" },
-    { "key": "register_username", "value": "postman_user" },
-    { "key": "register_email", "value": "postman@example.com" },
-    { "key": "register_password", "value": "PostmanPass1" },
-    { "key": "target_user_id", "value": "" },
-    { "key": "role_id", "value": "" },
-    { "key": "slogan_id", "value": "" },
-    { "key": "area_id", "value": "" }
-  ],
   "item": [
     {
-      "name": "Auth",
-      "description": "Register, login (JWT), me. Login saves token to {{access_token}} for protected routes.",
+      "name": "Authentication",
       "item": [
         {
-          "name": "Register",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 201 Created', function () { pm.response.to.have.status(201); });",
-                  "pm.test('Body has id and username', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('id');",
-                  "  pm.expect(j).to.have.property('username');",
-                  "  if (j.id) { pm.collectionVariables.set('user_id', String(j.id)); }",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Login",
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{register_username}}\",\n  \"email\": \"{{register_email}}\",\n  \"password\": \"{{register_password}}\"\n}"
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
-            },
-            "description": "Create a new user. Returns 201 with `id` and `username`. Email required. 409 if username/email taken. Test script saves `user_id`."
-          }
-        },
-        {
-          "name": "Login (saves token)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body has access_token and user', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('access_token');",
-                  "  pm.expect(j).to.have.property('user');",
-                  "  pm.expect(j.user).to.have.property('id');",
-                  "  pm.expect(j.user).to.have.property('username');",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  if (j.access_token) {",
-                  "    const token = String(j.access_token).trim();",
-                  "    pm.collectionVariables.set('access_token', token);",
-                  "    if (j.user && j.user.id) pm.collectionVariables.set('user_id', String(j.user.id));",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "login"]
-            },
-            "description": "Authenticate and get JWT. Saves token to {{access_token}} and user_id to {{user_id}}. 403 if email not verified or account is banned (Account is restricted.)."
+            }
           }
         },
         {
-          "name": "Login (invalid – 401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
-                  "pm.test('Body has error', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('error');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"wrong\",\n  \"password\": \"wrong\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
-            },
-            "description": "Expect 401 and error message."
-          }
-        },
-        {
-          "name": "Me",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body has id, username, role', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('id');",
-                  "  pm.expect(j).to.have.property('username');",
-                  "  pm.expect(j).to.have.property('role');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Get Current User",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/me",
-              "host": ["{{baseUrl}}"],
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
               "path": ["api", "v1", "auth", "me"]
-            },
-            "description": "Current user from JWT. Requires Bearer {{access_token}}. 401 without/invalid token."
-          }
-        },
-        {
-          "name": "Me (no token – 401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 401 without token', function () { pm.response.to.have.status(401); });",
-                  "pm.test('Body has error', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('error');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
             }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "me"]
-            },
-            "description": "Expect 401 when no Authorization header."
-          }
-        }
-      ]
-    },
-    {
-      "name": "System",
-      "description": "Health and test protected route.",
-      "item": [
-        {
-          "name": "Health",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body has status ok', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('status');",
-                  "  pm.expect(j.status).to.eql('ok');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "health"]
-            },
-            "description": "API health check. Returns { \"status\": \"ok\" }."
-          }
-        },
-        {
-          "name": "Test Protected",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body has user_id and username', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('user_id');",
-                  "  pm.expect(j).to.have.property('username');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/test/protected",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "test", "protected"]
-            },
-            "description": "Protected route. Requires Bearer token. Returns message, user_id, username."
           }
         }
       ]
     },
     {
       "name": "News",
-      "description": "News CRUD: List (public published; with moderator/admin JWT use published_only=0 for drafts), Detail (public or draft with moderator/admin JWT), Create, Update, Delete, Publish, Unpublish. Write and publish require moderator or admin role.",
       "item": [
         {
-          "name": "News List",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body has items, total, page, per_page', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('items');",
-                  "  pm.expect(j.items).to.be.an('array');",
-                  "  pm.expect(j).to.have.property('total');",
-                  "  pm.expect(j).to.have.property('page');",
-                  "  pm.expect(j).to.have.property('per_page');",
-                  "});",
-                  "const j = pm.response.json();",
-                  "if (j.items && j.items.length > 0 && j.items[0].id) {",
-                  "  pm.collectionVariables.set('news_id', String(j.items[0].id));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "List News",
           "request": {
-            "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/news?page=1&limit=20",
-              "host": ["{{baseUrl}}"],
+              "raw": "{{base_url}}/api/v1/news?page=1&limit=20&sort=published_at&direction=desc",
+              "host": ["{{base_url}}"],
               "path": ["api", "v1", "news"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "q", "value": "", "disabled": true },
-                { "key": "sort", "value": "published_at", "disabled": true },
-                { "key": "direction", "value": "desc", "disabled": true },
-                { "key": "category", "value": "", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "published_at"
+                },
+                {
+                  "key": "direction",
+                  "value": "desc"
+                }
               ]
-            },
-            "description": "List published news. Query: q, sort, direction, page, limit, category. Saves first item id to {{news_id}}."
+            }
           }
         },
         {
-          "name": "News Detail",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "  pm.test('Body has id, title, slug', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('id');",
-                  "    pm.expect(j).to.have.property('title');",
-                  "    pm.expect(j).to.have.property('slug');",
-                  "  });",
-                  "} else {",
-                  "  pm.test('Status is 200 or 404', function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/news/{{news_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "news", "{{news_id}}"]
-            },
-            "description": "Get one published news by id. 404 if not found or draft. Uses {{news_id}} from List or set manually."
-          }
-        },
-        {
-          "name": "News Detail (404)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
-                  "pm.test('Body has error', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('error');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/news/999999",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "news", "999999"]
-            },
-            "description": "Expect 404 for non-existent id."
-          }
-        },
-        {
-          "name": "News List (moderator, include drafts)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('items');",
-                  "  if (j.items && j.items.length > 0 && j.items[0].id) {",
-                  "    pm.collectionVariables.set('news_id', String(j.items[0].id));",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Get News Detail",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/news?page=1&limit=20&published_only=0",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "news"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "published_only", "value": "0" }
-              ]
-            },
-            "description": "List all news including drafts. Requires moderator or admin JWT. Sets news_id from first item."
+              "raw": "{{base_url}}/api/v1/news/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "news", "1"]
+            }
           }
         },
         {
-          "name": "News Create",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 201 or 400 or 401 or 403 or 409', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([201, 400, 401, 403, 409]);",
-                  "});",
-                  "if (pm.response.code === 201) {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('id');",
-                  "  pm.expect(j).to.have.property('title');",
-                  "  if (j.id) pm.collectionVariables.set('news_id', String(j.id));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Create News (Moderator+)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Postman Created Article\",\n  \"slug\": \"postman-created-article\",\n  \"content\": \"Content from Postman.\",\n  \"summary\": \"Optional summary\",\n  \"is_published\": false\n}"
+              "raw": "{\n  \"title\": \"New Article Title\",\n  \"slug\": \"new-article-title\",\n  \"content\": \"Article content here\",\n  \"summary\": \"Brief summary\",\n  \"category\": \"news\",\n  \"cover_image\": \"https://example.com/image.jpg\",\n  \"is_published\": false\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/news",
-              "host": ["{{baseUrl}}"],
+              "raw": "{{base_url}}/api/v1/news",
+              "host": ["{{base_url}}"],
               "path": ["api", "v1", "news"]
-            },
-            "description": "Create news. Moderator or admin JWT required. Body: title, slug, content; optional summary, is_published, cover_image, category. Sets news_id on 201."
+            }
           }
         },
         {
-          "name": "News Update",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 400 or 401 or 403 or 404 or 409', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 401, 403, 404, 409]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has id, title', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('id');",
-                  "    pm.expect(j).to.have.property('title');",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Update News",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Title\",\n  \"content\": \"Updated content.\"\n}"
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"summary\": \"Updated summary\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/news/{{news_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "news", "{{news_id}}"]
-            },
-            "description": "Update news. Moderator or admin JWT. Body: optional title, slug, summary, content, cover_image, category. Uses news_id."
+              "raw": "{{base_url}}/api/v1/news/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "news", "1"]
+            }
           }
         },
         {
-          "name": "News Publish",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 401 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has is_published true', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j.is_published).to.eql(true);",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Publish News",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/news/{{news_id}}/publish",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "news", "{{news_id}}", "publish"]
-            },
-            "description": "Publish article. Moderator or admin JWT. Sets is_published true, published_at to now."
+              "raw": "{{base_url}}/api/v1/news/1/publish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "news", "1", "publish"]
+            }
           }
         },
         {
-          "name": "News Unpublish",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 401 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has is_published false', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j.is_published).to.eql(false);",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Unpublish News",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/news/{{news_id}}/unpublish",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "news", "{{news_id}}", "unpublish"]
-            },
-            "description": "Unpublish article. Moderator or admin JWT."
+              "raw": "{{base_url}}/api/v1/news/1/unpublish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "news", "1", "unpublish"]
+            }
           }
         },
         {
-          "name": "News Delete",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 401 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has message', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('message');",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Delete News",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/news/{{news_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "news", "{{news_id}}"]
-            },
-            "description": "Delete article. Moderator or admin JWT. Use news_id of an article you can delete (e.g. one you created)."
+              "raw": "{{base_url}}/api/v1/news/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "news", "1"]
+            }
           }
         }
       ]
     },
     {
-      "name": "Users",
-      "description": "User CRUD: List, Delete, Assign role, Ban, Unban require admin role; Get and Update work for admin (any user) or self. Roles: user, moderator, admin.",
+      "name": "Forum",
       "item": [
         {
-          "name": "Users List",
-          "event": [
+          "name": "Categories",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 (admin) or 403 (non-admin)', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has items, total, page, per_page', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('items');",
-                  "    pm.expect(j.items).to.be.an('array');",
-                  "    pm.expect(j).to.have.property('total');",
-                  "    pm.expect(j).to.have.property('page');",
-                  "    pm.expect(j).to.have.property('per_page');",
-                  "  });",
-                  "  const j = pm.response.json();",
-                  "  const myId = pm.collectionVariables.get('user_id');",
-                  "  if (j.items && j.items.length > 0) {",
-                  "    const other = j.items.find(function(u) { return String(u.id) !== String(myId); });",
-                  "    if (other) pm.collectionVariables.set('target_user_id', String(other.id));",
-                  "  }",
-                  "}"
+              "name": "List Categories",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/categories",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Get Category",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/categories/general",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "categories", "general"]
+                }
+              }
+            },
+            {
+              "name": "Create Category (Admin)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
-                "type": "text/javascript"
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"General Discussion\",\n  \"slug\": \"general\",\n  \"description\": \"General discussion topics\",\n  \"is_visible\": true\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/categories",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "categories"]
+                }
               }
             }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users?page=1&limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "q", "value": "", "disabled": true }
-              ]
-            },
-            "description": "List users (admin only). 403 if not admin. Saves target_user_id to another user for Delete (if any)."
-          }
+          ]
         },
         {
-          "name": "Users Get (self)",
-          "event": [
+          "name": "Threads",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body has id, username, role', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('id');",
-                  "  pm.expect(j).to.have.property('username');",
-                  "  pm.expect(j).to.have.property('role');",
-                  "});"
+              "name": "List Category Threads",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/categories/general/threads?page=1&limit=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "categories", "general", "threads"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Thread",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/threads/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "threads", "1"]
+                }
+              }
+            },
+            {
+              "name": "Create Thread",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
-                "type": "text/javascript"
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category_id\": 1,\n  \"title\": \"Discussion Thread Title\",\n  \"content\": \"Initial post content\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/threads",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "threads"]
+                }
+              }
+            },
+            {
+              "name": "Lock Thread (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/threads/1/lock",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "threads", "1", "lock"]
+                }
+              }
+            },
+            {
+              "name": "Unlock Thread (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/threads/1/unlock",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "threads", "1", "unlock"]
+                }
+              }
+            },
+            {
+              "name": "Pin Thread (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/threads/1/pin",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "threads", "1", "pin"]
+                }
+              }
+            },
+            {
+              "name": "Unpin Thread (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/threads/1/unpin",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "threads", "1", "unpin"]
+                }
               }
             }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{user_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
-            },
-            "description": "Get current user by id (from Login). Returns 200 with id, username, role, email."
-          }
+          ]
         },
         {
-          "name": "Users Update (self)",
-          "event": [
+          "name": "Posts",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Body has id, username, role', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('id');",
-                  "  pm.expect(j).to.have.property('username');",
-                  "  pm.expect(j).to.have.property('role');",
-                  "});"
+              "name": "List Thread Posts",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/threads/1/posts?page=1&limit=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "threads", "1", "posts"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Post",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
-                "type": "text/javascript"
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"thread_id\": 1,\n  \"content\": \"Reply content here\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/posts",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "posts"]
+                }
+              }
+            },
+            {
+              "name": "Hide Post (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/posts/1/hide",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "posts", "1", "hide"]
+                }
+              }
+            },
+            {
+              "name": "Unhide Post (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/posts/1/unhide",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "posts", "1", "unhide"]
+                }
               }
             }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"{{username}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{user_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
-            },
-            "description": "Update user. Body: optional username, email, preferred_language, role (admin only), role_level (admin only; hierarchy: target must have lower level; only SuperAdmin may set own level to >= 100)."
-          }
+          ]
         },
         {
-          "name": "Users Get (404)",
-          "event": [
+          "name": "Likes",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
-                  "pm.test('Body has error', function () {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('error');",
-                  "});"
+              "name": "Like Post",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
-                "type": "text/javascript"
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/posts/1/like",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "posts", "1", "like"]
+                }
+              }
+            },
+            {
+              "name": "Unlike Post",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/posts/1/like",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "posts", "1", "like"]
+                }
               }
             }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/999999",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "999999"]
-            },
-            "description": "Expect 404 for non-existent user id."
-          }
+          ]
         },
         {
-          "name": "Users Delete",
-          "event": [
+          "name": "Reports",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has message', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('message');",
-                  "  });",
-                  "}"
+              "name": "Submit Report",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
-                "type": "text/javascript"
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"post_id\": 1,\n  \"reason\": \"Spam or abuse\",\n  \"comment\": \"This post contains inappropriate content\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/reports",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "reports"]
+                }
+              }
+            },
+            {
+              "name": "List Reports (Moderator+)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/reports?page=1&limit=20&status=open",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "reports"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "status",
+                      "value": "open"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Report (Moderator+)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"resolved\",\n  \"notes\": \"Post was removed\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/forum/reports/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "forum", "reports", "1"]
+                }
               }
             }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{target_user_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{target_user_id}}"]
-            },
-            "description": "Delete a user (admin only). Uses target_user_id from Users List (another user, not self). 403 if not admin; 404 if target_user_id empty or invalid."
-          }
-        },
-        {
-          "name": "Users Assign role",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 400 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('role');",
-                  "  pm.expect(['user','qa','moderator','admin']).to.include(j.role);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"role\": \"moderator\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{target_user_id}}/role",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{target_user_id}}", "role"]
-            },
-            "description": "Assign role to a user (admin only). Body: role (user, qa, moderator, admin). Hierarchy: target must have lower role_level; new role default_level must be below your level. Uses target_user_id."
-          }
-        },
-        {
-          "name": "Users Ban",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 400 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('is_banned');",
-                  "  pm.expect(j.is_banned).to.eql(true);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"reason\": \"Postman test ban\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{target_user_id}}/ban",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{target_user_id}}", "ban"]
-            },
-            "description": "Ban a user (admin only). Body: optional reason. Uses target_user_id. Cannot ban yourself (400). 403 if not admin."
-          }
-        },
-        {
-          "name": "Users Unban",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('is_banned');",
-                  "  pm.expect(j.is_banned).to.eql(false);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{target_user_id}}/unban",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{target_user_id}}", "unban"]
-            },
-            "description": "Unban a user (admin only). Uses target_user_id. 403 if not admin."
-          }
+          ]
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000",
+      "type": "string"
     },
     {
-      "name": "Roles",
-      "description": "Role CRUD. Admin only. Name: lowercase, digits, underscore; 1-20 chars. Optional: description, default_role_level (0-9999)."
-      "item": [
-        {
-          "name": "Roles List",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 (admin) or 403 (non-admin)', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has items, total, page, per_page', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('items');",
-                  "    pm.expect(j.items).to.be.an('array');",
-                  "    pm.expect(j).to.have.property('total');",
-                  "    pm.expect(j).to.have.property('page');",
-                  "    pm.expect(j).to.have.property('per_page');",
-                  "  });",
-                  "  const j = pm.response.json();",
-                  "  if (j.items && j.items.length > 0 && !pm.collectionVariables.get('role_id')) {",
-                  "    pm.collectionVariables.set('role_id', String(j.items[0].id));",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles?page=1&limit=50",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "50" },
-                { "key": "q", "value": "", "disabled": true }
-              ]
-            },
-            "description": "List roles (admin only). 403 if not admin. Optionally sets role_id for Get/Update/Delete."
-          }
-        },
-        {
-          "name": "Roles Get",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has id and name', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('id');",
-                  "    pm.expect(j).to.have.property('name');",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles/{{role_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles", "{{role_id}}"]
-            },
-            "description": "Get one role by id (admin only). Use role_id from Roles List or variable."
-          }
-        },
-        {
-          "name": "Roles Create",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 201 or 400 or 403 or 409', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([201, 400, 403, 409]);",
-                  "});",
-                  "if (pm.response.code === 201) {",
-                  "  pm.test('Body has id and name', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('id');",
-                  "    pm.expect(j).to.have.property('name');",
-                  "    if (j.id) pm.collectionVariables.set('role_id', String(j.id));",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"custom_role\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles"]
-            },
-            "description": "Create a role (admin only). Body: name (lowercase, digits, underscore). 409 if name exists."
-          }
-        },
-        {
-          "name": "Roles Update",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 400 or 403 or 404 or 409', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 404, 409]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has id and name', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('id');",
-                  "    pm.expect(j).to.have.property('name');",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"custom_updated\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles/{{role_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles", "{{role_id}}"]
-            },
-            "description": "Update a role's name (admin only). Body: name. Use role_id from List/Create."
-          }
-        },
-        {
-          "name": "Roles Delete",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 or 400 or 403 or 404', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 404]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has message', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('message');",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/roles/{{role_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "roles", "{{role_id}}"]
-            },
-            "description": "Delete a role (admin only). 400 if users have this role. Use role_id of a role with no users (e.g. custom role just created)."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Areas",
-      "description": "Area CRUD and user-area assignment (0.0.17). Admin only; requires feature manage.areas. Areas: all (wildcard), community, website content, rules and system, ai integration, game, wiki.",
-      "item": [
-        {
-          "name": "Areas List",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 (admin with feature) or 401 or 403', function () { pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]); });",
-                  "if (pm.response.code === 200) {",
-                  "  const j = pm.response.json();",
-                  "  pm.expect(j).to.have.property('items');",
-                  "  if (j.items && j.items.length > 0 && !pm.collectionVariables.get('area_id')) {",
-                  "    pm.collectionVariables.set('area_id', String(j.items[0].id));",
-                  "  }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/areas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "areas"]
-            },
-            "description": "List areas (admin with manage.areas). Sets area_id from first item."
-          }
-        },
-        {
-          "name": "Areas Get",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/areas/{{area_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "areas", "{{area_id}}"]
-            },
-            "description": "Get one area by id (admin with manage.areas)."
-          }
-        },
-        {
-          "name": "Areas Create",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 201 or 400 or 403 or 409', function () { pm.expect(pm.response.code).to.be.oneOf([201, 400, 403, 409]); });",
-                  "if (pm.response.code === 201) {",
-                  "  const j = pm.response.json();",
-                  "  if (j.id) pm.collectionVariables.set('area_id', String(j.id));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"custom_area\",\n  \"slug\": \"custom-area\",\n  \"description\": \"Optional\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/areas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "areas"]
-            },
-            "description": "Create area (admin). name and slug required; slug unique. 409 if slug exists."
-          }
-        },
-        {
-          "name": "Areas Update",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Area\",\n  \"description\": \"Updated\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/areas/{{area_id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "areas", "{{area_id}}"]
-            },
-            "description": "Update area (admin). System areas (e.g. all) may have restricted edits."
-          }
-        },
-        {
-          "name": "User Areas Get",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{target_user_id}}/areas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{target_user_id}}", "areas"]
-            },
-            "description": "Get areas assigned to a user (admin; target must have lower role_level)."
-          }
-        },
-        {
-          "name": "User Areas Put",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"area_ids\": [1, 2]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/{{target_user_id}}/areas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{target_user_id}}", "areas"]
-            },
-            "description": "Set user areas (admin; target must have lower role_level). area_ids: list of area ids; empty = no areas."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Feature Areas",
-      "description": "Feature/view to area mapping (0.0.17). Admin only; requires feature manage.feature_areas. GET list all; GET/PUT per feature_id (e.g. manage.news, manage.users).",
-      "item": [
-        {
-          "name": "Feature Areas List",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/feature-areas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "feature-areas"]
-            },
-            "description": "List all features and their area_ids (admin with manage.feature_areas)."
-          }
-        },
-        {
-          "name": "Feature Areas Get",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/feature-areas/manage.news",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "feature-areas", "manage.news"]
-            },
-            "description": "Get area_ids for one feature (admin)."
-          }
-        },
-        {
-          "name": "Feature Areas Put",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"area_ids\": [1, 2]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/feature-areas/manage.news",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "feature-areas", "manage.news"]
-            },
-            "description": "Set areas for a feature (admin). Empty area_ids = global (any area). 400 if feature_id unknown."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Data Export/Import",
-      "description": "Versioned data export/import (0.0.18). Admin-only export; SuperAdmin-only import execution. Uses structured JSON payload with metadata + data.tables.",
-      "item": [
-        {
-          "name": "Export Full",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"scope\": \"full\"\n}" },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/data/export",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "data", "export"]
-            },
-            "description": "Full database export. Admin JWT required; feature manage.data_export. Returns JSON with metadata + data.tables."
-          }
-        },
-        {
-          "name": "Export Table (users)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"scope\": \"table\",\n  \"table\": \"users\"\n}" },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/data/export",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "data", "export"]
-            },
-            "description": "Export users table only."
-          }
-        },
-        {
-          "name": "Export Rows (users 1,2)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"scope\": \"rows\",\n  \"table\": \"users\",\n  \"primary_keys\": [1, 2]\n}" },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/data/export",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "data", "export"]
-            },
-            "description": "Export selected user rows by primary key."
-          }
-        },
-        {
-          "name": "Import Preflight",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"metadata\": {\n    \"format_version\": 1,\n    \"schema_revision\": \"rev-or-empty\",\n    \"scope\": { \"type\": \"table\", \"table\": \"users\" },\n    \"tables\": [],\n    \"application_version\": \"0.0.18\",\n    \"exported_at\": \"2026-03-12T00:00:00Z\",\n    \"generator\": {\"name\": \"WorldOfShadows Backend\", \"host\": \"local\"},\n    \"checksum\": {\"algorithm\": \"sha256\", \"value\": \"\"}\n  },\n  \"data\": {\n    \"tables\": { \"users\": [] }\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/data/import/preflight",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "data", "import", "preflight"]
-            },
-            "description": "Validate payload only. Admin JWT required; feature manage.data_import. Returns ok + issues + metadata."
-          }
-        },
-        {
-          "name": "Import Execute",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"metadata\": {\n    \"format_version\": 1,\n    \"schema_revision\": \"rev-or-empty\",\n    \"scope\": { \"type\": \"table\", \"table\": \"users\" },\n    \"tables\": [],\n    \"application_version\": \"0.0.18\",\n    \"exported_at\": \"2026-03-12T00:00:00Z\",\n    \"generator\": {\"name\": \"WorldOfShadows Backend\", \"host\": \"local\"},\n    \"checksum\": {\"algorithm\": \"sha256\", \"value\": \"\"}\n  },\n  \"data\": {\n    \"tables\": { \"users\": [] }\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/data/import/execute",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "data", "import", "execute"]
-            },
-            "description": "Execute import. SuperAdmin + feature manage.data_import required. Uses same payload as preflight."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin Logs",
-      "description": "Activity logs list and CSV export. Admin role only. Same token as Users (admin).",
-      "item": [
-        {
-          "name": "Admin Logs List",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 (admin) or 403 (non-admin)', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Body has items, total, page, limit', function () {",
-                  "    const j = pm.response.json();",
-                  "    pm.expect(j).to.have.property('items');",
-                  "    pm.expect(j.items).to.be.an('array');",
-                  "    pm.expect(j).to.have.property('total');",
-                  "    pm.expect(j).to.have.property('page');",
-                  "    pm.expect(j).to.have.property('limit');",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/logs?page=1&limit=50",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "logs"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "50" },
-                { "key": "q", "value": "", "disabled": true },
-                { "key": "category", "value": "", "disabled": true },
-                { "key": "status", "value": "", "disabled": true },
-                { "key": "date_from", "value": "", "disabled": true },
-                { "key": "date_to", "value": "", "disabled": true }
-              ]
-            },
-            "description": "List activity logs (admin only). Query: q, category, status, date_from, date_to, page, limit. 403 if not admin."
-          }
-        },
-        {
-          "name": "Admin Logs Export",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 200 (admin) or 403 (non-admin)', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
-                  "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.test('Content-Type is CSV', function () {",
-                  "    const ct = pm.response.headers.get('Content-Type');",
-                  "    pm.expect(ct).to.include('text/csv');",
-                  "  });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/logs/export?limit=100",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "logs", "export"],
-              "query": [
-                { "key": "limit", "value": "100" },
-                { "key": "q", "value": "", "disabled": true },
-                { "key": "category", "value": "", "disabled": true },
-                { "key": "status", "value": "", "disabled": true },
-                { "key": "date_from", "value": "", "disabled": true },
-                { "key": "date_to", "value": "", "disabled": true }
-              ]
-            },
-            "description": "Export activity logs as CSV (admin only). Same filters as list; limit max 5000. 403 if not admin."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Slogans",
-      "description": "Slogan CRUD (moderator+). Placement resolution via Site / Site slogan (public).",
-      "item": [
-        {
-          "name": "Slogans List",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/slogans",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "slogans"],
-              "query": [
-                { "key": "placement_key", "value": "", "disabled": true },
-                { "key": "language_code", "value": "", "disabled": true },
-                { "key": "category", "value": "", "disabled": true }
-              ]
-            },
-            "description": "List slogans (moderator or admin). Query: placement_key, language_code, category, active_only."
-          }
-        },
-        {
-          "name": "Slogan Create",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) {",
-                  "  const j = pm.response.json();",
-                  "  if (j.id) pm.collectionVariables.set('slogan_id', String(j.id));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"text\": \"A dark foundation for a dark future.\",\n  \"category\": \"landing_teaser\",\n  \"placement_key\": \"landing.teaser.primary\",\n  \"language_code\": \"de\",\n  \"is_active\": true,\n  \"is_pinned\": false,\n  \"priority\": 0\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/slogans",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "slogans"]
-            },
-            "description": "Create a slogan (moderator+). Body: text, category, placement_key, language_code, is_active, is_pinned, priority, valid_from, valid_until."
-          }
-        },
-        {
-          "name": "Slogan Activate",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/slogans/{{slogan_id}}/activate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "slogans", "{{slogan_id}}", "activate"]
-            },
-            "description": "Set slogan is_active=true. Replace 1 with slogan id."
-          }
-        },
-        {
-          "name": "Slogan Deactivate",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/slogans/{{slogan_id}}/deactivate",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "slogans", "{{slogan_id}}", "deactivate"]
-            },
-            "description": "Set slogan is_active=false. Replace 1 with slogan id."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Site",
-      "description": "Public site API: slogan resolution and site settings (no auth).",
-      "item": [
-        {
-          "name": "Site Slogan (resolve placement)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/site/slogan?placement=landing.teaser.primary&lang=de",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "site", "slogan"],
-              "query": [
-                { "key": "placement", "value": "landing.teaser.primary" },
-                { "key": "lang", "value": "de" }
-              ]
-            },
-            "description": "Resolve one slogan for placement and language. Public. Returns { text, placement_key, language_code } or text null."
-          }
-        },
-        {
-          "name": "Site Slogans (list for placement)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/site/slogans?placement=landing.teaser.primary&lang=de",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "site", "slogans"],
-              "query": [
-                { "key": "placement", "value": "landing.teaser.primary" },
-                { "key": "lang", "value": "de" }
-              ]
-            },
-            "description": "List all slogans for a placement and language (for rotation). Public. Returns { items: [ { text, placement_key, language_code }, ... ] }."
-          }
-        },
-        {
-          "name": "Site Settings (public)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/site/settings",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "site", "settings"]
-            },
-            "description": "Public read-only site settings. Returns { slogan_rotation_interval_seconds, slogan_rotation_enabled }."
-          }
-        }
-      ]
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
     }
   ]
 }
