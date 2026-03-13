@@ -1,6 +1,12 @@
-## Forum Integration Wave — v0.0.27 (2026-03-13)
+# Forum Integration Wave Changelog
+
+## v0.0.27 — Forum Integration Wave (2026-03-13)
 
 ### Added
+
+- **`GET /api/v1/forum/tags`** — List all forum tags (moderator/admin only). Supports `q` (label/slug search), `page`, and `limit` query params. Returns `items` (each with `id`, `slug`, `label`, `thread_count`, `created_at`), `total`, `page`, `per_page`.
+- **`DELETE /api/v1/forum/tags/<id>`** — Delete a forum tag by ID (admin only). Returns 404 if the tag does not exist and 409 if the tag is currently associated with one or more threads.
+- **`bookmarked_by_me` and `tags` fields on thread list** — `GET /api/v1/forum/categories/<slug>/threads` now includes `bookmarked_by_me` (bool, false for anonymous users) and `tags` (array of tag label strings) on each thread object. Batch-loaded per page to avoid N+1 queries.
 
 - **`resolution_note` on forum reports:** `ForumReport` model gained a `resolution_note TEXT` column
   (migration 027). The field is included in all `to_dict()` outputs. Both `PUT /api/v1/forum/reports/<id>`
@@ -37,8 +43,8 @@
   `resolution_note` as an optional field alongside `report_ids` and `status`.
 
 - **`GET /api/v1/forum/categories/<slug>/threads` response documented:** The response envelope includes
-  `items`, `total`, `page`, and `per_page` fields. Thread objects include `author_username`. Moderators and
-  admins receive hidden and archived threads that regular users do not see.
+  `items`, `total`, `page`, and `per_page` fields. Thread objects include `author_username`, `bookmarked_by_me`,
+  and `tags`. Moderators and admins receive hidden and archived threads via SQL-level filtering.
 
 ### Performance
 

@@ -871,7 +871,7 @@ def _normalize_tag_value(raw: str) -> Optional[str]:
     if not raw or not isinstance(raw, str):
         return None
     s = raw.strip().lower()
-    s = re.sub(r"[^a-z0-9\\-_]+", "-", s)
+    s = re.sub(r"[^a-z0-9_-]+", "-", s)
     s = re.sub(r"-{2,}", "-", s).strip("-")
     return s or None
 
@@ -935,6 +935,81 @@ def list_tags_for_thread(thread: ForumThread) -> List[ForumTag]:
         .order_by(ForumTag.slug.asc())
         .all()
     )
+
+
+def list_tags_for_threads(thread_ids: List[int]) -> dict[int, List[dict]]:
+    """Return tags for multiple threads in a single query. Returns {thread_id: [{"slug": ..., "label": ...}]}."""
+    if not thread_ids:
+        return {}
+    rows = (
+        db.session.query(ForumThreadTag.thread_id, ForumTag.slug, ForumTag.label)
+        .join(ForumTag, ForumTag.id == ForumThreadTag.tag_id)
+        .filter(ForumThreadTag.thread_id.in_(thread_ids))
+        .order_by(ForumThreadTag.thread_id, ForumTag.slug.asc())
+        .all()
+    )
+    result: dict[int, List[dict]] = {}
+    for tid, slug, label in rows:
+        result.setdefault(tid, []).append({"slug": slug, "label": label})
+    return result
+
+
+def bookmarked_thread_ids_for_user(user_id: int, thread_ids: List[int]) -> Set[int]:
+    """Return set of thread_ids that are bookmarked by a user from the given list."""
+    if not user_id or not thread_ids:
+        return set()
+    rows = (
+        ForumThreadBookmark.query.with_entities(ForumThreadBookmark.thread_id)
+        .filter(ForumThreadBookmark.user_id == user_id, ForumThreadBookmark.thread_id.in_(thread_ids))
+        .all()
+    )
+    return {r[0] for r in rows}
+
+
+def list_all_tags(*, page: int = 1, per_page: int = 50, q: Optional[str] = None) -> Tuple[List[ForumTag], int]:
+    """List all tags with optional label/slug search. Paginated."""
+    query = ForumTag.query
+    if q:
+        like_pattern = f"%{q}%"
+        query = query.filter(
+            db.or_(ForumTag.slug.ilike(like_pattern), ForumTag.label.ilike(like_pattern))
+        )
+    query = query.order_by(ForumTag.slug.asc())
+    total = query.count()
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    offset = (page - 1) * per_page
+    items = query.offset(offset).limit(per_page).all()
+    return items, total
+
+
+def tag_thread_count(tag: ForumTag) -> int:
+    """Return number of thread-tag associations for a tag."""
+    return ForumThreadTag.query.filter_by(tag_id=tag.id).count()
+
+
+def batch_tag_thread_counts(tag_ids: List[int]) -> dict[int, int]:
+    """Return a dict of tag_id -> thread count for all given tag IDs in a single query."""
+    if not tag_ids:
+        return {}
+    from sqlalchemy import func
+    rows = (
+        db.session.query(ForumThreadTag.tag_id, func.count(ForumThreadTag.id))
+        .filter(ForumThreadTag.tag_id.in_(tag_ids))
+        .group_by(ForumThreadTag.tag_id)
+        .all()
+    )
+    return dict(rows)
+
+
+def delete_tag(tag: ForumTag) -> Optional[str]:
+    """Delete a tag if it has no thread associations. Returns error string or None."""
+    count = tag_thread_count(tag)
+    if count > 0:
+        return f"Tag is in use by {count} thread(s) and cannot be deleted"
+    db.session.delete(tag)
+    db.session.commit()
+    return None
 
 
 def create_notifications_for_thread_reply(

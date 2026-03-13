@@ -21,10 +21,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Forum tag management endpoints:** `GET /api/v1/forum/tags` (moderator/admin, paginated, searchable) lists all tags with thread counts. `DELETE /api/v1/forum/tags/<id>` (admin only) deletes unused tags; returns 409 if the tag has thread associations.
+- **Thread list enhancements:** `GET /api/v1/forum/categories/<slug>/threads` now returns `bookmarked_by_me` (bool) and `tags` (array of label strings) per thread, and includes `total` in the response envelope. Tags and bookmark state are batch-loaded per page. SQL-level visibility filtering replaces the earlier Python-side THREAD_FETCH_CAP approach.
 - **`resolution_note` on forum reports:** `ForumReport` model gained a `resolution_note TEXT` column (migration 027). Accepted by `PUT /api/v1/forum/reports/<id>` and `POST /api/v1/forum/reports/bulk-status`; included in all `to_dict()` outputs. The administration tool displays a truncated snippet in the Reports table and prompts for a note when resolving or dismissing reports.
 - **Report list pagination and filtering:** `GET /api/v1/forum/reports` now accepts `page`, `limit`, `status`, and `target_type` query parameters and returns `{ items, total, page, limit }`. The admin UI uses load-more pagination with these parameters.
 - **Moderation log UI:** The forum management page in the administration tool initialises a moderation log card for moderators and admins (`initModerationLog`). Displays actor, action, target, message snippet, and timestamp with load-more pagination backed by `GET /api/v1/forum/moderation/log`.
 - **Bulk report UI in administration tool:** Reports table includes per-row checkboxes, select-all, a bulk action selector, and an optional bulk resolution note input. Submits to `POST /api/v1/forum/reports/bulk-status`.
+
+### Changed
+
+- **Postman collection:** Added `Forum > Tags` folder with `List Tags (Moderator+)` and `Delete Tag (Admin only)` requests including response examples. Updated `List Category Threads` with a response example showing `bookmarked_by_me`, `tags`, and `total`.
+- **`backend/docs/FORUM_MODULE.md`:** Updated to document all endpoints added since v0.0.19 including bookmarks, subscriptions, tags, bulk moderation, merges, splits, and search filters.
 
 ### Performance
 

@@ -722,16 +722,22 @@
                         if (empty) empty.hidden = false;
                         return;
                     }
-                    if (tbody && !append) tbody.innerHTML = "";
+                    if (tbody && !append) { while (tbody.firstChild) tbody.removeChild(tbody.firstChild); }
                     if (tbody) {
                         items.forEach(function(entry) {
                             var tr = document.createElement("tr");
-                            tr.innerHTML =
-                                "<td>" + escapeHtml(entry.actor_username_snapshot || "system") + "</td>" +
-                                "<td>" + escapeHtml(entry.action || "") + "</td>" +
-                                "<td>" + (entry.target_type || "") + (entry.target_id ? "#" + entry.target_id : "") + "</td>" +
-                                "<td>" + escapeHtml((entry.message || "").substring(0, 80)) + "</td>" +
-                                "<td>" + formatDate(entry.created_at) + "</td>";
+                            var cells = [
+                                escapeHtml(entry.actor_username_snapshot || "system"),
+                                escapeHtml(entry.action || ""),
+                                escapeHtml((entry.target_type || "") + (entry.target_id ? "#" + entry.target_id : "")),
+                                escapeHtml((entry.message || "").substring(0, 80)),
+                                formatDate(entry.created_at)
+                            ];
+                            cells.forEach(function(text) {
+                                var td = document.createElement("td");
+                                td.textContent = text;
+                                tr.appendChild(td);
+                            });
                             tbody.appendChild(tr);
                         });
                     }
@@ -758,6 +764,104 @@
         loadLog();
     }
 
+    // --- Tags ---
+    function initTags() {
+        var apiRef = api();
+        if (!apiRef) return;
+        var loading = $("manage-forum-tags-loading");
+        var errorEl = $("manage-forum-tags-error");
+        var empty = $("manage-forum-tags-empty");
+        var wrap = $("manage-forum-tags-table-wrap");
+        var tbody = $("manage-forum-tags-tbody");
+        var count = $("manage-forum-tags-count");
+        var footer = $("manage-forum-tags-footer");
+        var searchInput = $("manage-forum-tags-search");
+        var refreshBtn = $("manage-forum-tags-refresh");
+
+        function loadTags() {
+            if (!apiRef) return;
+            if (loading) loading.hidden = false;
+            if (errorEl) { errorEl.hidden = true; errorEl.textContent = ""; }
+            if (empty) empty.hidden = true;
+            if (wrap) wrap.hidden = true;
+            if (footer) footer.hidden = true;
+
+            var q = searchInput ? searchInput.value.trim() : "";
+            var url = "/api/v1/forum/tags?limit=100";
+            if (q) url += "&q=" + encodeURIComponent(q);
+            apiRef(url)
+                .then(function(data) {
+                    var items = (data && data.items) || [];
+                    if (loading) loading.hidden = true;
+                    if (!items.length) {
+                        if (empty) empty.hidden = false;
+                        return;
+                    }
+                    if (tbody) {
+                        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+                        items.forEach(function(tag) {
+                            var tr = document.createElement("tr");
+                            var tdSlug = document.createElement("td");
+                            tdSlug.textContent = tag.slug || "";
+                            var tdLabel = document.createElement("td");
+                            tdLabel.textContent = tag.label || "";
+                            var tdCount = document.createElement("td");
+                            tdCount.textContent = String(tag.thread_count || 0);
+                            var tdCreated = document.createElement("td");
+                            tdCreated.textContent = formatDate(tag.created_at);
+                            var tdActions = document.createElement("td");
+                            if (tag.thread_count === 0) {
+                                var delBtn = document.createElement("button");
+                                delBtn.type = "button";
+                                delBtn.className = "btn btn-sm btn-outline";
+                                delBtn.textContent = "Delete";
+                                delBtn.addEventListener("click", function() {
+                                    if (!confirm("Delete tag '" + (tag.slug || "") + "'?")) return;
+                                    apiRef("/api/v1/forum/tags/" + tag.id, { method: "DELETE" })
+                                        .then(function() { loadTags(); })
+                                        .catch(function(e) {
+                                            if (errorEl) {
+                                                errorEl.textContent = (e && e.message) || "Delete failed.";
+                                                errorEl.hidden = false;
+                                            }
+                                        });
+                                });
+                                tdActions.appendChild(delBtn);
+                            } else {
+                                tdActions.textContent = "In use";
+                            }
+                            tr.appendChild(tdSlug);
+                            tr.appendChild(tdLabel);
+                            tr.appendChild(tdCount);
+                            tr.appendChild(tdCreated);
+                            tr.appendChild(tdActions);
+                            tbody.appendChild(tr);
+                        });
+                    }
+                    if (wrap) wrap.hidden = false;
+                    if (count) count.textContent = items.length + " tags";
+                    if (footer) footer.hidden = false;
+                })
+                .catch(function(e) {
+                    if (loading) loading.hidden = true;
+                    if (errorEl) {
+                        errorEl.textContent = (e && e.message) || "Failed to load tags.";
+                        errorEl.hidden = false;
+                    }
+                });
+        }
+
+        if (refreshBtn) refreshBtn.addEventListener("click", loadTags);
+        if (searchInput) {
+            var debounceTimer;
+            searchInput.addEventListener("input", function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(loadTags, 300);
+            });
+        }
+        loadTags();
+    }
+
     function init() {
         if (!window.ManageAuth) return;
         window.ManageAuth.ensureAuth().then(function(user) {
@@ -765,6 +869,7 @@
             var isModeratorOrAdmin = user && (user.role === "moderator" || user.role === "admin");
             var categoriesCard = $("manage-forum-categories-card");
             var categoryEditor = $("manage-forum-category-editor");
+            var tagsCard = $("manage-forum-tags-card");
             if (!isAdmin) {
                 if (categoriesCard) categoriesCard.style.display = "none";
                 if (categoryEditor) categoryEditor.style.display = "none";
@@ -773,6 +878,12 @@
                 if (categoryEditor) categoryEditor.style.display = "";
             }
             if (isAdmin) initCategories();
+            if (isModeratorOrAdmin) {
+                initTags();
+                if (tagsCard) tagsCard.style.display = "";
+            } else {
+                if (tagsCard) tagsCard.style.display = "none";
+            }
             initReports();
             if (isModeratorOrAdmin) {
                 initModerationDashboard();

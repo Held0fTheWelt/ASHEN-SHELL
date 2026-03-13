@@ -119,7 +119,7 @@ Public/community (JWT optional):
 
 - `GET /api/v1/forum/categories` → list visible categories.
 - `GET /api/v1/forum/categories/<slug>` → category detail (+ `thread_count`).
-- `GET /api/v1/forum/categories/<slug>/threads?page&limit` → paginated threads. Response: `{ items, total, page, per_page }`. Thread objects include `author_username`. Moderators/admins see hidden/archived threads.
+- `GET /api/v1/forum/categories/<slug>/threads?page&limit` → paginated threads. Response: `{ items, total, page, per_page }`. Thread objects include `author_username`, `bookmarked_by_me` (bool), and `tags` (array of label strings). Moderators/admins see hidden/archived threads via SQL-level filter.
 - `GET /api/v1/forum/threads/<slug>` → thread detail, including `subscribed_by_me` flag and `tags` array (when tags exist).
 - `GET /api/v1/forum/threads/<id>/posts?page&limit&include_hidden&include_deleted` → paginated posts. Each post includes `liked_by_me` flag when authenticated.
 - `GET /api/v1/forum/search?q&page&limit&category&status&tag&include_content` → search threads (and optionally post content).
@@ -138,16 +138,29 @@ Moderator/admin:
 
 - Thread moderation: lock/unlock, pin/unpin, archive/unarchive, move, merge, split, hide thread.
 - Bulk thread operations: `POST /api/v1/forum/moderation/bulk-threads/status` (body `{ thread_ids, lock?, archive? }`).
-- Post moderation: `POST/unhide /api/v1/forum/posts/<id>/hide`.
+- Post moderation: `POST /api/v1/forum/posts/<id>/hide`, `POST /api/v1/forum/posts/<id>/unhide`.
 - Bulk post operations: `POST /api/v1/forum/moderation/bulk-posts/hide` (body `{ post_ids, hidden }`).
 - Reports: `GET /api/v1/forum/reports?page&limit&status&target_type` → `{ items, total, page, limit }`. Each item includes `resolution_note`.
 - Report update: `PUT /api/v1/forum/reports/<id>` (body `{ status, resolution_note? }`).
 - Bulk report update: `POST /api/v1/forum/reports/bulk-status` (body `{ report_ids, status, resolution_note? }`).
+- Tags: `GET /api/v1/forum/tags` (list all with thread counts; supports `q`, `page`, `limit`).
 - Moderation dashboard: metrics, recent open reports, recently handled reports, locked threads, pinned threads, hidden posts.
 - Moderation log: `GET /api/v1/forum/moderation/log?page&limit&q&status&date_from&date_to` → `{ items, total, page, limit }`.
 - Category admin: `POST /api/v1/forum/admin/categories`, `PUT /api/v1/forum/admin/categories/<id>`, `DELETE /api/v1/forum/admin/categories/<id>`.
 
+Admin only:
+
+- `DELETE /api/v1/forum/tags/<id>` — delete unused tag (409 if in use by any thread).
+
 All endpoints follow existing API conventions: JSON bodies, error structures `{"error": "..."}`, and pagination fields (`items`, `total`, `page`, `per_page` or `limit` depending on endpoint).
+
+## Tag management
+
+Tags are created implicitly when set on threads. Tag slugs are normalized from labels. The `GET /api/v1/forum/tags` endpoint returns each tag's `id`, `slug`, `label`, `thread_count`, and `created_at`. Tags cannot be deleted while any thread associations exist (409 Conflict).
+
+## Thread list `bookmarked_by_me` and `tags` fields
+
+Added in v0.0.27. The category thread list endpoint batch-loads bookmark state and tags for the current page. Anonymous requests always receive `bookmarked_by_me: false`. Tags are an array of label strings. SQL-level visibility filtering replaces the earlier Python-side THREAD_FETCH_CAP approach.
 
 ## Performance indexes (as of 0.0.27)
 

@@ -155,8 +155,37 @@ Tags appear in the following responses when a thread has at least one tag:
 - `GET /api/v1/forum/threads/<slug>` — `tags` array in the thread object.
 - `GET /api/v1/forum/bookmarks` — `tags` array per bookmark item.
 
-The category thread list (`GET /api/v1/forum/categories/<slug>/threads`) does not include tags per
-thread item.
+The category thread list (`GET /api/v1/forum/categories/<slug>/threads`) includes `tags` (array of label strings) and `bookmarked_by_me` (bool) per thread item. Anonymous requests always receive `bookmarked_by_me: false`.
+
+### Tag management (moderator/admin)
+
+`GET /api/v1/forum/tags` lists all tags with thread counts. Requires moderator or admin.
+
+Query params:
+- `q` -- optional text filter (matches label or slug)
+- `page` -- page number (default 1)
+- `limit` -- results per page (default 50, max 100)
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "slug": "lore",
+      "label": "lore",
+      "thread_count": 12,
+      "created_at": "2026-03-01T10:00:00+00:00"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "per_page": 50
+}
+```
+
+`DELETE /api/v1/forum/tags/<id>` deletes a tag. Requires admin. Returns 409 if the tag is currently associated with any threads.
 
 ### Searching by tag
 
@@ -241,5 +270,4 @@ a paginated response:
 }
 ```
 
-Moderators and admins automatically see hidden and archived threads in addition to open and locked
-threads. Regular users only see open and locked threads.
+Each thread object includes `bookmarked_by_me` (bool) and `tags` (array of label strings). Moderators and admins automatically see hidden and archived threads in addition to open and locked threads. Regular users only see open and locked threads. SQL-level visibility filtering is used for pagination accuracy.
