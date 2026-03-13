@@ -17,6 +17,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.0.27] - 2026-03-13
+
+### Added
+
+- **`resolution_note` on forum reports:** `ForumReport` model gained a `resolution_note TEXT` column (migration 027). Accepted by `PUT /api/v1/forum/reports/<id>` and `POST /api/v1/forum/reports/bulk-status`; included in all `to_dict()` outputs. The administration tool displays a truncated snippet in the Reports table and prompts for a note when resolving or dismissing reports.
+- **Report list pagination and filtering:** `GET /api/v1/forum/reports` now accepts `page`, `limit`, `status`, and `target_type` query parameters and returns `{ items, total, page, limit }`. The admin UI uses load-more pagination with these parameters.
+- **Moderation log UI:** The forum management page in the administration tool initialises a moderation log card for moderators and admins (`initModerationLog`). Displays actor, action, target, message snippet, and timestamp with load-more pagination backed by `GET /api/v1/forum/moderation/log`.
+- **Bulk report UI in administration tool:** Reports table includes per-row checkboxes, select-all, a bulk action selector, and an optional bulk resolution note input. Submits to `POST /api/v1/forum/reports/bulk-status`.
+
+### Performance
+
+- **Migration 028 — additional indexes:** `ix_forum_posts_status` and `ix_forum_posts_thread_status` on `forum_posts`; `ix_forum_threads_status` on `forum_threads`; `ix_notifications_user_is_read` on `notifications`. All created idempotently.
+
+### Fixed
+
+- **Postman `Submit Report` body corrected:** Updated to use the correct fields `target_type`, `target_id`, `reason` (old example incorrectly used `post_id` and `comment`).
+- **Postman report request bodies updated:** `Update Report Status` and `Bulk Update Report Status` now document `resolution_note` as an optional field.
+
+---
+
 ## [0.0.26] - 2026-03-12
 
 ### Added

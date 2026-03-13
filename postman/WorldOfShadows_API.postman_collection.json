@@ -67,9 +67,9 @@
         }
       ]
     },
-        {
-          "name": "News",
-          "item": [
+    {
+      "name": "News",
+      "item": [
         {
           "name": "List News",
           "request": {
@@ -268,98 +268,98 @@
             }
           }
         },
-            {
-              "name": "Unlink Discussion Thread",
-              "request": {
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/news/1/discussion-thread",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "news",
-                    "1",
-                    "discussion-thread"
-                  ]
-                }
-              }
-            },
-            {
-              "name": "List Related Threads (Public)",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/news/1/related-threads",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "news",
-                    "1",
-                    "related-threads"
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Add Related Thread (Moderator+)",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"thread_id\": 1\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/news/1/related-threads",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "news",
-                    "1",
-                    "related-threads"
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Remove Related Thread (Moderator+)",
-              "request": {
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/v1/news/1/related-threads/1",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "v1",
-                    "news",
-                    "1",
-                    "related-threads",
-                    "1"
-                  ]
-                }
-              }
+        {
+          "name": "Unlink Discussion Thread",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/news/1/discussion-thread",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "1",
+                "discussion-thread"
+              ]
             }
-          ]
+          }
         },
+        {
+          "name": "List Related Threads (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/news/1/related-threads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "1",
+                "related-threads"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Related Thread (Moderator+)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"thread_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/news/1/related-threads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "1",
+                "related-threads"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove Related Thread (Moderator+)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/news/1/related-threads/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "1",
+                "related-threads",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "Forum",
       "item": [
@@ -466,7 +466,8 @@
                       "value": "20"
                     }
                   ]
-                }
+                },
+                "description": "List threads in a category (paginated). Response: { items: [...], total, page, per_page }. Thread objects include author_username. Moderators/admins also see hidden and archived threads. Query: page (default 1), limit (default 20, max 100)."
               }
             },
             {
@@ -641,11 +642,26 @@
               "name": "Move Thread",
               "request": {
                 "method": "POST",
-                "header": [{"key": "Content-Type", "value": "application/json"}],
-                "body": {"mode": "raw", "raw": "{\n  \"category_id\": 2\n}"},
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category_id\": 2\n}"
+                },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/threads/1/move",
-                  "path": ["api", "v1", "forum", "threads", "1", "move"]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "move"
+                  ]
                 }
               }
             },
@@ -656,7 +672,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/threads/1/archive",
-                  "path": ["api", "v1", "forum", "threads", "1", "archive"]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "archive"
+                  ]
                 }
               }
             },
@@ -667,7 +690,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/threads/1/unarchive",
-                  "path": ["api", "v1", "forum", "threads", "1", "unarchive"]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "unarchive"
+                  ]
                 }
               }
             },
@@ -687,7 +717,14 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/threads/1/merge",
-                  "path": ["api", "v1", "forum", "threads", "1", "merge"]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "merge"
+                  ]
                 }
               }
             },
@@ -707,7 +744,14 @@
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/threads/1/split",
-                  "path": ["api", "v1", "forum", "threads", "1", "split"]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "threads",
+                    "1",
+                    "split"
+                  ]
                 }
               }
             },
@@ -1014,7 +1058,12 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"post_id\": 1,\n  \"reason\": \"Spam or abuse\",\n  \"comment\": \"This post contains inappropriate content\"\n}"
+                  "raw": "{\n  \"target_type\": \"post\",\n  \"target_id\": 1,\n  \"reason\": \"Spam or abuse\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/reports",
@@ -1036,7 +1085,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/api/v1/forum/reports?page=1&limit=20&status=open",
+                  "raw": "{{baseUrl}}/api/v1/forum/reports?page=1&limit=20&status=open&target_type=",
                   "host": [
                     "{{baseUrl}}"
                   ],
@@ -1058,6 +1107,11 @@
                     {
                       "key": "status",
                       "value": "open"
+                    },
+                    {
+                      "key": "target_type",
+                      "value": "",
+                      "description": "Filter by target type: thread or post (leave blank for all)"
                     }
                   ]
                 }
@@ -1075,7 +1129,12 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"resolved\"\n}"
+                  "raw": "{\n  \"status\": \"resolved\",\n  \"resolution_note\": \"Reviewed and resolved. Content removed by moderator.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/reports/1",
@@ -1089,7 +1148,8 @@
                     "reports",
                     "1"
                   ]
-                }
+                },
+                "description": "Update the status of a single report (moderator/admin only). Valid statuses: open, reviewed, escalated, resolved, dismissed. resolution_note is optional free-text stored with the report."
               }
             },
             {
@@ -1104,7 +1164,12 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"report_ids\": [1, 2, 3],\n  \"status\": \"resolved\"\n}"
+                  "raw": "{\n  \"report_ids\": [\n    1,\n    2,\n    3\n  ],\n  \"status\": \"resolved\",\n  \"resolution_note\": \"Batch resolved after review.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/reports/bulk-status",
@@ -1118,7 +1183,8 @@
                     "reports",
                     "bulk-status"
                   ]
-                }
+                },
+                "description": "Bulk update status for multiple reports (moderator/admin only). Valid statuses for bulk: reviewed, escalated, resolved, dismissed. resolution_note is optional and applied to all updated reports."
               }
             }
           ]
@@ -1275,8 +1341,19 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/moderation/recently-handled?limit=10",
-                  "path": ["api", "v1", "forum", "moderation", "recently-handled"],
-                  "query": [{"key": "limit", "value": "10"}]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "moderation",
+                    "recently-handled"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
                 }
               }
             },
@@ -1287,8 +1364,19 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/moderation/locked-threads?limit=20",
-                  "path": ["api", "v1", "forum", "moderation", "locked-threads"],
-                  "query": [{"key": "limit", "value": "20"}]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "moderation",
+                    "locked-threads"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
                 }
               }
             },
@@ -1299,8 +1387,19 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/moderation/pinned-threads?limit=20",
-                  "path": ["api", "v1", "forum", "moderation", "pinned-threads"],
-                  "query": [{"key": "limit", "value": "20"}]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "moderation",
+                    "pinned-threads"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
                 }
               }
             },
@@ -1311,8 +1410,19 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/forum/moderation/hidden-posts?limit=20",
-                  "path": ["api", "v1", "forum", "moderation", "hidden-posts"],
-                  "query": [{"key": "limit", "value": "20"}]
+                  "path": [
+                    "api",
+                    "v1",
+                    "forum",
+                    "moderation",
+                    "hidden-posts"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
                 }
               }
             },
