@@ -762,19 +762,38 @@ def create_report(*, target_type: str, target_id: int, reported_by: Optional[int
     return report, None
 
 
-def list_reports(*, status: Optional[str] = None) -> List[ForumReport]:
+def list_reports(
+    *,
+    status: Optional[str] = None,
+    target_type: Optional[str] = None,
+    page: int = 1,
+    limit: int = 20,
+) -> Tuple[List[ForumReport], int]:
+    """Return (items, total) with optional filters and pagination."""
     q = ForumReport.query
     if status:
         q = q.filter_by(status=status)
-    return q.order_by(ForumReport.created_at.desc()).all()
+    if target_type and target_type in ("thread", "post"):
+        q = q.filter_by(target_type=target_type)
+    total = q.count()
+    items = q.order_by(ForumReport.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    return items, total
 
 
-def update_report_status(report: ForumReport, *, status: str, handled_by: Optional[int]) -> ForumReport:
+def update_report_status(
+    report: ForumReport,
+    *,
+    status: str,
+    handled_by: Optional[int],
+    resolution_note: Optional[str] = None,
+) -> ForumReport:
     if status not in ("open", "reviewed", "escalated", "resolved", "dismissed"):
         raise ValueError("Invalid report status")
     report.status = status
     report.handled_by = handled_by
     report.handled_at = _utc_now()
+    if resolution_note is not None:
+        report.resolution_note = resolution_note
     db.session.commit()
     return report
 

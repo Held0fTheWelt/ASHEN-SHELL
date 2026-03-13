@@ -222,51 +222,96 @@
         var count = $("manage-forum-reports-count");
         var footer = $("manage-forum-reports-footer");
         var statusSel = $("manage-forum-report-status");
+        var targetTypeSel = $("manage-forum-report-target-type");
         var refreshBtn = $("manage-forum-report-refresh");
+        var loadMoreBtn = $("manage-forum-reports-load-more");
+        var bulkBar = $("manage-forum-reports-bulk-bar");
+        var selectAllCb = $("manage-forum-reports-select-all");
+        var theadCheck = $("manage-forum-reports-thead-check");
+        var bulkAction = $("manage-forum-reports-bulk-action");
+        var bulkNote = $("manage-forum-reports-bulk-note");
+        var bulkApply = $("manage-forum-reports-bulk-apply");
 
-        function loadReports() {
+        var currentPage = 1;
+        var currentTotal = 0;
+        var pageLimit = 20;
+
+        function getSelectedIds() {
+            var ids = [];
+            if (tbody) {
+                tbody.querySelectorAll("input.report-check:checked").forEach(function(cb) {
+                    ids.push(parseInt(cb.value, 10));
+                });
+            }
+            return ids;
+        }
+
+        function syncSelectAll() {
+            var all = tbody ? tbody.querySelectorAll("input.report-check") : [];
+            var checked = tbody ? tbody.querySelectorAll("input.report-check:checked") : [];
+            var allChecked = all.length > 0 && all.length === checked.length;
+            if (selectAllCb) selectAllCb.checked = allChecked;
+            if (theadCheck) theadCheck.checked = allChecked;
+        }
+
+        function loadReports(append) {
             if (!apiRef) return;
-            if (loading) loading.hidden = false;
+            if (!append) {
+                currentPage = 1;
+                if (loading) loading.hidden = false;
+                if (empty) empty.hidden = true;
+                if (wrap) wrap.hidden = true;
+                if (footer) footer.hidden = true;
+                if (bulkBar) bulkBar.hidden = true;
+            }
             if (errorEl) { errorEl.hidden = true; errorEl.textContent = ""; }
-            if (empty) empty.hidden = true;
-            if (wrap) wrap.hidden = true;
-            if (footer) footer.hidden = true;
 
             var status = statusSel ? statusSel.value : "";
-            var url = "/api/v1/forum/reports";
-            if (status) url += "?status=" + encodeURIComponent(status);
+            var targetType = targetTypeSel ? targetTypeSel.value : "";
+            var params = ["page=" + currentPage, "limit=" + pageLimit];
+            if (status) params.push("status=" + encodeURIComponent(status));
+            if (targetType) params.push("target_type=" + encodeURIComponent(targetType));
+            var url = "/api/v1/forum/reports?" + params.join("&");
             apiRef(url)
                 .then(function(data) {
                     var items = (data && data.items) || [];
+                    currentTotal = data.total || 0;
                     if (loading) loading.hidden = true;
-                    if (!items.length) {
+                    if (!append && !items.length) {
                         if (empty) empty.hidden = false;
                         return;
                     }
+                    if (tbody && !append) tbody.innerHTML = "";
                     if (tbody) {
-                        tbody.innerHTML = "";
                         items.forEach(function(r) {
                             var tr = document.createElement("tr");
                             var target = (r.target_type || "?") + "#" + String(r.target_id || "");
                             var created = formatDate(r.created_at);
+                            var noteSnippet = r.resolution_note ? r.resolution_note.substring(0, 40) + (r.resolution_note.length > 40 ? "..." : "") : "";
                             tr.innerHTML =
+                                "<td><input type=\"checkbox\" class=\"report-check\" value=\"" + r.id + "\"></td>" +
                                 "<td>" + r.id + "</td>" +
                                 "<td>" + target + "</td>" +
                                 "<td>" + (r.reason || "") + "</td>" +
+                                "<td class=\"mono\" style=\"font-size:0.85em;\">" + noteSnippet + "</td>" +
                                 "<td>" + (r.status || "") + "</td>" +
                                 "<td>" + created + "</td>" +
                                 "<td>" +
                                 "<button type=\"button\" class=\"btn btn-sm btn-outline\" data-status=\"open\">Open</button> " +
                                 "<button type=\"button\" class=\"btn btn-sm btn-outline\" data-status=\"reviewed\">Reviewed</button> " +
-                                "<button type=\"button\" class=\"btn btn-sm btn-outline\" data-status=\"resolved\">Resolved</button> " +
+                                "<button type=\"button\" class=\"btn btn-sm btn-outline\" data-status=\"escalated\">Escalate</button> " +
+                                "<button type=\"button\" class=\"btn btn-sm btn-outline\" data-status=\"resolved\">Resolve</button> " +
                                 "<button type=\"button\" class=\"btn btn-sm btn-outline\" data-status=\"dismissed\">Dismiss</button>" +
                                 "</td>";
                             tr.querySelectorAll("button[data-status]").forEach(function(btn) {
                                 btn.addEventListener("click", function() {
                                     var newStatus = btn.getAttribute("data-status");
+                                    var noteInput = (newStatus === "resolved" || newStatus === "dismissed") ? prompt("Resolution note (optional):") : null;
+                                    var body = { status: newStatus };
+                                    if (noteInput) body.resolution_note = noteInput;
                                     apiRef("/api/v1/forum/reports/" + r.id, {
                                         method: "PUT",
-                                        body: JSON.stringify({ status: newStatus })
+                                        body: JSON.stringify(body)
                                     })
                                         .then(function() { loadReports(); })
                                         .catch(function(e) {
@@ -277,12 +322,16 @@
                                         });
                                 });
                             });
+                            tr.querySelector("input.report-check").addEventListener("change", syncSelectAll);
                             tbody.appendChild(tr);
                         });
                     }
                     if (wrap) wrap.hidden = false;
-                    if (count) count.textContent = items.length + " reports";
+                    if (bulkBar) bulkBar.hidden = false;
+                    var loaded = tbody ? tbody.querySelectorAll("tr").length : 0;
+                    if (count) count.textContent = loaded + " / " + currentTotal + " reports";
                     if (footer) footer.hidden = false;
+                    if (loadMoreBtn) loadMoreBtn.hidden = (loaded >= currentTotal);
                 })
                 .catch(function(e) {
                     if (loading) loading.hidden = true;
@@ -293,8 +342,42 @@
                 });
         }
 
-        if (refreshBtn) refreshBtn.addEventListener("click", loadReports);
-        if (statusSel) statusSel.addEventListener("change", loadReports);
+        if (loadMoreBtn) loadMoreBtn.addEventListener("click", function() {
+            currentPage++;
+            loadReports(true);
+        });
+
+        function toggleAll(checked) {
+            if (tbody) {
+                tbody.querySelectorAll("input.report-check").forEach(function(cb) { cb.checked = checked; });
+            }
+        }
+        if (selectAllCb) selectAllCb.addEventListener("change", function() { toggleAll(selectAllCb.checked); if (theadCheck) theadCheck.checked = selectAllCb.checked; });
+        if (theadCheck) theadCheck.addEventListener("change", function() { toggleAll(theadCheck.checked); if (selectAllCb) selectAllCb.checked = theadCheck.checked; });
+
+        if (bulkApply) bulkApply.addEventListener("click", function() {
+            var ids = getSelectedIds();
+            var action = bulkAction ? bulkAction.value : "";
+            if (!ids.length || !action) { alert("Select reports and an action."); return; }
+            var body = { report_ids: ids, status: action };
+            var note = bulkNote ? bulkNote.value.trim() : "";
+            if (note) body.resolution_note = note;
+            apiRef("/api/v1/forum/reports/bulk-status", {
+                method: "POST",
+                body: JSON.stringify(body)
+            })
+                .then(function() { loadReports(); })
+                .catch(function(e) {
+                    if (errorEl) {
+                        errorEl.textContent = (e && e.message) || "Bulk update failed.";
+                        errorEl.hidden = false;
+                    }
+                });
+        });
+
+        if (refreshBtn) refreshBtn.addEventListener("click", function() { loadReports(); });
+        if (statusSel) statusSel.addEventListener("change", function() { loadReports(); });
+        if (targetTypeSel) targetTypeSel.addEventListener("change", function() { loadReports(); });
         loadReports();
     }
 
@@ -423,9 +506,13 @@
             var wrap = $("manage-forum-locked-wrap");
             var loadEl = $("manage-forum-locked-loading");
             var emptyEl = $("manage-forum-locked-empty");
+            var bulkBar = $("manage-forum-locked-bulk-bar");
+            var selectAllCb = $("manage-forum-locked-select-all");
+            var bulkUnlockBtn = $("manage-forum-locked-bulk-unlock");
             if (loadEl) loadEl.hidden = false;
             if (emptyEl) emptyEl.hidden = true;
             if (wrap) { wrap.hidden = true; wrap.innerHTML = ""; }
+            if (bulkBar) bulkBar.hidden = true;
             apiRef("/api/v1/forum/moderation/locked-threads?limit=20")
                 .then(function(data) {
                     if (loadEl) loadEl.hidden = true;
@@ -436,14 +523,39 @@
                     }
                     var table = document.createElement("table");
                     table.className = "data-table";
-                    table.innerHTML = "<thead><tr><th>Thread</th><th>Category</th><th>Updated</th></tr></thead><tbody></tbody>";
+                    table.innerHTML = "<thead><tr><th style=\"width:2rem;\"><input type=\"checkbox\" class=\"locked-thead-check\"></th><th>Thread</th><th>Category</th><th>Updated</th></tr></thead><tbody></tbody>";
                     items.forEach(function(t) {
                         var link = "<a href=\"" + forumThreadUrl(t.slug) + "\">" + (t.title || "") + "</a>";
                         var tr = document.createElement("tr");
-                        tr.innerHTML = "<td>" + link + "</td><td>" + (t.category_slug || "") + "</td><td>" + formatDate(t.updated_at) + "</td>";
+                        tr.innerHTML = "<td><input type=\"checkbox\" class=\"locked-check\" value=\"" + t.id + "\"></td><td>" + link + "</td><td>" + (t.category_slug || "") + "</td><td>" + formatDate(t.updated_at) + "</td>";
                         table.querySelector("tbody").appendChild(tr);
                     });
+                    var theadCb = table.querySelector(".locked-thead-check");
+                    if (theadCb) {
+                        theadCb.addEventListener("change", function() {
+                            table.querySelectorAll(".locked-check").forEach(function(cb) { cb.checked = theadCb.checked; });
+                            if (selectAllCb) selectAllCb.checked = theadCb.checked;
+                        });
+                    }
+                    if (selectAllCb) {
+                        selectAllCb.onclick = function() {
+                            table.querySelectorAll(".locked-check").forEach(function(cb) { cb.checked = selectAllCb.checked; });
+                            if (theadCb) theadCb.checked = selectAllCb.checked;
+                        };
+                    }
+                    if (bulkUnlockBtn) {
+                        bulkUnlockBtn.onclick = function() {
+                            var ids = [];
+                            table.querySelectorAll(".locked-check:checked").forEach(function(cb) { ids.push(parseInt(cb.value, 10)); });
+                            if (!ids.length) { alert("Select threads to unlock."); return; }
+                            apiRef("/api/v1/forum/moderation/bulk-threads/status", {
+                                method: "POST",
+                                body: JSON.stringify({ thread_ids: ids, lock: false })
+                            }).then(function() { loadLocked(); loadMetrics(); }).catch(function(e) { setError((e && e.message) || "Bulk unlock failed."); });
+                        };
+                    }
                     if (wrap) { wrap.appendChild(table); wrap.hidden = false; }
+                    if (bulkBar) bulkBar.hidden = false;
                 })
                 .catch(function() { if (loadEl) loadEl.hidden = true; });
         }
@@ -481,9 +593,13 @@
             var wrap = $("manage-forum-hidden-wrap");
             var loadEl = $("manage-forum-hidden-loading");
             var emptyEl = $("manage-forum-hidden-empty");
+            var bulkBar = $("manage-forum-hidden-bulk-bar");
+            var selectAllCb = $("manage-forum-hidden-select-all");
+            var bulkUnhideBtn = $("manage-forum-hidden-bulk-unhide");
             if (loadEl) loadEl.hidden = false;
             if (emptyEl) emptyEl.hidden = true;
             if (wrap) { wrap.hidden = true; wrap.innerHTML = ""; }
+            if (bulkBar) bulkBar.hidden = true;
             apiRef("/api/v1/forum/moderation/hidden-posts?limit=20")
                 .then(function(data) {
                     if (loadEl) loadEl.hidden = true;
@@ -494,14 +610,39 @@
                     }
                     var table = document.createElement("table");
                     table.className = "data-table";
-                    table.innerHTML = "<thead><tr><th>Thread</th><th>Snippet</th><th>Updated</th></tr></thead><tbody></tbody>";
+                    table.innerHTML = "<thead><tr><th style=\"width:2rem;\"><input type=\"checkbox\" class=\"hidden-thead-check\"></th><th>Thread</th><th>Snippet</th><th>Updated</th></tr></thead><tbody></tbody>";
                     items.forEach(function(p) {
                         var link = p.thread_slug ? "<a href=\"" + forumThreadUrl(p.thread_slug) + "\">" + (p.thread_title || p.thread_slug) + "</a>" : ("post#" + p.id);
                         var tr = document.createElement("tr");
-                        tr.innerHTML = "<td>" + link + "</td><td>" + (p.content_snippet || "").replace(/</g, "&lt;") + "</td><td>" + formatDate(p.updated_at) + "</td>";
+                        tr.innerHTML = "<td><input type=\"checkbox\" class=\"hidden-check\" value=\"" + p.id + "\"></td><td>" + link + "</td><td>" + (p.content_snippet || "").replace(/</g, "&lt;") + "</td><td>" + formatDate(p.updated_at) + "</td>";
                         table.querySelector("tbody").appendChild(tr);
                     });
+                    var theadCb = table.querySelector(".hidden-thead-check");
+                    if (theadCb) {
+                        theadCb.addEventListener("change", function() {
+                            table.querySelectorAll(".hidden-check").forEach(function(cb) { cb.checked = theadCb.checked; });
+                            if (selectAllCb) selectAllCb.checked = theadCb.checked;
+                        });
+                    }
+                    if (selectAllCb) {
+                        selectAllCb.onclick = function() {
+                            table.querySelectorAll(".hidden-check").forEach(function(cb) { cb.checked = selectAllCb.checked; });
+                            if (theadCb) theadCb.checked = selectAllCb.checked;
+                        };
+                    }
+                    if (bulkUnhideBtn) {
+                        bulkUnhideBtn.onclick = function() {
+                            var ids = [];
+                            table.querySelectorAll(".hidden-check:checked").forEach(function(cb) { ids.push(parseInt(cb.value, 10)); });
+                            if (!ids.length) { alert("Select posts to unhide."); return; }
+                            apiRef("/api/v1/forum/moderation/bulk-posts/hide", {
+                                method: "POST",
+                                body: JSON.stringify({ post_ids: ids, hidden: false })
+                            }).then(function() { loadHidden(); loadMetrics(); }).catch(function(e) { setError((e && e.message) || "Bulk unhide failed."); });
+                        };
+                    }
                     if (wrap) { wrap.appendChild(table); wrap.hidden = false; }
+                    if (bulkBar) bulkBar.hidden = false;
                 })
                 .catch(function() { if (loadEl) loadEl.hidden = true; });
         }
@@ -531,6 +672,83 @@
         loadAll();
     }
 
+    function initModerationLog() {
+        var apiRef = api();
+        if (!apiRef) return;
+        var card = $("manage-forum-modlog-card");
+        if (!card) return;
+        card.hidden = false;
+
+        var loading = $("manage-forum-modlog-loading");
+        var errorEl = $("manage-forum-modlog-error");
+        var empty = $("manage-forum-modlog-empty");
+        var wrap = $("manage-forum-modlog-table-wrap");
+        var tbody = $("manage-forum-modlog-tbody");
+        var countEl = $("manage-forum-modlog-count");
+        var footer = $("manage-forum-modlog-footer");
+        var loadMoreBtn = $("manage-forum-modlog-load-more");
+        var refreshBtn = $("manage-forum-modlog-refresh");
+
+        var currentPage = 1;
+        var currentTotal = 0;
+        var pageLimit = 30;
+
+        function loadLog(append) {
+            if (!append) {
+                currentPage = 1;
+                if (loading) loading.hidden = false;
+                if (empty) empty.hidden = true;
+                if (wrap) wrap.hidden = true;
+                if (footer) footer.hidden = true;
+            }
+            if (errorEl) { errorEl.hidden = true; errorEl.textContent = ""; }
+
+            var url = "/api/v1/forum/moderation/log?page=" + currentPage + "&limit=" + pageLimit;
+            apiRef(url)
+                .then(function(data) {
+                    var items = (data && data.items) || [];
+                    currentTotal = data.total || 0;
+                    if (loading) loading.hidden = true;
+                    if (!append && !items.length) {
+                        if (empty) empty.hidden = false;
+                        return;
+                    }
+                    if (tbody && !append) tbody.innerHTML = "";
+                    if (tbody) {
+                        items.forEach(function(entry) {
+                            var tr = document.createElement("tr");
+                            tr.innerHTML =
+                                "<td>" + (entry.actor_username_snapshot || "system") + "</td>" +
+                                "<td>" + (entry.action || "") + "</td>" +
+                                "<td>" + (entry.target_type || "") + (entry.target_id ? "#" + entry.target_id : "") + "</td>" +
+                                "<td>" + (entry.message || "").substring(0, 80) + "</td>" +
+                                "<td>" + formatDate(entry.created_at) + "</td>";
+                            tbody.appendChild(tr);
+                        });
+                    }
+                    if (wrap) wrap.hidden = false;
+                    var loaded = tbody ? tbody.querySelectorAll("tr").length : 0;
+                    if (countEl) countEl.textContent = loaded + " / " + currentTotal + " entries";
+                    if (footer) footer.hidden = false;
+                    if (loadMoreBtn) loadMoreBtn.hidden = (loaded >= currentTotal);
+                })
+                .catch(function(e) {
+                    if (loading) loading.hidden = true;
+                    if (errorEl) {
+                        errorEl.textContent = (e && e.message) || "Failed to load moderation log.";
+                        errorEl.hidden = false;
+                    }
+                });
+        }
+
+        if (loadMoreBtn) loadMoreBtn.addEventListener("click", function() {
+            currentPage++;
+            loadLog(true);
+        });
+        if (refreshBtn) refreshBtn.addEventListener("click", function() { loadLog(); });
+        loadLog();
+    }
+
     function init() {
         if (!window.ManageAuth) return;
         window.ManageAuth.ensureAuth().then(function(user) {
@@ -547,7 +765,10 @@
             }
             if (isAdmin) initCategories();
             initReports();
-            if (isModeratorOrAdmin) initModerationDashboard();
+            if (isModeratorOrAdmin) {
+                initModerationDashboard();
+                initModerationLog();
+            }
         }).catch(function() {});
     }
 

@@ -866,6 +866,8 @@ def forum_thread_lock(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_locked = thread.is_locked
+    old_status = thread.status
     thread = set_thread_lock(thread, True)
     log_activity(
         actor=user,
@@ -877,6 +879,7 @@ def forum_thread_lock(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"is_locked": old_locked, "status": old_status}, "after": {"is_locked": True, "status": thread.status}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -892,6 +895,8 @@ def forum_thread_unlock(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_locked = thread.is_locked
+    old_status = thread.status
     thread = set_thread_lock(thread, False)
     log_activity(
         actor=user,
@@ -903,6 +908,7 @@ def forum_thread_unlock(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"is_locked": old_locked, "status": old_status}, "after": {"is_locked": False, "status": thread.status}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -918,6 +924,7 @@ def forum_thread_pin(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_pinned = thread.is_pinned
     thread = set_thread_pinned(thread, True)
     log_activity(
         actor=user,
@@ -929,6 +936,7 @@ def forum_thread_pin(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"is_pinned": old_pinned}, "after": {"is_pinned": True}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -944,6 +952,7 @@ def forum_thread_unpin(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_pinned = thread.is_pinned
     thread = set_thread_pinned(thread, False)
     log_activity(
         actor=user,
@@ -955,6 +964,7 @@ def forum_thread_unpin(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"is_pinned": old_pinned}, "after": {"is_pinned": False}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -970,6 +980,7 @@ def forum_thread_feature(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_featured = thread.is_featured
     thread = set_thread_featured(thread, True)
     log_activity(
         actor=user,
@@ -981,6 +992,7 @@ def forum_thread_feature(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"is_featured": old_featured}, "after": {"is_featured": True}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -996,6 +1008,7 @@ def forum_thread_unfeature(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_featured = thread.is_featured
     thread = set_thread_featured(thread, False)
     log_activity(
         actor=user,
@@ -1007,6 +1020,7 @@ def forum_thread_unfeature(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"is_featured": old_featured}, "after": {"is_featured": False}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -1066,6 +1080,7 @@ def forum_thread_archive(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_status = thread.status
     thread = set_thread_archived(thread)
     log_activity(
         actor=user,
@@ -1077,6 +1092,7 @@ def forum_thread_archive(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"status": old_status}, "after": {"status": "archived"}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -1092,6 +1108,7 @@ def forum_thread_unarchive(thread_id: int):
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
+    old_status = thread.status
     thread = set_thread_unarchived(thread)
     log_activity(
         actor=user,
@@ -1103,6 +1120,7 @@ def forum_thread_unarchive(thread_id: int):
         method=request.method,
         target_type="forum_thread",
         target_id=str(thread.id),
+        metadata={"before": {"status": old_status}, "after": {"status": thread.status}},
     )
     return jsonify(thread.to_dict()), 200
 
@@ -1251,6 +1269,7 @@ def forum_post_hide(post_id: int):
     user, err_resp = _require_moderator_for_category(post.thread.category)
     if err_resp:
         return err_resp
+    old_post_status = post.status
     post = hide_post(post)
     log_activity(
         actor=user,
@@ -1262,6 +1281,7 @@ def forum_post_hide(post_id: int):
         method=request.method,
         target_type="forum_post",
         target_id=str(post.id),
+        metadata={"before": {"status": old_post_status}, "after": {"status": "hidden"}},
     )
     return jsonify(post.to_dict()), 200
 
@@ -1277,6 +1297,7 @@ def forum_post_unhide(post_id: int):
     user, err_resp = _require_moderator_for_category(post.thread.category)
     if err_resp:
         return err_resp
+    old_post_status = post.status
     post = unhide_post(post)
     log_activity(
         actor=user,
@@ -1288,6 +1309,7 @@ def forum_post_unhide(post_id: int):
         method=request.method,
         target_type="forum_post",
         target_id=str(post.id),
+        metadata={"before": {"status": old_post_status}, "after": {"status": post.status}},
     )
     return jsonify(post.to_dict()), 200
 
@@ -1298,16 +1320,17 @@ def forum_post_unhide(post_id: int):
 def forum_reports_list():
     """
     List forum reports (moderator/admin only).
-    Query: status (open, reviewed, resolved, dismissed).
+    Query: status, target_type, page, limit.
     """
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
-        # Allow moderators as well, but admin-only helper above already ensures admin;
-        # to avoid introducing a new feature flag, we keep this simple.
         return err_resp
     status = (request.args.get("status") or "").strip() or None
-    items = list_reports(status=status)
-    return jsonify({"items": [r.to_dict() for r in items]}), 200
+    target_type = (request.args.get("target_type") or "").strip() or None
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    items, total = list_reports(status=status, target_type=target_type, page=page, limit=limit)
+    return jsonify({"items": [r.to_dict() for r in items], "total": total, "page": page, "limit": limit}), 200
 
 
 @api_v1_bp.route("/forum/reports/<int:report_id>", methods=["GET"])
@@ -1341,9 +1364,13 @@ def forum_report_update(report_id: int):
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
+    old_status = report.status
     status = (data.get("status") or "").strip()
+    resolution_note = data.get("resolution_note")
+    if resolution_note is not None:
+        resolution_note = str(resolution_note).strip() or None
     try:
-        report = update_report_status(report, status=status, handled_by=user.id)
+        report = update_report_status(report, status=status, handled_by=user.id, resolution_note=resolution_note)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     log_activity(
@@ -1356,6 +1383,7 @@ def forum_report_update(report_id: int):
         method=request.method,
         target_type="forum_report",
         target_id=str(report.id),
+        metadata={"before": {"status": old_status}, "after": {"status": report.status}},
     )
     return jsonify(report.to_dict()), 200
 
@@ -1384,14 +1412,19 @@ def forum_reports_bulk_status():
     status = (data.get("status") or "").strip()
     if status not in ("reviewed", "escalated", "resolved", "dismissed"):
         return jsonify({"error": "Invalid status for bulk update"}), 400
+    resolution_note = data.get("resolution_note")
+    if resolution_note is not None:
+        resolution_note = str(resolution_note).strip() or None
 
     updated_ids: list[int] = []
+    before_statuses: dict[int, str] = {}
     for rid in id_list:
         report = get_report_by_id(rid)
         if not report:
             continue
+        before_statuses[report.id] = report.status
         try:
-            update_report_status(report, status=status, handled_by=user.id)
+            update_report_status(report, status=status, handled_by=user.id, resolution_note=resolution_note)
         except ValueError:
             continue
         updated_ids.append(report.id)
@@ -1407,6 +1440,7 @@ def forum_reports_bulk_status():
             method=request.method,
             target_type="forum_report",
             target_id=",".join(str(x) for x in updated_ids),
+            metadata={"before": {rid: before_statuses.get(rid) for rid in updated_ids}, "after": {"status": status}},
         )
     return jsonify({"updated_ids": updated_ids, "status": status}), 200
 
@@ -1732,6 +1766,7 @@ def forum_moderation_bulk_threads_status():
         return jsonify({"error": "At least one of lock or archive must be provided"}), 400
 
     updated: list[int] = []
+    before_states: dict[int, dict] = {}
     for tid in thread_ids:
         thread = get_thread_by_id(tid)
         if not thread or not thread.category:
@@ -1739,6 +1774,7 @@ def forum_moderation_bulk_threads_status():
         # Ensure user can moderate this category
         if not user_can_moderate_category(user, thread.category):
             continue
+        before_states[thread.id] = {"is_locked": thread.is_locked, "status": thread.status}
         if lock is not None:
             thread = set_thread_lock(thread, bool(lock))
         if archive is not None:
@@ -1754,6 +1790,11 @@ def forum_moderation_bulk_threads_status():
             actions.append(f"lock={bool(lock)}")
         if archive is not None:
             actions.append(f"archive={bool(archive)}")
+        after_state = {}
+        if lock is not None:
+            after_state["is_locked"] = bool(lock)
+        if archive is not None:
+            after_state["status"] = "archived" if archive else "open"
         log_activity(
             actor=user,
             category="forum",
@@ -1764,6 +1805,7 @@ def forum_moderation_bulk_threads_status():
             method=request.method,
             target_type="forum_thread",
             target_id=",".join(str(x) for x in updated),
+            metadata={"before": {str(tid): before_states.get(tid, {}) for tid in updated}, "after": after_state},
         )
     return jsonify({"updated_ids": updated}), 200
 
@@ -1794,12 +1836,14 @@ def forum_moderation_bulk_posts_hide():
         return jsonify({"error": "hidden must be provided"}), 400
 
     updated: list[int] = []
+    before_states: dict[int, dict] = {}
     for pid in post_ids:
         post = get_post_by_id(pid)
         if not post or not post.thread or not post.thread.category:
             continue
         if not user_can_moderate_category(user, post.thread.category):
             continue
+        before_states[post.id] = {"status": post.status}
         if hidden:
             hide_post(post)
         else:
@@ -1807,6 +1851,7 @@ def forum_moderation_bulk_posts_hide():
         updated.append(post.id)
 
     if updated:
+        new_status = "hidden" if hidden else "visible"
         log_activity(
             actor=user,
             category="forum",
@@ -1817,6 +1862,7 @@ def forum_moderation_bulk_posts_hide():
             method=request.method,
             target_type="forum_post",
             target_id=",".join(str(x) for x in updated),
+            metadata={"before": {str(pid): before_states.get(pid, {}) for pid in updated}, "after": {"status": new_status}},
         )
     return jsonify({"updated_ids": updated, "hidden": bool(hidden)}), 200
 

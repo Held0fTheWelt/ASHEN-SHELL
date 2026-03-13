@@ -34,6 +34,10 @@
                 </div>
                 <details class="manage-forum-details" style="margin-top:1rem;">
                     <summary class="mono">Locked threads</summary>
+                    <div id="manage-forum-locked-bulk-bar" class="manage-bulk-bar" hidden>
+                        <label><input type="checkbox" id="manage-forum-locked-select-all"> Select all</label>
+                        <button type="button" class="btn btn-primary btn-sm" id="manage-forum-locked-bulk-unlock">Bulk unlock</button>
+                    </div>
                     <p class="manage-state" id="manage-forum-locked-loading">Loading…</p>
                     <p class="manage-state" id="manage-forum-locked-empty" hidden>None.</p>
                     <div id="manage-forum-locked-wrap" class="table-wrap" hidden></div>
@@ -46,6 +50,10 @@
                 </details>
                 <details class="manage-forum-details" style="margin-top:0.5rem;">
                     <summary class="mono">Hidden posts</summary>
+                    <div id="manage-forum-hidden-bulk-bar" class="manage-bulk-bar" hidden>
+                        <label><input type="checkbox" id="manage-forum-hidden-select-all"> Select all</label>
+                        <button type="button" class="btn btn-primary btn-sm" id="manage-forum-hidden-bulk-unhide">Bulk unhide</button>
+                    </div>
                     <p class="manage-state" id="manage-forum-hidden-loading">Loading…</p>
                     <p class="manage-state" id="manage-forum-hidden-empty" hidden>None.</p>
                     <div id="manage-forum-hidden-wrap" class="table-wrap" hidden></div>
@@ -149,11 +157,18 @@
             <div class="table-filters">
                 <label for="manage-forum-report-status" class="visually-hidden">Status</label>
                 <select id="manage-forum-report-status" class="filter-select">
-                    <option value="">All</option>
+                    <option value="">All statuses</option>
                     <option value="open">Open</option>
                     <option value="reviewed">Reviewed</option>
+                    <option value="escalated">Escalated</option>
                     <option value="resolved">Resolved</option>
                     <option value="dismissed">Dismissed</option>
+                </select>
+                <label for="manage-forum-report-target-type" class="visually-hidden">Target type</label>
+                <select id="manage-forum-report-target-type" class="filter-select">
+                    <option value="">All types</option>
+                    <option value="thread">Thread</option>
+                    <option value="post">Post</option>
                 </select>
                 <button type="button" class="btn btn-outline btn-sm" id="manage-forum-report-refresh">Refresh</button>
             </div>
@@ -162,13 +177,27 @@
             <p class="manage-state" id="manage-forum-reports-loading" role="status">Loading…</p>
             <p class="manage-state manage-state-error" id="manage-forum-reports-error" role="alert" hidden></p>
             <p class="manage-state" id="manage-forum-reports-empty" hidden>No reports.</p>
+            <div id="manage-forum-reports-bulk-bar" class="manage-bulk-bar" hidden>
+                <label><input type="checkbox" id="manage-forum-reports-select-all"> Select all</label>
+                <select id="manage-forum-reports-bulk-action" class="filter-select">
+                    <option value="">Bulk action…</option>
+                    <option value="reviewed">Mark reviewed</option>
+                    <option value="escalated">Escalate</option>
+                    <option value="resolved">Resolve</option>
+                    <option value="dismissed">Dismiss</option>
+                </select>
+                <input type="text" id="manage-forum-reports-bulk-note" class="form-input" placeholder="Resolution note (optional)" style="max-width:250px;">
+                <button type="button" class="btn btn-primary btn-sm" id="manage-forum-reports-bulk-apply">Apply</button>
+            </div>
             <div class="table-wrap" id="manage-forum-reports-table-wrap" hidden>
                 <table class="data-table">
                     <thead>
                     <tr>
+                        <th style="width:2rem;"><input type="checkbox" id="manage-forum-reports-thead-check"></th>
                         <th>ID</th>
                         <th>Target</th>
                         <th>Reason</th>
+                        <th>Note</th>
                         <th>Status</th>
                         <th>Created</th>
                         <th>Actions</th>
@@ -180,6 +209,37 @@
         </div>
         <div class="manage-card-footer" id="manage-forum-reports-footer" hidden>
             <span id="manage-forum-reports-count" class="mono">0 reports</span>
+            <button type="button" class="btn btn-outline btn-sm" id="manage-forum-reports-load-more" hidden>Load more</button>
+        </div>
+    </div>
+
+    <div class="manage-card" id="manage-forum-modlog-card" hidden>
+        <div class="manage-card-header">
+            <h2 class="manage-card-title mono">// MODERATION LOG</h2>
+            <button type="button" class="btn btn-outline btn-sm" id="manage-forum-modlog-refresh">Refresh</button>
+        </div>
+        <div class="manage-card-body">
+            <p class="manage-state" id="manage-forum-modlog-loading" role="status">Loading…</p>
+            <p class="manage-state manage-state-error" id="manage-forum-modlog-error" role="alert" hidden></p>
+            <p class="manage-state" id="manage-forum-modlog-empty" hidden>No log entries.</p>
+            <div class="table-wrap" id="manage-forum-modlog-table-wrap" hidden>
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Actor</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                        <th>Message</th>
+                        <th>Timestamp</th>
+                    </tr>
+                    </thead>
+                    <tbody id="manage-forum-modlog-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="manage-card-footer" id="manage-forum-modlog-footer" hidden>
+            <span id="manage-forum-modlog-count" class="mono">0 entries</span>
+            <button type="button" class="btn btn-outline btn-sm" id="manage-forum-modlog-load-more" hidden>Load more</button>
         </div>
     </div>
 </section>

@@ -162,6 +162,7 @@ class ForumReport(db.Model):
     status = db.Column(db.String(32), nullable=False, default="open")
     handled_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     handled_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    resolution_note = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now)
 
     reporter = db.relationship("User", foreign_keys=[reported_by])
@@ -177,6 +178,7 @@ class ForumReport(db.Model):
             "status": self.status,
             "handled_by": self.handled_by,
             "handled_at": self.handled_at.isoformat() if self.handled_at else None,
+            "resolution_note": self.resolution_note,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
