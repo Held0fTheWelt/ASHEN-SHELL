@@ -839,6 +839,233 @@
             }
         }
 
+        function renderTagsSection() {
+            var tagsSection = document.getElementById("forum-thread-tags-section");
+            if (!tagsSection || !state.thread) return;
+            tagsSection.innerHTML = "";
+            var thread = state.thread;
+            var isAuthor = state.currentUserId && state.currentUserId === thread.author_id;
+            var canEditTags = state.hasToken && (isAuthor || state.canModerate);
+            var tags = thread.tags || [];
+
+            // Create tags container
+            var container = document.createElement("div");
+            container.className = "forum-tags-container";
+
+            // Display existing tags as pills
+            if (tags.length > 0) {
+                var tagList = document.createElement("div");
+                tagList.className = "forum-tags-list";
+                tagList.id = "forum-thread-tags-display";
+                tags.forEach(function(tag) {
+                    var pill = document.createElement("span");
+                    pill.className = "forum-tag-pill";
+                    pill.textContent = tag.label || tag.slug;
+                    tagList.appendChild(pill);
+                });
+                container.appendChild(tagList);
+            }
+
+            // Add edit button if user is author or moderator
+            if (canEditTags) {
+                var editBtn = document.createElement("button");
+                editBtn.type = "button";
+                editBtn.className = "btn btn-outline btn-sm forum-btn-edit-tags";
+                editBtn.textContent = tags.length > 0 ? "Edit tags" : "Add tags";
+                editBtn.dataset.threadId = thread.id;
+                container.appendChild(editBtn);
+
+                editBtn.addEventListener("click", function() {
+                    showTagEditor();
+                });
+            }
+
+            tagsSection.appendChild(container);
+            tagsSection.hidden = false;
+        }
+
+        function showTagEditor() {
+            var tagsSection = document.getElementById("forum-thread-tags-section");
+            if (!tagsSection || !state.thread) return;
+
+            // Clear the section
+            tagsSection.innerHTML = "";
+
+            var thread = state.thread;
+            var currentTags = (thread.tags || []).map(function(t) { return t.slug; });
+
+            var editorContainer = document.createElement("div");
+            editorContainer.className = "forum-tag-editor";
+
+            // Existing tags with remove buttons
+            if (currentTags.length > 0) {
+                var tagsList = document.createElement("div");
+                tagsList.className = "forum-tags-editor-list";
+                tagsList.id = "forum-tags-editor-list";
+                currentTags.forEach(function(slug) {
+                    var tagItem = document.createElement("div");
+                    tagItem.className = "forum-tag-item";
+                    tagItem.dataset.slug = slug;
+                    var label = document.createElement("span");
+                    label.className = "forum-tag-label";
+                    label.textContent = slug;
+                    var removeBtn = document.createElement("button");
+                    removeBtn.type = "button";
+                    removeBtn.className = "forum-tag-remove";
+                    removeBtn.textContent = "×";
+                    removeBtn.title = "Remove tag";
+                    removeBtn.addEventListener("click", function() {
+                        tagItem.remove();
+                    });
+                    tagItem.appendChild(label);
+                    tagItem.appendChild(removeBtn);
+                    tagsList.appendChild(tagItem);
+                });
+                editorContainer.appendChild(tagsList);
+            }
+
+            // Input field for adding new tags
+            var inputGroup = document.createElement("div");
+            inputGroup.className = "forum-tag-input-group";
+            var input = document.createElement("input");
+            input.type = "text";
+            input.className = "forum-tag-input";
+            input.placeholder = "Add tag (press Enter or click Add)";
+            input.id = "forum-tag-input";
+            var addBtn = document.createElement("button");
+            addBtn.type = "button";
+            addBtn.className = "btn btn-outline btn-sm";
+            addBtn.textContent = "Add";
+            addBtn.id = "forum-add-tag-btn";
+            inputGroup.appendChild(input);
+            inputGroup.appendChild(addBtn);
+            editorContainer.appendChild(inputGroup);
+
+            // Error message
+            var errorMsg = document.createElement("p");
+            errorMsg.className = "forum-form-error";
+            errorMsg.id = "forum-tag-editor-error";
+            errorMsg.hidden = true;
+            editorContainer.appendChild(errorMsg);
+
+            // Action buttons
+            var actions = document.createElement("div");
+            actions.className = "forum-tag-editor-actions";
+            var saveBtn = document.createElement("button");
+            saveBtn.type = "button";
+            saveBtn.className = "btn btn-primary btn-sm";
+            saveBtn.textContent = "Save tags";
+            saveBtn.id = "forum-save-tags-btn";
+            var cancelBtn = document.createElement("button");
+            cancelBtn.type = "button";
+            cancelBtn.className = "btn btn-ghost btn-sm";
+            cancelBtn.textContent = "Cancel";
+            cancelBtn.id = "forum-cancel-tags-btn";
+            actions.appendChild(saveBtn);
+            actions.appendChild(cancelBtn);
+            editorContainer.appendChild(actions);
+
+            var tagsSection = document.getElementById("forum-thread-tags-section");
+            tagsSection.innerHTML = "";
+            tagsSection.appendChild(editorContainer);
+            tagsSection.hidden = false;
+
+            // Focus input
+            input.focus();
+
+            // Add tag button click handler
+            addBtn.addEventListener("click", function() {
+                var val = input.value.trim().toLowerCase();
+                if (!val) return;
+                if (!/^[a-z0-9\-]+$/.test(val)) {
+                    var err = document.getElementById("forum-tag-editor-error");
+                    if (err) {
+                        err.textContent = "Tags must contain only lowercase letters, numbers, and hyphens";
+                        err.hidden = false;
+                    }
+                    return;
+                }
+                var tagsList = document.getElementById("forum-tags-editor-list");
+                if (!tagsList) {
+                    tagsList = document.createElement("div");
+                    tagsList.className = "forum-tags-editor-list";
+                    tagsList.id = "forum-tags-editor-list";
+                    editorContainer.insertBefore(tagsList, inputGroup);
+                }
+                // Check if tag already exists
+                var existing = Array.from(tagsList.querySelectorAll("[data-slug]")).some(function(el) {
+                    return el.dataset.slug === val;
+                });
+                if (existing) {
+                    var err = document.getElementById("forum-tag-editor-error");
+                    if (err) {
+                        err.textContent = "This tag is already added";
+                        err.hidden = false;
+                    }
+                    return;
+                }
+                var tagItem = document.createElement("div");
+                tagItem.className = "forum-tag-item";
+                tagItem.dataset.slug = val;
+                var label = document.createElement("span");
+                label.className = "forum-tag-label";
+                label.textContent = val;
+                var removeBtn = document.createElement("button");
+                removeBtn.type = "button";
+                removeBtn.className = "forum-tag-remove";
+                removeBtn.textContent = "×";
+                removeBtn.title = "Remove tag";
+                removeBtn.addEventListener("click", function() {
+                    tagItem.remove();
+                });
+                tagItem.appendChild(label);
+                tagItem.appendChild(removeBtn);
+                tagsList.appendChild(tagItem);
+                input.value = "";
+                var err = document.getElementById("forum-tag-editor-error");
+                if (err) {
+                    err.hidden = true;
+                    err.textContent = "";
+                }
+                input.focus();
+            });
+
+            // Enter key handler
+            input.addEventListener("keypress", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    addBtn.click();
+                }
+            });
+
+            // Save handler
+            saveBtn.addEventListener("click", function() {
+                saveBtn.disabled = true;
+                var tagsList = document.getElementById("forum-tags-editor-list");
+                var tags = Array.from((tagsList || []).querySelectorAll("[data-slug]")).map(function(el) {
+                    return el.dataset.slug;
+                });
+                var errorEl = document.getElementById("forum-tag-editor-error");
+                apiPut("threads/" + state.thread.id + "/tags", { tags: tags })
+                    .then(function(res) {
+                        state.thread.tags = res.tags || [];
+                        renderTagsSection();
+                    })
+                    .catch(function(err) {
+                        if (errorEl) {
+                            errorEl.textContent = (err && err.message) || "Failed to save tags";
+                            errorEl.hidden = false;
+                        }
+                        saveBtn.disabled = false;
+                    });
+            });
+
+            // Cancel handler
+            cancelBtn.addEventListener("click", function() {
+                renderTagsSection();
+            });
+        }
+
         showLoading(true);
         apiGet("threads/" + encodeURIComponent(threadSlug))
             .then(function(thread) {
@@ -899,6 +1126,8 @@
                     renderThreadModBarIfNeeded();
                     header.hidden = false;
                 }
+                // Render tags section
+                renderTagsSection();
                 var threadId = thread.id;
                 return apiGet("threads/" + threadId + "/posts?page=1&limit=" + state.perPage);
             })

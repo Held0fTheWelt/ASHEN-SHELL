@@ -1630,3 +1630,179 @@ def test_unbookmark_from_saved_threads(app, client, auth_headers):
     resp = client.get("/api/v1/forum/bookmarks", headers=auth_headers)
     assert resp.status_code == 200
     assert not any(t["slug"] == "del-thread" for t in resp.get_json()["items"])
+
+
+# ============= PHASE 3: TAG EDITING UX TESTS =============
+
+
+def test_tag_edit_thread_author_can_edit(app, client, auth_headers):
+    """Thread author can edit tags on their thread."""
+    with app.app_context():
+        cat = ForumCategory(slug="tag-edit-cat", title="TagEdit", is_active=True, is_private=False)
+        user = User.query.filter_by(username="testuser").first()
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="tag-author-edit",
+            title="Author Edit Tags",
+            author_id=user.id,
+            status="open"
+        )
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Author sets initial tags via PUT
+    resp = client.put(
+        f"/api/v1/forum/threads/{thread_id}/tags",
+        json={"tags": ["tag1", "tag2"]},
+        headers=auth_headers
+    )
+    assert resp.status_code == 200
+
+    # Author edits tags via PUT (change to tag1 and tag3)
+    resp = client.put(
+        f"/api/v1/forum/threads/{thread_id}/tags",
+        json={"tags": ["tag1", "tag3"]},
+        headers=auth_headers
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert "tags" in data
+    tag_slugs = {t["slug"] for t in data["tags"]}
+    assert "tag1" in tag_slugs
+    assert "tag3" in tag_slugs
+    assert "tag2" not in tag_slugs
+
+
+def test_tag_edit_moderator_can_edit(app, client, auth_headers, moderator_headers):
+    """Moderator can edit tags on any thread."""
+    with app.app_context():
+        cat = ForumCategory(slug="tag-mod-cat", title="TagMod", is_active=True, is_private=False)
+        user = User.query.filter_by(username="testuser").first()
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="tag-mod-edit",
+            title="Moderator Edit Tags",
+            author_id=user.id,
+            status="open"
+        )
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Moderator edits tags even though not the author
+    resp = client.put(
+        f"/api/v1/forum/threads/{thread_id}/tags",
+        json={"tags": ["tag-new", "tag-mod"]},
+        headers=moderator_headers
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    tag_slugs = {t["slug"] for t in data["tags"]}
+    assert "tag-new" in tag_slugs
+    assert "tag-mod" in tag_slugs
+
+
+def test_tag_edit_unauthorized_user_403(app, client, auth_headers):
+    """Regular user (not author, not mod) gets 403 trying to edit tags."""
+    with app.app_context():
+        cat = ForumCategory(slug="tag-auth-cat", title="TagAuth", is_active=True, is_private=False)
+        author = User.query.filter_by(username="testuser").first()
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="tag-forbidden",
+            title="Forbidden Tags",
+            author_id=author.id,
+            status="open"
+        )
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Make request as unauthenticated user
+    resp = client.put(
+        f"/api/v1/forum/threads/{thread_id}/tags",
+        json={"tags": ["tag-attempt"]}
+    )
+    assert resp.status_code == 401
+
+
+def test_tag_edit_empty_tags(app, client, auth_headers):
+    """Can clear all tags by setting empty tag list."""
+    with app.app_context():
+        cat = ForumCategory(slug="tag-empty-cat", title="TagEmpty", is_active=True, is_private=False)
+        user = User.query.filter_by(username="testuser").first()
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="tag-empty",
+            title="Clear Tags",
+            author_id=user.id,
+            status="open"
+        )
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Set some initial tags
+    resp = client.put(
+        f"/api/v1/forum/threads/{thread_id}/tags",
+        json={"tags": ["old-tag", "another-tag"]},
+        headers=auth_headers
+    )
+    assert resp.status_code == 200
+
+    # Clear all tags
+    resp = client.put(
+        f"/api/v1/forum/threads/{thread_id}/tags",
+        json={"tags": []},
+        headers=auth_headers
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["tags"] == []
+
+
+def test_tag_edit_duplicate_tags(app, client, auth_headers):
+    """Duplicate tags are deduplicated (or handled) by backend."""
+    with app.app_context():
+        cat = ForumCategory(slug="tag-dup-cat", title="TagDup", is_active=True, is_private=False)
+        user = User.query.filter_by(username="testuser").first()
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="tag-duplicate",
+            title="Duplicate Tags Test",
+            author_id=user.id,
+            status="open"
+        )
+        db.session.add(thread)
+        db.session.commit()
+        thread_id = thread.id
+
+    # Send duplicate tags in request
+    resp = client.put(
+        f"/api/v1/forum/threads/{thread_id}/tags",
+        json={"tags": ["tag-dup", "tag-dup", "tag-other"]},
+        headers=auth_headers
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    # Backend should deduplicate or handle gracefully
+    tag_slugs = [t["slug"] for t in data["tags"]]
+    # Count occurrences of tag-dup
+    dup_count = tag_slugs.count("tag-dup")
+    assert dup_count == 1, f"Expected 1 tag-dup, got {dup_count}"

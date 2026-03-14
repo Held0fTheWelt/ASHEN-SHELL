@@ -13,6 +13,7 @@
 <div id="forum-thread" class="forum-thread" data-thread-slug="{{ thread_slug }}">
     <p class="forum-state loading" id="forum-thread-loading" role="status">{{ t.common_loading | default('Loading…') }}</p>
     <article id="forum-thread-header" class="forum-thread-header" hidden></article>
+    <div id="forum-thread-tags-section" class="forum-thread-tags-section" hidden></div>
     <div id="forum-posts-content" class="forum-posts-content" hidden aria-live="polite"></div>
     <p class="forum-state empty" id="forum-thread-empty" hidden role="status">{{ t.forum_no_posts | default('No posts yet.') }}</p>
     <p class="forum-state error" id="forum-thread-error" hidden role="alert"></p>
