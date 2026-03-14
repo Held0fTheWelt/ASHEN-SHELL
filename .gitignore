@@ -27,3 +27,6 @@ QUALITY_TRACKING.md
 Task.md
 FORUM_QA_REPORT_0.0.20.md
 .report/FORUM_QA_COMPLETION_REPORT.md
+/.claude-plugin
+/.clockwork_runtime
+/.llama_runtime
