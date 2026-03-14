@@ -97,6 +97,18 @@ Bookmarking is only available to non-banned authenticated users. If a bookmarked
 deleted, moved to an inactive category, or otherwise becomes inaccessible, it is silently excluded
 from the bookmark list.
 
+### Saved Threads page
+
+A dedicated page at `/forum/saved` displays a user's bookmarked threads in paginated view. Features:
+
+- **Access**: Logged-in users only; bookmark list is private to the user
+- **Display**: Thread title (linked), category, reply count, last activity date, tags, and bookmark removal button
+- **Pagination**: Standard page/limit controls (default 20 per page)
+- **Unbooking**: Click the bookmark button (★) to remove a thread from the saved list
+- **Refresh**: Saved list updates immediately after unbooking
+
+This page provides a convenient way to review and manage saved threads without navigating through category views.
+
 ---
 
 ## Thread Tags
@@ -186,6 +198,22 @@ Response:
 ```
 
 `DELETE /api/v1/forum/tags/<id>` deletes a tag. Requires admin. Returns 409 if the tag is currently associated with any threads.
+
+### Tag editing (user-facing)
+
+Thread authors and moderators can edit tags directly on the thread detail page. When viewing a thread:
+
+- **View tags**: Existing tags are displayed as clickable badges
+- **Edit button**: Authors and moderators see an "Edit tags" button next to the tag display
+- **Editor interface**: Click to open an inline tag editor with:
+  - List of existing tags with individual remove buttons (×)
+  - Input field for adding new tags (normalized per tag rules)
+  - Save and Cancel buttons
+  - Error feedback for invalid input
+- **Save**: Click Save to apply tag changes via `PUT /api/v1/forum/threads/<id>/tags`
+- **Permissions**: Only thread author, moderators, and admins can edit tags; unauthorized users see tags as read-only
+
+This provides a lightweight way for community members to organize and categorize discussions without requiring admin intervention.
 
 ### Searching by tag
 

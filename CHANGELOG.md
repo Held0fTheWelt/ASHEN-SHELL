@@ -17,6 +17,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.0.28] - 2026-03-14
+
+### Added
+
+- **Saved Threads page:** New public page at `/forum/saved` displays a user's bookmarked threads with pagination. Shows thread title (linked), category, reply count, last activity date, and tags. Users can unbookmark threads from this page. Accessible to logged-in users only; bookmark list is private.
+- **Thread-level tag editing UI:** Threads now display an "Edit tags" button (for authors and moderators/admins) on the thread detail page. Inline editor allows adding/removing tags; tags are persisted via the existing `PUT /api/v1/forum/threads/<id>/tags` endpoint. Read-only tag display for non-editors.
+
+### Changed
+
+- **Community features docs:** `docs/FORUM_COMMUNITY_FEATURES.md` updated with sections on the Saved Threads page and tag editing workflow (permissions, editor interface, user experience).
+
+### Deferred
+
+- **Reactions:** Explicitly deferred beyond current pass. See `docs/FORUM_REACTIONS_DEFER.md` for truthful explanation. Likes system remains production-ready and stable; no half-built features added. Future reactions wave will require dedicated architectural pass (L2+) and full test coverage.
+
+### Tests
+
+- Added 13 focused tests covering:
+  - Saved threads list retrieval and pagination
+  - Bookmark add/remove idempotent operations
+  - Tag editing permissions (author, moderator, unauthorized)
+  - Tag normalization and thread detail updates
+  - Likes system regression (post/unlike, independence from bookmarks)
+  - Reactions endpoint explicitly not present (404)
+
+---
+
 ## [0.0.27] - 2026-03-13
 
 ### Added
