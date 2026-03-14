@@ -140,6 +140,18 @@ def forum_saved_threads():
     return render_template("forum/saved_threads.html")
 
 
+@app.route("/users/<int:user_id>/profile")
+def user_profile(user_id):
+    """User profile page. Data loaded by JS from backend API."""
+    return render_template("user/profile.html", user_id=user_id)
+
+
+@app.route("/forum/tags/<slug>")
+def forum_tag_detail(slug):
+    """Forum tag detail page with threads. Data loaded by JS from backend API."""
+    return render_template("forum/tag_detail.html", tag_slug=slug)
+
+
 # --- Management / editorial area (protected by frontend auth; backend enforces roles) ---
 
 @app.route("/manage")

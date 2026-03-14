@@ -485,3 +485,158 @@ def unban_user(user_id: int) -> tuple[User | None, str | None]:
     db.session.refresh(user)
     logger.info("User unbanned: user_id=%s", user_id)
     return user, None
+
+
+# --- Activity Counting (Phase 4) ---
+
+
+def count_user_threads(user_id: int) -> int:
+    """Count threads created by this user (only open/visible threads)."""
+    from app.models import ForumThread
+    if user_id is None:
+        return 0
+    return ForumThread.query.filter(
+        ForumThread.author_id == user_id,
+        ForumThread.status.notin_(("deleted",))
+    ).count()
+
+
+def count_user_posts(user_id: int) -> int:
+    """Count posts created by this user (only visible posts)."""
+    from app.models import ForumPost
+    if user_id is None:
+        return 0
+    return ForumPost.query.filter(
+        ForumPost.author_id == user_id,
+        ForumPost.status.in_(("visible",))
+    ).count()
+
+
+def count_user_bookmarks(user_id: int) -> int:
+    """Count bookmarked threads for this user."""
+    from app.models import ForumThreadBookmark
+    if user_id is None:
+        return 0
+    return ForumThreadBookmark.query.filter_by(user_id=user_id).count()
+
+
+def get_user_recent_threads(user_id: int, limit: int = 10):
+    """
+    Get recent threads created by this user.
+    Returns list of dicts with thread info: id, title, slug, post_count, created_at.
+    """
+    from app.models import ForumThread
+    if user_id is None:
+        return []
+    threads = ForumThread.query.filter(
+        ForumThread.author_id == user_id,
+        ForumThread.status.notin_(("deleted",))
+    ).order_by(ForumThread.created_at.desc()).limit(limit).all()
+
+    return [
+        {
+            "id": t.id,
+            "title": t.title,
+            "slug": t.slug,
+            "post_count": t.reply_count,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+            "updated_at": t.updated_at.isoformat() if t.updated_at else None,
+        }
+        for t in threads
+    ]
+
+
+def get_user_recent_posts(user_id: int, limit: int = 10):
+    """
+    Get recent posts created by this user.
+    Returns list of dicts with post info: id, content preview, thread_id, thread_title, created_at.
+    """
+    from app.models import ForumPost
+    if user_id is None:
+        return []
+    posts = ForumPost.query.filter(
+        ForumPost.author_id == user_id,
+        ForumPost.status.in_(("visible",))
+    ).order_by(ForumPost.created_at.desc()).limit(limit).all()
+
+    return [
+        {
+            "id": p.id,
+            "content_preview": p.content[:200] + "..." if len(p.content) > 200 else p.content,
+            "thread_id": p.thread_id,
+            "thread_title": p.thread.title if p.thread else None,
+            "thread_slug": p.thread.slug if p.thread else None,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in posts
+    ]
+
+
+def get_user_bookmarks(user_id: int, limit: int = 20, page: int = 1):
+    """
+    Get paginated bookmarked threads for this user.
+    Returns (threads_list, total_count).
+    """
+    from app.models import ForumThreadBookmark
+    if user_id is None:
+        return [], 0
+
+    query = ForumThreadBookmark.query.filter_by(user_id=user_id).order_by(
+        ForumThreadBookmark.created_at.desc()
+    )
+    total = query.count()
+    bookmarks = query.offset((page - 1) * limit).limit(limit).all()
+
+    threads = [
+        {
+            "id": b.thread.id,
+            "title": b.thread.title,
+            "slug": b.thread.slug,
+            "author_id": b.thread.author_id,
+            "author_username": b.thread.author.username if b.thread.author else None,
+            "post_count": b.thread.reply_count,
+            "view_count": b.thread.view_count,
+            "created_at": b.thread.created_at.isoformat() if b.thread.created_at else None,
+            "last_post_at": b.thread.last_post_at.isoformat() if b.thread.last_post_at else None,
+            "bookmarked_at": b.created_at.isoformat() if b.created_at else None,
+        }
+        for b in bookmarks
+    ]
+    return threads, total
+
+
+def get_user_tags(user_id: int, limit: int = 20):
+    """
+    Get tags used by this user's threads.
+    Returns list of dicts with tag info: id, label, slug, thread_count (for user's threads only).
+    """
+    from app.models import ForumTag, ForumThreadTag, ForumThread
+    if user_id is None:
+        return []
+
+    # Find tags on threads authored by this user
+    tags_data = db.session.query(
+        ForumTag.id,
+        ForumTag.label,
+        ForumTag.slug,
+        db.func.count(ForumThreadTag.thread_id).label("thread_count")
+    ).join(
+        ForumThreadTag, ForumTag.id == ForumThreadTag.tag_id
+    ).join(
+        ForumThread, ForumThreadTag.thread_id == ForumThread.id
+    ).filter(
+        ForumThread.author_id == user_id,
+        ForumThread.status.notin_(("deleted",))
+    ).group_by(ForumTag.id, ForumTag.label, ForumTag.slug).order_by(
+        db.func.count(ForumThreadTag.thread_id).desc()
+    ).limit(limit).all()
+
+    return [
+        {
+            "id": tag[0],
+            "label": tag[1],
+            "slug": tag[2],
+            "thread_count": tag[3],
+        }
+        for tag in tags_data
+    ]

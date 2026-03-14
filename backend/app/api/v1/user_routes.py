@@ -14,7 +14,7 @@ from app.auth.permissions import (
     get_current_user,
     require_jwt_admin,
 )
-from app.extensions import limiter
+from app.extensions import limiter, db
 from app.services import log_activity
 from app.services.user_service import (
     assign_role as assign_role_service,
@@ -25,6 +25,13 @@ from app.services.user_service import (
     unban_user as unban_user_service,
     update_user as update_user_service,
     delete_user as delete_user_service,
+    count_user_threads,
+    count_user_posts,
+    count_user_bookmarks,
+    get_user_recent_threads,
+    get_user_recent_posts,
+    get_user_bookmarks,
+    get_user_tags,
 )
 
 logger = logging.getLogger(__name__)
@@ -391,3 +398,171 @@ def users_unban(user_id):
         target_id=str(user.id),
     )
     return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), 200
+
+
+# --- User Profiles (Phase 4) ---
+
+
+@api_v1_bp.route("/users/<int:user_id>/profile", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required(optional=True)
+def users_profile(user_id):
+    """
+    Get public user profile with activity summary.
+    Returns: basic user info, activity counts, recent threads/posts, bookmarks count, tags.
+    No authentication required (public endpoint).
+    """
+    user = get_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Basic user info (public safe data)
+    profile = {
+        "id": user.id,
+        "username": user.username,
+        "role": user.role,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "last_seen_at": user.last_seen_at.isoformat() if user.last_seen_at else None,
+    }
+
+    # Activity counts
+    profile["stats"] = {
+        "thread_count": count_user_threads(user.id),
+        "post_count": count_user_posts(user.id),
+        "bookmark_count": count_user_bookmarks(user.id),
+    }
+
+    # Recent activity
+    profile["recent_threads"] = get_user_recent_threads(user.id, limit=10)
+    profile["recent_posts"] = get_user_recent_posts(user.id, limit=10)
+
+    # Tags used by this user
+    profile["tags"] = get_user_tags(user.id, limit=15)
+
+    return jsonify(profile), 200
+
+
+@api_v1_bp.route("/users/<int:user_id>/bookmarks", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def users_bookmarks(user_id):
+    """
+    Get bookmarked threads for a user.
+    Only the user themselves or admins can view their bookmarks.
+    Query: page, limit.
+    """
+    current = get_current_user()
+    if current is None:
+        return jsonify({"error": "User not found"}), 404
+
+    # Users can only view their own bookmarks
+    if current.id != user_id and not current_user_is_admin():
+        return jsonify({"error": "Forbidden"}), 403
+
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+
+    bookmarks, total = get_user_bookmarks(user_id, limit=limit, page=page)
+
+    return jsonify({
+        "items": bookmarks,
+        "total": total,
+        "page": page,
+        "per_page": limit,
+    }), 200
+
+
+@api_v1_bp.route("/forum/tags/popular", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required(optional=True)
+def forum_tags_popular():
+    """
+    Get popular tags across all threads.
+    Query: limit (default 20, max 100).
+    Returns list of tags with label, slug, thread_count.
+    """
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+
+    from app.models import ForumTag, ForumThreadTag, ForumThread
+    tags_data = db.session.query(
+        ForumTag.id,
+        ForumTag.label,
+        ForumTag.slug,
+        db.func.count(ForumThreadTag.thread_id).label("thread_count")
+    ).outerjoin(
+        ForumThreadTag, ForumTag.id == ForumThreadTag.tag_id
+    ).outerjoin(
+        ForumThread, ForumThreadTag.thread_id == ForumThread.id
+    ).filter(
+        ForumThread.status.notin_(("deleted",))
+    ).group_by(
+        ForumTag.id, ForumTag.label, ForumTag.slug
+    ).order_by(
+        db.func.count(ForumThreadTag.thread_id).desc()
+    ).limit(limit).all()
+
+    tags = [
+        {
+            "id": tag[0],
+            "label": tag[1],
+            "slug": tag[2],
+            "thread_count": tag[3] or 0,
+        }
+        for tag in tags_data
+    ]
+
+    return jsonify({"items": tags}), 200
+
+
+@api_v1_bp.route("/forum/tags/<slug>", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required(optional=True)
+def forum_tag_detail(slug):
+    """
+    Get tag details with threads using this tag.
+    Query: page, limit.
+    Returns tag info and paginated list of threads.
+    """
+    from app.models import ForumTag, ForumThreadTag, ForumThread
+
+    tag = ForumTag.query.filter_by(slug=slug).first()
+    if not tag:
+        return jsonify({"error": "Tag not found"}), 404
+
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+
+    # Get threads with this tag (exclude deleted)
+    threads_query = ForumThread.query.join(
+        ForumThreadTag, ForumThread.id == ForumThreadTag.thread_id
+    ).filter(
+        ForumThreadTag.tag_id == tag.id,
+        ForumThread.status.notin_(("deleted",))
+    ).order_by(ForumThread.created_at.desc())
+
+    total = threads_query.count()
+    threads = threads_query.offset((page - 1) * limit).limit(limit).all()
+
+    return jsonify({
+        "tag": {
+            "id": tag.id,
+            "label": tag.label,
+            "slug": tag.slug,
+        },
+        "threads": [
+            {
+                "id": t.id,
+                "title": t.title,
+                "slug": t.slug,
+                "author_id": t.author_id,
+                "author_username": t.author.username if t.author else None,
+                "post_count": t.reply_count,
+                "view_count": t.view_count,
+                "created_at": t.created_at.isoformat() if t.created_at else None,
+            }
+            for t in threads
+        ],
+        "total": total,
+        "page": page,
+        "per_page": limit,
+    }), 200
