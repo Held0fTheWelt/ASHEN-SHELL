@@ -1025,6 +1025,41 @@ def delete_tag(tag: ForumTag) -> Optional[str]:
     return None
 
 
+def suggest_related_threads_by_tags(thread_id: int, *, limit: int = 5) -> List[ForumThread]:
+    """Suggest related threads based on shared tags. Returns up to `limit` threads."""
+    thread = ForumThread.query.get(thread_id)
+    if not thread:
+        return []
+
+    # Get tags for this thread
+    thread_tags = (
+        db.session.query(ForumTag.id)
+        .join(ForumThreadTag, ForumThreadTag.tag_id == ForumTag.id)
+        .filter(ForumThreadTag.thread_id == thread_id)
+        .all()
+    )
+    tag_ids = [t[0] for t in thread_tags]
+    if not tag_ids:
+        return []
+
+    # Find other threads with shared tags, exclude deleted/hidden
+    from sqlalchemy import and_, func
+    suggestions = (
+        db.session.query(ForumThread)
+        .join(ForumThreadTag, ForumThreadTag.thread_id == ForumThread.id)
+        .filter(
+            ForumThreadTag.tag_id.in_(tag_ids),
+            ForumThread.id != thread_id,  # Exclude self
+            ForumThread.status.notin_(("deleted", "hidden")),
+        )
+        .group_by(ForumThread.id)
+        .order_by(func.count(ForumThreadTag.id).desc(), ForumThread.last_post_at.desc())  # Sort by tag overlap, then recency
+        .limit(limit)
+        .all()
+    )
+    return suggestions
+
+
 def create_notifications_for_thread_reply(
     thread: ForumThread,
     post: ForumPost,

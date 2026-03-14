@@ -313,3 +313,29 @@ def publish_wiki_translation(page_id: int, language_code: str):
     trans.translation_status = TRANSLATION_STATUS_PUBLISHED
     db.session.commit()
     return trans, None
+
+
+def get_suggested_threads_for_wiki_page(page_id: int, *, limit: int = 5) -> list[dict]:
+    """Get auto-suggested related forum threads for a wiki page (in addition to explicit links)."""
+    page = WikiPage.query.get(page_id)
+    if not page:
+        return []
+
+    from app.models import ForumThread, ForumCategory
+
+    # Suggest threads from public categories (simple, coherent strategy)
+    # Only show public, non-hidden threads
+    q = (
+        ForumThread.query
+        .join(ForumCategory, ForumCategory.id == ForumThread.category_id)
+        .filter(
+            ForumCategory.is_active.is_(True),
+            ForumCategory.is_private.is_(False),
+            ForumThread.status.notin_(("deleted", "hidden")),
+        )
+        .order_by(ForumThread.last_post_at.desc().nullslast())
+        .limit(limit)
+        .all()
+    )
+
+    return [t.to_dict() for t in q]

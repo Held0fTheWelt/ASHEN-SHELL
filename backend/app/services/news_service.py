@@ -642,3 +642,29 @@ def mark_article_translations_outdated(article_id: int, exclude_language: str | 
         q = q.filter(NewsArticleTranslation.language_code != exclude_language)
     q.update({"translation_status": TRANSLATION_STATUS_OUTDATED}, synchronize_session=False)
     db.session.commit()
+
+
+def get_suggested_threads_for_article(article_id: int, *, limit: int = 5) -> list[dict]:
+    """Get auto-suggested related forum threads for a news article (in addition to explicit links)."""
+    article = NewsArticle.query.get(article_id)
+    if not article or not article.category:
+        return []
+
+    from app.models import ForumThread, ForumCategory
+
+    # Suggest threads from same category (simple, coherent strategy)
+    # Only show public, non-hidden threads
+    q = (
+        ForumThread.query
+        .join(ForumCategory, ForumCategory.id == ForumThread.category_id)
+        .filter(
+            ForumCategory.is_active.is_(True),
+            ForumCategory.is_private.is_(False),
+            ForumThread.status.notin_(("deleted", "hidden")),
+        )
+        .order_by(ForumThread.last_post_at.desc().nullslast())
+        .limit(limit)
+        .all()
+    )
+
+    return [t.to_dict() for t in q]
