@@ -160,12 +160,17 @@ class ForumReport(db.Model):
     reported_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     reason = db.Column(db.String(512), nullable=False)
     status = db.Column(db.String(32), nullable=False, default="open")
+    priority = db.Column(db.String(16), nullable=False, default="normal")  # low, normal, high, critical
+    escalation_reason = db.Column(db.Text, nullable=True)
+    assigned_to = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    escalated_at = db.Column(db.DateTime(timezone=True), nullable=True)
     handled_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     handled_at = db.Column(db.DateTime(timezone=True), nullable=True)
     resolution_note = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now)
 
     reporter = db.relationship("User", foreign_keys=[reported_by])
+    assignee = db.relationship("User", foreign_keys=[assigned_to])
     handler = db.relationship("User", foreign_keys=[handled_by])
 
     def to_dict(self):
@@ -176,6 +181,10 @@ class ForumReport(db.Model):
             "reported_by": self.reported_by,
             "reason": self.reason,
             "status": self.status,
+            "priority": self.priority,
+            "escalation_reason": self.escalation_reason,
+            "assigned_to": self.assigned_to,
+            "escalated_at": self.escalated_at.isoformat() if self.escalated_at else None,
             "handled_by": self.handled_by,
             "handled_at": self.handled_at.isoformat() if self.handled_at else None,
             "resolution_note": self.resolution_note,

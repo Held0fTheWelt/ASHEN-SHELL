@@ -30,6 +30,8 @@ from app.models import (
 from app.services import log_activity
 from app.services.activity_log_service import list_activity_logs
 from app.services.forum_service import (
+    assign_report_to_moderator,
+    bulk_update_report_status,
     create_category,
     create_notifications_for_thread_reply,
     create_post,
@@ -48,9 +50,13 @@ from app.services.forum_service import (
     like_post,
     list_all_tags,
     list_categories_for_user,
+    list_escalation_queue,
+    list_handled_reports,
+    list_moderator_assigned_reports,
     list_posts_for_thread,
     list_reports,
     list_reports_for_target,
+    list_review_queue,
     list_threads_for_category,
     list_tags_for_threads,
     bookmarked_thread_ids_for_user,
@@ -1437,8 +1443,13 @@ def forum_report_get(report_id: int):
 @jwt_required()
 def forum_report_update(report_id: int):
     """
-    Update report status (moderator/admin only).
-    Body: status (open, reviewed, escalated, resolved, dismissed).
+    Update report status and metadata (moderator/admin only).
+    Body: {
+        "status": "open|reviewed|escalated|resolved|dismissed",
+        "priority": "low|normal|high|critical" (optional),
+        "escalation_reason": "str" (optional, for escalations),
+        "resolution_note": "str" (optional)
+    }
     """
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
@@ -1451,11 +1462,29 @@ def forum_report_update(report_id: int):
         return jsonify({"error": "Invalid or missing JSON body"}), 400
     status = (data.get("status") or "").strip()
     old_status = report.status
+    old_priority = report.priority
+
+    priority = data.get("priority")
+    if priority and priority not in ("low", "normal", "high", "critical"):
+        return jsonify({"error": "Invalid priority"}), 400
+
+    escalation_reason = data.get("escalation_reason")
+    if escalation_reason is not None:
+        escalation_reason = str(escalation_reason).strip() or None
+
     resolution_note = data.get("resolution_note")
     if resolution_note is not None:
         resolution_note = str(resolution_note).strip() or None
+
     try:
-        report = update_report_status(report, status=status, handled_by=user.id, resolution_note=resolution_note)
+        report = update_report_status(
+            report,
+            status=status,
+            handled_by=user.id,
+            resolution_note=resolution_note,
+            priority=priority,
+            escalation_reason=escalation_reason,
+        )
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     log_activity(
@@ -1468,7 +1497,10 @@ def forum_report_update(report_id: int):
         method=request.method,
         target_type="forum_report",
         target_id=str(report.id),
-        metadata={"before": {"status": old_status}, "after": {"status": report.status}},
+        metadata={
+            "before": {"status": old_status, "priority": old_priority},
+            "after": {"status": report.status, "priority": report.priority},
+        },
     )
     return jsonify(report.to_dict()), 200
 
@@ -1478,8 +1510,14 @@ def forum_report_update(report_id: int):
 @jwt_required()
 def forum_reports_bulk_status():
     """
-    Bulk update report status (moderator/admin only).
-    Body: { "report_ids": [int, ...], "status": "reviewed|escalated|resolved|dismissed" }
+    Bulk update report status with per-item feedback (moderator/admin only).
+    Body: {
+        "report_ids": [int, ...],
+        "status": "reviewed|escalated|resolved|dismissed",
+        "priority": "low|normal|high|critical" (optional),
+        "resolution_note": "str" (optional)
+    }
+    Response: { "success_ids": [...], "failed_items": [{"id": int, "reason": str}, ...] }
     """
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
@@ -1498,37 +1536,199 @@ def forum_reports_bulk_status():
     if status not in ("reviewed", "escalated", "resolved", "dismissed"):
         return jsonify({"error": "Invalid status for bulk update"}), 400
 
+    priority = data.get("priority")
+    if priority and priority not in ("low", "normal", "high", "critical"):
+        return jsonify({"error": "Invalid priority"}), 400
+
     resolution_note = data.get("resolution_note")
     if resolution_note is not None:
         resolution_note = str(resolution_note).strip() or None
 
-    before_statuses: dict[int, str] = {}
-    updated_ids: list[int] = []
-    for rid in id_list:
-        report = get_report_by_id(rid)
-        if not report:
-            continue
-        before_statuses[report.id] = report.status
-        try:
-            update_report_status(report, status=status, handled_by=user.id, resolution_note=resolution_note)
-        except ValueError:
-            continue
-        updated_ids.append(report.id)
+    # Use service function for bulk update with per-item feedback
+    success_ids, failed_items = bulk_update_report_status(
+        id_list,
+        status=status,
+        handled_by=user.id,
+        resolution_note=resolution_note,
+        priority=priority,
+    )
 
-    if updated_ids:
+    if success_ids:
         log_activity(
             actor=user,
             category="forum",
             action="reports_bulk_status_updated",
             status="success",
-            message=f"Reports {updated_ids} status -> {status}",
+            message=f"Reports {success_ids} status -> {status}",
             route=request.path,
             method=request.method,
             target_type="forum_report",
-            target_id=",".join(str(x) for x in updated_ids),
-            metadata={"before": {rid: before_statuses.get(rid) for rid in updated_ids}, "after": {"status": status}},
+            target_id=",".join(str(x) for x in success_ids),
+            metadata={
+                "before": {"status": "mixed"},
+                "after": {"status": status, "count": len(success_ids)},
+            },
         )
-    return jsonify({"updated_ids": updated_ids, "status": status}), 200
+    return jsonify({"success_ids": success_ids, "failed_items": failed_items}), 200
+
+
+@api_v1_bp.route("/forum/moderation/escalation-queue", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_escalation_queue():
+    """
+    Get escalated reports in priority order (moderator/admin only).
+    Query params: page (default 1), limit (default 50, max 100), priority (filter: critical|high|normal|low)
+    Response: { items: [ForumReport], total }
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    priority_filter = request.args.get("priority", "").strip() or None
+
+    items, total = list_escalation_queue(
+        page=page,
+        per_page=limit,
+        priority_filter=priority_filter,
+    )
+
+    return jsonify({
+        "items": [r.to_dict() for r in items],
+        "total": total,
+        "page": page,
+        "limit": limit,
+    }), 200
+
+
+@api_v1_bp.route("/forum/moderation/review-queue", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_review_queue():
+    """
+    Get open and reviewed reports pending action (moderator/admin only).
+    Query params: page (default 1), limit (default 50, max 100)
+    Response: { items: [ForumReport], total }
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+
+    items, total = list_review_queue(page=page, per_page=limit)
+
+    return jsonify({
+        "items": [r.to_dict() for r in items],
+        "total": total,
+        "page": page,
+        "limit": limit,
+    }), 200
+
+
+@api_v1_bp.route("/forum/moderation/moderator-assigned", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_moderator_assigned():
+    """
+    Get reports assigned to the current moderator (moderator/admin only).
+    Query params: page (default 1), limit (default 50, max 100)
+    Response: { items: [ForumReport], total }
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+
+    items, total = list_moderator_assigned_reports(user.id, page=page, per_page=limit)
+
+    return jsonify({
+        "items": [r.to_dict() for r in items],
+        "total": total,
+        "page": page,
+        "limit": limit,
+    }), 200
+
+
+@api_v1_bp.route("/forum/moderation/handled-reports", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+def forum_handled_reports():
+    """
+    Get resolved or dismissed reports (moderator/admin only).
+    Query params: page (default 1), limit (default 50, max 100), status (filter: resolved|dismissed)
+    Response: { items: [ForumReport], total }
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+
+    page = _parse_int(request.args.get("page"), 1, min_val=1)
+    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    status_filter = request.args.get("status", "").strip() or None
+
+    items, total = list_handled_reports(page=page, per_page=limit, status_filter=status_filter)
+
+    return jsonify({
+        "items": [r.to_dict() for r in items],
+        "total": total,
+        "page": page,
+        "limit": limit,
+    }), 200
+
+
+@api_v1_bp.route("/forum/moderation/reports/<int:report_id>/assign", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+def forum_report_assign(report_id: int):
+    """
+    Assign a report to a moderator (moderator/admin only).
+    Body: { "moderator_id": int } or { "assign_to_me": true }
+    """
+    user, err_resp = _require_moderator_or_admin()
+    if err_resp:
+        return err_resp
+
+    report = get_report_by_id(report_id)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    assign_to_me = data.get("assign_to_me", False)
+
+    if assign_to_me:
+        moderator_id = user.id
+    else:
+        moderator_id = data.get("moderator_id")
+        if not moderator_id:
+            return jsonify({"error": "moderator_id or assign_to_me required"}), 400
+        try:
+            moderator_id = int(moderator_id)
+        except (TypeError, ValueError):
+            return jsonify({"error": "moderator_id must be integer"}), 400
+
+    before_assigned = report.assigned_to
+    report = assign_report_to_moderator(report, moderator_id)
+
+    log_activity(
+        actor=user,
+        category="forum",
+        action="report_assigned",
+        status="success",
+        message=f"Report {report_id} assigned to moderator {moderator_id}",
+        route=request.path,
+        method=request.method,
+        target_type="forum_report",
+        target_id=str(report_id),
+        metadata={"before": {"assigned_to": before_assigned}, "after": {"assigned_to": moderator_id}},
+    )
+
+    return jsonify({"id": report.id, "assigned_to": report.assigned_to}), 200
 
 
 # --- Category admin -----------------------------------------------------------

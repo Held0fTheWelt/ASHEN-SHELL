@@ -248,7 +248,7 @@ def test_thread_bookmark_create_and_list(client, auth_headers):
 
 @pytest.mark.usefixtures("app")
 def test_reports_bulk_status_update(app, client, admin_headers):
-    """Bulk status update moves multiple reports to resolved."""
+    """Bulk status update moves multiple reports to resolved with per-item feedback."""
     with app.app_context():
         cat = ForumCategory(slug="rep-cat", title="RepCat", is_active=True, is_private=False)
         db.session.add(cat)
@@ -270,8 +270,9 @@ def test_reports_bulk_status_update(app, client, admin_headers):
     )
     assert resp.status_code == 200
     data = resp.get_json()
-    assert set(data["updated_ids"]) == set(ids)
-    assert data["status"] == "resolved"
+    # New response format: success_ids and failed_items
+    assert set(data["success_ids"]) == set(ids)
+    assert len(data["failed_items"]) == 0
 
 
 def test_forum_search_filter_by_tag_and_category(app, client, auth_headers):
@@ -2506,3 +2507,457 @@ def test_search_response_always_has_pagination_metadata(app, client):
     assert "items" in data
     assert "page" in data
     assert "per_page" in data
+
+
+# ============= PHASE 3: MODERATION PROFESSIONALIZATION TESTS =============
+
+def test_phase3_escalation_queue_new_fields(app, client, moderator_headers, test_user):
+    """Test that escalation queue works with new priority/escalation fields."""
+    user, _ = test_user
+    with app.app_context():
+        cat = ForumCategory(slug="mod-cat", title="Mod Category", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+        thread = ForumThread(category_id=cat.id, slug="test-thread", title="Test Thread", status="open")
+        db.session.add(thread)
+        db.session.flush()
+        report = ForumReport(
+            target_type="thread",
+            target_id=thread.id,
+            reported_by=user.id,
+            reason="Test reason",
+            status="escalated",
+            priority="high",
+            escalation_reason="This is urgent",
+        )
+        db.session.add(report)
+        db.session.commit()
+
+    # Get escalation queue
+    resp = client.get("/api/v1/forum/moderation/escalation-queue", headers=moderator_headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["total"] == 1
+    assert data["items"][0]["status"] == "escalated"
+    assert data["items"][0]["priority"] == "high"
+    assert data["items"][0]["escalation_reason"] == "This is urgent"
+
+
+def test_phase3_escalation_queue_priority_sorting(app, client, moderator_headers, test_user):
+    """Test that escalation queue sorts by priority correctly."""
+    user, _ = test_user
+    with app.app_context():
+        cat = ForumCategory(slug="prio-cat", title="Priority Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        # Create reports with different priorities
+        for i, priority in enumerate(["low", "critical", "normal", "high"]):
+            thread = ForumThread(
+                category_id=cat.id,
+                slug=f"thread-{i}",
+                title=f"Thread {i}",
+                status="open",
+            )
+            db.session.add(thread)
+            db.session.flush()
+            report = ForumReport(
+                target_type="thread",
+                target_id=thread.id,
+                reported_by=user.id,
+                reason=f"Report {priority}",
+                status="escalated",
+                priority=priority,
+            )
+            db.session.add(report)
+        db.session.commit()
+
+    # Get escalation queue
+    resp = client.get("/api/v1/forum/moderation/escalation-queue", headers=moderator_headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["total"] == 4
+
+    # Check sorting: critical > high > normal > low
+    priorities = [r["priority"] for r in data["items"]]
+    assert priorities == ["critical", "high", "normal", "low"]
+
+
+def test_phase3_review_queue(app, client, moderator_headers, test_user):
+    """Test review queue endpoint."""
+    user, _ = test_user
+    with app.app_context():
+        cat = ForumCategory(slug="review-cat", title="Review Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        # Create open and reviewed reports
+        for i, status in enumerate(["open", "reviewed"]):
+            thread = ForumThread(
+                category_id=cat.id,
+                slug=f"review-thread-{i}",
+                title=f"Review Thread {i}",
+                status="open",
+            )
+            db.session.add(thread)
+            db.session.flush()
+            report = ForumReport(
+                target_type="thread",
+                target_id=thread.id,
+                reported_by=user.id,
+                reason=f"Report {status}",
+                status=status,
+            )
+            db.session.add(report)
+        db.session.commit()
+
+    # Get review queue
+    resp = client.get("/api/v1/forum/moderation/review-queue", headers=moderator_headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["total"] == 2
+    statuses = {r["status"] for r in data["items"]}
+    assert statuses == {"open", "reviewed"}
+
+
+def test_phase3_moderator_assigned_reports(app, client, moderator_headers, moderator_user, test_user):
+    """Test that moderator can see reports assigned to them."""
+    user, _ = test_user
+    moderator, _ = moderator_user
+    with app.app_context():
+        cat = ForumCategory(slug="assign-cat", title="Assign Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="assign-thread",
+            title="Assign Thread",
+            status="open",
+        )
+        db.session.add(thread)
+        db.session.flush()
+        report = ForumReport(
+            target_type="thread",
+            target_id=thread.id,
+            reported_by=user.id,
+            reason="Assign test",
+            status="open",
+            assigned_to=moderator.id,
+        )
+        db.session.add(report)
+        db.session.commit()
+
+    # Moderator should see this report
+    resp = client.get("/api/v1/forum/moderation/moderator-assigned", headers=moderator_headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["total"] == 1
+    assert data["items"][0]["assigned_to"] == moderator.id
+
+
+def test_phase3_handled_reports(app, client, moderator_headers, moderator_user, test_user):
+    """Test handled reports endpoint."""
+    user, _ = test_user
+    moderator, _ = moderator_user
+    with app.app_context():
+        cat = ForumCategory(slug="handled-cat", title="Handled Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        # Create resolved and dismissed reports
+        for i, status in enumerate(["resolved", "dismissed"]):
+            thread = ForumThread(
+                category_id=cat.id,
+                slug=f"handled-thread-{i}",
+                title=f"Handled Thread {i}",
+                status="open",
+            )
+            db.session.add(thread)
+            db.session.flush()
+            report = ForumReport(
+                target_type="thread",
+                target_id=thread.id,
+                reported_by=user.id,
+                reason=f"Report {status}",
+                status=status,
+                handled_by=moderator.id,
+                handled_at=datetime.now(timezone.utc),
+            )
+            db.session.add(report)
+        db.session.commit()
+
+    # Get handled reports
+    resp = client.get("/api/v1/forum/moderation/handled-reports", headers=moderator_headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["total"] == 2
+    statuses = {r["status"] for r in data["items"]}
+    assert statuses == {"resolved", "dismissed"}
+
+
+def test_phase3_bulk_update_with_feedback(app, client, moderator_headers, test_user):
+    """Test bulk update reports with per-item feedback."""
+    user, _ = test_user
+    with app.app_context():
+        cat = ForumCategory(slug="bulk-cat", title="Bulk Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        # Create multiple reports
+        report_ids = []
+        for i in range(3):
+            thread = ForumThread(
+                category_id=cat.id,
+                slug=f"bulk-thread-{i}",
+                title=f"Bulk Thread {i}",
+                status="open",
+            )
+            db.session.add(thread)
+            db.session.flush()
+            report = ForumReport(
+                target_type="thread",
+                target_id=thread.id,
+                reported_by=user.id,
+                reason=f"Report {i}",
+                status="open",
+            )
+            db.session.add(report)
+            db.session.flush()
+            report_ids.append(report.id)
+        db.session.commit()
+
+    # Bulk update with mixed success (add a non-existent ID)
+    invalid_id = 99999
+    resp = client.post(
+        "/api/v1/forum/reports/bulk-status",
+        json={
+            "report_ids": report_ids + [invalid_id],
+            "status": "reviewed",
+            "priority": "high",
+        },
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert len(data["success_ids"]) == 3
+    assert len(data["failed_items"]) == 1
+    assert data["failed_items"][0]["id"] == invalid_id
+
+
+def test_phase3_assign_report_to_me(app, client, moderator_headers, moderator_user, test_user):
+    """Test assigning report to self."""
+    user, _ = test_user
+    moderator, _ = moderator_user
+    with app.app_context():
+        cat = ForumCategory(slug="selfassign-cat", title="Self Assign", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="selfassign-thread",
+            title="Self Assign Thread",
+            status="open",
+        )
+        db.session.add(thread)
+        db.session.flush()
+        report = ForumReport(
+            target_type="thread",
+            target_id=thread.id,
+            reported_by=user.id,
+            reason="Test",
+            status="open",
+        )
+        db.session.add(report)
+        db.session.commit()
+        report_id = report.id
+
+    # Moderator assigns to themselves
+    resp = client.post(
+        f"/api/v1/forum/moderation/reports/{report_id}/assign",
+        json={"assign_to_me": True},
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["assigned_to"] == moderator.id
+
+
+def test_phase3_assign_report_to_other_mod(app, client, moderator_headers, moderator_user, test_user):
+    """Test assigning report to another moderator."""
+    user, _ = test_user
+    other_mod, _ = moderator_user
+    with app.app_context():
+        cat = ForumCategory(slug="otherassign-cat", title="Other Assign", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="otherassign-thread",
+            title="Other Assign Thread",
+            status="open",
+        )
+        db.session.add(thread)
+        db.session.flush()
+        report = ForumReport(
+            target_type="thread",
+            target_id=thread.id,
+            reported_by=user.id,
+            reason="Test",
+            status="open",
+        )
+        db.session.add(report)
+        db.session.commit()
+        report_id = report.id
+
+    # Moderator assigns to another moderator
+    resp = client.post(
+        f"/api/v1/forum/moderation/reports/{report_id}/assign",
+        json={"moderator_id": other_mod.id},
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["assigned_to"] == other_mod.id
+
+
+def test_phase3_update_report_with_escalation_fields(app, client, moderator_headers, test_user):
+    """Test updating report with escalation_reason and priority."""
+    user, _ = test_user
+    with app.app_context():
+        cat = ForumCategory(slug="escalate-cat", title="Escalate Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        thread = ForumThread(
+            category_id=cat.id,
+            slug="escalate-thread",
+            title="Escalate Thread",
+            status="open",
+        )
+        db.session.add(thread)
+        db.session.flush()
+        report = ForumReport(
+            target_type="thread",
+            target_id=thread.id,
+            reported_by=user.id,
+            reason="Initial reason",
+            status="open",
+            priority="normal",
+        )
+        db.session.add(report)
+        db.session.commit()
+        report_id = report.id
+
+    # Update with escalation details
+    resp = client.put(
+        f"/api/v1/forum/reports/{report_id}",
+        json={
+            "status": "escalated",
+            "priority": "critical",
+            "escalation_reason": "Coordinated harassment campaign detected",
+        },
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "escalated"
+    assert data["priority"] == "critical"
+    assert data["escalation_reason"] == "Coordinated harassment campaign detected"
+
+
+def test_phase3_permission_denied_non_moderator(app, client, auth_headers):
+    """Test that non-moderators cannot access moderation endpoints."""
+    endpoints = [
+        "/api/v1/forum/moderation/escalation-queue",
+        "/api/v1/forum/moderation/review-queue",
+        "/api/v1/forum/moderation/moderator-assigned",
+        "/api/v1/forum/moderation/handled-reports",
+    ]
+    for endpoint in endpoints:
+        resp = client.get(endpoint, headers=auth_headers)
+        assert resp.status_code == 403
+
+
+def test_phase3_escalation_queue_priority_filter(app, client, moderator_headers, test_user):
+    """Test filtering escalation queue by priority."""
+    user, _ = test_user
+    with app.app_context():
+        cat = ForumCategory(slug="filter-cat", title="Filter Cat", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        # Create escalated reports with different priorities
+        for priority in ["critical", "high", "normal"]:
+            thread = ForumThread(
+                category_id=cat.id,
+                slug=f"filter-{priority}",
+                title=f"Filter {priority}",
+                status="open",
+            )
+            db.session.add(thread)
+            db.session.flush()
+            report = ForumReport(
+                target_type="thread",
+                target_id=thread.id,
+                reported_by=user.id,
+                reason=f"Report {priority}",
+                status="escalated",
+                priority=priority,
+            )
+            db.session.add(report)
+        db.session.commit()
+
+    # Filter for critical only
+    resp = client.get(
+        "/api/v1/forum/moderation/escalation-queue?priority=critical",
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["total"] == 1
+    assert data["items"][0]["priority"] == "critical"
+
+
+def test_phase3_handled_reports_status_filter(app, client, moderator_headers, moderator_user, test_user):
+    """Test filtering handled reports by status."""
+    user, _ = test_user
+    moderator, _ = moderator_user
+    with app.app_context():
+        cat = ForumCategory(slug="handled-filter-cat", title="Handled Filter", is_active=True, is_private=False)
+        db.session.add(cat)
+        db.session.flush()
+
+        # Create resolved and dismissed reports
+        for status in ["resolved", "dismissed"]:
+            thread = ForumThread(
+                category_id=cat.id,
+                slug=f"handled-filter-{status}",
+                title=f"Handled Filter {status}",
+                status="open",
+            )
+            db.session.add(thread)
+            db.session.flush()
+            report = ForumReport(
+                target_type="thread",
+                target_id=thread.id,
+                reported_by=user.id,
+                reason=f"Report {status}",
+                status=status,
+                handled_by=moderator.id,
+                handled_at=datetime.now(timezone.utc),
+            )
+            db.session.add(report)
+        db.session.commit()
+
+    # Filter for resolved only
+    resp = client.get(
+        "/api/v1/forum/moderation/handled-reports?status=resolved",
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["total"] == 1
+    assert data["items"][0]["status"] == "resolved"

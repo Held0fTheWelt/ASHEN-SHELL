@@ -801,16 +801,243 @@ def update_report_status(
     status: str,
     handled_by: Optional[int],
     resolution_note: Optional[str] = None,
+    priority: Optional[str] = None,
+    escalation_reason: Optional[str] = None,
 ) -> ForumReport:
+    """Update report status with validation and optional escalation fields.
+
+    Valid status transitions:
+    - open → (reviewed | escalated | dismissed)
+    - reviewed → (escalated | resolved | dismissed)
+    - escalated → (action_required | resolved)
+    - resolved/dismissed → (final states)
+    """
     if status not in ("open", "reviewed", "escalated", "resolved", "dismissed"):
         raise ValueError("Invalid report status")
+
+    # Validate status transition if needed (basic validation)
+    if status == "escalated" and report.status != "escalated":
+        report.escalated_at = _utc_now()
+
     report.status = status
     report.handled_by = handled_by
     report.handled_at = _utc_now()
     if resolution_note is not None:
         report.resolution_note = resolution_note
+    if priority is not None:
+        report.priority = priority
+    if escalation_reason is not None:
+        report.escalation_reason = escalation_reason
     db.session.commit()
     return report
+
+
+def bulk_update_report_status(
+    report_ids: List[int],
+    *,
+    status: str,
+    handled_by: Optional[int],
+    resolution_note: Optional[str] = None,
+    priority: Optional[str] = None,
+) -> Tuple[List[int], List[dict]]:
+    """Bulk update report statuses with per-item feedback.
+
+    Returns: (success_ids, failed_items) where failed_items is list of dicts:
+    [{"id": <id>, "reason": <error_reason>}, ...]
+    """
+    success_ids = []
+    failed_items = []
+
+    for report_id in report_ids:
+        report = ForumReport.query.get(report_id)
+        if not report:
+            failed_items.append({"id": report_id, "reason": "Report not found"})
+            continue
+
+        try:
+            update_report_status(
+                report,
+                status=status,
+                handled_by=handled_by,
+                resolution_note=resolution_note,
+                priority=priority,
+            )
+            success_ids.append(report_id)
+        except Exception as e:
+            failed_items.append({"id": report_id, "reason": str(e)})
+
+    return success_ids, failed_items
+
+
+def assign_report_to_moderator(
+    report: ForumReport,
+    moderator_id: int,
+) -> ForumReport:
+    """Assign a report to a specific moderator."""
+    report.assigned_to = moderator_id
+    db.session.commit()
+    return report
+
+
+def list_escalation_queue(
+    *,
+    page: int = 1,
+    per_page: int = 50,
+    priority_filter: Optional[str] = None,
+    assigned_to_id: Optional[int] = None,
+    created_after: Optional[datetime] = None,
+) -> Tuple[List[ForumReport], int]:
+    """Get escalated reports in priority order.
+
+    Filters:
+    - priority_filter: "critical", "high", "normal", "low" (exact match)
+    - assigned_to_id: Only reports assigned to this moderator
+    - created_after: Only reports created after this datetime
+
+    Order: priority (critical→low), escalated_at (newest), id (asc)
+    """
+    query = ForumReport.query.filter(ForumReport.status == "escalated")
+
+    if priority_filter:
+        query = query.filter(ForumReport.priority == priority_filter)
+    if assigned_to_id is not None:
+        query = query.filter(ForumReport.assigned_to == assigned_to_id)
+    if created_after:
+        query = query.filter(ForumReport.created_at >= created_after)
+
+    # Priority ordering: critical > high > normal > low
+    from sqlalchemy import case
+    priority_case = case(
+        (ForumReport.priority == "critical", 4),
+        (ForumReport.priority == "high", 3),
+        (ForumReport.priority == "normal", 2),
+        (ForumReport.priority == "low", 1),
+        else_=0
+    )
+
+    total = query.count()
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    offset = (page - 1) * per_page
+
+    items = (
+        query
+        .order_by(
+            priority_case.desc(),
+            ForumReport.escalated_at.desc().nullslast(),
+            ForumReport.id.asc()
+        )
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    return items, total
+
+
+def list_review_queue(
+    *,
+    page: int = 1,
+    per_page: int = 50,
+) -> Tuple[List[ForumReport], int]:
+    """Get open and reviewed reports pending action (review queue).
+
+    Returns reports in open or reviewed status, ordered by creation date (newest).
+    """
+    query = ForumReport.query.filter(
+        ForumReport.status.in_(("open", "reviewed"))
+    )
+
+    total = query.count()
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    offset = (page - 1) * per_page
+
+    items = (
+        query
+        .order_by(ForumReport.created_at.desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    return items, total
+
+
+def list_moderator_assigned_reports(
+    moderator_id: int,
+    *,
+    page: int = 1,
+    per_page: int = 50,
+) -> Tuple[List[ForumReport], int]:
+    """Get reports assigned to a specific moderator.
+
+    Returns reports where assigned_to = moderator_id, ordered by status and date.
+    """
+    query = ForumReport.query.filter(
+        ForumReport.assigned_to == moderator_id
+    )
+
+    total = query.count()
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    offset = (page - 1) * per_page
+
+    # Order by: open/reviewed first, then escalated, then by date
+    from sqlalchemy import case
+    status_case = case(
+        (ForumReport.status == "open", 3),
+        (ForumReport.status == "reviewed", 2),
+        (ForumReport.status == "escalated", 1),
+        else_=0
+    )
+
+    items = (
+        query
+        .order_by(
+            status_case.desc(),
+            ForumReport.created_at.desc()
+        )
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    return items, total
+
+
+def list_handled_reports(
+    *,
+    page: int = 1,
+    per_page: int = 50,
+    status_filter: Optional[str] = None,
+) -> Tuple[List[ForumReport], int]:
+    """Get resolved or dismissed reports with optional filtering.
+
+    Args:
+        status_filter: "resolved" or "dismissed" (if None, returns both)
+    """
+    query = ForumReport.query.filter(
+        ForumReport.status.in_(("resolved", "dismissed"))
+    )
+
+    if status_filter:
+        query = query.filter(ForumReport.status == status_filter)
+
+    total = query.count()
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
+    offset = (page - 1) * per_page
+
+    items = (
+        query
+        .order_by(ForumReport.handled_at.desc().nullslast(), ForumReport.created_at.desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+    return items, total
 
 
 # --- Subscriptions -----------------------------------------------------------
