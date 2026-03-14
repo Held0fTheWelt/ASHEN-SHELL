@@ -36,6 +36,7 @@ from app.services.news_service import (
     get_news_by_id,
     get_news_by_slug,
     get_news_article_by_id,
+    get_suggested_threads_for_article,
     list_article_translations,
     list_news,
     publish_article_translation,
@@ -684,3 +685,38 @@ def news_related_threads_delete(article_id: int, thread_id: int):
     )
     items = list_related_threads_for_article(article.id, limit=10)
     return jsonify({"items": items}), 200
+
+
+@api_v1_bp.route("/news/<int:article_id>/suggested-threads", methods=["GET"])
+@limiter.limit("60 per minute")
+def news_suggested_threads_get(article_id: int):
+    """Get auto-suggested forum threads for a news article.
+
+    Suggestions are based on:
+    - Same category as the news article
+    - Sorted by recent activity (last_post_at DESC)
+    - Excludes hidden/deleted threads
+    - Excludes manually linked related threads
+
+    Returns:
+    - { "items": [thread_objects], "total": count }
+    - 404 if article not found
+    """
+    article = get_news_article_by_id(article_id)
+    if not article:
+        return jsonify({"error": "Article not found"}), 404
+    if not article.is_published:
+        # Non-published articles don't show suggestions to public
+        return jsonify({"items": [], "total": 0}), 200
+
+    # Get auto-suggested threads
+    suggested = get_suggested_threads_for_article(article_id, limit=10)
+
+    # Get manually linked threads to exclude duplicates
+    manual = list_related_threads_for_article(article_id, limit=100)
+    manual_ids = {t["id"] for t in manual}
+
+    # Filter out duplicates
+    unique_suggested = [t for t in suggested if t.get("id") not in manual_ids]
+
+    return jsonify({"items": unique_suggested, "total": len(unique_suggested)}), 200

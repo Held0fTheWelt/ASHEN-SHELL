@@ -10,7 +10,11 @@ from app.auth.permissions import get_current_user, require_jwt_moderator_or_admi
 from app.extensions import db, limiter
 from app.models import ForumThread
 from app.services import log_activity
-from app.services.wiki_service import get_wiki_page_by_slug, list_related_threads_for_page
+from app.services.wiki_service import (
+    get_wiki_page_by_slug,
+    get_suggested_threads_for_wiki_page,
+    list_related_threads_for_page,
+)
 
 
 def _wiki_path():
@@ -51,9 +55,17 @@ def wiki_page_get(slug):
         payload["discussion_thread_id"] = None
         payload["discussion_thread_slug"] = None
 
+    # Manually linked related threads
     related = list_related_threads_for_page(page.id, limit=5)
     if related:
         payload["related_threads"] = related
+
+    # Auto-suggested threads (distinct from manually linked)
+    suggested = get_suggested_threads_for_wiki_page(page.id, limit=5)
+    manual_ids = {t["id"] for t in (related or [])}
+    unique_suggested = [t for t in suggested if t.get("id") not in manual_ids]
+    if unique_suggested:
+        payload["suggested_threads"] = unique_suggested
 
     return jsonify(payload), 200
 
