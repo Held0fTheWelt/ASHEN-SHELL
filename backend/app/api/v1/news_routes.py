@@ -160,11 +160,41 @@ def news_detail(id_or_slug):
                 return jsonify({"error": "Not found"}), 404
         except (ValueError, TypeError):
             pass
-    # Attach related forum threads for integration layer (public, safe subset).
+    # Attach discussion context for integration layer (public, safe subset).
     if news.get("id"):
-        related = list_related_threads_for_article(news["id"], limit=5)
+        article_id = news["id"]
+
+        # Primary discussion thread
+        article = get_news_article_by_id(article_id)
+        if article and article.discussion_thread_id:
+            thread = db.session.get(ForumThread, article.discussion_thread_id)
+            if thread and thread.deleted_at is None:
+                news["discussion"] = {
+                    "type": "primary",
+                    "thread_id": thread.id,
+                    "thread_slug": thread.slug,
+                    "thread_title": thread.title,
+                    "category": thread.category.slug if thread.category else None,
+                }
+
+        # Manually linked related threads
+        related = list_related_threads_for_article(article_id, limit=5)
         if related:
-            news["related_threads"] = related
+            news["related_threads"] = [
+                {**t, "type": "related"} for t in related
+            ]
+
+        # Auto-suggested threads (excluding duplicates)
+        suggested = get_suggested_threads_for_article(article_id, limit=5)
+        manual_ids = {t.get("id") for t in (related or [])}
+        if article and article.discussion_thread_id:
+            manual_ids.add(article.discussion_thread_id)
+        unique_suggested = [t for t in suggested if t.get("id") not in manual_ids]
+        if unique_suggested:
+            news["suggested_threads"] = [
+                {**t, "type": "suggested", "reason": "Same category"} for t in unique_suggested
+            ]
+
     return jsonify(news), 200
 
 

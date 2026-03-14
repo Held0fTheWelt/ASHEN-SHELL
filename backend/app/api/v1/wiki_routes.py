@@ -43,29 +43,39 @@ def wiki_page_get(slug):
         "html": html,
         "language_code": trans.language_code,
     }
+    # Contextual discussion information
     if page.discussion_thread_id is not None:
         thread = db.session.get(ForumThread, page.discussion_thread_id)
         if thread and thread.deleted_at is None:
-            payload["discussion_thread_id"] = thread.id
-            payload["discussion_thread_slug"] = thread.slug
+            payload["discussion"] = {
+                "type": "primary",
+                "thread_id": thread.id,
+                "thread_slug": thread.slug,
+                "thread_title": thread.title,
+                "category": thread.category.slug if thread.category else None,
+            }
         else:
-            payload["discussion_thread_id"] = None
-            payload["discussion_thread_slug"] = None
+            payload["discussion"] = None
     else:
-        payload["discussion_thread_id"] = None
-        payload["discussion_thread_slug"] = None
+        payload["discussion"] = None
 
-    # Manually linked related threads
+    # Manually linked related threads (with type marker)
     related = list_related_threads_for_page(page.id, limit=5)
     if related:
-        payload["related_threads"] = related
+        payload["related_threads"] = [
+            {**t, "type": "related"} for t in related
+        ]
 
-    # Auto-suggested threads (distinct from manually linked)
+    # Auto-suggested threads (distinct from manually linked, with reason)
     suggested = get_suggested_threads_for_wiki_page(page.id, limit=5)
     manual_ids = {t["id"] for t in (related or [])}
+    if page.discussion_thread_id:
+        manual_ids.add(page.discussion_thread_id)
     unique_suggested = [t for t in suggested if t.get("id") not in manual_ids]
     if unique_suggested:
-        payload["suggested_threads"] = unique_suggested
+        payload["suggested_threads"] = [
+            {**t, "type": "suggested", "reason": "Same category"} for t in unique_suggested
+        ]
 
     return jsonify(payload), 200
 
