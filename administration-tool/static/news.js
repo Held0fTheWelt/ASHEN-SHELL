@@ -322,7 +322,7 @@
                     }
                     suggestedList.appendChild(li);
                 });
-                suggestedWrap.appendChildsuggestedWrap.appendChild(suggestedList);
+                suggestedWrap.appendChild(suggestedList);
                 content.appendChild(suggestedWrap);
             }
 
