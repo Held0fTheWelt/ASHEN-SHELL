@@ -752,3 +752,67 @@ if __name__ == "__main__":
 4. **Run Tests:**  Save the code as a Python file (e.g., `test_news_suggestions.py`) and run it from the command line: `pytest test_news_suggestions.py`
 
 This structure provides a solid foundation for testing your `/api/v1/news/<id>/suggested-threads` endpoint. Remember to adapt it to your specific API's design and requirements.  Good luck!
+
+```python
+import pytest
+from unittest.mock import patch
+
+# Assume this is your API client and data setup
+# Replace with your actual API client and data structures
+class MockApiClient:
+    def get_news_suggestions(self, query, exclude=None, order_by=None):
+        # Simulate API response
+        if exclude == "hidden":
+            return [{"id": 1, "title": "Test News 1", "label": "tech"},
+                    {"id": 2, "title": "Test News 2", "label": "sports"}]
+        elif order_by == "label":
+            return [{"id": 2, "title": "Test News 2", "label": "sports"},
+                    {"id": 1, "title": "Test News 1", "label": "tech"}]
+        else:
+            return [{"id": 1, "title": "Test News 1", "label": "tech"},
+                    {"id": 2, "title": "Test News 2", "label": "sports"}]
+
+client = MockApiClient()
+
+
+@pytest.fixture(scope="module")
+def api_client():
+    return client
+
+
+def test_news_suggestions_no_duplicates():
+    """
+    Test: Verify that the response contains no duplicate suggestions.
+    """
+    response = client.get_news_suggestions("test")
+    assert len(response) == 2
+    ids = {item["id"] for item in response}
+    assert len(ids) == 2
+
+
+def test_news_suggestions_exclude_hidden():
+    """
+    Test: Verify that 'hidden' suggestions are excluded from the response.
+    """
+    response = client.get_news_suggestions("test", exclude="hidden")
+    assert len(response) == 1
+    assert response[0]["label"] == "tech"
+
+
+def test_news_suggestions_deterministic_order():
+    """
+    Test: Verify the order of the suggestions is deterministic based on order_by.
+    """
+    response1 = client.get_news_suggestions("test", order_by="label")
+    response2 = client.get_news_suggestions("test", order_by="label")
+    assert response1 == response2
+
+
+def test_news_suggestions_truthful_labels():
+    """
+    Test: Verify the labels in the suggestions are truthful.
+    """
+    response = client.get_news_suggestions("test")
+    assert all("tech" in label for item in response for label in item.values())
+    assert all("sports" in label for item in response for label in item.values())
+```

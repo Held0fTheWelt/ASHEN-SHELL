@@ -320,9 +320,9 @@
                         catSpan.textContent = ' (' + t.category.slug + ')';
                         li.appendChild(catSpan);
                     }
-                    list.appendChild(li);
+                    suggestedList.appendChild(li);
                 });
-                suggestedWrap.appendChild(suggestedList);
+                suggestedWrap.appendChildsuggestedWrap.appendChild(suggestedList);
                 content.appendChild(suggestedWrap);
             }
 
