@@ -1,6 +1,6 @@
 """Phase 5: Add comprehensive performance indexes for search, pagination, and profile queries.
 
-Revision ID: 030_phase5_performance_indexes
+Revision ID: 030
 Revises: 029_phase3_moderation_enhancements
 Create Date: 2026-03-14
 
@@ -17,7 +17,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "030_phase5_performance_indexes"
+revision = "030"
 down_revision = "029_phase3_moderation_enhancements"
 branch_labels = None
 depends_on = None
