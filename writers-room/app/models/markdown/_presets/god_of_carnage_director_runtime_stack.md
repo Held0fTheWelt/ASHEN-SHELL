@@ -12,9 +12,13 @@ load_order:
 optional:
   - implementation.god_of_carnage.player_role.penelope_longstreet
   - implementation.god_of_carnage.player_role.michael_longstreet
+  - implementation.god_of_carnage.subconscious.penelope_longstreet
+  - implementation.god_of_carnage.subconscious.michael_longstreet
   - implementation.god_of_carnage.scene.s01_arrival_and_statement
 drop_order:
   - implementation.god_of_carnage.scene.s01_arrival_and_statement
+  - implementation.god_of_carnage.subconscious.michael_longstreet
+  - implementation.god_of_carnage.subconscious.penelope_longstreet
   - implementation.god_of_carnage.player_role.michael_longstreet
   - implementation.god_of_carnage.player_role.penelope_longstreet
   - implementation.god_of_carnage.location.longstreet_apartment
@@ -37,10 +41,15 @@ Use this when you want tighter dramatic control, richer room handling, and bette
 - `implementation.god_of_carnage.player_role.penelope_longstreet`
 - `implementation.god_of_carnage.player_role.michael_longstreet`
 
+## Choose Matching Subconscious Layer
+- `implementation.god_of_carnage.subconscious.penelope_longstreet`
+- `implementation.god_of_carnage.subconscious.michael_longstreet`
+
 ## Load Order
 1. `implementation.god_of_carnage.start_stack.director`
 2. `implementation.god_of_carnage.relationship_map`
 3. `implementation.god_of_carnage.scene.opening.director`
 4. `implementation.god_of_carnage.location.longstreet_apartment`
 5. Optional: one player-role file
-6. Optional: `implementation.god_of_carnage.scene.s01_arrival_and_statement`
+6. Optional: one matching subconscious file
+7. Optional: `implementation.god_of_carnage.scene.s01_arrival_and_statement`

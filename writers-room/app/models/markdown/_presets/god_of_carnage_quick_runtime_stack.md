@@ -11,7 +11,11 @@ load_order:
 optional:
   - implementation.god_of_carnage.player_role.penelope_longstreet
   - implementation.god_of_carnage.player_role.michael_longstreet
+  - implementation.god_of_carnage.subconscious.penelope_longstreet
+  - implementation.god_of_carnage.subconscious.michael_longstreet
 drop_order:
+  - implementation.god_of_carnage.subconscious.michael_longstreet
+  - implementation.god_of_carnage.subconscious.penelope_longstreet
   - implementation.god_of_carnage.player_role.michael_longstreet
   - implementation.god_of_carnage.player_role.penelope_longstreet
   - implementation.god_of_carnage.scene.opening.quick
@@ -33,8 +37,13 @@ Use this when you want the fastest possible start for the chamber-play scenario.
 - `implementation.god_of_carnage.player_role.penelope_longstreet`
 - `implementation.god_of_carnage.player_role.michael_longstreet`
 
+## Choose Matching Subconscious Layer
+- `implementation.god_of_carnage.subconscious.penelope_longstreet`
+- `implementation.god_of_carnage.subconscious.michael_longstreet`
+
 ## Load Order
 1. `implementation.god_of_carnage.start_stack.quick`
 2. `implementation.god_of_carnage.relationship_map`
 3. `implementation.god_of_carnage.scene.opening.quick`
 4. One player-role file
+5. One matching subconscious file

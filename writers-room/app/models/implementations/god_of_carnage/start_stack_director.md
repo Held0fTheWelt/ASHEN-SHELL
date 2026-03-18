@@ -8,6 +8,7 @@ parent:
 references:
   required:
     - template.characters.gm.standard
+    - template.characters.subconscious.standard
     - template.scenes.scene.director
     - template.core.truth_layer.standard
     - template.core.session_state.standard
@@ -16,6 +17,10 @@ references:
     - implementation.god_of_carnage.location.longstreet_apartment
     - implementation.god_of_carnage.scene.s01_arrival_and_statement
   recommended:
+    - implementation.god_of_carnage.player_role.penelope_longstreet
+    - implementation.god_of_carnage.player_role.michael_longstreet
+    - implementation.god_of_carnage.subconscious.penelope_longstreet
+    - implementation.god_of_carnage.subconscious.michael_longstreet
     - implementation.god_of_carnage.npc.annette_reille
     - implementation.god_of_carnage.npc.alain_reille
     - implementation.god_of_carnage.scene.s02_first_departure_failure
@@ -40,4 +45,5 @@ Load this when you want to run the scenario as a guided chamber play with contro
 - Use utility spaces only to change pressure, not to escape the core conflict.
 - Escalate through language first, then disgust, then loss of inhibition.
 - Preserve shifting alliances.
+- Let the player's subconscious layer intensify shame, pride, disgust, dread, or self-justification without taking agency away.
 - Do not let the ending become clean reconciliation.

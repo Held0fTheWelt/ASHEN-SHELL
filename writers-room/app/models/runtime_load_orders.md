@@ -14,8 +14,9 @@ The main rule is:
 1. load output control first
 2. load the current playable space second
 3. load the active actors third
-4. load runtime state fourth
-5. only then add broader world context
+4. load the active inner layer fourth
+5. load runtime state and consequences fifth
+6. only then add broader world context
 
 ---
 
@@ -29,6 +30,8 @@ These files usually matter most for moment-to-moment play.
 - `session_state_prompt_stack.md`
 - active `location` / `room` / `micro setting`
 - active NPC files
+- active player role file if one is present
+- active subconscious file if one is present
 - active scene file from the implementation
 
 ### Priority B — Strong Support
@@ -61,8 +64,10 @@ Fast, stable, scene-focused runtime.
 3. `session_state_prompt_stack.md`
 4. active `room_or_place_prompt_stack.md` or concrete implementation location
 5. active NPC files
-6. current scene file
-7. optional compact escalation or consequence note
+6. active player role file if relevant
+7. matching `subconscious_quick_prompt.md` or scenario subconscious file
+8. current scene file
+9. optional compact escalation or consequence note
 
 ### Best Use Cases
 - small local models
@@ -85,6 +90,7 @@ Only keep:
 - scene
 - room
 - actors
+- inner pressure
 - current state
 - immediate pressure
 
@@ -101,11 +107,13 @@ Balanced standard runtime with stronger continuity.
 3. `session_state_prompt_stack.md`
 4. active location / room
 5. active NPC files
-6. current scene file
-7. `consequence_heat_prompt_stack.md`
-8. `clue_secret_prompt_stack.md`
-9. compact `world_state_prompt_stack.md`
-10. optional `quest_or_mission_prompt_stack.md`
+6. active player role file if relevant
+7. matching `subconscious_prompt_stack.md` or scenario subconscious file
+8. current scene file
+9. `consequence_heat_prompt_stack.md`
+10. `clue_secret_prompt_stack.md`
+11. compact `world_state_prompt_stack.md`
+12. optional `quest_or_mission_prompt_stack.md`
 
 ### Best Use Cases
 - default play mode
@@ -113,6 +121,7 @@ Balanced standard runtime with stronger continuity.
 - dialogue-heavy episodes
 - mystery scenes
 - stronger memory continuity
+- situations where agitation or intuition should color play
 
 ### 8k Rule
 Use this as the default operating range when possible.
@@ -128,19 +137,21 @@ Deeper continuity and richer support without losing focus.
 1. `gm_prompt_stack.md`
 2. `scene_director_prompt_stack.md`
 3. `session_state_prompt_stack.md`
-4. `world_state_prompt_stack.md`
-5. `setting_macro_prompt_stack.md`
-6. `district_prompt_stack.md` or other relevant local-context layer
-7. active location
-8. active sub-rooms if needed
-9. active NPC files
-10. `faction_prompt_stack.md` if relevant
-11. `quest_or_mission_prompt_stack.md`
-12. `clue_secret_prompt_stack.md`
-13. `consequence_heat_prompt_stack.md`
-14. current scene file
-15. 1–3 short scene recaps
-16. active event or encounter files
+4. active player role file
+5. matching subconscious file
+6. `world_state_prompt_stack.md`
+7. `setting_macro_prompt_stack.md`
+8. `district_prompt_stack.md` or other relevant local-context layer
+9. active location
+10. active sub-rooms if needed
+11. active NPC files
+12. `faction_prompt_stack.md` if relevant
+13. `quest_or_mission_prompt_stack.md`
+14. `clue_secret_prompt_stack.md`
+15. `consequence_heat_prompt_stack.md`
+16. current scene file
+17. 1–3 short scene recaps
+18. active event or encounter files
 
 ### Best Use Cases
 - larger context models
@@ -148,6 +159,7 @@ Deeper continuity and richer support without losing focus.
 - multi-thread scenes
 - sessions with meaningful state carryover
 - richer investigation or faction interplay
+- strong inner-state play with continuity
 
 ### 16k Rule
 Add depth, not ballast.
@@ -168,7 +180,9 @@ Load:
 3. Session state
 4. current room
 5. active NPCs
-6. current scene
+6. active player role if relevant
+7. matching subconscious quick
+8. current scene
 
 ### Scene Director Runtime
 Use for:
@@ -182,9 +196,11 @@ Load:
 3. Session state
 4. current location / room
 5. active NPCs
-6. current scene
-7. consequence / heat
-8. clue / secret
+6. active player role if relevant
+7. matching subconscious standard
+8. current scene
+9. consequence / heat
+10. clue / secret
 
 ### One-Room Social Conflict Runtime
 Use for:
@@ -201,8 +217,9 @@ Load:
 5. scenario core
 6. active characters
 7. relationship map
-8. escalation / consequence layer
-9. current beat scene
+8. active subconscious layer for the current player character
+9. escalation / consequence layer
+10. current beat scene
 
 ### Investigation Runtime
 Use for:
@@ -216,10 +233,12 @@ Load:
 3. Session state
 4. current location
 5. active NPCs
-6. clue / secret
-7. quest / mission
-8. consequence / heat
-9. optional compact world state
+6. active player role if relevant
+7. optional subconscious standard
+8. clue / secret
+9. quest / mission
+10. consequence / heat
+11. optional compact world state
 
 ---
 
@@ -236,6 +255,7 @@ When the context window becomes tight, remove in this order:
 7. inactive clue files
 8. side rooms
 9. inactive NPCs
+10. inactive subconscious files that do not belong to the active player role
 
 Do not drop early:
 - GM prompt
@@ -243,6 +263,8 @@ Do not drop early:
 - session state
 - current room
 - active NPCs
+- active player role
+- active subconscious layer
 - escalation / consequence layer
 
 ---
@@ -260,6 +282,7 @@ Example:
 - Current scene: {{current_scene_id}}
 - Current room: {{current_room_id}}
 - Player role: {{player_role_id}}
+- Player subconscious: {{player_subconscious_id}}
 - Present NPCs: {{present_npc_ids}}
 - Current tension: {{current_tension}}
 - Active objects: {{active_objects}}
@@ -283,9 +306,10 @@ Recommended use:
 3. Session state
 4. living room
 5. player role
-6. Annette
-7. Alain
-8. current scene
+6. matching subconscious
+7. Annette
+8. Alain
+9. current scene
 
 ### 8k
 1. GM standard
@@ -295,12 +319,13 @@ Recommended use:
 5. adaptation / alias layer
 6. living room
 7. player role
-8. Annette
-9. Alain
-10. Michael or Penelope as counterpart
-11. relationship map
-12. escalation / consequence
-13. current scene
+8. matching subconscious
+9. Annette
+10. Alain
+11. Michael or Penelope as counterpart
+12. relationship map
+13. escalation / consequence
+14. current scene
 
 ### 16k
 Use the 8k stack, then add:
@@ -317,6 +342,7 @@ This scenario works best when the runtime stays centered on:
 - recurring props
 - escalation beats
 - failed departure attempts
+- the active player character's inner friction
 
 Do not overinflate the stack with world breadth that the chamber-play structure does not need.
 
@@ -330,6 +356,8 @@ Do not overinflate the stack with world breadth that the chamber-play structure 
 - `session_state_prompt_stack.md`
 - one location
 - active NPCs
+- active player role if relevant
+- `subconscious_quick_prompt.md`
 - one current scene
 
 ### Default for balanced play
@@ -338,6 +366,8 @@ Do not overinflate the stack with world breadth that the chamber-play structure 
 - `session_state_prompt_stack.md`
 - active location
 - active NPCs
+- active player role if relevant
+- `subconscious_prompt_stack.md`
 - current scene
 - `consequence_heat_prompt_stack.md`
 - `clue_secret_prompt_stack.md`
@@ -362,5 +392,6 @@ The model should always know:
 - who is here
 - where this is happening
 - what is under pressure
+- what the active player character is privately wrestling with
 - what just changed
 - what kind of response it is expected to produce

@@ -24,7 +24,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### writers-room: runtime prompt stacking presets
 - Added `stack_presets.md` and runtime stack preset templates under `writers-room/app/models/markdown/_presets/` to define real load order for prompt stacking.
 - Added `runtime_load_orders.md` as practical load orders for prompt runtime stacks across small, medium, and larger context windows
+- Added `subconscious_prompt_stack.md` as a base for self-talking
+- Added `subconscious_quick_prompt.md` as a base for self-noticing
+- Added God of Carnage implementations
+
 - Updated the prompt registry pack documentation (`prompt_registry.yaml` and `writers-room/app/models/README.md`) to reference the new runtime stacking V3 content.
+- Updated Registry and IDs
+- Updated Runtime Settings
+
 
 ---
 

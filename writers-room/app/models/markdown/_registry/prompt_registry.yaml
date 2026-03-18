@@ -45,6 +45,10 @@ templates:
   file: markdown/core/continuity_guard_prompt_stack.md
 - id: template.scenes.scene.starter
   file: markdown/scenes/scene_starter_prompt_stack.md
+- id: template.characters.subconscious.standard
+  file: markdown/characters/subconscious_prompt_stack.md
+- id: template.characters.subconscious.quick
+  file: markdown/characters/subconscious_quick_prompt.md
 implementations:
 - id: implementation.god_of_carnage.readme
   file: implementations/god_of_carnage/README.md
@@ -100,6 +104,10 @@ implementations:
   file: implementations/god_of_carnage/scenes/s07_total_breakdown.md
 - id: implementation.god_of_carnage.scene.s08_unresolved_ring
   file: implementations/god_of_carnage/scenes/s08_unresolved_ring.md
+- id: implementation.god_of_carnage.subconscious.penelope_longstreet
+  file: implementations/god_of_carnage/characters/subconscious_penelope_longstreet.md
+- id: implementation.god_of_carnage.subconscious.michael_longstreet
+  file: implementations/god_of_carnage/characters/subconscious_michael_longstreet.md
 presets:
 - id: preset.runtime.minimal
   file: markdown/_presets/minimal_runtime_stack.md

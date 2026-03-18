@@ -13,10 +13,12 @@ load_order:
   - template.gameplay.consequence_heat.standard
   - template.core.truth_layer.standard
 optional:
-  - template.core.continuity_guard.standard
   - template.characters.player_role.standard
+  - template.characters.subconscious.standard
+  - template.core.continuity_guard.standard
 drop_order:
   - template.core.continuity_guard.standard
+  - template.characters.subconscious.standard
   - template.characters.player_role.standard
   - template.core.truth_layer.standard
   - template.gameplay.consequence_heat.standard
@@ -51,8 +53,9 @@ It is best for:
 5. `template.characters.npc.standard`
 6. `template.gameplay.consequence_heat.standard`
 7. `template.core.truth_layer.standard`
-8. Optional: `template.core.continuity_guard.standard`
-9. Optional: `template.characters.player_role.standard`
+8. Optional: `template.characters.player_role.standard`
+9. Optional: `template.characters.subconscious.standard`
+10. Optional: `template.core.continuity_guard.standard`
 
 ## Special Strength
 This stack is tuned for:
@@ -62,6 +65,7 @@ This stack is tuned for:
 - private facts surfacing under stress
 - repeated failed exits
 - local objects becoming dramatic triggers
+- inner agitation becoming externally visible
 
 ## Good Fit
 - God of Carnage style play

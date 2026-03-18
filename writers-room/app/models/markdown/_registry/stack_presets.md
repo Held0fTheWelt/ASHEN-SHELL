@@ -21,6 +21,12 @@ They are ordered from lightest to heaviest.
 - `preset.runtime.god_of_carnage.quick`
 - `preset.runtime.god_of_carnage.director`
 
+## Subconscious Layer Guidance
+When a player-facing character is active, add:
+- `template.characters.subconscious.quick` for light stacks
+- `template.characters.subconscious.standard` for director stacks
+- one matching implementation subconscious file in scenario-specific stacks
+
 ## Practical Recommendation
 Start with the lightest stack that can still carry the scene.
 Only add heavier support when the current scene genuinely needs it.

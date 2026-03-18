@@ -12,11 +12,15 @@ load_order:
   - template.characters.npc.standard
   - template.gameplay.consequence_heat.standard
 optional:
+  - template.characters.player_role.standard
+  - template.characters.subconscious.standard
   - template.core.world_state.standard
   - template.core.continuity_guard.standard
 drop_order:
   - template.core.world_state.standard
   - template.core.continuity_guard.standard
+  - template.characters.subconscious.standard
+  - template.characters.player_role.standard
   - template.gameplay.consequence_heat.standard
   - template.characters.npc.standard
   - template.scenes.room_or_place.standard
@@ -47,8 +51,10 @@ It is best for:
 4. `template.scenes.scene.director`
 5. `template.characters.npc.standard`
 6. `template.gameplay.consequence_heat.standard`
-7. Optional: `template.core.world_state.standard`
-8. Optional: `template.core.continuity_guard.standard`
+7. Optional: `template.characters.player_role.standard`
+8. Optional: `template.characters.subconscious.standard`
+9. Optional: `template.core.world_state.standard`
+10. Optional: `template.core.continuity_guard.standard`
 
 ## What This Stack Gives You
 - a strong GM layer
@@ -56,6 +62,7 @@ It is best for:
 - active dramatic control
 - richer NPC consistency
 - visible consequences and pressure
+- optional inner-pressure guidance for the active player character
 
 ## Good Fit
 - centerpiece scenes
