@@ -5,6 +5,7 @@ Currently hosts the "Almighty Oracle" page, but uses a shared admin-style layout
 and supports login via the main backend API (JWT stored in session).
 """
 
+import importlib.util
 import json
 import os
 import urllib.request
@@ -12,11 +13,6 @@ import urllib.error
 from pathlib import Path
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
-
-try:
-    from openai import OpenAI  # type: ignore
-except ImportError:  # pragma: no cover
-    OpenAI = None
 
 _here = Path(__file__).resolve().parent
 _repo_root = _here.parent
@@ -57,18 +53,15 @@ BACKEND_BASE_URL = (
     or "http://127.0.0.1:5000"
 ).rstrip("/")
 
-# API key from environment (set OPENAI_API_KEY or create a .env file)
-api_key = os.environ.get("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key) if (api_key and OpenAI) else None
-openai_available = OpenAI is not None
+_service_file = _here / "app" / "services" / "chatgpt_service.py"
+_spec = importlib.util.spec_from_file_location("writers_room_chatgpt_service", str(_service_file))
+_chatgpt_service = importlib.util.module_from_spec(_spec)  # type: ignore[arg-type]
+if _spec and _spec.loader:
+    _spec.loader.exec_module(_chatgpt_service)  # type: ignore[call-arg]
+else:  # pragma: no cover
+    raise RuntimeError(f"Cannot load chatgpt service module from: {_service_file}")
 
-if not api_key:
-    print("OPENAI_API_KEY not found. Oracle will run in offline mode.")
-
-ORACLE_SYSTEM = """You are the Almighty Oracle – but a completely unreliable one.
-You MUST always give WRONG, absurd, or deliberately silly answers.
-Be funny, a bit angry, or dizzy. Never give the real answer.
-Keep answers concise (1–3 sentences). Answer in the same language as the question."""
+get_oracle_answer = _chatgpt_service.get_oracle_answer
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -76,18 +69,9 @@ def index():
     answer = None
     if request.method == "POST":
         question = request.form.get("question", "").strip()
-        # Step 2: User input in Variable, zum Prüfen ausgeben
         print(f"[Oracle] User question: {question!r}")
-        if question and client:
-            # Step 3 & 4: An OpenAI senden, Antwort mit „spicy“ Oracle-Prompt
-            answer = ask_oracle(question)
-        elif question and not client:
-            if not api_key:
-                answer = "🔑 Set OPENAI_API_KEY in your environment, then restart the app."
-            elif not openai_available:
-                answer = "Missing dependency: install `openai` (run `pip install -r requirements.txt`) and restart the app."
-            else:
-                answer = "Login failed (oracle client not initialized). Restart the app."
+        if question:
+            answer = get_oracle_answer(question)
         else:
             answer = "You didn't ask anything. Try again!"
     return render_template("index.html", answer=answer)
@@ -145,23 +129,6 @@ def logout():
     session.clear()
     flash("You have been logged out.", "info")
     return redirect(url_for("index"))
-
-
-def ask_oracle(question: str) -> str:
-    """Sendet die Frage an OpenAI und gibt die (absichtlich falsche) Oracle-Antwort zurück."""
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": ORACLE_SYSTEM},
-                {"role": "user", "content": question},
-            ],
-            temperature=0.9,
-            max_tokens=150,
-        )
-        return response.choices[0].message.content or "(The Oracle fell silent.)"
-    except Exception as e:
-        return f"The Oracle glitched: {e!s}"
 
 
 if __name__ == "__main__":
