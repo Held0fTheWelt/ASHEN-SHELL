@@ -51,7 +51,11 @@ app.secret_key = (
     or "writers-room-dev-secret-do-not-use-in-production"
 )
 
-BACKEND_BASE_URL = (os.environ.get("BACKEND_BASE_URL") or "http://127.0.0.1:5000").rstrip("/")
+BACKEND_BASE_URL = (
+    os.environ.get("BACKEND_BASE_URL")
+    or os.environ.get("BACKEND_API_URL")
+    or "http://127.0.0.1:5000"
+).rstrip("/")
 
 # API key from environment (set OPENAI_API_KEY or create a .env file)
 api_key = os.environ.get("OPENAI_API_KEY")
