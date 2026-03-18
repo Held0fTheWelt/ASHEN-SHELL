@@ -13,6 +13,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Version 0.1: Integration of a content framework to organize role playing game
 - Version 0.2: Integration of Game Rules and Game System
 - Version 0.3: Integration of dynamic evolving content with rules and drafts
+
+---
+
+## [0.1.5] - 2026-03-18
+
+### world-engine: SQL persistence, Group story lobby with seats, local hardening and more
+- SQL/Postgres-compatible persistence via a store abstraction
+- Group story lobby with seats, ready/unready status, host-initiated sessions, and account-based rejoining
+- Local hardening patch for the API, snapshot metadata, browser client, and README
+- Docker Compose file for starting Postgres locally
+- Updated API endpoints, configuration, content models, runtime engine, manager, and store
+- Enhanced web client with improved styling and templates
+- Updated tests for API and runtime manager
+
+
 ---
 
 ## [0.1.4] - 2026-03-18
