@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Oracle – Writers Room{% endblock %}
+{% block content %}
+<div class="manage-login-wrap">
+    <div class="card manage-login-card">
+        <h1 class="manage-login-title">Ask the Almighty Oracle</h1>
+        <p class="subtitle">Pose your question and receive wisdom (or chaos).</p>
+
+        <form method="post" action="{{ url_for('index') }}" class="manage-login-form">
+            <div class="form-group">
+                <label for="question">Question</label>
+                <input class="form-input" type="text" name="question" id="question" placeholder="What is the answer to life, the universe, and everything?" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Ask</button>
+        </form>
+
+        {% if answer is not none %}
+        <div class="oracle-answer">
+            <h2>The Oracle speaks</h2>
+            <p>{{ answer }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
