@@ -25,8 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added `stack_presets.md` and runtime stack preset templates under `writers-room/app/models/markdown/_presets/` to define real load order for prompt stacking.
 - Updated the prompt registry pack documentation (`prompt_registry.yaml` and `writers-room/app/models/README.md`) to reference the new runtime stacking V3 content.
 
-
-
 ---
 
 ## [0.1.3] - 2026-03-18
@@ -140,6 +138,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Summary
 All four gaps in the News/Wiki auto-suggestions feature corrected. Suggestions now visible to end users on public pages and visible to administrators in management interfaces with ability to promote suggestions to manually-curated related threads.
 
+---
+
 ## [0.0.34] - 2026-03-15
 
 ### Summary
@@ -225,7 +225,6 @@ All endpoints support optional `date_from` / `date_to` parameters (YYYY-MM-DD fo
 - Requires Chart.js CDN access (https://cdn.jsdelivr.net/npm/chart.js)
 
 ---
-
 
 ## [0.0.33] - 2026-03-15
 
