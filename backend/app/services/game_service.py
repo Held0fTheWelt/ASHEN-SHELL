@@ -70,8 +70,9 @@ def _internal_headers() -> dict[str, str]:
 
 def _request(method: str, path: str, *, json_payload: dict | None = None, internal: bool = False) -> dict | list:
     base_url = _require_configured_url("internal" if internal else "public")
+    timeout = current_app.config.get("PLAY_SERVICE_REQUEST_TIMEOUT", 30)  # Use config timeout (default 30s)
     try:
-        with httpx.Client(base_url=base_url, timeout=10.0) as client:
+        with httpx.Client(base_url=base_url, timeout=float(timeout)) as client:
             response = client.request(method, path, json=json_payload, headers=_internal_headers() if internal else None)
     except httpx.RequestError as exc:
         raise GameServiceError(f"Play service unavailable: {exc}", status_code=502) from exc
