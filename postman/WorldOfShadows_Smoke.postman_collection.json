@@ -1,0 +1,1201 @@
+{
+  "info": {
+    "name": "World of Shadows - Smoke Suite",
+    "description": "Smaller smoke suite for quick local verification of backend, forum, game bridge, and world-engine health.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Setup & Authentication",
+      "description": "",
+      "item": [
+        {
+          "name": "Initialize Run Variables + Backend Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/health",
+            "description": "Resets collection variables and verifies backend health before the runner continues."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = String(Date.now());",
+                  "pm.collectionVariables.clear();",
+                  "pm.collectionVariables.set('runSuffix', suffix);",
+                  "pm.collectionVariables.set('categorySlug', `postman-category-${suffix}`);",
+                  "pm.collectionVariables.set('categoryTitle', `Postman Category ${suffix}`);",
+                  "pm.collectionVariables.set('secondaryCategorySlug', `postman-category-b-${suffix}`);",
+                  "pm.collectionVariables.set('secondaryCategoryTitle', `Postman Category B ${suffix}`);",
+                  "pm.collectionVariables.set('roleName', `postman-role-${suffix}`);",
+                  "pm.collectionVariables.set('roleDescription', `Postman role ${suffix}`);",
+                  "pm.collectionVariables.set('areaSlug', `postman-area-${suffix}`);",
+                  "pm.collectionVariables.set('areaName', `Postman Area ${suffix}`);",
+                  "pm.collectionVariables.set('newsSlug', `postman-news-${suffix}`);",
+                  "pm.collectionVariables.set('newsTitle', `Postman News ${suffix}`);",
+                  "pm.collectionVariables.set('wikiKey', `postman-page-${suffix}`);",
+                  "pm.collectionVariables.set('wikiSlug', `postman-page-${suffix}`);",
+                  "pm.collectionVariables.set('threadTitle', `Postman Thread ${suffix}`);",
+                  "pm.collectionVariables.set('threadTitleB', `Postman Thread B ${suffix}`);",
+                  "pm.collectionVariables.set('threadReply', `Postman reply ${suffix}`);",
+                  "pm.collectionVariables.set('tagOne', `postman-tag-${suffix}`);",
+                  "pm.collectionVariables.set('sloganText', `Postman slogan ${suffix}`);",
+                  "pm.collectionVariables.set('disposableUsername', `postman_user_${suffix}`);",
+                  "pm.collectionVariables.set('disposableEmail', `postman_${suffix}@example.com`);",
+                  "pm.collectionVariables.set('disposablePassword', pm.environment.get('disposablePassword') || 'PostmanPass123!');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Backend health payload contains status\", function () {",
+                  "  pm.expect(data).to.be.an('object');",
+                  "  pm.expect(data).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Backend Languages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/languages",
+            "description": "Public supported languages endpoint."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Languages payload contains items\", function(){ pm.expect(data).to.be.an('object'); pm.expect(data).to.have.property('items'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Disposable User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/register",
+            "description": "Creates a disposable user for admin-side lifecycle tests. May return 409 only if a stale collision exists.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{disposableUsername}}\",\n  \"email\": \"{{disposableEmail}}\",\n  \"password\": \"{{disposablePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [201, 409];",
+                  "    pm.test(\"Status code is one of [201, 409]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "if (pm.response.code === 201 && data) {",
+                  "  pm.collectionVariables.set('disposableUserId', String(data.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/login",
+            "description": "Logs in as the admin user defined in the active environment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Admin login returns token\", function(){ pm.expect(data).to.have.property('access_token'); pm.expect(data).to.have.property('user'); });",
+                  "pm.collectionVariables.set('adminToken', data.access_token);",
+                  "pm.collectionVariables.set('adminUserId', String(data.user.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Moderator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/login",
+            "description": "Logs in as the moderator user defined in the active environment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{moderatorUsername}}\",\n  \"password\": \"{{moderatorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Moderator login returns token\", function(){ pm.expect(data).to.have.property('access_token'); });",
+                  "pm.collectionVariables.set('moderatorToken', data.access_token);",
+                  "pm.collectionVariables.set('moderatorUserId', String(data.user.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/login",
+            "description": "Logs in as the normal user defined in the active environment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userUsername}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"User login returns token\", function(){ pm.expect(data).to.have.property('access_token'); });",
+                  "pm.collectionVariables.set('userToken', data.access_token);",
+                  "pm.collectionVariables.set('userUserId', String(data.user.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth Me (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/me",
+            "description": "Checks the authenticated admin JWT context.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Admin /me contains allowed_features\", function(){ pm.expect(data).to.have.property('allowed_features'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth Me (User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/me",
+            "description": "Checks the authenticated normal-user JWT context.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"User /me returns own id\", function(){ pm.expect(String(data.id)).to.eql(pm.collectionVariables.get('userUserId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected Test (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/test/protected",
+            "description": "Example protected route.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const allowed = [200];",
+                  "pm.test(\"Status code is one of [200]\", function () {",
+                  "  pm.expect(allowed).to.include(pm.response.code);",
+                  "});",
+                  "let data = null;",
+                  "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "if (contentType.includes('application/json')) {",
+                  "  try { data = pm.response.json(); } catch (e) {}",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Smoke - Public + Auth",
+      "description": "",
+      "item": [
+        {
+          "name": "Backend Languages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/languages",
+            "description": "Public supported languages endpoint."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Languages payload contains items\", function(){ pm.expect(data).to.be.an('object'); pm.expect(data).to.have.property('items'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/login",
+            "description": "Logs in as the admin user defined in the active environment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Admin login returns token\", function(){ pm.expect(data).to.have.property('access_token'); pm.expect(data).to.have.property('user'); });",
+                  "pm.collectionVariables.set('adminToken', data.access_token);",
+                  "pm.collectionVariables.set('adminUserId', String(data.user.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/auth/login",
+            "description": "Logs in as the normal user defined in the active environment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userUsername}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"User login returns token\", function(){ pm.expect(data).to.have.property('access_token'); });",
+                  "pm.collectionVariables.set('userToken', data.access_token);",
+                  "pm.collectionVariables.set('userUserId', String(data.user.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Site Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/site/settings",
+            "description": "Public site settings."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const allowed = [200];",
+                  "pm.test(\"Status code is one of [200]\", function () {",
+                  "  pm.expect(allowed).to.include(pm.response.code);",
+                  "});",
+                  "let data = null;",
+                  "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "if (contentType.includes('application/json')) {",
+                  "  try { data = pm.response.json(); } catch (e) {}",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "News List (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/news?page=1&limit=10&sort=published_at&direction=desc",
+            "description": "Public news list."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const allowed = [200];",
+                  "pm.test(\"Status code is one of [200]\", function () {",
+                  "  pm.expect(allowed).to.include(pm.response.code);",
+                  "});",
+                  "let data = null;",
+                  "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "if (contentType.includes('application/json')) {",
+                  "  try { data = pm.response.json(); } catch (e) {}",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Smoke - Forum",
+      "description": "",
+      "item": [
+        {
+          "name": "Forum Admin Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/forum/admin/categories",
+            "description": "Creates a temporary public category.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"{{categorySlug}}\",\n  \"title\": \"{{categoryTitle}}\",\n  \"description\": \"Created by Postman\",\n  \"sort_order\": 500,\n  \"is_active\": true,\n  \"is_private\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [201];",
+                  "    pm.test(\"Status code is one of [201]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.collectionVariables.set('categoryId', String(data.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "User Create Thread",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/forum/categories/{categorySlug}/threads",
+            "description": "Creates a user thread in the temporary category.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{threadTitle}}\",\n  \"content\": \"Opening post for {{threadTitle}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [201];",
+                  "    pm.test(\"Status code is one of [201]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.collectionVariables.set('threadId', String(data.id));",
+                  "pm.collectionVariables.set('threadSlug', data.slug);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forum Thread Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/forum/threads/{threadSlug}",
+            "description": "Gets thread by slug."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const allowed = [200];",
+                  "pm.test(\"Status code is one of [200]\", function () {",
+                  "  pm.expect(allowed).to.include(pm.response.code);",
+                  "});",
+                  "let data = null;",
+                  "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "if (contentType.includes('application/json')) {",
+                  "  try { data = pm.response.json(); } catch (e) {}",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "User Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/forum/threads/{threadId}/posts",
+            "description": "Creates a top-level reply.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"{{threadReply}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [201];",
+                  "    pm.test(\"Status code is one of [201]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.collectionVariables.set('postId', String(data.id));",
+                  "pm.collectionVariables.set('splitRootPostId', String(data.id));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Smoke - Game Bridge",
+      "description": "",
+      "item": [
+        {
+          "name": "Backend Game Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/game/templates",
+            "description": "Lists game templates through the backend/play-service bridge.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.test(\"Templates payload exists\", function(){ pm.expect(data).to.have.property('templates'); });",
+                  "if (data && Array.isArray(data.templates) && data.templates.length) {",
+                  "  pm.collectionVariables.set('gameTemplateId', data.templates[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Backend Game Runs List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/game/runs",
+            "description": "Lists runs through the backend bridge.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const allowed = [200];",
+                  "pm.test(\"Status code is one of [200]\", function () {",
+                  "  pm.expect(allowed).to.include(pm.response.code);",
+                  "});",
+                  "let data = null;",
+                  "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "if (contentType.includes('application/json')) {",
+                  "  try { data = pm.response.json(); } catch (e) {}",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Backend Game Create Run",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/game/runs",
+            "description": "Creates a play run through the backend bridge.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"template_id\": \"{{gameTemplateId}}\",\n  \"character_id\": null,\n  \"character_name\": \"{{userUsername}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.collectionVariables.set('backendRunId', data.run.id || data.run_id || data.id || data.run?.run_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Backend Game Create Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/game/tickets",
+            "description": "Issues a play ticket through the backend bridge.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"run_id\": \"{{backendRunId}}\",\n  \"character_name\": \"{{userUsername}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.collectionVariables.set('backendGameTicket', data.ticket);",
+                  "pm.collectionVariables.set('backendParticipantId', data.participant_id);",
+                  "pm.collectionVariables.set('backendRoleId', data.role_id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Smoke - World Engine",
+      "description": "",
+      "item": [
+        {
+          "name": "World Engine Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{worldEngineBaseUrl}}{{worldEngineApiPrefix}}/health",
+            "description": "Direct world-engine health."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const allowed = [200];",
+                  "pm.test(\"Status code is one of [200]\", function () {",
+                  "  pm.expect(allowed).to.include(pm.response.code);",
+                  "});",
+                  "let data = null;",
+                  "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "if (contentType.includes('application/json')) {",
+                  "  try { data = pm.response.json(); } catch (e) {}",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "World Engine Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{worldEngineBaseUrl}}{{worldEngineApiPrefix}}/templates",
+            "description": "Direct template listing."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "if (Array.isArray(data) && data.length) {",
+                  "  pm.collectionVariables.set('worldTemplateId', data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "World Engine Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{worldEngineBaseUrl}}{{worldEngineApiPrefix}}/runs",
+            "description": "Direct run listing."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const allowed = [200];",
+                  "pm.test(\"Status code is one of [200]\", function () {",
+                  "  pm.expect(allowed).to.include(pm.response.code);",
+                  "});",
+                  "let data = null;",
+                  "const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "if (contentType.includes('application/json')) {",
+                  "  try { data = pm.response.json(); } catch (e) {}",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "World Engine Create Run",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{worldEngineBaseUrl}}{{worldEngineApiPrefix}}/runs",
+            "description": "Creates a direct runtime instance.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"template_id\": \"{{worldTemplateId}}\",\n  \"account_id\": \"postman-direct-user\",\n  \"character_id\": \"postman-direct-char\",\n  \"display_name\": \"Postman Direct\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.collectionVariables.set('worldRunId', data.run.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "World Engine Create Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{worldEngineBaseUrl}}{{worldEngineApiPrefix}}/tickets",
+            "description": "Creates a direct play ticket.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"run_id\": \"{{worldRunId}}\",\n  \"account_id\": \"postman-direct-user\",\n  \"character_id\": \"postman-direct-char\",\n  \"display_name\": \"Postman Direct\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "    const allowed = [200];",
+                  "    pm.test(\"Status code is one of [200]\", function () {",
+                  "      pm.expect(allowed).to.include(pm.response.code);",
+                  "    });",
+                  "    let data = null;",
+                  "    const contentType = (pm.response.headers.get('Content-Type') || '').toLowerCase();",
+                  "    if (contentType.includes('application/json')) {",
+                  "      try { data = pm.response.json(); } catch (e) {}",
+                  "    }",
+                  "",
+                  "pm.collectionVariables.set('worldTicket', data.ticket);",
+                  "pm.collectionVariables.set('worldParticipantId', data.participant_id);",
+                  "pm.collectionVariables.set('worldRoleId', data.role_id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

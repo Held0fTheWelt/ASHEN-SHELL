@@ -1,50 +1,62 @@
-# Postman – World of Shadows API
+# Postman Test Suite – World of Shadows
+
+This package contains a comprehensive Postman suite for the **current backend + world-engine state**.
 
 ## Files
 
-- **WorldOfShadows_API.postman_collection.json** – Collection with all API requests and **test scripts** (status codes and response assertions).
-- **WorldOfShadows_Local.postman_environment.json** – Local test environment (localhost:5000, admin credentials).
-- **WorldOfShadows_Test.postman_environment.json** – Additional test environment (e.g. for testuser or different base URL).
+- `WorldOfShadows_Complete.postman_collection.json` – full suite
+- `WorldOfShadows_Smoke.postman_collection.json` – smaller smoke pass
+- `WorldOfShadows_Local.postman_environment.json` – localhost environment
+- `WorldOfShadows_Docker.postman_environment.json` – container-to-container environment
+- `WEBSOCKET_MANUAL.md` – WebSocket validation flow for Postman
 
-## Setup
+## What is covered
 
-1. In Postman: **Import** → import the collection and both environment files.
-2. Select **Environment** in the top right (e.g. "World of Shadows – Local").
-3. Start the backend: `cd Backend && flask run` (or `python run.py`), default port 5000.
+### Backend
+- auth and identity
+- public site/news/wiki/forum endpoints
+- users, roles, areas, feature-area mapping
+- slogans, news, wiki admin flows
+- forum creation, moderation, reports, bulk actions, tags, subscriptions
+- admin logs and analytics
+- data export / import preflight / optional execute
+- backend ↔ world-engine game bridge
 
-## Environment variables (full test environment)
+### World-engine
+- health
+- templates
+- runs
+- tickets
+- internal join-context
+- snapshot
+- transcript
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `baseUrl` | Backend base URL | `http://localhost:5000` |
-| `apiPath` | API prefix (optional) | `/api/v1` |
-| `username` | Login username | `admin` |
-| `password` | Login password | (secret) |
-| `email` | User email | `admin@example.com` |
-| `access_token` | JWT (set by "Login") | – |
-| `user_id` | Current user ID (from Login/Me/Register) | – |
-| `target_user_id` | User ID for Users Delete, Assign role, Ban, Unban (set by "Users List", different user) | – |
-| `news_id` | A news ID (set by "News List" or "News Create") | – |
-| `role_id` | A role ID (set by "Roles List" or "Roles Create") | – |
-| `slogan_id` | A slogan ID (set by "Slogan Create") | – |
-| `register_username` | Username for registration | `postman_user` |
-| `register_email` | Email for registration | `postman@example.com` |
-| `register_password` | Password for registration | (secret) |
+## Required local services
 
-## Flow
+For the **complete** suite, start both services:
 
-1. Run **Login (saves token)** → `access_token` and `user_id` are set.
-2. Protected requests (Me, Test Protected, **Users**, **Roles**, **Admin Logs**, News Write) automatically use **Authorization: Bearer {{access_token}}**.
-3. **Users** (admin for List, Delete, Assign role, Ban, Unban): **Users List** sets `target_user_id` to another user for Delete, Assign role, Ban, Unban. Roles: user, moderator, admin.
-4. **Roles** (admin only): List, Get, Create, Update, Delete. Roles List/Create set `role_id` for Get/Update/Delete.
-5. **Admin Logs List** and **Admin Logs Export** (admin only): activity logs API; 403 if not admin.
-6. **News:** List (public) and **News List (moderator, include drafts)** set `news_id`; **News Create** sets `news_id` on 201. Use **moderator or admin** token for Create, Update, Delete, Publish, Unpublish.
-7. **Slogans** (moderator or admin): List, Create (sets `slogan_id`), Activate, Deactivate. **Site / Site Slogan** is public (no auth): resolve slogan by placement and lang.
+1. Flask backend
+2. world-engine
 
-## Collection Runner
+The game bridge requests require the backend to be configured against a running world-engine instance.
 
-- Select **Collection** → **Run**.
-- Choose environment → **Run World of Shadows API**.
-- All requests run in sequence; **test scripts** run for each (green/red).
+## Recommended runner order
 
-Note: **Users**, **Roles**, and **Admin Logs** require a user with **admin** role (in the DB `role='admin'`). "Register" creates a new user; on repeated runs you may get 409 (username/email already taken) unless `register_username`/`register_email` are changed. For a clean run, execute only **Login** and **System/News/Users/Roles/Admin Logs** first, or use a one-off new registration user.
+1. Import the collection and one environment
+2. Fill in real credentials for `admin`, `moderator`, and `user`
+3. Run the full collection from top to bottom
+4. Run the `90 - High-Risk / Cleanup / Optional` folder last
+
+## Notes
+
+- The collection creates temporary resources using a fresh `runSuffix` on every run.
+- The first request resets collection variables and generates all dynamic names.
+- Some endpoints depend on feature permissions existing for the admin/moderator users in your local dataset.
+- `Data Import Execute` is intentionally flexible: depending on your local role setup it may return `200`, `400`, or `403`.
+- WebSocket validation is documented separately in `WEBSOCKET_MANUAL.md`.
+
+## Suggested use
+
+- Use the **smoke suite** during rapid local iteration
+- Use the **complete suite** before merging bigger backend or runtime changes
+- For CI, consider exporting the collection to Newman later
