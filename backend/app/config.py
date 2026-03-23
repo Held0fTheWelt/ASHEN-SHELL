@@ -137,6 +137,31 @@ class Config:
 class DevelopmentConfig(Config):
     """Dev-only: fallback secrets when DEV_SECRETS_OK is explicitly enabled.
 
-    SECURITY: DEV_SECRETS_OK flag only permitted in TESTING mode.
-    When not in TESTING, SECRET_KEY and JWT_SECRET_KEY must be explicitly provided
-   
+    run.py selects this class only when DEV_SECRETS_OK=1. Never set that in production.
+    """
+
+    if env_bool("DEV_SECRETS_OK", False):
+        SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-do-not-use-in-production"
+        JWT_SECRET_KEY = (
+            os.environ.get("JWT_SECRET_KEY")
+            or os.environ.get("SECRET_KEY")
+            or "dev-jwt-secret-do-not-use-in-production"
+        )
+
+
+class TestingConfig(Config):
+    """Config for tests only: in-memory DB, fixed secrets, CSRF disabled, high rate limit."""
+
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SECRET_KEY = "test-secret-key"
+    JWT_SECRET_KEY = "test-jwt-secret-key-at-least-32-bytes-long"
+    RATELIMIT_DEFAULT = "1000 per minute"
+    WTF_CSRF_ENABLED = False
+    CORS_ORIGINS = None
+    PLAY_SERVICE_PUBLIC_URL = "http://play.example.test"
+    PLAY_SERVICE_INTERNAL_URL = "http://play.example.test"
+    PLAY_SERVICE_SHARED_SECRET = "test-play-secret"
+    PLAY_SERVICE_INTERNAL_API_KEY = "test-play-key"
+    REGISTRATION_REQUIRE_EMAIL = False  # Email optional in tests
+    REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = False  # Allow login without verification in tests
