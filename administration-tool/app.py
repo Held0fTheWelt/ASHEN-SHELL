@@ -168,4 +168,169 @@ def news_detail(news_id):
 @app.route("/wiki/<path:slug>")
 def wiki_index(slug=None):
     """Public wiki page. Default slug 'wiki' for main page. Data loaded by JS from backend API."""
-    return render_template
+    return render_template("wiki_public.html", slug=slug or "wiki")
+
+
+# --- Forum (public; data from backend API) ---
+
+@app.route("/forum")
+def forum_index():
+    """Forum categories list. Data loaded by JS from backend API."""
+    return render_template("forum/index.html")
+
+
+@app.route("/forum/categories/<slug>")
+def forum_category(slug):
+    """Threads in a category. Data loaded by JS from backend API."""
+    return render_template("forum/category.html", category_slug=slug)
+
+
+@app.route("/forum/threads/<slug>")
+def forum_thread(slug):
+    """Thread detail and posts. Data loaded by JS from backend API."""
+    return render_template("forum/thread.html", thread_slug=slug)
+
+
+@app.route("/forum/notifications")
+def forum_notifications():
+    """Notifications list (requires login). Data loaded by JS from backend API."""
+    return render_template("forum/notifications.html")
+
+
+@app.route("/forum/saved")
+def forum_saved_threads():
+    """Saved threads / bookmarks list (requires login). Data loaded by JS from backend API."""
+    return render_template("forum/saved_threads.html")
+
+
+@app.route("/users/<int:user_id>/profile")
+def user_profile(user_id):
+    """User profile page. Data loaded by JS from backend API."""
+    return render_template("user/profile.html", user_id=user_id)
+
+
+@app.route("/forum/tags/<slug>")
+def forum_tag_detail(slug):
+    """Forum tag detail page with threads. Data loaded by JS from backend API."""
+    return render_template("forum/tag_detail.html", tag_slug=slug)
+
+
+# --- Management / editorial area (protected by frontend auth; backend enforces roles) ---
+
+@app.route("/manage")
+def manage_index():
+    """Management area entry; redirects to login or dashboard (news)."""
+    return render_template("manage/dashboard.html")
+
+
+@app.route("/manage/login")
+def manage_login():
+    """Management login page (JWT via backend API)."""
+    return render_template("manage/login.html")
+
+
+@app.route("/manage/news")
+def manage_news():
+    """News management (list, create, edit, publish, unpublish, delete)."""
+    return render_template("manage/news.html")
+
+
+@app.route("/manage/users")
+def manage_users():
+    """User administration (admin only; table, edit, role, role_level, ban, unban)."""
+    return render_template("manage/users.html")
+
+
+@app.route("/manage/roles")
+def manage_roles():
+    """Role management (admin only): list, create, edit, delete roles."""
+    return render_template("manage/roles.html")
+
+
+@app.route("/manage/areas")
+def manage_areas():
+    """Area management (admin only): list, create, edit, delete areas."""
+    return render_template("manage/areas.html")
+
+
+@app.route("/manage/feature-areas")
+def manage_feature_areas():
+    """Feature/view to area access mapping (admin only)."""
+    return render_template("manage/feature_areas.html")
+
+
+@app.route("/manage/wiki")
+def manage_wiki():
+    """Wiki editor (markdown source, preview, save)."""
+    return render_template("manage/wiki.html")
+
+
+@app.route("/manage/slogans")
+def manage_slogans():
+    """Slogan management (moderator+): CRUD, activate/deactivate, placement resolution."""
+    return render_template("manage/slogans.html")
+
+
+@app.route("/manage/data")
+def manage_data():
+    """Data export/import (admin only)."""
+    return render_template("manage/data.html")
+
+
+@app.route("/manage/forum")
+def manage_forum():
+    """Forum management (moderation, categories, reports)."""
+    return render_template("manage/forum.html")
+
+
+@app.route("/manage/analytics")
+def manage_analytics():
+    """Community analytics dashboard."""
+    return render_template("manage_analytics.html")
+
+
+@app.route("/manage/moderator-dashboard")
+def manage_moderator_dashboard():
+    """Moderator dashboard with queue and recent actions."""
+    return render_template("manage_moderator_dashboard.html")
+
+
+def _backend_origin():
+    """Origin (scheme + netloc) of BACKEND_API_URL for CSP connect-src in split frontend/backend setups."""
+    parsed = urlparse(BACKEND_API_URL)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return None
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    connect_src = ["'self'", "https:"]
+    origin = _backend_origin()
+    if origin and origin not in ("https:", "'self'"):
+        connect_src.append(origin)
+    csp = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self'; "
+        "connect-src " + " ".join(connect_src) + "; "
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+    response.headers["Content-Security-Policy"] = csp
+    return response
+
+
+if __name__ == "__main__":
+    # Use FRONTEND_PORT to avoid clashing with backend's PORT in shared .env
+    port = int(os.environ.get("FRONTEND_PORT") or os.environ.get("PORT", 5001))
+    debug = os.environ.get("FLASK_DEBUG", "0").strip().lower() in ("1", "true", "yes", "on")
+    app.run(host="0.0.0.0", port=port, debug=debug)

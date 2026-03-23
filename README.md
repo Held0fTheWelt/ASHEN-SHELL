@@ -12,7 +12,7 @@ backend/                  # API, auth, dashboard, DB, migrations, tests
   run.py                  # entrypoint; CLI: init-db, seed-dev-user, seed-news
   requirements.txt, requirements-dev.txt, Dockerfile, pytest.ini
 administration-tool/      # Public website + management area
-  frontend_app.py         # Flask app: /, /news, /forum, /manage, …
+  app.py                  # Flask app: /, /news, /forum, /manage, …
   templates/, static/
   requirements.txt, Dockerfile
 README.md, CHANGELOG.md, docker-compose.yml, docs/, .env.example at repo root.

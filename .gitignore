@@ -1,4 +1,6 @@
 .venv
+venv
+source
 .idea
 .report
 .claude
@@ -9,8 +11,6 @@ instance/*.db
 __pycache__/
 *.pyc
 *.pyo
-.env
-instance/
 *.db
 .coverage
 htmlcov/
@@ -20,6 +20,7 @@ temp_tests_backup/
 dist/
 build/
 .worktrees/
+*.egg
 ARCHITECTURE.md
 CLAUDE.md
 MODEL_POLICY.md

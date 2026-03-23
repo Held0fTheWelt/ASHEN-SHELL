@@ -36,6 +36,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Resolved 22 critical and high-severity vulnerabilities identified during a comprehensive security audit (Round 3) performed by AI agents using phi4-14b:reviewer.
 - Previous versions have already addressed 70 additional vulnerabilities, including XSS, CSRF, privilege escalation, JWT blacklist issues, account lockout, email verification bypass, encrypted exports, and more.
 
+### Repository Maintenance (2026-03-23)
+- **Test File Repair:** Removed 250+ lines of corrupted markdown documentation and assistant prose from `backend/tests/test_narrow_followup.py` while preserving all 394 lines of legitimate pytest code across 4 test classes (11 test methods).
+- **Administration Tool Repair:** Restored incomplete `administration-tool/app.py` wiki route handler (was truncated at line 171, restored to 335 lines), fixed incomplete `render_template` call with proper fallback logic, and restored 18 missing route definitions.
+- **Documentation Alignment:** Corrected README.md reference from non-existent `administration-tool/frontend_app.py` to actual `app.py` file.
+- **Repository Hygiene:** Removed local environment directories (`.venv`, `venv`, `.pytest_cache`) from `world-engine/` and enhanced `.gitignore` to properly exclude virtualenv folders, build artifacts, and cache files.
+- **Validation:** Confirmed all Python files compile cleanly, pytest can collect all tests (9 items), and all referenced documentation paths exist.
+
 ---
 
 # Version Description
