@@ -116,7 +116,7 @@ def wiki_admin_translations_list(page_id):
 
 
 @api_v1_bp.route("/wiki-admin/pages/<int:page_id>/translations/<lang>", methods=["GET"])
-@limiter.limit("50 per minute", key_func=lambda: f"{request.remote_addr}:{request.headers.get('X-Service-Key', '')}")
+@limiter.limit("50 per minute", key_func=lambda: request.headers.get("X-Service-Key", ""))
 @require_editor_or_n8n_service
 def wiki_admin_translation_get(page_id, lang):
     """Get one wiki translation. Requires moderator/admin or n8n X-Service-Key."""
@@ -130,7 +130,7 @@ def wiki_admin_translation_get(page_id, lang):
 
 
 @api_v1_bp.route("/wiki-admin/pages/<int:page_id>/translations/<lang>", methods=["PUT"])
-@limiter.limit("50 per minute", key_func=lambda: f"{request.remote_addr}:{request.headers.get('X-Service-Key', '')}")
+@limiter.limit("50 per minute", key_func=lambda: request.headers.get("X-Service-Key", ""))
 @require_editor_or_n8n_service
 def wiki_admin_translation_put(page_id, lang):
     """Create or update wiki page translation. Body: title, slug, content_markdown, translation_status?. Requires moderator/admin or n8n X-Service-Key (machine_draft only)."""
@@ -149,4 +149,291 @@ def wiki_admin_translation_put(page_id, lang):
         title=data.get("title"),
         slug=data.get("slug"),
         content_markdown=data.get("content_markdown"),
-        translation_status
+        translation_status=translation_status,
+    )
+    if err:
+        status = 404 if err == "Page not found" else 400
+        return jsonify({"error": err}), status
+    return jsonify(_translation_to_dict(trans)), 200
+
+
+@api_v1_bp.route("/wiki-admin/pages/<int:page_id>/translations/<lang>/submit-review", methods=["POST"])
+@limiter.limit("30 per minute")
+@require_jwt_moderator_or_admin
+def wiki_admin_translation_submit_review(page_id, lang):
+    """Set translation status to review_required. Requires moderator/admin."""
+    validated_lang, err = validate_language_code(lang)
+    if err:
+        return jsonify({"error": err}), 400
+    trans, err = submit_review_wiki_translation(page_id, validated_lang)
+    if err:
+        return jsonify({"error": err}), 404
+    log_activity(
+        actor=get_current_user(),
+        category="wiki",
+        action="translation_submit_review",
+        status="success",
+        message=f"Wiki translation {page_id}/{validated_lang} submitted for review",
+        route=request.path,
+        method=request.method,
+        target_type="wiki_translation",
+        target_id=f"{page_id}:{validated_lang}",
+    )
+    return jsonify(_translation_to_dict(trans)), 200
+
+
+@api_v1_bp.route("/wiki-admin/pages/<int:page_id>/translations/<lang>/approve", methods=["POST"])
+@limiter.limit("30 per minute")
+@require_jwt_moderator_or_admin
+def wiki_admin_translation_approve(page_id, lang):
+    """Set translation status to approved. Requires moderator/admin."""
+    validated_lang, err = validate_language_code(lang)
+    if err:
+        return jsonify({"error": err}), 400
+    user = get_current_user()
+    trans, err = approve_wiki_translation(page_id, validated_lang, reviewer_id=user.id if user else None)
+    if err:
+        return jsonify({"error": err}), 404
+    log_activity(
+        actor=user,
+        category="wiki",
+        action="translation_approve",
+        status="success",
+        message=f"Wiki translation {page_id}/{validated_lang} approved",
+        route=request.path,
+        method=request.method,
+        target_type="wiki_translation",
+        target_id=f"{page_id}:{validated_lang}",
+    )
+    return jsonify(_translation_to_dict(trans)), 200
+
+
+@api_v1_bp.route("/wiki-admin/pages/<int:page_id>/translations/<lang>/publish", methods=["POST"])
+@limiter.limit("30 per minute")
+@require_jwt_moderator_or_admin
+def wiki_admin_translation_publish(page_id, lang):
+    """Set translation status to published. Requires moderator/admin."""
+    validated_lang, err = validate_language_code(lang)
+    if err:
+        return jsonify({"error": err}), 400
+    trans, err = publish_wiki_translation(page_id, validated_lang)
+    if err:
+        return jsonify({"error": err}), 404
+    log_activity(
+        actor=get_current_user(),
+        category="wiki",
+        action="translation_publish",
+        status="success",
+        message=f"Wiki translation {page_id}/{validated_lang} published",
+        route=request.path,
+        method=request.method,
+        target_type="wiki_translation",
+        target_id=f"{page_id}:{validated_lang}",
+    )
+    return jsonify(_translation_to_dict(trans)), 200
+
+
+@api_v1_bp.route("/wiki-admin/pages/<int:page_id>/translations/auto-translate", methods=["POST"])
+@limiter.limit("20 per minute")
+@require_jwt_moderator_or_admin
+def wiki_admin_auto_translate(page_id):
+    """Request machine translation for missing languages. Body: target_language?. Triggers n8n when N8N_WEBHOOK_URL set."""
+    data = request.get_json(silent=True) or {}
+    target_lang = (data.get("target_language") or "").strip().lower() or None
+    from flask import current_app
+    supported = current_app.config.get("SUPPORTED_LANGUAGES", ["de", "en"])
+    page = get_wiki_page_by_id(page_id)
+    if not page:
+        return jsonify({"error": "Page not found"}), 404
+    if target_lang and target_lang not in supported:
+        return jsonify({"error": "Unsupported target language"}), 400
+    items, _ = list_wiki_page_translations(page_id)
+    missing = [it["language_code"] for it in items if it.get("translation_status") == "missing"]
+    if target_lang:
+        missing = [target_lang] if target_lang in missing else []
+    from app.i18n import get_default_language
+    from app.n8n_trigger import trigger_webhook
+    source_lang = get_default_language()
+    for lang in missing:
+        trigger_webhook("wiki.translation.requested", {
+            "page_id": page_id,
+            "target_language": lang,
+            "source_language": source_lang,
+        })
+    return jsonify({
+        "message": "Auto-translate requested; translations will be created as machine_draft by automation.",
+        "translations": items,
+    }), 202
+
+
+# --- Discussion Thread Links (Phase 5) ----------------------------------------
+
+
+@api_v1_bp.route("/wiki/<int:page_id>/discussion-thread", methods=["POST"])
+@limiter.limit("30 per minute")
+@require_jwt_moderator_or_admin
+def wiki_link_discussion_thread(page_id: int):
+    """
+    Link a discussion thread to a wiki page (moderator/admin only).
+    Body: discussion_thread_id.
+    """
+    page = get_wiki_page_by_id(page_id)
+    if not page:
+        return jsonify({"error": "Wiki page not found"}), 404
+
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+
+    try:
+        thread_id = int(data.get("discussion_thread_id"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "discussion_thread_id must be an integer"}), 400
+
+    thread = ForumThread.query.get(thread_id)
+    if not thread:
+        return jsonify({"error": "Discussion thread not found"}), 404
+
+    page.discussion_thread_id = thread_id
+    db.session.commit()
+    log_activity(
+        actor=get_current_user(),
+        category="wiki",
+        action="discussion_linked",
+        status="success",
+        message=f"Discussion thread {thread_id} linked to wiki page {page_id}",
+        route=request.path,
+        method=request.method,
+        target_type="wiki_page",
+        target_id=str(page_id),
+    )
+    return jsonify({
+        "id": page.id,
+        "discussion_thread_id": page.discussion_thread_id,
+    }), 200
+
+
+@api_v1_bp.route("/wiki/<int:page_id>/discussion-thread", methods=["DELETE"])
+@limiter.limit("30 per minute")
+@require_jwt_moderator_or_admin
+def wiki_unlink_discussion_thread(page_id: int):
+    """
+    Unlink a discussion thread from a wiki page (moderator/admin only).
+    """
+    page = get_wiki_page_by_id(page_id)
+    if not page:
+        return jsonify({"error": "Wiki page not found"}), 404
+
+    page.discussion_thread_id = None
+    db.session.commit()
+    log_activity(
+        actor=get_current_user(),
+        category="wiki",
+        action="discussion_unlinked",
+        status="success",
+        message=f"Discussion thread unlinked from wiki page {page_id}",
+        route=request.path,
+        method=request.method,
+        target_type="wiki_page",
+        target_id=str(page_id),
+    )
+    return jsonify({"message": "Discussion thread unlinked"}), 200
+
+
+@api_v1_bp.route("/wiki/<int:page_id>/related-threads", methods=["GET"])
+@limiter.limit("60 per minute")
+@require_jwt_moderator_or_admin
+def wiki_related_threads_get(page_id: int):
+    """
+    List related forum threads for a wiki page. Moderator/admin only.
+    """
+    page = get_wiki_page_by_id(page_id)
+    if not page:
+        return jsonify({"error": "Wiki page not found"}), 404
+    items = list_related_threads_for_page(page.id, limit=20)
+    return jsonify({"items": items}), 200
+
+
+@api_v1_bp.route("/wiki/<int:page_id>/related-threads", methods=["POST"])
+@limiter.limit("30 per minute")
+@require_jwt_moderator_or_admin
+def wiki_related_threads_add(page_id: int):
+    """
+    Add a related forum thread to a wiki page.
+    Body: thread_id.
+    """
+    page = get_wiki_page_by_id(page_id)
+    if not page:
+        return jsonify({"error": "Wiki page not found"}), 404
+
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Invalid or missing JSON body"}), 400
+    try:
+        thread_id = int(data.get("thread_id"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "thread_id must be an integer"}), 400
+
+    thread = ForumThread.query.get(thread_id)
+    if not thread or thread.deleted_at is not None:
+        return jsonify({"error": "Forum thread not found"}), 404
+
+    from app.models import WikiPageForumThread
+
+    existing = WikiPageForumThread.query.filter_by(page_id=page.id, thread_id=thread.id).first()
+    if not existing:
+        mapping = WikiPageForumThread(
+            page_id=page.id,
+            thread_id=thread.id,
+            relation_type="related",
+        )
+        db.session.add(mapping)
+        db.session.commit()
+
+    log_activity(
+        actor=get_current_user(),
+        category="wiki",
+        action="related_thread_added",
+        status="success",
+        message=f"Related thread {thread.id} added to wiki page {page.id}",
+        route=request.path,
+        method=request.method,
+        target_type="wiki_page",
+        target_id=str(page.id),
+    )
+    items = list_related_threads_for_page(page.id, limit=20)
+    return jsonify({"items": items}), 200
+
+
+@api_v1_bp.route("/wiki/<int:page_id>/related-threads/<int:thread_id>", methods=["DELETE"])
+@limiter.limit("30 per minute")
+@require_jwt_moderator_or_admin
+def wiki_related_threads_delete(page_id: int, thread_id: int):
+    """
+    Remove a related forum thread from a wiki page.
+    """
+    page = get_wiki_page_by_id(page_id)
+    if not page:
+        return jsonify({"error": "Wiki page not found"}), 404
+
+    from app.models import WikiPageForumThread
+
+    mapping = WikiPageForumThread.query.filter_by(page_id=page.id, thread_id=thread_id).first()
+    if not mapping:
+        return jsonify({"error": "Related thread mapping not found"}), 404
+    db.session.delete(mapping)
+    db.session.commit()
+
+    log_activity(
+        actor=get_current_user(),
+        category="wiki",
+        action="related_thread_removed",
+        status="success",
+        message=f"Related thread {thread_id} removed from wiki page {page.id}",
+        route=request.path,
+        method=request.method,
+        target_type="wiki_page",
+        target_id=str(page.id),
+    )
+    items = list_related_threads_for_page(page.id, limit=20)
+    return jsonify({"items": items}), 200

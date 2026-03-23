@@ -42,11 +42,6 @@ def _derive_key_from_password(password: str, salt: bytes) -> bytes:
     Returns:
         32-byte (256-bit) encryption key
     """
-    try:
-        password_bytes = password.encode('utf-8')
-    except UnicodeEncodeError:
-        raise ValueError("Password contains non-UTF-8 characters")
-
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=KEY_SIZE,
@@ -54,7 +49,7 @@ def _derive_key_from_password(password: str, salt: bytes) -> bytes:
         iterations=PBKDF2_ITERATIONS,
         backend=default_backend(),
     )
-    return kdf.derive(password_bytes)
+    return kdf.derive(password.encode('utf-8'))
 
 
 def encrypt_export(export_data: Dict[str, Any], password: str) -> Dict[str, Any]:
@@ -79,7 +74,7 @@ def encrypt_export(export_data: Dict[str, Any], password: str) -> Dict[str, Any]
 
     Raises:
         TypeError: If export_data cannot be serialized to JSON
-        ValueError: If password is empty or contains non-UTF-8 characters
+        ValueError: If password is empty
     """
     if not password or not isinstance(password, str):
         raise ValueError("Password must be a non-empty string")
@@ -184,4 +179,6 @@ def decrypt_export(encrypted_payload: Dict[str, Any], password: str) -> Dict[str
         plaintext_json = plaintext.decode('utf-8')
         export_data = json.loads(plaintext_json)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise TypeError(f"Decrypted data is
+        raise TypeError(f"Decrypted data is not valid JSON: {exc}")
+
+    return export_data

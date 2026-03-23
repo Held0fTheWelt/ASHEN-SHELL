@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import socket
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Mapping
+from typing import Any, Dict, Iterable, List, Mapping, Tuple
 
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -30,7 +30,6 @@ try:
 except Exception:  # pragma: no cover - fallback if version module missing
     APP_VERSION = "0.0.0"
 
-from flask import g  # Importing Flask's global object for authentication
 
 EXPORT_FORMAT_VERSION = 1
 
@@ -134,16 +133,8 @@ def _build_metadata(
     }
 
 
-def _check_user_permissions() -> None:
-    """Check if the current user has permission to export data."""
-    if not g.user or not g.user.is_authenticated or not g.user.has_permission('export_data'):
-        raise PermissionError("User does not have permission to export data.")
-
-
 def export_full() -> Dict[str, Any]:
     """Export all application tables (excluding alembic_version)."""
-    _check_user_permissions()
-
     data_tables: Dict[str, List[Dict[str, Any]]] = {}
     tables_meta: List[Dict[str, Any]] = []
 
@@ -160,8 +151,6 @@ def export_full() -> Dict[str, Any]:
 
 def export_table(table_name: str) -> Dict[str, Any]:
     """Export all rows from a single table."""
-    _check_user_permissions()
-
     table = _get_table_by_name(table_name)
     rows = _collect_rows(table)
     data_tables = {table.name: rows}
@@ -174,8 +163,6 @@ def export_table(table_name: str) -> Dict[str, Any]:
 
 def export_table_rows(table_name: str, primary_keys: Iterable[Any]) -> Dict[str, Any]:
     """Export selected rows from a single table by primary key values."""
-    _check_user_permissions()
-
     table = _get_table_by_name(table_name)
     ids = list(primary_keys)
     rows = _collect_rows(table, where_ids=ids)
@@ -188,4 +175,37 @@ def export_table_rows(table_name: str, primary_keys: Iterable[Any]) -> Dict[str,
 
 
 def list_exportable_tables() -> List[str]:
-    """Return a sorted list of exportable table names
+    """Return a sorted list of exportable table names for UI/API purposes."""
+    names = [t.name for t in _iter_exportable_tables()]
+    return sorted(names)
+
+
+def encrypt_export(export_data: Dict[str, Any], password: str) -> Dict[str, Any]:
+    """Encrypt exported data with AES-256-CBC.
+
+    Args:
+        export_data: Dictionary containing metadata and data sections
+        password: User-provided password for encryption
+
+    Returns:
+        Encrypted payload with encrypted_data, iv, salt, algorithm, and version
+    """
+    return encryption_service.encrypt_export(export_data, password)
+
+
+def decrypt_export(encrypted_payload: Dict[str, Any], password: str) -> Dict[str, Any]:
+    """Decrypt an encrypted export payload.
+
+    Args:
+        encrypted_payload: Dictionary containing encrypted_data, iv, salt, etc.
+        password: User-provided password for decryption
+
+    Returns:
+        Decrypted export data dictionary
+
+    Raises:
+        ValueError: If payload is invalid or password is wrong
+        TypeError: If decrypted data is not valid JSON
+    """
+    return encryption_service.decrypt_export(encrypted_payload, password)
+

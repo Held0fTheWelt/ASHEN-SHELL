@@ -16,17 +16,18 @@ depends_on = None
 
 
 def upgrade():
-    op.create_table(
-        'token_blacklist',
-        sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column('jti', sa.String(length=36), nullable=False, unique=True, index=True),
-        sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id', ondelete='SET NULL'), nullable=True),
-        sa.Column('blacklisted_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
-    )
-    op.create_index('ix_token_blacklist_jti', 'token_blacklist', ['jti'], unique=False)
-    op.create_index('ix_token_blacklist_user_id', 'token_blacklist', ['user_id'], unique=False)
-    op.create_index('ix_token_blacklist_expires_at', 'token_blacklist', ['expires_at'], unique=False)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS token_blacklist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            jti VARCHAR(36) NOT NULL UNIQUE,
+            user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            blacklisted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NOT NULL
+        )
+    """)
+    op.execute('CREATE INDEX IF NOT EXISTS ix_token_blacklist_jti ON token_blacklist (jti)')
+    op.execute('CREATE INDEX IF NOT EXISTS ix_token_blacklist_user_id ON token_blacklist (user_id)')
+    op.execute('CREATE INDEX IF NOT EXISTS ix_token_blacklist_expires_at ON token_blacklist (expires_at)')
 
 
 def downgrade():
