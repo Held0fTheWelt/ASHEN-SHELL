@@ -177,4 +177,95 @@ def admin_create_moderator_assignment():
 
     # Check for existing assignment
     existing = ModeratorAssignment.query.filter_by(
-        user_id
+        user_id=user_id,
+        category_id=category_id,
+    ).first()
+    if existing:
+        return jsonify({"error": "Moderator is already assigned to this category"}), 409
+
+    # Create assignment
+    assignment = ModeratorAssignment(
+        user_id=user_id,
+        category_id=category_id,
+        assigned_by=admin_user.id,
+    )
+    db.session.add(assignment)
+    db.session.commit()
+
+    log_activity(
+        actor=admin_user,
+        category="admin",
+        action="moderator_assigned",
+        status="success",
+        message=f"Moderator {user.username} assigned to category {category.slug}",
+        route=request.path,
+        method=request.method,
+        target_type="moderator_assignment",
+        target_id=str(assignment.id),
+        metadata={"user_id": user_id, "category_id": category_id},
+    )
+
+    return jsonify(assignment.to_dict()), 201
+
+
+@api_v1_bp.route("/admin/moderator-assignments/<int:assignment_id>", methods=["DELETE"])
+@limiter.limit("30 per minute")
+@require_jwt_admin
+def admin_delete_moderator_assignment(assignment_id: int):
+    """
+    Remove a moderator from a category (admin only).
+    """
+    admin_user = get_current_user()
+    assignment = ModeratorAssignment.query.get(assignment_id)
+    if not assignment:
+        return jsonify({"error": "Assignment not found"}), 404
+
+    user = User.query.get(assignment.user_id)
+    category = ForumCategory.query.get(assignment.category_id)
+
+    db.session.delete(assignment)
+    db.session.commit()
+
+    log_activity(
+        actor=admin_user,
+        category="admin",
+        action="moderator_unassigned",
+        status="success",
+        message=(
+            f"Moderator {user.username if user else 'unknown'} unassigned from category "
+            f"{category.slug if category else 'unknown'}"
+        ),
+        route=request.path,
+        method=request.method,
+        target_type="moderator_assignment",
+        target_id=str(assignment_id),
+        metadata={"user_id": assignment.user_id, "category_id": assignment.category_id},
+    )
+
+    return jsonify({"message": "Unassigned"}), 200
+
+
+@api_v1_bp.route("/admin/moderator-assignments/user/<int:user_id>", methods=["GET"])
+@limiter.limit("60 per minute")
+@require_jwt_admin
+def admin_list_user_assignments(user_id: int):
+    """
+    List all categories a moderator is assigned to (admin only).
+    """
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    assignments = ModeratorAssignment.query.filter_by(user_id=user_id).all()
+    categories = []
+    for assignment in assignments:
+        cat = ForumCategory.query.get(assignment.category_id)
+        if cat:
+            categories.append(cat.to_dict())
+
+    return jsonify({
+        "user_id": user_id,
+        "username": user.username,
+        "categories": categories,
+        "total": len(categories),
+    }), 200
