@@ -121,8 +121,8 @@ def create_app(config_object=None):
                 "and set it in your .env file."
             )
 
-    # Verify email verification is enforced in production
-    if app.config.get("ENV") == "production" or (not app.config.get("TESTING") and app.config.get("MAIL_ENABLED")):
+    # Verify email verification is enforced in production (strict check only in production env)
+    if app.config.get("ENV") == "production":
         if not app.config.get("REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN"):
             raise ValueError(
                 "SECURITY VIOLATION: Email verification MUST be enforced in production. "
