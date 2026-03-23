@@ -5,7 +5,7 @@ All notable changes to the World of Shadows project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
-## [0.0.8] - 2026-03-23
+## [0.1.8] - 2026-03-23
 
 ### Security
 - **Critical Fixes:**
