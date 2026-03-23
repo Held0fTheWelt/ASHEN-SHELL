@@ -93,13 +93,11 @@ def create_app(config_object=None):
     if not secret_key or secret_key == "change-me-in-production":
         if app.config.get("TESTING"):
             app.config["SECRET_KEY"] = "test-secret-key-for-testing"
-        elif not app.config.get("MAIL_ENABLED") or not app.config.get("ENV") == "production":
+        elif app.config.get("ENV") != "production":
             import secrets
             app.config["SECRET_KEY"] = secrets.token_urlsafe(32)
         else:
             raise ValueError("SECRET_KEY must be set in environment. Use .env or export.")
-    elif not app.config.get("TESTING") and not secret_key:
-        raise ValueError("SECRET_KEY must be set in environment. Use .env or export.")
     # Validate JWT_SECRET_KEY meets cryptographic security standards (32+ bytes / 256 bits)
     jwt_secret = app.config.get("JWT_SECRET_KEY", "")
 
@@ -109,7 +107,7 @@ def create_app(config_object=None):
             # In testing, use a fixed fallback
             jwt_secret = "test-key-32-bytes-minimum-value"
             app.config["JWT_SECRET_KEY"] = jwt_secret
-        elif not app.config.get("MAIL_ENABLED") or not app.config.get("ENV") == "production":
+        elif app.config.get("ENV") != "production":
             # In development, auto-generate
             import secrets
             jwt_secret = secrets.token_urlsafe(32)
