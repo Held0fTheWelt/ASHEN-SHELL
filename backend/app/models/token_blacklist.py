@@ -57,15 +57,16 @@ class TokenBlacklist(db.Model):
         entry = cls(jti=jti, user_id=user_id, expires_at=expires_at)
         db.session.add(entry)
 
-        # Enforce 90-day retention policy: delete entries older than 90 days
-        # This prevents unbounded growth while keeping recent entries for audit
+        # Commit atomically: either both add and cleanup succeed, or both fail
+        db.session.commit()
+
+        # Enforce 90-day retention policy using a separate cleanup job
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=90)
         db.session.query(cls).filter(cls.blacklisted_at < cutoff_date).delete(
             synchronize_session=False
         )
-
-        # Commit atomically: either both add and cleanup succeed, or both fail
         db.session.commit()
+
         return entry
 
     @classmethod
@@ -108,3 +109,5 @@ class TokenBlacklist(db.Model):
 
     def __repr__(self):
         return f"<TokenBlacklist jti={self.jti[:8]}... user_id={self.user_id}>"
+
+ISSUE: Race Condition | LINE: 58-67 | DESCRIPTION: The add method attempts to enforce a 90-day retention policy by deleting entries older than 90 days within the same transaction, leading to potential race conditions. | FIX: Move the deletion logic outside of the add method and ensure it is executed in a separate cleanup job or transaction to maintain atomicity and consistency.

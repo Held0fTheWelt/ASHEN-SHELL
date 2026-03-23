@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.api.v1 import api_v1_bp
 from app.auth.feature_registry import FEATURE_MANAGE_DATA_EXPORT, FEATURE_MANAGE_DATA_IMPORT
-from app.auth.permissions import current_user_is_admin, current_user_is_super_admin, require_feature
+from app.auth.permissions import current_user_is_admin, require_feature
 from app.services import data_export_service, data_import_service
 from app.extensions import limiter
 from app.utils.error_handler import log_full_error, ERROR_MESSAGES
@@ -22,6 +22,15 @@ def _get_user_id_for_rate_limit():
         pass
     # Fallback to request IP if JWT identity unavailable
     return request.remote_addr
+
+
+def _has_required_privileges(required_level):
+    """Check if the current user has the required privileges."""
+    if required_level == "admin":
+        return current_user_is_admin()
+    elif required_level == "super_admin":
+        return current_user_is_super_admin()
+    return False
 
 
 @api_v1_bp.route("/data/export", methods=["POST"])
@@ -42,7 +51,7 @@ def export_data():
     - encrypt (bool): If true, encrypt the export with AES-256-CBC
     - password (str): Required if encrypt=true. User-provided password for encryption
     """
-    if not current_user_is_admin():
+    if not _has_required_privileges("admin"):
         return jsonify({"error": "Forbidden"}), 403
 
     payload = request.get_json(silent=True) or {}
@@ -100,7 +109,7 @@ def decrypt_export():
     - password: user-provided password for decryption
     - (optional fields: version, algorithm, pbkdf2_iterations)
     """
-    if not current_user_is_admin():
+    if not _has_required_privileges("admin"):
         return jsonify({"error": "Forbidden"}), 403
 
     payload = request.get_json(silent=True) or {}
@@ -132,7 +141,7 @@ def decrypt_export():
 @require_feature(FEATURE_MANAGE_DATA_IMPORT)
 def import_preflight():
     """Validate an import payload without writing to the database."""
-    if not current_user_is_admin():
+    if not _has_required_privileges("admin"):
         return jsonify({"error": "Forbidden"}), 403
 
     payload = request.get_json(silent=True)
@@ -159,7 +168,7 @@ def import_preflight():
 @require_feature(FEATURE_MANAGE_DATA_IMPORT)
 def import_execute():
     """Execute an import. SuperAdmin-only due to high risk."""
-    if not current_user_is_super_admin():
+    if not _has_required_privileges("super_admin"):
         return jsonify({"error": "Forbidden. SuperAdmin required for import."}), 403
 
     payload = request.get_json(silent=True)
@@ -171,43 +180,4 @@ def import_execute():
         return (
             jsonify(
                 {
-                    "ok": False,
-                    "issues": [
-                        {"code": i.code, "message": i.message, "table": i.table} for i in pre.issues
-                    ],
-                    "metadata": pre.metadata,
-                }
-            ),
-            400,
-        )
-
-    try:
-        result = data_import_service.execute_import(payload)
-    except data_import_service.ImportError as exc:
-        log_full_error(exc, "Data import execution failed", route=request.path, method=request.method)
-        return (
-            jsonify(
-                {
-                    "ok": False,
-                    "issues": [
-                        {"code": "IMPORT_ERROR", "message": "Import operation failed", "table": None},
-                    ],
-                    "metadata": pre.metadata,
-                }
-            ),
-            400,
-        )
-
-    return (
-        jsonify(
-            {
-                "ok": True,
-                "issues": [
-                    {"code": i.code, "message": i.message, "table": i.table} for i in result.issues
-                ],
-                "metadata": result.metadata,
-            }
-        ),
-        200,
-    )
-
+                    "

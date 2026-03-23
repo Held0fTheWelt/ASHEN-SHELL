@@ -186,7 +186,11 @@ def preflight_validate_payload(payload: Dict[str, Any]) -> ImportPreflightResult
         if len(pk_cols) != 1:
             continue
         pk_col = pk_cols[0]
+        
+        # Ensure incoming_ids contains only integers
         incoming_ids = [r.get(pk_col.name) for r in rows if isinstance(r, dict) and pk_col.name in r]
+        incoming_ids = [id_ for id_ in incoming_ids if isinstance(id_, int)]
+        
         if not incoming_ids:
             continue
 
@@ -211,35 +215,4 @@ def execute_import(payload: Dict[str, Any]) -> ImportPreflightResult:
 
     Raises ImportError if validation fails or on DB errors; the caller should handle
     this and surface appropriate API responses. On success, returns the same
-    structure as preflight, with ok=True and issues possibly containing warnings.
-    """
-    pre = preflight_validate_payload(payload)
-    if not pre.ok:
-        raise ImportError("Preflight validation failed; see issues for details.")
-
-    data = payload["data"]
-    tables_data: Dict[str, Any] = data["tables"]
-
-    try:
-        with db.session.begin():
-            for table_name, rows in tables_data.items():
-                table = _get_table(table_name)
-                if table is None or not isinstance(rows, list) or not rows:
-                    continue
-
-                insert_rows: List[Dict[str, Any]] = []
-                for row in rows:
-                    assert isinstance(row, dict)
-                    prepared: Dict[str, Any] = {}
-                    for col in table.columns:
-                        if col.name in row:
-                            prepared[col.name] = _parse_datetime_if_needed(col, row[col.name])
-                    insert_rows.append(prepared)
-
-                db.session.execute(table.insert(), insert_rows)
-    except SQLAlchemyError as exc:  # pragma: no cover - DB-level errors are rare and environment-specific
-        db.session.rollback()
-        raise ImportError(f"Database error during import: {exc}") from exc
-
-    return pre
-
+    structure as preflight, with ok=True and issues

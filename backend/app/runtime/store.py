@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Protocol
 
@@ -28,6 +29,9 @@ class JsonRunStore:
         self.root.mkdir(parents=True, exist_ok=True)
 
     def path_for(self, run_id: str) -> Path:
+        # Validate and sanitize the run_id to prevent path traversal
+        if not re.match(r'^[a-zA-Z0-9_-]+$', run_id):
+            raise ValueError("Invalid run_id")
         return self.root / f"{run_id}.json"
 
     def save(self, instance: RuntimeInstance) -> None:

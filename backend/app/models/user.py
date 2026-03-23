@@ -14,6 +14,17 @@ def _utc_now():
     return datetime.now(timezone.utc)
 
 
+class PasswordHistory(db.Model):
+    __tablename__ = "password_histories"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now)
+
+    user_rel = db.relationship("User", backref=db.backref("password_histories", lazy="dynamic"))
+
+
 class User(db.Model):
     """User for auth (web session and API JWT). Primary role via Role model; role_level for hierarchy. Supports ban state."""
 
@@ -23,7 +34,6 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(254), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    password_history = db.Column(db.Text, nullable=True)  # JSON string: ["hash1", "hash2", "hash3"]
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
     role_level = db.Column(db.Integer, nullable=False, default=0)
     email_verified_at = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
@@ -105,17 +115,9 @@ class User(db.Model):
         Check if plaintext_password matches any of the last 3 password hashes in history.
         Returns True if found (reuse detected), False otherwise.
         """
-        if not self.password_history:
-            return False
-        try:
-            hashes = json.loads(self.password_history)
-            if not isinstance(hashes, list):
-                return False
-            for stored_hash in hashes:
-                if check_password_hash(stored_hash, plaintext_password):
-                    return True
-        except (json.JSONDecodeError, TypeError):
-            return False
+        for history in self.password_histories.order_by(PasswordHistory.created_at.desc()).limit(3):
+            if check_password_hash(history.password_hash, plaintext_password):
+                return True
         return False
 
     def add_to_password_history(self, password_hash: str) -> None:
@@ -123,20 +125,13 @@ class User(db.Model):
         Add password_hash to history and keep only the last 3 hashes.
         Called after setting a new password.
         """
-        try:
-            hashes = json.loads(self.password_history) if self.password_history else []
-            if not isinstance(hashes, list):
-                hashes = []
-        except (json.JSONDecodeError, TypeError):
-            hashes = []
-
-        hashes.append(password_hash)
-
-        # Keep only last 3 hashes
-        if len(hashes) > 3:
-            hashes = hashes[-3:]
-
-        self.password_history = json.dumps(hashes)
+        new_entry = PasswordHistory(user_id=self.id, password_hash=password_hash)
+        db.session.add(new_entry)
+        # Keep only last 3 entries
+        db.session.query(PasswordHistory).filter(PasswordHistory.user_id == self.id).order_by(
+            PasswordHistory.created_at.desc()
+        ).offset(3).delete(synchronize_session=False)
+        db.session.commit()
 
     def __repr__(self):
         return f"<User id={self.id} username={self.username!r}>"

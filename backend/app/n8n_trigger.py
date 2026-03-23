@@ -9,6 +9,13 @@ from flask import current_app
 
 logger = logging.getLogger(__name__)
 
+def validate_secret(secret: str) -> bool:
+    """Validate the format and length of the secret."""
+    if not isinstance(secret, str):
+        return False
+    if len(secret) < 16 or len(secret) > 64:
+        return False
+    return True
 
 def trigger_webhook(event: str, payload: dict) -> bool:
     """
@@ -22,7 +29,7 @@ def trigger_webhook(event: str, payload: dict) -> bool:
     body_bytes = json.dumps(body, sort_keys=True).encode("utf-8")
     headers = {"Content-Type": "application/json"}
     secret = current_app.config.get("N8N_WEBHOOK_SECRET") if current_app else None
-    if secret:
+    if secret and validate_secret(secret):
         sig = hmac.new(secret.encode("utf-8"), body_bytes, hashlib.sha256).hexdigest()
         headers["X-Webhook-Signature"] = f"sha256={sig}"
     try:

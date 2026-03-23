@@ -16,12 +16,11 @@ from app.services.wiki_service import (
     list_related_threads_for_page,
 )
 
-
 def _wiki_path():
-    """Return Path to Backend/content/wiki.md. Resolved from app root."""
-    app_root = Path(current_app.root_path)
-    return app_root.parent / "content" / "wiki.md"
-
+    """Return Path to Backend/content/wiki.md. Resolved from a fixed base path."""
+    # Use a fixed base path for critical files
+    base_path = Path(__file__).parent.parent / "content" / "wiki.md"
+    return base_path
 
 @api_v1_bp.route("/wiki/<slug>", methods=["GET"])
 @limiter.limit("60 per minute")

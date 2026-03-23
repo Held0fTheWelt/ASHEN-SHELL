@@ -139,7 +139,7 @@ def require_jwt_moderator_or_admin(f):
 
 def _is_n8n_service_request() -> bool:
     """True if request has valid X-Service-Key matching N8N_SERVICE_TOKEN."""
-    token = current_app.config.get("N8N_SERVICE_TOKEN") if current_app else None
+    token = current_app.config.get("N8N_SERVICE_TOKEN") or os.getenv("N8N_SERVICE_TOKEN")
     if not token or not token.strip():
         return False
     key = (request.headers.get("X-Service-Key") or "").strip()
@@ -163,3 +163,5 @@ def require_editor_or_n8n_service(f):
             return jsonify({"error": "Forbidden"}), 403
         return f(*args, **kwargs)
     return jwt_required(optional=True)(wrapped)
+
+ISSUE: Security | LINE: 97 | DESCRIPTION: The function `_is_n8n_service_request()` uses a hardcoded token from the configuration (N8N_SERVICE_TOKEN) to validate requests. If this token is not securely managed or rotated,
