@@ -28,6 +28,42 @@ def normalize_language(code):
     return normalized if normalized in get_supported_languages() else None
 
 
+def validate_language_code(code):
+    """Validate language_code parameter for translation endpoints.
+
+    Returns tuple (normalized_code, error_message):
+    - (code, None) if valid
+    - (None, error_msg) if invalid
+
+    Prevents injection attacks by:
+    - Type checking (must be string)
+    - Whitelist validation against SUPPORTED_LANGUAGES
+    - No special characters or escape sequences allowed
+    """
+    if not code:
+        return None, "language_code is required"
+
+    if not isinstance(code, str):
+        return None, "language_code must be a string"
+
+    normalized = code.strip().lower()
+
+    # Check length to prevent DoS via extremely long strings
+    if len(normalized) > 10:
+        return None, "language_code is invalid"
+
+    # Only alphanumeric and hyphen allowed (standard locale format)
+    if not all(c.isalnum() or c == '-' for c in normalized):
+        return None, "language_code contains invalid characters"
+
+    # Whitelist check - only accepted languages
+    supported = get_supported_languages()
+    if normalized not in supported:
+        return None, f"Unsupported language '{code}'. Supported languages: {', '.join(sorted(supported))}"
+
+    return normalized, None
+
+
 # Translation status values for content (news, wiki). Do not auto-publish machine_draft.
 TRANSLATION_STATUS_MISSING = "missing"
 TRANSLATION_STATUS_MACHINE_DRAFT = "machine_draft"

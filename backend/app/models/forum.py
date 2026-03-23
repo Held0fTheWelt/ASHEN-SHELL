@@ -269,3 +269,32 @@ class ForumThreadTag(db.Model):
     )
 
 
+class ModeratorAssignment(db.Model):
+    """Track which moderator is assigned to moderate which forum categories."""
+
+    __tablename__ = "moderator_assignments"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    category_id = db.Column(db.Integer, db.ForeignKey("forum_categories.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigned_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now)
+    assigned_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    user = db.relationship("User", foreign_keys=[user_id], backref="moderated_categories")
+    category = db.relationship("ForumCategory", backref="moderators")
+    admin = db.relationship("User", foreign_keys=[assigned_by])
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "category_id", name="uq_moderator_assignment"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "category_id": self.category_id,
+            "assigned_at": self.assigned_at.isoformat() if self.assigned_at else None,
+            "assigned_by": self.assigned_by,
+        }
+
+

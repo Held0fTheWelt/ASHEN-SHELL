@@ -6,6 +6,16 @@
     var apiRef = null; // set at init from ManageAuth.apiFetchWithAuth
     function $(id) { return document.getElementById(id); }
 
+    function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
     function formatDateTime(iso) {
         if (!iso) return "—";
         try {
@@ -97,16 +107,16 @@
                 tr.dataset.id = u.id;
                 if (state.selectedId === u.id) tr.classList.add("selected");
                 var banText = u.is_banned ? "Yes" : "No";
-                var lang = (u.preferred_language || "").replace(/</g, "&lt;") || "—";
+                var lang = escapeHtml(u.preferred_language) || "—";
                 var created = formatDateTime(u.created_at);
                 var lastSeen = formatDateTime(u.last_seen_at);
                 var level = typeof u.role_level === "number" ? u.role_level : (u.role_level != null ? String(u.role_level) : "—");
                 tr.innerHTML =
-                    "<td>" + (u.id || "") + "</td>" +
-                    "<td>" + (u.username || "").replace(/</g, "&lt;") + "</td>" +
-                    "<td>" + (u.email || "").replace(/</g, "&lt;") + "</td>" +
-                    "<td>" + (u.role || "").replace(/</g, "&lt;") + "</td>" +
-                    "<td>" + level + "</td>" +
+                    "<td>" + escapeHtml(u.id) + "</td>" +
+                    "<td>" + escapeHtml(u.username) + "</td>" +
+                    "<td>" + escapeHtml(u.email) + "</td>" +
+                    "<td>" + escapeHtml(u.role) + "</td>" +
+                    "<td>" + escapeHtml(level) + "</td>" +
                     "<td>" + lang + "</td>" +
                     "<td>" + banText + "</td>" +
                     "<td>" + created + "</td>" +

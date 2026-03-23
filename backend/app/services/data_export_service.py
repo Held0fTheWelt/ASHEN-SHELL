@@ -4,6 +4,7 @@ This module provides foundation helpers for:
 - full database export
 - single-table export
 - row-level export for a single table
+- encryption of exported data
 
 It deliberately does NOT deal with HTTP, files, or permissions. That is handled
 by API routes. All functions here return plain Python dicts ready to be dumped
@@ -22,6 +23,7 @@ from sqlalchemy.engine import RowMapping
 from sqlalchemy.sql.schema import Table
 
 from app.extensions import db
+from app.services import encryption_service
 
 try:
     from app.version import APP_VERSION
@@ -176,4 +178,34 @@ def list_exportable_tables() -> List[str]:
     """Return a sorted list of exportable table names for UI/API purposes."""
     names = [t.name for t in _iter_exportable_tables()]
     return sorted(names)
+
+
+def encrypt_export(export_data: Dict[str, Any], password: str) -> Dict[str, Any]:
+    """Encrypt exported data with AES-256-CBC.
+
+    Args:
+        export_data: Dictionary containing metadata and data sections
+        password: User-provided password for encryption
+
+    Returns:
+        Encrypted payload with encrypted_data, iv, salt, algorithm, and version
+    """
+    return encryption_service.encrypt_export(export_data, password)
+
+
+def decrypt_export(encrypted_payload: Dict[str, Any], password: str) -> Dict[str, Any]:
+    """Decrypt an encrypted export payload.
+
+    Args:
+        encrypted_payload: Dictionary containing encrypted_data, iv, salt, etc.
+        password: User-provided password for decryption
+
+    Returns:
+        Decrypted export data dictionary
+
+    Raises:
+        ValueError: If payload is invalid or password is wrong
+        TypeError: If decrypted data is not valid JSON
+    """
+    return encryption_service.decrypt_export(encrypted_payload, password)
 

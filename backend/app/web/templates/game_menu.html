@@ -123,12 +123,13 @@
         </div>
     </div>
 </div>
-<script>
-window.WOS_GAME_CONFIG = {
-    playServiceConfigured: {{ 'true' if play_service_configured else 'false' }},
-    apiBase: '/api/v1/game',
-    playServicePublicUrl: {{ play_service_public_url | tojson }},
-};
+<script type="application/json" id="game-config">
+{
+    "playServiceConfigured": {{ 'true' if play_service_configured else 'false' }},
+    "apiBase": "/api/v1/game",
+    "playServicePublicUrl": {{ play_service_public_url | tojson }}
+}
 </script>
+<script src="{{ url_for('static', filename='game-config-loader.js') }}"></script>
 <script src="{{ url_for('static', filename='game_menu.js') }}" defer></script>
 {% endblock %}

@@ -5,19 +5,41 @@ import secrets
 from datetime import datetime, timezone, timedelta
 
 from werkzeug.security import check_password_hash, generate_password_hash
+from email_validator import validate_email, EmailNotValidError
 
 from app.extensions import db
 from app.models import Role, User
 from app.models.email_verification_token import EmailVerificationToken, PURPOSE_ACTIVATION
+from app.services.search_utils import _escape_sql_like_wildcards
 
 logger = logging.getLogger(__name__)
 
-EMAIL_BASIC_PATTERN = re.compile(r"[^@]+@[^@]+\.[^@]+")
+
+def validate_email_format(email: str) -> tuple[bool, str]:
+    """
+    Validate email format using email-validator library.
+    Normalizes email to lowercase before validation.
+    Returns (is_valid, normalized_email) on success.
+    Returns (False, error_message) on invalid email.
+    Skips DNS deliverability checks for performance.
+    """
+    if not email or not isinstance(email, str):
+        return False, "Email is required"
+    try:
+        # Normalize to lowercase and strip whitespace
+        normalized_input = email.strip().lower()
+        valid = validate_email(normalized_input, check_deliverability=False)
+        return True, valid.normalized
+    except EmailNotValidError as e:
+        return False, str(e)
+
 
 USERNAME_MAX_LENGTH = 80
 USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
+PASSWORD_COMPLEXITY_MIN_LENGTH = 12
+PASSWORD_SPECIAL_CHARS = "!@#$%^&*-"
 
 
 def validate_password(password: str) -> str | None:
@@ -35,6 +57,28 @@ def validate_password(password: str) -> str | None:
     if not re.search(r"\d", password):
         return "Password must contain at least one digit"
     return None
+
+
+def validate_password_complexity(password: str) -> tuple[bool, str]:
+    """
+    Validate password complexity: 12+ characters with uppercase, lowercase, number, and special character.
+    Returns (is_valid, error_message). error_message is empty string if valid.
+    """
+    if not password:
+        return False, "Password is required"
+    if len(password) < PASSWORD_COMPLEXITY_MIN_LENGTH:
+        return False, f"Password must be at least {PASSWORD_COMPLEXITY_MIN_LENGTH} characters"
+    if len(password) > PASSWORD_MAX_LENGTH:
+        return False, f"Password must be at most {PASSWORD_MAX_LENGTH} characters"
+    if not re.search(r"[A-Z]", password):
+        return False, "Password must contain at least one uppercase letter"
+    if not re.search(r"[a-z]", password):
+        return False, "Password must contain at least one lowercase letter"
+    if not re.search(r"\d", password):
+        return False, "Password must contain at least one digit"
+    if not re.search(f"[{re.escape(PASSWORD_SPECIAL_CHARS)}]", password):
+        return False, f"Password must contain at least one special character ({PASSWORD_SPECIAL_CHARS})"
+    return True, ""
 
 
 def get_user_by_username(username):
@@ -113,11 +157,12 @@ def list_users(page: int = 1, per_page: int = 20, search: str | None = None):
     """
     q = User.query
     if search and search.strip():
-        term = f"%{search.strip().lower()}%"
+        escaped_term = _escape_sql_like_wildcards(search.strip().lower())
+        term = f"%{escaped_term}%"
         q = q.filter(
             db.or_(
-                db.func.lower(User.username).like(term),
-                db.and_(User.email.isnot(None), db.func.lower(User.email).like(term)),
+                db.func.lower(User.username).like(term, escape="\\"),
+                db.and_(User.email.isnot(None), db.func.lower(User.email).like(term, escape="\\")),
             )
         )
     total = q.count()
@@ -129,6 +174,7 @@ def create_user(username, password, email=None):
     """
     Create a new user. Returns (user, None) or (None, error_message).
     Email is optional when REGISTRATION_REQUIRE_EMAIL is False; otherwise required, valid format and unique.
+    Email is normalized to lowercase before storage and comparison.
     """
     from flask import current_app
     require_email = current_app.config.get("REGISTRATION_REQUIRE_EMAIL", False)
@@ -150,17 +196,18 @@ def create_user(username, password, email=None):
 
     email_val = None
     if email is not None and isinstance(email, str):
-        email_val = (email or "").strip().lower()
+        email_raw = (email or "").strip().lower()
+        if email_raw:
+            is_valid, result = validate_email_format(email_raw)
+            if not is_valid:
+                return None, result
+            email_val = result
     if require_email:
         if not email_val:
             return None, "Email is required"
-        if not EMAIL_BASIC_PATTERN.match(email_val):
-            return None, "Invalid email format"
         if get_user_by_email(email_val):
             return None, "Email already registered"
     elif email_val:
-        if not EMAIL_BASIC_PATTERN.match(email_val):
-            return None, "Invalid email format"
         if get_user_by_email(email_val):
             return None, "Email already registered"
 
@@ -174,13 +221,14 @@ def create_user(username, password, email=None):
         role_id=default_role.id,
         role_level=0,
     )
-    # When email verification is disabled, treat accounts as verified on creation.
-    email_verification_enabled = current_app.config.get("EMAIL_VERIFICATION_ENABLED", False)
-    if email_val and not email_verification_enabled:
+    # When email verification is not required (REGISTRATION_REQUIRE_EMAIL=False),
+    # treat accounts as verified on creation for backward compatibility.
+    require_email = current_app.config.get("REGISTRATION_REQUIRE_EMAIL", True)
+    if email_val and not require_email:
         user.email_verified_at = datetime.now(timezone.utc)
     db.session.add(user)
     db.session.commit()
-    logger.info("User created: id=%s username=%r", user.id, user.username)
+    logger.info("User created: id=%s username=%r email=%r", user.id, user.username, email_val)
     return user, None
 
 
@@ -215,6 +263,7 @@ def get_valid_reset_token(raw_token: str):
 def reset_password_with_token(raw_token: str, new_password: str):
     """
     Reset password if token is valid. Returns (True, None) or (False, error).
+    Note: Password reset via token does not enforce password history reuse prevention.
     """
     record = get_valid_reset_token(raw_token)
     if not record:
@@ -222,6 +271,8 @@ def reset_password_with_token(raw_token: str, new_password: str):
     pw_error = validate_password(new_password)
     if pw_error:
         return False, pw_error
+    # Add old password to history before resetting
+    record.user.add_to_password_history(record.user.password_hash)
     record.user.password_hash = generate_password_hash(new_password)
     record.used = True
     db.session.commit()
@@ -303,6 +354,7 @@ def change_password(
 ) -> tuple[User | None, str | None]:
     """
     Change password for user (self-service only; caller must be the user). Requires current_password.
+    Enforces password reuse prevention: new password cannot match any of the last 3 passwords.
     Returns (user, None) or (None, error_message).
     """
     user = get_user_by_id(user_id)
@@ -315,6 +367,15 @@ def change_password(
     pw_error = validate_password(new_password)
     if pw_error:
         return None, pw_error
+
+    # Check if new password is in recent history (last 3 passwords)
+    if user.is_password_in_history(new_password):
+        return None, "Cannot reuse one of your last 3 passwords"
+
+    # Add current password hash to history before changing it
+    user.add_to_password_history(user.password_hash)
+
+    # Set the new password
     user.password_hash = generate_password_hash(new_password)
     db.session.commit()
     db.session.refresh(user)
@@ -356,10 +417,15 @@ def update_user(
         user.username = username
 
     if email is not None:
-        email_val = (email or "").strip().lower() if email else None
+        email_val = None
+        if email:
+            email_raw = (email or "").strip().lower()
+            if email_raw:
+                is_valid, result = validate_email_format(email_raw)
+                if not is_valid:
+                    return None, result
+                email_val = result
         if email_val is not None:
-            if not EMAIL_BASIC_PATTERN.match(email_val):
-                return None, "Invalid email format"
             other = get_user_by_email(email_val)
             if other and other.id != user.id:
                 return None, "Email already registered"

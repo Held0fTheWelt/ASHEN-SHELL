@@ -31,10 +31,15 @@
     function start() {
         var el = document.getElementById("hero-teaser-slogan");
         if (!el) return;
-        var defaultText = el.innerHTML;
+        var defaultText = el.textContent;
         function setText(text) {
             if (typeof text !== "string") return;
-            el.innerHTML = text.replace(/\n/g, "<br>");
+            el.textContent = "";
+            var lines = text.split(/\r?\n/);
+            for (var i = 0; i < lines.length; i++) {
+                if (i > 0) el.appendChild(document.createElement("br"));
+                el.appendChild(document.createTextNode(lines[i]));
+            }
         }
         function run(items, intervalSec, enabled) {
             if (!items || !items.length) { if (defaultText) setText(defaultText); return; }

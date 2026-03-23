@@ -10,6 +10,7 @@ from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
+from app.utils.error_handler import log_full_error, ERROR_MESSAGES
 from app.auth.permissions import (
     current_user_is_admin,
     current_user_is_moderator,
@@ -29,6 +30,7 @@ from app.models import (
 )
 from app.services import log_activity
 from app.services.activity_log_service import list_activity_logs
+from app.services.search_utils import _escape_sql_like_wildcards
 from app.services.forum_service import (
     assign_report_to_moderator,
     bulk_update_report_status,
@@ -119,6 +121,60 @@ def _current_user_optional():
         return get_current_user()
     except Exception:
         return None
+
+
+def _validate_content_length(content, min_len=10, max_len=50000):
+    """
+    Validate content length. Returns (is_valid, error_message).
+    Enforces strict type checking to prevent bypass via non-string inputs.
+    """
+    # Type check first: must be a string
+    if not isinstance(content, str):
+        return False, "Content must be a string"
+
+    # Strip and check length
+    trimmed = content.strip()
+    if len(trimmed) < min_len:
+        return False, f"Content must be at least {min_len} characters"
+    if len(trimmed) > max_len:
+        return False, f"Content must not exceed {max_len} characters"
+    return True, None
+
+
+def _validate_title_length(title, min_len=5, max_len=500):
+    """
+    Validate title length. Returns (is_valid, error_message).
+    Enforces strict type checking to prevent bypass via non-string inputs.
+    """
+    # Type check first: must be a string
+    if not isinstance(title, str):
+        return False, "Title must be a string"
+
+    # Strip and check length
+    trimmed = title.strip()
+    if len(trimmed) < min_len:
+        return False, f"Title must be at least {min_len} characters"
+    if len(trimmed) > max_len:
+        return False, f"Title must not exceed {max_len} characters"
+    return True, None
+
+
+def _validate_category_title_length(title, min_len=5, max_len=200):
+    """
+    Validate category title length. Returns (is_valid, error_message).
+    Enforces strict type checking to prevent bypass via non-string inputs.
+    """
+    # Type check first: must be a string
+    if not isinstance(title, str):
+        return False, "Title must be a string"
+
+    # Strip and check length
+    trimmed = title.strip()
+    if len(trimmed) < min_len:
+        return False, f"Title must be at least {min_len} characters"
+    if len(trimmed) > max_len:
+        return False, f"Title must not exceed {max_len} characters"
+    return True, None
 
 
 # --- Public / community -------------------------------------------------------
@@ -219,7 +275,8 @@ def forum_thread_detail(slug):
     thread = get_thread_by_slug(slug)
     if not thread or not user_can_view_thread(user, thread):
         return jsonify({"error": "Thread not found"}), 404
-    increment_thread_view(thread)
+    user_id = user.id if user else None
+    increment_thread_view(thread, user_id=user_id)
     data = thread.to_dict()
     data["author_username"] = thread.author.username if thread.author else None
     if thread.category:
@@ -285,13 +342,6 @@ def forum_thread_posts(thread_id: int):
             "per_page": limit,
         }
     ), 200
-
-
-def _escape_sql_like_wildcards(s: str) -> str:
-    """Escape SQL LIKE wildcards (%, _) in a string for safe LIKE pattern matching."""
-    if not s:
-        return s
-    return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 @api_v1_bp.route("/forum/search", methods=["GET"])
@@ -484,10 +534,29 @@ def forum_thread_create(slug):
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
-    title = (data.get("title") or "").strip()
-    content = (data.get("content") or "").strip()
+
+    # Type check before stripping
+    title_raw = data.get("title")
+    content_raw = data.get("content")
+    if title_raw is not None and not isinstance(title_raw, str):
+        return jsonify({"error": "Title must be a string"}), 400
+    if content_raw is not None and not isinstance(content_raw, str):
+        return jsonify({"error": "Content must be a string"}), 400
+
+    title = (title_raw or "").strip()
+    content = (content_raw or "").strip()
     if not title or not content:
         return jsonify({"error": "title and content are required"}), 400
+
+    # Validate title length (5-500 characters)
+    is_valid, error_msg = _validate_title_length(title, min_len=5, max_len=500)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
+
+    # Validate content length (10-50000 characters)
+    is_valid, error_msg = _validate_content_length(content, min_len=10, max_len=50000)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
 
     thread, post, err = create_thread(
         category=cat,
@@ -520,7 +589,8 @@ def forum_thread_create(slug):
 @jwt_required()
 def forum_thread_update(thread_id: int):
     """
-    Update thread title. Author or moderators/admins only.
+    Update thread title. Author or category moderators/admins only.
+    Moderators can only update threads in their assigned categories.
     Body: title (optional).
     """
     user, err_resp = _require_user()
@@ -529,14 +599,27 @@ def forum_thread_update(thread_id: int):
     thread = get_thread_by_id(thread_id)
     if not thread:
         return jsonify({"error": "Thread not found"}), 404
-    if not (thread.author_id == user.id or current_user_is_moderator() or current_user_is_admin()):
+    if not thread.category:
+        return jsonify({"error": "Thread has no category"}), 400
+    # Author can update their own thread
+    if thread.author_id == user.id:
+        pass
+    # Moderators/admins must be assigned to the category
+    elif not user_can_moderate_category(user, thread.category):
         return jsonify({"error": "Forbidden"}), 403
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
     title = data.get("title")
     if title is not None:
+        # Type check before attempting to strip
+        if not isinstance(title, str):
+            return jsonify({"error": "Title must be a string"}), 400
         title = title.strip()
+        # Validate title length (5-500 characters)
+        is_valid, error_msg = _validate_title_length(title, min_len=5, max_len=500)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
     thread = update_thread(thread, title=title)
     log_activity(
         actor=user,
@@ -561,7 +644,8 @@ def forum_thread_update(thread_id: int):
 @jwt_required()
 def forum_thread_delete(thread_id: int):
     """
-    Soft-delete a thread. Author or moderators/admins only.
+    Soft-delete a thread. Author or category moderators/admins only.
+    Moderators can only delete threads in their assigned categories.
     """
     user, err_resp = _require_user()
     if err_resp:
@@ -569,7 +653,13 @@ def forum_thread_delete(thread_id: int):
     thread = get_thread_by_id(thread_id)
     if not thread:
         return jsonify({"error": "Thread not found"}), 404
-    if not (thread.author_id == user.id or current_user_is_moderator() or current_user_is_admin()):
+    if not thread.category:
+        return jsonify({"error": "Thread has no category"}), 400
+    # Author can delete their own thread
+    if thread.author_id == user.id:
+        pass
+    # Moderators/admins must be assigned to the category
+    elif not user_can_moderate_category(user, thread.category):
         return jsonify({"error": "Forbidden"}), 403
     thread = soft_delete_thread(thread)
     log_activity(
@@ -587,7 +677,7 @@ def forum_thread_delete(thread_id: int):
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/posts", methods=["POST"])
-@limiter.limit("60 per minute")
+@limiter.limit("10 per minute")
 @jwt_required()
 def forum_post_create(thread_id: int):
     """
@@ -606,7 +696,13 @@ def forum_post_create(thread_id: int):
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
-    content = (data.get("content") or "").strip()
+
+    # Type check before stripping
+    content_raw = data.get("content")
+    if content_raw is not None and not isinstance(content_raw, str):
+        return jsonify({"error": "Content must be a string"}), 400
+
+    content = (content_raw or "").strip()
     parent_post_id = data.get("parent_post_id")
     parent_id_int: Optional[int] = None
     if parent_post_id is not None:
@@ -614,6 +710,11 @@ def forum_post_create(thread_id: int):
             parent_id_int = int(parent_post_id)
         except (TypeError, ValueError):
             return jsonify({"error": "parent_post_id must be an integer"}), 400
+
+    # Validate content length (10-50000 characters)
+    is_valid, error_msg = _validate_content_length(content, min_len=10, max_len=50000)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
 
     post, err = create_post(
         thread=thread,
@@ -733,7 +834,8 @@ def forum_thread_set_tags(thread_id: int):
 @jwt_required()
 def forum_post_update(post_id: int):
     """
-    Update a post's content. Author or moderators/admins only.
+    Update a post's content. Author or category moderators/admins only.
+    Moderators can only edit posts in their assigned categories.
     Body: content.
     """
     user, err_resp = _require_user()
@@ -742,7 +844,7 @@ def forum_post_update(post_id: int):
     post = get_post_by_id(post_id)
     if not post:
         return jsonify({"error": "Post not found"}), 404
-    if not (user_can_edit_post(user, post) or current_user_is_moderator() or current_user_is_admin()):
+    if not user_can_edit_post(user, post):
         return jsonify({"error": "Forbidden"}), 403
     data = request.get_json(silent=True)
     if data is None:
@@ -750,6 +852,16 @@ def forum_post_update(post_id: int):
     content = data.get("content")
     if content is None:
         return jsonify({"error": "content is required"}), 400
+
+    # Type check before validation
+    if not isinstance(content, str):
+        return jsonify({"error": "Content must be a string"}), 400
+
+    # Validate content length (10-50000 characters)
+    is_valid, error_msg = _validate_content_length(content, min_len=10, max_len=50000)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
+
     post = update_post(post, content=content, editor_id=user.id)
     log_activity(
         actor=user,
@@ -1486,7 +1598,8 @@ def forum_report_update(report_id: int):
             escalation_reason=escalation_reason,
         )
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        log_full_error(e, "Report status update validation failed", user_id=user.id, route=request.path, method=request.method)
+        return jsonify({"error": ERROR_MESSAGES["validation_error"]}), 400
     log_activity(
         actor=user,
         category="forum",
@@ -1748,8 +1861,14 @@ def forum_admin_category_create():
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "Invalid or missing JSON body"}), 400
+
+    # Type check title before stripping
+    title_raw = data.get("title")
+    if title_raw is not None and not isinstance(title_raw, str):
+        return jsonify({"error": "Title must be a string"}), 400
+
     slug = (data.get("slug") or "").strip()
-    title = (data.get("title") or "").strip()
+    title = (title_raw or "").strip()
     description = data.get("description")
     parent_id = data.get("parent_id")
     sort_order = data.get("sort_order", 0)
@@ -1766,6 +1885,11 @@ def forum_admin_category_create():
         sort_order_int = int(sort_order)
     except (TypeError, ValueError):
         sort_order_int = 0
+
+    # Validate category title length (5-200 characters)
+    is_valid, error_msg = _validate_category_title_length(title, min_len=5, max_len=200)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
 
     cat, err = create_category(
         slug=slug,
@@ -1823,6 +1947,17 @@ def forum_admin_category_update(category_id: int):
             sort_order_int = int(sort_order)
         except (TypeError, ValueError):
             return jsonify({"error": "sort_order must be an integer"}), 400
+
+    # Validate category title length if provided (5-200 characters)
+    if title is not None:
+        # Type check first
+        if not isinstance(title, str):
+            return jsonify({"error": "Title must be a string"}), 400
+        title = title.strip()
+        is_valid, error_msg = _validate_category_title_length(title, min_len=5, max_len=200)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
+
     cat = update_category(
         cat,
         title=title,

@@ -42,6 +42,13 @@ const el = {
   startRunButton: document.getElementById('startRunButton'),
 };
 
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 async function getJson(path, options = {}) {
   const response = await fetch(path, {
     headers: { 'Content-Type': 'application/json' },
@@ -72,11 +79,11 @@ function setStatus(text) {
 
 function renderSelectOptions() {
   el.templateSelect.innerHTML = state.templates
-    .map(template => `<option value="${template.id}">${template.title} — ${template.kind}</option>`)
+    .map(template => `<option value="${escapeHtml(template.id)}">${escapeHtml(template.title)} — ${escapeHtml(template.kind)}</option>`)
     .join('');
 
   el.activeRunSelect.innerHTML = state.runs
-    .map(run => `<option value="${run.id}">${run.template_title} | ${run.id} | ${run.status} | ready=${run.ready_human_seats} | open=${run.open_human_seats}</option>`)
+    .map(run => `<option value="${escapeHtml(run.id)}">${escapeHtml(run.template_title)} | ${escapeHtml(run.id)} | ${escapeHtml(run.status)} | ready=${run.ready_human_seats} | open=${run.open_human_seats}</option>`)
     .join('');
 }
 
@@ -95,9 +102,9 @@ function renderLobby(snapshot) {
   el.lobbyStatus.textContent = `Lobby: ${lobby.occupied_human_seats}/${lobby.seats.length} seats occupied • ${lobby.ready_human_seats} ready • min start ${lobby.min_humans_to_start}`;
   el.lobbySeatList.innerHTML = lobby.seats.map(seat => `
     <div class="token token--stacked">
-      <strong>${seat.role_display_name}</strong>
-      <span class="small muted">role_id=${seat.role_id}</span>
-      <span>${seat.occupant_display_name || 'Open seat'}</span>
+      <strong>${escapeHtml(seat.role_display_name)}</strong>
+      <span class="small muted">role_id=${escapeHtml(seat.role_id)}</span>
+      <span>${escapeHtml(seat.occupant_display_name || 'Open seat')}</span>
       <span class="small muted">${seat.connected ? 'connected' : 'offline'} • ${seat.ready ? 'ready' : 'not ready'}</span>
     </div>
   `).join('') || '<span class="muted small">No lobby seats defined.</span>';
@@ -125,39 +132,39 @@ function renderSnapshot(snapshot) {
 
     el.exitList.innerHTML = room.exits.map(exit => `
       <div class="token">
-        <span>${exit.label}</span>
-        <button data-room="${exit.target_room_id}" class="move-button">Go</button>
+        <span>${escapeHtml(exit.label)}</span>
+        <button data-room="${escapeHtml(exit.target_room_id)}" class="move-button">Go</button>
       </div>
     `).join('') || '<span class="muted small">No exits from here.</span>';
 
     const visibleProps = room.props || [];
     el.propList.innerHTML = visibleProps.map(prop => `
       <div class="token">
-        <span>${prop.name} <span class="small muted">(${prop.state})</span></span>
-        <button data-inspect="${prop.id}" class="inspect-button">Inspect</button>
+        <span>${escapeHtml(prop.name)} <span class="small muted">(${escapeHtml(prop.state)})</span></span>
+        <button data-inspect="${escapeHtml(prop.id)}" class="inspect-button">Inspect</button>
       </div>
     `).join('') || '<span class="muted small">No props in this room.</span>';
 
     const occupants = snapshot.visible_occupants || [];
     el.occupantList.innerHTML = occupants.map(occupant => `
       <div class="token">
-        <span>${occupant.display_name}${occupant.is_self ? ' (you)' : ''}</span>
-        <span class="small muted">${occupant.mode}</span>
+        <span>${escapeHtml(occupant.display_name)}${occupant.is_self ? ' (you)' : ''}</span>
+        <span class="small muted">${escapeHtml(occupant.mode)}</span>
       </div>
     `).join('') || '<span class="muted small">Nobody else is here.</span>';
   }
 
   el.actionList.innerHTML = snapshot.available_actions.map(action => `
     <div class="token">
-      <span>${action.label}</span>
-      <button data-action="${action.id}" class="action-button">Use</button>
+      <span>${escapeHtml(action.label)}</span>
+      <button data-action="${escapeHtml(action.id)}" class="action-button">Use</button>
     </div>
   `).join('') || '<span class="muted small">No scripted actions available here.</span>';
 
   el.transcript.innerHTML = snapshot.transcript_tail.map(entry => `
     <div class="entry">
-      <div class="meta">${new Date(entry.at).toLocaleTimeString()}${entry.actor ? ` • ${entry.actor}` : ''}${entry.room_id ? ` • ${entry.room_id}` : ''}</div>
-      <div class="text">${entry.text}</div>
+      <div class="meta">${new Date(entry.at).toLocaleTimeString()}${entry.actor ? ` • ${escapeHtml(entry.actor)}` : ''}${entry.room_id ? ` • ${escapeHtml(entry.room_id)}` : ''}</div>
+      <div class="text">${escapeHtml(entry.text)}</div>
     </div>
   `).join('');
   el.transcript.scrollTop = el.transcript.scrollHeight;

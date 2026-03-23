@@ -1,5 +1,5 @@
 """Community analytics endpoints: dashboard metrics and insights."""
-from flask import jsonify, request
+from flask import current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from app.api.v1 import api_v1_bp
@@ -35,7 +35,8 @@ def admin_analytics_summary():
         result = get_analytics_summary(date_from=date_from, date_to=date_to)
         return jsonify(result), 200
     except Exception as e:
-        return jsonify({"error": "Failed to fetch analytics", "detail": str(e)}), 500
+        current_app.logger.exception("Analytics error in admin_analytics_summary")
+        return jsonify({"error": "Failed to fetch analytics"}), 500
 
 
 @api_v1_bp.route("/admin/analytics/timeline", methods=["GET"])
@@ -60,7 +61,8 @@ def admin_analytics_timeline():
         result = get_analytics_timeline(date_from=date_from, date_to=date_to, metric=metric)
         return jsonify(result), 200
     except Exception as e:
-        return jsonify({"error": "Failed to fetch timeline", "detail": str(e)}), 500
+        current_app.logger.exception("Analytics error in admin_analytics_timeline")
+        return jsonify({"error": "Failed to fetch timeline"}), 500
 
 
 @api_v1_bp.route("/admin/analytics/users", methods=["GET"])
@@ -90,7 +92,8 @@ def admin_analytics_users():
         result = get_analytics_users(limit=limit, sort_by=sort_by)
         return jsonify(result), 200
     except Exception as e:
-        return jsonify({"error": "Failed to fetch user analytics", "detail": str(e)}), 500
+        current_app.logger.exception("Analytics error in admin_analytics_users")
+        return jsonify({"error": "Failed to fetch user analytics"}), 500
 
 
 @api_v1_bp.route("/admin/analytics/content", methods=["GET"])
@@ -121,7 +124,8 @@ def admin_analytics_content():
         result = get_analytics_content(date_from=date_from, date_to=date_to, limit=limit)
         return jsonify(result), 200
     except Exception as e:
-        return jsonify({"error": "Failed to fetch content analytics", "detail": str(e)}), 500
+        current_app.logger.exception("Analytics error in admin_analytics_content")
+        return jsonify({"error": "Failed to fetch content analytics"}), 500
 
 
 @api_v1_bp.route("/admin/analytics/moderation", methods=["GET"])
@@ -146,4 +150,5 @@ def admin_analytics_moderation():
         result = get_analytics_moderation(date_from=date_from, date_to=date_to, priority_filter=priority_filter)
         return jsonify(result), 200
     except Exception as e:
-        return jsonify({"error": "Failed to fetch moderation analytics", "detail": str(e)}), 500
+        current_app.logger.exception("Analytics error in admin_analytics_moderation")
+        return jsonify({"error": "Failed to fetch moderation analytics"}), 500

@@ -11,6 +11,7 @@ from app.auth.feature_registry import (
     is_valid_feature_id,
     set_feature_areas as set_feature_areas_impl,
 )
+from app.services.search_utils import _escape_sql_like_wildcards
 
 AREA_SLUG_PATTERN = re.compile(r"^[a-z0-9_]+$")
 AREA_NAME_MAX = 128
@@ -21,9 +22,10 @@ def list_areas(page: int = 1, per_page: int = 50, q: str | None = None):
     """Return (list of Area, total count). Optional search by name/slug (case-insensitive contains)."""
     query = Area.query
     if q and q.strip():
-        term = f"%{q.strip().lower()}%"
+        escaped_term = _escape_sql_like_wildcards(q.strip().lower())
+        term = f"%{escaped_term}%"
         query = query.filter(
-            db.or_(func.lower(Area.name).like(term), func.lower(Area.slug).like(term))
+            db.or_(func.lower(Area.name).like(term, escape="\\"), func.lower(Area.slug).like(term, escape="\\"))
         )
     total = query.count()
     query = query.order_by(Area.slug.asc()).offset((page - 1) * per_page).limit(per_page)

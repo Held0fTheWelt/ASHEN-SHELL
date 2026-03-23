@@ -284,12 +284,11 @@ const AnalyticsDashboard = {
 
         contributors.forEach(user => {
             const row = document.createElement('tr');
-            row.textContent = user.username;
             row.innerHTML = `
                 <td>${this.escapeHtml(user.username)}</td>
-                <td>${user.threads}</td>
-                <td>${user.posts}</td>
-                <td><strong>${user.total_contributions}</strong></td>
+                <td>${this.escapeHtml(String(user.threads))}</td>
+                <td>${this.escapeHtml(String(user.posts))}</td>
+                <td><strong>${this.escapeHtml(String(user.total_contributions))}</strong></td>
             `;
             tbody.appendChild(row);
         });
@@ -307,7 +306,7 @@ const AnalyticsDashboard = {
             div.className = 'role-dist-item';
             div.innerHTML = `
                 <div class="role-name">${this.escapeHtml(role)}</div>
-                <div class="role-count">${count}</div>
+                <div class="role-count">${this.escapeHtml(String(count))}</div>
             `;
             container.appendChild(div);
         });
@@ -343,7 +342,7 @@ const AnalyticsDashboard = {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${this.escapeHtml(tag.label)}</strong></td>
-                <td>${tag.thread_count}</td>
+                <td>${this.escapeHtml(String(tag.thread_count))}</td>
             `;
             tbody.appendChild(row);
         });
@@ -367,9 +366,9 @@ const AnalyticsDashboard = {
             row.innerHTML = `
                 <td><strong>${this.escapeHtml(thread.title)}</strong></td>
                 <td>${this.escapeHtml(thread.author || 'Unknown')}</td>
-                <td>${thread.replies}</td>
-                <td>${thread.views}</td>
-                <td>${lastActivity}</td>
+                <td>${this.escapeHtml(String(thread.replies))}</td>
+                <td>${this.escapeHtml(String(thread.views))}</td>
+                <td>${this.escapeHtml(lastActivity)}</td>
             `;
             tbody.appendChild(row);
         });
@@ -426,7 +425,7 @@ const AnalyticsDashboard = {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${this.escapeHtml(status)}</strong></td>
-                <td>${count}</td>
+                <td>${this.escapeHtml(String(count))}</td>
             `;
             tbody.appendChild(row);
         });
@@ -447,7 +446,7 @@ const AnalyticsDashboard = {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${this.escapeHtml(action)}</strong></td>
-                <td>${count}</td>
+                <td>${this.escapeHtml(String(count))}</td>
             `;
             tbody.appendChild(row);
         });

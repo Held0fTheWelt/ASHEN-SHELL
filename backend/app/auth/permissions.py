@@ -1,5 +1,6 @@
 """Permission helpers for API routes. Use after @jwt_required(). Centralized role, role_level, and ban checks."""
 
+import hmac
 from functools import wraps
 
 from flask import current_app, g, jsonify, request
@@ -139,10 +140,10 @@ def require_jwt_moderator_or_admin(f):
 def _is_n8n_service_request() -> bool:
     """True if request has valid X-Service-Key matching N8N_SERVICE_TOKEN."""
     token = current_app.config.get("N8N_SERVICE_TOKEN") if current_app else None
-    if not token:
+    if not token or not token.strip():
         return False
     key = (request.headers.get("X-Service-Key") or "").strip()
-    return key == token and len(key) > 0
+    return hmac.compare_digest(key, token) if key else False
 
 
 def require_editor_or_n8n_service(f):

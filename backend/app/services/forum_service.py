@@ -5,6 +5,7 @@ import re
 from datetime import datetime, timezone
 from typing import List, Optional, Set, Tuple
 
+import bleach
 from flask import current_app
 
 from app.extensions import db
@@ -21,6 +22,11 @@ from app.models import (
     ForumTag,
     ForumThreadTag,
 )
+
+# View rate limiting cache: {f"{user_id}:{thread_id}": timestamp}
+# 5-minute TTL window for view counting
+_VIEW_RATE_LIMIT_CACHE = {}
+_VIEW_RATE_LIMIT_TTL_SECONDS = 300  # 5 minutes
 
 
 def _utc_now() -> datetime:
@@ -126,18 +132,25 @@ def user_can_view_post(user: Optional[User], post: ForumPost) -> bool:
 def user_can_edit_post(user: Optional[User], post: ForumPost) -> bool:
     if user is None or user.is_banned:
         return False
-    if user_is_moderator(user) or user_is_admin(user):
+    # Author may edit own visible post
+    if post.author_id == user.id and post.status not in ("hidden", "deleted"):
         return True
-    return post.author_id == user.id and post.status not in ("hidden", "deleted")
+    # Moderators/admins can only edit if assigned to the post's category
+    if post.thread and post.thread.category:
+        return user_can_moderate_category(user, post.thread.category)
+    return False
 
 
 def user_can_soft_delete_post(user: Optional[User], post: ForumPost) -> bool:
     if user is None or user.is_banned:
         return False
-    if user_is_moderator(user) or user_is_admin(user):
-        return True
     # Author may soft-delete own visible post.
-    return post.author_id == user.id and post.status not in ("hidden", "deleted")
+    if post.author_id == user.id and post.status not in ("hidden", "deleted"):
+        return True
+    # Moderators/admins can only delete if assigned to the post's category
+    if post.thread and post.thread.category:
+        return user_can_moderate_category(user, post.thread.category)
+    return False
 
 
 def user_can_like_post(user: Optional[User], post: ForumPost) -> bool:
@@ -154,12 +167,68 @@ def user_can_like_post(user: Optional[User], post: ForumPost) -> bool:
 
 
 def user_can_moderate_category(user: Optional[User], category: ForumCategory) -> bool:
-    """Moderation permission for a category: moderators and admins only."""
-    return user_is_moderator(user) or user_is_admin(user)
+    """
+    Moderation permission for a category: moderators and admins only.
+    Moderators must be explicitly assigned to the category.
+    Admins can moderate any category.
+    """
+    if user is None or user.is_banned:
+        return False
+    if user_is_admin(user):
+        return True
+    # Moderators must be assigned to this specific category
+    if not user_is_moderator(user):
+        return False
+    # Check if moderator is assigned to this category
+    from app.models.forum import ModeratorAssignment
+    assignment = ModeratorAssignment.query.filter_by(
+        user_id=user.id,
+        category_id=category.id
+    ).first()
+    return assignment is not None
 
 
 def user_can_manage_categories(user: Optional[User]) -> bool:
     return user_is_admin(user)
+
+
+# --- HTML Sanitization helpers -----------------------------------------------
+
+
+def _sanitize_html(content: str) -> str:
+    """
+    Sanitize HTML content to prevent stored XSS attacks.
+
+    Allows safe tags: b, i, em, strong, a (with href), br, p
+    All other tags and dangerous attributes are stripped or escaped.
+
+    Args:
+        content: Raw HTML content from user input
+
+    Returns:
+        Sanitized HTML content safe for storage and display
+    """
+    if not content or not isinstance(content, str):
+        return ""
+
+    # Define safe tags and allowed attributes
+    safe_tags = ["b", "i", "em", "strong", "a", "br", "p"]
+
+    # Define allowed attributes per tag
+    safe_attributes = {
+        "a": ["href", "title"]  # Only allow href and title on anchor tags
+    }
+
+    # Clean the HTML
+    sanitized = bleach.clean(
+        content,
+        tags=safe_tags,
+        attributes=safe_attributes,
+        strip=True,  # Remove disallowed tags instead of escaping them
+        strip_comments=True  # Remove HTML comments
+    )
+
+    return sanitized
 
 
 # --- Category operations -----------------------------------------------------
@@ -284,6 +353,8 @@ def create_thread(*, category: ForumCategory, author_id: int | None, title: str,
     content = (content or "").strip()
     if not title or not content:
         return None, None, "title and content are required"
+    # Sanitize content to prevent stored XSS
+    content = _sanitize_html(content)
     base_slug = _normalize_slug(title)
     slug = _ensure_unique_thread_slug(base_slug)
     now = _utc_now()
@@ -534,10 +605,87 @@ def split_thread_from_post(
     return new_thread, None
 
 
-def increment_thread_view(thread: ForumThread) -> None:
+def _cleanup_expired_view_cache() -> None:
+    """Remove expired entries from view rate limit cache (TTL > 5 minutes)."""
+    now = _utc_now()
+    expired_keys = [
+        key for key, timestamp in _VIEW_RATE_LIMIT_CACHE.items()
+        if (now - timestamp).total_seconds() > _VIEW_RATE_LIMIT_TTL_SECONDS
+    ]
+    for key in expired_keys:
+        del _VIEW_RATE_LIMIT_CACHE[key]
+
+
+def _can_view_count(user_id: Optional[int], thread_id: int) -> bool:
+    """
+    Check if a user view should be counted based on rate limiting rules.
+
+    Returns True if:
+    - User has not viewed this thread in the last 5 minutes
+    - User is not viewing their own thread (prevents self-count)
+
+    Returns False if:
+    - User (anonymous or authenticated) has viewed within 5 minutes
+    - User is the thread author (self-view prevention)
+    """
+    _cleanup_expired_view_cache()
+
+    # Anonymous users can always count a view (no self-view concern, untracked)
+    if user_id is None:
+        return True
+
+    # Check if thread author is viewing their own thread - prevent self-count
+    thread = ForumThread.query.get(thread_id)
+    if thread and thread.author_id == user_id:
+        return False
+
+    # Check rate limit: user_id:thread_id in cache means viewed recently
+    cache_key = f"{user_id}:{thread_id}"
+
+    if cache_key in _VIEW_RATE_LIMIT_CACHE:
+        return False  # Viewed within TTL window
+
+    return True
+
+
+def _record_view_in_cache(user_id: Optional[int], thread_id: int) -> None:
+    """Record that a user viewed a thread at current time."""
+    if user_id is None:
+        return  # Don't track anonymous users
+
+    cache_key = f"{user_id}:{thread_id}"
+    _VIEW_RATE_LIMIT_CACHE[cache_key] = _utc_now()
+
+
+def increment_thread_view(thread: ForumThread, user_id: Optional[int] = None) -> bool:
+    """
+    Increment thread view count with rate limiting protection.
+
+    Rate limiting rules:
+    - 1 view per user per thread per 5 minutes
+    - Authors cannot count views on their own threads
+    - Anonymous views always count (but are not tracked)
+
+    Args:
+        thread: The ForumThread object to increment
+        user_id: The user ID of the viewer (None for anonymous)
+
+    Returns:
+        True if view was counted, False if rate limited or self-view
+    """
+    # Check if this view should be counted
+    if not _can_view_count(user_id, thread.id):
+        return False
+
+    # Increment the view counter
     thread.view_count = (thread.view_count or 0) + 1
     thread.updated_at = _utc_now()
     db.session.commit()
+
+    # Record in cache only for authenticated users
+    _record_view_in_cache(user_id, thread.id)
+
+    return True
 
 
 def recalc_thread_counters(thread: ForumThread) -> None:
@@ -597,6 +745,9 @@ def create_post(*, thread: ForumThread, author_id: int | None, content: str, par
     content = (content or "").strip()
     if not content:
         return None, "content is required"
+
+    # Sanitize content to prevent stored XSS
+    content = _sanitize_html(content)
 
     parent = None
     if parent_post_id is not None:
@@ -677,7 +828,10 @@ def _create_mention_notifications_for_post(post: ForumPost, author_id: Optional[
 
 
 def update_post(post: ForumPost, *, content: str, editor_id: Optional[int]) -> ForumPost:
-    post.content = (content or "").strip()
+    content = (content or "").strip()
+    # Sanitize content to prevent stored XSS
+    content = _sanitize_html(content)
+    post.content = content
     post.edited_at = _utc_now()
     post.edited_by = editor_id
     if post.status == "visible":

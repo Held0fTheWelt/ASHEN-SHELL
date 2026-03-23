@@ -48,6 +48,7 @@ class Config:
     """Base config for production. SECRET_KEY must be set via environment."""
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max request body to prevent DoS attacks
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or os.environ.get("SECRET_KEY")
@@ -60,9 +61,13 @@ class Config:
         _uri = "sqlite:///" + str(_default_db).replace("\\", "/")
     SQLALCHEMY_DATABASE_URI = _uri
 
-    JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 86400))
+    # Access token: 1 hour (3600 seconds) for short-lived sessions
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 3600))
+    # Refresh token: 7 days (604800 seconds) for long-lived refresh capability
+    JWT_REFRESH_TOKEN_EXPIRES = int(os.environ.get("JWT_REFRESH_TOKEN_EXPIRES", 604800))
     JWT_HEADER_NAME = "Authorization"
     JWT_HEADER_TYPE = "Bearer"
+    JWT_ALGORITHM = "HS256"
 
     CORS_ORIGINS = _parse_cors_origins()
 
@@ -70,6 +75,8 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = env_bool("PREFER_HTTPS", False)
     ENFORCE_HTTPS = env_bool("PREFER_HTTPS", False)
+    # Enforce SECURE flag for production deployments
+    PREFER_HTTPS = env_bool("PREFER_HTTPS", False)
 
     RATELIMIT_DEFAULT = os.environ.get("RATELIMIT_DEFAULT", "100 per minute")
     RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
@@ -83,14 +90,17 @@ class Config:
     MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@worldofshadows.local")
     MAIL_ENABLED = env_bool("MAIL_ENABLED", False)
 
-    REGISTRATION_REQUIRE_EMAIL = env_bool("REGISTRATION_REQUIRE_EMAIL", False)
+    REGISTRATION_REQUIRE_EMAIL = env_bool("REGISTRATION_REQUIRE_EMAIL", True)
     APP_PUBLIC_BASE_URL = os.environ.get("APP_PUBLIC_BASE_URL", "").strip() or None
     EMAIL_VERIFICATION_TTL_HOURS = int(os.environ.get("EMAIL_VERIFICATION_TTL_HOURS", "24"))
     EMAIL_VERIFICATION_ENABLED = env_bool("EMAIL_VERIFICATION_ENABLED", False)
+    # Require email verification before login (default: True in production, False in dev/testing)
+    REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = env_bool("REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN", True)
 
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "").strip() or None
 
-    SUPPORTED_LANGUAGES = ["de", "en"]
+    # Supported languages: whitelisted codes only (ISO 639-1)
+    SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it", "pt", "ru", "zh", "ja", "ko"]
     DEFAULT_LANGUAGE = "de"
 
     N8N_WEBHOOK_URL = os.environ.get("N8N_WEBHOOK_URL", "").strip() or None
@@ -125,15 +135,44 @@ class Config:
 
 
 class DevelopmentConfig(Config):
-    """Dev-only: fallback secrets when DEV_SECRETS_OK is explicitly enabled."""
+    """Dev-only: fallback secrets when DEV_SECRETS_OK is explicitly enabled.
 
-    if env_bool("DEV_SECRETS_OK", False):
-        SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-do-not-use-in-production"
+    SECURITY: DEV_SECRETS_OK flag only permitted in TESTING mode.
+    When not in TESTING, SECRET_KEY and JWT_SECRET_KEY must be explicitly provided
+    via environment variables to prevent accidental use of hardcoded secrets in production.
+    """
+
+    # DEV_SECRETS_OK is only safe to use in TESTING mode
+    # Detect if we're in TESTING by checking environment or Flask config
+    _dev_secrets_enabled = env_bool("DEV_SECRETS_OK", False)
+    _is_testing = env_bool("TESTING", False) or os.environ.get("FLASK_ENV") == "testing"
+
+    if _dev_secrets_enabled:
+        # Only allow fallback to dev secrets in TESTING mode
+        if not _is_testing:
+            raise ValueError(
+                "SECURITY VIOLATION: DEV_SECRETS_OK=1 is only allowed in TESTING mode. "
+                "In production/development, SECRET_KEY and JWT_SECRET_KEY must be "
+                "explicitly set via environment variables to prevent hardcoded secrets "
+                "from leaking into production."
+            )
+        # Safe fallback in TESTING mode
+        SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-do-not-use"
         JWT_SECRET_KEY = (
             os.environ.get("JWT_SECRET_KEY")
             or os.environ.get("SECRET_KEY")
-            or "dev-jwt-secret-do-not-use-in-production"
+            or "dev-jwt-secret-do-not-use"
         )
+    else:
+        # When DEV_SECRETS_OK is not enabled, require explicit env vars
+        SECRET_KEY = os.environ.get("SECRET_KEY")
+        JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or os.environ.get("SECRET_KEY")
+        if not SECRET_KEY or not JWT_SECRET_KEY:
+            raise ValueError(
+                "MISSING SECRETS: SECRET_KEY and JWT_SECRET_KEY required. "
+                "Set these explicitly via environment variables. "
+                "DEV_SECRETS_OK=1 is only supported in TESTING mode."
+            )
 
 
 class TestingConfig(Config):
@@ -150,3 +189,5 @@ class TestingConfig(Config):
     PLAY_SERVICE_INTERNAL_URL = "http://play.example.test"
     PLAY_SERVICE_SHARED_SECRET = "test-play-secret"
     PLAY_SERVICE_INTERNAL_API_KEY = "test-play-key"
+    REGISTRATION_REQUIRE_EMAIL = False  # Email optional in tests
+    REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = False  # Allow login without verification in tests

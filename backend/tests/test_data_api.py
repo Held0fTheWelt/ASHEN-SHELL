@@ -86,3 +86,70 @@ def test_data_import_execute_detects_primary_key_conflict(client, super_admin_he
     exec_body = exec_resp.get_json()
     assert exec_body["ok"] is False
 
+
+def test_data_export_rate_limit_allows_5_per_hour(client, admin_headers):
+    """Test that export endpoint allows up to 5 requests per hour per user."""
+    for i in range(5):
+        resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=admin_headers)
+        assert resp.status_code == 200, f"Export request {i + 1} should succeed, got {resp.status_code}"
+
+
+def test_data_export_rate_limit_blocks_6th_request(client, admin_headers):
+    """Test that export endpoint returns 429 on 6th request within hour (rate limit: 5/hour)."""
+    for i in range(5):
+        resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=admin_headers)
+        assert resp.status_code == 200, f"Export request {i + 1} should succeed"
+
+    # 6th request should be rate limited
+    resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=admin_headers)
+    assert resp.status_code == 429, f"6th export request should return 429, got {resp.status_code}"
+    body = resp.get_json()
+    assert "error" in body
+    assert "too many requests" in body["error"].lower()
+
+
+def test_data_import_execute_rate_limit_allows_1_per_hour(client, super_admin_headers):
+    """Test that import execute endpoint allows 1 request per hour per user."""
+    export_resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=super_admin_headers)
+    assert export_resp.status_code == 200
+    payload = export_resp.get_json()
+
+    # First request should succeed (but validation may fail - we only care about rate limit)
+    resp = client.post("/api/v1/data/import/execute", json=payload, headers=super_admin_headers)
+    # 200 or 400 (validation error) is fine; we just care it's not 429
+    assert resp.status_code in (200, 400), f"First import request should not be rate limited, got {resp.status_code}"
+
+
+def test_data_import_execute_rate_limit_blocks_2nd_request(client, super_admin_headers):
+    """Test that import execute endpoint returns 429 on 2nd request within hour (rate limit: 1/hour)."""
+    export_resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=super_admin_headers)
+    assert export_resp.status_code == 200
+    payload = export_resp.get_json()
+
+    # First request
+    resp1 = client.post("/api/v1/data/import/execute", json=payload, headers=super_admin_headers)
+    assert resp1.status_code in (200, 400), f"First import request should not be rate limited, got {resp1.status_code}"
+
+    # 2nd request should be rate limited
+    resp2 = client.post("/api/v1/data/import/execute", json=payload, headers=super_admin_headers)
+    assert resp2.status_code == 429, f"2nd import request should return 429, got {resp2.status_code}"
+    body = resp2.get_json()
+    assert "error" in body
+    assert "too many requests" in body["error"].lower()
+
+
+def test_data_export_rate_limit_per_user(client, app, admin_headers, super_admin_headers):
+    """Test that export rate limit is per-user (different users have independent limits)."""
+    # Admin user exhausts their 5/hour limit
+    for i in range(5):
+        resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=admin_headers)
+        assert resp.status_code == 200
+
+    # Admin user's 6th request is blocked
+    resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=admin_headers)
+    assert resp.status_code == 429
+
+    # Super-admin user can still make requests (independent limit)
+    resp = client.post("/api/v1/data/export", json={"scope": "full"}, headers=super_admin_headers)
+    assert resp.status_code == 200, f"Different user should have independent rate limit, got {resp.status_code}"
+

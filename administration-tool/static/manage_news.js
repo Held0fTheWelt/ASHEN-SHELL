@@ -16,13 +16,24 @@
         return isNaN(d.getTime()) ? "" : d.toLocaleDateString(undefined, { dateStyle: "short" });
     }
 
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
     function statusBadge(status) {
         var c = "badge";
         if (status === "published") c += " badge-success";
         else if (status === "approved" || status === "review_required") c += " badge-warning";
         else if (status === "machine_draft" || status === "outdated") c += " badge-info";
         else c += " badge-secondary";
-        return "<span class=\"" + c + "\">" + (status || "missing").replace(/</g, "&lt;") + "</span>";
+        return "<span class=\"" + c + "\">" + escapeHtml(status || "missing") + "</span>";
     }
 
     var state = {
@@ -122,11 +133,11 @@
                 if (state.selectedId === item.id) tr.classList.add("selected");
                 var statuses = item.translation_statuses || {};
                 tr.innerHTML =
-                    "<td>" + (item.title || "").replace(/</g, "&lt;") + "</td>" +
+                    "<td>" + escapeHtml(item.title || "") + "</td>" +
                     "<td>" + (item.is_published ? "Published" : "Draft") + "</td>" +
                     "<td>" + statusBadge(statuses.de) + "</td>" +
                     "<td>" + statusBadge(statuses.en) + "</td>" +
-                    "<td>" + (item.category || "").replace(/</g, "&lt;") + "</td>" +
+                    "<td>" + escapeHtml(item.category || "") + "</td>" +
                     "<td>" + formatDate(item.updated_at || item.created_at) + "</td>";
                 tr.addEventListener("click", function() { selectArticle(item.id); });
                 tbody.appendChild(tr);
@@ -207,7 +218,7 @@
         var items = state.translations.items || [];
         var html = [];
         items.forEach(function(t) {
-            html.push("<span class=\"manage-news-status-item\"><strong>" + (t.language_code || "").toUpperCase() + "</strong>: " + statusBadge(t.translation_status) + "</span>");
+            html.push("<span class=\"manage-news-status-item\"><strong>" + escapeHtml((t.language_code || "").toUpperCase()) + "</strong>: " + statusBadge(t.translation_status) + "</span>");
         });
         el.innerHTML = html.length ? html.join(" ") : "";
     }

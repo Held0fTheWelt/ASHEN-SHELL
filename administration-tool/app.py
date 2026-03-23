@@ -37,14 +37,16 @@ app = Flask(
     static_url_path="/static",
 )
 app.config["BACKEND_API_URL"] = BACKEND_API_URL
+
+# CRITICAL SECURITY: Session secret must be explicitly configured via environment variable.
+# Never use hardcoded defaults; always require explicit configuration.
 _secret = os.environ.get("SECRET_KEY", "").strip()
 if not _secret:
-    import sys
-    if os.environ.get("FLASK_ENV") == "development" or os.environ.get("DEV_SECRETS_OK", "").lower() in ("1", "true", "yes", "on"):
-        _secret = os.urandom(32).hex()
-        print("Warning: SECRET_KEY not set; using random key for this run. Set SECRET_KEY for production.", file=sys.stderr)
-    else:
-        raise ValueError("SECRET_KEY must be set in environment for the frontend. Use .env or export.")
+    raise ValueError(
+        "SECRET_KEY environment variable is required and must not be empty. "
+        "Set it via .env file, environment export, or container secrets. "
+        "Hardcoded defaults are not allowed for security reasons."
+    )
 app.secret_key = _secret
 
 

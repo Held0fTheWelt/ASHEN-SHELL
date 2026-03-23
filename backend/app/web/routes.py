@@ -69,7 +69,7 @@ def login():
             )
             return redirect(url_for("web.blocked"))
         if (
-            current_app.config.get("EMAIL_VERIFICATION_ENABLED", False)
+            current_app.config.get("REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN", True)
             and user.email
             and user.email_verified_at is None
         ):
@@ -163,6 +163,7 @@ def register():
         require_email = current_app.config.get("REGISTRATION_REQUIRE_EMAIL", False)
         return render_template("register.html", require_email=require_email)
     username = (request.form.get("username") or "").strip()
+    # Normalize email to lowercase and strip whitespace
     email = (request.form.get("email") or "").strip().lower()
     password = request.form.get("password") or ""
     password_confirm = request.form.get("password_confirm") or ""
@@ -259,6 +260,7 @@ def resend_verification():
         create_email_verification_token,
     )
 
+    # Normalize email to lowercase and strip whitespace
     email = (request.form.get("email") or "").strip().lower()
     if not email:
         flash("Please enter your email address.", "error")
@@ -288,6 +290,7 @@ def forgot_password():
     """Request a password reset link by email."""
     if request.method == "GET":
         return render_template("forgot_password.html")
+    # Normalize email to lowercase and strip whitespace
     email = (request.form.get("email") or "").strip().lower()
     if not email:
         flash("Please enter your email address.", "error")

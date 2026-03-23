@@ -1,4 +1,7 @@
 from datetime import datetime, timezone
+import json
+
+from werkzeug.security import check_password_hash
 
 from app.extensions import db
 from app.models.area import user_areas
@@ -20,6 +23,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(254), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    password_history = db.Column(db.Text, nullable=True)  # JSON string: ["hash1", "hash2", "hash3"]
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
     role_level = db.Column(db.Integer, nullable=False, default=0)
     email_verified_at = db.Column(db.DateTime(timezone=True), nullable=True, default=None)
@@ -29,6 +33,8 @@ class User(db.Model):
     preferred_language = db.Column(db.String(10), nullable=True)
     last_seen_at = db.Column(db.DateTime(timezone=True), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=True, default=_utc_now)
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime(timezone=True), nullable=True)
 
     role_rel = db.relationship("Role", backref="users", lazy="joined")
     areas = db.relationship("Area", secondary=user_areas, lazy="select", backref=db.backref("users", lazy="dynamic"))
@@ -93,6 +99,44 @@ class User(db.Model):
     def can_write_news(self):
         """True if this user may create/update/delete/publish news (moderator or admin)."""
         return self.has_any_role((self.ROLE_MODERATOR, self.ROLE_ADMIN))
+
+    def is_password_in_history(self, plaintext_password: str) -> bool:
+        """
+        Check if plaintext_password matches any of the last 3 password hashes in history.
+        Returns True if found (reuse detected), False otherwise.
+        """
+        if not self.password_history:
+            return False
+        try:
+            hashes = json.loads(self.password_history)
+            if not isinstance(hashes, list):
+                return False
+            for stored_hash in hashes:
+                if check_password_hash(stored_hash, plaintext_password):
+                    return True
+        except (json.JSONDecodeError, TypeError):
+            return False
+        return False
+
+    def add_to_password_history(self, password_hash: str) -> None:
+        """
+        Add password_hash to history and keep only the last 3 hashes.
+        Called after setting a new password.
+        """
+        try:
+            hashes = json.loads(self.password_history) if self.password_history else []
+            if not isinstance(hashes, list):
+                hashes = []
+        except (json.JSONDecodeError, TypeError):
+            hashes = []
+
+        hashes.append(password_hash)
+
+        # Keep only last 3 hashes
+        if len(hashes) > 3:
+            hashes = hashes[-3:]
+
+        self.password_history = json.dumps(hashes)
 
     def __repr__(self):
         return f"<User id={self.id} username={self.username!r}>"

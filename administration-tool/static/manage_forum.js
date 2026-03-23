@@ -446,7 +446,7 @@
                     table.innerHTML = "<thead><tr><th>Target</th><th>Reason</th><th>Created</th><th>Actions</th></tr></thead><tbody></tbody>";
                     items.forEach(function(r) {
                         var slug = r.thread_slug;
-                        var link = slug ? "<a href=\"" + forumThreadUrl(slug) + "\">" + (r.target_title || r.target_type + "#" + r.target_id) + "</a>" : (r.target_type + "#" + r.target_id);
+                        var link = slug ? "<a href=\"" + forumThreadUrl(slug) + "\">" + escapeHtml(r.target_title || r.target_type + "#" + r.target_id) + "</a>" : (r.target_type + "#" + r.target_id);
                         var tr = document.createElement("tr");
                         tr.innerHTML =
                             "<td>" + link + "</td>" +
@@ -495,7 +495,7 @@
                     table.innerHTML = "<thead><tr><th>Target</th><th>Status</th><th>Handled</th></tr></thead><tbody></tbody>";
                     items.forEach(function(r) {
                         var slug = r.thread_slug;
-                        var link = slug ? "<a href=\"" + forumThreadUrl(slug) + "\">" + (r.target_title || r.target_type + "#" + r.target_id) + "</a>" : (r.target_type + "#" + r.target_id);
+                        var link = slug ? "<a href=\"" + forumThreadUrl(slug) + "\">" + escapeHtml(r.target_title || r.target_type + "#" + r.target_id) + "</a>" : (r.target_type + "#" + r.target_id);
                         var tr = document.createElement("tr");
                         tr.innerHTML =
                             "<td>" + link + "</td>" +
@@ -534,9 +534,9 @@
                     table.className = "data-table";
                     table.innerHTML = "<thead><tr><th style=\"width:2rem;\"><input type=\"checkbox\" class=\"locked-thead-check\"></th><th>Thread</th><th>Category</th><th>Updated</th></tr></thead><tbody></tbody>";
                     items.forEach(function(t) {
-                        var link = "<a href=\"" + forumThreadUrl(t.slug) + "\">" + (t.title || "") + "</a>";
+                        var link = "<a href=\"" + forumThreadUrl(t.slug) + "\">" + escapeHtml(t.title || "") + "</a>";
                         var tr = document.createElement("tr");
-                        tr.innerHTML = "<td><input type=\"checkbox\" class=\"locked-check\" value=\"" + t.id + "\"></td><td>" + link + "</td><td>" + (t.category_slug || "") + "</td><td>" + formatDate(t.updated_at) + "</td>";
+                        tr.innerHTML = "<td><input type=\"checkbox\" class=\"locked-check\" value=\"" + t.id + "\"></td><td>" + link + "</td><td>" + escapeHtml(t.category_slug || "") + "</td><td>" + formatDate(t.updated_at) + "</td>";
                         table.querySelector("tbody").appendChild(tr);
                     });
                     var theadCb = table.querySelector(".locked-thead-check");
@@ -588,9 +588,9 @@
                     table.className = "data-table";
                     table.innerHTML = "<thead><tr><th>Thread</th><th>Category</th><th>Updated</th></tr></thead><tbody></tbody>";
                     items.forEach(function(t) {
-                        var link = "<a href=\"" + forumThreadUrl(t.slug) + "\">" + (t.title || "") + "</a>";
+                        var link = "<a href=\"" + forumThreadUrl(t.slug) + "\">" + escapeHtml(t.title || "") + "</a>";
                         var tr = document.createElement("tr");
-                        tr.innerHTML = "<td>" + link + "</td><td>" + (t.category_slug || "") + "</td><td>" + formatDate(t.updated_at) + "</td>";
+                        tr.innerHTML = "<td>" + link + "</td><td>" + escapeHtml(t.category_slug || "") + "</td><td>" + formatDate(t.updated_at) + "</td>";
                         table.querySelector("tbody").appendChild(tr);
                     });
                     if (wrap) { wrap.appendChild(table); wrap.hidden = false; }
@@ -621,7 +621,7 @@
                     table.className = "data-table";
                     table.innerHTML = "<thead><tr><th style=\"width:2rem;\"><input type=\"checkbox\" class=\"hidden-thead-check\"></th><th>Thread</th><th>Snippet</th><th>Updated</th></tr></thead><tbody></tbody>";
                     items.forEach(function(p) {
-                        var link = p.thread_slug ? "<a href=\"" + forumThreadUrl(p.thread_slug) + "\">" + (p.thread_title || p.thread_slug) + "</a>" : ("post#" + p.id);
+                        var link = p.thread_slug ? "<a href=\"" + forumThreadUrl(p.thread_slug) + "\">" + escapeHtml(p.thread_title || p.thread_slug) + "</a>" : ("post#" + p.id);
                         var tr = document.createElement("tr");
                         tr.innerHTML = "<td><input type=\"checkbox\" class=\"hidden-check\" value=\"" + p.id + "\"></td><td>" + link + "</td><td>" + escapeHtml(p.content_snippet || "") + "</td><td>" + formatDate(p.updated_at) + "</td>";
                         table.querySelector("tbody").appendChild(tr);

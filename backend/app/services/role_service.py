@@ -5,6 +5,7 @@ from sqlalchemy import func
 
 from app.extensions import db
 from app.models import Role, User
+from app.services.search_utils import _escape_sql_like_wildcards
 
 ROLE_NAME_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
@@ -13,8 +14,9 @@ def list_roles(page: int = 1, per_page: int = 50, q: str | None = None):
     """Return (list of Role, total count). Optional search by name (case-insensitive contains)."""
     query = Role.query
     if q and q.strip():
-        term = f"%{q.strip().lower()}%"
-        query = query.filter(func.lower(Role.name).like(term))
+        escaped_term = _escape_sql_like_wildcards(q.strip().lower())
+        term = f"%{escaped_term}%"
+        query = query.filter(func.lower(Role.name).like(term, escape="\\"))
     total = query.count()
     query = query.order_by(Role.name.asc()).offset((page - 1) * per_page).limit(per_page)
     return query.all(), total

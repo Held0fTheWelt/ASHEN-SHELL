@@ -65,6 +65,13 @@ async function getJson(path, options = {}) {
   return data;
 }
 
+function escapeHtml(s) {
+  if (s == null) return '';
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
 function setStatus(text) {
   el.connectionStatus.textContent = text;
 }
@@ -116,7 +123,7 @@ function renderCharacterMeta() {
 function renderSelectOptions() {
   el.characterSelect.innerHTML = [
     '<option value="">No stored character (use fallback display name)</option>',
-    ...state.characters.map(character => `<option value="${character.id}">${character.display_name} — ${character.name}${character.is_default ? ' [default]' : ''}</option>`),
+    ...state.characters.map(character => `<option value="${character.id}">${escapeHtml(character.display_name)} — ${escapeHtml(character.name)}${character.is_default ? ' [default]' : ''}</option>`),
   ].join('');
 
   const defaultCharacter = state.characters.find(character => character.is_default) || state.characters[0] || null;
@@ -154,7 +161,7 @@ function renderSnapshot(snapshot) {
       el.exitList,
       room.exits.map(exit => `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
-          <span>${exit.label}</span>
+          <span>${escapeHtml(exit.label)}</span>
           <button data-room="${exit.target_room_id}" class="move-button btn">Go</button>
         </div>`),
       'No exits from here.'
@@ -165,7 +172,7 @@ function renderSnapshot(snapshot) {
       el.propList,
       visibleProps.map(prop => `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
-          <span>${prop.name} <small>(${prop.state})</small></span>
+          <span>${escapeHtml(prop.name)} <small>(${escapeHtml(prop.state)})</small></span>
           <button data-inspect="${prop.id}" class="inspect-button btn">Inspect</button>
         </div>`),
       'No props in this room.'
@@ -176,7 +183,7 @@ function renderSnapshot(snapshot) {
       el.occupantList,
       occupants.map(occupant => `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
-          <span>${occupant.display_name}</span>
+          <span>${escapeHtml(occupant.display_name)}</span>
           <small>${occupant.mode}</small>
         </div>`),
       'Nobody else is here.'
@@ -187,7 +194,7 @@ function renderSnapshot(snapshot) {
     el.actionList,
     snapshot.available_actions.map(action => `
       <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
-        <span>${action.label}</span>
+        <span>${escapeHtml(action.label)}</span>
         <button data-action="${action.id}" class="action-button btn">Use</button>
       </div>`),
     'No scripted actions available here.'
@@ -195,8 +202,8 @@ function renderSnapshot(snapshot) {
 
   el.transcript.innerHTML = snapshot.transcript_tail.map(entry => `
     <div>
-      <div style="font-size:0.8rem; opacity:0.75;">${new Date(entry.at).toLocaleTimeString()}${entry.actor ? ` • ${entry.actor}` : ''}</div>
-      <div>${entry.text}</div>
+      <div style="font-size:0.8rem; opacity:0.75;">${new Date(entry.at).toLocaleTimeString()}${entry.actor ? ` • ${escapeHtml(entry.actor)}` : ''}</div>
+      <div>${escapeHtml(entry.text)}</div>
     </div>
   `).join('');
   el.transcript.scrollTop = el.transcript.scrollHeight;

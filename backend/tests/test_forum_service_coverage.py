@@ -298,15 +298,86 @@ class TestThreadCreation:
             assert archived.status == "archived"
 
     def test_increment_thread_view(self, app, forum_data):
-        """increment_thread_view increases view count."""
+        """increment_thread_view increases view count for anonymous users."""
         with app.app_context():
             thread = ForumThread.query.get(forum_data["thread1"])
             initial_views = thread.view_count or 0
 
-            forum_service.increment_thread_view(thread)
+            result = forum_service.increment_thread_view(thread, user_id=None)
 
+            assert result is True
             updated = ForumThread.query.get(forum_data["thread1"])
             assert (updated.view_count or 0) > initial_views
+
+    def test_increment_thread_view_rate_limit(self, app, test_user, forum_data):
+        """Same user cannot increment view twice within 5 minutes."""
+        with app.app_context():
+            user, _ = test_user
+            thread = ForumThread.query.get(forum_data["thread1"])
+            initial_views = thread.view_count or 0
+
+            # First view should count
+            result1 = forum_service.increment_thread_view(thread, user_id=user.id)
+            assert result1 is True
+            views_after_first = thread.view_count or 0
+            assert views_after_first > initial_views
+
+            # Second view within 5 minutes should be rate limited
+            result2 = forum_service.increment_thread_view(thread, user_id=user.id)
+            assert result2 is False
+            views_after_second = ForumThread.query.get(forum_data["thread1"]).view_count or 0
+            assert views_after_second == views_after_first
+
+    def test_increment_thread_view_prevent_self_view(self, app, test_user, forum_data):
+        """Thread author cannot count views on their own thread."""
+        with app.app_context():
+            user, _ = test_user
+            # Get thread authored by the test user (or create one)
+            thread = ForumThread.query.get(forum_data["thread1"])
+            # Change author to our test user
+            thread.author_id = user.id
+            from app.extensions import db
+            db.session.commit()
+
+            initial_views = thread.view_count or 0
+
+            # Author trying to view own thread should not count
+            result = forum_service.increment_thread_view(thread, user_id=user.id)
+            assert result is False
+            updated = ForumThread.query.get(forum_data["thread1"])
+            assert (updated.view_count or 0) == initial_views
+
+    def test_increment_thread_view_multiple_users(self, app, test_user, forum_data):
+        """Different users can each count one view within 5 minutes."""
+        with app.app_context():
+            from app.models import User
+            from app.extensions import db
+
+            thread = ForumThread.query.get(forum_data["thread1"])
+            user1, _ = test_user
+            # Create a second test user
+            user2 = User(
+                username="testuser2",
+                email="testuser2@example.com",
+                password_hash="hashed_password",
+                is_email_verified=True
+            )
+            db.session.add(user2)
+            db.session.commit()
+
+            initial_views = thread.view_count or 0
+
+            # First user views
+            result1 = forum_service.increment_thread_view(thread, user_id=user1.id)
+            assert result1 is True
+            views1 = (ForumThread.query.get(forum_data["thread1"]).view_count or 0)
+            assert views1 > initial_views
+
+            # Second user views - should count as different user
+            result2 = forum_service.increment_thread_view(thread, user_id=user2.id)
+            assert result2 is True
+            views2 = (ForumThread.query.get(forum_data["thread1"]).view_count or 0)
+            assert views2 > views1
 
 
 class TestPostManagement:

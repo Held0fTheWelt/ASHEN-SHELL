@@ -3,6 +3,7 @@ from flask import current_app, jsonify, request
 
 from app.api.v1 import api_v1_bp
 from app.extensions import limiter
+from app.i18n import validate_language_code
 from app.services.slogan_service import list_slogans_for_placement, resolve_slogan_for_placement
 
 
@@ -39,7 +40,10 @@ def site_slogans():
     if not placement:
         return jsonify({"error": "placement is required"}), 400
     lang = (request.args.get("lang") or "").strip() or current_app.config.get("DEFAULT_LANGUAGE", "de")
-    slogans = list_slogans_for_placement(placement, lang)
+    validated_lang, err = validate_language_code(lang)
+    if err:
+        return jsonify({"error": err}), 400
+    slogans = list_slogans_for_placement(placement, validated_lang)
     items = [
         {"text": s.text, "placement_key": s.placement_key, "language_code": s.language_code}
         for s in slogans
@@ -59,9 +63,12 @@ def site_slogan():
     if not placement:
         return jsonify({"error": "placement is required"}), 400
     lang = (request.args.get("lang") or "").strip() or current_app.config.get("DEFAULT_LANGUAGE", "de")
-    slogan = resolve_slogan_for_placement(placement, lang)
+    validated_lang, err = validate_language_code(lang)
+    if err:
+        return jsonify({"error": err}), 400
+    slogan = resolve_slogan_for_placement(placement, validated_lang)
     if not slogan:
-        return jsonify({"text": None, "placement_key": placement, "language_code": lang}), 200
+        return jsonify({"text": None, "placement_key": placement, "language_code": validated_lang}), 200
     return jsonify({
         "text": slogan.text,
         "placement_key": slogan.placement_key,

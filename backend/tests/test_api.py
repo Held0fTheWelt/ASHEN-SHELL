@@ -112,13 +112,13 @@ def test_login_invalid_returns_401(client):
 
 
 def test_login_unverified_email_returns_403_when_verification_enabled(client, app):
-    """POST /api/v1/auth/login with valid credentials but unverified email returns 403 when verification is enabled."""
+    """POST /api/v1/auth/login with valid credentials but unverified email returns 403 when REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN is True."""
     from app.extensions import db
     from app.models import Role, User
     from werkzeug.security import generate_password_hash
 
     with app.app_context():
-        app.config["EMAIL_VERIFICATION_ENABLED"] = True
+        app.config["REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN"] = True
         role = Role.query.filter_by(name=Role.NAME_USER).first()
         user = User(
             username="apiverify",
@@ -136,7 +136,39 @@ def test_login_unverified_email_returns_403_when_verification_enabled(client, ap
     )
     assert response.status_code == 403
     data = response.get_json()
-    assert "verified" in (data.get("error") or "").lower()
+    assert data.get("code") == "EMAIL_NOT_VERIFIED"
+    assert "verify" in (data.get("error") or "").lower()
+
+
+def test_login_unverified_email_allowed_when_verification_disabled(client, app):
+    """POST /api/v1/auth/login with unverified email succeeds when REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN is False (default in tests)."""
+    from app.extensions import db
+    from app.models import Role, User
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        # TestingConfig already has REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = False
+        # Verify it's set to False
+        assert app.config.get("REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN") is False
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
+        user = User(
+            username="apiverifydev",
+            email="apiverifydev@example.com",
+            password_hash=generate_password_hash("Apiverifydev1"),
+            email_verified_at=None,  # Unverified email
+            role_id=role.id,
+        )
+        db.session.add(user)
+        db.session.commit()
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": "apiverifydev", "password": "Apiverifydev1"},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "access_token" in data
+    assert data["user"]["username"] == "apiverifydev"
 
 
 def test_login_banned_user_returns_403(client, banned_user):
@@ -160,6 +192,57 @@ def test_login_missing_body_returns_400(client):
         content_type="text/plain",
     )
     assert response.status_code == 400
+
+
+def test_resend_verification_success(client, app):
+    """POST /api/v1/auth/resend-verification with valid email returns 200."""
+    from app.extensions import db
+    from app.models import Role, User
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
+        user = User(
+            username="resendtest",
+            email="resendtest@example.com",
+            password_hash=generate_password_hash("Resendtest1"),
+            email_verified_at=None,
+            role_id=role.id,
+        )
+        db.session.add(user)
+        db.session.commit()
+    response = client.post(
+        "/api/v1/auth/resend-verification",
+        json={"email": "resendtest@example.com"},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "message" in data
+    assert "sent" in data["message"].lower()
+
+
+def test_resend_verification_returns_success_for_nonexistent_email(client):
+    """POST /api/v1/auth/resend-verification with nonexistent email returns 200 (to prevent email enumeration)."""
+    response = client.post(
+        "/api/v1/auth/resend-verification",
+        json={"email": "nonexistent@example.com"},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "message" in data
+
+
+def test_resend_verification_missing_email_returns_400(client):
+    """POST /api/v1/auth/resend-verification without email returns 400."""
+    response = client.post(
+        "/api/v1/auth/resend-verification",
+        json={},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+    assert "error" in response.get_json()
 
 
 def test_me_without_token_returns_401(client):

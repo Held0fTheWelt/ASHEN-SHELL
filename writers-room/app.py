@@ -41,11 +41,18 @@ app = Flask(
     template_folder=str(_template_dir),
     static_folder=str(_static_dir),
 )
-app.secret_key = (
-    os.environ.get("WRITERS_ROOM_SECRET_KEY")
-    or os.environ.get("SECRET_KEY")
-    or "writers-room-dev-secret-do-not-use-in-production"
-)
+# Security requirement: Flask session secret key MUST be set via environment variable.
+# Do NOT use hardcoded defaults in production environments. The secret key is critical
+# for session security and should be generated securely and kept confidential.
+_secret_key = os.environ.get("WRITERS_ROOM_SECRET_KEY")
+if not _secret_key:
+    raise ValueError(
+        "WRITERS_ROOM_SECRET_KEY environment variable must be explicitly set. "
+        "This is required for secure session management. "
+        "Generate a secure secret key using: python -c \"import secrets; print(secrets.token_hex(32))\" "
+        "and set it in your environment or .env file."
+    )
+app.secret_key = _secret_key
 
 BACKEND_BASE_URL = (
     os.environ.get("BACKEND_BASE_URL")
