@@ -268,7 +268,7 @@ Potential improvements for future versions:
 
 ## Dependencies
 
-- `cryptography>=41.0,<43`: Cryptographic primitives (AES, PBKDF2)
+- `cryptography>=45.0.7,<47` (mit `pyOpenSSL>=25.3`): Cryptographic primitives (AES, PBKDF2); abgestimmt mit pyhanko (`>=43.0.3`) und aktuellem PyOpenSSL (nicht 24.x mit `cryptography<45`)
 
 Install with:
 ```bash
