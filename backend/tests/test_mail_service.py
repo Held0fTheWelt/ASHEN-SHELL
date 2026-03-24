@@ -155,7 +155,7 @@ class TestSendVerificationEmailExceptions:
                     with patch("app.services.mail_service.logger") as mock_logger:
                         send_verification_email(user, token)
                         call_args = mock_logger.exception.call_args
-                        assert str(user.id) in call_args[0]
+                        assert user.id in call_args[0]
                         assert token not in str(call_args)
 
     def test_12_verification_email_exception_never_reraised(self, app, test_user):
@@ -394,20 +394,21 @@ class TestSendPasswordResetEmailExceptions:
                     with patch("app.services.mail_service.logger") as mock_logger:
                         send_password_reset_email(user, token)
                         call_args = mock_logger.exception.call_args
-                        assert str(user.id) in call_args[0]
+                        assert user.id in call_args[0]
                         assert token not in str(call_args)
 
     def test_28_password_reset_email_exception_never_reraised(self, app, test_user):
         """Test send_password_reset_email catches all exceptions and never re-raises."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "test_token_reset_reraise"
-            with patch("app.services.mail_service.mail.send", side_effect=Exception("Crash")):
-                result = send_password_reset_email(user, token)
-                assert result is False
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "test_token_reset_reraise"
+                with patch("app.services.mail_service.mail.send", side_effect=Exception("Crash")):
+                    result = send_password_reset_email(user, token)
+                    assert result is False
 
     @pytest.mark.parametrize("exception_type", [
         ConnectionRefusedError,
@@ -418,13 +419,14 @@ class TestSendPasswordResetEmailExceptions:
         """Test send_password_reset_email catches network exceptions."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "test_network_error"
-            with patch("app.services.mail_service.mail.send", side_effect=exception_type("Network")):
-                result = send_password_reset_email(user, token)
-                assert result is False
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "test_network_error"
+                with patch("app.services.mail_service.mail.send", side_effect=exception_type("Network")):
+                    result = send_password_reset_email(user, token)
+                    assert result is False
 
 
 class TestSendPasswordResetEmailProduction:
@@ -434,53 +436,57 @@ class TestSendPasswordResetEmailProduction:
         """Test send_password_reset_email sends Message in production mode."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "prod_token_reset"
-            with patch("app.services.mail_service.mail.send") as mock_send:
-                result = send_password_reset_email(user, token)
-                assert result is True
-                mock_send.assert_called_once()
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "prod_token_reset"
+                with patch("app.services.mail_service.mail.send") as mock_send:
+                    result = send_password_reset_email(user, token)
+                    assert result is True
+                    mock_send.assert_called_once()
 
     def test_31_password_reset_email_message_has_correct_subject(self, app, test_user):
         """Test sent message has correct subject."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "token_reset_subject"
-            with patch("app.services.mail_service.mail.send") as mock_send:
-                send_password_reset_email(user, token)
-                msg = mock_send.call_args[0][0]
-                assert msg.subject == "World of Shadows – Password reset"
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "token_reset_subject"
+                with patch("app.services.mail_service.mail.send") as mock_send:
+                    send_password_reset_email(user, token)
+                    msg = mock_send.call_args[0][0]
+                    assert msg.subject == "World of Shadows – Password reset"
 
     def test_32_password_reset_email_message_has_correct_recipient(self, app, test_user):
         """Test sent message has correct recipient email."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "token_reset_recipient"
-            with patch("app.services.mail_service.mail.send") as mock_send:
-                send_password_reset_email(user, token)
-                msg = mock_send.call_args[0][0]
-                assert msg.recipients == [user.email]
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "token_reset_recipient"
+                with patch("app.services.mail_service.mail.send") as mock_send:
+                    send_password_reset_email(user, token)
+                    msg = mock_send.call_args[0][0]
+                    assert msg.recipients == [user.email]
 
     def test_33_password_reset_email_message_body_contains_username(self, app, test_user):
         """Test sent message body contains user's username."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "token_reset_body_user"
-            with patch("app.services.mail_service.mail.send") as mock_send:
-                send_password_reset_email(user, token)
-                msg = mock_send.call_args[0][0]
-                assert user.username in msg.body
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "token_reset_body_user"
+                with patch("app.services.mail_service.mail.send") as mock_send:
+                    send_password_reset_email(user, token)
+                    msg = mock_send.call_args[0][0]
+                    assert user.username in msg.body
 
     def test_34_password_reset_email_message_body_contains_reset_url(self, app, test_user):
         """Test sent message body contains reset URL."""
@@ -501,26 +507,28 @@ class TestSendPasswordResetEmailProduction:
         """Test sent message body mentions token expiration time."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "token_reset_expiration"
-            with patch("app.services.mail_service.mail.send") as mock_send:
-                send_password_reset_email(user, token)
-                msg = mock_send.call_args[0][0]
-                assert "60 minutes" in msg.body
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "token_reset_expiration"
+                with patch("app.services.mail_service.mail.send") as mock_send:
+                    send_password_reset_email(user, token)
+                    msg = mock_send.call_args[0][0]
+                    assert "60 minutes" in msg.body
 
     def test_36_password_reset_email_returns_true_on_successful_send(self, app, test_user):
         """Test send_password_reset_email returns True when mail.send succeeds."""
         user, _ = test_user
         with app.app_context():
-            app.config["TESTING"] = False
-            app.config["MAIL_SERVER"] = "smtp.example.com"
-            app.config["MAIL_USERNAME"] = "mailuser"
-            token = "token_reset_success"
-            with patch("app.services.mail_service.mail.send"):
-                result = send_password_reset_email(user, token)
-                assert result is True
+            with app.test_request_context():
+                app.config["TESTING"] = False
+                app.config["MAIL_SERVER"] = "smtp.example.com"
+                app.config["MAIL_USERNAME"] = "mailuser"
+                token = "token_reset_success"
+                with patch("app.services.mail_service.mail.send"):
+                    result = send_password_reset_email(user, token)
+                    assert result is True
 
     def test_37_password_reset_email_with_url_for_in_request_context(self, app, test_user):
         """Test send_password_reset_email uses url_for correctly in request context."""

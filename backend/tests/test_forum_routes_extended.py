@@ -18,16 +18,50 @@ from app.models import (
     ForumTag,
     ForumThreadTag,
 )
+from app.models.forum import ModeratorAssignment
 from app.models.activity_log import ActivityLog
 
 
+def _assign_moderators_to_category(app, category_id):
+    """Helper: assign all moderators to a category for testing moderation."""
+    with app.app_context():
+        moderator_role = Role.query.filter_by(name="moderator").first()
+        admin_role = Role.query.filter_by(name="admin").first()
+        moderators = User.query.filter_by(role_id=moderator_role.id).all() if moderator_role else []
+        admin = User.query.filter_by(role_id=admin_role.id).first() if admin_role else None
+
+        for mod in moderators:
+            assignment = ModeratorAssignment(
+                user_id=mod.id,
+                category_id=category_id,
+                assigned_by=admin.id if admin else mod.id,
+            )
+            db.session.add(assignment)
+        db.session.commit()
+
+
 def _setup_public_cat_and_thread(app, username="testuser"):
-    """Helper: create a public category + thread owned by given user, return IDs."""
+    """Helper: create a public category + thread owned by given user, return IDs.
+    Also assigns all moderators to the category for testing moderation endpoints."""
     with app.app_context():
         user = User.query.filter_by(username=username).first()
         cat = ForumCategory(slug="pub-ext", title="Pub Ext", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
+
+        # Assign all moderators to this category so they can test moderation
+        moderator_role = Role.query.filter_by(name="moderator").first()
+        admin_role = Role.query.filter_by(name="admin").first()
+        moderators = User.query.filter_by(role_id=moderator_role.id).all() if moderator_role else []
+        admin = User.query.filter_by(role_id=admin_role.id).first() if admin_role else None
+        for mod in moderators:
+            assignment = ModeratorAssignment(
+                user_id=mod.id,
+                category_id=cat.id,
+                assigned_by=admin.id if admin else mod.id,
+            )
+            db.session.add(assignment)
+
         thread = ForumThread(
             category_id=cat.id, slug="ext-thread", title="Ext Thread",
             status="open", author_id=user.id,
@@ -417,7 +451,9 @@ def test_lock_unlock_via_route(app, client, moderator_headers):
         db.session.add(t)
         db.session.commit()
         thread_id = t.id
+        cat_id = cat.id
 
+    _assign_moderators_to_category(app, cat_id)
     resp = client.post(f"/api/v1/forum/threads/{thread_id}/lock", headers=moderator_headers)
     assert resp.status_code == 200
     resp = client.post(f"/api/v1/forum/threads/{thread_id}/unlock", headers=moderator_headers)
@@ -434,6 +470,7 @@ def test_pin_unpin_via_route(app, client, moderator_headers):
         db.session.add(t)
         db.session.commit()
         thread_id = t.id
+        _assign_moderators_to_category(app, cat.id)
 
     resp = client.post(f"/api/v1/forum/threads/{thread_id}/pin", headers=moderator_headers)
     assert resp.status_code == 200
@@ -469,6 +506,7 @@ def test_feature_unfeature_thread(app, client, moderator_headers):
         db.session.add(t)
         db.session.commit()
         thread_id = t.id
+        _assign_moderators_to_category(app, cat.id)
 
     resp = client.post(f"/api/v1/forum/threads/{thread_id}/feature", headers=moderator_headers)
     assert resp.status_code == 200
@@ -488,6 +526,7 @@ def test_archive_unarchive_via_route(app, client, moderator_headers):
         db.session.add(t)
         db.session.commit()
         thread_id = t.id
+        _assign_moderators_to_category(app, cat.id)
 
     resp = client.post(f"/api/v1/forum/threads/{thread_id}/archive", headers=moderator_headers)
     assert resp.status_code == 200
@@ -510,6 +549,7 @@ def test_hide_unhide_post_via_route(app, client, moderator_headers):
         db.session.add(p)
         db.session.commit()
         post_id = p.id
+        _assign_moderators_to_category(app, cat.id)
 
     resp = client.post(f"/api/v1/forum/posts/{post_id}/hide", headers=moderator_headers)
     assert resp.status_code == 200
@@ -536,6 +576,8 @@ def test_move_thread_via_route(app, client, moderator_headers):
         db.session.commit()
         thread_id = t.id
         cat2_id = cat2.id
+        _assign_moderators_to_category(app, cat1.id)
+        _assign_moderators_to_category(app, cat2.id)
 
     resp = client.post(
         f"/api/v1/forum/threads/{thread_id}/move",
@@ -562,6 +604,7 @@ def test_merge_thread_via_route(app, client, moderator_headers):
         db.session.commit()
         source_id = source.id
         target_id = target.id
+        _assign_moderators_to_category(app, cat.id)
 
     resp = client.post(
         f"/api/v1/forum/threads/{source_id}/merge",
@@ -584,6 +627,7 @@ def test_bulk_thread_lock(app, client, moderator_headers):
         db.session.add_all([t1, t2])
         db.session.commit()
         ids = [t1.id, t2.id]
+        _assign_moderators_to_category(app, cat.id)
 
     resp = client.post(
         "/api/v1/forum/moderation/bulk-threads/status",
@@ -614,6 +658,7 @@ def test_bulk_posts_hide(app, client, moderator_headers):
         db.session.add_all([p1, p2])
         db.session.commit()
         ids = [p1.id, p2.id]
+        _assign_moderators_to_category(app, cat.id)
 
     resp = client.post(
         "/api/v1/forum/moderation/bulk-posts/hide",
@@ -652,6 +697,14 @@ def test_bulk_thread_missing_action(app, client, moderator_headers):
     assert resp.status_code == 400
 
 
+    resp = client.post(
+        "/api/v1/forum/moderation/bulk-threads/status",
+        json={"thread_ids": [1]},
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 400
+
+
 def test_bulk_thread_empty_ids(app, client, moderator_headers):
     resp = client.post(
         "/api/v1/forum/moderation/bulk-threads/status",
@@ -661,7 +714,25 @@ def test_bulk_thread_empty_ids(app, client, moderator_headers):
     assert resp.status_code == 400
 
 
+    resp = client.post(
+        "/api/v1/forum/moderation/bulk-threads/status",
+        json={"thread_ids": [], "lock": True},
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 400
+
+
 def test_bulk_posts_hide_missing_hidden(app, client, moderator_headers):
+    resp = client.post(
+        "/api/v1/forum/moderation/bulk-posts/hide",
+        json={"post_ids": [1]},
+        headers=moderator_headers,
+    )
+    assert resp.status_code == 400
+
+
+# ============= ADMIN CATEGORY CRUD =============
+
     resp = client.post(
         "/api/v1/forum/moderation/bulk-posts/hide",
         json={"post_ids": [1]},
@@ -686,12 +757,12 @@ def test_admin_create_category(app, client, admin_headers):
 def test_admin_create_category_duplicate(app, client, admin_headers):
     client.post(
         "/api/v1/forum/admin/categories",
-        json={"slug": "dup-cat", "title": "Dup"},
+        json={"slug": "dup-cat", "title": "Duplicate Category"},
         headers=admin_headers,
     )
     resp = client.post(
         "/api/v1/forum/admin/categories",
-        json={"slug": "dup-cat", "title": "Dup Again"},
+        json={"slug": "dup-cat", "title": "Duplicate Again"},
         headers=admin_headers,
     )
     assert resp.status_code == 409
@@ -755,6 +826,11 @@ def test_moderation_log(app, client, moderator_headers):
     assert "items" in resp.get_json()
 
 
+    resp = client.get("/api/v1/forum/moderation/log", headers=moderator_headers)
+    assert resp.status_code == 200
+    assert "items" in resp.get_json()
+
+
 def test_moderation_log_forbidden_for_user(app, client, auth_headers):
     resp = client.get("/api/v1/forum/moderation/log", headers=auth_headers)
     assert resp.status_code == 403
@@ -781,12 +857,26 @@ def test_moderation_recent_reports(app, client, moderator_headers):
     assert resp.status_code == 200
 
 
+    resp = client.get("/api/v1/forum/moderation/recent-reports", headers=moderator_headers)
+    assert resp.status_code == 200
+
+
 def test_moderation_hidden_posts(app, client, moderator_headers):
     resp = client.get("/api/v1/forum/moderation/hidden-posts", headers=moderator_headers)
     assert resp.status_code == 200
 
 
+    resp = client.get("/api/v1/forum/moderation/hidden-posts", headers=moderator_headers)
+    assert resp.status_code == 200
+
+
 def test_moderation_locked_threads(app, client, moderator_headers):
+    resp = client.get("/api/v1/forum/moderation/locked-threads", headers=moderator_headers)
+    assert resp.status_code == 200
+
+
+# ============= NOTIFICATIONS =============
+
     resp = client.get("/api/v1/forum/moderation/locked-threads", headers=moderator_headers)
     assert resp.status_code == 200
 
@@ -870,6 +960,12 @@ def test_reports_list_route(app, client, moderator_headers):
     assert "items" in data
 
 
+    resp = client.get("/api/v1/forum/reports?page=1&limit=10", headers=moderator_headers)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert "items" in data
+
+
 def test_report_detail_route(app, client, moderator_headers):
     with app.app_context():
         mod = User.query.filter_by(username="moderatoruser").first()
@@ -915,14 +1011,15 @@ def test_report_update_route(app, client, moderator_headers):
 def test_activity_log_after_lock(app, client, moderator_headers):
     with app.app_context():
         mod = User.query.filter_by(username="moderatoruser").first()
-        cat = ForumCategory(slug="log-lock-cat", title="LogLock", is_active=True, is_private=False)
+        cat = ForumCategory(slug="log-lock-cat", title="Log Lock Category", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
-        t = ForumThread(category_id=cat.id, slug="log-lock-t", title="LogLock", status="open", author_id=mod.id)
+        t = ForumThread(category_id=cat.id, slug="log-lock-t", title="Log Lock Thread", status="open", author_id=mod.id)
         db.session.add(t)
         db.session.commit()
         thread_id = t.id
 
+    _assign_moderators_to_category(app, t.category_id)
     client.post(f"/api/v1/forum/threads/{thread_id}/lock", headers=moderator_headers)
 
     with app.app_context():

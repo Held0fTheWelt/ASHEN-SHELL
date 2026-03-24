@@ -108,18 +108,26 @@ class TestWikiTranslationEndpoints:
             db.session.commit()
             page_id = page.id
 
-        payloads = [
+        # SQL injection payloads that make it to the handler
+        sql_payloads = [
             "en' OR '1'='1",
             "en\"; DROP TABLE",
-            "../../etc/passwd",
         ]
 
-        for payload in payloads:
+        for payload in sql_payloads:
             response = client.get(
                 f"/api/v1/wiki-admin/pages/{page_id}/translations/{payload}",
                 headers=admin_headers
             )
             assert response.status_code == 400, f"Payload '{payload}' should return 400"
+
+        # Path traversal payloads that don't match the route (Flask rejects at routing level)
+        path_payload = "../../etc/passwd"
+        response = client.get(
+            f"/api/v1/wiki-admin/pages/{page_id}/translations/{path_payload}",
+            headers=admin_headers
+        )
+        assert response.status_code == 404, f"Path traversal '{path_payload}' should return 404 (rejected at routing level)"
 
     def test_wiki_translation_put_valid_language(self, client, app, admin_headers):
         """PUT wiki translation with valid language should succeed."""
@@ -211,9 +219,8 @@ class TestNewsTranslationEndpoints:
         """GET news translation with valid language should succeed."""
         with app.app_context():
             article = NewsArticle(
-                title="Test Article",
-                slug="test-article",
-                content="Test content",
+                default_language="en",
+                status="published",
                 author_id=1
             )
             db.session.add(article)
@@ -240,9 +247,8 @@ class TestNewsTranslationEndpoints:
         """GET news translation with invalid language should return 400."""
         with app.app_context():
             article = NewsArticle(
-                title="Test Article",
-                slug="test-article",
-                content="Test content",
+                default_language="en",
+                status="published",
                 author_id=1
             )
             db.session.add(article)
@@ -261,9 +267,8 @@ class TestNewsTranslationEndpoints:
         """PUT news translation with valid language should succeed."""
         with app.app_context():
             article = NewsArticle(
-                title="Test Article",
-                slug="test-article",
-                content="Test content",
+                default_language="en",
+                status="published",
                 author_id=1
             )
             db.session.add(article)
@@ -285,9 +290,8 @@ class TestNewsTranslationEndpoints:
         """PUT news translation with invalid language should return 400."""
         with app.app_context():
             article = NewsArticle(
-                title="Test Article",
-                slug="test-article",
-                content="Test content",
+                default_language="en",
+                status="published",
                 author_id=1
             )
             db.session.add(article)
@@ -311,9 +315,8 @@ class TestNewsTranslationEndpoints:
         """POST news translation submit-review with invalid language should return 400."""
         with app.app_context():
             article = NewsArticle(
-                title="Test Article",
-                slug="test-article",
-                content="Test content",
+                default_language="en",
+                status="published",
                 author_id=1
             )
             db.session.add(article)
@@ -330,9 +333,8 @@ class TestNewsTranslationEndpoints:
         """POST news translation approve with invalid language should return 400."""
         with app.app_context():
             article = NewsArticle(
-                title="Test Article",
-                slug="test-article",
-                content="Test content",
+                default_language="en",
+                status="published",
                 author_id=1
             )
             db.session.add(article)
@@ -349,9 +351,8 @@ class TestNewsTranslationEndpoints:
         """POST news translation publish with invalid language should return 400."""
         with app.app_context():
             article = NewsArticle(
-                title="Test Article",
-                slug="test-article",
-                content="Test content",
+                default_language="en",
+                status="published",
                 author_id=1
             )
             db.session.add(article)

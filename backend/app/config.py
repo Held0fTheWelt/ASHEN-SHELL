@@ -157,7 +157,8 @@ class TestingConfig(Config):
     SECRET_KEY = "test-secret-key"
     JWT_SECRET_KEY = "test-jwt-secret-key-at-least-32-bytes-long"
     RATELIMIT_ENABLED = True  # Enable rate limiting so tests can verify it works
-    RATELIMIT_DEFAULT = "1000 per minute"
+    RATELIMIT_DEFAULT = "10000 per minute"  # Allow reasonable default, endpoint-specific limits will be enforced
+    RATELIMIT_STORAGE_URI = "memory://"  # In-memory storage for testing
     # Note: CSRF is intentionally enabled in testing so we can test CSRF protection works
     CORS_ORIGINS = None
     PLAY_SERVICE_PUBLIC_URL = "http://play.example.test"

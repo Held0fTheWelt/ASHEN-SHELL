@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Version 0.3: Integration of dynamic evolving content with rules and drafts
 
 
+
 ## [0.1.8] - 2026-03-23
 
 ### Security

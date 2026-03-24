@@ -9,6 +9,7 @@ This test suite ensures that:
 """
 
 import pytest
+from werkzeug.security import generate_password_hash
 from app import create_app
 from app.config import TestingConfig
 from app.extensions import db
@@ -60,31 +61,35 @@ def setup_data(app):
 
     db.session.commit()
 
-    # Create users
+    # Create users with real passwords
+    author_password = "Author1"
+    mod_a_password = "ModA1"
+    mod_b_password = "ModB1"
+    admin_password = "Admin1"
+
     user_author = User(
         username="author",
         email="author@test.com",
-        password_hash="hash",
+        password_hash=generate_password_hash(author_password),
         role_id=user_role.id,
     )
     user_mod_a = User(
         username="mod_a",
         email="mod_a@test.com",
-        password_hash="hash",
+        password_hash=generate_password_hash(mod_a_password),
         role_id=mod_role.id,
     )
     user_mod_b = User(
         username="mod_b",
         email="mod_b@test.com",
-        password_hash="hash",
+        password_hash=generate_password_hash(mod_b_password),
         role_id=mod_role.id,
     )
     user_admin = User(
         username="admin",
         email="admin@test.com",
-        password_hash="hash",
+        password_hash=generate_password_hash(admin_password),
         role_id=admin_role.id,
-        is_admin=True,
     )
 
     db.session.add_all([user_author, user_mod_a, user_mod_b, user_admin])
@@ -170,6 +175,12 @@ def setup_data(app):
             "mod_b": user_mod_b,
             "admin": user_admin,
         },
+        "passwords": {
+            "author": author_password,
+            "mod_a": mod_a_password,
+            "mod_b": mod_b_password,
+            "admin": admin_password,
+        },
         "categories": {
             "cat_a": cat_a,
             "cat_b": cat_b,
@@ -193,13 +204,9 @@ class TestModeratorPermissions:
         post_cat_b = setup_data["posts"]["cat_b"]
         mod_a = setup_data["users"]["mod_a"]
 
-        # Generate JWT token for mod_a
-        # Note: In real tests, use proper JWT token generation
-        # This is a placeholder showing the test intent
-
         response = client.delete(
             f"/api/v1/forum/posts/{post_cat_b.id}",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a, client, setup_data)}"},
         )
 
         # Expected: 403 Forbidden (not authorized for Category B)
@@ -215,7 +222,7 @@ class TestModeratorPermissions:
 
         response = client.delete(
             f"/api/v1/forum/posts/{post_cat_a.id}",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a, client, setup_data)}"},
         )
 
         # Expected: 200 OK
@@ -231,7 +238,7 @@ class TestModeratorPermissions:
 
         response = client.delete(
             f"/api/v1/forum/posts/{post_cat_b.id}",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(admin)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(admin, client, setup_data)}"},
         )
 
         # Expected: 200 OK
@@ -247,7 +254,7 @@ class TestModeratorPermissions:
 
         response = client.post(
             f"/api/v1/forum/threads/{thread_cat_a.id}/lock",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_b)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_b, client, setup_data)}"},
         )
 
         # Expected: 403 Forbidden
@@ -263,7 +270,7 @@ class TestModeratorPermissions:
 
         response = client.post(
             f"/api/v1/forum/threads/{thread_cat_b.id}/lock",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_b)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_b, client, setup_data)}"},
         )
 
         # Expected: 200 OK
@@ -279,7 +286,7 @@ class TestModeratorPermissions:
 
         response = client.post(
             f"/api/v1/forum/posts/{post_cat_b.id}/hide",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a, client, setup_data)}"},
         )
 
         # Expected: 403 Forbidden
@@ -295,7 +302,7 @@ class TestModeratorPermissions:
 
         response = client.post(
             f"/api/v1/forum/posts/{post_cat_a.id}/hide",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(mod_a, client, setup_data)}"},
         )
 
         # Expected: 200 OK
@@ -313,7 +320,7 @@ class TestModeratorPermissions:
 
         response = client.delete(
             f"/api/v1/forum/posts/{post_cat_b.id}",
-            headers={"Authorization": f"Bearer {self._get_jwt_token(author)}"},
+            headers={"Authorization": f"Bearer {self._get_jwt_token(author, client, setup_data)}"},
         )
 
         # Expected: 200 OK
@@ -322,11 +329,32 @@ class TestModeratorPermissions:
             f"Got {response.status_code}: {response.get_json()}"
         )
 
-    def _get_jwt_token(self, user):
+    def _get_jwt_token(self, user, client, setup_data):
         """Helper to generate JWT token for a user."""
-        # In real tests, implement proper JWT token generation
-        # This is a placeholder
-        return "fake_token"
+        # Get the password for this user from setup_data
+        user_key = None
+        for key, u in setup_data["users"].items():
+            if u.id == user.id:
+                user_key = key
+                break
+
+        if not user_key:
+            raise ValueError(f"User {user.id} not found in setup_data")
+
+        password = setup_data["passwords"][user_key]
+
+        # Login to get a JWT token
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"username": user.username, "password": password},
+            content_type="application/json",
+        )
+
+        if response.status_code != 200:
+            raise ValueError(f"Failed to login user {user.username}: {response.get_json()}")
+
+        data = response.get_json()
+        return data["access_token"]
 
 
 class TestModeratorAssignmentModel:

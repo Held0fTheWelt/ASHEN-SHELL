@@ -170,20 +170,16 @@ def user_can_moderate_category(user: Optional[User], category: ForumCategory) ->
     """
     Moderation permission for a category: moderators and admins only.
     - Admins can moderate any category.
-    - Moderators can moderate public categories OR categories they're explicitly assigned to.
-    - Moderators cannot moderate private categories unless explicitly assigned.
+    - Moderators can ONLY moderate categories they're explicitly assigned to.
     """
     if user is None or user.is_banned:
         return False
     if user_is_admin(user):
         return True
-    # Moderators must be assigned to this specific category OR it must be public
+    # Moderators must be explicitly assigned to this specific category
     if not user_is_moderator(user):
         return False
-    # For public categories, any moderator can moderate
-    if not category.is_private:
-        return True
-    # For private categories, check if moderator is explicitly assigned
+    # Check if moderator is explicitly assigned
     from app.models.forum import ModeratorAssignment
     assignment = ModeratorAssignment.query.filter_by(
         user_id=user.id,
@@ -906,7 +902,7 @@ def list_reports_for_target(target_type: str, target_id: int) -> List[ForumRepor
 def like_post(user: User, post: ForumPost) -> Tuple[Optional[ForumPostLike], Optional[str]]:
     existing = ForumPostLike.query.filter_by(post_id=post.id, user_id=user.id).first()
     if existing:
-        return existing, None
+        return None, "You have already liked this post"
     like = ForumPostLike(post_id=post.id, user_id=user.id, created_at=_utc_now())
     db.session.add(like)
     post.like_count = (post.like_count or 0) + 1

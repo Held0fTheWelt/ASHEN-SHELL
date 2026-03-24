@@ -11,6 +11,16 @@ from app.services import forum_service
 from werkzeug.security import generate_password_hash
 
 
+@pytest.fixture(autouse=True)
+def clear_view_cache():
+    """Clear the view rate limit cache before each test to prevent cross-test contamination."""
+    # Clear the cache at the start of each test
+    forum_service._VIEW_RATE_LIMIT_CACHE.clear()
+    yield
+    # Clear the cache at the end of each test
+    forum_service._VIEW_RATE_LIMIT_CACHE.clear()
+
+
 @pytest.fixture
 def forum_data(app, test_user, admin_user):
     """Create comprehensive forum test data."""
@@ -268,10 +278,10 @@ class TestThreadCreation:
             thread = ForumThread.query.get(forum_data["thread1"])
 
             locked = forum_service.set_thread_lock(thread, True)
-            assert locked.locked is True
+            assert locked.is_locked is True
 
             unlocked = forum_service.set_thread_lock(thread, False)
-            assert unlocked.locked is False
+            assert unlocked.is_locked is False
 
     def test_set_thread_pinned(self, app, forum_data):
         """set_thread_pinned pins/unpins a thread."""
@@ -287,7 +297,7 @@ class TestThreadCreation:
             thread = ForumThread.query.get(forum_data["thread1"])
 
             featured = forum_service.set_thread_featured(thread, True)
-            assert featured.featured is True
+            assert featured.is_featured is True
 
     def test_set_thread_archived(self, app, forum_data):
         """set_thread_archived archives a thread."""
@@ -313,7 +323,7 @@ class TestThreadCreation:
         """Same user cannot increment view twice within 5 minutes."""
         with app.app_context():
             user, _ = test_user
-            thread = ForumThread.query.get(forum_data["thread1"])
+            thread = ForumThread.query.get(forum_data["thread2"])  # Use thread2 (authored by admin)
             initial_views = thread.view_count or 0
 
             # First view should count
@@ -325,7 +335,7 @@ class TestThreadCreation:
             # Second view within 5 minutes should be rate limited
             result2 = forum_service.increment_thread_view(thread, user_id=user.id)
             assert result2 is False
-            views_after_second = ForumThread.query.get(forum_data["thread1"]).view_count or 0
+            views_after_second = ForumThread.query.get(forum_data["thread2"]).view_count or 0
             assert views_after_second == views_after_first
 
     def test_increment_thread_view_prevent_self_view(self, app, test_user, forum_data):
@@ -353,14 +363,16 @@ class TestThreadCreation:
             from app.models import User
             from app.extensions import db
 
-            thread = ForumThread.query.get(forum_data["thread1"])
+            thread = ForumThread.query.get(forum_data["thread2"])  # Use thread2 (authored by admin)
             user1, _ = test_user
             # Create a second test user
+            from datetime import datetime, timezone
             user2 = User(
                 username="testuser2",
                 email="testuser2@example.com",
                 password_hash="hashed_password",
-                is_email_verified=True
+                email_verified_at=datetime.now(timezone.utc),
+                role_id=1  # Default role ID
             )
             db.session.add(user2)
             db.session.commit()
@@ -370,13 +382,13 @@ class TestThreadCreation:
             # First user views
             result1 = forum_service.increment_thread_view(thread, user_id=user1.id)
             assert result1 is True
-            views1 = (ForumThread.query.get(forum_data["thread1"]).view_count or 0)
+            views1 = (ForumThread.query.get(forum_data["thread2"]).view_count or 0)
             assert views1 > initial_views
 
             # Second user views - should count as different user
             result2 = forum_service.increment_thread_view(thread, user_id=user2.id)
             assert result2 is True
-            views2 = (ForumThread.query.get(forum_data["thread1"]).view_count or 0)
+            views2 = (ForumThread.query.get(forum_data["thread2"]).view_count or 0)
             assert views2 > views1
 
 
@@ -576,11 +588,11 @@ class TestReports:
             )
             db.session.commit()
 
-            updated, _ = forum_service.update_report_status(
+            updated = forum_service.update_report_status(
                 report,
-                new_status="resolved",
-                moderator_id=admin.id,
-                resolution_notes="Fixed"
+                status="resolved",
+                handled_by=admin.id,
+                resolution_note="Fixed"
             )
 
             assert updated.status == "resolved"

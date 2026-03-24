@@ -4,11 +4,21 @@ import pytest
 
 from app import create_app
 from app.config import TestingConfig
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import Role, User
 from app.models.role import ensure_roles_seeded
 from app.models.area import ensure_areas_seeded
 from werkzeug.security import generate_password_hash
+
+
+@pytest.fixture(autouse=True)
+def clear_rate_limiter():
+    """Clear rate limiter state before each test to prevent cross-test contamination."""
+    if hasattr(limiter, 'request_times'):
+        limiter.request_times.clear()
+    yield
+    if hasattr(limiter, 'request_times'):
+        limiter.request_times.clear()
 
 
 @pytest.fixture

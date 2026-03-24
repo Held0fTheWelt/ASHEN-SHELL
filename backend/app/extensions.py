@@ -24,11 +24,6 @@ def get_rate_limit_key():
     return get_remote_address()
 
 
-limiter = Limiter(key_func=get_rate_limit_key, default_limits=[])
-migrate = Migrate()
-mail = Mail()
-
-
 class TestLimiter:
     """Rate limiter that works in tests by actually tracking request counts."""
     def __init__(self):
@@ -59,10 +54,15 @@ class TestLimiter:
                 from flask_jwt_extended import get_jwt_identity
 
                 # Get the rate limit key - prefer JWT identity for authenticated endpoints
+                key = None
                 try:
                     identity = get_jwt_identity()
-                    key = f"{f.__name__}:{identity}"
+                    if identity:
+                        key = f"{f.__name__}:{identity}"
                 except Exception:
+                    pass
+
+                if not key:
                     # Fall back to key_func or remote_addr if JWT not available
                     if key_func:
                         try:
@@ -99,12 +99,17 @@ class TestLimiter:
         pass
 
 
+# Use Flask-Limiter for rate limiting
+limiter = Limiter(key_func=get_rate_limit_key, default_limits=[])
+migrate = Migrate()
+mail = Mail()
+
+
 def init_app(app):
     """Bind extensions to app. CORS uses configurable origins from config."""
     db.init_app(app)
     jwt.init_app(app)
-    # Initialize limiter - in-memory storage by default, which works for testing
-    # IMPORTANT: Don't disable rate limiting in test mode - we have tests that verify it works
+    # Initialize limiter (TestLimiter.init_app is a no-op)
     limiter.init_app(app)
     mail.init_app(app)
     if not app.config.get("TESTING"):
