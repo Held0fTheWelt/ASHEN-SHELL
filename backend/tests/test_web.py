@@ -47,9 +47,10 @@ def test_login_get_returns_200(client):
 
 def test_login_post_invalid_credentials(client):
     """POST /login with wrong credentials shows error and does not redirect."""
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/login",
-        data={"username": "nobody", "password": "wrong"},
+        {"username": "nobody", "password": "wrong"},
         follow_redirects=False,
     )
     assert response.status_code == 200
@@ -59,9 +60,10 @@ def test_login_post_invalid_credentials(client):
 def test_login_post_success_redirects_to_dashboard(client, test_user):
     """POST /login with valid credentials redirects to dashboard and sets session."""
     user, password = test_user
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/login",
-        data={"username": user.username, "password": password},
+        {"username": user.username, "password": password},
         follow_redirects=True,
     )
     assert response.status_code == 200
@@ -71,7 +73,7 @@ def test_login_post_success_redirects_to_dashboard(client, test_user):
 def test_login_get_when_logged_in_redirects_to_dashboard(client, test_user):
     """GET /login when already logged in redirects to dashboard."""
     user, password = test_user
-    client.post("/login", data={"username": user.username, "password": password})
+    _get_csrf_and_post(client, "/login", {"username": user.username, "password": password})
     response = client.get("/login", follow_redirects=False)
     assert response.status_code == 302
     assert "dashboard" in response.location or response.headers.get("Location", "").endswith("/dashboard")
@@ -80,9 +82,10 @@ def test_login_get_when_logged_in_redirects_to_dashboard(client, test_user):
 def test_login_banned_user_redirects_to_blocked(client, banned_user):
     """POST /login with banned user redirects to /blocked and shows restricted message."""
     user, password = banned_user
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/login",
-        data={"username": user.username, "password": password},
+        {"username": user.username, "password": password},
         follow_redirects=True,
     )
     assert response.status_code == 200
@@ -105,7 +108,7 @@ def test_get_logout_rejected(client):
 def test_logout_post_redirects_and_clears_session(client, test_user):
     """POST /logout redirects to home and clears session (logout is POST only)."""
     user, password = test_user
-    client.post("/login", data={"username": user.username, "password": password})
+    _get_csrf_and_post(client, "/login", {"username": user.username, "password": password})
     response = client.post("/logout", follow_redirects=True)
     assert response.status_code == 200
     assert b"Log in" in response.data or b"login" in response.data.lower()
@@ -121,7 +124,7 @@ def test_dashboard_anonymous_redirects_to_login(client):
 def test_dashboard_logged_in_returns_200(client, test_user):
     """GET /dashboard with valid session returns 200 and dashboard content."""
     user, password = test_user
-    client.post("/login", data={"username": user.username, "password": password})
+    _get_csrf_and_post(client, "/login", {"username": user.username, "password": password})
     response = client.get("/dashboard")
     assert response.status_code == 200
     assert b"Dashboard" in response.data or user.username.encode() in response.data
@@ -348,9 +351,10 @@ def test_reset_password_flow(client, test_user_with_email, app):
     )
     assert response.status_code == 200
     assert b"login" in response.data.lower() or b"Log in" in response.data
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/login",
-        data={"username": user.username, "password": "Newpass123"},
+        {"username": user.username, "password": "Newpass123"},
         follow_redirects=True,
     )
     assert response.status_code == 200
@@ -439,9 +443,10 @@ def test_login_blocked_for_unverified_user_when_verification_enabled(client, app
         )
         db.session.add(user)
         db.session.commit()
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/login",
-        data={"username": "unverifieduser", "password": "Unverified1"},
+        {"username": "unverifieduser", "password": "Unverified1"},
         follow_redirects=True,
     )
     assert response.status_code == 200
