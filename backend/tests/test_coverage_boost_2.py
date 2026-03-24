@@ -29,7 +29,7 @@ from werkzeug.security import generate_password_hash
 
 # ======================= HELPER =======================
 
-def _login_session(client, username, password, app=None, app):
+def _login_session(client, username, password, app=None):
     """Web login and return client with session cookie set."""
     import re
     # Ensure user has email verified (for web login)
