@@ -129,10 +129,16 @@ def proxy_api(subpath: str):
 
     Client calls: /_proxy/api/v1/...
     Server forwards to: {BACKEND_API_URL}/api/v1/...
+
+    Security: Blocks /_proxy/admin/* paths (403 Forbidden).
     """
     # Allow preflight to succeed quickly (browser shouldn't need it for same-origin, but harmless).
     if request.method == "OPTIONS":
         return Response(status=204)
+
+    # Security: Block admin paths
+    if subpath.startswith("admin"):
+        return Response("Forbidden", status=403, mimetype="text/plain")
 
     base = (app.config.get("BACKEND_API_URL") or "").rstrip("/")
     if not base:
@@ -147,12 +153,16 @@ def proxy_api(subpath: str):
     body = request.get_data() if request.method in ("POST", "PUT", "PATCH") else None
 
     headers = {}
-    # Forward only relevant headers
+    # Forward only relevant headers, explicitly strip dangerous ones
+    dangerous_headers = {"Cookie", "Set-Cookie", "Host"}
     if request.headers.get("Authorization"):
         headers["Authorization"] = request.headers["Authorization"]
     if request.headers.get("Content-Type"):
         headers["Content-Type"] = request.headers["Content-Type"]
     headers["Accept"] = request.headers.get("Accept", "application/json")
+    # Ensure dangerous headers are not forwarded
+    for header in dangerous_headers:
+        headers.pop(header, None)
 
     req = Request(target, data=body, method=request.method, headers=headers)
     try:
