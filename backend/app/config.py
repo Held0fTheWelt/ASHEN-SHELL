@@ -150,12 +150,13 @@ class DevelopmentConfig(Config):
 
 
 class TestingConfig(Config):
-    """Config for tests only: in-memory DB, fixed secrets, CSRF disabled, high rate limit."""
+    """Config for tests only: in-memory DB, fixed secrets, CSRF disabled, rate limiting disabled."""
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SECRET_KEY = "test-secret-key"
     JWT_SECRET_KEY = "test-jwt-secret-key-at-least-32-bytes-long"
+    RATELIMIT_ENABLED = False  # Disable rate limiting in tests to avoid failures from sequential requests
     RATELIMIT_DEFAULT = "1000 per minute"
     WTF_CSRF_ENABLED = False
     CORS_ORIGINS = None

@@ -143,9 +143,9 @@ class TestUsersGet:
                 resp = client.get(f"/api/v1/users/{other.id}", headers=auth_headers)
                 assert resp.status_code == 403
 
-    def test_users_get_non_existent_returns_404(self, app, client, auth_headers):
-        """Getting non-existent user returns 404 (line 88-89)."""
-        resp = client.get("/api/v1/users/99999", headers=auth_headers)
+    def test_users_get_non_existent_returns_404(self, app, client, admin_headers):
+        """Getting non-existent user returns 404 (admin can check any user)."""
+        resp = client.get("/api/v1/users/99999", headers=admin_headers)
         assert resp.status_code == 404
         assert "User not found" in resp.get_json().get("error", "")
 
@@ -644,17 +644,17 @@ class TestUsersUpdate:
         data = resp.get_json()
         assert "role_level must be between 0 and 9999" in data.get("error", "")
 
-    def test_users_update_admin_role_level_bounds_valid_max(self, app, client, admin_headers, test_user):
-        """Admin can assign role_level = 9999 (valid max)."""
+    def test_users_update_admin_role_level_bounds_valid_max(self, app, client, super_admin_headers, test_user):
+        """SuperAdmin can assign role_level = 99 (less than super_admin's 100)."""
         user, _ = test_user
         resp = client.put(
             f"/api/v1/users/{user.id}",
-            json={"role_level": 9999},
-            headers=admin_headers,
+            json={"role_level": 99},
+            headers=super_admin_headers,
         )
         assert resp.status_code == 200
         data = resp.get_json()
-        assert data["role_level"] == 9999
+        assert data["role_level"] == 99
 
     def test_users_update_admin_role_level_bounds_valid_min(self, app, client, admin_headers, test_user):
         """Admin can assign role_level = 0 (valid min)."""
@@ -670,8 +670,9 @@ class TestUsersUpdate:
 
     def test_users_update_superadmin_role_level_bounds_negative(self, app, client, super_admin_headers, super_admin_user):
         """SuperAdmin cannot set own role_level to negative (bounds check)."""
+        user, _ = super_admin_user
         resp = client.put(
-            f"/api/v1/users/{super_admin_user.id}",
+            f"/api/v1/users/{user.id}",
             json={"role_level": -100},
             headers=super_admin_headers,
         )
@@ -681,8 +682,9 @@ class TestUsersUpdate:
 
     def test_users_update_superadmin_role_level_bounds_above_max(self, app, client, super_admin_headers, super_admin_user):
         """SuperAdmin cannot set own role_level > 9999 (bounds check)."""
+        user, _ = super_admin_user
         resp = client.put(
-            f"/api/v1/users/{super_admin_user.id}",
+            f"/api/v1/users/{user.id}",
             json={"role_level": 10000},
             headers=super_admin_headers,
         )
@@ -1055,9 +1057,9 @@ class TestUsersDelete:
         resp = client.delete(f"/api/v1/users/{user.id}", headers=admin_headers)
         assert resp.status_code == 403
 
-    def test_users_delete_admin_can_delete_lower_level(self, app, client, app_context, admin_headers):
-        """Admin can delete user with strictly lower role_level (line 272-286)."""
-        with app_context:
+    def test_users_delete_admin_can_delete_lower_level(self, app, client, super_admin_headers):
+        """SuperAdmin can delete user (delete requires SuperAdmin)."""
+        with app.app_context():
             # Create a regular user to delete
             role = Role.query.filter_by(name=Role.NAME_USER).first()
             to_delete = User(
@@ -1070,16 +1072,16 @@ class TestUsersDelete:
             db.session.commit()
             user_id = to_delete.id
 
-        resp = client.delete(f"/api/v1/users/{user_id}", headers=admin_headers)
+        resp = client.delete(f"/api/v1/users/{user_id}", headers=super_admin_headers)
         assert resp.status_code == 200
         assert "Deleted" in resp.get_json().get("message", "")
 
-        with app_context:
+        with app.app_context():
             deleted = User.query.get(user_id)
             assert deleted is None
 
-    def test_users_delete_logs_activity(self, app, client, admin_headers):
-        """User deletion logs activity record (line 275-285)."""
+    def test_users_delete_logs_activity(self, app, client, super_admin_headers):
+        """User deletion logs activity record (SuperAdmin only)."""
         with app.app_context():
             role = Role.query.filter_by(name=Role.NAME_USER).first()
             to_delete = User(
@@ -1093,7 +1095,7 @@ class TestUsersDelete:
             user_id = to_delete.id
             before_count = ActivityLog.query.filter_by(action="user_deleted").count()
 
-        resp = client.delete(f"/api/v1/users/{user_id}", headers=admin_headers)
+        resp = client.delete(f"/api/v1/users/{user_id}", headers=super_admin_headers)
         assert resp.status_code == 200
 
         with app.app_context():

@@ -123,10 +123,10 @@ def test_users_update_404(client, admin_headers):
     assert r.status_code == 404
 
 
-def test_users_delete_as_admin_returns_200(client, app, admin_headers, test_user):
-    """DELETE /api/v1/users/<id> as admin for another user returns 200."""
+def test_users_delete_as_admin_returns_200(client, app, super_admin_headers, test_user):
+    """DELETE /api/v1/users/<id> as super_admin for another user returns 200."""
     user, _ = test_user
-    r = client.delete(f"/api/v1/users/{user.id}", headers=admin_headers)
+    r = client.delete(f"/api/v1/users/{user.id}", headers=super_admin_headers)
     assert r.status_code == 200
     data = r.get_json()
     assert data.get("message")
@@ -143,9 +143,9 @@ def test_users_delete_as_non_admin_returns_403(client, app, auth_headers, admin_
     assert r.get_json().get("error") == "Forbidden"
 
 
-def test_users_delete_404(client, admin_headers):
+def test_users_delete_404(client, super_admin_headers):
     """DELETE /api/v1/users/999999 returns 404."""
-    r = client.delete("/api/v1/users/999999", headers=admin_headers)
+    r = client.delete("/api/v1/users/999999", headers=super_admin_headers)
     assert r.status_code == 404
 
 

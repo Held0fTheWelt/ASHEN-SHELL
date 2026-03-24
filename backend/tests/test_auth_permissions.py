@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
 
 from flask import Flask, jsonify, g
-from flask_jwt_extended import create_access_token, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
 
 from app import create_app
 from app.config import TestingConfig
@@ -18,6 +18,7 @@ from app.models import User, Role
 from app.models.user import SUPERADMIN_THRESHOLD
 from app.auth.permissions import (
     get_current_user,
+    create_access_token,
     current_user_has_role,
     current_user_has_any_role,
     current_user_is_admin,
@@ -121,10 +122,20 @@ def get_jwt_token(client, username, password):
 class TestGetCurrentUser:
     """Test get_current_user() function."""
 
-    def test_get_current_user_with_valid_user_id(self, app_with_test_routes, test_user):
+    def test_get_current_user_with_valid_user_id(self, app_with_test_routes):
         """get_current_user returns user when JWT identity is valid user ID."""
         with app_with_test_routes.app_context():
-            user, password = test_user
+            # Create user within this app's context
+            role = Role.query.filter_by(name="user").first()
+            user = User(
+                username="testuser",
+                password_hash=generate_password_hash("Testpass1"),
+                role_id=role.id,
+            )
+            db.session.add(user)
+            db.session.commit()
+            db.session.refresh(user)
+
             token = create_access_token(identity=user.id)
 
             with app_with_test_routes.test_request_context(
@@ -145,7 +156,12 @@ class TestGetCurrentUser:
         """get_current_user returns None when JWT identity is None."""
         with app_with_test_routes.app_context():
             with app_with_test_routes.test_request_context():
-                result = get_current_user()
+                from flask_jwt_extended import jwt_required
+                @jwt_required(optional=True)
+                def check_user():
+                    return get_current_user()
+
+                result = check_user()
                 assert result is None
 
     def test_get_current_user_with_invalid_type_identity(self, app_with_test_routes):
@@ -186,10 +202,19 @@ class TestGetCurrentUser:
 class TestCurrentUserHasRole:
     """Test current_user_has_role() function."""
 
-    def test_user_has_matching_role(self, app_with_test_routes, test_user):
+    def test_user_has_matching_role(self, app_with_test_routes):
         """User with matching role returns True."""
         with app_with_test_routes.app_context():
-            user, password = test_user
+            role = Role.query.filter_by(name="user").first()
+            user = User(
+                username="testuser",
+                password_hash=generate_password_hash("Testpass1"),
+                role_id=role.id,
+            )
+            db.session.add(user)
+            db.session.commit()
+            db.session.refresh(user)
+
             token = create_access_token(identity=user.id)
 
             with app_with_test_routes.test_request_context(
@@ -202,10 +227,19 @@ class TestCurrentUserHasRole:
 
                 assert check_role() is True
 
-    def test_user_lacks_required_role(self, app_with_test_routes, test_user):
+    def test_user_lacks_required_role(self, app_with_test_routes):
         """User without matching role returns False."""
         with app_with_test_routes.app_context():
-            user, password = test_user
+            role = Role.query.filter_by(name="user").first()
+            user = User(
+                username="testuser",
+                password_hash=generate_password_hash("Testpass1"),
+                role_id=role.id,
+            )
+            db.session.add(user)
+            db.session.commit()
+            db.session.refresh(user)
+
             token = create_access_token(identity=user.id)
 
             with app_with_test_routes.test_request_context(
@@ -263,10 +297,19 @@ class TestCurrentUserHasAnyRole:
         (["admin", "moderator"], False),
         ([], False),
     ])
-    def test_user_has_any_of_roles(self, app_with_test_routes, test_user, role_list, expected):
+    def test_user_has_any_of_roles(self, app_with_test_routes, role_list, expected):
         """User checks multiple roles correctly."""
         with app_with_test_routes.app_context():
-            user, password = test_user
+            role = Role.query.filter_by(name="user").first()
+            user = User(
+                username="testuser",
+                password_hash=generate_password_hash("Testpass1"),
+                role_id=role.id,
+            )
+            db.session.add(user)
+            db.session.commit()
+            db.session.refresh(user)
+
             token = create_access_token(identity=user.id)
 
             with app_with_test_routes.test_request_context(
@@ -336,10 +379,19 @@ class TestCurrentUserIsAdmin:
 
                 assert check_admin() is True
 
-    def test_non_admin_user_returns_false(self, app_with_test_routes, test_user):
+    def test_non_admin_user_returns_false(self, app_with_test_routes):
         """Non-admin user returns False."""
         with app_with_test_routes.app_context():
-            user, password = test_user
+            role = Role.query.filter_by(name="user").first()
+            user = User(
+                username="testuser",
+                password_hash=generate_password_hash("Testpass1"),
+                role_id=role.id,
+            )
+            db.session.add(user)
+            db.session.commit()
+            db.session.refresh(user)
+
             token = create_access_token(identity=user.id)
 
             with app_with_test_routes.test_request_context(
@@ -558,10 +610,19 @@ class TestCurrentUserIsModerator:
 
                 assert check_mod() is True
 
-    def test_non_moderator_returns_false(self, app_with_test_routes, test_user):
+    def test_non_moderator_returns_false(self, app_with_test_routes):
         """User without moderator role returns False."""
         with app_with_test_routes.app_context():
-            user, password = test_user
+            role = Role.query.filter_by(name="user").first()
+            user = User(
+                username="testuser",
+                password_hash=generate_password_hash("Testpass1"),
+                role_id=role.id,
+            )
+            db.session.add(user)
+            db.session.commit()
+            db.session.refresh(user)
+
             token = create_access_token(identity=user.id)
 
             with app_with_test_routes.test_request_context(
@@ -725,10 +786,19 @@ class TestCurrentUserIsBanned:
 
                 assert check_banned() is True
 
-    def test_non_banned_user_returns_false(self, app_with_test_routes, test_user):
+    def test_non_banned_user_returns_false(self, app_with_test_routes):
         """Non-banned user returns False."""
         with app_with_test_routes.app_context():
-            user, password = test_user
+            role = Role.query.filter_by(name="user").first()
+            user = User(
+                username="testuser",
+                password_hash=generate_password_hash("Testpass1"),
+                role_id=role.id,
+            )
+            db.session.add(user)
+            db.session.commit()
+            db.session.refresh(user)
+
             token = create_access_token(identity=user.id)
 
             with app_with_test_routes.test_request_context(
@@ -884,7 +954,8 @@ class TestRequireJwtAdminDecorator:
                 app_with_test_routes, "banned_admin", "admin",
                 role_level=50, is_banned=True
             )
-            token = get_jwt_token(client_with_routes, user.username, password)
+            # Create token directly since banned users cannot login
+            token = create_access_token(identity=user.id)
 
         resp = client_with_routes.get(
             "/admin-only",
@@ -958,7 +1029,8 @@ class TestRequireJwtModeratorOrAdminDecorator:
             user, password = create_test_user(
                 app_with_test_routes, "banned_mod", "moderator", is_banned=True
             )
-            token = get_jwt_token(client_with_routes, user.username, password)
+            # Create token directly since banned users cannot login
+            token = create_access_token(identity=user.id)
 
         resp = client_with_routes.get(
             "/mod-or-admin",
@@ -1076,26 +1148,37 @@ class TestRequireEditorOrN8nServiceDecorator:
         assert resp.status_code == 200
         assert resp.get_json()["is_n8n_service"] is True
 
-    def test_g_is_n8n_service_flag_false_for_jwt(self, app_with_test_routes, client_with_routes):
+    def test_g_is_n8n_service_flag_false_for_jwt(self):
         """g.is_n8n_service is set to False for JWT request (line 158)."""
-        with app_with_test_routes.app_context():
+        # Create a fresh app for this test since we need to register new blueprints
+        app = create_app(TestingConfig)
+
+        with app.app_context():
+            db.create_all()
+            from app.models.role import ensure_roles_seeded
+            from app.models.area import ensure_areas_seeded
+            ensure_roles_seeded()
+            ensure_areas_seeded()
+
+            # Create test route
+            from flask import Blueprint
+            bp = Blueprint("check_flag_jwt", __name__)
+
+            @bp.route("/check-flag-jwt", methods=["GET"])
+            @require_editor_or_n8n_service
+            def check_flag_jwt():
+                return jsonify({"is_n8n_service": g.is_n8n_service}), 200
+
+            app.register_blueprint(bp)
+
+            # Create user and get token
             user, password = create_test_user(
-                app_with_test_routes, "mod_user", "moderator"
+                app, "mod_user", "moderator"
             )
-            token = get_jwt_token(client_with_routes, user.username, password)
+            token = get_jwt_token(app.test_client(), user.username, password)
 
-        # Create a test route that checks g.is_n8n_service
-        from flask import Blueprint
-        bp = Blueprint("check_flag_jwt", __name__)
-
-        @bp.route("/check-flag-jwt", methods=["GET"])
-        @require_editor_or_n8n_service
-        def check_flag_jwt():
-            return jsonify({"is_n8n_service": g.is_n8n_service}), 200
-
-        app_with_test_routes.register_blueprint(bp)
-
-        resp = client_with_routes.get(
+        client = app.test_client()
+        resp = client.get(
             "/check-flag-jwt",
             headers={"Authorization": f"Bearer {token}"}
         )

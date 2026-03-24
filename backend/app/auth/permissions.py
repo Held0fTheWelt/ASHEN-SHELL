@@ -1,6 +1,7 @@
 """Permission helpers for API routes. Use after @jwt_required(). Centralized role, role_level, and ban checks."""
 
 import hmac
+import os
 from functools import wraps
 
 from flask import current_app, g, jsonify, request

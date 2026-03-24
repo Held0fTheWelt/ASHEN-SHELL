@@ -36,7 +36,13 @@ def _check_rate_limit(key: str, limit_string: str) -> bool:
     limit_string format: "10/minute" or "100/hour"
     Returns True if limit is NOT exceeded (request is allowed)
     Returns False if limit IS exceeded (request should be rejected)
+
+    Note: Rate limiting is disabled in TESTING mode.
     """
+    # Disable rate limiting in test mode
+    if current_app.config.get("TESTING"):
+        return True  # Always allow in test mode
+
     try:
         parts = limit_string.split("/")
         if len(parts) != 2:

@@ -948,19 +948,19 @@ class TestUserAPIExtended:
         )
         assert resp.status_code == 400
 
-    def test_user_delete_by_admin(self, app, client, admin_headers):
-        # Create a user to delete
+    def test_user_delete_by_admin(self, app, client, super_admin_headers):
+        # Create a user to delete (delete requires SuperAdmin)
         with app.app_context():
             role = Role.query.filter_by(name=Role.NAME_USER).first()
             u = User(username="deleteuser", password_hash=generate_password_hash("Delpass1"), role_id=role.id)
             db.session.add(u)
             db.session.commit()
             uid = u.id
-        resp = client.delete(f"/api/v1/users/{uid}", headers=admin_headers)
+        resp = client.delete(f"/api/v1/users/{uid}", headers=super_admin_headers)
         assert resp.status_code == 200
 
-    def test_user_delete_not_found(self, app, client, admin_headers):
-        resp = client.delete("/api/v1/users/99999", headers=admin_headers)
+    def test_user_delete_not_found(self, app, client, super_admin_headers):
+        resp = client.delete("/api/v1/users/99999", headers=super_admin_headers)
         assert resp.status_code == 404
 
     def test_user_delete_forbidden_for_user(self, app, client, auth_headers):

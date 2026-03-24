@@ -6,12 +6,13 @@ from app.config import TestingConfig
 
 
 def test_create_app_raises_when_secret_key_missing():
-    """create_app with config that has no SECRET_KEY and not TESTING raises ValueError."""
+    """create_app with config that has no SECRET_KEY and TESTING=False in production raises ValueError."""
     class NoSecretConfig(TestingConfig):
         TESTING = False
         SECRET_KEY = None
+        ENV = "production"
 
-    with pytest.raises(ValueError, match="SECRET_KEY must be set"):
+    with pytest.raises(ValueError, match="SECRET_KEY must be set in environment"):
         create_app(NoSecretConfig)
 
 
@@ -23,32 +24,35 @@ def test_create_app_accepts_testing_config():
 
 
 def test_create_app_raises_when_secret_key_empty_and_not_testing():
-    """Regression: empty SECRET_KEY with TESTING=False must raise (no insecure fallback)."""
+    """Regression: empty SECRET_KEY with TESTING=False in production must raise (no insecure fallback)."""
     class EmptySecretConfig(TestingConfig):
         TESTING = False
         SECRET_KEY = ""
+        ENV = "production"
 
-    with pytest.raises(ValueError, match="SECRET_KEY must be set"):
+    with pytest.raises(ValueError, match="SECRET_KEY must be set in environment"):
         create_app(EmptySecretConfig)
 
 
 def test_create_app_raises_when_jwt_secret_key_empty():
-    """Startup validation: empty JWT_SECRET_KEY raises ValueError."""
+    """Startup validation: empty JWT_SECRET_KEY in production raises ValueError."""
     class NoJWTSecretConfig(TestingConfig):
         TESTING = False
         SECRET_KEY = "valid-secret-key-for-testing-purposes"
         JWT_SECRET_KEY = ""
+        ENV = "production"
 
     with pytest.raises(ValueError, match="JWT_SECRET_KEY must be at least 32 bytes"):
         create_app(NoJWTSecretConfig)
 
 
 def test_create_app_raises_when_jwt_secret_key_too_short():
-    """Startup validation: JWT_SECRET_KEY < 32 bytes raises ValueError."""
+    """Startup validation: JWT_SECRET_KEY < 32 bytes in production raises ValueError."""
     class ShortJWTSecretConfig(TestingConfig):
         TESTING = False
         SECRET_KEY = "valid-secret-key-for-testing-purposes"
         JWT_SECRET_KEY = "weak"
+        ENV = "production"
 
     with pytest.raises(ValueError, match="JWT_SECRET_KEY must be at least 32 bytes"):
         create_app(ShortJWTSecretConfig)
@@ -150,6 +154,7 @@ def test_create_app_raises_when_mail_enabled_email_verification_disabled():
         TESTING = False
         SECRET_KEY = "valid-secret-key-for-testing-purposes"
         JWT_SECRET_KEY = "valid-jwt-secret-key-at-least-32-bytes-long"
+        ENV = "production"
         MAIL_ENABLED = True
         REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = False
 

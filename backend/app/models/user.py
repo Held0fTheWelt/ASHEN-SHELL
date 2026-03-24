@@ -127,10 +127,16 @@ class User(db.Model):
         """
         new_entry = PasswordHistory(user_id=self.id, password_hash=password_hash)
         db.session.add(new_entry)
-        # Keep only last 3 entries
-        db.session.query(PasswordHistory).filter(PasswordHistory.user_id == self.id).order_by(
-            PasswordHistory.created_at.desc()
-        ).offset(3).delete(synchronize_session=False)
+        # Keep only last 3 entries by finding IDs to delete, then deleting them
+        # Get all entries ordered by created_at descending, skip first 3
+        to_delete_entries = db.session.query(PasswordHistory.id).filter(
+            PasswordHistory.user_id == self.id
+        ).order_by(PasswordHistory.created_at.desc()).offset(3).all()
+
+        if to_delete_entries:
+            delete_ids = [e[0] for e in to_delete_entries]
+            db.session.query(PasswordHistory).filter(PasswordHistory.id.in_(delete_ids)).delete(synchronize_session=False)
+
         db.session.commit()
 
     def __repr__(self):

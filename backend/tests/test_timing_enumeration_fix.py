@@ -11,10 +11,18 @@ from werkzeug.security import generate_password_hash
 def unverified_user(app):
     """Create a test user with unverified email."""
     with app.app_context():
+        from app.models import Role
+        role = Role.query.filter_by(name="user").first()
+        if not role:
+            role = Role(name="user", default_role_level=0)
+            db.session.add(role)
+            db.session.commit()
+
         user = User(
             username="unverified_user",
             email="unverified@example.com",
             password_hash=generate_password_hash("SecurePassword123!"),
+            role_id=role.id,
             email_verified_at=None,  # Not verified
         )
         db.session.add(user)

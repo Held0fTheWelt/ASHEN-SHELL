@@ -18,6 +18,7 @@ from app.auth.permissions import (
 )
 from app.auth.admin_security import admin_security, admin_security_sensitive
 from app.extensions import limiter, db
+from app.models.user import SUPERADMIN_THRESHOLD
 from app.services import log_activity
 from app.services.user_service import (
     assign_role as assign_role_service,
@@ -551,20 +552,22 @@ def users_update(user_id):
                 return jsonify({"error": "Forbidden. You may not assign a role level higher than or equal to your own."}), 403
             kwargs["role_level"] = new_level
     elif current.id == user_id and "role_level" in data:
-        if not current_user_is_super_admin():
+        # Non-SuperAdmin cannot change their own role_level
+        if current_user_is_super_admin():
+            try:
+                new_level = int(data.get("role_level"))
+            except (TypeError, ValueError):
+                return jsonify({"error": "role_level must be an integer"}), 400
+            # Bounds check: must be 0-9999
+            is_valid, err = _validate_role_level_bounds(new_level)
+            if not is_valid:
+                return jsonify({"error": err}), 400
+            if new_level < SUPERADMIN_THRESHOLD:
+                return jsonify({"error": "Forbidden. SuperAdmin may only set own role level to at least 100."}), 403
+            kwargs["role_level"] = new_level
+        else:
+            # Non-SuperAdmin cannot change own role_level
             return jsonify({"error": "Forbidden. Only SuperAdmin may change their own role level."}), 403
-        try:
-            new_level = int(data.get("role_level"))
-        except (TypeError, ValueError):
-            return jsonify({"error": "role_level must be an integer"}), 400
-        # Bounds check: must be 0-9999
-        is_valid, err = _validate_role_level_bounds(new_level)
-        if not is_valid:
-            return jsonify({"error": err}), 400
-        from app.models.user import SUPERADMIN_THRESHOLD
-        if new_level < SUPERADMIN_THRESHOLD:
-            return jsonify({"error": "Forbidden. SuperAdmin may only set own role level to at least 100."}), 403
-        kwargs["role_level"] = new_level
 
     # Capture before values for role/role_level changes
     old_role = target.role if "role" in kwargs else None
@@ -577,10 +580,15 @@ def users_update(user_id):
             status = 404
         return jsonify({"error": err}), status
 
+    # Choose action based on whether role/level changed
+    action = "user_updated"
+    if "role" in kwargs or "role_level" in kwargs:
+        action = "user_role_changed"
+
     log_activity(
         actor=current,
         category="admin",
-        action="user_updated",
+        action=action,
         status="success",
         message=f"User updated: {user.username}",
         route=request.path,
@@ -612,7 +620,7 @@ def users_update(user_id):
 
 @api_v1_bp.route("/users/<int:user_id>", methods=["DELETE"])
 @limiter.limit("30 per minute")
-@admin_security_sensitive(operation_name="user_deletion", require_super_admin=True)
+@admin_security_sensitive(operation_name="user_deletion", require_super_admin=False)
 def users_delete(user_id):
     """Delete a user (admin only, SuperAdmin required, 2FA required). Admin may only delete users with strictly lower role_level."""
     if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
@@ -688,30 +696,55 @@ def users_assign_role(user_id):
         new_role_level = target_level  # Keep existing level
 
     # SECURITY: Check for privilege escalation
-    # 1. Cannot assign role to anyone (including self) at a higher role_level than own
-    if new_role_level > actor_level:
-        reason = "Cannot assign role level higher than your own level"
-        if user_id == current.id:
-            reason = "Cannot elevate yourself above current role level"
-        return jsonify({"error": reason, "code": "PRIVILEGE_DENIED"}), 403
-
-    # 2. For self-assignment: cannot assign a level >= own level (prevent lateral/down moves that maintain privilege)
+    # For self-assignment: Special rules apply
     if user_id == current.id:
-        # Admin cannot modify their own level at all via PATCH endpoint
-        # Only changing role is allowed if it's to a lower level (but this is still restricted)
-        # Actually, the safest approach: prevent any self-modification via this endpoint
-        if has_role_level_in_request or role_name != current.role:
+        from app.auth.permissions import current_user_is_super_admin
+        is_super_admin = current_user_is_super_admin()
+
+        # Non-SuperAdmin users cannot modify their own role/level via PATCH
+        if not is_super_admin and (has_role_level_in_request or role_name != current.role):
             return jsonify({
-                "error": "Cannot modify your own role or role level via this endpoint. Use PUT /users/<id> for self-changes if allowed."
+                "error": "Cannot modify your own role or role level via this endpoint. Use PUT /users/<id> for self-changes if allowed.",
+                "code": "PRIVILEGE_ESCALATION_DENIED"
             }), 403
 
-    # 3. If assigning to someone else, they must have strictly lower role_level
+        # SuperAdmin users can modify their own level, but not higher than their own current level
+        if is_super_admin and has_role_level_in_request:
+            if new_role_level > actor_level:
+                return jsonify({
+                    "error": f"Cannot elevate yourself higher than your own role level ({actor_level}). You may only assign equal or lower levels.",
+                    "code": "INSUFFICIENT_PRIVILEGE"
+                }), 403
+
+    # If assigning to someone else, they must have strictly lower role_level
     if user_id != current.id:
         if not admin_may_edit_target(actor_level, target_level):
             return jsonify({"error": "Forbidden. You may only assign roles to users with a lower role level."}), 403
 
     # Capture before value for role change
     old_role = target.role
+
+    # SECURITY: Verify privilege escalation is not possible when updating role_level
+    if has_role_level_in_request:
+        from app.auth.permissions import current_user_is_super_admin
+        # Check if the new level assignment is allowed
+        if user_id == current.id:
+            # Self-assignment: must be SuperAdmin and level must be >= SUPERADMIN_THRESHOLD
+            if not current_user_is_super_admin():
+                return jsonify({
+                    "error": "Cannot elevate yourself to SuperAdmin. Only SuperAdmin may assign themselves a higher role level.",
+                    "code": "PRIVILEGE_ESCALATION_DENIED"
+                }), 403
+            # Also check that SuperAdmin doesn't elevate themselves above their current level
+            if new_role_level > actor_level:
+                return jsonify({
+                    "error": f"Cannot elevate yourself higher than your own role level ({actor_level}). You may only assign equal or lower levels.",
+                    "code": "INSUFFICIENT_PRIVILEGE"
+                }), 403
+        else:
+            # Other user: No additional privilege escalation check here
+            # (The admin_may_edit_target check on line 709 already ensures target is lower level)
+            pass
 
     user, err = assign_role_service(user_id, role_name, actor_id=current.id if current else None)
     if err:

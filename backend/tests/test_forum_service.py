@@ -359,6 +359,10 @@ class TestPostPermissions:
         with app.app_context():
             mod = _make_user(Role.NAME_MODERATOR, "mc_mod")
             cat = _make_category(slug="mc2cat")
+            # Moderators must be explicitly assigned to categories
+            from app.models.forum import ModeratorAssignment
+            assignment = ModeratorAssignment(user_id=mod.id, category_id=cat.id)
+            db.session.add(assignment)
             db.session.commit()
             assert user_can_moderate_category(mod, cat) is True
 
