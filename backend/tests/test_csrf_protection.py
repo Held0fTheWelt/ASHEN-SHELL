@@ -11,8 +11,10 @@ Comprehensive tests to verify CSRF protection is properly implemented:
 
 import pytest
 from flask import session
+from werkzeug.security import generate_password_hash
 from app.extensions import db
-from app.models import User
+from app.models import User, Role
+from app.models.role import ensure_roles_seeded
 
 
 class TestCSRFConfiguration:
@@ -85,13 +87,20 @@ class TestWebFormCSRFProtection:
     def test_web_logout_requires_csrf_token(self, client, app):
         """POST to /logout without CSRF token should fail with 400."""
         with app.app_context():
+            # Ensure roles are seeded
+            ensure_roles_seeded()
+
+            # Get the user role
+            role = Role.query.filter_by(name=Role.NAME_USER).first()
+
             # Create and login a user first
             user = User(
                 username="testuser",
                 email="test@example.com",
-                email_verified_at=db.func.now()
+                email_verified_at=db.func.now(),
+                password_hash=generate_password_hash("TestPassword123!"),
+                role_id=role.id
             )
-            user.set_password("TestPassword123!")
             db.session.add(user)
             db.session.commit()
 

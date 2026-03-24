@@ -328,8 +328,7 @@ class TestDashboardAPI:
         resp = client.put(
             "/dashboard/api/site-settings",
             json={"slogan_rotation_interval_seconds": 30, "slogan_rotation_enabled": True},
-            data={"csrf_token": csrf_value},
-            content_type="application/json",
+            headers={"X-CSRFToken": csrf_value},
         )
         # Accept 200 (success) or 400 (CSRF validation issue) or 302 (redirect due to auth)
         assert resp.status_code in (200, 302, 400)

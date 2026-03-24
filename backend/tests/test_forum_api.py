@@ -18,6 +18,25 @@ from app.models import (
     User,
     Role,
 )
+from app.models.forum import ModeratorAssignment
+
+
+def _assign_moderators_to_category(app, category_id):
+    """Helper: assign all moderators to a category for testing moderation."""
+    with app.app_context():
+        moderator_role = Role.query.filter_by(name="moderator").first()
+        admin_role = Role.query.filter_by(name="admin").first()
+        moderators = User.query.filter_by(role_id=moderator_role.id).all() if moderator_role else []
+        admin = User.query.filter_by(role_id=admin_role.id).first() if admin_role else None
+
+        for mod in moderators:
+            assignment = ModeratorAssignment(
+                user_id=mod.id,
+                category_id=category_id,
+                assigned_by=admin.id if admin else mod.id,
+            )
+            db.session.add(assignment)
+        db.session.commit()
 
 
 # ============= CATEGORY VISIBILITY & ACCESS TESTS =============
@@ -494,14 +513,18 @@ def test_report_status_update(app, client, test_user, moderator_headers):
 def test_lock_unlock_thread(app, client, moderator_headers):
     """Moderators can lock/unlock threads."""
     thread_id = None
+    cat_id = None
     with app.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
+        cat_id = cat.id
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open", is_locked=False)
         db.session.add(thread)
         db.session.commit()
         thread_id = thread.id
+
+    _assign_moderators_to_category(app, cat_id)
 
     # Lock
     resp = client.post(f"/api/v1/forum/threads/{thread_id}/lock", headers=moderator_headers)
@@ -519,14 +542,18 @@ def test_lock_unlock_thread(app, client, moderator_headers):
 def test_pin_unpin_thread(app, client, moderator_headers):
     """Moderators can pin/unpin threads."""
     thread_id = None
+    cat_id = None
     with app.app_context():
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
+        cat_id = cat.id
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open", is_pinned=False)
         db.session.add(thread)
         db.session.commit()
         thread_id = thread.id
+
+    _assign_moderators_to_category(app, cat_id)
 
     # Pin
     resp = client.post(f"/api/v1/forum/threads/{thread_id}/pin", headers=moderator_headers)
@@ -544,11 +571,13 @@ def test_pin_unpin_thread(app, client, moderator_headers):
 def test_hide_unhide_post(app, client, test_user, moderator_headers):
     """Moderators can hide/unhide posts."""
     post_id = None
+    cat_id = None
     with app.app_context():
         user = User.query.filter_by(username="testuser").first()
         cat = ForumCategory(slug="public", title="Public", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
+        cat_id = cat.id
         thread = ForumThread(category_id=cat.id, slug="test", title="Test", status="open")
         db.session.add(thread)
         db.session.flush()
@@ -556,6 +585,8 @@ def test_hide_unhide_post(app, client, test_user, moderator_headers):
         db.session.add(post)
         db.session.commit()
         post_id = post.id
+
+    _assign_moderators_to_category(app, cat_id)
 
     # Hide
     resp = client.post(f"/api/v1/forum/posts/{post_id}/hide", headers=moderator_headers)
@@ -912,7 +943,10 @@ def test_move_thread(app, client, moderator_headers):
         t = ForumThread(category_id=c1.id, slug="move-thread", title="Move Me", status="open")
         db.session.add(t)
         db.session.commit()
-        thread_id, cat2_id = t.id, c2.id
+        thread_id, cat1_id, cat2_id = t.id, c1.id, c2.id
+
+    _assign_moderators_to_category(app, cat1_id)
+    _assign_moderators_to_category(app, cat2_id)
 
     resp = client.post(
         "/api/v1/forum/threads/{}/move".format(thread_id),
@@ -936,10 +970,13 @@ def test_archive_unarchive_thread(app, client, moderator_headers):
         cat = ForumCategory(slug="arch-cat", title="Arch Cat", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
+        cat_id = cat.id
         t = ForumThread(category_id=cat.id, slug="arch-thread", title="Archive Me", status="open")
         db.session.add(t)
         db.session.commit()
         thread_id = t.id
+
+    _assign_moderators_to_category(app, cat_id)
 
     resp = client.post("/api/v1/forum/threads/{}/archive".format(thread_id), headers=moderator_headers, json={})
     assert resp.status_code == 200
@@ -956,6 +993,7 @@ def test_thread_merge_moves_posts_and_updates_counters(app, client, moderator_he
         cat = ForumCategory(slug="merge-cat", title="Merge Cat", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
+        cat_id = cat.id
         source = ForumThread(category_id=cat.id, slug="source-thread", title="Source", status="open")
         target = ForumThread(category_id=cat.id, slug="target-thread", title="Target", status="open")
         db.session.add_all([source, target])
@@ -968,6 +1006,8 @@ def test_thread_merge_moves_posts_and_updates_counters(app, client, moderator_he
         db.session.commit()
         source_id = source.id
         target_id = target.id
+
+    _assign_moderators_to_category(app, cat_id)
 
     resp = client.post(
         f"/api/v1/forum/threads/{source_id}/merge",
@@ -1018,6 +1058,7 @@ def test_thread_merge_merges_subscriptions(app, client, moderator_headers):
         cat = ForumCategory(slug="merge-cat3", title="Merge Cat 3", is_active=True, is_private=False)
         db.session.add(cat)
         db.session.flush()
+        cat_id = cat.id
         source = ForumThread(category_id=cat.id, slug="source-thread3", title="Source3", status="open")
         target = ForumThread(category_id=cat.id, slug="target-thread3", title="Target3", status="open")
         db.session.add_all([source, target])
@@ -1034,6 +1075,8 @@ def test_thread_merge_merges_subscriptions(app, client, moderator_headers):
         target_id = target.id
         user1_id = user1.id
         user2_id = user2.id
+
+    _assign_moderators_to_category(app, cat_id)
 
     resp = client.post(
         f"/api/v1/forum/threads/{source_id}/merge",
@@ -1079,6 +1122,8 @@ def test_thread_split_creates_new_thread_and_moves_posts(app, client, moderator_
         reply_id = reply.id
         other_id = other.id
         cat_id = cat.id
+
+    _assign_moderators_to_category(app, cat_id)
 
     resp = client.post(
         f"/api/v1/forum/threads/{source_id}/split",

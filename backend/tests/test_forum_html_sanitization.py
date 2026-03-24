@@ -42,10 +42,18 @@ class TestHTMLSanitization:
         clean = _sanitize_html(dirty)
         assert "<p>" in clean
         assert "<b>" in clean
+        assert "</b>" in clean
         assert "<i>" in clean
+        assert "</i>" in clean
         assert "<em>" in clean
+        assert "</em>" in clean
         assert "<strong>" in clean
-        assert "Hello bold italic emphasis strong" in clean.replace("</b>", "").replace("</i>", "").replace("</em>", "").replace("</strong>", "")
+        assert "</strong>" in clean
+        assert "Hello" in clean
+        assert "bold" in clean
+        assert "italic" in clean
+        assert "emphasis" in clean
+        assert "strong" in clean
 
     def test_sanitize_allows_safe_links(self):
         """Links with safe href attribute should be preserved."""
@@ -162,12 +170,12 @@ class TestForumThreadSanitization:
             )
             db.session.add(category)
             db.session.commit()
-            return category
+            return category.id
 
     def test_create_thread_sanitizes_content(self, app, setup_forum):
         """Thread content should be sanitized on creation."""
         with app.app_context():
-            category = setup_forum
+            category = ForumCategory.query.get(setup_forum)
             dirty_content = '<p>Hello <script>alert("xss")</script></p>'
 
             thread, post, err = create_thread(
@@ -187,7 +195,7 @@ class TestForumThreadSanitization:
     def test_create_thread_allows_safe_html(self, app, setup_forum):
         """Thread content should preserve safe HTML tags."""
         with app.app_context():
-            category = setup_forum
+            category = ForumCategory.query.get(setup_forum)
             safe_content = '<p>Hello <b>bold</b> <i>italic</i> text</p>'
 
             thread, post, err = create_thread(
@@ -235,12 +243,12 @@ class TestForumPostSanitization:
             db.session.add(thread)
             db.session.commit()
 
-            return thread
+            return thread.id
 
     def test_create_post_sanitizes_content(self, app, setup_forum_with_thread):
         """Post content should be sanitized on creation."""
         with app.app_context():
-            thread = setup_forum_with_thread
+            thread = ForumThread.query.get(setup_forum_with_thread)
             dirty_content = '<p>Reply <iframe src="evil.com"></iframe></p>'
 
             post, err = create_post(
@@ -258,7 +266,7 @@ class TestForumPostSanitization:
     def test_create_post_allows_safe_tags(self, app, setup_forum_with_thread):
         """Post content should preserve safe tags."""
         with app.app_context():
-            thread = setup_forum_with_thread
+            thread = ForumThread.query.get(setup_forum_with_thread)
             safe_content = '<p>Check this <a href="https://example.com">link</a></p>'
 
             post, err = create_post(

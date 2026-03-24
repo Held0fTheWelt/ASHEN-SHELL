@@ -912,7 +912,7 @@ def forum_post_delete(post_id: int):
 @jwt_required()
 def forum_post_like(post_id: int):
     """
-    Like a post. Duplicate likes are ignored (idempotent).
+    Like a post. Duplicate likes are ignored (idempotent - returns 200 for already-liked posts).
     """
     user, err_resp = _require_user()
     if err_resp:
@@ -924,7 +924,8 @@ def forum_post_like(post_id: int):
         return jsonify({"error": "Forbidden"}), 403
     like, err = like_post(user, post)
     if err:
-        return jsonify({"error": err}), 400
+        # Duplicate like - return 200 for idempotency (user already liked this post)
+        return jsonify({"message": "Already liked", "like_count": post.like_count, "liked_by_me": True}), 200
     return jsonify({"message": "Liked", "like_count": post.like_count, "liked_by_me": True}), 200
 
 
