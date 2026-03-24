@@ -29,9 +29,16 @@ from werkzeug.security import generate_password_hash
 
 # ======================= HELPER =======================
 
+def _get_csrf_token(client, path="/login"):
+    """Extract CSRF token from a GET request."""
+    import re
+    page = client.get(path)
+    match = re.search(r'name="csrf_token"\s+value="([^"]+)"', page.data.decode())
+    return match.group(1) if match else ""
+
+
 def _login_session(client, username, password, app=None):
     """Web login and return client with session cookie set."""
-    import re
     # Ensure user has email verified (for web login)
     if app:
         with app.app_context():
@@ -40,10 +47,7 @@ def _login_session(client, username, password, app=None):
                 user.email_verified_at = datetime.now(timezone.utc)
                 db.session.commit()
 
-    # Get login page to extract CSRF token
-    login_page = client.get("/login")
-    match = re.search(r'name="csrf_token"\s+value="([^"]+)"', login_page.data.decode())
-    csrf_value = match.group(1) if match else ""
+    csrf_value = _get_csrf_token(client, "/login")
     return client.post(
         "/login",
         data={"username": username, "password": password, "csrf_token": csrf_value},
@@ -83,7 +87,12 @@ class TestWebRoutesExtended:
         assert resp.status_code == 200  # re-renders login form
 
     def test_web_login_post_missing_fields(self, app, client):
-        resp = client.post("/login", data={"username": "", "password": ""}, follow_redirects=False)
+        import re
+        # Get login page to extract CSRF token
+        login_page = client.get("/login")
+        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', login_page.data.decode())
+        csrf_value = match.group(1) if match else ""
+        resp = client.post("/login", data={"username": "", "password": "", "csrf_token": csrf_value}, follow_redirects=False)
         assert resp.status_code == 200
 
     def test_web_login_already_logged_in(self, app, client, test_user):
@@ -103,9 +112,10 @@ class TestWebRoutesExtended:
         assert resp.status_code == 200
 
     def test_web_register_post_success(self, app, client):
+        csrf_value = _get_csrf_token(client, "/register")
         resp = client.post(
             "/register",
-            data={"username": "newreguser", "password": "StrongPass1", "password_confirm": "StrongPass1"},
+            data={"username": "newreguser", "password": "StrongPass1", "password_confirm": "StrongPass1", "csrf_token": csrf_value},
             follow_redirects=False,
         )
         assert resp.status_code in (200, 302)
