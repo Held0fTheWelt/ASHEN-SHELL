@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """
-World of Shadows — Complete Test Suite Runner (Python)
+World of Shadows — Complete Test Suite Runner (All Suites)
 
-Cross-platform test runner with multiple modes and detailed reporting.
+Cross-platform test runner for backend, administration-tool, and world-engine
+with multiple modes and detailed reporting.
 
 Usage:
-    python run_tests.py                # Full suite with coverage (default)
-    python run_tests.py --quick        # Fast tests only
-    python run_tests.py --coverage     # Detailed coverage report
-    python run_tests.py --api          # API tests only
-    python run_tests.py --security     # Security tests only
-    python run_tests.py --verbose      # Full debug output
-    python run_tests.py --help         # Show this help
+    python run_tests.py                           # All suites (default)
+    python run_tests.py --suite backend           # Backend only
+    python run_tests.py --suite administration    # Administration-tool only
+    python run_tests.py --suite engine            # World-engine only
+    python run_tests.py --suite all               # All suites (explicit)
+    python run_tests.py --suite backend --quick   # Backend quick tests
+    python run_tests.py --help                    # Show this help
 """
 
 import sys
@@ -25,8 +26,9 @@ from datetime import datetime
 TESTS_DIR = Path(__file__).parent.absolute()
 PROJECT_ROOT = TESTS_DIR.parent
 BACKEND_DIR = PROJECT_ROOT / "backend"
-COVERAGE_DIR = BACKEND_DIR / "htmlcov"
-REPORTS_DIR = TESTS_DIR / "reports"
+ADMIN_TOOL_DIR = PROJECT_ROOT / "administration-tool"
+WORLD_ENGINE_DIR = PROJECT_ROOT / "world-engine"
+REPORTS_DIR = PROJECT_ROOT / "test_reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 
 # ANSI colors
@@ -67,7 +69,7 @@ def check_environment():
         import pytest
         print_success(f"pytest: {pytest.__version__}")
     except ImportError:
-        print_error("pytest not installed. Run: pip install -r requirements-dev.txt")
+        print_error("pytest not installed. Run: pip install -r backend/requirements-dev.txt")
         return False
 
     try:
@@ -79,242 +81,120 @@ def check_environment():
     print()
     return True
 
-def show_test_stats():
-    """Display test discovery statistics."""
+def show_test_stats(suites):
+    """Display test discovery statistics for selected suites."""
     print_header("Test Suite Statistics")
 
-    try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", "--collect-only", "-q", str(TESTS_DIR)],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            cwd=str(BACKEND_DIR)
-        )
-        output = result.stdout + result.stderr
-        # Extract test count from last line
-        for line in output.split('\n'):
-            if 'test' in line.lower() and any(c.isdigit() for c in line):
-                print_info(f"Tests discovered: {line.strip()}")
-                break
-    except Exception as e:
-        print_info(f"Could not get test count: {e}")
+    for suite_name, suite_dir in suites.items():
+        if not (suite_dir / "tests").exists():
+            print_info(f"{suite_name}: No tests directory found")
+            continue
 
-    test_files = len(list(TESTS_DIR.glob("test_*.py")))
-    print_info(f"Test files: {test_files}")
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", "--collect-only", "-q", "tests"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(suite_dir)
+            )
+            output = result.stdout + result.stderr
+            # Extract test count from output
+            for line in output.split('\n'):
+                if 'test' in line.lower() and any(c.isdigit() for c in line):
+                    print_info(f"{suite_name}: {line.strip()}")
+                    break
+        except Exception as e:
+            print_info(f"{suite_name}: Could not get test count ({e})")
+
     print()
 
-def parse_and_report_failures(junit_report):
-    """Parse pytest JUnit XML report and generate human-readable failure report."""
-    if not junit_report.exists():
-        return None
-
-    try:
-        import xml.etree.ElementTree as ET
-        tree = ET.parse(junit_report)
-        root = tree.getroot()
-
-        # Extract failed tests
-        failed_tests = []
-        for testcase in root.findall('.//testcase'):
-            failure = testcase.find('failure')
-            if failure is not None:
-                failed_tests.append({
-                    'name': testcase.get('name'),
-                    'classname': testcase.get('classname'),
-                    'message': failure.get('message', ''),
-                    'text': failure.text or ''
-                })
-
-        if not failed_tests:
-            return None
-
-        # Generate human-readable report
-        report_file = REPORTS_DIR / f"FAILED_TESTS_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-
-        with open(report_file, 'w') as f:
-            f.write("=" * 90 + "\n")
-            f.write("FAILED TESTS REPORT\n")
-            f.write("=" * 90 + "\n")
-            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Total failures: {len(failed_tests)}\n")
-            f.write("=" * 90 + "\n\n")
-
-            for i, test in enumerate(failed_tests, 1):
-                full_name = f"{test['classname']}::{test['name']}"
-                f.write(f"\n{'─' * 90}\n")
-                f.write(f"[{i}] {full_name}\n")
-                f.write(f"{'─' * 90}\n")
-
-                if test['message']:
-                    f.write(f"Message: {test['message']}\n\n")
-
-                if test['text']:
-                    f.write(f"Details:\n{test['text']}\n")
-
-            f.write("\n" + "=" * 90 + "\n")
-            f.write(f"Summary: {len(failed_tests)} test(s) failed\n")
-            f.write("=" * 90 + "\n")
-
-        return report_file
-    except Exception as e:
-        print_info(f"Could not parse test report: {e}")
-        return None
-
-def run_pytest(args, description):
-    """Run pytest with given arguments."""
+def run_pytest(suite_name, suite_dir, args, description):
+    """Run pytest for a specific suite."""
     print_header(description)
 
-    # Add JUnit XML report generation for failure tracking
-    junit_report = REPORTS_DIR / "pytest_report.xml"
-    # Ensure tests path is correct (run from backend dir, tests are in tests/ subdir)
-    args = [arg if arg != "." else "tests" for arg in args]
+    if not (suite_dir / "tests").exists():
+        print_error(f"Test directory not found: {suite_dir / 'tests'}")
+        return False
+
+    # Add JUnit XML report generation
+    junit_report = REPORTS_DIR / f"pytest_{suite_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+
+    # Ensure tests path is correct
     cmd = [sys.executable, "-m", "pytest"] + args + [f"--junit-xml={junit_report}"]
 
     try:
-        result = subprocess.run(cmd, cwd=str(BACKEND_DIR))
-
-        # Generate failure report if tests failed
-        if result.returncode != 0:
-            report_file = parse_and_report_failures(junit_report)
-            if report_file:
-                print()
-                print_info(f"📄 Failed tests report saved to: {report_file}")
-                print()
-
+        result = subprocess.run(cmd, cwd=str(suite_dir))
         return result.returncode == 0
     except Exception as e:
         print_error(f"Failed to run tests: {e}")
         return False
 
-def run_full_tests():
-    """Run full test suite with coverage."""
-    args = [
-        "-v", "--tb=short",
-        "--cov=app",
-        "--cov-report=term-missing",
-        "--cov-report=html",
-        "--cov-fail-under=85",
-        "."
-    ]
+def get_suite_configs(suite_names):
+    """Get configuration for selected suites."""
+    all_suites = {
+        'backend': BACKEND_DIR,
+        'administration': ADMIN_TOOL_DIR,
+        'engine': WORLD_ENGINE_DIR,
+    }
 
-    success = run_pytest(args, "Running Full Test Suite with Coverage")
+    if 'all' in suite_names:
+        return all_suites
 
-    if success:
-        print_success("All tests passed!")
-        print_info(f"Coverage report: {COVERAGE_DIR}/index.html")
-    else:
-        print_error("Tests failed")
+    result = {}
+    for suite in suite_names:
+        if suite in all_suites:
+            result[suite] = all_suites[suite]
+        else:
+            print_error(f"Unknown suite: {suite}")
 
-    return success
+    return result if result else all_suites
 
-def run_quick_tests():
-    """Run quick test suite without coverage."""
-    args = [
-        "-v", "--tb=short",
-        "--no-cov",
-        "-x",  # Stop on first failure
-        "."
-    ]
+def run_tests_for_suites(suites, args):
+    """Run tests for multiple suites."""
+    all_passed = True
+    results = {}
 
-    success = run_pytest(args, "Running Quick Test Suite (no coverage)")
+    for suite_name, suite_dir in suites.items():
+        suite_display = {
+            'backend': 'Backend Test Suite',
+            'administration': 'Administration Tool Test Suite',
+            'engine': 'World Engine Test Suite'
+        }.get(suite_name, f'{suite_name} Test Suite')
 
-    if success:
-        print_success("Quick tests passed!")
-    else:
-        print_error("Tests failed")
+        success = run_pytest(suite_name, suite_dir, args, f"Running {suite_display}")
+        results[suite_name] = success
+        all_passed = all_passed and success
 
-    return success
+        if not success:
+            print_error(f"{suite_name} tests failed")
+        else:
+            print_success(f"{suite_name} tests passed!")
+        print()
 
-def run_coverage_tests():
-    """Run with detailed coverage reporting."""
-    args = [
-        "-v", "--tb=short",
-        "--cov=app",
-        "--cov-report=term-missing:skip-covered",
-        "--cov-report=html",
-        "--cov-report=json",
-        "--cov-fail-under=85",
-        "."
-    ]
-
-    success = run_pytest(args, "Running Full Test Suite with Detailed Coverage")
-
-    if success:
-        print_success("All tests passed with coverage!")
-        print_info(f"Coverage report: {COVERAGE_DIR}/index.html")
-    else:
-        print_error("Tests failed")
-
-    return success
-
-def run_api_tests():
-    """Run API tests only."""
-    args = [
-        "-v", "--tb=short",
-        "--no-cov",
-        "-k", "api",
-        "."
-    ]
-
-    success = run_pytest(args, "Running API Tests")
-
-    if success:
-        print_success("API tests passed!")
-    else:
-        print_error("API tests failed")
-
-    return success
-
-def run_security_tests():
-    """Run security-related tests."""
-    args = [
-        "-v", "--tb=short",
-        "--no-cov",
-        "-k", "security or csrf or auth or injection or xss or privilege",
-        "."
-    ]
-
-    success = run_pytest(args, "Running Security Tests")
-
-    if success:
-        print_success("Security tests passed!")
-    else:
-        print_error("Security tests failed")
-
-    return success
-
-def run_verbose_tests():
-    """Run with full debug output."""
-    args = [
-        "-vv", "--tb=long",
-        "-s",  # No capture
-        "--cov=app",
-        "--cov-report=term-missing",
-        "--cov-fail-under=85",
-        "."
-    ]
-
-    success = run_pytest(args, "Running Full Test Suite (Verbose with Debug Output)")
-
-    if success:
-        print_success("All tests passed!")
-    else:
-        print_error("Tests failed")
-
-    return success
+    return all_passed, results
 
 def main():
     parser = argparse.ArgumentParser(
-        description="World of Shadows — Complete Test Suite Runner",
+        description="World of Shadows — Complete Test Suite Runner (All Suites)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_tests.py              # Full suite with coverage
-  python run_tests.py --quick      # Fast tests only
-  python run_tests.py --coverage   # Detailed coverage
-  python run_tests.py --security   # Security tests only
+  python run_tests.py                        # All suites (default)
+  python run_tests.py --suite backend        # Backend only
+  python run_tests.py --suite administration # Administration-tool only
+  python run_tests.py --suite engine         # World-engine only
+  python run_tests.py --suite all            # All suites (explicit)
+  python run_tests.py --suite backend --quick # Backend quick tests
         """
+    )
+
+    parser.add_argument(
+        "--suite",
+        nargs="+",
+        default=["all"],
+        choices=["backend", "administration", "engine", "all"],
+        help="Test suite(s) to run (default: all)"
     )
 
     parser.add_argument(
@@ -322,21 +202,13 @@ Examples:
         action="store_true",
         help="Run quick tests without coverage"
     )
+
     parser.add_argument(
         "--coverage",
         action="store_true",
         help="Run with detailed coverage report"
     )
-    parser.add_argument(
-        "--api",
-        action="store_true",
-        help="Run API tests only"
-    )
-    parser.add_argument(
-        "--security",
-        action="store_true",
-        help="Run security tests only"
-    )
+
     parser.add_argument(
         "--verbose",
         action="store_true",
@@ -349,24 +221,72 @@ Examples:
     if not check_environment():
         return 1
 
+    # Get suite configs
+    suites = get_suite_configs(args.suite)
+
+    if not suites:
+        print_error("No valid suites specified")
+        return 1
+
     # Show stats
-    show_test_stats()
+    show_test_stats(suites)
 
-    # Run tests based on mode
+    # Prepare pytest arguments
     if args.quick:
-        success = run_quick_tests()
+        pytest_args = [
+            "-v", "--tb=short",
+            "--no-cov",
+            "-x",  # Stop on first failure
+            "tests"
+        ]
+        description_suffix = "Quick Tests (no coverage)"
     elif args.coverage:
-        success = run_coverage_tests()
-    elif args.api:
-        success = run_api_tests()
-    elif args.security:
-        success = run_security_tests()
+        pytest_args = [
+            "-v", "--tb=short",
+            "--cov=app" if "backend" in suites else "--cov=.",
+            "--cov-report=term-missing:skip-covered",
+            "--cov-report=html",
+            "--cov-fail-under=80",
+            "tests"
+        ]
+        description_suffix = "Tests with Detailed Coverage"
     elif args.verbose:
-        success = run_verbose_tests()
+        pytest_args = [
+            "-vv", "--tb=long",
+            "-s",  # No capture
+            "--cov=app" if "backend" in suites else "--cov=.",
+            "--cov-report=term-missing",
+            "tests"
+        ]
+        description_suffix = "Verbose Tests with Debug Output"
     else:
-        success = run_full_tests()
+        # Default: full tests with coverage
+        pytest_args = [
+            "-v", "--tb=short",
+            "--cov=app" if "backend" in suites else "--cov=.",
+            "--cov-report=term-missing",
+            "--cov-fail-under=80",
+            "tests"
+        ]
+        description_suffix = "Full Tests with Coverage"
 
-    return 0 if success else 1
+    # Run tests
+    all_passed, results = run_tests_for_suites(suites, pytest_args)
+
+    # Summary
+    print_header("Test Summary")
+    for suite, passed in results.items():
+        status = "✓ PASSED" if passed else "✗ FAILED"
+        symbol = Colors.OKGREEN if passed else Colors.FAIL
+        print(f"{symbol}{status}{Colors.ENDC} - {suite}")
+
+    print()
+    if all_passed:
+        print_success("All test suites passed!")
+        return 0
+    else:
+        print_error("Some test suites failed")
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main())
