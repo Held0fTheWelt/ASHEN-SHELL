@@ -285,7 +285,7 @@ class TestSendPasswordResetEmailDevMode:
                     assert result is True
                     mock_logger.info.assert_called_once()
                     call_args = mock_logger.info.call_args
-                    assert "DEV" in call_args[0][0]
+                    assert "TESTING" in call_args[0][0]
                     assert user.username in call_args[0]
 
     def test_21_password_reset_email_testing_mode_logs_username_not_token(self, app, test_user):
