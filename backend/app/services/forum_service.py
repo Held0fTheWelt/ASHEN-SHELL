@@ -169,17 +169,21 @@ def user_can_like_post(user: Optional[User], post: ForumPost) -> bool:
 def user_can_moderate_category(user: Optional[User], category: ForumCategory) -> bool:
     """
     Moderation permission for a category: moderators and admins only.
-    Moderators must be explicitly assigned to the category.
-    Admins can moderate any category.
+    - Admins can moderate any category.
+    - Moderators can moderate public categories OR categories they're explicitly assigned to.
+    - Moderators cannot moderate private categories unless explicitly assigned.
     """
     if user is None or user.is_banned:
         return False
     if user_is_admin(user):
         return True
-    # Moderators must be assigned to this specific category
+    # Moderators must be assigned to this specific category OR it must be public
     if not user_is_moderator(user):
         return False
-    # Check if moderator is assigned to this category
+    # For public categories, any moderator can moderate
+    if not category.is_private:
+        return True
+    # For private categories, check if moderator is explicitly assigned
     from app.models.forum import ModeratorAssignment
     assignment = ModeratorAssignment.query.filter_by(
         user_id=user.id,
@@ -208,8 +212,18 @@ def _sanitize_html(content: str) -> str:
     Returns:
         Sanitized HTML content safe for storage and display
     """
+    import re
+
     if not content or not isinstance(content, str):
         return ""
+
+    # First, remove dangerous tags and their content completely
+    # Remove script tags and content
+    content = re.sub(r'<script\b[^>]*>.*?</script>', '', content, flags=re.IGNORECASE | re.DOTALL)
+    # Remove style tags and content
+    content = re.sub(r'<style\b[^>]*>.*?</style>', '', content, flags=re.IGNORECASE | re.DOTALL)
+    # Remove iframe tags and content
+    content = re.sub(r'<iframe\b[^>]*>.*?</iframe>', '', content, flags=re.IGNORECASE | re.DOTALL)
 
     # Define safe tags and allowed attributes
     safe_tags = ["b", "i", "em", "strong", "a", "br", "p"]

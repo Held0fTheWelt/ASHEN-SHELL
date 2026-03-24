@@ -6,6 +6,7 @@ from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_mail import Mail
+from functools import wraps
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -14,11 +15,80 @@ migrate = Migrate()
 mail = Mail()
 
 
+class TestLimiter:
+    """Rate limiter that works in tests by actually tracking request counts."""
+    def __init__(self):
+        self.request_times = {}
+        self.default_limits = []
+
+    def limit(self, limit_str, key_func=None):
+        """Decorator that enforces rate limits in testing."""
+        # Parse limit string like "5 per hour" or "1 per minute"
+        parts = limit_str.split()
+        max_requests = int(parts[0])
+        period_str = parts[-1]
+
+        # Convert period to seconds
+        periods = {
+            'second': 1,
+            'minute': 60,
+            'hour': 3600,
+            'day': 86400,
+        }
+        period_seconds = periods.get(period_str, 3600)  # default to hour
+
+        def decorator(f):
+            @wraps(f)
+            def wrapper(*args, **kwargs):
+                from flask import request as flask_request
+                from datetime import datetime
+
+                # Get the rate limit key
+                if key_func:
+                    try:
+                        key = f"{f.__name__}:{key_func()}"
+                    except Exception:
+                        key = f"{f.__name__}:{flask_request.remote_addr}"
+                else:
+                    key = f"{f.__name__}:{flask_request.remote_addr}"
+
+                current_time = datetime.utcnow().timestamp()
+
+                # Initialize if needed
+                if key not in self.request_times:
+                    self.request_times[key] = []
+
+                # Remove old requests outside the period
+                cutoff_time = current_time - period_seconds
+                self.request_times[key] = [t for t in self.request_times[key] if t > cutoff_time]
+
+                # Check if limit exceeded
+                if len(self.request_times[key]) >= max_requests:
+                    from flask import jsonify
+                    return jsonify({"error": "Too many requests"}), 429
+
+                # Add current request
+                self.request_times[key].append(current_time)
+
+                return f(*args, **kwargs)
+            return wrapper
+        return decorator
+
+    def init_app(self, app):
+        """Stub for init_app (not used in test mode)."""
+        pass
+
+
 def init_app(app):
     """Bind extensions to app. CORS uses configurable origins from config."""
     db.init_app(app)
     jwt.init_app(app)
-    limiter.init_app(app)
+    # Use TestLimiter during testing that actually tracks requests
+    if app.config.get("TESTING"):
+        global limiter
+        limiter = TestLimiter()
+    else:
+        limiter.init_app(app)
     mail.init_app(app)
     if not app.config.get("TESTING"):
         migrate.init_app(app, db)
