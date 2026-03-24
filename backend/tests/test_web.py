@@ -1,5 +1,20 @@
 """Tests for web (server-rendered) routes."""
 import pytest
+import re
+
+
+def _get_csrf_and_post(client, path, data, **kwargs):
+    """Helper: get CSRF token from form page and make POST request."""
+    # Determine which page to get CSRF token from
+    csrf_path = path if path in ["/register", "/forgot-password", "/reset-password"] else "/login"
+    page = client.get(csrf_path)
+    match = re.search(r'name="csrf_token"\s+value="([^"]+)"', page.data.decode())
+    csrf_value = match.group(1) if match else ""
+
+    # Add CSRF token to data
+    data = {**data, "csrf_token": csrf_value}
+
+    return client.post(path, data=data, **kwargs)
 
 
 def test_home_returns_200(client):
@@ -220,9 +235,10 @@ def test_register_post_password_mismatch_shows_error(client):
 def test_register_post_duplicate_username_shows_error(client, test_user):
     """POST /register with existing username shows error."""
     user, _ = test_user
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/register",
-        data={
+        {
             "username": user.username,
             "email": "other@example.com",
             "password": "Otherpass1",
