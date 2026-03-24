@@ -31,6 +31,28 @@ BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "https://held0fthewelt.pytho
 SUPPORTED_LANGUAGES = ["de", "en"]
 DEFAULT_LANGUAGE = "de"
 
+
+def validate_secret_key(secret_key, is_production=True):
+    if not secret_key:
+        raise ValueError("secret_key cannot be empty")
+    if is_production and len(secret_key) < 32:
+        raise ValueError("secret_key must be at least 32 characters in production")
+    return True
+
+
+def validate_service_url(url, required=True):
+    if required and not url:
+        raise ValueError("service_url is required")
+    if url:
+        if not url.startswith(('http://', 'https://')):
+            raise ValueError("service_url must have http or https scheme")
+        # Check that there's something after the scheme (a host)
+        parsed_url = url.replace('http://', '').replace('https://', '')
+        if not parsed_url or parsed_url.isspace():
+            raise ValueError("service_url must have http or https scheme")
+    return True
+
+
 app = Flask(
     __name__,
     template_folder="templates",
