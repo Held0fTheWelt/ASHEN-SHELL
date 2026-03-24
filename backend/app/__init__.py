@@ -9,8 +9,8 @@ from flask_wtf.csrf import CSRFProtect
 
 from app.config import Config
 from app.extensions import init_app as init_extensions, limiter
-from app.web import web_bp
 from app.api import register_api
+from app.web import web_bp
 
 
 def _wants_json():

@@ -37,11 +37,12 @@ def forum_setup(app):
         db.session.flush()
 
         # Create thread
+        import uuid
         thread = ForumThread(
             category_id=cat.id,
             author_id=user.id,
             title="Test Thread",
-            content="Test thread content",
+            slug=f"test-thread-{uuid.uuid4()}",
         )
         db.session.add(thread)
         db.session.commit()
@@ -76,7 +77,7 @@ def test_forum_post_rate_limit_10_posts_succeed(app, client, forum_setup):
                 json={"content": f"Test post {i+1} with enough content to pass validation"},
                 headers=headers,
             )
-            assert resp.status_code == 200, f"Post {i+1} failed with status {resp.status_code}"
+            assert resp.status_code == 201, f"Post {i+1} failed with status {resp.status_code}"
             data = resp.get_json()
             assert "id" in data, f"Post {i+1} should return post ID"
 
@@ -103,7 +104,7 @@ def test_forum_post_11th_post_returns_429(app, client, forum_setup):
                 json={"content": f"Test post {i+1} with enough content to pass validation"},
                 headers=headers,
             )
-            assert resp.status_code == 200
+            assert resp.status_code == 201
 
         # 11th post should be rate limited
         resp = client.post(
@@ -156,7 +157,7 @@ def test_forum_post_different_users_independent_limits(app, client, forum_setup)
                 json={"content": f"User 1 post {i+1} with enough content to pass validation"},
                 headers=headers1,
             )
-            assert resp.status_code == 200
+            assert resp.status_code == 201
 
         # User 1's 11th post should fail
         resp = client.post(
@@ -172,4 +173,4 @@ def test_forum_post_different_users_independent_limits(app, client, forum_setup)
             json={"content": "User 2 post 1 with enough content to pass validation"},
             headers=headers2,
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201

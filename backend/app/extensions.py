@@ -10,7 +10,21 @@ from functools import wraps
 
 db = SQLAlchemy()
 jwt = JWTManager()
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
+
+
+def get_rate_limit_key():
+    """Get a rate limit key, preferring JWT identity over remote address."""
+    try:
+        from flask_jwt_extended import get_jwt_identity
+        identity = get_jwt_identity()
+        if identity:
+            return f"user:{identity}"
+    except Exception:
+        pass
+    return get_remote_address()
+
+
+limiter = Limiter(key_func=get_rate_limit_key, default_limits=[])
 migrate = Migrate()
 mail = Mail()
 
@@ -42,15 +56,21 @@ class TestLimiter:
             def wrapper(*args, **kwargs):
                 from flask import request as flask_request
                 from datetime import datetime
+                from flask_jwt_extended import get_jwt_identity
 
-                # Get the rate limit key
-                if key_func:
-                    try:
-                        key = f"{f.__name__}:{key_func()}"
-                    except Exception:
-                        key = f"{f.__name__}:{flask_request.remote_addr}"
-                else:
-                    key = f"{f.__name__}:{flask_request.remote_addr}"
+                # Get the rate limit key - prefer JWT identity for authenticated endpoints
+                try:
+                    identity = get_jwt_identity()
+                    key = f"{f.__name__}:{identity}"
+                except Exception:
+                    # Fall back to key_func or remote_addr if JWT not available
+                    if key_func:
+                        try:
+                            key = f"{f.__name__}:{key_func()}"
+                        except Exception:
+                            key = f"{f.__name__}:{flask_request.remote_addr or 'unknown'}"
+                    else:
+                        key = f"{f.__name__}:{flask_request.remote_addr or 'unknown'}"
 
                 current_time = datetime.utcnow().timestamp()
 
@@ -83,12 +103,9 @@ def init_app(app):
     """Bind extensions to app. CORS uses configurable origins from config."""
     db.init_app(app)
     jwt.init_app(app)
-    # Use TestLimiter during testing that actually tracks requests
-    if app.config.get("TESTING"):
-        global limiter
-        limiter = TestLimiter()
-    else:
-        limiter.init_app(app)
+    # Initialize limiter - in-memory storage by default, which works for testing
+    # IMPORTANT: Don't disable rate limiting in test mode - we have tests that verify it works
+    limiter.init_app(app)
     mail.init_app(app)
     if not app.config.get("TESTING"):
         migrate.init_app(app, db)
