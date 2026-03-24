@@ -22,10 +22,12 @@ import argparse
 from datetime import datetime
 
 # Setup
-BACKEND_DIR = Path(__file__).parent.absolute()
+TESTS_DIR = Path(__file__).parent.absolute()
+BACKEND_DIR = TESTS_DIR.parent
 PROJECT_ROOT = BACKEND_DIR.parent
-TEST_DIR = BACKEND_DIR / "tests"
 COVERAGE_DIR = BACKEND_DIR / "htmlcov"
+REPORTS_DIR = TESTS_DIR / "reports"
+REPORTS_DIR.mkdir(exist_ok=True)
 
 # ANSI colors
 class Colors:
@@ -83,10 +85,11 @@ def show_test_stats():
 
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "pytest", "--collect-only", "-q", str(TEST_DIR)],
+            [sys.executable, "-m", "pytest", "--collect-only", "-q", str(TESTS_DIR)],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
+            cwd=str(BACKEND_DIR)
         )
         output = result.stdout + result.stderr
         # Extract test count from last line
@@ -97,18 +100,86 @@ def show_test_stats():
     except Exception as e:
         print_info(f"Could not get test count: {e}")
 
-    test_files = len(list(TEST_DIR.glob("test_*.py")))
+    test_files = len(list(TESTS_DIR.glob("test_*.py")))
     print_info(f"Test files: {test_files}")
     print()
+
+def parse_and_report_failures(junit_report):
+    """Parse pytest JUnit XML report and generate human-readable failure report."""
+    if not junit_report.exists():
+        return None
+
+    try:
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(junit_report)
+        root = tree.getroot()
+
+        # Extract failed tests
+        failed_tests = []
+        for testcase in root.findall('.//testcase'):
+            failure = testcase.find('failure')
+            if failure is not None:
+                failed_tests.append({
+                    'name': testcase.get('name'),
+                    'classname': testcase.get('classname'),
+                    'message': failure.get('message', ''),
+                    'text': failure.text or ''
+                })
+
+        if not failed_tests:
+            return None
+
+        # Generate human-readable report
+        report_file = REPORTS_DIR / f"FAILED_TESTS_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+
+        with open(report_file, 'w') as f:
+            f.write("=" * 90 + "\n")
+            f.write("FAILED TESTS REPORT\n")
+            f.write("=" * 90 + "\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Total failures: {len(failed_tests)}\n")
+            f.write("=" * 90 + "\n\n")
+
+            for i, test in enumerate(failed_tests, 1):
+                full_name = f"{test['classname']}::{test['name']}"
+                f.write(f"\n{'─' * 90}\n")
+                f.write(f"[{i}] {full_name}\n")
+                f.write(f"{'─' * 90}\n")
+
+                if test['message']:
+                    f.write(f"Message: {test['message']}\n\n")
+
+                if test['text']:
+                    f.write(f"Details:\n{test['text']}\n")
+
+            f.write("\n" + "=" * 90 + "\n")
+            f.write(f"Summary: {len(failed_tests)} test(s) failed\n")
+            f.write("=" * 90 + "\n")
+
+        return report_file
+    except Exception as e:
+        print_info(f"Could not parse test report: {e}")
+        return None
 
 def run_pytest(args, description):
     """Run pytest with given arguments."""
     print_header(description)
 
-    cmd = [sys.executable, "-m", "pytest"] + args
+    # Add JUnit XML report generation for failure tracking
+    junit_report = REPORTS_DIR / "pytest_report.xml"
+    cmd = [sys.executable, "-m", "pytest"] + args + [f"--junit-xml={junit_report}"]
 
     try:
         result = subprocess.run(cmd, cwd=str(BACKEND_DIR))
+
+        # Generate failure report if tests failed
+        if result.returncode != 0:
+            report_file = parse_and_report_failures(junit_report)
+            if report_file:
+                print()
+                print_info(f"📄 Failed tests report saved to: {report_file}")
+                print()
+
         return result.returncode == 0
     except Exception as e:
         print_error(f"Failed to run tests: {e}")
@@ -122,7 +193,7 @@ def run_full_tests():
         "--cov-report=term-missing",
         "--cov-report=html",
         "--cov-fail-under=85",
-        str(TEST_DIR)
+.
     ]
 
     success = run_pytest(args, "Running Full Test Suite with Coverage")
@@ -141,7 +212,7 @@ def run_quick_tests():
         "-v", "--tb=short",
         "--no-cov",
         "-x",  # Stop on first failure
-        str(TEST_DIR)
+.
     ]
 
     success = run_pytest(args, "Running Quick Test Suite (no coverage)")
@@ -162,7 +233,7 @@ def run_coverage_tests():
         "--cov-report=html",
         "--cov-report=json",
         "--cov-fail-under=85",
-        str(TEST_DIR)
+.
     ]
 
     success = run_pytest(args, "Running Full Test Suite with Detailed Coverage")
@@ -181,7 +252,7 @@ def run_api_tests():
         "-v", "--tb=short",
         "--no-cov",
         "-k", "api",
-        str(TEST_DIR)
+.
     ]
 
     success = run_pytest(args, "Running API Tests")
@@ -199,7 +270,7 @@ def run_security_tests():
         "-v", "--tb=short",
         "--no-cov",
         "-k", "security or csrf or auth or injection or xss or privilege",
-        str(TEST_DIR)
+.
     ]
 
     success = run_pytest(args, "Running Security Tests")
@@ -219,7 +290,7 @@ def run_verbose_tests():
         "--cov=app",
         "--cov-report=term-missing",
         "--cov-fail-under=85",
-        str(TEST_DIR)
+.
     ]
 
     success = run_pytest(args, "Running Full Test Suite (Verbose with Debug Output)")

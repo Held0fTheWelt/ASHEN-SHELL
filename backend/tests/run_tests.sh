@@ -22,10 +22,15 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Config
-BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TESTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$(dirname "$TESTS_DIR")"
 PROJECT_ROOT="$(dirname "$BACKEND_DIR")"
-TEST_DIR="$BACKEND_DIR/tests"
 COVERAGE_DIR="$BACKEND_DIR/htmlcov"
+REPORTS_DIR="$TESTS_DIR/reports"
+JUNIT_REPORT="$REPORTS_DIR/pytest_report.xml"
+
+# Create reports directory
+mkdir -p "$REPORTS_DIR"
 
 # Defaults
 MODE="${1:-full}"
@@ -53,6 +58,111 @@ print_info() {
 
 show_help() {
     head -n 18 "$0" | tail -n +2
+}
+
+generate_failure_report() {
+    local junit_file="$1"
+    local report_file="$REPORTS_DIR/FAILED_TESTS_$(date +%Y%m%d_%H%M%S).txt"
+
+    if [ ! -f "$junit_file" ]; then
+        return
+    fi
+
+    # Extract failed tests from JUnit XML and generate report
+    $PYTHON_CMD << 'PYTHON_EOF'
+import xml.etree.ElementTree as ET
+import sys
+from pathlib import Path
+
+junit_file = sys.argv[1]
+report_file = sys.argv[2]
+
+try:
+    tree = ET.parse(junit_file)
+    root = tree.getroot()
+
+    failed_tests = []
+    for testcase in root.findall('.//testcase'):
+        failure = testcase.find('failure')
+        if failure is not None:
+            failed_tests.append({
+                'name': testcase.get('name'),
+                'classname': testcase.get('classname'),
+                'message': failure.get('message', ''),
+                'text': failure.text or ''
+            })
+
+    if not failed_tests:
+        sys.exit(0)
+
+    with open(report_file, 'w') as f:
+        f.write("=" * 90 + "\n")
+        f.write("FAILED TESTS REPORT\n")
+        f.write("=" * 90 + "\n")
+        f.write(f"Total failures: {len(failed_tests)}\n")
+        f.write("=" * 90 + "\n\n")
+
+        for i, test in enumerate(failed_tests, 1):
+            full_name = f"{test['classname']}::{test['name']}"
+            f.write(f"\n{'─' * 90}\n")
+            f.write(f"[{i}] {full_name}\n")
+            f.write(f"{'─' * 90}\n")
+
+            if test['message']:
+                f.write(f"Message: {test['message']}\n\n")
+
+            if test['text']:
+                f.write(f"Details:\n{test['text']}\n")
+
+        f.write("\n" + "=" * 90 + "\n")
+        f.write(f"Summary: {len(failed_tests)} test(s) failed\n")
+        f.write("=" * 90 + "\n")
+
+    print(f"Report: {report_file}")
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
+PYTHON_EOF
+
+    $PYTHON_CMD -c "
+import xml.etree.ElementTree as ET
+junit_file = '$junit_file'
+report_file = '$report_file'
+
+try:
+    tree = ET.parse(junit_file)
+    root = tree.getroot()
+    failed_tests = [tc for tc in root.findall('.//testcase') if tc.find('failure') is not None]
+
+    if failed_tests:
+        with open(report_file, 'w') as f:
+            f.write('=' * 90 + '\n')
+            f.write('FAILED TESTS REPORT\n')
+            f.write('=' * 90 + '\n')
+            f.write(f'Total failures: {len(failed_tests)}\n')
+            f.write('=' * 90 + '\n\n')
+
+            for i, test in enumerate(failed_tests, 1):
+                name = test.get('name')
+                cls = test.get('classname')
+                failure = test.find('failure')
+                msg = failure.get('message', '') if failure is not None else ''
+                txt = failure.text if failure is not None else ''
+
+                f.write(f'\n{\"─\" * 90}\n')
+                f.write(f'[{i}] {cls}::{name}\n')
+                f.write(f'{\"─\" * 90}\n')
+                if msg:
+                    f.write(f'Message: {msg}\n\n')
+                if txt:
+                    f.write(f'Details:\n{txt}\n')
+
+            f.write('\n' + '=' * 90 + '\n')
+            f.write(f'Summary: {len(failed_tests)} test(s) failed\n')
+            f.write('=' * 90 + '\n')
+        print('📄 Failed tests report: $report_file')
+except:
+    pass
+" 2>/dev/null
 }
 
 check_env() {
@@ -93,7 +203,8 @@ run_full_tests() {
         --cov-report=term-missing \
         --cov-report=html \
         --cov-fail-under=85 \
-        "$TEST_DIR"
+        --junit-xml="$JUNIT_REPORT" \
+        .
 
     TEST_EXIT=$?
 
@@ -102,6 +213,8 @@ run_full_tests() {
         print_info "Coverage report: $COVERAGE_DIR/index.html"
     else
         print_error "Tests failed with exit code $TEST_EXIT"
+        echo ""
+        generate_failure_report "$JUNIT_REPORT"
     fi
 
     return $TEST_EXIT
@@ -114,7 +227,8 @@ run_quick_tests() {
         $PYTEST_ARGS \
         --no-cov \
         -x \
-        "$TEST_DIR"
+        --junit-xml="$JUNIT_REPORT" \
+        .
 
     TEST_EXIT=$?
 
@@ -122,6 +236,8 @@ run_quick_tests() {
         print_success "Quick tests passed!"
     else
         print_error "Tests failed with exit code $TEST_EXIT"
+        echo ""
+        generate_failure_report "$JUNIT_REPORT"
     fi
 
     return $TEST_EXIT
@@ -137,7 +253,8 @@ run_coverage_tests() {
         --cov-report=html \
         --cov-report=json \
         --cov-fail-under=85 \
-        "$TEST_DIR"
+        --junit-xml="$JUNIT_REPORT" \
+        .
 
     TEST_EXIT=$?
 
@@ -151,6 +268,8 @@ run_coverage_tests() {
         $PYTHON_CMD -m coverage report --skip-covered
     else
         print_error "Tests failed with exit code $TEST_EXIT"
+        echo ""
+        generate_failure_report "$JUNIT_REPORT"
     fi
 
     return $TEST_EXIT
@@ -163,7 +282,8 @@ run_api_tests() {
         $PYTEST_ARGS \
         --no-cov \
         -k "api" \
-        "$TEST_DIR"
+        --junit-xml="$JUNIT_REPORT" \
+        .
 
     TEST_EXIT=$?
 
@@ -171,6 +291,8 @@ run_api_tests() {
         print_success "API tests passed!"
     else
         print_error "API tests failed with exit code $TEST_EXIT"
+        echo ""
+        generate_failure_report "$JUNIT_REPORT"
     fi
 
     return $TEST_EXIT
@@ -183,7 +305,8 @@ run_security_tests() {
         $PYTEST_ARGS \
         --no-cov \
         -k "security or csrf or auth or injection or xss or privilege" \
-        "$TEST_DIR"
+        --junit-xml="$JUNIT_REPORT" \
+        .
 
     TEST_EXIT=$?
 
@@ -191,6 +314,8 @@ run_security_tests() {
         print_success "Security tests passed!"
     else
         print_error "Security tests failed with exit code $TEST_EXIT"
+        echo ""
+        generate_failure_report "$JUNIT_REPORT"
     fi
 
     return $TEST_EXIT
@@ -206,7 +331,8 @@ run_verbose_tests() {
         --cov=app \
         --cov-report=term-missing \
         --cov-fail-under=85 \
-        "$TEST_DIR"
+        --junit-xml="$JUNIT_REPORT" \
+        .
 
     TEST_EXIT=$?
 
@@ -214,6 +340,8 @@ run_verbose_tests() {
         print_success "All tests passed!"
     else
         print_error "Tests failed with exit code $TEST_EXIT"
+        echo ""
+        generate_failure_report "$JUNIT_REPORT"
     fi
 
     return $TEST_EXIT

@@ -6,7 +6,7 @@ Complete documentation for running the backend test suite.
 
 ### Using Bash Script (Linux/macOS)
 ```bash
-cd backend
+cd backend/tests
 ./run_tests.sh              # Full suite with coverage
 ./run_tests.sh quick        # Fast tests (no coverage)
 ./run_tests.sh coverage     # Detailed coverage report
@@ -14,7 +14,7 @@ cd backend
 
 ### Using Python (Cross-Platform)
 ```bash
-cd backend
+cd backend/tests
 python run_tests.py         # Full suite with coverage
 python run_tests.py --quick # Fast tests (no coverage)
 python run_tests.py --help  # Show options
@@ -22,7 +22,7 @@ python run_tests.py --help  # Show options
 
 ### Using Make (If installed)
 ```bash
-cd backend
+cd backend/tests
 make test               # Full suite (default)
 make test-quick        # Fast tests
 make test-coverage     # Detailed coverage
@@ -196,6 +196,74 @@ Click on file names to see line-by-line coverage.
 
 ---
 
+## Failure Reports
+
+When tests fail, the runners automatically generate a detailed failure report saved to `reports/`:
+
+**Report filename:** `FAILED_TESTS_YYYYMMDD_HHMMSS.txt`
+
+**Example:**
+```
+reports/FAILED_TESTS_20260324_143022.txt
+```
+
+### Report Contents
+
+Each failure report includes:
+
+- **Total failures:** Count of all failed tests
+- **Test names:** Full test identifier (e.g., `test_api.py::TestUser::test_login`)
+- **Error messages:** Assertion failure or exception message
+- **Full traceback:** Complete error details for debugging
+
+### Example Report Output
+
+```
+══════════════════════════════════════════════════════════════════════════════
+FAILED TESTS REPORT
+══════════════════════════════════════════════════════════════════════════════
+Total failures: 3
+══════════════════════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────────────────────
+[1] test_api.py::TestAuth::test_login_fails_with_invalid_password
+────────────────────────────────────────────────────────────────────────────
+Message: AssertionError: Expected 401, got 200
+
+Details:
+test_api.py:123: in test_login_fails_with_invalid_password
+    assert response.status_code == 401
+AssertionError: assert 200 == 401
+
+────────────────────────────────────────────────────────────────────────────
+[2] test_auth_permissions.py::TestPrivilege::test_user_cannot_escalate
+────────────────────────────────────────────────────────────────────────────
+Message: AssertionError: Expected privilege check to reject elevation
+
+Details:
+...
+
+══════════════════════════════════════════════════════════════════════════════
+Summary: 3 test(s) failed
+══════════════════════════════════════════════════════════════════════════════
+```
+
+### Accessing Failure Reports
+
+Reports are automatically printed to the console with their file path:
+```
+📄 Failed tests report saved to: tests/reports/FAILED_TESTS_20260324_143022.txt
+```
+
+You can also check the `tests/reports/` directory:
+```bash
+cd backend/tests
+ls -lh reports/
+tail -f reports/FAILED_TESTS_*.txt
+```
+
+---
+
 ## Test Organization
 
 ### Directory Structure
@@ -212,13 +280,14 @@ backend/
 │   ├── test_news_*.py                 # News feature tests
 │   ├── test_data_*.py                 # Data import/export tests
 │   ├── conftest.py                    # Pytest fixtures (app, client, user)
+│   ├── reports/                       # Test failure reports (auto-generated)
+│   │   └── FAILED_TESTS_*.txt         # Timestamped failure reports
+│   ├── run_tests.sh                   # Bash test runner
+│   ├── run_tests.py                   # Python test runner (cross-platform)
+│   ├── Makefile                       # Make shortcuts
+│   ├── TESTING.md                     # This file
+│   ├── pytest.ini                     # Pytest configuration
 │   └── ... (70+ test files)
-│
-├── run_tests.sh                        # Bash test runner
-├── run_tests.py                        # Python test runner (cross-platform)
-├── Makefile                            # Make shortcuts
-├── TESTING.md                          # This file
-└── pytest.ini                          # Pytest configuration
 ```
 
 ### Key Test Files
@@ -243,9 +312,9 @@ pip install -r requirements-dev.txt
 ```
 
 ### Tests fail with "no module named 'app'"
-**Solution:** Make sure you're in the `backend/` directory
+**Solution:** Make sure you're in the `backend/tests/` directory
 ```bash
-cd backend
+cd backend/tests
 python run_tests.py
 ```
 
