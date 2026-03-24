@@ -552,7 +552,7 @@ def users_update(user_id):
                 return jsonify({"error": "Forbidden. You may not assign a role level higher than or equal to your own."}), 403
             kwargs["role_level"] = new_level
     elif current.id == user_id and "role_level" in data:
-        # Non-SuperAdmin cannot change their own role_level; silently ignore for non-SuperAdmin
+        # Non-SuperAdmin cannot change their own role_level
         if current_user_is_super_admin():
             try:
                 new_level = int(data.get("role_level"))
@@ -565,7 +565,10 @@ def users_update(user_id):
             if new_level < SUPERADMIN_THRESHOLD:
                 return jsonify({"error": "Forbidden. SuperAdmin may only set own role level to at least 100."}), 403
             kwargs["role_level"] = new_level
-        # else: Non-SuperAdmin cannot change own role_level; silently ignore
+        elif current_user_is_admin():
+            # Admin (non-SuperAdmin) cannot change own role_level
+            return jsonify({"error": "Forbidden. Only SuperAdmin may change their own role_level."}), 403
+        # else: Non-admin user, silently ignore role_level field
 
     # Capture before values for role/role_level changes
     old_role = target.role if "role" in kwargs else None
