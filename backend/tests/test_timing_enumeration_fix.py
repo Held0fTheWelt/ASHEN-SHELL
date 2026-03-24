@@ -27,9 +27,9 @@ def unverified_user(app):
         )
         db.session.add(user)
         db.session.commit()
+        db.session.refresh(user)
         yield user
-        db.session.delete(user)
-        db.session.commit()
+        # Cleanup handled by test database teardown
 
 
 def test_resend_verification_constant_time_existing_email(client, unverified_user):
