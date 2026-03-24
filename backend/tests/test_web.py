@@ -171,9 +171,10 @@ def test_register_get_returns_200(client):
 
 def test_register_post_without_email_redirects_to_login_when_email_optional(client):
     """POST /register without email redirects to login when REGISTRATION_REQUIRE_EMAIL is False (default)."""
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/register",
-        data={
+        {
             "username": "noemail",
             "password": "Secret123",
             "password_confirm": "Secret123",
@@ -187,9 +188,10 @@ def test_register_post_without_email_redirects_to_login_when_email_optional(clie
 def test_register_post_missing_email_shows_error_when_email_required(client):
     """POST /register without email shows error when REGISTRATION_REQUIRE_EMAIL is True."""
     client.application.config["REGISTRATION_REQUIRE_EMAIL"] = True
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/register",
-        data={
+        {
             "username": "noemail2",
             "password": "Secret123",
             "password_confirm": "Secret123",
@@ -202,9 +204,10 @@ def test_register_post_missing_email_shows_error_when_email_required(client):
 
 def test_register_post_success_redirects_to_pending(client):
     """POST /register with valid data redirects to /register/pending (email verification)."""
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/register",
-        data={
+        {
             "username": "Alice1",
             "email": "a@b.com",
             "password": "Alice123",
@@ -218,9 +221,10 @@ def test_register_post_success_redirects_to_pending(client):
 
 def test_register_post_password_mismatch_shows_error(client):
     """POST /register with mismatched passwords shows error."""
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/register",
-        data={
+        {
             "username": "mismatchuser",
             "email": "mismatch@example.com",
             "password": "Alice123",
@@ -252,25 +256,22 @@ def test_register_post_duplicate_username_shows_error(client, test_user):
 
 def test_register_post_weak_password_shows_error(client):
     """POST /register with weak password shows error."""
-    response = client.post(
-        "/register",
-        data={
+    response = _get_csrf_and_post(client, "/register", {
             "username": "weakuser",
             "email": "weak@example.com",
             "password": "short",
             "password_confirm": "short",
-        },
-        follow_redirects=False,
-    )
+        }, follow_redirects=False)
     assert response.status_code == 200
     assert b"error" in response.data.lower() or b"8" in response.data
 
 
 def test_register_preserves_username_on_error(client):
     """POST /register with error re-renders form with username pre-filled."""
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/register",
-        data={
+        {
             "username": "prefilluser",
             "email": "prefill@example.com",
             "password": "weak",
@@ -292,9 +293,10 @@ def test_forgot_password_get_returns_200(client):
 
 def test_forgot_password_post_unknown_email_shows_generic_message(client):
     """POST /forgot-password with unknown email still shows success message (no enumeration)."""
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/forgot-password",
-        data={"email": "unknown@example.com"},
+        {"email": "unknown@example.com"},
         follow_redirects=True,
     )
     assert response.status_code == 200
@@ -307,9 +309,10 @@ def test_forgot_password_post_known_email_shows_success_message(
 ):
     """POST /forgot-password with known email shows generic success message."""
     user, _ = test_user_with_email
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         "/forgot-password",
-        data={"email": user.email},
+        {"email": user.email},
         follow_redirects=True,
     )
     assert response.status_code == 200
@@ -334,9 +337,10 @@ def test_reset_password_flow(client, test_user_with_email, app):
     response = client.get(f"/reset-password/{raw_token}")
     assert response.status_code == 200
     assert b"password" in response.data.lower()
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         f"/reset-password/{raw_token}",
-        data={
+        {
             "password": "Newpass123",
             "password_confirm": "Newpass123",
         },
@@ -360,9 +364,10 @@ def test_reset_password_token_unusable_after_use(client, test_user_with_email, a
     user, _ = test_user_with_email
     with app.app_context():
         raw_token = create_password_reset_token(user)
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         f"/reset-password/{raw_token}",
-        data={
+        {
             "password": "Firstpass1",
             "password_confirm": "Firstpass1",
         },
@@ -381,9 +386,10 @@ def test_reset_password_mismatch_shows_error(client, test_user_with_email, app):
     user, _ = test_user_with_email
     with app.app_context():
         raw_token = create_password_reset_token(user)
-    response = client.post(
+    response = _get_csrf_and_post(
+        client,
         f"/reset-password/{raw_token}",
-        data={
+        {
             "password": "Newpass123",
             "password_confirm": "Otherpass1",
         },
