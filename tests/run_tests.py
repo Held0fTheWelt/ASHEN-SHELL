@@ -193,7 +193,7 @@ def run_full_tests():
         "--cov-report=term-missing",
         "--cov-report=html",
         "--cov-fail-under=85",
-.
+        "."
     ]
 
     success = run_pytest(args, "Running Full Test Suite with Coverage")
@@ -212,7 +212,7 @@ def run_quick_tests():
         "-v", "--tb=short",
         "--no-cov",
         "-x",  # Stop on first failure
-.
+        "."
     ]
 
     success = run_pytest(args, "Running Quick Test Suite (no coverage)")
@@ -233,7 +233,7 @@ def run_coverage_tests():
         "--cov-report=html",
         "--cov-report=json",
         "--cov-fail-under=85",
-.
+        "."
     ]
 
     success = run_pytest(args, "Running Full Test Suite with Detailed Coverage")
@@ -252,7 +252,7 @@ def run_api_tests():
         "-v", "--tb=short",
         "--no-cov",
         "-k", "api",
-.
+        "."
     ]
 
     success = run_pytest(args, "Running API Tests")
@@ -270,7 +270,7 @@ def run_security_tests():
         "-v", "--tb=short",
         "--no-cov",
         "-k", "security or csrf or auth or injection or xss or privilege",
-.
+        "."
     ]
 
     success = run_pytest(args, "Running Security Tests")
@@ -290,7 +290,7 @@ def run_verbose_tests():
         "--cov=app",
         "--cov-report=term-missing",
         "--cov-fail-under=85",
-.
+        "."
     ]
 
     success = run_pytest(args, "Running Full Test Suite (Verbose with Debug Output)")
