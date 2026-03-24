@@ -88,8 +88,10 @@ def test_resend_verification_timing_variance(client, unverified_user):
             content_type="application/json",
         )
         elapsed = time.time() - start
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         times_existing.append(elapsed)
+
+        time.sleep(13)  # Space out requests to avoid 5 per minute rate limit
 
         # Test non-existent email
         start = time.time()
@@ -99,8 +101,10 @@ def test_resend_verification_timing_variance(client, unverified_user):
             content_type="application/json",
         )
         elapsed = time.time() - start
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         times_nonexisting.append(elapsed)
+
+        time.sleep(13)  # Space out requests to avoid 5 per minute rate limit
 
     avg_existing = sum(times_existing) / len(times_existing)
     avg_nonexisting = sum(times_nonexisting) / len(times_nonexisting)
@@ -172,10 +176,12 @@ def test_forgot_password_timing_variance(client, unverified_user):
             content_type="application/json",
         )
         elapsed = time.time() - start
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         times_existing.append(elapsed)
 
-        # Test non-existent email
+        time.sleep(1)  # Space out requests to avoid 5 per hour rate limit per email
+
+        # Test non-existent email (using different email each iteration to avoid rate limit)
         start = time.time()
         response = client.post(
             "/api/v1/auth/forgot-password",
@@ -183,8 +189,10 @@ def test_forgot_password_timing_variance(client, unverified_user):
             content_type="application/json",
         )
         elapsed = time.time() - start
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         times_nonexisting.append(elapsed)
+
+        time.sleep(1)  # Space out requests to avoid 5 per hour rate limit per email
 
     avg_existing = sum(times_existing) / len(times_existing)
     avg_nonexisting = sum(times_nonexisting) / len(times_nonexisting)
