@@ -1,15 +1,18 @@
 #!/bin/bash
 ################################################################################
-# World of Shadows — Complete Test Suite Runner
+# World of Shadows — Complete Test Suite Runner (Multi-Suite)
+#
+# Supports backend, administration-tool, and world-engine test suites
 #
 # Usage:
-#   ./run_tests.sh                    # Full suite with coverage (default)
-#   ./run_tests.sh quick              # Fast tests only (no coverage)
-#   ./run_tests.sh coverage           # Full suite with detailed coverage report
-#   ./run_tests.sh api                # API tests only
-#   ./run_tests.sh security           # Security tests only
-#   ./run_tests.sh verbose            # Full output with debugging
-#   ./run_tests.sh help               # Show this help
+#   ./run_tests.sh                                  # All suites (default)
+#   ./run_tests.sh --suite backend                  # Backend only
+#   ./run_tests.sh --suite administration           # Administration-tool only
+#   ./run_tests.sh --suite engine                   # World-engine only
+#   ./run_tests.sh --suite backend administration   # Multiple suites
+#   ./run_tests.sh --suite backend --quick          # Backend quick tests
+#   ./run_tests.sh --suite all --coverage           # All suites with coverage
+#   ./run_tests.sh help                             # Show this help
 ################################################################################
 
 set -e
@@ -22,18 +25,20 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Config
-TESTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$TESTS_DIR")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 BACKEND_DIR="$PROJECT_ROOT/backend"
-COVERAGE_DIR="$BACKEND_DIR/htmlcov"
-REPORTS_DIR="$TESTS_DIR/reports"
-JUNIT_REPORT="$REPORTS_DIR/pytest_report.xml"
+ADMIN_TOOL_DIR="$PROJECT_ROOT/administration-tool"
+WORLD_ENGINE_DIR="$PROJECT_ROOT/world-engine"
+REPORTS_DIR="$PROJECT_ROOT/test_reports"
+PYTHON_CMD="python3"
 
 # Create reports directory
 mkdir -p "$REPORTS_DIR"
 
 # Defaults
-MODE="${1:-full}"
+SUITES=("all")
+MODE="full"
 PYTHON_CMD="python3"
 PYTEST_ARGS="-v --tb=short"
 
@@ -57,7 +62,66 @@ print_info() {
 }
 
 show_help() {
-    head -n 18 "$0" | tail -n +2
+    head -n 25 "$0" | tail -n +2
+}
+
+# Parse arguments
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --suite)
+                shift
+                SUITES=()
+                while [[ $# -gt 0 ]] && [[ "$1" != --* ]]; do
+                    SUITES+=("$1")
+                    shift
+                done
+                continue
+                ;;
+            --quick)
+                MODE="quick"
+                shift
+                ;;
+            --coverage)
+                MODE="coverage"
+                shift
+                ;;
+            --verbose)
+                MODE="verbose"
+                shift
+                ;;
+            help|-h|--help)
+                show_help
+                exit 0
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+}
+
+# Get suites to run
+get_suites() {
+    local suite_list=()
+    for suite in "${SUITES[@]}"; do
+        case "$suite" in
+            all)
+                suite_list=("backend" "administration" "engine")
+                break
+                ;;
+            backend)
+                suite_list+=("backend")
+                ;;
+            administration)
+                suite_list+=("administration")
+                ;;
+            engine)
+                suite_list+=("engine")
+                ;;
+        esac
+    done
+    echo "${suite_list[@]}"
 }
 
 generate_failure_report() {
@@ -194,157 +258,90 @@ check_env() {
     echo ""
 }
 
-run_full_tests() {
-    print_header "Running Full Test Suite with Coverage"
-
-    $PYTHON_CMD -m pytest \
-        $PYTEST_ARGS \
-        --cov=app \
-        --cov-report=term-missing \
-        --cov-report=html \
-        --cov-fail-under=85 \
-        --junit-xml="$JUNIT_REPORT" \
-        tests
-
-    TEST_EXIT=$?
-
-    if [ $TEST_EXIT -eq 0 ]; then
-        print_success "All tests passed!"
-        print_info "Coverage report: $COVERAGE_DIR/index.html"
-    else
-        print_error "Tests failed with exit code $TEST_EXIT"
-        echo ""
-        generate_failure_report "$JUNIT_REPORT"
-    fi
-
-    return $TEST_EXIT
+get_suite_dir() {
+    local suite="$1"
+    case "$suite" in
+        backend)
+            echo "$BACKEND_DIR"
+            ;;
+        administration)
+            echo "$ADMIN_TOOL_DIR"
+            ;;
+        engine)
+            echo "$WORLD_ENGINE_DIR"
+            ;;
+    esac
 }
 
-run_quick_tests() {
-    print_header "Running Quick Test Suite (no coverage)"
-
-    $PYTHON_CMD -m pytest \
-        $PYTEST_ARGS \
-        --no-cov \
-        -x \
-        --junit-xml="$JUNIT_REPORT" \
-        tests
-
-    TEST_EXIT=$?
-
-    if [ $TEST_EXIT -eq 0 ]; then
-        print_success "Quick tests passed!"
+get_cov_target() {
+    local suite="$1"
+    if [ "$suite" = "backend" ]; then
+        echo "app"
     else
-        print_error "Tests failed with exit code $TEST_EXIT"
-        echo ""
-        generate_failure_report "$JUNIT_REPORT"
+        echo "."
     fi
-
-    return $TEST_EXIT
 }
 
-run_coverage_tests() {
-    print_header "Running Full Test Suite with Detailed Coverage"
+run_tests_for_suite() {
+    local suite="$1"
+    local suite_dir=$(get_suite_dir "$suite")
+    local test_dir="$suite_dir/tests"
+    local junit_file="$REPORTS_DIR/pytest_${suite}_$(date +%Y%m%d_%H%M%S).xml"
+    local cov_target=$(get_cov_target "$suite")
 
-    $PYTHON_CMD -m pytest \
-        $PYTEST_ARGS \
-        --cov=app \
-        --cov-report=term-missing:skip-covered \
-        --cov-report=html \
-        --cov-report=json \
-        --cov-fail-under=85 \
-        --junit-xml="$JUNIT_REPORT" \
-        tests
-
-    TEST_EXIT=$?
-
-    if [ $TEST_EXIT -eq 0 ]; then
-        print_success "All tests passed with coverage!"
-        print_info "Detailed coverage report: $COVERAGE_DIR/index.html"
-
-        # Show coverage summary
-        echo ""
-        print_info "Coverage summary:"
-        $PYTHON_CMD -m coverage report --skip-covered
-    else
-        print_error "Tests failed with exit code $TEST_EXIT"
-        echo ""
-        generate_failure_report "$JUNIT_REPORT"
+    if [ ! -d "$test_dir" ]; then
+        print_error "Test directory not found: $test_dir"
+        return 1
     fi
 
-    return $TEST_EXIT
-}
+    local suite_display=""
+    case "$suite" in
+        backend)
+            suite_display="Backend Test Suite"
+            ;;
+        administration)
+            suite_display="Administration Tool Test Suite"
+            ;;
+        engine)
+            suite_display="World Engine Test Suite"
+            ;;
+    esac
 
-run_api_tests() {
-    print_header "Running API Tests"
+    print_header "Running $suite_display"
 
-    $PYTHON_CMD -m pytest \
-        $PYTEST_ARGS \
-        --no-cov \
-        -k "api" \
-        --junit-xml="$JUNIT_REPORT" \
-        tests
+    local pytest_cmd=("$PYTHON_CMD" "-m" "pytest" "-v" "--tb=short")
 
-    TEST_EXIT=$?
+    case "$MODE" in
+        quick)
+            pytest_cmd+=(--no-cov -x)
+            ;;
+        coverage)
+            pytest_cmd+=(--cov="$cov_target" --cov-report=term-missing:skip-covered --cov-report=html --cov-fail-under=80)
+            ;;
+        verbose)
+            pytest_cmd+=(-vv --tb=long -s --cov="$cov_target" --cov-report=term-missing)
+            ;;
+        *)
+            pytest_cmd+=(--cov="$cov_target" --cov-report=term-missing --cov-fail-under=80)
+            ;;
+    esac
 
-    if [ $TEST_EXIT -eq 0 ]; then
-        print_success "API tests passed!"
+    pytest_cmd+=(--junit-xml="$junit_file" tests)
+
+    cd "$suite_dir" || return 1
+    "${pytest_cmd[@]}"
+    local test_exit=$?
+    cd - > /dev/null || return 1
+
+    if [ $test_exit -eq 0 ]; then
+        print_success "$suite tests passed!"
     else
-        print_error "API tests failed with exit code $TEST_EXIT"
-        echo ""
-        generate_failure_report "$JUNIT_REPORT"
+        print_error "$suite tests failed with exit code $test_exit"
+        generate_failure_report "$junit_file"
     fi
 
-    return $TEST_EXIT
-}
-
-run_security_tests() {
-    print_header "Running Security Tests"
-
-    $PYTHON_CMD -m pytest \
-        $PYTEST_ARGS \
-        --no-cov \
-        -k "security or csrf or auth or injection or xss or privilege" \
-        --junit-xml="$JUNIT_REPORT" \
-        tests
-
-    TEST_EXIT=$?
-
-    if [ $TEST_EXIT -eq 0 ]; then
-        print_success "Security tests passed!"
-    else
-        print_error "Security tests failed with exit code $TEST_EXIT"
-        echo ""
-        generate_failure_report "$JUNIT_REPORT"
-    fi
-
-    return $TEST_EXIT
-}
-
-run_verbose_tests() {
-    print_header "Running Full Test Suite (Verbose with Debug Output)"
-
-    $PYTHON_CMD -m pytest \
-        -vv \
-        --tb=long \
-        --capture=no \
-        --cov=app \
-        --cov-report=term-missing \
-        --cov-fail-under=85 \
-        --junit-xml="$JUNIT_REPORT" \
-        tests
-
-    TEST_EXIT=$?
-
-    if [ $TEST_EXIT -eq 0 ]; then
-        print_success "All tests passed!"
-    else
-        print_error "Tests failed with exit code $TEST_EXIT"
-        echo ""
-        generate_failure_report "$JUNIT_REPORT"
-    fi
-
-    return $TEST_EXIT
+    echo ""
+    return $test_exit
 }
 
 show_test_stats() {
