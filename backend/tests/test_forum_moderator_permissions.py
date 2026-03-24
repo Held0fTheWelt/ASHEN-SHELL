@@ -10,6 +10,7 @@ This test suite ensures that:
 
 import pytest
 from app import create_app
+from app.config import TestingConfig
 from app.extensions import db
 from app.models import (
     User,
@@ -24,7 +25,7 @@ from app.models import (
 @pytest.fixture
 def app():
     """Create app with test config."""
-    app = create_app(config_name="testing")
+    app = create_app(TestingConfig)
     with app.app_context():
         db.create_all()
         yield app

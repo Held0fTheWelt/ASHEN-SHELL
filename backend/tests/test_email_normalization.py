@@ -5,6 +5,7 @@ Ensures emails are stored and compared case-insensitively.
 
 import pytest
 from app import create_app
+from app.config import TestingConfig
 from app.extensions import db
 from app.models import User, Role
 from app.services.user_service import (
@@ -17,7 +18,7 @@ from app.services.user_service import (
 @pytest.fixture
 def app():
     """Create a Flask application for testing."""
-    app = create_app("testing")
+    app = create_app(TestingConfig)
     with app.app_context():
         db.create_all()
         # Ensure default role exists
