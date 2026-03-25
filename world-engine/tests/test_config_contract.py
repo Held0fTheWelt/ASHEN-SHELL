@@ -17,6 +17,7 @@ import pytest
 
 from app.config import (
     validate_play_service_secret,
+    validate_play_service_internal_api_key,
     validate_database_url,
     validate_redis_url,
     validate_cors_origins,
@@ -30,23 +31,43 @@ class TestPlayServiceSecretStartupContract:
     """Test PLAY_SERVICE_SECRET startup behavior and requirements."""
 
     @pytest.mark.contract
-    def test_missing_play_service_secret_issues_warning(self, monkeypatch):
-        """Missing PLAY_SERVICE_SECRET should issue warning during config loading."""
-        # When PLAY_SERVICE_SECRET is not set, config loading issues warning
+    def test_missing_play_service_secret_issues_warning_in_test_mode(self, monkeypatch):
+        """Missing PLAY_SERVICE_SECRET in explicit test mode should issue warning."""
         monkeypatch.delenv("PLAY_SERVICE_SECRET", raising=False)
         monkeypatch.delenv("PLAY_SERVICE_SHARED_SECRET", raising=False)
+        monkeypatch.setenv("FLASK_ENV", "test")
 
-        # Importing config should trigger warning
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            # Re-import to trigger the warning code path
             import importlib
             import app.config
             importlib.reload(app.config)
-            # At least one warning should mention PLAY_SERVICE_SECRET
             warning_messages = [str(warning.message) for warning in w]
             assert any("PLAY_SERVICE_SECRET" in msg for msg in warning_messages), \
                 f"Expected PLAY_SERVICE_SECRET warning, got: {warning_messages}"
+
+    @pytest.mark.contract
+    def test_missing_play_service_secret_fails_in_production_mode(self, monkeypatch):
+        """Missing PLAY_SERVICE_SECRET should raise error in production mode."""
+        monkeypatch.delenv("PLAY_SERVICE_SECRET", raising=False)
+        monkeypatch.delenv("PLAY_SERVICE_SHARED_SECRET", raising=False)
+        monkeypatch.setenv("FLASK_ENV", "production")
+
+        with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
+            import importlib
+            import app.config
+            importlib.reload(app.config)
+
+    @pytest.mark.contract
+    def test_blank_play_service_secret_fails_in_production_mode(self, monkeypatch):
+        """Blank PLAY_SERVICE_SECRET should raise error in production mode."""
+        monkeypatch.setenv("PLAY_SERVICE_SECRET", "")
+        monkeypatch.setenv("FLASK_ENV", "production")
+
+        with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
+            import importlib
+            import app.config
+            importlib.reload(app.config)
 
     @pytest.mark.contract
     def test_blank_play_service_secret_rejected_in_validation(self):
@@ -138,6 +159,32 @@ class TestPlayServiceInternalApiKeyStartupContract:
         importlib.reload(app.config)
         from app.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
         assert piak == "valid-api-key"
+
+    @pytest.mark.contract
+    def test_validate_internal_api_key_function_exists(self):
+        """validate_play_service_internal_api_key function must exist and be callable."""
+        assert callable(validate_play_service_internal_api_key)
+
+    @pytest.mark.contract
+    def test_internal_api_key_validation_accepts_valid_key(self):
+        """Valid internal API key should pass validation."""
+        result = validate_play_service_internal_api_key("valid-key-123", is_required=False)
+        assert result is True
+
+    @pytest.mark.contract
+    def test_internal_api_key_validation_rejects_blank_when_required(self):
+        """Blank key should be rejected when required."""
+        with pytest.raises(ValueError, match="play_service_internal_api_key cannot be empty when required"):
+            validate_play_service_internal_api_key("", is_required=True)
+
+        with pytest.raises(ValueError, match="play_service_internal_api_key cannot be empty when required"):
+            validate_play_service_internal_api_key(None, is_required=True)
+
+    @pytest.mark.contract
+    def test_internal_api_key_validation_rejects_whitespace_when_set(self):
+        """Whitespace-only key should be rejected when already set."""
+        with pytest.raises(ValueError, match="play_service_internal_api_key cannot be blank"):
+            validate_play_service_internal_api_key("   ", is_required=False)
 
 
 class TestRunStoreDirStartupContract:

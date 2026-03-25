@@ -103,6 +103,29 @@ def validate_redis_url(url, required=False):
     return True
 
 
+def validate_play_service_internal_api_key(key, is_required=False, is_production=True):
+    """Validate PLAY_SERVICE_INTERNAL_API_KEY configuration.
+
+    Args:
+        key: The API key string to validate
+        is_required: Whether the key is required (fail-fast if missing)
+        is_production: Whether this is a production environment
+
+    Returns:
+        True if validation passes
+
+    Raises:
+        ValueError: If validation fails
+    """
+    if is_required and (not key or (isinstance(key, str) and not key.strip())):
+        raise ValueError("play_service_internal_api_key cannot be empty when required")
+
+    if key and isinstance(key, str) and not key.strip():
+        raise ValueError("play_service_internal_api_key cannot be blank (whitespace-only)")
+
+    return True
+
+
 def validate_cors_origins(origins, is_production=True):
     """Validate CORS origins configuration.
 
@@ -166,12 +189,36 @@ DATA_DIR = BASE_DIR / "app" / "var"
 RUN_STORE_DIR = DATA_DIR / "runs"
 APP_TITLE = os.getenv("APP_TITLE", "World of Shadows Play Service Prototype")
 APP_VERSION = "0.3.0"
-# CRITICAL: Shared secret with backend. Must be configured via env var, never use defaults.
-PLAY_SERVICE_SECRET = (os.getenv("PLAY_SERVICE_SECRET") or os.getenv("PLAY_SERVICE_SHARED_SECRET") or "").strip() or None
-if PLAY_SERVICE_SECRET is None:
-    import warnings
-    warnings.warn("PLAY_SERVICE_SECRET not configured - backend integration will fail. Set PLAY_SERVICE_SECRET or PLAY_SERVICE_SHARED_SECRET env var.")
 
+# Determine if we're in production-like mode (explicit opt-in to lenient test mode)
+_IS_PRODUCTION_MODE = os.getenv("FLASK_ENV") in {"production", "staging"} or \
+                      os.getenv("ENV") in {"production", "staging"} or \
+                      (os.getenv("PLAY_SERVICE_SECRET") is not None and
+                       os.getenv("PLAY_SERVICE_SECRET", "").strip() != "" and
+                       os.getenv("FLASK_ENV") not in {"test"})
+
+# CRITICAL: Shared secret with backend. Must be configured via env var, never use defaults.
+# Fail fast in production if missing or blank
+PLAY_SERVICE_SECRET = (os.getenv("PLAY_SERVICE_SECRET") or os.getenv("PLAY_SERVICE_SHARED_SECRET") or "").strip() or None
+
+if PLAY_SERVICE_SECRET is None:
+    if _IS_PRODUCTION_MODE or os.getenv("FLASK_ENV") not in {"test"}:
+        # In production or production-like mode, fail fast
+        raise ValueError(
+            "PLAY_SERVICE_SECRET is required and cannot be empty. "
+            "Set PLAY_SERVICE_SECRET or PLAY_SERVICE_SHARED_SECRET environment variable. "
+            "In test mode, set FLASK_ENV=test to use lenient defaults."
+        )
+    else:
+        # In explicit test mode, issue warning for traceability
+        import warnings
+        warnings.warn(
+            "PLAY_SERVICE_SECRET not configured - backend integration will fail in production. "
+            "Set PLAY_SERVICE_SECRET or PLAY_SERVICE_SHARED_SECRET env var for production deployment.",
+            stacklevel=2
+        )
+
+# PLAY_SERVICE_INTERNAL_API_KEY: optional in lenient mode, but when set must be non-blank
 PLAY_SERVICE_INTERNAL_API_KEY = os.getenv("PLAY_SERVICE_INTERNAL_API_KEY", "").strip() or None
 RUN_STORE_BACKEND = os.getenv("RUN_STORE_BACKEND", "json")
 RUN_STORE_URL = os.getenv("RUN_STORE_URL", "")

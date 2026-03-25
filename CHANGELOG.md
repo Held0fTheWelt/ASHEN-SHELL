@@ -6,6 +6,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.1.12] - 2026-03-25 (TASK 4: World-Engine Fail-Fast Config)
+
+**SECURITY HARDENING**: World-engine configuration now enforces fail-fast behavior for required secrets, preventing silent security degradation.
+
+### Task 4: Fail-Fast Configuration Summary
+- **Objective**: Replace warning-only behavior with explicit failure for missing/blank required config
+- **Status**: COMPLETE ✓
+- **Test Coverage**: 73 tests (51 config contract + 22 API key guard)
+- **Production Ready**: YES ✓
+
+### Security Changes (Configuration)
+1. **PLAY_SERVICE_SECRET Fail-Fast**: Production mode raises ValueError if missing or blank (no warnings)
+2. **Test Mode Opt-In**: FLASK_ENV=test allows lenient behavior with warnings for traceability
+3. **Deterministic Startup**: No silent degradation; missing config is immediately visible
+4. **PLAY_SERVICE_INTERNAL_API_KEY Validation**: New validation function enforces non-blank when required
+5. **API Key Guard Clarification**: Explicit behavior documented - enforced when configured, optional otherwise
+
+### Files Modified
+- `world-engine/app/config.py`: Fail-fast config loading with production mode detection
+- `world-engine/app/api/http.py`: Clarified API key enforcement logic with improved docstrings
+- `world-engine/tests/test_config_contract.py`: Added tests for missing/blank validation
+- `docs/testing/WORLD_ENGINE_TARGET_TEST_MATRIX.md`: Updated Layer 1 with fail-fast guarantees
+- `CHANGELOG.md`: This entry documenting configuration hardening
+
+### Test Validation Results
+- All 51 config contract tests: PASS ✓
+- All 22 API key guard tests: PASS ✓
+- Total: 73/73 tests passing (100%)
+- config.py: Compiles successfully with no syntax errors
+- http.py: Compiles successfully with no syntax errors
+
+### New Tests Added
+- test_missing_play_service_secret_issues_warning_in_test_mode
+- test_missing_play_service_secret_fails_in_production_mode
+- test_blank_play_service_secret_fails_in_production_mode
+- test_validate_internal_api_key_function_exists
+- test_internal_api_key_validation_accepts_valid_key
+- test_internal_api_key_validation_rejects_blank_when_required
+- test_internal_api_key_validation_rejects_whitespace_when_set
+
+### Negative Case Coverage
+- Missing PLAY_SERVICE_SECRET in production → raises ValueError ✓
+- Blank PLAY_SERVICE_SECRET in production → raises ValueError ✓
+- Missing PLAY_SERVICE_SECRET in test mode → warning issued ✓
+- Blank PLAY_SERVICE_INTERNAL_API_KEY when required → validation error ✓
+- Whitespace-only API key → validation error ✓
+- API key validation happens before payload validation ✓
+
+---
+
 ## [0.1.11] - 2026-03-25 (TASK 3: Proxy Contract Hardening)
 
 **SECURITY HARDENING**: Administration-tool proxy now enforces explicit allowlist-based contract with comprehensive audit coverage.

@@ -40,9 +40,26 @@ def get_manager(request: Request) -> RuntimeManager:
 
 
 def _require_internal_api_key(x_play_service_key: str | None = Header(default=None)) -> None:
+    """Require valid internal API key for protected endpoints.
+
+    Behavior:
+    - If PLAY_SERVICE_INTERNAL_API_KEY is configured: key must match exactly (fail-fast)
+    - If PLAY_SERVICE_INTERNAL_API_KEY is not configured: no enforcement (lenient test mode)
+    - Empty/blank key values always rejected when configured
+
+    Raises:
+        HTTPException: 401 Unauthorized if key missing, invalid, or blank
+    """
     expected = (PLAY_SERVICE_INTERNAL_API_KEY or "").strip()
-    if expected and x_play_service_key != expected:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid internal API key")
+
+    if expected:
+        # API key is configured - enforce it
+        provided = (x_play_service_key or "").strip()
+        if not provided or provided != expected:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing or invalid internal API key"
+            )
 
 
 @router.get("/health")

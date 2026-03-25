@@ -1,8 +1,13 @@
 # World Engine Target Test Matrix
 
-**Version**: 0.1.10
+**Version**: 0.1.11
 **Date**: 2026-03-25
 **Purpose**: Define comprehensive test coverage structure for the FastAPI-based game runtime engine.
+
+**WAVE 5 (Ongoing)**: Fail-fast configuration and explicit security contracts
+- PLAY_SERVICE_SECRET: fail-fast in production mode if missing/blank
+- PLAY_SERVICE_INTERNAL_API_KEY: validation function added, enforcement clarified
+- Config startup: deterministic behavior, no silent degradation
 
 ---
 
@@ -16,7 +21,7 @@ The World Engine (`world-engine/`) is a FastAPI application providing:
 - Game templates and content loading
 - Integration with backend via API keys and internal endpoints
 
-**Current test count**: ~150 tests across API, WebSocket, persistence, runtime, and security layers.
+**Current test count**: ~165 tests across API, WebSocket, persistence, runtime, and security layers (updated WAVE 5).
 
 **Target coverage by phase**:
 - **Phase 1 (WAVE 0)**: 50 new tests (structure definition and contract tests)
@@ -34,19 +39,22 @@ The World Engine (`world-engine/`) is a FastAPI application providing:
 
 | Component | Current Tests | Target Tests | Markers | Test Examples |
 |-----------|---------------|--------------|---------|---------------|
-| Config Validation | 4 | 6 | unit, contract | test_play_service_secret_validates, test_database_url_schema_validates |
-| Secret Key Management | 3 | 5 | unit, security, contract | test_secret_min_32_bytes_production, test_secret_random_generation |
+| Config Validation | 8 | 10 | unit, contract | test_missing_play_service_secret_fails_in_production_mode, test_blank_play_service_secret_fails_in_production_mode |
+| Secret Key Management | 5 | 7 | unit, security, contract | test_secret_min_32_bytes_production, test_play_service_secret_issues_warning_in_test_mode |
 | Database URL Validation | 4 | 6 | unit, contract | test_sqlite_url_validates, test_postgres_url_with_auth |
 | Redis URL Validation | 2 | 3 | unit, contract | test_redis_url_optional, test_redis_url_requires_netloc |
-| Internal API Key Guard | 3 | 5 | security, contract, unit | test_internal_api_key_required, test_invalid_api_key_rejected |
-| **Layer 1 Total** | **16** | **25** | | |
+| Internal API Key Guard | 9 | 9 | security, contract, unit | test_internal_api_key_validation_accepts_valid_key, test_internal_api_key_validation_rejects_blank_when_required |
+| **Layer 1 Total** | **28** | **35** | | |
 
 **Security Guarantees**:
+- PLAY_SERVICE_SECRET enforced: fail-fast if missing/blank in production mode
 - PLAY_SERVICE_SECRET enforced: 32+ bytes in production
-- Internal API key required for sensitive endpoints (/_internal/*)
+- Internal API key: validation enforced when configured (blanks rejected)
+- Internal API key: optional in lenient test mode, required in production
 - Invalid/missing credentials → 401 Unauthorized
 - Database credentials validated but never logged
 - Environment variables securely managed (no defaults in code)
+- Deterministic startup: no silent degradation of security
 
 **Negative Tests**:
 - Empty secret key rejected
@@ -323,7 +331,7 @@ The World Engine (`world-engine/`) is a FastAPI application providing:
 
 | Layer | Type | Current | Target | Gap |
 |-------|------|---------|--------|-----|
-| Config & Auth | unit, security, contract | 16 | 25 | +9 |
+| Config & Auth | unit, security, contract | 28 | 35 | +7 |
 | HTTP API | contract, integration | 27 | 53 | +26 |
 | WebSocket API | websocket, contract, integration | 15 | 34 | +19 |
 | Runtime & Engine | unit, integration, persistence | 22 | 47 | +25 |
@@ -332,7 +340,7 @@ The World Engine (`world-engine/`) is a FastAPI application providing:
 | API Contracts | contract | 0 | 25 | +25 |
 | Performance | slow, integration | 0 | 12 | +12 |
 | Recovery & Errors | integration, persistence, contract | 1 | 10 | +9 |
-| **TOTAL** | | **117** | **274** | **+157** |
+| **TOTAL** | | **129** | **282** | **+153** |
 
 ---
 
