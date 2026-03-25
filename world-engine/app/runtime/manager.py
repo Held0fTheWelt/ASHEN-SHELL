@@ -225,7 +225,9 @@ class RuntimeManager:
             seat_owner=account_id or display_name,
         )
         instance.participants[participant.id] = participant
-        instance.status = RunStatus.RUNNING
+        # Only transition to RUNNING for open_world templates; GROUP_STORY stays in LOBBY until start_run
+        if template.kind.value == "open_world":
+            instance.status = RunStatus.RUNNING
         instance.metadata.setdefault("seat_assignments", {})[role.id] = participant.id
 
         # Update lobby seat if it exists
@@ -324,9 +326,13 @@ class RuntimeManager:
         await websocket.accept()
         self.connections[run_id][participant_id] = websocket
         instance = self.instances[run_id]
+        template = self.templates[instance.template_id]
         participant = instance.participants[participant_id]
         participant.connected = True
-        instance.status = RunStatus.RUNNING
+
+        # Only transition to RUNNING for open_world templates; GROUP_STORY stays in LOBBY until start_run
+        if template.kind.value == "open_world":
+            instance.status = RunStatus.RUNNING
 
         # Update lobby seat connected status if it exists
         if participant.role_id in instance.lobby_seats:
