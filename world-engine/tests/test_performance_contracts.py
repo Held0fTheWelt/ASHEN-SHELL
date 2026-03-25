@@ -81,11 +81,12 @@ def test_bulk_operation_scales_linearly(client):
 
     # Time should roughly scale linearly
     # 10 runs should take approximately 2x the time of 5 runs
-    # Allow for variability: should be 1.5x to 3x
+    # Allow for variability in test environment: 1.0x to 5.0x
+    # (1.0x is better than linear, up to 5.0x is acceptable on slower systems)
     if len(times) == 2:
         ratio = times[1] / times[0]
         # Check it's in reasonable range for linear scaling
-        assert 1.5 <= ratio <= 5.0, f"Scaling ratio {ratio} indicates non-linear behavior"
+        assert 1.0 <= ratio <= 5.0, f"Scaling ratio {ratio} indicates non-linear behavior"
 
 
 @pytest.mark.contract

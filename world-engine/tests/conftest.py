@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import os
 import sys
 from pathlib import Path
 
@@ -53,9 +54,27 @@ def receive_until_snapshot(websocket, predicate, attempts: int = 6, timeout: flo
 
 
 def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: str | None = None) -> FastAPI:
+    # Import modules
     tickets_module = importlib.import_module("app.auth.tickets")
     runtime_manager_module = importlib.import_module("app.runtime.manager")
+
+    # Check if app.config has been mocked/patched by a test
+    # If the current PLAY_SERVICE_INTERNAL_API_KEY value doesn't match the environment,
+    # it might be a mock, so we should NOT reload (to preserve the mock)
+    import app.config
+    current_value = app.config.PLAY_SERVICE_INTERNAL_API_KEY
+    env_value = os.getenv("PLAY_SERVICE_INTERNAL_API_KEY", "").strip() or None
+
+    # Only reload if the current value matches the environment value
+    # This handles monkeypatch.setenv (both env and current value are in sync)
+    # and avoids reloading when using unittest.mock.patch (current != env)
+    if current_value == env_value:
+        importlib.reload(app.config)
+
+    # Reload http and ws modules - they will import the current config values
     http_module = importlib.import_module("app.api.http")
+    http_module = importlib.reload(http_module)
+
     ws_module = importlib.import_module("app.api.ws")
     ws_module = importlib.reload(ws_module)
 
