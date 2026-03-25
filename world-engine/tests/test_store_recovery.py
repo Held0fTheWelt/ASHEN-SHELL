@@ -194,3 +194,204 @@ def test_recovery_flags_preserved(tmp_path):
     assert "flag1" in run2.flags
     assert "flag2" in run2.flags
     assert "used:action_xyz" in run2.flags
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_partial_write_scenario(tmp_path):
+    """Verify recovery from partial write (incomplete file)."""
+    # First: Create a complete run
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+    run1.tension = 25
+    manager1.store.save(run1)
+
+    # Simulate partial write: truncate the JSON file
+    json_file = tmp_path / f"{run1.id}.json"
+    content = json_file.read_text(encoding="utf-8")
+    json_file.write_text(content[:len(content)//2], encoding="utf-8")
+
+    # Reload should skip the corrupted file
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+
+    # The corrupted run should not be loaded
+    recovered = manager2.instances.get(run1.id)
+    assert recovered is None
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_lobby_seats_preserved(tmp_path):
+    """Verify lobby seat state is preserved through recovery."""
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    # Record lobby seats
+    original_seats = dict(run1.lobby_seats)
+
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    # Verify lobby seats match
+    assert len(run2.lobby_seats) == len(original_seats)
+    for seat_id, seat in original_seats.items():
+        assert seat_id in run2.lobby_seats
+        loaded_seat = run2.lobby_seats[seat_id]
+        assert loaded_seat.role_id == seat.role_id
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_status_field_preserved(tmp_path):
+    """Verify run status is preserved through recovery."""
+    from app.runtime.models import RunStatus
+
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    # Record initial status
+    original_status = run1.status
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    # Status should be preserved
+    assert run2.status == original_status
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_join_policy_preserved(tmp_path):
+    """Verify join policy is preserved through recovery."""
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    assert run2.join_policy == run1.join_policy
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_persistent_flag_preserved(tmp_path):
+    """Verify persistent flag is preserved."""
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    run1.persistent = True
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    assert run2.persistent is True
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_owner_account_preserved(tmp_path):
+    """Verify owner account ID is preserved."""
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    assert run2.owner_account_id == run1.owner_account_id
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_beat_id_preserved(tmp_path):
+    """Verify beat_id is preserved through recovery."""
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    assert run2.beat_id == run1.beat_id
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_consistent_across_multiple_cycles(tmp_path):
+    """Verify data remains consistent through multiple save/load cycles."""
+    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    # Original state - set these after creation
+    original_id = run.id
+    original_template = run.template_id
+
+    for cycle in range(3):
+        # Set unique flag for this cycle
+        run.flags.add(f"cycle_{cycle}")
+        manager.store.save(run)
+
+        # Reload
+        manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+        run = manager2.instances.get(original_id)
+
+        # Verify basic fields preserved
+        assert run.id == original_id
+        assert run.template_id == original_template
+        assert f"cycle_{cycle}" in run.flags
+
+        manager = manager2
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_empty_collections_preserved(tmp_path):
+    """Verify empty collections are handled correctly."""
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    # At creation, these should be empty
+    assert len(run1.transcript) == 0
+    assert len(run1.flags) == 0
+
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    assert len(run2.transcript) == 0
+    assert len(run2.flags) == 0
+
+
+@pytest.mark.persistence
+@pytest.mark.contract
+def test_recovery_template_id_preserved_enables_engine_reload(tmp_path):
+    """Verify template_id is preserved so engine can be reloaded."""
+    manager1 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
+
+    manager1.store.save(run1)
+
+    # Reload
+    manager2 = RuntimeManager(store_root=tmp_path, store_backend="json")
+    run2 = manager2.instances.get(run1.id)
+
+    # Verify we can get the template
+    assert run2.template_id in manager2.templates
+    engine = manager2.engines.get(run2.id)
+    assert engine is not None
