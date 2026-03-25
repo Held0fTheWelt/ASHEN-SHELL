@@ -53,6 +53,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `tests/test_http_join_context.py` (18 tests): Internal join-context endpoint, API key auth, response structure, error handling
   - `tests/test_http_snapshot_and_transcript.py` (18 tests): Snapshot/transcript retrieval, missing run/participant handling, response structure validation
 
+- **WAVE 7: World-engine WebSocket auth and isolation (46 tests)**
+  - `tests/test_ws_auth.py` (13 tests): Valid/invalid tickets, credential validation, run/participant/character/role mismatches, signature tampering, expired tickets, concurrent connections
+  - `tests/test_ws_rejoin.py` (10 tests): Disconnect/reconnect, state preservation, stale ticket rejection, foreign participant rejection, seat ownership, concurrent rejoin
+  - `tests/test_ws_state_transitions.py` (13 tests): Lobby/ready/running state flow, start_run gating, idempotency, multi-participant synchronization, host-only restrictions
+  - `tests/test_ws_isolation.py` (10 tests): Cross-run isolation, seat ownership protection, perspective isolation, transcript isolation, permission enforcement
+
 ## [0.1.8] - 2026-03-23
 
 ### Security
