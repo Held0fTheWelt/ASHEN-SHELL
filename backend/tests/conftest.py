@@ -484,6 +484,24 @@ def forum_archived_category(app):
 
 
 @pytest.fixture
+def app_without_alembic_version(app):
+    """Create app without alembic_version table for testing fallback behavior.
+
+    This fixture returns an app where the alembic_version table may not exist,
+    allowing tests to verify fallback behavior when the migration table is missing.
+    """
+    with app.app_context():
+        from sqlalchemy import text
+        # Drop alembic_version table if it exists to test fallback behavior
+        try:
+            db.session.execute(text("DROP TABLE IF EXISTS alembic_version"))
+            db.session.commit()
+        except Exception:
+            pass
+    return app
+
+
+@pytest.fixture
 def app_with_alembic_version(app):
     """Create alembic_version table for tests that need schema revision info.
 
