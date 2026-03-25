@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `tests/test_proxy_contract.py` (54 tests): Allowed paths (/api/*), forbidden paths (/admin/*), all HTTP methods, query/body forwarding, response integrity, header management
   - `tests/test_proxy_error_mapping.py` (45 tests): Timeout→502, URLError handling, backend status preservation (401/403/404/429/500), malformed response handling, comprehensive error scenario coverage
 
+- **WAVE 3: Administration-tool session and security headers (198 tests)**
+  - `tests/test_security_headers.py` (135 tests): CSP, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy on 19+ routes; CSP directives validated; error responses secured
+  - `tests/test_session_security.py` (27 tests): Session cookie flags (Secure, HttpOnly, SameSite=Lax), lifetime configuration, session isolation, secret key validation
+  - `tests/test_error_responses.py` (36 tests): 404/403/500 determinism, no information leakage, error page security headers, response consistency
+
 # Version Description
 
 - Version 0.0: Foundation, Web-Api with backend and administration-tool to administrate the system
