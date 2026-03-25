@@ -46,6 +46,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `tests/test_ticket_manager.py` (59 tests): Ticket issuance/verification, HMAC-SHA256 signing, expiration enforcement, malformed token rejection, payload preservation, TTL control
   - `tests/test_internal_api_key_guard.py` (35 tests): Internal API key authentication, guard function behavior, endpoint protection, public endpoint isolation, key validation order
 
+- **WAVE 6: World-engine HTTP contract expansion (102 tests)**
+  - `tests/test_http_health_and_templates.py` (21 tests): /api/health, /api/health/ready, /api/templates endpoints with response schema validation
+  - `tests/test_http_runs.py` (28 tests): Create/list/detail runs, error handling (404/422), malformed payload rejection, template validation
+  - `tests/test_http_tickets.py` (17 tests): Ticket issuance, error handling (404/422/403), ticket verification, optional parameter handling
+  - `tests/test_http_join_context.py` (18 tests): Internal join-context endpoint, API key auth, response structure, error handling
+  - `tests/test_http_snapshot_and_transcript.py` (18 tests): Snapshot/transcript retrieval, missing run/participant handling, response structure validation
+
 ## [0.1.8] - 2026-03-23
 
 ### Security
