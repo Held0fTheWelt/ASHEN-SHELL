@@ -130,7 +130,9 @@ class LimiterProxy:
                     # Get the rate limit key
                     key = None
                     try:
-                        from flask_jwt_extended import get_jwt_identity
+                        from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+                        # Verify JWT if present (optional, doesn't fail if missing)
+                        verify_jwt_in_request(optional=True)
                         identity = get_jwt_identity()
                         if identity:
                             key = f"{f.__name__}:{identity}"
