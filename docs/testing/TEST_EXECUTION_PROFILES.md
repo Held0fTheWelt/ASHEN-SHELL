@@ -5,14 +5,17 @@ This document describes practical test execution patterns for the WorldOfShadows
 ## Overview
 
 The project is organized into three main testing contexts:
-- **Backend** - Flask API and core business logic
-- **Administration Tool** - Admin interface and management features
-- **World Engine** - Game runtime and WebSocket communication
+- **Backend** - Flask API and core business logic (1,950+ tests)
+- **Administration Tool** - Admin interface and management features (1,039 tests)
+- **World Engine** - Game runtime and WebSocket communication (788 tests)
 
-Each profile below includes the exact command, expected test counts, and typical execution time.
+Each profile below includes the exact command, expected test counts, typical execution time, and quality gate requirements.
 
-**Updated**: v0.1.10 (WAVE 9) with actual measured counts and durations.
+**Updated**: v1.0 (WAVE 9+) with quality gate documentation
+**Coverage Thresholds**: Backend 85% minimum; others documented in QUALITY_GATES.md
 **Note**: Some cross-service tests have known test isolation issues; see XFAIL_POLICY.md.
+
+**Cross-reference**: See QUALITY_GATES.md for comprehensive quality gate requirements, thresholds, and CI/CD integration guidance.
 
 ---
 
@@ -496,18 +499,25 @@ kill -9 <PID>
 
 ## Quick Reference Table
 
-| Profile | Command | Tests | Time | Status | Use Case |
-|---------|---------|-------|------|--------|----------|
-| Fast Admin | `cd admin && pytest -m "not slow"` | 1,038 | 10-15s | ✓ All pass | Dev iteration |
-| Full Admin | `cd admin && pytest` | 1,038 | 15-20s | ✓ All pass | Pre-deploy |
-| Fast WE | `cd world-engine && pytest -m "not slow and not websocket"` | 683 | ~10s | 5 known fails* | Dev iteration |
-| Full WE | `cd world-engine && pytest` | 770 | ~12s | 18 known fails* | Full validation |
-| Security | `pytest -m security` | 399+ | 15-25s | ✓ All pass | Security audit |
-| Contracts | `pytest -m contract` | 1,179+ | 20-30s | ✓ All pass (100%) | API changes |
-| Bridge | `cd world-engine && pytest test_backend_bridge_contract.py` | 24 | 0.3s | ✓ All pass (100%) | Integration changes |
-| All Suites | `python run_tests.py --suite all` | 1,800+ | 30-45s | See notes | Release testing |
+| Profile | Command | Tests | Time | Status | Use Case | Quality Gate |
+|---------|---------|-------|------|--------|----------|--------------|
+| Fast Admin | `cd admin && pytest -m "not slow"` | 1,000+ | 10-15s | ✓ All pass | Dev iteration | Soft |
+| Full Admin | `cd admin && pytest` | 1,039 | 15-20s | ✓ All pass | Pre-deploy | Hard |
+| Fast WE | `cd world-engine && pytest -m "not slow and not websocket"` | 683 | ~10s | 99%+ pass* | Dev iteration | Soft |
+| Full WE | `cd world-engine && pytest` | 788 | ~12s | 97.7% pass* | Full validation | Soft |
+| Fast Backend | `cd backend && pytest -m "not slow"` | 1,900+ | 20-30s | ✓ All pass | Dev iteration | Soft |
+| Full Backend | `cd backend && pytest --cov=app --cov-fail-under=85` | 1,950+ | 40-60s | ✓ 85% coverage | Pre-deploy | Hard |
+| Security | `pytest -m security` | 219+ | 15-20s | ✓ All pass | Security audit | Hard |
+| Contracts | `pytest -m contract` | 900+ | 20-30s | ✓ All pass (100%) | API changes | Hard |
+| Bridge | `cd world-engine && pytest test_backend_bridge_contract.py` | 24 | 0.3s | ✓ All pass (100%) | Integration changes | Hard |
+| All Fast | `python run_tests.py --suite all --quick` | 3,500+ | ~40s | See notes | Dev gates | Soft |
+| All Full | `python run_tests.py --suite all --coverage` | 3,777+ | ~90-120s | See notes | Release testing | Hard |
 
 **\* Known test isolation issues documented in XFAIL_POLICY.md**
+
+**Quality Gate Levels**:
+- **Soft**: Nice to have; informational; can proceed if most pass
+- **Hard**: Required; gate blocks merging; must pass at 100% (except Engine at 97.7%+)
 
 ---
 

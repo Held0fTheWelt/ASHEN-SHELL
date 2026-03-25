@@ -53,6 +53,12 @@
   - Performance optimization
   - Use for: Choosing right test execution strategy
 
+- **[QUALITY_GATES.md](QUALITY_GATES.md)** - Quality standards and thresholds
+  - Coverage thresholds per suite (Backend 85%, Admin/Engine documented)
+  - Gate definitions and failure procedures
+  - CI/CD workflow examples
+  - Use for: Understanding quality requirements and automation
+
 ---
 
 ## Quick Navigation
@@ -70,9 +76,10 @@
 3. Metrics: Test Coverage Summary tables
 
 **DevOps/CI Engineer**:
-1. Execution: [TEST_EXECUTION_PROFILES.md](TEST_EXECUTION_PROFILES.md)
-2. Commands: [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md) - Marker Reference
-3. Markers: pytest.ini files in each project
+1. Gates: [QUALITY_GATES.md](QUALITY_GATES.md) - Quality requirements
+2. Execution: [TEST_EXECUTION_PROFILES.md](TEST_EXECUTION_PROFILES.md)
+3. Scripts: `scripts/run-quality-gates.sh` - Automated execution
+4. Commands: [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md) - Marker Reference
 
 **Security Reviewer**:
 1. Admin Tool: [ADMIN_TOOL_TARGET_TEST_MATRIX.md](ADMIN_TOOL_TARGET_TEST_MATRIX.md) - Layer 4-5 (Security)
@@ -244,7 +251,10 @@ docs/testing/
 ├── WORLD_ENGINE_TARGET_TEST_MATRIX.md    (FastAPI testing guide)
 ├── MATRIX_QUICK_REFERENCE.md             (quick lookup)
 ├── WAVE_0_COMPLETION_REPORT.md           (status report)
-└── TEST_EXECUTION_PROFILES.md            (execution strategies)
+├── TEST_EXECUTION_PROFILES.md            (execution strategies)
+├── QUALITY_GATES.md                      (quality standards)
+├── XFAIL_POLICY.md                       (known failures)
+└── WAVE_9_VALIDATION_REPORT.md           (validation results)
 ```
 
 ### Configuration Files
