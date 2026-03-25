@@ -231,12 +231,13 @@ class TestBackendURLInjection:
             assert app.config["BACKEND_API_URL"] is not None
 
     @pytest.mark.contract
-    def test_backend_url_in_frontend_config(self, app):
+    def test_backend_url_in_frontend_config(self, monkeypatch):
         """Test that backend URL is in frontend_config context."""
-        with app.test_request_context("/"):
-            # Access the context processor directly
-            from app import inject_config
-            context = inject_config()
+        url = "https://test.example.com"
+        module = load_frontend_module(monkeypatch, backend_url=url)
+        with module.app.test_request_context("/"):
+            # Access the context processor directly from the loaded module
+            context = module.inject_config()
             assert "frontend_config" in context
             assert "backendApiUrl" in context["frontend_config"]
-            assert context["frontend_config"]["backendApiUrl"] == app.config["BACKEND_API_URL"]
+            assert context["frontend_config"]["backendApiUrl"] == url
