@@ -59,6 +59,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `tests/test_ws_state_transitions.py` (13 tests): Lobby/ready/running state flow, start_run gating, idempotency, multi-participant synchronization, host-only restrictions
   - `tests/test_ws_isolation.py` (10 tests): Cross-run isolation, seat ownership protection, perspective isolation, transcript isolation, permission enforcement
 
+- **WAVE 8: World-engine runtime, store, and recovery (56 tests)**
+  - `tests/test_runtime_commands.py` (11 tests): In-game commands (move, say, emote, inspect), input validation, authorization enforcement
+  - `tests/test_runtime_lobby_rules.py` (8 tests): Lobby state management, set_ready idempotency, start_run gating, state transitions
+  - `tests/test_runtime_visibility.py` (8 tests): Transcript privacy, room isolation, visible_occupants filtering, information visibility enforcement
+  - `tests/test_runtime_open_world.py` (5 tests): Open-world bootstrap, persistent instance creation, default initialization
+  - `tests/test_store_json.py` (9 tests): File persistence roundtrips, atomic writes, corrupted file recovery, special character handling
+  - `tests/test_store_sqlalchemy.py` (7 tests): SQL persistence, database initialization, transcript storage, optional dependency handling
+  - `tests/test_store_recovery.py` (8 tests): Recovery after save/reload, state preservation, data integrity, multi-run consistency
+
 ## [0.1.8] - 2026-03-23
 
 ### Security
