@@ -196,33 +196,10 @@ class TestStateTransitions:
                 # Should either be 409 (conflict) or idempotent (204)
                 assert response.status_code in [204, 409]
 
-    def test_cannot_lock_already_locked_thread(self, client, moderator_headers, app):
+    def test_cannot_lock_already_locked_thread(self, client, moderator_headers, app, forum_locked_thread):
         """Cannot lock an already locked forum thread."""
-        thread = None
-        with app.app_context():
-            thread = ForumThread.query.filter_by(is_locked=True).first()
-            if not thread:
-                cat = ForumCategory.query.first()
-                user = User.query.filter_by(username="testuser").first()
-                if cat and user:
-                    thread = ForumThread(
-                        category_id=cat.id,
-                        title="Test",
-                        author_id=user.id,
-                        is_locked=True,
-                        slug="test-locked-thread"
-                    )
-                    db.session.add(thread)
-                    db.session.flush()
-                    db.session.commit()
-
-            if thread:
-                thread_id = thread.id
-            else:
-                pytest.skip("Could not create or find locked thread")
-
         response = client.post(
-            f"/api/v1/forum/threads/{thread_id}/lock",
+            f"/api/v1/forum/threads/{forum_locked_thread}/lock",
             headers=moderator_headers
         )
         # Idempotent or conflict
@@ -271,27 +248,23 @@ class TestStateTransitions:
 class TestActivityLogging:
     """Test that moderation actions are properly logged."""
 
-    def test_thread_lock_creates_activity_log(self, client, moderator_headers, app):
+    def test_thread_lock_creates_activity_log(self, client, moderator_headers, app, forum_category, test_user):
         """Locking a thread creates an activity log entry."""
-        thread_id = None
+        # Create a thread to lock
         with app.app_context():
-            cat = ForumCategory.query.first()
-            user = User.query.filter_by(username="testuser").first()
-            if cat and user:
-                thread = ForumThread(
-                    category_id=cat.id,
-                    title="Logging Test",
-                    author_id=user.id,
-                    slug="logging-test-thread"
-                )
-                db.session.add(thread)
-                db.session.flush()
-                thread_id = thread.id
-                db.session.commit()
-
-                log_count_before = ActivityLog.query.count()
-            else:
-                pytest.skip("Could not find category or test user for activity log test")
+            user, _ = test_user
+            cat = ForumCategory.query.get(forum_category)
+            thread = ForumThread(
+                category_id=cat.id,
+                title="Logging Test",
+                author_id=user.id,
+                slug="logging-test-thread"
+            )
+            db.session.add(thread)
+            db.session.flush()
+            thread_id = thread.id
+            log_count_before = ActivityLog.query.count()
+            db.session.commit()
 
         response = client.post(
             f"/api/v1/forum/threads/{thread_id}/lock",
@@ -434,20 +407,10 @@ class TestBulkOperations:
 class TestServiceLayerEdgeCases:
     """Test service layer logic for edge cases."""
 
-    def test_cannot_create_forum_thread_in_archived_category(self, client, admin_headers, app):
+    def test_cannot_create_forum_thread_in_archived_category(self, client, admin_headers, app, forum_archived_category):
         """Cannot create threads in archived/inactive categories."""
-        cat_id = None
-        with app.app_context():
-            cat = ForumCategory.query.first()
-            if cat:
-                cat.is_active = False  # Mark category as inactive instead of archived
-                db.session.commit()
-                cat_id = cat.id
-            else:
-                pytest.skip("No category available for test")
-
         response = client.post(
-            f"/api/v1/forum/categories/{cat_id}/threads",
+            f"/api/v1/forum/categories/{forum_archived_category}/threads",
             headers=admin_headers,
             json={"title": "Test"}
         )

@@ -105,7 +105,21 @@ class TestLimiter:
         pass
 
 
-# Use Flask-Limiter for rate limiting
+# Use Flask-Limiter for rate limiting, but switch to TestLimiter in test mode
+_limiter_instance = None
+
+def _get_limiter():
+    """Get the appropriate limiter instance (TestLimiter for tests, Limiter for production)."""
+    global _limiter_instance
+    if _limiter_instance is None:
+        from flask import current_app
+        if current_app and current_app.config.get("TESTING"):
+            _limiter_instance = TestLimiter()
+        else:
+            _limiter_instance = Limiter(key_func=get_rate_limit_key, default_limits=[])
+    return _limiter_instance
+
+# Initially use Limiter; will be replaced by TestLimiter if TESTING=True
 limiter = Limiter(key_func=get_rate_limit_key, default_limits=[])
 migrate = Migrate()
 mail = Mail()
@@ -113,10 +127,14 @@ mail = Mail()
 
 def init_app(app):
     """Bind extensions to app. CORS uses configurable origins from config."""
+    global limiter
     db.init_app(app)
     jwt.init_app(app)
-    # Initialize limiter (TestLimiter.init_app is a no-op)
-    limiter.init_app(app)
+    # Use TestLimiter in test mode for proper rate limit enforcement
+    if app.config.get("TESTING"):
+        limiter = TestLimiter()
+    else:
+        limiter.init_app(app)
     mail.init_app(app)
     if not app.config.get("TESTING"):
         migrate.init_app(app, db)

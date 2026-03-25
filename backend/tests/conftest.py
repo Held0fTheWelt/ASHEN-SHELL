@@ -412,6 +412,146 @@ def forum_category(app):
         return cat.id
 
 
+@pytest.fixture
+def forum_locked_thread(app, test_user):
+    """Create a locked forum thread for testing lock constraints.
+
+    Returns the thread ID (integer) to avoid DetachedInstanceError.
+    Tests should reload the thread from the database with:
+        thread = ForumThread.query.get(forum_locked_thread)
+    within an app context when they need the full object.
+    """
+    with app.app_context():
+        from app.models import ForumCategory, ForumThread
+
+        # Ensure a category exists
+        cat = ForumCategory.query.filter_by(slug="general").first()
+        if not cat:
+            cat = ForumCategory(
+                slug="general",
+                title="General Discussion",
+                description="General discussion forum",
+                sort_order=0,
+                is_active=True,
+                is_private=False
+            )
+            db.session.add(cat)
+            db.session.flush()
+
+        # Get the test user
+        user, _ = test_user
+
+        # Create a locked thread
+        thread = ForumThread(
+            category_id=cat.id,
+            author_id=user.id,
+            title="Locked Thread",
+            slug="locked-thread-fixture",
+            is_locked=True,
+            status="open"
+        )
+        db.session.add(thread)
+        db.session.commit()
+        return thread.id
+
+
+@pytest.fixture
+def forum_archived_category(app):
+    """Create an archived/inactive forum category for testing category constraints.
+
+    Returns the category ID (integer) to avoid DetachedInstanceError.
+    Tests should reload the category from the database with:
+        category = ForumCategory.query.get(forum_archived_category)
+    within an app context when they need the full object.
+    """
+    with app.app_context():
+        from app.models import ForumCategory
+
+        cat = ForumCategory(
+            slug="archived-category-fixture",
+            title="Archived Category",
+            description="This category is archived",
+            sort_order=100,
+            is_active=False,  # Mark as inactive/archived
+            is_private=False
+        )
+        db.session.add(cat)
+        db.session.commit()
+        return cat.id
+
+
+@pytest.fixture
+def app_with_alembic_version(app):
+    """Create alembic_version table for tests that need schema revision info.
+
+    This fixture creates a test alembic_version table and returns the app.
+    Tests that depend on schema_revision can use this fixture instead of 'app'.
+    """
+    with app.app_context():
+        from sqlalchemy import text
+        # Create alembic_version table if it doesn't exist
+        try:
+            db.session.execute(text("""
+                CREATE TABLE IF NOT EXISTS alembic_version (
+                    version_num VARCHAR(32) NOT NULL,
+                    PRIMARY KEY (version_num)
+                )
+            """))
+            db.session.commit()
+
+            # Check if version already exists
+            result = db.session.execute(text("SELECT version_num FROM alembic_version")).first()
+            if not result:
+                # Insert a test version
+                db.session.execute(text(
+                    "INSERT INTO alembic_version (version_num) VALUES ('test_version_001')"
+                ))
+                db.session.commit()
+        except Exception:
+            # If table creation fails, just proceed (table might already exist)
+            pass
+
+    return app
+
+
+@pytest.fixture(autouse=True)
+def ensure_schema_revision(app):
+    """Ensure alembic_version table exists with a test version.
+
+    This autouse fixture ensures all tests have access to a valid schema revision.
+    It creates the alembic_version table during app initialization if it doesn't exist.
+    """
+    with app.app_context():
+        from sqlalchemy import text
+        try:
+            # Try to create the alembic_version table
+            db.session.execute(text("""
+                CREATE TABLE IF NOT EXISTS alembic_version (
+                    version_num VARCHAR(32) NOT NULL,
+                    PRIMARY KEY (version_num)
+                )
+            """))
+            db.session.commit()
+
+            # Check if a version exists
+            try:
+                result = db.session.execute(text("SELECT version_num FROM alembic_version LIMIT 1")).first()
+                if not result:
+                    # Insert a test version for tests to use
+                    db.session.execute(text(
+                        "INSERT INTO alembic_version (version_num) VALUES ('00001_test')"
+                    ))
+                    db.session.commit()
+            except Exception:
+                # If the insert fails (e.g., unique constraint), just continue
+                db.session.rollback()
+        except Exception:
+            # If table creation fails, that's okay - tests can still work with empty revision
+            db.session.rollback()
+    yield
+    # Cleanup is handled by the app fixture's session management
+
+
 # Known foreign/corrupted test modules accidentally carried into backend/.
 # They either target the separate world-engine service or contain incomplete generated text.
 collect_ignore = [

@@ -223,9 +223,9 @@ class TestPreflightValidatePayload:
         with app.app_context():
             user, _ = test_user
             current_rev = _get_schema_revision()
-            # Skip if schema_revision is empty (test environment without Alembic)
+            # Use default test revision if alembic_version is not available
             if not current_rev:
-                pytest.skip("Alembic version not available in test environment")
+                current_rev = "00001_test"
             payload = {
                 "metadata": {"format_version": EXPORT_FORMAT_VERSION, "schema_revision": current_rev},
                 "data": {
@@ -252,7 +252,7 @@ class TestPreflightValidatePayload:
             user, _ = test_user
             current_rev = _get_schema_revision()
             if not current_rev:
-                pytest.skip("Alembic version not available in test environment")
+                current_rev = "00001_test"
             payload = {
                 "metadata": {"format_version": EXPORT_FORMAT_VERSION, "schema_revision": current_rev},
                 "data": {
@@ -280,7 +280,7 @@ class TestPreflightValidatePayload:
             user, _ = test_user
             current_rev = _get_schema_revision()
             if not current_rev:
-                pytest.skip("Alembic version not available in test environment")
+                current_rev = "00001_test"
             payload = {
                 "metadata": {"format_version": EXPORT_FORMAT_VERSION, "schema_revision": current_rev},
                 "data": {
@@ -477,7 +477,7 @@ class TestExecuteImport:
         with app.app_context():
             current_rev = _get_schema_revision()
             if not current_rev:
-                pytest.skip("Alembic version not available in test environment")
+                current_rev = "00001_test"
             payload = minimal_payload(schema_rev=current_rev)
             result = execute_import(payload)
             assert result.ok is True
@@ -488,7 +488,7 @@ class TestExecuteImport:
             user, _ = test_user
             current_rev = _get_schema_revision()
             if not current_rev:
-                pytest.skip("Alembic version not available in test environment")
+                current_rev = "00001_test"
             payload = {
                 "metadata": {"format_version": EXPORT_FORMAT_VERSION, "schema_revision": current_rev},
                 "data": {
@@ -660,7 +660,7 @@ class TestEdgeCases:
             user, _ = test_user
             current_rev = _get_schema_revision()
             if not current_rev:
-                pytest.skip("Alembic version not available in test environment")
+                current_rev = "00001_test"
             payload = {
                 "metadata": {"format_version": EXPORT_FORMAT_VERSION, "schema_revision": current_rev},
                 "data": {
@@ -693,7 +693,7 @@ class TestEdgeCases:
             user, _ = test_user
             current_rev = _get_schema_revision()
             if not current_rev:
-                pytest.skip("Alembic version not available in test environment")
+                current_rev = "00001_test"
             payload = {
                 "metadata": {"format_version": EXPORT_FORMAT_VERSION, "schema_revision": current_rev},
                 "data": {
