@@ -171,14 +171,15 @@ class TestParseDatetimeIfNeeded:
             assert result.year == 2025
             assert result.month == 3
 
-    def test_parse_datetime_invalid_iso_returns_original(self, app):
-        """_parse_datetime_if_needed() returns original value on parse error."""
+    def test_parse_datetime_invalid_iso_returns_none(self, app):
+        """_parse_datetime_if_needed() returns None on parse error (for database compatibility)."""
         with app.app_context():
             users_table = _get_table("users")
             created_at_col = users_table.columns["created_at"]
             invalid_string = "not-a-date"
             result = _parse_datetime_if_needed(created_at_col, invalid_string)
-            assert result == invalid_string
+            # Returns None to avoid database type errors; invalid dates become NULL
+            assert result is None
 
     def test_parse_datetime_non_string_returns_unchanged(self, app):
         """_parse_datetime_if_needed() returns non-string values unchanged."""

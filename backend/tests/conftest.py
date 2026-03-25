@@ -548,6 +548,9 @@ def ensure_schema_revision(app):
         except Exception:
             # If table creation fails, that's okay - tests can still work with empty revision
             db.session.rollback()
+        finally:
+            # Ensure the session is clean for the test
+            db.session.remove()
     yield
     # Cleanup is handled by the app fixture's session management
 

@@ -56,7 +56,7 @@ class TestLimiter:
             @wraps(f)
             def wrapper(*args, **kwargs):
                 from flask import request as flask_request
-                from datetime import datetime
+                from datetime import datetime, timezone
                 from flask_jwt_extended import get_jwt_identity
 
                 # Get the rate limit key - prefer JWT identity for authenticated endpoints
@@ -78,7 +78,7 @@ class TestLimiter:
                     else:
                         key = f"{f.__name__}:{flask_request.remote_addr or 'unknown'}"
 
-                current_time = datetime.utcnow().timestamp()
+                current_time = datetime.now(timezone.utc).timestamp()
 
                 # Initialize if needed
                 if key not in self.request_times:
@@ -152,7 +152,7 @@ class LimiterProxy:
 
                     # Check rate limit
                     import re
-                    from datetime import datetime
+                    from datetime import datetime, timezone
                     match = re.match(r'(\d+)\s+per\s+(\w+)', limit_str)
                     if match:
                         max_requests = int(match.group(1))
@@ -160,7 +160,7 @@ class LimiterProxy:
                         periods = {'second': 1, 'minute': 60, 'hour': 3600, 'day': 86400}
                         period_seconds = periods.get(period_str, 3600)
 
-                        current_time = datetime.utcnow().timestamp()
+                        current_time = datetime.now(timezone.utc).timestamp()
                         if key not in test_limiter.request_times:
                             test_limiter.request_times[key] = []
 

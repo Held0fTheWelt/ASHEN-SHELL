@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from sqlalchemy import and_, select, text
 from sqlalchemy.engine import RowMapping
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError
 from sqlalchemy.sql.schema import Column, Table
 
 from app.extensions import db
@@ -57,9 +57,8 @@ def _get_table(name: str) -> Optional[Table]:
 def _required_columns(table: Table) -> List[Column]:
     required: List[Column] = []
     for col in table.columns:
-        if col.autoincrement:
-            continue
-        if col in table.primary_key.columns and col.autoincrement:
+        # Skip columns that are explicitly autoincrement (not 'auto' string value)
+        if col.autoincrement is True:
             continue
         if not col.nullable and col.default is None and col.server_default is None:
             required.append(col)
@@ -73,7 +72,9 @@ def _parse_datetime_if_needed(col: Column, value: Any) -> Any:
         try:
             return datetime.fromisoformat(value)
         except Exception:
-            return value
+            # Invalid datetime string: return None to avoid DB errors
+            # This allows import to proceed with NULL for invalid dates
+            return None
     return value
 
 
@@ -221,22 +222,52 @@ def execute_import(payload: Dict[str, Any]) -> ImportPreflightResult:
     tables_data: Dict[str, Any] = data["tables"]
 
     try:
-        with db.session.begin():
-            for table_name, rows in tables_data.items():
-                table = _get_table(table_name)
-                if table is None or not isinstance(rows, list) or not rows:
-                    continue
+        # Try to start a transaction; if one is already active, use a savepoint instead
+        try:
+            # Attempt to start a new transaction
+            with db.session.begin():
+                for table_name, rows in tables_data.items():
+                    table = _get_table(table_name)
+                    if table is None or not isinstance(rows, list) or not rows:
+                        continue
 
-                insert_rows: List[Dict[str, Any]] = []
-                for row in rows:
-                    assert isinstance(row, dict)
-                    prepared: Dict[str, Any] = {}
-                    for col in table.columns:
-                        if col.name in row:
-                            prepared[col.name] = _parse_datetime_if_needed(col, row[col.name])
-                    insert_rows.append(prepared)
+                    insert_rows: List[Dict[str, Any]] = []
+                    for row in rows:
+                        assert isinstance(row, dict)
+                        prepared: Dict[str, Any] = {}
+                        for col in table.columns:
+                            if col.name in row:
+                                prepared[col.name] = _parse_datetime_if_needed(col, row[col.name])
+                        insert_rows.append(prepared)
 
-                db.session.execute(table.insert(), insert_rows)
+                    db.session.execute(table.insert(), insert_rows)
+        except InvalidRequestError as e:
+            # If "transaction is already begun", use a savepoint
+            if "transaction is already begun" in str(e).lower():
+                savepoint = db.session.begin_nested()
+                try:
+                    for table_name, rows in tables_data.items():
+                        table = _get_table(table_name)
+                        if table is None or not isinstance(rows, list) or not rows:
+                            continue
+
+                        insert_rows: List[Dict[str, Any]] = []
+                        for row in rows:
+                            assert isinstance(row, dict)
+                            prepared: Dict[str, Any] = {}
+                            for col in table.columns:
+                                if col.name in row:
+                                    prepared[col.name] = _parse_datetime_if_needed(col, row[col.name])
+                            insert_rows.append(prepared)
+
+                        db.session.execute(table.insert(), insert_rows)
+                    savepoint.commit()
+                except Exception:
+                    savepoint.rollback()
+                    raise
+            else:
+                # Re-raise if it's not the transaction issue
+                raise
     except SQLAlchemyError as exc:  # pragma: no cover - DB-level errors are rare and environment-specific
         db.session.rollback()
         raise ImportError(f"Database error during import: {exc}") from exc

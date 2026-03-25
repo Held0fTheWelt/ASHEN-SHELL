@@ -62,7 +62,7 @@ class ForumThread(db.Model):
     view_count = db.Column(db.Integer, nullable=False, default=0)
     reply_count = db.Column(db.Integer, nullable=False, default=0)
     last_post_at = db.Column(db.DateTime(timezone=True), nullable=True)
-    last_post_id = db.Column(db.Integer, db.ForeignKey("forum_posts.id", ondelete="SET NULL"), nullable=True)
+    last_post_id = db.Column(db.Integer, db.ForeignKey("forum_posts.id", ondelete="SET NULL", use_alter=True), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now)
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=_utc_now, onupdate=_utc_now)
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
