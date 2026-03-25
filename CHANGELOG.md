@@ -72,6 +72,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `tests/test_backend_bridge_contract.py` (24 tests): Backend ticket issuance, HMAC verification, credential mismatch detection, expired ticket handling, field mapping compatibility, signature tampering detection
   - `docs/testing/TEST_EXECUTION_PROFILES.md`: 8 practical test execution profiles with exact commands (fast/full admin, fast/full world-engine, security-only, contract-only, websocket-only, bridge); CI/CD integration guidance; troubleshooting guide
 
+### Fixed
+- **Data Import Service Test Suite (2026-03-25)**
+  - Fixed `test_preflight_issue_missing_required_fields`: Corrected `_required_columns()` logic to check `col.autoincrement is True` instead of truthy check (SQLAlchemy sets autoincrement='auto' for non-PK columns)
+  - Fixed `test_execute_import_success_empty_tables`, `test_execute_import_success_single_table`: Added savepoint fallback for nested transactions when session already has active transaction
+  - Fixed `test_invalid_datetime_in_payload_parsed_gracefully`: Changed `_parse_datetime_if_needed()` to return `None` for invalid dates instead of original string (SQLite rejects string values for DateTime columns)
+  - Fixed `test_execute_import_atomicity_rollback_on_constraint_error`: Enabled SQLite foreign key constraints with `PRAGMA foreign_keys=ON` in test fixture to properly test constraint violations
+  - Converted `test_get_schema_revision_fallback_on_missing_table` from xfail to passing: Created `app_without_alembic_version` fixture to test fallback when alembic_version table doesn't exist
+  - **Results:** All 43 data import service tests passing (was 42 + 1 xfailed); test suite health improved from 85.43% to 85.46% coverage
+
+- **Database Migrations (2026-03-25)**
+  - Fixed migration 036 to safely handle existing `password_history` column: Uses SQLAlchemy `inspect()` to check column existence before adding/removing, preventing duplicate column errors when column was previously created by `db.create_all()`
+  - Migration is now idempotent and handles both fresh and pre-existing schema states
+
+- **Test Output Cleanliness (2026-03-25)**
+  - Suppressed `PLAY_SERVICE_SECRET` UserWarning in world-engine test output by adding `ignore::UserWarning:app.config` filter to `pytest.ini`
+
 ## [0.1.8] - 2026-03-23
 
 ### Security
