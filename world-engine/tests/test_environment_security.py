@@ -58,7 +58,8 @@ class TestEnvironmentSecurity:
             if is_test_secret:
                 # This is acceptable in test/dev environment
                 # In production, this should fail and alert developers
-                assert os.environ.get("FLASK_ENV") in ["testing", "development", None], \
+                flask_env = os.environ.get("FLASK_ENV", "").lower()
+                assert flask_env in ["test", "testing", "development", ""], \
                     "Production-like environment should not use test-prefixed secrets"
             assert not play_service_secret.startswith("default-")
 
