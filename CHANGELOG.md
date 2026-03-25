@@ -4,6 +4,20 @@ All notable changes to the World of Shadows project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - Test Expansion Waves (WAVE 0-1)
+
+### Added
+- **WAVE 0: Target contracts and test infrastructure**
+  - Created `docs/testing/ADMIN_TOOL_TARGET_TEST_MATRIX.md` with component scope, security guarantees, negative cases, status codes, and state transitions
+  - Created `docs/testing/WORLD_ENGINE_TARGET_TEST_MATRIX.md` with similar comprehensive contract definitions
+  - Added `browser` test marker to both pytest.ini files for browser integration test categorization
+
+- **WAVE 1: Administration-tool test foundation (107 tests)**
+  - `tests/test_app_factory.py` (17 tests): Deterministic app creation, configuration isolation, no global-state leakage
+  - `tests/test_config_contract.py` (29 tests): SECRET_KEY validation, BACKEND_API_URL contract, config isolation per app instance
+  - `tests/test_context_processor.py` (24 tests): Context injection of backend_api_url, frontend_config, language metadata
+  - `tests/test_language_resolution.py` (37 tests): Language resolution hierarchy (query param > session > Accept-Language > default), session persistence, fallback behavior
+
 # Version Description
 
 - Version 0.0: Foundation, Web-Api with backend and administration-tool to administrate the system
