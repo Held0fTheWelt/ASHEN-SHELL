@@ -1,13 +1,14 @@
 # World Engine Target Test Matrix
 
-**Version**: 0.1.11
+**Version**: 0.1.12
 **Date**: 2026-03-25
 **Purpose**: Define comprehensive test coverage structure for the FastAPI-based game runtime engine.
 
-**WAVE 5 (Ongoing)**: Fail-fast configuration and explicit security contracts
+**WAVE 5 (Ongoing)**: Fail-fast configuration, explicit security contracts, and TicketManager hardening
 - PLAY_SERVICE_SECRET: fail-fast in production mode if missing/blank
 - PLAY_SERVICE_INTERNAL_API_KEY: validation function added, enforcement clarified
 - Config startup: deterministic behavior, no silent degradation
+- TicketManager: validates secret upfront; missing/blank → explicit TicketError (TASK 5)
 
 ---
 

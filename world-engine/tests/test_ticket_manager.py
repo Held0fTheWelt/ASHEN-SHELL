@@ -569,8 +569,9 @@ class TestTicketCustomSecret:
             manager2.verify(token)
 
     @pytest.mark.unit
-    def test_none_secret_uses_global(self):
-        """Passing None as secret should use global PLAY_SERVICE_SECRET."""
+    @pytest.mark.security
+    def test_none_secret_uses_global_when_available(self):
+        """Passing None as secret should use global PLAY_SERVICE_SECRET if valid."""
         with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "fallback-secret"):
             manager = TicketManager(None)
 
@@ -578,6 +579,62 @@ class TestTicketCustomSecret:
             assert manager.secret is not None
             assert isinstance(manager.secret, bytes)
             assert manager.secret == b"fallback-secret"
+
+    @pytest.mark.unit
+    @pytest.mark.security
+    def test_none_secret_with_missing_global_fails(self):
+        """Passing None as secret should fail if global PLAY_SERVICE_SECRET is missing."""
+        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", None):
+            with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required and cannot be empty"):
+                TicketManager(None)
+
+    @pytest.mark.unit
+    @pytest.mark.security
+    def test_none_secret_with_blank_global_fails(self):
+        """Passing None as secret should fail if global PLAY_SERVICE_SECRET is blank."""
+        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", ""):
+            with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required and cannot be empty"):
+                TicketManager(None)
+
+    @pytest.mark.unit
+    @pytest.mark.security
+    def test_none_secret_with_whitespace_global_fails(self):
+        """Passing None as secret should fail if global PLAY_SERVICE_SECRET is whitespace-only."""
+        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "   \t\n  "):
+            with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required and cannot be empty"):
+                TicketManager(None)
+
+    @pytest.mark.unit
+    @pytest.mark.security
+    def test_empty_string_secret_fails(self):
+        """Passing empty string as secret should fail explicitly."""
+        with pytest.raises(TicketError, match="Secret cannot be None or blank"):
+            TicketManager("")
+
+    @pytest.mark.unit
+    @pytest.mark.security
+    def test_blank_secret_fails(self):
+        """Passing whitespace-only string as secret should fail explicitly."""
+        with pytest.raises(TicketError, match="Secret cannot be None or blank"):
+            TicketManager("   \t\n  ")
+
+    @pytest.mark.unit
+    @pytest.mark.security
+    def test_explicit_secret_overrides_missing_global(self):
+        """Explicit secret should be used even if global secret is missing."""
+        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", None):
+            # Should not raise because explicit secret is provided
+            manager = TicketManager("explicit-secret")
+            assert manager.secret == b"explicit-secret"
+
+    @pytest.mark.unit
+    @pytest.mark.security
+    def test_explicit_secret_overrides_blank_global(self):
+        """Explicit secret should be used even if global secret is blank."""
+        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", ""):
+            # Should not raise because explicit secret is provided
+            manager = TicketManager("explicit-secret")
+            assert manager.secret == b"explicit-secret"
 
 
 class TestTicketSecurityIsolation:

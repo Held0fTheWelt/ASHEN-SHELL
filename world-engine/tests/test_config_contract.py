@@ -380,3 +380,65 @@ class TestStartupReadinessDeterministic:
         assert config_mod.PLAY_SERVICE_SECRET == initial_secret
         assert config_mod.PLAY_SERVICE_INTERNAL_API_KEY == initial_api_key
         assert config_mod.RUN_STORE_DIR == initial_run_store
+
+
+class TestTicketManagerSecretValidation:
+    """Test TicketManager secret validation contract."""
+
+    @pytest.mark.contract
+    @pytest.mark.security
+    def test_ticket_manager_rejects_missing_secret(self):
+        """TicketManager should reject missing secret explicitly."""
+        from app.auth.tickets import TicketManager, TicketError
+
+        with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required"):
+            # Pass None with no global secret available
+            from unittest.mock import patch
+            with patch("app.auth.tickets.PLAY_SERVICE_SECRET", None):
+                TicketManager(None)
+
+    @pytest.mark.contract
+    @pytest.mark.security
+    def test_ticket_manager_rejects_blank_secret(self):
+        """TicketManager should reject blank secret explicitly."""
+        from app.auth.tickets import TicketManager, TicketError
+
+        # Empty string should fail
+        with pytest.raises(TicketError, match="Secret cannot be None or blank"):
+            TicketManager("")
+
+        # Whitespace-only should fail
+        with pytest.raises(TicketError, match="Secret cannot be None or blank"):
+            TicketManager("   ")
+
+    @pytest.mark.contract
+    @pytest.mark.security
+    def test_ticket_manager_accepts_valid_explicit_secret(self):
+        """TicketManager should accept valid explicit secret."""
+        from app.auth.tickets import TicketManager
+
+        manager = TicketManager("valid-secret-32-chars-long-okya")
+        assert manager.secret == b"valid-secret-32-chars-long-okya"
+
+    @pytest.mark.contract
+    @pytest.mark.security
+    def test_ticket_manager_accepts_valid_global_secret(self):
+        """TicketManager should accept valid global secret when None passed."""
+        from app.auth.tickets import TicketManager
+        from unittest.mock import patch
+
+        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "global-valid-secret-ok"):
+            manager = TicketManager(None)
+            assert manager.secret == b"global-valid-secret-ok"
+
+    @pytest.mark.contract
+    @pytest.mark.security
+    def test_ticket_manager_fails_fast_on_initialization(self):
+        """TicketManager should fail fast during __init__, not during use."""
+        from app.auth.tickets import TicketManager, TicketError
+
+        # Should raise immediately in __init__, not later
+        with pytest.raises(TicketError):
+            TicketManager("")
+
+        # No .issue() or .verify() call should be needed to trigger error

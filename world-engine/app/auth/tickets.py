@@ -16,7 +16,24 @@ class TicketError(Exception):
 
 class TicketManager:
     def __init__(self, secret: str | None = None) -> None:
-        self.secret = (secret or PLAY_SERVICE_SECRET).encode("utf-8")
+        # SECURITY: Validate secret upfront before any encode() operations
+        # Fail fast and explicitly if secret is missing or blank
+        if secret is not None:
+            # Explicit secret provided: validate it
+            if not secret or (isinstance(secret, str) and not secret.strip()):
+                raise TicketError("Secret cannot be None or blank")
+            effective_secret = secret
+        else:
+            # No explicit secret: use global PLAY_SERVICE_SECRET
+            if not PLAY_SERVICE_SECRET or (isinstance(PLAY_SERVICE_SECRET, str) and not PLAY_SERVICE_SECRET.strip()):
+                raise TicketError(
+                    "PLAY_SERVICE_SECRET is required and cannot be empty. "
+                    "Set PLAY_SERVICE_SECRET environment variable."
+                )
+            effective_secret = PLAY_SERVICE_SECRET
+
+        # Now that we've validated the secret exists and is non-blank, encode it
+        self.secret = effective_secret.encode("utf-8")
 
     def issue(self, payload: dict[str, Any], ttl_seconds: int = 3600) -> str:
         body = {
