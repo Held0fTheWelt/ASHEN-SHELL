@@ -19,6 +19,19 @@ def load_frontend_module(
     backend_url: str = "https://backend.example.test",
     secret: str | None = "test-secret-key",
 ):
+    """Load the frontend module with environment variable overrides.
+
+    This function is used for testing module-level imports in isolation.
+    For new code, prefer using the create_app() factory directly.
+
+    Args:
+        monkeypatch: pytest monkeypatch fixture
+        backend_url: BACKEND_API_URL to set
+        secret: SECRET_KEY to set, or None to not set it
+
+    Returns:
+        Loaded module object with app instance
+    """
     monkeypatch.setenv("BACKEND_API_URL", backend_url)
     if secret is None:
         monkeypatch.delenv("SECRET_KEY", raising=False)
@@ -37,22 +50,43 @@ def load_frontend_module(
 
 @pytest.fixture
 def frontend_module(monkeypatch: pytest.MonkeyPatch):
+    """Fixture providing the loaded frontend module for tests."""
     return load_frontend_module(monkeypatch)
 
 
 @pytest.fixture
 def app(frontend_module):
+    """Fixture providing a test app instance from the frontend module.
+
+    The app is configured in TESTING mode for isolated test execution.
+    """
     frontend_module.app.config.update(TESTING=True)
     return frontend_module.app
 
 
 @pytest.fixture
+def app_factory():
+    """Fixture providing direct access to the create_app() factory.
+
+    Allows tests to create apps with arbitrary test_config without
+    module reloading. New tests should prefer this fixture.
+    """
+    from app import create_app
+    return create_app
+
+
+@pytest.fixture
 def client(app):
+    """Fixture providing a test client for the app instance."""
     return app.test_client()
 
 
 @contextmanager
 def captured_templates(app) -> Iterator[list[tuple[str, dict]]]:
+    """Context manager to capture template rendering events during test execution.
+
+    Yields a list of (template_name, context_dict) tuples for inspection.
+    """
     recorded: list[tuple[str, dict]] = []
 
     def record(sender, template, context, **extra):
