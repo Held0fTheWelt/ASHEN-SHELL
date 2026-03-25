@@ -125,8 +125,7 @@ def decrypt_export(encrypted_payload: Dict[str, Any], password: str) -> Dict[str
         Decrypted export data dictionary (with metadata and data sections)
 
     Raises:
-        ValueError: If payload format is invalid, password is wrong, or decryption fails
-        TypeError: If decrypted data is not valid JSON
+        ValueError: If payload format is invalid, password is wrong, decryption fails, or decrypted data is not valid JSON
     """
     if not password or not isinstance(password, str):
         raise ValueError("Password must be a non-empty string")
@@ -179,6 +178,6 @@ def decrypt_export(encrypted_payload: Dict[str, Any], password: str) -> Dict[str
         plaintext_json = plaintext.decode('utf-8')
         export_data = json.loads(plaintext_json)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise TypeError(f"Decrypted data is not valid JSON: {exc}")
+        raise ValueError(f"Decrypted data is not valid JSON: {exc}")
 
     return export_data
