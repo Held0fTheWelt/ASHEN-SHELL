@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `tests/test_context_processor.py` (24 tests): Context injection of backend_api_url, frontend_config, language metadata
   - `tests/test_language_resolution.py` (37 tests): Language resolution hierarchy (query param > session > Accept-Language > default), session persistence, fallback behavior
 
+- **WAVE 2: Administration-tool proxy contract (99 tests)**
+  - `tests/test_proxy_contract.py` (54 tests): Allowed paths (/api/*), forbidden paths (/admin/*), all HTTP methods, query/body forwarding, response integrity, header management
+  - `tests/test_proxy_error_mapping.py` (45 tests): Timeout→502, URLError handling, backend status preservation (401/403/404/429/500), malformed response handling, comprehensive error scenario coverage
+
 # Version Description
 
 - Version 0.0: Foundation, Web-Api with backend and administration-tool to administrate the system
