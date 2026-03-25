@@ -10,6 +10,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+# CRITICAL: Set FLASK_ENV to test before any imports from app.config
+# This allows lenient validation for PLAY_SERVICE_SECRET in test mode
+if "FLASK_ENV" not in os.environ:
+    os.environ["FLASK_ENV"] = "test"
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
