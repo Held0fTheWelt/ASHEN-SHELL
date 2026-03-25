@@ -29,7 +29,7 @@ from app.runtime.store import JsonRunStore
 @pytest.mark.persistence
 def test_run_id_uniqueness_enforced(tmp_path):
     """Verify that run IDs are unique and never duplicated."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run1 = manager.create_run("god_of_carnage_solo", account_id="acct:test1", display_name="Test 1")
     run2 = manager.create_run("god_of_carnage_solo", account_id="acct:test2", display_name="Test 2")
     run3 = manager.create_run("apartment_confrontation_group", account_id="acct:test3", display_name="Test 3")
@@ -45,7 +45,7 @@ def test_run_id_uniqueness_enforced(tmp_path):
 @pytest.mark.persistence
 def test_participant_identity_consistency(tmp_path):
     """Verify that participant IDs remain consistent across operations."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:owner", display_name="Owner")
 
     # Create participant with explicit ID
@@ -75,7 +75,7 @@ def test_participant_identity_consistency(tmp_path):
 @pytest.mark.persistence
 def test_timestamp_ordering_consistency(tmp_path):
     """Verify that timestamps maintain logical ordering."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Verify created_at is set
@@ -99,7 +99,7 @@ def test_timestamp_ordering_consistency(tmp_path):
 @pytest.mark.persistence
 def test_transcript_message_sequence_integrity(tmp_path):
     """Verify that transcript messages maintain sequence integrity."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Add transcript entries in order
@@ -130,7 +130,7 @@ def test_transcript_message_sequence_integrity(tmp_path):
 @pytest.mark.persistence
 def test_foreign_key_constraints_enforced(tmp_path):
     """Verify that foreign key relationships are maintained."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Create participant and transcript entry referencing the participant
@@ -167,7 +167,7 @@ def test_foreign_key_constraints_enforced(tmp_path):
 @pytest.mark.persistence
 def test_data_type_consistency_across_stores(tmp_path):
     """Verify that data types remain consistent after persistence."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Set various data types
@@ -195,7 +195,7 @@ def test_data_type_consistency_across_stores(tmp_path):
 @pytest.mark.persistence
 def test_null_field_validation(tmp_path):
     """Verify that nullable fields are handled correctly."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id=None, display_name="Test")
 
     # Verify nullable fields
@@ -227,7 +227,7 @@ def test_null_field_validation(tmp_path):
 @pytest.mark.persistence
 def test_json_schema_validation(tmp_path):
     """Verify that loaded data conforms to expected schema."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Save and reload
@@ -255,7 +255,7 @@ def test_json_schema_validation(tmp_path):
 @pytest.mark.persistence
 def test_data_encoding_consistency(tmp_path):
     """Verify that special characters and encodings are preserved."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Special characters test in transcript (more reliable than participant name)
@@ -290,7 +290,7 @@ def test_backup_restore_data_integrity(tmp_path):
     # Create initial data
     original_path = tmp_path / "original"
     original_path.mkdir()
-    manager1 = RuntimeManager(store_root=original_path, store_backend="json")
+    manager1 = RuntimeManager(store_root=original_path)
     run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:test1", display_name="Test 1")
     run2 = manager1.create_run("apartment_confrontation_group", account_id="acct:test2", display_name="Test 2")
 

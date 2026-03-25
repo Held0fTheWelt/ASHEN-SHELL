@@ -18,7 +18,7 @@ from app.runtime.models import ParticipantState, ParticipantMode, RunStatus
 @pytest.mark.unit
 def test_visibility_transcript_only_shows_current_room(tmp_path):
     """Verify transcript only shows events from current room and personal events."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -40,7 +40,7 @@ def test_visibility_transcript_only_shows_current_room(tmp_path):
 @pytest.mark.unit
 def test_visibility_room_isolation_in_group_story(tmp_path):
     """Verify participants in different rooms don't see each other's events by default."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -73,7 +73,7 @@ def test_visibility_room_isolation_in_group_story(tmp_path):
 @pytest.mark.unit
 def test_visibility_visible_occupants_only_in_room(tmp_path):
     """Verify visible_occupants only returns participants in same room."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -105,7 +105,7 @@ def test_visibility_visible_occupants_only_in_room(tmp_path):
 @pytest.mark.unit
 def test_visibility_private_metadata_includes_human_count(tmp_path):
     """Verify public metadata includes aggregated data."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -118,7 +118,7 @@ def test_visibility_private_metadata_includes_human_count(tmp_path):
 @pytest.mark.unit
 def test_visibility_can_inspect_current_room(tmp_path):
     """Verify participant can inspect their current room."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -133,7 +133,7 @@ def test_visibility_can_inspect_current_room(tmp_path):
 @pytest.mark.unit
 def test_visibility_can_inspect_props_in_room(tmp_path):
     """Verify participant can inspect props in current room only."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -152,7 +152,7 @@ def test_visibility_can_inspect_props_in_room(tmp_path):
 @pytest.mark.unit
 def test_visibility_cannot_inspect_distant_props(tmp_path):
     """Verify participant cannot inspect props outside current room."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -171,7 +171,7 @@ def test_visibility_cannot_inspect_distant_props(tmp_path):
 @pytest.mark.unit
 def test_transcript_entry_visibility_respects_room_isolation(tmp_path):
     """Verify transcript entries are properly filtered based on room."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 

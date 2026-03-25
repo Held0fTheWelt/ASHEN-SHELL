@@ -18,7 +18,7 @@ from app.runtime.models import RunStatus
 @pytest.mark.unit
 def test_set_ready_in_lobby(tmp_path):
     """Verify set_ready command succeeds in lobby."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -42,7 +42,7 @@ def test_set_ready_in_lobby(tmp_path):
 @pytest.mark.unit
 def test_set_not_ready_from_ready(tmp_path):
     """Verify ready state can be toggled back to not ready."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -67,7 +67,7 @@ def test_set_not_ready_from_ready(tmp_path):
 @pytest.mark.unit
 def test_set_ready_idempotent(tmp_path):
     """Verify setting ready multiple times is idempotent."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -90,7 +90,7 @@ def test_set_ready_idempotent(tmp_path):
 @pytest.mark.unit
 def test_start_run_blocked_when_not_all_ready(tmp_path):
     """Verify start_run fails if not all occupied seats are ready."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -107,7 +107,7 @@ def test_start_run_blocked_when_not_all_ready(tmp_path):
 @pytest.mark.unit
 def test_start_run_succeeds_when_ready(tmp_path):
     """Verify start_run succeeds when all conditions met."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -129,7 +129,7 @@ def test_start_run_succeeds_when_ready(tmp_path):
 @pytest.mark.unit
 def test_start_run_blocked_after_already_started(tmp_path):
     """Verify start_run cannot be called twice."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -152,7 +152,7 @@ def test_start_run_blocked_after_already_started(tmp_path):
 @pytest.mark.unit
 def test_set_ready_non_group_story_rejected(tmp_path):
     """Verify set_ready fails on solo story."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -166,7 +166,7 @@ def test_set_ready_non_group_story_rejected(tmp_path):
 @pytest.mark.unit
 def test_start_run_non_group_story_rejected(tmp_path):
     """Verify start_run fails on non-group story templates."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 

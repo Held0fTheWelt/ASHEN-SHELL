@@ -541,8 +541,8 @@ class TestConfigIsolationPerEnvironment:
         from tests.conftest import build_test_app
 
         # Create two app instances with different store backends
-        app1 = build_test_app(tmp_path, store_backend="json")
-        app2 = build_test_app(tmp_path / "store2", store_backend="json")
+        app1 = build_test_app(tmp_path)
+        app2 = build_test_app(tmp_path / "store2")
 
         # Both should work independently
         assert app1 is not None

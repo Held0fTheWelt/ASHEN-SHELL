@@ -146,6 +146,22 @@ def create_join_context(payload: JoinContextRequest, manager: RuntimeManager = D
     }
 
 
+@router.get("/runs/{run_id}")
+def get_run_details_public(run_id: str, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
+    """Get run details for a specific run (publicly accessible)."""
+    try:
+        instance = manager.get_instance(run_id)
+        # Get any participant to build a snapshot
+        participant_id = next(iter(instance.participants.keys()))
+        snapshot = manager.build_snapshot(run_id, participant_id)
+        return {
+            "run": manager.describe_run(run_id),
+            "lobby": snapshot.lobby,
+        }
+    except (KeyError, StopIteration) as exc:
+        raise HTTPException(status_code=404, detail="Run not found") from exc
+
+
 @router.get("/runs/{run_id}/snapshot/{participant_id}")
 def get_snapshot(run_id: str, participant_id: str, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
     try:

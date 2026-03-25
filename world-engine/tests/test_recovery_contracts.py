@@ -28,7 +28,7 @@ from app.runtime.store import JsonRunStore
 @pytest.mark.persistence
 def test_failed_write_triggers_rollback(tmp_path):
     """Verify that failed write operations don't leave partial data."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Initial save
@@ -58,7 +58,7 @@ def test_failed_write_triggers_rollback(tmp_path):
 @pytest.mark.persistence
 def test_partial_update_rollback(tmp_path):
     """Verify that partial updates are handled correctly without corruption."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Get initial participant count (includes NPCs)
@@ -110,7 +110,7 @@ def test_partial_update_rollback(tmp_path):
 @pytest.mark.persistence
 def test_recovery_from_corrupted_snapshot(tmp_path):
     """Verify that corrupted snapshots can be recovered from."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
     manager.store.save(run)
 
@@ -129,7 +129,7 @@ def test_recovery_from_corrupted_snapshot(tmp_path):
 @pytest.mark.persistence
 def test_concurrent_access_without_data_loss(tmp_path):
     """Verify that multiple runs can be accessed without data loss."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
 
     # Create multiple runs
     runs = []
@@ -159,7 +159,7 @@ def test_store_reconnection_consistency(tmp_path, sqlalchemy_available):
     # Test with JSON store
     json_path = tmp_path / "json_store"
     json_path.mkdir()
-    manager1 = RuntimeManager(store_root=json_path, store_backend="json")
+    manager1 = RuntimeManager(store_root=json_path)
     run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
     manager1.store.save(run1)
 
@@ -176,7 +176,7 @@ def test_store_reconnection_consistency(tmp_path, sqlalchemy_available):
         db_url = f"sqlite:///{db_path}"
         sql_tmp_path = tmp_path / "sql_store"
         sql_tmp_path.mkdir()
-        manager_sql = RuntimeManager(store_root=sql_tmp_path, store_backend="sqlalchemy", store_url=db_url)
+        manager_sql = RuntimeManager(store_root=sql_tmp_path, store_url=db_url)
         run_sql = manager_sql.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
         manager_sql.store.save(run_sql)
 
@@ -191,7 +191,7 @@ def test_store_reconnection_consistency(tmp_path, sqlalchemy_available):
 @pytest.mark.persistence
 def test_incomplete_transaction_cleanup(tmp_path):
     """Verify that incomplete transactions don't leave orphaned resources."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Start a save but don't complete it properly (simulate interruption)
@@ -216,7 +216,7 @@ def test_incomplete_transaction_cleanup(tmp_path):
 @pytest.mark.persistence
 def test_run_state_recovery_after_crash(tmp_path):
     """Verify that run state can be recovered after a simulated crash."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Set up complex state with transcript and metadata
@@ -234,7 +234,7 @@ def test_run_state_recovery_after_crash(tmp_path):
     manager.store.save(run)
 
     # Simulate crash by creating new manager (fresh load from storage)
-    manager_recovered = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager_recovered = RuntimeManager(store_root=tmp_path)
 
     # Verify state was recovered
     recovered_run = manager_recovered.instances.get(run.id)
@@ -252,7 +252,7 @@ def test_database_constraint_violation_handling(tmp_path, sqlalchemy_available):
         pytest.skip("sqlalchemy not available")
 
     db_url = "sqlite:///:memory:"
-    manager = RuntimeManager(store_root=tmp_path, store_backend="sqlalchemy", store_url=db_url)
+    manager = RuntimeManager(store_root=tmp_path, store_url=db_url)
 
     # Create and save a run
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
@@ -277,7 +277,7 @@ def test_database_constraint_violation_handling(tmp_path, sqlalchemy_available):
 def test_store_describe_accuracy(tmp_path, sqlalchemy_available):
     """Verify that store description provides accurate backend information."""
     # Test JSON store description
-    json_manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    json_manager = RuntimeManager(store_root=tmp_path)
     desc = json_manager.store.describe()
     assert desc["backend"] == "json"
     assert "root" in desc
@@ -285,7 +285,7 @@ def test_store_describe_accuracy(tmp_path, sqlalchemy_available):
     # Test SQLAlchemy store description
     if sqlalchemy_available:
         db_url = "sqlite:///:memory:"
-        sql_manager = RuntimeManager(store_root=tmp_path, store_backend="sqlalchemy", store_url=db_url)
+        sql_manager = RuntimeManager(store_root=tmp_path, store_url=db_url)
         desc_sql = sql_manager.store.describe()
         assert desc_sql["backend"] == "sqlalchemy"
         assert "url" in desc_sql

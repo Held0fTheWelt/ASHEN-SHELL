@@ -10,7 +10,7 @@ from app.runtime.store import JsonRunStore, build_run_store
 
 
 def test_json_store_roundtrip_persists_runtime_instances(tmp_path):
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:solo", display_name="Solo")
 
     store = JsonRunStore(tmp_path)

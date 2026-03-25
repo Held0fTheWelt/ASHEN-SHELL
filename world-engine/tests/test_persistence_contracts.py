@@ -29,7 +29,7 @@ from app.runtime.store import JsonRunStore
 @pytest.mark.persistence
 def test_runtime_instance_persists_to_json_store(tmp_path):
     """Verify that a RuntimeInstance can be saved to and loaded from JSON store."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test Player")
 
     # Manually save to store
@@ -51,7 +51,7 @@ def test_runtime_instance_persists_to_sqlalchemy_store(tmp_path, sqlalchemy_avai
         pytest.skip("sqlalchemy not available")
 
     db_url = "sqlite:///:memory:"
-    manager = RuntimeManager(store_root=tmp_path, store_backend="sqlalchemy", store_url=db_url)
+    manager = RuntimeManager(store_root=tmp_path, store_url=db_url)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test Player")
 
     # Manually save to store
@@ -69,7 +69,7 @@ def test_runtime_instance_persists_to_sqlalchemy_store(tmp_path, sqlalchemy_avai
 @pytest.mark.persistence
 def test_run_data_roundtrip_preserves_all_fields(tmp_path):
     """Verify that all RuntimeInstance fields survive a save/load roundtrip."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run(
         "god_of_carnage_solo",
         account_id="acct:owner",
@@ -112,7 +112,7 @@ def test_run_data_roundtrip_preserves_all_fields(tmp_path):
 @pytest.mark.persistence
 def test_participant_data_roundtrip_consistency(tmp_path):
     """Verify that ParticipantState data survives roundtrip intact."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:owner", display_name="Owner")
 
     # Create participant with all fields set
@@ -144,7 +144,7 @@ def test_participant_data_roundtrip_consistency(tmp_path):
 @pytest.mark.persistence
 def test_snapshot_data_roundtrip_consistency(tmp_path):
     """Verify that RuntimeSnapshot data is consistent in roundtrips."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Get the human participant created during bootstrap
@@ -176,7 +176,7 @@ def test_snapshot_data_roundtrip_consistency(tmp_path):
 @pytest.mark.persistence
 def test_run_state_transitions_persist_correctly(tmp_path):
     """Verify that state transitions (LOBBY/RUNNING -> COMPLETED) persist correctly."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Verify initial state (god_of_carnage_solo auto-transitions to RUNNING for solo stories)
@@ -222,7 +222,7 @@ def test_sqlalchemy_store_transaction_rollback(tmp_path, sqlalchemy_available):
         pytest.skip("sqlalchemy not available")
 
     db_url = "sqlite:///:memory:"
-    manager = RuntimeManager(store_root=tmp_path, store_backend="sqlalchemy", store_url=db_url)
+    manager = RuntimeManager(store_root=tmp_path, store_url=db_url)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Save initial state
@@ -249,7 +249,7 @@ def test_store_migration_between_backends(tmp_path):
     # Create and save with JSON backend
     json_path = tmp_path / "json"
     json_path.mkdir()
-    manager_json = RuntimeManager(store_root=json_path, store_backend="json")
+    manager_json = RuntimeManager(store_root=json_path)
     run_json = manager_json.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
     manager_json.store.save(run_json)
 
@@ -295,7 +295,7 @@ def test_corrupted_data_graceful_handling(tmp_path):
 @pytest.mark.persistence
 def test_large_transcript_persistence(tmp_path):
     """Verify that large transcript data persists correctly."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:test", display_name="Test")
 
     # Add many transcript entries
@@ -321,7 +321,7 @@ def test_large_transcript_persistence(tmp_path):
 @pytest.mark.persistence
 def test_concurrent_write_safety(tmp_path):
     """Verify that concurrent writes don't corrupt data (basic single-threaded simulation)."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run1 = manager.create_run("god_of_carnage_solo", account_id="acct:test1", display_name="Test 1")
     run2 = manager.create_run("apartment_confrontation_group", account_id="acct:test2", display_name="Test 2")
 

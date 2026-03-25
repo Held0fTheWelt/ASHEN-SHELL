@@ -7,7 +7,7 @@ from app.runtime.models import RunStatus
 
 
 def _solo_manager_with_human(tmp_path):
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:solo", display_name="Solo")
     human = next(participant for participant in run.participants.values() if participant.account_id == "acct:solo")
     engine = RuntimeEngine(manager.get_template(run.template_id))
@@ -95,7 +95,7 @@ def test_conditional_story_actions_unlock_across_beats(tmp_path):
 
 
 def test_group_story_actions_are_blocked_while_lobby_is_active(tmp_path):
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     host = next(participant for participant in run.participants.values() if participant.account_id == "acct:host")
     engine = RuntimeEngine(manager.get_template(run.template_id))
@@ -111,7 +111,7 @@ def test_group_story_actions_are_blocked_while_lobby_is_active(tmp_path):
 
 
 def test_group_story_npc_cycle_emits_house_ai_only_once(tmp_path):
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     host = next(participant for participant in run.participants.values() if participant.account_id == "acct:host")
     guest = manager.find_or_join_run(run.id, account_id="acct:guest", display_name="Guest", preferred_role_id="parent_a")
@@ -133,7 +133,7 @@ def test_group_story_npc_cycle_emits_house_ai_only_once(tmp_path):
 
 
 def test_open_world_patrol_flag_triggers_drone_npc_cycle(tmp_path):
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run_id = next(run.id for run in manager.list_runs() if run.template_id == "better_tomorrow_district_alpha")
     run = manager.get_instance(run_id)
     citizen = manager.find_or_join_run(run.id, account_id="acct:citizen", display_name="Citizen")

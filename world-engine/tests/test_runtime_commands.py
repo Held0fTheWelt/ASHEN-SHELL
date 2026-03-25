@@ -18,7 +18,7 @@ from app.runtime.models import ParticipantState, RunStatus
 @pytest.mark.unit
 def test_move_command_valid_destination(tmp_path):
     """Verify move command succeeds with valid, reachable destination."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -41,7 +41,7 @@ def test_move_command_valid_destination(tmp_path):
 @pytest.mark.unit
 def test_move_command_invalid_destination(tmp_path):
     """Verify move command rejects unreachable destinations."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -58,7 +58,7 @@ def test_move_command_invalid_destination(tmp_path):
 @pytest.mark.unit
 def test_say_command_valid_text(tmp_path):
     """Verify say command accepts non-empty text."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -74,7 +74,7 @@ def test_say_command_valid_text(tmp_path):
 @pytest.mark.unit
 def test_say_command_empty_text(tmp_path):
     """Verify say command rejects empty text."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -89,7 +89,7 @@ def test_say_command_empty_text(tmp_path):
 @pytest.mark.unit
 def test_emote_command_valid_text(tmp_path):
     """Verify emote command accepts valid action text."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -104,7 +104,7 @@ def test_emote_command_valid_text(tmp_path):
 @pytest.mark.unit
 def test_emote_command_empty_text(tmp_path):
     """Verify emote command rejects empty text."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -118,7 +118,7 @@ def test_emote_command_empty_text(tmp_path):
 @pytest.mark.unit
 def test_inspect_command_room(tmp_path):
     """Verify inspect command succeeds on current room."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -133,7 +133,7 @@ def test_inspect_command_room(tmp_path):
 @pytest.mark.unit
 def test_inspect_command_invalid_target(tmp_path):
     """Verify inspect command rejects non-visible targets."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -147,7 +147,7 @@ def test_inspect_command_invalid_target(tmp_path):
 @pytest.mark.unit
 def test_unknown_command_rejected(tmp_path):
     """Verify unknown commands are rejected."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -162,7 +162,7 @@ def test_unknown_command_rejected(tmp_path):
 @pytest.mark.unit
 def test_command_in_group_story_lobby_blocks_actions(tmp_path):
     """Verify that certain commands are blocked while lobby is in progress."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -184,7 +184,7 @@ def test_command_in_group_story_lobby_blocks_actions(tmp_path):
 @pytest.mark.unit
 def test_start_run_by_non_host_rejected(tmp_path):
     """Verify only host can start group story."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
 
     # Create run with specific host
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
@@ -206,7 +206,7 @@ def test_start_run_by_non_host_rejected(tmp_path):
 @pytest.mark.unit
 def test_set_ready_in_group_story_lobby(tmp_path):
     """Verify set_ready command works in lobby."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -229,7 +229,7 @@ def test_set_ready_in_group_story_lobby(tmp_path):
 @pytest.mark.unit
 def test_set_not_ready_in_group_story_lobby(tmp_path):
     """Verify set_ready can mark participant as not ready."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -253,7 +253,7 @@ def test_set_not_ready_in_group_story_lobby(tmp_path):
 @pytest.mark.unit
 def test_command_missing_action_field_rejected(tmp_path):
     """Verify command without action field is rejected."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -267,7 +267,7 @@ def test_command_missing_action_field_rejected(tmp_path):
 @pytest.mark.unit
 def test_say_command_with_whitespace_only_rejected(tmp_path):
     """Verify say command rejects whitespace-only text."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -281,7 +281,7 @@ def test_say_command_with_whitespace_only_rejected(tmp_path):
 @pytest.mark.unit
 def test_command_adds_transcript_entry(tmp_path):
     """Verify commands add entries to transcript."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -297,7 +297,7 @@ def test_command_adds_transcript_entry(tmp_path):
 @pytest.mark.unit
 def test_move_command_updates_participant_room(tmp_path):
     """Verify move command updates participant's current_room_id."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -316,7 +316,7 @@ def test_move_command_updates_participant_room(tmp_path):
 @pytest.mark.unit
 def test_inspect_command_unavailable_in_wrong_room(tmp_path):
     """Verify inspect fails for props in different room."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -338,7 +338,7 @@ def test_inspect_command_unavailable_in_wrong_room(tmp_path):
 @pytest.mark.unit
 def test_start_run_requires_minimum_ready_participants(tmp_path):
     """Verify start_run rejects if not enough ready participants."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("apartment_confrontation_group", account_id="acct:host", display_name="Host")
     engine = manager.engines[run.id]
 
@@ -354,7 +354,7 @@ def test_start_run_requires_minimum_ready_participants(tmp_path):
 @pytest.mark.unit
 def test_command_result_includes_events(tmp_path):
     """Verify successful commands include events in result."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -370,7 +370,7 @@ def test_command_result_includes_events(tmp_path):
 @pytest.mark.unit
 def test_command_result_includes_reason_on_rejection(tmp_path):
     """Verify rejected commands include reason."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 
@@ -386,7 +386,7 @@ def test_command_result_includes_reason_on_rejection(tmp_path):
 @pytest.mark.unit
 def test_emote_command_sanitizes_text(tmp_path):
     """Verify emote command processes text correctly."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
     run = manager.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")
     engine = manager.engines[run.id]
 

@@ -18,7 +18,7 @@ from app.runtime.models import RunStatus
 @pytest.mark.unit
 def test_open_world_bootstrap_creates_persistent_instance(tmp_path):
     """Verify open world bootstrap creates persistent instance on init."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
 
     # Find an open world template
     open_world_template = next(
@@ -42,7 +42,7 @@ def test_open_world_bootstrap_creates_persistent_instance(tmp_path):
 @pytest.mark.unit
 def test_open_world_starts_in_running_state(tmp_path):
     """Verify open world instances start in RUNNING state."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
 
     open_world_template = next(
         (t for t in manager.templates.values() if str(t.kind) == "open_world"),
@@ -62,7 +62,7 @@ def test_open_world_starts_in_running_state(tmp_path):
 @pytest.mark.unit
 def test_open_world_has_initial_beat(tmp_path):
     """Verify open world has initial beat set."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
 
     open_world_template = next(
         (t for t in manager.templates.values() if str(t.kind) == "open_world"),
@@ -83,7 +83,7 @@ def test_open_world_has_initial_beat(tmp_path):
 @pytest.mark.unit
 def test_open_world_has_all_props_initialized(tmp_path):
     """Verify all props are initialized in open world."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
 
     open_world_template = next(
         (t for t in manager.templates.values() if str(t.kind) == "open_world"),
@@ -105,7 +105,7 @@ def test_open_world_has_all_props_initialized(tmp_path):
 @pytest.mark.unit
 def test_open_world_has_npc_participants(tmp_path):
     """Verify NPCs are present in open world."""
-    manager = RuntimeManager(store_root=tmp_path, store_backend="json")
+    manager = RuntimeManager(store_root=tmp_path)
 
     open_world_template = next(
         (t for t in manager.templates.values() if str(t.kind) == "open_world"),
