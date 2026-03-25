@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Version 0.2: Integration of Game Rules and Game System
 - Version 0.3: Integration of dynamic evolving content with rules and drafts
 
-## [Unreleased] - Test Expansion Waves (WAVE 0-1)
+## [0.1.9] - Test Expansion Waves (WAVE 0-1)
 
 ### Added
 - **WAVE 0: Target contracts and test infrastructure**
@@ -40,6 +40,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `tests/test_public_routes.py` (67 tests): Public routes (/, /news, /news/<id>, /wiki, /wiki/<slug>), template rendering, context injection (backend_api_url, frontend_config, language metadata)
   - `tests/test_forum_routes.py` (75 tests): Forum routes (/forum*, /forum/categories/*, /forum/threads/*, /forum/notifications, /forum/saved, /forum/tags/*), rendering with context, parameter forwarding, graceful degradation
   - `tests/test_manage_routes.py` (83 tests): Management routes (/manage*, /users/<id>/profile), context consistency, security headers, proxy access configuration, graceful rendering without backend
+
+- **WAVE 5: World-engine config and internal auth (117 tests)**
+  - `tests/test_config_contract.py` (43 tests): PLAY_SERVICE_SECRET validation, PLAY_SERVICE_INTERNAL_API_KEY behavior, database/Redis URL validation, store configuration, startup readiness
+  - `tests/test_ticket_manager.py` (59 tests): Ticket issuance/verification, HMAC-SHA256 signing, expiration enforcement, malformed token rejection, payload preservation, TTL control
+  - `tests/test_internal_api_key_guard.py` (35 tests): Internal API key authentication, guard function behavior, endpoint protection, public endpoint isolation, key validation order
 
 ## [0.1.8] - 2026-03-23
 
