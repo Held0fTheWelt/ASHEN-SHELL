@@ -576,3 +576,31 @@ class TestManagementRoutesProxyAccess:
 
         _, context = templates[-1]
         assert context["frontend_config"]["backendApiUrl"] == app.config["BACKEND_API_URL"]
+
+
+class TestManagementGameContentRoute:
+    @pytest.mark.unit
+    def test_manage_game_content_returns_200(self, client):
+        response = client.get("/manage/game-content")
+        assert response.status_code == 200
+
+    @pytest.mark.unit
+    def test_manage_game_content_renders_correct_template(self, app, client):
+        with captured_templates(app) as templates:
+            response = client.get("/manage/game-content")
+        assert response.status_code == 200
+        assert templates[-1][0] == "manage/game_content.html"
+
+
+class TestManagementGameOperationsRoute:
+    @pytest.mark.unit
+    def test_manage_game_operations_returns_200(self, client):
+        response = client.get("/manage/game-operations")
+        assert response.status_code == 200
+
+    @pytest.mark.unit
+    def test_manage_game_operations_renders_correct_template(self, app, client):
+        with captured_templates(app) as templates:
+            response = client.get("/manage/game-operations")
+        assert response.status_code == 200
+        assert templates[-1][0] == "manage/game_operations.html"

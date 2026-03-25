@@ -31,6 +31,8 @@ from conftest import captured_templates
         ("/manage/slogans", "manage/slogans.html"),
         ("/manage/data", "manage/data.html"),
         ("/manage/forum", "manage/forum.html"),
+        ("/manage/game-content", "manage/game_content.html"),
+        ("/manage/game-operations", "manage/game_operations.html"),
         ("/manage/analytics", "manage_analytics.html"),
         ("/manage/moderator-dashboard", "manage_moderator_dashboard.html"),
     ],

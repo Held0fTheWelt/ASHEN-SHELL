@@ -35,3 +35,5 @@ from app.api.v1 import forum_routes  # noqa: F401, E402
 from app.api.v1 import analytics_routes  # noqa: F401, E402
 
 from app.api.v1 import game_routes  # noqa: F401, E402
+
+from app.api.v1 import game_admin_routes  # noqa: F401, E402

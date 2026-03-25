@@ -235,3 +235,48 @@ textarea.form-input { min-height: 100px; resize: vertical; }
 .badge-warning { background: #6b5a2d; color: #fff8e0; }
 .badge-info { background: #2d4a6b; color: #e0f0ff; }
 .badge-secondary { background: var(--surface); color: var(--text-muted); }
+
+.manage-page-grid { display: grid; gap: 1rem; }
+.manage-split-grid { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 1rem; }
+@media (max-width: 960px) { .manage-split-grid { grid-template-columns: 1fr; } }
+.stack-list { display: grid; gap: 0.5rem; }
+.list-card-button {
+    width: 100%;
+    text-align: left;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+.list-card-button.is-active,
+.list-card-button:hover { border-color: var(--primary); background: rgba(122, 92, 158, 0.08); }
+.stack-form { display: grid; gap: 0.85rem; }
+.form-row { display: grid; gap: 0.35rem; }
+.form-row input,
+.form-row select,
+.form-row textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+.button-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.code-block {
+    margin: 0;
+    padding: 1rem;
+    min-height: 8rem;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--void);
+    color: var(--text);
+    font-family: var(--mono-font);
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}

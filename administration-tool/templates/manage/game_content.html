@@ -1,0 +1,87 @@
+{% extends "manage/base.html" %}
+{% block title %}Game content{% endblock %}
+{% block content %}
+<div class="manage-page-grid">
+    <section class="card">
+        <h1 class="page-header">Game content</h1>
+        <p class="muted">Create, edit, version, and publish authored experiences for the world-engine.</p>
+        <div id="game-content-error" class="form-error" hidden></div>
+        <div class="manage-split-grid">
+            <div>
+                <div class="form-row">
+                    <label for="game-content-search">Search</label>
+                    <input id="game-content-search" type="text" placeholder="Filter by key or title">
+                </div>
+                <div class="form-row">
+                    <label for="game-content-status-filter">Status</label>
+                    <select id="game-content-status-filter">
+                        <option value="">All</option>
+                        <option value="draft">Draft</option>
+                        <option value="review">Review</option>
+                        <option value="published">Published</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                <button id="game-content-refresh" class="btn">Refresh</button>
+                <div id="game-content-list" class="stack-list" style="margin-top: 1rem;"></div>
+            </div>
+            <div>
+                <h2 style="margin-top:0;">Editor</h2>
+                <form id="game-content-form" class="stack-form">
+                    <input id="game-content-id" type="hidden">
+                    <div class="form-row">
+                        <label for="game-content-key">Key</label>
+                        <input id="game-content-key" type="text" placeholder="god_of_carnage_authored">
+                    </div>
+                    <div class="form-row">
+                        <label for="game-content-title">Title</label>
+                        <input id="game-content-title" type="text" placeholder="God of Carnage — Authored">
+                    </div>
+                    <div class="form-row">
+                        <label for="game-content-type">Experience type</label>
+                        <select id="game-content-type">
+                            <option value="solo_story">Solo story</option>
+                            <option value="group_story">Group story</option>
+                            <option value="open_world">Open world</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="game-content-style">Style profile</label>
+                        <input id="game-content-style" type="text" value="retro_pulp">
+                    </div>
+                    <div class="form-row">
+                        <label for="game-content-tags">Tags</label>
+                        <input id="game-content-tags" type="text" placeholder="social-drama, authored">
+                    </div>
+                    <div class="form-row">
+                        <label for="game-content-summary">Summary</label>
+                        <textarea id="game-content-summary" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <label for="game-content-status">Status</label>
+                        <select id="game-content-status">
+                            <option value="draft">Draft</option>
+                            <option value="review">Review</option>
+                            <option value="published">Published</option>
+                            <option value="archived">Archived</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="game-content-payload">Draft payload (JSON)</label>
+                        <textarea id="game-content-payload" rows="18" style="font-family: var(--mono-font, monospace);"></textarea>
+                    </div>
+                    <div class="button-row">
+                        <button type="button" id="game-content-new" class="btn btn-secondary">New</button>
+                        <button type="submit" id="game-content-save" class="btn btn-primary">Save</button>
+                        <button type="button" id="game-content-publish" class="btn">Publish</button>
+                    </div>
+                    <pre id="game-content-meta" class="code-block"></pre>
+                </form>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='manage_game_content.js') }}"></script>
+{% endblock %}

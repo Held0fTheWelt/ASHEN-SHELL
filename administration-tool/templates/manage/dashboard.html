@@ -21,6 +21,14 @@
             <h3>Slogans</h3>
             <p>Manage landing and site slogans (moderator+).</p>
         </a>
+        <a href="{{ url_for('manage_game_content') }}" class="card card-link" id="manage-dashboard-game-content" data-feature="manage.game_content">
+            <h3>Game content</h3>
+            <p>Author, validate, version, and publish experience templates for the world-engine.</p>
+        </a>
+        <a href="{{ url_for('manage_game_operations') }}" class="card card-link" id="manage-dashboard-game-operations" data-feature="manage.game_operations">
+            <h3>Game operations</h3>
+            <p>Inspect active runs, review transcripts, and terminate unstable runtime sessions.</p>
+        </a>
     </div>
 </div>
 {% endblock %}

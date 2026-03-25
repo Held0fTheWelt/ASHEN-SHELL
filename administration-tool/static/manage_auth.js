@@ -127,6 +127,12 @@
             var fid = link.getAttribute("data-feature");
             link.style.display = fid && hasFeature(fid) ? "" : "none";
         });
+        [].forEach.call(document.querySelectorAll("[data-feature]"), function(el) {
+            if (!el.classList.contains("manage-nav-link") && !el.classList.contains("card-link")) return;
+            var fid = el.getAttribute("data-feature");
+            if (!fid) return;
+            el.style.display = hasFeature(fid) ? "" : "none";
+        });
         var usersCard = document.getElementById("manage-dashboard-users");
         if (usersCard) usersCard.style.display = hasFeature("manage.users") ? "" : "none";
     }
