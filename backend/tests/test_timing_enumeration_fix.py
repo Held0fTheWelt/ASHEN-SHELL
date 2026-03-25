@@ -49,7 +49,6 @@ def test_resend_verification_constant_time_existing_email(client, unverified_use
     assert response.status_code == 200
 
     print(f"Time for existing email: {elapsed_existing:.4f}s")
-    return elapsed_existing
 
 
 def test_resend_verification_constant_time_nonexistent_email(client):
@@ -67,7 +66,6 @@ def test_resend_verification_constant_time_nonexistent_email(client):
     assert "if the email exists" in response.get_json().get("message", "").lower()
 
     print(f"Time for non-existent email: {elapsed_nonexisting:.4f}s")
-    return elapsed_nonexisting
 
 
 def test_resend_verification_timing_variance(client, unverified_user):
@@ -139,7 +137,6 @@ def test_forgot_password_constant_time_existing_email(client, unverified_user):
     assert "if the email exists" in response.get_json().get("message", "").lower()
 
     print(f"Time for forgot-password (existing email): {elapsed_existing:.4f}s")
-    return elapsed_existing
 
 
 def test_forgot_password_constant_time_nonexistent_email(client):
@@ -156,7 +153,6 @@ def test_forgot_password_constant_time_nonexistent_email(client):
     assert "if the email exists" in response.get_json().get("message", "").lower()
 
     print(f"Time for forgot-password (non-existent email): {elapsed_nonexisting:.4f}s")
-    return elapsed_nonexisting
 
 
 def test_forgot_password_timing_variance(client, unverified_user):
