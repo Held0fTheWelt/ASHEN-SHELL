@@ -13,7 +13,7 @@ These tests verify critical contracts for the multiplayer game experience.
 
 import pytest
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TestBackendEngineBridgeTicketContract:
@@ -26,7 +26,7 @@ class TestBackendEngineBridgeTicketContract:
             'id': 1,
             'title': 'Test Ticket',
             'description': 'Test Description',
-            'created_at': datetime.utcnow().isoformat(),
+            'created_at': datetime.now(timezone.utc).isoformat(),
             'created_by': 'user_123',
             'status': 'open',
             'priority': 'normal',
@@ -158,7 +158,7 @@ class TestBackendEngineEventContract:
         """World engine expects specific event format."""
         event = {
             'type': 'ticket_created',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'source': 'backend',
             'payload': {
                 'ticket_id': 1,
@@ -199,7 +199,7 @@ class TestBackendEngineEventContract:
             'participant_joined': {
                 'ticket_id': 1,
                 'participant_id': 'user_456',
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
             },
         }
 
@@ -238,7 +238,7 @@ class TestBackendEngineStateContract:
         ticket = {
             'id': 1,
             'status': 'open',
-            'created_at': datetime.utcnow().isoformat(),
+            'created_at': datetime.now(timezone.utc).isoformat(),
         }
 
         # Engine tracks it
@@ -280,21 +280,20 @@ class TestBackendEngineDataTypeContract:
 
     def test_timestamp_format_consistency(self):
         """Both services use compatible timestamp formats."""
-        import iso8601
-
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
 
         # Engine must be able to parse it
         # (Verify ISO8601 format)
         assert 'T' in timestamp  # ISO8601 format
-        assert timestamp[-1] in ['Z', '+', '-']  # Has timezone
+        # Has timezone offset (format: +HH:MM or Z)
+        assert '+' in timestamp or timestamp.endswith('Z')
 
     def test_json_serialization_contract(self):
         """Data must be JSON-serializable between services."""
         data = {
             'id': 1,
             'name': 'test',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'active': True,
             'score': 100.5,
         }
@@ -316,7 +315,7 @@ class TestBackendEngineErrorHandlingContract:
             'code': 'INVALID_TICKET_ID',
             'message': 'Ticket not found',
             'status': 404,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
         }
 
         # Error must have these fields
@@ -388,7 +387,7 @@ class TestBackendEngineBridgeValidation:
         ticket_participant = {
             'participant_id': participant['world_engine_player_id'],
             'username': participant['username'],
-            'joined_at': datetime.utcnow().isoformat(),
+            'joined_at': datetime.now(timezone.utc).isoformat(),
         }
 
         # 4. Verify full contract
