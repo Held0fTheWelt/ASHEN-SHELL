@@ -57,6 +57,9 @@ def has_complete_play_service_config() -> bool:
     try:
         _require_configured_url("public")
         _require_configured_url("internal")
+        secret = (current_app.config.get("PLAY_SERVICE_SHARED_SECRET") or "").strip()
+        if not secret:
+            return False
         return True
     except GameServiceConfigError:
         return False
