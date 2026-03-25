@@ -13,15 +13,7 @@ from app.api.http import router as http_router
 from app.api.ws import router as ws_router
 from app.auth.tickets import TicketManager
 from app.runtime.manager import RuntimeManager
-
-
-def receive_until_snapshot(websocket, predicate, attempts: int = 5):
-    last = None
-    for _ in range(attempts):
-        last = websocket.receive_json()
-        if last.get("type") == "snapshot" and predicate(last["data"]):
-            return last
-    raise AssertionError(f"Did not receive matching snapshot; last payload was: {last}")
+from conftest import receive_until_snapshot
 
 def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: str | None = None) -> FastAPI:
     app = FastAPI()
