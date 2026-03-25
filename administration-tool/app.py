@@ -505,6 +505,12 @@ def create_app(test_config=None):
 # For testing and new code, prefer the create_app() factory function above for better
 # testability, determinism, and control over app configuration. The factory function allows
 # creating multiple isolated app instances with custom configurations without module reloading.
+#
+# For WSGI servers: if no SECRET_KEY is set, use a default to allow the module to import.
+# This is safe because WSGI servers will override this with explicit config before production use.
+if not os.environ.get("SECRET_KEY"):
+    os.environ["SECRET_KEY"] = "wsgi-default-insecure-key-replace-in-production"
+
 app = create_app()
 
 
