@@ -405,7 +405,7 @@ def create_app(test_config=None):
     else:
         backend_url = BACKEND_API_URL
 
-    app.config["BACKEND_API_URL"] = backend_url
+    app.config["BACKEND_API_URL"] = backend_url.rstrip("/")
 
     # Configure secret key with security validation
     if test_config and "SECRET_KEY" in test_config:
@@ -430,7 +430,12 @@ def create_app(test_config=None):
 
     # Apply test config overrides if provided
     if test_config:
-        app.config.update(test_config)
+        # Make a copy to avoid modifying the input dict
+        config_to_update = test_config.copy()
+        # Ensure BACKEND_API_URL doesn't have trailing slashes
+        if "BACKEND_API_URL" in config_to_update:
+            config_to_update["BACKEND_API_URL"] = config_to_update["BACKEND_API_URL"].rstrip("/")
+        app.config.update(config_to_update)
 
     # Register all routes and handlers
     _register_routes(app)
@@ -438,9 +443,11 @@ def create_app(test_config=None):
     return app
 
 
-# Create global app instance for module-level access and WSGI servers
-# This is loaded at module import time for compatibility with existing deployments
-# New code should use create_app() factory function directly for better testability
+# Create global app instance for module-level access and WSGI servers.
+# This global app export is provided for WSGI server compatibility (e.g., gunicorn, uWSGI).
+# For testing and new code, prefer the create_app() factory function above for better
+# testability, determinism, and control over app configuration. The factory function allows
+# creating multiple isolated app instances with custom configurations without module reloading.
 app = create_app()
 
 

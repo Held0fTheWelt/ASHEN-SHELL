@@ -16,90 +16,96 @@ class TestContextProcessorInjection:
     """Test that inject_config context processor injects required variables."""
 
     @pytest.mark.unit
-    def test_inject_config_returns_dict(self, monkeypatch):
+    def test_inject_config_returns_dict(self, app_factory):
         """Test that inject_config returns a dictionary."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert isinstance(context, dict)
 
     @pytest.mark.unit
-    def test_inject_config_includes_backend_api_url(self, monkeypatch):
+    def test_inject_config_includes_backend_api_url(self, app_factory):
         """Test that inject_config includes backend_api_url."""
-        from conftest import load_frontend_module
+        from app import inject_config
         backend_url = "https://api.test.example.com"
-        module = load_frontend_module(monkeypatch, backend_url=backend_url)
+        app = app_factory(test_config={
+            "BACKEND_API_URL": backend_url,
+            "TESTING": True,
+        })
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert "backend_api_url" in context
             assert context["backend_api_url"] == backend_url
 
     @pytest.mark.unit
-    def test_inject_config_includes_frontend_config_dict(self, monkeypatch):
+    def test_inject_config_includes_frontend_config_dict(self, app_factory):
         """Test that inject_config includes frontend_config."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert "frontend_config" in context
             assert isinstance(context["frontend_config"], dict)
 
     @pytest.mark.unit
-    def test_frontend_config_has_backend_api_url(self, monkeypatch):
+    def test_frontend_config_has_backend_api_url(self, app_factory):
         """Test that frontend_config includes backendApiUrl."""
-        from conftest import load_frontend_module
+        from app import inject_config
         backend_url = "https://backend.example.com"
-        module = load_frontend_module(monkeypatch, backend_url=backend_url)
+        app = app_factory(test_config={
+            "BACKEND_API_URL": backend_url,
+            "TESTING": True,
+        })
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert context["frontend_config"]["backendApiUrl"] == backend_url
 
     @pytest.mark.unit
-    def test_frontend_config_has_api_proxy_base(self, monkeypatch):
+    def test_frontend_config_has_api_proxy_base(self, app_factory):
         """Test that frontend_config includes apiProxyBase."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert "apiProxyBase" in context["frontend_config"]
             assert context["frontend_config"]["apiProxyBase"] == "/_proxy"
 
     @pytest.mark.unit
-    def test_frontend_config_has_supported_languages(self, monkeypatch):
+    def test_frontend_config_has_supported_languages(self, app_factory):
         """Test that frontend_config includes supportedLanguages."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert "supportedLanguages" in context["frontend_config"]
             assert isinstance(context["frontend_config"]["supportedLanguages"], list)
 
     @pytest.mark.unit
-    def test_frontend_config_has_default_language(self, monkeypatch):
+    def test_frontend_config_has_default_language(self, app_factory):
         """Test that frontend_config includes defaultLanguage."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert "defaultLanguage" in context["frontend_config"]
             assert isinstance(context["frontend_config"]["defaultLanguage"], str)
 
     @pytest.mark.unit
-    def test_frontend_config_has_current_language(self, monkeypatch):
+    def test_frontend_config_has_current_language(self, app_factory):
         """Test that frontend_config includes currentLanguage."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/?lang=en"):
-            context = module.inject_config()
+        with app.test_request_context("/?lang=en"):
+            context = inject_config()
             assert "currentLanguage" in context["frontend_config"]
             assert context["frontend_config"]["currentLanguage"] == "en"
 
@@ -108,84 +114,84 @@ class TestLanguageMetadataInContext:
     """Test that language metadata is available in context."""
 
     @pytest.mark.unit
-    def test_context_includes_current_lang(self, monkeypatch):
+    def test_context_includes_current_lang(self, app_factory):
         """Test that current_lang is available in context."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/?lang=de"):
-            context = module.inject_config()
+        with app.test_request_context("/?lang=de"):
+            context = inject_config()
             assert "current_lang" in context
             assert context["current_lang"] == "de"
 
     @pytest.mark.unit
-    def test_context_includes_supported_languages(self, monkeypatch):
+    def test_context_includes_supported_languages(self, app_factory):
         """Test that supported_languages is available in context."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert "supported_languages" in context
             assert isinstance(context["supported_languages"], list)
 
     @pytest.mark.unit
-    def test_supported_languages_contains_de_and_en(self, monkeypatch):
+    def test_supported_languages_contains_de_and_en(self, app_factory):
         """Test that supported_languages contains at least de and en."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             langs = context["supported_languages"]
             assert "de" in langs
             assert "en" in langs
 
     @pytest.mark.unit
-    def test_current_lang_defaults_to_default_language(self, monkeypatch):
+    def test_current_lang_defaults_to_default_language(self, app_factory):
         """Test that current_lang defaults to DEFAULT_LANGUAGE when no preference."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config, DEFAULT_LANGUAGE
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
-            assert context["current_lang"] == module.DEFAULT_LANGUAGE
+        with app.test_request_context("/"):
+            context = inject_config()
+            assert context["current_lang"] == DEFAULT_LANGUAGE
 
 
 class TestTranslationsInContext:
     """Test that translations are available in context."""
 
     @pytest.mark.unit
-    def test_context_includes_translations_dict(self, monkeypatch):
+    def test_context_includes_translations_dict(self, app_factory):
         """Test that translations dict (t) is available in context."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
+        with app.test_request_context("/"):
+            context = inject_config()
             assert "t" in context
             assert isinstance(context["t"], dict)
 
     @pytest.mark.unit
-    def test_translations_dict_is_dict_for_valid_language(self, monkeypatch):
+    def test_translations_dict_is_dict_for_valid_language(self, app_factory):
         """Test that translations dict is a dict (even if empty)."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/?lang=de"):
-            context = module.inject_config()
+        with app.test_request_context("/?lang=de"):
+            context = inject_config()
             t = context["t"]
             assert isinstance(t, dict)
 
     @pytest.mark.unit
-    def test_translations_available_for_each_language(self, monkeypatch):
+    def test_translations_available_for_each_language(self, app_factory):
         """Test that translations can be loaded for each supported language."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config, SUPPORTED_LANGUAGES
+        app = app_factory(test_config={"TESTING": True})
 
-        for lang in module.SUPPORTED_LANGUAGES:
-            with module.app.test_request_context(f"/?lang={lang}"):
-                context = module.inject_config()
+        for lang in SUPPORTED_LANGUAGES:
+            with app.test_request_context(f"/?lang={lang}"):
+                context = inject_config()
                 assert context["current_lang"] == lang
                 assert "t" in context
 
@@ -272,45 +278,48 @@ class TestContextProcessorEdgeCases:
     """Test edge cases for context processor."""
 
     @pytest.mark.unit
-    def test_inject_config_with_invalid_language_query(self, monkeypatch):
+    def test_inject_config_with_invalid_language_query(self, app_factory):
         """Test that inject_config handles invalid language gracefully."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config, DEFAULT_LANGUAGE
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/?lang=invalid"):
-            context = module.inject_config()
+        with app.test_request_context("/?lang=invalid"):
+            context = inject_config()
             # Should fall back to default
-            assert context["current_lang"] == module.DEFAULT_LANGUAGE
+            assert context["current_lang"] == DEFAULT_LANGUAGE
 
     @pytest.mark.unit
-    def test_inject_config_with_empty_language_query(self, monkeypatch):
+    def test_inject_config_with_empty_language_query(self, app_factory):
         """Test that inject_config handles empty lang parameter."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/?lang="):
-            context = module.inject_config()
+        with app.test_request_context("/?lang="):
+            context = inject_config()
             # Should fall back to default
             assert "current_lang" in context
 
     @pytest.mark.unit
-    def test_inject_config_with_whitespace_language(self, monkeypatch):
+    def test_inject_config_with_whitespace_language(self, app_factory):
         """Test that inject_config handles whitespace language."""
-        from conftest import load_frontend_module
-        module = load_frontend_module(monkeypatch)
+        from app import inject_config
+        app = app_factory(test_config={"TESTING": True})
 
-        with module.app.test_request_context("/?lang=   "):
-            context = module.inject_config()
+        with app.test_request_context("/?lang=   "):
+            context = inject_config()
             # Should fall back to default
             assert "current_lang" in context
 
     @pytest.mark.unit
-    def test_context_backend_url_matches_app_config(self, monkeypatch):
+    def test_context_backend_url_matches_app_config(self, app_factory):
         """Test that context backend_api_url matches app.config BACKEND_API_URL."""
-        from conftest import load_frontend_module
+        from app import inject_config
         backend_url = "https://custom-backend.test"
-        module = load_frontend_module(monkeypatch, backend_url=backend_url)
+        app = app_factory(test_config={
+            "BACKEND_API_URL": backend_url,
+            "TESTING": True,
+        })
 
-        with module.app.test_request_context("/"):
-            context = module.inject_config()
-            assert context["backend_api_url"] == module.app.config["BACKEND_API_URL"]
+        with app.test_request_context("/"):
+            context = inject_config()
+            assert context["backend_api_url"] == app.config["BACKEND_API_URL"]

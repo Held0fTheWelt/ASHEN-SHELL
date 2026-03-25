@@ -9,32 +9,29 @@ Validates that:
 from __future__ import annotations
 
 import pytest
-from conftest import load_frontend_module
 
 
 class TestAppFactory:
     """Test app factory and app initialization."""
 
     @pytest.mark.unit
-    def test_app_creation_is_deterministic(self, monkeypatch):
+    def test_app_creation_is_deterministic(self, app_factory):
         """Test that app creation with same config produces consistent app objects."""
         # Create app 1
-        module1 = load_frontend_module(
-            monkeypatch,
-            backend_url="https://test1.example.com",
-            secret="test-secret-key-1"
-        )
-        app1 = module1.app
+        app1 = app_factory(test_config={
+            "BACKEND_API_URL": "https://test1.example.com",
+            "SECRET_KEY": "test-secret-key-1",
+            "TESTING": True,
+        })
         config1_backend = app1.config["BACKEND_API_URL"]
         config1_secret = app1.secret_key
 
         # Create app 2 with same config
-        module2 = load_frontend_module(
-            monkeypatch,
-            backend_url="https://test1.example.com",
-            secret="test-secret-key-1"
-        )
-        app2 = module2.app
+        app2 = app_factory(test_config={
+            "BACKEND_API_URL": "https://test1.example.com",
+            "SECRET_KEY": "test-secret-key-1",
+            "TESTING": True,
+        })
         config2_backend = app2.config["BACKEND_API_URL"]
         config2_secret = app2.secret_key
 
@@ -43,23 +40,21 @@ class TestAppFactory:
         assert config1_secret == config2_secret == "test-secret-key-1"
 
     @pytest.mark.unit
-    def test_app_creation_does_not_share_global_state(self, monkeypatch):
+    def test_app_creation_does_not_share_global_state(self, app_factory):
         """Test that multiple app instances don't share global state."""
         # Create app 1 with URL A
-        module1 = load_frontend_module(
-            monkeypatch,
-            backend_url="https://backend-a.example.com",
-            secret="secret-a"
-        )
-        app1 = module1.app
+        app1 = app_factory(test_config={
+            "BACKEND_API_URL": "https://backend-a.example.com",
+            "SECRET_KEY": "secret-a",
+            "TESTING": True,
+        })
 
         # Create app 2 with URL B (should not affect app1)
-        module2 = load_frontend_module(
-            monkeypatch,
-            backend_url="https://backend-b.example.com",
-            secret="secret-b"
-        )
-        app2 = module2.app
+        app2 = app_factory(test_config={
+            "BACKEND_API_URL": "https://backend-b.example.com",
+            "SECRET_KEY": "secret-b",
+            "TESTING": True,
+        })
 
         # Each app should have its own config
         assert app1.config["BACKEND_API_URL"] == "https://backend-a.example.com"
@@ -73,26 +68,33 @@ class TestAppFactory:
         assert app.config.get("TESTING") is True
 
     @pytest.mark.unit
-    def test_app_accepts_custom_backend_url(self, monkeypatch):
+    def test_app_accepts_custom_backend_url(self, app_factory):
         """Test that app can be configured with custom backend URL."""
         custom_url = "http://localhost:3000"
-        module = load_frontend_module(monkeypatch, backend_url=custom_url)
-        assert module.app.config["BACKEND_API_URL"] == custom_url
+        app = app_factory(test_config={
+            "BACKEND_API_URL": custom_url,
+            "SECRET_KEY": "test-secret",
+            "TESTING": True,
+        })
+        assert app.config["BACKEND_API_URL"] == custom_url
 
     @pytest.mark.unit
-    def test_app_accepts_custom_secret_key(self, monkeypatch):
+    def test_app_accepts_custom_secret_key(self, app_factory):
         """Test that app can be configured with custom secret key."""
         custom_secret = "my-custom-test-secret-key-1234567890"
-        module = load_frontend_module(monkeypatch, secret=custom_secret)
-        assert module.app.secret_key == custom_secret
+        app = app_factory(test_config={
+            "SECRET_KEY": custom_secret,
+            "TESTING": True,
+        })
+        assert app.secret_key == custom_secret
 
     @pytest.mark.unit
-    def test_app_default_secret_key_when_none_provided(self, monkeypatch):
+    def test_app_default_secret_key_when_none_provided(self, app_factory):
         """Test that app generates a secret key when none is provided."""
-        module = load_frontend_module(monkeypatch, secret=None)
+        app = app_factory(test_config={"TESTING": True})
         # Secret should be generated (non-empty)
-        assert module.app.secret_key
-        assert len(module.app.secret_key) > 0
+        assert app.secret_key
+        assert len(app.secret_key) > 0
 
     @pytest.mark.unit
     def test_app_session_cookie_security_hardening(self, app):
@@ -131,42 +133,48 @@ class TestAppConfiguration:
     """Test app configuration behavior."""
 
     @pytest.mark.unit
-    def test_backend_url_respects_rstrip_slash(self, monkeypatch):
+    def test_backend_url_respects_rstrip_slash(self, app_factory):
         """Test that trailing slashes are removed from backend URL."""
         url_with_slash = "https://api.example.com/"
-        module = load_frontend_module(monkeypatch, backend_url=url_with_slash)
-        assert module.app.config["BACKEND_API_URL"] == "https://api.example.com"
+        app = app_factory(test_config={
+            "BACKEND_API_URL": url_with_slash,
+            "TESTING": True,
+        })
+        assert app.config["BACKEND_API_URL"] == "https://api.example.com"
 
     @pytest.mark.unit
-    def test_backend_url_preserves_path(self, monkeypatch):
+    def test_backend_url_preserves_path(self, app_factory):
         """Test that backend URL with path is preserved."""
         url_with_path = "https://api.example.com/v1"
-        module = load_frontend_module(monkeypatch, backend_url=url_with_path)
-        assert module.app.config["BACKEND_API_URL"] == "https://api.example.com/v1"
+        app = app_factory(test_config={
+            "BACKEND_API_URL": url_with_path,
+            "TESTING": True,
+        })
+        assert app.config["BACKEND_API_URL"] == "https://api.example.com/v1"
 
     @pytest.mark.unit
-    def test_app_testing_flag_isolated_between_instances(self, monkeypatch):
+    def test_app_testing_flag_isolated_between_instances(self, app_factory):
         """Test that TESTING flag doesn't leak between app instances."""
-        # Load with fixture (which sets TESTING=True)
-        module1 = load_frontend_module(monkeypatch)
-        module1.app.config.update(TESTING=True)
+        # Create app with TESTING=True
+        app1 = app_factory(test_config={"TESTING": True})
+        assert app1.config.get("TESTING") is True
 
-        # Load a new module
-        module2 = load_frontend_module(monkeypatch)
-        # module2 app should not have TESTING set by default
-        assert module2.app.config.get("TESTING") != True  # Not set by load_frontend_module
+        # Create a new app without TESTING flag
+        app2 = app_factory(test_config={})
+        # app2 should not have TESTING set by default
+        assert app2.config.get("TESTING") != True  # Not set by factory
 
     @pytest.mark.unit
-    def test_supported_languages_constant(self, monkeypatch):
+    def test_supported_languages_constant(self, app_factory):
         """Test that SUPPORTED_LANGUAGES constant is correct."""
-        module = load_frontend_module(monkeypatch)
-        assert module.SUPPORTED_LANGUAGES == ["de", "en"]
+        from app import SUPPORTED_LANGUAGES
+        assert SUPPORTED_LANGUAGES == ["de", "en"]
 
     @pytest.mark.unit
-    def test_default_language_constant(self, monkeypatch):
+    def test_default_language_constant(self, app_factory):
         """Test that DEFAULT_LANGUAGE constant is correct."""
-        module = load_frontend_module(monkeypatch)
-        assert module.DEFAULT_LANGUAGE == "de"
+        from app import DEFAULT_LANGUAGE
+        assert DEFAULT_LANGUAGE == "de"
 
 
 class TestAppIntegration:

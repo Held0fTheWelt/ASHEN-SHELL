@@ -11,41 +11,40 @@ Validates that:
 from __future__ import annotations
 
 import pytest
-from conftest import load_frontend_module
 
 
 class TestSecretKeyContract:
     """Test SECRET_KEY configuration contract."""
 
     @pytest.mark.contract
-    def test_test_mode_accepts_any_secret_key(self, monkeypatch):
+    def test_test_mode_accepts_any_secret_key(self, app_factory):
         """Test that app accepts short secrets in test mode."""
-        module = load_frontend_module(monkeypatch, secret="short")
-        assert module.app.secret_key == "short"
+        app = app_factory(test_config={"SECRET_KEY": "short", "TESTING": True})
+        assert app.secret_key == "short"
 
     @pytest.mark.contract
-    def test_secret_key_is_set_when_provided(self, monkeypatch):
+    def test_secret_key_is_set_when_provided(self, app_factory):
         """Test that app uses provided SECRET_KEY."""
         secret = "this-is-my-test-secret-key-exactly"
-        module = load_frontend_module(monkeypatch, secret=secret)
-        assert module.app.secret_key == secret
+        app = app_factory(test_config={"SECRET_KEY": secret, "TESTING": True})
+        assert app.secret_key == secret
 
     @pytest.mark.contract
-    def test_secret_key_auto_generated_when_none(self, monkeypatch):
+    def test_secret_key_auto_generated_when_none(self, app_factory):
         """Test that app generates a secret key when SECRET_KEY env var is not set."""
-        module = load_frontend_module(monkeypatch, secret=None)
+        app = app_factory(test_config={"TESTING": True})
         # Should generate a key via secrets.token_urlsafe(32)
-        assert module.app.secret_key is not None
-        assert len(module.app.secret_key) > 0
+        assert app.secret_key is not None
+        assert len(app.secret_key) > 0
 
     @pytest.mark.contract
-    def test_secret_key_auto_generated_is_different_each_time(self, monkeypatch):
+    def test_secret_key_auto_generated_is_different_each_time(self, app_factory):
         """Test that auto-generated keys are different for each app."""
-        module1 = load_frontend_module(monkeypatch, secret=None)
-        secret1 = module1.app.secret_key
+        app1 = app_factory(test_config={"TESTING": True})
+        secret1 = app1.secret_key
 
-        module2 = load_frontend_module(monkeypatch, secret=None)
-        secret2 = module2.app.secret_key
+        app2 = app_factory(test_config={"TESTING": True})
+        secret2 = app2.secret_key
 
         # Both should be non-empty (they might be the same if SECRET_KEY
         # env var was already set in the environment, so we just check they exist)
@@ -53,168 +52,168 @@ class TestSecretKeyContract:
         assert len(secret1) > 0 and len(secret2) > 0
 
     @pytest.mark.contract
-    def test_secret_key_is_not_empty_string(self, monkeypatch):
+    def test_secret_key_is_not_empty_string(self, app_factory):
         """Test that secret_key is never an empty string."""
-        module = load_frontend_module(monkeypatch, secret=None)
-        assert module.app.secret_key != ""
-        assert module.app.secret_key is not None
+        app = app_factory(test_config={"TESTING": True})
+        assert app.secret_key != ""
+        assert app.secret_key is not None
 
 
 class TestBackendURLContract:
     """Test BACKEND_API_URL configuration contract."""
 
     @pytest.mark.contract
-    def test_backend_url_is_configured_in_app_config(self, monkeypatch):
+    def test_backend_url_is_configured_in_app_config(self, app_factory):
         """Test that BACKEND_API_URL is available in app.config."""
         url = "https://api.example.com"
-        module = load_frontend_module(monkeypatch, backend_url=url)
-        assert "BACKEND_API_URL" in module.app.config
-        assert module.app.config["BACKEND_API_URL"] == url
+        app = app_factory(test_config={"BACKEND_API_URL": url, "TESTING": True})
+        assert "BACKEND_API_URL" in app.config
+        assert app.config["BACKEND_API_URL"] == url
 
     @pytest.mark.contract
-    def test_backend_url_can_be_localhost(self, monkeypatch):
+    def test_backend_url_can_be_localhost(self, app_factory):
         """Test that localhost URLs are accepted."""
         url = "http://localhost:5000"
-        module = load_frontend_module(monkeypatch, backend_url=url)
-        assert module.app.config["BACKEND_API_URL"] == url
+        app = app_factory(test_config={"BACKEND_API_URL": url, "TESTING": True})
+        assert app.config["BACKEND_API_URL"] == url
 
     @pytest.mark.contract
-    def test_backend_url_can_be_https(self, monkeypatch):
+    def test_backend_url_can_be_https(self, app_factory):
         """Test that HTTPS URLs are accepted."""
         url = "https://secure-api.example.com"
-        module = load_frontend_module(monkeypatch, backend_url=url)
-        assert module.app.config["BACKEND_API_URL"] == url
+        app = app_factory(test_config={"BACKEND_API_URL": url, "TESTING": True})
+        assert app.config["BACKEND_API_URL"] == url
 
     @pytest.mark.contract
-    def test_backend_url_trailing_slash_removed(self, monkeypatch):
+    def test_backend_url_trailing_slash_removed(self, app_factory):
         """Test that trailing slashes are stripped from backend URL."""
         url_with_slash = "https://api.example.com/"
-        module = load_frontend_module(monkeypatch, backend_url=url_with_slash)
-        assert module.app.config["BACKEND_API_URL"] == "https://api.example.com"
+        app = app_factory(test_config={"BACKEND_API_URL": url_with_slash, "TESTING": True})
+        assert app.config["BACKEND_API_URL"] == "https://api.example.com"
 
     @pytest.mark.contract
-    def test_backend_url_with_path_preserved(self, monkeypatch):
+    def test_backend_url_with_path_preserved(self, app_factory):
         """Test that backend URL with path segments is preserved."""
         url_with_path = "https://api.example.com/v1/api"
-        module = load_frontend_module(monkeypatch, backend_url=url_with_path)
-        assert module.app.config["BACKEND_API_URL"] == "https://api.example.com/v1/api"
+        app = app_factory(test_config={"BACKEND_API_URL": url_with_path, "TESTING": True})
+        assert app.config["BACKEND_API_URL"] == "https://api.example.com/v1/api"
 
     @pytest.mark.contract
-    def test_backend_url_with_port(self, monkeypatch):
+    def test_backend_url_with_port(self, app_factory):
         """Test that backend URL with port is preserved."""
         url_with_port = "http://localhost:3000"
-        module = load_frontend_module(monkeypatch, backend_url=url_with_port)
-        assert module.app.config["BACKEND_API_URL"] == "http://localhost:3000"
+        app = app_factory(test_config={"BACKEND_API_URL": url_with_port, "TESTING": True})
+        assert app.config["BACKEND_API_URL"] == "http://localhost:3000"
 
     @pytest.mark.contract
-    def test_backend_url_multiple_trailing_slashes_removed(self, monkeypatch):
+    def test_backend_url_multiple_trailing_slashes_removed(self, app_factory):
         """Test that multiple trailing slashes are removed."""
         url_with_slashes = "https://api.example.com///"
-        module = load_frontend_module(monkeypatch, backend_url=url_with_slashes)
-        assert module.app.config["BACKEND_API_URL"] == "https://api.example.com"
+        app = app_factory(test_config={"BACKEND_API_URL": url_with_slashes, "TESTING": True})
+        assert app.config["BACKEND_API_URL"] == "https://api.example.com"
 
 
 class TestConfigIsolation:
     """Test that config is isolated between test instances."""
 
     @pytest.mark.contract
-    def test_multiple_apps_have_independent_backends(self, monkeypatch):
+    def test_multiple_apps_have_independent_backends(self, app_factory):
         """Test that multiple app instances have independent BACKEND_API_URL."""
-        module1 = load_frontend_module(
-            monkeypatch,
-            backend_url="https://backend-1.example.com"
-        )
-        assert module1.app.config["BACKEND_API_URL"] == "https://backend-1.example.com"
+        app1 = app_factory(test_config={
+            "BACKEND_API_URL": "https://backend-1.example.com",
+            "TESTING": True,
+        })
+        assert app1.config["BACKEND_API_URL"] == "https://backend-1.example.com"
 
-        module2 = load_frontend_module(
-            monkeypatch,
-            backend_url="https://backend-2.example.com"
-        )
-        assert module2.app.config["BACKEND_API_URL"] == "https://backend-2.example.com"
+        app2 = app_factory(test_config={
+            "BACKEND_API_URL": "https://backend-2.example.com",
+            "TESTING": True,
+        })
+        assert app2.config["BACKEND_API_URL"] == "https://backend-2.example.com"
 
         # app1 config should not have changed
-        assert module1.app.config["BACKEND_API_URL"] == "https://backend-1.example.com"
+        assert app1.config["BACKEND_API_URL"] == "https://backend-1.example.com"
 
     @pytest.mark.contract
-    def test_multiple_apps_have_independent_secrets(self, monkeypatch):
+    def test_multiple_apps_have_independent_secrets(self, app_factory):
         """Test that multiple app instances have independent secret keys."""
-        module1 = load_frontend_module(monkeypatch, secret="secret-1")
-        assert module1.app.secret_key == "secret-1"
+        app1 = app_factory(test_config={"SECRET_KEY": "secret-1", "TESTING": True})
+        assert app1.secret_key == "secret-1"
 
-        module2 = load_frontend_module(monkeypatch, secret="secret-2")
-        assert module2.app.secret_key == "secret-2"
+        app2 = app_factory(test_config={"SECRET_KEY": "secret-2", "TESTING": True})
+        assert app2.secret_key == "secret-2"
 
         # app1 secret should not have changed
-        assert module1.app.secret_key == "secret-1"
+        assert app1.secret_key == "secret-1"
 
     @pytest.mark.contract
-    def test_supported_languages_available_from_module(self, monkeypatch):
+    def test_supported_languages_available_from_module(self):
         """Test that SUPPORTED_LANGUAGES is available from loaded module."""
-        module = load_frontend_module(monkeypatch)
-        assert hasattr(module, "SUPPORTED_LANGUAGES")
-        assert isinstance(module.SUPPORTED_LANGUAGES, list)
+        from app import SUPPORTED_LANGUAGES
+        assert SUPPORTED_LANGUAGES is not None
+        assert isinstance(SUPPORTED_LANGUAGES, list)
 
     @pytest.mark.contract
-    def test_default_language_available_from_module(self, monkeypatch):
+    def test_default_language_available_from_module(self):
         """Test that DEFAULT_LANGUAGE is available from loaded module."""
-        module = load_frontend_module(monkeypatch)
-        assert hasattr(module, "DEFAULT_LANGUAGE")
-        assert isinstance(module.DEFAULT_LANGUAGE, str)
+        from app import DEFAULT_LANGUAGE
+        assert DEFAULT_LANGUAGE is not None
+        assert isinstance(DEFAULT_LANGUAGE, str)
 
 
 class TestConfigValidationFunctions:
     """Test configuration validation helper functions."""
 
     @pytest.mark.unit
-    def test_validate_secret_key_function_exists(self, monkeypatch):
+    def test_validate_secret_key_function_exists(self):
         """Test that validate_secret_key function is available."""
-        module = load_frontend_module(monkeypatch)
-        assert hasattr(module, "validate_secret_key")
-        assert callable(module.validate_secret_key)
+        from app import validate_secret_key
+        assert validate_secret_key is not None
+        assert callable(validate_secret_key)
 
     @pytest.mark.unit
-    def test_validate_service_url_function_exists(self, monkeypatch):
+    def test_validate_service_url_function_exists(self):
         """Test that validate_service_url function is available."""
-        module = load_frontend_module(monkeypatch)
-        assert hasattr(module, "validate_service_url")
-        assert callable(module.validate_service_url)
+        from app import validate_service_url
+        assert validate_service_url is not None
+        assert callable(validate_service_url)
 
     @pytest.mark.contract
     @pytest.mark.parametrize("secret_length", [1, 10, 32, 64, 128])
-    def test_validate_secret_key_accepts_any_length_in_test_mode(self, monkeypatch, secret_length):
+    def test_validate_secret_key_accepts_any_length_in_test_mode(self, secret_length):
         """Test that validate_secret_key accepts any length when is_production=False."""
-        module = load_frontend_module(monkeypatch)
+        from app import validate_secret_key
         test_secret = "x" * secret_length
-        result = module.validate_secret_key(test_secret, is_production=False)
+        result = validate_secret_key(test_secret, is_production=False)
         assert result is True
 
     @pytest.mark.contract
-    def test_validate_service_url_accepts_http(self, monkeypatch):
+    def test_validate_service_url_accepts_http(self):
         """Test that validate_service_url accepts http URLs."""
-        module = load_frontend_module(monkeypatch)
-        result = module.validate_service_url("http://localhost:5000", required=True)
+        from app import validate_service_url
+        result = validate_service_url("http://localhost:5000", required=True)
         assert result is True
 
     @pytest.mark.contract
-    def test_validate_service_url_accepts_https(self, monkeypatch):
+    def test_validate_service_url_accepts_https(self):
         """Test that validate_service_url accepts https URLs."""
-        module = load_frontend_module(monkeypatch)
-        result = module.validate_service_url("https://api.example.com", required=True)
+        from app import validate_service_url
+        result = validate_service_url("https://api.example.com", required=True)
         assert result is True
 
     @pytest.mark.contract
-    def test_validate_service_url_rejects_invalid_scheme(self, monkeypatch):
+    def test_validate_service_url_rejects_invalid_scheme(self):
         """Test that validate_service_url rejects non-http(s) schemes."""
-        module = load_frontend_module(monkeypatch)
+        from app import validate_service_url
         with pytest.raises(ValueError, match="service_url"):
-            module.validate_service_url("ftp://example.com", required=True)
+            validate_service_url("ftp://example.com", required=True)
 
     @pytest.mark.contract
-    def test_validate_service_url_rejects_scheme_only(self, monkeypatch):
+    def test_validate_service_url_rejects_scheme_only(self):
         """Test that validate_service_url rejects URL with scheme but no host."""
-        module = load_frontend_module(monkeypatch)
+        from app import validate_service_url
         with pytest.raises(ValueError, match="service_url"):
-            module.validate_service_url("https://", required=True)
+            validate_service_url("https://", required=True)
 
 
 class TestBackendURLInjection:
@@ -231,13 +230,17 @@ class TestBackendURLInjection:
             assert app.config["BACKEND_API_URL"] is not None
 
     @pytest.mark.contract
-    def test_backend_url_in_frontend_config(self, monkeypatch):
+    def test_backend_url_in_frontend_config(self, app_factory):
         """Test that backend URL is in frontend_config context."""
         url = "https://test.example.com"
-        module = load_frontend_module(monkeypatch, backend_url=url)
-        with module.app.test_request_context("/"):
-            # Access the context processor directly from the loaded module
-            context = module.inject_config()
+        app = app_factory(test_config={
+            "BACKEND_API_URL": url,
+            "TESTING": True,
+        })
+        with app.test_request_context("/"):
+            # Access the context processor directly
+            from app import inject_config
+            context = inject_config()
             assert "frontend_config" in context
             assert "backendApiUrl" in context["frontend_config"]
             assert context["frontend_config"]["backendApiUrl"] == url
