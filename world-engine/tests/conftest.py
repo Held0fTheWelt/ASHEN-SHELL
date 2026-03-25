@@ -23,13 +23,32 @@ def sqlalchemy_available() -> bool:
 
 
 
-def receive_until_snapshot(websocket, predicate, attempts: int = 6):
+def receive_until_snapshot(websocket, predicate, attempts: int = 6, timeout: float = 5.0):
+    """Receive WebSocket messages until a snapshot matching the predicate is received.
+
+    Args:
+        websocket: WebSocket connection
+        predicate: Function to test snapshot data
+        attempts: Maximum number of receive attempts
+        timeout: Timeout in seconds for each receive attempt (default 5.0)
+
+    Raises:
+        AssertionError: If no matching snapshot received after all attempts
+        TimeoutError: If timeout exceeded on any receive attempt
+    """
+    import socket
     last = None
-    for _ in range(attempts):
-        last = websocket.receive_json()
-        if last.get("type") == "snapshot" and predicate(last["data"]):
-            return last
-    raise AssertionError(f"Did not receive matching snapshot; last payload was: {last}")
+    for attempt in range(attempts):
+        try:
+            # Set a timeout on the underlying socket to prevent infinite blocking
+            if hasattr(websocket, 'sock') and websocket.sock:
+                websocket.sock.settimeout(timeout)
+            last = websocket.receive_json()
+            if last.get("type") == "snapshot" and predicate(last["data"]):
+                return last
+        except socket.timeout:
+            raise TimeoutError(f"WebSocket receive timeout on attempt {attempt + 1}/{attempts}") from None
+    raise AssertionError(f"Did not receive matching snapshot after {attempts} attempts; last payload was: {last}")
 
 
 
