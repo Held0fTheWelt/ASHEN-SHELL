@@ -35,6 +35,9 @@ def app():
     """Application with testing config and in-memory DB."""
     application = create_app(TestingConfig)
     with application.app_context():
+        # Enable foreign key constraints for SQLite (required for constraint violation tests)
+        db.session.execute(db.text('PRAGMA foreign_keys = ON'))
+        db.session.commit()
         db.create_all()
         ensure_roles_seeded()
         ensure_areas_seeded()
