@@ -461,10 +461,9 @@ def forum_search():
 
     # Optional post content search (requires 3+ chars for performance)
     if include_content and like_pattern and len(q_raw) >= 3:
-        sub = (
-            ForumPost.query.with_entities(ForumPost.thread_id)
-            .filter(ForumPost.content.ilike(like_pattern, escape="\\"))
-            .subquery()
+        from sqlalchemy import select
+        sub = select(ForumPost.thread_id).where(
+            ForumPost.content.ilike(like_pattern, escape="\\")
         )
         q = q.filter(
             db.or_(
