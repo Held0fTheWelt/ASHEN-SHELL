@@ -35,6 +35,7 @@ body {
     color: var(--text);
     display: flex;
     flex-direction: column;
+    align-items: center;
     line-height: 1.5;
 }
 
@@ -66,9 +67,10 @@ body {
 .container {
     flex: 1;
     padding: 1.5rem;
-    max-width: 99%;
-    margin: 0 auto;
+    max-width: 1500px;
     width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .flash-messages { list-style: none; padding: 0; margin: 0 0 1rem 0; }
