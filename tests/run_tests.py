@@ -2,17 +2,19 @@
 """
 World of Shadows — Complete Test Suite Runner (All Suites)
 
-Cross-platform test runner for backend, administration-tool, and world-engine
+Cross-platform test runner for backend, administration-tool, world-engine, and database
 with multiple modes and detailed reporting.
 
 Usage:
-    python run_tests.py                           # All suites (default)
-    python run_tests.py --suite backend           # Backend only
-    python run_tests.py --suite administration    # Administration-tool only
-    python run_tests.py --suite engine            # World-engine only
-    python run_tests.py --suite all               # All suites (explicit)
-    python run_tests.py --suite backend --quick   # Backend quick tests
-    python run_tests.py --help                    # Show this help
+    python run_tests.py                                # All suites (default)
+    python run_tests.py --suite backend                # Backend only
+    python run_tests.py --suite administration         # Administration-tool only
+    python run_tests.py --suite engine                 # World-engine only
+    python run_tests.py --suite database               # Database only
+    python run_tests.py --suite all                    # All suites (explicit)
+    python run_tests.py --suite backend database       # Multiple suites
+    python run_tests.py --suite backend --quick        # Backend quick tests
+    python run_tests.py --help                         # Show this help
 """
 
 import sys
@@ -28,6 +30,7 @@ PROJECT_ROOT = TESTS_DIR.parent
 BACKEND_DIR = PROJECT_ROOT / "backend"
 ADMIN_TOOL_DIR = PROJECT_ROOT / "administration-tool"
 WORLD_ENGINE_DIR = PROJECT_ROOT / "world-engine"
+DATABASE_DIR = PROJECT_ROOT / "database"
 REPORTS_DIR = PROJECT_ROOT / "tests" / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -99,11 +102,17 @@ def show_test_stats(suites):
                 cwd=str(suite_dir)
             )
             output = result.stdout + result.stderr
-            # Extract test count from output
+            # Extract test count from output - prefer "collected" line
+            collected_line = None
             for line in output.split('\n'):
-                if 'test' in line.lower() and any(c.isdigit() for c in line):
-                    print_info(f"{suite_name}: {line.strip()}")
+                if 'collected' in line.lower() and any(c.isdigit() for c in line):
+                    collected_line = line.strip()
                     break
+                elif 'test' in line.lower() and any(c.isdigit() for c in line) and 'passed' in line.lower():
+                    # fallback to lines showing test results
+                    collected_line = line.strip()
+            if collected_line:
+                print_info(f"{suite_name}: {collected_line}")
         except Exception as e:
             print_info(f"{suite_name}: Could not get test count ({e})")
 
@@ -136,6 +145,7 @@ def get_suite_configs(suite_names):
         'backend': BACKEND_DIR,
         'administration': ADMIN_TOOL_DIR,
         'engine': WORLD_ENGINE_DIR,
+        'database': DATABASE_DIR,
     }
 
     if 'all' in suite_names:
@@ -159,7 +169,8 @@ def run_tests_for_suites(suites, args):
         suite_display = {
             'backend': 'Backend Test Suite',
             'administration': 'Administration Tool Test Suite',
-            'engine': 'World Engine Test Suite'
+            'engine': 'World Engine Test Suite',
+            'database': 'Database Test Suite'
         }.get(suite_name, f'{suite_name} Test Suite')
 
         success = run_pytest(suite_name, suite_dir, args, f"Running {suite_display}")
@@ -180,12 +191,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_tests.py                        # All suites (default)
-  python run_tests.py --suite backend        # Backend only
-  python run_tests.py --suite administration # Administration-tool only
-  python run_tests.py --suite engine         # World-engine only
-  python run_tests.py --suite all            # All suites (explicit)
-  python run_tests.py --suite backend --quick # Backend quick tests
+  python run_tests.py                              # All suites (default)
+  python run_tests.py --suite backend              # Backend only
+  python run_tests.py --suite administration       # Administration-tool only
+  python run_tests.py --suite engine               # World-engine only
+  python run_tests.py --suite database             # Database only
+  python run_tests.py --suite all                  # All suites (explicit)
+  python run_tests.py --suite backend database     # Multiple suites
+  python run_tests.py --suite backend --quick      # Backend quick tests
         """
     )
 
@@ -193,7 +206,7 @@ Examples:
         "--suite",
         nargs="+",
         default=["all"],
-        choices=["backend", "administration", "engine", "all"],
+        choices=["backend", "administration", "engine", "database", "all"],
         help="Test suite(s) to run (default: all)"
     )
 
