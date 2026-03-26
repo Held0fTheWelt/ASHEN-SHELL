@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Content Module Schema",
+  "description": "W0 schema for formalized story content modules (e.g., God of Carnage)",
+  "type": "object",
+  "required": [
+    "module_id",
+    "module_version",
+    "contract_version",
+    "characters",
+    "relationships",
+    "scenes",
+    "triggers",
+    "endings"
+  ],
+  "properties": {
+    "module_id": {
+      "type": "string",
+      "description": "Unique identifier for the content module (e.g., 'god_of_carnage')"
+    },
+    "module_version": {
+      "type": "string",
+      "description": "Semantic version of the module (e.g., '1.0.0')"
+    },
+    "contract_version": {
+      "type": "string",
+      "description": "Version of the MVP contract this module adheres to"
+    },
+    "characters": {
+      "type": "object",
+      "description": "Character definitions (name → properties)"
+    },
+    "relationships": {
+      "type": "array",
+      "description": "Relationship axes and dynamics between characters"
+    },
+    "scenes": {
+      "type": "array",
+      "description": "Scene definitions and structure"
+    },
+    "triggers": {
+      "type": "array",
+      "description": "Recognized trigger types for this module"
+    },
+    "endings": {
+      "type": "array",
+      "description": "Valid end states and flip conditions"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional module metadata"
+    }
+  }
+}
