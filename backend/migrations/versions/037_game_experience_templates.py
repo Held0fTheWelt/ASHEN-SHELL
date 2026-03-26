@@ -1,15 +1,15 @@
 """add game experience templates
 
-Revision ID: 037_game_experience_templates
-Revises: 036_add_password_history_field
+Revision ID: 037
+Revises: 036
 Create Date: 2026-03-26
 """
 from alembic import op
 import sqlalchemy as sa
 
 
-revision = '037_game_experience_templates'
-down_revision = '036_add_password_history_field'
+revision = '037'
+down_revision = '036'
 branch_labels = None
 depends_on = None
 
