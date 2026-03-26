@@ -67,6 +67,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Administration tool content management tests
 
 ### Fixed
+- **Database Migrations**:
+  - Resolved duplicate migration 032 (removed duplicate game_experience_templates.py)
+  - Fixed revision references in 037_game_experience_templates.py (numeric IDs: 037, down: 036)
+  - Migration chain now properly resolves: 036 → 037
+
 - **Test Failures**:
   - **test_internal_run_detail_and_terminate**: Corrected response structure access (nested under 'run' key)
   - **test_backend_published_content_overrides_builtin**: Fixed test isolation by using environment variables and proper module reloading
