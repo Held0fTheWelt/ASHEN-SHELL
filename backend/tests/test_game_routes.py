@@ -20,7 +20,7 @@ def test_game_menu_logged_in_renders_launcher(client, test_user):
     assert response.status_code == 200
     assert b"Game Menu" in response.data
     assert b"game_menu.js" in response.data
-    assert b"Character workshop" in response.data
+    assert b"Character Workshop" in response.data
 
 
 
