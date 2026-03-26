@@ -14,11 +14,6 @@
    - 9 layers, 274 target tests
    - Focus: API contracts, WebSocket, persistence, performance
 
-3. **WAVE_0_COMPLETION_REPORT.md** - Status and roadmap
-   - Validation results
-   - Implementation timeline
-   - Success criteria
-
 ---
 
 ## Test Layers by Project
@@ -251,7 +246,7 @@ world-engine/
 For questions about test structure:
 - See ADMIN_TOOL_TARGET_TEST_MATRIX.md for Flask frontend details
 - See WORLD_ENGINE_TARGET_TEST_MATRIX.md for FastAPI engine details
-- Check WAVE_0_COMPLETION_REPORT.md for implementation timeline
+- See README.md for implementation timeline and project status
 
 For implementation help:
 - Review existing tests in the appropriate layer

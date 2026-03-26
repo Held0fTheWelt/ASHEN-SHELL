@@ -242,7 +242,6 @@ docs/testing/
 ├── ADMIN_TOOL_TARGET_TEST_MATRIX.md      (Flask testing guide)
 ├── WORLD_ENGINE_TARGET_TEST_MATRIX.md    (FastAPI testing guide)
 ├── MATRIX_QUICK_REFERENCE.md             (quick lookup)
-├── WAVE_0_COMPLETION_REPORT.md           (status report)
 ├── TEST_EXECUTION_PROFILES.md            (execution strategies)
 ├── QUALITY_GATES.md                      (quality standards)
 ├── XFAIL_POLICY.md                       (known failures)
@@ -282,8 +281,8 @@ backend/tests/                            (~7 test suites, 429 tests)
 2. Quick commands: [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md) - Marker Reference
 
 ### "I need project status"
-1. Read: [WAVE_0_COMPLETION_REPORT.md](WAVE_0_COMPLETION_REPORT.md) - Current status
-2. Check: Implementation Timeline section
+1. Check: Implementation Timeline section below
+2. Review: Key Metrics in README.md
 
 ### "I need quick answers"
 1. Check: [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md) - Common questions section
@@ -323,7 +322,7 @@ backend/tests/                            (~7 test suites, 429 tests)
 - [ ] Review relevant TARGET_TEST_MATRIX.md
 - [ ] Bookmark [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md)
 - [ ] Check [TEST_EXECUTION_PROFILES.md](TEST_EXECUTION_PROFILES.md) for your workflow
-- [ ] Review [WAVE_0_COMPLETION_REPORT.md](WAVE_0_COMPLETION_REPORT.md) for timeline
+- [ ] Review Implementation Timeline section for timeline
 - [ ] Start implementing WAVE 1 tests (Layer 1-2)
 
 ---
@@ -332,7 +331,7 @@ backend/tests/                            (~7 test suites, 429 tests)
 
 **Documentation Issue**: File a GitHub issue referencing the document
 **Test Implementation**: See [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md) - Common Pitfalls
-**Timeline Question**: See [WAVE_0_COMPLETION_REPORT.md](WAVE_0_COMPLETION_REPORT.md) - Implementation Roadmap
+**Timeline Question**: See Implementation Timeline section above
 **Marker Question**: Run `pytest --markers` in project directory
 
 ---
