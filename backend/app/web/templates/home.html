@@ -2,6 +2,16 @@
 {% block title %}BETTER TOMORROW{% endblock %}
 {% block body_class %}landing{% endblock %}
 
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='lightbox.js') }}" defer></script>
+<script src="{{ url_for('static', filename='splitting.min.js') }}" defer></script>
+<script src="{{ url_for('static', filename='matrix-layer.js') }}" defer></script>
+<script src="{{ url_for('static', filename='landing.js') }}" defer></script>
+<script src="{{ url_for('static', filename='splitting-init.js') }}" defer></script>
+<script src="{{ url_for('static', filename='slogan-rotator.js') }}" defer></script>
+<script src="{{ url_for('static', filename='void-slogan-rotator.js') }}" defer></script>
+{% endblock %}
+
 {% block site_main %}
 <div class="matrix-layer" id="matrix-layer" aria-hidden="true">
   <canvas id="matrixCanvas" class="matrix-layer__canvas"></canvas>
@@ -176,11 +186,3 @@
   </div>
 </div>
 {% endblock %}
-
-<script src="{{ url_for('static', filename='lightbox.js') }}" defer></script>
-<script src="{{ url_for('static', filename='splitting.min.js') }}" defer></script>
-<script src="{{ url_for('static', filename='matrix-layer.js') }}" defer></script>
-<script src="{{ url_for('static', filename='landing.js') }}" defer></script>
-<script src="{{ url_for('static', filename='splitting-init.js') }}" defer></script>
-<script src="{{ url_for('static', filename='slogan-rotator.js') }}" defer></script>
-<script src="{{ url_for('static', filename='void-slogan-rotator.js') }}" defer></script>
