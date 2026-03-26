@@ -1,0 +1,96 @@
+{
+  "id": "public-better_tomorrow_district_alpha",
+  "template_id": "better_tomorrow_district_alpha",
+  "template_title": "Better Tomorrow District Alpha",
+  "kind": "open_world",
+  "join_policy": "public",
+  "owner_player_name": null,
+  "owner_account_id": null,
+  "owner_character_id": null,
+  "status": "running",
+  "beat_id": "streetlife",
+  "tension": 0,
+  "flags": [],
+  "participants": {
+    "0f897094cee843b19bfc2511d4137027": {
+      "id": "0f897094cee843b19bfc2511d4137027",
+      "display_name": "Vendor AI",
+      "role_id": "vendor_ai",
+      "mode": "npc",
+      "current_room_id": "noodle_bar",
+      "connected": true,
+      "account_id": null,
+      "character_id": null,
+      "seat_owner_account_id": null,
+      "seat_owner_display_name": null,
+      "seat_owner": null,
+      "joined_at": "2026-03-26T16:10:10.727123Z"
+    },
+    "e37b4b46fcf8485890a559af1a229947": {
+      "id": "e37b4b46fcf8485890a559af1a229947",
+      "display_name": "Patrol Drone",
+      "role_id": "patrol_drone",
+      "mode": "npc",
+      "current_room_id": "plaza",
+      "connected": true,
+      "account_id": null,
+      "character_id": null,
+      "seat_owner_account_id": null,
+      "seat_owner_display_name": null,
+      "seat_owner": null,
+      "joined_at": "2026-03-26T16:10:10.727145Z"
+    }
+  },
+  "lobby_seats": {
+    "citizen": {
+      "role_id": "citizen",
+      "role_display_name": "Citizen",
+      "reserved_for_account_id": null,
+      "reserved_for_display_name": null,
+      "participant_id": null,
+      "occupant_display_name": null,
+      "connected": false,
+      "ready": false,
+      "joined_at": null
+    }
+  },
+  "props": {
+    "billboard": {
+      "id": "billboard",
+      "name": "Corporate Billboard",
+      "room_id": "plaza",
+      "description": "A giant Better Tomorrow slogan fused into the architecture.",
+      "state": "active"
+    },
+    "turnstile": {
+      "id": "turnstile",
+      "name": "Transit Turnstile",
+      "room_id": "plaza",
+      "description": "A controlled seam between public flow and controlled access.",
+      "state": "idle"
+    },
+    "counter_terminal": {
+      "id": "counter_terminal",
+      "name": "Counter Terminal",
+      "room_id": "noodle_bar",
+      "description": "A small terminal for ordering food and seeing who is watching.",
+      "state": "active"
+    },
+    "maintenance_panel": {
+      "id": "maintenance_panel",
+      "name": "Maintenance Panel",
+      "room_id": "service_alley",
+      "description": "A locked panel with promises of utility and trespass.",
+      "state": "locked"
+    }
+  },
+  "transcript": [],
+  "event_log": [],
+  "created_at": "2026-03-26T16:10:10.727068Z",
+  "updated_at": "2026-03-26T16:10:10.727070Z",
+  "persistent": true,
+  "metadata": {
+    "store_backend": "json",
+    "min_humans_to_start": 1
+  }
+}

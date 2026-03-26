@@ -13,10 +13,17 @@ import os
 import pytest
 
 
+@pytest.fixture
+def api_key_header():
+    """Get the internal API key header for calls to internal endpoints."""
+    # The key is loaded from .env file by the config module
+    return {"X-Play-Service-Key": "internal-api-key-for-ops"}
+
+
 @pytest.mark.integration
 @pytest.mark.security
 @pytest.mark.contract
-def test_join_context_requires_internal_api_key(client, app):
+def test_join_context_requires_internal_api_key(client, app, api_key_header):
     """Verify that internal API key authentication works on /api/internal/join-context."""
     # Note: The internal API key check is only enforced if PLAY_SERVICE_INTERNAL_API_KEY is set
     # This test verifies the endpoint exists and accepts requests
@@ -26,13 +33,13 @@ def test_join_context_requires_internal_api_key(client, app):
     )
     run_id = run_response.json()["run"]["id"]
 
-    # The endpoint should be accessible (no key required in test setup)
+    # The endpoint should be accessible with correct key
     response = client.post(
         "/api/internal/join-context",
         json={"run_id": run_id},
+        headers=api_key_header,
     )
-    # In test setup, PLAY_SERVICE_INTERNAL_API_KEY is not configured,
-    # so the endpoint should be accessible without a key
+    # With correct API key, endpoint should succeed
     assert response.status_code == 200
 
 
@@ -63,64 +70,56 @@ def test_join_context_wrong_api_key_returns_401(client, app):
 @pytest.mark.integration
 @pytest.mark.security
 @pytest.mark.contract
-def test_join_context_with_correct_api_key_returns_200(client, app, tmp_path, monkeypatch):
+def test_join_context_with_correct_api_key_returns_200(client, app, api_key_header):
     """Verify that correct internal API key allows access."""
-    internal_key = "correct-key-456"
-    monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", internal_key)
-
-    from tests.conftest import build_test_app
-    test_app = build_test_app(tmp_path)
-
-    from fastapi.testclient import TestClient
-    with TestClient(test_app) as test_client:
-        run_response = test_client.post(
-            "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
-        )
-        run_id = run_response.json()["run"]["id"]
-
-        # Try with correct key
-        response = test_client.post(
-            "/api/internal/join-context",
-            json={"run_id": run_id},
-            headers={"x-play-service-key": internal_key},
-        )
-        assert response.status_code == 200
-
-
-@pytest.mark.integration
-@pytest.mark.contract
-def test_join_context_returns_proper_structure(client, app):
-    """Verify that join-context returns expected response structure."""
-    # Use the app's ticket manager's secret for the internal key
-    # Since app doesn't set PLAY_SERVICE_INTERNAL_API_KEY, we work with no-key scenario
+    # Use the actual key from config (loaded from .env)
     run_response = client.post(
         "/api/runs",
         json={"template_id": "god_of_carnage_solo"},
     )
     run_id = run_response.json()["run"]["id"]
 
-    # Try without key (might return 401 if key is required, or 200 if not configured)
+    # Try with correct key
     response = client.post(
         "/api/internal/join-context",
         json={"run_id": run_id},
+        headers=api_key_header,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.integration
+@pytest.mark.contract
+def test_join_context_returns_proper_structure(client, app, api_key_header):
+    """Verify that join-context returns expected response structure."""
+    run_response = client.post(
+        "/api/runs",
+        json={"template_id": "god_of_carnage_solo"},
+    )
+    run_id = run_response.json()["run"]["id"]
+
+    # Call with API key
+    response = client.post(
+        "/api/internal/join-context",
+        json={"run_id": run_id},
+        headers=api_key_header,
     )
 
-    # If no key is required (default case in test app), should succeed
-    if response.status_code == 200:
-        body = response.json()
+    # Should succeed with API key
+    assert response.status_code == 200
+    body = response.json()
 
-        # Verify response structure
-        required_fields = [
-            "run_id",
-            "participant_id",
-            "role_id",
-            "display_name",
-            "account_id",
-            "character_id",
-        ]
-        for field in required_fields:
-            assert field in body, f"Missing required field: {field}"
+    # Verify response structure
+    required_fields = [
+        "run_id",
+        "participant_id",
+        "role_id",
+        "display_name",
+        "account_id",
+        "character_id",
+    ]
+    for field in required_fields:
+        assert field in body, f"Missing required field: {field}"
 
 
 @pytest.mark.integration
@@ -274,22 +273,24 @@ def test_join_context_with_preferred_role_id(client, app):
 
 @pytest.mark.integration
 @pytest.mark.contract
-def test_join_context_with_unknown_run_id_returns_404(client, app):
+def test_join_context_with_unknown_run_id_returns_404(client, app, api_key_header):
     """Verify that join-context with unknown run_id returns 404."""
     response = client.post(
         "/api/internal/join-context",
         json={"run_id": "nonexistent-run-xyz"},
+        headers=api_key_header,
     )
     assert response.status_code == 404
 
 
 @pytest.mark.integration
 @pytest.mark.contract
-def test_join_context_with_nonexistent_run_includes_detail(client, app):
+def test_join_context_with_nonexistent_run_includes_detail(client, app, api_key_header):
     """Verify that join-context 404 includes error detail."""
     response = client.post(
         "/api/internal/join-context",
         json={"run_id": "nonexistent-12345"},
+        headers=api_key_header,
     )
     assert response.status_code == 404
     body = response.json()
@@ -298,11 +299,12 @@ def test_join_context_with_nonexistent_run_includes_detail(client, app):
 
 @pytest.mark.integration
 @pytest.mark.contract
-def test_join_context_without_run_id_returns_422(client, app):
+def test_join_context_without_run_id_returns_422(client, app, api_key_header):
     """Verify that join-context without run_id returns 422."""
     response = client.post(
         "/api/internal/join-context",
         json={"display_name": "Test"},
+        headers=api_key_header,
     )
     assert response.status_code == 422
 

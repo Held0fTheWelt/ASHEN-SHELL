@@ -119,3 +119,18 @@ def app(tmp_path: Path):
 def client(app):
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def internal_api_key() -> str:
+    """Get the internal API key from environment (loaded from .env file).
+
+    This fixture provides the correct API key for tests that call
+    /api/internal/* endpoints. It reads the actual configured value
+    from the environment/config so tests use the correct key.
+    """
+    import app.config
+    # Return the configured key, or a default if not configured
+    return (os.getenv("PLAY_SERVICE_INTERNAL_API_KEY") or
+            getattr(app.config, "PLAY_SERVICE_INTERNAL_API_KEY", None) or
+            "internal-api-key-for-ops")

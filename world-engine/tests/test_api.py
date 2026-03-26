@@ -43,6 +43,8 @@ def test_internal_join_context_reuses_same_account_seat(tmp_path: Path):
     app = build_test_app(tmp_path)
     client = TestClient(app)
 
+    api_key = {"X-Play-Service-Key": "internal-api-key-for-ops"}
+
     run_response = client.post(
         "/api/runs",
         json={"template_id": "apartment_confrontation_group", "account_id": "100", "display_name": "Host"},
@@ -52,10 +54,12 @@ def test_internal_join_context_reuses_same_account_seat(tmp_path: Path):
     first = client.post(
         "/api/internal/join-context",
         json={"run_id": run_id, "account_id": "100", "display_name": "Host"},
+        headers=api_key,
     )
     second = client.post(
         "/api/internal/join-context",
         json={"run_id": run_id, "account_id": "100", "display_name": "Host Updated"},
+        headers=api_key,
     )
 
     assert first.status_code == 200
@@ -95,18 +99,20 @@ def test_internal_run_detail_and_terminate(tmp_path: Path):
     app = build_test_app(tmp_path)
     client = TestClient(app)
 
+    api_key = {"X-Play-Service-Key": "internal-api-key-for-ops"}
+
     run_response = client.post("/api/runs", json={"template_id": "god_of_carnage_solo", "account_id": "7", "display_name": "Hollywood"})
     run_id = run_response.json()["run"]["id"]
 
-    detail_response = client.get(f"/api/internal/runs/{run_id}")
+    detail_response = client.get(f"/api/internal/runs/{run_id}", headers=api_key)
     assert detail_response.status_code == 200
     assert detail_response.json()["run"]["id"] == run_id
 
-    transcript_response = client.get(f"/api/internal/runs/{run_id}/transcript")
+    transcript_response = client.get(f"/api/internal/runs/{run_id}/transcript", headers=api_key)
     assert transcript_response.status_code == 200
     assert transcript_response.json()["run_id"] == run_id
 
-    terminate_response = client.post(f"/api/internal/runs/{run_id}/terminate", json={"actor_display_name": "Ops", "reason": "Test stop"})
+    terminate_response = client.post(f"/api/internal/runs/{run_id}/terminate", json={"actor_display_name": "Ops", "reason": "Test stop"}, headers=api_key)
     assert terminate_response.status_code == 200
     body = terminate_response.json()
     assert body["terminated"] == True
