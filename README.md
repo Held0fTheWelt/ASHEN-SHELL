@@ -1,6 +1,9 @@
 # Better Tomorrow (World of Shadows)
 
-Flask-based backend (API, auth, dashboard, news, DB) and a separate Flask frontend (public site, news pages). The frontend consumes the backend API only; no database in the frontend.
+A multi-service game backend platform with:
+- **Backend** — Flask-based API, authentication, dashboard, news, user/role management, database with migrations
+- **Administration Tool** — Public website, management dashboard, news pages, wiki, forum (consumes backend API only)
+- **World Engine** — FastAPI-based runtime for game experiences, with WebSocket support for real-time multiplayer interactions
 
 ## Repository structure
 
@@ -11,10 +14,21 @@ backend/                  # API, auth, dashboard, DB, migrations, tests
   tests/                  # pytest (test_api, test_web, test_news_api, …)
   run.py                  # entrypoint; CLI: init-db, seed-dev-user, seed-news
   requirements.txt, requirements-dev.txt, Dockerfile, pytest.ini
+
 administration-tool/      # Public website + management area
   app.py                  # Flask app: /, /news, /forum, /manage, …
   templates/, static/
-  requirements.txt, Dockerfile
+  tests/                  # pytest (route, proxy, security, i18n contracts)
+  requirements.txt, requirements-dev.txt, Dockerfile, pytest.ini
+
+world-engine/             # FastAPI runtime for game experiences
+  app/                    # FastAPI app, config, runtime engine, WebSocket API
+  app/api/                # HTTP and WebSocket endpoints
+  app/runtime/            # Game state management, engine, store, models
+  tests/                  # pytest (API, WebSocket, persistence, security contracts)
+  requirements.txt, requirements-dev.txt, Dockerfile, pytest.ini
+
+run_tests.py             # Multi-suite test runner (--suite backend|administration|engine|all)
 README.md, CHANGELOG.md, docker-compose.yml, docs/, .env.example at repo root.
 ```
 
@@ -112,17 +126,59 @@ flask db upgrade
 
 ## Tests
 
-All tests live under **backend/tests/** (API, web, news API, config, security). Run from **backend/**:
+### Multi-Suite Test Runner
 
+Run all test suites or specific services from the **repo root**:
+
+```bash
+# Run all tests
+python run_tests.py --suite all
+
+# Run specific suite
+python run_tests.py --suite backend
+python run_tests.py --suite administration
+python run_tests.py --suite engine
+
+# Options
+python run_tests.py --suite all --coverage    # Include coverage report
+python run_tests.py --suite all --verbose     # Verbose output
+python run_tests.py --suite all --quick       # Fast mode (skip slow tests)
+```
+
+### Individual Service Tests
+
+**Backend** (from `backend/`):
 ```bash
 cd backend
 pip install -r requirements-dev.txt
-pytest
-# or: pytest tests/ -v
-# or: pytest tests/test_news_api.py tests/test_api.py -v
+pytest                          # All tests
+pytest tests/ -v                # Verbose
+pytest tests/test_news_api.py   # Specific module
 ```
 
-Default pytest config: `pytest.ini` in backend (testpaths = tests, coverage on `app`, 85% fail-under). See **docs/VERIFICATION.md** for exact commands, what they verify, and coverage gate.
+**Administration Tool** (from `administration-tool/`):
+```bash
+cd administration-tool
+pip install -r requirements-dev.txt
+pytest                          # All tests (route, proxy, security, i18n contracts)
+pytest tests/ -v                # Verbose
+```
+
+**World Engine** (from `world-engine/`):
+```bash
+cd world-engine
+pip install -r requirements-dev.txt
+pytest                          # All tests (HTTP, WebSocket, persistence, runtime)
+pytest tests/ -v                # Verbose
+pytest tests/test_ws_*.py       # WebSocket-related tests
+```
+
+### Coverage
+
+Each service has a pytest.ini with coverage requirements:
+- **Backend**: 85% fail-under on `app/` (see `docs/VERIFICATION.md`)
+- **Administration Tool**: Contract and security coverage
+- **World Engine**: 80% fail-under on `app/` (97%+ achieved in practice)
 
 ## Docker (compose)
 
@@ -176,21 +232,62 @@ docker compose exec backend flask db upgrade
 **Roles:** Default roles are user, moderator, editor, admin; admins can manage roles via the Roles CRUD API. New registrations get role **user**. Editor and admin can write news; only **admin** can access user list, user delete, roles CRUD, and activity logs API. Role checks are centralized (`user.is_admin`, `user.has_role(...)`, `require_web_admin`). Activity logging is done via `log_activity(...)`; auth, account, news, and admin actions produce structured entries visible in the admin dashboard Logs tab.
 
 
-## Play service integration
+## World Engine (Game Runtime)
 
-The repository now includes a first backend-to-play-service integration path:
+The **world-engine/** directory contains a FastAPI-based runtime for game experiences:
 
-- `/game-menu` is no longer just a placeholder. It acts as a launcher UI.
-- The Flask backend stays responsible for the logged-in user session / JWT identity.
-- The backend proxies template and run catalog calls to the play service.
-- The backend requests join context from the play service and signs the final short-lived WebSocket ticket itself.
-- The browser then connects directly to the play service over WebSocket with that ticket.
+### Architecture
 
-Required environment variables:
+- **HTTP API** (`/api`) — Template listing, run management, snapshot retrieval, ticket issuance
+- **WebSocket API** (`/ws`) — Real-time game state synchronization, participant commands (move, say, emote, inspect)
+- **Runtime Engine** — Game state management, NPC behaviors, visibility rules, command processing
+- **Persistence** — JSON or SQLAlchemy-backed store for run state recovery
 
-- `PLAY_SERVICE_INTERNAL_URL`
-- `PLAY_SERVICE_PUBLIC_URL`
-- `PLAY_SERVICE_SHARED_SECRET`
-- optional `PLAY_SERVICE_INTERNAL_API_KEY`
+### Quick Start
 
-This keeps your existing Flask auth as the source of truth while letting the play service remain a separate runtime.
+```bash
+cd world-engine
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+# Default: http://127.0.0.1:8000
+# Health: GET /api/health
+# Ready: GET /api/health/ready
+# Docs: http://127.0.0.1:8000/docs (Swagger UI)
+```
+
+### Configuration
+
+Key environment variables:
+
+- `PLAY_SERVICE_SECRET` — Session signing secret (required in production)
+- `PLAY_SERVICE_INTERNAL_API_KEY` — Optional: validates internal `/api/internal/*` endpoints
+- `RUN_STORE_BACKEND` — `json` (default) or `sqlalchemy` for SQL persistence
+- `RUN_STORE_URL` — Database URL (required when `RUN_STORE_BACKEND=sqlalchemy`)
+- `GAME_CONTENT_SOURCE_URL` — Optional: remote template source URL
+
+### Ticket-Based Authentication
+
+Game clients authenticate via JWT tickets issued by the backend:
+
+```
+Backend → Issues ticket (signed JWT) → Client connects to WebSocket with ticket
+Client ← Ticket validated → WebSocket connection established
+```
+
+See `app/auth/tickets.py` for ticket validation logic.
+
+## Backend-to-Engine Integration
+
+The Flask backend (`/game-menu`) proxies game experience requests to the world-engine:
+
+1. **Template Catalog** — `GET /api/templates` from world-engine
+2. **Run Creation** — `POST /api/runs` to world-engine (signed with `PLAY_SERVICE_SECRET`)
+3. **Join Context** — `POST /api/internal/join-context` (requires `PLAY_SERVICE_INTERNAL_API_KEY`)
+4. **WebSocket Upgrade** — Client connects to world-engine with issued ticket
+
+Required environment variables in backend:
+
+- `PLAY_SERVICE_INTERNAL_URL` — Internal URL for backend-to-engine calls
+- `PLAY_SERVICE_PUBLIC_URL` — Public URL for client WebSocket connections
+- `PLAY_SERVICE_SHARED_SECRET` — Must match `PLAY_SERVICE_SECRET` in world-engine
+- `PLAY_SERVICE_INTERNAL_API_KEY` — Optional: used for internal API security
