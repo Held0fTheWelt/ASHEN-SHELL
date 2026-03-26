@@ -710,7 +710,7 @@ class TestFailFastValidation:
         with pytest.raises(ValueError, match="RUN_STORE_URL is required"):
             RuntimeManager(
                 store_root=tmp_path,
-                store_backend="sqlalchemy",
+                
                 store_url=None
             )
 

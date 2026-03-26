@@ -54,6 +54,18 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/health/ready")
+def health_ready(manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
+    """Readiness probe endpoint with runtime state information."""
+    return {
+        "status": "ready",
+        "app": "world-engine",
+        "template_count": len(manager.list_templates()),
+        "run_count": len(manager.list_runs()),
+        "store": "json",
+    }
+
+
 @router.get("/templates")
 def list_templates(manager: RuntimeManager = Depends(get_manager)) -> list[dict[str, Any]]:
     return [template.model_dump(mode="json") for template in manager.list_templates()]
@@ -79,6 +91,7 @@ def create_run(payload: CreateRunRequest, manager: RuntimeManager = Depends(get_
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
         "run": manager.get_instance(instance.id).model_dump(mode="json"),
+        "store": "json",
         "hint": "Use POST /api/tickets, POST /api/internal/join-context, or the integrated backend launcher to join the run over WebSocket.",
     }
 
