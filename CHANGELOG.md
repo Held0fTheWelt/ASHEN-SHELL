@@ -70,7 +70,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Database Migrations**:
   - Resolved duplicate migration 032 (removed duplicate game_experience_templates.py)
   - Fixed revision references in 037_game_experience_templates.py (numeric IDs: 037, down: 036)
-  - Migration chain now properly resolves: 036 → 037
+  - Added missing migration 038 for updated_at column in users table
+  - Migration chain now properly resolves: 036 → 037 → 038
+  - Fixes "no such column: users.updated_at" error on login
 
 - **Test Failures**:
   - **test_internal_run_detail_and_terminate**: Corrected response structure access (nested under 'run' key)
