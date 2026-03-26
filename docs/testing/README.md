@@ -49,19 +49,7 @@ This directory contains comprehensive testing guidance and target matrices for t
 
 ---
 
-### 3. [WAVE_0_COMPLETION_REPORT.md](WAVE_0_COMPLETION_REPORT.md)
-**Status**: ✅ COMPLETE
-- WAVE 0 deliverables and validation
-- Pytest marker configuration
-- Test execution profiles
-- Implementation roadmap (WAVE 1-3)
-- Success criteria checklist
-
-**Read this for**: Project status, validation results, and timeline
-
----
-
-### 4. [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md)
+### 3. [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md)
 **Purpose**: Quick lookup guide for test implementation
 
 **Contents**:
@@ -76,7 +64,7 @@ This directory contains comprehensive testing guidance and target matrices for t
 
 ---
 
-### 5. [TEST_EXECUTION_PROFILES.md](TEST_EXECUTION_PROFILES.md)
+### 4. [TEST_EXECUTION_PROFILES.md](TEST_EXECUTION_PROFILES.md)
 **Purpose**: Test execution strategies for different scenarios
 
 **Covers**:
@@ -314,10 +302,10 @@ world-engine/tests/
 
 ## Related Documents
 
-- Backend testing: See `backend/` directory
-- API Reference: See `docs/API_REFERENCE.md`
-- Security Audit: See `docs/SECURITY-AUDIT-2026-03-15.md`
-- Development Guide: See `DEVELOPMENT_SETUP.md`
+- [Backend Testing](../backend/tests/) - Backend test suite
+- [API Documentation](../api/README.md) - API reference and endpoints
+- [Security Guide](../security/README.md) - Security policies and audit
+- [Development Guide](../development/README.md) - Development setup and practices
 
 ---
 

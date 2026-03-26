@@ -4,8 +4,8 @@ Security policies, threat models, vulnerability management, and compliance.
 
 ## 🔐 Security Overview
 
-### [Security Audit Report](../SECURITY-AUDIT-2026-03-15.md)
-Latest security assessment and remediation status (2026-03-15).
+### [Security Audit Report](./AUDIT_REPORT.md)
+Latest security assessment and remediation status.
 
 **Current Status:**
 - ✅ Authentication hardened (JWT + refresh tokens)

@@ -38,15 +38,7 @@
   - Common pitfalls
   - Use for: Quick answers during implementation
 
-### Level 4: Status & Planning
-- **[WAVE_0_COMPLETION_REPORT.md](WAVE_0_COMPLETION_REPORT.md)** - Deliverables and validation
-  - WAVE 0 status: COMPLETE ✅
-  - Validation results
-  - Implementation roadmap (WAVE 1-3)
-  - Success criteria checklist
-  - Use for: Understanding current phase and timeline
-
-### Level 5: Execution Strategy
+### Level 4: Execution Strategy
 - **[TEST_EXECUTION_PROFILES.md](TEST_EXECUTION_PROFILES.md)** - How to run tests
   - Local development profiles
   - CI/CD integration
@@ -71,8 +63,8 @@
 3. Quick lookup: [MATRIX_QUICK_REFERENCE.md](MATRIX_QUICK_REFERENCE.md)
 
 **Project Manager**:
-1. Status: [WAVE_0_COMPLETION_REPORT.md](WAVE_0_COMPLETION_REPORT.md)
-2. Timeline: Implementation Phases section
+1. Status: Key Metrics at a Glance (below)
+2. Timeline: Implementation Phases in test matrices
 3. Metrics: Test Coverage Summary tables
 
 **DevOps/CI Engineer**:

@@ -4,7 +4,7 @@ User-facing features, game mechanics, and community systems.
 
 ## 🎮 Game & Runtime
 
-### [World Engine Features](./GAME_MECHANICS.md)
+### World Engine Features
 Game runtime, player mechanics, and narrative flow.
 
 **Key Features:**
@@ -14,7 +14,7 @@ Game runtime, player mechanics, and narrative flow.
 - Narrative prompts and decision trees
 - NPC interactions with context awareness
 
-**See:** [Game Mechanics Documentation](./GAME_MECHANICS.md)
+**See:** [Runtime Commands](./RUNTIME_COMMANDS.md) for game engine commands and mechanics
 
 ## 👥 User Management
 
@@ -28,7 +28,6 @@ Game runtime, player mechanics, and narrative flow.
 - **User:** Basic player role
 - **Moderator:** Forum moderation, reporting
 - **Admin:** Full system access, user management
-- **See:** [Roles & Permissions](./ROLES_AND_PERMISSIONS.md)
 
 ## 💬 Forum & Community
 
@@ -50,12 +49,6 @@ Community discussion platform with categories, threads, and posts.
 - Action logs and audit trail
 
 **See:** [Forum Moderation Workflow](../forum/ModerationWorkflow.md)
-
-### Suggested Discussions
-- **Purpose:** Community-driven feature requests
-- **Voting:** Users vote on suggestions
-- **Implementation:** High-voted suggestions become features
-- **See:** [Suggested Discussions Analysis](../SUGGESTED_DISCUSSIONS_ANALYSIS.md)
 
 ## 📰 News & Wiki
 
@@ -155,14 +148,6 @@ Community discussion platform with categories, threads, and posts.
 - 📋 Streaming integration
 
 ## Integration Points
-
-### [Game Integration](./GAME_INTEGRATION.md)
-How to integrate the World Engine with custom game content.
-
-- Custom game templates
-- Template asset management
-- Custom NPC behaviors
-- Game state persistence
 
 ### API Integration
 - See [API Documentation](../api/README.md) for endpoint details

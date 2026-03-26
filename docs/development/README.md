@@ -4,7 +4,7 @@ Setup, workflow, and best practices for local development.
 
 ## Getting Started
 
-### 1️⃣ [Local Development Setup](./LOCAL_DEVELOPMENT.md)
+### 1️⃣ [Local Development Setup](./LocalDevelopment.md)
 Complete guide to setting up the development environment on your machine.
 
 **Quick Start:**
@@ -198,4 +198,4 @@ pip install -r requirements.txt --force-reinstall
 
 ---
 
-**Still stuck?** Check the [Troubleshooting Guide](./TROUBLESHOOTING.md) or ask the team.
+**Still stuck?** Check the [Development Guide](#debugging) or ask the team.

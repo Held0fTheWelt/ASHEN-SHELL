@@ -4,9 +4,6 @@ Database schema, migrations, indexes, and data management.
 
 ## 📋 Schema Overview
 
-### [Database Schema](./SCHEMA.md)
-Complete documentation of all tables, columns, and relationships.
-
 **Core Tables:**
 ```
 users              - User accounts and authentication
@@ -26,8 +23,6 @@ wiki_pages         - Wiki documentation
 game_runs          - Active/completed game sessions
 game_participants  - Players in runs
 game_saves         - Save points for runs
-
-[See SCHEMA.md for complete details]
 ```
 
 ### Key Relationships
@@ -37,12 +32,7 @@ game_saves         - Save points for runs
 - Forum Threads → Forum Posts (one-to-many)
 - Game Runs → Game Participants (one-to-many)
 
-**See:** [Complete Schema Documentation](./SCHEMA.md)
-
 ## 🔄 Migrations
-
-### [Migration Guide](./MIGRATIONS.md)
-Creating, testing, and deploying database migrations.
 
 ### Current Version
 **Migration 039:** Add refresh_tokens table (2026-03-26)
@@ -103,8 +93,6 @@ flask shell
 tail -f logs/production.log
 ```
 
-**See:** [Migration Guide](./MIGRATIONS.md) for detailed procedures
-
 ## 🗂️ Data Management
 
 ### Backups
@@ -154,8 +142,7 @@ flask shell
 
 ## 📊 Performance & Optimization
 
-### [Index Optimization](../INDEX-OPTIMIZATION-ANALYSIS.md)
-Database indexes and query performance.
+### Database Indexes and Query Performance
 
 **Key Indexes:**
 - users (id, username, email) - Primary lookups
@@ -253,4 +240,4 @@ flask shell < scripts/seed_dev_data.py
 
 ---
 
-**Database issue?** Check [Troubleshooting](../development/TROUBLESHOOTING.md) or contact DBA.
+**Database issue?** Check [Development Guide](../development/README.md) or contact DBA.

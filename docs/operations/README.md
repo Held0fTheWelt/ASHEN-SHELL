@@ -4,8 +4,7 @@ Production deployment, monitoring, incident response, and operational runbooks.
 
 ## 🚀 Deployment
 
-### [Deployment Procedures](./DEPLOYMENT.md)
-Step-by-step guides for deploying to production environments.
+### Deployment Procedures
 
 **Quick Deploy:**
 ```bash
@@ -25,8 +24,7 @@ cd backend && flask db upgrade
 
 ## 📊 Monitoring & Health
 
-### [Health Checks](./HEALTH_CHECKS.md)
-Service health monitoring and readiness probes.
+### Service Health Monitoring
 
 **Quick Status Check:**
 ```bash
@@ -40,12 +38,12 @@ curl http://localhost:5001/health
 curl http://localhost:5002/api/health
 ```
 
-### [Alerting Configuration](../ALERTING-CONFIG.md)
+### [Alerting Configuration](./ALERTING-CONFIG.md)
 Monitoring alerts, notification channels, and incident escalation.
 
 ## 📋 Runbooks
 
-### [Production Runbook](../runbook.md)
+### [Production Runbook](./RUNBOOK.md)
 Operational procedures for common tasks and incidents.
 
 **Common tasks:**

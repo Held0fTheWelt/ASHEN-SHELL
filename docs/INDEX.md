@@ -133,8 +133,6 @@ Complete index and cross-reference guide for WorldOfShadows documentation.
 
 ### For Database Questions
 → [Database Guide](./database/README.md)
-→ [Schema Documentation](./database/SCHEMA.md)
-→ [Migration Guide](./database/MIGRATIONS.md)
 
 ### For Deployment Questions
 → [Operations Guide](./operations/README.md)
@@ -143,7 +141,7 @@ Complete index and cross-reference guide for WorldOfShadows documentation.
 
 ### For Security Questions
 → [Security Guide](./security/README.md)
-→ [Security Audit Report](./SECURITY-AUDIT-2026-03-15.md)
+→ [Security Audit Report](./security/AUDIT_REPORT.md)
 → [Security Best Practices](./development/README.md#security-requirements)
 
 ## 📖 Document Status

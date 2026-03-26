@@ -4,7 +4,7 @@ Complete API reference for all services in WorldOfShadows.
 
 ## Backend API
 
-### [REST API Reference](./BACKEND_API.md)
+### [REST API Reference](./REFERENCE.md#backend-api)
 Complete REST endpoint documentation for the Flask backend.
 
 **Base URL:** `http://localhost:5000` (development) or `https://api.worldofshadows.com` (production)
@@ -28,7 +28,7 @@ Forum
   GET    /api/v1/forum/posts           - List posts in thread
   POST   /api/v1/forum/posts           - Create post
 
-See [REST API Reference](./BACKEND_API.md) for complete details.
+See [REST API Reference](./REFERENCE.md#backend-api) for complete details.
 ```
 
 ### Authentication & Authorization
@@ -40,7 +40,7 @@ See [REST API Reference](./BACKEND_API.md) for complete details.
 
 ## World Engine API
 
-### [World Engine Specification](./WORLD_ENGINE_API.md)
+### [World Engine Specification](./REFERENCE.md#world-engine-api)
 FastAPI-based game runtime with HTTP and WebSocket endpoints.
 
 **Base URL:** `http://localhost:5002` (development) or `https://engine.worldofshadows.com` (production)
@@ -59,7 +59,7 @@ WebSocket (Real-time)
   WS     /ws?ticket=<ticket>           - Player connection
   Messages: snapshot, join, leave, move, say, emote, etc.
 
-See [World Engine API](./WORLD_ENGINE_API.md) for complete details.
+See [World Engine API](./REFERENCE.md#world-engine-api) for complete details.
 ```
 
 ### Ticket Authentication
@@ -71,7 +71,7 @@ See [World Engine API](./WORLD_ENGINE_API.md) for complete details.
 
 ## Administration Tool
 
-### [Administration Endpoints](./ADMIN_TOOL_API.md)
+### [Administration Endpoints](./REFERENCE.md#administration-tool)
 Proxy endpoints for content management and user administration.
 
 **Key Endpoints:**
@@ -91,7 +91,7 @@ News & Wiki
   GET    /manage/wiki                  - Wiki management
   POST   /manage/content                - Create content
 
-See [Administration API](./ADMIN_TOOL_API.md) for complete details.
+See [Administration API](./REFERENCE.md#administration-tool) for complete details.
 ```
 
 ### Security
@@ -197,8 +197,7 @@ All APIs return consistent error responses:
 
 ## Postman Collections
 
-- [Forum Endpoints](../POSTMAN_FORUM_ENDPOINTS.md) - Forum API postman collection
-- Complete collections available in `postman/` directory
+Complete collections available in `postman/` directory.
 
 ## Integration Guides
 
@@ -213,4 +212,4 @@ All APIs return consistent error responses:
 
 ---
 
-**API Issue?** Check the [Troubleshooting Guide](../development/TROUBLESHOOTING.md) or create an issue.
+**API Issue?** Check the [Testing Guide](../testing/README.md) or create an issue.

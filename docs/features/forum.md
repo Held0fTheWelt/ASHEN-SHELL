@@ -65,7 +65,7 @@ The forum system provides community discussion, moderation, and content manageme
 
 ### Moderation Workflow
 
-See [Forum Moderation Workflow](./moderation.md) for detailed moderation procedures.
+See [Forum Moderation Workflow](../forum/ModerationWorkflow.md) for detailed moderation procedures.
 
 **Process:**
 1. Report: User reports post or user behavior
@@ -209,7 +209,7 @@ pytest tests/test_forum*.py -v
 
 ## Related Documentation
 
-- [Moderation Workflow](./moderation.md) - How to moderate forum
+- [Moderation Workflow](../forum/ModerationWorkflow.md) - How to moderate forum
 - [Feature Documentation](./README.md) - All features
 - [API Documentation](../../api/README.md) - Complete API reference
 - [Database Guide](../../database/README.md) - Schema details
@@ -230,4 +230,4 @@ pytest tests/test_forum*.py -v
 
 ---
 
-**Forum issue?** Check [Moderation Workflow](./moderation.md) or create GitHub issue.
+**Forum issue?** Check [Moderation Workflow](../forum/ModerationWorkflow.md) or create GitHub issue.
