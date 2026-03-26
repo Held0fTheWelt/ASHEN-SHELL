@@ -6,6 +6,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.2] - 2026-03-27 (W1.1 Repair - Structural Consistency)
+
+**Focus**: Resolve internal inconsistencies between module models, loader, schemas, and tests. Ensure canonical module representation is consistent across all layers.
+
+### Fixed
+
+- **Models**: All collection types changed from lists to dictionaries keyed by ID (characters, scene_phases, trigger_definitions, relationship_axes, ending_conditions, phase_transitions)
+- **Models**: Added missing escalation_axes field to ContentModule
+- **Models**: Updated field types to match actual YAML structure:
+  - ModuleMetadata.content: str → dict[str, Any] (structured metadata)
+  - ModuleMetadata.files: dict → list[str] (list of file names)
+  - RelationshipAxis.relationships: dict → list[str] (list of character pair IDs)
+  - RelationshipAxis.baseline: str|float → dict[str, Any] (complex structure)
+  - ScenePhase.content_focus: str → list[str] (list of focus items)
+  - ScenePhase.enforced_constraints: dict → list[str] (list of constraint strings)
+  - EndingCondition.outcome: str → dict[str, Any] (complex structure)
+  - EndingCondition.closure_action: dict → list[str] (list of action strings)
+  - PhaseTransition.transition_action: dict → str|None (simple description)
+- **Loader**: Added field name mappings (trigger_types → trigger_definitions, ending_types → ending_conditions, relationships → relationship_axes, scenes → scene_phases, transitions → phase_transitions)
+- **Loader**: Added module.yaml metadata extraction and mapping to ContentModule.metadata
+- **Loader**: Added YAML dictionary unwrapping logic to handle nested file structures
+- **Service**: Changed metadata file lookup from metadata.yaml to module.yaml
+- **Validator**: Fixed collection iteration to use .items() and .values() for dict-based collections
+- **Validator**: Added defensive dict/list handling in _is_valid_dag() method
+- **Schema**: Changed phase_transitions from array to object type (keyed by transition ID)
+- **Schema**: Corrected metadata structure (content as object, files as array)
+- **Tests**: Fixed phase_transitions iteration patterns to use .items() instead of direct iteration
+- **Tests**: Updated import paths for correct module loading
+
+### Verified
+
+- Module loads successfully without structural errors
+- All models, tests, schemas, and loader describe the same module truth
+- No list vs. dict drift remaining
+- No God-of-Carnage-specific engine hacks introduced
+- Generic loader/validator/service work for any YAML-based content module
+- W2 implementation ready to begin
+
+### Technical Debt Resolved
+
+- ✅ 8 major type mismatches between YAML and models
+- ✅ Metadata file naming confusion (module.yaml vs metadata.yaml)
+- ✅ Collection representation drift (lists vs dicts)
+- ✅ Field name mapping inconsistencies
+- ✅ Schema type errors
+- ✅ Test iteration bugs
+- ✅ Documentation inaccuracies
+
+---
+
 ## [0.2.1] - 2026-03-26 (Wave 1: God of Carnage Canonical Module Structure)
 
 **Focus**: Establish God of Carnage as the first formal, machine-readable, testable reference content module for the World of Shadows MVP. Implementation of canonical module structure aligned with contract specifications.
@@ -30,6 +80,8 @@ Core module files (aligned with contract specifications):
    - Baseline state initialization
    - Tension markers and escalation triggers per character
    - Vulnerability profiles for each character
+
+   **Note**: Initial models in 0.2.1 defined collections as lists; corrected to dicts keyed by ID in W1.1
 
 3. **`relationships.yaml`** (155 lines)
    - 4 relationship axes: Spousal Internal, Host↔Guest Power, Moral vs Pragmatic, Latent Dominance/Devaluation
@@ -97,6 +149,15 @@ AI story generation guidance (optional but included):
    - Voice consistency guidelines and pitfalls to avoid
    - Detailed character vulnerability profiles
 
+### Known Assumptions Later Corrected
+
+The 0.2.1 implementation made assumptions about data representation that required W1.1 repair work to resolve:
+
+1. **Collection Type Representation**: Models implemented collections as lists; YAML uses dictionaries keyed by ID. Reconciled in W1.1.
+2. **Metadata File Location**: module.yaml created but supporting code initially referenced metadata.yaml. Corrected in W1.1.
+3. **Field Type Definitions**: Several field types (ModuleMetadata.content, RelationshipAxis.baseline, etc.) required updates to match actual YAML structures. Corrected in W1.1.
+4. **Schema Alignment**: JSON schemas contained type errors (phase_transitions as array instead of object). Corrected in W1.1.
+
 ### Cleanup: Wave References Removed
 
 - Removed "" and "" identifiers from all content module YAML files
@@ -113,59 +174,14 @@ AI story generation guidance (optional but included):
 | Wave references in content | 0 | ✅ Removed |
 | Memory documentation | 1 | ✅ Created (.claude memory) |
 
-**Wave 1 Status**: ✅ **CANONICAL MODULE STRUCTURE COMPLETE, READY FOR ENGINE INTEGRATION**
+**Wave 1 Status**: ✅ **CANONICAL MODULE STRUCTURE CREATED** (Structural validation deferred to W1.1)
+
+**Known Issues Discovered in W1.1 Repair**:
+- Collection type ambiguity: Models initially used lists; YAML uses dicts keyed by ID (resolved in W1.1)
+- Metadata file naming: module.yaml created but service initially looked for metadata.yaml (resolved in W1.1)
+- Field type mismatches between YAML and models (resolved in W1.1)
 
 Next Phase:  AI loop implementation (story generation, trigger detection, state delta proposal and validation).
-
----
-
-## [0.2.2] - 2026-03-27 (W1.1 Repair - Structural Consistency)
-
-**Focus**: Resolve internal inconsistencies between module models, loader, schemas, and tests. Ensure canonical module representation is consistent across all layers.
-
-### Fixed
-
-- **Models**: All collection types changed from lists to dictionaries keyed by ID (characters, scene_phases, trigger_definitions, relationship_axes, ending_conditions, phase_transitions)
-- **Models**: Added missing escalation_axes field to ContentModule
-- **Models**: Updated field types to match actual YAML structure:
-  - ModuleMetadata.content: str → dict[str, Any] (structured metadata)
-  - ModuleMetadata.files: dict → list[str] (list of file names)
-  - RelationshipAxis.relationships: dict → list[str] (list of character pair IDs)
-  - RelationshipAxis.baseline: str|float → dict[str, Any] (complex structure)
-  - ScenePhase.content_focus: str → list[str] (list of focus items)
-  - ScenePhase.enforced_constraints: dict → list[str] (list of constraint strings)
-  - EndingCondition.outcome: str → dict[str, Any] (complex structure)
-  - EndingCondition.closure_action: dict → list[str] (list of action strings)
-  - PhaseTransition.transition_action: dict → str|None (simple description)
-- **Loader**: Added field name mappings (trigger_types → trigger_definitions, ending_types → ending_conditions, relationships → relationship_axes, scenes → scene_phases, transitions → phase_transitions)
-- **Loader**: Added module.yaml metadata extraction and mapping to ContentModule.metadata
-- **Loader**: Added YAML dictionary unwrapping logic to handle nested file structures
-- **Service**: Changed metadata file lookup from metadata.yaml to module.yaml
-- **Validator**: Fixed collection iteration to use .items() and .values() for dict-based collections
-- **Validator**: Added defensive dict/list handling in _is_valid_dag() method
-- **Schema**: Changed phase_transitions from array to object type (keyed by transition ID)
-- **Schema**: Corrected metadata structure (content as object, files as array)
-- **Tests**: Fixed phase_transitions iteration patterns to use .items() instead of direct iteration
-- **Tests**: Updated import paths for correct module loading
-
-### Verified
-
-- Module loads successfully without structural errors
-- All models, tests, schemas, and loader describe the same module truth
-- No list vs. dict drift remaining
-- No God-of-Carnage-specific engine hacks introduced
-- Generic loader/validator/service work for any YAML-based content module
-- W2 implementation ready to begin
-
-### Technical Debt Resolved
-
-- ✅ 8 major type mismatches between YAML and models
-- ✅ Metadata file naming confusion (module.yaml vs metadata.yaml)
-- ✅ Collection representation drift (lists vs dicts)
-- ✅ Field name mapping inconsistencies
-- ✅ Schema type errors
-- ✅ Test iteration bugs
-- ✅ Documentation inaccuracies
 
 ---
 
@@ -233,7 +249,11 @@ Next Phase:  AI loop implementation (story generation, trigger detection, state 
   - Character state: emotional_state, escalation_level, engagement, moral_defense (0–100)
   - Relationship state: stability (0–100), dominance_shift (-5 to +5)
 
-**Total schema footprint**: 6.6 KB (lightweight, focused on  structure)
+**Total schema footprint**: 6.6 KB (lightweight, focused on structure)
+
+**Note**: Schemas were updated in W1.1 repair:
+- `phase_transitions`: Changed from array to object type (keyed by transition ID)
+- `content_module.schema.json`: Metadata structure corrected (content as object, files as array)
 
 #### 3. Lightweight Validation Scaffold
 
