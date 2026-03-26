@@ -6,13 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [0.2.0] - 2026-03-26 (Wave 0: MVP Foundation & Documentation Cleanup)
+## [0.2.0] - 2026-03-26 (MVP Foundation & Documentation Cleanup)
 
-**Focus**: Complete Wave 0 foundation: 4 canonical MVP contracts, schema skeletons, validation scaffold, and documentation cleanup to enable W1 module implementation.
+**Focus**: Complete Wave 0 foundation: 4 canonical MVP contracts, schema skeletons, validation scaffold, and documentation cleanup to enable  module implementation.
 
 ---
 
-### Wave 0 (W0) MVP Foundation Delivery
+### MVP Foundation Delivery
 
 #### 1. Four Canonical MVP Contracts
 
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`docs/architecture/mvp_definition.md`** (133 lines)
   - MVP scope: 8 deliverables, 12 explicit exclusions
   - System authority model: Engine (canonical), AI (proposes), SLM (helpers), UI (views only)
-  - Wave structure W0–W4 with gate criteria
+  - Wave structure – with gate criteria
   - Quality principles and anti-scope-creep policy
 
 - **`docs/architecture/god_of_carnage_module_contract.md`** (252 lines)
@@ -52,7 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 #### 2. Schema Skeletons (Canonical Structure)
 
-**Created 4 JSON schema files** aligned with contracts, intentionally minimal for W0:
+**Created 4 JSON schema files** aligned with contracts, intentionally minimal for :
 
 - **`schemas/content_module.schema.json`** (45 lines)
   - Required: module_id, module_version, contract_version, characters, relationships, scenes, triggers, endings
@@ -70,15 +70,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Character state: emotional_state, escalation_level, engagement, moral_defense (0–100)
   - Relationship state: stability (0–100), dominance_shift (-5 to +5)
 
-**Total schema footprint**: 6.6 KB (lightweight, focused on W0 structure)
+**Total schema footprint**: 6.6 KB (lightweight, focused on  structure)
 
 #### 3. Lightweight Validation Scaffold
 
 **Created smoke test** to prevent documentation/schema drift:
 
 - **`tests/smoke/test_w0_contracts.py`** (103 lines, 8 tests)
-  - TestW0ContractDocs: Validates 4 contract files exist and are > 500 bytes
-  - TestW0Schemas: Validates 4 schema files exist, parse as valid JSON, contain required fields
+  - TestContractDocs: Validates 4 contract files exist and are > 500 bytes
+  - TestSchemas: Validates 4 schema files exist, parse as valid JSON, contain required fields
   - All 8 tests pass in 0.17 seconds (negligible CI impact)
 
 **Purpose**: Lightweight anti-drift validation without testing complexity. Fails immediately if contracts deleted or schemas malformed.
@@ -86,35 +86,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 #### 4. Infrastructure & Audit Trail
 
 - **`docs/audits/` directory** (created)
-  - W0_CONSOLIDATION_AUDIT.md — Phase 1 analysis of doc tree state
-  - W0_OBJECTIVES_AUDIT.md — Final validation of W0 objectives vs. delivery
+  - _CONSOLIDATION_AUDIT.md — Phase 1 analysis of doc tree state
+  - W0_OBJECTIVES_AUDIT.md — Final validation of  objectives vs. delivery
 
 - **`docs/reports/` directory** (created)
-  - W0_IMPLEMENTATION_REPORT.md — Phase 2 detailed changes and fixes
-  - W0_COMPLETION_AUDIT.md — Final 10-point checklist validation
+  - _IMPLEMENTATION_REPORT.md — Phase 2 detailed changes and fixes
+  - _COMPLETION_AUDIT.md — Final 10-point checklist validation
 
 ---
 
 ### Changed (Documentation & Navigation)
 
-#### Documentation Navigation & Structure (W0 - Consolidation Phase)
+#### Documentation Navigation & Structure ( - Consolidation Phase)
 - **Fixed 15+ broken links** in `docs/INDEX.md` and `docs/README.md`
 - **Normalized documentation paths**: Fixed capitalization and path inconsistencies
 - **Consolidated API references**: Merged separate BACKEND_API, WORLD_ENGINE_API, ADMIN_TOOL_API into single unified `api/REFERENCE.md`
 - **Removed dead references**: Eliminated references to non-existent analysis documents and historical artifacts
 - **Improved navigation hierarchy**: Added `docs/testing/INDEX.md` reference for test documentation discovery
-- **Prepared W0 MVP contract locations**: Added canonical homes for MVPDefinition, GameModuleContract, AIStoryContract, SessionRuntimeContract in `docs/architecture/README.md`
+- **Prepared  MVP contract locations**: Added canonical homes for MVPDefinition, GameModuleContract, AIStoryContract, SessionRuntimeContract in `docs/architecture/README.md`
 
 #### Documentation Organization
 - **Created `docs/audits/` directory** for audit and analysis documents
 - **Created `docs/reports/` directory** for implementation and validation reports
-- **Added W0_CONSOLIDATION_AUDIT.md** (comprehensive analysis of documentation tree state, problems, and consolidation strategy)
-- **Added W0_IMPLEMENTATION_REPORT.md** (detailed report of all changes, broken links fixed, and sprawl prevention)
+- **Added _CONSOLIDATION_AUDIT.md** (comprehensive analysis of documentation tree state, problems, and consolidation strategy)
+- **Added _IMPLEMENTATION_REPORT.md** (detailed report of all changes, broken links fixed, and sprawl prevention)
 
 ### Key Files Updated
 - `docs/README.md` - Fixed development setup link capitalization
 - `docs/INDEX.md` - Fixed 15+ broken links, normalized references
-- `docs/architecture/README.md` - Added W0 MVP Contracts section
+- `docs/architecture/README.md` - Added  MVP Contracts section
 
 ### Documentation Sprawl Prevention
 - ✅ Zero new documentation files created (except audit/report files)
@@ -133,7 +133,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-### W0 Completion Summary
+###  Completion Summary
 
 | Objective | Target | Delivered | Status |
 |-----------|--------|-----------|--------|
@@ -148,7 +148,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 **Wave 0 Status**: ✅ **COMPLETE AND VALIDATED**
 
-### Documentation Hygiene Pass (W0 Cleanup Phase)
+### Documentation Hygiene Pass ( Cleanup Phase)
 
 **Completed systematic cleanup of broken links and dead documentation references:**
 
@@ -200,14 +200,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Roadmap Translation
 
 - **Added `docs/ROADMAP_MVP_EN.md`** — Complete English translation of German MVP roadmap (ROADMAP_MVP.md)
-  - All 5 waves documented (W0–W4) with detailed objectives
+  - All 5 waves documented (–) with detailed objectives
   - Hybrid AI architecture and SLM/LLM role definitions
   - Quality principles, reproducibility requirements, and gates
   - 1,145 lines, same structure as German original
 
 ---
 
-### W0 Deliverables Summary
+###  Deliverables Summary
 
 | Category | Count | Status |
 |----------|-------|--------|
@@ -219,7 +219,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 | Broken links fixed | 40 | ✅ Complete |
 | New placeholder files | 0 | ✅ None created |
 
-**Wave 0 Status**: ✅ **FOUNDATION COMPLETE, DOCUMENTATION HYGIENIC, READY FOR W1**
+**Wave 0 Status**: ✅ **FOUNDATION COMPLETE, DOCUMENTATION HYGIENIC, READY FOR **
 
 ---
 
@@ -227,7 +227,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 **Focus**: Establish God of Carnage as the first formal, machine-readable, testable reference content module for the World of Shadows MVP. Implementation of canonical module structure aligned with contract specifications.
 
-### Wave 1 (W1) Canonical Module Implementation
+### Wave 1 () Canonical Module Implementation
 
 #### Created: Content Module Directory Structure
 
@@ -316,11 +316,11 @@ AI story generation guidance (optional but included):
 
 ### Cleanup: Wave References Removed
 
-- Removed "W0" and "W1" identifiers from all content module YAML files
+- Removed "" and "" identifiers from all content module YAML files
 - Content modules are now generic and reusable; wave tracking kept in CHANGELOG.md and .claude memory only
 - Created `.claude/memory/w0_w1_identification.md` for internal wave phase documentation
 
-### W1 Deliverables Summary
+###  Deliverables Summary
 
 | Component | Files | Status |
 |-----------|-------|--------|
@@ -332,7 +332,7 @@ AI story generation guidance (optional but included):
 
 **Wave 1 Status**: ✅ **CANONICAL MODULE STRUCTURE COMPLETE, READY FOR ENGINE INTEGRATION**
 
-Next Phase: W2 AI loop implementation (story generation, trigger detection, state delta proposal and validation).
+Next Phase:  AI loop implementation (story generation, trigger detection, state delta proposal and validation).
 
 ---
 

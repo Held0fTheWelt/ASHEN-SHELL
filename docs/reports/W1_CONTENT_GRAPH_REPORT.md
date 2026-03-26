@@ -1,4 +1,4 @@
-# W1 Final Report: God of Carnage Canonical Content Graph
+#  Final Report: God of Carnage Canonical Content Graph
 
 **Version**: 0.2.1
 **Date**: 2026-03-26
@@ -97,17 +97,17 @@ Wave 1 establishes the God of Carnage module as a formally traversable, machine-
     - 18 validation tests covering:
       * Structure tests (7): directory existence, file existence, YAML parsing, field presence
       * Consistency tests (3): character references, duration, exit conditions
-      * Wave reference tests (3): no W0/W1/Wx in content files
+      * Wave reference tests (3): no //Wx in content files
       * New escalation_axes test (1): validates 4 axes present
     - All tests passing (0.51s execution time)
 
 ### Configuration Files Updated
 
 13. **`CHANGELOG.md`**
-    - Added v0.2.1 W1 delivery section (440+ lines)
+    - Added v0.2.1  delivery section (440+ lines)
     - Lists all 8 core files + 3 direction files with line counts and descriptions
     - Summary table: 8 core (1,520 lines), 3 direction (730 lines), total 2,250 lines
-    - Confirms module structure complete and ready for W2
+    - Confirms module structure complete and ready for 
 
 ---
 
@@ -346,7 +346,7 @@ Wave 1 establishes the God of Carnage module as a formally traversable, machine-
 **Graph-Level**:
 1. **Trigger Combinations**: When multiple triggers fire simultaneously, escalation impact stacks. Order of application may matter.
    - **Resolution Path**: Engine should apply in order: contradiction → exposure → relativization → apology/cynicism → flight/collapse/retreat
-   - **Status**: Deferred to W2 (AI output logic)
+   - **Status**: Deferred to  (AI output logic)
 
 2. **Coalition State Recovery**: If coalition shifts to "dissolved" (all isolated), can it return to "realigned"?
    - **Current Design**: No reversion; phase progression is monotonic
@@ -355,15 +355,15 @@ Wave 1 establishes the God of Carnage module as a formally traversable, machine-
 
 3. **Conversation Coherence Granularity**: Metric is composite (turn length + topic + listening + clarity); exact calculation deferred
    - **Current Design**: Qualitative thresholds; engine can use any formula maintaining 0-100 scale
-   - **Status**: Acceptable for MVP; exact calculation deferred to W2
+   - **Status**: Acceptable for MVP; exact calculation deferred to 
 
 4. **Character-Specific Vulnerability Weighting**: Triggers have different impact per character; exact delta values may need calibration
    - **Current Design**: Baseline deltas provided; engine can adjust per character
-   - **Status**: Acceptable; tuning can happen in W2 playtesting
+   - **Status**: Acceptable; tuning can happen in  playtesting
 
 5. **AI Detection of Subtle Triggers**: Some triggers (flight_into_sideplots) are contextual and hard to detect automatically
    - **Current Design**: AI proposes; engine validates against rules
-   - **Status**: Deferred to W2 (AI story generation)
+   - **Status**: Deferred to  (AI story generation)
 
 ### Assumptions and Constraints
 
@@ -382,7 +382,7 @@ Wave 1 establishes the God of Carnage module as a formally traversable, machine-
 ```
 tests/smoke/test_w1_module.py: 18/18 passing ✅
 
-TestW1ModuleStructure:
+TestModuleStructure:
   ✅ test_module_root_exists
   ✅ test_core_files_exist
   ✅ test_direction_files_exist
@@ -397,12 +397,12 @@ TestW1ModuleStructure:
   ✅ test_endings_yaml_structure
   ✅ test_module_file_registry_matches_reality
 
-TestW1ModuleConsistency:
+TestModuleConsistency:
   ✅ test_character_references_valid
   ✅ test_module_has_reasonable_duration
   ✅ test_phases_have_exit_conditions
 
-TestW1ModuleNoWaveReferences:
+TestModuleNoWaveReferences:
   ✅ test_no_w0_references_in_yaml
   ✅ test_no_wave_references_in_direction
 
@@ -413,7 +413,7 @@ Execution Time: 0.51 seconds
 
 - ✅ **YAML Syntax**: All files parse correctly; no syntax errors
 - ✅ **Field Presence**: All required fields present in all structures
-- ✅ **Wave References**: Zero W0/W1/Wx references in content files
+- ✅ **Wave References**: Zero //Wx references in content files
 - ✅ **File Registry**: module.yaml accurately lists all 11 files
 - ✅ **Constraint Consistency**: No conflicting constraints defined
 
@@ -460,7 +460,7 @@ e2edc86 test(w1): add validation scaffold for god of carnage module
 
 ---
 
-## Summary: W1 Complete
+## Summary:  Complete
 
 | Dimension | Status |
 |-----------|--------|
@@ -475,9 +475,9 @@ e2edc86 test(w1): add validation scaffold for god of carnage module
 | **Graph Completeness** | ✅ Complete (no dead branches) |
 | **Special-Case Logic** | ✅ None required (fully generic) |
 
-**Module Status**: Ready for W2 AI story generation implementation.
+**Module Status**: Ready for  AI story generation implementation.
 
 ---
 
 **Report Generated**: 2026-03-26
-**Next Phase**: W2 - AI Story Generation and Validation Loop
+**Next Phase**:  - AI Story Generation and Validation Loop
