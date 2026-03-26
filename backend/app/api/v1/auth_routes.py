@@ -25,8 +25,9 @@ from app.utils.error_handler import log_full_error, ERROR_MESSAGES
 
 logger = logging.getLogger(__name__)
 
-# Constant-time delay (milliseconds) to prevent timing-based email enumeration attacks
-CONSTANT_TIME_DELAY_SECONDS = 0.2
+# Constant-time delay (seconds) to prevent timing-based email enumeration attacks
+# Set to 0.5s to accommodate token creation and email sending operations plus overhead
+CONSTANT_TIME_DELAY_SECONDS = 0.5
 
 
 @api_v1_bp.route("/auth/register", methods=["POST"])

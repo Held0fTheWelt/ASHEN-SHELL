@@ -100,7 +100,7 @@ def test_internal_run_detail_and_terminate(tmp_path: Path):
 
     detail_response = client.get(f"/api/internal/runs/{run_id}")
     assert detail_response.status_code == 200
-    assert detail_response.json()["id"] == run_id
+    assert detail_response.json()["run"]["id"] == run_id
 
     transcript_response = client.get(f"/api/internal/runs/{run_id}/transcript")
     assert transcript_response.status_code == 200
@@ -109,5 +109,5 @@ def test_internal_run_detail_and_terminate(tmp_path: Path):
     terminate_response = client.post(f"/api/internal/runs/{run_id}/terminate", json={"actor_display_name": "Ops", "reason": "Test stop"})
     assert terminate_response.status_code == 200
     body = terminate_response.json()
-    assert body["status"] == "completed"
-    assert body["metadata"]["terminated_reason"] == "Test stop"
+    assert body["terminated"] == True
+    assert body["run_id"] == run_id

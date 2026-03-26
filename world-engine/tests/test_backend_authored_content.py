@@ -8,11 +8,11 @@ from conftest import build_test_app
 
 
 def test_backend_published_content_overrides_builtin(tmp_path, monkeypatch):
-    manager_module = importlib.import_module('app.runtime.manager')
-    monkeypatch.setattr(manager_module, 'BACKEND_CONTENT_SYNC_ENABLED', True)
-    monkeypatch.setattr(manager_module, 'BACKEND_CONTENT_FEED_URL', 'https://backend.example/api/v1/game/content/published')
-    monkeypatch.setattr(manager_module, 'BACKEND_CONTENT_TIMEOUT_SECONDS', 5.0)
-    monkeypatch.setattr(manager_module, 'BACKEND_CONTENT_SYNC_INTERVAL_SECONDS', 0.0)
+    # Set environment variables before app build
+    monkeypatch.setenv('BACKEND_CONTENT_SYNC_ENABLED', 'true')
+    monkeypatch.setenv('BACKEND_CONTENT_FEED_URL', 'https://backend.example/api/v1/game/content/published')
+    monkeypatch.setenv('BACKEND_CONTENT_TIMEOUT_SECONDS', '5.0')
+    monkeypatch.setenv('BACKEND_CONTENT_SYNC_INTERVAL_SECONDS', '0.0')
 
     def fake_loader(url: str, timeout: float = 10.0):
         from app.content.models import ExperienceTemplate
@@ -46,12 +46,28 @@ def test_backend_published_content_overrides_builtin(tmp_path, monkeypatch):
         }
         return {'god_of_carnage_solo': ExperienceTemplate.model_validate(payload)}
 
-    monkeypatch.setattr(manager_module, 'load_published_templates', fake_loader)
+    # Patch load_published_templates where it's imported
+    backend_loader = importlib.import_module('app.content.backend_loader')
+    original_loader = backend_loader.load_published_templates
+    monkeypatch.setattr(backend_loader, 'load_published_templates', fake_loader)
     app = build_test_app(tmp_path)
     manager = app.state.manager
     template = manager.get_template('god_of_carnage_solo')
     assert template.title == 'God of Carnage — Authored Publish'
     assert manager.template_sources['god_of_carnage_solo'] == 'backend_published'
+
+    # Restore original function and reset env to prevent interference with other tests
+    monkeypatch.setattr(backend_loader, 'load_published_templates', original_loader)
+    monkeypatch.delenv('BACKEND_CONTENT_SYNC_ENABLED', raising=False)
+    monkeypatch.delenv('BACKEND_CONTENT_FEED_URL', raising=False)
+    monkeypatch.delenv('BACKEND_CONTENT_TIMEOUT_SECONDS', raising=False)
+    monkeypatch.delenv('BACKEND_CONTENT_SYNC_INTERVAL_SECONDS', raising=False)
+
+    # Reload config and manager to pick up cleared env vars and restored function
+    import app.config
+    importlib.reload(app.config)
+    import app.runtime.manager
+    importlib.reload(app.runtime.manager)
 
 
 def test_delete_run_endpoint_terminates_runtime_instance(tmp_path, monkeypatch):

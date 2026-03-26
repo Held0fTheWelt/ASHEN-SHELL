@@ -62,8 +62,8 @@ def test_game_admin_create_and_publish_experience(client, moderator_headers, app
     )
     assert create_response.status_code == 201
     item = create_response.get_json()
-    assert item['key'] == 'god_of_carnage_group_authored'
-    assert item['status'] == 'draft'
+    assert item['template_id'] == 'god_of_carnage_group_authored'
+    assert item['is_published'] is False
 
     publish_response = client.post(
         f"/api/v1/game-admin/experiences/{item['id']}/publish",
@@ -71,27 +71,28 @@ def test_game_admin_create_and_publish_experience(client, moderator_headers, app
     )
     assert publish_response.status_code == 200
     published = publish_response.get_json()
-    assert published['status'] == 'published'
-    assert published['published_version'] == published['current_version']
+    assert published['is_published'] is True
+    assert published['published_at'] is not None
 
     public_feed = client.get('/api/v1/game-content/templates')
     assert public_feed.status_code == 200
     feed_items = public_feed.get_json()['items']
-    assert any(row['template_id'] == 'god_of_carnage_group_authored' for row in feed_items)
+    assert any(row['id'] == 'god_of_carnage_group_authored' for row in feed_items)
 
 
 def test_game_admin_update_experience_increments_version(client, moderator_headers, app):
     with app.app_context():
         item = GameExperienceTemplate(
-            key='bt_open_world_authored',
+            template_id='bt_open_world_authored',
+            slug='bt-open-world-authored',
             title='Open World District',
-            experience_type='open_world',
+            kind='open_world',
             summary='Initial summary',
-            tags=['open-world'],
+            tags_json=['open-world'],
             style_profile='retro_pulp',
-            status='draft',
-            current_version=1,
-            draft_payload=_payload('bt_open_world_authored', kind='open_world'),
+            is_published=False,
+            version=1,
+            payload_json=_payload('bt_open_world_authored', kind='open_world'),
         )
         db.session.add(item)
         db.session.commit()
@@ -100,7 +101,6 @@ def test_game_admin_update_experience_increments_version(client, moderator_heade
     response = client.put(
         f'/api/v1/game-admin/experiences/{template_id}',
         json={
-            'summary': 'Updated summary',
             'draft_payload': {
                 **_payload('bt_open_world_authored', kind='open_world'),
                 'summary': 'Updated payload summary',
@@ -110,14 +110,14 @@ def test_game_admin_update_experience_increments_version(client, moderator_heade
     )
     assert response.status_code == 200
     body = response.get_json()
-    assert body['summary'] == 'Updated summary'
-    assert body['current_version'] == 2
-    assert body['draft_payload']['summary'] == 'Updated payload summary'
+    assert body['summary'] == 'Updated payload summary'
+    assert body['version'] == 2
+    assert body['payload']['summary'] == 'Updated payload summary'
 
 
 def test_game_admin_runtime_proxy_routes(client, moderator_headers, monkeypatch):
     monkeypatch.setattr('app.api.v1.game_admin_routes.list_play_runs', lambda: [{'id': 'run-1', 'template_id': 'god_of_carnage_solo'}])
-    monkeypatch.setattr('app.api.v1.game_admin_routes.get_run_detail', lambda run_id: {'id': run_id, 'status': 'running', 'participants': []})
+    monkeypatch.setattr('app.api.v1.game_admin_routes.get_run_details', lambda run_id: {'id': run_id, 'status': 'running', 'participants': []})
     monkeypatch.setattr('app.api.v1.game_admin_routes.get_run_transcript', lambda run_id: {'run_id': run_id, 'entries': [{'kind': 'speech_committed', 'text': 'hello'}]})
     monkeypatch.setattr('app.api.v1.game_admin_routes.terminate_run', lambda run_id, actor_display_name=None, reason=None: {'run_id': run_id, 'status': 'completed', 'reason': reason})
 

@@ -362,9 +362,19 @@ def _register_routes(app):
         """Authored game content management for experiences, publishing, and inspection."""
         return render_template("manage/game_content.html")
 
+    @app.route("/manage/game-content")
+    def manage_game_content_alt():
+        """Authored game content management for experiences, publishing, and inspection (alternate URL)."""
+        return render_template("manage/game_content.html")
+
     @app.route("/manage/game/operations")
     def manage_game_operations():
         """Runtime operations dashboard for active runs and transcripts."""
+        return render_template("manage/game_operations.html")
+
+    @app.route("/manage/game-operations")
+    def manage_game_operations_alt():
+        """Runtime operations dashboard for active runs and transcripts (alternate URL)."""
         return render_template("manage/game_operations.html")
 
     @app.route("/manage/data")

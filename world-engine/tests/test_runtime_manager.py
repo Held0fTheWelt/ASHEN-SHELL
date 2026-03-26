@@ -75,7 +75,17 @@ def test_inspect_rejects_remote_room_targets(tmp_path):
 
 
 def test_remote_templates_override_and_load(tmp_path, monkeypatch):
+    import importlib
     from app.content.models import ExperienceKind, ExperienceTemplate, JoinPolicy, RoleTemplate, RoomTemplate, BeatTemplate, ParticipantMode
+
+    # Set environment variables to enable backend content sync
+    monkeypatch.setenv('BACKEND_CONTENT_SYNC_ENABLED', 'true')
+    monkeypatch.setenv('BACKEND_CONTENT_FEED_URL', 'https://content.example.com/api/v1/game-content/templates')
+    monkeypatch.setenv('BACKEND_CONTENT_SYNC_INTERVAL_SECONDS', '0.0')
+
+    # Reload config to pick up environment variables
+    import app.config
+    importlib.reload(app.config)
 
     remote_template = ExperienceTemplate(
         id="god_of_carnage_solo",
@@ -92,6 +102,15 @@ def test_remote_templates_override_and_load(tmp_path, monkeypatch):
         beats=[BeatTemplate(id="intro", name="Intro", description="desc", summary="sum")],
     )
 
-    monkeypatch.setattr('app.runtime.manager.load_remote_templates', lambda url: {remote_template.id: remote_template})
-    manager = RuntimeManager(store_root=tmp_path, content_source_url='https://content.example.com/api/v1/game-content/templates')
+    # Patch load_published_templates in backend_loader
+    backend_loader = importlib.import_module('app.content.backend_loader')
+    monkeypatch.setattr(backend_loader, 'load_published_templates', lambda url, timeout=10: {remote_template.id: remote_template})
+
+    # Reload runtime manager to pick up reloaded config
+    import app.runtime.manager
+    importlib.reload(app.runtime.manager)
+
+    # Now create manager - it will pick up the reloaded config and patched function
+    from app.runtime.manager import RuntimeManager
+    manager = RuntimeManager(store_root=tmp_path)
     assert manager.get_template('god_of_carnage_solo').title == 'Remote Override'

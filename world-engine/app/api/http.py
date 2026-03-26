@@ -179,6 +179,37 @@ def create_join_context(payload: JoinContextRequest, manager: RuntimeManager = D
     }
 
 
+@router.get("/internal/runs/{run_id}", dependencies=[Depends(_require_internal_api_key)])
+def get_internal_run_details(run_id: str, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
+    try:
+        return manager.get_run_details(run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Run not found") from exc
+
+
+@router.get("/internal/runs/{run_id}/transcript", dependencies=[Depends(_require_internal_api_key)])
+def get_internal_transcript(run_id: str, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
+    try:
+        instance = manager.get_instance(run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Run not found") from exc
+    return {
+        "run_id": run_id,
+        "entries": [entry.model_dump(mode="json") for entry in instance.transcript],
+    }
+
+
+class TerminateRunRequest(BaseModel):
+    actor_display_name: str
+    reason: str
+
+
+@router.post("/internal/runs/{run_id}/terminate", dependencies=[Depends(_require_internal_api_key)])
+def terminate_run_internal(run_id: str, payload: TerminateRunRequest, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
+    try:
+        return manager.terminate_run(run_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Run not found") from exc
 
 
 @router.delete("/runs/{run_id}", dependencies=[Depends(_require_internal_api_key)])

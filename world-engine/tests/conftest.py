@@ -34,14 +34,14 @@ def sqlalchemy_available() -> bool:
 
 
 
-def receive_until_snapshot(websocket, predicate, attempts: int = 6, timeout: float = 5.0):
+def receive_until_snapshot(websocket, predicate, attempts: int = 10, timeout: float = 0.1):
     """Receive WebSocket messages until a snapshot matching the predicate is received.
 
     Args:
         websocket: WebSocket connection
         predicate: Function to test snapshot data
         attempts: Maximum number of receive attempts
-        timeout: Timeout in seconds for each receive attempt (default 5.0)
+        timeout: Timeout in seconds for each receive attempt (default 0.1)
 
     Raises:
         AssertionError: If no matching snapshot received after all attempts
@@ -84,6 +84,8 @@ def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: st
     # and avoids reloading when using unittest.mock.patch (current != env)
     if current_value == env_value:
         importlib.reload(app.config)
+        # Also reload modules that depend on config
+        runtime_manager_module = importlib.reload(runtime_manager_module)
 
     # Reload http and ws modules - they will import the current config values
     http_module = importlib.import_module("app.api.http")
@@ -95,7 +97,8 @@ def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: st
     app = FastAPI()
     app.state.manager = runtime_manager_module.RuntimeManager(
         store_root=tmp_path,
-        content_source_url=store_url,
+        store_backend=store_backend,
+        store_url=store_url,
     )
     app.state.ticket_manager = tickets_module.TicketManager("test-secret")
     app.include_router(http_module.router)

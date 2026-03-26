@@ -284,7 +284,7 @@ def build_god_of_carnage_solo() -> ExperienceTemplate:
                 label="Pour a stronger drink",
                 description="Test whether alcohol is courtesy, surrender, or escalation.",
                 scope="room",
-                available_if=[Condition(type=ConditionType.BEAT_EQUALS, value="alliances")],
+                available_if=[Condition(type=ConditionType.BEAT_EQUALS, value="first_fracture")],
                 effects=[
                     Effect(type=EffectType.SET_FLAG, key="rum_poured"),
                     Effect(type=EffectType.SET_PROP_STATE, target_id="rum_bottle", value="open"),

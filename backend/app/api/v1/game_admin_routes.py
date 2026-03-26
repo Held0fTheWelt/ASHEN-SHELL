@@ -11,11 +11,11 @@ from app.services.game_content_service import (
     create_experience,
     get_experience,
     list_experiences,
-    list_published_experiences,
+    list_published_experience_payloads,
     publish_experience,
     update_experience,
 )
-from app.services.game_service import GameServiceError, get_run_detail, get_run_transcript, list_runs as list_play_runs, terminate_run
+from app.services.game_service import GameServiceError, get_run_details, get_run_transcript, list_runs as list_play_runs, terminate_run
 
 
 def _experience_dict(item, *, include_published_payload: bool = False):
@@ -42,20 +42,22 @@ def game_admin_create_experience():
     if data is None:
         return jsonify({'error': 'Invalid or missing JSON body'}), 400
     user = get_current_user()
-    item, err = create_experience(
-        key=data.get('key'),
-        title=data.get('title'),
-        experience_type=data.get('experience_type'),
-        summary=data.get('summary'),
-        tags=data.get('tags'),
-        style_profile=data.get('style_profile'),
-        draft_payload=data.get('draft_payload'),
-        actor_id=user.id if user else None,
-    )
-    if err:
-        return jsonify({'error': err}), 409 if 'exists' in err.lower() else 400
-    log_activity(actor=user, category='game', action='experience_create', status='success', message=f'Created game experience {item.key}', route=request.path, method=request.method, target_type='game_experience', target_id=str(item.id))
-    return jsonify(_experience_dict(item)), 201
+    try:
+        # Build payload from request - draft_payload contains the full template structure
+        payload = data.get('draft_payload', {})
+        if not payload:
+            return jsonify({'error': 'draft_payload is required'}), 400
+
+        item = create_experience(
+            payload=payload,
+            actor_user_id=user.id if user else None,
+        )
+    except Exception as exc:
+        error_msg = str(exc)
+        return jsonify({'error': error_msg}), 409 if 'exists' in error_msg.lower() else 400
+
+    log_activity(actor=user, category='game', action='experience_create', status='success', message=f'Created game experience {item["template_id"]}', route=request.path, method=request.method, target_type='game_experience', target_id=str(item['id']))
+    return jsonify(item), 201
 
 
 @api_v1_bp.route('/game-admin/experiences/<int:experience_id>', methods=['GET'])
@@ -78,21 +80,23 @@ def game_admin_update_experience(experience_id: int):
     if data is None:
         return jsonify({'error': 'Invalid or missing JSON body'}), 400
     user = get_current_user()
-    item, err = update_experience(
-        experience_id,
-        title=data.get('title') if 'title' in data else None,
-        experience_type=data.get('experience_type') if 'experience_type' in data else None,
-        summary=data.get('summary') if 'summary' in data else None,
-        tags=data.get('tags') if 'tags' in data else None,
-        style_profile=data.get('style_profile') if 'style_profile' in data else None,
-        draft_payload=data.get('draft_payload') if 'draft_payload' in data else None,
-        status=data.get('status') if 'status' in data else None,
-        actor_id=user.id if user else None,
-    )
-    if err:
-        return jsonify({'error': err}), 404 if 'not found' in err.lower() else 400
-    log_activity(actor=user, category='game', action='experience_update', status='success', message=f'Updated game experience {item.key}', route=request.path, method=request.method, target_type='game_experience', target_id=str(item.id))
-    return jsonify(_experience_dict(item, include_published_payload=True)), 200
+    try:
+        # Build payload from draft_payload if provided
+        payload = data.get('draft_payload', {})
+        if not payload:
+            return jsonify({'error': 'draft_payload is required'}), 400
+
+        item = update_experience(
+            experience_id,
+            payload=payload,
+            actor_user_id=user.id if user else None,
+        )
+    except Exception as exc:
+        error_msg = str(exc)
+        return jsonify({'error': error_msg}), 404 if 'not found' in error_msg.lower() else 400
+
+    log_activity(actor=user, category='game', action='experience_update', status='success', message=f'Updated game experience {item["template_id"]}', route=request.path, method=request.method, target_type='game_experience', target_id=str(item['id']))
+    return jsonify(item), 200
 
 
 @api_v1_bp.route('/game-admin/experiences/<int:experience_id>/publish', methods=['POST'])
@@ -101,17 +105,20 @@ def game_admin_update_experience(experience_id: int):
 @require_feature(FEATURE_MANAGE_GAME_CONTENT)
 def game_admin_publish_experience(experience_id: int):
     user = get_current_user()
-    item, err = publish_experience(experience_id, actor_id=user.id if user else None)
-    if err:
-        return jsonify({'error': err}), 404 if 'not found' in err.lower() else 400
-    log_activity(actor=user, category='game', action='experience_publish', status='success', message=f'Published game experience {item.key} version {item.published_version}', route=request.path, method=request.method, target_type='game_experience', target_id=str(item.id))
-    return jsonify(_experience_dict(item, include_published_payload=True)), 200
+    try:
+        item = publish_experience(experience_id, actor_user_id=user.id if user else None)
+    except Exception as exc:
+        error_msg = str(exc)
+        return jsonify({'error': error_msg}), 404 if 'not found' in error_msg.lower() else 400
+
+    log_activity(actor=user, category='game', action='experience_publish', status='success', message=f'Published game experience {item["template_id"]}', route=request.path, method=request.method, target_type='game_experience', target_id=str(item['id']))
+    return jsonify(item), 200
 
 
 @api_v1_bp.route('/game-content/templates', methods=['GET'])
 @limiter.limit('120 per minute')
 def game_content_published_feed():
-    return jsonify({'items': list_published_experiences()}), 200
+    return jsonify({'items': list_published_experience_payloads()}), 200
 
 
 @api_v1_bp.route('/game-admin/runtime/runs', methods=['GET'])
@@ -131,7 +138,7 @@ def game_admin_runtime_runs():
 @require_feature(FEATURE_MANAGE_GAME_OPERATIONS)
 def game_admin_runtime_run_detail(run_id: str):
     try:
-        return jsonify(get_run_detail(run_id)), 200
+        return jsonify(get_run_details(run_id)), 200
     except GameServiceError as exc:
         return jsonify({'error': str(exc)}), exc.status_code
 

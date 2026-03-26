@@ -142,16 +142,18 @@ def test_api_rejects_expired_tickets(client, tmp_path):
             "display_name": participant.display_name,
             "role_id": participant.role_id,
         },
-        ttl_seconds=0,  # Expires immediately
+        ttl_seconds=-1,  # Already expired (ttl in the past)
     )
 
-    # Wait to ensure expiration
-    time.sleep(1)
-
     # Attempting to use the expired ticket should fail
-    with pytest.raises((WebSocketDisconnect, Exception)):
-        with test_client.websocket_connect(f"/ws?ticket={expired_ticket}"):
-            pass
+    try:
+        with test_client.websocket_connect(f"/ws?ticket={expired_ticket}") as websocket:
+            # Try to receive - should fail on expired ticket
+            websocket.receive_json()
+        assert False, "Should have disconnected on expired ticket"
+    except (WebSocketDisconnect, RuntimeError):
+        # Expected: connection should close due to expired ticket
+        pass
 
 
 @pytest.mark.security
