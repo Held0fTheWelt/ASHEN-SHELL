@@ -6,9 +6,94 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [0.2.0] - 2026-03-26 (Game Rules, Game System, and Documentation Foundation)
+## [0.2.0] - 2026-03-26 (Wave 0: MVP Foundation & Documentation Cleanup)
 
-**Focus**: Foundation for game rules and game system integration with cleaned documentation structure.
+**Focus**: Complete Wave 0 foundation: 4 canonical MVP contracts, schema skeletons, validation scaffold, and documentation cleanup to enable W1 module implementation.
+
+---
+
+### Wave 0 (W0) MVP Foundation Delivery
+
+#### 1. Four Canonical MVP Contracts
+
+**Created canonical contract documents** defining MVP scope, authority model, and technical structure:
+
+- **`docs/architecture/mvp_definition.md`** (133 lines)
+  - MVP scope: 8 deliverables, 12 explicit exclusions
+  - System authority model: Engine (canonical), AI (proposes), SLM (helpers), UI (views only)
+  - Wave structure W0–W4 with gate criteria
+  - Quality principles and anti-scope-creep policy
+
+- **`docs/architecture/god_of_carnage_module_contract.md`** (252 lines)
+  - Module structure: 6 YAML files (module.yaml, characters.yaml, relationships.yaml, scenes.yaml, triggers.yaml, endings.yaml)
+  - 4 characters (Véronique, Michel, Annette, Alain) with formal properties
+  - 4 relationship axes: spousal internal, host-guest power, moral vs pragmatic, dominance
+  - 5 scene phases, 6 trigger types, 4 escalation dimensions, 4 end conditions
+
+- **`docs/architecture/ai_story_contract.md`** (362 lines)
+  - Authority rule: "AI proposes. Engine decides."
+  - Mandatory AI output fields: scene_interpretation, detected_triggers, proposed_state_deltas, dialogue_impulses, conflict_vector
+  - 5 SLM helper roles (context_packer, trigger_extractor, delta_normalizer, guard_precheck, router)
+  - 12 named error classes with recovery strategies
+  - Forbidden mutations and validation guardrails
+
+- **`docs/architecture/session_runtime_contract.md`** (339 lines)
+  - Session metadata: 12 required fields (session_id, module_id, module_version, contract_version, prompt_version, ai_backend, ai_model, created_at, updated_at, current_scene, turn_number, session_active)
+  - 9-step turn pipeline: input → context pack → route → story gen → trigger extract → normalize → guard → validate → response
+  - 4 mandatory logs: event_log, state_delta_log, ai_decision_log, validation_log
+  - State delta format with 0–100 numeric bounds
+  - API contract (POST /sessions, GET /sessions/{id}, POST /sessions/{id}/turn, GET /sessions/{id}/logs)
+  - Recovery levels (Level 1–3) and fallback mode
+
+**Gate criteria satisfied**:
+- ✅ Core terms defined (Engine/AI/SLM/UI/Content authority boundaries)
+- ✅ Contracts documented (4 contracts, 1,086 lines, operationally specific)
+- ✅ SLM/LLM roles separated (5 SLM helpers + 1 story LLM, clear authority model)
+
+#### 2. Schema Skeletons (Canonical Structure)
+
+**Created 4 JSON schema files** aligned with contracts, intentionally minimal for W0:
+
+- **`schemas/content_module.schema.json`** (45 lines)
+  - Required: module_id, module_version, contract_version, characters, relationships, scenes, triggers, endings
+
+- **`schemas/ai_story_output.schema.json`** (50 lines)
+  - Required: scene_interpretation, detected_triggers, proposed_state_deltas, dialogue_impulses, conflict_vector
+  - Optional: confidence (0–1), uncertainty
+
+- **`schemas/session_state.schema.json`** (65 lines)
+  - Required: 12 metadata fields (session_id, module_id, module_version, contract_version, prompt_version, ai_backend, ai_model, created_at, updated_at, current_scene, turn_number, session_active)
+  - Optional: seed, fallback_mode, recovery_attempt_count
+
+- **`schemas/state_delta.schema.json`** (50 lines)
+  - additionalProperties: true (any character_name key)
+  - Character state: emotional_state, escalation_level, engagement, moral_defense (0–100)
+  - Relationship state: stability (0–100), dominance_shift (-5 to +5)
+
+**Total schema footprint**: 6.6 KB (lightweight, focused on W0 structure)
+
+#### 3. Lightweight Validation Scaffold
+
+**Created smoke test** to prevent documentation/schema drift:
+
+- **`tests/smoke/test_w0_contracts.py`** (103 lines, 8 tests)
+  - TestW0ContractDocs: Validates 4 contract files exist and are > 500 bytes
+  - TestW0Schemas: Validates 4 schema files exist, parse as valid JSON, contain required fields
+  - All 8 tests pass in 0.17 seconds (negligible CI impact)
+
+**Purpose**: Lightweight anti-drift validation without testing complexity. Fails immediately if contracts deleted or schemas malformed.
+
+#### 4. Infrastructure & Audit Trail
+
+- **`docs/audits/` directory** (created)
+  - W0_CONSOLIDATION_AUDIT.md — Phase 1 analysis of doc tree state
+  - W0_OBJECTIVES_AUDIT.md — Final validation of W0 objectives vs. delivery
+
+- **`docs/reports/` directory** (created)
+  - W0_IMPLEMENTATION_REPORT.md — Phase 2 detailed changes and fixes
+  - W0_COMPLETION_AUDIT.md — Final 10-point checklist validation
+
+---
 
 ### Changed (Documentation & Navigation)
 
@@ -37,6 +122,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ✅ Removed dead links instead of creating placeholder documents
 - ✅ Merged game mechanics into RUNTIME_COMMANDS.md instead of creating separate files
 - ✅ Deferred out-of-scope documentation expansion
+
+### Test Infrastructure
+
+#### Database Test Suite Integration
+- **Added database suite** to `tests/run_tests.py` multi-suite runner
+- **Synced database/tests/conftest.py** with backend test configuration patterns
+- Database tests now run with `python run_tests.py --suite database`
+- All 429+ backend tests passing across all suites
+
+---
+
+### W0 Completion Summary
+
+| Objective | Target | Delivered | Status |
+|-----------|--------|-----------|--------|
+| Canonical contracts | 4 docs | mvp_definition, god_of_carnage_module_contract, ai_story_contract, session_runtime_contract | ✅ Complete |
+| Schema skeletons | 4 schemas | content_module, ai_story_output, session_state, state_delta | ✅ Complete |
+| Validation scaffold | 1 test file | tests/smoke/test_w0_contracts.py (8 tests, 0.17s) | ✅ Complete |
+| SLM/LLM roles | Defined | 5 SLM helpers + 1 story LLM in ai_story_contract.md | ✅ Complete |
+| Folder structure | Organized | docs/architecture/, schemas/, tests/smoke/, docs/audits/, docs/reports/ | ✅ Complete |
+| Gate: Core terms | Defined | Engine/AI/SLM/UI/Content authority model in mvp_definition.md | ✅ Pass |
+| Gate: Contracts | Documented | 1,086 lines across 4 contracts, operationally specific | ✅ Pass |
+| Gate: Roles separated | Clear | 5 SLM helper roles vs. story LLM vs. Engine, authority boundaries explicit | ✅ Pass |
+
+**Wave 0 Status**: ✅ **COMPLETE AND VALIDATED**
+
+Next Wave (W1): Implement God of Carnage content module (module.yaml, characters.yaml, relationships.yaml, scenes.yaml, triggers.yaml, endings.yaml) per god_of_carnage_module_contract.md specifications.
 
 ---
 
