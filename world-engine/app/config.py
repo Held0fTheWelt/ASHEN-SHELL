@@ -203,3 +203,11 @@ _piak = os.getenv("PLAY_SERVICE_INTERNAL_API_KEY", "").strip()
 PLAY_SERVICE_INTERNAL_API_KEY = _piak if _piak else None
 
 GAME_CONTENT_SOURCE_URL = os.getenv("GAME_CONTENT_SOURCE_URL", "").strip()
+
+# RUN_STORE configuration
+RUN_STORE_BACKEND = os.getenv("RUN_STORE_BACKEND", "json").strip()
+RUN_STORE_URL = os.getenv("RUN_STORE_URL", "").strip()
+
+# Validate store configuration
+if RUN_STORE_BACKEND == "sqlalchemy" and not RUN_STORE_URL:
+    raise ValueError("RUN_STORE_URL is required when RUN_STORE_BACKEND is sqlalchemy")
