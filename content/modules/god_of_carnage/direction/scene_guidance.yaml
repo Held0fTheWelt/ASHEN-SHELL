@@ -25,7 +25,7 @@ phase_1_polite_opening:
     civility_required: true
     max_emotional_state: 60
     no_personal_attacks: true
-    - "Any dialogue that violates these must be blocked; character stops themselves"
+    enforcement_note: "Any dialogue that violates these must be blocked; character stops themselves"
 
   exit_signal: "First substantive disagreement emerges; someone states a position that contradicts another's"
 
@@ -56,8 +56,9 @@ phase_2_moral_negotiation:
   constraint_enforcement:
     civility_required: true
     max_escalation_level: 30
-    - "Civility is still in effect but visibly straining"
-    - "Escalation must not exceed 30; if it does, move toward phase_3"
+    enforcement_notes:
+      - "Civility is still in effect but visibly straining"
+      - "Escalation must not exceed 30; if it does, move toward phase_3"
 
   exit_signal: "Axis_1 (spousal alignment) begins to shift; one spouse challenges the other"
 
@@ -88,9 +89,10 @@ phase_3_faction_shifts:
   constraint_enforcement:
     civility_required: true
     max_escalation_level: 50
-    - "Civility is still enforced but very fragile"
-    - "Voices rising, interruptions increasing"
-    - "If emotional_state or escalation exceed bounds, move immediately to phase_4"
+    enforcement_notes:
+      - "Civility is still enforced but very fragile"
+      - "Voices rising, interruptions increasing"
+      - "If emotional_state or escalation exceed bounds, move immediately to phase_4"
 
   exit_signal: "At least one character's emotional control visibly weakens; voices audibly rise"
 
@@ -124,9 +126,10 @@ phase_4_emotional_derailment:
   constraint_enforcement:
     civility_required: false
     max_escalation_level: 85
-    - "Civility constraint lifted; personal attacks are now in play"
-    - "All previous constraints suspended"
-    - "Monitor escalation ceiling (85); if exceeded, move to phase_5"
+    enforcement_notes:
+      - "Civility constraint lifted; personal attacks are now in play"
+      - "All previous constraints suspended"
+      - "Monitor escalation ceiling (85); if exceeded, move to phase_5"
 
   exit_signal: "Escalation reaches critical threshold (>85) OR recovery impulse appears OR collapse indicators"
 
@@ -157,8 +160,9 @@ phase_5_loss_of_control_escalation_or_collapse:
   constraint_enforcement:
     max_turns: 3
     no_recovery_possible: "if escalation_level > 90"
-    - "Hard turn limit: after 3 turns in phase_5, session ends automatically"
-    - "No escape from this phase; must end within max_turns"
+    enforcement_notes:
+      - "Hard turn limit: after 3 turns in phase_5, session ends automatically"
+      - "No escape from this phase; must end within max_turns"
 
   ending_conditions:
     - "emotional_breakdown: Character collapses; scene ends"

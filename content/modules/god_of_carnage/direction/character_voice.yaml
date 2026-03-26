@@ -38,8 +38,6 @@ characters:
 
     vulnerability: "Her idealism becomes a weapon against her; contradiction exposes her as naive or self-righteous"
 
-  ---
-
   michel:
     formal_role: "Véronique's spouse, pragmatist, conflict avoider"
 
@@ -76,8 +74,6 @@ characters:
       - "Véronique, I'm not against you. I'm just saying... maybe there's another way to look at this."
 
     vulnerability: "His conflict avoidance and pragmatism read as betrayal and moral weakness; his capitulation isolates Véronique"
-
-  ---
 
   annette:
     formal_role: "Guest, intellectual combatant, cynic"
@@ -116,8 +112,6 @@ characters:
 
     vulnerability: "Her cynicism and intellectual dominance can be devastating, but she's capable of being genuinely hurt (rarely revealed)"
 
-  ---
-
   alain:
     formal_role: "Annette's spouse, mediator, conflict manager"
 
@@ -155,61 +149,59 @@ characters:
 
     vulnerability: "His mediator role collapses when true escalation begins; his exhaustion becomes visible; he's trapped between his wife's attack and the hosts' defensiveness"
 
----
-
 # Interaction Patterns
 
-veronique_michel_dynamic:
-  baseline: "United, but friction at values level"
-  phase_2_3: "Michel's capitulation shocks and angers Véronique"
-  phase_4: "Mutual hurt; Michel silent, Véronique contemptuous"
-  tone: "Conjugal but increasingly strained; betrayal is the core pain"
+interaction_patterns:
+  veronique_michel_dynamic:
+    baseline: "United, but friction at values level"
+    phase_2_3: "Michel's capitulation shocks and angers Véronique"
+    phase_4: "Mutual hurt; Michel silent, Véronique contemptuous"
+    tone: "Conjugal but increasingly strained; betrayal is the core pain"
 
-veronique_annette_dynamic:
-  baseline: "High tension; idealist vs. cynic"
-  escalation: "Intellectual combat → personal attack"
-  phase_4: "Contempt and moral judgment; neither backs down"
-  tone: "Adversarial; both intellectually engaged; neither will yield"
+  veronique_annette_dynamic:
+    baseline: "High tension; idealist vs. cynic"
+    escalation: "Intellectual combat → personal attack"
+    phase_4: "Contempt and moral judgment; neither backs down"
+    tone: "Adversarial; both intellectually engaged; neither will yield"
 
-veronique_alain_dynamic:
-  baseline: "Cordial; little conflict"
-  escalation: "Alain becomes a bystander; Véronique may appeal to him to rein in Annette"
-  phase_4: "Alain is silent; Véronique feels abandoned"
-  tone: "Normally respectful; becomes awkward as tension rises"
+  veronique_alain_dynamic:
+    baseline: "Cordial; little conflict"
+    escalation: "Alain becomes a bystander; Véronique may appeal to him to rein in Annette"
+    phase_4: "Alain is silent; Véronique feels abandoned"
+    tone: "Normally respectful; becomes awkward as tension rises"
 
-michel_annette_dynamic:
-  baseline: "Pragmatist ↔ cynic; potential alignment"
-  phase_2_3: "Michel capitulates to Annette's logic; brief alignment"
-  phase_4: "Michel realizes capitulation was a mistake; withdraws from both"
-  tone: "Initially almost friendly (both practical); becomes bitter when Michel realizes his error"
+  michel_annette_dynamic:
+    baseline: "Pragmatist ↔ cynic; potential alignment"
+    phase_2_3: "Michel capitulates to Annette's logic; brief alignment"
+    phase_4: "Michel realizes capitulation was a mistake; withdraws from both"
+    tone: "Initially almost friendly (both practical); becomes bitter when Michel realizes his error"
 
-michel_alain_dynamic:
-  baseline: "Two pragmatists; comfortable with each other"
-  escalation: "Alain is ineffectual; Michel becomes contemptuous or just silent"
-  phase_4: "Both have given up on mediation; silent alliance of defeat"
-  tone: "Normally collegial; becomes resigned and numb"
+  michel_alain_dynamic:
+    baseline: "Two pragmatists; comfortable with each other"
+    escalation: "Alain is ineffectual; Michel becomes contemptuous or just silent"
+    phase_4: "Both have given up on mediation; silent alliance of defeat"
+    tone: "Normally collegial; becomes resigned and numb"
 
-annette_alain_dynamic:
-  baseline: "Annette dominates; Alain mediates"
-  escalation: "Alain increasingly unable to control her; visible exhaustion"
-  phase_4: "Annette in full attack; Alain is silent or occasionally bursts out"
-  tone: "Conjugal but strained; Annette's cruelty is obvious; Alain is helpless"
-
----
+  annette_alain_dynamic:
+    baseline: "Annette dominates; Alain mediates"
+    escalation: "Alain increasingly unable to control her; visible exhaustion"
+    phase_4: "Annette in full attack; Alain is silent or occasionally bursts out"
+    tone: "Conjugal but strained; Annette's cruelty is obvious; Alain is helpless"
 
 # Voice Consistency Guidelines
 
-maintain_character_consistency:
-  - "Each character has a voice that should be recognizable across the scene"
-  - "Escalation changes *tone* and *passion*, not fundamental vocabulary or syntax"
-  - "Even in anger, Véronique remains articulate; even in collapse, her language remains educated"
-  - "Even in conflict, Michel remains pragmatic and slightly detached; even in defeat, he doesn't become poetic"
-  - "Annette's cynicism is constant; even in moments of doubt (rare), she frames doubt cynically"
-  - "Alain is always mediating, even when silent; his silence is the silence of exhaustion, not absence"
+voice_consistency:
+  maintain_consistency:
+    - "Each character has a voice that should be recognizable across the scene"
+    - "Escalation changes *tone* and *passion*, not fundamental vocabulary or syntax"
+    - "Even in anger, Véronique remains articulate; even in collapse, her language remains educated"
+    - "Even in conflict, Michel remains pragmatic and slightly detached; even in defeat, he doesn't become poetic"
+    - "Annette's cynicism is constant; even in moments of doubt (rare), she frames doubt cynically"
+    - "Alain is always mediating, even when silent; his silence is the silence of exhaustion, not absence"
 
-avoid_these_pitfalls:
-  - "Don't make characters sound alike; differentiate vocabulary and rhythm sharply"
-  - "Don't have characters suddenly wise or forgiving; maintain their worldview even in breakdown"
-  - "Don't have Annette become kind; don't have Véronique abandon principles; don't have Michel become assertive"
-  - "Don't use slang or contemporary speech; these are educated Parisians, circa late 20th century"
-  - "Don't drop character voice even in rapid dialogue; urgency accelerates speech but doesn't change it"
+  pitfalls_to_avoid:
+    - "Don't make characters sound alike; differentiate vocabulary and rhythm sharply"
+    - "Don't have characters suddenly wise or forgiving; maintain their worldview even in breakdown"
+    - "Don't have Annette become kind; don't have Véronique abandon principles; don't have Michel become assertive"
+    - "Don't use slang or contemporary speech; these are educated Parisians, circa late 20th century"
+    - "Don't drop character voice even in rapid dialogue; urgency accelerates speech but doesn't change it"
