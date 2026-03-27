@@ -167,7 +167,7 @@ class TestW1RelationshipValidation:
             pytest.skip("God of Carnage module not found")
 
         assert len(module.relationship_axes) > 0
-        assert len(module.relationships) > 0
+        assert len(module.relationship_definitions) > 0
 
     def test_relationship_character_references_valid(self):
         """All relationship references point to real characters."""
@@ -294,7 +294,6 @@ class TestW1TransitionValidation:
         except ModuleNotFoundError:
             pytest.skip("God of Carnage module not found")
 
-        trigger_ids = set(module.trigger_definitions.keys())
         validator = ModuleCrossReferenceValidator()
         errors = validator.validate_trigger_references(module)
 
@@ -418,7 +417,9 @@ class TestW1LegalStoryPath:
         assert "phase_5" in phases
 
         # Verify transitions connect phases linearly
-        transitions = {t.from_phase: t.to_phase for t in module.phase_transitions}
+        transitions = {
+            t.from_phase: t.to_phase for t in module.phase_transitions.values()
+        }
         assert transitions.get("phase_1") == "phase_2"
         assert transitions.get("phase_2") == "phase_3"
         assert transitions.get("phase_3") == "phase_4"

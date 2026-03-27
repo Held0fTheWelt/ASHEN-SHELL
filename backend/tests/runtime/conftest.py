@@ -25,17 +25,15 @@ def god_of_carnage_module_root(content_modules_root):
 
 
 @pytest.fixture
-def god_of_carnage_module(god_of_carnage_module_root):
+def god_of_carnage_module(content_modules_root):
     """Load the god_of_carnage ContentModule."""
-    # Pass the module directory itself
-    return load_module("god_of_carnage", root_path=god_of_carnage_module_root)
+    return load_module("god_of_carnage", root_path=content_modules_root)
 
 
 @pytest.fixture
-def god_of_carnage_module_with_state(god_of_carnage_module_root):
+def god_of_carnage_module_with_state(content_modules_root):
     """Start a session with god_of_carnage module and return initialized SessionState."""
-    # start_session will pass root_path to load_module, which expects the module directory
-    result = start_session("god_of_carnage", root_path=god_of_carnage_module_root)
+    result = start_session("god_of_carnage", root_path=content_modules_root)
     return result.session
 
 

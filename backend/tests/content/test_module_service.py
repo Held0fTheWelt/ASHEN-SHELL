@@ -4,10 +4,10 @@ Tests for module_service.py (ModuleService).
 
 import pytest
 from pathlib import Path
-from backend.app.content.module_service import ModuleService
-from backend.app.content.module_exceptions import ModuleNotFoundError
-from backend.app.content.module_models import ContentModule
-from backend.app.content.module_validator import ValidationResult
+from app.content.module_service import ModuleService
+from app.content.module_exceptions import ModuleNotFoundError
+from app.content.module_models import ContentModule
+from app.content.module_validator import ValidationResult
 
 
 class TestModuleService:
@@ -21,13 +21,6 @@ class TestModuleService:
     @pytest.fixture
     def service_with_valid_module(self, test_modules_root, valid_module_root):
         """Create service with valid test module available."""
-        import shutil
-
-        dest = test_modules_root / "test_module"
-        if dest.exists():
-            shutil.rmtree(dest)
-        shutil.copytree(valid_module_root, dest)
-
         return ModuleService(root_path=test_modules_root)
 
     def test_service_initialization(self, test_modules_root):
@@ -181,28 +174,14 @@ class TestModuleServiceErrorHandling:
 
     def test_load_malformed_module(self, service, malformed_yaml_root, test_modules_root):
         """Loading malformed module raises appropriate exception."""
-        import shutil
-
-        dest = test_modules_root / "malformed_module"
-        if dest.exists():
-            shutil.rmtree(dest)
-        shutil.copytree(malformed_yaml_root, dest)
-
-        from backend.app.content.module_exceptions import ModuleParseError
+        from app.content.module_exceptions import ModuleParseError
 
         with pytest.raises(ModuleParseError):
             service.load_and_validate("malformed_module")
 
     def test_load_invalid_module(self, service, invalid_module_root, test_modules_root):
         """Loading module with invalid structure raises exception."""
-        import shutil
-
-        dest = test_modules_root / "invalid_module"
-        if dest.exists():
-            shutil.rmtree(dest)
-        shutil.copytree(invalid_module_root, dest)
-
-        from backend.app.content.module_exceptions import ModuleStructureError
+        from app.content.module_exceptions import ModuleStructureError
 
         with pytest.raises(ModuleStructureError):
             service.load_and_validate("invalid_module")
@@ -249,8 +228,6 @@ class TestModuleServiceWorkflow:
             service.get_module_metadata("nonexistent_module")
 
         # Load should fail
-        from backend.app.content.module_exceptions import ModuleNotFoundError
-
         with pytest.raises(ModuleNotFoundError):
             service.load_and_validate("nonexistent_module")
 

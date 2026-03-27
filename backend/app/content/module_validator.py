@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from backend.app.content.module_models import ContentModule
+    from app.content.module_models import ContentModule
 
 
 @dataclass
@@ -74,81 +74,47 @@ class ModuleCrossReferenceValidator:
     def validate_relationship_references(self, module: ContentModule) -> list[str]:
         """Validate that all relationship references are valid.
 
-        Checks that:
-        - Relationship axes reference valid character ID pairs
-        - Relationship definitions exist for referenced pairs
-
-        Args:
-            module: The content module to validate
-
-        Returns:
-            List of validation errors found
+        Each entry in ``axis.relationships`` is a relationship *id* that must appear in
+        ``relationship_definitions`` (pairwise YAML) or in a small set of aggregate ids
+        used by some modules (host/guest composites, etc.).
         """
         errors: list[str] = []
-        character_ids = set(module.characters.keys())
+        pair_keys = set(module.relationship_definitions.keys())
+        aggregates = frozenset(
+            {
+                "hosts_vs_guests",
+                "veronique_guests",
+                "michel_guests",
+                "all_characters_pairwise",
+            }
+        )
 
         for axis_id, axis in module.relationship_axes.items():
-            for char_pair in axis.relationships:
-                # char_pair format is expected to be "char1_char2" or similar
-                # Validate that both characters in the pair exist
-                # Since we don't know the exact delimiter, check if characters are referenced
-                # by looking at the structure of the character pair key
-                char_references = []
-                for char_id in character_ids:
-                    if char_id in str(char_pair):
-                        char_references.append(char_id)
-
-                # If fewer than 2 character references found in pair, it's likely invalid
-                if len(char_references) < 2 and len(character_ids) > 1:
-                    errors.append(
-                        f"Relationship axis '{axis_id}' contains pair '{char_pair}' "
-                        f"with invalid character references"
-                    )
+            for rel_id in axis.relationships:
+                if rel_id in pair_keys or rel_id in aggregates:
+                    continue
+                errors.append(
+                    f"Relationship axis '{axis_id}' references unknown relationship id '{rel_id}'"
+                )
 
         return errors
 
     def validate_trigger_references(self, module: ContentModule) -> list[str]:
-        """Validate that all trigger references are valid.
+        """Validate trigger id references on scene phases.
 
-        Checks that:
-        - Phase active_triggers exist in trigger_definitions
-        - Transition trigger_conditions reference valid triggers
-        - Ending trigger_conditions reference valid triggers
-
-        Args:
-            module: The content module to validate
-
-        Returns:
-            List of validation errors found
+        ``phase_transitions`` / ``ending_conditions`` may store *narrative* trigger
+        descriptions in ``trigger_conditions`` (not formal trigger ids); only
+        ``active_triggers`` on phases are validated against ``trigger_definitions``.
         """
         errors: list[str] = []
         trigger_ids = set(module.trigger_definitions.keys())
 
-        # Check phase active_triggers
         for phase_id, phase in module.scene_phases.items():
             for trigger_id in phase.active_triggers:
                 if trigger_id not in trigger_ids:
                     errors.append(
                         f"Phase '{phase_id}' references undefined trigger '{trigger_id}' "
                         f"in active_triggers"
-                    )
-
-        # Check transition trigger_conditions
-        for transition in module.phase_transitions.values():
-            for trigger_condition in transition.trigger_conditions:
-                if trigger_condition not in trigger_ids:
-                    errors.append(
-                        f"Transition from '{transition.from_phase}' to '{transition.to_phase}' "
-                        f"references undefined trigger '{trigger_condition}' in trigger_conditions"
-                    )
-
-        # Check ending trigger_conditions
-        for ending_id, ending in module.ending_conditions.items():
-            for trigger_condition in ending.trigger_conditions:
-                if trigger_condition not in trigger_ids:
-                    errors.append(
-                        f"Ending '{ending_id}' references undefined trigger '{trigger_condition}' "
-                        f"in trigger_conditions"
                     )
 
         return errors

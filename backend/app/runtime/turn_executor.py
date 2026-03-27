@@ -94,9 +94,9 @@ class TurnExecutionResult(BaseModel):
 
     turn_number: int
     session_id: str
-    execution_status: str  # "success" or "failure"
+    execution_status: str  # "success", "validation_failed", or "system_error"
     decision: MockDecision
-    validation_outcome: ValidationOutcome
+    validation_outcome: ValidationOutcome | None = None
     validation_errors: list[str] = Field(default_factory=list)
     accepted_deltas: list[StateDelta] = Field(default_factory=list)
     rejected_deltas: list[StateDelta] = Field(default_factory=list)

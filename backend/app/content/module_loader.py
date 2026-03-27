@@ -23,6 +23,12 @@ from .module_exceptions import (
 from .module_models import ContentModule
 
 
+def content_modules_root() -> Path:
+    """Absolute path to ``content/modules`` at the repository root (sibling of ``backend/``)."""
+    # This file: backend/app/content/module_loader.py
+    return Path(__file__).resolve().parent.parent.parent.parent / "content" / "modules"
+
+
 class ModuleFileLoader:
     """Handles reading and parsing YAML files from module directories.
 
@@ -48,6 +54,13 @@ class ModuleFileLoader:
                 content = yaml.safe_load(f)
                 # safe_load returns None for empty files, convert to empty dict
                 return content if content is not None else {}
+        except OSError as e:
+            raise ModuleFileReadError(
+                message="Failed to read YAML file",
+                module_id="unknown",
+                file_path=str(path),
+                errors=[str(e)],
+            ) from e
         except yaml.YAMLError as e:
             raise ModuleParseError(
                 message="Failed to parse YAML file",
@@ -142,6 +155,15 @@ class ModuleFileLoader:
         # Iterate over a copy of items to avoid "dictionary keys changed during iteration" error
         for filename, content in list(result.items()):
             if filename != "module" and isinstance(content, dict):
+                # relationships.yaml may contain both relationship_axes and pairwise relationships;
+                # keep both so structure validation can map them into ContentModule.
+                if filename == "relationships" and "relationship_axes" in content:
+                    result[filename] = {
+                        "relationship_axes": content["relationship_axes"],
+                        "relationship_pair_definitions": content.get("relationships", {}),
+                        "stability_constraints": content.get("stability_constraints", {}),
+                    }
+                    continue
                 # Check if this filename has a known unwrap mapping
                 if filename in unwrap_mapping:
                     wrapping_key = unwrap_mapping[filename]
@@ -211,16 +233,20 @@ class ModuleStructureValidator:
         if "transitions" in raw_data:
             raw_data["phase_transitions"] = raw_data.pop("transitions")
 
-        # Map relationships -> relationship_axes
+        # Map relationships (file) -> relationship_axes (+ optional pairwise definitions)
         if "relationships" in raw_data:
             relationships_content = raw_data.pop("relationships")
-            # Handle the case where relationships might be a list (legacy) or dict (current)
             if isinstance(relationships_content, list):
-                # Convert list to dict if necessary (keyed by relationship id)
-                relationships_dict = {rel.get("id", f"rel_{i}"): rel for i, rel in enumerate(relationships_content)}
+                relationships_dict = {
+                    rel.get("id", f"rel_{i}"): rel for i, rel in enumerate(relationships_content)
+                }
                 raw_data["relationship_axes"] = relationships_dict
-            else:
-                # It's already a dict (from unwrapped relationships.yaml)
+            elif isinstance(relationships_content, dict) and "relationship_axes" in relationships_content:
+                raw_data["relationship_axes"] = relationships_content["relationship_axes"]
+                pairs = relationships_content.get("relationship_pair_definitions", {})
+                if isinstance(pairs, dict):
+                    raw_data["relationship_definitions"] = pairs
+            elif isinstance(relationships_content, dict):
                 raw_data["relationship_axes"] = relationships_content
 
         # Ensure escalation_axes is passed through correctly
@@ -269,8 +295,8 @@ def load_module(
 
     Args:
         module_id: The unique identifier of the module to load.
-        root_path: Optional root path for module files. If not provided,
-                  defaults to content/modules/{module_id}/
+        root_path: Optional *modules root* (parent of ``<module_id>/``). If omitted,
+                  uses the repository ``content/modules`` directory (next to ``backend/``).
 
     Returns:
         A validated ContentModule instance.
@@ -285,26 +311,25 @@ def load_module(
         >>> module = load_module("god_of_carnage")
         >>> print(module.metadata.title)
     """
-    # Determine module root path
     if root_path is None:
-        root_path = Path("content/modules") / module_id
+        modules_root = content_modules_root()
+    else:
+        modules_root = Path(root_path) if isinstance(root_path, str) else root_path
 
-    # Ensure it's a Path object
-    if isinstance(root_path, str):
-        root_path = Path(root_path)
+    module_root = modules_root / module_id
 
     # Check if module directory exists before attempting to load
-    if not root_path.exists():
+    if not module_root.exists():
         raise ModuleNotFoundError(
             message=f"Module not found",
             module_id=module_id,
-            file_path=str(root_path),
+            file_path=str(module_root),
         )
 
     # Load all YAML files from the module directory
     loader = ModuleFileLoader()
     try:
-        raw_data = loader.load_all_module_files(root_path)
+        raw_data = loader.load_all_module_files(module_root)
     except (ModuleFileReadError, ModuleParseError):
         # Re-raise with proper module_id context
         raise

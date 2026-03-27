@@ -4,19 +4,19 @@ Tests for module_loader.py (ModuleFileLoader and entry point).
 
 import pytest
 from pathlib import Path
-from backend.app.content.module_loader import (
+from app.content.module_loader import (
     ModuleFileLoader,
     ModuleStructureValidator,
     load_module,
 )
-from backend.app.content.module_exceptions import (
+from app.content.module_exceptions import (
     ModuleLoadError,
     ModuleNotFoundError,
     ModuleFileReadError,
     ModuleParseError,
     ModuleStructureError,
 )
-from backend.app.content.module_models import ContentModule
+from app.content.module_models import ContentModule
 
 
 class TestModuleFileLoader:
@@ -132,29 +132,11 @@ class TestLoadModuleEntryPoint:
 
     def test_load_module_malformed_yaml(self, malformed_yaml_root, test_modules_root):
         """Loading module with malformed YAML raises ModuleParseError."""
-        # Create a module in the test directory
-        test_modules_root.mkdir(exist_ok=True)
-        import shutil
-        shutil.copytree(
-            malformed_yaml_root,
-            test_modules_root / "malformed_module",
-            dirs_exist_ok=True,
-        )
-
         with pytest.raises(ModuleParseError):
             load_module("malformed_module", root_path=test_modules_root)
 
     def test_load_module_invalid_structure(self, invalid_module_root, test_modules_root):
         """Loading module with invalid structure raises ModuleStructureError."""
-        # Copy invalid module to test directory
-        test_modules_root.mkdir(exist_ok=True)
-        import shutil
-        shutil.copytree(
-            invalid_module_root,
-            test_modules_root / "invalid_module",
-            dirs_exist_ok=True,
-        )
-
         with pytest.raises(ModuleStructureError):
             load_module("invalid_module", root_path=test_modules_root)
 

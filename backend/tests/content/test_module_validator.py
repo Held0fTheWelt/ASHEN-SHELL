@@ -3,12 +3,12 @@ Tests for module_validator.py (ModuleCrossReferenceValidator).
 """
 
 import pytest
-from backend.app.content.module_loader import load_module
-from backend.app.content.module_validator import (
+from app.content.module_loader import load_module
+from app.content.module_validator import (
     ModuleCrossReferenceValidator,
     ValidationResult,
 )
-from backend.app.content.module_models import ContentModule
+from app.content.module_models import ContentModule
 
 
 class TestValidationResult:
@@ -53,11 +53,11 @@ class TestModuleCrossReferenceValidator:
         return ModuleCrossReferenceValidator()
 
     @pytest.fixture
-    def god_of_carnage_module(self, god_of_carnage_module_root):
+    def god_of_carnage_module(self, content_modules_root, god_of_carnage_module_root):
         """Load God of Carnage module for testing."""
         if not god_of_carnage_module_root.exists():
             pytest.skip("God of Carnage module not found")
-        return load_module("god_of_carnage")
+        return load_module("god_of_carnage", root_path=content_modules_root)
 
     def test_validate_character_references_valid(self, validator, god_of_carnage_module):
         """Validate character references in valid module."""
@@ -129,14 +129,6 @@ class TestModuleValidatorErrorDetection:
 
     def test_detect_undefined_character_reference(self, validator, valid_module_root):
         """Detect when trigger references undefined character."""
-        from backend.app.content.module_loader import load_module
-
-        # This test would require modifying a valid module
-        # For now, we verify the method exists and can be called
-        from backend.tests.content.conftest import (
-            god_of_carnage_module_root,
-        )  # noqa: F401
-
         # Placeholder: actual error detection tested via God of Carnage module integrity
 
     def test_detect_undefined_trigger_reference(self, validator):
@@ -154,11 +146,11 @@ class TestModuleValidatorGodOfCarnage:
     """Integration tests for validator with God of Carnage module."""
 
     @pytest.fixture
-    def god_of_carnage_module(self, god_of_carnage_module_root):
+    def god_of_carnage_module(self, content_modules_root, god_of_carnage_module_root):
         """Load God of Carnage module."""
         if not god_of_carnage_module_root.exists():
             pytest.skip("God of Carnage module not found")
-        return load_module("god_of_carnage")
+        return load_module("god_of_carnage", root_path=content_modules_root)
 
     def test_god_of_carnage_full_validation(self, god_of_carnage_module):
         """Run full validation on God of Carnage module."""

@@ -185,6 +185,10 @@ class ContentModule(BaseModel):
     metadata: ModuleMetadata = Field(..., description="Module metadata")
     characters: dict[str, CharacterDefinition] = Field(default_factory=dict, description="Character definitions by ID")
     relationship_axes: dict[str, RelationshipAxis] = Field(default_factory=dict, description="Relationship axes by ID")
+    relationship_definitions: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Pairwise relationship definitions keyed by relationship id (from relationships.yaml)",
+    )
     trigger_definitions: dict[str, TriggerDefinition] = Field(default_factory=dict, description="Trigger definitions by ID")
     scene_phases: dict[str, ScenePhase] = Field(default_factory=dict, description="Scene phases by ID")
     phase_transitions: dict[str, PhaseTransition] = Field(default_factory=dict, description="Phase transitions")

@@ -15,7 +15,12 @@ from .module_exceptions import (
     ModuleNotFoundError,
     ModuleValidationError,
 )
-from .module_loader import ModuleFileLoader, ModuleStructureValidator, load_module
+from .module_loader import (
+    ModuleFileLoader,
+    ModuleStructureValidator,
+    content_modules_root,
+    load_module,
+)
 from .module_models import ContentModule
 from .module_validator import ModuleCrossReferenceValidator, ValidationResult
 
@@ -35,13 +40,11 @@ class ModuleService:
         """Initialize the ModuleService.
 
         Args:
-            root_path: Optional custom root path for module directory.
-                      If not provided, defaults to project_root/content/modules/
-                      Relative paths are resolved from the current working directory.
+            root_path: Optional *modules root* (directory containing ``<module_id>/``).
+                      If omitted, uses the repository ``content/modules`` next to ``backend/``.
         """
         if root_path is None:
-            # Default to content/modules/ directory from current working directory
-            self.root_path = Path("content") / "modules"
+            self.root_path = content_modules_root()
         else:
             # Convert to Path if string, keep as Path if already Path
             self.root_path = Path(root_path) if isinstance(root_path, str) else root_path
@@ -232,5 +235,4 @@ class ModuleService:
             ModuleLoadError: If module files cannot be loaded or parsed.
             ModuleValidationError: If module structure is invalid.
         """
-        module_path = self.root_path / module_id
-        return load_module(module_id, root_path=module_path)
+        return load_module(module_id, root_path=self.root_path)

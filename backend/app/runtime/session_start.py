@@ -116,7 +116,8 @@ def start_session(
 
     Args:
         module_id: Identifier of the module to load (e.g., "god_of_carnage")
-        root_path: Optional override for module root directory
+        root_path: Optional *modules root* (parent of ``<module_id>/``). If omitted,
+                  uses the repository ``content/modules`` directory.
         seed: Optional reproducibility seed
 
     Returns:
