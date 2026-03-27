@@ -6,6 +6,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.3] - 2026-03-27 (W2.1.3: Parse, Normalize, and Pre-Validate AI Output)
+
+**Focus**: Bridge raw adapter output into a clean, inspectable internal decision representation. Establish the parse → normalize → pre-validate pipeline that transforms adapter responses into canonical form before runtime validation.
+
+### Added
+
+- **`backend/app/runtime/ai_decision.py`**: Parse/normalize/pre-validate pipeline (267 lines)
+  - `ParsedAIDecision`: Canonical internal decision representation (required + optional fields + diagnostics)
+  - `ParseResult`: Inspectable result model (success flag, decision, errors, raw output)
+  - `parse_adapter_response()`: Full pipeline (parse → normalize → pre-validate)
+  - `normalize_structured_output()`: Whitespace stripping, list normalization, source tracking
+  - `prevalidate_decision()`: Catch blank fields, malformed deltas, duplicate triggers
+  - `process_adapter_response()`: Convenience wrapper
+- **`backend/tests/runtime/test_ai_decision.py`**: 26 focused tests for parse/normalize/pre-validate
+  - TestParseAdapterResponse (10 tests) — valid parsing, error handling, field validation
+  - TestNormalizeStructuredOutput (6 tests) — whitespace stripping, list normalization
+  - TestPrevalidateDecision (6 tests) — empty field detection, duplicate detection, validation
+  - TestProcessAdapterResponse (4 tests) — full pipeline success/failure modes
+
+### Design
+
+- **Immutable Pipeline**: Each stage (parse → normalize → pre-validate) returns new objects, no mutations
+- **Diagnostic Trace**: raw_output and parsed_source preserved throughout for post-facto analysis
+- **Clear Boundaries**: Pre-validation catches obvious issues; full runtime validation deferred to W2.1.4
+- **Error Aggregation**: All errors collected in ParseResult.errors; success flag indicates validity
+- **Provider-Agnostic**: Works with any adapter; tests use mock AdapterResponse
+
+### What Pre-Validation Catches
+
+- Adapter error flags
+- Missing structured_payload
+- Invalid field types (detected by Pydantic during StructuredAIStoryOutput construction)
+- Empty/blank required text fields (scene_interpretation, rationale)
+- Empty target_path in proposed deltas
+- Duplicate trigger IDs in detected_triggers list
+
+### What is Deferred to Runtime Validation (W2.1.4+)
+
+- Whether trigger IDs exist in module.trigger_definitions
+- Whether proposed_scene_id exists in module.scene_phases
+- Whether target_paths are valid for this module
+- Whether proposed delta values are valid for their fields
+- Immutability rule violations
+- Complex guard logic
+
+**Tests**: 26 new (all passing)
+**Total Runtime Tests**: 226 (200 existing + 26 new)
+
+---
+
 ## [0.3.2] - 2026-03-27 (W2.1.2: Canonical Structured AI Story Output Contract)
 
 **Focus**: Define the schema-driven contract for AI story decision output. All proposals are structured and validated; AI cannot have freeform authority.
