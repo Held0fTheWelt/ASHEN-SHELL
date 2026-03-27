@@ -40,6 +40,7 @@ class NextSituation(BaseModel):
 def derive_next_situation(
     session: SessionState,
     module: ContentModule,
+    detected_triggers: list[str] | None = None,
 ) -> NextSituation:
     """Derive the next canonical situation from the committed post-turn state.
 
@@ -48,9 +49,15 @@ def derive_next_situation(
     2. If no ending, check for valid scene transitions
     3. If no transition, continue in current scene
 
+    Condition evaluation:
+    - If detected_triggers provided, evaluate conditions against it
+    - If conditions are empty, transition/ending always active (unconditional)
+    - If conditions are present but detected_triggers is None, skip
+
     Args:
         session: Post-turn committed SessionState with updated canonical_state
         module: Loaded ContentModule with transition and ending definitions
+        detected_triggers: List of trigger IDs detected in the current turn (optional)
 
     Returns:
         NextSituation with status, scene_id, and derivation reason
@@ -66,7 +73,7 @@ def derive_next_situation(
 
     # Step 1: Check for ending conditions (highest priority)
     for ending_id, ending in module.ending_conditions.items():
-        if _check_ending_condition(ending, session):
+        if _check_ending_condition(ending, session, detected_triggers):
             return NextSituation(
                 current_scene_id=current_scene_id,
                 situation_status="ending_reached",
@@ -79,7 +86,7 @@ def derive_next_situation(
     # Step 2: Check for valid transitions from current scene
     for transition_id, transition in module.phase_transitions.items():
         if transition.from_phase == current_scene_id:
-            if _check_transition_condition(transition, session, module):
+            if _check_transition_condition(transition, session, module, detected_triggers):
                 next_scene_id = transition.to_phase
                 if next_scene_id not in module.scene_phases:
                     # Skip invalid transitions
@@ -98,23 +105,34 @@ def derive_next_situation(
     )
 
 
-def _check_ending_condition(ending, session: SessionState) -> bool:
+def _check_ending_condition(
+    ending, session: SessionState, detected_triggers: list[str] | None = None
+) -> bool:
     """Check if an ending condition is satisfied by current state.
 
-    For W2.0.5, minimal evaluation: only endings with no trigger_conditions are active.
-    Later versions add state-based evaluation.
+    Evaluates ending conditions:
+    - If no trigger_conditions defined, ending is always active (unconditional)
+    - If trigger_conditions defined and detected_triggers provided, all conditions must be detected
+    - If trigger_conditions defined but detected_triggers is None, ending cannot fire
 
     Args:
         ending: EndingCondition object
         session: Current SessionState
+        detected_triggers: List of trigger IDs detected in current turn (optional)
 
     Returns:
-        True only if ending has no trigger conditions (always triggered)
+        True if ending conditions are satisfied
     """
-    # For W2.0.5: only endings with no conditions are active
-    # Condition-based endings require W2.0.6+ state evaluation
+    # Unconditional ending (no conditions defined) always triggers
     if not ending.trigger_conditions:
         return True
+
+    # Conditional ending: all conditions must be detected
+    if detected_triggers is not None:
+        # All required trigger conditions must be in detected_triggers
+        return all(condition_id in detected_triggers for condition_id in ending.trigger_conditions)
+
+    # Conditions defined but no detected_triggers provided: cannot evaluate
     return False
 
 
@@ -122,27 +140,37 @@ def _check_transition_condition(
     transition,
     session: SessionState,
     module: ContentModule,
+    detected_triggers: list[str] | None = None,
 ) -> bool:
     """Check if a transition condition is satisfied.
 
-    For W2.0.5, validate that target exists; condition evaluation deferred to W2.0.6+.
+    Evaluates transition conditions:
+    - Validates that target scene exists
+    - If no trigger_conditions defined, transition is always active (unconditional)
+    - If trigger_conditions defined and detected_triggers provided, all conditions must be detected
+    - If trigger_conditions defined but detected_triggers is None, transition cannot fire
 
     Args:
         transition: PhaseTransition object
         session: Current SessionState
         module: ContentModule for scene lookups
+        detected_triggers: List of trigger IDs detected in current turn (optional)
 
     Returns:
-        True if transition target exists and has no conditions (unconditional transition)
+        True if transition target exists and conditions are satisfied
     """
     # Validate target exists
     if transition.to_phase not in module.scene_phases:
         return False
 
-    # For W2.0.5: only unconditional transitions are allowed
-    # Condition-based transitions require W2.0.6+ state evaluation
+    # Unconditional transition (no conditions defined) always allowed
     if not transition.trigger_conditions:
-        return True  # No conditions = transition allowed
+        return True
 
-    # Transitions with conditions deferred to W2.0.6+
+    # Conditional transition: all conditions must be detected
+    if detected_triggers is not None:
+        # All required trigger conditions must be in detected_triggers
+        return all(condition_id in detected_triggers for condition_id in transition.trigger_conditions)
+
+    # Conditions defined but no detected_triggers provided: cannot evaluate
     return False

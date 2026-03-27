@@ -292,3 +292,193 @@ class TestDeriveNextSituation:
         assert result.situation_status == "ending_reached"
         assert result.is_terminal is True
         assert result.ending_id == "auto_ending"
+
+
+class TestConditionAwareNextSituation:
+    """Tests for W2.0-R3: condition-aware next-situation derivation."""
+
+    def test_conditional_transition_triggered_with_conditions_satisfied(self):
+        """Conditional transition fires when all its trigger conditions are detected."""
+        from app.content.module_models import TriggerDefinition
+
+        metadata = ModuleMetadata(
+            module_id="test",
+            title="Test",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+
+        scenes = {
+            "scene_a": ScenePhase(id="scene_a", name="A", sequence=1, description="A"),
+            "scene_b": ScenePhase(id="scene_b", name="B", sequence=2, description="B"),
+        }
+
+        # Transition requires "escalation" trigger
+        transitions = {
+            "t1": PhaseTransition(
+                from_phase="scene_a",
+                to_phase="scene_b",
+                trigger_conditions=["escalation"],
+            ),
+        }
+
+        triggers = {
+            "escalation": TriggerDefinition(
+                id="escalation",
+                name="Escalation",
+                description="Conflict escalates",
+            ),
+        }
+
+        module = ContentModule(
+            metadata=metadata,
+            characters={},
+            relationship_axes={},
+            trigger_definitions=triggers,
+            scene_phases=scenes,
+            phase_transitions=transitions,
+            ending_conditions={},
+        )
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="scene_a",
+            canonical_state={},
+        )
+
+        # Without detected triggers: transition doesn't fire
+        result_no_triggers = derive_next_situation(session, module, detected_triggers=[])
+        assert result_no_triggers.situation_status == "continue"
+
+        # With escalation trigger detected: transition fires
+        result_with_trigger = derive_next_situation(session, module, detected_triggers=["escalation"])
+        assert result_with_trigger.situation_status == "transitioned"
+        assert result_with_trigger.current_scene_id == "scene_b"
+
+    def test_conditional_ending_triggered_with_conditions_satisfied(self):
+        """Conditional ending fires when all its trigger conditions are detected."""
+        from app.content.module_models import TriggerDefinition
+
+        metadata = ModuleMetadata(
+            module_id="test",
+            title="Test",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+
+        scenes = {
+            "scene_1": ScenePhase(id="scene_1", name="Scene 1", sequence=1, description="Only scene"),
+        }
+
+        # Ending requires "total_breakdown" trigger
+        endings = {
+            "catastrophic": EndingCondition(
+                id="catastrophic",
+                name="Catastrophic End",
+                description="Everything falls apart",
+                trigger_conditions=["total_breakdown"],
+                outcome={"status": "failure"},
+            ),
+        }
+
+        triggers = {
+            "total_breakdown": TriggerDefinition(
+                id="total_breakdown",
+                name="Total Breakdown",
+                description="System completely fails",
+            ),
+        }
+
+        module = ContentModule(
+            metadata=metadata,
+            characters={},
+            relationship_axes={},
+            trigger_definitions=triggers,
+            scene_phases=scenes,
+            phase_transitions={},
+            ending_conditions=endings,
+        )
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="scene_1",
+            canonical_state={},
+        )
+
+        # Without trigger: continues
+        result_no_trigger = derive_next_situation(session, module, detected_triggers=[])
+        assert result_no_trigger.situation_status == "continue"
+
+        # With trigger detected: ending fires
+        result_with_trigger = derive_next_situation(session, module, detected_triggers=["total_breakdown"])
+        assert result_with_trigger.situation_status == "ending_reached"
+        assert result_with_trigger.is_terminal is True
+
+    def test_multiple_condition_transition_requires_all_conditions(self):
+        """Transition with multiple conditions requires ALL to be detected."""
+        from app.content.module_models import TriggerDefinition
+
+        metadata = ModuleMetadata(
+            module_id="test",
+            title="Test",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+
+        scenes = {
+            "scene_1": ScenePhase(id="scene_1", name="Scene 1", sequence=1, description="S1"),
+            "scene_2": ScenePhase(id="scene_2", name="Scene 2", sequence=2, description="S2"),
+        }
+
+        # Transition requires BOTH "anger" AND "betrayal"
+        transitions = {
+            "t1": PhaseTransition(
+                from_phase="scene_1",
+                to_phase="scene_2",
+                trigger_conditions=["anger", "betrayal"],
+            ),
+        }
+
+        triggers = {
+            "anger": TriggerDefinition(id="anger", name="Anger", description="Anger detected"),
+            "betrayal": TriggerDefinition(id="betrayal", name="Betrayal", description="Betrayal detected"),
+        }
+
+        module = ContentModule(
+            metadata=metadata,
+            characters={},
+            relationship_axes={},
+            trigger_definitions=triggers,
+            scene_phases=scenes,
+            phase_transitions=transitions,
+            ending_conditions={},
+        )
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="scene_1",
+            canonical_state={},
+        )
+
+        # Only anger: continues
+        result_partial = derive_next_situation(session, module, detected_triggers=["anger"])
+        assert result_partial.situation_status == "continue"
+
+        # Both anger and betrayal: transitions
+        result_both = derive_next_situation(session, module, detected_triggers=["anger", "betrayal"])
+        assert result_both.situation_status == "transitioned"
+        assert result_both.current_scene_id == "scene_2"
+
+    def test_backward_compatibility_unconditional_still_works(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        """Unconditional transitions/endings still work without detected_triggers."""
+        session = god_of_carnage_module_with_state
+
+        # Without detected_triggers parameter (backward compatible)
+        result = derive_next_situation(session, god_of_carnage_module)
+
+        # Should handle unconditional cases (empty trigger_conditions)
+        assert result.situation_status in ["continue", "transitioned", "ending_reached"]
+        assert result.current_scene_id is not None
