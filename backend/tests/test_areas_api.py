@@ -1,6 +1,8 @@
 """Tests for areas and user/feature area assignment API. Admin only; hierarchy and area checks."""
 import pytest
 
+from app.models import User
+
 
 def test_areas_list_without_token_returns_401(client):
     response = client.get("/api/v1/areas")
@@ -174,103 +176,102 @@ class TestAreaAPI:
 
 """Tests for TestAreaAPIExtended."""
 
-class TestAreaAPIExtended:
 
-    def test_area_update(self, app, client, admin_headers):
-        resp = client.post(
-            "/api/v1/areas",
-            json={"name": "Area Upd", "slug": "area_upd"},
-            headers=admin_headers,
-        )
-        if resp.status_code in (200, 201):
-            area_id = resp.get_json()["id"]
-            resp = client.put(
-                f"/api/v1/areas/{area_id}",
-                json={"name": "Area Updated"},
-                headers=admin_headers,
-            )
-            assert resp.status_code == 200
-
-    def test_area_update_not_found(self, app, client, admin_headers):
+def test_area_update(app, client, admin_headers):
+    resp = client.post(
+        "/api/v1/areas",
+        json={"name": "Area Upd", "slug": "area_upd"},
+        headers=admin_headers,
+    )
+    if resp.status_code in (200, 201):
+        area_id = resp.get_json()["id"]
         resp = client.put(
-            "/api/v1/areas/99999",
-            json={"name": "X"},
-            headers=admin_headers,
-        )
-        assert resp.status_code == 404
-
-    def test_area_delete(self, app, client, admin_headers):
-        resp = client.post(
-            "/api/v1/areas",
-            json={"name": "Area Del", "slug": "area_del"},
-            headers=admin_headers,
-        )
-        if resp.status_code in (200, 201):
-            area_id = resp.get_json()["id"]
-            resp = client.delete(f"/api/v1/areas/{area_id}", headers=admin_headers)
-            assert resp.status_code == 200
-
-    def test_area_delete_not_found(self, app, client, admin_headers):
-        resp = client.delete("/api/v1/areas/99999", headers=admin_headers)
-        assert resp.status_code == 404
-
-    def test_area_create_invalid_slug(self, app, client, admin_headers):
-        resp = client.post(
-            "/api/v1/areas",
-            json={"name": "Area Bad Slug", "slug": "INVALID-SLUG!"},
-            headers=admin_headers,
-        )
-        assert resp.status_code == 400
-
-    def test_area_create_missing_name(self, app, client, admin_headers):
-        resp = client.post(
-            "/api/v1/areas",
-            json={"name": ""},
-            headers=admin_headers,
-        )
-        assert resp.status_code == 400
-
-    def test_area_list_with_search(self, app, client, admin_headers):
-        resp = client.get("/api/v1/areas?q=test", headers=admin_headers)
-        assert resp.status_code == 200
-
-    def test_user_areas_list(self, app, client, admin_headers, test_user):
-        user, _ = test_user
-        with app.app_context():
-            uid = User.query.filter_by(username="testuser").first().id
-        resp = client.get(f"/api/v1/users/{uid}/areas", headers=admin_headers)
-        assert resp.status_code == 200
-
-    def test_user_areas_set(self, app, client, admin_headers, test_user):
-        user, _ = test_user
-        with app.app_context():
-            uid = User.query.filter_by(username="testuser").first().id
-        resp = client.put(
-            f"/api/v1/users/{uid}/areas",
-            json={"area_ids": []},
+            f"/api/v1/areas/{area_id}",
+            json={"name": "Area Updated"},
             headers=admin_headers,
         )
         assert resp.status_code == 200
 
-    def test_feature_areas_list(self, app, client, admin_headers):
-        resp = client.get("/api/v1/feature-areas", headers=admin_headers)
+def test_area_update_not_found(app, client, admin_headers):
+    resp = client.put(
+        "/api/v1/areas/99999",
+        json={"name": "X"},
+        headers=admin_headers,
+    )
+    assert resp.status_code == 404
+
+def test_area_delete(app, client, admin_headers):
+    resp = client.post(
+        "/api/v1/areas",
+        json={"name": "Area Del", "slug": "area_del"},
+        headers=admin_headers,
+    )
+    if resp.status_code in (200, 201):
+        area_id = resp.get_json()["id"]
+        resp = client.delete(f"/api/v1/areas/{area_id}", headers=admin_headers)
         assert resp.status_code == 200
 
-    def test_feature_areas_get(self, app, client, admin_headers):
-        resp = client.get("/api/v1/feature-areas/manage.users", headers=admin_headers)
-        assert resp.status_code == 200
+def test_area_delete_not_found(app, client, admin_headers):
+    resp = client.delete("/api/v1/areas/99999", headers=admin_headers)
+    assert resp.status_code == 404
 
-    def test_feature_areas_get_unknown(self, app, client, admin_headers):
-        resp = client.get("/api/v1/feature-areas/unknown.feature", headers=admin_headers)
-        assert resp.status_code == 404
+def test_area_create_invalid_slug(app, client, admin_headers):
+    resp = client.post(
+        "/api/v1/areas",
+        json={"name": "Area Bad Slug", "slug": "INVALID-SLUG!"},
+        headers=admin_headers,
+    )
+    assert resp.status_code == 400
 
-    def test_feature_areas_set(self, app, client, admin_headers):
-        resp = client.put(
-            "/api/v1/feature-areas/manage.users",
-            json={"area_ids": []},
-            headers=admin_headers,
-        )
-        assert resp.status_code == 200
+def test_area_create_missing_name(app, client, admin_headers):
+    resp = client.post(
+        "/api/v1/areas",
+        json={"name": ""},
+        headers=admin_headers,
+    )
+    assert resp.status_code == 400
+
+def test_area_list_with_search(app, client, admin_headers):
+    resp = client.get("/api/v1/areas?q=test", headers=admin_headers)
+    assert resp.status_code == 200
+
+def test_user_areas_list(app, client, admin_headers, test_user):
+    user, _ = test_user
+    with app.app_context():
+        uid = User.query.filter_by(username="testuser").first().id
+    resp = client.get(f"/api/v1/users/{uid}/areas", headers=admin_headers)
+    assert resp.status_code == 200
+
+def test_user_areas_set(app, client, admin_headers, test_user):
+    user, _ = test_user
+    with app.app_context():
+        uid = User.query.filter_by(username="testuser").first().id
+    resp = client.put(
+        f"/api/v1/users/{uid}/areas",
+        json={"area_ids": []},
+        headers=admin_headers,
+    )
+    assert resp.status_code == 200
+
+def test_feature_areas_list(app, client, admin_headers):
+    resp = client.get("/api/v1/feature-areas", headers=admin_headers)
+    assert resp.status_code == 200
+
+def test_feature_areas_get(app, client, admin_headers):
+    resp = client.get("/api/v1/feature-areas/manage.users", headers=admin_headers)
+    assert resp.status_code == 200
+
+def test_feature_areas_get_unknown(app, client, admin_headers):
+    resp = client.get("/api/v1/feature-areas/unknown.feature", headers=admin_headers)
+    assert resp.status_code == 404
+
+def test_feature_areas_set(app, client, admin_headers):
+    resp = client.put(
+        "/api/v1/feature-areas/manage.users",
+        json={"area_ids": []},
+        headers=admin_headers,
+    )
+    assert resp.status_code == 200
 
 
 # ======================= USER API EXTENDED =======================
