@@ -9,12 +9,13 @@ ContentModule rules to produce the next active situation.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 from app.content.module_models import ContentModule
-from app.runtime.w2_models import SessionState
+from app.runtime.w2_models import EventLogEntry, SessionState, SessionStatus
 
 
 class NextSituation(BaseModel):
@@ -174,3 +175,104 @@ def _check_transition_condition(
 
     # Conditions defined but no detected_triggers provided: cannot evaluate
     return False
+
+
+def log_situation_outcome(
+    situation: NextSituation,
+    session_id: str,
+    turn_number: int,
+) -> list[EventLogEntry]:
+    """Generate event log entries for a situation outcome.
+
+    Creates audit trail events for what happened after turn execution:
+    - scene_continued: narrative continues in current scene
+    - scene_transitioned: narrative moves to a new scene
+    - ending_reached: terminal outcome achieved
+
+    Args:
+        situation: NextSituation result from derive_next_situation()
+        session_id: Session identifier
+        turn_number: Current turn number
+
+    Returns:
+        List of EventLogEntry objects (usually 1, may be multiple if needed)
+    """
+    entries: list[EventLogEntry] = []
+    order_index = 0
+
+    if situation.situation_status == "ending_reached":
+        entry = EventLogEntry(
+            event_type="ending_reached",
+            order_index=order_index,
+            summary=f"Story ending reached: {situation.ending_id}",
+            payload={
+                "ending_id": situation.ending_id,
+                "ending_outcome": situation.ending_outcome or {},
+                "derivation_reason": situation.derivation_reason,
+            },
+            session_id=session_id,
+            turn_number=turn_number,
+        )
+        entries.append(entry)
+
+    elif situation.situation_status == "transitioned":
+        entry = EventLogEntry(
+            event_type="scene_transitioned",
+            order_index=order_index,
+            summary=f"Scene transition: entering {situation.current_scene_id}",
+            payload={
+                "to_scene_id": situation.current_scene_id,
+                "derivation_reason": situation.derivation_reason,
+            },
+            session_id=session_id,
+            turn_number=turn_number,
+        )
+        entries.append(entry)
+
+    elif situation.situation_status == "continue":
+        entry = EventLogEntry(
+            event_type="scene_continued",
+            order_index=order_index,
+            summary=f"Narrative continues in {situation.current_scene_id}",
+            payload={
+                "scene_id": situation.current_scene_id,
+                "derivation_reason": situation.derivation_reason,
+            },
+            session_id=session_id,
+            turn_number=turn_number,
+        )
+        entries.append(entry)
+
+    return entries
+
+
+def apply_situation_outcome(
+    session: SessionState,
+    situation: NextSituation,
+) -> SessionState:
+    """Apply situation outcome to update canonical session state.
+
+    Updates session based on outcome:
+    - Updates current_scene_id if situation moved to a different scene
+    - Updates status to ENDED if terminal outcome was reached
+    - Preserves immutability (returns new session, original unchanged)
+
+    Args:
+        session: Current SessionState
+        situation: NextSituation from derive_next_situation()
+
+    Returns:
+        Updated SessionState (original unchanged)
+    """
+    updated_session = session.model_copy(deep=True)
+
+    # Update scene if changed (transition) or continue (stays same)
+    # situation.current_scene_id reflects the next scene or current scene
+    updated_session.current_scene_id = situation.current_scene_id
+
+    # Mark as ended if terminal outcome reached
+    if situation.is_terminal:
+        updated_session.status = SessionStatus.ENDED
+        updated_session.updated_at = datetime.now(timezone.utc)
+
+    return updated_session

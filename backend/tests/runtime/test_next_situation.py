@@ -482,3 +482,267 @@ class TestConditionAwareNextSituation:
         # Should handle unconditional cases (empty trigger_conditions)
         assert result.situation_status in ["continue", "transitioned", "ending_reached"]
         assert result.current_scene_id is not None
+
+
+class TestLogSituationOutcome:
+    """Test outcome logging for narrative states."""
+
+    def test_log_continuation_creates_event(self):
+        """Scene continuation generates scene_continued event."""
+        from app.runtime.next_situation import log_situation_outcome
+
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="continue",
+            derivation_reason="No transition triggered",
+        )
+
+        entries = log_situation_outcome(situation, session_id="sess1", turn_number=1)
+
+        assert len(entries) == 1
+        assert entries[0].event_type == "scene_continued"
+        assert entries[0].session_id == "sess1"
+        assert entries[0].turn_number == 1
+        assert entries[0].order_index == 0
+        assert entries[0].payload["scene_id"] == "phase_1"
+
+    def test_log_transition_creates_event(self):
+        """Scene transition generates scene_transitioned event."""
+        from app.runtime.next_situation import log_situation_outcome
+
+        situation = NextSituation(
+            current_scene_id="phase_2",
+            situation_status="transitioned",
+            derivation_reason="Condition met for phase_1 -> phase_2",
+        )
+
+        entries = log_situation_outcome(situation, session_id="sess1", turn_number=2)
+
+        assert len(entries) == 1
+        assert entries[0].event_type == "scene_transitioned"
+        assert entries[0].session_id == "sess1"
+        assert entries[0].turn_number == 2
+        assert entries[0].payload["to_scene_id"] == "phase_2"
+
+    def test_log_ending_creates_event(self):
+        """Ending reached generates ending_reached event."""
+        from app.runtime.next_situation import log_situation_outcome
+
+        outcome = {"ending_name": "bittersweet_resolution", "score": 75}
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="ending_reached",
+            ending_id="ending_1",
+            ending_outcome=outcome,
+            is_terminal=True,
+            derivation_reason="Ending condition satisfied",
+        )
+
+        entries = log_situation_outcome(situation, session_id="sess1", turn_number=3)
+
+        assert len(entries) == 1
+        assert entries[0].event_type == "ending_reached"
+        assert entries[0].session_id == "sess1"
+        assert entries[0].turn_number == 3
+        assert entries[0].payload["ending_id"] == "ending_1"
+        assert entries[0].payload["ending_outcome"] == outcome
+
+    def test_log_outcome_event_has_derivation_reason(self):
+        """All outcome events include derivation reason in payload."""
+        from app.runtime.next_situation import log_situation_outcome
+
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="continue",
+            derivation_reason="No valid transitions from current state",
+        )
+
+        entries = log_situation_outcome(situation, session_id="sess1", turn_number=1)
+
+        assert entries[0].payload["derivation_reason"] == "No valid transitions from current state"
+
+    def test_log_outcome_events_independent_sessions(self):
+        """Outcome events correctly distinguish different sessions."""
+        from app.runtime.next_situation import log_situation_outcome
+
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="continue",
+        )
+
+        entries_a = log_situation_outcome(situation, session_id="sess_a", turn_number=1)
+        entries_b = log_situation_outcome(situation, session_id="sess_b", turn_number=1)
+
+        assert entries_a[0].session_id == "sess_a"
+        assert entries_b[0].session_id == "sess_b"
+
+    def test_log_outcome_empty_ending_outcome_handled(self):
+        """Ending outcome None is converted to empty dict in payload."""
+        from app.runtime.next_situation import log_situation_outcome
+
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="ending_reached",
+            ending_id="ending_1",
+            ending_outcome=None,
+            is_terminal=True,
+        )
+
+        entries = log_situation_outcome(situation, session_id="sess1", turn_number=1)
+
+        assert entries[0].payload["ending_outcome"] == {}
+
+
+class TestApplySituationOutcome:
+    """Test session state updates from situation outcomes."""
+
+    def test_apply_continuation_preserves_scene(self):
+        """Continuation outcome preserves current scene."""
+        from app.runtime.next_situation import apply_situation_outcome
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="phase_1",
+            canonical_state={"test": "state"},
+        )
+
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="continue",
+            is_terminal=False,
+        )
+
+        updated = apply_situation_outcome(session, situation)
+
+        assert updated.current_scene_id == "phase_1"
+        assert updated.status == SessionStatus.ACTIVE
+        assert session.current_scene_id == "phase_1"  # Original unchanged
+        assert session is not updated  # Different objects
+
+    def test_apply_transition_updates_scene(self):
+        """Transition outcome updates current scene."""
+        from app.runtime.next_situation import apply_situation_outcome
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="phase_1",
+            canonical_state={},
+        )
+
+        situation = NextSituation(
+            current_scene_id="phase_2",
+            situation_status="transitioned",
+            is_terminal=False,
+        )
+
+        updated = apply_situation_outcome(session, situation)
+
+        assert updated.current_scene_id == "phase_2"
+        assert session.current_scene_id == "phase_1"  # Original unchanged
+
+    def test_apply_ending_sets_terminal_status(self):
+        """Ending outcome updates session status to ENDED."""
+        from app.runtime.next_situation import apply_situation_outcome
+        from app.runtime.w2_models import SessionStatus
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="phase_1",
+            canonical_state={},
+            status=SessionStatus.ACTIVE,
+        )
+
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="ending_reached",
+            ending_id="ending_1",
+            is_terminal=True,
+        )
+
+        updated = apply_situation_outcome(session, situation)
+
+        assert updated.status == SessionStatus.ENDED
+        assert session.status == SessionStatus.ACTIVE  # Original unchanged
+
+    def test_apply_outcome_updates_timestamp_on_terminal(self):
+        """Terminal outcome updates session timestamp."""
+        from app.runtime.next_situation import apply_situation_outcome
+        from datetime import datetime
+        import time
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="phase_1",
+            canonical_state={},
+        )
+        original_time = session.updated_at
+
+        situation = NextSituation(
+            current_scene_id="phase_1",
+            situation_status="ending_reached",
+            is_terminal=True,
+        )
+
+        # Small delay to ensure time difference
+        time.sleep(0.01)
+
+        updated = apply_situation_outcome(session, situation)
+
+        assert updated.updated_at > original_time
+        assert session.updated_at == original_time  # Original unchanged
+
+    def test_apply_outcome_immutability(self):
+        """Apply outcome does not modify original session."""
+        from app.runtime.next_situation import apply_situation_outcome
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="phase_1",
+            canonical_state={"key": "value"},
+            status=SessionStatus.ACTIVE,
+        )
+
+        situation = NextSituation(
+            current_scene_id="phase_2",
+            situation_status="transitioned",
+            is_terminal=False,
+        )
+
+        updated = apply_situation_outcome(session, situation)
+
+        # Original completely unchanged
+        assert session.current_scene_id == "phase_1"
+        assert session.status == SessionStatus.ACTIVE
+        assert session.canonical_state == {"key": "value"}
+
+    def test_apply_transition_and_ending_scene_change_plus_status(self):
+        """Combined transition + ending outcome handles both scene and status."""
+        from app.runtime.next_situation import apply_situation_outcome
+
+        session = SessionState(
+            module_id="test",
+            module_version="0.1.0",
+            current_scene_id="phase_1",
+            canonical_state={},
+            status=SessionStatus.ACTIVE,
+        )
+
+        # Edge case: ending reached in a different scene
+        situation = NextSituation(
+            current_scene_id="phase_3",
+            situation_status="ending_reached",
+            ending_id="final_ending",
+            is_terminal=True,
+        )
+
+        updated = apply_situation_outcome(session, situation)
+
+        assert updated.current_scene_id == "phase_3"
+        assert updated.status == SessionStatus.ENDED
+        assert session.current_scene_id == "phase_1"
+        assert session.status == SessionStatus.ACTIVE
