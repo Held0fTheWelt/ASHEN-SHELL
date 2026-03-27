@@ -30,8 +30,9 @@ jobs:
           pip install -r backend/requirements-dev.txt
 
       - name: Run security tests
+        working-directory: ./backend
         run: |
-          pytest -m security -v --tb=short
+          python -m pytest tests/ -m security -v --tb=short
 
       - name: Upload test results
         if: always()
@@ -64,8 +65,9 @@ jobs:
           pip install -r backend/requirements-dev.txt
 
       - name: Run contract tests
+        working-directory: ./backend
         run: |
-          pytest -m contract -v --tb=short
+          python -m pytest tests/ -m contract -v --tb=short
 
       - name: Upload test results
         if: always()
