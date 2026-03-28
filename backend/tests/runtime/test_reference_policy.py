@@ -75,3 +75,46 @@ class TestRelationshipReferences:
         decision = ReferencePolicy.evaluate("relationship", "", god_of_carnage_module)
         assert decision.allowed is False
         assert decision.reason_code == "unknown_relationship"
+
+
+class TestSceneReferences:
+    """Test scene reference validation (existence + reachability)."""
+
+    def test_self_reference_scene_allowed(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        """Current scene can reference itself."""
+        current_scene = god_of_carnage_module_with_state.current_scene_id
+        decision = ReferencePolicy.evaluate(
+            "scene",
+            current_scene,
+            god_of_carnage_module,
+            session=god_of_carnage_module_with_state,
+            current_scene_id=current_scene
+        )
+        assert decision.allowed is True
+
+    def test_unknown_scene_reference(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        """Nonexistent scene reference is rejected."""
+        decision = ReferencePolicy.evaluate(
+            "scene",
+            "nonexistent_scene_xyz",
+            god_of_carnage_module,
+            session=god_of_carnage_module_with_state,
+            current_scene_id=god_of_carnage_module_with_state.current_scene_id
+        )
+        assert decision.allowed is False
+        assert decision.reason_code == "unknown_scene"
+
+    def test_scene_reference_without_context(self, god_of_carnage_module):
+        """Scene reference without current_scene_id fails for non-self references."""
+        # Pick any scene ID
+        if god_of_carnage_module.scene_phases:
+            scene_id = next(iter(god_of_carnage_module.scene_phases.keys()))
+            decision = ReferencePolicy.evaluate(
+                "scene",
+                scene_id,
+                god_of_carnage_module,
+                session=None,
+                current_scene_id=None
+            )
+            assert decision.allowed is False
+            assert decision.reason_code == "missing_context"
