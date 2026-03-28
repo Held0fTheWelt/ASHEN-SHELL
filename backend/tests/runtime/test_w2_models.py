@@ -9,6 +9,7 @@ from app.runtime.w2_models import (
     DeltaType,
     DeltaValidationStatus,
     EventLogEntry,
+    GuardOutcome,
     SessionState,
     SessionStatus,
     StateDelta,
@@ -309,6 +310,7 @@ class TestAIDecisionLog:
         decision = AIDecisionLog(
             session_id="session_abc123",
             turn_number=1,
+            guard_outcome=GuardOutcome.ACCEPTED,
         )
         assert decision.id is not None
         assert len(decision.id) == 32
@@ -342,6 +344,7 @@ class TestAIDecisionLog:
             turn_number=1,
             accepted_deltas=[delta_accepted],
             rejected_deltas=[delta_rejected],
+            guard_outcome=GuardOutcome.PARTIALLY_ACCEPTED,
         )
         assert len(decision.accepted_deltas) == 1
         assert len(decision.rejected_deltas) == 1
@@ -353,10 +356,12 @@ class TestAIDecisionLog:
         decision1 = AIDecisionLog(
             session_id="session_abc123",
             turn_number=1,
+            guard_outcome=GuardOutcome.ACCEPTED,
         )
         decision2 = AIDecisionLog(
             session_id="session_abc123",
             turn_number=1,
+            guard_outcome=GuardOutcome.ACCEPTED,
         )
         assert decision1.id != decision2.id
 
@@ -368,6 +373,7 @@ class TestAIDecisionLog:
             validation_outcome=AIValidationOutcome.PARTIAL,
             guard_notes="Emotion escalation exceeded bounds",
             recovery_notes="Clamped to valid range",
+            guard_outcome=GuardOutcome.PARTIALLY_ACCEPTED,
         )
         assert decision.validation_outcome == AIValidationOutcome.PARTIAL
         assert decision.guard_notes == "Emotion escalation exceeded bounds"
@@ -382,6 +388,7 @@ class TestAIDecisionLog:
             turn_number=1,
             raw_output=raw_text,
             parsed_output=parsed,
+            guard_outcome=GuardOutcome.ACCEPTED,
         )
         assert decision.raw_output == raw_text
         assert decision.parsed_output == parsed

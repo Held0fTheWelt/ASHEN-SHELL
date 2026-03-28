@@ -370,5 +370,5 @@ class AIDecisionLog(BaseModel):
     responder_output: ResponderSection | None = None
     """Runtime-relevant proposals from responder role (feeds normalization)."""
 
-    guard_outcome: GuardOutcome | None = None
+    guard_outcome: GuardOutcome
     """Canonical validation result for responder proposals (guard decision)."""

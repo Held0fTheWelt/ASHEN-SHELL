@@ -279,6 +279,7 @@ def _create_decision_log(
         accepted_deltas=accepted_state_deltas,
         rejected_deltas=rejected_state_deltas,
         guard_notes=guard_notes,
+        guard_outcome=turn_result.guard_outcome,
     )
 
 
@@ -314,6 +315,7 @@ def _create_error_decision_log(
         accepted_deltas=[],
         rejected_deltas=[],
         guard_notes=guard_notes,
+        guard_outcome=GuardOutcome.STRUCTURALLY_INVALID,
     )
 
 
