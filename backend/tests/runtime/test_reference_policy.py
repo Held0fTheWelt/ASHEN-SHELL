@@ -134,3 +134,32 @@ class TestTriggerReferences:
         )
         assert decision.allowed is False
         assert decision.reason_code == "unknown_trigger"
+
+
+class TestReferenceValidationIntegration:
+    """Integration tests: reference validation in decision validation pipeline."""
+
+    def test_reference_policy_decision_values(self):
+        """Test that ReferencePolicyDecision correctly represents allowed/blocked states."""
+        allowed = ReferencePolicyDecision(allowed=True)
+        assert allowed.allowed is True
+        assert allowed.reason_code is None
+
+        blocked = ReferencePolicyDecision(
+            allowed=False,
+            reason_code="unknown_character",
+            reason_message="Not found"
+        )
+        assert blocked.allowed is False
+        assert blocked.reason_code == "unknown_character"
+        assert blocked.reason_message == "Not found"
+
+    def test_invalid_reference_type(self, god_of_carnage_module):
+        """Invalid reference type is rejected."""
+        decision = ReferencePolicy.evaluate(
+            "invalid_type",
+            "some_id",
+            god_of_carnage_module
+        )
+        assert decision.allowed is False
+        assert decision.reason_code == "invalid_reference_type"
