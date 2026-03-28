@@ -114,7 +114,9 @@ class AdapterRequest(BaseModel):
         canonical_state: Complete world state snapshot (dict)
         recent_events: List of recent events as plain dicts (not Pydantic objects)
         operator_input: Optional operator instruction or context
-        request_role_structured_output: If True, request output as AIRoleContract shape (W2.4.2+)
+        request_role_structured_output: If True, request output as AIRoleContract shape (W2.4.2+).
+                                        Defaults to False for backward compatibility.
+                                        W2.4.3 will update default to True when normalization is ready.
         metadata: Extensible metadata dict for future use
     """
 
@@ -124,8 +126,10 @@ class AdapterRequest(BaseModel):
     canonical_state: dict[str, Any]
     recent_events: list[dict[str, Any]] = Field(default_factory=list)
     operator_input: str | None = None
-    request_role_structured_output: bool = Field(default=True)
-        # W2.4.2+: Request role-separated output (interpreter, director, responder)
+    request_role_structured_output: bool = Field(default=False)
+        # W2.4.2+: Request role-separated output (interpreter, director, responder).
+        # Defaults to False (maintains backward compatibility).
+        # Set to True to receive AIRoleContract shape. W2.4.3 will update default when ready.
     metadata: dict[str, Any] = Field(default_factory=dict)
 ```
 
@@ -133,7 +137,7 @@ class AdapterRequest(BaseModel):
 
 Run: `PYTHONPATH=backend python -m pytest backend/tests/runtime/test_ai_adapter.py::TestAdapterRequest -v`
 
-Expected: All TestAdapterRequest tests pass (request_role_structured_output defaults to True).
+Expected: All TestAdapterRequest tests pass (request_role_structured_output defaults to False for backward compatibility).
 
 ### Step 3: Commit
 
@@ -202,7 +206,7 @@ def generate(self, request: AdapterRequest) -> AdapterResponse:
 
 Run: `PYTHONPATH=backend python -m pytest backend/tests/runtime/test_ai_adapter.py -v`
 
-Expected: All existing tests pass. MockStoryAIAdapter returns role-structured output by default.
+Expected: All existing tests pass. MockStoryAIAdapter defaults to legacy format (request_role_structured_output=False).
 
 ### Step 3: Commit
 
@@ -227,28 +231,31 @@ Add to `backend/tests/runtime/test_ai_adapter.py`:
 class TestAdapterRequestRoleStructured:
     """Test role-structured output request field."""
 
-    def test_adapter_request_role_structured_defaults_to_true(self):
-        """AdapterRequest.request_role_structured_output defaults to True."""
-        request = AdapterRequest(
-            session_id="sess1",
-            turn_number=1,
-            current_scene_id="phase_1",
-            canonical_state={},
-            recent_events=[],
-        )
-        assert request.request_role_structured_output is True
+    def test_adapter_request_role_structured_defaults_to_false(self):
+        """AdapterRequest.request_role_structured_output defaults to False (backward compat).
 
-    def test_adapter_request_role_structured_can_be_set_false(self):
-        """AdapterRequest.request_role_structured_output can be set to False for backward compatibility."""
+        W2.4.3 will update default to True when normalization is ready.
+        """
         request = AdapterRequest(
             session_id="sess1",
             turn_number=1,
             current_scene_id="phase_1",
             canonical_state={},
             recent_events=[],
-            request_role_structured_output=False,
         )
         assert request.request_role_structured_output is False
+
+    def test_adapter_request_role_structured_can_be_set_true(self):
+        """AdapterRequest.request_role_structured_output can be set to True to opt-in to new format."""
+        request = AdapterRequest(
+            session_id="sess1",
+            turn_number=1,
+            current_scene_id="phase_1",
+            canonical_state={},
+            recent_events=[],
+            request_role_structured_output=True,
+        )
+        assert request.request_role_structured_output is True
 ```
 
 ### Step 2: Write test for mock adapter role-structured response
@@ -400,12 +407,13 @@ Expected: All tests pass.
 
 ## Acceptance Criteria
 
-- ✅ AdapterRequest has request_role_structured_output field (default=True)
-- ✅ MockStoryAIAdapter returns role-structured output in AIRoleContract shape
-- ✅ Tests verify role-structured request/response
-- ✅ Backward compatibility maintained (legacy format available)
+- ✅ AdapterRequest has request_role_structured_output field (default=False for backward compatibility)
+- ✅ MockStoryAIAdapter returns role-structured output in AIRoleContract shape when request_role_structured_output=True
+- ✅ MockStoryAIAdapter returns legacy format when request_role_structured_output=False (default)
+- ✅ Tests verify role-structured request/response (explicit opt-in testing)
+- ✅ Backward compatibility maintained (existing code unaffected, W2.4.3 will update defaults)
 - ✅ All existing tests pass
-- ✅ No W2.4.3 scope jump (normalization deferred)
+- ✅ No W2.4.3 scope jump (normalization deferred, default update deferred)
 
 ---
 
