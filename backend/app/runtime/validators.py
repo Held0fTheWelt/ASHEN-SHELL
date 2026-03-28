@@ -12,6 +12,88 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+def validate_action_type(action_type: str) -> tuple[bool, str | None]:
+    """Validate that an action type is in the canonical taxonomy.
+
+    Args:
+        action_type: The proposed action type
+
+    Returns:
+        Tuple of (is_valid, error_message)
+        If valid: (True, None)
+        If invalid: (False, error_message)
+    """
+    from app.runtime.decision_policy import AIActionType
+
+    if not action_type:
+        return False, "action_type cannot be empty"
+
+    try:
+        AIActionType(action_type)
+        return True, None
+    except ValueError:
+        allowed = ", ".join([at.value for at in AIActionType])
+        return False, (
+            f"Unknown action type: '{action_type}'. "
+            f"Allowed types: {allowed}"
+        )
+
+
+def validate_action_structure(action_type: str, action_data: dict) -> tuple[bool, list[str]]:
+    """Validate that an action has required fields for its type.
+
+    Args:
+        action_type: The action type (must be valid AIActionType)
+        action_data: Dict of action fields
+
+    Returns:
+        Tuple of (is_valid, list_of_error_messages)
+    """
+    from app.runtime.decision_policy import AIActionType
+
+    errors = []
+
+    try:
+        action = AIActionType(action_type)
+    except ValueError:
+        # This should have been caught by validate_action_type()
+        errors.append(f"Invalid action type: {action_type}")
+        return False, errors
+
+    # Validate required fields based on action type
+    if action == AIActionType.STATE_UPDATE:
+        if not action_data.get("target_path"):
+            errors.append("STATE_UPDATE requires 'target_path'")
+        if action_data.get("next_value") is None:
+            errors.append("STATE_UPDATE requires 'next_value'")
+
+    elif action == AIActionType.RELATIONSHIP_SHIFT:
+        if not action_data.get("target_path"):
+            errors.append("RELATIONSHIP_SHIFT requires 'target_path'")
+        if action_data.get("next_value") is None:
+            errors.append("RELATIONSHIP_SHIFT requires 'next_value'")
+
+    elif action == AIActionType.SCENE_TRANSITION:
+        if not action_data.get("scene_id"):
+            errors.append("SCENE_TRANSITION requires 'scene_id'")
+
+    elif action == AIActionType.TRIGGER_ASSERTION:
+        if not action_data.get("trigger_ids"):
+            errors.append("TRIGGER_ASSERTION requires 'trigger_ids'")
+
+    elif action == AIActionType.DIALOGUE_IMPULSE:
+        if not action_data.get("character_id"):
+            errors.append("DIALOGUE_IMPULSE requires 'character_id'")
+        if not action_data.get("impulse_text"):
+            errors.append("DIALOGUE_IMPULSE requires 'impulse_text'")
+
+    elif action == AIActionType.CONFLICT_SIGNAL:
+        if not action_data.get("intensity") and action_data.get("intensity") != 0:
+            errors.append("CONFLICT_SIGNAL requires 'intensity'")
+
+    return len(errors) == 0, errors
+
+
 class ValidationStatus(str, Enum):
     """Status of a validation check."""
 
