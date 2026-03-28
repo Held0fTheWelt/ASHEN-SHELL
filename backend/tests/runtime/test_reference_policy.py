@@ -118,3 +118,19 @@ class TestSceneReferences:
             )
             assert decision.allowed is False
             assert decision.reason_code == "missing_context"
+
+
+class TestTriggerReferences:
+    """Test trigger reference validation (existence + applicability)."""
+
+    def test_unknown_trigger_reference(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        """Nonexistent trigger reference is rejected."""
+        decision = ReferencePolicy.evaluate(
+            "trigger",
+            "nonexistent_trigger_xyz",
+            god_of_carnage_module,
+            session=god_of_carnage_module_with_state,
+            current_scene_id=god_of_carnage_module_with_state.current_scene_id
+        )
+        assert decision.allowed is False
+        assert decision.reason_code == "unknown_trigger"
