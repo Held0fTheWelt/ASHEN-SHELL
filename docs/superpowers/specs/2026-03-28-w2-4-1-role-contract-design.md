@@ -157,8 +157,8 @@ class DirectorSection(BaseModel):
         # 0-10 scale: how much should conflict intensity change?
         # 0 = de-escalate, 5 = neutral, 10 = maximum escalation.
 
-    recommended_direction: Literal["escalate", "stabilize", "shift_alliance", "introduce_new_factor"]
-        # Enum: type of narrative movement.
+    recommended_direction: Literal["escalate", "stabilize", "shift_alliance", "redirect", "hold"]
+        # Enum: type of narrative movement (bounded set, not free text).
 
     pressure_movement: str | None = Field(default=None)
         # Optional: specific description of where conflict pressure shifts.
@@ -167,29 +167,50 @@ class DirectorSection(BaseModel):
 
 ---
 
-### 2.3 ResponderSection
+### 2.3 ResponderSection and Supporting Models
 
 ```python
+class ResponseImpulse(BaseModel):
+    """A concrete behavioral or emotional impulse from responder."""
+
+    character_id: str
+        # Character experiencing the impulse
+
+    impulse_type: Literal["emotional_reaction", "dialogue_urge", "action_urge"]
+        # Category of impulse (enumerated, not free text)
+
+    intensity: int = Field(ge=0, le=10)
+        # 0-10 scale: how strong is the impulse?
+
+    rationale: str
+        # Why this character has this impulse in this moment
+
+
+class StateChangeCandidate(BaseModel):
+    """A pre-delta proposal for state mutation from responder."""
+
+    target_path: str
+        # Path to the state field (e.g., "characters.alice.emotional_state")
+        # NOT yet ProposedStateDelta; will be normalized
+
+    proposed_value: Any
+        # New value for the target (any type allowed at this stage)
+
+    rationale: str
+        # Why this state change is proposed
+
+
 class ResponderSection(BaseModel):
     """Runtime-relevant proposals (feeds normalization)."""
 
-    response_impulses: list[dict[str, Any]] = Field(default_factory=list)
+    response_impulses: list[ResponseImpulse] = Field(default_factory=list)
         # Concrete behavioral/emotional impulses before execution.
-        # Schema: {
-        #   "character_id": str,
-        #   "impulse_type": "emotional_reaction" | "dialogue_urge" | "action_urge",
-        #   "intensity": int (0-10),
-        #   "rationale": str
-        # }
+        # Typed as ResponseImpulse, not dict.
 
-    state_change_candidates: list[dict[str, Any]] = Field(default_factory=list)
+    state_change_candidates: list[StateChangeCandidate] = Field(default_factory=list)
         # Pre-delta format proposals for state mutations.
-        # NOT yet ProposedStateDelta; will be normalized.
-        # Schema: {
-        #   "target_path": str (e.g., "characters.alice.emotional_state"),
-        #   "proposed_value": Any,
-        #   "rationale": str
-        # }
+        # Typed as StateChangeCandidate, not dict.
+        # Will be normalized to ProposedStateDelta in W2.4.2.
 
     dialogue_impulses: list[str] | None = Field(default=None)
         # Suggested dialogue lines or dialogue directions.
@@ -258,16 +279,17 @@ After parsing, the runtime normalizes responder output into existing canonical s
 ```python
 # Pseudocode (W2.4.2 implementation)
 def normalize_responder_to_proposals(role_contract: AIRoleContract) -> dict:
-    """Convert responder impulses into canonical runtime proposal structures."""
+    """Convert responder impulses (typed objects) into canonical runtime proposal structures."""
 
     normalized = {
         "detected_triggers": role_contract.responder.trigger_assertions,
         "proposed_deltas": [
             ProposedStateDelta(
-                target=candidate["target_path"],
-                next_value=candidate["proposed_value"]
+                target=candidate.target_path,
+                next_value=candidate.proposed_value
             )
             for candidate in role_contract.responder.state_change_candidates
+            # Note: candidate is StateChangeCandidate (typed object), not dict
         ],
         "proposed_scene_id": role_contract.responder.scene_transition_candidate,
         # narrative_text built from dialogue_impulses (if needed)
@@ -290,6 +312,63 @@ Both Interpreter and Director output remains available for:
 ---
 
 ## 4. Responsibility Boundaries (Preventing Role Blur)
+
+### 4.0 Canonical Contract Rules (Enforceable)
+
+These are hard boundaries, not guidelines. Enforced at type-system level and in tests.
+
+**Interpreter Rule:**
+```
+interpreter = diagnostic only
+
+Interpreter output must NOT contain:
+- state mutations or proposals
+- trigger assertions (only candidates)
+- executable proposals
+- role collapse into raw observations
+```
+
+**Director Rule:**
+```
+director = diagnostic/steering only
+
+Director output must NOT contain:
+- state mutations or proposals
+- dialogue generation or action frames
+- trigger assertions
+- role collapse into generic narration
+```
+
+**Responder Rule:**
+```
+responder = may emit runtime-relevant candidates
+
+Responder output must:
+- use pre-delta format (StateChangeCandidate), not ProposedStateDelta
+- emit ResponseImpulse objects (typed, not dict)
+- propose triggers as plain strings (trigger_assertions)
+- propose scene transitions as candidate IDs
+- remain pre-normalized (normalization happens in W2.4.2)
+
+Responder output must NOT:
+- directly mutate state (proposals must be normalized first)
+- bypass guard/validation (all go through existing path)
+- assert triggers without normalization
+- emit ProposedStateDelta directly
+- ignore existing mutation authorization
+```
+
+**Runtime Rule:**
+```
+only normalized responder-derived proposals may enter the canonical guarded runtime path
+
+- Interpreter and Director outputs are diagnostic only
+- They do not authorize state mutations
+- All responder candidates must undergo normalization before guard evaluation
+- Existing guard/validation path remains authoritative
+```
+
+---
 
 ### 4.1 Interpreter Cannot
 
@@ -322,7 +401,9 @@ Both Interpreter and Director output remains available for:
 ### 5.1 New Files
 
 - **`backend/app/runtime/role_contract.py`** (new)
-  - AIRoleContract and three role sections (Pydantic models)
+  - ResponseImpulse and StateChangeCandidate (typed candidate models)
+  - InterpreterSection, DirectorSection, ResponderSection (role models)
+  - AIRoleContract (top-level contract)
   - Example instances for documentation
 
 - **`backend/tests/runtime/test_w2_4_1_role_contract.py`** (new)
@@ -404,7 +485,9 @@ Both Interpreter and Director output remains available for:
 
 ```
 backend/app/runtime/
-  role_contract.py          # NEW: AIRoleContract, InterpreterSection, DirectorSection, ResponderSection
+  role_contract.py          # NEW: ResponseImpulse, StateChangeCandidate,
+                            #      InterpreterSection, DirectorSection, ResponderSection,
+                            #      AIRoleContract
   ai_adapter.py             # MODIFIED: Comment only (no code change)
 
 backend/tests/runtime/
