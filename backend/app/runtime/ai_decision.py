@@ -68,12 +68,14 @@ class ParseResult(BaseModel):
     Attributes:
         success: True if parse+normalize+prevalidate all passed
         decision: ParsedAIDecision if successful, None otherwise
+        role_aware_decision: ParsedRoleAwareDecision (optional, only if role-structured input)
         errors: List of errors encountered (empty if successful)
         raw_output: Original adapter output (always preserved)
     """
 
     success: bool
     decision: ParsedAIDecision | None = None
+    role_aware_decision: Any | None = None  # ParsedRoleAwareDecision from W2.4.3
     errors: list[str] = []
     raw_output: str
 
