@@ -98,6 +98,8 @@ class ParseResult(BaseModel):
 
 **Consistency rule:** If both `decision` and `role_aware_decision` are present, they must be semantically identical at the ParsedAIDecision level. No divergence allowed.
 
+**Implementation note:** This consistency is enforced at construction time in `parse_role_contract()`. When returning ParseResult, set `decision = role_aware_decision.parsed_decision` to ensure they point to the same object (no duplicate, no divergence). Field validators are for runtime type safety only, not for post-construction consistency checks.
+
 ---
 
 ## 3. Canonical Normalization Mapping
@@ -122,15 +124,19 @@ class ParseResult(BaseModel):
 
 | Source | Target | Rule |
 |--------|--------|------|
-| `responder.state_change_candidates` | `parsed_decision.proposed_deltas` | Convert StateChangeCandidate → ProposedDelta (preserving target_path, proposed_value, rationale) |
+| `responder.state_change_candidates` | `parsed_decision.proposed_deltas` | Convert each StateChangeCandidate to ProposedDelta: `target_path` (unchanged), `next_value` (from StateChangeCandidate.proposed_value), `rationale` (unchanged), `delta_type` (None) |
 | `responder.trigger_assertions` | `parsed_decision.detected_triggers` | Use as-is |
 | `responder.scene_transition_candidate` | `parsed_decision.proposed_scene_id` | Use as-is (or None if not set) |
-| `responder.response_impulses` (dialogue_urge only) | `parsed_decision.dialogue_impulses` | Convert ResponseImpulse → DialogueImpulse only for dialogue_urge; scale intensity from 0-10 to 0.0-1.0 |
-| All `responder.response_impulses` | `ParsedRoleAwareDecision.responder.response_impulses` | Preserve all in responder section for diagnostics |
+| `responder.response_impulses` (dialogue_urge only) | `parsed_decision.dialogue_impulses` | Filter response_impulses for impulse_type=="dialogue_urge" only; convert each to DialogueImpulse: `character_id` (unchanged), `impulse_text` (from ResponseImpulse.rationale), `intensity` (scale 0-10 to 0.0-1.0) |
+| `responder.dialogue_impulses` | (diagnostic only, not used in normalization) | Preserved in responder section for diagnostics only; does NOT feed parsed_decision |
+| All `responder.response_impulses` | `ParsedRoleAwareDecision.responder.response_impulses` | Preserve all (including non-dialogue types) in responder section for diagnostics |
 
 **Critical constraints:**
-- Only `dialogue_urge` impulses map to `dialogue_impulses`
-- Emotional and action-oriented impulses remain diagnostic only (preserved in responder section)
+- Only `dialogue_urge` impulses map to `dialogue_impulses` (emotional_reaction and action_urge stay diagnostic)
+- StateChangeCandidate.proposed_value → ProposedDelta.next_value (field rename, not transformation)
+- StateChangeCandidate → ProposedDelta always uses delta_type=None (no new information from responder)
+- ResponseImpulse.rationale becomes DialogueImpulse.impulse_text (the rationale is the concrete dialogue content)
+- Responder's separate dialogue_impulses field is preserved for diagnostics but does NOT feed the normalized decision (responder impulses are the authoritative source)
 - StateChangeCandidate is pre-delta format; conversion to ProposedDelta is normalization, not execution
 - All normalized responder proposals still go through existing validation and guard path
 
@@ -184,12 +190,20 @@ def parse_role_contract(
     """Parse role-structured payload into ParsedRoleAwareDecision.
 
     Steps:
-    1. Parse dict → AIRoleContract (Pydantic validation)
-    2. Normalize responder section → ProposedDelta, DialogueImpulse, etc.
-    3. Construct ParsedAIDecision from normalized fields
-    4. Wrap with role sections → ParsedRoleAwareDecision
-    5. Pre-validate decision
-    6. Return (ParsedRoleAwareDecision, []) or (None, [errors])
+    1. Parse dict → AIRoleContract (Pydantic validation of all three role sections)
+    2. Normalize responder section using conversion functions:
+       - StateChangeCandidate → ProposedDelta (target_path, next_value←proposed_value, rationale, delta_type=None)
+       - Trigger assertions (list of strings) → detected_triggers (unchanged)
+       - Scene transition candidate (string or None) → proposed_scene_id (unchanged)
+       - Response impulses (dialogue_urge only) → DialogueImpulse (character_id, impulse_text←rationale, intensity 0-10→0.0-1.0)
+    3. Extract normalized fields from interpreter, director, responder:
+       - scene_interpretation ← interpreter.scene_reading (strip whitespace)
+       - rationale ← director.conflict_steering (strip whitespace)
+       - proposed_deltas, detected_triggers, proposed_scene_id, dialogue_impulses ← from normalization above
+    4. Construct ParsedAIDecision from normalized fields + raw_output
+    5. Construct ParsedRoleAwareDecision(parsed_decision=..., interpreter=..., director=..., responder=...)
+    6. Pre-validate decision
+    7. Return (ParsedRoleAwareDecision, []) or (None, [errors])
 
     Args:
         payload: Validated dict with interpreter, director, responder keys
@@ -199,8 +213,11 @@ def parse_role_contract(
         (ParsedRoleAwareDecision, []) if successful
         (None, [errors]) if parsing or validation failed
 
-    Critical: No silent downgrades. If this function is called, it means
-    strict detection succeeded. Parse failure must return explicit errors.
+    Critical constraints:
+    - No silent downgrades. If this function is called, it means strict detection succeeded. Parse failure must return explicit errors.
+    - Set decision = role_aware_decision.parsed_decision when returning to ParseResult (no duplicate, no divergence)
+    - Only dialogue_urge impulses map to dialogue_impulses; other response impulses stay diagnostic only
+    - Responder's separate dialogue_impulses field is preserved diagnostically but does NOT feed the normalized decision
     """
 ```
 
