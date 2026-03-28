@@ -256,6 +256,102 @@ def extract_entity_id(target_path: str) -> str | None:
     return None
 
 
+def _accumulate_turn_context(
+    session: SessionState,
+    result: TurnExecutionResult,
+    prior_scene_id: str | None = None,
+) -> None:
+    """Accumulate short-term context and session history from turn result.
+
+    W2.3-R2: Wire W2.3 layers into real runtime flow.
+
+    Derives ShortTermTurnContext from the turn result and updates:
+    1. session.context_layers.short_term_context
+    2. session.context_layers.session_history
+
+    This is called after every turn (success or system_error) to accumulate
+    real continuity data into the session state.
+
+    Args:
+        session: The SessionState to update (modified in place).
+        result: The TurnExecutionResult from the completed turn.
+        prior_scene_id: The scene ID before this turn (for transition detection).
+
+    Note:
+        - Initializes SessionHistory if not yet present
+        - Maintains bounded history (max_size=100)
+        - Works for all guard_outcome values (accepted, partially_accepted, rejected, structurally_invalid)
+    """
+    # Local imports to avoid circular dependency
+    from app.runtime.session_history import HistoryEntry, SessionHistory
+    from app.runtime.short_term_context import build_short_term_context
+
+    # Initialize SessionHistory if not present
+    if session.context_layers.session_history is None:
+        session.context_layers.session_history = SessionHistory(max_size=100)
+
+    # Derive short-term context from result
+    short_term_context = build_short_term_context(result, prior_scene_id=prior_scene_id)
+    session.context_layers.short_term_context = short_term_context
+
+    # Convert to history entry and add to session history
+    if isinstance(session.context_layers.session_history, SessionHistory):
+        history_entry = HistoryEntry.from_short_term_context(short_term_context)
+        session.context_layers.session_history.add_entry(history_entry)
+
+
+def _derive_runtime_context(
+    session: SessionState,
+    module: ContentModule,
+) -> None:
+    """Derive progression, relationship, and lore context from accumulated history.
+
+    W2.3-R3: Wire W2.3 downstream layers into real runtime flow.
+
+    Called after _accumulate_turn_context() to keep downstream layers current.
+    Skips derivation if session history is not yet populated (guard for early calls).
+
+    Derivation order (W2.3-R3):
+    1. ProgressionSummary — structural signals from SessionHistory (no upstream deps)
+    2. RelationshipAxisContext — interpersonal dynamics from SessionHistory (no upstream deps)
+    3. LoreDirectionContext — module guidance injection; requires steps 1 and 2
+
+    Args:
+        session: The SessionState to update (modified in place).
+        module: The ContentModule for lore/direction extraction.
+
+    Note:
+        - All three derivations are deterministic pure functions
+        - Layers remain bounded: ProgressionSummary fields capped, salient_axes ≤ 10, selected_units ≤ 15
+        - Works for all guard_outcome values
+    """
+    from app.runtime.lore_direction_context import derive_lore_direction_context
+    from app.runtime.progression_summary import derive_progression_summary
+    from app.runtime.relationship_context import derive_relationship_axis_context
+
+    history = session.context_layers.session_history
+    if history is None or history.size == 0:
+        return
+
+    # Step 1: ProgressionSummary (depends only on SessionHistory)
+    progression = derive_progression_summary(history)
+    session.context_layers.progression_summary = progression
+
+    # Step 2: RelationshipAxisContext (depends only on SessionHistory)
+    relationship = derive_relationship_axis_context(history)
+    session.context_layers.relationship_axis_context = relationship
+
+    # Step 3: LoreDirectionContext (depends on steps 1-2 + module + current scene)
+    lore = derive_lore_direction_context(
+        module=module,
+        current_scene_id=session.current_scene_id,
+        history=history,
+        progression_summary=progression,
+        relationship_context=relationship,
+    )
+    session.context_layers.lore_direction_context = lore
+
+
 # ===== Core Functions =====
 
 
@@ -414,6 +510,7 @@ async def execute_turn(
 
     Orchestrates: validation → construction → application → finalization.
     Emits structured events for every phase.
+    Accumulates short-term context and session history (W2.3-R2).
 
     Args:
         session: Current session state
@@ -425,6 +522,7 @@ async def execute_turn(
         TurnExecutionResult with execution status, deltas, state, and events
     """
     started_at = datetime.now(timezone.utc)
+    prior_scene_id = session.current_scene_id  # Capture before turn execution
     event_log = RuntimeEventLog(session_id=session.session_id, turn_number=current_turn)
 
     # Always emit turn_started first — even if execution fails below
@@ -569,7 +667,7 @@ async def execute_turn(
             },
         )
 
-        return TurnExecutionResult(
+        result = TurnExecutionResult(
             turn_number=current_turn,
             session_id=session.session_id,
             execution_status="success",
@@ -588,6 +686,13 @@ async def execute_turn(
             events=event_log.flush(),
         )
 
+        # W2.3-R2: Accumulate short-term context and session history
+        _accumulate_turn_context(session, result, prior_scene_id=prior_scene_id)
+        # W2.3-R3: Derive downstream context layers from updated history
+        _derive_runtime_context(session, module)
+
+        return result
+
     except Exception as e:
         completed_at = datetime.now(timezone.utc)
         duration_ms = (completed_at - started_at).total_seconds() * 1000
@@ -602,7 +707,7 @@ async def execute_turn(
             },
         )
 
-        return TurnExecutionResult(
+        result = TurnExecutionResult(
             turn_number=current_turn,
             session_id=session.session_id,
             execution_status="system_error",
@@ -619,6 +724,13 @@ async def execute_turn(
             duration_ms=duration_ms,
             events=event_log.flush(),
         )
+
+        # W2.3-R2: Accumulate context even on failure
+        _accumulate_turn_context(session, result, prior_scene_id=prior_scene_id)
+        # W2.3-R3: Derive downstream context layers from updated history
+        _derive_runtime_context(session, module)
+
+        return result
 
 
 def commit_turn_result(
