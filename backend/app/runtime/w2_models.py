@@ -47,6 +47,7 @@ class SessionState(BaseModel):
         status: Session status (active, paused, ended, crashed).
         turn_counter: Number of turns executed in this session.
         canonical_state: Current world state snapshot (dict).
+        execution_mode: Turn execution mode ("mock" or "ai"). Default "mock".
         seed: Optional seed for reproducibility.
         created_at: Timestamp when session was created.
         updated_at: Timestamp when session was last updated.
@@ -60,6 +61,7 @@ class SessionState(BaseModel):
     status: SessionStatus = SessionStatus.ACTIVE
     turn_counter: int = 0
     canonical_state: dict[str, Any] = Field(default_factory=dict)
+    execution_mode: str = "mock"  # "mock" or "ai"
     seed: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
