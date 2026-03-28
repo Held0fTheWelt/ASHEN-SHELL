@@ -288,3 +288,111 @@ class TestAdapterContractCoherence:
 
         assert response.backend_metadata["model"] == "claude-3-sonnet"
         assert response.backend_metadata["latency_ms"] == 234
+
+
+class TestAdapterRequestRoleStructured:
+    """Test role-structured output request field."""
+
+    def test_adapter_request_role_structured_defaults_to_false(self):
+        """AdapterRequest.request_role_structured_output defaults to False (backward compat).
+
+        W2.4.3 will update default to True when normalization is ready.
+        """
+        request = AdapterRequest(
+            session_id="sess1",
+            turn_number=1,
+            current_scene_id="phase_1",
+            canonical_state={},
+            recent_events=[],
+        )
+        assert request.request_role_structured_output is False
+
+    def test_adapter_request_role_structured_can_be_set_true(self):
+        """AdapterRequest.request_role_structured_output can be set to True to opt-in to new format."""
+        request = AdapterRequest(
+            session_id="sess1",
+            turn_number=1,
+            current_scene_id="phase_1",
+            canonical_state={},
+            recent_events=[],
+            request_role_structured_output=True,
+        )
+        assert request.request_role_structured_output is True
+
+
+class TestMockAdapterRoleStructured:
+    """Test MockStoryAIAdapter role-structured output."""
+
+    def test_mock_adapter_returns_role_contract_shape_when_requested(self):
+        """MockStoryAIAdapter returns AIRoleContract shape when request_role_structured_output=True."""
+        adapter = MockStoryAIAdapter()
+        request = AdapterRequest(
+            session_id="sess1",
+            turn_number=1,
+            current_scene_id="phase_1",
+            canonical_state={},
+            recent_events=[],
+            request_role_structured_output=True,
+        )
+
+        response = adapter.generate(request)
+
+        # Verify structure matches AIRoleContract shape
+        payload = response.structured_payload
+        assert payload is not None
+        assert "interpreter" in payload
+        assert "director" in payload
+        assert "responder" in payload
+
+        # Verify interpreter section
+        assert "scene_reading" in payload["interpreter"]
+        assert "detected_tensions" in payload["interpreter"]
+        assert "trigger_candidates" in payload["interpreter"]
+
+        # Verify director section
+        assert "conflict_steering" in payload["director"]
+        assert "escalation_level" in payload["director"]
+        assert "recommended_direction" in payload["director"]
+
+        # Verify responder section
+        assert "response_impulses" in payload["responder"]
+        assert "state_change_candidates" in payload["responder"]
+        assert "trigger_assertions" in payload["responder"]
+
+    def test_mock_adapter_returns_legacy_format_when_not_requested(self):
+        """MockStoryAIAdapter returns legacy format when request_role_structured_output=False."""
+        adapter = MockStoryAIAdapter()
+        request = AdapterRequest(
+            session_id="sess1",
+            turn_number=1,
+            current_scene_id="phase_1",
+            canonical_state={},
+            recent_events=[],
+            request_role_structured_output=False,
+        )
+
+        response = adapter.generate(request)
+
+        # Verify legacy structure
+        payload = response.structured_payload
+        assert payload is not None
+        assert "detected_triggers" in payload
+        assert "proposed_deltas" in payload
+        assert "proposed_scene_id" in payload
+        assert "narrative_text" in payload
+
+    def test_mock_adapter_metadata_reflects_role_structured_flag(self):
+        """MockStoryAIAdapter backend_metadata includes role_structured flag."""
+        adapter = MockStoryAIAdapter()
+        request = AdapterRequest(
+            session_id="sess1",
+            turn_number=1,
+            current_scene_id="phase_1",
+            canonical_state={},
+            recent_events=[],
+            request_role_structured_output=True,
+        )
+
+        response = adapter.generate(request)
+
+        assert response.backend_metadata["role_structured"] is True
