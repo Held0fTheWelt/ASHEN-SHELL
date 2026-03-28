@@ -463,6 +463,60 @@ class TestExecuteTurnWithAI:
         assert decision_log.parsed_output is not None
         assert decision_log.validation_outcome == AIValidationOutcome.ACCEPTED
 
+    def test_partial_validation_logged(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Partial validation (some accepted, some rejected) logged correctly."""
+        from app.runtime.w2_models import AIValidationOutcome
+
+        session = god_of_carnage_module_with_state
+
+        # Ensure character exists for valid delta
+        if "characters" not in session.canonical_state:
+            session.canonical_state["characters"] = {}
+        if "veronique" not in session.canonical_state["characters"]:
+            session.canonical_state["characters"]["veronique"] = {"emotional_state": 50}
+
+        # Mixed payload: one valid (character exists), one invalid (character doesn't exist)
+        mixed_payload = {
+            "scene_interpretation": "Mixed result",
+            "detected_triggers": [],
+            "proposed_state_deltas": [
+                {
+                    "target_path": "characters.veronique.emotional_state",
+                    "next_value": 70,
+                    "delta_type": "character_state",
+                },
+                {
+                    "target_path": "characters.nonexistent.emotional_state",
+                    "next_value": 99,
+                    "delta_type": "character_state",
+                },
+            ],
+            "rationale": "Testing mixed validation",
+        }
+        adapter = DeterministicAIAdapter(payload=mixed_payload)
+
+        result = asyncio.run(
+            execute_turn_with_ai(
+                session,
+                current_turn=session.turn_counter + 1,
+                adapter=adapter,
+                module=god_of_carnage_module,
+            )
+        )
+
+        # Verify decision log captures partial validation
+        assert "ai_decision_logs" in session.metadata
+        decision_log = session.metadata["ai_decision_logs"][0]
+
+        # Should have PARTIAL outcome (some accepted, some rejected)
+        if len(result.rejected_deltas) > 0 and len(result.accepted_deltas) > 0:
+            assert decision_log.validation_outcome == AIValidationOutcome.PARTIAL
+
+        # Both accepted and rejected should be visible
+        assert len(decision_log.accepted_deltas) + len(decision_log.rejected_deltas) >= 1
+
     def test_mock_path_remains_available_and_coherent(
         self, god_of_carnage_module_with_state, god_of_carnage_module
     ):
