@@ -201,12 +201,15 @@ def validate_decision(decision: Any, session: Any, module: Any) -> ValidationOut
             accepted_indices.append(idx)
 
     # Check scene transition legality (W2.2.4)
-    # Validates against canonical scene transition rules, not just reachability
+    # Validates against canonical scene transition rules with actual detected triggers
+    # This ensures validation-time and execution-time semantics are coherent
     if hasattr(decision, "proposed_scene_id") and decision.proposed_scene_id:
         current_scene_id = session.current_scene_id if session else None
+        # Get detected triggers from decision; they're available at validation time
+        decision_triggers = getattr(decision, "detected_triggers", [])
         legality_decision = SceneTransitionLegality.check_transition_legal(
             current_scene_id, decision.proposed_scene_id, module,
-            session=session, detected_triggers=None  # Triggers not available at validation time
+            session=session, detected_triggers=decision_triggers  # W2.2.4: Use actual triggers from decision
         )
         if not legality_decision.allowed:
             errors.append(
@@ -214,11 +217,13 @@ def validate_decision(decision: Any, session: Any, module: Any) -> ValidationOut
             )
 
     # Check ending legality (W2.2.4)
-    # Validates if any ending condition is legally triggered
+    # Validates if any ending condition is legally triggered with actual detected triggers
     # This is a pre-check; actual ending determination happens in next_situation
     if hasattr(decision, "proposed_ending_id") and decision.proposed_ending_id:
+        # Get detected triggers from decision; they're available at validation time
+        decision_triggers = getattr(decision, "detected_triggers", [])
         ending_id, legality_decision = SceneTransitionLegality.check_ending_legal(
-            module, session=session, detected_triggers=None  # Triggers not available at validation time
+            module, session=session, detected_triggers=decision_triggers  # W2.2.4: Use actual triggers from decision
         )
         # Check if the proposed ending matches a legally available ending
         if ending_id != decision.proposed_ending_id:

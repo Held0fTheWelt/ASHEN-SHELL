@@ -473,29 +473,34 @@ class TestTurnExecutorLegalityEnforcement:
         assert any(e.event_type == "scene_transition_blocked" for e in result.events)
 
     def test_execute_turn_allows_legal_conditional_transition(self, conditional_module, session_s2):
-        """Turn execution uses actual detected_triggers from execution (not validation time)."""
+        """Validator and executor are now coherent: both use actual detected_triggers (W2.2.4 repair).
+
+        With the W2.2.4 repair (Option A), validation-time scene legality checks are now
+        trigger-aware. Both validator and executor use decision.detected_triggers,
+        ensuring coherent semantics.
+        """
         import asyncio
         from app.runtime.turn_executor import MockDecision, execute_turn
 
-        # This transition would be rejected by validator (detected_triggers=None),
-        # but accepted by executor (detected_triggers=["unlock"])
+        # This transition is now legal at both validation time and execution time
+        # because the validator uses the actual detected_triggers from the decision
         decision = MockDecision(
             proposed_scene_id="s3",
             proposed_deltas=[],
-            detected_triggers=["unlock"],  # Available at execution time
+            detected_triggers=["unlock"],  # Available at both validation and execution time
         )
 
-        # Validator would reject this
+        # Validator now accepts this (uses actual triggers)
         from app.runtime.validators import validate_decision
         validation = validate_decision(decision, session_s2, conditional_module)
-        assert not validation.is_valid  # Validator rejects (no evidence at validation time)
+        assert validation.is_valid  # Validator accepts (coherent with executor)
 
-        # But executor should apply it (evidence available at execution time)
+        # Executor also accepts it (uses actual triggers)
         result = asyncio.run(
             execute_turn(session_s2, 1, decision, module=conditional_module)
         )
         assert result.execution_status == "success"
-        assert result.updated_scene_id == "s3"  # Executor allows it
+        assert result.updated_scene_id == "s3"  # Both agree: transition is legal
 
     def test_ending_legality_checked_in_execution(self, conditional_module, session_s2):
         """Turn execution checks ending legality and includes it in result."""
