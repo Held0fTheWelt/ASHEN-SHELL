@@ -21,6 +21,9 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
+# W2.4.2: Import role contract (W2.4.1)
+from app.runtime.role_contract import AIRoleContract
+
 
 class AdapterRequest(BaseModel):
     """Input to an AI adapter from the canonical story runtime.
@@ -99,6 +102,35 @@ class StoryAIAdapter(ABC):
             String name (e.g., "mock", "claude-3-sonnet", "gpt-4")
         """
         pass
+
+
+def _create_mock_role_contract() -> dict[str, Any]:
+    """Create a mock AIRoleContract shape for deterministic testing.
+
+    Returns:
+        Dict matching AIRoleContract structure (interpreter, director, responder).
+    """
+    return {
+        "interpreter": {
+            "scene_reading": "[mock] Scene interpretation - generic analysis of current state",
+            "detected_tensions": ["mock_tension_1"],
+            "trigger_candidates": ["mock_trigger_candidate"],
+            "uncertainty_markers": None,
+        },
+        "director": {
+            "conflict_steering": "[mock] Recommended conflict direction for this turn",
+            "escalation_level": 5,
+            "recommended_direction": "hold",
+            "pressure_movement": None,
+        },
+        "responder": {
+            "response_impulses": [],
+            "state_change_candidates": [],
+            "dialogue_impulses": None,
+            "trigger_assertions": [],
+            "scene_transition_candidate": None,
+        },
+    }
 
 
 class MockStoryAIAdapter(StoryAIAdapter):
