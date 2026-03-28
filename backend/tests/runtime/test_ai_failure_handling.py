@@ -13,6 +13,7 @@ Comprehensive test suite for safe handling of AI execution failures:
 
 import asyncio
 import pytest
+from app.runtime.ai_adapter import AdapterResponse, StoryAIAdapter
 from app.runtime.turn_executor import MockDecision
 
 
@@ -41,3 +42,37 @@ def test_turn_execution_result_has_failure_reason():
     )
 
     assert result.failure_reason == ExecutionFailureReason.GENERATION_ERROR
+
+
+def test_empty_adapter_output_fails_safely(
+    god_of_carnage_module_with_state, god_of_carnage_module
+):
+    """Empty AI output is detected and handled safely."""
+    from app.runtime.ai_turn_executor import execute_turn_with_ai
+    from app.runtime.w2_models import ExecutionFailureReason
+
+    session = god_of_carnage_module_with_state
+
+    class EmptyAdapter(StoryAIAdapter):
+        @property
+        def adapter_name(self):
+            return "empty-test"
+
+        def generate(self, request):
+            return AdapterResponse(
+                raw_output="",
+                structured_payload=None,
+            )
+
+    result = asyncio.run(
+        execute_turn_with_ai(
+            session,
+            current_turn=session.turn_counter + 1,
+            adapter=EmptyAdapter(),
+            module=god_of_carnage_module,
+        )
+    )
+
+    assert result.execution_status == "system_error"
+    assert result.failure_reason == ExecutionFailureReason.GENERATION_ERROR
+    assert result.updated_canonical_state == session.canonical_state

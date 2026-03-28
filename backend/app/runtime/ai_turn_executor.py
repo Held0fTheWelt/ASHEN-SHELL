@@ -30,6 +30,7 @@ from app.runtime.w2_models import (
     AIValidationOutcome,
     DeltaType,
     DeltaValidationStatus,
+    ExecutionFailureReason,
     SessionState,
     StateDelta,
 )
@@ -371,13 +372,36 @@ async def execute_turn_with_ai(
         )
         _store_decision_log(session, error_log)
 
-        return _make_parse_failure_result(
+        result = _make_parse_failure_result(
             session,
             current_turn,
             [f"Adapter error: {response.error}"],
             response.raw_output,
             started_at,
         )
+        result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
+        return result
+
+    # Step 2c: Check for empty output
+    if not response.raw_output or not response.raw_output.strip():
+        error_log = _create_error_decision_log(
+            session,
+            current_turn,
+            response.raw_output or "",
+            ["Empty AI response"],
+            "generation_error",
+        )
+        _store_decision_log(session, error_log)
+
+        result = _make_parse_failure_result(
+            session,
+            current_turn,
+            ["Empty AI response"],
+            response.raw_output or "",
+            started_at,
+        )
+        result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
+        return result
 
     # Step 3: Parse response
     parse_result: ParseResult = process_adapter_response(response)
@@ -393,13 +417,15 @@ async def execute_turn_with_ai(
         )
         _store_decision_log(session, error_log)
 
-        return _make_parse_failure_result(
+        result = _make_parse_failure_result(
             session,
             current_turn,
             parse_result.errors,
             parse_result.raw_output,
             started_at,
         )
+        result.failure_reason = ExecutionFailureReason.PARSING_ERROR
+        return result
 
     # Step 5: Bridge parsed decision to MockDecision
     mock_decision = decision_from_parsed(parse_result.decision)
