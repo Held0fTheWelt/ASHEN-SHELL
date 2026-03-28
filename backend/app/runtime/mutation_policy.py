@@ -203,6 +203,14 @@ class MutationPolicy:
         if pattern == "*.__*":
             return any(comp.startswith("__") for comp in path_parts)
 
+        # Special case: *.cache matches any component exactly "cache"
+        if pattern == "*.cache":
+            return "cache" in path_parts
+
+        # Special case: *.cached_* matches any component starting with "cached_"
+        if pattern == "*.cached_*":
+            return any(comp.startswith("cached_") for comp in path_parts)
+
         # Standard component-by-component matching
         # Pattern must have same number of components as path
         if len(pattern_parts) != len(path_parts):
@@ -229,12 +237,18 @@ class MutationPolicy:
         Determines the appropriate reason code based on which pattern blocked it.
         """
         # Categorize the reason based on pattern type
-        if any(pat in pattern for pat in [".*", "system", "logs", "decision", "session", "turn", "metadata", "runtime", "cache"]):
-            reason_code = "blocked_root_domain"
-        elif "_*" in pattern or "__*" in pattern:
-            reason_code = "blocked_internal_field"
-        elif "_internal" in pattern or "_derived" in pattern or "cached" in pattern:
+        # Check for cache/cached patterns first (more specific)
+        if "cached" in pattern or ".cache" == pattern[-6:]:  # .cache at end
             reason_code = "blocked_technical_field"
+        # Check for field-level underscore patterns
+        elif pattern in ["*._*", "*.__*"]:
+            reason_code = "blocked_internal_field"
+        # Check for named underscore patterns
+        elif "_internal" in pattern or "_derived" in pattern:
+            reason_code = "blocked_technical_field"
+        # Check for domain patterns
+        elif any(pat in pattern for pat in [".*", "system", "logs", "decision", "session", "turn", "metadata", "runtime"]):
+            reason_code = "blocked_root_domain"
         else:
             reason_code = "blocked_technical_field"
 
