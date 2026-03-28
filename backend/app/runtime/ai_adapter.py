@@ -35,6 +35,9 @@ class AdapterRequest(BaseModel):
         canonical_state: Complete world state snapshot (dict)
         recent_events: List of recent events as plain dicts (not Pydantic objects)
         operator_input: Optional operator instruction or context
+        request_role_structured_output: If True, request output as AIRoleContract shape (W2.4.2+).
+                                        Defaults to False for backward compatibility.
+                                        W2.4.3 will update default to True when normalization is ready.
         metadata: Extensible metadata dict for future use
     """
 
@@ -44,6 +47,7 @@ class AdapterRequest(BaseModel):
     canonical_state: dict[str, Any]
     recent_events: list[dict[str, Any]] = Field(default_factory=list)
     operator_input: str | None = None
+    request_role_structured_output: bool = Field(default=False)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
