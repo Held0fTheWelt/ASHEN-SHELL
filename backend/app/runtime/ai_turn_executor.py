@@ -18,6 +18,7 @@ from typing import Any
 from app.content.module_models import ContentModule
 from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapter
 from app.runtime.ai_decision import ParseResult, process_adapter_response
+from app.runtime.decision_policy import AIDecisionPolicy
 from app.runtime.event_log import RuntimeEventLog
 from app.runtime.turn_executor import (
     MockDecision,
@@ -25,6 +26,7 @@ from app.runtime.turn_executor import (
     TurnExecutionResult,
     execute_turn,
 )
+from app.runtime.validators import validate_action_type
 from app.runtime.w2_models import (
     AIDecisionLog,
     AIValidationOutcome,
@@ -425,6 +427,41 @@ async def execute_turn_with_ai(
             started_at,
         )
         result.failure_reason = ExecutionFailureReason.PARSING_ERROR
+        return result
+
+    # Step 4b: Validate that proposed actions comply with canonical policy
+    # Check each proposed delta's action type before state mutation
+    policy_validation_errors = []
+    for delta in parse_result.decision.proposed_deltas:
+        # Infer action type from delta: default to STATE_UPDATE
+        # (In future, AI output might explicitly specify action_type)
+        delta_type = delta.delta_type or "state_update"
+
+        # Validate the action type is allowed
+        is_valid, error = validate_action_type(delta_type)
+        if not is_valid:
+            # Invalid action type - fail parse before state mutation
+            policy_validation_errors.append(error)
+
+    if policy_validation_errors:
+        # Policy validation failed - create error log and return early
+        error_log = _create_error_decision_log(
+            session,
+            current_turn,
+            parse_result.raw_output,
+            policy_validation_errors,
+            "policy_validation_error",
+        )
+        _store_decision_log(session, error_log)
+
+        result = _make_parse_failure_result(
+            session,
+            current_turn,
+            policy_validation_errors,
+            parse_result.raw_output,
+            started_at,
+        )
+        result.failure_reason = ExecutionFailureReason.VALIDATION_ERROR
         return result
 
     # Step 5: Bridge parsed decision to MockDecision
