@@ -25,7 +25,14 @@ from app.runtime.turn_executor import (
     TurnExecutionResult,
     execute_turn,
 )
-from app.runtime.w2_models import DeltaType, DeltaValidationStatus, SessionState, StateDelta
+from app.runtime.w2_models import (
+    AIDecisionLog,
+    AIValidationOutcome,
+    DeltaType,
+    DeltaValidationStatus,
+    SessionState,
+    StateDelta,
+)
 
 
 def build_adapter_request(
@@ -208,6 +215,108 @@ def _convert_proposed_delta_to_state_delta(
     )
 
 
+def _create_decision_log(
+    session: SessionState,
+    current_turn: int,
+    parsed_decision: Any,
+    adapter_response: AdapterResponse,
+    turn_result: TurnExecutionResult,
+) -> AIDecisionLog:
+    """Create AIDecisionLog from successful turn execution.
+
+    Args:
+        session: Current session
+        current_turn: Turn number
+        parsed_decision: Parsed AI decision
+        adapter_response: Raw adapter response
+        turn_result: Result from execute_turn
+
+    Returns:
+        AIDecisionLog with complete tracing information
+    """
+    # Determine overall validation outcome
+    if turn_result.execution_status == "success":
+        if len(turn_result.rejected_deltas) > 0:
+            validation_outcome = AIValidationOutcome.PARTIAL
+        else:
+            validation_outcome = AIValidationOutcome.ACCEPTED
+    else:
+        validation_outcome = AIValidationOutcome.ERROR
+
+    # Accepted and rejected deltas are already StateDelta objects from execute_turn
+    # Just use them directly
+    accepted_state_deltas = turn_result.accepted_deltas
+    rejected_state_deltas = turn_result.rejected_deltas
+
+    # Capture guard notes from validation errors
+    guard_notes = None
+    if turn_result.validation_errors:
+        guard_notes = "; ".join(turn_result.validation_errors[:3])  # First 3 errors
+
+    return AIDecisionLog(
+        session_id=session.session_id,
+        turn_number=current_turn,
+        raw_output=adapter_response.raw_output,
+        parsed_output={
+            "scene_interpretation": parsed_decision.scene_interpretation,
+            "detected_triggers": parsed_decision.detected_triggers,
+            "rationale": parsed_decision.rationale,
+            "proposed_scene_id": parsed_decision.proposed_scene_id,
+            "proposed_deltas_count": len(parsed_decision.proposed_deltas),
+        },
+        validation_outcome=validation_outcome,
+        accepted_deltas=accepted_state_deltas,
+        rejected_deltas=rejected_state_deltas,
+        guard_notes=guard_notes,
+    )
+
+
+def _create_error_decision_log(
+    session: SessionState,
+    current_turn: int,
+    raw_output: str,
+    errors: list[str],
+    error_type: str,
+) -> AIDecisionLog:
+    """Create AIDecisionLog for error paths (parse error, adapter error).
+
+    Args:
+        session: Current session
+        current_turn: Turn number
+        raw_output: Raw adapter output (may be partial or malformed)
+        errors: List of error messages
+        error_type: Type of error ("parse_error", "adapter_error", etc.)
+
+    Returns:
+        AIDecisionLog with ERROR outcome
+    """
+    guard_notes = f"{error_type}: {'; '.join(errors[:3])}"
+
+    return AIDecisionLog(
+        session_id=session.session_id,
+        turn_number=current_turn,
+        raw_output=raw_output,
+        parsed_output=None,
+        validation_outcome=AIValidationOutcome.ERROR,
+        accepted_deltas=[],
+        rejected_deltas=[],
+        guard_notes=guard_notes,
+    )
+
+
+def _store_decision_log(session: SessionState, log: AIDecisionLog) -> None:
+    """Store decision log in session metadata.
+
+    Args:
+        session: Current session (modified in-place)
+        log: AIDecisionLog to store
+    """
+    if "ai_decision_logs" not in session.metadata:
+        session.metadata["ai_decision_logs"] = []
+
+    session.metadata["ai_decision_logs"].append(log)
+
+
 async def execute_turn_with_ai(
     session: SessionState,
     current_turn: int,
@@ -254,8 +363,17 @@ async def execute_turn_with_ai(
     # Step 3: Parse response
     parse_result: ParseResult = process_adapter_response(response)
 
-    # Step 4: If parse failed, return system_error result
+    # Step 4: If parse failed, create error decision log and return system_error result
     if not parse_result.success:
+        error_log = _create_error_decision_log(
+            session,
+            current_turn,
+            parse_result.raw_output,
+            parse_result.errors,
+            "parse_error",
+        )
+        _store_decision_log(session, error_log)
+
         return _make_parse_failure_result(
             session,
             current_turn,
@@ -268,4 +386,16 @@ async def execute_turn_with_ai(
     mock_decision = decision_from_parsed(parse_result.decision)
 
     # Step 6: Delegate to execute_turn (full validation/execution)
-    return await execute_turn(session, current_turn, mock_decision, module)
+    turn_result = await execute_turn(session, current_turn, mock_decision, module)
+
+    # Step 7: Create and store decision log from execution result
+    decision_log = _create_decision_log(
+        session=session,
+        current_turn=current_turn,
+        parsed_decision=parse_result.decision,
+        adapter_response=response,
+        turn_result=turn_result,
+    )
+    _store_decision_log(session, decision_log)
+
+    return turn_result

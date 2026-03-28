@@ -366,6 +366,36 @@ class TestExecuteTurnWithAI:
         # Delta should be in rejected_deltas, not accepted_deltas
         assert len(result.rejected_deltas) > 0
 
+    def test_successful_ai_turn_creates_decision_log(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Successful AI turn execution creates AIDecisionLog entry."""
+        from app.runtime.w2_models import AIValidationOutcome
+
+        session = god_of_carnage_module_with_state
+        adapter = DeterministicAIAdapter(payload=DELTA_PAYLOAD)
+
+        # Execute turn
+        result = asyncio.run(
+            execute_turn_with_ai(
+                session,
+                current_turn=session.turn_counter + 1,
+                adapter=adapter,
+                module=god_of_carnage_module,
+            )
+        )
+
+        # Verify decision log was created and stored
+        assert "ai_decision_logs" in session.metadata
+        assert len(session.metadata["ai_decision_logs"]) == 1
+
+        decision_log = session.metadata["ai_decision_logs"][0]
+        assert decision_log.session_id == session.session_id
+        assert decision_log.turn_number == session.turn_counter + 1
+        assert decision_log.raw_output is not None
+        assert decision_log.parsed_output is not None
+        assert decision_log.validation_outcome == AIValidationOutcome.ACCEPTED
+
     def test_mock_path_remains_available_and_coherent(
         self, god_of_carnage_module_with_state, god_of_carnage_module
     ):
