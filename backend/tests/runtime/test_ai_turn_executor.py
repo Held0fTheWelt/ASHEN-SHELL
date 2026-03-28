@@ -24,7 +24,14 @@ from app.runtime.ai_turn_executor import (
     execute_turn_with_ai,
 )
 from app.runtime.turn_executor import MockDecision, ProposedStateDelta
-from app.runtime.w2_models import DeltaType, DeltaValidationStatus, SessionState
+from app.runtime.w2_models import (
+    DeltaType,
+    DeltaValidationStatus,
+    SessionState,
+    AIValidationOutcome,
+    StateDelta,
+    GuardOutcome,
+)
 
 
 # ===== Test Adapter: DeterministicAIAdapter =====
@@ -615,3 +622,168 @@ def test_no_w2_scope_jump():
     # - Accepted/rejected deltas visible
 
     assert True  # Scope validation is manual; this documents the intent
+
+
+class TestAIDecisionLogOutcomes:
+    """Tests for canonical AIValidationOutcome mapping and guard_notes normalization."""
+
+    def test_clean_turn_produces_accepted_validation_outcome(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test AIValidationOutcome.ACCEPTED for clean turn with all valid deltas."""
+        session = god_of_carnage_module_with_state
+        # Use a known-good payload structure
+        adapter = DeterministicAIAdapter(
+            payload={
+                "scene_interpretation": "Scene is calm",
+                "detected_triggers": [],
+                "proposed_state_deltas": [
+                    {
+                        "target_path": "characters.veronique.emotional_state",
+                        "next_value": 70,
+                        "delta_type": "state_update",
+                        "rationale": "Emotional increase",
+                    }
+                ],
+                "rationale": "Test decision",
+            }
+        )
+
+        result = asyncio.run(
+            execute_turn_with_ai(
+                session,
+                current_turn=session.turn_counter + 1,
+                adapter=adapter,
+                module=god_of_carnage_module,
+            )
+        )
+
+        assert result.execution_status == "success"
+
+        # Check AI decision log from session metadata
+        assert "ai_decision_logs" in session.metadata
+        decision_logs = session.metadata["ai_decision_logs"]
+        assert len(decision_logs) > 0
+        latest_log = decision_logs[-1]
+
+        assert latest_log.validation_outcome == AIValidationOutcome.ACCEPTED
+        assert latest_log.guard_notes is None  # No validation errors
+
+    def test_guard_outcome_rejected_is_mapped_to_rejected_validation_outcome(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test that GuardOutcome.REJECTED maps to AIValidationOutcome.REJECTED (the bugfix)."""
+        # This test verifies the fix: all-rejected deltas should produce REJECTED, not PARTIAL.
+        # We use direct unit test instead of integration to avoid adapter complexities.
+        from app.runtime.ai_turn_executor import _create_decision_log
+        from app.runtime.turn_executor import TurnExecutionResult, MockDecision
+
+        session = god_of_carnage_module_with_state
+
+        # Create a turn result with all rejected deltas (guard_outcome=REJECTED)
+        result = TurnExecutionResult(
+            turn_number=1,
+            session_id=session.session_id,
+            execution_status="success",
+            decision=MockDecision(),
+            accepted_deltas=[],
+            rejected_deltas=[
+                StateDelta(
+                    delta_type=DeltaType.CHARACTER_STATE,
+                    target_path="characters.unknown.emotional_state",
+                    source="ai_proposal",
+                ),
+                StateDelta(
+                    delta_type=DeltaType.CHARACTER_STATE,
+                    target_path="characters.unknown2.emotional_state",
+                    source="ai_proposal",
+                ),
+            ],
+            validation_errors=["Unknown character unknown", "Unknown character unknown2"],
+            guard_outcome=GuardOutcome.REJECTED,
+        )
+
+        # Create decision log from the all-rejected result
+        log = _create_decision_log(
+            session,
+            1,
+            type("MockParsed", (), {
+                "scene_interpretation": "Test",
+                "detected_triggers": [],
+                "proposed_deltas": [],
+                "proposed_scene_id": None,
+                "rationale": "Test",
+            })(),
+            type("MockResponse", (), {"raw_output": "Test"})(),
+            result,
+        )
+
+        # This is the fix: all-rejected should produce REJECTED, not PARTIAL
+        assert log.validation_outcome == AIValidationOutcome.REJECTED
+        assert log.guard_notes is not None
+        assert "error" in log.guard_notes
+        assert "rejected" in log.guard_notes
+
+    def test_guard_notes_format_normalized_with_error_count_and_label(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test that guard_notes is normalized with error count and outcome label."""
+        from app.runtime.ai_turn_executor import _create_decision_log
+        from app.runtime.turn_executor import TurnExecutionResult, MockDecision
+
+        session = god_of_carnage_module_with_state
+
+        # Create a turn result with partial acceptance
+        result = TurnExecutionResult(
+            turn_number=1,
+            session_id=session.session_id,
+            execution_status="success",
+            decision=MockDecision(),
+            accepted_deltas=[
+                StateDelta(
+                    delta_type=DeltaType.CHARACTER_STATE,
+                    target_path="characters.veronique.emotional_state",
+                    source="ai_proposal",
+                )
+            ],
+            rejected_deltas=[
+                StateDelta(
+                    delta_type=DeltaType.CHARACTER_STATE,
+                    target_path="characters.unknown.emotional_state",
+                    source="ai_proposal",
+                )
+            ],
+            validation_errors=["Unknown character unknown"],
+            guard_outcome=GuardOutcome.PARTIALLY_ACCEPTED,
+        )
+
+        # Create decision log from the partial result
+        log = _create_decision_log(
+            session,
+            1,
+            type("MockParsed", (), {
+                "scene_interpretation": "Test",
+                "detected_triggers": [],
+                "proposed_deltas": [],
+                "proposed_scene_id": None,
+                "rationale": "Test",
+            })(),
+            type("MockResponse", (), {"raw_output": "Test"})(),
+            result,
+        )
+
+        assert log.validation_outcome == AIValidationOutcome.PARTIAL
+        assert log.guard_notes is not None
+
+        # Verify normalized guard_notes format: "N error(s); partially_accepted: ..."
+        guard_notes_parts = log.guard_notes.split(";")
+        assert len(guard_notes_parts) >= 2
+
+        # First part should be error count
+        error_part = guard_notes_parts[0].strip()
+        assert "error" in error_part
+        assert "1 error" in error_part  # One invalid character
+
+        # Second part should contain outcome label
+        outcome_part = ";".join(guard_notes_parts[1:]).strip()
+        assert "partially_accepted" in outcome_part

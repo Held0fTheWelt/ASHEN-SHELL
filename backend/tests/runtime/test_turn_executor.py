@@ -22,6 +22,7 @@ from app.runtime.w2_models import (
     StateDelta,
     DeltaType,
     DeltaValidationStatus,
+    GuardOutcome,
 )
 from app.runtime.turn_executor import (
     MockDecision,
@@ -1359,3 +1360,128 @@ class TestCommitTurnResult:
         assert session.current_scene_id == original_scene
         # Check a character value to ensure state wasn't mutated
         assert session.canonical_state.get("characters", {}).get("veronique", {}).get("emotional_state") == original_state.get("characters", {}).get("veronique", {}).get("emotional_state")
+
+
+class TestGuardOutcome:
+    """Tests for canonical guard outcome classification in TurnExecutionResult."""
+
+    def test_guard_outcome_accepted_all_deltas_pass(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test GuardOutcome.ACCEPTED when all proposed deltas are accepted."""
+        session = god_of_carnage_module_with_state
+        mock_decision = MockDecision(
+            proposed_deltas=[
+                ProposedStateDelta(
+                    target="characters.veronique.emotional_state",
+                    next_value=55,
+                    delta_type=DeltaType.CHARACTER_STATE,
+                )
+            ],
+        )
+
+        result = asyncio.run(execute_turn(session, 1, mock_decision, god_of_carnage_module))
+
+        assert result.execution_status == "success"
+        assert result.guard_outcome == GuardOutcome.ACCEPTED
+        assert len(result.accepted_deltas) > 0
+        assert len(result.rejected_deltas) == 0
+
+    def test_guard_outcome_partially_accepted_mixed_deltas(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test GuardOutcome.PARTIALLY_ACCEPTED when some deltas accepted, some rejected."""
+        session = god_of_carnage_module_with_state
+        mock_decision = MockDecision(
+            proposed_deltas=[
+                ProposedStateDelta(
+                    target="characters.veronique.emotional_state",
+                    next_value=55,
+                    delta_type=DeltaType.CHARACTER_STATE,
+                ),
+                ProposedStateDelta(
+                    target="characters.unknown_char.emotional_state",
+                    next_value=50,
+                    delta_type=DeltaType.CHARACTER_STATE,
+                ),
+            ],
+        )
+
+        result = asyncio.run(execute_turn(session, 1, mock_decision, god_of_carnage_module))
+
+        assert result.execution_status == "success"
+        assert result.guard_outcome == GuardOutcome.PARTIALLY_ACCEPTED
+        assert len(result.accepted_deltas) > 0
+        assert len(result.rejected_deltas) > 0
+
+    def test_guard_outcome_rejected_all_deltas_fail(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test GuardOutcome.REJECTED when all proposed deltas are rejected."""
+        session = god_of_carnage_module_with_state
+        mock_decision = MockDecision(
+            proposed_deltas=[
+                ProposedStateDelta(
+                    target="characters.unknown_char1.emotional_state",
+                    next_value=50,
+                    delta_type=DeltaType.CHARACTER_STATE,
+                ),
+                ProposedStateDelta(
+                    target="characters.unknown_char2.emotional_state",
+                    next_value=60,
+                    delta_type=DeltaType.CHARACTER_STATE,
+                ),
+            ],
+        )
+
+        result = asyncio.run(execute_turn(session, 1, mock_decision, god_of_carnage_module))
+
+        assert result.execution_status == "success"
+        assert result.guard_outcome == GuardOutcome.REJECTED
+        assert len(result.accepted_deltas) == 0
+        assert len(result.rejected_deltas) > 0
+
+    def test_guard_outcome_structurally_invalid_empty_decision(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test GuardOutcome.STRUCTURALLY_INVALID when no deltas proposed."""
+        session = god_of_carnage_module_with_state
+        mock_decision = MockDecision(proposed_deltas=[])
+
+        result = asyncio.run(execute_turn(session, 1, mock_decision, god_of_carnage_module))
+
+        assert result.execution_status == "success"
+        assert result.guard_outcome == GuardOutcome.STRUCTURALLY_INVALID
+        assert len(result.accepted_deltas) == 0
+        assert len(result.rejected_deltas) == 0
+
+    def test_guard_outcome_in_turn_completed_event(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        """Test that guard_outcome is included in turn_completed event payload."""
+        session = god_of_carnage_module_with_state
+        mock_decision = MockDecision(
+            proposed_deltas=[
+                ProposedStateDelta(
+                    target="characters.veronique.emotional_state",
+                    next_value=55,
+                    delta_type=DeltaType.CHARACTER_STATE,
+                )
+            ],
+        )
+
+        result = asyncio.run(execute_turn(session, 1, mock_decision, god_of_carnage_module))
+
+        assert result.execution_status == "success"
+        assert result.guard_outcome == GuardOutcome.ACCEPTED
+
+        # Find turn_completed event
+        turn_completed_event = None
+        for event in result.events:
+            if event.event_type == "turn_completed":
+                turn_completed_event = event
+                break
+
+        assert turn_completed_event is not None
+        assert "guard_outcome" in turn_completed_event.payload
+        assert turn_completed_event.payload["guard_outcome"] == GuardOutcome.ACCEPTED.value

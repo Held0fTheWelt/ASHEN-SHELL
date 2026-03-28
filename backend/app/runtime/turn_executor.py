@@ -25,6 +25,7 @@ from app.runtime.w2_models import (
     DeltaValidationStatus,
     EventLogEntry,
     ExecutionFailureReason,
+    GuardOutcome,
     SessionState,
     StateDelta,
     TurnStatus,
@@ -89,6 +90,7 @@ class TurnExecutionResult(BaseModel):
         updated_canonical_state: Full canonical state after applying deltas.
         updated_scene_id: Scene ID after execution (if changed, via canonical legality check).
         updated_ending_id: Ending ID if an ending was triggered (via canonical legality check).
+        guard_outcome: Canonical guard classification (accepted, partially_accepted, rejected, structurally_invalid).
         failure_reason: Explicit classification of any failure (generation, parsing, validation, or none).
         started_at: Timestamp when turn execution began.
         completed_at: Timestamp when turn execution completed.
@@ -107,6 +109,7 @@ class TurnExecutionResult(BaseModel):
     updated_canonical_state: dict[str, Any] = Field(default_factory=dict)
     updated_scene_id: str | None = None
     updated_ending_id: str | None = None
+    guard_outcome: GuardOutcome = GuardOutcome.STRUCTURALLY_INVALID
     failure_reason: ExecutionFailureReason = ExecutionFailureReason.NONE
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: datetime | None = None
@@ -373,6 +376,34 @@ def apply_deltas(
     return new_state
 
 
+def _compute_guard_outcome(
+    accepted: list,
+    rejected: list,
+    execution_status: str,
+) -> GuardOutcome:
+    """Compute the canonical guard outcome based on delta acceptance status.
+
+    Args:
+        accepted: List of accepted deltas.
+        rejected: List of rejected deltas.
+        execution_status: Turn execution status ("success", "validation_failed", "system_error").
+
+    Returns:
+        GuardOutcome classification for the turn.
+    """
+    if execution_status != "success":
+        return GuardOutcome.STRUCTURALLY_INVALID
+    n_accepted = len(accepted)
+    n_rejected = len(rejected)
+    if n_accepted == 0 and n_rejected == 0:
+        return GuardOutcome.STRUCTURALLY_INVALID
+    if n_rejected == 0:
+        return GuardOutcome.ACCEPTED
+    if n_accepted == 0:
+        return GuardOutcome.REJECTED
+    return GuardOutcome.PARTIALLY_ACCEPTED
+
+
 async def execute_turn(
     session: SessionState,
     current_turn: int,
@@ -523,6 +554,8 @@ async def execute_turn(
         completed_at = datetime.now(timezone.utc)
         duration_ms = (completed_at - started_at).total_seconds() * 1000
 
+        guard_outcome_value = _compute_guard_outcome(accepted_deltas, rejected_deltas, "success")
+
         event_log.log(
             "turn_completed",
             f"Turn {current_turn} completed: {len(accepted_deltas)} accepted, {len(rejected_deltas)} rejected",
@@ -530,6 +563,7 @@ async def execute_turn(
                 "turn_number": current_turn,
                 "accepted_delta_count": len(accepted_deltas),
                 "rejected_delta_count": len(rejected_deltas),
+                "guard_outcome": guard_outcome_value.value,
                 "detected_triggers": mock_decision.detected_triggers,
                 "duration_ms": duration_ms,
             },
@@ -547,6 +581,7 @@ async def execute_turn(
             updated_canonical_state=updated_state,
             updated_scene_id=updated_scene_id,
             updated_ending_id=updated_ending_id,
+            guard_outcome=guard_outcome_value,
             started_at=started_at,
             completed_at=completed_at,
             duration_ms=duration_ms,
@@ -574,6 +609,7 @@ async def execute_turn(
             rejected_deltas=[],
             updated_canonical_state=session.canonical_state,
             updated_scene_id=session.current_scene_id,
+            guard_outcome=GuardOutcome.STRUCTURALLY_INVALID,
             started_at=started_at,
             completed_at=completed_at,
             duration_ms=duration_ms,

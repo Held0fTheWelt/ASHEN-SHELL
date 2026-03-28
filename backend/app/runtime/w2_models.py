@@ -210,6 +210,26 @@ class ExecutionFailureReason(str, Enum):
     VALIDATION_ERROR = "validation_error"  # Runtime validation rejected changes
 
 
+class GuardOutcome(str, Enum):
+    """Canonical guard outcome classification for a turn's proposed deltas.
+
+    Represents the guard's final decision on a set of proposed deltas,
+    providing clear semantics for full acceptance, partial acceptance,
+    full rejection, and structural invalidity.
+
+    Values:
+        ACCEPTED: All proposed deltas passed validation and were applied.
+        PARTIALLY_ACCEPTED: Some deltas accepted, some rejected by the guard.
+        REJECTED: All proposed deltas rejected; nothing applied.
+        STRUCTURALLY_INVALID: No deltas proposed (empty decision) or system error.
+    """
+
+    ACCEPTED = "accepted"
+    PARTIALLY_ACCEPTED = "partially_accepted"
+    REJECTED = "rejected"
+    STRUCTURALLY_INVALID = "structurally_invalid"
+
+
 class AIDecisionAction(BaseModel):
     """An AI decision action with explicit type and validation context.
 

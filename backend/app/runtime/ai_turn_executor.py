@@ -33,6 +33,7 @@ from app.runtime.w2_models import (
     DeltaType,
     DeltaValidationStatus,
     ExecutionFailureReason,
+    GuardOutcome,
     SessionState,
     StateDelta,
 )
@@ -237,12 +238,15 @@ def _create_decision_log(
     Returns:
         AIDecisionLog with complete tracing information
     """
-    # Determine overall validation outcome
+    # Determine overall validation outcome from canonical guard_outcome
     if turn_result.execution_status == "success":
-        if len(turn_result.rejected_deltas) > 0:
-            validation_outcome = AIValidationOutcome.PARTIAL
-        else:
-            validation_outcome = AIValidationOutcome.ACCEPTED
+        _outcome_map = {
+            GuardOutcome.ACCEPTED: AIValidationOutcome.ACCEPTED,
+            GuardOutcome.PARTIALLY_ACCEPTED: AIValidationOutcome.PARTIAL,
+            GuardOutcome.REJECTED: AIValidationOutcome.REJECTED,
+            GuardOutcome.STRUCTURALLY_INVALID: AIValidationOutcome.ERROR,
+        }
+        validation_outcome = _outcome_map.get(turn_result.guard_outcome, AIValidationOutcome.ERROR)
     else:
         validation_outcome = AIValidationOutcome.ERROR
 
@@ -251,10 +255,14 @@ def _create_decision_log(
     accepted_state_deltas = turn_result.accepted_deltas
     rejected_state_deltas = turn_result.rejected_deltas
 
-    # Capture guard notes from validation errors
+    # Normalize guard notes with count and outcome label
     guard_notes = None
     if turn_result.validation_errors:
-        guard_notes = "; ".join(turn_result.validation_errors[:3])  # First 3 errors
+        errors = turn_result.validation_errors
+        count = len(errors)
+        outcome_label = turn_result.guard_outcome.value
+        sample = "; ".join(errors[:3])
+        guard_notes = f"{count} error{'s' if count != 1 else ''}; {outcome_label}: {sample}"
 
     return AIDecisionLog(
         session_id=session.session_id,
@@ -293,7 +301,9 @@ def _create_error_decision_log(
     Returns:
         AIDecisionLog with ERROR outcome
     """
-    guard_notes = f"{error_type}: {'; '.join(errors[:3])}"
+    count = len(errors)
+    sample = "; ".join(errors[:3])
+    guard_notes = f"{count} error{'s' if count != 1 else ''}; {error_type}: {sample}"
 
     return AIDecisionLog(
         session_id=session.session_id,
