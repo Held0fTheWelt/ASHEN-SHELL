@@ -11,6 +11,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.runtime.reference_policy import ReferencePolicy
+
 
 def validate_action_type(action_type: str) -> tuple[bool, str | None]:
     """Validate that an action type is in the canonical taxonomy.
@@ -39,12 +41,18 @@ def validate_action_type(action_type: str) -> tuple[bool, str | None]:
         )
 
 
-def validate_action_structure(action_type: str, action_data: dict) -> tuple[bool, list[str]]:
+def validate_action_structure(
+    action_type: str, action_data: dict, module: Any = None, session: Any = None
+) -> tuple[bool, list[str]]:
     """Validate that an action has required fields for its type.
+
+    Also validates action references (trigger IDs, character IDs) when module is provided.
 
     Args:
         action_type: The action type (must be valid AIActionType)
         action_data: Dict of action fields
+        module: Optional ContentModule for reference validation
+        session: Optional SessionState for context-aware reference checks
 
     Returns:
         Tuple of (is_valid, list_of_error_messages)
@@ -80,10 +88,32 @@ def validate_action_structure(action_type: str, action_data: dict) -> tuple[bool
     elif action == AIActionType.TRIGGER_ASSERTION:
         if not action_data.get("trigger_ids"):
             errors.append("TRIGGER_ASSERTION requires 'trigger_ids'")
+        elif module is not None:
+            # Validate trigger references (W2.2.3)
+            current_scene_id = session.current_scene_id if session else None
+            for trigger_id in action_data["trigger_ids"]:
+                ref_decision = ReferencePolicy.evaluate(
+                    "trigger", trigger_id, module,
+                    session=session, current_scene_id=current_scene_id
+                )
+                if not ref_decision.allowed:
+                    errors.append(
+                        f"Trigger reference validation failed: {ref_decision.reason_message} "
+                        f"(reason: {ref_decision.reason_code})"
+                    )
 
     elif action == AIActionType.DIALOGUE_IMPULSE:
         if not action_data.get("character_id"):
             errors.append("DIALOGUE_IMPULSE requires 'character_id'")
+        elif module is not None:
+            # Validate character reference (W2.2.3)
+            char_id = action_data["character_id"]
+            ref_decision = ReferencePolicy.evaluate("character", char_id, module)
+            if not ref_decision.allowed:
+                errors.append(
+                    f"Character reference validation failed: {ref_decision.reason_message} "
+                    f"(reason: {ref_decision.reason_code})"
+                )
         if not action_data.get("impulse_text"):
             errors.append("DIALOGUE_IMPULSE requires 'impulse_text'")
 
@@ -169,13 +199,18 @@ def validate_decision(decision: Any, session: Any, module: Any) -> ValidationOut
         else:
             accepted_indices.append(idx)
 
-    # Check scene transition if present
+    # Check scene reference if present (W2.2.3)
     if hasattr(decision, "proposed_scene_id") and decision.proposed_scene_id:
-        scene_errors = _validate_scene_transition(
-            decision.proposed_scene_id, session, module
+        current_scene_id = session.current_scene_id if session else None
+        ref_decision = ReferencePolicy.evaluate(
+            "scene", decision.proposed_scene_id, module,
+            session=session, current_scene_id=current_scene_id
         )
-        if scene_errors:
-            errors.extend(scene_errors)
+        if not ref_decision.allowed:
+            errors.append(
+                f"Scene reference validation failed: {ref_decision.reason_message} "
+                f"(reason: {ref_decision.reason_code})"
+            )
 
     # Determine overall validation status
     is_valid = len(errors) == 0
@@ -226,17 +261,39 @@ def _validate_delta(delta: Any, session: Any, module: Any) -> list[str]:
         errors.append(f"Invalid target path format: {target}")
         return errors
 
-    # Check if entity exists in module
+    # Check reference integrity for entity types (W2.2.3)
     entity_type = parts[0]
-    if entity_type == "characters":
-        entity_id = parts[1] if len(parts) > 1 else None
-        if entity_id and not _entity_exists(entity_id, module.characters):
-            errors.append(f"Unknown character: {entity_id}")
-    elif entity_type == "relationships":
-        entity_id = parts[1] if len(parts) > 1 else None
-        if entity_id and not _entity_exists(entity_id, module.relationship_axes):
-            errors.append(f"Unknown relationship axis: {entity_id}")
-    elif entity_type not in ["metadata", "scene", "scene_state", "conflict_state", "runtime", "system", "logs", "decision", "session", "turn", "cache"]:
+    entity_id = parts[1] if len(parts) > 1 else None
+
+    if entity_type == "characters" and entity_id:
+        ref_decision = ReferencePolicy.evaluate("character", entity_id, module)
+        if not ref_decision.allowed:
+            errors.append(
+                f"Reference validation failed: {ref_decision.reason_message} "
+                f"(reason: {ref_decision.reason_code})"
+            )
+            return errors
+    elif entity_type == "relationships" and entity_id:
+        ref_decision = ReferencePolicy.evaluate("relationship", entity_id, module)
+        if not ref_decision.allowed:
+            errors.append(
+                f"Reference validation failed: {ref_decision.reason_message} "
+                f"(reason: {ref_decision.reason_code})"
+            )
+            return errors
+    elif entity_type == "scene_state" and entity_id:
+        current_scene_id = session.current_scene_id if session else None
+        ref_decision = ReferencePolicy.evaluate(
+            "scene", entity_id, module,
+            session=session, current_scene_id=current_scene_id
+        )
+        if not ref_decision.allowed:
+            errors.append(
+                f"Reference validation failed: {ref_decision.reason_message} "
+                f"(reason: {ref_decision.reason_code})"
+            )
+            return errors
+    elif entity_type not in ["metadata", "conflict_state", "runtime", "system", "logs", "decision", "session", "turn", "cache"]:
         errors.append(f"Unknown entity type in target: {entity_type}")
 
     # Step 4: Check mutation permission (W2.2.2)
@@ -262,72 +319,3 @@ def _validate_delta(delta: Any, session: Any, module: Any) -> list[str]:
     return errors
 
 
-def _validate_scene_transition(
-    scene_id: str, session: Any, module: Any
-) -> list[str]:
-    """Validate a scene transition is legal from the current canonical scene.
-
-    Checks that:
-    1. Target scene exists in module
-    2. Target scene is reachable from current scene via defined transitions
-    3. Current scene is valid in module
-
-    Args:
-        scene_id: Target scene ID.
-        session: Current SessionState.
-        module: ContentModule.
-
-    Returns:
-        List of error messages (empty if valid).
-    """
-    errors = []
-
-    # Check target scene exists
-    if not _entity_exists(scene_id, module.scene_phases):
-        errors.append(f"Unknown scene/phase: {scene_id}")
-        return errors  # Can't check reachability if target doesn't exist
-
-    # Check current scene is valid in module
-    current_scene_id = session.current_scene_id
-    if not _entity_exists(current_scene_id, module.scene_phases):
-        errors.append(f"Current scene '{current_scene_id}' not in module")
-        return errors
-
-    # Prevent self-transitions (no movement)
-    if scene_id == current_scene_id:
-        # Self-transitions are allowed (staying in same scene)
-        return errors
-
-    # Check if target is reachable: find a valid transition from current to target
-    # A transition is valid if it exists and has its target in the module
-    reachable = False
-    if isinstance(module.phase_transitions, dict):
-        for transition_id, transition in module.phase_transitions.items():
-            # Check if this transition starts from current scene
-            if transition.from_phase == current_scene_id:
-                # Check if this transition goes to target scene
-                if transition.to_phase == scene_id:
-                    # Check if target is valid
-                    if _entity_exists(transition.to_phase, module.scene_phases):
-                        reachable = True
-                        break
-
-    if not reachable:
-        errors.append(
-            f"Scene '{scene_id}' is not reachable from current scene '{current_scene_id}'"
-        )
-
-    return errors
-
-
-def _entity_exists(entity_id: str, entity_map: dict) -> bool:
-    """Check if an entity exists in a map.
-
-    Args:
-        entity_id: Entity ID to check.
-        entity_map: Dictionary of entities.
-
-    Returns:
-        True if entity exists.
-    """
-    return entity_id in entity_map if isinstance(entity_map, dict) else False

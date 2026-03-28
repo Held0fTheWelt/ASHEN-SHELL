@@ -485,8 +485,8 @@ class TestSceneReachabilityValidation:
         )
 
         outcome = validate_decision(decision, session, god_of_carnage_module)
-        # Should have unknown scene error
-        unknown_errors = [e for e in outcome.errors if "Unknown scene" in e]
+        # Should have unknown scene error via ReferencePolicy
+        unknown_errors = [e for e in outcome.errors if "scene" in e.lower() and "not in module" in e.lower()]
         assert len(unknown_errors) > 0
 
     def test_validate_self_transition_allowed(self, god_of_carnage_module, god_of_carnage_module_with_state):
