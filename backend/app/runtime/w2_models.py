@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -34,12 +34,42 @@ class SessionStatus(str, Enum):
     CRASHED = "crashed"
 
 
+class SessionContextLayers(BaseModel):
+    """W2.3 memory and context layers for a session.
+
+    Contains the five bounded context layers that enable longer-session coherence:
+    - short_term_context: Most recent turn's context (W2.3.1)
+    - session_history: Bounded history of turns (W2.3.2)
+    - progression_summary: Compressed session progression (W2.3.3)
+    - relationship_axis_context: Salient relationship dynamics (W2.3.4)
+    - lore_direction_context: Selective module guidance injection (W2.3.5)
+
+    All layers are optional (None) until explicitly derived/accumulated.
+    This wrapper keeps W2.3 layers grouped and distinct from core session state.
+
+    Attributes:
+        short_term_context: Current turn context snapshot (from W2.3.1).
+        session_history: Accumulated bounded history (from W2.3.2).
+        progression_summary: Compressed progression state (from W2.3.3).
+        relationship_axis_context: Relationship dynamics snapshot (from W2.3.4).
+        lore_direction_context: Selected module guidance (from W2.3.5).
+    """
+
+    short_term_context: Optional[Any] = None  # ShortTermTurnContext when populated
+    session_history: Optional[Any] = None  # SessionHistory when populated
+    progression_summary: Optional[Any] = None  # ProgressionSummary when populated
+    relationship_axis_context: Optional[Any] = None  # RelationshipAxisContext when populated
+    lore_direction_context: Optional[Any] = None  # LoreDirectionContext when populated
+
+
 class SessionState(BaseModel):
     """Represents the state of an active story session.
 
     Captures the session identity, module reference, current scene,
     overall status, and the canonical state snapshot. Serves as the
     container for a complete story loop session.
+
+    Includes W2.3 memory/context layers for longer-session coherence.
 
     Attributes:
         session_id: Unique identifier for this session (uuid4).
@@ -55,6 +85,7 @@ class SessionState(BaseModel):
         created_at: Timestamp when session was created.
         updated_at: Timestamp when session was last updated.
         metadata: Extensible metadata dict.
+        context_layers: W2.3 memory and context layers (W2.3.1-W2.3.5).
     """
 
     session_id: str = Field(default_factory=lambda: uuid4().hex)
@@ -70,6 +101,7 @@ class SessionState(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict[str, Any] = Field(default_factory=dict)
+    context_layers: SessionContextLayers = Field(default_factory=SessionContextLayers)
 
 
 # ===== Turn Models =====
