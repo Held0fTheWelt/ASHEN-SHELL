@@ -396,3 +396,33 @@ class TestMockAdapterRoleStructured:
         response = adapter.generate(request)
 
         assert response.backend_metadata["role_structured"] is True
+
+    def test_mock_adapter_role_structured_payload_has_canonical_keys(self):
+        """MockStoryAIAdapter role-structured output has all three canonical top-level keys.
+
+        When request_role_structured_output=True, structured_payload must contain
+        exactly these top-level keys: interpreter, director, responder.
+        This ensures the payload is recognized as role-structured format, not legacy.
+        """
+        adapter = MockStoryAIAdapter()
+        request = AdapterRequest(
+            session_id="sess1",
+            turn_number=1,
+            current_scene_id="phase_1",
+            canonical_state={},
+            recent_events=[],
+            request_role_structured_output=True,
+        )
+
+        response = adapter.generate(request)
+        payload = response.structured_payload
+
+        # Verify all three canonical keys are present
+        assert isinstance(payload, dict)
+        assert "interpreter" in payload
+        assert "director" in payload
+        assert "responder" in payload
+
+        # Verify it's not legacy format (no legacy-specific keys as top level)
+        assert "detected_triggers" not in payload  # Legacy format has this at top level
+        assert "proposed_deltas" not in payload    # Legacy format has this at top level
