@@ -14,12 +14,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
 from app.runtime.decision_policy import AIActionType
+from app.runtime.role_contract import ResponderSection
 
 
 # ===== Session Models =====
@@ -299,6 +300,34 @@ class AIValidationOutcome(str, Enum):
     ERROR = "error"
 
 
+class InterpreterDiagnosticSummary(BaseModel):
+    """Diagnostic summary of scene interpretation (non-executable).
+
+    Preserves the scene reading and identified tensions for diagnostics.
+    Does not feed runtime execution.
+    """
+
+    scene_reading: str
+    """Narrative description of what the interpreter observed in the scene."""
+
+    detected_tensions: list[str]
+    """Interpersonal/situational tensions identified by the interpreter."""
+
+
+class DirectorDiagnosticSummary(BaseModel):
+    """Diagnostic summary of conflict steering (non-executable).
+
+    Preserves the steering rationale and recommended direction for diagnostics.
+    Does not feed runtime execution.
+    """
+
+    conflict_steering: str
+    """Narrative rationale for the chosen conflict direction."""
+
+    recommended_direction: Literal["escalate", "stabilize", "shift_alliance", "redirect", "hold"]
+    """Enum: type of narrative movement (bounded set)."""
+
+
 class AIDecisionLog(BaseModel):
     """Record of AI decision for a turn.
 
@@ -330,3 +359,16 @@ class AIDecisionLog(BaseModel):
     guard_notes: str | None = None
     recovery_notes: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # W2.4.4 role diagnostic fields (optional for backward compatibility)
+    interpreter_output: InterpreterDiagnosticSummary | None = None
+    """Diagnostic summary from interpreter role: scene reading and detected tensions."""
+
+    director_output: DirectorDiagnosticSummary | None = None
+    """Diagnostic summary from director role: conflict steering and recommended direction."""
+
+    responder_output: ResponderSection | None = None
+    """Runtime-relevant proposals from responder role (feeds normalization)."""
+
+    guard_outcome: GuardOutcome | None = None
+    """Canonical validation result for responder proposals (guard decision)."""
