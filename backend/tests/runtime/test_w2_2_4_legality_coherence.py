@@ -199,12 +199,130 @@ class TestEndingLegalityCoherence:
         assert not legality.allowed
 
 
+class TestConditionalTransitionCoherence:
+    """Validator and derivation are coherent for conditional transitions."""
+
+    @pytest.fixture
+    def conditional_module(self):
+        """Module with only conditional transition from s2 to s3."""
+        metadata = ModuleMetadata(
+            module_id="conditional",
+            title="Conditional",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+
+        scenes = {
+            "s1": ScenePhase(id="s1", name="S1", sequence=1, description=""),
+            "s2": ScenePhase(id="s2", name="S2", sequence=2, description=""),
+            "s3": ScenePhase(id="s3", name="S3", sequence=3, description=""),
+        }
+
+        # ONLY conditional transition from s2 to s3 (no unconditional path)
+        transitions = {
+            "t_conditional": PhaseTransition(
+                id="t_conditional",
+                from_phase="s2",
+                to_phase="s3",
+                trigger_conditions=["unlock"],
+            ),
+        }
+
+        return ContentModule(
+            metadata=metadata,
+            scene_phases=scenes,
+            phase_transitions=transitions,
+            ending_conditions={},
+            characters={},
+            relationship_axes={},
+            triggers={},
+            assertions={},
+        )
+
+    @pytest.fixture
+    def session_s2(self):
+        """Session at s2."""
+        return SessionState(
+            session_id="test",
+            module_id="conditional",
+            module_version="0.1.0",
+            current_scene_id="s2",
+            status=SessionStatus.ACTIVE,
+            canonical_state={},
+        )
+
+    def test_validator_rejects_conditional_without_evidence(
+        self, conditional_module, session_s2
+    ):
+        """Validator rejects conditional transition when trigger evidence unavailable."""
+        # Validator checks with detected_triggers=None (no trigger evidence)
+        legality = SceneTransitionLegality.check_transition_legal(
+            "s2", "s3", conditional_module, detected_triggers=None
+        )
+        assert not legality.allowed
+        assert "undefined" in legality.reason.lower() or "cannot" in legality.reason.lower()
+
+    def test_validator_rejects_conditional_without_triggers(
+        self, conditional_module, session_s2
+    ):
+        """Validator rejects conditional transition when required triggers not detected."""
+        # Validator checks with empty detected_triggers (triggers detected but not the one needed)
+        legality = SceneTransitionLegality.check_transition_legal(
+            "s2", "s3", conditional_module, detected_triggers=[]
+        )
+        assert not legality.allowed
+        assert "missing" in legality.reason.lower()
+
+    def test_validator_accepts_conditional_with_triggers(
+        self, conditional_module, session_s2
+    ):
+        """Validator accepts conditional transition when all required triggers detected."""
+        legality = SceneTransitionLegality.check_transition_legal(
+            "s2", "s3", conditional_module, detected_triggers=["unlock"]
+        )
+        assert legality.allowed
+
+    def test_derivation_coherent_with_validator(
+        self, conditional_module, session_s2
+    ):
+        """Derivation reaches same conclusion as validator for conditional transition."""
+        # Scenario 1: No trigger evidence (validator time)
+        validator_legality = SceneTransitionLegality.check_transition_legal(
+            "s2", "s3", conditional_module, detected_triggers=None
+        )
+        assert not validator_legality.allowed
+
+        # Scenario 2: Trigger not detected (derivation with empty triggers)
+        derivation_legality_no_trigger = SceneTransitionLegality.check_transition_legal(
+            "s2", "s3", conditional_module, detected_triggers=[]
+        )
+        assert not derivation_legality_no_trigger.allowed
+
+        # Scenario 3: Trigger detected (derivation with trigger)
+        derivation_legality_with_trigger = SceneTransitionLegality.check_transition_legal(
+            "s2", "s3", conditional_module, detected_triggers=["unlock"]
+        )
+        assert derivation_legality_with_trigger.allowed
+
+    def test_validator_api_call_rejects_conditional(
+        self, conditional_module, session_s2
+    ):
+        """validate_decision rejects conditional transition (validator path)."""
+        from app.runtime.turn_executor import MockDecision
+
+        # Validator calls with detected_triggers=None
+        decision = MockDecision(proposed_scene_id="s3", proposed_deltas=[])
+        outcome = validate_decision(decision, session_s2, conditional_module)
+        assert not outcome.is_valid
+        assert any("scene" in e.lower() for e in outcome.errors)
+
+
 class TestNoIllegalNarrativeForcing:
     """Core requirement: AI cannot force illegal narrative progression."""
 
     @pytest.fixture
     def gated_module(self):
-        """Module with conditional transition (gated behind a trigger)."""
+        """Module with mixed transitions (conditional and unconditional paths)."""
         metadata = ModuleMetadata(
             module_id="gated",
             title="Gated",
@@ -218,7 +336,6 @@ class TestNoIllegalNarrativeForcing:
             "s3": ScenePhase(id="s3", name="S3", sequence=3, description=""),
         }
 
-        # Conditional transition requires trigger
         transitions = {
             "t": PhaseTransition(
                 id="t",
@@ -250,25 +367,6 @@ class TestNoIllegalNarrativeForcing:
             status=SessionStatus.ACTIVE,
             canonical_state={},
         )
-
-    def test_conditional_transition_blocked_without_trigger(
-        self, gated_module, session_s2
-    ):
-        """Transition requiring unmet trigger is illegal."""
-        legality = SceneTransitionLegality.check_transition_legal(
-            "s2", "s3", gated_module, detected_triggers=[]
-        )
-        assert not legality.allowed
-        assert "unmet" in legality.reason.lower()
-
-    def test_conditional_transition_allowed_with_trigger(
-        self, gated_module, session_s2
-    ):
-        """Transition becomes legal when trigger is present."""
-        legality = SceneTransitionLegality.check_transition_legal(
-            "s2", "s3", gated_module, detected_triggers=["unlock"]
-        )
-        assert legality.allowed
 
     def test_validator_rejects_unreachable_scene(self, gated_module, session_s2):
         """Validator blocks jump to unreachable scene (no direct transition)."""

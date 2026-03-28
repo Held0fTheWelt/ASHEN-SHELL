@@ -93,6 +93,7 @@ class SceneTransitionLegality:
         # Step 4: Check conditions on matching transitions
         # If ANY transition has no conditions, it's unconditionally legal
         # If ALL transitions require conditions, check if they're met
+        last_rejection_reason = None
         for transition in matching_transitions:
             is_legal, reason = SceneTransitionLegality._check_transition_conditions(
                 transition, detected_triggers
@@ -102,12 +103,21 @@ class SceneTransitionLegality:
                     allowed=True,
                     reason=f"Transition from '{from_scene}' to '{to_scene}' is legal"
                 )
+            # Track the rejection reason for final error message
+            last_rejection_reason = reason
 
         # All transitions require conditions that aren't met
-        return SceneLegalityDecision(
-            allowed=False,
-            reason=f"All transitions from '{from_scene}' to '{to_scene}' require unmet conditions"
-        )
+        # Use specific rejection reason if available (e.g., "Conditions undefined but detected_triggers not provided")
+        if last_rejection_reason:
+            return SceneLegalityDecision(
+                allowed=False,
+                reason=f"Transition from '{from_scene}' to '{to_scene}' cannot proceed: {last_rejection_reason}"
+            )
+        else:
+            return SceneLegalityDecision(
+                allowed=False,
+                reason=f"All transitions from '{from_scene}' to '{to_scene}' require unmet conditions"
+            )
 
     @staticmethod
     def _check_transition_conditions(transition, detected_triggers: list[str] | None = None) -> tuple[bool, str]:
