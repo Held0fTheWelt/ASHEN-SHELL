@@ -12,6 +12,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.runtime.reference_policy import ReferencePolicy
+from app.runtime.scene_legality import SceneTransitionLegality
 
 
 def validate_action_type(action_type: str) -> tuple[bool, str | None]:
@@ -199,17 +200,31 @@ def validate_decision(decision: Any, session: Any, module: Any) -> ValidationOut
         else:
             accepted_indices.append(idx)
 
-    # Check scene reference if present (W2.2.3)
+    # Check scene transition legality (W2.2.4)
+    # Validates against canonical scene transition rules, not just reachability
     if hasattr(decision, "proposed_scene_id") and decision.proposed_scene_id:
         current_scene_id = session.current_scene_id if session else None
-        ref_decision = ReferencePolicy.evaluate(
-            "scene", decision.proposed_scene_id, module,
-            session=session, current_scene_id=current_scene_id
+        legality_decision = SceneTransitionLegality.check_transition_legal(
+            current_scene_id, decision.proposed_scene_id, module,
+            session=session, detected_triggers=None  # Triggers not available at validation time
         )
-        if not ref_decision.allowed:
+        if not legality_decision.allowed:
             errors.append(
-                f"Scene reference validation failed: {ref_decision.reason_message} "
-                f"(reason: {ref_decision.reason_code})"
+                f"Scene transition rejected: {legality_decision.reason}"
+            )
+
+    # Check ending legality (W2.2.4)
+    # Validates if any ending condition is legally triggered
+    # This is a pre-check; actual ending determination happens in next_situation
+    if hasattr(decision, "proposed_ending_id") and decision.proposed_ending_id:
+        ending_id, legality_decision = SceneTransitionLegality.check_ending_legal(
+            module, session=session, detected_triggers=None  # Triggers not available at validation time
+        )
+        # Check if the proposed ending matches a legally available ending
+        if ending_id != decision.proposed_ending_id:
+            errors.append(
+                f"Ending '{decision.proposed_ending_id}' is not currently legal. "
+                f"Legal ending (if any): {ending_id}"
             )
 
     # Determine overall validation status

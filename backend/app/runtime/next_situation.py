@@ -15,6 +15,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.content.module_models import ContentModule
+from app.runtime.scene_legality import SceneTransitionLegality
 from app.runtime.w2_models import EventLogEntry, SessionState, SessionStatus
 
 
@@ -72,30 +73,34 @@ def derive_next_situation(
     if current_scene_id not in module.scene_phases:
         raise ValueError(f"Current scene '{current_scene_id}' not in module")
 
-    # Step 1: Check for ending conditions (highest priority)
-    for ending_id, ending in module.ending_conditions.items():
-        if _check_ending_condition(ending, session, detected_triggers):
-            return NextSituation(
-                current_scene_id=current_scene_id,
-                situation_status="ending_reached",
-                ending_id=ending.id,
-                ending_outcome=ending.outcome,
-                is_terminal=True,
-                derivation_reason=f"Ending condition '{ending.id}' satisfied",
-            )
+    # Step 1: Check for ending conditions (highest priority, via canonical rules)
+    ending_id, legality_decision = SceneTransitionLegality.check_ending_legal(
+        module, session=session, detected_triggers=detected_triggers
+    )
+    if ending_id is not None:
+        ending = module.ending_conditions[ending_id]
+        return NextSituation(
+            current_scene_id=current_scene_id,
+            situation_status="ending_reached",
+            ending_id=ending.id,
+            ending_outcome=ending.outcome,
+            is_terminal=True,
+            derivation_reason=f"Ending condition '{ending.id}' satisfied: {legality_decision.reason}",
+        )
 
-    # Step 2: Check for valid transitions from current scene
+    # Step 2: Check for valid transitions from current scene (via canonical rules)
+    # Try each transition from current scene
     for transition_id, transition in module.phase_transitions.items():
         if transition.from_phase == current_scene_id:
-            if _check_transition_condition(transition, session, module, detected_triggers):
-                next_scene_id = transition.to_phase
-                if next_scene_id not in module.scene_phases:
-                    # Skip invalid transitions
-                    continue
+            legality_decision = SceneTransitionLegality.check_transition_legal(
+                current_scene_id, transition.to_phase, module,
+                session=session, detected_triggers=detected_triggers
+            )
+            if legality_decision.allowed:
                 return NextSituation(
-                    current_scene_id=next_scene_id,
+                    current_scene_id=transition.to_phase,
                     situation_status="transitioned",
-                    derivation_reason=f"Transition from '{current_scene_id}' to '{next_scene_id}' conditions met",
+                    derivation_reason=f"Transition from '{current_scene_id}' to '{transition.to_phase}': {legality_decision.reason}",
                 )
 
     # Step 3: Continue in current scene (default)
