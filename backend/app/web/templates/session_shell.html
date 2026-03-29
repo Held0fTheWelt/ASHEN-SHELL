@@ -3,6 +3,7 @@
 {% block content %}
 <main class="app-shell">
 
+  <!-- Session Info Panel -->
   <section class="panel session-info-panel">
     <h2>Session</h2>
     <dl class="session-meta">
@@ -13,20 +14,124 @@
     </dl>
   </section>
 
+  <!-- Scene Display Panel -->
   <section class="panel scene-panel">
     <h3>Scene</h3>
-    <p class="placeholder muted">Scene view — coming in a future update.</p>
+    {% if scene %}
+      <h4>{{ scene.title }}</h4>
+      {% if scene.description %}
+        <p>{{ scene.description }}</p>
+      {% endif %}
+      {% if state_summary %}
+        <div class="state-summary">
+          {% if state_summary.situation %}
+            <p><strong>Situation:</strong> {{ state_summary.situation }}</p>
+          {% endif %}
+          {% if state_summary.conversation_status %}
+            <p><strong>Status:</strong> {{ state_summary.conversation_status }}</p>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <p class="placeholder muted">Scene not loaded.</p>
+    {% endif %}
   </section>
 
+  <!-- Interaction Panel -->
   <section class="panel interaction-panel">
     <h3>Interaction</h3>
-    <p class="placeholder muted">Interaction panel — coming in a future update.</p>
+    <form method="POST" action="{{ url_for('web.session_execute', session_id=session_id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label for="operator_input">What do you do?</label>
+        <textarea id="operator_input" name="operator_input" rows="4" placeholder="Describe your action..." required></textarea>
+      </div>
+
+      <!-- Optional quick-action helper buttons -->
+      <div class="quick-actions">
+        <button type="button" class="btn-helper" data-action="observe">Observe</button>
+        <button type="button" class="btn-helper" data-action="interact">Interact</button>
+        <button type="button" class="btn-helper" data-action="move">Move</button>
+      </div>
+
+      <button type="submit" class="btn-primary">Execute Action</button>
+    </form>
   </section>
 
+  <!-- Result Feedback Panel (shown after turn execution) -->
+  {% if turn_result %}
+  <section class="panel result-panel">
+    <h3>Result</h3>
+
+    <!-- Narrative text from turn execution -->
+    {% if turn_result.narrative_text %}
+      <div class="narrative">
+        {{ turn_result.narrative_text }}
+      </div>
+    {% endif %}
+
+    <!-- Guard outcome status -->
+    <div class="outcome-status">
+      <strong>Outcome:</strong>
+      <span class="outcome {% if turn_result.guard_outcome == 'accepted' %}accepted{% elif turn_result.guard_outcome == 'partially_accepted' %}partially-accepted{% elif turn_result.guard_outcome == 'rejected' %}rejected{% else %}invalid{% endif %}">
+        {{ turn_result.guard_outcome }}
+      </span>
+    </div>
+
+    <!-- What changed -->
+    {% if turn_result.accepted_delta_paths or turn_result.rejected_delta_paths %}
+      <div class="deltas">
+        {% if turn_result.accepted_delta_paths %}
+          <p><strong>Accepted changes:</strong></p>
+          <ul>
+            {% for path in turn_result.accepted_delta_paths %}
+              <li>{{ path }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% if turn_result.rejected_delta_paths %}
+          <p><strong>Rejected changes:</strong></p>
+          <ul>
+            {% for path in turn_result.rejected_delta_paths %}
+              <li>{{ path }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </section>
+  {% endif %}
+
+  <!-- Error messages -->
+  {% if error %}
+  <section class="panel error-panel">
+    <p class="error-message">{{ error }}</p>
+  </section>
+  {% endif %}
+
+  <!-- History Panel Placeholder (deferred to W3.4+) -->
   <section class="panel history-panel">
     <h3>History</h3>
     <p class="placeholder muted">Turn history — coming in a future update.</p>
   </section>
 
 </main>
+
+<script>
+// Quick-action helper buttons populate/assist textarea (don't replace it)
+document.querySelectorAll('.btn-helper').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const action = this.dataset.action;
+    const textarea = document.getElementById('operator_input');
+    // Insert suggestion into textarea without replacing existing text
+    const prefix = textarea.value ? textarea.value + ' ' : '';
+    textarea.value = prefix + '[' + action + ']';
+    textarea.focus();
+  });
+});
+</script>
+
 {% endblock %}

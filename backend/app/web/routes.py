@@ -12,6 +12,10 @@ from app.services.game_service import has_complete_play_service_config
 from app.web.auth import is_safe_redirect, require_web_login, require_web_admin
 from app.services.user_service import update_user_last_seen
 
+# W3.3 imports
+from app.runtime.session_store import RuntimeSession, create_session as create_runtime_session, get_session as get_runtime_session, update_session as update_runtime_session
+from app.runtime.turn_dispatcher import dispatch_turn
+
 web_bp = Blueprint("web", __name__)
 
 
@@ -678,3 +682,185 @@ def session_view(session_id):
         flash("Session not found or expired.", "error")
         return redirect(url_for("web.session_start"))
     return render_template("session_shell.html", current_user=user, session_data=active)
+
+
+# ── W3.3: Session Execution & Helpers ─────────────────────────────────────────
+
+def _resolve_runtime_session(session_id: str) -> RuntimeSession | None:
+    """Validates Flask session matches requested session_id and loads RuntimeSession.
+
+    Args:
+        session_id: Session ID from URL path
+
+    Returns:
+        RuntimeSession if Flask session matches and session exists, None otherwise
+    """
+    flask_session_id = session.get("active_session", {}).get("session_id")
+    if flask_session_id != session_id:
+        return None
+    return get_runtime_session(session_id)
+
+
+def _present_turn_result(runtime_session: RuntimeSession, turn_result) -> dict:
+    """Map TurnExecutionResult and RuntimeSession to template-facing fields.
+
+    Extracts scene info from module, outcome from result, and formats for template.
+
+    Args:
+        runtime_session: Updated RuntimeSession after turn execution
+        turn_result: TurnExecutionResult from dispatcher
+
+    Returns:
+        Dict with keys: narrative_text, guard_outcome, accepted_delta_paths,
+                       rejected_delta_paths, next_scene_id, execution_status
+    """
+    # Extract scene info from module
+    module = runtime_session.module
+    current_scene_id = runtime_session.current_runtime_state.current_scene_id
+    next_scene_id = turn_result.updated_scene_id if turn_result.updated_scene_id else current_scene_id
+
+    # Get scene from module (defensive coding: check if scenes exist)
+    scene_data = {}
+    if hasattr(module, 'scenes') and current_scene_id in module.scenes:
+        scene = module.scenes[current_scene_id]
+        scene_data = {
+            "title": getattr(scene, 'title', current_scene_id),
+            "description": getattr(scene, 'description', ''),
+        }
+    else:
+        scene_data = {
+            "title": current_scene_id,
+            "description": "",
+        }
+
+    # Extract state summary from canonical state
+    canonical_state = runtime_session.current_runtime_state.canonical_state
+    state_summary = {
+        "situation": canonical_state.get("situation", ""),
+        "conversation_status": canonical_state.get("conversation_status", ""),
+    }
+
+    # Extract deltas
+    accepted_delta_paths = [delta.target for delta in turn_result.accepted_deltas] if turn_result.accepted_deltas else []
+    rejected_delta_paths = [delta.target for delta in turn_result.rejected_deltas] if turn_result.rejected_deltas else []
+
+    return {
+        "scene": scene_data,
+        "state_summary": state_summary,
+        "turn_result": {
+            "narrative_text": turn_result.decision.narrative_text if turn_result.decision and hasattr(turn_result.decision, 'narrative_text') else "",
+            "guard_outcome": turn_result.guard_outcome.value if hasattr(turn_result.guard_outcome, 'value') else str(turn_result.guard_outcome),
+            "accepted_delta_paths": accepted_delta_paths,
+            "rejected_delta_paths": rejected_delta_paths,
+        },
+        "next_scene_id": next_scene_id,
+        "execution_status": turn_result.execution_status,
+    }
+
+
+@web_bp.route("/play/<session_id>/execute", methods=["POST"])
+@require_web_login
+async def session_execute(session_id: str):
+    """Execute a turn in the session.
+
+    Submits operator_input to the canonical dispatch_turn() router.
+    Dispatcher owns execution mode routing and decision construction.
+    Updates runtime session with result, renders updated scene + feedback.
+    """
+    uid = session.get("user_id")
+    user = db.session.get(User, int(uid)) if uid else None
+
+    # Validate Flask session matches session_id and load RuntimeSession
+    runtime_session = _resolve_runtime_session(session_id)
+    if not runtime_session:
+        flash("Session not found or expired.", "error")
+        return redirect(url_for("web.session_start"))
+
+    # Extract operator input from form
+    operator_input = request.form.get("operator_input", "").strip()
+    if not operator_input:
+        flash("Please enter an action.", "error")
+        return redirect(url_for("web.session_view", session_id=session_id))
+
+    try:
+        # Call CANONICAL DISPATCHER (not execute_turn directly)
+        # Dispatcher owns execution mode routing and all decision construction
+        turn_result = await dispatch_turn(
+            session=runtime_session.current_runtime_state,
+            current_turn=runtime_session.current_runtime_state.turn_counter + 1,
+            module=runtime_session.module,
+            operator_input=operator_input,
+        )
+
+        # Update RuntimeSession in store
+        # Replace canonical state with result state
+        updated_state = runtime_session.current_runtime_state
+        updated_state.canonical_state = turn_result.updated_canonical_state
+        updated_state.current_scene_id = turn_result.updated_scene_id or updated_state.current_scene_id
+        updated_state.turn_counter += 1
+
+        update_runtime_session(session_id, updated_state)
+
+        # Reload runtime session with updated state
+        runtime_session = get_runtime_session(session_id)
+
+        # Map result to template fields
+        presented_result = _present_turn_result(runtime_session, turn_result)
+
+        # Render updated scene + result feedback
+        return render_template(
+            "session_shell.html",
+            current_user=user,
+            session_id=session_id,
+            scene=presented_result["scene"],
+            state_summary=presented_result["state_summary"],
+            turn_result=presented_result["turn_result"],
+            session_data={
+                "module_id": runtime_session.current_runtime_state.module_id,
+                "current_scene_id": runtime_session.current_runtime_state.current_scene_id,
+                "status": runtime_session.current_runtime_state.status.value,
+                "turn_counter": runtime_session.current_runtime_state.turn_counter,
+            },
+        )
+
+    except Exception as e:
+        # Error: preserve session state, flash error, re-render current scene
+        flash(f"Turn execution failed: {str(e)}", "error")
+
+        # Re-render current scene without state change
+        module = runtime_session.module
+        current_scene_id = runtime_session.current_runtime_state.current_scene_id
+        canonical_state = runtime_session.current_runtime_state.canonical_state
+
+        scene_data = {}
+        if hasattr(module, 'scenes') and current_scene_id in module.scenes:
+            scene = module.scenes[current_scene_id]
+            scene_data = {
+                "title": getattr(scene, 'title', current_scene_id),
+                "description": getattr(scene, 'description', ''),
+            }
+        else:
+            scene_data = {
+                "title": current_scene_id,
+                "description": "",
+            }
+
+        state_summary = {
+            "situation": canonical_state.get("situation", ""),
+            "conversation_status": canonical_state.get("conversation_status", ""),
+        }
+
+        return render_template(
+            "session_shell.html",
+            current_user=user,
+            session_id=session_id,
+            scene=scene_data,
+            state_summary=state_summary,
+            session_data={
+                "module_id": runtime_session.current_runtime_state.module_id,
+                "current_scene_id": current_scene_id,
+                "status": runtime_session.current_runtime_state.status.value,
+                "turn_counter": runtime_session.current_runtime_state.turn_counter,
+            },
+            error="Turn execution failed.",
+        ), 400
