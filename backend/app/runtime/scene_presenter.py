@@ -168,3 +168,122 @@ def present_character_panel(
         overall_trajectory=overall_trajectory,
         top_relationship_movements=top_relationship_movements,
     )
+
+
+def present_conflict_panel(
+    session_state: SessionState,
+) -> ConflictPanelOutput:
+    """Map canonical session data to conflict panel output.
+
+    Extracts conflict pressure, escalation status, and trend signals from SessionState.
+    All fields derive strictly from canonical sources.
+
+    Args:
+        session_state: The active SessionState.
+
+    Returns:
+        ConflictPanelOutput with bounded, canonical-derived fields.
+
+    Logic:
+        1. Extract current_pressure from short_term_context.conflict_pressure or
+           canonical_state.conflict_state.pressure. Keep as None if absent.
+        2. Derive current_escalation_status:
+           - If pressure is None → 'unknown'
+           - Else: 0–33 → 'low', 34–66 → 'medium', 67–100 → 'high'
+        3. Derive recent_trend from canonical sources using priority rule:
+           - Priority 1: If guard_outcomes show more rejections → 'escalating'
+           - Priority 2: If relationship escalation markers present → 'escalating'
+           - Priority 3: If relationship stability signal == 'de-escalating' → 'de-escalating'
+           - Priority 4: If relationship stability signal == 'stable' → 'stable'
+           - Fallback: 'uncertain'
+           - source_basis lists all sources that contributed.
+           - If context layers missing → None
+        4. Derive turning_point_risk:
+           - True if relationship_axis_context.has_escalation_markers is True
+           - False otherwise
+           - None if context layers missing
+        5. Return ConflictPanelOutput.
+    """
+    # Step 1: Extract current_pressure
+    current_pressure = None
+    if session_state.context_layers and session_state.context_layers.short_term_context:
+        current_pressure = session_state.context_layers.short_term_context.conflict_pressure
+    if current_pressure is None and session_state.canonical_state:
+        conflict_state = session_state.canonical_state.get("conflict_state", {})
+        if isinstance(conflict_state, dict):
+            current_pressure = conflict_state.get("pressure")
+
+    # Step 2: Derive current_escalation_status
+    if current_pressure is None:
+        current_escalation_status = "unknown"
+    elif current_pressure <= 33:
+        current_escalation_status = "low"
+    elif current_pressure <= 66:
+        current_escalation_status = "medium"
+    else:
+        current_escalation_status = "high"
+
+    # Step 3: Derive recent_trend using priority rule
+    recent_trend = None
+    if (
+        session_state.context_layers
+        and (
+            session_state.context_layers.progression_summary
+            or session_state.context_layers.relationship_axis_context
+        )
+    ):
+        signal = None
+        source_basis = []
+
+        # Priority 1: Check guard outcomes for escalation
+        if session_state.context_layers.progression_summary:
+            outcomes = (
+                session_state.context_layers.progression_summary.most_recent_guard_outcomes
+            )
+            if outcomes:
+                rejections = outcomes.count("rejected")
+                acceptances = outcomes.count("accepted")
+                if rejections > acceptances:
+                    signal = "escalating"
+                    source_basis.append("guard_outcomes")
+
+        # Priority 2: Check relationship escalation markers
+        if session_state.context_layers.relationship_axis_context:
+            rel_ctx = session_state.context_layers.relationship_axis_context
+            if rel_ctx.has_escalation_markers:
+                if signal != "escalating":
+                    signal = "escalating"
+                source_basis.append("relationship_tension")
+            elif signal is None:
+                # Check overall stability signal (only if not escalating)
+                if rel_ctx.overall_stability_signal == "de-escalating":
+                    signal = "de-escalating"
+                    source_basis.append("stability_signal")
+                elif rel_ctx.overall_stability_signal == "stable":
+                    signal = "stable"
+                    source_basis.append("stability_signal")
+
+        # Fallback
+        if signal is None:
+            signal = "uncertain"
+
+        if source_basis or signal != "uncertain":
+            recent_trend = ConflictTrendSignal(
+                signal=signal,
+                source_basis=source_basis,
+            )
+
+    # Step 4: Derive turning_point_risk
+    turning_point_risk = None
+    if session_state.context_layers and session_state.context_layers.relationship_axis_context:
+        turning_point_risk = (
+            session_state.context_layers.relationship_axis_context.has_escalation_markers
+        )
+
+    # Step 5: Return ConflictPanelOutput
+    return ConflictPanelOutput(
+        current_pressure=current_pressure,
+        current_escalation_status=current_escalation_status,
+        recent_trend=recent_trend,
+        turning_point_risk=turning_point_risk,
+    )

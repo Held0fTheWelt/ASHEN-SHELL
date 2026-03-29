@@ -378,3 +378,362 @@ class TestPresentCharacterPanel:
 
         assert result.character_name is None
         assert result.overall_trajectory == "escalating"
+
+
+from app.runtime.scene_presenter import present_conflict_panel
+from app.runtime.progression_summary import ProgressionSummary
+from app.runtime.short_term_context import ShortTermTurnContext
+
+
+class TestPresentConflictPanel:
+    """Tests for present_conflict_panel function."""
+
+    def test_present_conflict_panel_pressure_low(self):
+        """Low pressure (20) returns escalation_status='low'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 20}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure == 20
+        assert result.current_escalation_status == "low"
+
+    def test_present_conflict_panel_pressure_medium(self):
+        """Medium pressure (50) returns escalation_status='medium'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 50}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure == 50
+        assert result.current_escalation_status == "medium"
+
+    def test_present_conflict_panel_pressure_high(self):
+        """High pressure (75) returns escalation_status='high'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 75}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure == 75
+        assert result.current_escalation_status == "high"
+
+    def test_present_conflict_panel_no_pressure(self):
+        """Missing pressure returns current_pressure=None and status='unknown'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure is None
+        assert result.current_escalation_status == "unknown"
+
+    def test_present_conflict_panel_guard_outcomes_escalating(self):
+        """More rejections than acceptances → signal='escalating'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 50}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+                progression_summary=ProgressionSummary(
+                    first_turn_covered=1,
+                    last_turn_covered=5,
+                    total_turns_in_source=5,
+                    current_scene_id="scene-1",
+                    most_recent_guard_outcomes=["rejected", "rejected", "accepted"],
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.recent_trend is not None
+        assert result.recent_trend.signal == "escalating"
+        assert "guard_outcomes" in result.recent_trend.source_basis
+
+    def test_present_conflict_panel_relationship_escalation_markers(self):
+        """Relationship escalation markers → signal='escalating'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 40}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+                relationship_axis_context=RelationshipAxisContext(
+                    has_escalation_markers=True,
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.recent_trend is not None
+        assert result.recent_trend.signal == "escalating"
+        assert "relationship_tension" in result.recent_trend.source_basis
+
+    def test_present_conflict_panel_stable_signal(self):
+        """Stable overall_stability_signal → signal='stable'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 30}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+                relationship_axis_context=RelationshipAxisContext(
+                    overall_stability_signal="stable",
+                    has_escalation_markers=False,
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.recent_trend is not None
+        assert result.recent_trend.signal == "stable"
+        assert "stability_signal" in result.recent_trend.source_basis
+
+    def test_present_conflict_panel_de_escalating_signal(self):
+        """De-escalating overall_stability_signal → signal='de-escalating'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 25}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+                relationship_axis_context=RelationshipAxisContext(
+                    overall_stability_signal="de-escalating",
+                    has_escalation_markers=False,
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.recent_trend is not None
+        assert result.recent_trend.signal == "de-escalating"
+        assert "stability_signal" in result.recent_trend.source_basis
+
+    def test_present_conflict_panel_pressure_boundary_33(self):
+        """Pressure at boundary 33 → status='low'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 33}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure == 33
+        assert result.current_escalation_status == "low"
+
+    def test_present_conflict_panel_pressure_boundary_34(self):
+        """Pressure at boundary 34 → status='medium'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 34}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure == 34
+        assert result.current_escalation_status == "medium"
+
+    def test_present_conflict_panel_pressure_boundary_66(self):
+        """Pressure at boundary 66 → status='medium'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 66}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure == 66
+        assert result.current_escalation_status == "medium"
+
+    def test_present_conflict_panel_pressure_boundary_67(self):
+        """Pressure at boundary 67 → status='high'."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 67}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.current_pressure == 67
+        assert result.current_escalation_status == "high"
+
+    def test_present_conflict_panel_turning_point_risk_true(self):
+        """Escalation markers present → turning_point_risk=True."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+                relationship_axis_context=RelationshipAxisContext(
+                    has_escalation_markers=True,
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.turning_point_risk is True
+
+    def test_present_conflict_panel_turning_point_risk_false(self):
+        """No escalation markers → turning_point_risk=False."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+                relationship_axis_context=RelationshipAxisContext(
+                    has_escalation_markers=False,
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.turning_point_risk is False
+
+    def test_present_conflict_panel_missing_context_layers(self):
+        """Missing context layers → recent_trend=None, turning_point_risk=None."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={},
+        )
+        result = present_conflict_panel(session_state)
+        assert result.recent_trend is None
+        assert result.turning_point_risk is None
+
+    def test_present_conflict_panel_multiple_sources(self):
+        """Multiple sources contributing → source_basis includes all."""
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="scene-1",
+            canonical_state={"conflict_state": {"pressure": 60}},
+            context_layers=SessionContextLayers(
+                short_term_context=ShortTermTurnContext(
+                    turn_number=1,
+                    scene_id="scene-1",
+                    guard_outcome="accepted",
+                ),
+                progression_summary=ProgressionSummary(
+                    first_turn_covered=1,
+                    last_turn_covered=5,
+                    total_turns_in_source=5,
+                    current_scene_id="scene-1",
+                    most_recent_guard_outcomes=["rejected", "rejected", "accepted"],
+                ),
+                relationship_axis_context=RelationshipAxisContext(
+                    has_escalation_markers=True,
+                ),
+            ),
+        )
+        result = present_conflict_panel(session_state)
+        assert result.recent_trend is not None
+        assert "guard_outcomes" in result.recent_trend.source_basis
+        assert "relationship_tension" in result.recent_trend.source_basis
