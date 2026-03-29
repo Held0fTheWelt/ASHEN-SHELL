@@ -828,6 +828,7 @@ def session_execute(session_id: str):
         # Present characters and conflict from updated state
         characters = present_all_characters(runtime_session.current_runtime_state)
         conflict = present_conflict_panel(runtime_session.current_runtime_state)
+        history_panel = present_history_panel(runtime_session.current_runtime_state)
 
         # Render updated scene + result feedback
         return render_template(
@@ -839,6 +840,7 @@ def session_execute(session_id: str):
             turn_result=presented_result["turn_result"],
             characters=characters,
             conflict=conflict,
+            history_panel=history_panel,
             session_data={
                 "module_id": runtime_session.current_runtime_state.module_id,
                 "current_scene_id": runtime_session.current_runtime_state.current_scene_id,
@@ -877,6 +879,7 @@ def session_execute(session_id: str):
         # Present characters and conflict from current state (unchanged by error)
         characters = present_all_characters(runtime_session.current_runtime_state)
         conflict = present_conflict_panel(runtime_session.current_runtime_state)
+        history_panel = present_history_panel(runtime_session.current_runtime_state)
 
         return render_template(
             "session_shell.html",
@@ -886,6 +889,7 @@ def session_execute(session_id: str):
             state_summary=state_summary,
             characters=characters,
             conflict=conflict,
+            history_panel=history_panel,
             session_data={
                 "module_id": runtime_session.current_runtime_state.module_id,
                 "current_scene_id": current_scene_id,
