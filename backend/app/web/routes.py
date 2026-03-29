@@ -655,6 +655,7 @@ def session_start():
 def session_create():
     from app.services.session_service import create_session
     from app.runtime.session_start import SessionStartError
+    from app.content.module_loader import load_module
 
     module_id = request.form.get("module_id", "").strip()
     if not module_id:
@@ -675,6 +676,19 @@ def session_create():
         "status": new_session.status.value,
         "turn_counter": new_session.turn_counter,
     }
+
+    # Register session in runtime store (W3.3 in-memory registry)
+    try:
+        module = load_module(module_id)
+        create_runtime_session(
+            session_id=new_session.session_id,
+            initial_state=new_session,
+            module=module,
+        )
+    except Exception as e:
+        # Log error but don't fail - session is still valid in Flask session
+        current_app.logger.warning(f"Failed to register runtime session: {e}")
+
     return redirect(f"/play/{new_session.session_id}")
 
 
