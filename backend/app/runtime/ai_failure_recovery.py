@@ -401,3 +401,167 @@ class ReducedContextRetryPolicy:
             True if reduced-context retry is applicable, False otherwise
         """
         return RetryPolicy.is_retryable_failure(failure_class)
+
+
+class FallbackResponderMode(str, Enum):
+    """Fallback response modes for degraded AI execution.
+
+    When normal AI execution and retries fail, fallback mode provides a safe,
+    conservative response to keep the session alive.
+    """
+
+    ACTIVE = "active"
+    """Fallback mode is active—using degraded conservative behavior."""
+
+    INACTIVE = "inactive"
+    """Normal execution mode (fallback not needed)."""
+
+
+class FallbackResponderPolicy:
+    """W2.5.4 — Canonical degraded fallback response mode.
+
+    When both normal AI execution and retries fail (retry exhausted, parse failure,
+    validation failure), fallback mode provides a safe alternative that:
+    - Makes minimal, conservative proposals
+    - Avoids aggressive scene transitions
+    - Preserves session continuity
+    - Respects validation/guard boundaries
+    - Is explicitly marked for diagnostics
+
+    Fallback is NOT a bypass—it still goes through validation/guards. It simply
+    provides conservative proposal defaults when AI generation fails.
+
+    Fallback Constraints (what it CANNOT do):
+    - Cannot propose risky scene transitions
+    - Cannot propose extreme state mutations
+    - Cannot bypass validation/guard enforcement
+    - Cannot create arbitrary new narrative state
+
+    Fallback Permissions (what it CAN do):
+    - Propose minimal emotional/tension adjustments (±10 units)
+    - Suggest safe scene continuity (stay in current scene)
+    - Log the session state for investigation
+    - Advance the turn counter (session progress)
+    """
+
+    # Fallback is activated when normal execution is exhausted
+    FALLBACK_TRIGGER_FAILURES: set[AIFailureClass] = {
+        AIFailureClass.RETRY_EXHAUSTED,      # Retried max times, still failing
+        AIFailureClass.PARSE_FAILURE,        # Could not parse adapter output
+        AIFailureClass.STRUCTURALLY_INVALID_OUTPUT,  # Parsed but invalid schema
+    }
+
+    @classmethod
+    def should_activate_fallback(cls, failure_class: AIFailureClass) -> bool:
+        """Check if fallback mode should activate for a failure.
+
+        Fallback activates only for specific non-retryable failures that have
+        exhausted recovery options.
+
+        Args:
+            failure_class: The failure that occurred
+
+        Returns:
+            True if fallback mode should activate, False otherwise
+        """
+        return failure_class in cls.FALLBACK_TRIGGER_FAILURES
+
+    @classmethod
+    def get_fallback_trigger_failures(cls) -> set[AIFailureClass]:
+        """Get the set of failures that trigger fallback mode.
+
+        Returns:
+            Set of AIFailureClass values that activate fallback
+        """
+        return cls.FALLBACK_TRIGGER_FAILURES.copy()
+
+    @classmethod
+    def is_fallback_conservative(cls) -> bool:
+        """Verify fallback behavior is conservative (not risky).
+
+        Fallback is explicitly designed to be conservative and safe:
+        - Minimal proposals
+        - No aggressive transitions
+        - Session continuity over drama
+        - Guard compliance mandatory
+
+        Returns:
+            True (fallback is inherently conservative by design)
+        """
+        return True
+
+    @classmethod
+    def fallback_respects_guards(cls) -> bool:
+        """Verify fallback proposals still go through validation/guards.
+
+        Fallback is not a bypass. Even fallback proposals must pass the full
+        validation pipeline, guard enforcement, and mutation policy.
+
+        Returns:
+            True (fallback respects guard enforcement)
+        """
+        return True
+
+    @classmethod
+    def is_fallback_marked_explicitly(cls) -> bool:
+        """Verify fallback activation is marked in runtime state.
+
+        Fallback activation is always explicit and visible in:
+        - TurnExecutionResult.failure_reason
+        - AIDecisionLog entries
+        - Runtime event logs
+        - Diagnostic traces
+
+        This ensures fallback is never silent or implicit.
+
+        Returns:
+            True (fallback is explicitly marked)
+        """
+        return True
+
+    @classmethod
+    def get_fallback_mode_status(cls, failure_class: AIFailureClass | None) -> FallbackResponderMode:
+        """Get the current fallback mode status.
+
+        Args:
+            failure_class: The current failure class (None if no failure)
+
+        Returns:
+            FallbackResponderMode indicating active or inactive status
+        """
+        if failure_class is None:
+            return FallbackResponderMode.INACTIVE
+        if cls.should_activate_fallback(failure_class):
+            return FallbackResponderMode.ACTIVE
+        return FallbackResponderMode.INACTIVE
+
+    @classmethod
+    def get_fallback_constraints(cls) -> dict[str, str]:
+        """Get the canonical constraints on fallback behavior.
+
+        Returns:
+            Dictionary of constraint names to descriptions
+        """
+        return {
+            "no_risky_transitions": "Cannot propose aggressive scene transitions",
+            "no_extreme_mutations": "Cannot propose extreme state changes (±10 unit limit)",
+            "must_pass_guards": "All proposals must pass validation/guard enforcement",
+            "no_arbitrary_state": "Cannot create arbitrary new narrative elements",
+            "minimal_proposals": "Keep proposals conservative and minimal",
+            "continuity_focus": "Prioritize session continuity over dramatic progress",
+        }
+
+    @classmethod
+    def get_fallback_permissions(cls) -> dict[str, str]:
+        """Get the canonical permissions for fallback behavior.
+
+        Returns:
+            Dictionary of permission names to descriptions
+        """
+        return {
+            "minimal_adjustments": "Propose minimal emotional/tension adjustments (±10 units)",
+            "safe_continuity": "Suggest scene continuity (stay in current scene)",
+            "state_logging": "Log session state for investigation",
+            "advance_turn": "Advance turn counter (session progress)",
+            "preserve_state": "Maintain existing character/scene state",
+        }

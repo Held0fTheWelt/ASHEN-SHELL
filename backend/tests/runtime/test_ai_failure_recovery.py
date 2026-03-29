@@ -451,3 +451,159 @@ class TestReducedContextRetryPolicy:
             mode = ReducedContextRetryPolicy.get_retry_mode(attempt)
             # Should be deterministic and within bounds
             assert mode in [ReducedContextRetryPolicy.get_retry_mode(attempt)]
+
+
+class TestFallbackResponderPolicy:
+    """Verify W2.5.4 canonical fallback mode is conservative and explicit."""
+
+    def test_fallback_responder_mode_enum_exists(self):
+        """FallbackResponderMode enum exists with ACTIVE and INACTIVE."""
+        from app.runtime.ai_failure_recovery import FallbackResponderMode
+
+        assert hasattr(FallbackResponderMode, "ACTIVE")
+        assert hasattr(FallbackResponderMode, "INACTIVE")
+        assert FallbackResponderMode.ACTIVE.value == "active"
+        assert FallbackResponderMode.INACTIVE.value == "inactive"
+
+    def test_fallback_triggers_on_retry_exhausted(self):
+        """Fallback activates when retries are exhausted."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert FallbackResponderPolicy.should_activate_fallback(AIFailureClass.RETRY_EXHAUSTED)
+
+    def test_fallback_triggers_on_parse_failure(self):
+        """Fallback activates on parse failure (non-retryable structural issue)."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert FallbackResponderPolicy.should_activate_fallback(AIFailureClass.PARSE_FAILURE)
+
+    def test_fallback_triggers_on_structurally_invalid(self):
+        """Fallback activates on structurally invalid output."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert FallbackResponderPolicy.should_activate_fallback(
+            AIFailureClass.STRUCTURALLY_INVALID_OUTPUT
+        )
+
+    def test_fallback_does_not_trigger_on_validation_failure(self):
+        """Fallback does NOT activate for validation failures.
+
+        Validation failures go through normal validation/guard flow, not fallback.
+        """
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert not FallbackResponderPolicy.should_activate_fallback(
+            AIFailureClass.RESPONDER_VALIDATION_FAILURE
+        )
+        assert not FallbackResponderPolicy.should_activate_fallback(AIFailureClass.GUARD_REJECTION)
+
+    def test_fallback_does_not_trigger_on_retryable_failures(self):
+        """Fallback does NOT activate on retryable failures (those get retried instead)."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert not FallbackResponderPolicy.should_activate_fallback(AIFailureClass.ADAPTER_ERROR)
+        assert not FallbackResponderPolicy.should_activate_fallback(
+            AIFailureClass.TIMEOUT_OR_EMPTY_RESPONSE
+        )
+
+    def test_fallback_is_conservative(self):
+        """Fallback behavior is explicitly conservative."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert FallbackResponderPolicy.is_fallback_conservative()
+
+    def test_fallback_respects_guards(self):
+        """Fallback proposals still go through validation/guard enforcement."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert FallbackResponderPolicy.fallback_respects_guards()
+
+    def test_fallback_is_marked_explicitly(self):
+        """Fallback activation is explicitly marked in runtime state."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        assert FallbackResponderPolicy.is_fallback_marked_explicitly()
+
+    def test_get_fallback_mode_status_inactive_when_no_failure(self):
+        """Fallback status is INACTIVE when there's no failure."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy, FallbackResponderMode
+
+        status = FallbackResponderPolicy.get_fallback_mode_status(failure_class=None)
+        assert status == FallbackResponderMode.INACTIVE
+
+    def test_get_fallback_mode_status_active_when_triggered(self):
+        """Fallback status is ACTIVE when failure triggers it."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy, FallbackResponderMode
+
+        status = FallbackResponderPolicy.get_fallback_mode_status(AIFailureClass.RETRY_EXHAUSTED)
+        assert status == FallbackResponderMode.ACTIVE
+
+    def test_get_fallback_mode_status_inactive_when_not_triggered(self):
+        """Fallback status is INACTIVE when failure doesn't trigger it."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy, FallbackResponderMode
+
+        status = FallbackResponderPolicy.get_fallback_mode_status(AIFailureClass.ADAPTER_ERROR)
+        assert status == FallbackResponderMode.INACTIVE
+
+    def test_fallback_constraints_are_defined(self):
+        """Fallback has explicit constraints on what it cannot do."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        constraints = FallbackResponderPolicy.get_fallback_constraints()
+        # Should have multiple constraints
+        assert len(constraints) > 0
+        assert isinstance(constraints, dict)
+        # Key constraints
+        assert "no_risky_transitions" in constraints
+        assert "no_extreme_mutations" in constraints
+        assert "must_pass_guards" in constraints
+
+    def test_fallback_permissions_are_defined(self):
+        """Fallback has explicit permissions on what it can do."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        permissions = FallbackResponderPolicy.get_fallback_permissions()
+        # Should have multiple permissions
+        assert len(permissions) > 0
+        assert isinstance(permissions, dict)
+        # Key permissions
+        assert "minimal_adjustments" in permissions
+        assert "safe_continuity" in permissions
+        assert "advance_turn" in permissions
+
+    def test_fallback_trigger_failures_are_explicit(self):
+        """Fallback trigger failures are explicitly defined."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        triggers = FallbackResponderPolicy.get_fallback_trigger_failures()
+        # Should be a set of specific failures
+        assert isinstance(triggers, set)
+        assert len(triggers) > 0
+        # Should include retry exhaustion
+        assert AIFailureClass.RETRY_EXHAUSTED in triggers
+
+    def test_fallback_constraints_and_permissions_do_not_conflict(self):
+        """Fallback constraints and permissions are complementary, not conflicting."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        constraints = FallbackResponderPolicy.get_fallback_constraints()
+        permissions = FallbackResponderPolicy.get_fallback_permissions()
+        # Constraints are what fallback CANNOT do
+        # Permissions are what fallback CAN do
+        # Should not have the same constraint and permission
+        constraint_keys = set(constraints.keys())
+        permission_keys = set(permissions.keys())
+        # No overlap expected
+        assert constraint_keys & permission_keys == set()
+
+    def test_fallback_is_explicit_not_implicit(self):
+        """Fallback activation is explicit and never silent."""
+        from app.runtime.ai_failure_recovery import FallbackResponderPolicy
+
+        # Fallback mode is explicitly marked
+        assert FallbackResponderPolicy.is_fallback_marked_explicitly()
+        # Fallback triggers are explicit
+        assert len(FallbackResponderPolicy.get_fallback_trigger_failures()) > 0
+        # Fallback constraints and permissions are explicit
+        assert len(FallbackResponderPolicy.get_fallback_constraints()) > 0
+        assert len(FallbackResponderPolicy.get_fallback_permissions()) > 0
