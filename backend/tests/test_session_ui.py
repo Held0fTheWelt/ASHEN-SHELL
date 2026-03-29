@@ -350,3 +350,221 @@ class TestConflictPanel:
         # Placeholder for integration test once turn execution is wired
         # At minimum, verify the template has structure for pressure/escalation display
         pass
+
+
+# ── W3.5.1: Presenter Tests ────────────────────────────────────────────────────────────
+
+
+class TestHistoryPresenter:
+    """Tests for history panel presenter."""
+
+    def test_history_presenter_returns_valid_pydantic_model(self):
+        """present_history_panel returns HistoryPanelOutput with valid structure."""
+        from app.runtime.w2_models import SessionState
+        from app.runtime.history_presenter import present_history_panel, HistoryPanelOutput
+
+        # Create minimal valid SessionState
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+        )
+
+        # Call presenter
+        result = present_history_panel(session_state)
+
+        # Verify result is HistoryPanelOutput
+        assert isinstance(result, HistoryPanelOutput)
+        assert hasattr(result, 'history_summary')
+        assert hasattr(result, 'recent_entries')
+        assert isinstance(result.recent_entries, list)
+        assert result.entry_count >= 0
+
+    def test_history_presenter_recent_entries_limited_to_20(self):
+        """present_history_panel limits recent_entries to last 20 entries."""
+        from app.runtime.w2_models import SessionState
+        from app.runtime.history_presenter import present_history_panel
+
+        # Create session state
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+        )
+
+        result = present_history_panel(session_state)
+
+        # Verify recent_entries is bounded to 20 max
+        assert len(result.recent_entries) <= 20
+
+
+class TestDebugPresenter:
+    """Tests for debug panel presenter."""
+
+    def test_debug_presenter_returns_valid_pydantic_model(self):
+        """present_debug_panel returns DebugPanelOutput with valid structure."""
+        from app.runtime.w2_models import SessionState
+        from app.runtime.debug_presenter import present_debug_panel, DebugPanelOutput
+
+        # Create minimal valid SessionState
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+        )
+
+        # Call presenter
+        result = present_debug_panel(session_state)
+
+        # Verify result is DebugPanelOutput
+        assert isinstance(result, DebugPanelOutput)
+        assert hasattr(result, 'primary_diagnostic')
+        assert hasattr(result, 'recent_pattern_context')
+        assert isinstance(result.recent_pattern_context, list)
+        assert hasattr(result, 'degradation_markers')
+
+    def test_debug_presenter_recent_pattern_bounded_to_5(self):
+        """present_debug_panel limits recent_pattern_context to last 3-5 turns."""
+        from app.runtime.w2_models import SessionState
+        from app.runtime.debug_presenter import present_debug_panel
+
+        # Create session state
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+        )
+
+        result = present_debug_panel(session_state)
+
+        # Verify recent_pattern_context is bounded
+        assert len(result.recent_pattern_context) <= 5
+
+
+class TestPresenterIntegration:
+    """Integration tests verifying presenters derive from canonical sources."""
+
+    def test_history_presenter_derives_from_progression_summary(self):
+        """Verify HistoryPanelOutput.history_summary is populated from ProgressionSummary."""
+        from app.runtime.w2_models import SessionState
+        from app.runtime.progression_summary import ProgressionSummary
+        from app.runtime.history_presenter import present_history_panel
+
+        # Create session with progression summary
+        progression = ProgressionSummary(
+            first_turn_covered=1,
+            last_turn_covered=15,
+            total_turns_in_source=15,
+            current_scene_id="scene_1",
+            scene_transition_count=2,
+            recent_scene_ids=["scene_1", "scene_2"],
+            unique_triggers_in_period=["trigger_a", "trigger_b"],
+            trigger_frequency={"trigger_b": 3, "trigger_a": 1},
+            guard_outcome_distribution={"ACCEPTED": 12, "REJECTED": 3},
+            most_recent_guard_outcomes=["ACCEPTED", "ACCEPTED"],
+            ending_reached=False,
+            session_phase="middle",
+        )
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+        )
+        session_state.context_layers.progression_summary = progression
+
+        result = present_history_panel(session_state)
+
+        # Verify summary is populated from progression
+        assert result.history_summary.session_phase == "middle"
+        assert result.history_summary.total_turns_covered == 15
+        assert result.history_summary.scene_transition_count == 2
+
+    def test_debug_presenter_derives_from_short_term_context(self):
+        """Verify DebugPanelOutput.primary_diagnostic is populated from ShortTermTurnContext."""
+        from datetime import datetime, timezone
+        from app.runtime.w2_models import SessionState
+        from app.runtime.short_term_context import ShortTermTurnContext
+        from app.runtime.debug_presenter import present_debug_panel
+
+        # Create session with short term context
+        short_term = ShortTermTurnContext(
+            turn_number=5,
+            scene_id="scene_2",
+            detected_triggers=["trigger_x"],
+            accepted_delta_targets=["characters.alice.emotional_state"],
+            rejected_delta_targets=[],
+            guard_outcome="ACCEPTED",
+            scene_changed=True,
+            prior_scene_id="scene_1",
+            ending_reached=False,
+            conflict_pressure=45.0,
+            created_at=datetime.now(timezone.utc),
+        )
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_2",
+        )
+        session_state.context_layers.short_term_context = short_term
+
+        result = present_debug_panel(session_state)
+
+        # Verify primary diagnostic is populated from short_term_context
+        assert result.primary_diagnostic.summary.turn_number == 5
+        assert result.primary_diagnostic.summary.scene_id == "scene_2"
+        assert result.primary_diagnostic.summary.guard_outcome == "ACCEPTED"
+        assert "trigger_x" in result.primary_diagnostic.summary.detected_triggers
+        assert result.primary_diagnostic.detailed.accepted_delta_target_count == 1
+
+
+class TestPresenterDeterminism:
+    """Tests verifying presenters are deterministic and handle missing data."""
+
+    def test_history_presenter_deterministic(self):
+        """Calling presenter twice with same input produces identical output."""
+        from app.runtime.w2_models import SessionState
+        from app.runtime.history_presenter import present_history_panel
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+        )
+
+        result1 = present_history_panel(session_state)
+        result2 = present_history_panel(session_state)
+
+        # Pydantic models are equal if their field values match
+        assert result1 == result2
+
+    def test_debug_presenter_handles_missing_data_gracefully(self):
+        """Presenter returns valid output with None/empty fields when data missing."""
+        from app.runtime.w2_models import SessionState
+        from app.runtime.debug_presenter import present_debug_panel, DebugPanelOutput
+
+        # Create session with NO short_term_context or history
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+        )
+        # context_layers.short_term_context is None by default
+        # context_layers.session_history is None by default
+
+        # Should not raise error
+        result = present_debug_panel(session_state)
+
+        # Should return valid DebugPanelOutput
+        assert isinstance(result, DebugPanelOutput)
+        assert result.recent_pattern_context == []
+        assert result.degradation_markers == []

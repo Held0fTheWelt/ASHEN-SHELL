@@ -18,6 +18,10 @@ from app.runtime.session_store import RuntimeSession, create_session as create_r
 from app.runtime.turn_dispatcher import dispatch_turn
 from app.runtime import present_all_characters, present_conflict_panel
 
+# W3.5.1 presenter imports
+from app.runtime.history_presenter import present_history_panel, HistoryPanelOutput
+from app.runtime.debug_presenter import present_debug_panel, DebugPanelOutput
+
 web_bp = Blueprint("web", __name__)
 
 
