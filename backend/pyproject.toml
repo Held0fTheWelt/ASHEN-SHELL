@@ -1,0 +1,43 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+asyncio_mode = "strict"
+addopts = "-v --tb=short --cov=app --cov-report=term-missing --cov-config=.coveragerc --cov-branch"
+filterwarnings = [
+    "ignore::sqlalchemy.exc.LegacyAPIWarning",
+]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = [
+    "*/site-packages/*",
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+    "@overload",
+]
+precision = 2
+skip_covered = false
+skip_empty = true
+
+[tool.coverage.paths]
+source = [
+    "app",
+    "*/app",
+    "/mnt/c/*/app",
+    "C:\\Users\\*\\*\\app",
+]
