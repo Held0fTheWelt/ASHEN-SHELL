@@ -13,8 +13,8 @@ from app.runtime.adapter_registry import (
 from app.runtime.ai_adapter import AdapterResponse, StoryAIAdapter
 
 
-class TestAdapter(StoryAIAdapter):
-    """Test adapter for registry testing."""
+class MockAdapter(StoryAIAdapter):
+    """Mock adapter for registry testing."""
 
     def __init__(self, name: str = "test"):
         self._name = name
@@ -38,7 +38,7 @@ class TestAdapter(StoryAIAdapter):
 def test_register_adapter():
     """Adapter can be registered by name."""
     clear_registry()
-    adapter = TestAdapter("test_adapter")
+    adapter = MockAdapter("test_adapter")
     register_adapter("test_adapter", adapter)
     assert adapter_registered("test_adapter")
 
@@ -46,7 +46,7 @@ def test_register_adapter():
 def test_get_adapter():
     """Adapter can be looked up by name."""
     clear_registry()
-    adapter = TestAdapter("my_adapter")
+    adapter = MockAdapter("my_adapter")
     register_adapter("my_adapter", adapter)
 
     retrieved = get_adapter("my_adapter")
@@ -57,7 +57,7 @@ def test_get_adapter():
 def test_get_adapter_case_insensitive():
     """Adapter lookup is case-insensitive."""
     clear_registry()
-    adapter = TestAdapter("CaseAdapter")
+    adapter = MockAdapter("CaseAdapter")
     register_adapter("CaseAdapter", adapter)
 
     assert get_adapter("caseadapter") is not None
@@ -74,7 +74,7 @@ def test_get_nonexistent_adapter_returns_none():
 def test_register_adapter_validates_name():
     """Adapter registration requires non-empty name."""
     clear_registry()
-    adapter = TestAdapter()
+    adapter = MockAdapter()
 
     with pytest.raises(ValueError, match="Adapter name cannot be empty"):
         register_adapter("", adapter)
@@ -94,7 +94,7 @@ def test_register_adapter_validates_adapter():
 def test_clear_registry():
     """Registry can be cleared."""
     clear_registry()
-    adapter = TestAdapter("test")
+    adapter = MockAdapter("test")
     register_adapter("test", adapter)
     assert adapter_registered("test")
 
@@ -108,7 +108,7 @@ def test_adapter_registered_function():
 
     assert not adapter_registered("unknown")
 
-    adapter = TestAdapter("check")
+    adapter = MockAdapter("check")
     register_adapter("check", adapter)
     assert adapter_registered("check")
 
@@ -117,8 +117,8 @@ def test_multiple_adapters_registered():
     """Multiple adapters can be registered independently."""
     clear_registry()
 
-    adapter1 = TestAdapter("adapter1")
-    adapter2 = TestAdapter("adapter2")
+    adapter1 = MockAdapter("adapter1")
+    adapter2 = MockAdapter("adapter2")
 
     register_adapter("adapter1", adapter1)
     register_adapter("adapter2", adapter2)

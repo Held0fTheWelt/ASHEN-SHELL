@@ -307,8 +307,8 @@ class TestSessionHistoryDistinctness:
         entry = HistoryEntry.from_short_term_context(context)
 
         # Context has fields history doesn't
-        context_field_count = len(context.model_fields)
-        entry_field_count = len(entry.model_fields)
+        context_field_count = len(type(context).model_fields)
+        entry_field_count = len(type(entry).model_fields)
 
         # Entry is notably lighter
         assert entry_field_count < context_field_count
