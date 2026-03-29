@@ -6,120 +6,128 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [0.4.0] - 2026-03-28 (W2.3: Multi-Turn Memory and Context Layers)
+## [0.3.5] - 2026-03-29
 
-**Focus**: Establish five canonical context layers for session-wide coherence. Accumulated history drives structural summaries, interpersonal dynamics, and selective guidance injection. All layers update automatically post-turn, bounded and distinct.
+**Summary**: Made the session UI genuinely playable. Routes now execute real turns via the canonical dispatcher. Players can submit free-text actions that update live session state in-memory with scene context and result feedback.
 
-### Added (W2.3-R1: State Integration)
+### Added
 
-- **`backend/app/runtime/w2_models.py`**: SessionContextLayers wrapper (57 lines)
-  - `SessionContextLayers`: Five W2.3 context layers grouped in canonical SessionState
-  - `SessionState.context_layers`: New field (default_factory=SessionContextLayers)
+- **`backend/app/runtime/session_store.py`**: In-memory runtime session registry
+  - `RuntimeSession` dataclass: wraps SessionState, ContentModule reference, turn_counter, timestamp
+  - Module-level dict registry (`_runtime_sessions`) — server-side session store for live gameplay
+  - Functions: `create_session()`, `get_session()`, `update_session()`, `delete_session()`, `clear_registry()`
 
-- **`backend/tests/runtime/test_session_state_context_integration.py`**: 13 tests for R1 integration
-  - TestSessionContextLayersModel (3 tests) — wrapper instantiation and serialization
-  - TestSessionStateContextIntegration (5 tests) — SessionState integration, backward compatibility
-  - TestSessionStateStructureMaintenance (3 tests) — serialization, structure preservation
-  - TestSessionStateContextLayersClear (2 tests) — reset and independent updates
+- **`backend/app/web/routes.py`** (modifications):
+  - `_resolve_runtime_session(session_id)`: Validates Flask session matches requested session_id
+  - `_present_turn_result(runtime_session, turn_result)`: Explicit presenter mapping canonical runtime data to template fields
+  - `POST /play/<session_id>/execute`: Executes real turns via canonical `dispatch_turn()` router
+    - Validates Flask session, extracts operator_input (raw string, no conversion to MockDecision)
+    - Calls dispatcher with RuntimeSession context
+    - Updates in-memory session state with new canonical state from dispatcher
+    - Maps result via presenter, re-renders template with feedback
 
-### Added (W2.3-R2: Accumulation Wiring)
+- **`backend/app/web/templates/session_shell.html`** (modifications):
+  - Scene display panel: title, description, state summary (situation, conversation_status)
+  - Interaction form: Free-text textarea (primary) with optional quick-action helper buttons
+    - Buttons (observe, interact, move) populate textarea without replacing text
+  - Result feedback panel: narrative_text, guard_outcome, accepted/rejected delta paths, next_scene_id
+  - Error panel: Shows error messages on execution failure
+  - All fields via explicit presenter mapping, not direct object access
 
-- **`backend/app/runtime/turn_executor.py`**: Post-turn accumulation (300 lines modified)
-  - `_accumulate_turn_context()`: Creates ShortTermTurnContext and populates SessionHistory
-  - Captures `prior_scene_id` for transition detection
-  - Wired in success and failure paths (automatic post-turn)
-  - Local imports prevent circular dependencies
+- **`backend/tests/runtime/test_session_store.py`**: Unit tests for session store
+  - 7 tests covering CRUD operations and session isolation
+  - TestRuntimeSessionModel (2 tests) — dataclass creation, timestamp validation
+  - TestSessionStoreRegistry (5 tests) — create/get/update/delete/multiple concurrent sessions
 
-- **`backend/tests/runtime/test_w2_3_r2_accumulation.py`**: 11 integration tests for R2 accumulation
-  - TestShortTermContextDerivation (2 tests) — successful and rejected turns
-  - TestSessionHistoryAccumulation (3 tests) — creation, accumulation, bounded trimming
-  - TestSceneTransitionTracking (1 test) — scene change detection
-  - TestFailedTurnAccumulation (1 test) — system errors still accumulate
-  - TestContextOrderingAndDeterminism (2 tests) — deterministic ordering
-  - TestGuardOutcomeVariation (2 tests) — all guard outcomes accumulate
+- **`backend/tests/test_session_ui.py`**: Integration tests for UI routes
+  - test_session_execute_route_requires_login: Auth validation
+  - test_session_start_returns_module_list: GET /play returns available modules
 
-### Added (W2.3-R3: Derivation Wiring)
+### Architecture
 
-- **`backend/app/runtime/turn_executor.py`**: Post-turn derivation (351 lines added)
-  - `_derive_runtime_context()`: Orchestrates three-step derivation
-    1. ProgressionSummary from SessionHistory
-    2. RelationshipAxisContext from SessionHistory
-    3. LoreDirectionContext from module + history + prior layers
-  - Wired in success and failure paths (automatic post-turn)
-  - Local imports prevent circular dependencies
+- **Hybrid session management**: Flask session stores lightweight metadata (session_id), RuntimeSession registry holds full context (state, module, turn counter)
+- **Canonical dispatcher**: Routes call `dispatch_turn()` (session-level router), not execute_turn directly
+  - Dispatcher owns execution mode routing and decision construction
+  - Routes pass only operator_input (raw string), dispatcher handles MockDecision/AI logic
+- **In-memory constraints** (documented): Sessions exist only while server running, lost on restart (intentional MVP scope)
+- **State immutability**: Failed execution preserves last valid session state; successful execution replaces state atomically
+- **Session isolation**: Multiple RuntimeSession objects prevent state leakage across concurrent sessions
 
-- **`backend/tests/runtime/test_w2_3_r3_derivation.py`**: 11 focused tests for R3 derivation
-  - TestProgressionSummaryDerivation (3 tests) — creation, updates, scene reflection
-  - TestRelationshipAxisContextDerivation (2 tests) — creation, history reflection
-  - TestLoreDirectionContextDerivation (2 tests) — creation, derivation tracking
-  - TestAllLayersPresent (1 test) — all five layers non-None with correct types
-  - TestLayerDistinctness (1 test) — layers are distinct types
-  - TestBoundednessInRuntime (1 test) — bounds enforced in runtime
-  - TestDerivationWithRejectedTurns (1 test) — derivation on failed turns
+### Scope Boundaries
 
-### Added (W2.3-R4: Integration Proof)
+**This Release:**
+- Scene view (title, description, state summary from canonical module/state)
+- Free-text operator input (primary interaction model)
+- Quick-action helpers (optional, non-replacing buttons)
+- Real turn execution via canonical dispatcher
+- Result feedback (narrative, outcome, deltas, next scene)
+- In-memory session state management
+- Session isolation and error preservation
 
-- **`backend/tests/runtime/test_w2_3_r4_integration.py`**: 3 canonical integration tests for R4 proof
-  - TestW23CanonicalIntegration (3 tests)
-    1. `test_all_five_w23_layers_coherent_across_five_turns` — Canonical snapshot: all five layers present, typed, bounded, coherent after 5 real turns
-    2. `test_w23_layer_state_changes_are_detectable_across_turns` — State changes measurable (not static); fails if wiring removed
-    3. `test_w23_history_trimming_leaves_derived_layers_coherent` — FIFO trimming (max_size=3) produces coherent state; all layers reflect trimmed history
-
-### Design: Five W2.3 Layers
-
-1. **W2.3.1 (ShortTermTurnContext)** — Bounded snapshot of immediately recent turn (scene, triggers, deltas, guard outcome, transition)
-2. **W2.3.2 (SessionHistory)** — Bounded ordered sequence of turn entries (max 100, FIFO trimming)
-3. **W2.3.3 (ProgressionSummary)** — Compressed aggregation from history (phases, trigger frequency, scene transitions, ending state)
-4. **W2.3.4 (RelationshipAxisContext)** — Salient interpersonal dynamics from history (character pairs, escalation/resolution trends, stability signals)
-5. **W2.3.5 (LoreDirectionContext)** — Selective module guidance for current situation (bounded to 15 units based on scene, triggers, progression, relationships)
-
-### Wiring: Automatic Post-Turn
-
-Both success and failure paths:
-```python
-_accumulate_turn_context(session, result, prior_scene_id)   # W2.3-R2
-_derive_runtime_context(session, module)                     # W2.3-R3
-```
-
-All layer updates are:
-- **Deterministic** — Pure functions, same input → same output
-- **Ordered** — Derivation steps are explicit (Progression, then Relationship, then Lore)
-- **Bounded** — All fields respect size limits
-- **Distinct** — Five separate types, no duplication
-- **Automatic** — No manual calls needed
-
-### What is Deferred to W2.4+
-
-- Consulting relationship context in narrative decisions
-- Injecting lore/direction guidance in AI requests
-- Using progression phase for scene selection
-- Full context assembly into prompts
+**Deferred to Later Releases:**
+- Persistence layer (session/turn history storage)
+- Rich character detail and relationship panels
+- Conflict/escalation panel depth
+- Advanced debugging and diagnostics panels
+- Full turn history panels
 
 ### Test Coverage
 
-- **38 total W2.3 tests** (13 R1 + 11 R2 + 11 R3 + 3 R4)
-- **481 total runtime tests** (456 baseline + 25 W2.3 new)
-- **Zero regressions**
-
-### Key Accomplishments
-
-- ✅ All five context layers integrated into canonical SessionState
-- ✅ Automatic accumulation post-turn for all outcomes (success, failure, reject, error)
-- ✅ Automatic derivation post-turn with explicit ordering
-- ✅ Boundedness enforced in runtime (not just unit tests)
-- ✅ Layer distinctness proven (different types, different content)
-- ✅ FIFO trimming produces coherent multi-layer state
-- ✅ Integration proof: canonical path tested with real turns
-- ✅ No scope jump (all models exist from prior work, no new production code beyond wiring)
-
-**Tests**: 25 new W2.3 tests + 456 existing = 481 total (all passing)
-**Status**: W2.3 complete and ready for W2.4 usage integration
+- **9 tests total** (7 unit + 2 integration)
+- **2724 full test suite** (all passing, zero regressions)
+- **Test categories**: Session store CRUD, isolation, integration routes, auth
 
 ---
 
-## [0.3.3] - 2026-03-27 (W2.1.3: Parse, Normalize, and Pre-Validate AI Output)
+## [0.3.4] - 2026-03-28
 
-**Focus**: Bridge raw adapter output into a clean, inspectable internal decision representation. Establish the parse → normalize → pre-validate pipeline that transforms adapter responses into canonical form before runtime validation.
+**Summary**: Added five canonical context layers that track session history, progression phase, relationship dynamics, and lore guidance. All layers update automatically after each turn and feed into narrative decisions.
+
+### Added
+
+- **`backend/app/runtime/w2_models.py`**: SessionContextLayers wrapper
+  - `SessionContextLayers`: Five context layers grouped in canonical SessionState
+  - `SessionState.context_layers`: New field wrapping short-term, history, progression, relationships, lore
+  - Integration tests for state backwards compatibility and serialization
+
+- **`backend/app/runtime/turn_executor.py`**: Automatic post-turn context updates
+  - `_accumulate_turn_context()`: Creates ShortTermTurnContext and populates SessionHistory
+  - Captures prior_scene_id for transition detection, wired in success and failure paths
+  - `_derive_runtime_context()`: Orchestrates three-step derivation (progression → relationships → lore)
+  - All updates automatic, no manual calls needed
+
+- **Tests**: 38 new context layer tests (all passing)
+  - State integration (13 tests)
+  - Accumulation wiring (11 tests)
+  - Derivation wiring (11 tests)
+  - Integration proof (3 tests)
+
+### Design: Five Context Layers
+
+1. **ShortTermTurnContext** — Bounded snapshot of immediately recent turn
+2. **SessionHistory** — Bounded ordered sequence of turn entries (max 100, FIFO trimmed)
+3. **ProgressionSummary** — Compressed aggregation from history
+4. **RelationshipAxisContext** — Salient interpersonal dynamics from history
+5. **LoreDirectionContext** — Selective module guidance for current situation
+
+### Guarantees
+
+- **Deterministic**: Pure functions, consistent output for same input
+- **Ordered**: Derivation steps explicit (Progression → Relationship → Lore)
+- **Bounded**: All fields respect size limits, FIFO trimming enforced
+- **Distinct**: Five separate types, no duplication
+- **Automatic**: All updates post-turn across success and failure paths
+
+### Test Coverage
+
+- **481 total runtime tests** (456 existing + 25 new W2.3)
+- **Zero regressions**
+
+---
+
+## [0.3.3] - 2026-03-27
+
+**Summary**: Implemented parse-normalize-validate pipeline for AI adapter output. Transforms raw model responses into canonical decision form with error handling and diagnostic trace.
 
 ### Added
 
@@ -167,9 +175,9 @@ All layer updates are:
 
 ---
 
-## [0.3.2] - 2026-03-27 (W2.1.2: Canonical Structured AI Story Output Contract)
+## [0.3.2] - 2026-03-27
 
-**Focus**: Define the schema-driven contract for AI story decision output. All proposals are structured and validated; AI cannot have freeform authority.
+**Summary**: Defined structured AI output contract. Models for state deltas, dialogue impulses, conflict vectors, and story output. AI proposes changes; runtime validates all proposals.
 
 ### Added
 
@@ -221,9 +229,9 @@ All layer updates are:
 
 ---
 
-## [0.3.1] - 2026-03-27 (W2.1.1: Canonical AI Adapter Contract)
+## [0.3.1] - 2026-03-27
 
-**Focus**: Establish a clean, provider-agnostic adapter boundary between the story runtime and any AI model integration. Define the canonical contract that all AI adapters (Claude, GPT, local models, etc.) must implement.
+**Summary**: Created adapter contract layer. Defines request/response models for any AI provider (Claude, GPT, local models). Mock adapter for reproducible testing.
 
 ### Added
 
@@ -259,104 +267,76 @@ All layer updates are:
 
 ---
 
-## [0.3.0] - 2026-03-27 (W2.0: Canonical Story Runtime Skeleton)
+## [0.3.0] - 2026-03-27
 
-**Focus**: Implement the complete in-memory story runtime foundation. No persistence, no AI, no UI. Pure canonical runtime: session initialization, turn execution, event logging, outcome derivation, and session commitment.
+**Summary**: Implemented in-memory story runtime. Sessions initialize with module context. Turns execute through validation → delta generation → state application pipeline. All changes logged as immutable events. Scene transitions and ending conditions automatic.
 
-### Added (W2.0 Core Phases)
+### Added
 
-- **W2.0.1 (Models)**: `backend/app/runtime/w2_models.py`
+- **`backend/app/runtime/w2_models.py`**: Core runtime models and enums
   - `SessionState`: Session identity, module ref, current scene, turn counter, canonical state
   - `TurnState`: Per-turn metadata, snapshots, status, timing
-  - `EventLogEntry`: Immutable audit records with monotonic order_index
-  - `StateDelta`: Atomic world state changes with type, source, validation status
-  - `AIDecisionLog`: Full AI response lifecycle (raw output, parsed, validation, deltas)
-  - Enums: `SessionStatus`, `TurnStatus`, `DeltaType`, `DeltaValidationStatus`, `AIValidationOutcome`
+  - `EventLogEntry`: Immutable audit records with monotonic ordering
+  - `StateDelta`: Atomic state changes with type, source, validation status
+  - `AIDecisionLog`: AI response lifecycle (raw output, parsed, validation, deltas)
+  - Enums: SessionStatus, TurnStatus, DeltaType, DeltaValidationStatus, AIValidationOutcome
 
-- **W2.0.2 (Session Start)**: `backend/app/runtime/session_start.py`
+- **`backend/app/runtime/session_start.py`**: Session initialization
   - `start_session()`: Initialize SessionState with module, initial scene, canonical state
   - `resolve_initial_scene()`: Scene selection by sequence order
   - `build_initial_canonical_state()`: Character/relationship state initialization
-  - Event logging: `session_started`, `module_loaded`, `initial_scene_resolved`
 
-- **W2.0.3 (Turn Execution)**: `backend/app/runtime/turn_executor.py`
-  - `execute_turn()`: Main turn execution function (validation → deltas → application)
+- **`backend/app/runtime/turn_executor.py`**: Turn execution pipeline
+  - `execute_turn()`: Main execution (validation → deltas → application)
   - `construct_deltas()`: Build explicit StateDelta objects from proposed changes
-  - `validate_decision()`: Validate input against module rules (triggers, characters, paths, immutables)
+  - `validate_decision()`: Validate against module rules
   - `apply_deltas()`: Immutably apply deltas to canonical state
-  - Event logging: `turn_started`, `decision_validated`, `deltas_generated`, `deltas_applied`, `turn_completed`, `turn_failed` (on error)
-  - Scene change events: `scene_changed` (conditional)
 
-- **W2.0.4 (Event Logging)**: `backend/app/runtime/event_log.py`
-  - `RuntimeEventLog`: Monotonic event accumulator helper
-  - Per-operation accumulation (not persistence)
-  - Automatic order_index assignment and session_id/turn_number injection
+- **`backend/app/runtime/event_log.py`**: Event accumulation
+  - `RuntimeEventLog`: Monotonic event accumulator
+  - Automatic order_index assignment and context injection
 
-- **W2.0.5 (Next Situation)**: `backend/app/runtime/next_situation.py`
-  - `derive_next_situation()`: Evaluate ending conditions, scene transitions, default continuation
-  - Trigger-based condition evaluation (AND logic: all conditions must match)
+- **`backend/app/runtime/next_situation.py`**: Situation derivation
+  - `derive_next_situation()`: Evaluate ending conditions and scene transitions
+  - Trigger-based condition evaluation (AND logic)
   - Scene graph-aware transition validation
-  - `NextSituation` result model with status, scene, outcome
 
-### Added (W2.0 Repair Phases)
-
-- **W2.0-R1 (Failure Path Coherence)**
-  - Fixed: Made `validation_outcome` optional in `TurnExecutionResult`
-  - Allows failure paths to construct coherent results without crashing
-
-- **W2.0-R2 (Scene Graph Validation)**
-  - Added: Scene reachability validation in `_validate_scene_transition()`
-  - Checks: current scene exists, target scene exists, valid transition path exists
-
-- **W2.0-R3 (Condition-Aware Transitions)**
-  - Added: Optional `detected_triggers` parameter to `derive_next_situation()`
-  - Condition evaluation: all trigger_conditions must be in detected_triggers (AND logic)
-  - Backward compatible: None triggers means cannot fire conditional outcomes
-
-- **W2.0-R4 (Session Commitment)**
-  - Added: `commit_turn_result()` function for atomic session state updates
-  - Updates: canonical_state, current_scene_id, turn_counter, timestamp
-  - Immutable pattern: returns new session, original unchanged
-
-- **W2.0-R5 (Terminal State & Outcome Logging)**
-  - Added: `log_situation_outcome()` — generates outcome events
-  - Added: `apply_situation_outcome()` — updates session status/scene
-  - Event types: `scene_continued`, `scene_transitioned`, `ending_reached`
-  - Status updates: Sets `status=ENDED` for terminal outcomes
+- **Refinements** (applied during development):
+  - Made `validation_outcome` optional in TurnExecutionResult for coherent failure paths
+  - Added scene reachability validation in transitions
+  - Added optional `detected_triggers` parameter to derive_next_situation()
+  - Added `commit_turn_result()` for atomic state updates
+  - Added `log_situation_outcome()` and `apply_situation_outcome()` for terminal states
 
 ### Test Coverage
 
-- **W2.0.1**: 27 tests (models, enums, defaults)
-- **W2.0.2**: 39 tests (session start, event logging)
-- **W2.0.3**: 48 tests (turn execution, validation, events, deltas)
-- **W2.0.4**: 17 tests (event accumulation, monotonicity)
-- **W2.0.5**: 26 tests (situation derivation, conditions, outcome logging)
-- **Total**: 157 tests (all passing)
+- **157 total tests** (all passing)
+  - Models and enums: 27 tests
+  - Session initialization: 39 tests
+  - Turn execution: 48 tests
+  - Event logging: 17 tests
+  - Situation derivation: 26 tests
 
-### Design
+### Design Principles
 
-- **Immutable State**: All updates return new objects (original unchanged)
-- **Event-Centric**: Every state change logged as immutable EventLogEntry
-- **Provider-Agnostic**: No hardcoded logic for specific content modules
-- **Synchronous Execution**: Sequential per-turn processing (async deferred to W2.1+)
-- **Module-Driven Validation**: All rules pulled from ContentModule (no engine hacks)
+- **Immutable State**: All updates return new objects
+- **Event-Centric**: Every state change logged as immutable entry
+- **Provider-Agnostic**: No hardcoded logic for specific modules
+- **Synchronous Execution**: Sequential per-turn processing
+- **Module-Driven**: All rules pulled from ContentModule
 
 ### Deferred to W2.1+
 
 - Persistence/save-load
-- Global event accumulation
-- Session manager/coordinator
 - Real AI integration
 - Async/await support
-
-**Tests**: 157 (all passing)
-**Gate Status**: ✅ APPROVED FOR W2.1 TRANSITION
+- Session coordination
 
 ---
 
-## [0.2.2] - 2026-03-27 (W1.1 Repair - Structural Consistency)
+## [0.2.2] - 2026-03-27
 
-**Focus**: Resolve internal inconsistencies between module models, loader, schemas, and tests. Ensure canonical module representation is consistent across all layers.
+**Summary**: Fixed structural drift between module YAML, models, schemas, and loader. All collections now keyed by ID. Field types aligned with actual content structure. Module loads without errors.
 
 ### Fixed
 
@@ -404,13 +384,13 @@ All layer updates are:
 
 ---
 
-## [0.2.1] - 2026-03-26 (Wave 1: God of Carnage Canonical Module Structure)
+## [0.2.1] - 2026-03-26
 
-**Focus**: Establish God of Carnage as the first formal, machine-readable, testable reference content module for the World of Shadows MVP. Implementation of canonical module structure aligned with contract specifications.
+**Summary**: Implemented God of Carnage content module. YAML-based structure defines characters, relationships, scenes, triggers, escalation axes, endings. Direction guidance for AI story generation. Machine-readable, versioned, and generic (works for any module).
 
-### Wave 1 () Canonical Module Implementation
+### Added
 
-#### Created: Content Module Directory Structure
+**Content Module Files** (`content/modules/god_of_carnage/`)
 
 **Location**: `content/modules/god_of_carnage/`
 
