@@ -283,3 +283,121 @@ class RetryPolicy:
             The failure class for exhausted retries
         """
         return AIFailureClass.RETRY_EXHAUSTED
+
+
+class ReducedContextRetryMode(str, Enum):
+    """Retry modes for handling context during retry attempts.
+
+    Normal retry repeats the same request with full context.
+    Reduced-context retry uses progressively smaller context to reduce token pressure.
+    """
+
+    NORMAL = "normal"
+    """Full context retry—use same context as original attempt."""
+
+    REDUCED = "reduced"
+    """Reduced-context retry—trim lower-priority context layers."""
+
+
+class ReducedContextRetryPolicy:
+    """W2.5.3 — Reduced-context retry strategy.
+
+    When a retryable failure occurs, reduced-context retry reduces token pressure
+    by trimming context layers in a deterministic order while preserving minimal
+    session continuity.
+
+    Reduction order (W2.3 layers):
+    1. Trim lore/direction context (W2.3.5) — module guidance is least critical
+    2. Trim relationship context detail (W2.3.4) — dynamics can be inferred
+    3. Reduce session history contribution (W2.3.2) — trim older turns
+    4. Preserve short-term context (W2.3.1) — current turn grounding essential
+    5. Preserve canonical state (current scene, character state) — baseline required
+
+    This order balances:
+    - Token savings (higher layers reduced more)
+    - Continuity preservation (core session state stays)
+    - Predictability (deterministic reduction sequence)
+    """
+
+    # Reduction phases (applied in order)
+    REDUCTION_PHASES: list[str] = [
+        "trim_lore_direction",           # Phase 1: Remove W2.3.5 (least critical)
+        "trim_relationship_detail",       # Phase 2: Remove W2.3.4 (dynamics)
+        "reduce_session_history",         # Phase 3: Trim W2.3.2 (older turns)
+        "preserve_short_term",            # Phase 4: Keep W2.3.1 (current turn)
+        "preserve_canonical_state",       # Phase 5: Keep core state (grounding)
+    ]
+
+    @classmethod
+    def should_use_reduced_context(cls, attempt: int) -> bool:
+        """Determine if reduced-context retry should be used.
+
+        Uses reduced context starting on the second retry attempt to preserve
+        token budget while maintaining session coherence.
+
+        Args:
+            attempt: The current retry attempt (1-indexed)
+
+        Returns:
+            True if reduced context should be used, False for normal context
+        """
+        # First attempt uses normal context
+        # Second+ attempts use reduced context (if available)
+        return attempt >= 2
+
+    @classmethod
+    def get_retry_mode(cls, attempt: int) -> ReducedContextRetryMode:
+        """Get the retry mode for a given attempt number.
+
+        Args:
+            attempt: The current retry attempt (1-indexed)
+
+        Returns:
+            ReducedContextRetryMode indicating which context strategy to use
+        """
+        if cls.should_use_reduced_context(attempt):
+            return ReducedContextRetryMode.REDUCED
+        return ReducedContextRetryMode.NORMAL
+
+    @classmethod
+    def get_reduction_phases(cls) -> list[str]:
+        """Get the deterministic context reduction phases.
+
+        Returns:
+            List of reduction phases in order, from least critical to most critical
+        """
+        return cls.REDUCTION_PHASES.copy()
+
+    @classmethod
+    def get_phase_description(cls, phase: str) -> str:
+        """Get description of what a reduction phase does.
+
+        Args:
+            phase: The reduction phase name
+
+        Returns:
+            Description of what context is affected
+        """
+        descriptions = {
+            "trim_lore_direction": "Remove lore/direction context (W2.3.5) — module guidance",
+            "trim_relationship_detail": "Remove relationship context (W2.3.4) — dynamics",
+            "reduce_session_history": "Reduce session history (W2.3.2) — trim to last N turns",
+            "preserve_short_term": "Preserve short-term context (W2.3.1) — current turn",
+            "preserve_canonical_state": "Preserve canonical state — character/scene baseline",
+        }
+        return descriptions.get(phase, f"Unknown phase: {phase}")
+
+    @classmethod
+    def is_reduced_context_eligible(cls, failure_class: AIFailureClass) -> bool:
+        """Check if a failure is eligible for reduced-context retry.
+
+        Only retryable failures (transient adapter issues) can use reduced-context
+        retry. Other failures don't retry, so context reduction doesn't apply.
+
+        Args:
+            failure_class: The failure to check
+
+        Returns:
+            True if reduced-context retry is applicable, False otherwise
+        """
+        return RetryPolicy.is_retryable_failure(failure_class)

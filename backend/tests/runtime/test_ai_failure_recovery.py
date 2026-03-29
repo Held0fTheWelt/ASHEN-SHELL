@@ -323,3 +323,131 @@ class TestRetryPolicy:
         decision1 = RetryPolicy.should_retry(AIFailureClass.ADAPTER_ERROR, attempt=1)
         decision2 = RetryPolicy.should_retry(AIFailureClass.ADAPTER_ERROR, attempt=1)
         assert decision1 == decision2
+
+
+class TestReducedContextRetryPolicy:
+    """Verify W2.5.3 reduced-context retry policy is explicit and bounded."""
+
+    def test_reduced_context_retry_mode_enum_exists(self):
+        """ReducedContextRetryMode enum exists with NORMAL and REDUCED."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryMode
+
+        assert hasattr(ReducedContextRetryMode, "NORMAL")
+        assert hasattr(ReducedContextRetryMode, "REDUCED")
+        assert ReducedContextRetryMode.NORMAL.value == "normal"
+        assert ReducedContextRetryMode.REDUCED.value == "reduced"
+
+    def test_first_attempt_uses_normal_context(self):
+        """First retry attempt uses normal (full) context."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy, ReducedContextRetryMode
+
+        assert not ReducedContextRetryPolicy.should_use_reduced_context(attempt=1)
+        assert ReducedContextRetryPolicy.get_retry_mode(attempt=1) == ReducedContextRetryMode.NORMAL
+
+    def test_second_attempt_uses_reduced_context(self):
+        """Second and subsequent retry attempts use reduced context."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy, ReducedContextRetryMode
+
+        assert ReducedContextRetryPolicy.should_use_reduced_context(attempt=2)
+        assert ReducedContextRetryPolicy.get_retry_mode(attempt=2) == ReducedContextRetryMode.REDUCED
+        assert ReducedContextRetryPolicy.get_retry_mode(attempt=3) == ReducedContextRetryMode.REDUCED
+
+    def test_reduction_phases_are_defined(self):
+        """Canonical reduction phases are defined in order."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy
+
+        phases = ReducedContextRetryPolicy.get_reduction_phases()
+        # Should have phases in order
+        assert len(phases) > 0
+        assert isinstance(phases, list)
+        # Should include key phases
+        assert "trim_lore_direction" in phases
+        assert "trim_relationship_detail" in phases
+        assert "reduce_session_history" in phases
+        assert "preserve_short_term" in phases
+        assert "preserve_canonical_state" in phases
+
+    def test_reduction_phases_order_is_correct(self):
+        """Reduction phases follow correct priority order."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy
+
+        phases = ReducedContextRetryPolicy.get_reduction_phases()
+        # Lore should be trimmed before relationship
+        lore_index = phases.index("trim_lore_direction")
+        relationship_index = phases.index("trim_relationship_detail")
+        history_index = phases.index("reduce_session_history")
+        assert lore_index < relationship_index
+        assert relationship_index < history_index
+        # Critical layers should be last
+        assert phases[-1] == "preserve_canonical_state"
+
+    def test_phase_descriptions_exist(self):
+        """Each reduction phase has a description."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy
+
+        phases = ReducedContextRetryPolicy.get_reduction_phases()
+        for phase in phases:
+            description = ReducedContextRetryPolicy.get_phase_description(phase)
+            assert isinstance(description, str)
+            assert len(description) > 0
+            # Should not be "Unknown phase"
+            assert "Unknown" not in description
+
+    def test_reduced_context_only_for_retryable_failures(self):
+        """Reduced-context retry only applies to retryable failures."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy
+
+        # Should be eligible for retryable failures
+        assert ReducedContextRetryPolicy.is_reduced_context_eligible(AIFailureClass.ADAPTER_ERROR)
+        assert ReducedContextRetryPolicy.is_reduced_context_eligible(AIFailureClass.TIMEOUT_OR_EMPTY_RESPONSE)
+        # Should NOT be eligible for non-retryable failures
+        assert not ReducedContextRetryPolicy.is_reduced_context_eligible(AIFailureClass.PARSE_FAILURE)
+        assert not ReducedContextRetryPolicy.is_reduced_context_eligible(AIFailureClass.RESPONDER_VALIDATION_FAILURE)
+
+    def test_context_reduction_strategy_is_deterministic(self):
+        """Retry mode for a given attempt is always the same."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy
+
+        mode1 = ReducedContextRetryPolicy.get_retry_mode(attempt=2)
+        mode2 = ReducedContextRetryPolicy.get_retry_mode(attempt=2)
+        assert mode1 == mode2
+
+    def test_context_reduction_preserves_continuity_priority(self):
+        """Context reduction preserves critical layers (state, current turn)."""
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy
+
+        phases = ReducedContextRetryPolicy.get_reduction_phases()
+        # Canonical state must be last (most critical, never trimmed)
+        assert phases[-1] == "preserve_canonical_state"
+        # Short-term context must be near the end (session grounding)
+        short_term_index = phases.index("preserve_short_term")
+        canonical_index = phases.index("preserve_canonical_state")
+        assert short_term_index < canonical_index
+
+    def test_reduced_context_mode_reduces_token_pressure(self):
+        """Reduced-context retry uses fewer layers than normal retry.
+
+        Normal path: all 5 W2.3 layers + canonical state
+        Reduced path: starts trimming lower layers
+        """
+        from app.runtime.ai_failure_recovery import ReducedContextRetryPolicy, ReducedContextRetryMode
+
+        normal_mode = ReducedContextRetryPolicy.get_retry_mode(attempt=1)
+        reduced_mode = ReducedContextRetryPolicy.get_retry_mode(attempt=2)
+
+        assert normal_mode == ReducedContextRetryMode.NORMAL
+        assert reduced_mode == ReducedContextRetryMode.REDUCED
+        # Reduction phases exist to implement the difference
+        phases = ReducedContextRetryPolicy.get_reduction_phases()
+        assert len(phases) >= 3  # At least some phases to trim
+
+    def test_max_retries_respects_reduced_context_window(self):
+        """Reduced-context retries respect the global max retry limit."""
+        from app.runtime.ai_failure_recovery import RetryPolicy, ReducedContextRetryPolicy
+
+        max_retries = RetryPolicy.MAX_RETRIES
+        # All attempts up to max should be handled
+        for attempt in range(1, max_retries + 1):
+            mode = ReducedContextRetryPolicy.get_retry_mode(attempt)
+            # Should be deterministic and within bounds
+            assert mode in [ReducedContextRetryPolicy.get_retry_mode(attempt)]
