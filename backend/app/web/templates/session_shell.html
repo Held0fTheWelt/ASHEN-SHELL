@@ -1,121 +1,161 @@
 {% extends "base.html" %}
 {% block title %}Session – World of Shadows{% endblock %}
 {% block content %}
-<main class="app-shell">
+<main class="app-shell app-shell-with-sidebar">
 
-  <!-- Session Info Panel -->
-  <section class="panel session-info-panel">
-    <h2>Session</h2>
-    <dl class="session-meta">
-      <dt>Module</dt><dd>{{ session_data.module_id }}</dd>
-      <dt>Scene</dt><dd>{{ session_data.current_scene_id }}</dd>
-      <dt>Status</dt><dd>{{ session_data.status }}</dd>
-      <dt>Turn</dt><dd>{{ session_data.turn_counter }}</dd>
-    </dl>
-  </section>
+  <!-- Sidebar: Character Panel -->
+  <aside class="sidebar character-sidebar">
+    <h3>Characters</h3>
+    {% if characters %}
+      {% for character in characters %}
+        <div class="character-card">
+          <h4>{{ character.character_name or character.character_id }}</h4>
+          <dl class="character-meta">
+            <dt>Trajectory</dt>
+            <dd class="trajectory {{ character.overall_trajectory }}">
+              {{ character.overall_trajectory }}
+            </dd>
+          </dl>
 
-  <!-- Scene Display Panel -->
-  <section class="panel scene-panel">
-    <h3>Scene</h3>
-    {% if scene %}
-      <h4>{{ scene.title }}</h4>
-      {% if scene.description %}
-        <p>{{ scene.description }}</p>
-      {% endif %}
-      {% if state_summary %}
-        <div class="state-summary">
-          {% if state_summary.situation %}
-            <p><strong>Situation:</strong> {{ state_summary.situation }}</p>
+          {% if character.top_relationship_movements %}
+            <div class="relationships">
+              <p class="label">Salient Relationships</p>
+              <ul>
+                {% for movement in character.top_relationship_movements %}
+                  <li>
+                    <span class="other-id">{{ movement.other_character_id }}</span>:
+                    <span class="signal-type">{{ movement.signal_type }}</span>
+                    <span class="recent-change">({{ movement.recent_change }})</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
           {% endif %}
-          {% if state_summary.conversation_status %}
-            <p><strong>Status:</strong> {{ state_summary.conversation_status }}</p>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="character-empty-state">No characters currently in play.</p>
+    {% endif %}
+  </aside>
+
+  <!-- Main Column: Existing panels -->
+  <div class="main-column">
+
+    <!-- Session Info Panel -->
+    <section class="panel session-info-panel">
+      <h2>Session</h2>
+      <dl class="session-meta">
+        <dt>Module</dt><dd>{{ session_data.module_id }}</dd>
+        <dt>Scene</dt><dd>{{ session_data.current_scene_id }}</dd>
+        <dt>Status</dt><dd>{{ session_data.status }}</dd>
+        <dt>Turn</dt><dd>{{ session_data.turn_counter }}</dd>
+      </dl>
+    </section>
+
+    <!-- Scene Display Panel -->
+    <section class="panel scene-panel">
+      <h3>Scene</h3>
+      {% if scene %}
+        <h4>{{ scene.title }}</h4>
+        {% if scene.description %}
+          <p>{{ scene.description }}</p>
+        {% endif %}
+        {% if state_summary %}
+          <div class="state-summary">
+            {% if state_summary.situation %}
+              <p><strong>Situation:</strong> {{ state_summary.situation }}</p>
+            {% endif %}
+            {% if state_summary.conversation_status %}
+              <p><strong>Status:</strong> {{ state_summary.conversation_status }}</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="placeholder muted">Scene not loaded.</p>
+      {% endif %}
+    </section>
+
+    <!-- Interaction Panel -->
+    <section class="panel interaction-panel">
+      <h3>Interaction</h3>
+      <form method="POST" action="{{ url_for('web.session_execute', session_id=session_id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label for="operator_input">What do you do?</label>
+          <textarea id="operator_input" name="operator_input" rows="4" placeholder="Describe your action..." required></textarea>
+        </div>
+
+        <!-- Optional quick-action helper buttons -->
+        <div class="quick-actions">
+          <button type="button" class="btn-helper" data-action="observe">Observe</button>
+          <button type="button" class="btn-helper" data-action="interact">Interact</button>
+          <button type="button" class="btn-helper" data-action="move">Move</button>
+        </div>
+
+        <button type="submit" class="btn-primary">Execute Action</button>
+      </form>
+    </section>
+
+    <!-- Result Feedback Panel (shown after turn execution) -->
+    {% if turn_result %}
+    <section class="panel result-panel">
+      <h3>Result</h3>
+
+      <!-- Narrative text from turn execution -->
+      {% if turn_result.narrative_text %}
+        <div class="narrative">
+          {{ turn_result.narrative_text }}
+        </div>
+      {% endif %}
+
+      <!-- Guard outcome status -->
+      <div class="outcome-status">
+        <strong>Outcome:</strong>
+        <span class="outcome {% if turn_result.guard_outcome == 'accepted' %}accepted{% elif turn_result.guard_outcome == 'partially_accepted' %}partially-accepted{% elif turn_result.guard_outcome == 'rejected' %}rejected{% else %}invalid{% endif %}">
+          {{ turn_result.guard_outcome }}
+        </span>
+      </div>
+
+      <!-- What changed -->
+      {% if turn_result.accepted_delta_paths or turn_result.rejected_delta_paths %}
+        <div class="deltas">
+          {% if turn_result.accepted_delta_paths %}
+            <p><strong>Accepted changes:</strong></p>
+            <ul>
+              {% for path in turn_result.accepted_delta_paths %}
+                <li>{{ path }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if turn_result.rejected_delta_paths %}
+            <p><strong>Rejected changes:</strong></p>
+            <ul>
+              {% for path in turn_result.rejected_delta_paths %}
+                <li>{{ path }}</li>
+              {% endfor %}
+            </ul>
           {% endif %}
         </div>
       {% endif %}
-    {% else %}
-      <p class="placeholder muted">Scene not loaded.</p>
-    {% endif %}
-  </section>
 
-  <!-- Interaction Panel -->
-  <section class="panel interaction-panel">
-    <h3>Interaction</h3>
-    <form method="POST" action="{{ url_for('web.session_execute', session_id=session_id) }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-      <div class="form-group">
-        <label for="operator_input">What do you do?</label>
-        <textarea id="operator_input" name="operator_input" rows="4" placeholder="Describe your action..." required></textarea>
-      </div>
-
-      <!-- Optional quick-action helper buttons -->
-      <div class="quick-actions">
-        <button type="button" class="btn-helper" data-action="observe">Observe</button>
-        <button type="button" class="btn-helper" data-action="interact">Interact</button>
-        <button type="button" class="btn-helper" data-action="move">Move</button>
-      </div>
-
-      <button type="submit" class="btn-primary">Execute Action</button>
-    </form>
-  </section>
-
-  <!-- Result Feedback Panel (shown after turn execution) -->
-  {% if turn_result %}
-  <section class="panel result-panel">
-    <h3>Result</h3>
-
-    <!-- Narrative text from turn execution -->
-    {% if turn_result.narrative_text %}
-      <div class="narrative">
-        {{ turn_result.narrative_text }}
-      </div>
+    </section>
     {% endif %}
 
-    <!-- Guard outcome status -->
-    <div class="outcome-status">
-      <strong>Outcome:</strong>
-      <span class="outcome {% if turn_result.guard_outcome == 'accepted' %}accepted{% elif turn_result.guard_outcome == 'partially_accepted' %}partially-accepted{% elif turn_result.guard_outcome == 'rejected' %}rejected{% else %}invalid{% endif %}">
-        {{ turn_result.guard_outcome }}
-      </span>
-    </div>
-
-    <!-- What changed -->
-    {% if turn_result.accepted_delta_paths or turn_result.rejected_delta_paths %}
-      <div class="deltas">
-        {% if turn_result.accepted_delta_paths %}
-          <p><strong>Accepted changes:</strong></p>
-          <ul>
-            {% for path in turn_result.accepted_delta_paths %}
-              <li>{{ path }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-        {% if turn_result.rejected_delta_paths %}
-          <p><strong>Rejected changes:</strong></p>
-          <ul>
-            {% for path in turn_result.rejected_delta_paths %}
-              <li>{{ path }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-      </div>
+    <!-- Error messages -->
+    {% if error %}
+    <section class="panel error-panel">
+      <p class="error-message">{{ error }}</p>
+    </section>
     {% endif %}
 
-  </section>
-  {% endif %}
+    <!-- History Panel Placeholder (deferred to W3.4+) -->
+    <section class="panel history-panel">
+      <h3>History</h3>
+      <p class="placeholder muted">Turn history — coming in a future update.</p>
+    </section>
 
-  <!-- Error messages -->
-  {% if error %}
-  <section class="panel error-panel">
-    <p class="error-message">{{ error }}</p>
-  </section>
-  {% endif %}
-
-  <!-- History Panel Placeholder (deferred to W3.4+) -->
-  <section class="panel history-panel">
-    <h3>History</h3>
-    <p class="placeholder muted">Turn history — coming in a future update.</p>
-  </section>
+  </div>
 
 </main>
 
