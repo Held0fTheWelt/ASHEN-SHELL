@@ -65,3 +65,35 @@ def test_post_play_start_stores_session_in_cookie(client, test_user):
     with client.session_transaction() as s:
         assert "active_session" in s
         assert s["active_session"]["module_id"] == "god_of_carnage"
+
+def test_session_view_accessible_after_creation(client, test_user):
+    user, password = test_user
+    csrf = _get_csrf_token(client, "/play", user.username, password)
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage", "csrf_token": csrf},
+        follow_redirects=False,
+    )
+    shell_url = response.headers["Location"]
+    response = client.get(shell_url)
+    assert response.status_code == 200
+    assert b"god_of_carnage" in response.data
+
+def test_session_view_without_active_session_redirects(client, test_user):
+    user, password = test_user
+    _login_session(client, user.username, password)
+    response = client.get("/play/nonexistent-session-id", follow_redirects=False)
+    assert response.status_code == 302
+    assert "/play" in response.headers["Location"]
+
+def test_session_shell_shows_session_info(client, test_user):
+    user, password = test_user
+    csrf = _get_csrf_token(client, "/play", user.username, password)
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage", "csrf_token": csrf},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"god_of_carnage" in response.data
+    assert b"active" in response.data  # status shown

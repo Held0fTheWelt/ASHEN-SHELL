@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Session – World of Shadows{% endblock %}
+{% block content %}
+<main class="app-shell">
+
+  <section class="panel session-info-panel">
+    <h2>Session</h2>
+    <dl class="session-meta">
+      <dt>Module</dt><dd>{{ session_data.module_id }}</dd>
+      <dt>Scene</dt><dd>{{ session_data.current_scene_id }}</dd>
+      <dt>Status</dt><dd>{{ session_data.status }}</dd>
+      <dt>Turn</dt><dd>{{ session_data.turn_counter }}</dd>
+    </dl>
+  </section>
+
+  <section class="panel scene-panel">
+    <h3>Scene</h3>
+    <p class="placeholder muted">Scene view — coming in a future update.</p>
+  </section>
+
+  <section class="panel interaction-panel">
+    <h3>Interaction</h3>
+    <p class="placeholder muted">Interaction panel — coming in a future update.</p>
+  </section>
+
+  <section class="panel history-panel">
+    <h3>History</h3>
+    <p class="placeholder muted">Turn history — coming in a future update.</p>
+  </section>
+
+</main>
+{% endblock %}

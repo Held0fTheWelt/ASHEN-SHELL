@@ -666,3 +666,15 @@ def session_create():
         "turn_counter": new_session.turn_counter,
     }
     return redirect(f"/play/{new_session.session_id}")
+
+
+@web_bp.route("/play/<session_id>")
+@require_web_login
+def session_view(session_id):
+    uid = session.get("user_id")
+    user = db.session.get(User, int(uid)) if uid else None
+    active = session.get("active_session", {})
+    if active.get("session_id") != session_id:
+        flash("Session not found or expired.", "error")
+        return redirect(url_for("web.session_start"))
+    return render_template("session_shell.html", current_user=user, session_data=active)
