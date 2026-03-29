@@ -53,10 +53,12 @@ Responsibilities:
 
 `RuntimeSession` dataclass/model wraps:
 - `session_id`: unique identifier
-- `current_runtime_state`: the full SessionState from W2 (canonical)
+- `current_runtime_state`: the full SessionState from W2 (canonical) — required by canonical `execute_turn()`
+- `module`: reference to loaded ContentModule — required for turn validation and state legality checks
+- `turn_counter`: current turn number — incremented after each successful execution, passed to `execute_turn()`
 - `updated_at`: timestamp of last update
 
-**Implementation rule:** This is the ONLY server-side runtime session registry for W3.3. No parallel stores.
+**Implementation rule:** This is the ONLY server-side runtime session registry for W3.3. No parallel stores. RuntimeSession must carry all context needed to call the real canonical execution path without UI-specific shortcuts.
 
 ### `app/web/routes.py` (modifications)
 
@@ -80,20 +82,24 @@ def _resolve_runtime_session(session_id: str) -> RuntimeSession | None:
 - Validate Flask session matches session_id
 - Resolve RuntimeSession from store
 - Extract operator input from form
-- Call canonical `turn_executor.execute_turn(current_canonical_state, operator_input)`
-- Update RuntimeSession in store with new canonical state from TurnExecutionResult
-- Build result_feedback from TurnExecutionResult
-- Re-render `session_shell.html` with new scene + result feedback
+- Convert operator input to MockDecision object (encapsulating free-text as a proposal)
+- Call **canonical** `turn_executor.execute_turn(RuntimeSession.current_runtime_state, RuntimeSession.turn_counter + 1, mock_decision, RuntimeSession.module)`
+  - This is the REAL canonical path: no UI shortcuts, no simplified calls
+  - Passes SessionState, turn number, MockDecision, and ContentModule
+  - Returns TurnExecutionResult with updated_canonical_state, guard_outcome, accepted_deltas, rejected_deltas
+- Update RuntimeSession in store: replace current_runtime_state with TurnExecutionResult.updated_canonical_state, increment turn_counter
+- Build result_feedback using explicit presenter mapping (see "Template Result Field Mapping" section below)
+- Re-render `session_shell.html` with new scene + result feedback using mapped fields
 - If execution fails, preserve in-memory session state, flash error, re-render with error feedback
 
-**Implementation rule:** The POST route MUST call the canonical runtime execution path through real W2 session/runtime objects, not a simplified UI-only wrapper. State updates must replace the in-memory runtime session with the new canonical state produced by turn execution.
+**Implementation rule:** The POST route MUST call the canonical runtime execution path through real W2 runtime objects (SessionState, ContentModule, execute_turn signature). No UI-specific shortcuts. State updates must replace the in-memory runtime session with the new canonical state produced by turn execution.
 
 ### `session_shell.html` (template modifications)
 
 **Scene display section:**
-- Show `scene.title` (extracted from canonical state)
-- Show `scene.description` if available
-- Show `state_summary` (situation, conversation_status) derived from canonical state
+- Show `scene.title` (extracted from canonical state via presenter)
+- Show `scene.description` if available (via presenter)
+- Show `state_summary` (situation, conversation_status) derived from canonical state via presenter
 - Do not fabricate narrative fields not provided by the runtime
 
 **Interaction form section:**
@@ -104,12 +110,31 @@ def _resolve_runtime_session(session_id: str) -> RuntimeSession | None:
 - Implementation rule: Free-text is the primary interaction model; helpers are optional enhancements
 
 **Result feedback section (shown after turn execution):**
-- Narrative text from `TurnExecutionResult.narrative_text`
-- Guard outcome (accepted, partially_accepted, rejected, structurally_invalid)
-- If outcome is degraded/fallback/safe-turn, show visible status using real runtime outcome data
-- What changed: list of accepted delta targets
-- Next scene: updated scene_id if scene changed
-- Implementation rule: Result feedback strictly derived from canonical TurnExecutionResult, not UI-invented fields
+- All fields mapped through explicit presenter (see "Template Result Field Mapping" section below)
+- Do not assume fields exist directly in runtime objects; map explicitly
+- Implementation rule: Result feedback strictly derived from canonical TurnExecutionResult and RuntimeSession, never UI-invented fields
+
+---
+
+### Template Result Field Mapping (Presenter Rules)
+
+The route layer MUST include a presenter/mapping function that explicitly transforms canonical runtime data into template-facing fields. Do not assume template shape matches runtime object shape.
+
+**Mapping from RuntimeSession + TurnExecutionResult:**
+
+| Template Field | Source | Extraction Logic |
+|---|---|---|
+| `scene.title` | RuntimeSession.current_runtime_state → module.scenes[current_scene_id].title | Lookup scene from module by scene_id |
+| `scene.description` | RuntimeSession.current_runtime_state → module.scenes[current_scene_id].description | Lookup scene from module by scene_id, nullable |
+| `state_summary` | RuntimeSession.current_runtime_state | Extract situation, key entities (e.g., character states, relationship status) into bounded summary |
+| `turn_result.narrative_text` | TurnExecutionResult (if not present, check decision.narrative_text) | Primary source is result; fallback to decision |
+| `turn_result.guard_outcome` | TurnExecutionResult.guard_outcome | Canonical outcome: "accepted", "partially_accepted", "rejected", "structurally_invalid" |
+| `turn_result.accepted_delta_paths` | TurnExecutionResult.accepted_deltas[*].target | List of state paths that were accepted |
+| `turn_result.rejected_delta_paths` | TurnExecutionResult.rejected_deltas[*].target | List of state paths that were rejected |
+| `next_scene_id` | TurnExecutionResult.updated_scene_id (if set) or RuntimeSession.current_runtime_state.current_scene_id | New scene after execution, or current if no transition |
+| `execution_status` | TurnExecutionResult.execution_status | "success", "validation_failed", or "system_error" |
+
+**Implementation requirement:** Create a `_present_turn_result(runtime_session, turn_result)` helper in routes.py that returns a dict of template-facing fields, ensuring all template rendering uses this mapping, not direct object access.
 
 ---
 
@@ -129,16 +154,20 @@ Browser request
 Browser form submit (operator_input)
   → Flask session lookup → session_id found
   → session_store.get(session_id) → RuntimeSession retrieved
-  → call canonical turn_executor.execute_turn(
-      current_canonical_state=RuntimeSession.current_runtime_state,
-      operator_input=form_input
+  → convert operator_input (free text) → MockDecision object
+  → call REAL CANONICAL turn_executor.execute_turn(
+      session=RuntimeSession.current_runtime_state,
+      current_turn=RuntimeSession.turn_counter + 1,
+      mock_decision=MockDecision(...),
+      module=RuntimeSession.module,
+      enforce_responder_only=False
     )
-  → turn_executor returns TurnExecutionResult
-  → extract: updated_canonical_state, guard_outcome, narrative_text, what_changed
-  → update RuntimeSession.current_runtime_state with TurnExecutionResult.updated_canonical_state
+  → turn_executor returns TurnExecutionResult (with updated_canonical_state, guard_outcome, accepted_deltas, rejected_deltas)
+  → update RuntimeSession.current_runtime_state ← TurnExecutionResult.updated_canonical_state
+  → increment RuntimeSession.turn_counter
   → session_store.update_session(session_id, updated_RuntimeSession)
-  → build result_feedback from TurnExecutionResult (narrative, outcome, what changed, next scene)
-  → re-render session_shell.html with new scene + result feedback
+  → use _present_turn_result(RuntimeSession, TurnExecutionResult) to map result to template fields
+  → re-render session_shell.html with new scene + mapped result feedback
 ```
 
 **Error flow:**
@@ -228,27 +257,34 @@ User logs out or session expires:
 
 ## Implementation Constraints (Non-Negotiable)
 
-1. **Canonical execution only:** The route MUST call the real turn executor through W2 runtime objects, not a UI-specific shortcut.
-2. **Single registry:** `session_store` is the ONLY server-side runtime session registry for W3.3.
-3. **Flask session linkage only:** Flask session stores only lightweight metadata (session_id), not the full runtime state.
-4. **State fidelity:** `/play/<session_id>/execute` re-renders from the updated runtime session state, not ad hoc temporary objects.
-5. **In-memory documentation:** The in-memory-only limitation is documented explicitly in code comments and developer docs.
-6. **Real canonical data only:** Scene display, state summary, and result feedback derive strictly from canonical runtime/module/session data. No fabricated UI-invented fields.
-7. **Free-text primary:** Interaction model is free-text input with optional helper buttons, not menu-driven or structured-choice-primary.
-8. **Error preservation:** Failed turn execution preserves the last valid in-memory session state.
-9. **Session isolation:** Multiple concurrent sessions must not leak runtime state into each other.
+1. **Canonical execution only:** The route MUST call the REAL canonical `execute_turn(session, turn_number, mock_decision, module)` signature. No UI shortcuts or simplified wrappers.
+2. **RuntimeSession completeness:** RuntimeSession MUST carry session_id, current_runtime_state (SessionState), module (ContentModule), turn_counter, and updated_at. No context can be UI-only.
+3. **MockDecision conversion:** Operator input (free text) MUST be converted to MockDecision object before calling execute_turn, not passed as raw string.
+4. **Single registry:** `session_store` is the ONLY server-side runtime session registry for W3.3.
+5. **Flask session linkage only:** Flask session stores only lightweight metadata (session_id), not the full runtime state.
+6. **State replacement, not merge:** `/play/<session_id>/execute` MUST replace RuntimeSession.current_runtime_state with TurnExecutionResult.updated_canonical_state, not merge partial updates.
+7. **Explicit presenter mapping:** All template fields MUST be derived via `_present_turn_result()` helper that maps canonical objects to template shape. No direct object access in templates.
+8. **In-memory documentation:** The in-memory-only limitation is documented explicitly in code comments and developer docs.
+9. **Real canonical data only:** Scene display, state summary, and result feedback derive strictly from canonical runtime/module/session data. No fabricated UI-invented fields.
+10. **Free-text primary:** Interaction model is free-text input with optional helper buttons, not menu-driven or structured-choice-primary.
+11. **Error preservation:** Failed turn execution preserves the last valid in-memory session state.
+12. **Session isolation:** Multiple concurrent sessions must not leak runtime state into each other.
 
 ---
 
 ## Success Criteria
 
-- ✓ A user can inspect the current scene (scene_id, description, state summary)
+- ✓ A user can inspect the current scene (title, description, state summary) — derived from canonical module + state via presenter
 - ✓ A user can submit free-text operator input via the UI
-- ✓ Turn execution is wired to the canonical turn executor
-- ✓ Turn execution updates in-memory session state
-- ✓ Turn result feedback is displayed (narrative, outcome, what changed, next scene)
+- ✓ Turn execution calls the REAL canonical `execute_turn(session, turn, decision, module)` path
+- ✓ RuntimeSession carries all execution context (state, module, turn counter)
+- ✓ Turn execution updates in-memory session state by replacing current_runtime_state
+- ✓ Turn result feedback is displayed (narrative, outcome, accepted/rejected deltas, next scene) — all via explicit presenter mapping
+- ✓ Template rendering uses only mapped fields from presenter, never direct canonical object access
 - ✓ Session isolation prevents state leakage between concurrent sessions
-- ✓ Failed execution preserves session state
+- ✓ Failed execution preserves session state without corruption
 - ✓ All tests pass (unit + integration)
 - ✓ No W3 scope jump occurred (W3.4+ features deferred)
 - ✓ In-memory-only constraint is clearly documented
+- ✓ MockDecision conversion from operator input is documented/implemented
+- ✓ Presenter mapping function is explicit and testable
