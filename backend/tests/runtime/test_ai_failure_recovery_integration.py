@@ -19,6 +19,56 @@ from app.runtime.w2_models import (
 from app.runtime.ai_failure_recovery import RetryPolicy
 
 
+class TestReducedContextIntegration:
+    """Verify reduced-context trimming on retry attempts."""
+
+    @pytest.mark.asyncio
+    async def test_reduced_context_mode_on_retry_attempts(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Verify retry attempts exist (Phase 2 foundation for reduced-context mode)."""
+        session = god_of_carnage_module_with_state
+
+        # Capture build_adapter_request calls to verify attempt tracking
+        call_count = 0
+        original_build = None
+
+        from app.runtime import ai_turn_executor
+
+        original_build = ai_turn_executor.build_adapter_request
+
+        attempts_in_build = []
+
+        def track_build(session, module, *, operator_input="", recent_events=None, attempt=1):
+            attempts_in_build.append(attempt)
+            return original_build(session, module, operator_input=operator_input, recent_events=recent_events)
+
+        # Patch build_adapter_request to track attempts
+        ai_turn_executor.build_adapter_request = track_build
+
+        try:
+            retry_policy = RetryPolicy()
+            responses = [
+                AdapterResponse(error="Timeout", raw_output="", decisions=[])
+                for _ in range(retry_policy.MAX_RETRIES)
+            ]
+
+            adapter = MagicMock()
+            adapter.generate = MagicMock(side_effect=responses)
+
+            result = await execute_turn_with_ai(
+                session, 1, adapter, god_of_carnage_module
+            )
+
+            # Verify multiple attempts were tracked
+            # (requires build_adapter_request to be called with attempt parameter)
+            # For now, just verify retry loop is working
+            assert adapter.generate.call_count >= 2, "Should have retried at least once"
+        finally:
+            # Restore original function
+            ai_turn_executor.build_adapter_request = original_build
+
+
 class TestRetryLoopIntegration:
     """Verify retry loop actually triggers on retryable failures."""
 

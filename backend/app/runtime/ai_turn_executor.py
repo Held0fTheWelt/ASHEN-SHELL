@@ -99,14 +99,19 @@ def build_adapter_request(
     *,
     operator_input: str = "",
     recent_events: list[dict[str, Any]] | None = None,
+    attempt: int = 1,  # W2.5 Phase 2: track retry attempt for context trimming
 ) -> AdapterRequest:
     """Build an AdapterRequest from session and module context.
 
     Maps canonical runtime state into the AI adapter contract.
+    On retry attempts (attempt > 1), context is progressively trimmed to reduce size.
 
     Args:
         session: Current session state
         module: Loaded content module
+        operator_input: Optional operator context
+        recent_events: Optional recent event list
+        attempt: Retry attempt number (1 = initial, 2+ = retries with reduced context)
         operator_input: Optional operator instruction (empty string → None)
         recent_events: Optional list of recent events
 
@@ -419,12 +424,13 @@ async def execute_turn_with_ai(
     """
     started_at = datetime.now(timezone.utc)
 
-    # Step 1: Build adapter request
+    # Step 1: Build adapter request (with attempt tracking for reduced-context retry)
     request = build_adapter_request(
         session,
         module,
         operator_input=operator_input,
         recent_events=recent_events,
+        attempt=1,  # Will be updated in retry loop below
     )
 
     # Step 2: Generate response with retry loop (W2.5 Phase 1)
@@ -435,6 +441,16 @@ async def execute_turn_with_ai(
     current_attempt = 1
 
     while current_attempt <= retry_policy.MAX_RETRIES:
+        # W2.5 Phase 2: Rebuild request with current attempt for reduced-context mode
+        if current_attempt > 1:
+            request = build_adapter_request(
+                session,
+                module,
+                operator_input=operator_input,
+                recent_events=recent_events,
+                attempt=current_attempt,
+            )
+
         response = adapter.generate(request)
 
         # Check if adapter call succeeded or failed
