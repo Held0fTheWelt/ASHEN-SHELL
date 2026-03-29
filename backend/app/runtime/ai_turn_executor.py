@@ -427,10 +427,40 @@ async def execute_turn_with_ai(
         recent_events=recent_events,
     )
 
-    # Step 2: Generate response
-    response: AdapterResponse = adapter.generate(request)
+    # Step 2: Generate response with retry loop (W2.5 Phase 1)
+    from app.runtime.ai_failure_recovery import RetryPolicy, AIFailureClass
 
-    # Step 2b: If adapter error, create error log and return early
+    retry_policy = RetryPolicy()
+    response: AdapterResponse | None = None
+    current_attempt = 1
+
+    while current_attempt <= retry_policy.MAX_RETRIES:
+        response = adapter.generate(request)
+
+        # Check if adapter call succeeded or failed
+        has_error = response.error is not None
+        is_empty = not response.raw_output or not response.raw_output.strip()
+
+        if has_error or is_empty:
+            # Adapter error or empty response occurred
+            failure_class = AIFailureClass.ADAPTER_ERROR if has_error else AIFailureClass.ADAPTER_ERROR
+
+            # Check if this failure is retryable
+            if (
+                retry_policy.is_retryable_failure(failure_class)
+                and current_attempt < retry_policy.MAX_RETRIES
+            ):
+                # Retryable and attempts remain - continue to next iteration
+                current_attempt += 1
+                continue
+            else:
+                # Not retryable or max attempts reached - break out of loop
+                break
+        else:
+            # Success - no error, no empty response
+            break
+
+    # Step 2b: Handle adapter error or empty output
     if response.error:
         error_log = _create_error_decision_log(
             session,
@@ -448,6 +478,8 @@ async def execute_turn_with_ai(
             response.raw_output,
             started_at,
         )
+
+        # Mark failure reason as generation error (adapter call failed)
         result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
         return result
 
@@ -469,6 +501,8 @@ async def execute_turn_with_ai(
             response.raw_output or "",
             started_at,
         )
+
+        # Mark failure reason as generation error (adapter produced empty response)
         result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
         return result
 
