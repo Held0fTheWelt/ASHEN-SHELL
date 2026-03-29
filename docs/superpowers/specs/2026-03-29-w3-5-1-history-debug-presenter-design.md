@@ -106,11 +106,11 @@ def present_history_panel(session_state: SessionState) -> HistoryPanelOutput:
 
 #### Canonical Sources
 
-- **PrimaryDiagnosticOutput:** Most recent `TurnExecutionResult` from last turn execution
-- **RecentPatternIndicator:** Last 3-5 entries from `SessionState.context_layers.session_history` (for turn status pattern)
-- **DegradationMarkers:** `SessionState.degraded_state.active_markers` (DegradedSessionState)
+- **PrimaryDiagnosticOutput:** Most recent `ShortTermTurnContext` from `SessionState.context_layers.short_term_context` (W2.3.1 immediate turn context)
+- **RecentPatternIndicator:** Last 3-5 entries from `SessionState.context_layers.session_history` (HistoryEntry records)
+- **DegradationMarkers:** `SessionState.degraded_state.active_markers` (DegradedSessionState, W2.5.7)
 
-**Constraint:** The presenter reads from SessionState, which must contain sufficient context. If TurnExecutionResult is not persisted in SessionState, the presenter scope is limited to HistoryEntry-derived patterns.
+**Rationale:** TurnExecutionResult is not persisted in SessionState. ShortTermTurnContext is the authoritative source for immediate turn diagnostics available to presenters. It provides turn identity, scene info, trigger detection, guard outcome, and scene transitions. More granular diagnostics (validation details, failure classification, recovery actions) are deferred to W3.5.2 pending storage design.
 
 #### Output Models
 
@@ -120,21 +120,22 @@ def present_history_panel(session_state: SessionState) -> HistoryPanelOutput:
 class DebugSummarySection(BaseModel):
     """Summary diagnostics for latest turn."""
     turn_number: int
+    scene_id: str  # from ShortTermTurnContext
     guard_outcome: str  # ACCEPTED, PARTIALLY_ACCEPTED, REJECTED, STRUCTURALLY_INVALID
-    validation_outcome: str  # from TurnExecutionResult.validation_outcome
-    detected_triggers: list[str]  # from TurnExecutionResult.events or HistoryEntry
-    accepted_delta_count: int  # len(TurnExecutionResult.accepted_deltas)
-    rejected_delta_count: int  # len(TurnExecutionResult.rejected_deltas)
-    execution_status: str  # "success", "validation_failed", "system_error"
-    failure_reason: Optional[str]  # ExecutionFailureReason enum value, if failed
-    duration_ms: int  # from TurnExecutionResult
+    detected_triggers: list[str]  # from ShortTermTurnContext
+    scene_changed: bool  # from ShortTermTurnContext
+    prior_scene_id: Optional[str]  # if scene changed
+    ending_reached: bool
+    ending_id: Optional[str]  # if ending was reached
+    conflict_pressure: Optional[float]  # from ShortTermTurnContext
+    created_at: datetime  # when this turn was recorded
 
 class DebugDetailedSection(BaseModel):
     """Detailed diagnostics for latest turn."""
-    validation_errors: Optional[list[str]]  # from TurnExecutionResult.validation_errors
-    # Note: raw_ai_output, interpreter_reading, director_steering, responder_impulses
-    # are in AIDecisionLog but not necessarily in TurnExecutionResult.
-    # Deferred to W3.5.2 if full AIDecisionLog access is available.
+    accepted_delta_target_count: int  # count of accepted_delta_targets from ShortTermTurnContext
+    rejected_delta_target_count: int  # count of rejected_delta_targets from ShortTermTurnContext
+    sample_accepted_targets: list[str]  # first 3 accepted delta target paths
+    sample_rejected_targets: list[str]  # first 3 rejected delta target paths
 
 class PrimaryDiagnosticOutput(BaseModel):
     """Typed wrapper for primary (latest turn) diagnostics."""
@@ -142,10 +143,12 @@ class PrimaryDiagnosticOutput(BaseModel):
     detailed: DebugDetailedSection
 
 class RecentPatternIndicator(BaseModel):
-    """Compressed pattern from recent turn."""
+    """Compressed pattern from recent turn (from HistoryEntry)."""
     turn_number: int
-    guard_outcome: str  # last 3-5 turns' guard outcomes
+    guard_outcome: str  # ACCEPTED, PARTIALLY_ACCEPTED, REJECTED, STRUCTURALLY_INVALID
+    scene_id: str
     scene_changed: bool
+    ending_reached: bool
 
 class DebugPanelOutput(BaseModel):
     """Complete debug panel presenter output."""
@@ -155,43 +158,50 @@ class DebugPanelOutput(BaseModel):
 ```
 
 **Removed/Deferred fields:**
-- ~~`raw_ai_output`~~ — in AIDecisionLog, not TurnExecutionResult; deferred to W3.5.2
-- ~~`parsed_decision_snippet`~~ — in AIDecisionLog, not TurnExecutionResult; deferred to W3.5.2
-- ~~`interpreter_reading`~~ — in AIDecisionLog (W2.4.4), not TurnExecutionResult; deferred to W3.5.2
-- ~~`director_steering`~~ — in AIDecisionLog (W2.4.4), not TurnExecutionResult; deferred to W3.5.2
-- ~~`responder_impulses`~~ — in AIDecisionLog, not TurnExecutionResult; deferred to W3.5.2
-- ~~`guard_notes`~~ — in AIDecisionLog, not TurnExecutionResult; deferred to W3.5.2
-- ~~`recovery_notes`~~ — in AIDecisionLog, not TurnExecutionResult; deferred to W3.5.2
-- ~~`recovery_action_taken`~~ — in DegradedSessionState.marker but not TurnExecutionResult; deferred to W3.5.2
-- ~~`failure_class`~~ — AIFailureClass enum, not in TurnExecutionResult; deferred to W3.5.2
+- ~~`validation_outcome`~~ — not in ShortTermTurnContext or HistoryEntry; deferred to W3.5.2
+- ~~`execution_status`~~ — not in ShortTermTurnContext; deferred to W3.5.2
+- ~~`failure_reason`~~ — not in ShortTermTurnContext; deferred to W3.5.2
+- ~~`duration_ms`~~ — not in ShortTermTurnContext; deferred to W3.5.2
+- ~~`validation_errors`~~ — not in ShortTermTurnContext; deferred to W3.5.2
+- ~~`raw_ai_output`~~ — in AIDecisionLog only; deferred to W3.5.2
+- ~~`parsed_decision_snippet`~~ — in AIDecisionLog only; deferred to W3.5.2
+- ~~`interpreter_reading`~~ — in AIDecisionLog only; deferred to W3.5.2
+- ~~`director_steering`~~ — in AIDecisionLog only; deferred to W3.5.2
+- ~~`responder_impulses`~~ — in AIDecisionLog only; deferred to W3.5.2
+- ~~`guard_notes`~~ — in AIDecisionLog only; deferred to W3.5.2
+- ~~`recovery_notes`~~ — in AIDecisionLog only; deferred to W3.5.2
+- ~~`recovery_action_taken`~~ — not in accessible canonical sources; deferred to W3.5.2
 
-**Rationale:** W3.5.1 presenter targets fields that exist in accessible canonical sources (TurnExecutionResult, HistoryEntry, DegradedSessionState). Full AIDecisionLog diagnostic fields (raw output, role diagnostics, detailed notes) are deferred to W3.5.2 pending clarification of how AIDecisionLog entries are persisted/accessed in SessionState.
+**Rationale:** W3.5.1 presenter uses only fields that exist in accessible canonical sources from SessionState: ShortTermTurnContext (latest turn), HistoryEntry (recent turns), and DegradedSessionState (degradation markers). TurnExecutionResult and AIDecisionLog are not persisted in SessionState and thus not available to presenters in W3.5.1. More granular diagnostics are deferred to W3.5.2 pending storage/access design.
 
 #### Presenter Function
 
 ```python
 def present_debug_panel(session_state: SessionState) -> DebugPanelOutput:
     """
-    Derive bounded diagnostic view from session's TurnExecutionResult history and degradation state.
+    Derive bounded diagnostic view from session's latest ShortTermTurnContext and recent HistoryEntry records.
 
-    Targets the latest turn as primary diagnostic object.
-    Includes small recent-pattern context from last 3-5 HistoryEntry records.
+    Targets the latest turn (from ShortTermTurnContext) as primary diagnostic object.
+    Includes recent-pattern context from last 3-5 HistoryEntry records (from SessionHistory).
 
     Args:
-        session_state: Current SessionState with context_layers.session_history and degraded_state
+        session_state: Current SessionState with context_layers.short_term_context,
+                      context_layers.session_history, and degraded_state populated
 
     Returns:
-        DebugPanelOutput with primary_diagnostic (latest) + recent_pattern_context (3-5 turns)
+        DebugPanelOutput with primary_diagnostic (latest turn from ShortTermTurnContext)
+        + recent_pattern_context (last 3-5 from SessionHistory) + degradation_markers
 
     Determinism:
         - No randomness, no side effects
-        - Filtering deterministic (by turn_number DESC)
-        - Graceful degradation: returns valid output with None values if data missing
+        - Filtering deterministic (by turn_number, by created_at)
+        - Graceful degradation: returns valid output with empty/None values if data missing
 
     Limitation (W3.5.1):
-        - Does not include AIDecisionLog diagnostic fields (raw output, role diagnostics, notes)
-        - Those require separate persistence of AIDecisionLog entries in SessionState
-        - Deferred to W3.5.2 pending design review
+        - Does not include TurnExecutionResult fields (validation outcomes, failure reasons, timing)
+        - Does not include AIDecisionLog fields (raw output, role diagnostics, guard notes)
+        - TurnExecutionResult and AIDecisionLog are not persisted in SessionState
+        - Deferred to W3.5.2 pending storage design for richer diagnostics
     """
 ```
 
@@ -286,16 +296,22 @@ def present_history_panel(session_state: SessionState) -> HistoryPanelOutput:
 
 ## Known Limitations & Deferred Work (W3.5.2+)
 
-**AIDecisionLog diagnostic fields deferred:**
-- Raw AI output, parsed decision, role diagnostics (interpreter/director/responder)
-- Guard notes, recovery notes, failure classification
-- Requires clarification of how AIDecisionLog entries are persisted in SessionState
-- Can be added to debug presenter once access pattern is established
+**TurnExecutionResult and AIDecisionLog not available in W3.5.1:**
+- TurnExecutionResult is not persisted in SessionState (only intermediate during turn execution)
+- AIDecisionLog is not persisted in SessionState (only created during turn execution)
+- Therefore, granular diagnostics (validation outcomes, failure classification, recovery actions, raw AI output, role diagnostics) are not available to presenters in W3.5.1
+- Deferred to W3.5.2 pending design of how/where these rich diagnostics should be stored for presenter access
+
+**W3.5.1 debug presenter scope:**
+- Uses only what's immediately available: ShortTermTurnContext (latest turn) + SessionHistory (recent turns)
+- Provides turn identity, scene transitions, trigger detection, guard outcomes, conflict pressure
+- Does not provide validation details, failure reasons, or AI output snapshots
+- This is intentional: presenter gets bounded, stable data; deeper diagnostics require storage design
 
 **History delta counts deferred:**
-- Accepted/rejected delta counts require AIDecisionLog lookup
-- Could be added to history presenter if HistoryEntry extended or AIDecisionLog integrated
-- Intentionally excluded from W3.5.1 to keep scope focused
+- Accepted/rejected delta counts require access to delta detail data (not in HistoryEntry)
+- Could be added if HistoryEntry extended or if delta tracking is stored separately
+- Intentionally excluded from W3.5.1 to keep scope focused on available canonical sources
 
 ---
 
