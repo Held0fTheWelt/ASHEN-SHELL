@@ -13,8 +13,10 @@ from app.runtime.w2_models import (
     AIDecisionLog,
     AIValidationOutcome,
     DirectorDiagnosticSummary,
+    DeltaType,
     GuardOutcome,
     InterpreterDiagnosticSummary,
+    StateDelta,
 )
 
 
@@ -251,3 +253,94 @@ def test_validation_outcome_mapping_structurally_invalid():
     )
 
     assert log.validation_outcome == AIValidationOutcome.ERROR
+
+
+def test_role_fields_do_not_affect_delta_validation():
+    """Role fields present or absent should not change delta acceptance/rejection."""
+    parsed_decision = ParsedAIDecision(
+        scene_interpretation="Scene",
+        detected_triggers=["trigger1"],
+        proposed_deltas=[],
+        proposed_scene_id=None,
+        rationale="Rationale",
+        raw_output="raw",
+        parsed_source="structured_payload",
+    )
+
+    mock_delta = StateDelta(
+        delta_type=DeltaType.CHARACTER_STATE,
+        target_path="characters.alice.emotional_state",
+        previous_value=50,
+        next_value=75,
+        source="ai_proposal",
+    )
+
+    # Create role-aware decision
+    role_aware = ParsedRoleAwareDecision(
+        interpreter=InterpreterSection(
+            scene_reading="Scene", detected_tensions=[], trigger_candidates=[]
+        ),
+        director=DirectorSection(
+            conflict_steering="Steering", escalation_level=5, recommended_direction="hold"
+        ),
+        responder=ResponderSection(),
+        parsed_decision=parsed_decision,
+    )
+
+    # Log WITH role fields
+    log_with_roles = construct_ai_decision_log(
+        session_id="sess1",
+        turn_number=1,
+        parsed_decision=parsed_decision,
+        raw_output="raw",
+        role_aware_decision=role_aware,  # Role fields POPULATED
+        guard_outcome=GuardOutcome.ACCEPTED,
+        accepted_deltas=[mock_delta],
+    )
+
+    # Log WITHOUT role fields
+    log_without_roles = construct_ai_decision_log(
+        session_id="sess1",
+        turn_number=1,
+        parsed_decision=parsed_decision,
+        raw_output="raw",
+        role_aware_decision=None,  # Role fields NOT populated
+        guard_outcome=GuardOutcome.ACCEPTED,
+        accepted_deltas=[mock_delta],
+    )
+
+    # Both logs must have identical delta collections despite different role fields
+    assert log_with_roles.accepted_deltas == log_without_roles.accepted_deltas
+    assert len(log_with_roles.accepted_deltas) == len(log_without_roles.accepted_deltas)
+
+
+def test_guard_outcome_remains_canonical():
+    """guard_outcome is the sole canonical validation result, not overridden."""
+    parsed_decision = ParsedAIDecision(
+        scene_interpretation="Scene",
+        detected_triggers=[],
+        proposed_deltas=[],
+        proposed_scene_id=None,
+        rationale="Rationale",
+        raw_output="raw",
+        parsed_source="structured_payload",
+    )
+
+    # Test all guard_outcome values
+    for guard_outcome in [
+        GuardOutcome.ACCEPTED,
+        GuardOutcome.PARTIALLY_ACCEPTED,
+        GuardOutcome.REJECTED,
+        GuardOutcome.STRUCTURALLY_INVALID,
+    ]:
+        log = construct_ai_decision_log(
+            session_id="sess1",
+            turn_number=1,
+            parsed_decision=parsed_decision,
+            raw_output="raw",
+            role_aware_decision=None,
+            guard_outcome=guard_outcome,
+        )
+
+        # guard_outcome must be preserved exactly
+        assert log.guard_outcome == guard_outcome
