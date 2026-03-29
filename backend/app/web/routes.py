@@ -15,6 +15,7 @@ from app.services.user_service import update_user_last_seen
 # W3.3 imports
 from app.runtime.session_store import RuntimeSession, create_session as create_runtime_session, get_session as get_runtime_session, update_session as update_runtime_session
 from app.runtime.turn_dispatcher import dispatch_turn
+from app.runtime import present_all_characters
 
 web_bp = Blueprint("web", __name__)
 
@@ -681,7 +682,14 @@ def session_view(session_id):
     if active.get("session_id") != session_id:
         flash("Session not found or expired.", "error")
         return redirect(url_for("web.session_start"))
-    return render_template("session_shell.html", current_user=user, session_data=active)
+
+    # Load runtime session and present characters
+    runtime_session = _resolve_runtime_session(session_id)
+    characters = []
+    if runtime_session:
+        characters = present_all_characters(runtime_session.current_runtime_state)
+
+    return render_template("session_shell.html", current_user=user, session_data=active, characters=characters)
 
 
 # ── W3.3: Session Execution & Helpers ─────────────────────────────────────────
