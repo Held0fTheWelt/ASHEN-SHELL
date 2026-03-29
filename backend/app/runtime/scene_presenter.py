@@ -287,3 +287,45 @@ def present_conflict_panel(
         recent_trend=recent_trend,
         turning_point_risk=turning_point_risk,
     )
+
+
+def present_all_characters(
+    session_state: SessionState,
+) -> list[CharacterPanelOutput]:
+    """Map all characters in play to bounded character panel outputs.
+
+    Collects all characters from canonical_state, orders deterministically,
+    calls present_character_panel for each, handles all edge cases gracefully.
+
+    Args:
+        session_state: The active SessionState.
+
+    Returns:
+        List of CharacterPanelOutput for all characters in play, deterministically ordered.
+        Empty list if no characters in canonical_state or canonical_state is missing.
+
+    Logic:
+        1. Extract character_ids from canonical_state.characters (empty dict if not present)
+        2. Order deterministically by character_id
+        3. For each character_id, call present_character_panel(session_state, character_id)
+        4. Collect results into list
+        5. Return list (may be empty)
+    """
+    # Step 1: Extract character_ids from canonical_state
+    character_ids = []
+    if session_state.canonical_state:
+        characters = session_state.canonical_state.get("characters", {})
+        if isinstance(characters, dict):
+            character_ids = list(characters.keys())
+
+    # Step 2: Order deterministically by character_id
+    character_ids.sort()
+
+    # Step 3 & 4: For each character_id, call present_character_panel and collect results
+    results = [
+        present_character_panel(session_state, char_id)
+        for char_id in character_ids
+    ]
+
+    # Step 5: Return list
+    return results

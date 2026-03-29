@@ -11,6 +11,10 @@ from app.runtime.scene_presenter import (
     ConflictTrendSignal,
     RelationshipMovement,
 )
+from app.runtime.w2_models import SessionState, SessionContextLayers
+from app.runtime.short_term_context import ShortTermTurnContext
+from app.runtime.progression_summary import ProgressionSummary
+from app.runtime.relationship_context import RelationshipAxisContext, SalientRelationshipAxis
 
 
 class TestRelationshipMovementModel:
@@ -737,3 +741,187 @@ class TestPresentConflictPanel:
         assert result.recent_trend is not None
         assert "guard_outcomes" in result.recent_trend.source_basis
         assert "relationship_tension" in result.recent_trend.source_basis
+
+
+class TestPresentAllCharacters:
+    """Tests for present_all_characters bulk presenter function."""
+
+    def test_present_all_characters_empty_canonical_state(self):
+        """present_all_characters returns empty list when canonical_state is missing."""
+        from app.runtime.scene_presenter import present_all_characters
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+            turn_counter=0,
+            status="active",
+            canonical_state={},
+            context_layers=SessionContextLayers(),
+        )
+        result = present_all_characters(session_state)
+        assert result == []
+
+    def test_present_all_characters_single_character_with_full_data(self):
+        """present_all_characters returns list with one CharacterPanelOutput for single character."""
+        from app.runtime.scene_presenter import present_all_characters
+
+        salient_axis = SalientRelationshipAxis(
+            character_a="protagonist",
+            character_b="antagonist",
+            signal_type="tension",
+            recent_change_direction="escalating",
+            salience_score=0.9,
+        )
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+            turn_counter=0,
+            status="active",
+            canonical_state={
+                "characters": {
+                    "protagonist": {"name": "Alice"},
+                    "antagonist": {"name": "Bob"},
+                }
+            },
+            context_layers=SessionContextLayers(
+                relationship_axis_context=RelationshipAxisContext(
+                    salient_axes=[salient_axis],
+                    has_escalation_markers=False,
+                    overall_stability_signal="escalating",
+                )
+            ),
+        )
+        result = present_all_characters(session_state)
+        assert len(result) == 2
+        assert result[0].character_id == "antagonist"  # alphabetical order
+        assert result[1].character_id == "protagonist"
+        assert result[0].character_name == "Bob"
+        assert result[1].character_name == "Alice"
+
+    def test_present_all_characters_multiple_characters_deterministic_order(self):
+        """present_all_characters orders characters deterministically by character_id."""
+        from app.runtime.scene_presenter import present_all_characters
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+            turn_counter=0,
+            status="active",
+            canonical_state={
+                "characters": {
+                    "zara": {"name": "Zara"},
+                    "alice": {"name": "Alice"},
+                    "bob": {"name": "Bob"},
+                }
+            },
+            context_layers=SessionContextLayers(),
+        )
+        result = present_all_characters(session_state)
+        assert len(result) == 3
+        assert [c.character_id for c in result] == ["alice", "bob", "zara"]
+
+    def test_present_all_characters_missing_name_uses_character_id(self):
+        """present_all_characters falls back to character_id when name is missing."""
+        from app.runtime.scene_presenter import present_all_characters
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+            turn_counter=0,
+            status="active",
+            canonical_state={
+                "characters": {
+                    "char_1": {},  # No name field
+                    "char_2": {"name": "Named Character"},
+                }
+            },
+            context_layers=SessionContextLayers(),
+        )
+        result = present_all_characters(session_state)
+        assert len(result) == 2
+        assert result[0].character_id == "char_1"
+        assert result[0].character_name is None
+        assert result[1].character_id == "char_2"
+        assert result[1].character_name == "Named Character"
+
+    def test_present_all_characters_missing_relationships(self):
+        """present_all_characters handles missing relationships gracefully."""
+        from app.runtime.scene_presenter import present_all_characters
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+            turn_counter=0,
+            status="active",
+            canonical_state={
+                "characters": {
+                    "isolated": {"name": "Isolated Character"},
+                }
+            },
+            context_layers=SessionContextLayers(
+                relationship_axis_context=RelationshipAxisContext(
+                    salient_axes=[],
+                    has_escalation_markers=False,
+                    overall_stability_signal="unknown",
+                )
+            ),
+        )
+        result = present_all_characters(session_state)
+        assert len(result) == 1
+        assert result[0].character_id == "isolated"
+        assert result[0].overall_trajectory == "unknown"
+        assert result[0].top_relationship_movements == []
+
+    def test_present_all_characters_missing_context_layers(self):
+        """present_all_characters returns characters even with empty context layers."""
+        from app.runtime.scene_presenter import present_all_characters
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+            turn_counter=0,
+            status="active",
+            canonical_state={
+                "characters": {
+                    "char_a": {"name": "Character A"},
+                    "char_b": {"name": "Character B"},
+                }
+            },
+            context_layers=SessionContextLayers(),
+        )
+        result = present_all_characters(session_state)
+        assert len(result) == 2
+        assert result[0].character_id == "char_a"
+        assert result[1].character_id == "char_b"
+        assert result[0].overall_trajectory == "unknown"
+        assert result[1].overall_trajectory == "unknown"
+
+    def test_present_all_characters_empty_characters_dict(self):
+        """present_all_characters returns empty list when characters dict is empty."""
+        from app.runtime.scene_presenter import present_all_characters
+
+        session_state = SessionState(
+            session_id="test-session",
+            module_id="test_module",
+            module_version="1.0",
+            current_scene_id="scene_1",
+            turn_counter=0,
+            status="active",
+            canonical_state={"characters": {}},
+            context_layers=SessionContextLayers(),
+        )
+        result = present_all_characters(session_state)
+        assert result == []
