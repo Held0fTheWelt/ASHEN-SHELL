@@ -815,6 +815,9 @@ async def session_execute(session_id: str):
         # Map result to template fields
         presented_result = _present_turn_result(runtime_session, turn_result)
 
+        # Present characters from updated state
+        characters = present_all_characters(runtime_session.current_runtime_state)
+
         # Render updated scene + result feedback
         return render_template(
             "session_shell.html",
@@ -823,6 +826,7 @@ async def session_execute(session_id: str):
             scene=presented_result["scene"],
             state_summary=presented_result["state_summary"],
             turn_result=presented_result["turn_result"],
+            characters=characters,
             session_data={
                 "module_id": runtime_session.current_runtime_state.module_id,
                 "current_scene_id": runtime_session.current_runtime_state.current_scene_id,
@@ -858,12 +862,16 @@ async def session_execute(session_id: str):
             "conversation_status": canonical_state.get("conversation_status", ""),
         }
 
+        # Present characters from current state (unchanged by error)
+        characters = present_all_characters(runtime_session.current_runtime_state)
+
         return render_template(
             "session_shell.html",
             current_user=user,
             session_id=session_id,
             scene=scene_data,
             state_summary=state_summary,
+            characters=characters,
             session_data={
                 "module_id": runtime_session.current_runtime_state.module_id,
                 "current_scene_id": current_scene_id,
