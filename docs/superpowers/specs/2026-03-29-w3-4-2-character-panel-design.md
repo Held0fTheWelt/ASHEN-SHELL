@@ -253,9 +253,10 @@ This ensures:
 
 - Character panel renders on initial GET `/play/<session_id>`
 - Character panel updates after POST `/play/<session_id>/execute`
-- Character cards are compact (no layout overflow)
 - Empty-state message renders when no characters
-- Character names and trajectories are visible and readable
+- Character name or character_id fallback renders
+- Overall trajectory renders
+- Top relationship movements render (when present)
 - No HTML rendering errors (all Jinja syntax valid)
 
 ---
