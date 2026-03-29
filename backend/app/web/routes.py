@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import markdown
@@ -770,7 +771,7 @@ def _present_turn_result(runtime_session: RuntimeSession, turn_result) -> dict:
 
 @web_bp.route("/play/<session_id>/execute", methods=["POST"])
 @require_web_login
-async def session_execute(session_id: str):
+def session_execute(session_id: str):
     """Execute a turn in the session.
 
     Submits operator_input to the canonical dispatch_turn() router.
@@ -795,12 +796,13 @@ async def session_execute(session_id: str):
     try:
         # Call CANONICAL DISPATCHER (not execute_turn directly)
         # Dispatcher owns execution mode routing and all decision construction
-        turn_result = await dispatch_turn(
+        # Note: asyncio.run() wraps async dispatch_turn for sync Flask route
+        turn_result = asyncio.run(dispatch_turn(
             session=runtime_session.current_runtime_state,
             current_turn=runtime_session.current_runtime_state.turn_counter + 1,
             module=runtime_session.module,
             operator_input=operator_input,
-        )
+        ))
 
         # Update RuntimeSession in store
         # Replace canonical state with result state
