@@ -35,6 +35,115 @@ class SessionStatus(str, Enum):
     CRASHED = "crashed"
 
 
+class DegradedMarker(str, Enum):
+    """Canonical markers for degraded session state.
+
+    When recovery actions occur during turn execution, the session is marked
+    with appropriate markers. These markers accumulate and persist for the
+    session lifetime, creating an auditable recovery history.
+
+    Markers:
+    - DEGRADED: Overall flag (set when ANY marker is set)
+    - RETRY_EXHAUSTED: Retries were exhausted, fallback attempted
+    - REDUCED_CONTEXT_ACTIVE: Reduced-context retry mode was used
+    - FALLBACK_ACTIVE: Fallback responder mode was used
+    - SAFE_TURN_USED: Safe-turn no-op was invoked
+    - RESTORE_USED: State was restored from snapshot
+    """
+
+    DEGRADED = "degraded"
+    """Overall degraded flag."""
+
+    RETRY_EXHAUSTED = "retry_exhausted"
+    """Retries were exhausted."""
+
+    REDUCED_CONTEXT_ACTIVE = "reduced_context_active"
+    """Reduced-context retry mode was used."""
+
+    FALLBACK_ACTIVE = "fallback_active"
+    """Fallback responder mode was used."""
+
+    SAFE_TURN_USED = "safe_turn_used"
+    """Safe-turn no-op was invoked."""
+
+    RESTORE_USED = "restore_used"
+    """State was restored from snapshot."""
+
+
+class DegradedSessionState(BaseModel):
+    """Tracks degradation markers for a session.
+
+    When the runtime invokes recovery actions (fallback, safe-turn, restore),
+    the session accumulates degradation markers. These markers persist for the
+    session lifetime, creating a coherent audit trail of what recovery paths
+    were needed.
+
+    Markers accumulate (never clear) so the full recovery history is visible.
+    This is intentional: a session that needed fallback remains marked as
+    "fallback_active" so diagnostics know the session was degraded.
+
+    Attributes:
+        is_degraded: True if any marker is set, False otherwise.
+        active_markers: Set of currently active DegradedMarker values.
+        marker_timestamps: Dict mapping marker to when it was first set.
+        marked_at: When the session first entered degraded mode (set when first marker added).
+    """
+
+    is_degraded: bool = False
+    """True if session is degraded (any marker active)."""
+
+    active_markers: set[DegradedMarker] = Field(default_factory=set)
+    """Markers that have been set."""
+
+    marker_timestamps: dict[DegradedMarker, datetime] = Field(default_factory=dict)
+    """When each marker was set."""
+
+    marked_at: datetime | None = None
+    """When session first entered degraded mode."""
+
+    def set_marker(self, marker: DegradedMarker) -> None:
+        """Set a degradation marker.
+
+        Markers accumulate and persist. Once set, a marker stays set for the
+        session lifetime (intentional for audit trail).
+
+        Args:
+            marker: The DegradedMarker to set
+        """
+        if marker not in self.active_markers:
+            self.active_markers.add(marker)
+            self.marker_timestamps[marker] = datetime.now(timezone.utc)
+
+            # Mark overall degraded on first marker
+            if self.marked_at is None:
+                self.marked_at = datetime.now(timezone.utc)
+
+            self.is_degraded = True
+
+    def has_marker(self, marker: DegradedMarker) -> bool:
+        """Check if a marker is set.
+
+        Args:
+            marker: The DegradedMarker to check
+
+        Returns:
+            True if marker is set, False otherwise
+        """
+        return marker in self.active_markers
+
+    def get_recovery_history(self) -> list[tuple[DegradedMarker, datetime]]:
+        """Get recovery history in chronological order.
+
+        Returns:
+            List of (marker, timestamp) tuples sorted by timestamp
+        """
+        items = [
+            (marker, self.marker_timestamps[marker])
+            for marker in self.active_markers
+        ]
+        return sorted(items, key=lambda x: x[1])
+
+
 class SessionContextLayers(BaseModel):
     """W2.3 memory and context layers for a session.
 
@@ -103,6 +212,8 @@ class SessionState(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict[str, Any] = Field(default_factory=dict)
     context_layers: SessionContextLayers = Field(default_factory=SessionContextLayers)
+    degraded_state: DegradedSessionState = Field(default_factory=DegradedSessionState)
+    """W2.5.7 degraded session tracking."""
 
 
 # ===== Turn Models =====
