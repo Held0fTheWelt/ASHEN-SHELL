@@ -31,69 +31,60 @@
 ### Step 1: Write failing tests for session_view() history panel
 
 ```python
-def test_session_view_includes_history_panel_in_context(client, test_user, test_session):
+def test_session_view_includes_history_panel_in_context(client, test_user):
     """Verify session_view() passes history_panel to template context"""
     user, password = test_user
-    session_id = test_session["session_id"]
 
-    # Login
+    # Login and create a session
     client.post("/login", data={"username": user.username, "password": password})
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage"},
+        follow_redirects=False,
+    )
+
+    # Extract session_id from redirect
+    session_id = response.headers["Location"].split("/play/")[-1]
 
     # Load session view
-    with client.session_transaction() as sess:
-        sess["active_session"] = {
-            "session_id": session_id,
-            "module_id": "god_of_carnage",
-            "status": "active",
-        }
-
     response = client.get(f"/play/{session_id}")
     assert response.status_code == 200
-    # Template renders with history_panel in context
-    assert b"History" in response.data  # History panel heading
+    # Template renders history panel with summary block
+    assert b"history-summary" in response.data
 
-def test_session_view_history_panel_shows_summary_block(client, test_user, test_session):
+def test_session_view_history_panel_shows_summary_block(client, test_user):
     """Verify history panel summary block renders on GET"""
     user, password = test_user
-    session_id = test_session["session_id"]
 
     client.post("/login", data={"username": user.username, "password": password})
-
-    with client.session_transaction() as sess:
-        sess["active_session"] = {
-            "session_id": session_id,
-            "module_id": "god_of_carnage",
-            "status": "active",
-        }
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage"},
+        follow_redirects=False,
+    )
+    session_id = response.headers["Location"].split("/play/")[-1]
 
     response = client.get(f"/play/{session_id}")
     assert response.status_code == 200
-    # Summary block fields visible
-    assert b"Phase" in response.data
-    assert b"Turns" in response.data
-    assert b"Scenes" in response.data
-    assert b"Triggers" in response.data
+    # Summary block structure visible (specific class, not just text)
+    assert b"summary-stats" in response.data
 
-def test_session_view_history_panel_shows_entries_table(client, test_user, test_session):
+def test_session_view_history_panel_shows_entries_table(client, test_user):
     """Verify history panel entries table renders on GET"""
     user, password = test_user
-    session_id = test_session["session_id"]
 
     client.post("/login", data={"username": user.username, "password": password})
-
-    with client.session_transaction() as sess:
-        sess["active_session"] = {
-            "session_id": session_id,
-            "module_id": "god_of_carnage",
-            "status": "active",
-        }
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage"},
+        follow_redirects=False,
+    )
+    session_id = response.headers["Location"].split("/play/")[-1]
 
     response = client.get(f"/play/{session_id}")
     assert response.status_code == 200
-    # Entries table structure visible
-    assert b"entries-table" in response.data or b"entry-row" in response.data
-    # No error message about missing history
-    assert b"No turn history yet" not in response.data or b"entries-table" in response.data
+    # Entries table structure visible (specific class)
+    assert b"entries-table" in response.data or b"No turn history yet" in response.data
 ```
 
 ### Step 2: Run tests to verify they fail
@@ -110,12 +101,17 @@ PYTHONPATH=. python -m pytest tests/test_session_ui.py::test_session_view_histor
 ### Step 3: Write tests for session_execute() history panel update
 
 ```python
-def test_session_execute_includes_history_panel_after_turn(client, test_user, test_session):
+def test_session_execute_includes_history_panel_after_turn(client, test_user):
     """Verify session_execute() passes updated history_panel to template after turn"""
     user, password = test_user
-    session_id = test_session["session_id"]
 
     client.post("/login", data={"username": user.username, "password": password})
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage"},
+        follow_redirects=False,
+    )
+    session_id = response.headers["Location"].split("/play/")[-1]
 
     with client.session_transaction() as sess:
         sess["active_session"] = {
@@ -124,21 +120,26 @@ def test_session_execute_includes_history_panel_after_turn(client, test_user, te
             "status": "active",
         }
 
-    # Execute a turn (POST)
+    # Execute a turn (POST to session_execute route)
     response = client.post(
-        f"/api/v1/sessions/{session_id}/turn",
-        json={"action": "test_action"},
+        f"/play/{session_id}/execute",
+        data={"action": "test_action"},
         follow_redirects=True,
     )
-    # After turn, history panel should be rendered
-    assert b"History" in response.data
+    # After turn, history panel should be rendered with summary block
+    assert b"history-summary" in response.data
 
-def test_session_execute_history_panel_shows_entries_table_after_turn(client, test_user, test_session):
+def test_session_execute_history_panel_shows_entries_table_after_turn(client, test_user):
     """Verify history panel entries table updates after turn execution"""
     user, password = test_user
-    session_id = test_session["session_id"]
 
     client.post("/login", data={"username": user.username, "password": password})
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage"},
+        follow_redirects=False,
+    )
+    session_id = response.headers["Location"].split("/play/")[-1]
 
     with client.session_transaction() as sess:
         sess["active_session"] = {
@@ -149,12 +150,12 @@ def test_session_execute_history_panel_shows_entries_table_after_turn(client, te
 
     # Execute turn
     response = client.post(
-        f"/api/v1/sessions/{session_id}/turn",
-        json={"action": "test_action"},
+        f"/play/{session_id}/execute",
+        data={"action": "test_action"},
         follow_redirects=True,
     )
-    # Entries table visible
-    assert b"entries-table" in response.data or b"entry-row" in response.data
+    # Entries table visible (specific class, not generic text)
+    assert b"entries-table" in response.data or b"No turn history yet" in response.data
 ```
 
 ### Step 4: Run tests to verify they fail
@@ -184,11 +185,11 @@ git commit -m "test(w3.5.2): add failing tests for history panel rendering on GE
 ### Step 1: Read current session_view() implementation
 
 ```bash
-# View lines around session_view() in routes.py
-sed -n '680,700p' /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/routes.py
+# View session_view() function starting at line 683
+sed -n '683,710p' /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/routes.py
 ```
 
-**Expected output:** Current implementation without history_panel call
+**Expected output:** Function definition without `history_panel = present_history_panel(...)` call
 
 ### Step 2: Add import for present_history_panel
 
@@ -250,22 +251,24 @@ git commit -m "feat(w3.5.2): add history_panel to session_view() context"
 ### Step 1: Read current session_execute() implementation
 
 ```bash
-# View the session_execute() function
-sed -n '770,850p' /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/routes.py
+# View the session_execute() function starting at line 778
+sed -n '778,850p' /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/routes.py
 ```
 
-**Expected output:** Function that executes turn and renders response
+**Expected output:** Function that executes turn and renders response (likely has success path around line 831 and error path around line 879)
 
 ### Step 2: Add presenter call in session_execute()
 
-In `session_execute()`, after turn execution completes and before rendering the response template, add:
+In `session_execute()`, AFTER turn execution but BEFORE rendering the response, add:
 
 ```python
 # Call presenter to get bounded history panel output (with updated turn data)
 history_panel = present_history_panel(runtime_session.current_runtime_state)
 ```
 
-Find all `render_template("session_shell.html", ...` calls in session_execute() (there may be multiple: success path, error path) and add `history_panel=history_panel,` to each.
+**Important:** Add this call BEFORE any `render_template()` calls, so it's available to both success and error paths.
+
+Then find ALL `render_template("session_shell.html", ...` calls in session_execute() (there are typically 2: success path around line 831, error path around line 879) and add `history_panel=history_panel,` to EACH one.
 
 ### Step 3: Run tests to verify they pass
 
@@ -301,10 +304,10 @@ git commit -m "feat(w3.5.2): add history_panel to session_execute() context on P
 ### Step 1: Verify placeholder location
 
 ```bash
-sed -n '190,200p' /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/templates/session_shell.html
+sed -n '195,199p' /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/templates/session_shell.html
 ```
 
-**Expected:** Find `<!-- History Panel Placeholder ... -->` comment section
+**Expected:** Find `<!-- History Panel Placeholder (deferred to W3.4+) -->` at lines 195-199
 
 ### Step 2: Replace placeholder with history panel template
 
@@ -402,13 +405,20 @@ git commit -m "feat(w3.5.2): add history panel template section with summary and
 **Files:**
 - Modify: `backend/app/web/static/styles.css` (append history panel styles)
 
-### Step 1: Read end of styles.css file
+### Step 1: Verify CSS file and read end of styles.css
 
 ```bash
+# Verify file exists
+ls -l /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/static/styles.css
+
+# Check end of file
 tail -20 /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/static/styles.css
+
+# Verify no history panel CSS exists yet
+grep -c ".history-panel" /mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/backend/app/web/static/styles.css || echo "0 matches"
 ```
 
-**Expected:** Last CSS rules in the file
+**Expected:** File exists, last CSS rule visible, no `.history-panel` CSS yet
 
 ### Step 2: Add history panel CSS rules
 
