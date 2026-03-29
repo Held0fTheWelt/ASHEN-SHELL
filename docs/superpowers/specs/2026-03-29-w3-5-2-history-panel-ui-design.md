@@ -137,7 +137,7 @@ return render_template(
 </section>
 ```
 
-**CSS (add to `backend/app/web/static/style.css` or existing stylesheet):**
+**CSS (add to `backend/app/web/static/styles.css`):**
 
 ```css
 .history-panel {
@@ -251,6 +251,10 @@ return render_template(
 }
 ```
 
+**Color scheme note:** The CSS uses hardcoded hex colors for dark theme consistency. If the codebase updates its CSS variable theme in the future, these color values may need manual adjustment. Current palette matches existing `.panel` and table styling.
+
+
+
 ---
 
 ## Data Flow
@@ -315,10 +319,11 @@ User sees bounded, chronological turn history
    - Verify entry_count incremented
 
 3. **Graceful degradation**
-   - Create session with missing session_history
-   - Verify history_panel renders with empty recent_entries
-   - Verify "No turn history yet." message displays
-   - Verify entry_count = 0
+   - Create session with missing session_history (tests presenter robustness from W3.5.1)
+   - Verify history_panel renders with empty recent_entries (presenter returns valid output)
+   - Verify "No turn history yet." message displays (template renders gracefully)
+   - Verify entry_count = 0 (presenter handles missing data)
+   - Note: This test primarily validates the presenter's existing graceful degradation; route/template assume valid presenter output
 
 4. **History panel synchronization**
    - Load session (GET) → verify summary + entries rendered
