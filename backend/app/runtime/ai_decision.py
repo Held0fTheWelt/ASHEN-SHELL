@@ -75,7 +75,7 @@ class ParseResult(BaseModel):
 
     success: bool
     decision: ParsedAIDecision | None = None
-    role_aware_decision: Any | None = None  # ParsedRoleAwareDecision from W2.4.3
+    role_aware_decision: Any | None = None  # ParsedRoleAwareDecision from W2.4.3, use Any to avoid circular import
     errors: list[str] = []
     raw_output: str
 
@@ -86,17 +86,24 @@ def parse_adapter_response(response: AdapterResponse) -> ParseResult:
     Performs:
     1. Check adapter error status
     2. Check structured_payload is present and is dict
-    3. Parse dict → StructuredAIStoryOutput (Pydantic validation)
-    4. Normalize to ParsedAIDecision
-    5. Pre-validate for obvious issues
-    6. Return ParseResult with success flag, decision, errors, raw output
+    3. Detect if payload is role-structured (W2.4.1) or standard format (W2.1.1)
+    4. If role-structured: Parse dict → ParsedRoleAwareDecision
+    5. If standard: Parse dict → StructuredAIStoryOutput → ParsedAIDecision
+    6. Pre-validate for obvious issues
+    7. Return ParseResult with success flag, decision, errors, raw output
 
     Args:
         response: AdapterResponse from AI adapter
 
     Returns:
-        ParseResult with success/decision/errors/raw_output
+        ParseResult with success/decision/errors/raw_output (role_aware_decision set if W2.4.1 format)
     """
+    # Local imports to avoid circular dependency with role_structured_decision
+    from app.runtime.role_structured_decision import (
+        _is_role_structured_payload,
+        parse_role_contract,
+    )
+
     raw_output = response.raw_output
 
     # Step 1: Check adapter error
@@ -126,35 +133,60 @@ def parse_adapter_response(response: AdapterResponse) -> ParseResult:
             raw_output=raw_output,
         )
 
-    # Step 3: Parse dict → StructuredAIStoryOutput
-    try:
-        structured = StructuredAIStoryOutput(**response.structured_payload)
-    except ValidationError as e:
-        errors = [
-            f"{'.'.join(str(x) for x in err['loc'])}: {err['msg']}"
-            for err in e.errors()
-        ]
+    # Step 3: Detect payload format (role-structured vs standard)
+    if _is_role_structured_payload(response.structured_payload):
+        # W2.4.1 role-structured format: parse to ParsedRoleAwareDecision
+        try:
+            role_aware_decision = parse_role_contract(response.structured_payload, raw_output)
+            decision = role_aware_decision.parsed_decision
+            # Pre-validate the normalized decision
+            prevalidation_errors = prevalidate_decision(decision)
+            success = len(prevalidation_errors) == 0
+            return ParseResult(
+                success=success,
+                decision=decision,
+                role_aware_decision=role_aware_decision,
+                errors=prevalidation_errors,
+                raw_output=raw_output,
+            )
+        except ValueError as e:
+            return ParseResult(
+                success=False,
+                decision=None,
+                errors=[f"Failed to parse role-structured decision: {e}"],
+                raw_output=raw_output,
+            )
+    else:
+        # Standard W2.1.1 format: parse to StructuredAIStoryOutput → ParsedAIDecision
+        # Step 4: Parse dict → StructuredAIStoryOutput
+        try:
+            structured = StructuredAIStoryOutput(**response.structured_payload)
+        except ValidationError as e:
+            errors = [
+                f"{'.'.join(str(x) for x in err['loc'])}: {err['msg']}"
+                for err in e.errors()
+            ]
+            return ParseResult(
+                success=False,
+                decision=None,
+                errors=errors,
+                raw_output=raw_output,
+            )
+
+        # Step 5: Normalize
+        decision = normalize_structured_output(structured, raw_output)
+
+        # Step 6: Pre-validate
+        prevalidation_errors = prevalidate_decision(decision)
+
+        # Step 7: Return result
+        success = len(prevalidation_errors) == 0
         return ParseResult(
-            success=False,
-            decision=None,
-            errors=errors,
+            success=success,
+            decision=decision,
+            errors=prevalidation_errors,
             raw_output=raw_output,
         )
-
-    # Step 4: Normalize
-    decision = normalize_structured_output(structured, raw_output)
-
-    # Step 5: Pre-validate
-    prevalidation_errors = prevalidate_decision(decision)
-
-    # Step 6: Return result
-    success = len(prevalidation_errors) == 0
-    return ParseResult(
-        success=success,
-        decision=decision,
-        errors=prevalidation_errors,
-        raw_output=raw_output,
-    )
 
 
 def normalize_structured_output(

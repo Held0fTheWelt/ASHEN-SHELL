@@ -26,6 +26,7 @@ from app.runtime.turn_executor import (
     TurnExecutionResult,
     execute_turn,
 )
+from app.runtime.role_structured_decision import ParsedRoleAwareDecision
 from app.runtime.validators import validate_action_type, validate_action_structure
 from app.runtime.w2_models import (
     AIDecisionLog,
@@ -34,9 +35,61 @@ from app.runtime.w2_models import (
     DeltaValidationStatus,
     ExecutionFailureReason,
     GuardOutcome,
+    ProposalSource,
     SessionState,
     StateDelta,
 )
+
+
+def process_role_structured_decision(
+    role_aware_decision: ParsedRoleAwareDecision,
+) -> MockDecision:
+    """Extract responder candidates from role-structured decision, mark as RESPONDER_DERIVED.
+
+    This function bridges W2.4 role separation (interpreter, director, responder)
+    into the canonical guarded execution path. It extracts state_change_candidates
+    from the responder section and marks them with RESPONDER_DERIVED source.
+
+    Only responder-derived proposals are authorized to enter the canonical
+    execution path when enforce_responder_only=True is set.
+
+    Args:
+        role_aware_decision: ParsedRoleAwareDecision with role sections preserved
+
+    Returns:
+        MockDecision with proposal_source=ProposalSource.RESPONDER_DERIVED
+
+    Process:
+    1. Extract state_change_candidates from responder section
+    2. Convert to ProposedStateDelta format (responder candidates are already in that form)
+    3. Return MockDecision marked RESPONDER_DERIVED
+    """
+    # Get responder candidates (state_change_candidates from responder section)
+    responder_candidates = role_aware_decision.responder.state_change_candidates or []
+
+    # Convert responder StateChangeCandidate to ProposedStateDelta
+    # StateChangeCandidate has: target_path, proposed_value, rationale
+    # ProposedStateDelta expects: target, next_value, delta_type, source
+    proposed_deltas = []
+    for candidate in responder_candidates:
+        proposed_deltas.append(
+            ProposedStateDelta(
+                target=candidate.target_path,
+                next_value=candidate.proposed_value,
+                delta_type=None,  # Will be inferred during validation
+                source="ai_proposal",
+            )
+        )
+
+    # Return decision marked RESPONDER_DERIVED
+    return MockDecision(
+        detected_triggers=[],
+        proposed_deltas=proposed_deltas,
+        proposed_scene_id=None,
+        narrative_text="",
+        rationale="",
+        proposal_source=ProposalSource.RESPONDER_DERIVED,
+    )
 
 
 def build_adapter_request(
@@ -491,10 +544,28 @@ async def execute_turn_with_ai(
         return result
 
     # Step 5: Bridge parsed decision to MockDecision
-    mock_decision = decision_from_parsed(parse_result.decision)
+    # Handle both role-structured (W2.4.1) and standard (W2.1.1) formats
+    enforce_responder_gate = False
+    if parse_result.role_aware_decision is not None:
+        # W2.4.1 role-structured decision: extract responder and mark RESPONDER_DERIVED
+        mock_decision = process_role_structured_decision(parse_result.role_aware_decision)
+        # Enable responder-only enforcement for role-structured proposals
+        enforce_responder_gate = True
+    else:
+        # Standard W2.1.1 decision: use standard bridge
+        mock_decision = decision_from_parsed(parse_result.decision)
 
-    # Step 6: Delegate to execute_turn (full validation/execution)
-    turn_result = await execute_turn(session, current_turn, mock_decision, module)
+    # Step 6: Delegate to execute_turn with conditional canonical enforcement
+    # W2.4.5: Enforce responder-only gating on role-structured AI path only.
+    # Only responder-derived proposals (from role sections) are permitted
+    # when enforce_responder_only=True.
+    turn_result = await execute_turn(
+        session,
+        current_turn,
+        mock_decision,
+        module,
+        enforce_responder_only=enforce_responder_gate,
+    )
 
     # Step 7: Create and store decision log from execution result
     decision_log = _create_decision_log(

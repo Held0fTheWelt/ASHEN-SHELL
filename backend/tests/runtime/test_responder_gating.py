@@ -145,3 +145,63 @@ async def test_execute_turn_allows_non_responder_when_enforcement_disabled(god_o
     # Should NOT be rejected by gate (but may be rejected by validation)
     # Key: gate doesn't reject, validation may
     assert result.guard_outcome in [GuardOutcome.ACCEPTED, GuardOutcome.PARTIALLY_ACCEPTED, GuardOutcome.REJECTED]
+
+
+@pytest.mark.asyncio
+async def test_role_structured_responder_candidates_marked_responder_derived():
+    """Responder candidates extracted from role-structured decision must be marked RESPONDER_DERIVED."""
+    # Setup: import required classes for role-structured decision
+    from app.runtime.role_contract import (
+        InterpreterSection,
+        DirectorSection,
+        ResponderSection,
+        StateChangeCandidate,
+    )
+    from app.runtime.role_structured_decision import ParsedRoleAwareDecision
+    from app.runtime.ai_decision import ParsedAIDecision
+    from app.runtime.ai_turn_executor import process_role_structured_decision
+
+    # Create components for role-structured decision
+    parsed_decision = ParsedAIDecision(
+        scene_interpretation="Scene",
+        detected_triggers=[],
+        proposed_deltas=[],
+        proposed_scene_id=None,
+        rationale="Rationale",
+        raw_output="raw",
+        parsed_source="structured_payload",
+    )
+
+    responder = ResponderSection(
+        state_change_candidates=[
+            StateChangeCandidate(
+                target_path="characters.veronique.emotional_state",
+                proposed_value=50,
+                rationale="Veronique is upset",
+            ),
+        ]
+    )
+
+    role_aware_decision = ParsedRoleAwareDecision(
+        parsed_decision=parsed_decision,
+        interpreter=InterpreterSection(
+            scene_reading="",
+            detected_tensions=[],
+            trigger_candidates=[],
+        ),
+        director=DirectorSection(
+            conflict_steering="",
+            escalation_level=5,
+            recommended_direction="hold",
+        ),
+        responder=responder,
+    )
+
+    # Extract responder candidates (simulate AI turn executor flow)
+    extracted_decision = process_role_structured_decision(role_aware_decision)
+
+    # Verify: responder candidates are marked RESPONDER_DERIVED
+    assert extracted_decision.proposal_source == ProposalSource.RESPONDER_DERIVED
+    assert len(extracted_decision.proposed_deltas) == 1
+    assert extracted_decision.proposed_deltas[0].target == "characters.veronique.emotional_state"
+    assert extracted_decision.proposed_deltas[0].next_value == 50
