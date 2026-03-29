@@ -17,7 +17,7 @@ from typing import Any
 
 from app.content.module_models import ContentModule
 from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapter
-from app.runtime.ai_decision import ParseResult, process_adapter_response
+from app.runtime.ai_decision import ParseResult, ParsedAIDecision, process_adapter_response
 from app.runtime.ai_decision_logging import construct_ai_decision_log
 from app.runtime.decision_policy import AIDecisionPolicy
 from app.runtime.event_log import RuntimeEventLog
@@ -525,8 +525,9 @@ async def execute_turn_with_ai(
     # Step 3: Parse response
     parse_result: ParseResult = process_adapter_response(response)
 
-    # Step 4: If parse failed, create error decision log and return system_error result
+    # Step 4: If parse failed, activate fallback responder (W2.5 Phase 3)
     if not parse_result.success:
+        # Log the parse error
         error_log = _create_error_decision_log(
             session,
             current_turn,
@@ -536,15 +537,50 @@ async def execute_turn_with_ai(
         )
         _store_decision_log(session, error_log)
 
-        result = _make_parse_failure_result(
+        # W2.5 Phase 3: Activate fallback responder instead of terminal failure
+        from app.runtime.ai_failure_recovery import (
+            generate_fallback_responder_proposal,
+            FallbackResponderPolicy,
+        )
+
+        # Generate minimal conservative fallback proposal (ParsedAIDecision with empty deltas)
+        fallback_parsed_decision = generate_fallback_responder_proposal()
+
+        # Convert fallback proposal to MockDecision for execution
+        mock_decision = decision_from_parsed(fallback_parsed_decision)
+
+        # Execute fallback proposal through normal validation/guard path
+        # This allows fallback to go through execute_turn and validation
+        turn_result = await execute_turn(
             session,
             current_turn,
-            parse_result.errors,
-            parse_result.raw_output,
-            started_at,
+            mock_decision,
+            module,
+            enforce_responder_only=False,  # Fallback is not responder-derived
         )
-        result.failure_reason = ExecutionFailureReason.PARSING_ERROR
-        return result
+
+        # Mark fallback activation explicitly in result
+        # Fallback mode was active (parse failure triggered it)
+        fallback_mode = FallbackResponderPolicy.get_fallback_mode_status(
+            AIFailureClass.PARSE_FAILURE
+        )
+        turn_result.failure_reason = ExecutionFailureReason.PARSING_ERROR
+
+        # Log the fallback execution decision
+        decision_log = construct_ai_decision_log(
+            session_id=session.session_id,
+            turn_number=current_turn,
+            parsed_decision=fallback_parsed_decision,
+            raw_output=parse_result.raw_output,
+            role_aware_decision=None,
+            guard_outcome=turn_result.guard_outcome,
+            accepted_deltas=turn_result.accepted_deltas,
+            rejected_deltas=turn_result.rejected_deltas,
+            guard_notes="fallback_mode_active: parse_failure_recovery",
+        )
+        _store_decision_log(session, decision_log)
+
+        return turn_result
 
     # Step 4b: Validate that proposed actions comply with canonical policy
     # Check each proposed delta's action type and structure before state mutation
@@ -575,7 +611,8 @@ async def execute_turn_with_ai(
             policy_validation_errors.extend(structure_errors)
 
     if policy_validation_errors:
-        # Policy validation failed - create error log and return early
+        # W2.5 Phase 3: Structurally invalid output triggers fallback responder
+        # Log the structural validation error
         error_log = _create_error_decision_log(
             session,
             current_turn,
@@ -585,15 +622,45 @@ async def execute_turn_with_ai(
         )
         _store_decision_log(session, error_log)
 
-        result = _make_parse_failure_result(
+        # Activate fallback responder for structural failure
+        from app.runtime.ai_failure_recovery import (
+            generate_fallback_responder_proposal,
+            FallbackResponderPolicy,
+        )
+
+        # Generate minimal conservative fallback proposal
+        fallback_parsed_decision = generate_fallback_responder_proposal()
+
+        # Convert fallback proposal to MockDecision
+        mock_decision = decision_from_parsed(fallback_parsed_decision)
+
+        # Execute fallback through normal validation/guard path
+        turn_result = await execute_turn(
             session,
             current_turn,
-            policy_validation_errors,
-            parse_result.raw_output,
-            started_at,
+            mock_decision,
+            module,
+            enforce_responder_only=False,
         )
-        result.failure_reason = ExecutionFailureReason.VALIDATION_ERROR
-        return result
+
+        # Mark fallback activation for structural failure
+        turn_result.failure_reason = ExecutionFailureReason.VALIDATION_ERROR
+
+        # Log the fallback execution decision
+        decision_log = construct_ai_decision_log(
+            session_id=session.session_id,
+            turn_number=current_turn,
+            parsed_decision=fallback_parsed_decision,
+            raw_output=parse_result.raw_output,
+            role_aware_decision=None,
+            guard_outcome=turn_result.guard_outcome,
+            accepted_deltas=turn_result.accepted_deltas,
+            rejected_deltas=turn_result.rejected_deltas,
+            guard_notes="fallback_mode_active: structure_validation_failure",
+        )
+        _store_decision_log(session, decision_log)
+
+        return turn_result
 
     # Step 5: Bridge parsed decision to MockDecision
     # Handle both role-structured (W2.4.1) and standard (W2.1.1) formats

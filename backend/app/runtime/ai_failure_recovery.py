@@ -958,3 +958,34 @@ class RestorePolicy:
             "no_silent_mutation": "Restore is never hidden—always visible to caller",
             "partial_corruption_prevention": "Restore clears any mutations made after snapshot",
         }
+
+
+def generate_fallback_responder_proposal() -> "ParsedAIDecision":
+    """Generate minimal, conservative fallback responder proposal.
+
+    W2.5 Phase 3: Fallback Responder - Generate safe, minimal proposal when parse/structure fails.
+
+    Fallback proposals are explicitly conservative:
+    - No scene transitions (stay in current)
+    - Minimal emotional/tension adjustments (±10 units max)
+    - No risky state mutations
+    - Must still pass validation/guard enforcement
+
+    Returns:
+        ParsedAIDecision with empty deltas (safe-turn equivalent).
+        This allows the session to survive a parse failure while maintaining state.
+    """
+    # Import here to avoid circular dependency
+    from app.runtime.ai_decision import ParsedAIDecision
+
+    # Create minimal ParsedAIDecision for fallback
+    # Empty deltas means no state mutations - conservative fallback
+    return ParsedAIDecision(
+        scene_interpretation="[fallback: scene continues unchanged]",
+        detected_triggers=[],
+        proposed_deltas=[],
+        proposed_scene_id=None,  # No scene transition
+        rationale="[fallback: minimal proposal due to parse/structure failure]",
+        raw_output="[fallback mode]",
+        parsed_source="fallback_responder",
+    )

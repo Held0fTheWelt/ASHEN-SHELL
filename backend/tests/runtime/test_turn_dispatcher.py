@@ -480,9 +480,10 @@ class TestAIIntegrationThroughDispatcher:
             )
         )
 
-        # Should fail safely with system_error
-        assert result.execution_status == "system_error"
-        # State should be unchanged (safety guarantee)
+        # W2.5 Phase 3: Fallback responder recovers from parse failure
+        # Should recover safely with success (fallback with empty deltas)
+        assert result.execution_status == "success"
+        # State should be unchanged (safety guarantee - fallback has empty deltas)
         assert result.updated_canonical_state == session.canonical_state
 
     def test_dispatcher_both_paths_return_compatible_results(

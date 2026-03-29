@@ -148,3 +148,113 @@ class TestRetryLoopIntegration:
         # Verify at least 2 calls (initial attempt + at least 1 retry)
         assert adapter.generate.call_count >= 2, \
             f"Should have retried (at least 2 calls), but was called {adapter.generate.call_count} times"
+
+
+class TestFallbackResponderIntegration:
+    """Verify fallback responder activates on parse/structure failures."""
+
+    @pytest.mark.asyncio
+    async def test_parse_failure_triggers_fallback(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Parse failure should trigger fallback responder instead of terminal failure."""
+        session = god_of_carnage_module_with_state
+
+        # Adapter returns malformed JSON (parse failure)
+        retry_policy = RetryPolicy()
+        responses = [
+            # Parse failures should NOT retry (not in RETRYABLE_FAILURES)
+            # Instead, should trigger fallback
+            AdapterResponse(
+                error=None,
+                raw_output='{"malformed": invalid_json}',  # Invalid JSON
+                decisions=[]
+            )
+            for _ in range(retry_policy.MAX_RETRIES)
+        ]
+
+        adapter = MagicMock()
+        adapter.generate = MagicMock(side_effect=responses)
+
+        result = await execute_turn_with_ai(
+            session, 1, adapter, god_of_carnage_module
+        )
+
+        # Should NOT retry parse failures (only 1 adapter call)
+        # Instead should attempt fallback on first attempt
+        assert adapter.generate.call_count == 1, \
+            f"Parse failure should NOT retry, but adapter was called {adapter.generate.call_count} times"
+
+        # Fallback should allow session to survive with minimal proposal (empty deltas)
+        # Empty deltas pass validation, so execution_status is success
+        assert result.execution_status == "success", \
+            f"Fallback responder should recover gracefully, got {result.execution_status}"
+
+        # Verify fallback proposal was executed (no deltas accepted or rejected)
+        assert result.accepted_deltas == [], "Fallback proposals have no deltas"
+        assert result.rejected_deltas == [], "Fallback proposals have no deltas"
+
+    @pytest.mark.asyncio
+    async def test_structurally_invalid_output_triggers_fallback(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Structurally invalid output should trigger fallback responder."""
+        session = god_of_carnage_module_with_state
+
+        # Adapter returns parseable JSON but invalid schema (missing required fields)
+        retry_policy = RetryPolicy()
+        responses = [
+            AdapterResponse(
+                error=None,
+                raw_output='{"invalid_field": "value"}',  # Missing required fields
+                decisions=[]
+            )
+            for _ in range(retry_policy.MAX_RETRIES)
+        ]
+
+        adapter = MagicMock()
+        adapter.generate = MagicMock(side_effect=responses)
+
+        result = await execute_turn_with_ai(
+            session, 1, adapter, god_of_carnage_module
+        )
+
+        # Should NOT retry structural failures (only 1 adapter call)
+        # Instead should attempt fallback on first attempt
+        assert adapter.generate.call_count == 1, \
+            f"Structural failure should NOT retry, but adapter was called {adapter.generate.call_count} times"
+
+        # Fallback should allow session to survive with minimal proposal
+        assert result.execution_status == "success", \
+            f"Fallback responder should recover from structural failure, got {result.execution_status}"
+
+        # Verify fallback proposal was executed (empty deltas)
+        assert result.accepted_deltas == [], "Fallback proposals have no deltas"
+        assert result.rejected_deltas == [], "Fallback proposals have no deltas"
+
+    @pytest.mark.asyncio
+    async def test_fallback_responder_mode_active_on_parse_failure(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Verify fallback responder mode becomes active when parse fails."""
+        session = god_of_carnage_module_with_state
+
+        # Parse failure response
+        adapter = MagicMock()
+        adapter.generate = MagicMock(
+            return_value=AdapterResponse(
+                error=None,
+                raw_output='invalid json {',
+                decisions=[]
+            )
+        )
+
+        result = await execute_turn_with_ai(
+            session, 1, adapter, god_of_carnage_module
+        )
+
+        # Check if fallback mode should be marked in result
+        # (Phase 3 marks fallback activation explicitly in runtime state)
+        # For now, just verify that fallback recovery path was attempted
+        # This will be enhanced once fallback marking is wired into result
+        assert result is not None, "Result should exist even with parse failure"

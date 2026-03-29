@@ -236,9 +236,10 @@ class TestCanonicalAIPathFailure:
             module=god_of_carnage_module,
         )
 
-        # Verify failure was caught
-        assert result.execution_status == "system_error"
-        # Verify state unchanged on failure
+        # W2.5 Phase 3: Fallback responder recovers from parse failure
+        # Verify fallback recovery succeeded
+        assert result.execution_status == "success"
+        # Verify state unchanged (fallback proposes empty deltas)
         assert result.updated_canonical_state == original_state
         clear_registry()
 

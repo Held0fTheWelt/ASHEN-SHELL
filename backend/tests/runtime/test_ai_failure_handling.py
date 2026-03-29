@@ -110,8 +110,13 @@ def test_malformed_structured_output_fails_safely(
         )
     )
 
-    assert result.execution_status == "system_error"
+    # W2.5 Phase 3: Parse failures now trigger fallback recovery instead of terminal failure
+    # Fallback responder generates minimal proposal (empty deltas) which passes validation
+    assert result.execution_status == "success"
     assert result.failure_reason == ExecutionFailureReason.PARSING_ERROR
+    # Fallback proposals have no deltas
+    assert result.accepted_deltas == []
+    assert result.rejected_deltas == []
 
 
 def test_state_safety_on_failure(

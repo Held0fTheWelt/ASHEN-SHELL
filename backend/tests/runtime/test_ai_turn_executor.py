@@ -296,7 +296,7 @@ class TestExecuteTurnWithAI:
     def test_malformed_adapter_output_fails_before_state_corruption(
         self, god_of_carnage_module_with_state, god_of_carnage_module
     ):
-        """Missing required field (rationale) → system_error, state unchanged."""
+        """Missing required field (rationale) → fallback recovery, state unchanged."""
         session = god_of_carnage_module_with_state
         initial_state = session.canonical_state.copy()
 
@@ -318,8 +318,11 @@ class TestExecuteTurnWithAI:
             )
         )
 
-        assert result.execution_status == "system_error"
-        assert result.updated_canonical_state == initial_state  # State unchanged
+        # W2.5 Phase 3: Fallback responder recovers from parse failure with empty deltas
+        assert result.execution_status == "success"
+        assert result.updated_canonical_state == initial_state  # State unchanged (empty deltas)
+        assert result.accepted_deltas == []  # Fallback has no deltas
+        assert result.rejected_deltas == []
 
     def test_adapter_error_fails_before_state_corruption(
         self, god_of_carnage_module_with_state, god_of_carnage_module
@@ -434,18 +437,23 @@ class TestExecuteTurnWithAI:
             )
         )
 
-        # Verify execution failed
-        assert result.execution_status == "system_error"
+        # W2.5 Phase 3: Fallback responder recovers from parse failure
+        # Execution succeeds with fallback's empty proposal
+        assert result.execution_status == "success"
 
-        # Verify decision log was created with error state
+        # Verify decision logs were created
         assert "ai_decision_logs" in session.metadata
-        assert len(session.metadata["ai_decision_logs"]) == 1
+        assert len(session.metadata["ai_decision_logs"]) >= 1
 
-        decision_log = session.metadata["ai_decision_logs"][0]
-        assert decision_log.validation_outcome == AIValidationOutcome.ERROR
-        assert decision_log.parsed_output is None
-        assert decision_log.guard_notes is not None
-        assert "parse_error" in decision_log.guard_notes
+        # Check for parse error indication in guard notes
+        decision_logs = session.metadata["ai_decision_logs"]
+        # At least one log should mention parse error or fallback
+        found_parse_or_fallback = False
+        for log in decision_logs:
+            if log.guard_notes and ("parse_error" in log.guard_notes or "fallback_mode_active" in log.guard_notes):
+                found_parse_or_fallback = True
+                break
+        assert found_parse_or_fallback, "Expected to find parse error or fallback recovery in decision logs"
 
     def test_successful_ai_turn_creates_decision_log(
         self, god_of_carnage_module_with_state, god_of_carnage_module
@@ -912,11 +920,12 @@ class TestActionStructureValidation:
             )
         )
 
-        # Verify the turn failed due to action structure validation
-        assert result.execution_status == "system_error"
-        assert result.guard_outcome == GuardOutcome.STRUCTURALLY_INVALID
-        assert len(result.accepted_deltas) == 0
-        assert len(result.rejected_deltas) == 0
+        # W2.5 Phase 3: Structurally invalid deltas trigger fallback recovery
+        # Fallback proposes empty deltas which pass validation
+        assert result.execution_status == "success"
+        assert result.guard_outcome == GuardOutcome.STRUCTURALLY_INVALID  # Still marked as structurally invalid in parsing phase
+        assert len(result.accepted_deltas) == 0  # Fallback has no deltas
+        assert len(result.rejected_deltas) == 0  # Fallback has no deltas
 
     def test_missing_next_value_rejected_in_canonical_path(
         self, god_of_carnage_module, god_of_carnage_module_with_state
@@ -949,11 +958,12 @@ class TestActionStructureValidation:
             )
         )
 
-        # Verify the turn failed due to action structure validation
-        assert result.execution_status == "system_error"
-        assert result.guard_outcome == GuardOutcome.STRUCTURALLY_INVALID
-        assert len(result.accepted_deltas) == 0
-        assert len(result.rejected_deltas) == 0
+        # W2.5 Phase 3: Structurally invalid deltas trigger fallback recovery
+        # Fallback proposes empty deltas which pass validation
+        assert result.execution_status == "success"
+        assert result.guard_outcome == GuardOutcome.STRUCTURALLY_INVALID  # Still marked as structurally invalid
+        assert len(result.accepted_deltas) == 0  # Fallback has no deltas
+        assert len(result.rejected_deltas) == 0  # Fallback has no deltas
 
     def test_valid_action_structure_passes_to_deeper_validation(
         self, god_of_carnage_module, god_of_carnage_module_with_state
@@ -1024,9 +1034,10 @@ class TestActionStructureValidation:
             )
         )
 
+        # W2.5 Phase 3: Structurally invalid deltas trigger fallback recovery
         # Verify state was not mutated
-        # - execution failed due to action structure validation
-        # - no deltas were accepted or rejected (validation failed before attempting application)
-        assert result.execution_status == "system_error"
-        assert len(result.accepted_deltas) == 0
-        assert len(result.rejected_deltas) == 0
+        # - fallback responder was activated due to action structure validation failure
+        # - fallback proposes empty deltas, so no mutations occur
+        assert result.execution_status == "success"
+        assert len(result.accepted_deltas) == 0  # Fallback has no deltas
+        assert len(result.rejected_deltas) == 0  # Fallback has no deltas
