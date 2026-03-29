@@ -27,6 +27,7 @@ from app.runtime.w2_models import (
     ExecutionFailureReason,
     GuardOutcome,
     MockDecision,
+    ProposalSource,
     ProposedStateDelta,
     SessionState,
     StateDelta,
@@ -472,6 +473,7 @@ async def execute_turn(
     current_turn: int,
     mock_decision: MockDecision,
     module: ContentModule,
+    enforce_responder_only: bool = False,
 ) -> TurnExecutionResult:
     """Execute a story turn with deterministic mock decision.
 
@@ -484,6 +486,9 @@ async def execute_turn(
         current_turn: Turn number (e.g., 1, 2, 3)
         mock_decision: Deterministic proposal with triggers and deltas
         module: Loaded content module for validation
+        enforce_responder_only: If True, only RESPONDER_DERIVED proposals are allowed.
+                              Rejects all non-responder proposals at gate.
+                              Default False for backward compatibility with non-AI paths.
 
     Returns:
         TurnExecutionResult with execution status, deltas, state, and events
@@ -503,6 +508,60 @@ async def execute_turn(
     )
 
     try:
+        # Enforce responder-only proposal gate if enabled (W2.4.5)
+        if enforce_responder_only and mock_decision.proposal_source != ProposalSource.RESPONDER_DERIVED:
+            completed_at = datetime.now(timezone.utc)
+            duration_ms = (completed_at - started_at).total_seconds() * 1000
+
+            gate_rejection_error = f"Proposals rejected: source is {mock_decision.proposal_source.value}, only RESPONDER_DERIVED allowed"
+
+            event_log.log(
+                "source_gate_rejected",
+                gate_rejection_error,
+                payload={
+                    "proposal_source": mock_decision.proposal_source.value,
+                    "enforce_responder_only": enforce_responder_only,
+                },
+            )
+
+            # Convert ProposedStateDelta to StateDelta for rejected_deltas
+            rejected_deltas = []
+            for proposed in mock_decision.proposed_deltas:
+                delta_type = (
+                    proposed.delta_type
+                    if proposed.delta_type
+                    else infer_delta_type(proposed.target)
+                )
+                previous_value = get_current_value(session.canonical_state, proposed.target)
+                delta = StateDelta(
+                    delta_type=delta_type,
+                    target_path=proposed.target,
+                    target_entity=extract_entity_id(proposed.target),
+                    previous_value=previous_value,
+                    next_value=proposed.next_value,
+                    source="source_gate_rejected",
+                    turn_number=current_turn,
+                    validation_status=DeltaValidationStatus.REJECTED,
+                )
+                rejected_deltas.append(delta)
+
+            return TurnExecutionResult(
+                turn_number=current_turn,
+                session_id=session.session_id,
+                execution_status="success",  # Gate rejection is clean: no exception
+                decision=mock_decision,
+                validation_outcome=None,
+                validation_errors=[gate_rejection_error],
+                accepted_deltas=[],
+                rejected_deltas=rejected_deltas,  # All deltas rejected by gate
+                updated_canonical_state=session.canonical_state,
+                guard_outcome=GuardOutcome.REJECTED,  # Clean rejection by gate
+                failure_reason=ExecutionFailureReason.NONE,
+                started_at=started_at,
+                completed_at=completed_at,
+                duration_ms=duration_ms,
+                events=event_log.flush(),
+            )
         # Step 1: Validate decision
         validation_outcome = validate_decision(mock_decision, session, module)
 
