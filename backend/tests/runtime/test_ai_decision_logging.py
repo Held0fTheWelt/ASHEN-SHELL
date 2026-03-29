@@ -344,3 +344,100 @@ def test_guard_outcome_remains_canonical():
 
         # guard_outcome must be preserved exactly
         assert log.guard_outcome == guard_outcome
+
+
+def test_backward_compatibility_legacy_decisions_still_work():
+    """Legacy decisions (ParsedAIDecision only) work unchanged."""
+    parsed_decision = ParsedAIDecision(
+        scene_interpretation="Scene",
+        detected_triggers=[],
+        proposed_deltas=[],
+        proposed_scene_id=None,
+        rationale="Rationale",
+        raw_output="raw",
+        parsed_source="structured_payload",
+    )
+
+    # Create log as if from W2.4.3 parsing (no role-structured output)
+    log = construct_ai_decision_log(
+        session_id="sess1",
+        turn_number=1,
+        parsed_decision=parsed_decision,
+        raw_output="raw",
+        role_aware_decision=None,  # Legacy path
+        guard_outcome=GuardOutcome.ACCEPTED,
+    )
+
+    # Log should be created successfully
+    assert log.id is not None
+    assert log.session_id == "sess1"
+    assert log.turn_number == 1
+
+    # Legacy logs have no role fields
+    assert log.interpreter_output is None
+    assert log.director_output is None
+    assert log.responder_output is None
+
+    # Guard outcome preserved
+    assert log.guard_outcome == GuardOutcome.ACCEPTED
+
+
+def test_parsed_ai_decision_fields_unchanged():
+    """Verify ParsedAIDecision model was not modified by W2.4.4."""
+    from app.runtime.ai_decision import ParsedAIDecision
+
+    # Expected fields from W2.1.3 spec (should not change in W2.4.4)
+    expected_fields = {
+        "scene_interpretation",
+        "detected_triggers",
+        "proposed_deltas",
+        "proposed_scene_id",
+        "rationale",
+        "dialogue_impulses",
+        "conflict_vector",
+        "confidence",
+        "raw_output",
+        "parsed_source",
+    }
+
+    actual_fields = set(ParsedAIDecision.model_fields.keys())
+    assert actual_fields == expected_fields, (
+        f"ParsedAIDecision should not be modified in W2.4.4. "
+        f"Expected {expected_fields}, got {actual_fields}"
+    )
+
+
+def test_guard_outcome_and_validation_outcome_semantics():
+    """Verify guard_outcome is sole canonical validation truth, validation_outcome derived."""
+    parsed_decision = ParsedAIDecision(
+        scene_interpretation="Scene",
+        detected_triggers=[],
+        proposed_deltas=[],
+        proposed_scene_id=None,
+        rationale="Rationale",
+        raw_output="raw",
+        parsed_source="structured_payload",
+    )
+
+    # For each guard_outcome state, validation_outcome must be correctly derived
+    test_cases = [
+        (GuardOutcome.ACCEPTED, AIValidationOutcome.ACCEPTED),
+        (GuardOutcome.PARTIALLY_ACCEPTED, AIValidationOutcome.PARTIAL),
+        (GuardOutcome.REJECTED, AIValidationOutcome.REJECTED),
+        (GuardOutcome.STRUCTURALLY_INVALID, AIValidationOutcome.ERROR),
+    ]
+
+    for guard_outcome, expected_validation_outcome in test_cases:
+        log = construct_ai_decision_log(
+            session_id="sess1",
+            turn_number=1,
+            parsed_decision=parsed_decision,
+            raw_output="raw",
+            role_aware_decision=None,
+            guard_outcome=guard_outcome,
+        )
+
+        # guard_outcome preserved as-is
+        assert log.guard_outcome == guard_outcome
+        # validation_outcome derived from guard_outcome
+        assert log.validation_outcome == expected_validation_outcome
