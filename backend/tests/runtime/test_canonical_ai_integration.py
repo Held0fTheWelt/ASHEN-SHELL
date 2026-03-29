@@ -270,8 +270,10 @@ class TestCanonicalAIPathFailure:
             module=god_of_carnage_module,
         )
 
-        assert result.execution_status == "system_error"
-        assert result.updated_canonical_state == original_state
+        # W2.5 Phase 4: Adapter error exhausts retries, activates safe-turn recovery
+        # Safe-turn preserves state safely
+        assert result.execution_status == "success"
+        assert result.updated_canonical_state == original_state  # Safe-turn doesn't mutate
         clear_registry()
 
     @pytest.mark.asyncio
@@ -300,8 +302,10 @@ class TestCanonicalAIPathFailure:
             module=god_of_carnage_module,
         )
 
-        assert result.execution_status == "system_error"
-        # Verify error was captured
+        # W2.5 Phase 4: Adapter error exhausts retries, activates safe-turn recovery
+        # Safe-turn succeeds with no-op execution and decision logs capture recovery
+        assert result.execution_status == "success"
+        # Verify error and recovery were captured in logs
         clear_registry()
 
 

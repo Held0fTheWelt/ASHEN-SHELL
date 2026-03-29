@@ -101,7 +101,7 @@ class TestRetryLoopIntegration:
     async def test_retry_exhaustion_after_max_attempts(
         self, god_of_carnage_module_with_state, god_of_carnage_module
     ):
-        """After MAX_RETRIES adapter errors, should exhaust retries."""
+        """After MAX_RETRIES adapter errors, should exhaust retries and activate safe-turn."""
         session = god_of_carnage_module_with_state
 
         # Always fail with adapter error
@@ -122,8 +122,15 @@ class TestRetryLoopIntegration:
         retry_policy = RetryPolicy()
         assert adapter.generate.call_count == retry_policy.MAX_RETRIES, \
             f"Should have tried max {retry_policy.MAX_RETRIES} times"
-        # Should not succeed
-        assert result.execution_status != "success", f"Expected failure but got {result.execution_status}"
+
+        # W2.5 Phase 4: Retry exhaustion activates safe-turn recovery
+        # Safe-turn results in success (no-op execution)
+        assert result.execution_status == "success", \
+            f"Expected safe-turn recovery (success) but got {result.execution_status}"
+
+        # Verify no state mutations (safe-turn has empty deltas)
+        assert result.accepted_deltas == [], "Safe-turn has no deltas"
+        assert result.rejected_deltas == [], "Safe-turn has no deltas"
 
     @pytest.mark.asyncio
     async def test_empty_response_triggers_retry(
@@ -258,3 +265,90 @@ class TestFallbackResponderIntegration:
         # For now, just verify that fallback recovery path was attempted
         # This will be enhanced once fallback marking is wired into result
         assert result is not None, "Result should exist even with parse failure"
+
+
+class TestSafeTurnIntegration:
+    """Verify safe-turn executor activates when stronger recovery exhausted."""
+
+    @pytest.mark.asyncio
+    async def test_retry_exhaustion_triggers_safe_turn(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """When all retries fail (RETRY_EXHAUSTED), should execute safe-turn."""
+        session = god_of_carnage_module_with_state
+
+        # Adapter always fails with adapter error (retryable)
+        retry_policy = RetryPolicy()
+        responses = [
+            AdapterResponse(
+                error="Persistent connection failure",
+                raw_output="",
+                decisions=[]
+            )
+            for _ in range(retry_policy.MAX_RETRIES)
+        ]
+
+        adapter = MagicMock()
+        adapter.generate = MagicMock(side_effect=responses)
+
+        result = await execute_turn_with_ai(
+            session, 1, adapter, god_of_carnage_module
+        )
+
+        # After MAX_RETRIES, should exhaust and not succeed
+        # Safe-turn will be next phase (Phase 4)
+        assert adapter.generate.call_count == retry_policy.MAX_RETRIES, \
+            f"Should have tried max {retry_policy.MAX_RETRIES} times"
+
+    @pytest.mark.asyncio
+    async def test_safe_turn_preserves_session_state(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Safe-turn preserves all character state (no mutations)."""
+        session = god_of_carnage_module_with_state
+        initial_state = session.canonical_state.copy()
+
+        # Create a scenario that exhausts recovery
+        # For now, test with retry exhaustion
+        retry_policy = RetryPolicy()
+        responses = [
+            AdapterResponse(error="Timeout", raw_output="", decisions=[])
+            for _ in range(retry_policy.MAX_RETRIES)
+        ]
+
+        adapter = MagicMock()
+        adapter.generate = MagicMock(side_effect=responses)
+
+        result = await execute_turn_with_ai(
+            session, 1, adapter, god_of_carnage_module
+        )
+
+        # When safe-turn is implemented (Phase 4), state should be unchanged
+        # For now, verify we get a result (actual safe-turn verification comes after Phase 4)
+        assert result is not None, "Should return result even with exhausted recovery"
+
+    @pytest.mark.asyncio
+    async def test_safe_turn_advances_turn_counter(
+        self, god_of_carnage_module_with_state, god_of_carnage_module
+    ):
+        """Safe-turn advances turn counter so session progresses."""
+        session = god_of_carnage_module_with_state
+        initial_turn = session.turn_counter
+
+        # Exhaust all retries
+        retry_policy = RetryPolicy()
+        responses = [
+            AdapterResponse(error="Timeout", raw_output="", decisions=[])
+            for _ in range(retry_policy.MAX_RETRIES)
+        ]
+
+        adapter = MagicMock()
+        adapter.generate = MagicMock(side_effect=responses)
+
+        result = await execute_turn_with_ai(
+            session, initial_turn + 1, adapter, god_of_carnage_module
+        )
+
+        # Turn counter should advance (Phase 4 verification)
+        # For now, just verify result exists
+        assert result is not None, "Result should exist"

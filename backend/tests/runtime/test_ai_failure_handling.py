@@ -73,9 +73,11 @@ def test_empty_adapter_output_fails_safely(
         )
     )
 
-    assert result.execution_status == "system_error"
+    # W2.5 Phase 4: Empty adapter output triggers retry, exhaustion activates safe-turn
+    # Safe-turn preserves state and allows session to continue
+    assert result.execution_status == "success"
     assert result.failure_reason == ExecutionFailureReason.GENERATION_ERROR
-    assert result.updated_canonical_state == session.canonical_state
+    assert result.updated_canonical_state == session.canonical_state  # Safe-turn doesn't mutate
 
 
 def test_malformed_structured_output_fails_safely(
@@ -151,8 +153,10 @@ def test_state_safety_on_failure(
         )
     )
 
-    assert result.execution_status == "system_error"
-    assert result.updated_canonical_state == initial_state
+    # W2.5 Phase 4: Adapter failure triggers retry exhaustion, then safe-turn recovery
+    # Safe-turn preserves state safety guarantee - no mutations on failure
+    assert result.execution_status == "success"
+    assert result.updated_canonical_state == initial_state  # Safe-turn doesn't mutate
     assert session.canonical_state == initial_state
 
 

@@ -477,50 +477,76 @@ async def execute_turn_with_ai(
             break
 
     # Step 2b: Handle adapter error or empty output
-    if response.error:
-        error_log = _create_error_decision_log(
-            session,
-            current_turn,
-            response.raw_output,
-            [response.error],
-            "adapter_error",
-        )
-        _store_decision_log(session, error_log)
-
-        result = _make_parse_failure_result(
-            session,
-            current_turn,
-            [f"Adapter error: {response.error}"],
-            response.raw_output,
-            started_at,
-        )
-
-        # Mark failure reason as generation error (adapter call failed)
-        result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
-        return result
-
-    # Step 2c: Check for empty output
-    if not response.raw_output or not response.raw_output.strip():
+    # W2.5 Phase 4: If retries exhausted, activate safe-turn instead of terminal failure
+    if response.error or (not response.raw_output or not response.raw_output.strip()):
         error_log = _create_error_decision_log(
             session,
             current_turn,
             response.raw_output or "",
-            ["Empty AI response"],
-            "generation_error",
+            [response.error] if response.error else ["Empty AI response"],
+            "adapter_error" if response.error else "generation_error",
         )
         _store_decision_log(session, error_log)
 
-        result = _make_parse_failure_result(
-            session,
-            current_turn,
-            ["Empty AI response"],
-            response.raw_output or "",
-            started_at,
-        )
+        # Check if retries are exhausted
+        if current_attempt >= retry_policy.MAX_RETRIES:
+            # W2.5 Phase 4: Retry exhausted - activate safe-turn (no-op recovery)
+            from app.runtime.ai_failure_recovery import SafeTurnPolicy
 
-        # Mark failure reason as generation error (adapter produced empty response)
-        result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
-        return result
+            # Create a safe-turn decision (no-op with empty deltas)
+            # Uses default ProposalSource.MOCK since safe-turn is system-generated
+            safe_turn_decision = MockDecision(
+                detected_triggers=[],
+                proposed_deltas=[],
+            )
+
+            # Execute safe-turn through normal path
+            turn_result = await execute_turn(
+                session,
+                current_turn,
+                safe_turn_decision,
+                module,
+                enforce_responder_only=False,
+            )
+
+            # Mark safe-turn in result
+            turn_result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
+
+            # Log safe-turn execution
+            decision_log = construct_ai_decision_log(
+                session_id=session.session_id,
+                turn_number=current_turn,
+                parsed_decision=ParsedAIDecision(
+                    scene_interpretation="[safe-turn: retry exhaustion recovery]",
+                    detected_triggers=[],
+                    proposed_deltas=[],
+                    proposed_scene_id=None,
+                    rationale="[safe-turn: no-op due to adapter failure after retries]",
+                    raw_output="",
+                    parsed_source="safe_turn_executor",
+                ),
+                raw_output=response.raw_output or "",
+                role_aware_decision=None,
+                guard_outcome=turn_result.guard_outcome,
+                accepted_deltas=turn_result.accepted_deltas,
+                rejected_deltas=turn_result.rejected_deltas,
+                guard_notes="safe_turn_mode_active: retry_exhausted_recovery",
+            )
+            _store_decision_log(session, decision_log)
+
+            return turn_result
+        else:
+            # Retries not yet exhausted (shouldn't reach here - retry loop should continue)
+            # Return error for now
+            result = _make_parse_failure_result(
+                session,
+                current_turn,
+                [response.error] if response.error else ["Empty AI response"],
+                response.raw_output or "",
+                started_at,
+            )
+            result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
+            return result
 
     # Step 3: Parse response
     parse_result: ParseResult = process_adapter_response(response)

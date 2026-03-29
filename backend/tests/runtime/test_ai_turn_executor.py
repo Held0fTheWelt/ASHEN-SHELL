@@ -327,7 +327,7 @@ class TestExecuteTurnWithAI:
     def test_adapter_error_fails_before_state_corruption(
         self, god_of_carnage_module_with_state, god_of_carnage_module
     ):
-        """Adapter error flag → system_error, state unchanged."""
+        """Adapter error triggers retry exhaustion, then safe-turn recovery."""
         session = god_of_carnage_module_with_state
         initial_state = session.canonical_state.copy()
 
@@ -342,9 +342,10 @@ class TestExecuteTurnWithAI:
             )
         )
 
-        assert result.execution_status == "system_error"
-        assert result.updated_canonical_state == initial_state  # State unchanged
-        assert any("Adapter error" in err for err in result.validation_errors)
+        # W2.5 Phase 4: Adapter error exhausts retries, activates safe-turn
+        # Safe-turn succeeds and preserves state
+        assert result.execution_status == "success"
+        assert result.updated_canonical_state == initial_state  # State unchanged (safe-turn)
 
     def test_engine_validation_still_controls_committed_changes(
         self, god_of_carnage_module_with_state, god_of_carnage_module
@@ -401,17 +402,22 @@ class TestExecuteTurnWithAI:
             )
         )
 
-        # Verify execution failed
-        assert result.execution_status == "system_error"
+        # W2.5 Phase 4: Adapter error exhausts retries, activates safe-turn
+        # Safe-turn results in success (no-op execution)
+        assert result.execution_status == "success"
 
-        # Verify decision log was created with error state
+        # Verify decision logs were created (error + safe-turn recovery)
         assert "ai_decision_logs" in session.metadata
-        assert len(session.metadata["ai_decision_logs"]) == 1
+        assert len(session.metadata["ai_decision_logs"]) >= 1
 
-        decision_log = session.metadata["ai_decision_logs"][0]
-        assert decision_log.validation_outcome == AIValidationOutcome.ERROR
-        assert decision_log.guard_notes is not None
-        assert "adapter_error" in decision_log.guard_notes or "Adapter error" in decision_log.guard_notes
+        # Check for adapter error and safe-turn in logs
+        decision_logs = session.metadata["ai_decision_logs"]
+        found_recovery = False
+        for log in decision_logs:
+            if log.guard_notes and ("adapter_error" in log.guard_notes or "safe_turn_mode_active" in log.guard_notes):
+                found_recovery = True
+                break
+        assert found_recovery, "Expected to find adapter error or safe-turn recovery in decision logs"
 
     def test_malformed_adapter_output_logs_error_decision(
         self, god_of_carnage_module_with_state, god_of_carnage_module
