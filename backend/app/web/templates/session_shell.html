@@ -41,6 +41,49 @@
   <!-- Main Column: Existing panels -->
   <div class="main-column">
 
+    <!-- Conflict & Escalation Panel -->
+    <section class="panel conflict-panel">
+      <h3>Conflict & Escalation</h3>
+      {% if conflict %}
+        <dl class="conflict-meta">
+          {% if conflict.current_pressure is not none %}
+          <dt>Pressure</dt>
+          <dd class="pressure-value">{{ conflict.current_pressure }}</dd>
+          {% endif %}
+
+          <dt>Escalation Status</dt>
+          <dd class="escalation-status {{ conflict.current_escalation_status }}">
+            {{ conflict.current_escalation_status }}
+          </dd>
+        </dl>
+
+        {% if conflict.recent_trend %}
+        <div class="recent-trend">
+          <p class="label">Recent Trend</p>
+          <p class="trend-signal {{ conflict.recent_trend.signal }}">
+            {{ conflict.recent_trend.signal }}
+          </p>
+          {% if conflict.recent_trend.source_basis %}
+          <p class="source-basis">
+            Source: {{ conflict.recent_trend.source_basis | join(", ") }}
+          </p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if conflict.turning_point_risk is not none %}
+        <div class="turning-point">
+          <p class="label">Turning Point Risk</p>
+          <p class="risk-flag {% if conflict.turning_point_risk %}high{% else %}low{% endif %}">
+            {% if conflict.turning_point_risk %}⚠️ High risk of major shift{% else %}Low risk{% endif %}
+          </p>
+        </div>
+        {% endif %}
+      {% else %}
+        <p class="conflict-empty-state">Conflict data unavailable.</p>
+      {% endif %}
+    </section>
+
     <!-- Session Info Panel -->
     <section class="panel session-info-panel">
       <h2>Session</h2>
