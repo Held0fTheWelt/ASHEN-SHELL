@@ -53,12 +53,12 @@ Responsibilities:
 
 `RuntimeSession` dataclass/model wraps:
 - `session_id`: unique identifier
-- `current_runtime_state`: the full SessionState from W2 (canonical) — required by canonical `execute_turn()`
+- `current_runtime_state`: the full SessionState from W2 (canonical) — contains execution_mode and adapter_name for dispatch routing
 - `module`: reference to loaded ContentModule — required for turn validation and state legality checks
-- `turn_counter`: current turn number — incremented after each successful execution, passed to `execute_turn()`
+- `turn_counter`: current turn number — incremented after each successful execution, passed to `dispatch_turn()`
 - `updated_at`: timestamp of last update
 
-**Implementation rule:** This is the ONLY server-side runtime session registry for W3.3. No parallel stores. RuntimeSession must carry all context needed to call the real canonical execution path without UI-specific shortcuts.
+**Implementation rule:** This is the ONLY server-side runtime session registry for W3.3. No parallel stores. RuntimeSession must carry all context needed to call the canonical `dispatch_turn()` entry point. The route receives no execution mode or adapter details — they come from SessionState, which dispatch_turn() reads to decide routing.
 
 ### `app/web/routes.py` (modifications)
 
@@ -82,17 +82,17 @@ def _resolve_runtime_session(session_id: str) -> RuntimeSession | None:
 - Validate Flask session matches session_id
 - Resolve RuntimeSession from store
 - Extract operator input from form
-- Convert operator input to MockDecision object (encapsulating free-text as a proposal)
-- Call **canonical** `turn_executor.execute_turn(RuntimeSession.current_runtime_state, RuntimeSession.turn_counter + 1, mock_decision, RuntimeSession.module)`
-  - This is the REAL canonical path: no UI shortcuts, no simplified calls
-  - Passes SessionState, turn number, MockDecision, and ContentModule
+- Call **canonical runtime session execution entry point**: `dispatch_turn(RuntimeSession.current_runtime_state, RuntimeSession.turn_counter + 1, RuntimeSession.module, operator_input=form_input)`
+  - This is the REAL canonical session-level router: delegates to AI or mock execution based on session.execution_mode
+  - The runtime core owns all decision construction (MockDecision, AI adapter, response parsing, etc.)
+  - Route does NOT construct MockDecision or manage execution mode logic — dispatcher does
   - Returns TurnExecutionResult with updated_canonical_state, guard_outcome, accepted_deltas, rejected_deltas
 - Update RuntimeSession in store: replace current_runtime_state with TurnExecutionResult.updated_canonical_state, increment turn_counter
 - Build result_feedback using explicit presenter mapping (see "Template Result Field Mapping" section below)
 - Re-render `session_shell.html` with new scene + result feedback using mapped fields
 - If execution fails, preserve in-memory session state, flash error, re-render with error feedback
 
-**Implementation rule:** The POST route MUST call the canonical runtime execution path through real W2 runtime objects (SessionState, ContentModule, execute_turn signature). No UI-specific shortcuts. State updates must replace the in-memory runtime session with the new canonical state produced by turn execution.
+**Implementation rule:** The POST route MUST submit operator_input to `dispatch_turn()`, the canonical session execution router. The route does not construct MockDecision, select execution mode, or manage adapter logic — all decision-making stays in the runtime layer. State updates must replace the in-memory runtime session with the new canonical state produced by turn execution.
 
 ### `session_shell.html` (template modifications)
 
@@ -154,17 +154,17 @@ Browser request
 Browser form submit (operator_input)
   → Flask session lookup → session_id found
   → session_store.get(session_id) → RuntimeSession retrieved
-  → convert operator_input (free text) → MockDecision object
-  → call REAL CANONICAL turn_executor.execute_turn(
+  → call CANONICAL SESSION EXECUTION ROUTER: dispatch_turn(
       session=RuntimeSession.current_runtime_state,
       current_turn=RuntimeSession.turn_counter + 1,
-      mock_decision=MockDecision(...),
       module=RuntimeSession.module,
-      enforce_responder_only=False
+      operator_input=form_input
     )
-  → turn_executor returns TurnExecutionResult (with updated_canonical_state, guard_outcome, accepted_deltas, rejected_deltas)
-  → update RuntimeSession.current_runtime_state ← TurnExecutionResult.updated_canonical_state
-  → increment RuntimeSession.turn_counter
+  → dispatcher routes to AI or mock execution based on session.execution_mode
+  → dispatcher owns all decision construction (MockDecision, AI adapter, parsing, etc.)
+  → dispatcher returns TurnExecutionResult (with updated_canonical_state, guard_outcome, accepted_deltas, rejected_deltas)
+  → route updates RuntimeSession.current_runtime_state ← TurnExecutionResult.updated_canonical_state
+  → route increments RuntimeSession.turn_counter
   → session_store.update_session(session_id, updated_RuntimeSession)
   → use _present_turn_result(RuntimeSession, TurnExecutionResult) to map result to template fields
   → re-render session_shell.html with new scene + mapped result feedback
@@ -213,8 +213,10 @@ User logs out or session expires:
 - `test_operator_input_form_present`: GET /play/<session_id> renders textarea + quick-action helpers
 
 **Turn execution tests:**
-- `test_turn_execution_calls_canonical_executor`: POST /play/<session_id>/execute calls real turn_executor
-- `test_turn_execution_updates_session_store`: after POST, RuntimeSession in store has updated canonical state
+- `test_turn_execution_calls_dispatch_turn`: POST /play/<session_id>/execute calls canonical `dispatch_turn()`, not execute_turn directly
+- `test_operator_input_passed_to_dispatcher`: operator_input (free text) is passed to dispatch_turn; no MockDecision conversion happens in route
+- `test_dispatcher_routes_based_on_execution_mode`: verify session.execution_mode and adapter_name are honored by dispatcher (test with mock mode)
+- `test_turn_execution_updates_session_store`: after POST, RuntimeSession in store has updated canonical state from dispatcher result
 - `test_turn_result_displayed_after_execution`: POST response includes narrative, outcome, what changed, next scene
 - `test_turn_execution_re_renders_from_updated_session`: POST response renders from updated in-memory session, not temporary route-local data
 - `test_degraded_outcome_feedback`: if turn result is degraded/fallback/safe-turn, response renders real outcome feedback correctly
@@ -257,18 +259,19 @@ User logs out or session expires:
 
 ## Implementation Constraints (Non-Negotiable)
 
-1. **Canonical execution only:** The route MUST call the REAL canonical `execute_turn(session, turn_number, mock_decision, module)` signature. No UI shortcuts or simplified wrappers.
-2. **RuntimeSession completeness:** RuntimeSession MUST carry session_id, current_runtime_state (SessionState), module (ContentModule), turn_counter, and updated_at. No context can be UI-only.
-3. **MockDecision conversion:** Operator input (free text) MUST be converted to MockDecision object before calling execute_turn, not passed as raw string.
-4. **Single registry:** `session_store` is the ONLY server-side runtime session registry for W3.3.
-5. **Flask session linkage only:** Flask session stores only lightweight metadata (session_id), not the full runtime state.
-6. **State replacement, not merge:** `/play/<session_id>/execute` MUST replace RuntimeSession.current_runtime_state with TurnExecutionResult.updated_canonical_state, not merge partial updates.
-7. **Explicit presenter mapping:** All template fields MUST be derived via `_present_turn_result()` helper that maps canonical objects to template shape. No direct object access in templates.
-8. **In-memory documentation:** The in-memory-only limitation is documented explicitly in code comments and developer docs.
-9. **Real canonical data only:** Scene display, state summary, and result feedback derive strictly from canonical runtime/module/session data. No fabricated UI-invented fields.
-10. **Free-text primary:** Interaction model is free-text input with optional helper buttons, not menu-driven or structured-choice-primary.
-11. **Error preservation:** Failed turn execution preserves the last valid in-memory session state.
-12. **Session isolation:** Multiple concurrent sessions must not leak runtime state into each other.
+1. **Canonical session execution router:** The route MUST call `dispatch_turn(session, turn_number, module, operator_input=...)`, the session-level execution entry point. No direct `execute_turn()` calls. No UI-owned decision construction.
+2. **Operator input as string:** The route passes operator_input as a raw string to dispatch_turn(). All decision construction (MockDecision, AI adapter invocation, response parsing) happens inside the runtime dispatcher.
+3. **Runtime owns execution mode:** The route does NOT read session.execution_mode or session.adapter_name — dispatch_turn() does. These remain owned by runtime.
+4. **RuntimeSession completeness:** RuntimeSession MUST carry session_id, current_runtime_state (SessionState with execution_mode and adapter_name), module (ContentModule), turn_counter, and updated_at.
+5. **Single registry:** `session_store` is the ONLY server-side runtime session registry for W3.3.
+6. **Flask session linkage only:** Flask session stores only lightweight metadata (session_id), not the full runtime state.
+7. **State replacement, not merge:** `/play/<session_id>/execute` MUST replace RuntimeSession.current_runtime_state with TurnExecutionResult.updated_canonical_state, not merge partial updates.
+8. **Explicit presenter mapping:** All template fields MUST be derived via `_present_turn_result()` helper that maps canonical objects to template shape. No direct object access in templates.
+9. **In-memory documentation:** The in-memory-only limitation is documented explicitly in code comments and developer docs.
+10. **Real canonical data only:** Scene display, state summary, and result feedback derive strictly from canonical runtime/module/session data. No fabricated UI-invented fields.
+11. **Free-text primary:** Interaction model is free-text input with optional helper buttons, not menu-driven or structured-choice-primary.
+12. **Error preservation:** Failed turn execution preserves the last valid in-memory session state.
+13. **Session isolation:** Multiple concurrent sessions must not leak runtime state into each other.
 
 ---
 
@@ -276,9 +279,11 @@ User logs out or session expires:
 
 - ✓ A user can inspect the current scene (title, description, state summary) — derived from canonical module + state via presenter
 - ✓ A user can submit free-text operator input via the UI
-- ✓ Turn execution calls the REAL canonical `execute_turn(session, turn, decision, module)` path
-- ✓ RuntimeSession carries all execution context (state, module, turn counter)
-- ✓ Turn execution updates in-memory session state by replacing current_runtime_state
+- ✓ Turn execution calls `dispatch_turn()`, the canonical session execution router
+- ✓ Route passes operator_input as raw string; does NOT construct MockDecision or manage execution mode
+- ✓ RuntimeSession carries execution context (state with execution_mode/adapter_name, module, turn counter)
+- ✓ Dispatcher decides execution path (AI vs mock) and all decision construction based on session config
+- ✓ Turn execution updates in-memory session state by replacing current_runtime_state with dispatcher result
 - ✓ Turn result feedback is displayed (narrative, outcome, accepted/rejected deltas, next scene) — all via explicit presenter mapping
 - ✓ Template rendering uses only mapped fields from presenter, never direct canonical object access
 - ✓ Session isolation prevents state leakage between concurrent sessions
@@ -286,5 +291,5 @@ User logs out or session expires:
 - ✓ All tests pass (unit + integration)
 - ✓ No W3 scope jump occurred (W3.4+ features deferred)
 - ✓ In-memory-only constraint is clearly documented
-- ✓ MockDecision conversion from operator input is documented/implemented
 - ✓ Presenter mapping function is explicit and testable
+- ✓ Route does not own execution mode logic or decision construction
