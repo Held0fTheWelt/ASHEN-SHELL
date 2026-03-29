@@ -18,6 +18,7 @@ from typing import Any
 from app.content.module_models import ContentModule
 from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapter
 from app.runtime.ai_decision import ParseResult, process_adapter_response
+from app.runtime.ai_decision_logging import construct_ai_decision_log
 from app.runtime.decision_policy import AIDecisionPolicy
 from app.runtime.event_log import RuntimeEventLog
 from app.runtime.turn_executor import (
@@ -119,6 +120,7 @@ def build_adapter_request(
         canonical_state=session.canonical_state,
         recent_events=recent_events or [],
         operator_input=operator_input or None,
+        request_role_structured_output=True,  # W2.4.2: Request role-structured format (interpreter/director/responder)
         metadata={
             "module_id": module.metadata.module_id,
             "module_version": module.metadata.version,
@@ -568,12 +570,25 @@ async def execute_turn_with_ai(
     )
 
     # Step 7: Create and store decision log from execution result
-    decision_log = _create_decision_log(
-        session=session,
-        current_turn=current_turn,
+    # W2.4.4: Use role-aware decision logging helper to populate interpreter/director/responder diagnostics
+    guard_notes = None
+    if turn_result.validation_errors:
+        errors = turn_result.validation_errors
+        count = len(errors)
+        outcome_label = turn_result.guard_outcome.value
+        sample = "; ".join(errors[:3])
+        guard_notes = f"{count} error{'s' if count != 1 else ''}; {outcome_label}: {sample}"
+
+    decision_log = construct_ai_decision_log(
+        session_id=session.session_id,
+        turn_number=current_turn,
         parsed_decision=parse_result.decision,
-        adapter_response=response,
-        turn_result=turn_result,
+        raw_output=response.raw_output,
+        role_aware_decision=parse_result.role_aware_decision,  # W2.4.4: Pass role sections for diagnostics
+        guard_outcome=turn_result.guard_outcome,
+        accepted_deltas=turn_result.accepted_deltas,
+        rejected_deltas=turn_result.rejected_deltas,
+        guard_notes=guard_notes,
     )
     _store_decision_log(session, decision_log)
 
