@@ -23,8 +23,10 @@
 
 **Pattern:** Route-driven integration (thin routes, pure presenters, bounded template rendering)
 
+**Scope:** W3.5.2 extends W3.3's initial session-shell render with history visibility. Does not degrade existing scene/state rendering on GET path.
+
 **Routes:**
-- `session_view()` (GET) — calls `present_history_panel(session_state)`, passes `history_panel` to template
+- `session_view()` (GET) — calls `present_history_panel(session_state)`, passes `history_panel` to template alongside existing W3.3 context
 - `session_execute()` (POST) — calls `present_history_panel(updated_session_state)`, passes `history_panel` to template
 
 **Presenter:**
@@ -46,19 +48,18 @@
 ```python
 from app.runtime.history_presenter import present_history_panel
 
+# Add history panel to existing context (preserves W3.3 scene/state rendering)
 history_panel = present_history_panel(session_state)
 return render_template(
     "session_shell.html",
     session_data=active,
     history_panel=history_panel,
-    # Optional context variables (for panels that render on both GET and POST)
-    scene=None,  # Not available on initial GET, template handles gracefully
-    state_summary=None,
-    turn_result=None,
+    # scene, state_summary already present from W3.3 (keep existing context)
+    # ... continue with existing context variables
 )
 ```
 
-**Note:** `session_view()` is an initial GET load, so scene/state_summary/turn_result are not available (they come from turn execution). The template already has `{% if scene %}` guards for these panels, so passing `None` is safe and keeps both routes using the same template.
+**Note:** W3.5.2 extends W3.3's initial session-shell render by adding `history_panel`. The existing scene/state context is preserved, not replaced with None values.
 
 **In `session_execute()` function (after turn execution, before rendering response):**
 ```python
