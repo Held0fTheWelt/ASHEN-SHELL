@@ -7,6 +7,7 @@ from app.runtime.scene_presenter import (
     RelationshipMovement,
     present_character_panel,
     present_conflict_panel,
+    present_all_characters,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "RelationshipMovement",
     "present_character_panel",
     "present_conflict_panel",
+    "present_all_characters",
 ]
