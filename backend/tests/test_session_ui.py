@@ -1235,4 +1235,30 @@ class TestW3SmokeAndStability:
         assert has_history, "History panel missing from response"
         assert has_debug, "Debug panel missing from response"
 
-    # Test methods will be added in subsequent tasks
+    def test_smoke_authenticated_start_and_load(self, client, test_user):
+        """Verify auth → start → load runtime flow works end-to-end."""
+        # Authenticate
+        user, password = test_user
+        client.post("/login", data={"username": user.username, "password": password})
+
+        # Start session
+        response = client.post(
+            "/play/start",
+            data={"module_id": "god_of_carnage"},
+            follow_redirects=False,
+        )
+        assert response.status_code == 302, f"Expected 302, got {response.status_code}"
+
+        # Extract session_id from redirect
+        location = response.headers.get("Location", "")
+        session_id = location.split("/play/")[-1] if "/play/" in location else None
+        assert session_id, f"Could not extract session_id from {location}"
+
+        # Load runtime page
+        response = client.get(f"/play/{session_id}")
+        self._assert_response_not_error(response)
+        self._assert_session_shell_renders(response)
+
+        # Verify session info visible
+        response_text = response.data.decode('utf-8', errors='ignore')
+        assert "god_of_carnage" in response_text, "Module name not visible on load"
