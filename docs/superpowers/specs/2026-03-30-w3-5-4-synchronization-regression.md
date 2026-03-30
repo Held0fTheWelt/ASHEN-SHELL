@@ -33,12 +33,24 @@ Add new test class to `backend/tests/test_session_ui.py` with 10 focused tests c
 **Purpose:** Verify one turn updates canonical state, presenter reads it, and response renders it.
 
 **Steps:**
-1. Create session, execute one turn via POST
-2. Get updated runtime state via `get_runtime_session(session_id)`
-3. Assert `turn_counter == 1` and `session_history.entries` has one entry
-4. Call `present_debug_panel(runtime_state)` directly
-5. Assert `primary_diagnostic.summary.turn_number == 1`
-6. Assert response contains `b"Turn 1"` or outcome class in HTML
+1. Create session via `_create_and_setup_session(client, test_user)` → get `session_id`
+2. Execute one turn via POST `/play/{session_id}/execute` with valid `operator_input` and CSRF token
+3. Layer 1 - Get updated runtime state:
+   ```python
+   runtime_session = get_runtime_session(session_id)
+   state = runtime_session.current_runtime_state
+   assert state.turn_counter == 1
+   assert len(state.session_history.entries) >= 1
+   ```
+4. Layer 2 - Call presenter on fresh state:
+   ```python
+   debug_panel = present_debug_panel(state)
+   assert debug_panel.primary_diagnostic.summary.turn_number == 1
+   ```
+5. Layer 3 - Assert response HTML contains turn/outcome:
+   ```python
+   assert b"Turn 1" in response.data or _extract_turn_number_from_html(response.data) == 1
+   ```
 
 **Failure signature:** Layer 1 (state not updated) or Layer 2 (presenter reads old state) or Layer 3 (HTML doesn't render it)
 
@@ -207,11 +219,126 @@ Add new test class to `backend/tests/test_session_ui.py` with 10 focused tests c
 
 ---
 
+## Implementation Setup (Critical for Test Isolation)
+
+### Test Isolation & Fixtures
+
+**All tests must use these fixtures to ensure isolation:**
+
+```python
+@pytest.fixture(autouse=True)
+def clear_runtime_sessions(app):
+    """Clear runtime session store before each test to prevent state leakage."""
+    from app.runtime.session_store import clear_registry
+    with app.app_context():
+        clear_registry()
+    yield
+    clear_registry()
+```
+
+**Session creation helper (reuse from TestCharacterPanel if available):**
+
+```python
+def _create_and_setup_session(client, test_user):
+    """Create session and return session_id."""
+    user, password = test_user
+    client.post("/login", data={"username": user.username, "password": password})
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage"},
+        follow_redirects=False,
+    )
+    return response.headers["Location"].split("/play/")[-1]
+
+def _get_csrf_token(client, session_id):
+    """Extract CSRF token from GET /play/{session_id}."""
+    response = client.get(f"/play/{session_id}")
+    import re
+    match = re.search(r'name="csrf_token"\s+value="([^"]+)"', response.data.decode())
+    return match.group(1) if match else ""
+```
+
+### Presenter Interface (Critical Clarification)
+
+**All tests calling presenters must extract `current_runtime_state` from `RuntimeSession`:**
+
+```python
+from app.runtime.session_store import get_runtime_session
+from app.runtime.history_presenter import present_history_panel
+from app.runtime.debug_presenter import present_debug_panel
+
+# CORRECT pattern:
+runtime_session = get_runtime_session(session_id)
+state = runtime_session.current_runtime_state  # Extract SessionState
+history_panel = present_history_panel(state)  # Pass SessionState
+debug_panel = present_debug_panel(state)      # Pass SessionState
+```
+
+### Bounded Window Constants
+
+**Before implementation, verify these values in code:**
+- `history_presenter.py`: max `recent_entries` (spec assumes 20, verify actual)
+- `debug_presenter.py`: max `recent_pattern_context` (spec assumes 5, verify actual)
+
+Reference in Test 5 assertions once verified.
+
+### Degradation Marker Fixture (Test 7)
+
+**If natural degradation trigger unavailable, use fixture:**
+
+```python
+@pytest.fixture
+def degraded_runtime_session(app, test_user):
+    """Create session with degradation marker for Test 7."""
+    from app.runtime.w2_models import DegradedSessionState, DegradedMarker
+    from app.runtime.session_store import update_runtime_session, get_runtime_session
+
+    session_id = _create_and_setup_session(client, test_user)
+    runtime_session = get_runtime_session(session_id)
+
+    # Manually set degradation marker
+    runtime_session.current_runtime_state.degraded_session_state = DegradedSessionState(
+        markers=[DegradedMarker.FALLBACK_ACTIVE]
+    )
+    update_runtime_session(session_id, runtime_session.current_runtime_state)
+
+    return session_id
+```
+
+### Helper Functions for HTML Parsing
+
+**Add these helpers to test class:**
+
+```python
+def _extract_turn_number_from_html(html_content):
+    """Extract turn number from response HTML."""
+    import re
+    match = re.search(r'Turn\s+(\d+)', html_content.decode())
+    return int(match.group(1)) if match else None
+
+def _extract_outcome_from_html(html_content):
+    """Extract guard outcome from response HTML."""
+    import re
+    # Check for outcome class in response
+    for outcome in ["accepted", "partially_accepted", "rejected", "structurally_invalid"]:
+        if f'outcome-{outcome}'.encode() in html_content or outcome.encode() in html_content:
+            return outcome
+    return None
+
+def _extract_entry_count_from_html(html_content):
+    """Extract entry count from response HTML."""
+    import re
+    match = re.search(r'(\d+)\s+total entries', html_content.decode())
+    return int(match.group(1)) if match else None
+```
+
+---
+
 ## Files to Modify
 
 | File | Action | Scope |
 |------|--------|-------|
-| `backend/tests/test_session_ui.py` | Add `TestSynchronizationRegression` class with 10 tests above | New test class only, no changes to existing tests or routes/templates |
+| `backend/tests/test_session_ui.py` | Add `TestSynchronizationRegression` class with 10 tests, helper functions, and fixtures above | New test class, helpers, and fixtures only; no changes to existing tests or routes/templates |
 
 ---
 
