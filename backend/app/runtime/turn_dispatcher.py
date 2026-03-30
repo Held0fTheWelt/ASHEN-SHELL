@@ -63,8 +63,17 @@ async def dispatch_turn(
     from app.runtime.adapter_registry import get_adapter
     from app.runtime.ai_turn_executor import execute_turn_with_ai
     from app.runtime.turn_executor import MockDecision, execute_turn
+    from app.runtime.helper_functions import (
+        compress_context_for_llm,
+        extract_active_triggers,
+    )
 
     execution_mode = session.execution_mode.lower() if session.execution_mode else "mock"
+
+    # W2 Helper-Role Layer: Prepare context for dispatcher
+    session_state = session
+    compressed_context = compress_context_for_llm(session_state)
+    active_triggers = extract_active_triggers(session_state)
 
     if execution_mode == "ai":
         # AI execution path
