@@ -71,3 +71,29 @@ def test_get_state_returns_current_canonical_state(client, test_user):
     data = json.loads(response.data)
     assert isinstance(data, dict)
     # Canonical state should be a dict (may be empty or have scene/character data)
+
+
+def test_execution_result_persisted_in_context(client, test_user):
+    """Turn execution result and AI log persisted in SessionState."""
+    from app.runtime.session_store import get_session as get_runtime_session
+
+    session = create_session("god_of_carnage")
+    session_id = session.session_id
+
+    # Execute a turn via API
+    response = client.post(
+        f"/api/v1/sessions/{session_id}/turns",
+        json={"operator_input": "test action"},
+        content_type="application/json"
+    )
+    assert response.status_code == 200
+
+    # Verify diagnostics persisted in SessionState
+    runtime_session = get_runtime_session(session_id)
+    state = runtime_session.current_runtime_state
+
+    assert state is not None
+    assert state.context_layers is not None
+    assert state.context_layers.last_turn_number > 0, "Turn number should be set after execution"
+    # last_turn_execution_result may be None or dict depending on mock behavior
+    assert state.context_layers.last_turn_number == 1

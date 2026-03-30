@@ -59,6 +59,10 @@ class ShortTermTurnContext(BaseModel):
     conflict_pressure: int | float | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    # W3 Diagnostic Persistence
+    execution_result_full: dict | None = None  # Full execution result for UI diagnostics
+    ai_decision_log_full: dict | None = None  # Full AI decision log for LLM pipeline visibility
+
 
 def build_short_term_context(
     result: TurnExecutionResult,
@@ -96,4 +100,7 @@ def build_short_term_context(
         ending_reached=bool(result.updated_ending_id),
         ending_id=result.updated_ending_id,
         conflict_pressure=conflict_pressure,
+        # W3 Diagnostic Persistence
+        execution_result_full=result.model_dump(mode='json') if hasattr(result, 'model_dump') else result,
+        ai_decision_log_full=result.ai_log if hasattr(result, 'ai_log') else None,
     )

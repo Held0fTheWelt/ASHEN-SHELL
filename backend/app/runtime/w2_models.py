@@ -171,6 +171,11 @@ class SessionContextLayers(BaseModel):
     relationship_axis_context: Optional[Any] = None  # RelationshipAxisContext when populated
     lore_direction_context: Optional[Any] = None  # LoreDirectionContext when populated
 
+    # W3 Diagnostic Persistence
+    last_turn_execution_result: Optional[dict[str, Any]] = None  # Full TurnExecutionResult for UI
+    last_ai_decision_log: Optional[dict[str, Any]] = None  # Full AIDecisionLog for diagnostics
+    last_turn_number: int = 0  # Track which turn these diagnostics are from
+
 
 class SessionState(BaseModel):
     """Represents the state of an active story session.

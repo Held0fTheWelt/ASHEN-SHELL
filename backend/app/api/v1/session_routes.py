@@ -132,10 +132,23 @@ def execute_session_turn(session_id):
     except Exception as e:
         return jsonify({"error": f"Turn execution failed: {str(e)}"}), 500
 
+    # Persist full diagnostics for UI access (W3 closure)
+    if hasattr(result, 'model_dump'):
+        result_dict = result.model_dump(mode='json')
+    elif isinstance(result, dict):
+        result_dict = result
+    else:
+        result_dict = {}
+
+    if state and state.context_layers:
+        state.context_layers.last_turn_execution_result = result_dict
+        state.context_layers.last_ai_decision_log = result_dict.get("ai_log") if isinstance(result_dict, dict) else None
+        state.context_layers.last_turn_number = runtime_session.turn_counter + 1
+
     return jsonify({
         "turn_number": runtime_session.turn_counter,
-        "result_status": result.get("status", "success") if isinstance(result, dict) else "success",
-        "guard_outcome": result.get("guard_outcome", "unknown") if isinstance(result, dict) else "unknown",
+        "result_status": result.get("status", "success") if isinstance(result, dict) else getattr(result, 'status', "success"),
+        "guard_outcome": result.get("guard_outcome", "unknown") if isinstance(result, dict) else getattr(result, 'guard_outcome', "unknown"),
         "updated_state": {
             "scene_id": state.canonical_state.get("scene_id") if state.canonical_state else None,
             "turn_counter": runtime_session.turn_counter
