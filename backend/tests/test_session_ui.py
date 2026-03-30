@@ -1204,3 +1204,35 @@ class TestSynchronizationRegression:
         # Layer 3: Verify GET response shows both (or at least latest)
         assert b"history-summary" in get2_response.data or b"entries-table" in get2_response.data, \
             "History not shown in final GET response"
+
+
+# ── W3.6 Smoke Tests ──────────────────────────────────────────────────────────
+
+class TestW3SmokeAndStability:
+    """Smoke tests for critical W3 playable UI paths and graceful failure handling."""
+
+    @staticmethod
+    def _assert_response_not_error(response):
+        """Verify response is not a 5xx error."""
+        assert response.status_code < 500, f"Got {response.status_code}: {response.data[:500]}"
+
+    @staticmethod
+    def _assert_session_shell_renders(response):
+        """Verify session shell template rendered."""
+        response_text = response.data.decode('utf-8', errors='ignore')
+        assert ("session" in response_text.lower() or
+                "shell" in response_text.lower() or
+                "Session" in response_text or
+                "play" in response_text.lower()), \
+            "Session shell not found in response"
+
+    @staticmethod
+    def _assert_panels_present(response):
+        """Verify both history and debug panel sections are in response."""
+        response_text = response.data.decode('utf-8', errors='ignore')
+        has_history = "history" in response_text.lower()
+        has_debug = "debug" in response_text.lower() or "diagnostic" in response_text.lower()
+        assert has_history, "History panel missing from response"
+        assert has_debug, "Debug panel missing from response"
+
+    # Test methods will be added in subsequent tasks
