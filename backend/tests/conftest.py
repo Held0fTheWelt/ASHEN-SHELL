@@ -2,6 +2,9 @@
 from datetime import datetime, timezone
 import pytest
 
+# Enable pytest-asyncio for async test support
+pytest_plugins = ("pytest_asyncio",)
+
 from app import create_app
 from app.config import TestingConfig
 from app.extensions import db, limiter
