@@ -1295,3 +1295,46 @@ class TestW3SmokeAndStability:
         # Verify turn counter incremented
         response_text = response.data.decode('utf-8', errors='ignore')
         assert "Turn" in response_text or "turn" in response_text, "Turn indicator missing"
+
+    def test_smoke_panels_render_with_meaningful_content(self, client, test_user):
+        """Verify history and debug panels contain actual data after turn."""
+        from app.runtime.session_store import get_session
+        from app.runtime.history_presenter import present_history_panel
+        from app.runtime.debug_presenter import present_debug_panel
+
+        # Create, load, and execute
+        user, password = test_user
+        client.post("/login", data={"username": user.username, "password": password})
+        response = client.post(
+            "/play/start",
+            data={"module_id": "god_of_carnage"},
+            follow_redirects=False,
+        )
+        session_id = response.headers["Location"].split("/play/")[-1]
+
+        response = client.get(f"/play/{session_id}")
+        import re
+        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', response.data.decode('utf-8', errors='ignore'))
+        csrf_token = match.group(1)
+
+        response = client.post(
+            f"/play/{session_id}/execute",
+            data={"operator_input": "test action", "csrf_token": csrf_token},
+        )
+
+        # Get runtime state and call presenters
+        runtime_session = get_session(session_id)
+        state = runtime_session.current_runtime_state
+
+        history_panel = present_history_panel(state)
+        debug_panel = present_debug_panel(state)
+
+        # Verify panels have content
+        assert history_panel.entry_count > 0, "History panel has no entries"
+        assert len(history_panel.recent_entries) > 0, "History panel recent_entries empty"
+        assert debug_panel.primary_diagnostic is not None, "Debug panel diagnostic missing"
+
+        # Verify content in response
+        response_text = response.data.decode('utf-8', errors='ignore')
+        has_outcome = "accepted" in response_text.lower() or "rejected" in response_text.lower()
+        assert has_outcome, "Guard outcome not visible in response"
