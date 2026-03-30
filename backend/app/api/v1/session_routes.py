@@ -12,7 +12,9 @@ to W3.2. The create endpoint is fully implemented; others return 501 Not
 Implemented pending persistence layer.
 """
 
-from flask import request, jsonify
+from flask import request, jsonify, g
+from datetime import datetime
+import json
 
 from app.api.v1 import api_v1_bp
 from app.api.v1.auth import require_mcp_service_token
@@ -24,6 +26,7 @@ from app.services.session_service import (
     get_session_state,
 )
 from app.runtime.session_store import get_session as get_runtime_session
+from app.observability.trace import get_trace_id
 
 
 @api_v1_bp.route("/sessions", methods=["POST"])
@@ -243,3 +246,88 @@ def get_session_canonical_state(session_id):
     }
 
     return jsonify(response), 200
+
+
+@api_v1_bp.route("/sessions/<session_id>/export", methods=["GET"])
+@require_mcp_service_token
+def export_session_bundle(session_id):
+    """Export session bundle for diagnostics and reproducibility (A2 operator endpoint).
+
+    Returns a compact JSON bundle containing snapshot, diagnostics, logs, and metadata.
+    Protected by MCP_SERVICE_TOKEN.
+    """
+    # Get session
+    session = get_runtime_session(session_id)
+    if not session:
+        return jsonify({
+            "error": {
+                "code": "NOT_FOUND",
+                "message": f"Session {session_id} not found"
+            }
+        }), 404
+
+    state = session.current_runtime_state
+    trace_id = g.get("trace_id") or get_trace_id()
+
+    # Determine if canonical_state needs truncation (50KB threshold)
+    state_json = json.dumps(state.canonical_state)
+    state_size = len(state_json.encode('utf-8'))
+    is_truncated = state_size > 50 * 1024
+
+    # Build export bundle
+    bundle = {
+        "session_snapshot": {
+            "session_id": session_id,
+            "module_id": session.module.metadata.module_id,
+            "module_version": session.module.metadata.version,
+            "current_scene_id": state.current_scene_id,
+            "status": state.status.value,
+            "turn_counter": state.turn_counter,
+            "execution_mode": state.execution_mode,
+            "adapter_name": state.adapter_name,
+            "canonical_state": state.canonical_state if not is_truncated else None,
+            "canonical_state_truncated": is_truncated,
+            "warnings": ["in_memory_session_state_is_volatile"]
+        },
+        "diagnostics": {
+            "session_id": session_id,
+            "turn_counter": state.turn_counter,
+            "current_scene_id": state.current_scene_id,
+            "capabilities": {
+                "has_turn_history": False,
+                "has_guard_outcome": False,
+                "has_trace_ids": False
+            },
+            "guard": {
+                "outcome": None,
+                "rejected_reasons": [],
+                "last_error": None
+            },
+            "trace": {
+                "trace_ids": []
+            },
+            "warnings": [
+                "in_memory_session_state_is_volatile",
+                "diagnostics_limited_to_current_runtime",
+                "guard_and_trace_not_recorded_yet"
+            ]
+        },
+        "logs": {
+            "events": [],
+            "total": 0,
+            "warnings": [
+                "history_not_available_in_current_runtime",
+                "in_memory_session_state_is_volatile"
+            ]
+        },
+        "meta": {
+            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "trace_id": trace_id,
+            "warnings": [
+                "in_memory_session_state_is_volatile",
+                "audit_logs_not_persisted_in_a2"
+            ]
+        }
+    }
+
+    return jsonify(bundle), 200

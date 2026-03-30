@@ -1,0 +1,310 @@
+"""Tests for observability system: trace ID, audit logging."""
+
+import contextvars
+import uuid
+import json
+import logging
+import pytest
+import re
+from unittest.mock import patch
+from flask import g
+
+from app.observability.trace import (
+    TRACE_ID,
+    set_trace_id,
+    get_trace_id,
+    ensure_trace_id,
+    reset_trace_id,
+)
+from app.observability.audit_log import (
+    get_audit_logger,
+    safe_hash,
+    log_api_endpoint,
+    log_turn_request,
+    log_turn_execution,
+)
+
+
+class TestTraceID:
+    """Tests for contextvars-based trace ID system."""
+
+    def test_ensure_trace_id_with_incoming_value(self):
+        """ensure_trace_id(incoming_value) sets and returns that value."""
+        result = ensure_trace_id("custom-trace-123")
+        assert result == "custom-trace-123"
+        assert get_trace_id() == "custom-trace-123"
+
+    def test_ensure_trace_id_generates_uuid_if_none(self):
+        """ensure_trace_id(None) generates UUIDv4 if contextvar not set."""
+        # Reset contextvar first
+        token = TRACE_ID.set(None)
+        try:
+            result = ensure_trace_id(None)
+            assert result is not None
+            # Verify it's a valid UUID
+            uuid.UUID(result)
+            assert get_trace_id() == result
+        finally:
+            TRACE_ID.reset(token)
+
+    def test_ensure_trace_id_idempotent(self):
+        """ensure_trace_id(None) uses existing contextvar if already set."""
+        token = TRACE_ID.set("existing-trace")
+        try:
+            result = ensure_trace_id(None)
+            assert result == "existing-trace"
+        finally:
+            TRACE_ID.reset(token)
+
+    def test_set_get_trace_id(self):
+        """set_trace_id and get_trace_id work correctly."""
+        token = set_trace_id("test-trace-456")
+        try:
+            assert get_trace_id() == "test-trace-456"
+        finally:
+            reset_trace_id(token)
+
+    def test_get_trace_id_returns_none_when_not_set(self):
+        """get_trace_id() returns None if contextvar never set."""
+        token = TRACE_ID.set(None)
+        try:
+            assert get_trace_id() is None
+        finally:
+            TRACE_ID.reset(token)
+
+    def test_reset_trace_id_clears_value(self):
+        """reset_trace_id(token) clears the contextvar."""
+        token = set_trace_id("temp-trace")
+        assert get_trace_id() == "temp-trace"
+        reset_trace_id(token)
+        assert get_trace_id() is None
+
+
+class TestAuditLogger:
+    """Tests for structured audit logging."""
+
+    def test_get_audit_logger_returns_wos_audit_logger(self):
+        """get_audit_logger() returns logger named 'wos.audit'."""
+        logger = get_audit_logger()
+        assert logger.name == "wos.audit"
+
+    def test_safe_hash_produces_consistent_hash(self):
+        """safe_hash produces SHA-256 hash."""
+        result = safe_hash("test input")
+        # Should be 64-char hex string (SHA-256)
+        assert len(result) == 64
+        assert all(c in "0123456789abcdef" for c in result)
+        # Consistent
+        assert safe_hash("test input") == result
+
+    def test_safe_hash_different_for_different_input(self):
+        """safe_hash differs for different inputs."""
+        hash1 = safe_hash("input1")
+        hash2 = safe_hash("input2")
+        assert hash1 != hash2
+
+    def test_log_api_endpoint_writes_json_entry(self, caplog):
+        """log_api_endpoint writes structured JSON to wos.audit logger."""
+        with caplog.at_level(logging.INFO, logger="wos.audit"):
+            log_api_endpoint(
+                trace_id="trace-123",
+                session_id="sess-abc",
+                endpoint="/api/v1/sessions/sess-abc",
+                method="GET",
+                status_code=200,
+                duration_ms=45,
+                outcome="ok",
+            )
+
+        # Verify log was written
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        # Log message should be JSON
+        log_data = json.loads(record.getMessage())
+        assert log_data["event"] == "api.endpoint"
+        assert log_data["trace_id"] == "trace-123"
+        assert log_data["session_id"] == "sess-abc"
+        assert log_data["status_code"] == 200
+        assert log_data["outcome"] == "ok"
+
+    def test_log_turn_request_writes_json_entry(self, caplog):
+        """log_turn_request writes turn.request event."""
+        with caplog.at_level(logging.INFO, logger="wos.audit"):
+            log_turn_request(
+                trace_id="trace-456",
+                session_id="sess-xyz",
+                operator_input="some input",
+                status_code=200,
+                duration_ms=120,
+            )
+
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        log_data = json.loads(record.getMessage())
+        assert log_data["event"] == "turn.request"
+        assert log_data["trace_id"] == "trace-456"
+        assert "operator_input_hash" in log_data
+        assert "operator_input_length" in log_data
+        assert log_data["status_code"] == 200
+        # Verify operator_input is NOT in the log
+        assert "operator_input" not in log_data
+
+    def test_log_turn_execution_writes_json_entry(self, caplog):
+        """log_turn_execution writes turn.execute event."""
+        with caplog.at_level(logging.INFO, logger="wos.audit"):
+            log_turn_execution(
+                trace_id="trace-789",
+                session_id="sess-def",
+                execution_mode="mock",
+                turn_before=2,
+                turn_after=3,
+                outcome="success",
+            )
+
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        log_data = json.loads(record.getMessage())
+        assert log_data["event"] == "turn.execute"
+        assert log_data["execution_mode"] == "mock"
+        assert log_data["turn_before"] == 2
+        assert log_data["turn_after"] == 3
+        assert log_data["outcome"] == "success"
+
+
+class TestFlaskMiddleware:
+    """Tests for trace/audit middleware integration with Flask."""
+
+    def test_trace_id_header_preserved_in_response(self, client, monkeypatch):
+        """If request has X-WoS-Trace-Id header, same value returned in response."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        incoming_trace = "test-trace-header-123"
+        response = client.get(
+            "/api/v1/sessions/sess-test",
+            headers={"X-WoS-Trace-Id": incoming_trace, "Authorization": "Bearer test-token"},
+        )
+        # Response should have X-WoS-Trace-Id header
+        assert response.headers.get("X-WoS-Trace-Id") == incoming_trace
+
+    def test_trace_id_generated_if_missing(self, client, monkeypatch):
+        """If request omits X-WoS-Trace-Id, UUID generated and returned."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        # Create a session first
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Request without trace header
+        response = client.get(
+            f"/api/v1/sessions/{session_id}",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        # Response should have X-WoS-Trace-Id header with UUID format
+        trace_id = response.headers.get("X-WoS-Trace-Id")
+        assert trace_id is not None
+        # Verify it looks like a UUID (simple check)
+        assert re.match(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", trace_id)
+
+    def test_api_endpoint_writes_audit_log(self, client, monkeypatch, caplog):
+        """A1.3 operator endpoint writes one audit log entry."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+
+        # Create a session
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Get the session via operator endpoint
+        with caplog.at_level(logging.INFO, logger="wos.audit"):
+            response = client.get(
+                f"/api/v1/sessions/{session_id}",
+                headers={"Authorization": "Bearer test-token"}
+            )
+
+        assert response.status_code == 200
+        # Verify one audit log was written
+        audit_records = [r for r in caplog.records if r.name == "wos.audit"]
+        assert len(audit_records) == 1
+        log_data = json.loads(audit_records[0].getMessage())
+        assert log_data["event"] == "api.endpoint"
+        assert log_data["session_id"] == session_id
+        assert log_data["status_code"] == 200
+
+
+class TestExportEndpoint:
+    """Tests for GET /api/v1/sessions/<id>/export endpoint."""
+
+    def test_export_without_auth_returns_401(self, client):
+        """GET /export without auth header returns 401."""
+        response = client.get("/api/v1/sessions/sess-test/export")
+        assert response.status_code == 401
+
+    def test_export_nonexistent_session_returns_404(self, client, monkeypatch):
+        """GET /export for non-existent session returns 404."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        response = client.get(
+            "/api/v1/sessions/nonexistent/export",
+            headers={"Authorization": "Bearer test-token"}
+        )
+        assert response.status_code == 404
+
+    def test_export_returns_bundle_structure(self, client, monkeypatch):
+        """GET /export returns complete diagnostics bundle."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+
+        # Create a session
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Get export
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/export",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+
+        # Verify bundle structure
+        assert "session_snapshot" in data
+        assert "diagnostics" in data
+        assert "logs" in data
+        assert "meta" in data
+
+        # Verify meta
+        assert "exported_at" in data["meta"]
+        assert "trace_id" in data["meta"]
+        assert "warnings" in data["meta"]
+        assert "in_memory_session_state_is_volatile" in data["meta"]["warnings"]
+
+    def test_export_includes_trace_id(self, client, monkeypatch):
+        """GET /export includes trace_id in meta."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+
+        # Create a session
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Get export with specific trace ID
+        test_trace = "test-export-trace-123"
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/export",
+            headers={
+                "Authorization": "Bearer test-token",
+                "X-WoS-Trace-Id": test_trace
+            }
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["meta"]["trace_id"] == test_trace
