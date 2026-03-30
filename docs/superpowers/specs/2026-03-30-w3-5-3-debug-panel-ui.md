@@ -150,10 +150,17 @@ Both success and error paths include debug panel (shows state at time of error).
 
 ### Graceful Degradation
 
-- If `debug_panel.primary_diagnostic` is None: Show "Debug information unavailable."
-- If `recent_pattern_context` is empty: Skip that section
-- If `degradation_markers` is empty: Skip that section
-- All fields using `Optional` or empty lists render as "—" or omitted
+**Canonical Rule:** `primary_diagnostic` is always present (presenter guarantees valid output).
+
+- `primary_diagnostic` always exists and is rendered (never None)
+- Graceful degradation happens via empty/None **fields within** `primary_diagnostic`:
+  - Empty `detected_triggers` list → render empty or "—"
+  - None `conflict_pressure` → render "—"
+  - None `prior_scene_id` → render "—"
+  - Empty `sample_accepted_targets` / `sample_rejected_targets` → render "—"
+- If `recent_pattern_context` is empty: Skip that section (or show "No recent turns")
+- If `degradation_markers` is empty: Skip that section (or show "No degradation markers")
+- All Optional fields render as "—" when None; all empty lists render as "—" or omitted
 
 ---
 
