@@ -683,3 +683,44 @@ class TestHistoryPanelUI:
         )
         # Entries table visible (specific class, not generic text)
         assert b"entries-table" in response.data or b"No turn history yet" in response.data
+
+
+class TestDebugPanelUI:
+    """Tests for W3.5.3 debug panel UI rendering."""
+
+    def test_session_view_includes_debug_panel_in_context(self, client, test_user):
+        """Verify session_view() passes debug_panel to template context."""
+        user, password = test_user
+
+        # Login and create session
+        client.post("/login", data={"username": user.username, "password": password})
+        response = client.post(
+            "/play/start",
+            data={"module_id": "god_of_carnage"},
+            follow_redirects=False,
+        )
+        session_id = response.headers["Location"].split("/play/")[-1]
+
+        # Load session view
+        response = client.get(f"/play/{session_id}")
+        assert response.status_code == 200
+        # Template should include debug panel
+        assert b"debug-panel" in response.data or b"debug-summary" in response.data
+
+    def test_debug_panel_shows_summary_section(self, client, test_user):
+        """Verify debug panel summary layer is always visible."""
+        user, password = test_user
+
+        client.post("/login", data={"username": user.username, "password": password})
+        response = client.post(
+            "/play/start",
+            data={"module_id": "god_of_carnage"},
+            follow_redirects=False,
+        )
+        session_id = response.headers["Location"].split("/play/")[-1]
+
+        response = client.get(f"/play/{session_id}")
+        assert response.status_code == 200
+        # Summary layer should be visible (guard outcome, triggers, changes, pressure)
+        assert b"debug-summary" in response.data
+        assert b"guard outcome" in response.data.lower() or b"debug-stats" in response.data

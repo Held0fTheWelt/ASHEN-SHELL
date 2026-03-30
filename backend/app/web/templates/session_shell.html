@@ -251,6 +251,88 @@
       <p class="entry-count">{{ history_panel.entry_count }} total entries</p>
     </section>
 
+    <!-- Debug & Diagnostics Panel (W3.5.3) -->
+    <section class="panel debug-panel">
+      <h3>Debug & Diagnostics</h3>
+
+      <!-- Always-visible summary -->
+      <div class="debug-summary">
+        <dl class="debug-stats">
+          <dt>Guard Outcome</dt>
+          <dd class="outcome-{{ debug_panel.primary_diagnostic.summary.guard_outcome | lower }}">
+            {{ debug_panel.primary_diagnostic.summary.guard_outcome }}
+          </dd>
+          <dt>Triggers</dt>
+          <dd>{{ debug_panel.primary_diagnostic.summary.detected_triggers | join(', ') or '—' }}</dd>
+          <dt>Changes</dt>
+          <dd>
+            {{ debug_panel.primary_diagnostic.detailed.accepted_delta_target_count }} accepted,
+            {{ debug_panel.primary_diagnostic.detailed.rejected_delta_target_count }} rejected
+          </dd>
+          <dt>Pressure</dt>
+          <dd>{{ debug_panel.primary_diagnostic.summary.conflict_pressure or '—' }}</dd>
+          <dt>Scene Changed</dt>
+          <dd>{% if debug_panel.primary_diagnostic.summary.scene_changed %}✓{% else %}—{% endif %}</dd>
+        </dl>
+      </div>
+
+      <!-- Collapsed diagnostics -->
+      <details class="debug-details">
+        <summary>Show diagnostics</summary>
+        <div class="debug-diagnostics">
+          <!-- Primary diagnostic full details -->
+          <div class="diagnostic-section">
+            <h4>Latest Turn Diagnostics</h4>
+            <dl>
+              <dt>Turn</dt>
+              <dd>{{ debug_panel.primary_diagnostic.summary.turn_number }}</dd>
+              <dt>Scene</dt>
+              <dd>{{ debug_panel.primary_diagnostic.summary.scene_id }}</dd>
+              {% if debug_panel.primary_diagnostic.summary.prior_scene_id %}
+              <dt>Prior Scene</dt>
+              <dd>{{ debug_panel.primary_diagnostic.summary.prior_scene_id }}</dd>
+              {% endif %}
+              <dt>Triggers</dt>
+              <dd>{{ debug_panel.primary_diagnostic.summary.detected_triggers | join(', ') or '—' }}</dd>
+              <dt>Sample Accepted Targets</dt>
+              <dd>{{ debug_panel.primary_diagnostic.detailed.sample_accepted_targets | join(', ') or '—' }}</dd>
+              <dt>Sample Rejected Targets</dt>
+              <dd>{{ debug_panel.primary_diagnostic.detailed.sample_rejected_targets | join(', ') or '—' }}</dd>
+              <dt>Ending Reached</dt>
+              <dd>{% if debug_panel.primary_diagnostic.summary.ending_reached %}Yes{% if debug_panel.primary_diagnostic.summary.ending_id %} ({{ debug_panel.primary_diagnostic.summary.ending_id }}){% endif %}{% else %}No{% endif %}</dd>
+            </dl>
+          </div>
+
+          <!-- Recent pattern -->
+          {% if debug_panel.recent_pattern_context %}
+          <div class="diagnostic-section">
+            <h4>Recent Turn Pattern (Last 3-5 Turns)</h4>
+            <ol class="pattern-list">
+              {% for pattern in debug_panel.recent_pattern_context %}
+              <li>
+                Turn {{ pattern.turn_number }}: {{ pattern.guard_outcome }}
+                (Scene: {{ pattern.scene_id }}, Changed: {% if pattern.scene_changed %}✓{% else %}—{% endif %})
+              </li>
+              {% endfor %}
+            </ol>
+          </div>
+          {% endif %}
+
+          <!-- Degradation markers -->
+          {% if debug_panel.degradation_markers %}
+          <div class="diagnostic-section">
+            <h4>Degradation Markers</h4>
+            <ul>
+              {% for marker in debug_panel.degradation_markers %}
+              <li>{{ marker }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </details>
+    </section>
+
   </div>
 
 </main>
