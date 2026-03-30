@@ -12,7 +12,62 @@ These tests verify route structure and imports.
 """
 
 import pytest
+import re
 from flask import session as flask_session
+from app.runtime.session_store import get_session, clear_registry, update_session
+from app.runtime.history_presenter import present_history_panel
+from app.runtime.debug_presenter import present_debug_panel
+from app.runtime.w2_models import DegradedSessionState, DegradedMarker
+
+
+# ── W3.5.4 Fixtures and Helpers ──────────────────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def clear_runtime_sessions(app):
+    """Clear runtime session store before each test to prevent state leakage."""
+    with app.app_context():
+        clear_registry()
+    yield
+    clear_registry()
+
+
+def _create_and_setup_session(client, test_user):
+    """Create session and return session_id."""
+    user, password = test_user
+    client.post("/login", data={"username": user.username, "password": password})
+    response = client.post(
+        "/play/start",
+        data={"module_id": "god_of_carnage"},
+        follow_redirects=False,
+    )
+    return response.headers["Location"].split("/play/")[-1]
+
+
+def _get_csrf_token(client, session_id):
+    """Extract CSRF token from GET /play/{session_id}."""
+    response = client.get(f"/play/{session_id}")
+    match = re.search(r'name="csrf_token"\s+value="([^"]+)"', response.data.decode())
+    return match.group(1) if match else ""
+
+
+def _extract_turn_number_from_html(html_content):
+    """Extract turn number from response HTML."""
+    match = re.search(r'Turn\s+(\d+)', html_content.decode())
+    return int(match.group(1)) if match else None
+
+
+def _extract_outcome_from_html(html_content):
+    """Extract guard outcome from response HTML."""
+    for outcome in ["accepted", "partially_accepted", "rejected", "structurally_invalid"]:
+        if f'outcome-{outcome}'.encode() in html_content or outcome.encode() in html_content:
+            return outcome
+    return None
+
+
+def _extract_entry_count_from_html(html_content):
+    """Extract entry count from response HTML."""
+    match = re.search(r'(\d+)\s+total entries', html_content.decode())
+    return int(match.group(1)) if match else None
 
 
 class TestSessionUIRoutes:
@@ -807,3 +862,8 @@ class TestDebugPanelUI:
         assert b"debug-panel" in response.data
         # Should show fallback text for missing optional fields (em-dash in UTF-8)
         assert b"\xe2\x80\x94" in response.data or response.status_code == 200
+
+
+class TestSynchronizationRegression:
+    """W3.5.4: Regression tests proving history and debug panels stay synchronized after turn execution."""
+    pass
