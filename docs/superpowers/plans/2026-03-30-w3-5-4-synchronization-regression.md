@@ -31,7 +31,7 @@ Add these fixtures and helpers at the beginning of the test file, before `TestSy
 ```python
 import pytest
 import re
-from app.runtime.session_store import get_runtime_session, clear_registry, update_runtime_session
+from app.runtime.session_store import get_session, clear_registry, update_session
 from app.runtime.history_presenter import present_history_panel
 from app.runtime.debug_presenter import present_debug_panel
 from app.runtime.w2_models import DegradedSessionState, DegradedMarker
@@ -148,7 +148,7 @@ def test_single_turn_synchronization(self, client, test_user):
     )
 
     # Layer 1: Verify canonical state updated
-    runtime_session = get_runtime_session(session_id)
+    runtime_session = get_session(session_id)
     state = runtime_session.current_runtime_state
     assert state.turn_counter == 1, f"Expected turn_counter=1, got {state.turn_counter}"
     assert len(state.session_history.entries) >= 1, "No history entry created"
@@ -207,7 +207,7 @@ def test_multiple_turn_accumulation(self, client, test_user):
         )
 
         # Layer 1: Verify canonical state has turn
-        runtime_session = get_runtime_session(session_id)
+        runtime_session = get_session(session_id)
         state = runtime_session.current_runtime_state
         assert state.turn_counter == turn_num, f"Turn {turn_num}: expected turn_counter={turn_num}, got {state.turn_counter}"
         assert len(state.session_history.entries) == turn_num, \
@@ -266,7 +266,7 @@ def test_outcome_tracking_propagation(self, client, test_user):
     )
 
     # Layer 1: Get canonical outcome
-    runtime_session = get_runtime_session(session_id)
+    runtime_session = get_session(session_id)
     state = runtime_session.current_runtime_state
     canonical_outcome = state.short_term_context.summary.guard_outcome if state.short_term_context else None
 
@@ -331,13 +331,13 @@ def test_outcome_changes_across_turns(self, client, test_user):
         assert response.status_code == 200
 
         # Capture outcome for this turn
-        runtime_session = get_runtime_session(session_id)
+        runtime_session = get_session(session_id)
         state = runtime_session.current_runtime_state
         outcome = state.short_term_context.summary.guard_outcome if state.short_term_context else None
         outcomes_by_turn[turn_num] = outcome
 
     # Verify final state shows both turns
-    runtime_session = get_runtime_session(session_id)
+    runtime_session = get_session(session_id)
     state = runtime_session.current_runtime_state
 
     # Layer 2: Verify presenter shows both
@@ -397,7 +397,7 @@ def test_bounded_output_consistency(self, client, test_user):
         assert response.status_code == 200
 
     # Layer 1: Get canonical state
-    runtime_session = get_runtime_session(session_id)
+    runtime_session = get_session(session_id)
     state = runtime_session.current_runtime_state
     assert state.turn_counter == 25, f"Expected 25 turns, got {state.turn_counter}"
 
@@ -523,21 +523,21 @@ def test_degraded_recovery_synchronization(self, client, test_user, app):
 
     # Manually set degradation marker on canonical state
     with app.app_context():
-        runtime_session = get_runtime_session(session_id)
+        runtime_session = get_session(session_id)
         state = runtime_session.current_runtime_state
 
         # Create degraded state with marker
-        state.degraded_session_state = DegradedSessionState(
-            markers=[DegradedMarker.FALLBACK_ACTIVE]
+        state.degraded_state = DegradedSessionState(
+            active_markers={DegradedMarker.FALLBACK_ACTIVE}
         )
-        update_runtime_session(session_id, state)
+        update_session(session_id, state)
 
     # Layer 1: Verify degradation marker present
     with app.app_context():
-        runtime_session = get_runtime_session(session_id)
+        runtime_session = get_session(session_id)
         state = runtime_session.current_runtime_state
-        assert state.degraded_session_state is not None, "Degradation marker not set"
-        assert len(state.degraded_session_state.markers) > 0, "No markers in degradation"
+        assert state.degraded_state is not None, "Degradation marker not set"
+        assert len(state.degraded_state.active_markers) > 0, "No markers in degradation"
 
     # Layer 2: Verify presenter includes degradation
     debug_panel = present_debug_panel(state)
@@ -600,7 +600,7 @@ def test_get_after_post_synchronization(self, client, test_user):
     get_turn_number = _extract_turn_number_from_html(get_response.data)
 
     # Layer 1: Verify canonical state persists
-    runtime_session = get_runtime_session(session_id)
+    runtime_session = get_session(session_id)
     state = runtime_session.current_runtime_state
     assert state.turn_counter == 1, "Turn counter not persisted"
 
@@ -668,7 +668,7 @@ def test_multiple_turns_with_get_reloads(self, client, test_user):
         assert get_turn == turn_num, f"GET turn mismatch: expected {turn_num}, got {get_turn}"
 
     # After 3 turns, verify all are persisted
-    runtime_session = get_runtime_session(session_id)
+    runtime_session = get_session(session_id)
     state = runtime_session.current_runtime_state
     assert state.turn_counter == 3, f"Expected 3 turns, got {state.turn_counter}"
 
@@ -736,7 +736,7 @@ def test_outcome_tracking_get_after_post(self, client, test_user):
     assert get2_response.status_code == 200
 
     # Verify final state has both turns and outcomes
-    runtime_session = get_runtime_session(session_id)
+    runtime_session = get_session(session_id)
     state = runtime_session.current_runtime_state
 
     # Layer 2: Verify presenter shows both
