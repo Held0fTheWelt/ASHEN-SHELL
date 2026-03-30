@@ -3,6 +3,18 @@
 {% block content %}
 <main class="app-shell app-shell-with-sidebar">
 
+  <!-- Session Header: Always visible, answers "What's happening?" -->
+  <header class="session-header">
+    <div class="session-header-main">
+      <h1>{{ session_data.module_id }}</h1>
+      <div class="session-meta">
+        <span class="meta-item">Turn <strong>{{ session_data.turn_counter }}</strong></span>
+        <span class="meta-item">Scene: <strong>{{ session_data.current_scene_id }}</strong></span>
+        <span class="meta-item">Status: <strong class="status-{{ session_data.status | lower }}">{{ session_data.status }}</strong></span>
+      </div>
+    </div>
+  </header>
+
   <!-- Sidebar: Character Panel -->
   <aside class="sidebar character-sidebar">
     <h3>Characters</h3>
@@ -84,18 +96,7 @@
       {% endif %}
     </section>
 
-    <!-- Session Info Panel -->
-    <section class="panel session-info-panel">
-      <h2>Session</h2>
-      <dl class="session-meta">
-        <dt>Module</dt><dd>{{ session_data.module_id }}</dd>
-        <dt>Scene</dt><dd>{{ session_data.current_scene_id }}</dd>
-        <dt>Status</dt><dd>{{ session_data.status }}</dd>
-        <dt>Turn</dt><dd>{{ session_data.turn_counter }}</dd>
-      </dl>
-    </section>
-
-    <!-- Scene Display Panel -->
+    <!-- Scene Display Panel: Answers "What's happening?" -->
     <section class="panel scene-panel">
       <h3>Scene</h3>
       {% if scene %}
@@ -118,15 +119,15 @@
       {% endif %}
     </section>
 
-    <!-- Interaction Panel -->
+    <!-- Interaction Panel: Answers "What can I do?" -->
     <section class="panel interaction-panel">
-      <h3>Interaction</h3>
+      <h2>What Happens Next?</h2>
       <form method="POST" action="{{ url_for('web.session_execute', session_id=session_id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
-          <label for="operator_input">What do you do?</label>
-          <textarea id="operator_input" name="operator_input" rows="4" placeholder="Describe your action..." required></textarea>
+          <label for="operator_input">Describe an action, dialogue, or intervention:</label>
+          <textarea id="operator_input" name="operator_input" rows="4" placeholder="Be specific. What do you say or do?" required></textarea>
         </div>
 
         <!-- Optional quick-action helper buttons -->
@@ -136,7 +137,7 @@
           <button type="button" class="btn-helper" data-action="move">Move</button>
         </div>
 
-        <button type="submit" class="btn-primary">Execute Action</button>
+        <button type="submit" class="btn-primary">Execute Turn</button>
       </form>
     </section>
 
@@ -251,9 +252,12 @@
       <p class="entry-count">{{ history_panel.entry_count }} total entries</p>
     </section>
 
-    <!-- Debug & Diagnostics Panel (W3.5.3) -->
-    <section class="panel debug-panel">
-      <h3>Debug & Diagnostics</h3>
+    <!-- Debug & Diagnostics Panel (W3.5.3) - Collapsed by default -->
+    <details class="panel debug-panel">
+      <summary><strong>Debug & Diagnostics</strong> (click to expand)</summary>
+
+      <!-- Debug content (hidden until expanded) -->
+      <div class="debug-content">
 
       <!-- Always-visible summary -->
       <div class="debug-summary">
@@ -399,12 +403,94 @@
           </div>
           {% endif %}
         </div>
+      </div>
+      <!-- End debug-content -->
       </details>
-    </section>
 
   </div>
 
 </main>
+
+<style>
+/* Session header styling for usability */
+.session-header {
+  padding: 1.5rem;
+  border-bottom: 2px solid #333;
+  background: #f8f8f8;
+  margin-bottom: 1rem;
+}
+
+.session-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+}
+
+.session-meta {
+  display: flex;
+  gap: 2rem;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.meta-item {
+  display: inline-block;
+}
+
+.meta-item strong {
+  font-weight: 600;
+  color: #333;
+}
+
+.status-active {
+  color: #0a7a0a;
+}
+
+.status-paused {
+  color: #ff8c00;
+}
+
+.status-ended,
+.status-crashed {
+  color: #cc0000;
+}
+
+/* Interaction panel styling */
+.interaction-panel h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.interaction-panel label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.interaction-panel textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+/* Debug panel collapsed by default */
+.debug-panel {
+  background: #f5f5f5;
+}
+
+.debug-panel summary {
+  cursor: pointer;
+  padding: 0.75rem;
+  user-select: none;
+}
+
+.debug-panel summary:hover {
+  background: #efefef;
+}
+
+.debug-content {
+  padding: 1rem;
+}
+</style>
 
 <script>
 // Quick-action helper buttons populate/assist textarea (don't replace it)
