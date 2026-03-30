@@ -85,6 +85,7 @@ class DebugPanelOutput(BaseModel):
     primary_diagnostic: PrimaryDiagnosticOutput
     recent_pattern_context: list[RecentPatternIndicator]  # last 3-5 turns
     degradation_markers: list[str]  # active DegradedSessionState markers
+    full_diagnostics: dict | None = None  # W3 closure: full LLM pipeline visibility
 
 
 def present_debug_panel(session_state: SessionState) -> DebugPanelOutput:
@@ -144,6 +145,7 @@ def present_debug_panel(session_state: SessionState) -> DebugPanelOutput:
             primary_diagnostic=primary,
             recent_pattern_context=[],
             degradation_markers=degradation_markers,
+            full_diagnostics=None,  # No short_term_context, so no full diagnostics
         )
 
     # Build primary diagnostic from short_term_context
@@ -197,8 +199,37 @@ def present_debug_panel(session_state: SessionState) -> DebugPanelOutput:
             for entry in entries_to_use
         ]
 
+    # Build full diagnostics from short_term_context (W3 closure)
+    full_diagnostics = None
+    if short_term and hasattr(short_term, 'execution_result_full'):
+        execution_result = getattr(short_term, 'execution_result_full', None)
+        ai_log = getattr(short_term, 'ai_decision_log_full', None)
+
+        full_diagnostics = {
+            "raw_llm_output": ai_log.get("raw_output") if isinstance(ai_log, dict) else None,
+            "parsed_output": ai_log.get("parsed_output") if isinstance(ai_log, dict) else None,
+            "role_diagnostics": {
+                "interpreter": ai_log.get("interpreter_output") if isinstance(ai_log, dict) else None,
+                "director": ai_log.get("director_output") if isinstance(ai_log, dict) else None,
+                "responder": ai_log.get("responder_output") if isinstance(ai_log, dict) else None
+            } if ai_log else None,
+            "validation_errors": execution_result.get("validation_errors", [])[:5] if isinstance(execution_result, dict) else [],
+            "recovery_action": None
+        }
+
+        # Infer recovery action from degradation markers
+        if degraded_state and degraded_state.active_markers:
+            markers = [m.value if hasattr(m, 'value') else str(m) for m in degraded_state.active_markers]
+            if "FALLBACK_ACTIVE" in markers:
+                full_diagnostics["recovery_action"] = "fallback_responder_used"
+            elif "REDUCED_CONTEXT_ACTIVE" in markers:
+                full_diagnostics["recovery_action"] = "reduced_context_retry"
+            elif "RETRY_EXHAUSTED" in markers:
+                full_diagnostics["recovery_action"] = "retries_exhausted_fallback"
+
     return DebugPanelOutput(
         primary_diagnostic=primary,
         recent_pattern_context=recent_pattern,
         degradation_markers=degradation_markers,
+        full_diagnostics=full_diagnostics,
     )
