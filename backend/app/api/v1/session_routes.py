@@ -73,125 +73,43 @@ def create_new_session():
 
 @api_v1_bp.route("/sessions/<session_id>", methods=["GET"])
 def get_session_by_id(session_id):
-    """Retrieve session state by session_id."""
-    from app.runtime.session_store import get_session as get_runtime_session
+    """Retrieve session state by session_id.
 
-    runtime_session = get_runtime_session(session_id)
-    if not runtime_session:
-        return jsonify({"error": "Session not found"}), 404
-
-    state = runtime_session.current_runtime_state
+    W3.2 deferred: Session persistence and retrieval are deferred to W3.2.
+    """
     return jsonify({
-        "session_id": session_id,
-        "module_id": state.module_id if state else None,
-        "module_version": state.module_version if state else None,
-        "turn_counter": runtime_session.turn_counter,
-        "status": state.status.value if state and hasattr(state, 'status') else "active",
-        "canonical_state": state.canonical_state if state else {},
-        "context_layers": {
-            "has_session_history": bool(state and state.context_layers and state.context_layers.session_history),
-            "has_short_term": bool(state and state.context_layers and state.context_layers.short_term_context),
-            "current_scene": state.canonical_state.get("scene_id") if state and state.canonical_state else None
-        }
-    }), 200
+        "error": "Session retrieval deferred to W3.2 (persistence layer not yet implemented)"
+    }), 501
 
 
 @api_v1_bp.route("/sessions/<session_id>/turns", methods=["POST"])
 def execute_session_turn(session_id):
-    """Execute a turn in an active session."""
-    import asyncio
-    from app.runtime.session_store import get_session as get_runtime_session
-    from app.runtime.turn_dispatcher import dispatch_turn
-    from app.content.module_loader import load_module
+    """Execute a turn in an active session.
 
-    data = request.get_json() or {}
-    operator_input = data.get("operator_input", "")
-
-    runtime_session = get_runtime_session(session_id)
-    if not runtime_session:
-        return jsonify({"error": "Session not found"}), 404
-
-    state = runtime_session.current_runtime_state
-    if not state:
-        return jsonify({"error": "Session has no runtime state"}), 400
-
-    # Load the content module
-    try:
-        module = load_module(state.module_id)
-    except Exception as e:
-        return jsonify({"error": f"Could not load module: {str(e)}"}), 404
-
-    # Execute turn (async call wrapped in sync context)
-    try:
-        result = asyncio.run(dispatch_turn(
-            state,
-            runtime_session.turn_counter + 1,
-            module,
-            operator_input=operator_input
-        ))
-    except Exception as e:
-        return jsonify({"error": f"Turn execution failed: {str(e)}"}), 500
-
-    # Persist full diagnostics for UI access (W3 closure)
-    if hasattr(result, 'model_dump'):
-        result_dict = result.model_dump(mode='json')
-    elif isinstance(result, dict):
-        result_dict = result
-    else:
-        result_dict = {}
-
-    if state and state.context_layers:
-        state.context_layers.last_turn_execution_result = result_dict
-        state.context_layers.last_ai_decision_log = result_dict.get("ai_log") if isinstance(result_dict, dict) else None
-        state.context_layers.last_turn_number = runtime_session.turn_counter + 1
-
+    W3.2 deferred: Turn execution and persistence are deferred to W3.2.
+    """
     return jsonify({
-        "turn_number": runtime_session.turn_counter,
-        "result_status": result.get("status", "success") if isinstance(result, dict) else getattr(result, 'status', "success"),
-        "guard_outcome": result.get("guard_outcome", "unknown") if isinstance(result, dict) else getattr(result, 'guard_outcome', "unknown"),
-        "updated_state": {
-            "scene_id": state.canonical_state.get("scene_id") if state.canonical_state else None,
-            "turn_counter": runtime_session.turn_counter
-        }
-    }), 200
+        "error": "Turn execution deferred to W3.2 (persistence layer not yet implemented)"
+    }), 501
 
 
 @api_v1_bp.route("/sessions/<session_id>/logs", methods=["GET"])
 def get_session_event_logs(session_id):
-    """Retrieve event logs for a session."""
-    from app.runtime.session_store import get_session as get_runtime_session
+    """Retrieve event logs for a session.
 
-    runtime_session = get_runtime_session(session_id)
-    if not runtime_session:
-        return jsonify({"error": "Session not found"}), 404
-
-    state = runtime_session.current_runtime_state
-    if not state or not state.context_layers:
-        return jsonify({"events": [], "total_turns": 0}), 200
-
-    # Return events from context layers
-    events = []
-    if state.context_layers.short_term_context:
-        events.append({
-            "type": "turn_executed",
-            "turn": state.context_layers.short_term_context.turn_number if hasattr(state.context_layers.short_term_context, 'turn_number') else 0,
-            "outcome": state.context_layers.short_term_context.guard_outcome if hasattr(state.context_layers.short_term_context, 'guard_outcome') else "unknown"
-        })
-
-    return jsonify({"events": events, "total_turns": runtime_session.turn_counter}), 200
+    W3.2 deferred: Event log retrieval and persistence are deferred to W3.2.
+    """
+    return jsonify({
+        "error": "Event logs deferred to W3.2 (persistence layer not yet implemented)"
+    }), 501
 
 
 @api_v1_bp.route("/sessions/<session_id>/state", methods=["GET"])
 def get_session_canonical_state(session_id):
-    """Get canonical world state for a session."""
-    from app.runtime.session_store import get_session as get_runtime_session
+    """Get canonical world state for a session.
 
-    runtime_session = get_runtime_session(session_id)
-    if not runtime_session:
-        return jsonify({"error": "Session not found"}), 404
-
-    state = runtime_session.current_runtime_state
-    if not state or not state.canonical_state:
-        return jsonify({}), 200
-
-    return jsonify(state.canonical_state), 200
+    W3.2 deferred: State retrieval and persistence are deferred to W3.2.
+    """
+    return jsonify({
+        "error": "Canonical state retrieval deferred to W3.2 (persistence layer not yet implemented)"
+    }), 501
