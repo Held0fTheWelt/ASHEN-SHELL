@@ -15,6 +15,7 @@ Implemented pending persistence layer.
 from flask import request, jsonify
 
 from app.api.v1 import api_v1_bp
+from app.api.v1.auth import require_mcp_service_token
 from app.services.session_service import (
     create_session,
     get_session,
@@ -22,6 +23,7 @@ from app.services.session_service import (
     get_session_logs,
     get_session_state,
 )
+from app.runtime.session_store import get_session as get_runtime_session
 
 
 @api_v1_bp.route("/sessions", methods=["POST"])
@@ -72,14 +74,95 @@ def create_new_session():
 
 
 @api_v1_bp.route("/sessions/<session_id>", methods=["GET"])
+@require_mcp_service_token
 def get_session_by_id(session_id):
-    """Retrieve session state by session_id.
+    """Retrieve session snapshot (A1.3 operator endpoint).
 
-    W3.2 deferred: Session persistence and retrieval are deferred to W3.2.
+    Returns session metadata + canonical state snapshot.
+    Requires: Authorization: Bearer <MCP_SERVICE_TOKEN>
     """
-    return jsonify({
-        "error": "Session retrieval deferred to W3.2 (persistence layer not yet implemented)"
-    }), 501
+    # Get session from runtime store
+    session = get_runtime_session(session_id)
+    if not session:
+        return jsonify({
+            "error": {
+                "code": "NOT_FOUND",
+                "message": f"Session {session_id} not found"
+            }
+        }), 404
+
+    # Get the session state
+    state = session.current_runtime_state
+
+    # Determine if canonical_state needs truncation (50KB threshold)
+    import json
+    state_json = json.dumps(state.canonical_state)
+    state_size = len(state_json.encode('utf-8'))
+    is_truncated = state_size > 50 * 1024
+
+    response = {
+        "session_id": session_id,
+        "module_id": session.module.metadata.module_id,
+        "module_version": session.module.metadata.version,
+        "current_scene_id": state.current_scene_id,
+        "status": state.status.value,
+        "turn_counter": state.turn_counter,
+        "execution_mode": state.execution_mode,
+        "adapter_name": state.adapter_name,
+        "canonical_state": state.canonical_state if not is_truncated else None,
+        "canonical_state_truncated": is_truncated,
+        "warnings": ["in_memory_session_state_is_volatile"]
+    }
+
+    return jsonify(response), 200
+
+
+@api_v1_bp.route("/sessions/<session_id>/diagnostics", methods=["GET"])
+@require_mcp_service_token
+def get_session_diagnostics(session_id):
+    """Get diagnostics bundle for a session (A1.3 operator endpoint).
+
+    Returns future-proof diagnostics envelope with current runtime indicators.
+    Requires: Authorization: Bearer <MCP_SERVICE_TOKEN>
+    """
+    # Get session from runtime store
+    session = get_runtime_session(session_id)
+    if not session:
+        return jsonify({
+            "error": {
+                "code": "NOT_FOUND",
+                "message": f"Session {session_id} not found"
+            }
+        }), 404
+
+    # Get the session state
+    state = session.current_runtime_state
+
+    response = {
+        "session_id": session_id,
+        "turn_counter": state.turn_counter,
+        "current_scene_id": state.current_scene_id,
+        "capabilities": {
+            "has_turn_history": False,
+            "has_guard_outcome": False,
+            "has_trace_ids": False
+        },
+        "guard": {
+            "outcome": None,
+            "rejected_reasons": [],
+            "last_error": None
+        },
+        "trace": {
+            "trace_ids": []
+        },
+        "warnings": [
+            "in_memory_session_state_is_volatile",
+            "diagnostics_limited_to_current_runtime",
+            "guard_and_trace_not_recorded_yet"
+        ]
+    }
+
+    return jsonify(response), 200
 
 
 @api_v1_bp.route("/sessions/<session_id>/turns", methods=["POST"])
@@ -94,22 +177,69 @@ def execute_session_turn(session_id):
 
 
 @api_v1_bp.route("/sessions/<session_id>/logs", methods=["GET"])
+@require_mcp_service_token
 def get_session_event_logs(session_id):
-    """Retrieve event logs for a session.
+    """Retrieve event logs for a session (A1.3 operator endpoint).
 
-    W3.2 deferred: Event log retrieval and persistence are deferred to W3.2.
+    Returns turn summaries / event history (always empty in A1.3).
+    Requires: Authorization: Bearer <MCP_SERVICE_TOKEN>
     """
-    return jsonify({
-        "error": "Event logs deferred to W3.2 (persistence layer not yet implemented)"
-    }), 501
+    # Get session from runtime store to verify it exists
+    session = get_runtime_session(session_id)
+    if not session:
+        return jsonify({
+            "error": {
+                "code": "NOT_FOUND",
+                "message": f"Session {session_id} not found"
+            }
+        }), 404
+
+    response = {
+        "session_id": session_id,
+        "events": [],
+        "total": 0,
+        "warnings": [
+            "history_not_available_in_current_runtime",
+            "in_memory_session_state_is_volatile"
+        ]
+    }
+
+    return jsonify(response), 200
 
 
 @api_v1_bp.route("/sessions/<session_id>/state", methods=["GET"])
+@require_mcp_service_token
 def get_session_canonical_state(session_id):
-    """Get canonical world state for a session.
+    """Get canonical world state for a session (A1.3 operator endpoint).
 
-    W3.2 deferred: State retrieval and persistence are deferred to W3.2.
+    Returns canonical state + current scene + minimal wrapper.
+    Requires: Authorization: Bearer <MCP_SERVICE_TOKEN>
     """
-    return jsonify({
-        "error": "Canonical state retrieval deferred to W3.2 (persistence layer not yet implemented)"
-    }), 501
+    # Get session from runtime store
+    session = get_runtime_session(session_id)
+    if not session:
+        return jsonify({
+            "error": {
+                "code": "NOT_FOUND",
+                "message": f"Session {session_id} not found"
+            }
+        }), 404
+
+    # Get the session state
+    state = session.current_runtime_state
+
+    # Determine if canonical_state needs truncation (50KB threshold)
+    import json
+    state_json = json.dumps(state.canonical_state)
+    state_size = len(state_json.encode('utf-8'))
+    is_truncated = state_size > 50 * 1024
+
+    response = {
+        "session_id": session_id,
+        "current_scene_id": state.current_scene_id,
+        "canonical_state": state.canonical_state if not is_truncated else None,
+        "canonical_state_truncated": is_truncated,
+        "warnings": ["in_memory_session_state_is_volatile"]
+    }
+
+    return jsonify(response), 200

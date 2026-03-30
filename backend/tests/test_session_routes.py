@@ -83,16 +83,78 @@ class TestCreateSessionEndpoint:
 
 
 class TestGetSessionEndpoint:
-    """Tests for GET /api/v1/sessions/<session_id>."""
+    """Tests for GET /api/v1/sessions/<session_id> (A1.3 snapshot endpoint)."""
 
-    def test_get_session_returns_501_not_implemented(self, client):
-        """GET /sessions/<id> returns 501 (W3.2 deferred)."""
+    def test_get_session_without_auth_header_returns_401(self, client, monkeypatch):
+        """GET /sessions/<id> without auth header returns 401."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
         response = client.get("/api/v1/sessions/some-session-id")
 
-        assert response.status_code == 501
+        assert response.status_code == 401
         data = response.get_json()
-        assert "error" in data
-        assert "W3.2" in data["error"] or "persistence" in data["error"]
+        assert data["error"]["code"] == "UNAUTHORIZED"
+        assert "Authorization" in data["error"]["message"]
+
+    def test_get_session_with_invalid_token_returns_401(self, client, monkeypatch):
+        """GET /sessions/<id> with invalid token returns 401."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "correct-token")
+        response = client.get(
+            "/api/v1/sessions/some-session-id",
+            headers={"Authorization": "Bearer wrong-token"}
+        )
+
+        assert response.status_code == 401
+        data = response.get_json()
+        assert data["error"]["code"] == "UNAUTHORIZED"
+
+    def test_get_session_without_env_var_returns_503(self, client, monkeypatch):
+        """GET /sessions/<id> without MCP_SERVICE_TOKEN env var returns 503."""
+        monkeypatch.delenv("MCP_SERVICE_TOKEN", raising=False)
+        response = client.get(
+            "/api/v1/sessions/some-session-id",
+            headers={"Authorization": "Bearer any-token"}
+        )
+
+        assert response.status_code == 503
+        data = response.get_json()
+        assert data["error"]["code"] == "MISCONFIGURED"
+
+    def test_get_session_nonexistent_returns_404(self, client, monkeypatch):
+        """GET /sessions/<id> for non-existent session returns 404."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        response = client.get(
+            "/api/v1/sessions/nonexistent-session-id",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["error"]["code"] == "NOT_FOUND"
+
+    def test_get_session_with_valid_token_returns_200(self, client, monkeypatch):
+        """GET /sessions/<id> with valid token and existing session returns 200."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+
+        # Create a session first
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Now get the session
+        response = client.get(
+            f"/api/v1/sessions/{session_id}",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["session_id"] == session_id
+        assert data["module_id"] == "god_of_carnage"
+        assert "canonical_state" in data
+        assert "warnings" in data
+        assert "in_memory_session_state_is_volatile" in data["warnings"]
 
 
 class TestExecuteTurnEndpoint:
@@ -112,29 +174,172 @@ class TestExecuteTurnEndpoint:
 
 
 class TestGetLogsEndpoint:
-    """Tests for GET /api/v1/sessions/<session_id>/logs."""
+    """Tests for GET /api/v1/sessions/<session_id>/logs (A1.3 event history endpoint)."""
 
-    def test_get_logs_returns_501_not_implemented(self, client):
-        """GET /sessions/<id>/logs returns 501 (W3.2 deferred)."""
+    def test_get_logs_without_auth_header_returns_401(self, client, monkeypatch):
+        """GET /sessions/<id>/logs without auth header returns 401."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
         response = client.get("/api/v1/sessions/some-session-id/logs")
 
-        assert response.status_code == 501
+        assert response.status_code == 401
         data = response.get_json()
-        assert "error" in data
-        assert "W3.2" in data["error"] or "persistence" in data["error"]
+        assert data["error"]["code"] == "UNAUTHORIZED"
+
+    def test_get_logs_nonexistent_returns_404(self, client, monkeypatch):
+        """GET /sessions/<id>/logs for non-existent session returns 404."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        response = client.get(
+            "/api/v1/sessions/nonexistent-session-id/logs",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["error"]["code"] == "NOT_FOUND"
+
+    def test_get_logs_returns_empty_events_with_warnings(self, client, monkeypatch):
+        """GET /sessions/<id>/logs returns empty events + warnings."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+
+        # Create a session first
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Get logs
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/logs",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["session_id"] == session_id
+        assert "events" in data
+        assert isinstance(data["events"], list)
+        assert len(data["events"]) == 0  # Empty in A1.3
+        assert "total" in data
+        assert data["total"] == 0
+        assert "warnings" in data
+        assert "in_memory_session_state_is_volatile" in data["warnings"]
+        assert "history_not_available_in_current_runtime" in data["warnings"]
 
 
 class TestGetStateEndpoint:
-    """Tests for GET /api/v1/sessions/<session_id>/state."""
+    """Tests for GET /api/v1/sessions/<session_id>/state (A1.3 state-only endpoint)."""
 
-    def test_get_state_returns_501_not_implemented(self, client):
-        """GET /sessions/<id>/state returns 501 (W3.2 deferred)."""
+    def test_get_state_without_auth_header_returns_401(self, client, monkeypatch):
+        """GET /sessions/<id>/state without auth header returns 401."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
         response = client.get("/api/v1/sessions/some-session-id/state")
 
-        assert response.status_code == 501
+        assert response.status_code == 401
         data = response.get_json()
-        assert "error" in data
-        assert "W3.2" in data["error"] or "persistence" in data["error"]
+        assert data["error"]["code"] == "UNAUTHORIZED"
+
+    def test_get_state_nonexistent_returns_404(self, client, monkeypatch):
+        """GET /sessions/<id>/state for non-existent session returns 404."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        response = client.get(
+            "/api/v1/sessions/nonexistent-session-id/state",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["error"]["code"] == "NOT_FOUND"
+
+    def test_get_state_returns_canonical_state_with_warnings(self, client, monkeypatch):
+        """GET /sessions/<id>/state returns state + warnings."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+
+        # Create a session first
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Get state
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/state",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["session_id"] == session_id
+        assert "current_scene_id" in data
+        assert "canonical_state" in data
+        assert "canonical_state_truncated" in data
+        assert "warnings" in data
+        assert "in_memory_session_state_is_volatile" in data["warnings"]
+
+
+class TestGetDiagnosticsEndpoint:
+    """Tests for GET /api/v1/sessions/<session_id>/diagnostics (A1.3 debug bundle)."""
+
+    def test_get_diagnostics_without_auth_header_returns_401(self, client, monkeypatch):
+        """GET /sessions/<id>/diagnostics without auth header returns 401."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        response = client.get("/api/v1/sessions/some-session-id/diagnostics")
+
+        assert response.status_code == 401
+        data = response.get_json()
+        assert data["error"]["code"] == "UNAUTHORIZED"
+
+    def test_get_diagnostics_nonexistent_returns_404(self, client, monkeypatch):
+        """GET /sessions/<id>/diagnostics for non-existent session returns 404."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        response = client.get(
+            "/api/v1/sessions/nonexistent-session-id/diagnostics",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["error"]["code"] == "NOT_FOUND"
+
+    def test_get_diagnostics_returns_envelope_structure(self, client, monkeypatch):
+        """GET /sessions/<id>/diagnostics returns diagnostics envelope."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+
+        # Create a session first
+        create_resp = client.post(
+            "/api/v1/sessions",
+            json={"module_id": "god_of_carnage"}
+        )
+        session_id = create_resp.get_json()["session_id"]
+
+        # Get diagnostics
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/diagnostics",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["session_id"] == session_id
+        assert "turn_counter" in data
+        assert "current_scene_id" in data
+        assert "capabilities" in data
+        assert "guard" in data
+        assert "trace" in data
+        assert "warnings" in data
+        # Check capabilities structure
+        assert "has_turn_history" in data["capabilities"]
+        assert "has_guard_outcome" in data["capabilities"]
+        assert "has_trace_ids" in data["capabilities"]
+        # Check guard structure
+        assert "outcome" in data["guard"]
+        assert "rejected_reasons" in data["guard"]
+        assert "last_error" in data["guard"]
+        # Check trace structure
+        assert "trace_ids" in data["trace"]
+        # Check warnings include expected entries
+        assert "in_memory_session_state_is_volatile" in data["warnings"]
 
 
 class TestSessionEndpointStatusCodes:
@@ -148,25 +353,11 @@ class TestSessionEndpointStatusCodes:
         )
         assert response.status_code == 201
 
-    def test_get_returns_501(self, client):
-        """GET /sessions/<id> returns 501 Not Implemented."""
-        response = client.get("/api/v1/sessions/any-id")
-        assert response.status_code == 501
-
-    def test_turns_returns_501(self, client):
-        """POST /sessions/<id>/turns returns 501 Not Implemented."""
+    def test_turns_returns_501(self, client, monkeypatch):
+        """POST /sessions/<id>/turns returns 501 Not Implemented (out of scope)."""
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
         response = client.post(
             "/api/v1/sessions/any-id/turns",
             json={"decision": {}},
         )
-        assert response.status_code == 501
-
-    def test_logs_returns_501(self, client):
-        """GET /sessions/<id>/logs returns 501 Not Implemented."""
-        response = client.get("/api/v1/sessions/any-id/logs")
-        assert response.status_code == 501
-
-    def test_state_returns_501(self, client):
-        """GET /sessions/<id>/state returns 501 Not Implemented."""
-        response = client.get("/api/v1/sessions/any-id/state")
         assert response.status_code == 501
