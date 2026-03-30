@@ -5,7 +5,7 @@ import sys
 import time
 from typing import Any, Optional
 
-from errors import (
+from .errors import (
     JsonRpcError,
     TOOL_NOT_FOUND,
     RATE_LIMITED,
@@ -18,9 +18,9 @@ from errors import (
     PermissionDeniedError,
     InvalidInputError,
 )
-from logging_utils import generate_trace_id, log_request, log_response, log_tool_call
-from rate_limiter import RateLimiter
-from tools_registry import create_default_registry
+from .logging_utils import generate_trace_id, log_request, log_response, log_tool_call
+from .rate_limiter import RateLimiter
+from .tools_registry import create_default_registry
 
 
 class McpServer:

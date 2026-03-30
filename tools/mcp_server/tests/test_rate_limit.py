@@ -1,8 +1,5 @@
-import sys
-sys.path.insert(0, "../")
-
 import pytest
-from rate_limiter import RateLimiter
+from tools.mcp_server.rate_limiter import RateLimiter
 
 
 def test_allows_requests_under_limit():

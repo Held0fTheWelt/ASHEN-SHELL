@@ -1,8 +1,5 @@
-import sys
-sys.path.insert(0, "../")
-
 import pytest
-from tools_registry import create_default_registry
+from tools.mcp_server.tools_registry import create_default_registry
 
 
 def test_tools_list_returns_three_tools():

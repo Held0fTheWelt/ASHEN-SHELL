@@ -1,9 +1,6 @@
-import sys
-sys.path.insert(0, "../")
-
 import json
 import pytest
-from server import McpServer
+from tools.mcp_server.server import McpServer
 
 
 def test_tools_list_valid_response():

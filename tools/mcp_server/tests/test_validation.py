@@ -1,9 +1,6 @@
-import sys
-sys.path.insert(0, "../")
-
 import pytest
-from server import McpServer
-from errors import InvalidInputError
+from tools.mcp_server.server import McpServer
+from tools.mcp_server.errors import InvalidInputError
 
 
 def test_missing_required_field_raises_error():
