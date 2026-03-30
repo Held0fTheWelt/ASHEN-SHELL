@@ -1462,6 +1462,47 @@ class TestW3SmokeAndStability:
         assert runtime_session is not None, "Session corrupted after error recovery"
 
 
+class TestDebugPanelDiagnosticsRendering:
+    """Test that debug panel template renders fuller diagnostics after the fix."""
+
+    def test_debug_panel_renders_with_diagnostic_sections(self, client, test_user):
+        """Verify that debug panel HTML includes diagnostic section markup."""
+        from app.runtime.session_store import get_session
+
+        # Setup: Create, load, and execute a turn
+        user, password = test_user
+        client.post("/login", data={"username": user.username, "password": password})
+
+        response = client.post(
+            "/play/start",
+            data={"module_id": "god_of_carnage"},
+            follow_redirects=False,
+        )
+        session_id = response.headers["Location"].split("/play/")[-1]
+
+        response = client.get(f"/play/{session_id}")
+        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', response.data.decode('utf-8', errors='ignore'))
+        csrf_token = match.group(1)
+
+        response = client.post(
+            f"/play/{session_id}/execute",
+            data={"operator_input": "test action", "csrf_token": csrf_token},
+        )
+
+        # Verify: HTML contains debug panel structure
+        html = response.data.decode('utf-8', errors='ignore')
+
+        # Check that debug panel sections exist
+        assert b"debug-panel" in response.data or "debug" in html.lower(), \
+            "Debug panel markup not found in response"
+
+        # Check for key diagnostic section indicators
+        assert b"Full LLM Pipeline Diagnostics" in response.data or \
+               b"Validation Errors" in response.data or \
+               b"Recovery Action" in response.data, \
+            "No diagnostic sections found in debug panel"
+
+
 class TestAIDecisionLogRouting:
     """Test that ai_decision_log_full is populated from real canonical source."""
 
