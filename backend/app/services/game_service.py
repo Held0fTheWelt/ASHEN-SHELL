@@ -111,7 +111,7 @@ def create_run(*, template_id: str, account_id: str, display_name: str, characte
             "display_name": display_name,
         },
     )
-    if not isinstance(payload, dict):
+    if not isinstance(payload, dict) or "run_id" not in payload:
         raise GameServiceError("Play service returned an unexpected create_run payload.")
     return payload
 
@@ -138,14 +138,17 @@ def resolve_join_context(
     )
     if not isinstance(payload, dict):
         raise GameServiceError("Play service returned an unexpected join-context payload.")
-    return PlayJoinContext(
-        run_id=payload["run_id"],
-        participant_id=payload["participant_id"],
-        role_id=payload["role_id"],
-        display_name=payload["display_name"],
-        account_id=payload.get("account_id"),
-        character_id=payload.get("character_id"),
-    )
+    try:
+        return PlayJoinContext(
+            run_id=payload["run_id"],
+            participant_id=payload["participant_id"],
+            role_id=payload["role_id"],
+            display_name=payload["display_name"],
+            account_id=payload.get("account_id"),
+            character_id=payload.get("character_id"),
+        )
+    except (KeyError, TypeError):
+        raise GameServiceError("Play service returned an unexpected join-context payload.")
 
 
 def issue_play_ticket(payload: dict, ttl_seconds: int | None = None) -> str:
@@ -165,20 +168,20 @@ def issue_play_ticket(payload: dict, ttl_seconds: int | None = None) -> str:
 
 def get_run_details(run_id: str) -> dict:
     payload = _request("GET", f"/api/runs/{run_id}")
-    if not isinstance(payload, dict):
+    if not isinstance(payload, dict) or "run_id" not in payload:
         raise GameServiceError("Play service returned an unexpected run detail payload.")
     return payload
 
 
 def get_run_transcript(run_id: str) -> dict:
     payload = _request("GET", f"/api/runs/{run_id}/transcript")
-    if not isinstance(payload, dict):
+    if not isinstance(payload, dict) or "entries" not in payload:
         raise GameServiceError("Play service returned an unexpected transcript payload.")
     return payload
 
 
 def terminate_run(run_id: str) -> dict:
     payload = _request("DELETE", f"/api/runs/{run_id}", internal=True)
-    if not isinstance(payload, dict):
+    if not isinstance(payload, dict) or "status" not in payload:
         raise GameServiceError("Play service returned an unexpected terminate payload.")
     return payload
