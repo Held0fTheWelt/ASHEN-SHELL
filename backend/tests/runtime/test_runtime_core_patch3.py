@@ -329,7 +329,7 @@ def test_runtime_engine_commands_and_snapshot(monkeypatch):
     assert unknown_action.reason == "Unknown action."
 
     instance.flags.add("patrol_pattern_seen")
-    npc_events = engine.run_npc_cycle(_runtime_instance_for("better_tomorrow_district_open_world"))
+    npc_events = engine.run_npc_cycle(_runtime_instance_for("better_tomorrow_district_alpha"))
     assert npc_events == [] or isinstance(npc_events, list)
 
     with pytest.raises(RuntimeError, match="NPC cycle invoked"):
@@ -343,6 +343,25 @@ def test_runtime_engine_group_story_ready_and_start(monkeypatch):
     instance = _runtime_instance_for("apartment_confrontation_group")
     actor = next(iter(instance.participants.values()))
 
+    # Add a second participant for the group story (requires at least 2 to start)
+    other_humans = [role for role in template.roles if role.mode == ParticipantMode.HUMAN and role.id != actor.role_id]
+    if other_humans:
+        other_role = other_humans[0]
+        other_participant = ParticipantState(
+            id="human-2",
+            display_name="Other Player",
+            role_id=other_role.id,
+            mode=ParticipantMode.HUMAN,
+            current_room_id=other_role.initial_room_id,
+            account_id="other-1",
+            character_id="char-2",
+        )
+        instance.participants[other_participant.id] = other_participant
+        instance.lobby_seats[other_role.id].participant_id = other_participant.id
+        instance.lobby_seats[other_role.id].occupant_display_name = other_participant.display_name
+        instance.lobby_seats[other_role.id].reserved_for_account_id = other_participant.account_id
+        instance.lobby_seats[other_role.id].reserved_for_display_name = other_participant.display_name
+
     blocked_move = engine.apply_command(instance, actor.id, {"action": "move", "target_room_id": "living_room"})
     assert blocked_move.reason.startswith("The group story is still in the lobby")
 
@@ -352,6 +371,10 @@ def test_runtime_engine_group_story_ready_and_start(monkeypatch):
     ready = engine.apply_command(instance, actor.id, {"action": "set_ready", "ready": True})
     assert ready.accepted is True
     assert instance.lobby_seats[actor.role_id].ready is True
+
+    # Mark the second participant as ready too (required to start group story)
+    if other_humans:
+        instance.lobby_seats[other_role.id].ready = True
 
     started = engine.apply_command(instance, actor.id, {"action": "start_run"})
     assert started.accepted is True
