@@ -446,6 +446,17 @@ async def execute_turn_with_ai(
         attempt=1,  # Will be updated in retry loop below
     )
 
+    # B1: MCP Preflight Enrichment (optional, feature-flagged)
+    if session.metadata.get("mcp_enrichment_enabled", False):
+        from app.mcp_client.enrichment import build_mcp_enrichment
+        from app.mcp_client.client import OperatorEndpointClient
+        from app.observability.trace import get_trace_id
+
+        _trace_id = get_trace_id()
+        _client = session.metadata.get("_mcp_client_override") or OperatorEndpointClient()
+        enrichment = build_mcp_enrichment(session.session_id, _trace_id, _client)
+        request.metadata["mcp_context_enrichment"] = enrichment
+
     # Step 2: Generate response with retry loop (W2.5 Phase 1)
     from app.runtime.ai_failure_recovery import RetryPolicy, AIFailureClass
 
