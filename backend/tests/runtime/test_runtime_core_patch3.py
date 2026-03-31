@@ -281,9 +281,9 @@ def test_runtime_model_defaults_and_npc_director_cycles():
     assert len(group_director.run_cycle(group_instance)) == 1
     assert group_director.run_cycle(group_instance) == []
 
-    open_world = _runtime_instance_for("better_tomorrow_district_open_world")
+    open_world = _runtime_instance_for("better_tomorrow_district_alpha")
     open_world.flags.add("patrol_pattern_seen")
-    open_director = RuntimeNpcDirector(templates["better_tomorrow_district_open_world"], emit)
+    open_director = RuntimeNpcDirector(templates["better_tomorrow_district_alpha"], emit)
     assert len(open_director.run_cycle(open_world)) == 1
     assert open_director.run_cycle(open_world) == []
 
