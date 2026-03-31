@@ -13,7 +13,7 @@ Implemented pending persistence layer.
 """
 
 from flask import request, jsonify, g
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 from app.api.v1 import api_v1_bp
@@ -321,7 +321,7 @@ def export_session_bundle(session_id):
             ]
         },
         "meta": {
-            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "trace_id": trace_id,
             "warnings": [
                 "in_memory_session_state_is_volatile",
