@@ -168,3 +168,8 @@ class TestingConfig(Config):
     REGISTRATION_REQUIRE_EMAIL = False  # Email optional in tests
     REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = False  # Allow login without verification in tests
     PASSWORD_COMPLEXITY_MIN_LENGTH = 8  # Relaxed requirement for testing (normally 12)
+
+
+# Module-level defaults for runtime configuration (used by app.runtime.manager)
+RUN_STORE_BACKEND = os.environ.get("RUN_STORE_BACKEND", "json")
+RUN_STORE_URL = os.environ.get("RUN_STORE_URL")
