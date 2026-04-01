@@ -18,6 +18,16 @@ class _Dumpable:
         return dict(self.payload)
 
 
+class _Instance:
+    """Mock instance that supports both attribute access and model_dump()."""
+    def __init__(self, id: str, transcript: list = None):
+        self.id = id
+        self.transcript = transcript or []
+
+    def model_dump(self, mode: str = "json") -> dict:
+        return {"id": self.id, "status": "running"}
+
+
 @dataclass
 class _Participant:
     id: str
@@ -47,7 +57,7 @@ class _Manager:
         self.created_runs: list[dict] = []
         self.join_calls: list[dict] = []
         self.instances = {
-            "run-1": types.SimpleNamespace(
+            "run-1": _Instance(
                 id="run-1",
                 transcript=[
                     _Dumpable({"kind": "speech_committed", "text": "hello"}),
@@ -80,8 +90,8 @@ class _Manager:
             "character_id": character_id,
         }
         self.created_runs.append(payload)
-        self.instances["created-run"] = types.SimpleNamespace(id="created-run", transcript=[])
-        return types.SimpleNamespace(id="created-run")
+        self.instances["created-run"] = _Instance(id="created-run", transcript=[])
+        return _Instance(id="created-run")
 
     def get_instance(self, run_id: str):
         if run_id == "missing":
