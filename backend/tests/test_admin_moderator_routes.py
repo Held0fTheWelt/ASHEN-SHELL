@@ -2,6 +2,7 @@
 from unittest.mock import patch
 
 import pytest
+from sqlalchemy.orm import Query as SAQuery
 
 from app.extensions import db
 from app.models import ForumCategory, User
@@ -161,9 +162,9 @@ def test_moderator_assignments_delete_and_user_list(
 
 
 def test_moderator_assignments_delete_logs_unknown_user_and_category(
-    client, admin_headers, app, admin_user, mod_cat_and_moderator, monkeypatch
+    client, admin_headers, app, admin_user, mod_cat_and_moderator
 ):
-    """DELETE success path when User or ForumCategory row is missing (message fallback)."""
+    """DELETE log fallbacks; GET user assignments skips missing ForumCategory (patched get)."""
     admin, _ = admin_user
     mid = mod_cat_and_moderator["moderator_id"]
     cid = mod_cat_and_moderator["category_id"]
@@ -175,18 +176,31 @@ def test_moderator_assignments_delete_logs_unknown_user_and_category(
         db.session.refresh(a)
         aid = a.id
 
-    real_user_get = User.query.get
+    # Model.query returns a new Query instance each time; patch ORM Query.get instead.
+    flags = {"hide_user": False, "hide_cat": False, "orphan_categories": False}
+    _orig_qget = SAQuery.get
 
-    def user_get(uid):
-        if uid == mid:
+    def _query_get_patched(self, ident, __orig=_orig_qget):
+        try:
+            mapper = self._only_full_mapper_zero("get")
+            cls = mapper.class_
+        except Exception:
+            return __orig(self, ident)
+        if flags["hide_user"] and cls is User and ident == mid:
             return None
-        return real_user_get(uid)
+        if flags["hide_cat"] and cls is ForumCategory and ident == cid:
+            return None
+        if flags["orphan_categories"] and cls is ForumCategory:
+            return None
+        return __orig(self, ident)
 
-    with patch.object(User.query, "get", side_effect=user_get):
+    with patch.object(SAQuery, "get", _query_get_patched):
+        flags["hide_user"] = True
         r = client.delete(
             f"/api/v1/admin/moderator-assignments/{aid}",
             headers=admin_headers,
         )
+        flags["hide_user"] = False
     assert r.status_code == 200
 
     with app.app_context():
@@ -196,38 +210,27 @@ def test_moderator_assignments_delete_logs_unknown_user_and_category(
         db.session.refresh(a2)
         aid2 = a2.id
 
-    real_cat_get = ForumCategory.query.get
-
-    def cat_get(cat_id):
-        if cat_id == cid:
-            return None
-        return real_cat_get(cat_id)
-
-    with patch.object(ForumCategory.query, "get", side_effect=cat_get):
+    with patch.object(SAQuery, "get", _query_get_patched):
+        flags["hide_cat"] = True
         r2 = client.delete(
             f"/api/v1/admin/moderator-assignments/{aid2}",
             headers=admin_headers,
         )
+        flags["hide_cat"] = False
     assert r2.status_code == 200
 
-
-def test_admin_list_user_assignments_skips_orphan_category(
-    client, admin_headers, app, admin_user, mod_cat_and_moderator
-):
-    """GET user assignments skips entries when ForumCategory row is missing."""
-    admin, _ = admin_user
-    mid = mod_cat_and_moderator["moderator_id"]
-    cid = mod_cat_and_moderator["category_id"]
     with app.app_context():
-        a = ModeratorAssignment(user_id=mid, category_id=cid, assigned_by=admin.id)
-        db.session.add(a)
+        a3 = ModeratorAssignment(user_id=mid, category_id=cid, assigned_by=admin.id)
+        db.session.add(a3)
         db.session.commit()
 
-    with patch.object(ForumCategory.query, "get", return_value=None):
-        r = client.get(
+    with patch.object(SAQuery, "get", _query_get_patched):
+        flags["orphan_categories"] = True
+        r3 = client.get(
             f"/api/v1/admin/moderator-assignments/user/{mid}",
             headers=admin_headers,
         )
-    assert r.status_code == 200
-    assert r.get_json()["categories"] == []
-    assert r.get_json()["total"] == 0
+        flags["orphan_categories"] = False
+    assert r3.status_code == 200
+    assert r3.get_json()["categories"] == []
+    assert r3.get_json()["total"] == 0
