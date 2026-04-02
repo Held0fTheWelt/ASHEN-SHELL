@@ -6,8 +6,9 @@ from app.extensions import db
 
 
 class GameExperienceTemplate(db.Model):
-    __tablename__ = "game_experience_templates"
-    __table_args__ = {"extend_existing": True}
+    """Shadow schema for unit tests only — not the production `game_experience_templates` table."""
+
+    __tablename__ = "game_experience_template_shadow"
 
     STATUS_DRAFT = "draft"
     STATUS_REVIEW = "review"

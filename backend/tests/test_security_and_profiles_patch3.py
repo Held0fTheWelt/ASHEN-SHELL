@@ -88,7 +88,10 @@ def test_verify_2fa_variants():
     stale = SimpleNamespace(two_factor_enabled=True, two_factor_verified_at=datetime.now(timezone.utc) - timedelta(hours=2))
     assert admin_security_module._verify_2fa(stale) is False
 
-    naive_recent = SimpleNamespace(two_factor_enabled=True, two_factor_verified_at=datetime.utcnow())
+    naive_recent = SimpleNamespace(
+        two_factor_enabled=True,
+        two_factor_verified_at=datetime.now(timezone.utc).replace(tzinfo=None),
+    )
     assert admin_security_module._verify_2fa(naive_recent) is True
 
 

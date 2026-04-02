@@ -159,11 +159,23 @@ class TestGameServicePatch5:
             assert list_templates() == []
             assert list_runs() == []
 
-            monkeypatch.setattr("app.services.game_service._request", lambda *args, **kwargs: {"run": {"id": "run-1"}})
-            assert create_run(template_id="tpl-1", account_id="7", display_name="Bruno") == {"run": {"id": "run-1"}}
-            assert get_run_details("run-1") == {"run": {"id": "run-1"}}
-            assert get_run_transcript("run-1") == {"run": {"id": "run-1"}}
-            assert terminate_run("run-1") == {"run": {"id": "run-1"}}
+            def _fake_request(method, path, **kwargs):
+                if method == "POST" and path == "/api/runs":
+                    return {"run_id": "run-1", "run": {"id": "run-1"}}
+                if method == "GET" and path.endswith("/transcript"):
+                    return {"run_id": "run-1", "entries": [{"text": "hello"}]}
+                if method == "DELETE":
+                    return {"run_id": "run-1", "status": "terminated"}
+                return {"run_id": "run-1", "run": {"id": "run-1"}}
+
+            monkeypatch.setattr("app.services.game_service._request", _fake_request)
+            assert create_run(template_id="tpl-1", account_id="7", display_name="Bruno") == {
+                "run_id": "run-1",
+                "run": {"id": "run-1"},
+            }
+            assert get_run_details("run-1") == {"run_id": "run-1", "run": {"id": "run-1"}}
+            assert get_run_transcript("run-1") == {"run_id": "run-1", "entries": [{"text": "hello"}]}
+            assert terminate_run("run-1") == {"run_id": "run-1", "status": "terminated"}
 
             monkeypatch.setattr(
                 "app.services.game_service._request",

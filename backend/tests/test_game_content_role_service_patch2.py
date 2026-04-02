@@ -124,6 +124,18 @@ class TestGameContentServiceAdditionalCoverage:
             with pytest.raises(GameContentNotFoundError):
                 update_experience(999999, payload=authored_payload)
 
+    def test_list_experiences_filters_by_q_and_status(self, app, authored_payload):
+        with app.app_context():
+            ensure_default_game_content_seeded()
+            create_experience(payload=authored_payload, actor_user_id=None)
+            by_q = list_experiences(q="patch_round2")
+            assert any(row["template_id"] == "patch_round2_story" for row in by_q)
+            published_rows = list_experiences(status="published")
+            assert any(row["template_id"] == "god_of_carnage_solo" for row in published_rows)
+            draft_rows = list_experiences(status="draft")
+            assert any(row["template_id"] == "patch_round2_story" for row in draft_rows)
+            assert not any(row["template_id"] == "god_of_carnage_solo" for row in draft_rows)
+
 
 class TestRoleServiceAdditionalCoverage:
     @pytest.mark.parametrize(

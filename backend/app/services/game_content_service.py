@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import re
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.content.builtins import build_god_of_carnage_solo
 from app.content.models import ExperienceTemplate
@@ -105,9 +105,30 @@ def ensure_default_game_content_seeded() -> None:
 
 
 
-def list_experiences(*, include_payload: bool = False) -> list[dict]:
+def list_experiences(
+    *,
+    include_payload: bool = False,
+    q: str | None = None,
+    status: str | None = None,
+) -> list[dict]:
     ensure_default_game_content_seeded()
-    rows = db.session.scalars(select(GameExperienceTemplate).order_by(GameExperienceTemplate.created_at.asc())).all()
+    stmt = select(GameExperienceTemplate).order_by(GameExperienceTemplate.created_at.asc())
+    if q:
+        needle = f"%{q.strip()}%"
+        stmt = stmt.where(
+            or_(
+                GameExperienceTemplate.title.ilike(needle),
+                GameExperienceTemplate.template_id.ilike(needle),
+                GameExperienceTemplate.slug.ilike(needle),
+            )
+        )
+    if status:
+        s = status.strip().lower()
+        if s == "published":
+            stmt = stmt.where(GameExperienceTemplate.is_published.is_(True))
+        elif s == "draft":
+            stmt = stmt.where(GameExperienceTemplate.is_published.is_(False))
+    rows = db.session.scalars(stmt).all()
     return [row.to_dict(include_payload=include_payload) for row in rows]
 
 

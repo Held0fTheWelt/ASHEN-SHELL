@@ -8,6 +8,7 @@ from app.auth.permissions import get_current_user, require_feature, require_jwt_
 from app.extensions import limiter
 from app.services import log_activity
 from app.services.game_content_service import (
+    GameContentNotFoundError,
     create_experience,
     get_experience,
     list_experiences,
@@ -16,10 +17,6 @@ from app.services.game_content_service import (
     update_experience,
 )
 from app.services.game_service import GameServiceError, get_run_details, get_run_transcript, list_runs as list_play_runs, terminate_run
-
-
-def _experience_dict(item, *, include_published_payload: bool = False):
-    return item.to_dict(include_payload=True, include_published_payload=include_published_payload)
 
 
 @api_v1_bp.route('/game-admin/experiences', methods=['GET'])
@@ -65,10 +62,11 @@ def game_admin_create_experience():
 @require_jwt_moderator_or_admin
 @require_feature(FEATURE_MANAGE_GAME_CONTENT)
 def game_admin_get_experience(experience_id: int):
-    item = get_experience(experience_id)
-    if not item:
+    try:
+        item = get_experience(experience_id, include_payload=True)
+    except GameContentNotFoundError:
         return jsonify({'error': 'Experience not found'}), 404
-    return jsonify(_experience_dict(item, include_published_payload=True)), 200
+    return jsonify(item), 200
 
 
 @api_v1_bp.route('/game-admin/experiences/<int:experience_id>', methods=['PUT'])
