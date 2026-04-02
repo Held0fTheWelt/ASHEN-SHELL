@@ -1,5 +1,12 @@
+from types import SimpleNamespace
+
 import pytest
+
+from app.content.module_models import ContentModule, EndingCondition, ModuleMetadata, PhaseTransition, ScenePhase
 from app.runtime.reference_policy import ReferencePolicyDecision, ReferencePolicy
+from app.runtime.validators import _validate_delta, validate_decision
+from app.runtime.turn_executor import ProposedStateDelta
+from app.runtime.w2_models import SessionState, SessionStatus
 
 
 def test_reference_policy_decision_allowed():
@@ -227,3 +234,237 @@ class TestReferenceValidationIntegration:
         )
         assert not is_valid
         assert len(errors) > 0
+
+    def test_validate_decision_missing_proposed_deltas(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        decision = SimpleNamespace()
+        outcome = validate_decision(decision, god_of_carnage_module_with_state, god_of_carnage_module)
+        assert not outcome.is_valid
+        assert any("proposed_deltas" in e.lower() for e in outcome.errors)
+
+    def test_validate_decision_proposed_ending_not_legal(self):
+        metadata = ModuleMetadata(
+            module_id="ending_val",
+            title="Ending val",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+        scenes = {"play": ScenePhase(id="play", name="Play", sequence=1, description="")}
+        endings = {
+            "end_ok": EndingCondition(
+                id="end_ok",
+                name="OK",
+                description="ok",
+                trigger_conditions=[],
+                outcome={"type": "default"},
+            ),
+        }
+        module = ContentModule(
+            metadata=metadata,
+            scene_phases=scenes,
+            phase_transitions={},
+            ending_conditions=endings,
+            characters={},
+            relationship_axes={},
+            trigger_definitions={},
+            escalation_axes={},
+            relationship_definitions={},
+        )
+        session = SessionState(
+            session_id="s1",
+            module_id="ending_val",
+            module_version="0.1.0",
+            current_scene_id="play",
+            status=SessionStatus.ACTIVE,
+            canonical_state={},
+        )
+        decision = SimpleNamespace(
+            proposed_deltas=[],
+            proposed_ending_id="not_the_legal_one",
+            detected_triggers=[],
+        )
+        outcome = validate_decision(decision, session, module)
+        assert not outcome.is_valid
+        assert any("ending" in e.lower() for e in outcome.errors)
+
+    def test_validate_delta_missing_target(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        delta = SimpleNamespace(next_value=1)
+        errors = _validate_delta(delta, god_of_carnage_module_with_state, god_of_carnage_module)
+        assert any("target" in e.lower() for e in errors)
+
+    def test_validate_delta_non_string_target(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        delta = SimpleNamespace(target=123, next_value=1)
+        errors = _validate_delta(delta, god_of_carnage_module_with_state, god_of_carnage_module)
+        assert any("string" in e.lower() for e in errors)
+
+    def test_validate_delta_invalid_target_path(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        delta = ProposedStateDelta(target="single", next_value=1)
+        errors = _validate_delta(delta, god_of_carnage_module_with_state, god_of_carnage_module)
+        assert any("path" in e.lower() or "format" in e.lower() for e in errors)
+
+    def test_validate_delta_unknown_entity_type(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        delta = ProposedStateDelta(target="weird_domain.x.field", next_value=1)
+        errors = _validate_delta(delta, god_of_carnage_module_with_state, god_of_carnage_module)
+        assert any("unknown" in e.lower() for e in errors)
+
+    def test_validate_delta_numeric_next_value_out_of_range(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        delta = ProposedStateDelta(target="characters.veronique.emotional_state", next_value=101)
+        errors = _validate_delta(delta, god_of_carnage_module_with_state, god_of_carnage_module)
+        assert any("100" in e or "0-100" in e for e in errors)
+
+    def test_validate_delta_scene_state_unknown_scene_rejected(
+        self, god_of_carnage_module, god_of_carnage_module_with_state
+    ):
+        delta = ProposedStateDelta(target="scene_state.no_such_scene.pressure", next_value=1)
+        errors = _validate_delta(delta, god_of_carnage_module_with_state, god_of_carnage_module)
+        assert errors
+
+    def test_validate_decision_proposed_ending_matches_legal_ending(self):
+        metadata = ModuleMetadata(
+            module_id="ending_ok",
+            title="Ending OK",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+        scenes = {"play": ScenePhase(id="play", name="Play", sequence=1, description="")}
+        endings = {
+            "end_ok": EndingCondition(
+                id="end_ok",
+                name="OK",
+                description="ok",
+                trigger_conditions=[],
+                outcome={"type": "default"},
+            ),
+        }
+        module = ContentModule(
+            metadata=metadata,
+            scene_phases=scenes,
+            phase_transitions={},
+            ending_conditions=endings,
+            characters={},
+            relationship_axes={},
+            trigger_definitions={},
+            escalation_axes={},
+            relationship_definitions={},
+        )
+        session = SessionState(
+            session_id="s1",
+            module_id="ending_ok",
+            module_version="0.1.0",
+            current_scene_id="play",
+            status=SessionStatus.ACTIVE,
+            canonical_state={},
+        )
+        decision = SimpleNamespace(
+            proposed_deltas=[],
+            proposed_ending_id="end_ok",
+            detected_triggers=[],
+        )
+        outcome = validate_decision(decision, session, module)
+        assert outcome.is_valid
+
+
+class TestReferencePolicyEdgeCases:
+    """Scene/trigger edge cases and alternate module shapes."""
+
+    def test_empty_scene_id_rejected(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        decision = ReferencePolicy.evaluate(
+            "scene",
+            "",
+            god_of_carnage_module,
+            session=god_of_carnage_module_with_state,
+            current_scene_id=god_of_carnage_module_with_state.current_scene_id,
+        )
+        assert not decision.allowed
+        assert decision.reason_code == "unknown_scene"
+
+    def test_empty_trigger_id_rejected(self, god_of_carnage_module, god_of_carnage_module_with_state):
+        decision = ReferencePolicy.evaluate(
+            "trigger",
+            "",
+            god_of_carnage_module,
+            session=god_of_carnage_module_with_state,
+            current_scene_id=god_of_carnage_module_with_state.current_scene_id,
+        )
+        assert not decision.allowed
+        assert decision.reason_code == "unknown_trigger"
+
+    def test_scene_not_reachable_across_phases(self):
+        metadata = ModuleMetadata(
+            module_id="reach",
+            title="Reach",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+        scenes = {
+            "s1": ScenePhase(id="s1", name="S1", sequence=1, description=""),
+            "s2": ScenePhase(id="s2", name="S2", sequence=2, description=""),
+            "s3": ScenePhase(id="s3", name="S3", sequence=3, description=""),
+        }
+        transitions = {
+            "t12": PhaseTransition(id="t12", from_phase="s1", to_phase="s2", trigger_conditions=[]),
+        }
+        module = ContentModule(
+            metadata=metadata,
+            scene_phases=scenes,
+            phase_transitions=transitions,
+            ending_conditions={},
+            characters={},
+            relationship_axes={},
+            trigger_definitions={},
+            escalation_axes={},
+            relationship_definitions={},
+        )
+        decision = ReferencePolicy.evaluate("scene", "s3", module, session=None, current_scene_id="s1")
+        assert not decision.allowed
+        assert decision.reason_code == "scene_not_reachable"
+
+    def test_scene_reference_allowed_when_reachable_from_current(self):
+        metadata = ModuleMetadata(
+            module_id="reach_ok",
+            title="Reach OK",
+            version="0.1.0",
+            contract_version="1.0.0",
+        )
+        scenes = {
+            "s1": ScenePhase(id="s1", name="S1", sequence=1, description=""),
+            "s2": ScenePhase(id="s2", name="S2", sequence=2, description=""),
+        }
+        transitions = {
+            "t12": PhaseTransition(id="t12", from_phase="s1", to_phase="s2", trigger_conditions=[]),
+        }
+        module = ContentModule(
+            metadata=metadata,
+            scene_phases=scenes,
+            phase_transitions=transitions,
+            ending_conditions={},
+            characters={},
+            relationship_axes={},
+            trigger_definitions={},
+            escalation_axes={},
+            relationship_definitions={},
+        )
+        decision = ReferencePolicy.evaluate("scene", "s2", module, session=None, current_scene_id="s1")
+        assert decision.allowed
+
+    def test_trigger_found_via_assertions_namespace(self, god_of_carnage_module_with_state):
+        mod = SimpleNamespace(assertions={"assertion_trigger_x": True})
+        decision = ReferencePolicy.evaluate(
+            "trigger",
+            "assertion_trigger_x",
+            mod,
+            session=god_of_carnage_module_with_state,
+            current_scene_id=god_of_carnage_module_with_state.current_scene_id,
+        )
+        assert decision.allowed
+
+    def test_scene_reachability_false_when_phase_transitions_not_dict(self):
+        mod = SimpleNamespace(
+            scene_phases={
+                "s1": ScenePhase(id="s1", name="S1", sequence=1, description=""),
+                "s2": ScenePhase(id="s2", name="S2", sequence=2, description=""),
+            },
+            phase_transitions=[],
+        )
+        decision = ReferencePolicy.evaluate("scene", "s2", mod, session=None, current_scene_id="s1")
+        assert not decision.allowed
+        assert decision.reason_code == "scene_not_reachable"

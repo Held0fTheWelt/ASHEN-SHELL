@@ -21,6 +21,21 @@ def test_wiki_html_sanitizer_removes_javascript_url(app):
     assert "javascript:" not in cleaned.lower()
 
 
+def test_wiki_html_sanitizer_guard_inputs(app):
+    """sanitize_wiki_html short-circuits for None, non-str, or whitespace-only input."""
+    from app.utils.html_sanitizer import sanitize_wiki_html
+
+    assert sanitize_wiki_html(None) == ""
+    assert sanitize_wiki_html(123) == ""
+    assert sanitize_wiki_html([]) == ""
+
+    ws_only = "  \n\t  "
+    assert sanitize_wiki_html(ws_only) is ws_only
+
+    assert "<p>" in sanitize_wiki_html("<p>Hello</p>")
+    assert "<script>" not in sanitize_wiki_html("<script>alert(1)</script>").lower()
+
+
 def test_password_change_requires_current_password(client, test_user):
     """PUT /users/<id>/password with wrong current_password fails."""
     user, password = test_user

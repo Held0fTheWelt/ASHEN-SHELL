@@ -7,6 +7,8 @@ Verifies that:
 4. Valid actions pass policy validation
 """
 
+from types import SimpleNamespace
+
 import pytest
 from app.runtime.decision_policy import AIActionType, AIDecisionPolicy
 from app.runtime.validators import validate_action_type, validate_action_structure
@@ -175,3 +177,62 @@ class TestActionStructureValidation:
             {"primary_axis": "trust", "intensity": 0.0}
         )
         assert is_valid
+
+
+class TestValidateActionStructureExtraBranches:
+    """Branches in validate_action_structure (invalid enum, module-backed checks)."""
+
+    def test_invalid_action_type_string(self):
+        is_valid, errors = validate_action_structure("not_a_valid_action_type", {})
+        assert not is_valid
+        assert errors and "Invalid action type" in errors[0]
+
+    def test_relationship_shift_missing_target_path(self):
+        is_valid, errors = validate_action_structure(
+            "relationship_shift",
+            {"next_value": 1},
+        )
+        assert not is_valid
+        assert any("target_path" in e for e in errors)
+
+    def test_trigger_assertion_passes_with_triggers_on_stub_module(self):
+        mod = SimpleNamespace(triggers={"known_trigger": True}, assertions={})
+        sess = SimpleNamespace(current_scene_id="scene_a")
+        is_valid, errors = validate_action_structure(
+            "trigger_assertion",
+            {"trigger_ids": ["known_trigger"]},
+            module=mod,
+            session=sess,
+        )
+        assert is_valid
+        assert errors == []
+
+    def test_dialogue_impulse_valid_with_god_of_carnage_module(self, god_of_carnage_module):
+        is_valid, errors = validate_action_structure(
+            "dialogue_impulse",
+            {"character_id": "veronique", "impulse_text": "A line."},
+            module=god_of_carnage_module,
+        )
+        assert is_valid
+        assert not errors
+
+    def test_dialogue_impulse_missing_impulse_text_after_character_ok(self, god_of_carnage_module):
+        is_valid, errors = validate_action_structure(
+            "dialogue_impulse",
+            {"character_id": "veronique"},
+            module=god_of_carnage_module,
+        )
+        assert not is_valid
+        assert any("impulse_text" in e for e in errors)
+
+    def test_trigger_assertion_one_invalid_among_ids(self):
+        mod = SimpleNamespace(triggers={"good_t": True}, assertions={})
+        sess = SimpleNamespace(current_scene_id="scene_a")
+        is_valid, errors = validate_action_structure(
+            "trigger_assertion",
+            {"trigger_ids": ["good_t", "bad_t"]},
+            module=mod,
+            session=sess,
+        )
+        assert not is_valid
+        assert errors

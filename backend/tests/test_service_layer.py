@@ -674,10 +674,3 @@ class TestServiceLevel:
         # Test formula injection prevention
         result = csv_safe_cell("=cmd")
         assert not result.startswith("=")
-
-    def test_html_sanitizer(self, app):
-        from app.utils.html_sanitizer import sanitize_wiki_html
-        result = sanitize_wiki_html("<p>Hello</p>")
-        assert "<p>" in result
-        result = sanitize_wiki_html("<script>alert(1)</script>")
-        assert "<script>" not in result

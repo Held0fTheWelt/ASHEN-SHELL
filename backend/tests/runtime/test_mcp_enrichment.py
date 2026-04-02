@@ -1,11 +1,12 @@
 """Tests for B1 MCP Preflight Context Enrichment for AI Turns."""
 
-import asyncio
 import json
-import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import MagicMock, Mock, AsyncMock, patch
 
-from app.mcp_client.client import MCPToolError, MCPEnrichmentClient
+import pytest
+import requests
+
+from app.mcp_client.client import MCPEnrichmentClient, MCPToolError, OperatorEndpointClient
 from app.mcp_client.enrichment import build_mcp_enrichment
 from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapter
 from app.runtime.ai_turn_executor import execute_turn_with_ai
@@ -220,3 +221,108 @@ async def test_guard_validates_after_enrichment(god_of_carnage_module_with_state
     assert session.turn_counter is not None
     # Guard validation would happen in actual turn execution
     # For this test, we just verify session is in valid state for such validation
+
+
+class TestOperatorEndpointClient:
+    """HTTP operator client for MCP-style session tools."""
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_success_json(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"session_id": "abc", "status": "ok"}
+        mock_resp.raise_for_status = MagicMock()
+        mock_get.return_value = mock_resp
+
+        client = OperatorEndpointClient(base_url="http://example.test", token="secret")
+        out = client.call_tool("wos.session.get", {"session_id": "abc"})
+        assert out["status"] == "ok"
+        mock_get.assert_called_once()
+        _args, kwargs = mock_get.call_args
+        assert kwargs["headers"]["Authorization"] == "Bearer secret"
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_missing_session_id(self, mock_get):
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("wos.session.get", {})
+        assert exc.value.reason == "missing_session_id"
+        mock_get.assert_not_called()
+
+    def test_resolve_url_unknown_tool_raises(self):
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client._resolve_url("unknown.tool", "sid")
+        assert exc.value.reason == "tool_not_found"
+
+    def test_call_tool_propagates_mcp_error_from_resolve_url(self):
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("no.such.tool", {"session_id": "abc"})
+        assert exc.value.reason == "tool_not_found"
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_timeout(self, mock_get):
+        from requests.exceptions import Timeout
+
+        mock_get.side_effect = Timeout
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("wos.session.get", {"session_id": "x"})
+        assert exc.value.reason == "timeout"
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_http_401(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 401
+        http_err = requests.exceptions.HTTPError(response=mock_resp)
+        mock_get.return_value.raise_for_status.side_effect = http_err
+
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("wos.session.state", {"session_id": "x"})
+        assert exc.value.reason == "unauthorized"
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_http_404(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        http_err = requests.exceptions.HTTPError(response=mock_resp)
+        mock_get.return_value.raise_for_status.side_effect = http_err
+
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("wos.session.logs", {"session_id": "x"})
+        assert exc.value.reason == "not_found"
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_http_other_status(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 503
+        http_err = requests.exceptions.HTTPError(response=mock_resp)
+        mock_get.return_value.raise_for_status.side_effect = http_err
+
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("wos.session.diag", {"session_id": "x"})
+        assert exc.value.reason == "http_503"
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_request_exception(self, mock_get):
+        mock_get.side_effect = requests.exceptions.RequestException("boom")
+
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("wos.session.get", {"session_id": "x"})
+        assert "request_error" in exc.value.reason
+
+    @patch("app.mcp_client.client.requests.get")
+    def test_call_tool_invalid_json(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.json.side_effect = ValueError("not json")
+        mock_resp.raise_for_status = MagicMock()
+        mock_get.return_value = mock_resp
+
+        client = OperatorEndpointClient()
+        with pytest.raises(MCPToolError) as exc:
+            client.call_tool("wos.session.get", {"session_id": "x"})
+        assert "invalid_json" in exc.value.reason
