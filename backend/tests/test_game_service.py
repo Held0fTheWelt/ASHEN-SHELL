@@ -1,12 +1,14 @@
+"""Tests for app.services.game_service (play service HTTP client and tickets)."""
+
 from __future__ import annotations
 
 import base64
 import json
-import types
 
 import httpx
 import pytest
 
+from app.services import game_service
 from app.services.game_service import (
     GameServiceConfigError,
     GameServiceError,
@@ -62,7 +64,7 @@ class _FakeClient:
         return self.response
 
 
-class TestGameServicePatch3:
+class TestGameServiceClient:
     def test_config_helpers_and_websocket_url(self, app):
         with app.app_context():
             app.config["PLAY_SERVICE_PUBLIC_URL"] = " https://play.example.com/ "
@@ -92,6 +94,8 @@ class TestGameServicePatch3:
                 get_play_service_public_url()
             with pytest.raises(GameServiceConfigError, match="PLAY_SERVICE_SHARED_SECRET"):
                 issue_play_ticket({"run_id": "run-1"})
+            with pytest.raises(GameServiceConfigError, match="PLAY_SERVICE_INTERNAL_URL"):
+                game_service._require_configured_url("internal")
 
     def test_request_success_error_and_empty_payload_paths(self, app, monkeypatch):
         capture = {}
@@ -160,11 +164,23 @@ class TestGameServicePatch3:
             assert list_templates() == []
             assert list_runs() == []
 
-            monkeypatch.setattr("app.services.game_service._request", lambda *args, **kwargs: {"run": {"id": "run-1"}})
-            assert create_run(template_id="tpl-1", account_id="7", display_name="Bruno") == {"run": {"id": "run-1"}}
-            assert get_run_details("run-1") == {"run": {"id": "run-1"}}
-            assert get_run_transcript("run-1") == {"run": {"id": "run-1"}}
-            assert terminate_run("run-1") == {"run": {"id": "run-1"}}
+            def _fake_request(method, path, **kwargs):
+                if method == "POST" and path == "/api/runs":
+                    return {"run_id": "run-1", "run": {"id": "run-1"}}
+                if method == "GET" and path.endswith("/transcript"):
+                    return {"run_id": "run-1", "entries": [{"text": "hello"}]}
+                if method == "DELETE":
+                    return {"run_id": "run-1", "status": "terminated"}
+                return {"run_id": "run-1", "run": {"id": "run-1"}}
+
+            monkeypatch.setattr("app.services.game_service._request", _fake_request)
+            assert create_run(template_id="tpl-1", account_id="7", display_name="Bruno") == {
+                "run_id": "run-1",
+                "run": {"id": "run-1"},
+            }
+            assert get_run_details("run-1") == {"run_id": "run-1", "run": {"id": "run-1"}}
+            assert get_run_transcript("run-1") == {"run_id": "run-1", "entries": [{"text": "hello"}]}
+            assert terminate_run("run-1") == {"run_id": "run-1", "status": "terminated"}
 
             monkeypatch.setattr(
                 "app.services.game_service._request",

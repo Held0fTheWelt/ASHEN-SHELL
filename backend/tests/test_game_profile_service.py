@@ -1,3 +1,5 @@
+"""Tests for app.services.game_profile_service (characters and save slots)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

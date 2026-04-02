@@ -1,3 +1,5 @@
+"""Tests for app.services.game_content_service and role_service (admin roles)."""
+
 from __future__ import annotations
 
 import pytest
@@ -66,7 +68,7 @@ def authored_payload() -> dict:
     }
 
 
-class TestGameContentServiceAdditionalCoverage:
+class TestGameContentService:
     def test_slugify_normalizes_and_rejects_empty_values(self):
         assert slugify("  Hello, Better Tomorrow!  ") == "hello-better-tomorrow"
         with pytest.raises(GameContentValidationError, match="slug cannot be empty"):
@@ -137,7 +139,7 @@ class TestGameContentServiceAdditionalCoverage:
             assert not any(row["template_id"] == "god_of_carnage_solo" for row in draft_rows)
 
 
-class TestRoleServiceAdditionalCoverage:
+class TestRoleServiceAdmin:
     @pytest.mark.parametrize(
         ("name", "expected"),
         [

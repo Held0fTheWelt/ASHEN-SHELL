@@ -1,3 +1,5 @@
+"""Tests for GameExperienceTemplate model serialization."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -61,3 +63,38 @@ def test_game_experience_template_to_dict_obeys_payload_flags():
     with_draft = template.to_dict(include_payload=True, include_published_payload=False)
     assert with_draft["draft_payload"] == {}
     assert "published_payload" not in with_draft
+
+
+@pytest.mark.usefixtures("isolated_app_context")
+def test_game_experience_template_to_dict_full_and_compact_variants():
+    template = GameExperienceTemplate(
+        id=5,
+        key="god_of_carnage",
+        title="God of Carnage",
+        experience_type=GameExperienceTemplate.TYPE_SOLO,
+        summary="summary",
+        tags=["a", "b"],
+        style_profile="retro_pulp",
+        status=GameExperienceTemplate.STATUS_PUBLISHED,
+        current_version=3,
+        published_version=2,
+        draft_payload={"draft": True},
+        published_payload={"published": True},
+        created_by=1,
+        updated_by=2,
+        published_by=3,
+        created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        updated_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+        published_at=datetime(2026, 1, 3, tzinfo=timezone.utc),
+    )
+
+    full = template.to_dict(include_payload=True, include_published_payload=True)
+    assert full["draft_payload"] == {"draft": True}
+    assert full["published_payload"] == {"published": True}
+    assert full["status"] == GameExperienceTemplate.STATUS_PUBLISHED
+    assert full["created_at"].startswith("2026-01-01T")
+
+    compact = template.to_dict(include_payload=False, include_published_payload=False)
+    assert "draft_payload" not in compact
+    assert "published_payload" not in compact
+    assert compact["tags"] == ["a", "b"]

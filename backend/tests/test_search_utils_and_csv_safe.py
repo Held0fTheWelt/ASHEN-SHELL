@@ -1,3 +1,5 @@
+"""Tests for search_utils SQL escaping and csv_safe_cell."""
+
 import pytest
 
 from app.services.search_utils import _escape_sql_like_wildcards

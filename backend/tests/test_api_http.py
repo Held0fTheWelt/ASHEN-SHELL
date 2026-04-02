@@ -1,3 +1,5 @@
+"""Tests for app.api.http (FastAPI runtime HTTP API)."""
+
 from __future__ import annotations
 
 import importlib
@@ -20,6 +22,7 @@ class _Dumpable:
 
 class _Instance:
     """Mock instance that supports both attribute access and model_dump()."""
+
     def __init__(self, id: str, transcript: list = None):
         self.id = id
         self.transcript = transcript or []

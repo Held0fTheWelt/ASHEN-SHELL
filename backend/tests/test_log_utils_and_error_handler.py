@@ -1,3 +1,5 @@
+"""Tests for app.services.log_utils and app.utils.error_handler."""
+
 from __future__ import annotations
 
 from types import SimpleNamespace

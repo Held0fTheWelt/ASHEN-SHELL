@@ -1,10 +1,12 @@
+"""Internal admin_security helpers, decorator behavior, and feature_registry area logic."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
-from flask import Flask, g, jsonify
+from flask import Flask, jsonify
 from werkzeug.security import generate_password_hash
 
 from app.auth import admin_security as admin_security_module
@@ -24,20 +26,6 @@ from app.auth.feature_registry import (
 )
 from app.extensions import db
 from app.models import Area, Role, User
-from app.services.game_profile_service import (
-    NotFoundError,
-    OwnershipError,
-    ValidationError,
-    create_character_for_user,
-    delete_save_slot_for_user,
-    get_character_for_user,
-    get_save_slot_for_user,
-    list_characters_for_user,
-    list_save_slots_for_user,
-    touch_character_last_used,
-    update_character_for_user,
-    upsert_save_slot_for_user,
-)
 
 
 def _make_security_user(*, is_admin=True, is_banned=False, role_level=50, username="admin"):
@@ -177,7 +165,7 @@ def test_admin_security_rejects_unauthorized_conditions(monkeypatch):
         assert response.get_json()["code"] == "2FA_REQUIRED"
 
     fresh_user = _make_security_user(role_level=100, username="success_user")
-    fresh_user.id = 999  # Different user ID to avoid rate limit quota consumed by other tests
+    fresh_user.id = 999
     fresh_user.two_factor_enabled = True
     fresh_user.two_factor_verified_at = datetime.now(timezone.utc)
     with app.test_request_context("/admin", environ_base={"REMOTE_ADDR": "127.0.0.1"}):
@@ -267,106 +255,3 @@ def test_feature_registry_area_and_role_logic(app):
         assert user_can_access_feature(regular, FEATURE_DASHBOARD_USER_SETTINGS) is True
         assert user_can_access_feature(moderator, FEATURE_MANAGE_NEWS) is True
         assert user_can_access_feature(moderator, FEATURE_DASHBOARD_METRICS) is False
-
-
-def test_game_profile_character_and_save_slot_workflow(app):
-    with app.app_context():
-        role = Role.query.filter_by(name=Role.NAME_USER).first()
-        owner = User(username="owner-user", password_hash=generate_password_hash("pw"), role_id=role.id)
-        other = User(username="other-user", password_hash=generate_password_hash("pw"), role_id=role.id)
-        db.session.add_all([owner, other])
-        db.session.commit()
-
-        with pytest.raises(ValidationError, match="Character name is required"):
-            create_character_for_user(owner, name="   ")
-        with pytest.raises(ValidationError, match="too long"):
-            create_character_for_user(owner, name="x" * 121)
-        with pytest.raises(ValidationError, match="Display name is too long"):
-            create_character_for_user(owner, name="ok", display_name="x" * 121)
-        with pytest.raises(ValidationError, match="bio is too long"):
-            create_character_for_user(owner, name="ok2", bio="x" * 4001)
-
-        first = create_character_for_user(owner, name="Rogue", display_name="Rogue Prime")
-        second = create_character_for_user(owner, name="Mage", is_default=False)
-        assert first.is_default is True
-        assert second.is_default is False
-
-        with pytest.raises(ValidationError, match="already have a character"):
-            create_character_for_user(owner, name="rogue")
-
-        listed = list_characters_for_user(owner.id)
-        assert [c.name for c in listed] == ["Rogue", "Mage"]
-
-        with pytest.raises(NotFoundError):
-            get_character_for_user(owner.id, 999999)
-        with pytest.raises(OwnershipError):
-            get_character_for_user(other.id, first.id)
-
-        archived = update_character_for_user(owner.id, first.id, is_archived=True)
-        assert archived.is_archived is True
-        assert archived.is_default is False
-        reassigned = get_character_for_user(owner.id, second.id)
-        assert reassigned.is_default is True
-
-        restored = update_character_for_user(owner.id, first.id, is_default=True, bio=" back ")
-        assert restored.is_archived is False
-        assert restored.is_default is True
-        assert restored.bio == "back"
-        assert get_character_for_user(owner.id, second.id).is_default is False
-
-        touch_character_last_used(owner.id, restored.id)
-        assert get_character_for_user(owner.id, restored.id).last_used_at is not None
-        touch_character_last_used(owner.id, None)
-
-        with pytest.raises(ValidationError, match="slot_key is required"):
-            upsert_save_slot_for_user(owner.id, slot_key="", title="T", template_id="solo")
-        with pytest.raises(ValidationError, match="title is required"):
-            upsert_save_slot_for_user(owner.id, slot_key="slot-a", title="", template_id="solo")
-        with pytest.raises(ValidationError, match="template_id is required"):
-            upsert_save_slot_for_user(owner.id, slot_key="slot-a", title="T", template_id="")
-        with pytest.raises(ValidationError, match="slot_key is too long"):
-            upsert_save_slot_for_user(owner.id, slot_key="x" * 65, title="T", template_id="solo")
-        with pytest.raises(ValidationError, match="title is too long"):
-            upsert_save_slot_for_user(owner.id, slot_key="slot-a", title="x" * 141, template_id="solo")
-        with pytest.raises(OwnershipError):
-            upsert_save_slot_for_user(other.id, slot_key="slot-a", title="T", template_id="solo", character_id=restored.id)
-
-        slot = upsert_save_slot_for_user(
-            owner.id,
-            slot_key=" Slot-A ",
-            title="Chapter One",
-            template_id="god_of_carnage_solo",
-            template_title="",
-            run_id="run-1",
-            kind="solo_story",
-            character_id=restored.id,
-            metadata={"checkpoint": 1},
-        )
-        assert slot.slot_key == "slot-a"
-        assert slot.template_title == "Chapter One"
-        assert slot.status == "active"
-        assert slot.last_played_at is not None
-
-        updated_slot = upsert_save_slot_for_user(
-            owner.id,
-            slot_key="slot-a",
-            title="Chapter One Updated",
-            template_id="god_of_carnage_solo",
-            status="paused",
-            metadata={"checkpoint": 2},
-        )
-        assert updated_slot.id == slot.id
-        assert updated_slot.status == "paused"
-        assert updated_slot.metadata_json == {"checkpoint": 2}
-
-        listed_slots = list_save_slots_for_user(owner.id)
-        assert [s.id for s in listed_slots] == [slot.id]
-        assert get_save_slot_for_user(owner.id, slot.id).title == "Chapter One Updated"
-
-        with pytest.raises(NotFoundError):
-            get_save_slot_for_user(owner.id, 999999)
-        with pytest.raises(OwnershipError):
-            get_save_slot_for_user(other.id, slot.id)
-
-        delete_save_slot_for_user(owner.id, slot.id)
-        assert list_save_slots_for_user(owner.id) == []

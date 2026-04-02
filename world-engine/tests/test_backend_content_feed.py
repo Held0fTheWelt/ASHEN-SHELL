@@ -1,3 +1,5 @@
+"""Tests for backend_loader and backend_source template HTTP loading."""
+
 from __future__ import annotations
 
 import httpx

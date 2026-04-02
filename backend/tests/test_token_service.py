@@ -1,12 +1,14 @@
-from flask_jwt_extended import decode_token
+"""Tests for app.services.token_service."""
+
 import pytest
+from flask_jwt_extended import decode_token
 
 from app.extensions import db
 from app.models import RefreshToken
 from app.services.token_service import generate_tokens, refresh_access_token, revoke_user_tokens
 
 
-class TestTokenServiceAdditionalCoverage:
+class TestTokenService:
     def test_generate_tokens_persists_refresh_token_and_claims(self, app, test_user):
         user, _ = test_user
 

@@ -1,4 +1,4 @@
-"""Coverage for app.extensions: TestLimiter, get_rate_limit_key, JWT blocklist callback."""
+"""Tests for app.extensions: TestLimiter, get_rate_limit_key, JWT blocklist callback."""
 
 from __future__ import annotations
 

@@ -1,5 +1,14 @@
 """Tests for real dashboard metrics API (admin session)."""
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+
 import pytest
+from werkzeug.security import generate_password_hash
+
+from app.extensions import db
+from app.models import Role, User
+from app.services.metrics_service import get_metrics
 
 
 def test_dashboard_metrics_anonymous_redirect(client):
@@ -51,6 +60,62 @@ def test_dashboard_metrics_range_30d(client, admin_user):
     data = r.get_json()
     assert data.get("selected_range") == "30d"
     assert len(data.get("bucket_labels", [])) == 30
+
+
+class TestMetricsServiceAggregates:
+    def test_get_metrics_aggregates_real_user_counts(self, app, monkeypatch):
+        fixed_now = datetime(2026, 3, 28, 12, 0, tzinfo=timezone.utc)
+        monkeypatch.setattr("app.services.metrics_service._utc_now", lambda: fixed_now)
+
+        with app.app_context():
+            user_role = Role.query.filter_by(name=Role.NAME_USER).first()
+            users = [
+                User(
+                    username="metrics_active_verified",
+                    email="active@example.com",
+                    password_hash=generate_password_hash("Secret123"),
+                    role_id=user_role.id,
+                    email_verified_at=fixed_now - timedelta(days=1),
+                    created_at=fixed_now - timedelta(hours=2),
+                    last_seen_at=fixed_now - timedelta(minutes=5),
+                    is_banned=False,
+                ),
+                User(
+                    username="metrics_banned_recent",
+                    email="banned@example.com",
+                    password_hash=generate_password_hash("Secret123"),
+                    role_id=user_role.id,
+                    created_at=fixed_now - timedelta(hours=6),
+                    last_seen_at=fixed_now - timedelta(hours=1),
+                    is_banned=True,
+                ),
+                User(
+                    username="metrics_old",
+                    email="old@example.com",
+                    password_hash=generate_password_hash("Secret123"),
+                    role_id=user_role.id,
+                    created_at=fixed_now - timedelta(days=2),
+                    last_seen_at=fixed_now - timedelta(days=2),
+                    is_banned=False,
+                ),
+            ]
+            db.session.add_all(users)
+            db.session.commit()
+
+            metrics = get_metrics("24h")
+            fallback_metrics = get_metrics("not-a-range")
+
+            assert metrics["active_now"] == 1
+            assert metrics["registered_total"] == 3
+            assert metrics["verified_total"] == 1
+            assert metrics["banned_total"] == 1
+            assert metrics["selected_range"] == "24h"
+            assert metrics["bucket_info"]["bucket_count"] == 24
+            assert len(metrics["bucket_labels"]) == 24
+            assert len(metrics["active_users_over_time"]) == 24
+            assert len(metrics["user_growth_over_time"]) == 24
+            assert max(metrics["active_users_over_time"]) >= 1
+            assert fallback_metrics["selected_range"] == "24h"
 
 
 # ======================= WIKI ADMIN TRANSLATION WORKFLOW =======================

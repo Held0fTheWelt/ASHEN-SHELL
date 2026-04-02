@@ -1,3 +1,5 @@
+"""Tests for builtin templates and RuntimeNpcDirector cycles."""
+
 from __future__ import annotations
 
 from app.content.builtins import (
@@ -27,7 +29,7 @@ class _Emitter:
         return [self.calls[-1]]
 
 
-class TestBuiltinTemplatesAdditionalCoverage:
+class TestBuiltinTemplates:
     def test_load_builtin_templates_exposes_expected_template_ids(self):
         templates = load_builtin_templates()
 
@@ -56,7 +58,7 @@ class TestBuiltinTemplatesAdditionalCoverage:
                 assert exit_template.target_room_id in room_ids
 
 
-class TestRuntimeNpcDirectorAdditionalCoverage:
+class TestRuntimeNpcDirector:
     def test_group_cycle_emits_house_ai_only_once_after_start(self):
         template = build_apartment_confrontation_group()
         emitter = _Emitter()

@@ -1,3 +1,5 @@
+"""Tests for app.services.area_service."""
+
 from __future__ import annotations
 
 from werkzeug.security import generate_password_hash
@@ -32,7 +34,7 @@ def _create_basic_user(username: str) -> User:
     return user
 
 
-class TestAreaServicePatch3:
+class TestAreaService:
     def test_create_list_get_and_search_areas(self, app):
         with app.app_context():
             created, error = create_area("Patch Search Area", description="Searchable")
