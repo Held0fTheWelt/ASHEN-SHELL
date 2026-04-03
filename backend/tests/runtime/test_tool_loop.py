@@ -82,7 +82,7 @@ def test_execute_tool_request_timeout_retries_are_bounded():
         tool_name="wos.read.current_scene",
         arguments={},
     )
-    ctx = HostToolContext(session=object(), module=object(), recent_events=[])
+    ctx = HostToolContext(session=object(), module=object(), current_turn=1, recent_events=[])
 
     entry, result = execute_tool_request(
         request,
@@ -230,3 +230,99 @@ def test_forever_tool_requests_stop_at_limit_deterministically(
     assert log.tool_loop_summary["stop_reason"] == ToolLoopStopReason.TOOL_CALL_LIMIT_REACHED
     assert log.tool_loop_summary["limit_hit"] is True
     assert log.tool_loop_summary["total_calls"] == 2
+
+
+def test_preview_tool_feedback_can_drive_corrected_final_output(
+    god_of_carnage_module_with_state, god_of_carnage_module
+):
+    """Preview rejection can be followed by a corrected finalized proposal."""
+    session = god_of_carnage_module_with_state
+    session.execution_mode = "ai"
+    session.canonical_state.setdefault("characters", {}).setdefault(
+        "veronique", {"emotional_state": 50}
+    )
+    session.metadata["tool_loop"] = {
+        "enabled": True,
+        "allowed_tools": ["wos.guard.preview_delta"],
+        "max_tool_calls_per_turn": 3,
+    }
+
+    adapter = SequencedToolLoopAdapter(
+        payloads=[
+            {
+                "type": "tool_request",
+                "tool_name": "wos.guard.preview_delta",
+                "arguments": {
+                    "scene_id": session.current_scene_id,
+                    "proposed_state_deltas": [
+                        {
+                            "target_path": "characters.nonexistent.emotional_state",
+                            "next_value": 77,
+                            "delta_type": "state_update",
+                        }
+                    ],
+                },
+            },
+            {
+                "scene_interpretation": "Corrected after preview",
+                "detected_triggers": [],
+                "proposed_state_deltas": [
+                    {
+                        "target_path": "characters.veronique.emotional_state",
+                        "next_value": 77,
+                        "delta_type": "state_update",
+                    }
+                ],
+                "rationale": "Correction applied",
+            },
+        ]
+    )
+    result = asyncio.run(
+        execute_turn_with_ai(
+            session,
+            current_turn=session.turn_counter + 1,
+            adapter=adapter,
+            module=god_of_carnage_module,
+        )
+    )
+
+    assert result.execution_status == "success"
+    log = session.metadata["ai_decision_logs"][-1]
+    assert log.preview_diagnostics is not None
+    assert log.preview_diagnostics["preview_count"] >= 1
+    assert log.preview_diagnostics["revised_after_preview"] is True
+    assert log.preview_diagnostics["improved_acceptance_vs_last_preview"] is True
+
+
+def test_endless_preview_requests_are_bounded(
+    god_of_carnage_module_with_state, god_of_carnage_module
+):
+    """Infinite preview recursion is stopped by deterministic call limits."""
+    session = god_of_carnage_module_with_state
+    session.execution_mode = "ai"
+    session.metadata["tool_loop"] = {
+        "enabled": True,
+        "allowed_tools": ["wos.guard.preview_delta"],
+        "max_tool_calls_per_turn": 2,
+    }
+
+    adapter = SequencedToolLoopAdapter(
+        payloads=[
+            {
+                "type": "tool_request",
+                "tool_name": "wos.guard.preview_delta",
+                "arguments": {"proposed_state_deltas": []},
+            }
+        ]
+    )
+    result = asyncio.run(
+        execute_turn_with_ai(
+            session,
+            current_turn=session.turn_counter + 1,
+            adapter=adapter,
+            module=god_of_carnage_module,
+        )
+    )
+    assert result.execution_status == "success"
+    log = session.metadata["ai_decision_logs"][-1]
+    assert log.tool_loop_summary["stop_reason"] == ToolLoopStopReason.TOOL_CALL_LIMIT_REACHED

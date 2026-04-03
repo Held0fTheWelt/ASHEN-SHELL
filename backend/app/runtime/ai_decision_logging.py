@@ -36,6 +36,7 @@ def construct_ai_decision_log(
     tool_loop_summary: Optional[dict] = None,
     tool_call_transcript: Optional[list[dict]] = None,
     tool_influence: Optional[dict] = None,
+    preview_diagnostics: Optional[dict] = None,
 ) -> AIDecisionLog:
     """Construct a fully-populated AIDecisionLog with role diagnostics if available.
 
@@ -104,4 +105,5 @@ def construct_ai_decision_log(
         tool_loop_summary=tool_loop_summary,
         tool_call_transcript=tool_call_transcript,
         tool_influence=tool_influence,
+        preview_diagnostics=preview_diagnostics,
     )

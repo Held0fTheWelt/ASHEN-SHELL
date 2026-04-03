@@ -62,6 +62,46 @@ class ToolLoopDispatcherAdapter(StoryAIAdapter):
         )
 
 
+class PreviewLoopDispatcherAdapter(StoryAIAdapter):
+    """Adapter that previews then finalizes corrected output."""
+
+    def __init__(self):
+        self._calls = 0
+
+    @property
+    def adapter_name(self) -> str:
+        return "preview-loop-dispatcher-adapter"
+
+    def generate(self, request):
+        self._calls += 1
+        if self._calls == 1:
+            return AdapterResponse(
+                raw_output="[preview request]",
+                structured_payload={
+                    "type": "tool_request",
+                    "tool_name": "wos.guard.preview_delta",
+                    "arguments": {
+                        "proposed_state_deltas": [
+                            {
+                                "target_path": "characters.nonexistent.emotional_state",
+                                "next_value": 10,
+                                "delta_type": "state_update",
+                            }
+                        ]
+                    },
+                },
+            )
+        return AdapterResponse(
+            raw_output="[preview corrected final]",
+            structured_payload={
+                "scene_interpretation": "Corrected after preview",
+                "detected_triggers": [],
+                "proposed_state_deltas": [],
+                "rationale": "Preview feedback incorporated",
+            },
+        )
+
+
 def test_dispatcher_routes_to_mock_when_mode_is_mock(
     god_of_carnage_module_with_state, god_of_carnage_module
 ):
@@ -128,6 +168,32 @@ def test_dispatcher_ai_mode_can_finalize_via_tool_loop(
     assert result.execution_status == "success"
     assert "ai_decision_logs" in session.metadata
     assert session.metadata["ai_decision_logs"][-1].tool_loop_summary is not None
+
+
+def test_dispatcher_ai_mode_supports_preview_write_feedback(
+    god_of_carnage_module_with_state, god_of_carnage_module
+):
+    """Dispatcher path supports preview tool usage and diagnostics."""
+    session = god_of_carnage_module_with_state
+    session.execution_mode = "ai"
+    session.metadata["tool_loop"] = {
+        "enabled": True,
+        "allowed_tools": ["wos.guard.preview_delta"],
+        "max_tool_calls_per_turn": 3,
+    }
+
+    adapter = PreviewLoopDispatcherAdapter()
+    result = asyncio.run(
+        dispatch_turn(
+            session,
+            current_turn=session.turn_counter + 1,
+            module=god_of_carnage_module,
+            ai_adapter=adapter,
+        )
+    )
+
+    assert result.execution_status == "success"
+    assert session.metadata["ai_decision_logs"][-1].preview_diagnostics is not None
 
 
 def test_dispatcher_raises_error_if_ai_mode_without_adapter(

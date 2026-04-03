@@ -1220,3 +1220,75 @@ def test_tool_loop_summary_absent_when_disabled(
     decision_log = session.metadata["ai_decision_logs"][-1]
     assert decision_log.tool_loop_summary is None
     assert decision_log.tool_call_transcript is None
+
+
+def test_preview_diagnostics_recorded_when_preview_tool_is_used(
+    god_of_carnage_module_with_state, god_of_carnage_module
+):
+    """Preview tool usage is persisted into decision diagnostics."""
+    session = god_of_carnage_module_with_state
+    session.execution_mode = "ai"
+    session.canonical_state.setdefault("characters", {}).setdefault(
+        "veronique", {"emotional_state": 50}
+    )
+    session.metadata["tool_loop"] = {
+        "enabled": True,
+        "allowed_tools": ["wos.guard.preview_delta"],
+        "max_tool_calls_per_turn": 3,
+    }
+
+    # second adapter call finalizes with corrected proposal
+    class PreviewThenFinalizeAdapter(DeterministicAIAdapter):
+        def __init__(self):
+            self.calls = 0
+        @property
+        def adapter_name(self):
+            return "preview-then-finalize"
+        def generate(self, request):
+            self.calls += 1
+            if self.calls == 1:
+                return AdapterResponse(
+                    raw_output="preview",
+                    structured_payload={
+                        "type": "tool_request",
+                        "tool_name": "wos.guard.preview_delta",
+                        "arguments": {
+                            "proposed_state_deltas": [
+                                {
+                                    "target_path": "characters.nonexistent.emotional_state",
+                                    "next_value": 10,
+                                    "delta_type": "state_update",
+                                }
+                            ]
+                        },
+                    },
+                )
+            return AdapterResponse(
+                raw_output="final",
+                structured_payload={
+                    "scene_interpretation": "corrected",
+                    "detected_triggers": [],
+                    "proposed_state_deltas": [
+                        {
+                            "target_path": "characters.veronique.emotional_state",
+                            "next_value": 60,
+                            "delta_type": "state_update",
+                        }
+                    ],
+                    "rationale": "corrected",
+                },
+            )
+
+    result = asyncio.run(
+        execute_turn_with_ai(
+            session,
+            current_turn=session.turn_counter + 1,
+            adapter=PreviewThenFinalizeAdapter(),
+            module=god_of_carnage_module,
+        )
+    )
+
+    assert result.execution_status == "success"
+    decision_log = session.metadata["ai_decision_logs"][-1]
+    assert decision_log.preview_diagnostics is not None
+    assert decision_log.preview_diagnostics["preview_count"] >= 1

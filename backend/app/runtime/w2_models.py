@@ -570,3 +570,6 @@ class AIDecisionLog(BaseModel):
     tool_loop_summary: dict[str, Any] | None = None
     tool_call_transcript: list[dict[str, Any]] | None = None
     tool_influence: dict[str, Any] | None = None
+
+    # B3 Preview-write diagnostics (optional, backward-compatible)
+    preview_diagnostics: dict[str, Any] | None = None

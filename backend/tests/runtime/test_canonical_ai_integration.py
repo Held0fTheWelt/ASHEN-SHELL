@@ -81,6 +81,52 @@ class ToolLoopIntegrationAdapter(StoryAIAdapter):
         )
 
 
+class PreviewCorrectionIntegrationAdapter(StoryAIAdapter):
+    """Integration adapter previewing invalid delta before corrected final output."""
+
+    def __init__(self):
+        self._calls = 0
+
+    @property
+    def adapter_name(self) -> str:
+        return "preview_correction_integration_adapter"
+
+    def generate(self, request) -> AdapterResponse:
+        self._calls += 1
+        if self._calls == 1:
+            return AdapterResponse(
+                raw_output="preview-request",
+                structured_payload={
+                    "type": "tool_request",
+                    "tool_name": "wos.guard.preview_delta",
+                    "arguments": {
+                        "proposed_state_deltas": [
+                            {
+                                "target_path": "characters.nonexistent.emotional_state",
+                                "next_value": 90,
+                                "delta_type": "state_update",
+                            }
+                        ]
+                    },
+                },
+            )
+        return AdapterResponse(
+            raw_output="preview-corrected-final",
+            structured_payload={
+                "scene_interpretation": "Corrected after preview",
+                "detected_triggers": [],
+                "proposed_state_deltas": [
+                    {
+                        "target_path": "characters.veronique.emotional_state",
+                        "next_value": 90,
+                        "delta_type": "state_update",
+                    }
+                ],
+                "rationale": "Use preview feedback",
+            },
+        )
+
+
 @pytest.fixture
 def deterministic_adapter():
     """Provide deterministic AI adapter for testing."""
@@ -268,6 +314,41 @@ class TestCanonicalAIPathSuccess:
         assert result.guard_outcome is not None
         assert result.updated_canonical_state == original_state
         assert session.metadata["ai_decision_logs"][-1].tool_loop_summary is not None
+        clear_registry()
+
+    @pytest.mark.asyncio
+    async def test_preview_feedback_allows_iterative_correction(
+        self, god_of_carnage_module
+    ):
+        """Preview feedback is recorded and corrected final output improves acceptance."""
+        adapter = PreviewCorrectionIntegrationAdapter()
+        register_adapter("preview_correction_integration_adapter", adapter)
+
+        session = SessionState(
+            module_id="god_of_carnage",
+            module_version="1.0",
+            current_scene_id="kitchen",
+            execution_mode="ai",
+            adapter_name="preview_correction_integration_adapter",
+        )
+        session.canonical_state = {"characters": {"veronique": {"emotional_state": 50}}}
+        session.metadata["tool_loop"] = {
+            "enabled": True,
+            "allowed_tools": ["wos.guard.preview_delta"],
+            "max_tool_calls_per_turn": 3,
+        }
+
+        result = await dispatch_turn(
+            session,
+            current_turn=1,
+            module=god_of_carnage_module,
+        )
+
+        assert result.execution_status == "success"
+        log = session.metadata["ai_decision_logs"][-1]
+        assert log.preview_diagnostics is not None
+        assert log.preview_diagnostics["revised_after_preview"] is True
+        assert log.preview_diagnostics["improved_acceptance_vs_last_preview"] is True
         clear_registry()
 
 

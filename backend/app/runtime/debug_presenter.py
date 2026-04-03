@@ -220,6 +220,7 @@ def present_debug_panel(session_state: SessionState) -> DebugPanelOutput:
                 ai_log.get("tool_call_transcript", [])[:10] if isinstance(ai_log, dict) else []
             ),
             "tool_influence": ai_log.get("tool_influence") if isinstance(ai_log, dict) else None,
+            "preview_diagnostics": ai_log.get("preview_diagnostics") if isinstance(ai_log, dict) else None,
         }
 
         # Infer recovery action from degradation markers

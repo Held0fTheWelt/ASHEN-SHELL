@@ -11,6 +11,8 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 from app.runtime.decision_policy import AIActionType
+from app.runtime.preview_delta import preview_delta_dry_run
+from app.runtime.preview_models import PreviewDeltaRequest
 
 
 class ToolCallStatus:
@@ -102,6 +104,7 @@ class HostToolContext:
 
     session: Any
     module: Any
+    current_turn: int
     recent_events: list[dict[str, Any]]
 
 
@@ -155,11 +158,23 @@ def _tool_allowed_actions(_args: dict[str, Any], _ctx: HostToolContext) -> dict[
     return {"allowed_action_types": sorted(action.value for action in AIActionType)}
 
 
+def _tool_preview_delta(args: dict[str, Any], ctx: HostToolContext) -> dict[str, Any]:
+    request = PreviewDeltaRequest(**args)
+    preview_result = preview_delta_dry_run(
+        session=ctx.session,
+        module=ctx.module,
+        current_turn=ctx.current_turn,
+        request=request,
+    )
+    return preview_result.model_dump()
+
+
 def build_host_tool_registry() -> dict[str, HostToolFn]:
     return {
         "wos.read.current_scene": _tool_current_scene,
         "wos.read.recent_history": _tool_recent_history,
         "wos.read.allowed_actions": _tool_allowed_actions,
+        "wos.guard.preview_delta": _tool_preview_delta,
     }
 
 

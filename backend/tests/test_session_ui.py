@@ -528,6 +528,12 @@ class TestDebugPresenter:
                 "parsed_output": {"scene_interpretation": "x"},
                 "tool_loop_summary": {"enabled": True, "total_calls": 1, "stop_reason": "finalized", "limit_hit": False, "finalized_after_tool_use": True},
                 "tool_call_transcript": [{"tool_name": "wos.read.current_scene", "status": "success", "attempts": 1, "duration_ms": 1}],
+                "preview_diagnostics": {
+                    "preview_count": 1,
+                    "last_preview": {"guard_outcome": "rejected", "accepted_delta_count": 0, "rejected_delta_count": 1},
+                    "revised_after_preview": True,
+                    "improved_acceptance_vs_last_preview": True,
+                },
             },
         )
 
@@ -535,6 +541,7 @@ class TestDebugPresenter:
         assert result.full_diagnostics is not None
         assert result.full_diagnostics["tool_loop_summary"] is not None
         assert len(result.full_diagnostics["tool_call_transcript"]) == 1
+        assert result.full_diagnostics["preview_diagnostics"] is not None
 
 
 class TestPresenterIntegration:
@@ -1546,6 +1553,7 @@ class TestDebugPanelDiagnosticsRendering:
         template_path = Path(__file__).resolve().parents[1] / "app" / "web" / "templates" / "session_shell.html"
         content = template_path.read_text(encoding="utf-8")
         assert "Tool Call Transcript" in content
+        assert "Preview Writes" in content
 
 
 class TestAIDecisionLogRouting:

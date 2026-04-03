@@ -470,3 +470,33 @@ def test_construct_log_accepts_optional_tool_loop_fields():
     assert log.tool_loop_summary == {"enabled": True, "total_calls": 1}
     assert isinstance(log.tool_call_transcript, list)
     assert log.tool_influence == {"influencing_tool_sequence": 1}
+
+
+def test_construct_log_accepts_preview_diagnostics():
+    """construct_ai_decision_log stores optional preview diagnostics."""
+    parsed_decision = ParsedAIDecision(
+        scene_interpretation="Scene",
+        detected_triggers=[],
+        proposed_deltas=[],
+        proposed_scene_id=None,
+        rationale="Rationale",
+        raw_output="raw",
+        parsed_source="structured_payload",
+    )
+    preview_diagnostics = {
+        "preview_count": 1,
+        "last_preview": {"guard_outcome": "rejected", "accepted_delta_count": 0, "rejected_delta_count": 1},
+        "revised_after_preview": True,
+        "improved_acceptance_vs_last_preview": True,
+    }
+
+    log = construct_ai_decision_log(
+        session_id="sess1",
+        turn_number=1,
+        parsed_decision=parsed_decision,
+        raw_output="raw",
+        role_aware_decision=None,
+        guard_outcome=GuardOutcome.ACCEPTED,
+        preview_diagnostics=preview_diagnostics,
+    )
+    assert log.preview_diagnostics == preview_diagnostics

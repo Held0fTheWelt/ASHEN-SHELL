@@ -449,6 +449,35 @@
             </div>
             {% endif %}
 
+            {% if debug_panel.full_diagnostics.preview_diagnostics %}
+            <div class="diagnostics-subsection">
+              <h5>Preview Writes</h5>
+              <dl>
+                <dt>Preview Calls</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.preview_count }}</dd>
+                <dt>Last Preview Guard Outcome</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.last_preview.guard_outcome }}</dd>
+                <dt>Last Preview Accepted / Rejected</dt>
+                <dd>
+                  {{ debug_panel.full_diagnostics.preview_diagnostics.last_preview.accepted_delta_count }}
+                  /
+                  {{ debug_panel.full_diagnostics.preview_diagnostics.last_preview.rejected_delta_count }}
+                </dd>
+                <dt>Corrected After Preview</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.revised_after_preview }}</dd>
+                <dt>Improved vs Preview</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.improved_acceptance_vs_last_preview }}</dd>
+              </dl>
+              {% if debug_panel.full_diagnostics.preview_diagnostics.last_preview.rejection_reasons %}
+              <ul>
+                {% for reason in debug_panel.full_diagnostics.preview_diagnostics.last_preview.rejection_reasons %}
+                <li><code>{{ reason | truncate(140, True, '...') }}</code></li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+            </div>
+            {% endif %}
+
           </div>
           {% endif %}
         </div>

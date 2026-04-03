@@ -455,6 +455,9 @@ async def execute_turn_with_ai(
     finalized_after_tool_use = False
     last_successful_tool_sequence: int | None = None
     tool_call_count = 0
+    tool_loop_summary: dict[str, Any] | None = None
+    preview_records: list[dict[str, Any]] = []
+    preview_diagnostics: dict[str, Any] | None = None
 
     def _build_request(attempt: int) -> AdapterRequest:
         request = build_adapter_request(
@@ -473,11 +476,15 @@ async def execute_turn_with_ai(
             }
         return request
 
-    # Step 1: Build adapter request (with attempt tracking for reduced-context retry)
-    request = _build_request(attempt=1)
+    # Step 1/2: Build request + generate response with retry loop (W2.5 Phase 1)
+    from app.runtime.ai_failure_recovery import RetryPolicy, AIFailureClass
 
-    # B1: MCP Preflight Enrichment (optional, feature-flagged)
-    if session.metadata.get("mcp_enrichment_enabled", False):
+    retry_policy = RetryPolicy()
+    mcp_enrichment_enabled = session.metadata.get("mcp_enrichment_enabled", False)
+
+    def _enrich_request_with_mcp(request: AdapterRequest) -> None:
+        if not mcp_enrichment_enabled:
+            return
         from app.mcp_client.enrichment import build_mcp_enrichment
         from app.mcp_client.client import OperatorEndpointClient
         from app.observability.trace import get_trace_id
@@ -487,54 +494,50 @@ async def execute_turn_with_ai(
         enrichment = build_mcp_enrichment(session.session_id, _trace_id, _client)
         request.metadata["mcp_context_enrichment"] = enrichment
 
-    # Step 2: Generate response with retry loop (W2.5 Phase 1)
-    from app.runtime.ai_failure_recovery import RetryPolicy, AIFailureClass
-
-    retry_policy = RetryPolicy()
-    response: AdapterResponse | None = None
-    current_attempt = 1
-
-    while current_attempt <= retry_policy.MAX_RETRIES:
-        # W2.5 Phase 2: Rebuild request with current attempt for reduced-context mode
-        if current_attempt > 1:
-            # W2.5 Phase 6: Mark reduced-context activation in degradation state
-            if DegradedMarker.REDUCED_CONTEXT_ACTIVE not in session.degraded_state.active_markers:
-                session.degraded_state.active_markers.add(DegradedMarker.REDUCED_CONTEXT_ACTIVE)
-                session.degraded_state.marker_timestamps[DegradedMarker.REDUCED_CONTEXT_ACTIVE] = (
+    def _mark_reduced_context_if_needed() -> None:
+        if DegradedMarker.REDUCED_CONTEXT_ACTIVE not in session.degraded_state.active_markers:
+            session.degraded_state.active_markers.add(DegradedMarker.REDUCED_CONTEXT_ACTIVE)
+            session.degraded_state.marker_timestamps[DegradedMarker.REDUCED_CONTEXT_ACTIVE] = (
+                datetime.now(timezone.utc)
+            )
+            if not session.degraded_state.is_degraded:
+                session.degraded_state.is_degraded = True
+                session.degraded_state.marker_timestamps[DegradedMarker.DEGRADED] = (
                     datetime.now(timezone.utc)
                 )
-                if not session.degraded_state.is_degraded:
-                    session.degraded_state.is_degraded = True
-                    session.degraded_state.marker_timestamps[DegradedMarker.DEGRADED] = (
-                        datetime.now(timezone.utc)
-                    )
 
-            request = _build_request(attempt=current_attempt)
+    def _generate_with_runtime_policy(
+        *,
+        starting_attempt: int = 1,
+    ) -> tuple[AdapterResponse, int]:
+        response: AdapterResponse | None = None
+        current_attempt = starting_attempt
+        request = _build_request(attempt=current_attempt)
+        _enrich_request_with_mcp(request)
 
-        response = adapter.generate(request)
+        while current_attempt <= retry_policy.MAX_RETRIES:
+            if current_attempt > 1:
+                _mark_reduced_context_if_needed()
+                request = _build_request(attempt=current_attempt)
+                _enrich_request_with_mcp(request)
 
-        # Check if adapter call succeeded or failed
-        has_error = response.error is not None
-        is_empty = not response.raw_output or not response.raw_output.strip()
-
-        if has_error or is_empty:
-            # Adapter error or empty response occurred
-            failure_class = AIFailureClass.ADAPTER_ERROR if has_error else AIFailureClass.ADAPTER_ERROR
-
-            # Check if this failure is retryable
-            if (
-                retry_policy.is_retryable_failure(failure_class)
-                and current_attempt < retry_policy.MAX_RETRIES
-            ):
-                # Retryable and attempts remain - continue to next iteration
-                current_attempt += 1
-                continue
-            else:
-                # Not retryable or max attempts reached - break out of loop
-                break
-        else:
-            # Success - no error, no empty response
+            response = adapter.generate(request)
+            has_error = response.error is not None
+            is_empty = not response.raw_output or not response.raw_output.strip()
+            if has_error or is_empty:
+                failure_class = AIFailureClass.ADAPTER_ERROR
+                if (
+                    retry_policy.is_retryable_failure(failure_class)
+                    and current_attempt < retry_policy.MAX_RETRIES
+                ):
+                    current_attempt += 1
+                    continue
             break
+
+        assert response is not None
+        return response, current_attempt
+
+    response, current_attempt = _generate_with_runtime_policy(starting_attempt=1)
 
     # Step 2b: Handle adapter error or empty output
     # W2.5 Phase 4-5: If retries exhausted, check if restore is needed
@@ -655,6 +658,7 @@ async def execute_turn_with_ai(
                             if last_successful_tool_sequence
                             else None
                         ),
+                        preview_diagnostics=preview_diagnostics,
                     )
                     # Set recovery_notes with restore metadata
                     decision_log.recovery_notes = restore_notes
@@ -717,6 +721,7 @@ async def execute_turn_with_ai(
                     if last_successful_tool_sequence
                     else None
                 ),
+                preview_diagnostics=preview_diagnostics,
             )
             _store_decision_log(session, decision_log)
 
@@ -739,6 +744,7 @@ async def execute_turn_with_ai(
         tool_context = HostToolContext(
             session=session,
             module=module,
+            current_turn=current_turn,
             recent_events=recent_events or [],
         )
         while True:
@@ -764,6 +770,18 @@ async def execute_turn_with_ai(
             tool_call_transcript.append(transcript_entry.model_dump())
             tool_results.append(tool_result)
             tool_call_count += 1
+            if (
+                tool_result.get("tool_name") == "wos.guard.preview_delta"
+                and tool_result.get("status") == ToolCallStatus.SUCCESS
+                and isinstance(tool_result.get("result"), dict)
+            ):
+                preview_records.append(
+                    {
+                        "sequence_index": transcript_entry.sequence_index,
+                        "request_id": tool_result.get("request_id"),
+                        "result": tool_result.get("result"),
+                    }
+                )
 
             if transcript_entry.status == ToolCallStatus.SUCCESS:
                 last_successful_tool_sequence = transcript_entry.sequence_index
@@ -779,10 +797,10 @@ async def execute_turn_with_ai(
                 tool_limit_hit = True
                 break
 
-            # Continue model loop with tool result context
-            request = _build_request(attempt=1)
-            response = adapter.generate(request)
+            # Continue model loop with shared runtime generation policy
+            response, _ = _generate_with_runtime_policy(starting_attempt=1)
             if response.error or (not response.raw_output or not response.raw_output.strip()):
+                tool_loop_stop_reason = ToolLoopStopReason.TOOL_ERROR_EXHAUSTED
                 break
 
         # Mark the last successful tool as influencing finalization when a final output was reached.
@@ -792,7 +810,6 @@ async def execute_turn_with_ai(
                     entry["influenced_final_output"] = True
                     break
 
-    tool_loop_summary: dict[str, Any] | None = None
     if tool_loop_enabled:
         tool_loop_summary = {
             "enabled": True,
@@ -808,6 +825,20 @@ async def execute_turn_with_ai(
         and tool_loop_stop_reason != ToolLoopStopReason.FINALIZED
         and tool_call_count > 0
     ):
+        if preview_records:
+            last_preview = preview_records[-1]["result"]
+            preview_diagnostics = {
+                "preview_count": len(preview_records),
+                "last_preview": {
+                    "guard_outcome": last_preview.get("guard_outcome"),
+                    "accepted_delta_count": last_preview.get("accepted_delta_count", 0),
+                    "rejected_delta_count": last_preview.get("rejected_delta_count", 0),
+                    "summary": last_preview.get("summary"),
+                    "rejection_reasons": (last_preview.get("rejection_reasons") or [])[:5],
+                },
+                "revised_after_preview": False,
+                "improved_acceptance_vs_last_preview": False,
+            }
         safe_turn_decision = MockDecision(
             detected_triggers=[],
             proposed_deltas=[],
@@ -845,12 +876,33 @@ async def execute_turn_with_ai(
                 if last_successful_tool_sequence
                 else None
             ),
+            preview_diagnostics=preview_diagnostics,
         )
         _store_decision_log(session, decision_log)
         return turn_result
 
     # Step 3: Parse response
     parse_result: ParseResult = process_adapter_response(response)
+    if preview_records:
+        final_targets = (
+            [delta.target_path for delta in (parse_result.decision.proposed_deltas or [])]
+            if parse_result.success and parse_result.decision
+            else []
+        )
+        last_preview = preview_records[-1]["result"]
+        preview_targets = list(last_preview.get("input_targets", []) or [])
+        preview_diagnostics = {
+            "preview_count": len(preview_records),
+            "last_preview": {
+                "guard_outcome": last_preview.get("guard_outcome"),
+                "accepted_delta_count": last_preview.get("accepted_delta_count", 0),
+                "rejected_delta_count": last_preview.get("rejected_delta_count", 0),
+                "summary": last_preview.get("summary"),
+                "rejection_reasons": (last_preview.get("rejection_reasons") or [])[:5],
+            },
+            "revised_after_preview": final_targets != preview_targets,
+            "improved_acceptance_vs_last_preview": False,
+        }
 
     # Step 4: If parse failed, activate fallback responder (W2.5 Phase 3)
     if not parse_result.success:
@@ -923,6 +975,7 @@ async def execute_turn_with_ai(
                 if last_successful_tool_sequence
                 else None
             ),
+            preview_diagnostics=preview_diagnostics,
         )
         _store_decision_log(session, decision_log)
 
@@ -1022,6 +1075,7 @@ async def execute_turn_with_ai(
                 if last_successful_tool_sequence
                 else None
             ),
+            preview_diagnostics=preview_diagnostics,
         )
         _store_decision_log(session, decision_log)
 
@@ -1050,6 +1104,11 @@ async def execute_turn_with_ai(
         module,
         enforce_responder_only=enforce_responder_gate,
     )
+    if preview_diagnostics is not None:
+        preview_diagnostics["improved_acceptance_vs_last_preview"] = (
+            len(turn_result.accepted_deltas)
+            > int(preview_diagnostics["last_preview"]["accepted_delta_count"])
+        )
 
     # Step 7: Create and store decision log from execution result
     # W2.4.4: Use role-aware decision logging helper to populate interpreter/director/responder diagnostics
@@ -1078,6 +1137,7 @@ async def execute_turn_with_ai(
             if last_successful_tool_sequence
             else None
         ),
+        preview_diagnostics=preview_diagnostics,
     )
     _store_decision_log(session, decision_log)
 
