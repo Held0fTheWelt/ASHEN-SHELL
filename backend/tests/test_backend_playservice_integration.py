@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import os
+import json
 import socket
 import subprocess
 import sys
 import time
+import threading
 from pathlib import Path
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import httpx
 import pytest
@@ -21,7 +24,104 @@ def _free_port() -> int:
 
 
 @pytest.fixture
-def play_service_endpoint() -> dict[str, str]:
+def backend_content_feed_endpoint() -> str:
+    payload = {
+        "templates": [
+            {
+                "id": "god_of_carnage_solo",
+                "title": "God of Carnage - Published Integration",
+                "kind": "solo_story",
+                "join_policy": "owner_only",
+                "summary": "Published authored payload from backend feed.",
+                "max_humans": 1,
+                "min_humans_to_start": 1,
+                "persistent": False,
+                "initial_beat_id": "courtesy",
+                "roles": [
+                    {
+                        "id": "visitor",
+                        "display_name": "Visitor",
+                        "description": "Player role",
+                        "mode": "human",
+                        "initial_room_id": "hallway",
+                        "can_join": True,
+                    },
+                    {
+                        "id": "veronique",
+                        "display_name": "Veronique",
+                        "description": "NPC",
+                        "mode": "npc",
+                        "initial_room_id": "living_room",
+                    },
+                ],
+                "rooms": [
+                    {
+                        "id": "hallway",
+                        "name": "Hallway",
+                        "description": "Start",
+                        "exits": [
+                            {"direction": "inside", "target_room_id": "living_room", "label": "Inside"}
+                        ],
+                        "prop_ids": [],
+                        "action_ids": [],
+                        "artwork_prompt": None,
+                    },
+                    {
+                        "id": "living_room",
+                        "name": "Living Room",
+                        "description": "Conflict room",
+                        "exits": [],
+                        "prop_ids": [],
+                        "action_ids": [],
+                        "artwork_prompt": None,
+                    },
+                ],
+                "props": [],
+                "actions": [],
+                "beats": [
+                    {
+                        "id": "courtesy",
+                        "name": "Courtesy",
+                        "description": "Start beat",
+                        "summary": "Summary",
+                    }
+                ],
+                "tags": ["authored"],
+                "style_profile": "retro_pulp",
+            }
+        ]
+    }
+
+    class _FeedHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path != "/api/v1/game/content/published":
+                self.send_response(404)
+                self.end_headers()
+                return
+            body = json.dumps(payload).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format, *args):  # pragma: no cover - test noise suppression
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _FeedHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        host, port = server.server_address
+        yield f"http://{host}:{port}/api/v1/game/content/published"
+    finally:
+        server.shutdown()
+        thread.join(timeout=2.0)
+        server.server_close()
+
+
+@pytest.fixture
+def play_service_endpoint(backend_content_feed_endpoint: str) -> dict[str, str]:
     pytest.importorskip("uvicorn")
     repo_root = Path(__file__).resolve().parents[2]
     world_engine_dir = repo_root / "world-engine"
@@ -29,7 +129,10 @@ def play_service_endpoint() -> dict[str, str]:
 
     env = os.environ.copy()
     env["PLAY_SERVICE_INTERNAL_API_KEY"] = "ops-key"
-    env["BACKEND_CONTENT_SYNC_ENABLED"] = "false"
+    env["BACKEND_CONTENT_SYNC_ENABLED"] = "true"
+    env["BACKEND_CONTENT_FEED_URL"] = backend_content_feed_endpoint
+    env["BACKEND_CONTENT_TIMEOUT_SECONDS"] = "5.0"
+    env["BACKEND_CONTENT_SYNC_INTERVAL_SECONDS"] = "0.0"
 
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
@@ -83,6 +186,7 @@ def test_backend_to_playservice_happy_path(app, play_service_endpoint):
 
         templates = game_service.list_templates()
         assert any(item.get("id") == "god_of_carnage_solo" for item in templates)
+        assert any(item.get("title") == "God of Carnage - Published Integration" for item in templates)
 
         created = game_service.create_run(
             template_id="god_of_carnage_solo",
@@ -105,6 +209,8 @@ def test_backend_to_playservice_happy_path(app, play_service_endpoint):
 
         details = game_service.get_run_details(run_id)
         assert details["run"]["id"] == run_id
+        assert details["template_source"] == "backend_published"
+        assert details["template"]["id"] == "god_of_carnage_solo"
         assert details["lobby"] is None or isinstance(details["lobby"], dict)
 
         transcript = game_service.get_run_transcript(run_id)

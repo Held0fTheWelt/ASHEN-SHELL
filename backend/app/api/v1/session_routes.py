@@ -22,6 +22,7 @@ from app.services.session_service import (
     get_session_logs,
     get_session_state,
 )
+from app.runtime.session_start import SessionStartError
 from app.runtime.session_store import get_session as get_runtime_session
 from app.observability.trace import get_trace_id
 
@@ -74,8 +75,14 @@ def create_new_session():
             "in_memory_session_state_is_volatile",
         ]
         return jsonify(body), 201
+    except SessionStartError as exc:
+        if exc.reason == "module_not_found":
+            return jsonify({"error": str(exc)}), 404
+        if exc.reason in {"module_invalid", "no_start_scene"}:
+            return jsonify({"error": str(exc)}), 422
+        return jsonify({"error": str(exc)}), 500
     except Exception as e:
-        # Error handling deferred to W3.2 comprehensive error handler
+        # Keep explicit fallback for unexpected failures.
         return jsonify({"error": str(e)}), 500
 
 

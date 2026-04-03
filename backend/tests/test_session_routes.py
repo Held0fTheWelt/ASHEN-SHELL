@@ -5,6 +5,8 @@ Endpoints are volatile and explicitly warned in JSON; live runs use the play ser
 
 import pytest
 
+from app.runtime.session_start import SessionStartError
+
 
 class TestCreateSessionEndpoint:
     """Tests for POST /api/v1/sessions."""
@@ -78,6 +80,32 @@ class TestCreateSessionEndpoint:
         assert isinstance(data["module_version"], str)
         assert isinstance(data["turn_counter"], int)
         assert data["turn_counter"] == 0
+
+    def test_create_session_module_not_found_returns_404(self, client, monkeypatch):
+        monkeypatch.setattr(
+            "app.api.v1.session_routes.create_session",
+            lambda module_id: (_ for _ in ()).throw(
+                SessionStartError("module_not_found", module_id, "missing")
+            ),
+        )
+        response = client.post("/api/v1/sessions", json={"module_id": "missing_module"})
+        assert response.status_code == 404
+        data = response.get_json()
+        assert "error" in data
+        assert "module_not_found" in data["error"]
+
+    def test_create_session_module_invalid_returns_422(self, client, monkeypatch):
+        monkeypatch.setattr(
+            "app.api.v1.session_routes.create_session",
+            lambda module_id: (_ for _ in ()).throw(
+                SessionStartError("module_invalid", module_id, "invalid")
+            ),
+        )
+        response = client.post("/api/v1/sessions", json={"module_id": "broken_module"})
+        assert response.status_code == 422
+        data = response.get_json()
+        assert "error" in data
+        assert "module_invalid" in data["error"]
 
 
 class TestGetSessionEndpoint:

@@ -19,9 +19,10 @@ services:
       - CORS_ORIGINS=http://localhost:5001,http://127.0.0.1:5001,http://localhost:5002,http://127.0.0.1:5002
       - FRONTEND_URL=http://localhost:5002
       - PLAY_SERVICE_INTERNAL_URL=http://play-service:8000
-      - PLAY_SERVICE_PUBLIC_URL=http://localhost:8001
+      - PLAY_SERVICE_PUBLIC_URL=http://play-service:8000
       - PLAY_SERVICE_SHARED_SECRET=local-dev-shared-secret
       - PLAY_SERVICE_INTERNAL_API_KEY=local-dev-internal-key
+      - JWT_SECRET_KEY=local-dev-jwt-secret-32-bytes-minimum-value
     depends_on:
       - play-service
 
