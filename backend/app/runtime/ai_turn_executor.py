@@ -1002,11 +1002,8 @@ async def execute_turn_with_ai(
         }
 
     # Deterministic stop when loop did not finalize to a final story payload.
-    if (
-        tool_loop_enabled
-        and tool_loop_stop_reason != ToolLoopStopReason.FINALIZED
-        and tool_call_count > 0
-    ):
+    # Includes zero-call exits (e.g. max_tool_calls_per_turn == 0 with a pending tool request).
+    if tool_loop_enabled and tool_loop_stop_reason != ToolLoopStopReason.FINALIZED:
         if preview_records:
             preview_diagnostics = _build_preview_diagnostics_payload(
                 records=preview_records,

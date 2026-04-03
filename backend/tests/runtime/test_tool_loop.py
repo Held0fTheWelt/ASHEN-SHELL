@@ -329,3 +329,32 @@ def test_endless_preview_requests_are_bounded(
     assert result.failure_reason is not None
     log = session.metadata["ai_decision_logs"][-1]
     assert log.tool_loop_summary["stop_reason"] == ToolLoopStopReason.TOOL_CALL_LIMIT_REACHED
+
+
+def test_tool_loop_zero_budget_triggers_recovery_without_ambiguous_parse(
+    god_of_carnage_module_with_state, god_of_carnage_module,
+):
+    """Non-finalized stop with zero executed tool calls must use explicit recovery path."""
+    session = god_of_carnage_module_with_state
+    session.execution_mode = "ai"
+    session.metadata["tool_loop"] = {
+        "enabled": True,
+        "allowed_tools": ["wos.read.current_scene"],
+        "max_tool_calls_per_turn": 0,
+    }
+    adapter = ForeverToolRequestAdapter()
+    result = asyncio.run(
+        execute_turn_with_ai(
+            session,
+            current_turn=session.turn_counter + 1,
+            adapter=adapter,
+            module=god_of_carnage_module,
+        )
+    )
+    assert result.execution_status == "system_error"
+    assert result.failure_reason is not None
+    log = session.metadata["ai_decision_logs"][-1]
+    assert log.tool_loop_summary is not None
+    assert log.tool_loop_summary["total_calls"] == 0
+    assert log.tool_loop_summary["stop_reason"] == ToolLoopStopReason.TOOL_CALL_LIMIT_REACHED
+    assert log.guard_notes and "tool_loop_failure_recovery_active: true" in log.guard_notes

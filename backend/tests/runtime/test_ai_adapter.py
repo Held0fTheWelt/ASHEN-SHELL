@@ -9,6 +9,8 @@ Verifies that:
 
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from app.runtime.ai_adapter import (
@@ -16,6 +18,7 @@ from app.runtime.ai_adapter import (
     AdapterResponse,
     MockStoryAIAdapter,
     StoryAIAdapter,
+    generate_with_timeout,
     normalize_token_usage,
 )
 
@@ -488,3 +491,57 @@ class TestTokenUsageNormalization:
         usage = normalize_token_usage(response)
 
         assert usage is None
+
+
+class TestGenerateWithTimeout:
+    """Direct unit tests for thread containment timeout helper (no executor integration)."""
+
+    def test_returns_result_when_adapter_finishes_within_timeout(self):
+        class FastAdapter(StoryAIAdapter):
+            @property
+            def adapter_name(self) -> str:
+                return "fast-timeout-test"
+
+            def generate(self, request: AdapterRequest) -> AdapterResponse:
+                return AdapterResponse(raw_output="ok", structured_payload={"x": 1})
+
+        request = AdapterRequest(
+            session_id="s",
+            turn_number=1,
+            current_scene_id="sc",
+            canonical_state={},
+            recent_events=[],
+        )
+        out = generate_with_timeout(adapter=FastAdapter(), request=request, timeout_ms=5000)
+        assert out.error is None
+        assert out.raw_output == "ok"
+        assert out.structured_payload == {"x": 1}
+
+    def test_slow_adapter_yields_explicit_timeout_outcome_containment_not_cancel(self):
+        """Waits are bounded; sync calls are not hard-cancelled (see backend_metadata)."""
+
+        class SlowAdapter(StoryAIAdapter):
+            @property
+            def adapter_name(self) -> str:
+                return "slow-timeout-test"
+
+            def generate(self, request: AdapterRequest) -> AdapterResponse:
+                time.sleep(0.15)
+                return AdapterResponse(raw_output="late", structured_payload=None)
+
+        request = AdapterRequest(
+            session_id="s",
+            turn_number=1,
+            current_scene_id="sc",
+            canonical_state={},
+            recent_events=[],
+        )
+        out = generate_with_timeout(adapter=SlowAdapter(), request=request, timeout_ms=20)
+        assert out.error is not None
+        assert out.error.startswith("adapter_generate_timeout:")
+        assert out.raw_output == ""
+        assert out.structured_payload is None
+        meta = out.backend_metadata or {}
+        assert meta.get("timeout_mode") == "thread_containment_no_hard_cancel"
+        assert meta.get("adapter") == "slow-timeout-test"
+        assert "timeout_ms" in meta
