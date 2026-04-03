@@ -9,7 +9,7 @@ from app.extensions import mail
 class TestActivationUrl:
     """Tests for _activation_url() helper function."""
 
-    def test_1_activation_url_with_app_public_base_url_configured(self, app, test_user):
+    def test_activation_url_with_app_public_base_url_configured(self, app, test_user):
         """Test _activation_url uses APP_PUBLIC_BASE_URL when configured."""
         with app.app_context():
             app.config["APP_PUBLIC_BASE_URL"] = "https://example.com"
@@ -17,7 +17,7 @@ class TestActivationUrl:
             url = _activation_url(token)
             assert url == "https://example.com/activate/test_token_123"
 
-    def test_2_activation_url_strips_trailing_slash_from_base_url(self, app, test_user):
+    def test_activation_url_strips_trailing_slash_from_base_url(self, app, test_user):
         """Test _activation_url strips trailing slash from APP_PUBLIC_BASE_URL."""
         with app.app_context():
             app.config["APP_PUBLIC_BASE_URL"] = "https://example.com/"
@@ -25,7 +25,7 @@ class TestActivationUrl:
             url = _activation_url(token)
             assert url == "https://example.com/activate/test_token_456"
 
-    def test_3_activation_url_with_empty_app_public_base_url(self, app, test_user):
+    def test_activation_url_with_empty_app_public_base_url(self, app, test_user):
         """Test _activation_url falls back to url_for when APP_PUBLIC_BASE_URL is empty string."""
         with app.app_context():
             app.config["APP_PUBLIC_BASE_URL"] = ""
@@ -35,7 +35,7 @@ class TestActivationUrl:
                 expected = url_for("web.activate", token=token, _external=True)
                 assert url == expected
 
-    def test_4_activation_url_with_none_app_public_base_url(self, app, test_user):
+    def test_activation_url_with_none_app_public_base_url(self, app, test_user):
         """Test _activation_url falls back to url_for when APP_PUBLIC_BASE_URL is None."""
         with app.app_context():
             app.config["APP_PUBLIC_BASE_URL"] = None
@@ -45,7 +45,7 @@ class TestActivationUrl:
                 expected = url_for("web.activate", token=token, _external=True)
                 assert url == expected
 
-    def test_5_activation_url_with_url_for_fallback(self, app, test_user):
+    def test_activation_url_with_url_for_fallback(self, app, test_user):
         """Test _activation_url returns correct url_for format when no base URL."""
         with app.app_context():
             app.config.pop("APP_PUBLIC_BASE_URL", None)
@@ -60,7 +60,7 @@ class TestActivationUrl:
 class TestSendVerificationEmailDevMode:
     """Tests for send_verification_email() in dev/testing modes."""
 
-    def test_6_verification_email_testing_mode_true(self, app, test_user):
+    def test_verification_email_testing_mode_true(self, app, test_user):
         """Test send_verification_email returns True and logs in TESTING=True mode."""
         user, _ = test_user
         with app.app_context():
@@ -76,7 +76,7 @@ class TestSendVerificationEmailDevMode:
                     assert "TESTING" in call_args[0][0]
                     assert user.username in call_args[0]
 
-    def test_7_verification_email_testing_mode_logs_username_not_token(self, app, test_user):
+    def test_verification_email_testing_mode_logs_username_not_token(self, app, test_user):
         """Test send_verification_email logs username but NOT token for security."""
         user, _ = test_user
         with app.app_context():
@@ -90,7 +90,7 @@ class TestSendVerificationEmailDevMode:
                     assert token not in logged_text
                     assert user.username in call_args[0]
 
-    def test_8_verification_email_mail_enabled_false(self, app, test_user):
+    def test_verification_email_mail_enabled_false(self, app, test_user):
         """Test send_verification_email returns True when MAIL_ENABLED=False."""
         user, _ = test_user
         with app.app_context():
@@ -105,7 +105,7 @@ class TestSendVerificationEmailDevMode:
                     call_args = mock_logger.warning.call_args
                     assert "MAIL_ENABLED=False" in call_args[0][0]
 
-    def test_9_verification_email_dev_mode_does_not_call_mail_send(self, app, test_user):
+    def test_verification_email_dev_mode_does_not_call_mail_send(self, app, test_user):
         """Test send_verification_email does not call mail.send() in dev modes."""
         user, _ = test_user
         with app.app_context():
@@ -129,7 +129,7 @@ class TestSendVerificationEmailExceptions:
         ValueError,
         TypeError,
     ])
-    def test_10_verification_email_catches_runtime_error(self, app, test_user, exception_type):
+    def test_verification_email_catches_runtime_error(self, app, test_user, exception_type):
         """Test send_verification_email catches RuntimeError and returns False."""
         user, _ = test_user
         with app.app_context():
@@ -143,7 +143,7 @@ class TestSendVerificationEmailExceptions:
                         assert result is False
                         mock_logger.exception.assert_called_once()
 
-    def test_11_verification_email_exception_logs_user_id_not_token(self, app, test_user):
+    def test_verification_email_exception_logs_user_id_not_token(self, app, test_user):
         """Test send_verification_email logs user.id on exception, NOT token."""
         user, _ = test_user
         with app.app_context():
@@ -158,7 +158,7 @@ class TestSendVerificationEmailExceptions:
                         assert user.id in call_args[0]
                         assert token not in str(call_args)
 
-    def test_12_verification_email_exception_never_reraised(self, app, test_user):
+    def test_verification_email_exception_never_reraised(self, app, test_user):
         """Test send_verification_email catches all exceptions and never re-raises."""
         user, _ = test_user
         with app.app_context():
@@ -176,7 +176,7 @@ class TestSendVerificationEmailExceptions:
         BrokenPipeError,
         EOFError,
     ])
-    def test_13_verification_email_catches_smtp_and_connection_errors(self, app, test_user, exception_type):
+    def test_verification_email_catches_smtp_and_connection_errors(self, app, test_user, exception_type):
         """Test send_verification_email catches SMTP and connection exceptions."""
         user, _ = test_user
         with app.app_context():
@@ -192,7 +192,7 @@ class TestSendVerificationEmailExceptions:
 class TestSendVerificationEmailProduction:
     """Tests for send_verification_email() in production mode."""
 
-    def test_14_verification_email_production_sends_message(self, app, test_user):
+    def test_verification_email_production_sends_message(self, app, test_user):
         """Test send_verification_email sends Message in production mode."""
         user, _ = test_user
         with app.app_context():
@@ -205,7 +205,7 @@ class TestSendVerificationEmailProduction:
                     assert result is True
                     mock_send.assert_called_once()
 
-    def test_15_verification_email_message_has_correct_subject(self, app, test_user):
+    def test_verification_email_message_has_correct_subject(self, app, test_user):
         """Test sent message has correct subject."""
         user, _ = test_user
         with app.app_context():
@@ -218,7 +218,7 @@ class TestSendVerificationEmailProduction:
                     msg = mock_send.call_args[0][0]
                     assert msg.subject == "World of Shadows – Verify your email"
 
-    def test_16_verification_email_message_has_correct_recipient(self, app, test_user):
+    def test_verification_email_message_has_correct_recipient(self, app, test_user):
         """Test sent message has correct recipient email."""
         user, _ = test_user
         with app.app_context():
@@ -231,7 +231,7 @@ class TestSendVerificationEmailProduction:
                     msg = mock_send.call_args[0][0]
                     assert msg.recipients == [user.email]
 
-    def test_17_verification_email_message_body_contains_username(self, app, test_user):
+    def test_verification_email_message_body_contains_username(self, app, test_user):
         """Test sent message body contains user's username."""
         user, _ = test_user
         with app.app_context():
@@ -244,7 +244,7 @@ class TestSendVerificationEmailProduction:
                     msg = mock_send.call_args[0][0]
                     assert user.username in msg.body
 
-    def test_18_verification_email_message_body_contains_activation_url(self, app, test_user):
+    def test_verification_email_message_body_contains_activation_url(self, app, test_user):
         """Test sent message body contains activation URL."""
         user, _ = test_user
         with app.app_context():
@@ -257,7 +257,7 @@ class TestSendVerificationEmailProduction:
                 msg = mock_send.call_args[0][0]
                 assert "https://example.com/activate/token_url_body" in msg.body
 
-    def test_19_verification_email_returns_true_on_successful_send(self, app, test_user):
+    def test_verification_email_returns_true_on_successful_send(self, app, test_user):
         """Test send_verification_email returns True when mail.send succeeds."""
         user, _ = test_user
         with app.app_context():
@@ -273,7 +273,7 @@ class TestSendVerificationEmailProduction:
 class TestSendPasswordResetEmailDevMode:
     """Tests for send_password_reset_email() in dev/testing modes."""
 
-    def test_20_password_reset_email_testing_mode_true(self, app, test_user):
+    def test_password_reset_email_testing_mode_true(self, app, test_user):
         """Test send_password_reset_email returns True and logs in TESTING=True mode."""
         user, _ = test_user
         with app.app_context():
@@ -288,7 +288,7 @@ class TestSendPasswordResetEmailDevMode:
                     assert "TESTING" in call_args[0][0]
                     assert user.username in call_args[0]
 
-    def test_21_password_reset_email_testing_mode_logs_username_not_token(self, app, test_user):
+    def test_password_reset_email_testing_mode_logs_username_not_token(self, app, test_user):
         """Test send_password_reset_email logs username but NOT token."""
         user, _ = test_user
         with app.app_context():
@@ -302,7 +302,7 @@ class TestSendPasswordResetEmailDevMode:
                     assert token not in logged_text
                     assert user.username in call_args[0]
 
-    def test_22_password_reset_email_localhost_with_no_username(self, app, test_user):
+    def test_password_reset_email_localhost_with_no_username(self, app, test_user):
         """Test send_password_reset_email dev fallback: localhost + no MAIL_USERNAME."""
         user, _ = test_user
         with app.app_context():
@@ -316,7 +316,7 @@ class TestSendPasswordResetEmailDevMode:
                     assert result is True
                     mock_logger.info.assert_called_once()
 
-    def test_23_password_reset_email_localhost_with_username_sends(self, app, test_user):
+    def test_password_reset_email_localhost_with_username_sends(self, app, test_user):
         """Test send_password_reset_email sends when MAIL_USERNAME is set (localhost override)."""
         user, _ = test_user
         with app.app_context():
@@ -330,7 +330,7 @@ class TestSendPasswordResetEmailDevMode:
                     # Should attempt to send (not fallback to logging)
                     mock_send.assert_called_once()
 
-    def test_24_password_reset_email_dev_mode_does_not_call_mail_send(self, app, test_user):
+    def test_password_reset_email_dev_mode_does_not_call_mail_send(self, app, test_user):
         """Test send_password_reset_email does not call mail.send() in TESTING mode."""
         user, _ = test_user
         with app.app_context():
@@ -341,7 +341,7 @@ class TestSendPasswordResetEmailDevMode:
                     send_password_reset_email(user, token)
                     mock_send.assert_not_called()
 
-    def test_25_password_reset_email_localhost_no_username_no_send(self, app, test_user):
+    def test_password_reset_email_localhost_no_username_no_send(self, app, test_user):
         """Test send_password_reset_email does not send with localhost + no MAIL_USERNAME."""
         user, _ = test_user
         with app.app_context():
@@ -366,7 +366,7 @@ class TestSendPasswordResetEmailExceptions:
         ValueError,
         TypeError,
     ])
-    def test_26_password_reset_email_catches_exception(self, app, test_user, exception_type):
+    def test_password_reset_email_catches_exception(self, app, test_user, exception_type):
         """Test send_password_reset_email catches exceptions and returns False."""
         user, _ = test_user
         with app.app_context():
@@ -381,7 +381,7 @@ class TestSendPasswordResetEmailExceptions:
                         assert result is False
                         mock_logger.exception.assert_called_once()
 
-    def test_27_password_reset_email_exception_logs_user_id_not_token(self, app, test_user):
+    def test_password_reset_email_exception_logs_user_id_not_token(self, app, test_user):
         """Test send_password_reset_email logs user.id, NOT token on error."""
         user, _ = test_user
         with app.app_context():
@@ -397,7 +397,7 @@ class TestSendPasswordResetEmailExceptions:
                         assert user.id in call_args[0]
                         assert token not in str(call_args)
 
-    def test_28_password_reset_email_exception_never_reraised(self, app, test_user):
+    def test_password_reset_email_exception_never_reraised(self, app, test_user):
         """Test send_password_reset_email catches all exceptions and never re-raises."""
         user, _ = test_user
         with app.app_context():
@@ -415,7 +415,7 @@ class TestSendPasswordResetEmailExceptions:
         BrokenPipeError,
         EOFError,
     ])
-    def test_29_password_reset_email_catches_network_errors(self, app, test_user, exception_type):
+    def test_password_reset_email_catches_network_errors(self, app, test_user, exception_type):
         """Test send_password_reset_email catches network exceptions."""
         user, _ = test_user
         with app.app_context():
@@ -432,7 +432,7 @@ class TestSendPasswordResetEmailExceptions:
 class TestSendPasswordResetEmailProduction:
     """Tests for send_password_reset_email() in production mode."""
 
-    def test_30_password_reset_email_production_sends_message(self, app, test_user):
+    def test_password_reset_email_production_sends_message(self, app, test_user):
         """Test send_password_reset_email sends Message in production mode."""
         user, _ = test_user
         with app.app_context():
@@ -446,7 +446,7 @@ class TestSendPasswordResetEmailProduction:
                     assert result is True
                     mock_send.assert_called_once()
 
-    def test_31_password_reset_email_message_has_correct_subject(self, app, test_user):
+    def test_password_reset_email_message_has_correct_subject(self, app, test_user):
         """Test sent message has correct subject."""
         user, _ = test_user
         with app.app_context():
@@ -460,7 +460,7 @@ class TestSendPasswordResetEmailProduction:
                     msg = mock_send.call_args[0][0]
                     assert msg.subject == "World of Shadows – Password reset"
 
-    def test_32_password_reset_email_message_has_correct_recipient(self, app, test_user):
+    def test_password_reset_email_message_has_correct_recipient(self, app, test_user):
         """Test sent message has correct recipient email."""
         user, _ = test_user
         with app.app_context():
@@ -474,7 +474,7 @@ class TestSendPasswordResetEmailProduction:
                     msg = mock_send.call_args[0][0]
                     assert msg.recipients == [user.email]
 
-    def test_33_password_reset_email_message_body_contains_username(self, app, test_user):
+    def test_password_reset_email_message_body_contains_username(self, app, test_user):
         """Test sent message body contains user's username."""
         user, _ = test_user
         with app.app_context():
@@ -488,7 +488,7 @@ class TestSendPasswordResetEmailProduction:
                     msg = mock_send.call_args[0][0]
                     assert user.username in msg.body
 
-    def test_34_password_reset_email_message_body_contains_reset_url(self, app, test_user):
+    def test_password_reset_email_message_body_contains_reset_url(self, app, test_user):
         """Test sent message body contains reset URL."""
         user, _ = test_user
         with app.app_context():
@@ -503,7 +503,7 @@ class TestSendPasswordResetEmailProduction:
                     # Body should contain a reset URL (from url_for)
                     assert "/reset-password/" in msg.body or "reset" in msg.body.lower()
 
-    def test_35_password_reset_email_message_body_mentions_expiration(self, app, test_user):
+    def test_password_reset_email_message_body_mentions_expiration(self, app, test_user):
         """Test sent message body mentions token expiration time."""
         user, _ = test_user
         with app.app_context():
@@ -517,7 +517,7 @@ class TestSendPasswordResetEmailProduction:
                     msg = mock_send.call_args[0][0]
                     assert "60 minutes" in msg.body
 
-    def test_36_password_reset_email_returns_true_on_successful_send(self, app, test_user):
+    def test_password_reset_email_returns_true_on_successful_send(self, app, test_user):
         """Test send_password_reset_email returns True when mail.send succeeds."""
         user, _ = test_user
         with app.app_context():
@@ -530,7 +530,7 @@ class TestSendPasswordResetEmailProduction:
                     result = send_password_reset_email(user, token)
                     assert result is True
 
-    def test_37_password_reset_email_with_url_for_in_request_context(self, app, test_user):
+    def test_password_reset_email_with_url_for_in_request_context(self, app, test_user):
         """Test send_password_reset_email uses url_for correctly in request context."""
         user, _ = test_user
         with app.app_context():
