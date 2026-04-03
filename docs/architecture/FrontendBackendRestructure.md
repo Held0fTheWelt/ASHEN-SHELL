@@ -149,7 +149,7 @@ This document is the result of an audit of the current repository and the Master
 
 | Responsibility | Backend (port 5000) | Frontend (port 5001) |
 |----------------|--------------------|----------------------|
-| **Public home** | When `FRONTEND_URL` is set: redirect `GET /` → frontend. Else: serve legacy `home.html`. | `GET /` – public landing (hero, links to backend login/register). |
+| **Public home** | `GET /` redirects to **`/backend`** (technical backend info surface). Player home is only on the frontend. Legacy `/login` etc. still redirect to `FRONTEND_URL` when set. | `GET /` – public landing (player UI). |
 | **Public news** | When `FRONTEND_URL` is set: redirect `GET /news` → frontend. Else: serve legacy `news.html`. | `GET /news` (list), `GET /news/<id>` (detail); data via JS from backend API. |
 | **Auth & internal** | `GET/POST /login`, `POST /logout`, `GET/POST /register`, `GET/POST /forgot-password`, `GET/POST /reset-password/<token>`, `GET /dashboard` (protected), `GET /game-menu` (protected). All session-rendered. | No auth; “Log in” / “Get started” link to backend URL. |
 | **Placeholders** | `GET /wiki`, `GET /community` – backend placeholders (frontend header links to backend for these). | — |

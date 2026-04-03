@@ -7,6 +7,8 @@ Complete API reference for all services in WorldOfShadows.
 ### [REST API Reference](./REFERENCE.md#backend-api)
 Complete REST endpoint documentation for the Flask backend.
 
+The Flask app also exposes **non-API technical pages** at **`/backend/*`** (architecture summary, API overview, operations pointers). These are for operators/developers only; canonical player UI remains in `frontend/`.
+
 **Base URL:** `http://localhost:5000` (development) or `https://api.worldofshadows.com` (production)
 
 **Key Endpoints:**

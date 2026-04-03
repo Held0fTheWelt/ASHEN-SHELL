@@ -33,7 +33,8 @@ tests/                 # Multi-suite test runner
 ### `backend/`
 - Owns API endpoints, authN/authZ, policy enforcement, persistence, and service integration
 - Exposes game/bootstrap/ticket APIs for frontend and play-service orchestration
-- Legacy `backend/app/web/*` is compatibility-only redirect infrastructure, not canonical UI hosting
+- Serves a small **technical HTML area** at `/backend/*` (architecture, API, ops — not player/admin UI); **`/` redirects to `/backend`**
+- Legacy `backend/app/web/*` paths (except `/` and `/health`) remain compatibility redirects to `FRONTEND_URL`, not canonical player UI hosting
 
 ### `world-engine/`
 - Owns authoritative game runtime state, session execution, and WebSocket live behavior
@@ -88,7 +89,7 @@ Play-service default URL: `http://127.0.0.1:8001`
 - `FRONTEND_SECRET_KEY` for `frontend/`
 - `BACKEND_API_URL` for `frontend/` and `administration-tool/`
 - `CORS_ORIGINS` on backend including `frontend` and `administration-tool` origins
-- `FRONTEND_URL` on backend for legacy redirect compatibility
+- `FRONTEND_URL` on backend for legacy path redirects (`/login`, `/play`, …); optional `ADMINISTRATION_TOOL_URL` for links on `/backend`
 - `PLAY_SERVICE_PUBLIC_URL`, `PLAY_SERVICE_INTERNAL_URL`, `PLAY_SERVICE_SHARED_SECRET` for backend/play integration
 
 ## Docker compose

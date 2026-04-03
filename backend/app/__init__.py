@@ -10,6 +10,7 @@ from flask_wtf.csrf import CSRFProtect
 from app.config import Config
 from app.extensions import init_app as init_extensions, limiter
 from app.api import register_api
+from app.info import info_bp
 from app.web import web_bp
 
 
@@ -181,6 +182,7 @@ def create_app(config_object=None):
     def invalid_token_callback(_err):
         return jsonify({"error": "Invalid or expired token."}), 401
 
+    app.register_blueprint(info_bp, url_prefix="/backend")
     app.register_blueprint(web_bp)
     register_api(app)
     csrf = CSRFProtect(app)

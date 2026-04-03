@@ -1,12 +1,13 @@
 """Legacy web compatibility routes.
 
 This blueprint no longer renders player/public HTML.
-It only provides infrastructure health and temporary redirects to the
-dedicated frontend service.
+It provides infrastructure health, a root redirect to the technical
+``/backend`` info surface, and compatibility redirects to the dedicated
+frontend service for legacy paths (``/login``, ``/play``, …).
 """
 from __future__ import annotations
 
-from flask import Blueprint, current_app, jsonify, redirect, request, session
+from flask import Blueprint, current_app, jsonify, redirect, request, session, url_for
 
 from app.services import log_activity
 
@@ -37,7 +38,8 @@ def health():
 
 @web_bp.route("/")
 def home():
-    return _compat_redirect("/")
+    """Direct browser entry lands on the technical backend info surface, not the player frontend."""
+    return redirect(url_for("info.backend_home"))
 
 
 @web_bp.route("/login", methods=["GET", "POST"])

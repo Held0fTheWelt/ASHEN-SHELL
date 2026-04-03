@@ -102,6 +102,9 @@ class Config:
     # Compatibility redirect target for legacy /web routes.
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "").strip() or None
 
+    # Optional: administration-tool base URL for operator links (e.g. backend /backend home page).
+    ADMINISTRATION_TOOL_URL = os.environ.get("ADMINISTRATION_TOOL_URL", "").strip() or None
+
     # Supported languages: whitelisted codes only (ISO 639-1)
     SUPPORTED_LANGUAGES = ["en", "fr", "de", "es", "it", "pt", "ru", "zh", "ja", "ko"]
     DEFAULT_LANGUAGE = "de"

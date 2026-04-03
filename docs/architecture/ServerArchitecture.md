@@ -8,6 +8,7 @@
 - Owns persistence and policy enforcement
 - Owns play bootstrap and ticket issuance APIs
 - Does not own canonical player/public HTML rendering
+- Exposes a small **technical information surface** at `/backend/*` (system/developer-facing pages only: architecture, API overview, ops links). Direct browser visits to the backend root `/` redirect to `/backend`. This is not a player or admin UI.
 
 ### Frontend (`frontend/`)
 - Owns player/public browser routes:
@@ -29,9 +30,11 @@
 ## Compatibility layer
 
 `backend/app/web/routes.py` is a compatibility redirect layer:
-- keeps legacy paths available temporarily
-- returns `302` redirects to `FRONTEND_URL`
+- **`GET /`** redirects to **`/backend`** (technical backend home), not to the player frontend
+- other legacy paths (`/login`, `/play`, …) return `302` redirects to `FRONTEND_URL` when set, else JSON **410**
 - does not render canonical player/public HTML
+
+Technical pages live under **`backend/app/info/`** (blueprint registered in `create_app()`).
 
 ## Operational implications
 

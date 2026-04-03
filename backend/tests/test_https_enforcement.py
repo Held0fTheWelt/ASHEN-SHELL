@@ -104,9 +104,11 @@ class TestHTTPToHTTPSRedirect:
             "/",
             base_url="https://localhost",
         )
-        # Should NOT be a redirect (200/404/410 depending on route; root may be 410 without FRONTEND_URL)
-        assert response.status_code in [200, 404, 410]
+        # Not the HTTP→HTTPS 301; root redirects to /backend info (302) when already HTTPS
         assert response.status_code != 301
+        assert response.status_code in [200, 302, 404, 410]
+        if response.status_code == 302:
+            assert "/backend" in (response.headers.get("Location") or "")
 
     def test_no_redirect_in_development(self, client_development):
         """HTTP request should NOT be redirected in development (debug=True)."""
@@ -114,9 +116,10 @@ class TestHTTPToHTTPSRedirect:
             "/",
             base_url="http://localhost",
         )
-        # Should not redirect (200/404/410 depending on route)
-        assert response.status_code in [200, 404, 410]
         assert response.status_code != 301
+        assert response.status_code in [200, 302, 404, 410]
+        if response.status_code == 302:
+            assert "/backend" in (response.headers.get("Location") or "")
 
     def test_no_redirect_in_testing(self, client_testing):
         """HTTP request should NOT be redirected in testing mode."""
@@ -124,9 +127,10 @@ class TestHTTPToHTTPSRedirect:
             "/",
             base_url="http://localhost",
         )
-        # Should not redirect (200/404/410 depending on route)
-        assert response.status_code in [200, 404, 410]
         assert response.status_code != 301
+        assert response.status_code in [200, 302, 404, 410]
+        if response.status_code == 302:
+            assert "/backend" in (response.headers.get("Location") or "")
 
     def test_api_endpoint_redirects_to_https(self, client_production_https):
         """API endpoint should also redirect from HTTP to HTTPS."""

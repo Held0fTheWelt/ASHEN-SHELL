@@ -3,7 +3,7 @@
 This project runs with separated services:
 - `frontend/` for player/public pages
 - `administration-tool/` for admin/management pages
-- `backend/` for API/business/auth logic
+- `backend/` for API/business/auth logic and technical `/backend/*` info pages
 - `world-engine/` for runtime authority
 
 ## Default URLs
@@ -56,7 +56,8 @@ python -m uvicorn app.main:app --reload --port 8001
 ### Backend
 
 - `CORS_ORIGINS=http://127.0.0.1:5002,http://127.0.0.1:5001`
-- `FRONTEND_URL=http://127.0.0.1:5002` (legacy redirect compatibility)
+- `FRONTEND_URL=http://127.0.0.1:5002` (legacy path redirects; `GET /` on the backend goes to `/backend` instead)
+- optional `ADMINISTRATION_TOOL_URL=http://127.0.0.1:5001` (links on `/backend` home)
 - `PLAY_SERVICE_PUBLIC_URL=http://127.0.0.1:8001`
 - `PLAY_SERVICE_INTERNAL_URL=http://127.0.0.1:8001`
 - `PLAY_SERVICE_SHARED_SECRET=<shared secret>`
@@ -72,6 +73,6 @@ python -m uvicorn app.main:app --reload --port 8001
 
 ## Notes
 
-- Backend legacy web routes are compatibility redirects only; canonical player/public pages live in `frontend/`.
+- Backend **`/`** redirects to **`/backend`** (operator/developer HTML). Other legacy web routes are compatibility redirects to `FRONTEND_URL`; canonical player/public pages live in `frontend/`.
 - The administration tool remains intentionally separate and is not part of `frontend/`.
 - Runtime authority remains in `world-engine` (session state, turn execution, websocket live behavior).

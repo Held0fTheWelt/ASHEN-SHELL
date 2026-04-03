@@ -6,7 +6,7 @@ This runbook describes the three-service player flow plus separate admin tooling
 
 | Service | URL | Purpose |
 |---|---|---|
-| Backend | `http://127.0.0.1:5000` | API/business/auth/policy |
+| Backend | `http://127.0.0.1:5000` | API/business/auth/policy + technical pages at `/backend/*` |
 | Frontend | `http://127.0.0.1:5002` | Player/public web UI |
 | Administration Tool | `http://127.0.0.1:5001` | Admin/management UI |
 | Play Service | `http://127.0.0.1:8001` | Authoritative runtime |
@@ -81,10 +81,13 @@ Required env:
 3. Access dashboard/news/wiki/community/game menu
 4. Start a run via `/play`, open play shell `/play/<session_id>`
 
+### Backend entry (technical)
+1. Open `http://127.0.0.1:5000/` — expect `302` to `http://127.0.0.1:5000/backend/` (system/developer info, not player UI).
+
 ### Legacy redirect compatibility
 1. Open `http://127.0.0.1:5000/login`
 2. Verify backend returns `302` to `http://127.0.0.1:5002/login`
-3. Verify no backend-rendered player/public HTML page is served
+3. Verify no backend-rendered player/public HTML page is served (only `/backend/*` technical templates)
 
 ### Admin flow
 1. Open `http://127.0.0.1:5001/manage`

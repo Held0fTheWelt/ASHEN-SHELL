@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.9] - 2026-04-04
+
+**Summary**: Backend **technical information surface** at `/backend/*` (multi-page HTML for operators/developers). Direct visits to backend **`/`** redirect to **`/backend`** instead of the player frontend; legacy player paths still redirect to **`FRONTEND_URL`** or return **410** when unset.
+
+### Added
+
+- **`backend/app/info/`**: Blueprint with templates and static CSS (`/backend`, `/backend/api`, `/backend/engine`, `/backend/ai`, `/backend/auth`, `/backend/ops`).
+- **`ADMINISTRATION_TOOL_URL`**: Optional config for links on the backend info home page.
+- **`backend/tests/test_backend_info_routes.py`**: Coverage for info pages, root redirect, blueprint registration, API collision check, and legacy redirect boundaries.
+
+### Changed
+
+- **`backend/app/web/routes.py`**: **`GET /`** → redirect to **`info.backend_home`** (`/backend/`).
+- **`backend/app/__init__.py`**: Registers the info blueprint before the web blueprint.
+- **Docs** (`README.md`, `.env.example`, `docs/architecture/ServerArchitecture.md`, `docs/architecture/FrontendBackendRestructure.md`, `docs/api/README.md`, `docs/development/LocalDevelopment.md`, `docs/operations/RUNBOOK.md`, **`backend/.env.example`**): Describe API + backend info surface vs player frontend.
+- **`backend/tests/test_web.py`**, **`test_https_enforcement.py`**: Expectations updated for root redirect behavior.
+
+---
+
 ## [0.3.8] - 2026-04-03
 
 **Summary**: Hardening and operations after the split: broad automated tests for the player frontend (strict coverage gate), admin observability, configurable site slogan rotation via API, and backend test alignment.

@@ -15,11 +15,13 @@ def test_legacy_ui_route_returns_410_without_frontend_url(client, app):
     assert payload["error"] == "Legacy UI route disabled."
 
 
-def test_home_redirects_to_frontend_url(client, app):
+def test_home_redirects_to_backend_info_not_player_frontend(client, app):
+    """Root is the backend entry point; player UI remains on FRONTEND_URL via other legacy paths."""
     app.config["FRONTEND_URL"] = "https://frontend.example.com"
     response = client.get("/", follow_redirects=False)
     assert response.status_code == 302
-    assert response.headers["Location"] == "https://frontend.example.com/"
+    loc = response.headers["Location"]
+    assert loc.endswith("/backend/") or loc.endswith("/backend")
 
 
 def test_play_route_redirects_to_frontend(client, app):
