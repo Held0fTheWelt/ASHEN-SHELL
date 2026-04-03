@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from app.runtime.agent_registry import (
@@ -572,3 +573,290 @@ def test_orchestrator_allows_delta_planner_preview_and_logs_requesting_agent(
     assert preview_entries
     assert preview_entries[0]["agent_id"] == "delta_planner"
     assert preview_entries[0]["preview_result_summary"]["preview_safe_no_write"] is True
+
+
+def test_orchestrator_enforces_max_agent_tokens_per_invocation(
+    god_of_carnage_module_with_state,
+    god_of_carnage_module,
+):
+    session = god_of_carnage_module_with_state
+    base_request = _build_base_request(session)
+
+    class HighTokenAdapter(StoryAIAdapter):
+        @property
+        def adapter_name(self) -> str:
+            return "high-token-adapter"
+
+        def generate(self, request: AdapterRequest) -> AdapterResponse:
+            agent_id = (request.metadata.get("agent_invocation") or {}).get("agent_id", "unknown")
+            payload = {
+                "scene_interpretation": f"{agent_id} summary",
+                "detected_triggers": [],
+                "proposed_state_deltas": [],
+                "rationale": f"{agent_id} rationale",
+            }
+            if agent_id == "finalizer":
+                payload = dict(request.metadata.get("supervisor_merge_payload") or {})
+                payload["rationale"] = "finalized"
+            return AdapterResponse(
+                raw_output=f"[{agent_id}]",
+                structured_payload=payload,
+                backend_metadata={
+                    "usage": {
+                        "input_tokens": 120,
+                        "output_tokens": 30,
+                        "total_tokens": 150,
+                    }
+                },
+            )
+
+    registry = build_default_agent_registry()
+    constrained_agents = []
+    for agent in registry.all_agents():
+        updated = agent.model_copy(deep=True)
+        updated.budget_profile.max_agent_tokens = 40
+        constrained_agents.append(updated)
+    constrained_registry = AgentRegistry(
+        agents=constrained_agents,
+        supervisor_policy=registry.supervisor_policy.model_copy(deep=True),
+    )
+
+    orchestrator = SupervisorOrchestrator(registry=constrained_registry)
+    outcome = orchestrator.orchestrate(
+        base_request=base_request,
+        adapter=HighTokenAdapter(),
+        session=session,
+        module=god_of_carnage_module,
+        current_turn=session.turn_counter + 1,
+        recent_events=[],
+        tool_registry=None,
+    )
+
+    non_skipped = [inv for inv in outcome.invocations if inv.execution_status != "skipped"]
+    assert non_skipped
+    assert any(inv.execution_status == "error" for inv in non_skipped)
+    assert any(
+        inv.error_summary and "agent_token_budget_exhausted" in inv.error_summary
+        for inv in non_skipped
+    )
+
+
+def test_failed_tool_calls_do_not_consume_budget_when_policy_disabled(
+    god_of_carnage_module_with_state,
+    god_of_carnage_module,
+):
+    session = god_of_carnage_module_with_state
+    base_request = _build_base_request(session)
+
+    class RejectedToolAdapter(StoryAIAdapter):
+        @property
+        def adapter_name(self) -> str:
+            return "rejected-tool-adapter"
+
+        def generate(self, request: AdapterRequest) -> AdapterResponse:
+            agent_id = (request.metadata.get("agent_invocation") or {}).get("agent_id", "unknown")
+            if agent_id == "scene_reader":
+                return AdapterResponse(
+                    raw_output="[request disallowed tool]",
+                    structured_payload={
+                        "type": "tool_request",
+                        "tool_name": "wos.guard.preview_delta",
+                        "arguments": {},
+                    },
+                )
+            if agent_id == "finalizer":
+                payload = dict(request.metadata.get("supervisor_merge_payload") or {})
+                payload["rationale"] = "finalized"
+                return AdapterResponse(raw_output="[finalizer]", structured_payload=payload)
+            return AdapterResponse(
+                raw_output=f"[{agent_id}]",
+                structured_payload={
+                    "scene_interpretation": f"{agent_id} summary",
+                    "detected_triggers": [],
+                    "proposed_state_deltas": [],
+                    "rationale": f"{agent_id} rationale",
+                },
+            )
+
+    registry = AgentRegistry(
+        agents=[
+            AgentConfig(
+                agent_id="scene_reader",
+                role="scene_reader",
+                allowed_tools=[],
+                budget_profile=AgentBudgetProfile(max_tool_calls=1),
+                participation="required",
+            ),
+            AgentConfig(
+                agent_id="finalizer",
+                role="finalizer",
+                allowed_tools=[],
+                budget_profile=AgentBudgetProfile(max_tool_calls=0),
+                participation="required",
+            ),
+        ],
+        supervisor_policy=SupervisorTurnPolicy(
+            consume_budget_on_failed_tool_call=False,
+            max_total_agent_calls=4,
+            max_total_tool_calls=4,
+        ),
+    )
+    orchestrator = SupervisorOrchestrator(registry=registry)
+    outcome = orchestrator.orchestrate(
+        base_request=base_request,
+        adapter=RejectedToolAdapter(),
+        session=session,
+        module=god_of_carnage_module,
+        current_turn=session.turn_counter + 1,
+        recent_events=[],
+        tool_registry=None,
+    )
+
+    consumed = outcome.budget_summary["consumed"]
+    assert consumed["total_tool_calls"] == 0
+    assert outcome.tool_audit
+    assert outcome.tool_audit[0]["status"] == "rejected"
+    assert outcome.tool_audit[0]["counted_against_hard_limits"] is False
+
+
+def test_cross_agent_preview_feedback_is_exposed_in_request_metadata(
+    god_of_carnage_module_with_state,
+    god_of_carnage_module,
+):
+    session = god_of_carnage_module_with_state
+    session.canonical_state.setdefault("characters", {}).setdefault(
+        "veronique", {"emotional_state": 50}
+    )
+    base_request = _build_base_request(session)
+    captured_feedback: list[dict[str, Any]] = []
+
+    class CrossAgentPreviewAdapter(StoryAIAdapter):
+        @property
+        def adapter_name(self) -> str:
+            return "cross-agent-preview-adapter"
+
+        def generate(self, request: AdapterRequest) -> AdapterResponse:
+            invocation = request.metadata.get("agent_invocation") or {}
+            agent_id = invocation.get("agent_id", "unknown")
+            cross_feedback = request.metadata.get("cross_agent_preview_feedback") or []
+            if cross_feedback:
+                captured_feedback.extend(cross_feedback)
+
+            tool_results = ((request.metadata.get("tool_loop") or {}).get("tool_results") or [])
+            if agent_id == "delta_planner" and not tool_results:
+                return AdapterResponse(
+                    raw_output="[delta planner preview request]",
+                    structured_payload={
+                        "type": "tool_request",
+                        "tool_name": "wos.guard.preview_delta",
+                        "arguments": {
+                            "proposed_state_deltas": [
+                                {
+                                    "target_path": "characters.veronique.emotional_state",
+                                    "next_value": 63,
+                                    "delta_type": "state_update",
+                                }
+                            ]
+                        },
+                    },
+                )
+            if agent_id == "finalizer":
+                payload = dict(request.metadata.get("supervisor_merge_payload") or {})
+                payload["rationale"] = "finalized"
+                return AdapterResponse(raw_output="[finalizer]", structured_payload=payload)
+            return AdapterResponse(
+                raw_output=f"[{agent_id}]",
+                structured_payload={
+                    "scene_interpretation": f"{agent_id} summary",
+                    "detected_triggers": [],
+                    "proposed_state_deltas": [],
+                    "rationale": f"{agent_id} rationale",
+                },
+            )
+
+    orchestrator = SupervisorOrchestrator()
+    outcome = orchestrator.orchestrate(
+        base_request=base_request,
+        adapter=CrossAgentPreviewAdapter(),
+        session=session,
+        module=god_of_carnage_module,
+        current_turn=session.turn_counter + 1,
+        recent_events=[],
+        tool_registry=None,
+    )
+
+    assert outcome.tool_audit is not None
+    assert captured_feedback
+    assert any(item.get("requesting_agent_id") == "delta_planner" for item in captured_feedback)
+
+
+def test_orchestrator_contains_slow_adapter_calls_with_timeout(
+    god_of_carnage_module_with_state,
+    god_of_carnage_module,
+):
+    session = god_of_carnage_module_with_state
+    base_request = _build_base_request(session)
+
+    class SlowAdapter(StoryAIAdapter):
+        @property
+        def adapter_name(self) -> str:
+            return "slow-supervisor-adapter"
+
+        def generate(self, request: AdapterRequest) -> AdapterResponse:
+            time.sleep(0.08)
+            agent_id = (request.metadata.get("agent_invocation") or {}).get("agent_id", "unknown")
+            if agent_id == "finalizer":
+                payload = dict(request.metadata.get("supervisor_merge_payload") or {})
+                payload["rationale"] = "finalized"
+                return AdapterResponse(raw_output="[finalizer]", structured_payload=payload)
+            return AdapterResponse(
+                raw_output=f"[{agent_id}]",
+                structured_payload={
+                    "scene_interpretation": f"{agent_id} summary",
+                    "detected_triggers": [],
+                    "proposed_state_deltas": [],
+                    "rationale": f"{agent_id} rationale",
+                },
+            )
+
+    registry = AgentRegistry(
+        agents=[
+            AgentConfig(
+                agent_id="scene_reader",
+                role="scene_reader",
+                allowed_tools=[],
+                budget_profile=AgentBudgetProfile(
+                    max_tool_calls=0,
+                    max_agent_duration_ms=5,
+                ),
+                participation="required",
+            ),
+            AgentConfig(
+                agent_id="finalizer",
+                role="finalizer",
+                allowed_tools=[],
+                budget_profile=AgentBudgetProfile(max_tool_calls=0, max_agent_duration_ms=5),
+                participation="required",
+            ),
+        ],
+        supervisor_policy=SupervisorTurnPolicy(max_total_agent_calls=4),
+    )
+    orchestrator = SupervisorOrchestrator(registry=registry)
+
+    started = time.perf_counter()
+    outcome = orchestrator.orchestrate(
+        base_request=base_request,
+        adapter=SlowAdapter(),
+        session=session,
+        module=god_of_carnage_module,
+        current_turn=session.turn_counter + 1,
+        recent_events=[],
+        tool_registry=None,
+    )
+    elapsed_ms = (time.perf_counter() - started) * 1000
+
+    assert elapsed_ms < 80
+    assert any(
+        inv.error_summary and "adapter_generate_timeout" in inv.error_summary
+        for inv in outcome.invocations
+    )

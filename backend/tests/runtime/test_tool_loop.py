@@ -195,11 +195,13 @@ def test_disallowed_tool_is_rejected_and_counted(
         )
     )
 
-    assert result.execution_status == "success"
+    assert result.execution_status == "system_error"
+    assert result.failure_reason is not None
     log = session.metadata["ai_decision_logs"][-1]
     assert len(log.tool_call_transcript or []) == 1
     assert log.tool_call_transcript[0]["status"] == ToolCallStatus.REJECTED
     assert log.tool_loop_summary["total_calls"] == 1
+    assert log.tool_loop_summary["stop_reason"] == ToolLoopStopReason.POLICY_REJECTED
 
 
 def test_forever_tool_requests_stop_at_limit_deterministically(
@@ -224,7 +226,7 @@ def test_forever_tool_requests_stop_at_limit_deterministically(
         )
     )
 
-    assert result.execution_status == "success"
+    assert result.execution_status == "system_error"
     assert result.failure_reason is not None
     log = session.metadata["ai_decision_logs"][-1]
     assert log.tool_loop_summary["stop_reason"] == ToolLoopStopReason.TOOL_CALL_LIMIT_REACHED
@@ -323,6 +325,7 @@ def test_endless_preview_requests_are_bounded(
             module=god_of_carnage_module,
         )
     )
-    assert result.execution_status == "success"
+    assert result.execution_status == "system_error"
+    assert result.failure_reason is not None
     log = session.metadata["ai_decision_logs"][-1]
     assert log.tool_loop_summary["stop_reason"] == ToolLoopStopReason.TOOL_CALL_LIMIT_REACHED

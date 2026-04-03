@@ -16,7 +16,12 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.content.module_models import ContentModule
-from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapter
+from app.runtime.ai_adapter import (
+    AdapterRequest,
+    AdapterResponse,
+    StoryAIAdapter,
+    generate_with_timeout,
+)
 from app.runtime.ai_decision import ParseResult, ParsedAIDecision, process_adapter_response
 from app.runtime.ai_decision_logging import construct_ai_decision_log
 from app.runtime.decision_policy import AIDecisionPolicy
@@ -484,6 +489,11 @@ async def execute_turn_with_ai(
     orchestration_failover = None
     orchestration_cache = None
     tool_audit = None
+    adapter_generate_timeout_ms_raw = session.metadata.get("adapter_generate_timeout_ms", 30000)
+    try:
+        adapter_generate_timeout_ms = max(int(adapter_generate_timeout_ms_raw), 1)
+    except (TypeError, ValueError):
+        adapter_generate_timeout_ms = 30000
 
     def _build_request(attempt: int) -> AdapterRequest:
         request = build_adapter_request(
@@ -547,11 +557,19 @@ async def execute_turn_with_ai(
                 request = _build_request(attempt=current_attempt)
                 _enrich_request_with_mcp(request)
 
-            response = adapter.generate(request)
+            response = generate_with_timeout(
+                adapter=adapter,
+                request=request,
+                timeout_ms=adapter_generate_timeout_ms,
+            )
             has_error = response.error is not None
             is_empty = not response.raw_output or not response.raw_output.strip()
             if has_error or is_empty:
                 failure_class = AIFailureClass.ADAPTER_ERROR
+                if has_error and isinstance(response.error, str) and response.error.startswith(
+                    "adapter_generate_timeout:"
+                ):
+                    failure_class = AIFailureClass.TIMEOUT_OR_EMPTY_RESPONSE
                 if (
                     retry_policy.is_retryable_failure(failure_class)
                     and current_attempt < retry_policy.MAX_RETRIES
@@ -581,7 +599,6 @@ async def execute_turn_with_ai(
         *,
         records: list[dict[str, Any]],
         final_targets: list[str],
-        include_improvement_placeholder: bool,
     ) -> dict[str, Any]:
         last_record = records[-1]
         last_preview = last_record["result"]
@@ -605,10 +622,19 @@ async def execute_turn_with_ai(
                 "request_summary": last_record.get("request_summary"),
             },
             "revised_after_preview": final_targets != preview_targets if final_targets else False,
-            "improved_acceptance_vs_last_preview": (
-                False if include_improvement_placeholder else False
-            ),
+            "improved_acceptance_vs_last_preview": False,
         }
+
+    def _set_preview_improvement_metric(
+        diagnostics: dict[str, Any] | None,
+        *,
+        final_accepted_count: int,
+    ) -> None:
+        if diagnostics is None:
+            return
+        last_preview = diagnostics.get("last_preview") or {}
+        baseline = int(last_preview.get("accepted_delta_count", 0))
+        diagnostics["improved_acceptance_vs_last_preview"] = final_accepted_count > baseline
 
     if orchestration_enabled:
         base_request = _build_request(attempt=1)
@@ -937,6 +963,9 @@ async def execute_turn_with_ai(
 
             if transcript_entry.status == ToolCallStatus.SUCCESS:
                 last_successful_tool_sequence = transcript_entry.sequence_index
+            elif transcript_entry.status == ToolCallStatus.REJECTED:
+                tool_loop_stop_reason = ToolLoopStopReason.POLICY_REJECTED
+                break
             elif transcript_entry.status == ToolCallStatus.TIMEOUT:
                 tool_loop_stop_reason = ToolLoopStopReason.TOOL_TIMEOUT_EXHAUSTED
                 break
@@ -982,7 +1011,6 @@ async def execute_turn_with_ai(
             preview_diagnostics = _build_preview_diagnostics_payload(
                 records=preview_records,
                 final_targets=[],
-                include_improvement_placeholder=True,
             )
         safe_turn_decision = MockDecision(
             detected_triggers=[],
@@ -994,6 +1022,11 @@ async def execute_turn_with_ai(
             safe_turn_decision,
             module,
             enforce_responder_only=False,
+        )
+        turn_result.execution_status = "system_error"
+        _set_preview_improvement_metric(
+            preview_diagnostics,
+            final_accepted_count=len(turn_result.accepted_deltas),
         )
         turn_result.failure_reason = ExecutionFailureReason.GENERATION_ERROR
         decision_log = construct_ai_decision_log(
@@ -1013,7 +1046,10 @@ async def execute_turn_with_ai(
             guard_outcome=turn_result.guard_outcome,
             accepted_deltas=turn_result.accepted_deltas,
             rejected_deltas=turn_result.rejected_deltas,
-            guard_notes=f"tool_loop_stop_reason: {tool_loop_stop_reason}",
+            guard_notes=(
+                f"tool_loop_failure_recovery_active: true; "
+                f"tool_loop_stop_reason: {tool_loop_stop_reason}"
+            ),
             tool_loop_summary=tool_loop_summary,
             tool_call_transcript=tool_call_transcript or None,
             tool_influence=(
@@ -1045,7 +1081,6 @@ async def execute_turn_with_ai(
         preview_diagnostics = _build_preview_diagnostics_payload(
             records=preview_records,
             final_targets=final_targets,
-            include_improvement_placeholder=False,
         )
 
     # Step 4: If parse failed, activate fallback responder (W2.5 Phase 3)
@@ -1264,11 +1299,10 @@ async def execute_turn_with_ai(
         module,
         enforce_responder_only=enforce_responder_gate,
     )
-    if preview_diagnostics is not None:
-        preview_diagnostics["improved_acceptance_vs_last_preview"] = (
-            len(turn_result.accepted_deltas)
-            > int(preview_diagnostics["last_preview"]["accepted_delta_count"])
-        )
+    _set_preview_improvement_metric(
+        preview_diagnostics,
+        final_accepted_count=len(turn_result.accepted_deltas),
+    )
 
     # Step 7: Create and store decision log from execution result
     # W2.4.4: Use role-aware decision logging helper to populate interpreter/director/responder diagnostics

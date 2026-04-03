@@ -12,7 +12,13 @@ from app.runtime.agent_registry import (
     SupervisorTurnPolicy,
     build_default_agent_registry,
 )
-from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapter, normalize_token_usage
+from app.runtime.ai_adapter import (
+    AdapterRequest,
+    AdapterResponse,
+    StoryAIAdapter,
+    generate_with_timeout,
+    normalize_token_usage,
+)
 from app.runtime.ai_decision import ParsedAIDecision, process_adapter_response
 from app.runtime.orchestration_cache import OrchestrationTurnCache
 from app.runtime.tool_loop import (
@@ -121,6 +127,7 @@ class SupervisorOrchestrator:
         consumed_total_tokens = 0
         exact_usage_count = 0
         proxy_fallback_count = 0
+        shared_preview_feedback: list[dict[str, Any]] = []
 
         for agent_id in plan.execution_order:
             if agent_id == "finalizer":
@@ -174,25 +181,19 @@ class SupervisorOrchestrator:
                 recent_events=recent_events or [],
                 tool_registry=tool_registry,
                 turn_cache=turn_cache,
+                shared_preview_feedback=shared_preview_feedback,
             )
             invocations.append(invocation)
             results.append(result)
             tool_transcript.extend(invocation.tool_call_transcript)
             policy_violations.extend(invocation.policy_violations)
             consumed_agent_calls += 1
-            consumed_tool_calls += len(invocation.tool_call_transcript)
-            consumed_token_proxy += int(invocation.budget_consumed.get("token_proxy_units", 0))
-            consumed_total_tokens += int(invocation.budget_consumed.get("consumed_total_tokens", 0))
-            if invocation.budget_consumed.get("token_usage_mode") == "exact":
-                exact_usage_count += 1
-            else:
-                proxy_fallback_count += 1
-            failed = invocation.execution_status != "success"
-            if failed:
-                failed_agent_calls += 1
+            counted_tool_calls = 0
             for entry in invocation.tool_call_transcript:
                 tool_status = str(entry.get("status", "unknown"))
                 counted = tool_status == ToolCallStatus.SUCCESS or policy.consume_budget_on_failed_tool_call
+                if counted:
+                    counted_tool_calls += 1
                 tool_audit.append(
                     {
                         "agent_id": agent.agent_id,
@@ -203,6 +204,27 @@ class SupervisorOrchestrator:
                         "cache_hit": bool(entry.get("cache_hit", False)),
                     }
                 )
+                if entry.get("tool_name") == "wos.guard.preview_delta":
+                    preview_summary = entry.get("preview_result_summary")
+                    if isinstance(preview_summary, dict):
+                        shared_preview_feedback.append(
+                            {
+                                "request_id": entry.get("preview_request_id"),
+                                "requesting_agent_id": entry.get("agent_id", agent.agent_id),
+                                "sequence_index": entry.get("sequence_index"),
+                                "result_summary": preview_summary,
+                            }
+                        )
+            consumed_tool_calls += counted_tool_calls
+            consumed_token_proxy += int(invocation.budget_consumed.get("token_proxy_units", 0))
+            consumed_total_tokens += int(invocation.budget_consumed.get("consumed_total_tokens", 0))
+            if invocation.budget_consumed.get("token_usage_mode") == "exact":
+                exact_usage_count += 1
+            else:
+                proxy_fallback_count += 1
+            failed = invocation.execution_status != "success"
+            if failed:
+                failed_agent_calls += 1
             if parsed is not None:
                 parsed_decisions[agent.agent_id] = parsed
             if failed:
@@ -420,15 +442,21 @@ class SupervisorOrchestrator:
         recent_events: list[dict[str, Any]],
         tool_registry: dict[str, Any] | None,
         turn_cache: OrchestrationTurnCache,
+        shared_preview_feedback: list[dict[str, Any]],
     ) -> tuple[AgentInvocationRecord, AgentResultRecord, ParsedAIDecision | None]:
         request = self._build_agent_request(
             base_request=base_request,
             agent=agent,
             sequence_index=sequence_index,
             tool_results=[],
+            cross_agent_preview_feedback=shared_preview_feedback,
         )
         started = perf_counter()
-        response = adapter.generate(request)
+        response = generate_with_timeout(
+            adapter=adapter,
+            request=request,
+            timeout_ms=max(agent.budget_profile.max_agent_duration_ms, 1),
+        )
         retry_count = 0
         tool_call_transcript: list[dict[str, Any]] = []
         policy_violations: list[str] = []
@@ -548,8 +576,13 @@ class SupervisorOrchestrator:
                 agent=agent,
                 sequence_index=sequence_index,
                 tool_results=tool_results,
+                cross_agent_preview_feedback=shared_preview_feedback,
             )
-            response = adapter.generate(request)
+            response = generate_with_timeout(
+                adapter=adapter,
+                request=request,
+                timeout_ms=max(agent.budget_profile.max_agent_duration_ms, 1),
+            )
 
         duration_ms = int((perf_counter() - started) * 1000)
         parse_result = process_adapter_response(response)
@@ -558,23 +591,36 @@ class SupervisorOrchestrator:
             and retry_count < max(agent.budget_profile.max_attempts - 1, 0)
         ):
             retry_count += 1
-            response = adapter.generate(request)
+            response = generate_with_timeout(
+                adapter=adapter,
+                request=request,
+                timeout_ms=max(agent.budget_profile.max_agent_duration_ms, 1),
+            )
             parse_result = process_adapter_response(response)
         status = "success" if parse_result.success else "error"
         error_summary = "; ".join(parse_result.errors) if parse_result.errors else None
         result_payload = response.structured_payload if isinstance(response.structured_payload, dict) else {}
+        token_consumed, token_usage = self._build_token_consumption(response)
         if duration_ms > agent.budget_profile.max_agent_duration_ms:
             status = "error"
             extra = (
                 f"agent_duration_budget_exhausted:{duration_ms}>{agent.budget_profile.max_agent_duration_ms}"
             )
             error_summary = f"{error_summary}; {extra}" if error_summary else extra
+        max_agent_tokens = max(agent.budget_profile.max_agent_tokens, 0)
+        if max_agent_tokens > 0 and int(token_consumed.get("consumed_total_tokens", 0)) > max_agent_tokens:
+            status = "error"
+            extra = (
+                "agent_token_budget_exhausted:"
+                f"{int(token_consumed.get('consumed_total_tokens', 0))}>{max_agent_tokens}"
+            )
+            error_summary = f"{error_summary}; {extra}" if error_summary else extra
+            policy_violations.append(f"{agent.agent_id}:{extra}")
         bounded_summary = (
             parse_result.decision.scene_interpretation[:200]
             if parse_result.success and parse_result.decision
             else (response.raw_output or "")[:200]
         )
-        token_consumed, token_usage = self._build_token_consumption(response)
         invocation = AgentInvocationRecord(
             agent_id=agent.agent_id,
             role=agent.role,
@@ -697,7 +743,11 @@ class SupervisorOrchestrator:
         ]
 
         started = perf_counter()
-        final_response = adapter.generate(finalizer_request)
+        final_response = generate_with_timeout(
+            adapter=adapter,
+            request=finalizer_request,
+            timeout_ms=max(finalizer_agent.budget_profile.max_agent_duration_ms, 1),
+        )
         parse_result = process_adapter_response(final_response)
         duration_ms = int((perf_counter() - started) * 1000)
         finalizer_fallback_used = False
@@ -722,6 +772,28 @@ class SupervisorOrchestrator:
             parse_result = process_adapter_response(final_response)
 
         token_consumed, token_usage = self._build_token_consumption(final_response)
+        max_agent_tokens = max(finalizer_agent.budget_profile.max_agent_tokens, 0)
+        if max_agent_tokens > 0 and int(token_consumed.get("consumed_total_tokens", 0)) > max_agent_tokens:
+            reason = (
+                "agent_token_budget_exhausted:"
+                f"{int(token_consumed.get('consumed_total_tokens', 0))}>{max_agent_tokens}"
+            )
+            if not allow_fallback:
+                raise RuntimeError(reason)
+            finalizer_fallback_used = True
+            finalizer_fallback_reason = f"finalizer_unavailable_or_invalid: {reason}"
+            final_response = AdapterResponse(
+                raw_output="[supervisor finalizer fallback] using deterministic merged payload",
+                structured_payload=merged_payload,
+                backend_metadata={
+                    "adapter": adapter.adapter_name,
+                    "supervisor_finalizer_fallback": True,
+                    "supervisor_finalizer_fallback_reason": finalizer_fallback_reason,
+                },
+                error=None,
+            )
+            parse_result = process_adapter_response(final_response)
+            token_consumed, token_usage = self._build_token_consumption(final_response)
         invocation = AgentInvocationRecord(
             agent_id=finalizer_agent.agent_id,
             role=finalizer_agent.role,
@@ -749,6 +821,8 @@ class SupervisorOrchestrator:
             tool_call_transcript=[],
             policy_violations=[],
         )
+        if finalizer_fallback_reason:
+            invocation.error_summary = finalizer_fallback_reason
         result = AgentResultRecord(
             agent_id=finalizer_agent.agent_id,
             payload=final_response.structured_payload or {},
@@ -901,6 +975,7 @@ class SupervisorOrchestrator:
         agent: AgentConfig,
         sequence_index: int,
         tool_results: list[dict[str, Any]],
+        cross_agent_preview_feedback: list[dict[str, Any]] | None = None,
     ) -> AdapterRequest:
         metadata = dict(base_request.metadata)
         metadata["agent_invocation"] = {
@@ -918,6 +993,8 @@ class SupervisorOrchestrator:
             "max_retries_per_tool_call": agent.budget_profile.max_retries_per_tool_call,
             "tool_results": tool_results[-agent.budget_profile.max_tool_calls :],
         }
+        if cross_agent_preview_feedback:
+            metadata["cross_agent_preview_feedback"] = list(cross_agent_preview_feedback[-5:])
         return AdapterRequest(
             session_id=base_request.session_id,
             turn_number=base_request.turn_number,

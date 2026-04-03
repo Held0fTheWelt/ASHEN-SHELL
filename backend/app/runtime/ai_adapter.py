@@ -15,6 +15,7 @@ the same interface. The runtime depends on this contract, not on specific provid
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
@@ -107,6 +108,45 @@ class StoryAIAdapter(ABC):
             String name (e.g., "mock", "claude-3-sonnet", "gpt-4")
         """
         pass
+
+
+def generate_with_timeout(
+    *,
+    adapter: StoryAIAdapter,
+    request: AdapterRequest,
+    timeout_ms: int,
+) -> AdapterResponse:
+    """Run adapter.generate with bounded wait-time containment.
+
+    This is a containment boundary only. For sync adapter APIs we cannot hard-cancel
+    a provider call that is already running; we return a timeout error and continue.
+    """
+    bounded_timeout_ms = max(int(timeout_ms), 1)
+    executor = ThreadPoolExecutor(max_workers=1)
+    future = executor.submit(adapter.generate, request)
+    try:
+        return future.result(timeout=bounded_timeout_ms / 1000.0)
+    except FutureTimeoutError:
+        future.cancel()
+        return AdapterResponse(
+            raw_output="",
+            structured_payload=None,
+            backend_metadata={
+                "adapter": adapter.adapter_name,
+                "timeout_ms": bounded_timeout_ms,
+                "timeout_mode": "thread_containment_no_hard_cancel",
+            },
+            error=f"adapter_generate_timeout:{bounded_timeout_ms}ms",
+        )
+    except Exception as exc:  # pragma: no cover - defensive adapter boundary
+        return AdapterResponse(
+            raw_output="",
+            structured_payload=None,
+            backend_metadata={"adapter": adapter.adapter_name},
+            error=f"adapter_generate_exception:{exc}",
+        )
+    finally:
+        executor.shutdown(wait=False, cancel_futures=True)
 
 
 def _to_int_or_none(value: Any) -> int | None:

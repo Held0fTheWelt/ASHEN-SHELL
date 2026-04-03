@@ -11,6 +11,7 @@ Comprehensive test suite for the canonical AI turn executor:
 
 import asyncio
 import pytest
+import time
 from datetime import datetime, timezone
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -81,6 +82,24 @@ class DeterministicAIAdapter(StoryAIAdapter):
         return AdapterResponse(
             raw_output=f"[deterministic] turn={request.turn_number}",
             structured_payload=self.payload or {},
+        )
+
+
+class SlowDeterministicAdapter(StoryAIAdapter):
+    """Adapter that blocks long enough to trigger runtime timeout containment."""
+
+    def __init__(self, *, sleep_seconds: float = 0.05):
+        self.sleep_seconds = sleep_seconds
+
+    @property
+    def adapter_name(self) -> str:
+        return "slow-deterministic"
+
+    def generate(self, request: AdapterRequest) -> AdapterResponse:
+        time.sleep(self.sleep_seconds)
+        return AdapterResponse(
+            raw_output=f"[slow] turn={request.turn_number}",
+            structured_payload=VALID_PAYLOAD,
         )
 
 
@@ -1447,3 +1466,35 @@ def test_agent_orchestration_has_priority_over_requested_tool_loop(
     assert controls.get("agent_orchestration_active") is True
     assert controls.get("tool_loop_requested") is True
     assert controls.get("tool_loop_active") is False
+
+
+def test_adapter_generate_timeout_is_contained_with_explicit_failure_reason(
+    god_of_carnage_module_with_state, god_of_carnage_module
+):
+    session = god_of_carnage_module_with_state
+    session.execution_mode = "ai"
+    session.metadata["adapter_generate_timeout_ms"] = 5
+
+    result = asyncio.run(
+        execute_turn_with_ai(
+            session,
+            current_turn=session.turn_counter + 1,
+            adapter=SlowDeterministicAdapter(sleep_seconds=0.05),
+            module=god_of_carnage_module,
+        )
+    )
+
+    assert result.failure_reason == ExecutionFailureReason.GENERATION_ERROR
+    decision_logs = session.metadata.get("ai_decision_logs", [])
+    assert decision_logs
+    assert any(
+        (
+            log.guard_notes
+            and "adapter_generate_timeout" in log.guard_notes
+        )
+        or (
+            log.recovery_notes
+            and "adapter_generate_timeout" in log.recovery_notes
+        )
+        for log in decision_logs
+    )
