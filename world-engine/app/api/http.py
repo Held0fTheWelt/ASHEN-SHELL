@@ -200,14 +200,20 @@ def get_internal_transcript(run_id: str, manager: RuntimeManager = Depends(get_m
 
 
 class TerminateRunRequest(BaseModel):
-    actor_display_name: str
-    reason: str
+    """Audit fields for internal terminate; both optional (empty strings default)."""
+
+    actor_display_name: str = ""
+    reason: str = ""
 
 
 @router.post("/internal/runs/{run_id}/terminate", dependencies=[Depends(_require_internal_api_key)])
 def terminate_run_internal(run_id: str, payload: TerminateRunRequest, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
     try:
-        return manager.terminate_run(run_id)
+        return manager.terminate_run(
+            run_id,
+            actor_display_name=payload.actor_display_name,
+            reason=payload.reason,
+        )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Run not found") from exc
 
@@ -215,7 +221,7 @@ def terminate_run_internal(run_id: str, payload: TerminateRunRequest, manager: R
 @router.delete("/runs/{run_id}", dependencies=[Depends(_require_internal_api_key)])
 def delete_run(run_id: str, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
     try:
-        return manager.terminate_run(run_id)
+        return manager.terminate_run(run_id, actor_display_name="internal_delete", reason="DELETE /api/runs")
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Run not found") from exc
 

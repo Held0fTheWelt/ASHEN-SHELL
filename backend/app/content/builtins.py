@@ -19,6 +19,8 @@ from app.content.models import (
 
 
 def load_builtin_templates() -> dict[str, ExperienceTemplate]:
+    # Backend builtins seed and validate authored template shapes. They are not the
+    # primary runtime content authority; published backend feed remains canonical.
     templates = [
         build_god_of_carnage_solo(),
         build_apartment_confrontation_group(),

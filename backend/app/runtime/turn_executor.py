@@ -1,10 +1,8 @@
-"""Mock turn executor for the story runtime.
+"""Transitional: in-process turn pipeline (mock path + validation) for ``SessionState``.
 
-W2.0.3 implementation: Canonical mock turn executor that processes deterministic
-mock decisions through validation, delta construction, and state application
-without real AI integration.
-
-Implements the core pipeline: validate -> construct deltas -> apply -> finalize.
+Deterministic mock decisions through validate → deltas → apply → finalize for **local
+simulation and tests**. Not authoritative live play; World Engine owns server-side
+execution for real runs.
 """
 
 from __future__ import annotations

@@ -1,13 +1,11 @@
-"""W2.0.1 — Canonical story runtime models.
+"""W2.0.1 — Reusable Pydantic models for in-process story session shape (SessionState, turns, deltas, logs).
 
-Establishes the foundational data structures for the story loop:
-- SessionState: session identity, module reference, current scene, status
-- TurnState: turn metadata, input/output snapshots, execution status
-- EventLogEntry: immutable event record with audit trail
-- StateDelta: atomic world state change with validation lifecycle
-- AIDecisionLog: AI proposal record with acceptance/rejection tracking
+These types define JSON-serializable structures for tests, tooling, persistence helpers,
+and the **non-authoritative** in-process W2 pipeline. They are **not** evidence that the
+Flask backend is the live narrative runtime; authoritative play runs in the **World
+Engine** (see ``docs/architecture/backend_runtime_classification.md``).
 
-These models are append-only and designed for reproducibility and logging.
+Design: append-oriented event and delta records for reproducibility and logging.
 """
 
 from __future__ import annotations

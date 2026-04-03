@@ -1,3 +1,10 @@
+"""Reusable DTOs for experience templates and ``RuntimeInstance`` (JSON-serializable run state).
+
+Shared schema for built-in templates and the **deprecated transitional** in-process
+``RuntimeManager`` tests. Live play authority and persistence belong to the **World
+Engine**; import these types for shape validation, not as proof execution happens here.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

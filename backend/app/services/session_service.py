@@ -1,12 +1,16 @@
-"""W3.1 — Session service layer for API exposure.
+"""Session service layer for API exposure (non-authoritative in-process W2 bridge).
 
-Provides the canonical service-level interface between API routes and W2 runtime:
-- create_session: Start a new session from a module
-- get_session: Retrieve active session state
-- execute_turn: Execute a turn in an active session
-- get_session_logs: Retrieve session event logs
-- get_session_state: Get canonical world state
+The Flask backend is **not** the live narrative runtime. Authoritative runs execute in
+the **World Engine** play service (``game_service`` HTTP client). This module wires
+content modules into an in-memory ``SessionState`` for tests, MCP/operator endpoints,
+and deferred W3.2 work — see ``docs/architecture/backend_runtime_classification.md``.
+
+Exposed operations:
+- create_session: start a **local** session from a module (registers in volatile store)
+- get_session / execute_turn / logs / state: still deferred (NotImplementedError)
 """
+
+from __future__ import annotations
 
 from app.runtime.session_start import start_session
 from app.runtime.runtime_models import SessionState
@@ -14,20 +18,16 @@ from app.content.module_loader import load_module
 
 
 def create_session(module_id: str) -> SessionState:
-    """Start a new story session from a content module.
+    """Bootstrap in-process ``SessionState`` from a content module (deprecated transitional).
 
-    Calls the W2 runtime session start workflow directly:
-    1. Loads and validates the target module
-    2. Determines the initial scene (data-driven)
-    3. Constructs initial SessionState with seeded canonical state
-    4. Registers session in the runtime session store
-    5. Returns the SessionState
+    **Not** creation of a World Engine run. Steps: load module, seed initial scene/state,
+    register in ``session_store`` (volatile, process-local).
 
     Args:
         module_id: Identifier of the module (e.g., "god_of_carnage")
 
     Returns:
-        SessionState for the newly created session
+        SessionState for the newly created in-process session
 
     Raises:
         SessionStartError: If module loading fails or module is invalid
@@ -35,8 +35,8 @@ def create_session(module_id: str) -> SessionState:
     result = start_session(module_id)
     session_state = result.session
 
-    # Register session in the runtime session store
     from app.runtime.session_store import create_session as register_session
+
     module = load_module(module_id)
     register_session(session_state.session_id, session_state, module)
 
@@ -49,7 +49,7 @@ def get_session(session_id: str) -> SessionState:
     W3.2 Deferral: Requires persistence layer.
 
     Raises:
-        NotImplementedError: Requires W3.2 persistence layer
+        NotImplementedError: Requires W3.2 session persistence layer
     """
     raise NotImplementedError("get_session requires W3.2 session persistence")
 
@@ -87,7 +87,7 @@ def get_session_logs(session_id: str) -> list:
 
 
 def get_session_state(session_id: str) -> dict:
-    """Get canonical world state for a session.
+    """Get world state dict for a session (W2 ``canonical_state`` field shape).
 
     W3.2 Deferral: Requires persistence layer for state retrieval.
 
@@ -95,7 +95,7 @@ def get_session_state(session_id: str) -> dict:
         session_id: Session identifier
 
     Returns:
-        Canonical world state dict
+        World state dict
 
     Raises:
         NotImplementedError: Requires W3.2 persistence layer

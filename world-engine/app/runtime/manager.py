@@ -409,7 +409,13 @@ class RuntimeManager:
             "lobby": self.engines[run_id].build_lobby_payload(instance),
         }
 
-    def terminate_run(self, run_id: str) -> dict[str, Any]:
+    def terminate_run(
+        self,
+        run_id: str,
+        *,
+        actor_display_name: str | None = None,
+        reason: str | None = None,
+    ) -> dict[str, Any]:
         instance = self.instances.pop(run_id, None)
         self.engines.pop(run_id, None)
         self.connections.pop(run_id, None)
@@ -417,7 +423,13 @@ class RuntimeManager:
         if instance is None:
             raise KeyError(run_id)
         self.store.delete(run_id)
-        return {"run_id": run_id, "terminated": True, "template_id": instance.template_id}
+        return {
+            "run_id": run_id,
+            "terminated": True,
+            "template_id": instance.template_id,
+            "actor_display_name": (actor_display_name or "").strip(),
+            "reason": (reason or "").strip(),
+        }
 
     async def connect(self, run_id: str, participant_id: str, websocket: WebSocket) -> None:
         await websocket.accept()

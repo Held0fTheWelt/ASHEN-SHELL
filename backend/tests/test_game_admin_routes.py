@@ -119,9 +119,33 @@ def test_game_admin_update_experience_increments_version(client, moderator_heade
 
 def test_game_admin_runtime_proxy_routes(client, moderator_headers, monkeypatch):
     monkeypatch.setattr('app.api.v1.game_admin_routes.list_play_runs', lambda: [{'id': 'run-1', 'template_id': 'god_of_carnage_solo'}])
-    monkeypatch.setattr('app.api.v1.game_admin_routes.get_run_details', lambda run_id: {'id': run_id, 'status': 'running', 'participants': []})
+    monkeypatch.setattr(
+        'app.api.v1.game_admin_routes.get_run_details',
+        lambda run_id: {
+            'run': {'id': run_id, 'status': 'running', 'participants': []},
+            'template_source': 'test',
+            'template': {
+                'id': 'god_of_carnage_solo',
+                'title': 'T',
+                'kind': 'solo_story',
+                'join_policy': 'public',
+                'min_humans_to_start': 1,
+            },
+            'store': {'backend': 'memory'},
+            'lobby': {},
+        },
+    )
     monkeypatch.setattr('app.api.v1.game_admin_routes.get_run_transcript', lambda run_id: {'run_id': run_id, 'entries': [{'kind': 'speech_committed', 'text': 'hello'}]})
-    monkeypatch.setattr('app.api.v1.game_admin_routes.terminate_run', lambda run_id, actor_display_name=None, reason=None: {'run_id': run_id, 'status': 'completed', 'reason': reason})
+    monkeypatch.setattr(
+        'app.api.v1.game_admin_routes.terminate_run',
+        lambda run_id, actor_display_name=None, reason=None: {
+            'run_id': run_id,
+            'terminated': True,
+            'template_id': 'god_of_carnage_solo',
+            'actor_display_name': actor_display_name or '',
+            'reason': reason or '',
+        },
+    )
 
     runs = client.get('/api/v1/game-admin/runtime/runs', headers=moderator_headers)
     assert runs.status_code == 200
@@ -129,7 +153,7 @@ def test_game_admin_runtime_proxy_routes(client, moderator_headers, monkeypatch)
 
     detail = client.get('/api/v1/game-admin/runtime/runs/run-1', headers=moderator_headers)
     assert detail.status_code == 200
-    assert detail.get_json()['status'] == 'running'
+    assert detail.get_json()['run']['status'] == 'running'
 
     transcript = client.get('/api/v1/game-admin/runtime/runs/run-1/transcript', headers=moderator_headers)
     assert transcript.status_code == 200
@@ -137,7 +161,9 @@ def test_game_admin_runtime_proxy_routes(client, moderator_headers, monkeypatch)
 
     terminate = client.post('/api/v1/game-admin/runtime/runs/run-1/terminate', json={'reason': 'Moderation stop'}, headers=moderator_headers)
     assert terminate.status_code == 200
-    assert terminate.get_json()['status'] == 'completed'
+    body = terminate.get_json()
+    assert body['terminated'] is True
+    assert body['reason'] == 'Moderation stop'
 
 
 def test_game_admin_list_experiences_query_flags(client, moderator_headers, app):

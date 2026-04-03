@@ -483,6 +483,10 @@ def game_ops_run_transcript(run_id: str):
 @require_jwt_moderator_or_admin
 def game_ops_run_terminate(run_id: str):
     try:
-        return jsonify(terminate_play_run(run_id))
+        actor = _current_user()
+        actor_name = (actor.username if actor else "moderator").strip() or "moderator"
+        return jsonify(
+            terminate_play_run(run_id, actor_display_name=actor_name, reason="game_ops_terminate"),
+        )
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)

@@ -245,7 +245,16 @@ def test_game_ops_proxy_endpoints(client, moderator_headers, monkeypatch):
     monkeypatch.setattr('app.api.v1.game_routes.list_play_runs', lambda: [{'id': 'run-123', 'template_title': 'God of Carnage', 'status': 'running'}])
     monkeypatch.setattr('app.api.v1.game_routes.get_play_run_details', lambda run_id: {'run': {'id': run_id}, 'template_source': 'backend_published'})
     monkeypatch.setattr('app.api.v1.game_routes.get_play_run_transcript', lambda run_id: {'run_id': run_id, 'entries': [{'text': 'One line.'}]})
-    monkeypatch.setattr('app.api.v1.game_routes.terminate_play_run', lambda run_id: {'run_id': run_id, 'terminated': True})
+    monkeypatch.setattr(
+        'app.api.v1.game_routes.terminate_play_run',
+        lambda run_id, **kwargs: {
+            'run_id': run_id,
+            'terminated': True,
+            'template_id': 'god_of_carnage_solo',
+            'actor_display_name': kwargs.get('actor_display_name') or '',
+            'reason': kwargs.get('reason') or '',
+        },
+    )
 
     runs_response = client.get('/api/v1/game/ops/runs', headers=moderator_headers)
     assert runs_response.status_code == 200

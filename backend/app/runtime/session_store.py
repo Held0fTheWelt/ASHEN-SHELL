@@ -1,9 +1,9 @@
-"""W3.3 In-Memory Session Store
+"""DEPRECATED (transitional): volatile in-memory registry for W2 ``RuntimeSession`` wrappers.
 
-Provides the canonical in-memory registry for RuntimeSession objects.
-Sessions are keyed by session_id and lost on server restart (intentional MVP scope).
-
-This is the ONLY server-side runtime session registry for W3.3.
+Maps ``session_id`` → in-process ``SessionState`` for operator/MCP routes and tests.
+**Not** authoritative for live play (World Engine owns runs). **Not** a durable or
+global registry — data is lost on restart. Rationale: bridge until engine-only
+execution and persistence subsume these endpoints.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ class RuntimeSession:
 
     Attributes:
         session_id: Unique session identifier
-        current_runtime_state: Full SessionState from W2 (canonical)
+        current_runtime_state: Full in-process ``SessionState`` (not live-engine authority)
         module: Loaded ContentModule (required for dispatch_turn)
         turn_counter: Current turn number (incremented after each execution)
         updated_at: Timestamp of last update
@@ -74,9 +74,9 @@ def get_session(session_id: str) -> RuntimeSession | None:
 
 
 def update_session(session_id: str, updated_state: SessionState) -> RuntimeSession | None:
-    """Update a session's canonical state.
+    """Replace ``current_runtime_state`` after an in-process turn (volatile store).
 
-    Replaces current_runtime_state with new state, updates timestamp.
+    Replaces ``current_runtime_state`` with new state, updates timestamp.
 
     Args:
         session_id: Unique session identifier

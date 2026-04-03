@@ -1,11 +1,8 @@
-"""Canonical scene transition and ending legality rules.
+"""Reusable scene transition and ending legality rules for W2 ``SessionState``.
 
-Provides the authoritative legality checking for:
-- Scene transitions (phase_transitions)
-- Ending conditions (ending_conditions)
-
-Used by both validators.py and next_situation.py to ensure consistent
-decision-making about narrative progression.
+Single implementation shared by ``validators`` and ``next_situation`` for consistent
+**in-process** narrative checks. Not “authority” over World Engine live runs — engine
+contracts govern production play.
 """
 
 from __future__ import annotations

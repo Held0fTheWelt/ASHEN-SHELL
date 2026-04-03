@@ -1,13 +1,11 @@
-"""W2.1-R1 — Canonical Turn Execution Dispatcher
+"""DEPRECATED (transitional): in-process turn router for W2 ``SessionState``.
 
-Provides the single authoritative entry point for turn execution, routing to
-either mock or AI execution based on session execution_mode.
-
-The dispatcher is the canonical runtime choice point: all turn execution requests
-go through dispatch_turn(), which selects the appropriate execution path.
+``dispatch_turn()`` chooses mock vs AI **inside this Python process only**. It is
+**not** the live play entry point (World Engine). Kept for unit tests, preview, and
+offline tooling until callers migrate to engine APIs.
 
 Core function:
-- dispatch_turn() — Route turn execution to mock or AI path based on mode
+- dispatch_turn() — mock vs AI path by ``execution_mode`` (in-process only).
 """
 
 from __future__ import annotations

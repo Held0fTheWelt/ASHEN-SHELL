@@ -1,7 +1,7 @@
-"""W2.1.4 — Integrate Canonical AI Execution Path into Turn Loop
+"""Transitional: AI-backed turn execution inside the backend ``SessionState`` loop.
 
-Bridges the AI adapter layer (W2.1.1–3) into the existing turn runtime (W2.0.3).
-The AI path wraps the mock path; no existing code is modified.
+Bridges adapters into ``execute_turn`` for **in-process** flows only — not a second
+live runtime alongside the World Engine.
 
 Core functions:
 1. build_adapter_request — Maps session/module to AdapterRequest

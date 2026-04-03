@@ -115,5 +115,8 @@ def test_internal_run_detail_and_terminate(tmp_path: Path):
     terminate_response = client.post(f"/api/internal/runs/{run_id}/terminate", json={"actor_display_name": "Ops", "reason": "Test stop"}, headers=api_key)
     assert terminate_response.status_code == 200
     body = terminate_response.json()
-    assert body["terminated"] == True
+    assert body["terminated"] is True
     assert body["run_id"] == run_id
+    assert body["actor_display_name"] == "Ops"
+    assert body["reason"] == "Test stop"
+    assert isinstance(body.get("template_id"), str) and body["template_id"]

@@ -23,6 +23,82 @@ class GameServiceConfigError(GameServiceError):
         super().__init__(message, status_code=500)
 
 
+def _unexpected(kind: str) -> GameServiceError:
+    return GameServiceError(f"Play service returned an unexpected {kind} payload.")
+
+
+def _parse_create_run_v1(payload: object) -> dict:
+    """Validate nested-run V1 create response; reject contradictory flat run_id."""
+    if not isinstance(payload, dict):
+        raise _unexpected("create_run")
+    run = payload.get("run")
+    if not isinstance(run, dict):
+        raise _unexpected("create_run")
+    run_inner_id = run.get("id")
+    if not isinstance(run_inner_id, str) or not run_inner_id.strip():
+        raise _unexpected("create_run")
+    top_run_id = payload.get("run_id")
+    if top_run_id is not None and top_run_id != run_inner_id:
+        raise GameServiceError("Play service create_run payload has contradictory run_id vs run.id.")
+    if not isinstance(payload.get("store"), dict):
+        raise _unexpected("create_run")
+    if not isinstance(payload.get("hint"), str):
+        raise _unexpected("create_run")
+    return payload
+
+
+def _parse_run_details_v1(payload: object, *, requested_run_id: str) -> dict:
+    """Validate nested-run V1 details; reject flat-only or contradictory identity."""
+    if not isinstance(payload, dict):
+        raise _unexpected("run detail")
+    run = payload.get("run")
+    if not isinstance(run, dict):
+        raise _unexpected("run detail")
+    inner_id = run.get("id")
+    if not isinstance(inner_id, str) or not inner_id.strip():
+        raise _unexpected("run detail")
+    if inner_id != requested_run_id:
+        raise GameServiceError("Play service run detail run.id does not match requested run_id.")
+    top_run_id = payload.get("run_id")
+    if top_run_id is not None and top_run_id != inner_id:
+        raise GameServiceError("Play service run detail payload has contradictory run_id vs run.id.")
+    if not isinstance(payload.get("template_source"), str):
+        raise _unexpected("run detail")
+    template = payload.get("template")
+    if not isinstance(template, dict):
+        raise _unexpected("run detail")
+    for key in ("id", "title", "kind", "join_policy", "min_humans_to_start"):
+        if key not in template:
+            raise _unexpected("run detail")
+    if not isinstance(payload.get("store"), dict):
+        raise _unexpected("run detail")
+    lobby = payload.get("lobby")
+    if lobby is not None and not isinstance(lobby, dict):
+        raise _unexpected("run detail")
+    return payload
+
+
+def _parse_terminate_v1(payload: object, *, requested_run_id: str) -> dict:
+    """Validate terminate envelope V1 (no legacy status-only success)."""
+    if not isinstance(payload, dict):
+        raise _unexpected("terminate")
+    if payload.get("terminated") is not True:
+        raise _unexpected("terminate")
+    rid = payload.get("run_id")
+    tid = payload.get("template_id")
+    if not isinstance(rid, str) or not rid.strip():
+        raise _unexpected("terminate")
+    if not isinstance(tid, str) or not tid.strip():
+        raise _unexpected("terminate")
+    if rid != requested_run_id:
+        raise GameServiceError("Play service terminate payload run_id does not match requested run_id.")
+    if not isinstance(payload.get("actor_display_name"), str):
+        raise _unexpected("terminate")
+    if not isinstance(payload.get("reason"), str):
+        raise _unexpected("terminate")
+    return payload
+
+
 @dataclass(slots=True)
 class PlayJoinContext:
     run_id: str
@@ -111,9 +187,7 @@ def create_run(*, template_id: str, account_id: str, display_name: str, characte
             "display_name": display_name,
         },
     )
-    if not isinstance(payload, dict) or "run_id" not in payload:
-        raise GameServiceError("Play service returned an unexpected create_run payload.")
-    return payload
+    return _parse_create_run_v1(payload)
 
 
 def resolve_join_context(
@@ -168,9 +242,7 @@ def issue_play_ticket(payload: dict, ttl_seconds: int | None = None) -> str:
 
 def get_run_details(run_id: str) -> dict:
     payload = _request("GET", f"/api/runs/{run_id}")
-    if not isinstance(payload, dict) or "run_id" not in payload:
-        raise GameServiceError("Play service returned an unexpected run detail payload.")
-    return payload
+    return _parse_run_details_v1(payload, requested_run_id=run_id)
 
 
 def get_run_transcript(run_id: str) -> dict:
@@ -180,8 +252,19 @@ def get_run_transcript(run_id: str) -> dict:
     return payload
 
 
-def terminate_run(run_id: str) -> dict:
-    payload = _request("DELETE", f"/api/runs/{run_id}", internal=True)
-    if not isinstance(payload, dict) or "status" not in payload:
-        raise GameServiceError("Play service returned an unexpected terminate payload.")
-    return payload
+def terminate_run(
+    run_id: str,
+    *,
+    actor_display_name: str | None = None,
+    reason: str | None = None,
+) -> dict:
+    payload = _request(
+        "POST",
+        f"/api/internal/runs/{run_id}/terminate",
+        json_payload={
+            "actor_display_name": (actor_display_name or "").strip(),
+            "reason": (reason or "").strip(),
+        },
+        internal=True,
+    )
+    return _parse_terminate_v1(payload, requested_run_id=run_id)

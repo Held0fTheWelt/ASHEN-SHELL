@@ -1,3 +1,10 @@
+"""DEPRECATED (transitional): In-process runtime manager (runs, WebSockets, run store).
+
+Used by **tests** (e.g. ``JsonRunStore``, lobby, commands). A former FastAPI shadow
+router under ``app.api.http`` duplicated play HTTP here and was **removed** (Block 2).
+**Not** the authoritative live play host — that is the World Engine.
+"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,10 +1,8 @@
-"""W2.0.2 — Session start path for the story runtime.
+"""DEPRECATED (transitional): bootstrap a W2 ``SessionState`` inside the backend process.
 
-Provides the canonical session-start workflow:
-- Load target content module
-- Determine initial scene from module data
-- Construct initial SessionState with seeded canonical state
-- Create turn-ready basis and initial events
+Loads modules and seeds ``canonical_state`` for **tests, tooling, and MCP/dev** — not
+where production narrative runs execute (**World Engine** is authoritative).
+Rationale: reuse backend content loading without duplicating module graphs in-engine.
 """
 
 from pathlib import Path
@@ -105,9 +103,9 @@ def start_session(
     root_path: Path | None = None,
     seed: str | None = None,
 ) -> SessionStartResult:
-    """Start a new story session from a content module.
+    """Bootstrap in-process ``SessionState`` from a content module (not a World Engine run).
 
-    Performs the canonical session-start workflow:
+    Performs the session-start workflow inside this process:
     1. Loads and validates the target module
     2. Determines the initial scene (data-driven from phase sequence)
     3. Constructs initial SessionState with seeded canonical state

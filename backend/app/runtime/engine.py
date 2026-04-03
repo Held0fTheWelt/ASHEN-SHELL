@@ -1,3 +1,10 @@
+"""DEPRECATED (transitional): In-process experience runtime engine (rooms, actions, snapshots).
+
+Mirrors World Engine mechanics for **unit tests and local experiments** only. The Flask
+app does not expose this as public live play; ``game_service`` targets the external
+World Engine. See ``docs/architecture/backend_runtime_classification.md``.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

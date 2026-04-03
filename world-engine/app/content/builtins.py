@@ -19,6 +19,8 @@ from app.content.models import (
 
 
 def load_builtin_templates() -> dict[str, ExperienceTemplate]:
+    # Builtins are fallback/test/demo templates. Published backend content is primary
+    # for canonical operations and may override matching template ids at sync time.
     templates = [
         build_god_of_carnage_solo(),
         build_apartment_confrontation_group(),

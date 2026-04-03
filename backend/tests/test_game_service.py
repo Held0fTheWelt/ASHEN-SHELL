@@ -164,23 +164,52 @@ class TestGameServiceClient:
             assert list_templates() == []
             assert list_runs() == []
 
+            _detail_v1 = {
+                "run": {"id": "run-1", "status": "lobby"},
+                "template_source": "builtin",
+                "template": {
+                    "id": "tpl",
+                    "title": "T",
+                    "kind": "solo_story",
+                    "join_policy": "public",
+                    "min_humans_to_start": 1,
+                },
+                "store": {"backend": "memory"},
+                "lobby": {},
+            }
+
             def _fake_request(method, path, **kwargs):
                 if method == "POST" and path == "/api/runs":
-                    return {"run_id": "run-1", "run": {"id": "run-1"}}
+                    return {"run": {"id": "run-1"}, "store": {"backend": "memory"}, "hint": "join via ws"}
                 if method == "GET" and path.endswith("/transcript"):
                     return {"run_id": "run-1", "entries": [{"text": "hello"}]}
-                if method == "DELETE":
-                    return {"run_id": "run-1", "status": "terminated"}
-                return {"run_id": "run-1", "run": {"id": "run-1"}}
+                if method == "POST" and path.endswith("/terminate"):
+                    return {
+                        "run_id": "run-1",
+                        "terminated": True,
+                        "template_id": "tpl-1",
+                        "actor_display_name": "ops",
+                        "reason": "cleanup",
+                    }
+                if method == "GET" and path == "/api/runs/run-1":
+                    return _detail_v1
+                return _detail_v1
 
             monkeypatch.setattr("app.services.game_service._request", _fake_request)
             assert create_run(template_id="tpl-1", account_id="7", display_name="Bruno") == {
-                "run_id": "run-1",
                 "run": {"id": "run-1"},
+                "store": {"backend": "memory"},
+                "hint": "join via ws",
             }
-            assert get_run_details("run-1") == {"run_id": "run-1", "run": {"id": "run-1"}}
+            assert get_run_details("run-1") == _detail_v1
             assert get_run_transcript("run-1") == {"run_id": "run-1", "entries": [{"text": "hello"}]}
-            assert terminate_run("run-1") == {"run_id": "run-1", "status": "terminated"}
+            assert terminate_run("run-1", actor_display_name="ops", reason="cleanup") == {
+                "run_id": "run-1",
+                "terminated": True,
+                "template_id": "tpl-1",
+                "actor_display_name": "ops",
+                "reason": "cleanup",
+            }
 
             monkeypatch.setattr(
                 "app.services.game_service._request",
@@ -213,6 +242,84 @@ class TestGameServiceClient:
             with pytest.raises(GameServiceError, match="unexpected transcript payload"):
                 get_run_transcript("run-1")
             with pytest.raises(GameServiceError, match="unexpected terminate payload"):
+                terminate_run("run-1")
+
+    def test_terminate_run_uses_post_internal_terminate_with_json_body(self, app, monkeypatch):
+        calls: list[tuple] = []
+
+        def capture(method, path, *, json_payload=None, internal=False, **kwargs):
+            calls.append((method, path, json_payload, internal))
+            return {
+                "run_id": "r9",
+                "terminated": True,
+                "template_id": "tpl",
+                "actor_display_name": "u",
+                "reason": "stop",
+            }
+
+        monkeypatch.setattr("app.services.game_service._request", capture)
+        with app.app_context():
+            app.config["PLAY_SERVICE_INTERNAL_URL"] = "https://internal.example.com"
+            out = game_service.terminate_run("r9", actor_display_name="u", reason="stop")
+        assert out["terminated"] is True
+        assert calls[0] == (
+            "POST",
+            "/api/internal/runs/r9/terminate",
+            {"actor_display_name": "u", "reason": "stop"},
+            True,
+        )
+
+    def test_create_run_rejects_contradictory_flat_run_id(self, app, monkeypatch):
+        monkeypatch.setattr(
+            "app.services.game_service._request",
+            lambda *a, **k: {
+                "run_id": "other",
+                "run": {"id": "run-1"},
+                "store": {},
+                "hint": "h",
+            },
+        )
+        with app.app_context():
+            app.config["PLAY_SERVICE_PUBLIC_URL"] = "https://play.example.com"
+            with pytest.raises(GameServiceError, match="contradictory run_id"):
+                create_run(template_id="t", account_id="1", display_name="x")
+
+    def test_get_run_details_rejects_path_run_id_mismatch(self, app, monkeypatch):
+        monkeypatch.setattr(
+            "app.services.game_service._request",
+            lambda *a, **k: {
+                "run": {"id": "wrong"},
+                "template_source": "builtin",
+                "template": {
+                    "id": "t",
+                    "title": "T",
+                    "kind": "solo_story",
+                    "join_policy": "public",
+                    "min_humans_to_start": 1,
+                },
+                "store": {},
+                "lobby": {},
+            },
+        )
+        with app.app_context():
+            app.config["PLAY_SERVICE_PUBLIC_URL"] = "https://play.example.com"
+            with pytest.raises(GameServiceError, match="does not match requested run_id"):
+                get_run_details("expected")
+
+    def test_terminate_requires_json_true_not_truthy(self, app, monkeypatch):
+        monkeypatch.setattr(
+            "app.services.game_service._request",
+            lambda *a, **k: {
+                "run_id": "run-1",
+                "terminated": 1,
+                "template_id": "t",
+                "actor_display_name": "",
+                "reason": "",
+            },
+        )
+        with app.app_context():
+            app.config["PLAY_SERVICE_INTERNAL_URL"] = "https://internal.example.com"
+            with pytest.raises(GameServiceError, match="unexpected terminate"):
                 terminate_run("run-1")
 
     def test_issue_play_ticket_encodes_signed_payload(self, app, monkeypatch):

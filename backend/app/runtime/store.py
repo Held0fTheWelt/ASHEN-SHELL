@@ -1,3 +1,9 @@
+"""Transitional: persistence backends for in-process ``RuntimeManager`` (tests / local runs).
+
+These stores back the **deprecated** backend-local experience runtime, not the World
+Engine authoritative store.
+"""
+
 from __future__ import annotations
 
 import json

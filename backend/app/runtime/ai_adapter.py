@@ -1,15 +1,14 @@
-"""W2.1.1 — Canonical AI Adapter Contract
+"""W2.1.1 — Reusable AI adapter contract for the in-process W2 session pipeline.
 
-Establishes the interface boundary between the story runtime and AI model integration.
+Defines stable request/response shapes between **backend-local** turn code and model
+providers. Provider-agnostic (Claude, GPT, local, …). This is **not** the World Engine
+live runtime boundary; it supports tests and tooling inside this repo.
 
 The adapter contract defines:
-- AdapterRequest: canonical input to any AI adapter
-- AdapterResponse: canonical output from any AI adapter
+- AdapterRequest: normalized input to any story AI adapter
+- AdapterResponse: normalized output from any story AI adapter
 - StoryAIAdapter: abstract base class (protocol) for all adapters
 - MockStoryAIAdapter: deterministic mock implementation for testing
-
-This contract is provider-agnostic: Claude, GPT, local models, etc. all implement
-the same interface. The runtime depends on this contract, not on specific providers.
 """
 
 from __future__ import annotations
@@ -28,7 +27,7 @@ from app.runtime.runtime_models import TokenUsageRecord
 
 
 class AdapterRequest(BaseModel):
-    """Input to an AI adapter from the canonical story runtime.
+    """Input to an AI adapter from the in-process W2 session pipeline.
 
     Attributes:
         session_id: Session identifier
@@ -54,7 +53,7 @@ class AdapterRequest(BaseModel):
 
 
 class AdapterResponse(BaseModel):
-    """Output from an AI adapter to the canonical story runtime.
+    """Output from an AI adapter to the in-process W2 session pipeline.
 
     Attributes:
         raw_output: Raw text output from the AI model (empty string if error occurred)
@@ -81,12 +80,12 @@ class StoryAIAdapter(ABC):
     All AI adapter implementations (Claude, GPT, local models, etc.) must inherit
     from this class and implement the required methods.
 
-    This class defines the canonical contract that the story runtime depends on.
+    This class defines the stable contract that in-process turn code depends on.
     """
 
     @abstractmethod
     def generate(self, request: AdapterRequest) -> AdapterResponse:
-        """Generate a structured story decision from canonical runtime context.
+        """Generate a structured story decision from session-shaped context.
 
         Args:
             request: AdapterRequest with session, state, and context

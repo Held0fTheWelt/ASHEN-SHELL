@@ -1,15 +1,12 @@
-"""W3.1 — Session management API routes.
+"""W3.1 — Session management API routes (non-authoritative in-process W2 bridge).
 
-Provides the canonical REST API for session lifecycle:
-- POST /api/v1/sessions - Create a new session
-- GET /api/v1/sessions/<session_id> - Retrieve session state
-- POST /api/v1/sessions/<session_id>/turns - Execute a turn
-- GET /api/v1/sessions/<session_id>/logs - Retrieve event logs
-- GET /api/v1/sessions/<session_id>/state - Get canonical world state
+**Live play runs in the World Engine**, not in this Flask process. These routes expose
+volatile in-memory ``SessionState`` for operators/MCP/tests; they must not be treated as
+an equivalent live runtime (see ``docs/architecture/backend_runtime_classification.md``).
 
-Routes expose W2 runtime capabilities while deferring persistence operations
-to W3.2. The create endpoint is fully implemented; others return 501 Not
-Implemented pending persistence layer.
+- POST /api/v1/sessions — create in-process session (includes explicit JSON warnings)
+- GET … — snapshots/diagnostics (volatile; token may be required)
+- POST …/turns — 501 until W3.2
 """
 
 from flask import request, jsonify, g
@@ -70,7 +67,13 @@ def create_new_session():
 
     try:
         session = create_session(module_id)
-        return jsonify(session.model_dump(mode='json')), 201
+        body = session.model_dump(mode="json")
+        body["warnings"] = [
+            "backend_in_process_session_not_authoritative_live_runtime",
+            "authoritative_runs_execute_in_world_engine_play_service",
+            "in_memory_session_state_is_volatile",
+        ]
+        return jsonify(body), 201
     except Exception as e:
         # Error handling deferred to W3.2 comprehensive error handler
         return jsonify({"error": str(e)}), 500
@@ -114,7 +117,10 @@ def get_session_by_id(session_id):
         "adapter_name": state.adapter_name,
         "canonical_state": state.canonical_state if not is_truncated else None,
         "canonical_state_truncated": is_truncated,
-        "warnings": ["in_memory_session_state_is_volatile"]
+        "warnings": [
+            "in_memory_session_state_is_volatile",
+            "backend_session_snapshot_not_world_engine_run",
+        ],
     }
 
     return jsonify(response), 200
@@ -161,8 +167,9 @@ def get_session_diagnostics(session_id):
         "warnings": [
             "in_memory_session_state_is_volatile",
             "diagnostics_limited_to_current_runtime",
-            "guard_and_trace_not_recorded_yet"
-        ]
+            "guard_and_trace_not_recorded_yet",
+            "backend_diagnostics_not_world_engine_run",
+        ],
     }
 
     return jsonify(response), 200
@@ -203,8 +210,9 @@ def get_session_event_logs(session_id):
         "total": 0,
         "warnings": [
             "history_not_available_in_current_runtime",
-            "in_memory_session_state_is_volatile"
-        ]
+            "in_memory_session_state_is_volatile",
+            "backend_logs_not_world_engine_transcript",
+        ],
     }
 
     return jsonify(response), 200
@@ -242,7 +250,10 @@ def get_session_canonical_state(session_id):
         "current_scene_id": state.current_scene_id,
         "canonical_state": state.canonical_state if not is_truncated else None,
         "canonical_state_truncated": is_truncated,
-        "warnings": ["in_memory_session_state_is_volatile"]
+        "warnings": [
+            "in_memory_session_state_is_volatile",
+            "backend_state_not_world_engine_run",
+        ],
     }
 
     return jsonify(response), 200
@@ -287,7 +298,10 @@ def export_session_bundle(session_id):
             "adapter_name": state.adapter_name,
             "canonical_state": state.canonical_state if not is_truncated else None,
             "canonical_state_truncated": is_truncated,
-            "warnings": ["in_memory_session_state_is_volatile"]
+            "warnings": [
+                "in_memory_session_state_is_volatile",
+                "backend_snapshot_not_world_engine_run",
+            ],
         },
         "diagnostics": {
             "session_id": session_id,
@@ -309,16 +323,18 @@ def export_session_bundle(session_id):
             "warnings": [
                 "in_memory_session_state_is_volatile",
                 "diagnostics_limited_to_current_runtime",
-                "guard_and_trace_not_recorded_yet"
-            ]
+                "guard_and_trace_not_recorded_yet",
+                "backend_diagnostics_not_world_engine_run",
+            ],
         },
         "logs": {
             "events": [],
             "total": 0,
             "warnings": [
                 "history_not_available_in_current_runtime",
-                "in_memory_session_state_is_volatile"
-            ]
+                "in_memory_session_state_is_volatile",
+                "backend_logs_not_world_engine_transcript",
+            ],
         },
         "meta": {
             "exported_at": datetime.now(timezone.utc).isoformat(),

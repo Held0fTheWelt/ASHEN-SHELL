@@ -1,11 +1,6 @@
-"""W3.1 — Integration tests for session API routes.
+"""W3.1 — Integration tests for session API routes (in-process W2 bridge, not World Engine).
 
-Tests the session management endpoints:
-- POST /api/v1/sessions - Create a new session
-- GET /api/v1/sessions/<session_id> - Retrieve session (W3.2 deferred)
-- POST /api/v1/sessions/<session_id>/turns - Execute turn (W3.2 deferred)
-- GET /api/v1/sessions/<session_id>/logs - Get event logs (W3.2 deferred)
-- GET /api/v1/sessions/<session_id>/state - Get world state (W3.2 deferred)
+Endpoints are volatile and explicitly warned in JSON; live runs use the play service.
 """
 
 import pytest
@@ -62,6 +57,9 @@ class TestCreateSessionEndpoint:
         assert "metadata" in data
         assert "context_layers" in data
         assert "degraded_state" in data
+        assert "warnings" in data
+        assert "backend_in_process_session_not_authoritative_live_runtime" in data["warnings"]
+        assert "authoritative_runs_execute_in_world_engine_play_service" in data["warnings"]
 
     def test_create_session_returns_serializable_response(self, client):
         """POST /sessions response is JSON-serializable and valid."""
@@ -340,6 +338,7 @@ class TestGetDiagnosticsEndpoint:
         assert "trace_ids" in data["trace"]
         # Check warnings include expected entries
         assert "in_memory_session_state_is_volatile" in data["warnings"]
+        assert "backend_diagnostics_not_world_engine_run" in data["warnings"]
 
 
 class TestSessionEndpointStatusCodes:

@@ -177,5 +177,5 @@ class TestingConfig(Config):
 RUN_STORE_BACKEND = os.environ.get("RUN_STORE_BACKEND", "json")
 RUN_STORE_URL = os.environ.get("RUN_STORE_URL")
 
-# Module-level play service configuration (used by app.api.http)
+# Internal API key for World Engine / play service (e.g. join-context); not used by removed backend FastAPI shadow router.
 PLAY_SERVICE_INTERNAL_API_KEY = (os.environ.get("PLAY_SERVICE_INTERNAL_API_KEY", "").strip() or None)
