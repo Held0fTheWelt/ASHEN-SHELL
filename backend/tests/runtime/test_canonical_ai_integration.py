@@ -431,6 +431,10 @@ class TestCanonicalAIPathSuccess:
         assert ai_log.supervisor_plan is not None
         assert ai_log.subagent_invocations is not None
         assert ai_log.merge_finalization is not None
+        assert ai_log.orchestration_budget_summary is not None
+        consumed = ai_log.orchestration_budget_summary["consumed"]
+        assert consumed["token_usage_mode"] in {"exact", "proxy", "mixed"}
+        assert "consumed_total_tokens" in consumed
         assert ai_log.tool_loop_summary is not None
         controls = ai_log.tool_loop_summary.get("execution_controls") or {}
         assert controls.get("agent_orchestration_active") is True

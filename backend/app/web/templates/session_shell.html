@@ -400,6 +400,108 @@
             </div>
             {% endif %}
 
+            {% if debug_panel.full_diagnostics.orchestration_budget_summary %}
+            <div class="diagnostics-subsection">
+              <h5>Orchestration Budget Summary</h5>
+              <dl>
+                <dt>Turn Duration (ms)</dt>
+                <dd>{{ debug_panel.full_diagnostics.orchestration_budget_summary.consumed.turn_duration_ms }}</dd>
+                <dt>Total Agent Calls</dt>
+                <dd>
+                  {{ debug_panel.full_diagnostics.orchestration_budget_summary.consumed.total_agent_calls }}
+                  /
+                  {{ debug_panel.full_diagnostics.orchestration_budget_summary.configured.max_total_agent_calls }}
+                </dd>
+                <dt>Total Tool Calls</dt>
+                <dd>
+                  {{ debug_panel.full_diagnostics.orchestration_budget_summary.consumed.total_tool_calls }}
+                  /
+                  {{ debug_panel.full_diagnostics.orchestration_budget_summary.configured.max_total_tool_calls }}
+                </dd>
+                <dt>Total Tokens</dt>
+                <dd>
+                  {{ debug_panel.full_diagnostics.orchestration_budget_summary.consumed.consumed_total_tokens }}
+                  /
+                  {{ debug_panel.full_diagnostics.orchestration_budget_summary.configured.max_total_tokens }}
+                </dd>
+                <dt>Token Usage Mode</dt>
+                <dd>{{ debug_panel.full_diagnostics.orchestration_budget_summary.consumed.token_usage_mode }}</dd>
+                <dt>Proxy Fallback Count</dt>
+                <dd>{{ debug_panel.full_diagnostics.orchestration_budget_summary.consumed.proxy_fallback_count }}</dd>
+                <dt>Limit Hit</dt>
+                <dd>{{ debug_panel.full_diagnostics.orchestration_budget_summary.limit_hit }}</dd>
+              </dl>
+            </div>
+            {% endif %}
+
+            {% if debug_panel.full_diagnostics.agent_budget_status %}
+            <div class="diagnostics-subsection">
+              <h5>Agent Budget / Status</h5>
+              <ol>
+                {% for item in debug_panel.full_diagnostics.agent_budget_status %}
+                <li>
+                  <strong>{{ item.agent_id }}</strong>
+                  [{{ item.execution_status }}]
+                  tools={{ item.budget_consumed.tool_calls }},
+                  tokens={{ item.budget_consumed.consumed_total_tokens }},
+                  mode={{ item.budget_consumed.token_usage_mode }},
+                  retries={{ item.retry_count }},
+                  duration={{ item.duration_ms }}ms
+                </li>
+                {% endfor %}
+              </ol>
+            </div>
+            {% endif %}
+
+            {% if debug_panel.full_diagnostics.failover_degradation %}
+            <div class="diagnostics-subsection">
+              <h5>Failover / Degradation</h5>
+              <ul>
+                {% for event in debug_panel.full_diagnostics.failover_degradation %}
+                <li>
+                  <strong>{{ event.reason }}</strong>
+                  {% if event.agent_id %}agent={{ event.agent_id }}{% endif %}
+                  {% if event.detail %}<code>{{ event.detail | truncate(200, True, '...') }}</code>{% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+
+            {% if debug_panel.full_diagnostics.cache_usage %}
+            <div class="diagnostics-subsection">
+              <h5>Cache Usage</h5>
+              <dl>
+                <dt>Scope</dt>
+                <dd>{{ debug_panel.full_diagnostics.cache_usage.scope }}</dd>
+                <dt>Hits / Misses</dt>
+                <dd>
+                  {{ debug_panel.full_diagnostics.cache_usage.hits }}
+                  /
+                  {{ debug_panel.full_diagnostics.cache_usage.misses }}
+                </dd>
+                <dt>Evictions</dt>
+                <dd>{{ debug_panel.full_diagnostics.cache_usage.evictions }}</dd>
+              </dl>
+            </div>
+            {% endif %}
+
+            {% if debug_panel.full_diagnostics.tool_audit %}
+            <div class="diagnostics-subsection">
+              <h5>Tool Audit</h5>
+              <ol>
+                {% for item in debug_panel.full_diagnostics.tool_audit %}
+                <li>
+                  {{ item.agent_id }} -> <strong>{{ item.tool_name }}</strong>
+                  [{{ item.status }}]
+                  duration={{ item.duration_ms }}ms
+                  {% if item.cache_hit %}<em>(cache hit)</em>{% endif %}
+                </li>
+                {% endfor %}
+              </ol>
+            </div>
+            {% endif %}
+
             <!-- Tool Call Transcript -->
             {% if debug_panel.full_diagnostics.tool_loop_summary or debug_panel.full_diagnostics.tool_call_transcript %}
             <div class="diagnostics-subsection">
@@ -557,6 +659,50 @@
                 <dt>Improved vs Preview</dt>
                 <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.improved_acceptance_vs_last_preview }}</dd>
               </dl>
+              {% if debug_panel.full_diagnostics.preview_diagnostics.last_preview_request %}
+              <h6>Preview Request / Result</h6>
+              <dl>
+                <dt>Request ID</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.last_preview_request.request_id }}</dd>
+                <dt>Requesting Agent</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.last_preview_request.requesting_agent_id }}</dd>
+                <dt>Request Summary</dt>
+                <dd>
+                  <code>
+                    {{
+                      debug_panel.full_diagnostics.preview_diagnostics.last_preview_request.request_summary
+                      | tojson
+                      | truncate(220, True, '...')
+                    }}
+                  </code>
+                </dd>
+                <dt>Preview Safe No Write</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.last_preview.preview_safe_no_write }}</dd>
+              </dl>
+              {% endif %}
+              <h6>Preview vs Final</h6>
+              <dl>
+                <dt>Corrected After Preview</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.revised_after_preview }}</dd>
+                <dt>Improved Acceptance</dt>
+                <dd>{{ debug_panel.full_diagnostics.preview_diagnostics.improved_acceptance_vs_last_preview }}</dd>
+              </dl>
+              {% if debug_panel.full_diagnostics.preview_diagnostics.preview_iterations %}
+              <h6>Preview Iterations</h6>
+              <ol>
+                {% for preview_entry in debug_panel.full_diagnostics.preview_diagnostics.preview_iterations %}
+                <li>
+                  <strong>#{{ preview_entry.sequence_index }}</strong>
+                  <code>{{ preview_entry.requesting_agent_id }}</code>
+                  <span>
+                    outcome={{ preview_entry.result_summary.guard_outcome }},
+                    accepted={{ preview_entry.result_summary.accepted_delta_count }},
+                    rejected={{ preview_entry.result_summary.rejected_delta_count }}
+                  </span>
+                </li>
+                {% endfor %}
+              </ol>
+              {% endif %}
               {% if debug_panel.full_diagnostics.preview_diagnostics.last_preview.rejection_reasons %}
               <ul>
                 {% for reason in debug_panel.full_diagnostics.preview_diagnostics.last_preview.rejection_reasons %}

@@ -1,6 +1,10 @@
 """Tests for C1 canonical agent registry."""
 
-from app.runtime.agent_registry import AgentConfig, AgentRegistry, build_default_agent_registry
+from app.runtime.agent_registry import (
+    AgentConfig,
+    AgentRegistry,
+    build_default_agent_registry,
+)
 
 
 def test_default_registry_exposes_enabled_agents():
@@ -52,3 +56,15 @@ def test_registry_exposes_model_selection_and_tool_policy():
     assert agent.model_selection.model_profile == "default"
     assert "wos.guard.preview_delta" in agent.allowed_tools
     assert agent.budget_profile.max_tool_calls >= 1
+
+
+def test_default_registry_exposes_turn_budget_policy_defaults():
+    registry = build_default_agent_registry()
+
+    policy = registry.supervisor_policy
+    assert policy.max_turn_duration_ms > 0
+    assert policy.max_total_agent_calls >= 3
+    assert policy.max_total_tool_calls >= 1
+    assert policy.max_failed_agent_calls >= 0
+    assert policy.max_degraded_steps >= 1
+    assert policy.allow_finalizer_fallback is True

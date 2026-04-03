@@ -1292,6 +1292,9 @@ def test_preview_diagnostics_recorded_when_preview_tool_is_used(
     decision_log = session.metadata["ai_decision_logs"][-1]
     assert decision_log.preview_diagnostics is not None
     assert decision_log.preview_diagnostics["preview_count"] >= 1
+    assert decision_log.preview_diagnostics["last_preview_request"]["requesting_agent_id"] == "primary_ai"
+    assert decision_log.preview_diagnostics["last_preview"]["preview_safe_no_write"] is True
+    assert len(decision_log.preview_diagnostics["preview_iterations"]) >= 1
 
 
 def test_agent_orchestration_executes_real_separate_subagents_and_logs_trace(
@@ -1404,6 +1407,14 @@ def test_agent_orchestration_executes_real_separate_subagents_and_logs_trace(
     assert controls.get("tool_loop_requested") is False
     assert decision_log.merge_finalization.fallback_used is False
     assert decision_log.merge_finalization.finalizer_status == "success"
+    assert decision_log.orchestration_budget_summary is not None
+    consumed = decision_log.orchestration_budget_summary["consumed"]
+    assert consumed["consumed_total_tokens"] >= 0
+    assert consumed["token_usage_mode"] in {"exact", "proxy", "mixed"}
+    assert "proxy_fallback_count" in consumed
+    assert decision_log.orchestration_failover is not None
+    assert decision_log.orchestration_cache is not None
+    assert decision_log.tool_audit is not None
 
 
 def test_agent_orchestration_has_priority_over_requested_tool_loop(

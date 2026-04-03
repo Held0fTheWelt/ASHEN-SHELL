@@ -80,6 +80,8 @@ def test_preview_returns_structured_feedback_for_valid_delta(
     assert result.guard_outcome in {"accepted", "partially_accepted", "rejected", "structurally_invalid"}
     assert result.input_delta_count == 1
     assert isinstance(result.summary, str) and result.summary
+    assert result.preview_safe_no_write is True
+    assert result.normalized_feedback["guard_outcome"] == result.guard_outcome
 
 
 def test_preview_rejects_illegal_targets_with_reasons(
@@ -104,6 +106,7 @@ def test_preview_rejects_illegal_targets_with_reasons(
 
     assert result.rejected_delta_count >= 1
     assert len(result.rejection_reasons) >= 1
+    assert result.preview_safe_no_write is True
 
 
 def test_preview_partial_acceptance_is_reported(
@@ -136,6 +139,7 @@ def test_preview_partial_acceptance_is_reported(
     assert result.partial_acceptance is True
     assert result.accepted_delta_count >= 1
     assert result.rejected_delta_count >= 1
+    assert result.normalized_feedback["partial_acceptance"] is True
 
 
 def test_preview_is_side_effect_free_on_canonical_state(

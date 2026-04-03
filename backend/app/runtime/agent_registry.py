@@ -14,6 +14,23 @@ class AgentBudgetProfile(BaseModel):
     max_tool_calls: int = 1
     per_tool_timeout_ms: int = 1500
     max_retries_per_tool_call: int = 0
+    max_agent_duration_ms: int = 3000
+    max_agent_tokens: int = 0
+
+
+class SupervisorTurnPolicy(BaseModel):
+    """Bounded policy controls shared across one orchestrated turn."""
+
+    max_turn_duration_ms: int = 12000
+    max_total_agent_calls: int = 8
+    max_total_tool_calls: int = 8
+    max_total_tokens: int = 0
+    max_failed_agent_calls: int = 2
+    max_degraded_steps: int = 3
+    skip_optional_agents_under_pressure: bool = True
+    continue_after_optional_failure: bool = True
+    allow_finalizer_fallback: bool = True
+    consume_budget_on_failed_tool_call: bool = True
 
 
 class AgentModelSelection(BaseModel):
@@ -33,6 +50,7 @@ class AgentConfig(BaseModel):
     model_selection: AgentModelSelection = Field(default_factory=AgentModelSelection)
     budget_profile: AgentBudgetProfile = Field(default_factory=AgentBudgetProfile)
     execution_mode: Literal["sequential"] = "sequential"
+    participation: Literal["required", "optional"] = "required"
     description: str = ""
     status: Literal["enabled", "disabled"] = "enabled"
 
@@ -43,11 +61,17 @@ class AgentConfig(BaseModel):
 class AgentRegistry:
     """Deterministic in-process agent registry."""
 
-    def __init__(self, agents: list[AgentConfig]):
+    def __init__(
+        self,
+        agents: list[AgentConfig],
+        *,
+        supervisor_policy: SupervisorTurnPolicy | None = None,
+    ):
         by_id: dict[str, AgentConfig] = {}
         for config in agents:
             by_id[config.agent_id] = config
         self._agents = by_id
+        self.supervisor_policy = supervisor_policy or SupervisorTurnPolicy()
 
     def get(self, agent_id: str) -> AgentConfig | None:
         return self._agents.get(agent_id)
@@ -111,6 +135,7 @@ def build_default_agent_registry() -> AgentRegistry:
                 description="Prepares dialogue and response framing hints.",
                 allowed_tools=[],
                 budget_profile=AgentBudgetProfile(max_attempts=1, max_tool_calls=0),
+                participation="optional",
             ),
             AgentConfig(
                 agent_id="finalizer",

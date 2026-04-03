@@ -231,6 +231,31 @@ def present_debug_panel(session_state: SessionState) -> DebugPanelOutput:
             "merge_finalization": (
                 ai_log.get("merge_finalization") if isinstance(ai_log, dict) else None
             ),
+            "orchestration_budget_summary": (
+                ai_log.get("orchestration_budget_summary")
+                if isinstance(ai_log, dict)
+                else None
+            ),
+            "agent_budget_status": (
+                ai_log.get("subagent_invocations", [])[:8]
+                if isinstance(ai_log, dict)
+                else []
+            ),
+            "failover_degradation": (
+                ai_log.get("orchestration_failover", [])[:10]
+                if isinstance(ai_log, dict)
+                else []
+            ),
+            "cache_usage": (
+                ai_log.get("orchestration_cache")
+                if isinstance(ai_log, dict)
+                else None
+            ),
+            "tool_audit": (
+                ai_log.get("tool_audit", [])[:12]
+                if isinstance(ai_log, dict)
+                else []
+            ),
         }
 
         # Infer recovery action from degradation markers

@@ -1556,11 +1556,19 @@ class TestDebugPanelDiagnosticsRendering:
         assert "Agent Orchestration Requested / Active" in content
         assert "Tool Loop Requested / Active" in content
         assert "Preview Writes" in content
+        assert "Preview Request / Result" in content
+        assert "Preview vs Final" in content
+        assert "Preview Iterations" in content
         assert "Supervisor Plan" in content
         assert "Subagent Execution" in content
         assert "Merge / Finalization" in content
         assert "Finalizer Status" in content
         assert "Fallback Used" in content
+        assert "Orchestration Budget Summary" in content
+        assert "Agent Budget / Status" in content
+        assert "Failover / Degradation" in content
+        assert "Cache Usage" in content
+        assert "Tool Audit" in content
 
 
 class TestAIDecisionLogRouting:

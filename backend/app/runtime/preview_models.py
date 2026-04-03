@@ -25,7 +25,9 @@ class PreviewDeltaRequest(BaseModel):
     proposed_state_deltas: list[PreviewDeltaProposal] = Field(default_factory=list)
     detected_triggers: list[str] = Field(default_factory=list)
     proposed_scene_id: str | None = None
+    requested_by_agent_id: str | None = None
     reasoning_summary: str | None = None
+    tool_request_context: dict[str, Any] = Field(default_factory=dict)
 
 
 class PreviewDeltaResult(BaseModel):
@@ -39,7 +41,9 @@ class PreviewDeltaResult(BaseModel):
     rejection_reasons: list[str] = Field(default_factory=list)
     warning_reasons: list[str] = Field(default_factory=list)
     suggested_corrections: list[str] = Field(default_factory=list)
+    normalized_feedback: dict[str, Any] = Field(default_factory=dict)
     summary: str
+    preview_safe_no_write: bool = True
     accepted_delta_count: int = 0
     rejected_delta_count: int = 0
     input_delta_count: int = 0

@@ -480,6 +480,10 @@ async def execute_turn_with_ai(
     subagent_results = None
     merge_finalization = None
     supervisor_tool_transcript: list[dict[str, Any]] = []
+    orchestration_budget_summary = None
+    orchestration_failover = None
+    orchestration_cache = None
+    tool_audit = None
 
     def _build_request(attempt: int) -> AdapterRequest:
         request = build_adapter_request(
@@ -559,6 +563,53 @@ async def execute_turn_with_ai(
         assert response is not None
         return response, current_attempt
 
+    def _build_preview_snapshot(preview_result: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "guard_outcome": preview_result.get("guard_outcome"),
+            "preview_allowed": bool(preview_result.get("preview_allowed", False)),
+            "accepted_delta_count": int(preview_result.get("accepted_delta_count", 0)),
+            "rejected_delta_count": int(preview_result.get("rejected_delta_count", 0)),
+            "partial_acceptance": bool(preview_result.get("partial_acceptance", False)),
+            "input_targets": list((preview_result.get("input_targets") or [])[:20]),
+            "summary": preview_result.get("summary"),
+            "rejection_reasons": (preview_result.get("rejection_reasons") or [])[:5],
+            "suggested_corrections": (preview_result.get("suggested_corrections") or [])[:5],
+            "preview_safe_no_write": bool(preview_result.get("preview_safe_no_write", True)),
+        }
+
+    def _build_preview_diagnostics_payload(
+        *,
+        records: list[dict[str, Any]],
+        final_targets: list[str],
+        include_improvement_placeholder: bool,
+    ) -> dict[str, Any]:
+        last_record = records[-1]
+        last_preview = last_record["result"]
+        preview_targets = list(last_preview.get("input_targets", []) or [])
+        return {
+            "preview_count": len(records),
+            "preview_iterations": [
+                {
+                    "sequence_index": item.get("sequence_index"),
+                    "request_id": item.get("request_id"),
+                    "requesting_agent_id": item.get("requesting_agent_id"),
+                    "request_summary": item.get("request_summary"),
+                    "result_summary": _build_preview_snapshot(item["result"]),
+                }
+                for item in records[-5:]
+            ],
+            "last_preview": _build_preview_snapshot(last_preview),
+            "last_preview_request": {
+                "request_id": last_record.get("request_id"),
+                "requesting_agent_id": last_record.get("requesting_agent_id"),
+                "request_summary": last_record.get("request_summary"),
+            },
+            "revised_after_preview": final_targets != preview_targets if final_targets else False,
+            "improved_acceptance_vs_last_preview": (
+                False if include_improvement_placeholder else False
+            ),
+        }
+
     if orchestration_enabled:
         base_request = _build_request(attempt=1)
         _enrich_request_with_mcp(base_request)
@@ -579,8 +630,27 @@ async def execute_turn_with_ai(
         subagent_results = orchestrated.results
         merge_finalization = orchestrated.merge_finalization
         supervisor_tool_transcript = orchestrated.agent_tool_transcript
+        orchestration_budget_summary = orchestrated.budget_summary
+        orchestration_failover = orchestrated.failover_events
+        orchestration_cache = orchestrated.cache_summary
+        tool_audit = orchestrated.tool_audit
         if supervisor_tool_transcript:
             tool_call_transcript.extend(supervisor_tool_transcript)
+            for entry in supervisor_tool_transcript:
+                if entry.get("tool_name") != "wos.guard.preview_delta":
+                    continue
+                preview_result = entry.get("preview_result_summary")
+                if not isinstance(preview_result, dict):
+                    continue
+                preview_records.append(
+                    {
+                        "sequence_index": entry.get("sequence_index"),
+                        "request_id": entry.get("preview_request_id"),
+                        "requesting_agent_id": entry.get("agent_id"),
+                        "request_summary": entry.get("sanitized_arguments") or {},
+                        "result": preview_result,
+                    }
+                )
         tool_loop_summary = {
             "enabled": False,
             "total_calls": 0,
@@ -716,6 +786,10 @@ async def execute_turn_with_ai(
                         subagent_invocations=subagent_invocations,
                         subagent_results=subagent_results,
                         merge_finalization=merge_finalization,
+                        orchestration_budget_summary=orchestration_budget_summary,
+                        orchestration_failover=orchestration_failover,
+                        orchestration_cache=orchestration_cache,
+                        tool_audit=tool_audit,
                     )
                     # Set recovery_notes with restore metadata
                     decision_log.recovery_notes = restore_notes
@@ -783,6 +857,10 @@ async def execute_turn_with_ai(
                 subagent_invocations=subagent_invocations,
                 subagent_results=subagent_results,
                 merge_finalization=merge_finalization,
+                orchestration_budget_summary=orchestration_budget_summary,
+                orchestration_failover=orchestration_failover,
+                orchestration_cache=orchestration_cache,
+                tool_audit=tool_audit,
             )
             _store_decision_log(session, decision_log)
 
@@ -823,12 +901,16 @@ async def execute_turn_with_ai(
                 tool_limit_hit = True
                 break
 
+            if tool_request.tool_name == "wos.guard.preview_delta":
+                tool_request.arguments.setdefault("requested_by_agent_id", "primary_ai")
+
             transcript_entry, tool_result = execute_tool_request(
                 tool_request,
                 policy=tool_loop_policy,
                 context=tool_context,
             )
-            tool_call_transcript.append(transcript_entry.model_dump())
+            transcript_entry_payload = transcript_entry.model_dump()
+            transcript_entry_payload["agent_id"] = "primary_ai"
             tool_results.append(tool_result)
             tool_call_count += 1
             if (
@@ -836,13 +918,22 @@ async def execute_turn_with_ai(
                 and tool_result.get("status") == ToolCallStatus.SUCCESS
                 and isinstance(tool_result.get("result"), dict)
             ):
+                preview_result = tool_result["result"]
+                transcript_entry_payload["preview_request_id"] = tool_result.get("request_id")
+                transcript_entry_payload["preview_result_summary"] = _build_preview_snapshot(
+                    preview_result
+                )
                 preview_records.append(
                     {
                         "sequence_index": transcript_entry.sequence_index,
                         "request_id": tool_result.get("request_id"),
-                        "result": tool_result.get("result"),
+                        "requesting_agent_id": "primary_ai",
+                        "request_summary": transcript_entry_payload.get("sanitized_arguments")
+                        or {},
+                        "result": preview_result,
                     }
                 )
+            tool_call_transcript.append(transcript_entry_payload)
 
             if transcript_entry.status == ToolCallStatus.SUCCESS:
                 last_successful_tool_sequence = transcript_entry.sequence_index
@@ -888,19 +979,11 @@ async def execute_turn_with_ai(
         and tool_call_count > 0
     ):
         if preview_records:
-            last_preview = preview_records[-1]["result"]
-            preview_diagnostics = {
-                "preview_count": len(preview_records),
-                "last_preview": {
-                    "guard_outcome": last_preview.get("guard_outcome"),
-                    "accepted_delta_count": last_preview.get("accepted_delta_count", 0),
-                    "rejected_delta_count": last_preview.get("rejected_delta_count", 0),
-                    "summary": last_preview.get("summary"),
-                    "rejection_reasons": (last_preview.get("rejection_reasons") or [])[:5],
-                },
-                "revised_after_preview": False,
-                "improved_acceptance_vs_last_preview": False,
-            }
+            preview_diagnostics = _build_preview_diagnostics_payload(
+                records=preview_records,
+                final_targets=[],
+                include_improvement_placeholder=True,
+            )
         safe_turn_decision = MockDecision(
             detected_triggers=[],
             proposed_deltas=[],
@@ -943,6 +1026,10 @@ async def execute_turn_with_ai(
             subagent_invocations=subagent_invocations,
             subagent_results=subagent_results,
             merge_finalization=merge_finalization,
+            orchestration_budget_summary=orchestration_budget_summary,
+            orchestration_failover=orchestration_failover,
+            orchestration_cache=orchestration_cache,
+            tool_audit=tool_audit,
         )
         _store_decision_log(session, decision_log)
         return turn_result
@@ -955,20 +1042,11 @@ async def execute_turn_with_ai(
             if parse_result.success and parse_result.decision
             else []
         )
-        last_preview = preview_records[-1]["result"]
-        preview_targets = list(last_preview.get("input_targets", []) or [])
-        preview_diagnostics = {
-            "preview_count": len(preview_records),
-            "last_preview": {
-                "guard_outcome": last_preview.get("guard_outcome"),
-                "accepted_delta_count": last_preview.get("accepted_delta_count", 0),
-                "rejected_delta_count": last_preview.get("rejected_delta_count", 0),
-                "summary": last_preview.get("summary"),
-                "rejection_reasons": (last_preview.get("rejection_reasons") or [])[:5],
-            },
-            "revised_after_preview": final_targets != preview_targets,
-            "improved_acceptance_vs_last_preview": False,
-        }
+        preview_diagnostics = _build_preview_diagnostics_payload(
+            records=preview_records,
+            final_targets=final_targets,
+            include_improvement_placeholder=False,
+        )
 
     # Step 4: If parse failed, activate fallback responder (W2.5 Phase 3)
     if not parse_result.success:
@@ -1046,6 +1124,10 @@ async def execute_turn_with_ai(
             subagent_invocations=subagent_invocations,
             subagent_results=subagent_results,
             merge_finalization=merge_finalization,
+            orchestration_budget_summary=orchestration_budget_summary,
+            orchestration_failover=orchestration_failover,
+            orchestration_cache=orchestration_cache,
+            tool_audit=tool_audit,
         )
         _store_decision_log(session, decision_log)
 
@@ -1150,6 +1232,10 @@ async def execute_turn_with_ai(
             subagent_invocations=subagent_invocations,
             subagent_results=subagent_results,
             merge_finalization=merge_finalization,
+            orchestration_budget_summary=orchestration_budget_summary,
+            orchestration_failover=orchestration_failover,
+            orchestration_cache=orchestration_cache,
+            tool_audit=tool_audit,
         )
         _store_decision_log(session, decision_log)
 
@@ -1216,6 +1302,10 @@ async def execute_turn_with_ai(
         subagent_invocations=subagent_invocations,
         subagent_results=subagent_results,
         merge_finalization=merge_finalization,
+        orchestration_budget_summary=orchestration_budget_summary,
+        orchestration_failover=orchestration_failover,
+        orchestration_cache=orchestration_cache,
+        tool_audit=tool_audit,
     )
     _store_decision_log(session, decision_log)
 

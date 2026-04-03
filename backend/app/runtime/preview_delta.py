@@ -106,6 +106,15 @@ def preview_delta_dry_run(
         f"accepted={accepted_count}, rejected={rejected_count}."
     )
     input_targets = [delta.target_path for delta in request.proposed_state_deltas][:20]
+    normalized_feedback = {
+        "preview_allowed": preview_allowed,
+        "guard_outcome": result.guard_outcome.value,
+        "accepted_delta_count": accepted_count,
+        "rejected_delta_count": rejected_count,
+        "partial_acceptance": partial,
+        "top_rejection_reasons": rejection_reasons[:5],
+        "suggested_corrections": suggested_corrections[:5],
+    }
 
     return PreviewDeltaResult(
         preview_allowed=preview_allowed,
@@ -116,7 +125,9 @@ def preview_delta_dry_run(
         rejection_reasons=rejection_reasons,
         warning_reasons=warnings[:10],
         suggested_corrections=suggested_corrections[:10],
+        normalized_feedback=normalized_feedback,
         summary=summary,
+        preview_safe_no_write=True,
         accepted_delta_count=accepted_count,
         rejected_delta_count=rejected_count,
         input_delta_count=len(request.proposed_state_deltas),

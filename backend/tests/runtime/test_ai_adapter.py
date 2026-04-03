@@ -16,6 +16,7 @@ from app.runtime.ai_adapter import (
     AdapterResponse,
     MockStoryAIAdapter,
     StoryAIAdapter,
+    normalize_token_usage,
 )
 
 
@@ -426,3 +427,64 @@ class TestMockAdapterRoleStructured:
         # Verify it's not legacy format (no legacy-specific keys as top level)
         assert "detected_triggers" not in payload  # Legacy format has this at top level
         assert "proposed_deltas" not in payload    # Legacy format has this at top level
+
+
+class TestTokenUsageNormalization:
+    """Test canonical token usage normalization from backend metadata."""
+
+    def test_normalize_token_usage_reads_usage_block(self):
+        response = AdapterResponse(
+            raw_output="ok",
+            backend_metadata={
+                "provider": "anthropic",
+                "model": "claude-3-5-sonnet",
+                "usage": {
+                    "input_tokens": 120,
+                    "output_tokens": 30,
+                    "total_tokens": 150,
+                },
+            },
+        )
+
+        usage = normalize_token_usage(response)
+
+        assert usage is not None
+        assert usage.usage_mode == "exact"
+        assert usage.input_tokens == 120
+        assert usage.output_tokens == 30
+        assert usage.total_tokens == 150
+        assert usage.provider_name == "anthropic"
+        assert usage.model_name == "claude-3-5-sonnet"
+
+    def test_normalize_token_usage_supports_prompt_completion_aliases(self):
+        response = AdapterResponse(
+            raw_output="ok",
+            backend_metadata={
+                "provider_name": "openai",
+                "model_name": "gpt-4o-mini",
+                "usage": {
+                    "prompt_tokens": 90,
+                    "completion_tokens": 15,
+                },
+            },
+        )
+
+        usage = normalize_token_usage(response)
+
+        assert usage is not None
+        assert usage.usage_mode == "exact"
+        assert usage.input_tokens == 90
+        assert usage.output_tokens == 15
+        assert usage.total_tokens == 105
+        assert usage.provider_name == "openai"
+        assert usage.model_name == "gpt-4o-mini"
+
+    def test_normalize_token_usage_returns_none_when_exact_usage_missing(self):
+        response = AdapterResponse(
+            raw_output="ok",
+            backend_metadata={"provider": "mock", "latency_ms": 3},
+        )
+
+        usage = normalize_token_usage(response)
+
+        assert usage is None

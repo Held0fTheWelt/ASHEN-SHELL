@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 
 # W2.4.2: Import role contract (W2.4.1)
 from app.runtime.role_contract import AIRoleContract
+from app.runtime.runtime_models import TokenUsageRecord
 
 
 class AdapterRequest(BaseModel):
@@ -106,6 +107,55 @@ class StoryAIAdapter(ABC):
             String name (e.g., "mock", "claude-3-sonnet", "gpt-4")
         """
         pass
+
+
+def _to_int_or_none(value: Any) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def normalize_token_usage(response: AdapterResponse) -> TokenUsageRecord | None:
+    """Normalize provider usage metadata into canonical exact token usage.
+
+    Returns None when exact usage metadata is unavailable or incomplete enough
+    that we cannot derive a trustworthy total token count.
+    """
+    metadata = response.backend_metadata if isinstance(response.backend_metadata, dict) else {}
+    usage = metadata.get("usage")
+    usage_dict = usage if isinstance(usage, dict) else metadata
+
+    input_tokens = _to_int_or_none(
+        usage_dict.get("input_tokens", usage_dict.get("prompt_tokens"))
+    )
+    output_tokens = _to_int_or_none(
+        usage_dict.get("output_tokens", usage_dict.get("completion_tokens"))
+    )
+    total_tokens = _to_int_or_none(usage_dict.get("total_tokens"))
+
+    if total_tokens is None and input_tokens is not None and output_tokens is not None:
+        total_tokens = input_tokens + output_tokens
+    if total_tokens is None:
+        return None
+
+    provider_name = metadata.get("provider_name", metadata.get("provider"))
+    model_name = metadata.get("model_name", metadata.get("model"))
+    raw_usage = usage if isinstance(usage, dict) else None
+
+    return TokenUsageRecord(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=max(total_tokens, 0),
+        provider_name=str(provider_name) if provider_name is not None else None,
+        model_name=str(model_name) if model_name is not None else None,
+        usage_mode="exact",
+        raw_usage=raw_usage,
+    )
 
 
 def _create_mock_role_contract() -> dict[str, Any]:

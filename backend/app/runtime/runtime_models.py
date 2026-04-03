@@ -534,6 +534,18 @@ class SupervisorPlan(BaseModel):
     operator_input_summary: str | None = None
 
 
+class TokenUsageRecord(BaseModel):
+    """Canonical token usage contract for one adapter invocation."""
+
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int = 0
+    provider_name: str | None = None
+    model_name: str | None = None
+    usage_mode: Literal["exact", "proxy"] = "proxy"
+    raw_usage: dict[str, Any] | None = None
+
+
 class AgentInvocationRecord(BaseModel):
     """Trace record for a bounded subagent invocation."""
 
@@ -546,6 +558,11 @@ class AgentInvocationRecord(BaseModel):
     adapter_name: str = "unknown"
     execution_status: Literal["success", "error", "skipped"] = "success"
     duration_ms: int = 0
+    retry_count: int = 0
+    budget_snapshot: dict[str, Any] = Field(default_factory=dict)
+    budget_consumed: dict[str, Any] = Field(default_factory=dict)
+    token_usage: TokenUsageRecord | None = None
+    failover_reason: str | None = None
     error_summary: str | None = None
     tool_call_transcript: list[dict[str, Any]] = Field(default_factory=list)
     policy_violations: list[str] = Field(default_factory=list)
@@ -635,6 +652,10 @@ class AIDecisionLog(BaseModel):
     subagent_invocations: list[AgentInvocationRecord] | None = None
     subagent_results: list[AgentResultRecord] | None = None
     merge_finalization: MergeFinalizationRecord | None = None
+    orchestration_budget_summary: dict[str, Any] | None = None
+    orchestration_failover: list[dict[str, Any]] | None = None
+    orchestration_cache: dict[str, Any] | None = None
+    tool_audit: list[dict[str, Any]] | None = None
 
 
 __all__ = [
@@ -661,6 +682,7 @@ __all__ = [
     "SessionStatus",
     "StateDelta",
     "SupervisorPlan",
+    "TokenUsageRecord",
     "TurnState",
     "TurnStatus",
 ]

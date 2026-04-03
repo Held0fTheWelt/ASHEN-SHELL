@@ -45,6 +45,10 @@ def construct_ai_decision_log(
     subagent_invocations: Optional[list[AgentInvocationRecord]] = None,
     subagent_results: Optional[list[AgentResultRecord]] = None,
     merge_finalization: Optional[MergeFinalizationRecord] = None,
+    orchestration_budget_summary: Optional[dict] = None,
+    orchestration_failover: Optional[list[dict]] = None,
+    orchestration_cache: Optional[dict] = None,
+    tool_audit: Optional[list[dict]] = None,
 ) -> AIDecisionLog:
     """Construct a fully-populated AIDecisionLog with role diagnostics if available.
 
@@ -118,4 +122,8 @@ def construct_ai_decision_log(
         subagent_invocations=subagent_invocations,
         subagent_results=subagent_results,
         merge_finalization=merge_finalization,
+        orchestration_budget_summary=orchestration_budget_summary,
+        orchestration_failover=orchestration_failover,
+        orchestration_cache=orchestration_cache,
+        tool_audit=tool_audit,
     )
