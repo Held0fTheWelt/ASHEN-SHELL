@@ -188,3 +188,35 @@ def test_release_readiness_reports_partial_honestly(client, moderator_headers, m
     payload = response.get_json()
     assert payload["overall_status"] == "partial"
     assert any(area["status"] == "partial" for area in payload["areas"])
+
+
+def test_release_readiness_sparse_env_does_not_claim_ready(client, moderator_headers, monkeypatch):
+    """Sparse environment: no improvement packages and no writers-room reviews exist.
+
+    Proves the system is honest about partial evidence states rather than silently
+    claiming readiness when the underlying artifact stores are empty.
+    """
+    monkeypatch.setattr("app.services.ai_stack_evidence_service._latest_writers_room_review", lambda: None)
+    monkeypatch.setattr("app.services.ai_stack_evidence_service._latest_improvement_package", lambda: None)
+
+    response = client.get("/api/v1/admin/ai-stack/release-readiness", headers=moderator_headers)
+    assert response.status_code == 200
+    payload = response.get_json()
+
+    # Must not falsely claim ready
+    assert payload["overall_status"] != "ready", (
+        "Release readiness must not claim 'ready' when no improvement packages "
+        "or writers-room reviews are present"
+    )
+
+    # The areas dict must exist and at least one area must report partial
+    assert "areas" in payload, "Response must include an 'areas' breakdown"
+    areas_by_name = {area["area"]: area["status"] for area in payload["areas"]}
+    assert "writers_room_hil" in areas_by_name, "writers_room_hil area must be present"
+    assert "improvement_evidence" in areas_by_name, "improvement_evidence area must be present"
+    assert areas_by_name["writers_room_hil"] == "partial", (
+        "writers_room_hil must be partial when no review artifacts are found"
+    )
+    assert areas_by_name["improvement_evidence"] == "partial", (
+        "improvement_evidence must be partial when no improvement packages are found"
+    )
