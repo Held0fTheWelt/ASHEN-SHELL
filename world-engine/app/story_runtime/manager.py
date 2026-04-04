@@ -9,7 +9,7 @@ from uuid import uuid4
 from story_runtime_core import ModelRegistry, RoutingPolicy, interpret_player_input
 from story_runtime_core.adapters import BaseModelAdapter, build_default_model_adapters
 from story_runtime_core.model_registry import build_default_registry
-from wos_ai_stack import RetrievalDomain, RetrievalRequest, build_runtime_retriever
+from wos_ai_stack import RuntimeTurnGraphExecutor, build_runtime_retriever
 
 
 @dataclass
@@ -48,6 +48,14 @@ class StoryRuntimeManager:
             self.retriever = retriever
             self.context_assembler = context_assembler
             self.retrieval_corpus = None
+        self.turn_graph = RuntimeTurnGraphExecutor(
+            interpreter=interpret_player_input,
+            routing=self.routing,
+            registry=self.registry,
+            adapters=self.adapters,
+            retriever=self.retriever,
+            assembler=self.context_assembler,
+        )
 
     def create_session(self, *, module_id: str, runtime_projection: dict[str, Any]) -> StorySession:
         session_id = uuid4().hex
@@ -63,66 +71,25 @@ class StoryRuntimeManager:
 
     def execute_turn(self, *, session_id: str, player_input: str) -> dict[str, Any]:
         session = self.get_session(session_id)
-        interpretation = interpret_player_input(player_input)
-        task_type = "classification" if interpretation.kind.value in {"explicit_command", "meta"} else "narrative_generation"
-        routing = self.routing.choose(task_type=task_type)
-        selected = self.registry.get(routing.selected_model)
-        adapter = self.adapters.get(routing.selected_provider or "")
-        retrieval_request = RetrievalRequest(
-            domain=RetrievalDomain.RUNTIME,
-            profile="runtime_turn_support",
-            query=f"{player_input}\nscene:{session.current_scene_id}\nmodule:{session.module_id}",
-            module_id=session.module_id,
-            scene_id=session.current_scene_id,
-            max_chunks=4,
-        )
-        retrieval_result = self.retriever.retrieve(retrieval_request)
-        context_pack = self.context_assembler.assemble(retrieval_result)
-        model_prompt = player_input if not context_pack.compact_context else f"{player_input}\n\n{context_pack.compact_context}"
-
         session.turn_counter += 1
         session.updated_at = datetime.now(timezone.utc)
-
-        generation: dict[str, object] = {
-            "attempted": False,
-            "success": None,
-            "error": None,
-            "retrieval_context_attached": bool(context_pack.compact_context),
-            "prompt_length": len(model_prompt),
-        }
-        if adapter and selected:
-            generation["attempted"] = True
-            timeout = float(selected.timeout_seconds)
-            call = adapter.generate(
-                model_prompt,
-                timeout_seconds=timeout,
-                retrieval_context=context_pack.compact_context,
-            )
-            generation["success"] = call.success
-            generation["error"] = call.metadata.get("error") if not call.success else None
+        graph_state = self.turn_graph.run(
+            session_id=session.session_id,
+            module_id=session.module_id,
+            current_scene_id=session.current_scene_id,
+            player_input=player_input,
+        )
 
         event = {
             "turn_number": session.turn_counter,
             "raw_input": player_input,
-            "interpreted_input": interpretation.model_dump(mode="json"),
-            "retrieval": {
-                "domain": context_pack.domain,
-                "profile": context_pack.profile,
-                "status": context_pack.status,
-                "hit_count": context_pack.hit_count,
-                "sources": context_pack.sources,
-                "ranking_notes": context_pack.ranking_notes,
-            },
+            "interpreted_input": graph_state.get("interpreted_input", {}),
+            "retrieval": graph_state.get("retrieval", {}),
             "model_route": {
-                "selected_model": routing.selected_model,
-                "selected_provider": routing.selected_provider,
-                "reason": routing.route_reason,
-                "fallback_model": routing.fallback_model,
-                "timeout_seconds": selected.timeout_seconds if selected else None,
-                "structured_output_success": bool(selected.structured_output_capable) if selected else False,
-                "registered_adapter_providers": sorted(self.adapters.keys()),
-                "generation": generation,
+                **graph_state.get("routing", {}),
+                "generation": graph_state.get("generation", {}),
             },
+            "graph": graph_state.get("graph_diagnostics", {}),
         }
         session.history.append(event)
         session.diagnostics.append(event)
