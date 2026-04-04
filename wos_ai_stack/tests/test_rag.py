@@ -10,6 +10,7 @@ from wos_ai_stack.rag import (
     RetrievalDomain,
     RetrievalRequest,
     RetrievalStatus,
+    build_runtime_retriever,
 )
 
 
@@ -64,6 +65,30 @@ def test_retrieval_is_deterministic_for_known_relevant_content(tmp_path: Path) -
     assert "god_of_carnage" in result.hits[0].source_path
 
 
+def test_retrieval_supports_semantic_phrasing_not_only_exact_overlap(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "content" / "god_of_carnage.md",
+        "The dinner dispute between both families escalates into social collapse.",
+    )
+    _write(tmp_path / "content" / "sports.md", "The team celebrates a championship victory.")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    retriever = ContextRetriever(corpus)
+
+    result = retriever.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="family argument at dinner becomes chaotic",
+            module_id="god_of_carnage",
+            max_chunks=1,
+        )
+    )
+
+    assert result.status == RetrievalStatus.OK
+    assert result.hits
+    assert "god_of_carnage" in result.hits[0].source_path
+
+
 def test_retrieval_domain_separation_excludes_runtime_from_review_only_content(tmp_path: Path) -> None:
     _write(tmp_path / "docs" / "reports" / "review.md", "Review artifact with red flags and remediation.")
     corpus = RagIngestionPipeline().build_corpus(tmp_path)
@@ -91,6 +116,28 @@ def test_retrieval_domain_separation_excludes_runtime_from_review_only_content(t
     assert any(hit.content_class == ContentClass.REVIEW_NOTE.value for hit in writers_result.hits)
 
 
+def test_retrieval_profile_boosts_canonical_content_for_runtime(tmp_path: Path) -> None:
+    _write(tmp_path / "content" / "modules" / "god_of_carnage" / "canon.md", "Dispute and civility collapse.")
+    _write(
+        tmp_path / "world-engine" / "app" / "var" / "runs" / "session.json",
+        '{"log":"dispute and civility collapse in transcript"}',
+    )
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    retriever = ContextRetriever(corpus)
+    result = retriever.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="dispute and civility collapse",
+            module_id="god_of_carnage",
+            max_chunks=1,
+        )
+    )
+
+    assert result.status == RetrievalStatus.OK
+    assert result.hits[0].content_class == ContentClass.AUTHORED_MODULE.value
+
+
 def test_context_pack_exposes_attribution_and_selection_notes(tmp_path: Path) -> None:
     _write(tmp_path / "content" / "god_of_carnage.md", "God of Carnage includes conflict and social tension.")
     corpus = RagIngestionPipeline().build_corpus(tmp_path)
@@ -110,7 +157,33 @@ def test_context_pack_exposes_attribution_and_selection_notes(tmp_path: Path) ->
     assert pack.hit_count >= 1
     assert pack.sources
     assert "selection_reason" in pack.sources[0]
+    assert "source_version" in pack.sources[0]
     assert pack.ranking_notes
+
+
+def test_runtime_retriever_persists_and_reuses_index(tmp_path: Path) -> None:
+    _write(tmp_path / "content" / "god_of_carnage.md", "Families argue at dinner.")
+    retriever_a, _assembler_a, corpus_a = build_runtime_retriever(tmp_path)
+    retriever_b, _assembler_b, corpus_b = build_runtime_retriever(tmp_path)
+
+    assert retriever_a is not None
+    assert retriever_b is not None
+    assert corpus_a.storage_path
+    assert Path(corpus_a.storage_path).exists()
+    assert corpus_b.storage_path == corpus_a.storage_path
+    assert corpus_b.corpus_fingerprint == corpus_a.corpus_fingerprint
+
+
+def test_ingestion_metadata_changes_when_source_content_changes(tmp_path: Path) -> None:
+    target = tmp_path / "content" / "god_of_carnage.md"
+    _write(target, "Original canon line.")
+    before = RagIngestionPipeline().build_corpus(tmp_path)
+    _write(target, "Original canon line updated with new policy wording.")
+    after = RagIngestionPipeline().build_corpus(tmp_path)
+
+    before_versions = {chunk.source_path: chunk.source_version for chunk in before.chunks}
+    after_versions = {chunk.source_path: chunk.source_version for chunk in after.chunks}
+    assert before_versions != after_versions
 
 
 def test_retrieval_gracefully_handles_sparse_or_absent_corpus(tmp_path: Path) -> None:
