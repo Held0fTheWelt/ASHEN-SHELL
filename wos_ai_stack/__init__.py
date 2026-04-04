@@ -17,6 +17,7 @@ from .langgraph_runtime import (
     RuntimeTurnGraphExecutor,
     build_seed_improvement_graph,
     build_seed_writers_room_graph,
+    ensure_langgraph_available,
 )
 from .version import AI_STACK_MILESTONE, AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
 from .capabilities import (
@@ -58,6 +59,7 @@ __all__ = [
     "RuntimeTurnGraphExecutor",
     "build_seed_improvement_graph",
     "build_seed_writers_room_graph",
+    "ensure_langgraph_available",
     "CapabilityAccessDeniedError",
     "CapabilityDefinition",
     "CapabilityInvocationError",

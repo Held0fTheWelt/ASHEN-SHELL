@@ -5,7 +5,13 @@ from importlib.metadata import PackageNotFoundError, version as pkg_version
 from typing import Any
 from typing_extensions import TypedDict
 
-from langgraph.graph import END, StateGraph
+LANGGRAPH_IMPORT_ERROR: Exception | None = None
+try:  # pragma: no cover - exercised by dedicated missing-dependency test via sentinel override
+    from langgraph.graph import END, StateGraph
+except Exception as exc:  # pragma: no cover
+    END = None
+    StateGraph = None
+    LANGGRAPH_IMPORT_ERROR = exc
 
 from story_runtime_core.adapters import BaseModelAdapter
 from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy
@@ -20,6 +26,14 @@ def _dist_version(name: str) -> str:
         return pkg_version(name)
     except PackageNotFoundError:
         return "unknown"
+
+
+def ensure_langgraph_available() -> None:
+    if LANGGRAPH_IMPORT_ERROR is not None:
+        raise RuntimeError(
+            "LangGraph runtime dependency is unavailable. Install 'langgraph' in the runtime environment "
+            "and verify requirements are up to date."
+        ) from LANGGRAPH_IMPORT_ERROR
 
 
 class RuntimeTurnState(TypedDict, total=False):
@@ -67,6 +81,7 @@ class RuntimeTurnGraphExecutor:
     graph_version: str = RUNTIME_TURN_GRAPH_VERSION
 
     def __post_init__(self) -> None:
+        ensure_langgraph_available()
         self._graph = self._build_graph()
 
     def _build_graph(self):
@@ -298,6 +313,7 @@ class RuntimeTurnGraphExecutor:
 
 
 def build_seed_writers_room_graph():
+    ensure_langgraph_available()
     class WritersRoomSeedState(TypedDict, total=False):
         module_id: str
         workflow: str
@@ -315,6 +331,7 @@ def build_seed_writers_room_graph():
 
 
 def build_seed_improvement_graph():
+    ensure_langgraph_available()
     class ImprovementSeedState(TypedDict, total=False):
         baseline_id: str
         workflow: str

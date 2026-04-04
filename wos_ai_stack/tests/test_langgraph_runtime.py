@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from story_runtime_core import RoutingPolicy, interpret_player_input
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
 from story_runtime_core.model_registry import build_default_registry
+import wos_ai_stack.langgraph_runtime as langgraph_runtime
 from wos_ai_stack import (
     ContextPackAssembler,
     ContextRetriever,
@@ -87,3 +89,9 @@ def test_seed_graphs_for_writers_room_and_improvement_are_operational() -> None:
     assert writers_result["status"] == "ready"
     assert improvement_result["workflow"] == "improvement_eval_seed"
     assert improvement_result["status"] == "ready"
+
+
+def test_langgraph_missing_dependency_raises_honest_runtime_error(monkeypatch) -> None:
+    monkeypatch.setattr(langgraph_runtime, "LANGGRAPH_IMPORT_ERROR", ModuleNotFoundError("langgraph"), raising=False)
+    with pytest.raises(RuntimeError, match="LangGraph runtime dependency is unavailable"):
+        langgraph_runtime.ensure_langgraph_available()
