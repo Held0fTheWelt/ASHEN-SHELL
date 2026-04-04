@@ -6,6 +6,16 @@ This document defines the formal contract between the AI story systems and the W
 
 ---
 
+## Model routing (Task 2A)
+
+The **executable** routing contracts and policy live in `backend/app/runtime/model_routing_contracts.py` and `backend/app/runtime/model_routing.py`, backed by model specs in `adapter_registry`. They implement cross-model LLM/SLM selection by task kind and phase.
+
+The SLM helper roles described later in this document are **conceptual** narrative roles for the story stack. They are not interchangeable with the **internal** interpreter/director/responder contract in `role_contract.py`, nor with the Task 2A routing layer. See [LLM / SLM role stratification (Task 2A)](./llm_slm_role_stratification.md).
+
+Task 2A does **not** integrate routing into the live turn dispatcher; that is deferred to later tasks.
+
+---
+
 ## Authority Rule (Fundamental)
 
 **AI proposes. Engine decides.**

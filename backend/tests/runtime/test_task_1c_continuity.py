@@ -117,6 +117,50 @@ def test_progression_same_scene_distinct_state_changes_counts():
     s = derive_progression_summary(h)
     assert s.same_scene_progression_count == 2
     assert s.progression_momentum in ("developing", "resolving", "holding")
+    assert s.stalled_turn_count == 0
+
+
+def test_progression_same_scene_counts_trailing_contiguous_phase_only():
+    """Re-entering the same scene_id must not count earlier blocks (Task 1C-R)."""
+    h = SessionHistory()
+    base_a = dict(scene_id="scene_a", guard_outcome="ACCEPTED", detected_triggers=[])
+    h.add_entry(
+        HistoryEntry(
+            turn_number=1,
+            situation_status="continue",
+            canonical_consequences=["state_changed:characters.old.one", "scene_continue:scene_a"],
+            **base_a,
+        )
+    )
+    h.add_entry(
+        HistoryEntry(
+            turn_number=2,
+            situation_status="continue",
+            canonical_consequences=["state_changed:characters.old.two", "scene_continue:scene_a"],
+            **base_a,
+        )
+    )
+    h.add_entry(
+        HistoryEntry(
+            turn_number=3,
+            scene_id="scene_b",
+            guard_outcome="ACCEPTED",
+            detected_triggers=[],
+            situation_status="continue",
+            canonical_consequences=["scene_continue:scene_b"],
+        )
+    )
+    h.add_entry(
+        HistoryEntry(
+            turn_number=4,
+            situation_status="continue",
+            canonical_consequences=["state_changed:characters.new.one", "scene_continue:scene_a"],
+            **base_a,
+        )
+    )
+    s = derive_progression_summary(h)
+    assert s.current_scene_id == "scene_a"
+    assert s.same_scene_progression_count == 1
 
 
 def test_progression_stalled_repeated_signatures():

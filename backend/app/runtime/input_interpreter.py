@@ -23,7 +23,7 @@ except ImportError:
 # Precautionary compatibility for existing backend import sites.
 from story_runtime_core import interpret_player_input
 
-PARSER_VERSION = "1a/1"
+PARSER_VERSION = "1a/2"
 
 _QUOTED_DOUBLE = re.compile(r'"([^"]*)"')
 _QUOTED_SINGLE = re.compile(r"'([^']*)'")
@@ -42,6 +42,18 @@ _ACTION_I = re.compile(
 _IMPERATIVE_LEAD = re.compile(
     r"^(?:step|walk|move|take|grab|reach|open|close|pick|put|turn|run|sit|stand|enter|"
     r"leave|pull|push|give|hand|approach|go|get|drop|use)\b",
+    re.IGNORECASE,
+)
+# Chained physical actions after comma / "and" / "then" (same verb whitelist as _ACTION_I;
+# two-word phrases first so "sit down" wins over bare "sit").
+_ACTION_CHAIN_TAIL = (
+    r"sit down|stand up|look around|step back|move away|"
+    r"step|steps|walk|walks|move|moves|take|takes|grab|grabs|reach|reaches|"
+    r"open|opens|close|closes|pick|picks|put|puts|turn|turns|run|runs|sit|sits|stand|stands|"
+    r"enter|leave|leaves|pull|pulls|push|pushes|give|gives|hand|hands|approach|approaches"
+)
+_CHAINED_ACTION = re.compile(
+    rf"(?:,|\band\b|\bthen\b)\s+({_ACTION_CHAIN_TAIL})\b",
     re.IGNORECASE,
 )
 _REACTION = re.compile(
@@ -112,13 +124,23 @@ def _find_reaction_cues(lowered: str) -> list[str]:
 
 
 def _find_action_cues(lowered: str, original: str) -> list[str]:
+    """Collect first-person, imperative-leading, and chained action cues (deterministic, deduped)."""
+    seen: set[str] = set()
     cues: list[str] = []
+
+    def add(cue: str) -> None:
+        c = cue.strip().lower()
+        if c and c not in seen:
+            seen.add(c)
+            cues.append(c)
+
     for m in _ACTION_I.finditer(lowered):
-        cues.append(m.group(0).strip().lower())
+        add(m.group(0))
     if _IMPERATIVE_LEAD.match(original.strip()):
         first = original.strip().split(None, 1)[0].lower()
-        if first not in cues:
-            cues.append(first)
+        add(first)
+    for m in _CHAINED_ACTION.finditer(lowered):
+        add(m.group(1))
     return cues
 
 

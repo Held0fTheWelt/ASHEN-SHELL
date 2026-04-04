@@ -75,11 +75,15 @@ def _consequence_frequency_bounded(entries: list[HistoryEntry]) -> dict[str, int
 
 
 def _same_scene_progression_count(entries: list[HistoryEntry], current_scene: str) -> int:
-    """Turns in current_scene with at least one meaningful state_changed consequence."""
+    """Count meaningful progression turns only in the trailing contiguous current-scene phase.
+
+    Walks newest-to-oldest and stops at the first scene_id mismatch so revisiting the same
+    scene_id later does not accumulate counts from an earlier visit.
+    """
     n = 0
-    for e in entries:
+    for e in reversed(entries):
         if e.scene_id != current_scene:
-            continue
+            break
         if _has_meaningful_state_progression(e.canonical_consequences):
             n += 1
     return n
@@ -152,7 +156,8 @@ class ProgressionSummary(BaseModel):
         ending_id: The ending ID if one was reached.
         session_phase: Rough phase classification (early/middle/late/ended).
         recent_situation_statuses: Recent situation_status strings (Task 1C).
-        same_scene_progression_count: Same-scene turns with state_changed commits (Task 1C).
+        same_scene_progression_count: Turns with state_changed commits in the trailing contiguous
+            stretch of current_scene_id only (Task 1C-R); not all-time for that scene id.
         consequence_frequency: Bounded frequency map over canonical_consequences (Task 1C).
         recent_canonical_consequences: Recent unique consequences, newest-first (Task 1C).
         progression_momentum: Coarse narrative momentum label (Task 1C).
@@ -191,6 +196,7 @@ def derive_progression_summary(history: SessionHistory) -> ProgressionSummary:
     - Tracks scene transitions and ending state
     - Classifies session phase based on turn count
     - Task 1C: narrative continuity signals from canonical_consequences / situation_status
+    - Task 1C-R: same_scene_progression_count uses trailing contiguous current scene only
 
     Args:
         history: A SessionHistory to summarize.
