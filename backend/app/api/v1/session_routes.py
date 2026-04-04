@@ -145,6 +145,28 @@ def get_session_by_id(session_id):
             "backend_session_snapshot_not_world_engine_run",
         ],
     }
+    metadata = state.metadata if isinstance(state.metadata, dict) else {}
+    engine_story_session_id = metadata.get("world_engine_story_session_id")
+    if isinstance(engine_story_session_id, str) and engine_story_session_id.strip():
+        trace_id = g.get("trace_id") or get_trace_id()
+        try:
+            authoritative_state = get_story_state(engine_story_session_id, trace_id=trace_id)
+            if isinstance(authoritative_state, dict):
+                response["world_engine_story_session_id"] = engine_story_session_id
+                response["current_scene_id"] = authoritative_state.get("current_scene_id", response["current_scene_id"])
+                response["turn_counter"] = authoritative_state.get("turn_counter", response["turn_counter"])
+                response["authoritative_state"] = authoritative_state
+                response["warnings"] = [
+                    "world_engine_story_runtime_authoritative_snapshot",
+                    "backend_in_memory_snapshot_retained_for_compatibility",
+                ]
+        except GameServiceError as exc:
+            response["bridge_error"] = {
+                "failure_class": "world_engine_unreachable",
+                "message": str(exc),
+                "status_code": exc.status_code,
+            }
+            response["warnings"].append("world_engine_authoritative_snapshot_unavailable")
 
     return jsonify(response), 200
 
@@ -194,6 +216,35 @@ def get_session_diagnostics(session_id):
             "backend_diagnostics_not_world_engine_run",
         ],
     }
+    metadata = state.metadata if isinstance(state.metadata, dict) else {}
+    engine_story_session_id = metadata.get("world_engine_story_session_id")
+    if isinstance(engine_story_session_id, str) and engine_story_session_id.strip():
+        trace_id = g.get("trace_id") or get_trace_id()
+        try:
+            authoritative = get_story_diagnostics(engine_story_session_id, trace_id=trace_id)
+            if isinstance(authoritative, dict):
+                diagnostics_rows = authoritative.get("diagnostics", [])
+                response = {
+                    "session_id": session_id,
+                    "world_engine_story_session_id": engine_story_session_id,
+                    "turn_counter": authoritative.get("turn_counter", state.turn_counter),
+                    "current_scene_id": (authoritative.get("committed_state", {}) or {}).get(
+                        "current_scene_id",
+                        state.current_scene_id,
+                    ),
+                    "committed_state": authoritative.get("committed_state", {}),
+                    "diagnostics": diagnostics_rows if isinstance(diagnostics_rows, list) else [],
+                    "trace_id": trace_id,
+                    "warnings": ["world_engine_story_runtime_authoritative_diagnostics"],
+                }
+                return jsonify(response), 200
+        except GameServiceError as exc:
+            response["bridge_error"] = {
+                "failure_class": "world_engine_unreachable",
+                "message": str(exc),
+                "status_code": exc.status_code,
+            }
+            response["warnings"].append("world_engine_authoritative_diagnostics_unavailable")
 
     return jsonify(response), 200
 
@@ -431,6 +482,30 @@ def get_session_canonical_state(session_id):
             "backend_state_not_world_engine_run",
         ],
     }
+    metadata = state.metadata if isinstance(state.metadata, dict) else {}
+    engine_story_session_id = metadata.get("world_engine_story_session_id")
+    if isinstance(engine_story_session_id, str) and engine_story_session_id.strip():
+        trace_id = g.get("trace_id") or get_trace_id()
+        try:
+            authoritative_state = get_story_state(engine_story_session_id, trace_id=trace_id)
+            if isinstance(authoritative_state, dict):
+                response = {
+                    "session_id": session_id,
+                    "world_engine_story_session_id": engine_story_session_id,
+                    "current_scene_id": authoritative_state.get("current_scene_id", state.current_scene_id),
+                    "turn_counter": authoritative_state.get("turn_counter", state.turn_counter),
+                    "committed_state": authoritative_state.get("committed_state", {}),
+                    "runtime_projection": authoritative_state.get("runtime_projection"),
+                    "warnings": ["world_engine_story_runtime_authoritative_state"],
+                }
+                return jsonify(response), 200
+        except GameServiceError as exc:
+            response["bridge_error"] = {
+                "failure_class": "world_engine_unreachable",
+                "message": str(exc),
+                "status_code": exc.status_code,
+            }
+            response["warnings"].append("world_engine_authoritative_state_unavailable")
 
     return jsonify(response), 200
 

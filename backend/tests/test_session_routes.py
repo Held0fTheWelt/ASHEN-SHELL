@@ -201,6 +201,33 @@ class TestGetSessionEndpoint:
         assert "warnings" in data
         assert "in_memory_session_state_is_volatile" in data["warnings"]
 
+    def test_get_session_prefers_world_engine_authoritative_snapshot_when_bound(self, client, monkeypatch):
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
+        session_id = create_resp.get_json()["session_id"]
+
+        from app.runtime.session_store import get_session as get_runtime_session
+
+        runtime_session = get_runtime_session(session_id)
+        runtime_session.current_runtime_state.metadata["world_engine_story_session_id"] = "we_story_snapshot"
+
+        monkeypatch.setattr(
+            "app.api.v1.session_routes.get_story_state",
+            lambda *_a, **_k: {"turn_counter": 3, "current_scene_id": "scene_2", "committed_state": {}},
+        )
+
+        response = client.get(
+            f"/api/v1/sessions/{session_id}",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["world_engine_story_session_id"] == "we_story_snapshot"
+        assert data["turn_counter"] == 3
+        assert data["current_scene_id"] == "scene_2"
+        assert "authoritative_state" in data
+        assert "world_engine_story_runtime_authoritative_snapshot" in data["warnings"]
+
 
 class TestExecuteTurnEndpoint:
     """Tests for POST /api/v1/sessions/<session_id>/turns."""
@@ -362,6 +389,39 @@ class TestGetStateEndpoint:
         assert "warnings" in data
         assert "in_memory_session_state_is_volatile" in data["warnings"]
 
+    def test_get_state_prefers_world_engine_authoritative_state_when_bound(self, client, monkeypatch):
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
+        session_id = create_resp.get_json()["session_id"]
+
+        from app.runtime.session_store import get_session as get_runtime_session
+
+        runtime_session = get_runtime_session(session_id)
+        runtime_session.current_runtime_state.metadata["world_engine_story_session_id"] = "we_story_3"
+
+        monkeypatch.setattr(
+            "app.api.v1.session_routes.get_story_state",
+            lambda *_a, **_k: {
+                "turn_counter": 5,
+                "current_scene_id": "scene_3",
+                "committed_state": {"current_scene_id": "scene_3", "last_progression_commit": {"allowed": True}},
+                "runtime_projection": {"start_scene_id": "scene_1"},
+            },
+        )
+
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/state",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["world_engine_story_session_id"] == "we_story_3"
+        assert data["turn_counter"] == 5
+        assert data["current_scene_id"] == "scene_3"
+        assert data["committed_state"]["current_scene_id"] == "scene_3"
+        assert data["runtime_projection"]["start_scene_id"] == "scene_1"
+        assert "world_engine_story_runtime_authoritative_state" in data["warnings"]
+
 
 class TestGetDiagnosticsEndpoint:
     """Tests for GET /api/v1/sessions/<session_id>/diagnostics (A1.3 debug bundle)."""
@@ -426,6 +486,38 @@ class TestGetDiagnosticsEndpoint:
         # Check warnings include expected entries
         assert "in_memory_session_state_is_volatile" in data["warnings"]
         assert "backend_diagnostics_not_world_engine_run" in data["warnings"]
+
+    def test_get_diagnostics_prefers_world_engine_authoritative_payload(self, client, monkeypatch):
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
+        session_id = create_resp.get_json()["session_id"]
+
+        from app.runtime.session_store import get_session as get_runtime_session
+
+        runtime_session = get_runtime_session(session_id)
+        runtime_session.current_runtime_state.metadata["world_engine_story_session_id"] = "we_story_2"
+
+        monkeypatch.setattr(
+            "app.api.v1.session_routes.get_story_diagnostics",
+            lambda *_a, **_k: {
+                "turn_counter": 4,
+                "committed_state": {"current_scene_id": "scene_2", "turn_counter": 4},
+                "diagnostics": [{"progression_commit": {"allowed": True, "committed_scene_id": "scene_2"}}],
+            },
+        )
+
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/diagnostics",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["world_engine_story_session_id"] == "we_story_2"
+        assert data["turn_counter"] == 4
+        assert data["current_scene_id"] == "scene_2"
+        assert data["committed_state"]["current_scene_id"] == "scene_2"
+        assert data["diagnostics"][0]["progression_commit"]["allowed"] is True
+        assert "world_engine_story_runtime_authoritative_diagnostics" in data["warnings"]
 
 
 class TestSessionEndpointStatusCodes:
