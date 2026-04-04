@@ -1,14 +1,20 @@
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
-COPY requirements.txt ./
+# IMPORTANT: build context must be repository root.
+COPY world-engine/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY world-engine/app ./app
+
+# Shared runtime packages used by world-engine imports
+COPY story_runtime_core ./story_runtime_core
+COPY wos_ai_stack ./wos_ai_stack
 
 EXPOSE 8000
 

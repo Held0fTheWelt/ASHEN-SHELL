@@ -7,8 +7,8 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     env_file: .env
@@ -51,8 +51,8 @@ services:
 
   play-service:
     build:
-      context: ./world-engine
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: world-engine/Dockerfile
     environment:
       - APP_TITLE=World of Shadows Play Service
       - PLAY_SERVICE_SECRET=local-dev-shared-secret

@@ -12,8 +12,8 @@ services:
 
   play-service:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: world-engine/Dockerfile
     environment:
       APP_TITLE: World of Shadows Play Service Prototype
       PLAY_SERVICE_SECRET: local-dev-secret

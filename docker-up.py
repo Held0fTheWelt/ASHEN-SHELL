@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
 """
-Steuert Docker Compose fuer dieses Repo: Stack mit Image-Rebuild, stoppen, etc.
+Run Docker Compose for this repository: bring the stack up with image rebuilds, stop, etc.
 
-Standard (ohne Unterbefehl): ``docker compose up -d --build`` — Images werden gebaut,
-Container neu erstellt/gestartet (typischer lokaler Rebuild-Workflow).
+Default (no subcommand): ``docker compose up -d --build`` - images are built and containers
+are recreated/started (typical local rebuild workflow). Compose runs with the repository
+root as the working directory; build contexts in ``docker-compose.yml`` are repo-root
+(``backend/`` and ``world-engine`` Dockerfiles expect context ``.``).
 
-Unterbefehle:
-  up, start   ``up -d``; standardmaessig mit ``--build`` (wie ohne COMMAND).
-  restart     ``restart`` (ohne Build, nur Prozesse neu starten).
+Subcommands:
+  up, start   ``up -d``; by default with ``--build`` (same as running without COMMAND).
+  build       ``build`` only (optional ``--no-cache`` / ``--pull``).
+  restart     ``restart`` (no build, processes only).
   stop        ``stop``
-  down        ``down`` (optional --volumes)
+  down        ``down`` (optional ``--volumes``)
 
-Schalter:
-  --no-build  Kein ``--build`` bei up/default (schneller, wenn Images aktuell sind).
+Flags:
+  --no-build  Omit ``--build`` on default/up (faster when images are current).
+  -f FILE     Compose file; may be given multiple times. Relative paths are resolved
+              from the repository root (not the shell cwd).
 
-Voraussetzung: ``docker compose`` (v2) oder Fallback ``docker-compose``.
+Requires ``docker compose`` (v2) or legacy ``docker-compose``.
 """
 from __future__ import annotations
 
@@ -26,6 +31,15 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
 DEFAULT_COMPOSE = REPO_ROOT / "docker-compose.yml"
+
+
+def _resolve_compose_path(path_str: str) -> Path:
+    p = Path(path_str)
+    if not p.is_absolute():
+        p = (REPO_ROOT / p).resolve()
+    else:
+        p = p.resolve()
+    return p
 
 
 def _compose_executable() -> list[str]:
@@ -42,7 +56,7 @@ def _compose_executable() -> list[str]:
     legacy = shutil.which("docker-compose")
     if legacy:
         return [legacy]
-    print('Fehler: Weder "docker compose" noch "docker-compose" im PATH gefunden.', file=sys.stderr)
+    print('Error: Neither "docker compose" nor "docker-compose" found in PATH.', file=sys.stderr)
     sys.exit(1)
 
 
@@ -50,11 +64,11 @@ def _compose_prefix(args: argparse.Namespace) -> list[str]:
     cmd = _compose_executable()
     files = args.file if args.file else [str(DEFAULT_COMPOSE)]
     for f in files:
-        p = Path(f)
+        p = _resolve_compose_path(f)
         if not p.is_file():
-            print(f"Fehler: Compose-Datei fehlt: {p}", file=sys.stderr)
+            print(f"Error: Compose file not found: {p}", file=sys.stderr)
             sys.exit(1)
-        cmd.extend(["-f", str(p.resolve())])
+        cmd.extend(["-f", str(p)])
     if args.project_name:
         cmd.extend(["-p", args.project_name])
     return cmd
@@ -98,6 +112,15 @@ def cmd_up(args: argparse.Namespace, services: list[str]) -> int:
     return _run(args, _up_args(args, services))
 
 
+def cmd_build(args: argparse.Namespace, services: list[str]) -> int:
+    build_args: list[str] = ["build"]
+    if getattr(args, "no_cache", False):
+        build_args.append("--no-cache")
+    if getattr(args, "pull", False):
+        build_args.append("--pull")
+    return _run(args, build_args + services)
+
+
 def cmd_restart(args: argparse.Namespace, services: list[str]) -> int:
     return _run(args, ["restart", *services])
 
@@ -109,7 +132,7 @@ def cmd_stop(args: argparse.Namespace, services: list[str]) -> int:
 def cmd_down(args: argparse.Namespace, services: list[str]) -> int:
     if services:
         print(
-            'Hinweis: "down" betrifft immer das ganze Projekt; zusaetzliche Dienstnamen werden ignoriert.',
+            'Note: "down" always affects the whole project; extra service names are ignored.',
             file=sys.stderr,
         )
     down_args = ["down"]
@@ -119,60 +142,87 @@ def cmd_down(args: argparse.Namespace, services: list[str]) -> int:
 
 
 def main() -> None:
+    # Shared flags so ``--dry-run`` works before or after the subcommand (e.g. ``up --dry-run``).
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print commands only; do not run.",
+    )
+
     parser = argparse.ArgumentParser(
-        description="Docker Compose: Standard = Stack mit Rebuild (up -d --build).",
+        description="Docker Compose: default = stack up with rebuild (up -d --build).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
+        parents=[common],
     )
     parser.add_argument(
         "-f",
         "--file",
         action="append",
         metavar="FILE",
-        help=f"Compose-Datei (mehrfach moeglich). Standard: {DEFAULT_COMPOSE.name}",
+        help=f"Compose file (repeatable). Default: {DEFAULT_COMPOSE.name}. Relative paths are from repo root.",
     )
     parser.add_argument(
         "-p",
         "--project-name",
         metavar="NAME",
-        help="Compose-Projektname (-p).",
+        help="Compose project name (-p).",
     )
     parser.add_argument(
         "--no-build",
         action="store_true",
-        help='Bei Standard und "up": kein Image-Build (nur up -d).',
+        help='For default and "up": skip image build (up -d only).',
     )
     parser.add_argument(
         "--volumes",
         action="store_true",
-        help='Nur bei "down": benannte Volumes mit entfernen.',
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Nur die Befehle ausgeben, nicht ausfuehren.",
+        help='For "down" only: remove named volumes.',
     )
     sub = parser.add_subparsers(
         dest="command",
         metavar="COMMAND",
-        help="Ohne COMMAND: up -d --build (Rebuild).",
+        help="Without COMMAND: up -d --build (rebuild).",
         required=False,
     )
 
-    p_up = sub.add_parser("up", aliases=["start"], help='Stack hochfahren (Standard: mit --build).')
-    p_up.add_argument("services", nargs="*", help="Optional nur diese Dienste.")
+    p_up = sub.add_parser(
+        "up",
+        aliases=["start"],
+        help="Start stack (default: with --build).",
+        parents=[common],
+    )
+    p_up.add_argument("services", nargs="*", help="Optional: only these services.")
     p_up.set_defaults(_handler=cmd_up)
 
-    p_restart = sub.add_parser("restart", help='"restart" ohne Build.')
-    p_restart.add_argument("services", nargs="*", help="Optional nur diese Dienste.")
+    p_build = sub.add_parser(
+        "build",
+        help="Build images (use --no-cache after Dockerfile changes).",
+        parents=[common],
+    )
+    p_build.add_argument("services", nargs="*", help="Optional: only these services.")
+    p_build.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Do not use cache when building images.",
+    )
+    p_build.add_argument(
+        "--pull",
+        action="store_true",
+        help="Always pull newer base images before building.",
+    )
+    p_build.set_defaults(_handler=cmd_build)
+
+    p_restart = sub.add_parser("restart", help="Restart without build.", parents=[common])
+    p_restart.add_argument("services", nargs="*", help="Optional: only these services.")
     p_restart.set_defaults(_handler=cmd_restart)
 
-    p_stop = sub.add_parser("stop", help="Container stoppen (ohne down).")
-    p_stop.add_argument("services", nargs="*", help="Optional nur diese Dienste.")
+    p_stop = sub.add_parser("stop", help="Stop containers (not down).", parents=[common])
+    p_stop.add_argument("services", nargs="*", help="Optional: only these services.")
     p_stop.set_defaults(_handler=cmd_stop)
 
-    p_down = sub.add_parser("down", help="Stack herunterfahren (Netzwerk entfernen).")
-    p_down.add_argument("services", nargs="*", help="Wird bei down ignoriert (Kompatibilitaet).")
+    p_down = sub.add_parser("down", help="Tear down stack (remove network).", parents=[common])
+    p_down.add_argument("services", nargs="*", help="Ignored for down (compatibility).")
     p_down.set_defaults(_handler=cmd_down)
 
     args = parser.parse_args()

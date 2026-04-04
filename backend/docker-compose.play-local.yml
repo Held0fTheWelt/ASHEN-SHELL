@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: backend/Dockerfile
     environment:
       SECRET_KEY: local-dev-secret
       JWT_SECRET_KEY: local-dev-jwt-secret
@@ -21,8 +21,8 @@ services:
 
   play-service:
     build:
-      context: ../world-engine
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: world-engine/Dockerfile
     environment:
       APP_TITLE: World of Shadows Play Service
       PLAY_SERVICE_SECRET: local-dev-shared-secret
