@@ -178,3 +178,110 @@ def test_story_runtime_builds_multi_turn_committed_progression(tmp_path):
     assert state["history_count"] == 2
     assert state["current_scene_id"] == "scene_3"
     assert diagnostics["diagnostics"][-1]["progression_commit"]["committed_scene_id"] == "scene_3"
+
+
+def test_story_runtime_natural_language_with_scene_token_commits_progression(tmp_path):
+    """Test that natural language input with a scene token commits progression correctly.
+
+    Player input: "I cross the room and enter scene_2 to confront them."
+    Expected: progression_commit["allowed"] is True, current_scene_id == "scene_2"
+    """
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("Natural language progression test corpus.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    adapter = CaptureAdapter()
+    manager = StoryRuntimeManager(
+        adapters={"mock": adapter, "openai": adapter, "ollama": adapter},
+        retriever=ContextRetriever(corpus),
+        context_assembler=ContextPackAssembler(),
+    )
+    session = manager.create_session(
+        module_id="god_of_carnage",
+        runtime_projection={
+            "start_scene_id": "scene_1",
+            "scenes": [{"id": "scene_1"}, {"id": "scene_2"}],
+            "transition_hints": [{"from": "scene_1", "to": "scene_2"}],
+        },
+    )
+
+    turn = manager.execute_turn(
+        session_id=session.session_id,
+        player_input="I cross the room and enter scene_2 to confront them.",
+    )
+    state = manager.get_state(session.session_id)
+
+    assert turn["progression_commit"]["allowed"] is True
+    assert turn["progression_commit"]["committed_scene_id"] == "scene_2"
+    assert state["current_scene_id"] == "scene_2"
+
+
+def test_story_runtime_natural_language_without_scene_reference_leaves_current_scene_unchanged(tmp_path):
+    """Test that natural language input without scene tokens leaves current scene unchanged.
+
+    Player input: "I pause and watch their reactions carefully."
+    Expected: progression_commit["reason"] == "no_scene_proposal", current_scene_id unchanged
+    """
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("No scene reference test corpus.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    adapter = CaptureAdapter()
+    manager = StoryRuntimeManager(
+        adapters={"mock": adapter, "openai": adapter, "ollama": adapter},
+        retriever=ContextRetriever(corpus),
+        context_assembler=ContextPackAssembler(),
+    )
+    session = manager.create_session(
+        module_id="god_of_carnage",
+        runtime_projection={
+            "start_scene_id": "scene_1",
+            "scenes": [{"id": "scene_1"}, {"id": "scene_2"}],
+            "transition_hints": [{"from": "scene_1", "to": "scene_2"}],
+        },
+    )
+
+    turn = manager.execute_turn(
+        session_id=session.session_id,
+        player_input="I pause and watch their reactions carefully.",
+    )
+    state = manager.get_state(session.session_id)
+
+    assert turn["progression_commit"]["reason"] == "no_scene_proposal"
+    assert state["current_scene_id"] == "scene_1"
+
+
+def test_story_runtime_natural_language_with_invalid_scene_token_is_rejected_safely(tmp_path):
+    """Test that natural language input with invalid scene token is rejected safely.
+
+    Player input: "I try to escape through scene_99 but cannot."
+    scene_99 is NOT in the runtime projection scenes.
+    Expected: progression_commit["allowed"] is False, scene stays unchanged
+    """
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("Invalid scene token test corpus.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    adapter = CaptureAdapter()
+    manager = StoryRuntimeManager(
+        adapters={"mock": adapter, "openai": adapter, "ollama": adapter},
+        retriever=ContextRetriever(corpus),
+        context_assembler=ContextPackAssembler(),
+    )
+    session = manager.create_session(
+        module_id="god_of_carnage",
+        runtime_projection={
+            "start_scene_id": "scene_1",
+            "scenes": [{"id": "scene_1"}, {"id": "scene_2"}],
+            "transition_hints": [{"from": "scene_1", "to": "scene_2"}],
+        },
+    )
+
+    turn = manager.execute_turn(
+        session_id=session.session_id,
+        player_input="I try to escape through scene_99 but cannot.",
+    )
+    state = manager.get_state(session.session_id)
+
+    assert turn["progression_commit"]["allowed"] is False
+    assert state["current_scene_id"] == "scene_1"

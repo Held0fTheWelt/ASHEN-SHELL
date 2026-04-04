@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import StrEnum
+import sys
+try:
+    from enum import StrEnum
+except ImportError:
+    # Python < 3.11 fallback
+    from enum import Enum
+    class StrEnum(str, Enum):
+        def __str__(self) -> str:
+            return self.value
 import hashlib
 import json
 import math

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    # Python < 3.11 fallback
+    from enum import Enum
+    class StrEnum(str, Enum):
+        def __str__(self) -> str:
+            return self.value
 from pathlib import Path
 from typing import Any, Callable
 from uuid import uuid4
