@@ -1,0 +1,41 @@
+{% extends "manage/base.html" %}
+{% block title %}AI Stack Governance{% endblock %}
+{% block content %}
+<section class="manage-section" data-page="ai-stack-governance">
+    <div class="manage-section-header">
+        <div>
+            <p class="manage-eyebrow">Observability &amp; governance</p>
+            <h1>AI Stack Governance</h1>
+            <p class="manage-lead">Inspect session evidence from the backend and World-Engine story host, plus improvement recommendation packages. Data is loaded live from the API; paste a backend runtime session id from tests or operators.</p>
+        </div>
+    </div>
+
+    <div class="manage-grid two-col">
+        <section class="panel">
+            <header class="panel-header">
+                <h2>Session evidence</h2>
+                <p>Requires moderator/admin with game operations feature. Calls <code>GET /api/v1/admin/ai-stack/session-evidence/&lt;id&gt;</code>.</p>
+            </header>
+            <label class="field-label" for="ai-stack-session-id">Backend session id</label>
+            <input type="text" id="ai-stack-session-id" class="field-input" placeholder="session uuid" autocomplete="off" />
+            <div class="manage-actions-row" style="margin-top: 0.75rem;">
+                <button class="btn" id="ai-stack-load-evidence" type="button">Load evidence</button>
+            </div>
+            <pre id="ai-stack-evidence-out" class="code-block" style="margin-top: 1rem;"></pre>
+        </section>
+        <section class="panel">
+            <header class="panel-header">
+                <h2>Improvement packages</h2>
+                <p>Human-review recommendation packages from the improvement loop.</p>
+            </header>
+            <div class="manage-actions-row">
+                <button class="btn" id="ai-stack-load-packages" type="button">Refresh packages</button>
+            </div>
+            <pre id="ai-stack-packages-out" class="code-block" style="margin-top: 1rem;"></pre>
+        </section>
+    </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='manage_ai_stack_governance.js') }}"></script>
+{% endblock %}

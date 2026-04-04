@@ -18,6 +18,7 @@ from .langgraph_runtime import (
     build_seed_improvement_graph,
     build_seed_writers_room_graph,
 )
+from .version import AI_STACK_MILESTONE, AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
 from .capabilities import (
     CapabilityAccessDeniedError,
     CapabilityDefinition,
@@ -30,6 +31,9 @@ from .capabilities import (
 )
 
 __all__ = [
+    "AI_STACK_MILESTONE",
+    "AI_STACK_SEMANTIC_VERSION",
+    "RUNTIME_TURN_GRAPH_VERSION",
     "ContentClass",
     "ContextPack",
     "ContextPackAssembler",

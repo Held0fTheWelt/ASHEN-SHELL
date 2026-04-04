@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from flask import jsonify, request
+from flask import g, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
+from app.observability.audit_log import log_workflow_audit
+from app.observability.trace import get_trace_id
 from app.services.improvement_service import (
     build_recommendation_package,
     create_variant,
@@ -25,11 +27,19 @@ def create_improvement_variant():
     if not candidate_summary:
         return jsonify({"error": "candidate_summary is required"}), 400
     actor_id = str(get_jwt_identity() or "unknown")
+    trace_id = g.get("trace_id") or get_trace_id()
     variant = create_variant(
         baseline_id=baseline_id,
         candidate_summary=candidate_summary,
         actor_id=actor_id,
         metadata=data.get("metadata") if isinstance(data.get("metadata"), dict) else None,
+    )
+    log_workflow_audit(
+        trace_id,
+        workflow="improvement_variant_create",
+        actor_id=actor_id,
+        outcome="ok",
+        resource_id=variant.get("variant_id"),
     )
     return jsonify(variant), 201
 
@@ -44,6 +54,7 @@ def run_improvement_experiment():
     if not variant_id:
         return jsonify({"error": "variant_id is required"}), 400
     actor_id = str(get_jwt_identity() or "unknown")
+    trace_id = g.get("trace_id") or get_trace_id()
     test_inputs = data.get("test_inputs")
     if test_inputs is not None and not isinstance(test_inputs, list):
         return jsonify({"error": "test_inputs must be a list when provided"}), 400
@@ -53,7 +64,20 @@ def run_improvement_experiment():
         test_inputs=[str(item) for item in test_inputs] if isinstance(test_inputs, list) else None,
     )
     package = build_recommendation_package(experiment_id=experiment["experiment_id"], actor_id=actor_id)
-    return jsonify({"experiment": experiment, "recommendation_package": package}), 200
+    log_workflow_audit(
+        trace_id,
+        workflow="improvement_experiment_run",
+        actor_id=actor_id,
+        outcome="ok",
+        resource_id=experiment.get("experiment_id"),
+    )
+    return jsonify(
+        {
+            "trace_id": trace_id,
+            "experiment": experiment,
+            "recommendation_package": package,
+        }
+    ), 200
 
 
 @api_v1_bp.route("/improvement/recommendations", methods=["GET"])

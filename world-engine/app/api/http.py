@@ -276,10 +276,16 @@ def create_story_session(payload: CreateStorySessionRequest, manager: StoryRunti
 def execute_story_turn(
     session_id: str,
     payload: ExecuteStoryTurnRequest,
+    request: Request,
     manager: StoryRuntimeManager = Depends(get_story_manager),
 ) -> dict[str, Any]:
+    trace_id = getattr(request.state, "trace_id", None)
     try:
-        turn = manager.execute_turn(session_id=session_id, player_input=payload.player_input)
+        turn = manager.execute_turn(
+            session_id=session_id,
+            player_input=payload.player_input,
+            trace_id=trace_id if isinstance(trace_id, str) else None,
+        )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Story session not found") from exc
     return {"session_id": session_id, "turn": turn}

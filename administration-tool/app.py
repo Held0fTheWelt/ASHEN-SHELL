@@ -362,6 +362,16 @@ def _register_routes(app):
         """Runtime operations dashboard for active runs and transcripts (alternate URL)."""
         return render_template("manage/game_operations.html")
 
+    @app.route("/manage/ai-stack/governance")
+    def manage_ai_stack_governance():
+        """AI stack observability and governance evidence (session diagnostics, improvement packages)."""
+        return render_template("manage/ai_stack_governance.html")
+
+    @app.route("/manage/ai-stack-governance")
+    def manage_ai_stack_governance_alt():
+        """Alternate URL for AI stack governance view."""
+        return render_template("manage/ai_stack_governance.html")
+
     @app.route("/manage/data")
     def manage_data():
         """Data export/import (admin only)."""

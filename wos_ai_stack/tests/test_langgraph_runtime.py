@@ -39,6 +39,21 @@ def _build_graph(tmp_path: Path) -> RuntimeTurnGraphExecutor:
     )
 
 
+def test_runtime_turn_graph_propagates_trace_and_host_versions(tmp_path: Path) -> None:
+    graph = _build_graph(tmp_path)
+    result = graph.run(
+        session_id="session_1",
+        module_id="god_of_carnage",
+        current_scene_id="scene_1",
+        player_input="I open the door",
+        trace_id="trace-goc-1",
+        host_versions={"world_engine_app_version": "test-9.9.9"},
+    )
+    repro = result["graph_diagnostics"].get("repro_metadata") or {}
+    assert repro.get("trace_id") == "trace-goc-1"
+    assert repro.get("host_versions", {}).get("world_engine_app_version") == "test-9.9.9"
+
+
 def test_runtime_turn_graph_executes_nodes_and_emits_trace(tmp_path: Path) -> None:
     graph = _build_graph(tmp_path)
     result = graph.run(
@@ -49,6 +64,11 @@ def test_runtime_turn_graph_executes_nodes_and_emits_trace(tmp_path: Path) -> No
     )
 
     assert result["graph_diagnostics"]["graph_name"] == "wos_runtime_turn_graph"
+    assert result["graph_diagnostics"]["graph_version"] == "m11_v1"
+    repro = result["graph_diagnostics"].get("repro_metadata") or {}
+    assert repro.get("ai_stack_semantic_version")
+    assert repro.get("runtime_turn_graph_version") == "m11_v1"
+    assert repro.get("retrieval_profile") == "runtime_turn_support"
     assert "interpret_input" in result["graph_diagnostics"]["nodes_executed"]
     assert "route_model" in result["graph_diagnostics"]["nodes_executed"]
     assert "generation" in result

@@ -156,3 +156,64 @@ def log_mcp_tool_call(
         entry["error"] = error
 
     logger.info(entry)
+
+
+def log_world_engine_bridge(
+    trace_id: str | None,
+    *,
+    operation: str,
+    backend_session_id: str | None,
+    world_engine_story_session_id: str | None,
+    outcome: str,
+    failure_class: str | None = None,
+    status_code: int | None = None,
+    message: str | None = None,
+) -> None:
+    """Log backend ↔ world-engine story bridge calls (governance visibility)."""
+    logger = get_audit_logger()
+    entry: dict = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "trace_id": trace_id,
+        "event": "world_engine.bridge",
+        "actor": "backend_runtime_bridge",
+        "operation": operation,
+        "backend_session_id": backend_session_id,
+        "world_engine_story_session_id": world_engine_story_session_id,
+        "outcome": outcome,
+    }
+    if failure_class:
+        entry["failure_class"] = failure_class
+    if status_code is not None:
+        entry["status_code"] = status_code
+    if message:
+        entry["message"] = message[:500]
+    logger.info(entry)
+
+
+def log_workflow_audit(
+    trace_id: str | None,
+    *,
+    workflow: str,
+    actor_id: str,
+    outcome: str,
+    resource_id: str | None = None,
+    failure_class: str | None = None,
+    detail: str | None = None,
+) -> None:
+    """Log Writers-Room / improvement / other unified-stack workflow boundaries."""
+    logger = get_audit_logger()
+    entry: dict = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "trace_id": trace_id,
+        "event": "workflow.run",
+        "workflow": workflow,
+        "actor_id": actor_id,
+        "outcome": outcome,
+    }
+    if resource_id:
+        entry["resource_id"] = resource_id
+    if failure_class:
+        entry["failure_class"] = failure_class
+    if detail:
+        entry["detail"] = detail[:500]
+    logger.info(entry)

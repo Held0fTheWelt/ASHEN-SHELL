@@ -46,7 +46,9 @@ def _get_workflow() -> _WritersRoomWorkflow:
     return _WORKFLOW
 
 
-def run_writers_room_review(*, module_id: str, focus: str, actor_id: str) -> dict[str, Any]:
+def run_writers_room_review(
+    *, module_id: str, focus: str, actor_id: str, trace_id: str | None = None
+) -> dict[str, Any]:
     workflow = _get_workflow()
     seed = workflow.seed_graph.invoke({"module_id": module_id})
     context_payload = workflow.capability_registry.invoke(
@@ -118,6 +120,7 @@ def run_writers_room_review(*, module_id: str, focus: str, actor_id: str) -> dic
 
     return {
         "canonical_flow": "writers_room_unified_stack_workflow",
+        "trace_id": trace_id,
         "module_id": module_id,
         "focus": focus,
         "workflow_seed": seed,

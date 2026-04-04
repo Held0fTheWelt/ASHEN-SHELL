@@ -80,3 +80,4 @@ from app.api.v1 import game_admin_routes  # noqa: F401, E402
 from app.api.v1 import session_routes  # noqa: F401, E402
 from app.api.v1 import writers_room_routes  # noqa: F401, E402
 from app.api.v1 import improvement_routes  # noqa: F401, E402
+from app.api.v1 import ai_stack_governance_routes  # noqa: F401, E402

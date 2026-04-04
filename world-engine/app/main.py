@@ -16,6 +16,7 @@ from app.api.http import router as http_router
 from app.api.ws import router as ws_router
 from app.auth.tickets import TicketManager
 from app.config import APP_TITLE, APP_VERSION, RUN_STORE_DIR
+from app.middleware.trace_middleware import install_trace_middleware
 from app.runtime.manager import RuntimeManager
 from app.story_runtime import StoryRuntimeManager
 
@@ -31,6 +32,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=APP_TITLE, version=APP_VERSION, lifespan=lifespan)
+install_trace_middleware(app)
 app.include_router(http_router)
 app.include_router(ws_router)
 app.mount("/static", StaticFiles(directory=WEB_ROOT / "static"), name="static")

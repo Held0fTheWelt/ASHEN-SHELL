@@ -478,7 +478,7 @@ class TestCapabilityAuditEndpoint:
 
         monkeypatch.setattr(
             "app.api.v1.session_routes.get_story_diagnostics",
-            lambda _sid: {
+            lambda *_a, **_k: {
                 "diagnostics": [
                     {
                         "graph": {

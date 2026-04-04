@@ -138,6 +138,29 @@ class TestGameServiceClient:
             app.config["PLAY_SERVICE_PUBLIC_URL"] = "https://play.example.com"
             assert _request("GET", "/api/runs") is None
 
+    def test_internal_request_includes_trace_header_when_configured(self, app, monkeypatch):
+        capture = {}
+        response = _FakeResponse(
+            status_code=200,
+            payload={"session_id": "we-1", "module_id": "god_of_carnage", "turn_counter": 0, "current_scene_id": ""},
+        )
+        monkeypatch.setattr(
+            "app.services.game_service.httpx.Client",
+            lambda **kwargs: _FakeClient(response=response, capture=capture, **kwargs),
+        )
+        with app.app_context():
+            app.config["PLAY_SERVICE_INTERNAL_URL"] = "https://play-internal.example.com"
+            app.config["PLAY_SERVICE_INTERNAL_API_KEY"] = "k"
+            from app.services import game_service as gs
+
+            gs.create_story_session(
+                module_id="god_of_carnage",
+                runtime_projection={"start_scene_id": "s1"},
+                trace_id="trace-from-backend",
+            )
+        assert capture["headers"].get("X-WoS-Trace-Id") == "trace-from-backend"
+        assert capture["headers"].get("X-Play-Service-Key") == "k"
+
     def test_request_wraps_transport_failures(self, app, monkeypatch):
         transport_error = httpx.RequestError("down", request=httpx.Request("GET", "https://play.example.com"))
         monkeypatch.setattr(

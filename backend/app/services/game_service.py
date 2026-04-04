@@ -144,12 +144,24 @@ def _internal_headers() -> dict[str, str]:
     return headers
 
 
-def _request(method: str, path: str, *, json_payload: dict | None = None, internal: bool = False) -> dict | list:
+def _request(
+    method: str,
+    path: str,
+    *,
+    json_payload: dict | None = None,
+    internal: bool = False,
+    trace_id: str | None = None,
+) -> dict | list:
     base_url = _require_configured_url("internal" if internal else "public")
     timeout = current_app.config.get("PLAY_SERVICE_REQUEST_TIMEOUT", 30)  # Use config timeout (default 30s)
+    headers: dict[str, str] | None = None
+    if internal:
+        headers = dict(_internal_headers())
+        if trace_id:
+            headers["X-WoS-Trace-Id"] = trace_id
     try:
         with httpx.Client(base_url=base_url, timeout=float(timeout)) as client:
-            response = client.request(method, path, json=json_payload, headers=_internal_headers() if internal else None)
+            response = client.request(method, path, json=json_payload, headers=headers)
     except httpx.RequestError as exc:
         raise GameServiceError(f"Play service unavailable: {exc}", status_code=502) from exc
 
@@ -270,39 +282,41 @@ def terminate_run(
     return _parse_terminate_v1(payload, requested_run_id=run_id)
 
 
-def create_story_session(*, module_id: str, runtime_projection: dict) -> dict:
+def create_story_session(*, module_id: str, runtime_projection: dict, trace_id: str | None = None) -> dict:
     payload = _request(
         "POST",
         "/api/story/sessions",
         json_payload={"module_id": module_id, "runtime_projection": runtime_projection},
         internal=True,
+        trace_id=trace_id,
     )
     if not isinstance(payload, dict) or "session_id" not in payload:
         raise GameServiceError("Play service returned an unexpected story-session payload.")
     return payload
 
 
-def execute_story_turn(*, session_id: str, player_input: str) -> dict:
+def execute_story_turn(*, session_id: str, player_input: str, trace_id: str | None = None) -> dict:
     payload = _request(
         "POST",
         f"/api/story/sessions/{session_id}/turns",
         json_payload={"player_input": player_input},
         internal=True,
+        trace_id=trace_id,
     )
     if not isinstance(payload, dict) or "turn" not in payload:
         raise GameServiceError("Play service returned an unexpected story-turn payload.")
     return payload
 
 
-def get_story_state(session_id: str) -> dict:
-    payload = _request("GET", f"/api/story/sessions/{session_id}/state", internal=True)
+def get_story_state(session_id: str, *, trace_id: str | None = None) -> dict:
+    payload = _request("GET", f"/api/story/sessions/{session_id}/state", internal=True, trace_id=trace_id)
     if not isinstance(payload, dict):
         raise GameServiceError("Play service returned an unexpected story-state payload.")
     return payload
 
 
-def get_story_diagnostics(session_id: str) -> dict:
-    payload = _request("GET", f"/api/story/sessions/{session_id}/diagnostics", internal=True)
+def get_story_diagnostics(session_id: str, *, trace_id: str | None = None) -> dict:
+    payload = _request("GET", f"/api/story/sessions/{session_id}/diagnostics", internal=True, trace_id=trace_id)
     if not isinstance(payload, dict):
         raise GameServiceError("Play service returned an unexpected story-diagnostics payload.")
     return payload

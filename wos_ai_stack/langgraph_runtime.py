@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version as pkg_version
 from typing import Any
 from typing_extensions import TypedDict
 
@@ -10,6 +11,14 @@ from story_runtime_core.adapters import BaseModelAdapter
 from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy
 from wos_ai_stack.capabilities import CapabilityRegistry
 from wos_ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
+from wos_ai_stack.version import AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
+
+
+def _dist_version(name: str) -> str:
+    try:
+        return pkg_version(name)
+    except PackageNotFoundError:
+        return "unknown"
 
 
 class RuntimeTurnState(TypedDict, total=False):
@@ -17,6 +26,8 @@ class RuntimeTurnState(TypedDict, total=False):
     module_id: str
     current_scene_id: str
     player_input: str
+    trace_id: str
+    host_versions: dict[str, Any]
     interpreted_input: dict[str, Any]
     task_type: str
     routing: dict[str, Any]
@@ -52,7 +63,7 @@ class RuntimeTurnGraphExecutor:
     assembler: ContextPackAssembler
     capability_registry: CapabilityRegistry | None = None
     graph_name: str = "wos_runtime_turn_graph"
-    graph_version: str = "m7_v1"
+    graph_version: str = RUNTIME_TURN_GRAPH_VERSION
 
     def __post_init__(self) -> None:
         self._graph = self._build_graph()
@@ -78,12 +89,23 @@ class RuntimeTurnGraphExecutor:
         graph.add_edge("package_output", END)
         return graph.compile()
 
-    def run(self, *, session_id: str, module_id: str, current_scene_id: str, player_input: str) -> RuntimeTurnState:
+    def run(
+        self,
+        *,
+        session_id: str,
+        module_id: str,
+        current_scene_id: str,
+        player_input: str,
+        trace_id: str | None = None,
+        host_versions: dict[str, Any] | None = None,
+    ) -> RuntimeTurnState:
         initial_state: RuntimeTurnState = {
             "session_id": session_id,
             "module_id": module_id,
             "current_scene_id": current_scene_id,
             "player_input": player_input,
+            "trace_id": trace_id or "",
+            "host_versions": host_versions or {},
             "nodes_executed": [],
             "node_outcomes": {},
             "graph_errors": [],
@@ -226,6 +248,31 @@ class RuntimeTurnGraphExecutor:
     def _package_output(self, state: RuntimeTurnState) -> RuntimeTurnState:
         fallback_taken = "fallback_model" in state.get("nodes_executed", [])
         update = _track(state, node_name="package_output")
+        routing = state.get("routing") or {}
+        retrieval = state.get("retrieval") or {}
+        generation = state.get("generation") or {}
+        host_versions = dict(state.get("host_versions") or {})
+        repro_metadata = {
+            "ai_stack_semantic_version": AI_STACK_SEMANTIC_VERSION,
+            "runtime_turn_graph_version": self.graph_version,
+            "graph_name": self.graph_name,
+            "trace_id": state.get("trace_id") or "",
+            "story_runtime_core_version": _dist_version("story_runtime_core"),
+            "routing_policy": "story_runtime_core.RoutingPolicy",
+            "routing_policy_version": "registry_default_v1",
+            "selected_model": routing.get("selected_model"),
+            "selected_provider": routing.get("selected_provider"),
+            "retrieval_domain": retrieval.get("domain"),
+            "retrieval_profile": retrieval.get("profile"),
+            "retrieval_status": retrieval.get("status"),
+            "retrieval_hit_count": retrieval.get("hit_count"),
+            "model_attempted": generation.get("attempted"),
+            "model_success": generation.get("success"),
+            "model_fallback_used": generation.get("fallback_used"),
+            "module_id": state.get("module_id"),
+            "session_id": state.get("session_id"),
+            "host_versions": host_versions,
+        }
         update["graph_diagnostics"] = {
             "graph_name": self.graph_name,
             "graph_version": self.graph_version,
@@ -234,6 +281,7 @@ class RuntimeTurnGraphExecutor:
             "fallback_path_taken": fallback_taken,
             "errors": state.get("graph_errors", []),
             "capability_audit": state.get("capability_audit", []),
+            "repro_metadata": repro_metadata,
         }
         return update
 

@@ -105,7 +105,10 @@ def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: st
     ws_module = importlib.import_module("app.api.ws")
     ws_module = importlib.reload(ws_module)
 
+    from app.middleware.trace_middleware import install_trace_middleware
+
     app = FastAPI()
+    install_trace_middleware(app)
     app.state.manager = runtime_manager_module.RuntimeManager(
         store_root=tmp_path,
         store_backend=store_backend,

@@ -15,6 +15,9 @@ from wos_ai_stack import (
     create_default_capability_registry,
 )
 
+from app.config import APP_VERSION
+from app.observability.audit_log import log_story_runtime_failure, log_story_turn_event
+
 
 @dataclass
 class StorySession:
@@ -79,19 +82,47 @@ class StoryRuntimeManager:
         self.sessions[session_id] = session
         return session
 
-    def execute_turn(self, *, session_id: str, player_input: str) -> dict[str, Any]:
+    def execute_turn(self, *, session_id: str, player_input: str, trace_id: str | None = None) -> dict[str, Any]:
         session = self.get_session(session_id)
         session.turn_counter += 1
         session.updated_at = datetime.now(timezone.utc)
-        graph_state = self.turn_graph.run(
-            session_id=session.session_id,
+        try:
+            graph_state = self.turn_graph.run(
+                session_id=session.session_id,
+                module_id=session.module_id,
+                current_scene_id=session.current_scene_id,
+                player_input=player_input,
+                trace_id=trace_id,
+                host_versions={"world_engine_app_version": APP_VERSION},
+            )
+        except Exception as exc:
+            log_story_runtime_failure(
+                trace_id=trace_id,
+                story_session_id=session_id,
+                operation="execute_turn",
+                message=str(exc),
+                failure_class="graph_execution_exception",
+            )
+            raise
+
+        graph_diag = graph_state.get("graph_diagnostics", {}) if isinstance(graph_state.get("graph_diagnostics"), dict) else {}
+        errors = graph_diag.get("errors", []) if isinstance(graph_diag.get("errors"), list) else []
+        gen = graph_state.get("generation", {}) if isinstance(graph_state.get("generation"), dict) else {}
+        model_ok = gen.get("success") is True
+        outcome = "ok" if model_ok and not errors else "degraded"
+        log_story_turn_event(
+            trace_id=trace_id,
+            story_session_id=session.session_id,
             module_id=session.module_id,
-            current_scene_id=session.current_scene_id,
+            turn_number=session.turn_counter,
             player_input=player_input,
+            outcome=outcome,
+            graph_error_count=len(errors),
         )
 
         event = {
             "turn_number": session.turn_counter,
+            "trace_id": trace_id or "",
             "raw_input": player_input,
             "interpreted_input": graph_state.get("interpreted_input", {}),
             "retrieval": graph_state.get("retrieval", {}),

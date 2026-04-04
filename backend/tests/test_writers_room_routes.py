@@ -18,6 +18,7 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert response.status_code == 200
     data = response.get_json()
     assert data["canonical_flow"] == "writers_room_unified_stack_workflow"
+    assert data.get("trace_id")
     assert data["module_id"] == "god_of_carnage"
     assert data["outputs_are_recommendations_only"] is True
     assert "retrieval" in data

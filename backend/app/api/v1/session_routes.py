@@ -26,12 +26,14 @@ from app.runtime.session_start import SessionStartError
 from app.runtime.session_store import get_session as get_runtime_session
 from app.content.compiler import compile_module
 from app.services.game_service import (
+    GameServiceError,
     create_story_session,
     execute_story_turn as execute_story_turn_in_engine,
     get_story_diagnostics,
     get_story_state,
 )
 from app.observability.trace import get_trace_id
+from app.observability.audit_log import log_world_engine_bridge
 from app.runtime.input_interpreter import interpret_player_input
 
 SESSION_START_ERROR_STATUS = {
@@ -227,7 +229,25 @@ def get_session_capability_audit(session_id):
             }
         ), 200
 
-    diagnostics = get_story_diagnostics(engine_story_session_id)
+    trace_id = g.get("trace_id") or get_trace_id()
+    try:
+        diagnostics = get_story_diagnostics(engine_story_session_id, trace_id=trace_id)
+    except GameServiceError as exc:
+        return jsonify(
+            {
+                "session_id": session_id,
+                "world_engine_story_session_id": engine_story_session_id,
+                "audit": [],
+                "total": 0,
+                "trace_id": trace_id,
+                "bridge_error": {
+                    "failure_class": "world_engine_unreachable",
+                    "message": str(exc),
+                    "status_code": exc.status_code,
+                },
+            }
+        ), 200
+
     entries = diagnostics.get("diagnostics", []) if isinstance(diagnostics, dict) else []
     audit_rows: list[dict] = []
     for entry in entries:
@@ -242,6 +262,7 @@ def get_session_capability_audit(session_id):
         {
             "session_id": session_id,
             "world_engine_story_session_id": engine_story_session_id,
+            "trace_id": trace_id,
             "audit": audit_rows[-100:],
             "total": len(audit_rows),
         }
@@ -267,24 +288,67 @@ def execute_session_turn(session_id):
     state = runtime_session.current_runtime_state
     metadata = state.metadata if isinstance(state.metadata, dict) else {}
     engine_story_session_id = metadata.get("world_engine_story_session_id")
+    trace_id = g.get("trace_id") or get_trace_id()
 
-    if not engine_story_session_id:
-        compiled = compile_module(state.module_id)
-        created = create_story_session(
-            module_id=state.module_id,
-            runtime_projection=compiled.runtime_projection.model_dump(mode="json"),
+    try:
+        if not engine_story_session_id:
+            compiled = compile_module(state.module_id)
+            created = create_story_session(
+                module_id=state.module_id,
+                runtime_projection=compiled.runtime_projection.model_dump(mode="json"),
+                trace_id=trace_id,
+            )
+            engine_story_session_id = created["session_id"]
+            metadata["world_engine_story_session_id"] = engine_story_session_id
+            state.metadata = metadata
+            log_world_engine_bridge(
+                trace_id,
+                operation="create_story_session",
+                backend_session_id=session_id,
+                world_engine_story_session_id=engine_story_session_id,
+                outcome="ok",
+            )
+
+        turn = execute_story_turn_in_engine(
+            session_id=engine_story_session_id,
+            player_input=player_input,
+            trace_id=trace_id,
         )
-        engine_story_session_id = created["session_id"]
-        metadata["world_engine_story_session_id"] = engine_story_session_id
-        state.metadata = metadata
+        diagnostics = get_story_diagnostics(engine_story_session_id, trace_id=trace_id)
+        current_state = get_story_state(engine_story_session_id, trace_id=trace_id)
+    except GameServiceError as exc:
+        log_world_engine_bridge(
+            trace_id,
+            operation="execute_or_fetch_story",
+            backend_session_id=session_id,
+            world_engine_story_session_id=engine_story_session_id if isinstance(engine_story_session_id, str) else None,
+            outcome="error",
+            failure_class="world_engine_unreachable",
+            status_code=exc.status_code,
+            message=str(exc),
+        )
+        return jsonify(
+            {
+                "session_id": session_id,
+                "trace_id": trace_id,
+                "failure_class": "world_engine_unreachable",
+                "message": str(exc),
+                "status_hint": exc.status_code,
+            }
+        ), 502
 
-    turn = execute_story_turn_in_engine(session_id=engine_story_session_id, player_input=player_input)
-    diagnostics = get_story_diagnostics(engine_story_session_id)
-    current_state = get_story_state(engine_story_session_id)
+    log_world_engine_bridge(
+        trace_id,
+        operation="execute_story_turn",
+        backend_session_id=session_id,
+        world_engine_story_session_id=engine_story_session_id,
+        outcome="ok",
+    )
 
     return jsonify(
         {
             "session_id": session_id,
+            "trace_id": trace_id,
             "world_engine_story_session_id": engine_story_session_id,
             "turn": turn.get("turn"),
             "state": current_state,
