@@ -126,6 +126,94 @@ def test_invalid_command_produces_command_rejected_message(tmp_path):
 
 
 
+def test_natural_input_message_executes_runtime_turn(tmp_path):
+    app = build_test_app(tmp_path)
+
+    from fastapi.testclient import TestClient
+
+    with TestClient(app) as client:
+        create_response = client.post(
+            "/api/runs",
+            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+        )
+        run_id = create_response.json()["run"]["id"]
+        ticket_response = client.post(
+            "/api/tickets",
+            json={"run_id": run_id, "account_id": "acct:owner", "display_name": "Owner"},
+        )
+        ticket = ticket_response.json()["ticket"]
+
+        with client.websocket_connect(f"/ws?ticket={ticket}") as websocket:
+            receive_until_snapshot(websocket, lambda data: data["viewer_account_id"] == "acct:owner")
+            websocket.send_json({"player_input": 'I step closer and quietly say: "stop lying."'})
+            turn_snapshot = websocket.receive_json()
+
+        assert turn_snapshot["type"] == "snapshot"
+        assert any(
+            "says:" in (entry.get("text") or "")
+            for entry in turn_snapshot["data"].get("transcript_tail", [])
+        )
+
+
+def test_ambiguous_natural_input_continues_with_runtime_event(tmp_path):
+    app = build_test_app(tmp_path)
+
+    from fastapi.testclient import TestClient
+
+    with TestClient(app) as client:
+        create_response = client.post(
+            "/api/runs",
+            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+        )
+        run_id = create_response.json()["run"]["id"]
+        ticket_response = client.post(
+            "/api/tickets",
+            json={"run_id": run_id, "account_id": "acct:owner", "display_name": "Owner"},
+        )
+        ticket = ticket_response.json()["ticket"]
+
+        with client.websocket_connect(f"/ws?ticket={ticket}") as websocket:
+            receive_until_snapshot(websocket, lambda data: data["viewer_account_id"] == "acct:owner")
+            websocket.send_json({"player_input": "I do not answer. I just stare at him."})
+            turn_snapshot = websocket.receive_json()
+
+        assert turn_snapshot["type"] == "snapshot"
+        assert any(
+            "stare at him" in (entry.get("text") or "")
+            for entry in turn_snapshot["data"].get("transcript_tail", [])
+        )
+
+
+def test_explicit_command_text_still_works_as_special_case(tmp_path):
+    app = build_test_app(tmp_path)
+
+    from fastapi.testclient import TestClient
+
+    with TestClient(app) as client:
+        create_response = client.post(
+            "/api/runs",
+            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+        )
+        run_id = create_response.json()["run"]["id"]
+        ticket_response = client.post(
+            "/api/tickets",
+            json={"run_id": run_id, "account_id": "acct:owner", "display_name": "Owner"},
+        )
+        ticket = ticket_response.json()["ticket"]
+
+        with client.websocket_connect(f"/ws?ticket={ticket}") as websocket:
+            initial_snapshot = receive_until_snapshot(websocket, lambda data: data["viewer_account_id"] == "acct:owner")
+            websocket.send_json({"player_input": "/inspect hallway"})
+            turn_snapshot = websocket.receive_json()
+
+        assert turn_snapshot["type"] == "snapshot"
+        assert len(turn_snapshot["data"].get("transcript_tail", [])) >= len(initial_snapshot["data"].get("transcript_tail", []))
+        assert any(
+            (entry.get("payload") or {}).get("target_id") == "hallway"
+            for entry in turn_snapshot["data"].get("transcript_tail", [])
+        )
+
+
 def test_websocket_disconnect_marks_participant_as_offline(tmp_path):
     app = build_test_app(tmp_path)
 

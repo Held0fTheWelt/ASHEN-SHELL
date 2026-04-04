@@ -28,6 +28,8 @@ const el = {
   propList: document.getElementById('propList'),
   occupantList: document.getElementById('occupantList'),
   transcript: document.getElementById('transcript'),
+  naturalInput: document.getElementById('naturalInput'),
+  naturalSubmitButton: document.getElementById('naturalSubmitButton'),
   sayText: document.getElementById('sayText'),
   emoteText: document.getElementById('emoteText'),
   inspectTarget: document.getElementById('inspectTarget'),
@@ -255,6 +257,13 @@ el.joinRunButton.onclick = () => joinRun().catch(err => alert(err.message));
 el.readyButton.onclick = () => sendCommand({ action: 'set_ready', ready: true });
 el.unreadyButton.onclick = () => sendCommand({ action: 'set_ready', ready: false });
 el.startRunButton.onclick = () => sendCommand({ action: 'start_run' });
+el.naturalSubmitButton.onclick = () => {
+  const text = el.naturalInput.value.trim();
+  if (text) {
+    sendCommand({ player_input: text });
+    el.naturalInput.value = '';
+  }
+};
 el.sayButton.onclick = () => {
   const text = el.sayText.value.trim();
   if (text) {

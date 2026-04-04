@@ -104,8 +104,11 @@
       </article>
 
       <article class="panel command-panel">
-        <h2>Quick commands</h2>
+        <h2>Natural input (primary)</h2>
+        <p class="subtitle">Describe your turn in plain language. Explicit slash commands are still available as a special case.</p>
         <div class="command-grid">
+          <textarea id="naturalInput" placeholder="I step closer and quietly say: stop lying."></textarea>
+          <button id="naturalSubmitButton">Submit turn</button>
           <textarea id="sayText" placeholder="Type something to say..."></textarea>
           <button id="sayButton">Say</button>
           <textarea id="emoteText" placeholder="Describe an emote, e.g. folds your arms and leans back"></textarea>

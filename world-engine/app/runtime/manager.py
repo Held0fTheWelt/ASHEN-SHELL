@@ -6,8 +6,10 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
+import re
 
 from fastapi import WebSocket
+from story_runtime_core import interpret_player_input
 
 from app.config import BACKEND_CONTENT_FEED_URL, BACKEND_CONTENT_SYNC_ENABLED, BACKEND_CONTENT_SYNC_INTERVAL_SECONDS, BACKEND_CONTENT_TIMEOUT_SECONDS, RUN_STORE_BACKEND, RUN_STORE_URL
 from app.content.backend_loader import BackendContentLoadError, load_published_templates
@@ -452,12 +454,81 @@ class RuntimeManager:
             self.store.save(self.instances[run_id])
             await self.broadcast_snapshot(run_id)
 
+    @staticmethod
+    def _map_explicit_command(raw_text: str) -> dict[str, Any] | None:
+        stripped = raw_text.strip()
+        if not stripped.startswith(("/", "!")):
+            return None
+        parts = stripped[1:].split()
+        if not parts:
+            return None
+        name = parts[0].lower()
+        args = parts[1:]
+        if name in {"move", "go", "goto"} and args:
+            return {"action": "move", "target_room_id": args[0]}
+        if name in {"say", "speak"} and args:
+            return {"action": "say", "text": " ".join(args)}
+        if name in {"emote", "me"} and args:
+            return {"action": "emote", "text": " ".join(args)}
+        if name in {"inspect", "look", "examine"} and args:
+            return {"action": "inspect", "target_id": args[0]}
+        if name in {"ready"}:
+            return {"action": "set_ready", "ready": True}
+        if name in {"unready"}:
+            return {"action": "set_ready", "ready": False}
+        if name in {"start", "start_run"}:
+            return {"action": "start_run"}
+        return None
+
+    @staticmethod
+    def _extract_spoken_text(raw_text: str) -> str:
+        quoted = re.findall(r'"([^"]+)"', raw_text)
+        if quoted:
+            return quoted[0].strip()
+        match = re.search(r"\b(?:say|says|said)\b\s*[:,-]?\s*(.+)$", raw_text, flags=re.IGNORECASE)
+        if match:
+            spoken = match.group(1).strip()
+            if spoken:
+                return spoken
+        return raw_text.strip()
+
+    def _normalize_player_message(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        action = payload.get("action")
+        if isinstance(action, str) and action.strip():
+            return payload
+
+        raw_input = payload.get("player_input")
+        if raw_input is None:
+            raw_input = payload.get("input")
+        if not isinstance(raw_input, str):
+            return None
+        text = raw_input.strip()
+        if not text:
+            return None
+
+        explicit = self._map_explicit_command(text)
+        if explicit is not None:
+            return explicit
+
+        interpretation = interpret_player_input(text)
+        kind = interpretation.kind.value
+        if kind in {"speech", "mixed"}:
+            return {"action": "say", "text": self._extract_spoken_text(text)}
+        return {"action": "emote", "text": text}
+
     async def process_command(self, run_id: str, participant_id: str, command: dict[str, Any]) -> None:
+        normalized = self._normalize_player_message(command)
+        if normalized is None:
+            websocket = self.connections[run_id].get(participant_id)
+            if websocket:
+                await websocket.send_json({"type": "command_rejected", "reason": "Provide action or player_input."})
+            return
+
         lock = self.locks.setdefault(run_id, asyncio.Lock())
         async with lock:
             instance = self.instances[run_id]
             engine = self.engines[run_id]
-            result = engine.apply_command(instance, participant_id, command)
+            result = engine.apply_command(instance, participant_id, normalized)
             if not result.accepted:
                 websocket = self.connections[run_id].get(participant_id)
                 if websocket:
