@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import Any
 
 from flask import g, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -9,6 +11,7 @@ from app.api.v1 import api_v1_bp
 from app.observability.audit_log import log_workflow_audit
 from app.observability.trace import get_trace_id
 from app.services.improvement_service import (
+    ImprovementStore,
     build_recommendation_package,
     create_variant,
     list_recommendation_packages,
@@ -21,6 +24,57 @@ from wos_ai_stack import (
     build_runtime_retriever,
     create_default_capability_registry,
 )
+
+
+def _transcript_tool_evidence_for_improvement(
+    *,
+    repo_root: Path,
+    experiment: dict[str, Any],
+    capability_registry: Any,
+    actor_id: str,
+    trace_id: str | None,
+) -> tuple[str, dict[str, Any]]:
+    """Persist sandbox transcript, read via capability tool, return (summary_suffix, meta).
+
+    The suffix is derived only from ``wos.transcript.read`` output so workflows visibly depend
+    on tool content rather than optional decoration.
+    """
+    runs_dir = repo_root / "world-engine" / "app" / "var" / "runs"
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    run_id = f"improvement_{experiment['experiment_id']}"
+    payload = {
+        "experiment_id": experiment["experiment_id"],
+        "variant_id": experiment["variant_id"],
+        "transcript": experiment.get("transcript", []),
+    }
+    run_path = runs_dir / f"{run_id}.json"
+    run_path.write_text(json.dumps(payload, ensure_ascii=True), encoding="utf-8")
+    try:
+        t_result = capability_registry.invoke(
+            name="wos.transcript.read",
+            mode="improvement",
+            actor=f"improvement:{actor_id}",
+            trace_id=trace_id,
+            payload={"run_id": run_id},
+        )
+    except CapabilityInvocationError:
+        return "|transcript_tool_error", {"run_id": run_id, "tool_error": True}
+    content = t_result.get("content", "")
+    meta: dict[str, Any] = {"run_id": run_id, "content_length": len(str(content))}
+    if not str(content).strip():
+        return "|transcript_tool_empty", meta
+    try:
+        parsed = json.loads(str(content))
+    except json.JSONDecodeError:
+        return "|transcript_json_invalid", meta
+    turns = parsed.get("transcript")
+    if not isinstance(turns, list):
+        return "|transcript_shape_invalid", meta
+    rep = sum(1 for row in turns if isinstance(row, dict) and row.get("repetition_flag"))
+    meta["turn_count"] = len(turns)
+    meta["repetition_turn_count"] = rep
+    suffix = f"|tr_turns={len(turns)}|tr_rep={rep}"
+    return suffix, meta
 
 
 @api_v1_bp.route("/improvement/variants", methods=["POST"])
@@ -74,7 +128,7 @@ def run_improvement_experiment():
     )
     package = build_recommendation_package(experiment_id=experiment["experiment_id"], actor_id=actor_id)
 
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = Path(__file__).resolve().parents[4]
     retriever, assembler, _ = build_runtime_retriever(repo_root)
     capability_registry = create_default_capability_registry(
         retriever=retriever,
@@ -98,7 +152,26 @@ def run_improvement_experiment():
         )
         retrieval_inner = context_payload.get("retrieval")
         retrieval_trace = build_retrieval_trace(retrieval_inner if isinstance(retrieval_inner, dict) else {})
-        evidence_tag = retrieval_trace["evidence_strength"]
+        evidence_tag = retrieval_trace["evidence_tier"]
+        transcript_suffix, transcript_meta = _transcript_tool_evidence_for_improvement(
+            repo_root=repo_root,
+            experiment=experiment,
+            capability_registry=capability_registry,
+            actor_id=actor_id,
+            trace_id=trace_id,
+        )
+        package_response = dict(package)
+        base_summary = str(package_response["recommendation_summary"])
+        if transcript_meta.get("repetition_turn_count", 0) >= 2:
+            package_response["recommendation_summary"] = "revise_before_review" + transcript_suffix
+        else:
+            package_response["recommendation_summary"] = base_summary + transcript_suffix
+        package_response["transcript_evidence"] = transcript_meta
+        ImprovementStore.default().write_json(
+            "recommendations",
+            str(package_response["package_id"]),
+            package_response,
+        )
         evidence_sources = [
             source.get("source_path", "")
             for source in context_payload.get("retrieval", {}).get("sources", [])
@@ -112,10 +185,10 @@ def run_improvement_experiment():
             payload={
                 "module_id": experiment["baseline_id"],
                 "summary": (
-                    f"[evidence:{evidence_tag}] Improvement recommendation for variant "
-                    f"{experiment['variant_id']}."
+                    f"[evidence_tier:{evidence_tag}] [transcript:{transcript_meta.get('run_id', '')}] "
+                    f"Improvement recommendation for variant {experiment['variant_id']}."
                 ),
-                "recommendations": [package["recommendation_summary"]],
+                "recommendations": [package_response["recommendation_summary"]],
                 "evidence_sources": evidence_sources,
             },
         )
@@ -142,9 +215,10 @@ def run_improvement_experiment():
         {
             "trace_id": trace_id,
             "experiment": experiment,
-            "recommendation_package": package,
+            "recommendation_package": package_response,
             "retrieval": context_payload.get("retrieval", {}),
             "retrieval_trace": retrieval_trace,
+            "transcript_evidence": transcript_meta,
             "review_bundle": review_bundle,
             "capability_audit": capability_registry.recent_audit(limit=20),
         }

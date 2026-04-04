@@ -30,7 +30,8 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert "workflow_stages" in data
     assert "retrieval" in data
     assert "retrieval_trace" in data
-    assert data["retrieval_trace"]["evidence_strength"] in {"strong", "none"}
+    assert data["retrieval_trace"]["evidence_strength"] in {"none", "weak", "moderate", "strong"}
+    assert data["retrieval_trace"]["evidence_tier"] == data["retrieval_trace"]["evidence_strength"]
     assert "review_bundle" in data
     assert "capability_audit" in data
     assert "langchain_retriever_preview" in data

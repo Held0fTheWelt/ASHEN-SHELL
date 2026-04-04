@@ -10,6 +10,7 @@ except ImportError:
     class StrEnum(str, Enum):
         def __str__(self) -> str:
             return self.value
+import json
 from pathlib import Path
 from typing import Any, Callable
 from uuid import uuid4
@@ -43,6 +44,9 @@ def _summarize_invocation_result(capability_name: str, result: dict[str, Any]) -
         top_hit = retrieval.get("top_hit_score")
         if isinstance(top_hit, str) and top_hit:
             summary["top_hit_score"] = top_hit
+        trace_hint = build_retrieval_trace(retrieval)
+        summary["evidence_tier"] = trace_hint.get("evidence_tier")
+        summary["evidence_rationale"] = trace_hint.get("evidence_rationale")
         return summary
     if capability_name == "wos.review_bundle.build":
         evidence = result.get("evidence_sources", [])
@@ -52,30 +56,97 @@ def _summarize_invocation_result(capability_name: str, result: dict[str, Any]) -
             "bundle_id": result.get("bundle_id"),
             "status": result.get("status"),
             "evidence_source_count": n_evidence,
+            "workflow_impact": "feeds_governance_review_package" if n_evidence else "metadata_only_bundle",
         }
     if capability_name == "wos.transcript.read":
         content = result.get("content", "")
+        turn_count = 0
+        repetition_turns = 0
+        try:
+            parsed = json.loads(str(content))
+            if isinstance(parsed, dict):
+                turns = parsed.get("transcript")
+                if isinstance(turns, list):
+                    turn_count = len(turns)
+                    repetition_turns = sum(1 for row in turns if isinstance(row, dict) and row.get("repetition_flag"))
+        except (json.JSONDecodeError, TypeError, ValueError):
+            pass
         return {
             "kind": "transcript_read",
             "run_id": result.get("run_id"),
             "content_length": len(str(content)),
+            "transcript_turn_count": turn_count,
+            "repetition_turn_count": repetition_turns,
+            "workflow_impact": (
+                "drives_improvement_recommendation_suffix"
+                if turn_count
+                else "no_parsed_transcript_rows"
+            ),
         }
     return None
 
 
+def _parse_top_hit_score(retrieval: dict[str, Any]) -> float | None:
+    raw = retrieval.get("top_hit_score")
+    if raw is None or raw == "":
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
-    """Normalize capability ``retrieval`` dict into workflow-facing trace fields."""
+    """Normalize capability ``retrieval`` dict into workflow-facing trace fields.
+
+    ``evidence_tier`` (and ``evidence_strength``, same value) use a four-level scale:
+    ``none`` / ``weak`` / ``moderate`` / ``strong``, derived from hit count, optional
+    top-hit score, and retrieval status—not a binary hit flag.
+    """
     if not isinstance(retrieval, dict):
         retrieval = {}
     hit_count = int(retrieval.get("hit_count") or 0)
+    status = retrieval.get("status")
+    top = _parse_top_hit_score(retrieval)
+    route = retrieval.get("retrieval_route")
+    route_s = route if isinstance(route, str) else ""
+
+    if hit_count <= 0 or status == "fallback":
+        tier = "none"
+        rationale = "no_usable_hits" if hit_count <= 0 else "fallback_status_without_hits"
+    elif hit_count == 1:
+        if top is not None and top >= 8.0:
+            tier = "strong"
+            rationale = "single_hit_high_score"
+        elif top is not None and top >= 4.0:
+            tier = "moderate"
+            rationale = "single_hit_mid_score"
+        else:
+            tier = "weak"
+            rationale = "single_hit_low_or_unknown_score"
+    elif hit_count == 2:
+        if top is not None and top >= 7.0:
+            tier = "strong"
+            rationale = "two_hits_with_strong_top_score"
+        else:
+            tier = "moderate"
+            rationale = "two_hits_typical_scores"
+    else:
+        tier = "strong"
+        rationale = "three_or_more_hits"
+
     return {
-        "evidence_strength": "strong" if hit_count > 0 else "none",
+        "evidence_strength": tier,
+        "evidence_tier": tier,
         "hit_count": hit_count,
-        "status": retrieval.get("status"),
+        "status": status,
         "domain": retrieval.get("domain"),
         "profile": retrieval.get("profile"),
         "index_version": retrieval.get("index_version"),
         "corpus_fingerprint": retrieval.get("corpus_fingerprint"),
+        "retrieval_route": route_s or None,
+        "top_hit_score": retrieval.get("top_hit_score"),
+        "evidence_rationale": rationale,
     }
 
 
@@ -312,9 +383,8 @@ def create_default_capability_registry(
             handler=context_pack_handler,
         )
     )
-    # wos.transcript.read: registered for future improvement loop usage.
-    # Not currently invoked in active workflows (aspirational capability).
-    # Allowed modes: runtime, improvement, admin.
+    # wos.transcript.read: used by the improvement sandbox experiment route (persisted run JSON
+    # under world-engine var/runs). Runtime and admin remain secondary / optional call sites.
     registry.register(
         CapabilityDefinition(
             name="wos.transcript.read",

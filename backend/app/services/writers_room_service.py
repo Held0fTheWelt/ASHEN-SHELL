@@ -108,7 +108,7 @@ def run_writers_room_review(
     )
     retrieval_inner = context_payload.get("retrieval")
     retrieval_trace = build_retrieval_trace(retrieval_inner if isinstance(retrieval_inner, dict) else {})
-    evidence_tag = retrieval_trace["evidence_strength"]
+    evidence_tag = retrieval_trace["evidence_tier"]
     routing_decision = workflow.routing.choose(task_type="narrative_generation")
     selected_provider = routing_decision.selected_provider or "mock"
     adapter = workflow.adapters.get(selected_provider)
@@ -156,7 +156,7 @@ def run_writers_room_review(
         {
             "module_id": module_id,
             "summary": (
-                f"[evidence:{evidence_tag}] Writers-Room review for {module_id} with focus '{focus}'."
+                f"[evidence_tier:{evidence_tag}] Writers-Room review for {module_id} with focus '{focus}'."
             ),
             "recommendations": recommendations,
             "evidence_sources": [source.get("source_path", "") for source in sources],

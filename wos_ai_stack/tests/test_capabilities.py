@@ -16,10 +16,46 @@ from wos_ai_stack import (
 )
 
 
-def test_build_retrieval_trace_evidence_strength_follows_hit_count() -> None:
-    assert build_retrieval_trace({"hit_count": 2, "status": "ok"})["evidence_strength"] == "strong"
-    assert build_retrieval_trace({"hit_count": 0, "status": "ok"})["evidence_strength"] == "none"
-    assert build_retrieval_trace(None)["evidence_strength"] == "none"
+def test_build_retrieval_trace_evidence_tier_uses_hit_count_and_top_score() -> None:
+    assert build_retrieval_trace({"hit_count": 0, "status": "ok"})["evidence_tier"] == "none"
+    assert build_retrieval_trace({"hit_count": 1, "status": "ok", "top_hit_score": "3.0"})["evidence_tier"] == "weak"
+    assert build_retrieval_trace({"hit_count": 1, "status": "ok", "top_hit_score": "9.0"})["evidence_tier"] == "strong"
+    assert build_retrieval_trace({"hit_count": 2, "status": "ok", "top_hit_score": "5.0"})["evidence_tier"] == "moderate"
+    assert build_retrieval_trace({"hit_count": 2, "status": "ok", "top_hit_score": "8.0"})["evidence_tier"] == "strong"
+    assert build_retrieval_trace({"hit_count": 4, "status": "ok"})["evidence_tier"] == "strong"
+    trace = build_retrieval_trace(None)
+    assert trace["evidence_strength"] == trace["evidence_tier"] == "none"
+    assert trace.get("evidence_rationale")
+
+
+def test_context_pack_audit_summary_includes_tier_and_transcript_impact(tmp_path: Path) -> None:
+    registry = _build_registry(tmp_path)
+    registry.invoke(
+        name="wos.context_pack.build",
+        mode="runtime",
+        actor="runtime_turn_graph",
+        payload={
+            "domain": "runtime",
+            "profile": "runtime_turn_support",
+            "query": "god of carnage sample",
+            "module_id": "god_of_carnage",
+            "scene_id": "scene_1",
+        },
+    )
+    audit = registry.recent_audit(limit=1)[0]
+    summary = audit.get("result_summary") or {}
+    assert summary.get("evidence_tier") in {"none", "weak", "moderate", "strong"}
+    assert summary.get("evidence_rationale")
+
+    with pytest.raises(CapabilityInvocationError):
+        registry.invoke(
+            name="wos.transcript.read",
+            mode="improvement",
+            actor="improvement:test",
+            payload={"run_id": "synthetic_run"},
+        )
+    t_audits = [a for a in registry.recent_audit(limit=10) if a["capability_name"] == "wos.transcript.read"]
+    assert t_audits[-1]["outcome"] == "error"
 
 
 def _build_registry(tmp_path: Path):
@@ -72,11 +108,9 @@ def test_capability_validation_failure_is_typed_and_audited(tmp_path: Path) -> N
 
 
 def test_transcript_read_capability_is_registered_and_invocable(tmp_path: Path) -> None:
-    """Proves wos.transcript.read is registered and invocable even though it is not yet
-    integrated into active workflows (aspirational capability documented in capabilities.py).
+    """``wos.transcript.read`` is registered for improvement (and other) modes.
 
-    Invoking with a missing run file must raise CapabilityInvocationError — an honest behavior
-    that confirms the handler executes and surfaces the run_not_found error path.
+    A missing run file must raise ``CapabilityInvocationError`` with ``run_not_found``.
     """
     registry = _build_registry(tmp_path)
 
@@ -150,3 +184,26 @@ def test_review_bundle_audit_includes_evidence_source_count(tmp_path: Path) -> N
     assert summary is not None
     assert summary["kind"] == "review_bundle"
     assert summary["evidence_source_count"] == 2
+    assert summary.get("workflow_impact") == "feeds_governance_review_package"
+
+
+def test_transcript_read_success_audit_records_parsed_turn_counts(tmp_path: Path) -> None:
+    run_id = "fixture_run"
+    run_path = tmp_path / "world-engine" / "app" / "var" / "runs" / f"{run_id}.json"
+    run_path.parent.mkdir(parents=True, exist_ok=True)
+    run_path.write_text(
+        '{"transcript":[{"player_input":"hello","repetition_flag":false},{"player_input":"again","repetition_flag":true}]}',
+        encoding="utf-8",
+    )
+    registry = _build_registry(tmp_path)
+    registry.invoke(
+        name="wos.transcript.read",
+        mode="improvement",
+        actor="improvement:test",
+        payload={"run_id": run_id},
+    )
+    audit = registry.recent_audit(limit=1)[0]
+    assert audit["outcome"] == "allowed"
+    assert audit["result_summary"]["transcript_turn_count"] == 2
+    assert audit["result_summary"]["repetition_turn_count"] == 1
+    assert audit["result_summary"]["workflow_impact"] == "drives_improvement_recommendation_suffix"

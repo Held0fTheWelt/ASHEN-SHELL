@@ -85,13 +85,20 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
     assert any(entry["capability_name"] == "wos.review_bundle.build" for entry in capability_audit)
     assert "retrieval_trace" in payload
     trace = payload["retrieval_trace"]
-    assert trace["evidence_strength"] in {"strong", "none"}
+    assert trace["evidence_strength"] in {"none", "weak", "moderate", "strong"}
+    assert trace["evidence_tier"] == trace["evidence_strength"]
     assert trace["profile"] == "improvement_eval"
-    if trace["evidence_strength"] == "strong":
+    assert "|tr_turns=3|" in recommendation["recommendation_summary"]
+    assert payload.get("transcript_evidence", {}).get("turn_count") == 3
+    assert any(
+        entry["capability_name"] == "wos.transcript.read" and entry["outcome"] == "allowed"
+        for entry in capability_audit
+    )
+    if trace["evidence_strength"] in {"strong", "moderate", "weak"}:
         assert trace["hit_count"] > 0
-        assert review_bundle["summary"].startswith("[evidence:strong]")
+        assert review_bundle["summary"].startswith(f"[evidence_tier:{trace['evidence_tier']}]")
     else:
-        assert review_bundle["summary"].startswith("[evidence:none]")
+        assert review_bundle["summary"].startswith("[evidence_tier:none]")
     ctx_audit = next(entry for entry in capability_audit if entry["capability_name"] == "wos.context_pack.build")
     assert ctx_audit.get("result_summary") is not None
     assert ctx_audit["result_summary"]["kind"] == "context_pack"
@@ -122,6 +129,8 @@ def test_improvement_experiment_reflects_empty_retrieval_in_trace_and_review_sum
                     },
                     "context_text": "",
                 }
+            if name == "wos.transcript.read":
+                return {"run_id": payload.get("run_id", ""), "content": "{}"}
             if name == "wos.review_bundle.build":
                 return {
                     "bundle_id": "synthetic_bundle",
@@ -164,8 +173,38 @@ def test_improvement_experiment_reflects_empty_retrieval_in_trace_and_review_sum
     assert experiment_resp.status_code == 200
     body = experiment_resp.get_json()
     assert body["retrieval_trace"]["evidence_strength"] == "none"
+    assert body["retrieval_trace"]["evidence_tier"] == "none"
     assert body["retrieval_trace"]["hit_count"] == 0
-    assert body["review_bundle"]["summary"].startswith("[evidence:none]")
+    assert body["review_bundle"]["summary"].startswith("[evidence_tier:none]")
+
+
+def test_improvement_recommendation_suffix_drops_when_transcript_helper_bypassed(client, auth_headers, monkeypatch):
+    """Proves the HTTP response depends on transcript tool wiring: bypass removes ``tr_turns`` marker."""
+    from app.api.v1 import improvement_routes
+
+    def _noop_transcript(**_kwargs):
+        return "", {"bypassed": True}
+
+    monkeypatch.setattr(improvement_routes, "_transcript_tool_evidence_for_improvement", _noop_transcript)
+
+    variant_resp = client.post(
+        "/api/v1/improvement/variants",
+        headers=auth_headers,
+        json={
+            "baseline_id": "god_of_carnage",
+            "candidate_summary": "Transcript dependence check.",
+        },
+    )
+    variant_id = variant_resp.get_json()["variant_id"]
+    experiment_resp = client.post(
+        "/api/v1/improvement/experiments/run",
+        headers=auth_headers,
+        json={"variant_id": variant_id, "test_inputs": ["one", "two"]},
+    )
+    assert experiment_resp.status_code == 200
+    body = experiment_resp.get_json()
+    assert "|tr_turns=" not in body["recommendation_package"]["recommendation_summary"]
+    assert body.get("transcript_evidence", {}).get("bypassed") is True
 
 
 def test_governance_accessibility_lists_recommendation_packages(client, auth_headers):
@@ -178,13 +217,20 @@ def test_governance_accessibility_lists_recommendation_packages(client, auth_hea
 
 def test_improvement_route_surfaces_capability_failures_honestly(client, auth_headers, monkeypatch):
     class FailingRegistry:
-        def __init__(self) -> None:
-            self.calls = 0
-
         def invoke(self, *, name, mode, actor, payload, trace_id=None):
-            self.calls += 1
-            if self.calls == 1:
-                return {"retrieval": {"sources": []}, "context_text": ""}
+            if name == "wos.context_pack.build":
+                return {
+                    "retrieval": {
+                        "sources": [],
+                        "hit_count": 0,
+                        "status": "ok",
+                        "profile": "improvement_eval",
+                        "domain": "improvement",
+                    },
+                    "context_text": "",
+                }
+            if name == "wos.transcript.read":
+                return {"run_id": payload.get("run_id", ""), "content": '{"transcript":[]}'}
             raise CapabilityInvocationError(name, "forced_failure")
 
         def recent_audit(self, *, limit=20):
