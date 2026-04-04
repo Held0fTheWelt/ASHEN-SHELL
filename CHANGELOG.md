@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.10] - 2026-04-04
+
+**Summary**: Everything merged **after the [0.3.9] narrative** for 2026-04-04: player-frontend landing/dashboard polish and `docker-up.py` (where not already spelled out under 0.3.9), the **unified AI stack program M0–M11** (architecture, runtime authority, content compiler, shared `story_runtime_core`, World-Engine hosting, model adapters/registry, interpretation, RAG, LangGraph, MCP capabilities, Writers-Room, improvement loop, observability/governance/release readiness), then **repair milestones A1–E1** that harden free-input runtime, narrative commit, LangChain/LangGraph, and deepen RAG/capabilities/writers-room/improvement/governance. Gate reviews: `docs/reports/ai_stack_gates/`; closures: `docs/reports/AI_STACK_M6_M10_CLOSURE_REPORT.md`, `docs/reports/AI_STACK_REPAIR_A1_A2_B1_B2_CLOSURE.md`, `docs/reports/AI_STACK_REPAIR_C1_C2_D1_D2_E1_CLOSURE.md`.
+
+### Added
+
+- **Developer tooling**: Root **`docker-up.py`** — Docker Compose helper with **rebuild as default** for local multi-service stacks.
+- **Player frontend** (`frontend/`): Landing experience (matrix layer, hero, overview, features, void-style footer, command dock) and **dashboard** shell with admin-oriented panels (metrics, logs, site settings via API); supporting static JS (`landing.js`, `dashboard.js`, `lightbox.js`, `matrix-layer.js`, slogan rotators, Splitting init); expanded **`style.css`**; hero/title imagery under **`frontend/static/`**; template updates (`home.html`, `dashboard.html`, `base.html`). (CLI `ensure-superadmin` and its tests are listed under [0.3.9].)
+- **M0 — Stack baseline**: `docs/architecture/ai_stack_in_world_of_shadows.md`, `docs/architecture/runtime_authority_decision.md`; session store **duplicate-ID rejection**; `SessionStartError` → HTTP status mapping; stricter **create-session JSON** validation (`backend/app/api/v1/session_routes.py`, `session_service` / `session_store`).
+- **M1 — Canonical content compiler**: Deterministic compiler from authored **`ContentModule`** to runtime projection + retrieval/review seeds; **`backend/app/content/compiler/`**; publishing attaches compilation metadata; tests in **`backend/tests/content/`**.
+- **M2 — `story_runtime_core/`**: Shared narrative-runtime package (`models`, interpreter shims, model registry/adapters extraction); **`docs/architecture/backend_runtime_classification.md`**; backend transitional shims.
+- **M3 — World-Engine authority**: Authoritative story HTTP API (internal key); **`StoryRuntimeManager`**; backend **`POST /api/v1/sessions/<id>/turns`** proxies to World-Engine (local authoritative path deprecated/warned).
+- **M4 — Model adapters**: OpenAI + Ollama + deterministic mock adapters; **`ModelSpec`** registry, routing (LLM vs SLM, timeouts, structured-output flags); registration from World-Engine startup; per-turn model diagnostics.
+- **M5 — Player input interpretation**: `docs/architecture/player_input_interpretation_contract.md`; structured **`PlayerInputInterpretation`** in **`story_runtime_core`**; World-Engine consumes interpretation; backend exposes **interpretation preview** on turn proxy; explicit command / meta paths.
+- **M6 — RAG foundation** (`wos_ai_stack/rag.py`): Retrieval domain model, ingestion, deterministic retriever, **context-pack** assembly; **`docs/architecture/rag_in_world_of_shadows.md`**; retrieval wired into **World-Engine** turn path with diagnostics/attribution; tests for ingestion, ranking, separation, sparse corpus.
+- **M7 — LangGraph** (`wos_ai_stack/langgraph_runtime.py`): Runtime turn graph with explicit state/nodes, fallbacks, **`graph_*` diagnostics**; workflow seeds for Writers-Room and improvement.
+- **M8 — MCP / capabilities** (`wos_ai_stack/capabilities.py`): Guarded capability registry (schemas, mode gating, audit, denial); **`wos.context_pack.build`** on runtime path; **`GET /api/v1/sessions/<session_id>/capability-audit`**; **`wos.capabilities.catalog`** alignment.
+- **M9 — Writers-Room on stack**: **`POST /api/v1/writers-room/reviews`** (JWT); service uses shared retrieval, LangGraph seeds, guarded bundle capability; administration UI entry to unified workflow; legacy oracle path isolated as **`/legacy-oracle`**.
+- **M10 — Improvement loop**: Variant model, sandbox experiments, metrics, recommendation packages; **`POST /api/v1/improvement/variants`**, **`POST /api/v1/improvement/experiments/run`**, **`GET /api/v1/improvement/recommendations`**.
+- **M11 — Observability & governance**: End-to-end **`X-WoS-Trace-Id`** (backend → World-Engine → LangGraph); structured audit logging (bridge, workflows, story turns); **`repro_metadata`** on graph output; **`ai_stack_evidence_service`** + governance APIs; administration-tool **AI stack governance** UI; **`docs/architecture/observability_and_governance_in_world_of_shadows.md`**, **`docs/reports/AI_STACK_RELEASE_READINESS_CHECKLIST.md`**, **`docs/reports/AI_STACK_M11_CLOSURE_REPORT.md`**; `.gitignore` for **`backend/var/improvement/`**.
+- **Repair A1**: Primary **free natural language** player path: frontend **`/play/.../execute`** → backend session **turns** → World-Engine **`RuntimeTurnGraphExecutor`** (end-to-end dispatch).
+- **Repair A2**: **Authoritative narrative commit** in **`StoryRuntimeManager.execute_turn`** (runtime projection legality, `progression_commit`, safe rejection reasons).
+- **Repair B1**: **LangChain** wired for runtime-adjacent invocation (`invoke_runtime_adapter_with_langchain` in LangGraph path) and Writers-Room retriever/tool bridges.
+- **Repair B2**: **`langgraph`** declared and **import gating** via `ensure_langgraph_available`; explicit errors when the graph stack is unavailable; tests for degraded path.
+- **Repair C1 — RAG**: Persistent corpus **`.wos/rag/runtime_corpus.json`** (fingerprinted rebuild), **sparse semantic** ranking with profile/canonical boosts, per-chunk **`source_version`** / hash metadata; `.gitignore` **`.wos/`**.
+- **Repair D1 — Writers-Room workflow**: JSON store **`backend/var/writers_room/reviews/`**; artifacts (`proposal_package`, `comment_bundle`, `patch_candidates`, `variant_candidates`, `workflow_stages`); **`GET /api/v1/writers-room/reviews/<review_id>`**, **`POST /api/v1/writers-room/reviews/<review_id>/decision`** (`accept` / `reject`) with state history; `.gitignore` **`backend/var/writers_room/`**; interim **D1 gate fail** documented then superseded (see `docs/reports/ai_stack_gates/D1_REPAIR_GATE_REPORT.md`).
+- **Repair D2 — Improvement depth**: Variant **`mutation_plan`** / lineage; experiments record **`baseline_transcript`**; evaluation adds **`baseline_metrics`**, **`comparison`** deltas; recommendations include **`evidence_bundle`**; **`docs/architecture/improvement_loop_in_world_of_shadows.md`**.
+- **Repair E1 — Release evidence**: Evidence bundles add **`repaired_layer_signals`**, **`degraded_signals`**, **`reproducibility_metadata`**; **`GET /api/v1/admin/ai-stack/release-readiness`** with honest **`ready` / `partial`** and **`known_partiality`**.
+
+### Changed
+
+- **Repair C2 — Improvement experiment path** (`backend/app/api/v1/improvement_routes.py`): Runs invoke **`wos.context_pack.build`** and **`wos.review_bundle.build`** in improvement mode; response includes **`retrieval`**, **`review_bundle`**, **`capability_audit`**; **502** **`capability_workflow_failed`** with audit payload on capability errors.
+- **Writers-Room API payloads**: **`outputs_are_recommendations_only`** is **false** when structured workflow artifacts are primary; legacy behavior still described in payload metadata.
+- **Repository hygiene**: Additional **`.gitignore`** rules for local AI-stack and improvement artifacts (e.g. `.wos/`, var trees) as milestones landed.
+
+### Tests
+
+- **AI stack / stack repairs**: `story_runtime_core/tests/`, `world-engine/tests/test_story_runtime_api.py`, `wos_ai_stack/tests/` (including `test_langgraph_runtime.py`, **`test_rag.py`**), `backend/tests/test_session_routes.py`, `test_game_service.py`, **`test_m11_ai_stack_observability.py`**, **`test_improvement_routes.py`**, **`test_writers_room_routes.py`**, `administration-tool/tests/`, and related gate-driven updates across backend and World-Engine.
+
+### Docs
+
+- Milestone gate reviews **`M0_GATE_REVIEW.md`–`M11_GATE_REVIEW.md`** under **`docs/reports/ai_stack_gates/`**; **`docs/reports/AI_STACK_M6_M10_CLOSURE_REPORT.md`**; repair gate reports **A1–E1**; **`docs/architecture/mcp_in_world_of_shadows.md`** (repair C2 alignment); closure reports **`AI_STACK_REPAIR_A1_A2_B1_B2_CLOSURE.md`**, **`AI_STACK_REPAIR_C1_C2_D1_D2_E1_CLOSURE.md`**; RUNBOOK and architecture index updates tied to the above.
+
+---
+
 ## [0.3.9] - 2026-04-04
 
 **Summary**: Backend **technical information surface** at `/backend/*` (multi-page HTML for operators/developers). Direct visits to backend **`/`** redirect to **`/backend`** instead of the player frontend; legacy player paths still redirect to **`FRONTEND_URL`** or return **410** when unset.
