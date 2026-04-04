@@ -68,6 +68,13 @@ def test_admin_session_evidence_returns_runtime_bundle(client, moderator_headers
     assert et.get("last_turn_graph_mode", {}).get("execution_health") == "healthy"
     assert et.get("committed_narrative_surface", {}).get("last_committed_turn_summary", {}).get("trace_id") == "t-committed"
     assert et.get("retrieval_influence", {}).get("hit_count") == 1
+    xc = data.get("cross_layer_classifiers") or {}
+    assert xc.get("last_turn_diagnostics_available") is True
+    assert xc.get("graph_execution_posture") == "primary_graph_path"
+    assert xc.get("runtime_retrieval_evidence_tier") == "weak"
+    assert xc.get("tool_influenced_last_turn") is True
+    rm = data.get("reproducibility_metadata") or {}
+    assert "retrieval_index_version" in rm
 
 
 def test_admin_session_evidence_404_for_unknown_session(client, moderator_headers):
@@ -212,9 +219,15 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
         "app.services.ai_stack_evidence_service._latest_improvement_package",
         lambda: {
             "package_id": "pkg_1",
+            "generated_at": "2026-04-04T12:00:00+00:00",
             "review_status": "pending_governance_review",
             "recommendation_summary": "promote",
             "evaluation": {"comparison": {"quality_heuristic_delta": 0.1}},
+            "evidence_strength_map": {
+                "retrieval_context": "moderate",
+                "transcript_tool_readback": "moderate",
+                "governance_review_bundle": "moderate",
+            },
             "evidence_bundle": {
                 "comparison": {"quality_heuristic_delta": 0.1},
                 "retrieval_source_paths": ["modules/a.md"],
@@ -243,12 +256,16 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
     assert payload["repaired_layer_signals"]["tools"]["material_influence"] is True
     assert payload["repaired_layer_signals"]["writers_room"]["review_status"] == "accepted"
     assert payload["repaired_layer_signals"]["writers_room"]["evidence_tier"] == "moderate"
+    wr_rr = payload["repaired_layer_signals"]["writers_room"]["review_readiness"]
+    assert wr_rr["retrieval_evidence_sufficient_for_review"] is True
+    assert wr_rr["retrieval_evidence_tier"] == "moderate"
     assert payload["repaired_layer_signals"]["writers_room"]["review_bundle_id"] == "b1"
     assert payload["repaired_layer_signals"]["improvement"]["package_id"] == "pkg_1"
     inf = payload["repaired_layer_signals"]["improvement"]["evidence_influence"]
     assert inf["retrieval_source_path_count"] == 1
     assert inf["has_transcript_evidence"] is True
     assert inf["has_governance_review_bundle"] is True
+    assert inf["evidence_strength_map"]["retrieval_context"] == "moderate"
     assert "governance_review_bundle" in inf["workflow_stage_ids"]
     et = payload.get("execution_truth") or {}
     assert et.get("last_turn_graph_mode", {}).get("graph_path_summary") == "primary_invoke_langchain_only"
@@ -297,6 +314,53 @@ def test_session_evidence_surfaces_degraded_execution_health(client, moderator_h
     payload = response.get_json()
     assert "fallback_path_taken" in (payload.get("degraded_path_signals") or [])
     assert (payload.get("execution_truth") or {}).get("last_turn_graph_mode", {}).get("execution_health") == "model_fallback"
+    xc = payload.get("cross_layer_classifiers") or {}
+    assert xc.get("graph_execution_posture") == "fallback_or_alternate_path"
+    assert "fallback_path_taken" in (xc.get("active_degradation_markers") or [])
+
+
+def test_session_evidence_empty_diagnostics_surfaces_no_turn_cross_layer(client, moderator_headers, monkeypatch):
+    """Empty diagnostics must not imply a healthy last-turn graph or retrieval tier."""
+    create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
+    session_id = create_resp.get_json()["session_id"]
+    monkeypatch.setattr(
+        "app.services.ai_stack_evidence_service.get_story_state",
+        lambda *_a, **_k: {"session_id": "we-empty", "turn_counter": 0},
+    )
+    monkeypatch.setattr(
+        "app.services.ai_stack_evidence_service.get_story_diagnostics",
+        lambda *_a, **_k: {"diagnostics": [], "committed_state": {"current_scene_id": "s0", "turn_counter": 0}},
+    )
+    from app.runtime.session_store import get_session as get_runtime_session
+
+    runtime_session = get_runtime_session(session_id)
+    runtime_session.current_runtime_state.metadata["world_engine_story_session_id"] = "we-empty"
+    monkeypatch.setattr("app.services.ai_stack_evidence_service._latest_writers_room_review", lambda: None)
+    monkeypatch.setattr("app.services.ai_stack_evidence_service._latest_improvement_package", lambda: None)
+
+    response = client.get(
+        f"/api/v1/admin/ai-stack/session-evidence/{session_id}",
+        headers=moderator_headers,
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    xc = payload.get("cross_layer_classifiers") or {}
+    assert xc.get("last_turn_diagnostics_available") is False
+    assert xc.get("runtime_retrieval_evidence_tier") == "no_turn_diagnostics"
+    assert xc.get("graph_execution_posture") == "no_turn_diagnostics"
+
+
+def test_latest_improvement_package_selects_newest_generated_at(monkeypatch):
+    from app.services import ai_stack_evidence_service as evidence_svc
+
+    packages = [
+        {"package_id": "older", "generated_at": "2026-01-01T00:00:00+00:00"},
+        {"package_id": "newer", "generated_at": "2026-06-15T08:30:00+00:00"},
+    ]
+    monkeypatch.setattr(evidence_svc, "list_recommendation_packages", lambda: packages)
+    latest = evidence_svc._latest_improvement_package()
+    assert latest is not None
+    assert latest["package_id"] == "newer"
 
 
 def test_release_readiness_reports_partial_honestly(client, moderator_headers, monkeypatch):
@@ -336,6 +400,60 @@ def test_release_readiness_sparse_env_does_not_claim_ready(client, moderator_hea
     assert areas_by_name.get("writers_room_review_artifacts") == "partial"
     assert areas_by_name.get("writers_room_retrieval_evidence_surface") == "partial"
     assert areas_by_name.get("improvement_governance_evidence") == "partial"
+    assert areas_by_name.get("improvement_retrieval_evidence_backing") == "partial"
     assert areas_by_name.get("writers_room_langgraph_orchestration_depth") == "partial"
     assert areas_by_name.get("runtime_turn_graph_contract") == "ready"
     assert "subsystem_maturity" in payload
+    assert "decision_support" in payload
+    assert payload["decision_support"]["latest_writers_room_retrieval_tier"] is None
+    assert "known_environment_sensitivities" in payload
+
+
+def test_release_readiness_writers_room_weak_retrieval_is_not_ready(client, moderator_headers, monkeypatch):
+    """Presence of retrieval_trace with none/weak tier must not count as review-grade retrieval surface."""
+    monkeypatch.setattr(
+        "app.services.ai_stack_evidence_service._latest_writers_room_review",
+        lambda: {
+            "review_id": "r1",
+            "review_state": {"status": "pending"},
+            "retrieval_trace": {"evidence_tier": "weak", "evidence_strength": "weak"},
+        },
+    )
+    monkeypatch.setattr("app.services.ai_stack_evidence_service._latest_improvement_package", lambda: None)
+
+    response = client.get("/api/v1/admin/ai-stack/release-readiness", headers=moderator_headers)
+    assert response.status_code == 200
+    payload = response.get_json()
+    areas_by_name = {a["area"]: a for a in payload["areas"]}
+    wr = areas_by_name["writers_room_retrieval_evidence_surface"]
+    assert wr["status"] == "partial"
+    assert "weak" in (wr.get("evidence_posture") or "")
+    assert payload["decision_support"]["writers_room_review_ready_for_retrieval_graded_review"] is False
+
+
+def test_release_readiness_improvement_weak_retrieval_backing_is_partial(client, moderator_headers, monkeypatch):
+    monkeypatch.setattr("app.services.ai_stack_evidence_service._latest_writers_room_review", lambda: None)
+    monkeypatch.setattr(
+        "app.services.ai_stack_evidence_service._latest_improvement_package",
+        lambda: {
+            "package_id": "pkg_weak",
+            "generated_at": "2026-04-04T10:00:00+00:00",
+            "evidence_bundle": {"comparison": {"ok": True}, "governance_review_bundle_id": "rb-1"},
+            "evidence_strength_map": {
+                "retrieval_context": "none",
+                "transcript_tool_readback": "low",
+                "governance_review_bundle": "moderate",
+            },
+        },
+    )
+
+    response = client.get("/api/v1/admin/ai-stack/release-readiness", headers=moderator_headers)
+    assert response.status_code == 200
+    payload = response.get_json()
+    areas_by_name = {a["area"]: a for a in payload["areas"]}
+    assert areas_by_name["improvement_governance_evidence"]["status"] == "ready"
+    backing = areas_by_name["improvement_retrieval_evidence_backing"]
+    assert backing["status"] == "partial"
+    assert backing.get("evidence_posture") == "weak_retrieval_backing"
+    assert payload["decision_support"]["latest_improvement_retrieval_context_class"] == "none"
+    assert payload["decision_support"]["improvement_review_ready_for_retrieval_graded_review"] is False

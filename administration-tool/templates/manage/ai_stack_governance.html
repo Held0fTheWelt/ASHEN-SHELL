@@ -10,6 +10,18 @@
         </div>
     </div>
 
+    <section class="panel" style="margin-bottom: 1.5rem;">
+        <header class="panel-header">
+            <h2>Release readiness</h2>
+            <p>Honest aggregate gate from <code>GET /api/v1/admin/ai-stack/release-readiness</code>. Summary is derived from the same JSON (no separate scoring service).</p>
+        </header>
+        <div class="manage-actions-row">
+            <button class="btn" id="ai-stack-load-release-readiness" type="button">Load release readiness</button>
+        </div>
+        <pre id="ai-stack-release-summary" class="code-block" style="margin-top: 0.75rem; white-space: pre-wrap;" aria-live="polite"></pre>
+        <pre id="ai-stack-release-readiness-out" class="code-block" style="margin-top: 0.75rem;"></pre>
+    </section>
+
     <div class="manage-grid two-col">
         <section class="panel">
             <header class="panel-header">

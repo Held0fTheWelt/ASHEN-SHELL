@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -117,6 +118,63 @@ def _degraded_path_signal_list(graph: dict[str, Any]) -> list[str]:
     return active
 
 
+def _improvement_package_recency_timestamp(package: dict[str, Any]) -> float:
+    raw = package.get("generated_at")
+    if not isinstance(raw, str) or not raw.strip():
+        return 0.0
+    try:
+        normalized = raw.replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized).timestamp()
+    except ValueError:
+        return 0.0
+
+
+def _retrieval_tier_strong_enough_for_governance(tier: Any) -> bool:
+    return tier in ("moderate", "strong")
+
+
+def _build_cross_layer_classifiers(
+    *,
+    execution_truth: dict[str, Any] | None,
+    degraded_path_signals: list[str],
+    bridge_errors: list[Any],
+    diag_list: list[Any] | None,
+) -> dict[str, Any]:
+    """Explicit cross-layer labels for review (derived only from existing bundle inputs)."""
+    has_last_turn = bool(diag_list) and isinstance(diag_list[-1], dict)
+    graph_mode = (execution_truth or {}).get("last_turn_graph_mode") if execution_truth else None
+    retrieval = (execution_truth or {}).get("retrieval_influence") if execution_truth else None
+    tools = (execution_truth or {}).get("tool_influence") if execution_truth else None
+    tier = retrieval.get("evidence_tier") if isinstance(retrieval, dict) else None
+    if not has_last_turn:
+        retrieval_class = "no_turn_diagnostics"
+    elif tier is None:
+        retrieval_class = "unknown"
+    else:
+        retrieval_class = tier
+
+    graph_posture = "no_turn_diagnostics"
+    if isinstance(graph_mode, dict):
+        if graph_mode.get("fallback_path_taken"):
+            graph_posture = "fallback_or_alternate_path"
+        elif graph_mode.get("execution_health") not in (None, "healthy"):
+            graph_posture = "degraded_execution_health"
+        else:
+            graph_posture = "primary_graph_path"
+
+    return {
+        "committed_vs_diagnostic": (
+            "committed_truth_is_session_fields_and_history_tail_diagnostic_rows_are_orchestration_envelopes"
+        ),
+        "last_turn_diagnostics_available": has_last_turn,
+        "graph_execution_posture": graph_posture,
+        "runtime_retrieval_evidence_tier": retrieval_class,
+        "tool_influenced_last_turn": bool(isinstance(tools, dict) and tools.get("material_influence")),
+        "bridge_reachability": "ok" if not bridge_errors else "degraded",
+        "active_degradation_markers": list(degraded_path_signals),
+    }
+
+
 def _improvement_evidence_influence(package: dict[str, Any]) -> dict[str, Any]:
     evidence = package.get("evidence_bundle") if isinstance(package.get("evidence_bundle"), dict) else {}
     stages = package.get("workflow_stages")
@@ -128,11 +186,14 @@ def _improvement_evidence_influence(package: dict[str, Any]) -> dict[str, Any]:
     paths = evidence.get("retrieval_source_paths")
     path_count = len(paths) if isinstance(paths, list) else 0
     tx = evidence.get("transcript_evidence")
+    strength = package.get("evidence_strength_map")
+    strength_map = strength if isinstance(strength, dict) else None
     return {
         "workflow_stage_ids": stage_ids,
         "retrieval_source_path_count": path_count,
         "has_transcript_evidence": bool(tx),
         "has_governance_review_bundle": bool(evidence.get("governance_review_bundle_id")),
+        "evidence_strength_map": strength_map,
         "tool_influence_indicators": {
             "context_pack_sources": path_count > 0,
             "transcript_tool": bool(tx),
@@ -151,16 +212,23 @@ def _writers_room_governance_signals(review: dict[str, Any]) -> dict[str, Any]:
         for row in audit[-12:]:
             if isinstance(row, dict) and isinstance(row.get("capability_name"), str):
                 audit_names.append(row["capability_name"])
+    wr_tier = rt.get("evidence_tier")
     return {
         "review_id": review.get("review_id"),
         "review_status": (review.get("review_state") or {}).get("status"),
-        "evidence_tier": rt.get("evidence_tier"),
+        "evidence_tier": wr_tier,
         "evidence_strength": rt.get("evidence_strength"),
         "retrieval_evidence_rationale": rt.get("evidence_rationale"),
         "model_adapter_invocation_mode": mg.get("adapter_invocation_mode"),
         "review_bundle_id": rs.get("bundle_id"),
         "review_bundle_status": rs.get("bundle_status"),
         "capability_audit_tail": audit_names,
+        "review_readiness": {
+            "governance_review_state_present": bool((review.get("review_state") or {}).get("status")),
+            "retrieval_evidence_sufficient_for_review": _retrieval_tier_strong_enough_for_governance(wr_tier),
+            "retrieval_evidence_tier": wr_tier,
+            "langgraph_orchestration": "seed_stub_not_runtime_turn_parity",
+        },
         "artifact_counts": {
             "issues": len(review.get("issues", [])),
             "patch_candidates": len(review.get("patch_candidates", [])),
@@ -217,6 +285,7 @@ def build_session_evidence_bundle(*, session_id: str, trace_id: str) -> dict[str
 
     last_diag = bundle.get("world_engine_diagnostics") or {}
     execution_truth: dict[str, Any] | None = None
+    diag_list_for_classifiers: list[Any] | None = None
     if isinstance(last_diag, dict):
         execution_truth = {
             "committed_narrative_surface": _committed_narrative_surface(last_diag),
@@ -225,6 +294,7 @@ def build_session_evidence_bundle(*, session_id: str, trace_id: str) -> dict[str
             "tool_influence": None,
         }
         diag_list = last_diag.get("diagnostics") if isinstance(last_diag.get("diagnostics"), list) else None
+        diag_list_for_classifiers = diag_list
         last_turn: dict[str, Any] | None = None
         if isinstance(diag_list, list) and diag_list:
             tail = diag_list[-1]
@@ -280,7 +350,24 @@ def build_session_evidence_bundle(*, session_id: str, trace_id: str) -> dict[str
                         "routing_policy_version": repro.get("routing_policy_version"),
                         "host_versions": repro.get("host_versions"),
                     }
+            ret_payload = last_turn.get("retrieval")
+            if isinstance(ret_payload, dict):
+                rtrace = build_retrieval_trace(ret_payload)
+                rm = bundle.get("reproducibility_metadata")
+                base_rm = rm if isinstance(rm, dict) else {}
+                bundle["reproducibility_metadata"] = {
+                    **base_rm,
+                    "retrieval_index_version": rtrace.get("index_version"),
+                    "retrieval_corpus_fingerprint": rtrace.get("corpus_fingerprint"),
+                    "retrieval_route": rtrace.get("retrieval_route"),
+                }
     bundle["execution_truth"] = execution_truth
+    bundle["cross_layer_classifiers"] = _build_cross_layer_classifiers(
+        execution_truth=execution_truth,
+        degraded_path_signals=bundle.get("degraded_path_signals") or [],
+        bridge_errors=bundle.get("bridge_errors") or [],
+        diag_list=diag_list_for_classifiers,
+    )
 
     writers_room_review = _latest_writers_room_review()
     if writers_room_review:
@@ -314,7 +401,23 @@ def _latest_improvement_package() -> dict[str, Any] | None:
     packages = list_recommendation_packages()
     if not packages:
         return None
-    return packages[-1]
+    return max(packages, key=_improvement_package_recency_timestamp)
+
+
+def _writers_room_retrieval_trace_tier(writers_room_review: dict[str, Any] | None) -> Any:
+    if not writers_room_review:
+        return None
+    rt = writers_room_review.get("retrieval_trace")
+    if not isinstance(rt, dict):
+        return None
+    return rt.get("evidence_tier")
+
+
+def _improvement_evidence_strength_map(package: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not package:
+        return None
+    m = package.get("evidence_strength_map")
+    return m if isinstance(m, dict) else None
 
 
 def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
@@ -325,11 +428,21 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
     wr_governance_ready = bool(
         writers_room_review and (writers_room_review.get("review_state") or {}).get("status")
     )
-    wr_evidence_ready = bool(
-        writers_room_review
-        and isinstance(writers_room_review.get("retrieval_trace"), dict)
-        and writers_room_review["retrieval_trace"].get("evidence_tier") is not None
+    wr_rt = _writers_room_retrieval_trace_tier(writers_room_review)
+    wr_has_trace = bool(
+        writers_room_review and isinstance(writers_room_review.get("retrieval_trace"), dict)
     )
+    wr_evidence_ready = bool(wr_has_trace and _retrieval_tier_strong_enough_for_governance(wr_rt))
+    wr_evidence_posture = (
+        "missing_retrieval_trace"
+        if not wr_has_trace
+        else (
+            "strong_enough_for_review"
+            if _retrieval_tier_strong_enough_for_governance(wr_rt)
+            else f"weak_retrieval_tier:{wr_rt}"
+        )
+    )
+
     improvement_ready = bool(
         improvement_package and (improvement_package.get("evidence_bundle") or {}).get("comparison")
     )
@@ -337,11 +450,34 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
         improvement_ready
         and (improvement_package.get("evidence_bundle") or {}).get("governance_review_bundle_id")
     )
+    imp_map = _improvement_evidence_strength_map(improvement_package)
+    imp_retrieval_class = imp_map.get("retrieval_context") if imp_map else None
+    improvement_retrieval_backing_ready = bool(
+        improvement_package
+        and imp_map is not None
+        and imp_retrieval_class not in (None, "none")
+    )
+    if not improvement_package:
+        imp_backing_reason = "no improvement recommendation package found"
+        imp_backing_posture = "no_package"
+    elif imp_map is None:
+        imp_backing_reason = "latest package has no evidence_strength_map (legacy or incomplete)"
+        imp_backing_posture = "missing_strength_map"
+    elif imp_retrieval_class == "none":
+        imp_backing_reason = (
+            "latest package has governance artifacts but retrieval_context strength is none "
+            "(recommendation not materially retrieval-backed)"
+        )
+        imp_backing_posture = "weak_retrieval_backing"
+    else:
+        imp_backing_reason = "retrieval_context strength is not none on latest package"
+        imp_backing_posture = "retrieval_backed"
 
     areas = [
         {
             "area": "story_runtime_cross_layer",
             "status": "partial",
+            "evidence_posture": "aggregate_only_not_session_scoped",
             "reason": (
                 "This aggregate report does not inspect a live World-Engine session; "
                 "use GET /admin/ai-stack/session-evidence/<id> after turns for bridged execution_truth."
@@ -350,6 +486,7 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
         {
             "area": "runtime_turn_graph_contract",
             "status": "ready",
+            "evidence_posture": "repository_contract_verified_by_tests",
             "reason": (
                 "Repository implements RuntimeTurnGraphExecutor with execution_health, "
                 "fallback markers, and repro_metadata (verified in wos_ai_stack/world-engine tests)."
@@ -358,6 +495,7 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
         {
             "area": "writers_room_review_artifacts",
             "status": "ready" if wr_governance_ready else "partial",
+            "evidence_posture": "governance_review_state_present" if wr_governance_ready else "missing_review_state",
             "reason": "Persisted writers-room review with review_state"
             if wr_governance_ready
             else "no persisted writers-room review artifacts with review state",
@@ -365,13 +503,22 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
         {
             "area": "writers_room_retrieval_evidence_surface",
             "status": "ready" if wr_evidence_ready else "partial",
-            "reason": "Latest review includes retrieval_trace evidence tier"
-            if wr_evidence_ready
-            else "no retrieval_trace on latest writers-room review",
+            "evidence_posture": wr_evidence_posture,
+            "reason": (
+                "Latest writers-room review has retrieval_trace with moderate or strong evidence tier"
+                if wr_evidence_ready
+                else (
+                    f"retrieval evidence tier is weak or none (tier={wr_rt!r}); "
+                    "not treated as review-grade retrieval backing"
+                    if wr_has_trace
+                    else "no retrieval_trace on latest writers-room review"
+                )
+            ),
         },
         {
             "area": "writers_room_langgraph_orchestration_depth",
             "status": "partial",
+            "evidence_posture": "seed_stub_intentionally_lightweight",
             "reason": (
                 "Writers-Room workflow uses a LangGraph seed graph stub for workflow_seed; "
                 "it is not runtime turn-graph parity (intentionally lightweight)."
@@ -380,6 +527,11 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
         {
             "area": "improvement_governance_evidence",
             "status": "ready" if improvement_governance_ready else "partial",
+            "evidence_posture": (
+                "comparison_and_governance_bundle_id_present"
+                if improvement_governance_ready
+                else "missing_comparison_or_governance_bundle_id"
+            ),
             "reason": "Recommendation package includes comparison plus governance review bundle id"
             if improvement_governance_ready
             else (
@@ -388,12 +540,27 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
                 else "no improvement recommendation package found"
             ),
         },
+        {
+            "area": "improvement_retrieval_evidence_backing",
+            "status": "ready" if improvement_retrieval_backing_ready else "partial",
+            "evidence_posture": imp_backing_posture,
+            "reason": imp_backing_reason,
+        },
     ]
     overall = "ready" if all(area["status"] == "ready" for area in areas) else "partial"
+    decision_support = {
+        "committed_vs_diagnostic_authority": "world_engine_session_fields_and_history_vs_diagnostics_envelopes",
+        "latest_writers_room_retrieval_tier": wr_rt,
+        "latest_improvement_retrieval_context_class": imp_retrieval_class,
+        "latest_improvement_selected_by": "max_generated_at_timestamp",
+        "writers_room_review_ready_for_retrieval_graded_review": wr_evidence_ready,
+        "improvement_review_ready_for_retrieval_graded_review": improvement_retrieval_backing_ready,
+    }
     return {
         "trace_id": trace_id,
         "overall_status": overall,
         "areas": areas,
+        "decision_support": decision_support,
         "subsystem_maturity": [
             {
                 "subsystem": "story_runtime_world_engine",
@@ -415,5 +582,9 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
             "local_json_persistence_not_distributed",
             "no_signed_immutable_audit_store",
             "release_readiness_aggregate_does_not_substitute_for_session_evidence",
+        ],
+        "known_environment_sensitivities": [
+            "writers_room_and_improvement_artifacts_depend_on_local_var_json_layout",
+            "improvement_latest_package_requires_parseable_generated_at_iso_timestamps",
         ],
     }

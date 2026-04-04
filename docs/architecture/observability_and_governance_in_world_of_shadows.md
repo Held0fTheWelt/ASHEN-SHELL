@@ -111,6 +111,9 @@ Readiness reporting must remain honest:
 
 - Missing repaired-path evidence yields `partial`, not silent success.
 - Known partiality (for example local JSON storage, unsigned audit retention) is explicitly listed in readiness payloads.
+- Writers-Room **`writers_room_retrieval_evidence_surface`** treats only `moderate`/`strong` retrieval tiers as `ready`; `none`/`weak` remain `partial` with an explicit `evidence_posture`.
+- Improvement loop: **`improvement_retrieval_evidence_backing`** can be `partial` when `evidence_strength_map.retrieval_context` is `none` even if comparison + `governance_review_bundle_id` exist (governance artifacts without retrieval-backed substance).
+- `GET /admin/ai-stack/release-readiness` includes **`decision_support`** (cross-cutting booleans and latest artifact hints), optional **`known_environment_sensitivities`**, and per-area **`evidence_posture`** strings—still aggregate-only for story runtime until session evidence is fetched.
 
 ### Session evidence bundle (`build_session_evidence_bundle`)
 
@@ -123,7 +126,11 @@ Moderator/admin session evidence includes **`execution_truth`**:
 
 **`degraded_path_signals`** lists active degradation markers (for example `fallback_path_taken`, `execution_health:model_fallback`); avoid treating empty diagnostic history as “healthy.”
 
-Persisted Writers-Room reviews add **`governance_truth`** (retrieval tier, generation path, invoked capabilities, seed-graph depth note) for review exports.
+**`cross_layer_classifiers`** summarizes the same bundle for operators: committed-vs-diagnostic authority note, whether the last diagnostic turn exists, graph execution posture (`primary_graph_path` vs fallback/degraded vs `no_turn_diagnostics`), runtime retrieval tier (or `no_turn_diagnostics` when no turn row), tool influence flag, bridge reachability, and active degradation markers.
+
+**`reproducibility_metadata`** merges graph `repro_metadata` with last-turn retrieval fingerprint fields (`retrieval_index_version`, `retrieval_corpus_fingerprint`, `retrieval_route`) when present.
+
+Persisted Writers-Room reviews add **`repaired_layer_signals.writers_room`** (including **`review_readiness`**: whether retrieval tier is sufficient for graded review vs seed-stub orchestration note).
 
 ## Version constants
 
