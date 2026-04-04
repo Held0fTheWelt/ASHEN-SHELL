@@ -15,7 +15,7 @@ import asyncio
 from pathlib import Path
 from app.services.session_service import create_session
 from app.services.persistence_service import save_session, load_session
-from app.runtime.session_store import get_session as get_stored_session
+from app.runtime.session_store import delete_session, get_session as get_stored_session
 from app.runtime.turn_dispatcher import dispatch_turn
 
 
@@ -156,6 +156,8 @@ class TestSessionPersistence:
             from app.runtime.session_store import create_session as register_session
 
             restored_module = load_module(restored.module_id)
+            # Same process still holds the pre-save registration; resume simulates a fresh runtime.
+            delete_session(restored.session_id)
             register_session(restored.session_id, restored, restored_module)
             restored_runtime = get_stored_session(restored.session_id)
 

@@ -163,14 +163,19 @@ def create_app(config_object=None):
         ph.setFormatter(logging.Formatter("%(levelname)s [%(name)s] %(message)s"))
         pkg_logger.addHandler(ph)
 
-    # Startup log: always show which mode we're in
+    # Startup log: always show which mode we're in (INFO in tests to avoid WARNING noise in pytest output)
     if app.config.get("TESTING"):
         mode = "TESTING"
     elif app.config.get("MAIL_ENABLED"):
         mode = "NORMAL (MAIL_ENABLED=1)"
     else:
         mode = "DEV (MAIL_ENABLED=0)"
-    app.logger.warning("Running BETTER TOMORROW Backend [mode: %s]", mode)
+    _startup_msg = "Running BETTER TOMORROW Backend [mode: %s]"
+    # Use Flask's testing flag so startup is INFO (no pytest WARNING noise), not WARNING.
+    if app.testing:
+        app.logger.info(_startup_msg, mode)
+    else:
+        app.logger.warning(_startup_msg, mode)
 
     init_extensions(app)
     limiter.default_limits = [app.config.get("RATELIMIT_DEFAULT", "100 per minute")]
