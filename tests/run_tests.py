@@ -2,9 +2,9 @@
 """
 World of Shadows — multi-component test runner.
 
-Runs pytest in each component tree (backend, frontend, administration-tool, world-engine, database)
-with a separate working directory per component. Optional scope filters apply only to
-the backend suite (pytest markers).
+Runs pytest in each component tree (backend, frontend, administration-tool, world-engine,
+database, wos_ai_stack) with a separate working directory per component (or repo root for
+wos_ai_stack tests). Optional scope filters apply only to the backend suite (pytest markers).
 
 Usage:
     python run_tests.py
@@ -17,6 +17,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -40,6 +41,7 @@ SUITE_DISPLAY_NAMES: dict[str, str] = {
     "administration": "Administration tool (proxy and UI)",
     "engine": "World engine (runtime and HTTP/WS)",
     "database": "Database (migrations and tooling)",
+    "wos_ai_stack": "WOS AI stack (LangGraph runtime, RAG, Writers-Room / improvement seed graphs)",
 }
 
 # Optional backend-only filter: CLI value -> pytest -m marker name
@@ -54,6 +56,17 @@ BACKEND_SCOPE_MARKERS: dict[str, str] = {
 BACKEND_COV_FAIL_UNDER = "85"
 FRONTEND_COV_FAIL_UNDER = "92"
 DEFAULT_COV_FAIL_UNDER = "80"
+
+# Suite -> (pytest cwd, path argument to pytest, relative to cwd)
+SUITE_PYTEST_TARGETS: dict[str, tuple[Path, str]] = {
+    "backend": (BACKEND_DIR, "tests"),
+    "frontend": (FRONTEND_DIR, "tests"),
+    "administration": (ADMIN_TOOL_DIR, "tests"),
+    "engine": (WORLD_ENGINE_DIR, "tests"),
+    "database": (DATABASE_DIR, "tests"),
+    # Writers-Room / improvement seed graphs and runtime turn graph; imports require repo root on PYTHONPATH.
+    "wos_ai_stack": (PROJECT_ROOT, "wos_ai_stack/tests"),
+}
 
 
 class Colors:
@@ -103,20 +116,36 @@ def check_environment() -> bool:
     return True
 
 
-def show_test_stats(suites: dict[str, Path]) -> None:
+def _subprocess_env_for_suite(suite_name: str) -> dict[str, str] | None:
+    """wos_ai_stack tests import sibling packages; ensure repo root is on PYTHONPATH."""
+    if suite_name != "wos_ai_stack":
+        return None
+    env = dict(os.environ)
+    root = str(PROJECT_ROOT)
+    sep = os.pathsep
+    existing = env.get("PYTHONPATH", "")
+    parts = [p for p in existing.split(sep) if p]
+    if root not in parts:
+        parts.insert(0, root)
+    env["PYTHONPATH"] = sep.join(parts)
+    return env
+
+
+def show_test_stats(suites: dict[str, tuple[Path, str]]) -> None:
     print_header("Test collection (collect-only)")
-    for suite_name, suite_dir in suites.items():
-        test_root = suite_dir / "tests"
+    for suite_name, (suite_cwd, test_path) in suites.items():
+        test_root = suite_cwd / test_path
         if not test_root.is_dir():
-            print_info(f"{suite_name}: no tests directory")
+            print_info(f"{suite_name}: no tests directory ({test_root})")
             continue
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", "--collect-only", "-q", "tests"],
+                [sys.executable, "-m", "pytest", "--collect-only", "-q", test_path],
                 capture_output=True,
                 text=True,
                 timeout=120,
-                cwd=str(suite_dir),
+                cwd=str(suite_cwd),
+                env=_subprocess_env_for_suite(suite_name) or os.environ,
             )
             out = (result.stdout or "") + (result.stderr or "")
             collected_line = None
@@ -133,17 +162,11 @@ def show_test_stats(suites: dict[str, Path]) -> None:
     print()
 
 
-def get_suite_configs(suite_names: list[str]) -> dict[str, Path]:
-    all_suites: dict[str, Path] = {
-        "backend": BACKEND_DIR,
-        "frontend": FRONTEND_DIR,
-        "administration": ADMIN_TOOL_DIR,
-        "engine": WORLD_ENGINE_DIR,
-        "database": DATABASE_DIR,
-    }
+def get_suite_configs(suite_names: list[str]) -> dict[str, tuple[Path, str]]:
+    all_suites = dict(SUITE_PYTEST_TARGETS)
     if "all" in suite_names:
         return dict(all_suites)
-    result: dict[str, Path] = {}
+    result: dict[str, tuple[Path, str]] = {}
     for name in suite_names:
         if name in all_suites:
             result[name] = all_suites[name]
@@ -160,23 +183,32 @@ def _cov_fail_under_for_suite(suite_name: str) -> str:
     return DEFAULT_COV_FAIL_UNDER
 
 
+def _cov_target_for_suite(suite_name: str) -> str:
+    if suite_name in ("backend", "frontend"):
+        return "app"
+    if suite_name == "wos_ai_stack":
+        return "wos_ai_stack"
+    return "."
+
+
 def build_pytest_argv(
     *,
     suite_name: str,
+    test_path: str,
     quick: bool,
     coverage_mode: bool,
     verbose: bool,
     scope: str,
 ) -> list[str]:
-    """Build pytest arguments for one component run (cwd = that component)."""
-    cov_target = "app" if suite_name in ("backend", "frontend") else "."
+    """Build pytest arguments for one component run (cwd = suite working directory)."""
+    cov_target = _cov_target_for_suite(suite_name)
     cov_under = _cov_fail_under_for_suite(suite_name)
 
     if quick:
         argv = ["-v", "--tb=short", "--no-cov", "-x"]
         if suite_name == "backend" and scope in BACKEND_SCOPE_MARKERS:
             argv.extend(["-m", BACKEND_SCOPE_MARKERS[scope]])
-        argv.append("tests")
+        argv.append(test_path)
         return argv
 
     if coverage_mode:
@@ -211,18 +243,19 @@ def build_pytest_argv(
         marker = BACKEND_SCOPE_MARKERS[scope]
         argv.extend(["-m", marker])
 
-    argv.append("tests")
+    argv.append(test_path)
     return argv
 
 
 def run_pytest(
     suite_name: str,
-    suite_dir: Path,
+    suite_cwd: Path,
+    test_path: str,
     pytest_argv: list[str],
     run_title: str,
 ) -> bool:
     print_header(run_title)
-    tests_dir = suite_dir / "tests"
+    tests_dir = suite_cwd / test_path
     if not tests_dir.is_dir():
         print_error(f"Tests directory not found: {tests_dir}")
         return False
@@ -230,7 +263,11 @@ def run_pytest(
     junit_report = REPORTS_DIR / f"pytest_{suite_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
     cmd = [sys.executable, "-m", "pytest", *pytest_argv, f"--junit-xml={junit_report}"]
     try:
-        result = subprocess.run(cmd, cwd=str(suite_dir))
+        result = subprocess.run(
+            cmd,
+            cwd=str(suite_cwd),
+            env=_subprocess_env_for_suite(suite_name) or os.environ,
+        )
         return result.returncode == 0
     except OSError as exc:
         print_error(f"Failed to run pytest: {exc}")
@@ -238,7 +275,7 @@ def run_pytest(
 
 
 def run_tests_for_suites(
-    suites: dict[str, Path],
+    suites: dict[str, tuple[Path, str]],
     *,
     quick: bool,
     coverage_mode: bool,
@@ -248,7 +285,7 @@ def run_tests_for_suites(
     all_passed = True
     results: dict[str, bool] = {}
 
-    for suite_name, suite_dir in suites.items():
+    for suite_name, (suite_cwd, test_path) in suites.items():
         display = SUITE_DISPLAY_NAMES.get(suite_name, suite_name)
         if scope in BACKEND_SCOPE_MARKERS:
             if suite_name == "backend":
@@ -264,12 +301,13 @@ def run_tests_for_suites(
 
         argv = build_pytest_argv(
             suite_name=suite_name,
+            test_path=test_path,
             quick=quick,
             coverage_mode=coverage_mode,
             verbose=verbose,
             scope=scope if suite_name == "backend" else "all",
         )
-        ok = run_pytest(suite_name, suite_dir, argv, f"Running: {title}")
+        ok = run_pytest(suite_name, suite_cwd, test_path, argv, f"Running: {title}")
         results[suite_name] = ok
         all_passed = all_passed and ok
         if not ok:
@@ -283,7 +321,10 @@ def run_tests_for_suites(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run pytest per component (backend, frontend, administration-tool, world-engine, database).",
+        description=(
+            "Run pytest per component (backend, frontend, administration-tool, world-engine, "
+            "database, wos_ai_stack)."
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -292,6 +333,7 @@ Examples:
   python run_tests.py --suite frontend
   python run_tests.py --suite backend --scope contracts
   python run_tests.py --suite backend database --quick
+  python run_tests.py --suite wos_ai_stack --quick
   python run_tests.py --suite all --coverage
         """,
     )
@@ -299,8 +341,8 @@ Examples:
         "--suite",
         nargs="+",
         default=["all"],
-        choices=["backend", "frontend", "administration", "engine", "database", "all"],
-        help="Component test tree to run (default: all)",
+        choices=["backend", "frontend", "administration", "engine", "database", "wos_ai_stack", "all"],
+        help="Component test tree to run (default: all includes wos_ai_stack Writers-Room seed graph tests)",
     )
     parser.add_argument(
         "--scope",
