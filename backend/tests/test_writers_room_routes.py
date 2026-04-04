@@ -38,6 +38,31 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert data["stack_components"]["langchain_integration"]["enabled"] is True
 
 
+def test_writers_room_patch_candidates_have_preview_summary_and_confidence(client, auth_headers):
+    response = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "canon consistency"},
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    patch_candidates = data.get("patch_candidates", [])
+    assert len(patch_candidates) >= 1, "Expected at least one patch candidate"
+    for candidate in patch_candidates:
+        assert "preview_summary" in candidate, f"Missing preview_summary in candidate: {candidate}"
+        assert "confidence" in candidate, f"Missing confidence in candidate: {candidate}"
+        assert isinstance(candidate["confidence"], float), (
+            f"confidence must be a float, got {type(candidate['confidence'])}"
+        )
+        assert 0.0 <= candidate["confidence"] <= 1.0, (
+            f"confidence must be between 0 and 1, got {candidate['confidence']}"
+        )
+        assert isinstance(candidate["preview_summary"], str), (
+            f"preview_summary must be a string, got {type(candidate['preview_summary'])}"
+        )
+        assert len(candidate["preview_summary"]) > 0, "preview_summary must not be empty"
+
+
 def test_writers_room_review_state_transition_and_fetch(client, auth_headers):
     create_resp = client.post(
         "/api/v1/writers-room/reviews",

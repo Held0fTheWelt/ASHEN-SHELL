@@ -183,11 +183,20 @@ def run_writers_room_review(
             for idx, issue in enumerate(issues, start=1)
         ],
     }
+    _severity_confidence = {"high": 0.9, "medium": 0.7, "low": 0.4}
     patch_candidates = [
         {
             "candidate_id": f"patch_{index}",
             "target": source.get("source_path", ""),
             "change_hint": "Adjust wording to maintain canon consistency.",
+            "preview_summary": (
+                f"Revise {source.get('source_path', 'target')} to resolve canon inconsistency "
+                f"identified during {module_id} review."
+            ),
+            "confidence": _severity_confidence.get(
+                issues[index - 1]["severity"] if index - 1 < len(issues) else "medium",
+                0.7,
+            ),
         }
         for index, source in enumerate(sources[:2], start=1)
     ]
