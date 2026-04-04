@@ -1,0 +1,62 @@
+from __future__ import annotations
+
+from flask import jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
+from app.api.v1 import api_v1_bp
+from app.services.improvement_service import (
+    build_recommendation_package,
+    create_variant,
+    list_recommendation_packages,
+    run_sandbox_experiment,
+)
+
+
+@api_v1_bp.route("/improvement/variants", methods=["POST"])
+@jwt_required()
+def create_improvement_variant():
+    data = request.get_json(silent=True)
+    if data is None or not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON body"}), 400
+    baseline_id = (data.get("baseline_id") or "").strip()
+    candidate_summary = (data.get("candidate_summary") or "").strip()
+    if not baseline_id:
+        return jsonify({"error": "baseline_id is required"}), 400
+    if not candidate_summary:
+        return jsonify({"error": "candidate_summary is required"}), 400
+    actor_id = str(get_jwt_identity() or "unknown")
+    variant = create_variant(
+        baseline_id=baseline_id,
+        candidate_summary=candidate_summary,
+        actor_id=actor_id,
+        metadata=data.get("metadata") if isinstance(data.get("metadata"), dict) else None,
+    )
+    return jsonify(variant), 201
+
+
+@api_v1_bp.route("/improvement/experiments/run", methods=["POST"])
+@jwt_required()
+def run_improvement_experiment():
+    data = request.get_json(silent=True)
+    if data is None or not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON body"}), 400
+    variant_id = (data.get("variant_id") or "").strip()
+    if not variant_id:
+        return jsonify({"error": "variant_id is required"}), 400
+    actor_id = str(get_jwt_identity() or "unknown")
+    test_inputs = data.get("test_inputs")
+    if test_inputs is not None and not isinstance(test_inputs, list):
+        return jsonify({"error": "test_inputs must be a list when provided"}), 400
+    experiment = run_sandbox_experiment(
+        variant_id=variant_id,
+        actor_id=actor_id,
+        test_inputs=[str(item) for item in test_inputs] if isinstance(test_inputs, list) else None,
+    )
+    package = build_recommendation_package(experiment_id=experiment["experiment_id"], actor_id=actor_id)
+    return jsonify({"experiment": experiment, "recommendation_package": package}), 200
+
+
+@api_v1_bp.route("/improvement/recommendations", methods=["GET"])
+@jwt_required()
+def list_improvement_recommendations():
+    return jsonify({"packages": list_recommendation_packages()}), 200
