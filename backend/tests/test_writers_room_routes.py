@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -45,6 +46,8 @@ def _build_controlled_workflow(
     repo_root: Path,
     context_pack_body: dict,
     review_bundle_body: dict,
+    *,
+    langchain_preview_paths: list[str] | None = None,
 ) -> _WritersRoomWorkflow:
     class ControlledRegistry:
         def __init__(self) -> None:
@@ -70,12 +73,23 @@ def _build_controlled_workflow(
         mode="writers_room",
         actor="writers_room:test_controlled",
     )
+    if langchain_preview_paths is not None:
+        class _ControlledLangChainPreview:
+            def get_writers_room_documents(self, query: str, module_id: str, max_chunks: int):
+                return [
+                    SimpleNamespace(metadata={"source_path": path})
+                    for path in langchain_preview_paths
+                ]
+
+        lc_bridge = _ControlledLangChainPreview()
+    else:
+        lc_bridge = build_langchain_retriever_bridge(retriever)
     return _WritersRoomWorkflow(
         capability_registry=registry,
         routing=RoutingPolicy(build_default_registry()),
         adapters=build_default_model_adapters(),
         seed_graph=build_seed_writers_room_graph(),
-        langchain_retriever=build_langchain_retriever_bridge(retriever),
+        langchain_retriever=lc_bridge,
         review_bundle_tool=review_tool,
     )
 
@@ -105,10 +119,17 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert "workflow_manifest" in data
     assert data["workflow_manifest"]["workflow"] == "writers_room_unified_stack_workflow"
     stage_ids = [s["id"] for s in data["workflow_manifest"]["stages"]]
+    assert data["workflow_stages"] == stage_ids
     assert "request_intake" in stage_ids
     assert "retrieval_analysis" in stage_ids
+    assert "retrieval_bridge_preview" in stage_ids
     assert "governance_envelope" in stage_ids
     assert "human_review_pending" in stage_ids
+    assert "review_checkpoint" in data["review_summary"]
+    assert data["review_summary"]["review_checkpoint"]["verify_recommendation_only_semantics"] is True
+    rd = data["proposal_package"]["retrieval_digest"]
+    assert "hit_count" in rd and "evidence_tier" in rd
+    assert "context_fingerprint_sha256_16" in rd
     assert "review_summary" in data
     assert data["review_summary"]["issue_count"] >= 0
     assert data["review_summary"]["bundle_id"] == (data.get("review_bundle") or {}).get("bundle_id")
@@ -169,6 +190,120 @@ def test_writers_room_patch_candidates_have_preview_summary_and_confidence(clien
             f"preview_summary must be a string, got {type(candidate['preview_summary'])}"
         )
         assert len(candidate["preview_summary"]) > 0, "preview_summary must not be empty"
+        assert candidate.get("review_bundle_id") == (data.get("review_bundle") or {}).get("bundle_id")
+        assert candidate.get("confidence_kind") == "retrieval_heuristic"
+        assert "evidence_tier" in candidate
+
+
+def test_proposal_package_langchain_preview_paths_materialized(client, auth_headers, monkeypatch):
+    """LangChain retriever preview paths must be copied into the packaged proposal."""
+    from app.services import writers_room_service as wrs
+
+    repo = _repo_root()
+    rb = {
+        "bundle_id": "bundle_preview_pkg",
+        "status": "recommendation_only",
+        "summary": "s",
+        "recommendations": [],
+        "evidence_sources": [],
+    }
+    ctx = _context_pack_for_paths(["corp/d1_with_preview.md"])
+    monkeypatch.setattr(wrs, "_WORKFLOW", None)
+    monkeypatch.setattr(
+        wrs,
+        "_get_workflow",
+        lambda: _build_controlled_workflow(
+            repo, ctx, rb, langchain_preview_paths=["corp/langchain_preview_doc.md"]
+        ),
+    )
+    r = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "preview packaging"},
+    )
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["proposal_package"]["langchain_preview_paths"] == ["corp/langchain_preview_doc.md"]
+    gr = body["proposal_package"]["governance_readiness"]
+    assert gr["langchain_preview_path_count"] == 1
+
+
+def test_revision_submit_preserves_prior_snapshot_and_refreshes_artifacts(client, auth_headers, monkeypatch):
+    """After revise, revision-submit re-runs workflow and appends a revision cycle."""
+    from app.services import writers_room_service as wrs
+
+    repo = _repo_root()
+    rb = {
+        "bundle_id": "bundle_rev",
+        "status": "recommendation_only",
+        "summary": "s",
+        "recommendations": [],
+        "evidence_sources": [],
+    }
+    alpha = _context_pack_for_paths(["corp/rev_alpha.md"], context_tag="a")
+    monkeypatch.setattr(wrs, "_WORKFLOW", None)
+    monkeypatch.setattr(
+        wrs,
+        "_get_workflow",
+        lambda: _build_controlled_workflow(
+            repo, alpha, rb, langchain_preview_paths=["preview/a.md"]
+        ),
+    )
+    c1 = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "revision cycle"},
+    )
+    assert c1.status_code == 200
+    review_id = c1.get_json()["review_id"]
+    assert c1.get_json()["proposal_package"]["evidence_sources"][0] == "corp/rev_alpha.md"
+
+    rev = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/decision",
+        headers=auth_headers,
+        json={"decision": "revise", "note": "expand evidence"},
+    )
+    assert rev.status_code == 200
+
+    beta = _context_pack_for_paths(["corp/rev_beta.md"], context_tag="b")
+    monkeypatch.setattr(wrs, "_WORKFLOW", None)
+    monkeypatch.setattr(
+        wrs,
+        "_get_workflow",
+        lambda: _build_controlled_workflow(
+            repo, beta, rb, langchain_preview_paths=["preview/b.md"]
+        ),
+    )
+    sub = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/revision-submit",
+        headers=auth_headers,
+        json={"note": "second pass", "focus": "revision cycle B"},
+    )
+    assert sub.status_code == 200
+    final = sub.get_json()
+    assert final["review_state"]["status"] == "pending_human_review"
+    assert len(final["revision_cycles"]) == 1
+    prior = final["revision_cycles"][0]["prior_snapshot"]
+    assert prior["proposal_package"]["evidence_sources"][0] == "corp/rev_alpha.md"
+    assert final["proposal_package"]["evidence_sources"][0] == "corp/rev_beta.md"
+    assert final["proposal_package"]["langchain_preview_paths"] == ["preview/b.md"]
+    assert final["focus"] == "revision cycle B"
+
+
+def test_revision_submit_rejected_when_not_pending_revision(client, auth_headers):
+    create_resp = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "no revision"},
+    )
+    review_id = create_resp.get_json()["review_id"]
+    bad = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/revision-submit",
+        headers=auth_headers,
+        json={},
+    )
+    assert bad.status_code == 400
+    assert "revision" in bad.get_json().get("error", "").lower()
 
 
 def test_writers_room_review_state_transition_and_fetch(client, auth_headers):

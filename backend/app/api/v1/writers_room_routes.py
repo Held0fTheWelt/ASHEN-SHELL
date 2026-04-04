@@ -10,6 +10,7 @@ from app.services.writers_room_service import (
     apply_writers_room_decision,
     get_writers_room_review,
     run_writers_room_review,
+    submit_writers_room_revision,
 )
 
 
@@ -46,6 +47,38 @@ def get_writers_room_review_by_id(review_id: str):
         review = get_writers_room_review(review_id=review_id)
     except FileNotFoundError:
         return jsonify({"error": "review_not_found"}), 404
+    return jsonify(review), 200
+
+
+@api_v1_bp.route("/writers-room/reviews/<review_id>/revision-submit", methods=["POST"])
+@jwt_required()
+def submit_writers_room_review_revision(review_id: str):
+    data = request.get_json(silent=True)
+    if data is None or not isinstance(data, dict):
+        data = {}
+    actor_id = str(get_jwt_identity() or "unknown")
+    trace_id = g.get("trace_id") or get_trace_id()
+    focus_raw = data.get("focus")
+    focus = str(focus_raw).strip() if focus_raw is not None else None
+    try:
+        review = submit_writers_room_revision(
+            review_id=review_id,
+            actor_id=actor_id,
+            focus=focus,
+            note=str(data.get("note") or "").strip(),
+            trace_id=trace_id,
+        )
+    except FileNotFoundError:
+        return jsonify({"error": "review_not_found"}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    log_workflow_audit(
+        trace_id,
+        workflow="writers_room_revision_submit",
+        actor_id=actor_id,
+        outcome="ok",
+        resource_id=review_id,
+    )
     return jsonify(review), 200
 
 
