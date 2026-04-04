@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -17,28 +16,12 @@ from wos_ai_stack.rag import (
     RetrievalStatus,
     build_runtime_retriever,
 )
-from wos_ai_stack.semantic_embedding import encode_texts
+from wos_ai_stack.tests.embedding_markers import requires_embeddings
 
 
 def _write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
-
-
-def _embedding_backend_ready() -> bool:
-    prev = os.environ.get("WOS_RAG_DISABLE_EMBEDDINGS")
-    try:
-        os.environ.pop("WOS_RAG_DISABLE_EMBEDDINGS", None)
-        return encode_texts(["ping"], batch_size=1) is not None
-    finally:
-        if prev is not None:
-            os.environ["WOS_RAG_DISABLE_EMBEDDINGS"] = prev
-
-
-requires_embeddings = pytest.mark.skipif(
-    not _embedding_backend_ready(),
-    reason="fastembed/numpy embedding backend unavailable (install deps or offline model cache)",
-)
 
 
 def test_ingestion_builds_corpus_from_repo_owned_sources(tmp_path: Path) -> None:

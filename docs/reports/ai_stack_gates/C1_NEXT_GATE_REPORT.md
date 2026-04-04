@@ -66,6 +66,7 @@ All C1-next gate conditions are met: materially more semantic retrieval when emb
 
 - **Embedding availability**: environments without `fastembed`/onnx or without model cache fall back to sparse-only (explicit, but weaker retrieval).
 - **Linear dense scan** may become slow if corpus size grows without an ANN layer.
+- **Reproducibility / cache control:** addressed in the follow-up hardening gate `H1_EMBEDDING_HARDENING_GATE_REPORT.md` (`WOS_RAG_EMBEDDING_CACHE_DIR`, `embedding_backend_probe`, and targeted tests).
 
 ## BC-next verification rerun
 

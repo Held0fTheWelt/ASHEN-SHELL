@@ -39,19 +39,40 @@ When source content changes, chunk source versions change accordingly.
 
 ## Embedding/retrieval approach
 
-- Retrieval uses a local sparse semantic representation with:
-  - canonicalized token normalization
-  - concept expansion terms
-  - weighted sparse vectors with IDF weighting
-  - cosine similarity ranking
-- Retrieval remains deterministic and does not require external embedding services.
-- Profile and context boosts are applied on top of semantic similarity:
-  - content-class boosts by profile
-  - canonical priority boost
-  - module match boost
-  - scene hint boost
+### Sparse path (always available)
 
-This is materially semantic compared to prior lexical overlap scoring, while remaining lightweight and local.
+- Canonicalized token normalization, concept expansion terms, weighted sparse vectors with IDF weighting, cosine similarity ranking.
+- Does not require `fastembed` or downloaded models.
+- When the dense path is unavailable or disabled, `ContextRetriever` uses this path only and sets `retrieval_route=sparse_fallback` (explicit in ranking notes).
+
+### Dense / hybrid path (C1-next, optional at install time)
+
+- **Optional dependency:** `fastembed` (declared in `world-engine/requirements.txt` and `backend/requirements.txt`). The stack runs without it; hybrid scoring is off in that case.
+- **Strongly recommended for full BC-next / C1-next verification:** environments that must prove the hybrid path should install `fastembed`, allow a one-time model fetch (or use a pre-populated cache), and pin the cache directory for reproducibility.
+- **Model:** `BAAI/bge-small-en-v1.5` (ONNX via fastembed), L2-normalized vectors.
+- **Artifacts:** `.wos/rag/runtime_embeddings.npz` + `runtime_embeddings.meta.json` next to `runtime_corpus.json`, versioned so mismatched fingerprints or index versions force rebuild.
+- **Explicit routing:** `retrieval_route=hybrid` when the dense index and query encoding succeed; otherwise `sparse_fallback` (e.g. missing dependency, `WOS_RAG_DISABLE_EMBEDDINGS`, corrupt sidecar, or query encode failure—with `embedding_query_encode_failed` in ranking notes when the failure happens at query time).
+
+### Environment variables (embedding cache and toggles)
+
+| Variable | Effect |
+|----------|--------|
+| `WOS_RAG_DISABLE_EMBEDDINGS` | When set to `1` / `true` / `yes`, disables dense encoding and forces sparse-only retrieval (explicit fallback). |
+| `WOS_RAG_EMBEDDING_CACHE_DIR` | When set to a directory path, passed to `fastembed.TextEmbedding(cache_dir=...)` so model/ONNX downloads land in a known location (recommended for CI and reproducible local runs). |
+| `HF_HOME`, `HUGGINGFACE_HUB_CACHE`, etc. | Standard Hugging Face hub variables may still influence download/cache layout when the fastembed stack uses the hub; the table above documents the repo-specific override. |
+
+### Introspection
+
+- `wos_ai_stack.semantic_embedding.embedding_backend_probe()` returns structured availability (`import_ok`, `encode_ok`, `disabled_by_env`, reason codes) without writing RAG files. Use it in tooling or tests instead of inferring capability from retrieval alone.
+
+### Profile and context boosts
+
+Applied on top of the chosen scoring path (hybrid or sparse):
+
+- content-class boosts by profile
+- canonical priority boost
+- module match boost
+- scene hint boost
 
 ## Retrieval domains and active profiles
 
@@ -78,6 +99,9 @@ This keeps runtime retrieval biased toward canonical authored truth where releva
 
 ## Current limits
 
-- Semantic retrieval is local sparse-vector semantics, not transformer embedding search.
-- Persistence is single-node local JSON storage; no distributed index, sharding, or service-managed durability.
+- **Hybrid dense retrieval** is local, linear scan over chunk vectors (no ANN service); first use may require network access to fetch the ONNX model unless the cache is already populated.
+- **OS / runtime variance:** ONNX execution and Hugging Face cache behavior (e.g. symlinks on Windows) can differ by machine; the sparse path remains the portable baseline.
+- Persistence is single-node local JSON + optional npz sidecars; not a distributed vector database.
 - There is no advanced profile auto-tuning or retrieval quality dashboard yet.
+
+See `docs/reports/ai_stack_gates/H1_EMBEDDING_HARDENING_GATE_REPORT.md` for the embedding/cache hardening gate and remaining environment risk.
