@@ -17,6 +17,19 @@ from pydantic import BaseModel, Field
 
 from app.runtime.short_term_context import ShortTermTurnContext
 
+# Task 1C: tighter caps for long-lived history rows (JSON-safe, compact).
+_MAX_HISTORY_CONSEQUENCES = 16
+_MAX_HISTORY_REASON_LEN = 200
+
+
+def _cap_history_reason(value: str | None) -> str | None:
+    if value is None:
+        return None
+    s = str(value).strip()
+    if len(s) <= _MAX_HISTORY_REASON_LEN:
+        return s
+    return s[: _MAX_HISTORY_REASON_LEN - 1] + "…"
+
 
 class HistoryEntry(BaseModel):
     """A single bounded historical record from a completed turn.
@@ -35,6 +48,10 @@ class HistoryEntry(BaseModel):
         ending_reached: Whether an ending was triggered.
         ending_id: The ending ID if reached.
         created_at: When this history entry was recorded.
+        situation_status: Narrative situation label when recorded (Task 1C).
+        canonical_consequences: Bounded consequence tokens carried from short-term context.
+        authoritative_reason: Truncated authoritative reason for continuity.
+        is_terminal: Whether the turn committed a terminal ending.
     """
 
     turn_number: int
@@ -47,12 +64,18 @@ class HistoryEntry(BaseModel):
     ending_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    situation_status: str = ""
+    canonical_consequences: list[str] = Field(default_factory=list)
+    authoritative_reason: Optional[str] = None
+    is_terminal: bool = False
+
     @classmethod
     def from_short_term_context(cls, context: ShortTermTurnContext) -> HistoryEntry:
         """Create a history entry from a short-term turn context.
 
         Extracts the most relevant information for long-term session tracking.
         """
+        consequences = list(context.canonical_consequences or [])[:_MAX_HISTORY_CONSEQUENCES]
         return cls(
             turn_number=context.turn_number,
             scene_id=context.scene_id,
@@ -62,6 +85,10 @@ class HistoryEntry(BaseModel):
             prior_scene_id=context.prior_scene_id,
             ending_reached=context.ending_reached,
             ending_id=context.ending_id,
+            situation_status=context.situation_status or "",
+            canonical_consequences=consequences,
+            authoritative_reason=_cap_history_reason(context.authoritative_reason),
+            is_terminal=context.is_terminal,
         )
 
 

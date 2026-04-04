@@ -23,6 +23,7 @@ from app.runtime.ai_adapter import (
     generate_with_timeout,
 )
 from app.runtime.input_interpreter import interpret_operator_input
+from app.runtime.short_term_context import ShortTermTurnContext
 from app.runtime.ai_decision import ParseResult, ParsedAIDecision, process_adapter_response
 from app.runtime.ai_decision_logging import construct_ai_decision_log
 from app.runtime.decision_policy import AIDecisionPolicy
@@ -109,6 +110,47 @@ def process_role_structured_decision(
     )
 
 
+def _continuity_context_from_session_layers(session: SessionState) -> dict[str, Any] | None:
+    """Task 1C: bounded JSON snapshots from ``context_layers`` only (binding precision §1).
+
+    Excludes diagnostic short-term blobs. Does not embed session_history, turn results,
+    or raw metadata.
+    """
+    cl = session.context_layers
+    out: dict[str, Any] = {}
+
+    st = cl.short_term_context
+    if st is not None:
+        if isinstance(st, ShortTermTurnContext):
+            out["short_term_turn_context"] = st.model_dump(
+                mode="json",
+                exclude={"execution_result_full", "ai_decision_log_full"},
+            )
+        elif hasattr(st, "model_dump"):
+            out["short_term_turn_context"] = st.model_dump(
+                mode="json",
+                exclude={"execution_result_full", "ai_decision_log_full"},
+            )
+        elif isinstance(st, dict):
+            out["short_term_turn_context"] = {
+                k: v for k, v in st.items() if k not in ("execution_result_full", "ai_decision_log_full")
+            }
+
+    ps = cl.progression_summary
+    if ps is not None and hasattr(ps, "model_dump"):
+        out["progression_summary"] = ps.model_dump(mode="json")
+
+    rel = cl.relationship_axis_context
+    if rel is not None and hasattr(rel, "model_dump"):
+        out["relationship_axis_context"] = rel.model_dump(mode="json")
+
+    lore = cl.lore_direction_context
+    if lore is not None and hasattr(lore, "model_dump"):
+        out["lore_direction_context"] = lore.model_dump(mode="json")
+
+    return out if out else None
+
+
 def build_adapter_request(
     session: SessionState,
     module: ContentModule,
@@ -136,6 +178,7 @@ def build_adapter_request(
     """
     op_raw = operator_input if operator_input is not None else ""
     input_interpretation = interpret_operator_input(op_raw)
+    continuity_context = _continuity_context_from_session_layers(session)
     return AdapterRequest(
         session_id=session.session_id,
         turn_number=session.turn_counter,
@@ -144,6 +187,7 @@ def build_adapter_request(
         recent_events=recent_events or [],
         operator_input=operator_input or None,
         input_interpretation=input_interpretation,
+        continuity_context=continuity_context,
         request_role_structured_output=True,  # W2.4.2: Request role-structured format (interpreter/director/responder)
         metadata={
             "module_id": module.metadata.module_id,

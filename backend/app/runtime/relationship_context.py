@@ -19,6 +19,34 @@ from pydantic import BaseModel, Field
 
 from app.runtime.session_history import SessionHistory
 
+# Task 1C: explicit path parsing for narrative_commit consequences (no free-text NLP).
+_STATE_CHANGED_PREFIX = "state_changed:"
+_MAX_STATE_PATH_LEN = 120
+
+_ESCALATION_PATH_SEGMENTS = frozenset(
+    {
+        "tension",
+        "hostility",
+        "conflict",
+        "aggression",
+        "rage",
+        "enemy",
+        "betrayal",
+        "accusation",
+    }
+)
+_DE_ESCALATION_PATH_SEGMENTS = frozenset(
+    {
+        "trust",
+        "reconciliation",
+        "peace",
+        "alliance",
+        "support",
+        "calm",
+        "forgiveness",
+    }
+)
+
 
 class SalientRelationshipAxis(BaseModel):
     """A single relationship axis that matters in the current context.
@@ -85,10 +113,8 @@ def _extract_characters_from_trigger(trigger_name: str) -> set[str]:
     Returns:
         Set of character identifiers mentioned in the trigger.
     """
-    # Split by separators
     parts = trigger_name.lower().replace("-", "_").split("_")
 
-    # Filter out common non-character words
     excluded = {
         "conflict",
         "tension",
@@ -110,12 +136,54 @@ def _extract_characters_from_trigger(trigger_name: str) -> set[str]:
     return chars
 
 
+def _extract_character_ids_from_state_path(path: str) -> set[str]:
+    """Derive character-like IDs from a canonical state dot-path (Task 1C).
+
+    Only structured segments — no substring search over the full session text.
+    """
+    parts = path.split(".")
+    if not parts:
+        return set()
+    out: set[str] = set()
+    root = parts[0].strip().lower()
+    if root == "characters" and len(parts) >= 2:
+        tid = parts[1].strip().lower()
+        if len(tid) > 1:
+            out.add(tid)
+    if root == "relationships" and len(parts) >= 2:
+        rel = parts[1].lower().replace("-", "_")
+        for token in rel.split("_"):
+            if len(token) > 2:
+                out.add(token)
+    return out
+
+
+def _path_segment_valence(path: str) -> int:
+    """Integer score from allowlisted dot-segments only."""
+    score = 0
+    for seg in path.lower().split("."):
+        seg = seg.strip()
+        if seg in _ESCALATION_PATH_SEGMENTS:
+            score += 1
+        if seg in _DE_ESCALATION_PATH_SEGMENTS:
+            score -= 1
+    return score
+
+
+def _path_marks_emotion_or_relationship(path: str) -> bool:
+    pl = path.lower()
+    return "emotional_state" in pl or ".attitude" in pl or pl.startswith("relationships.")
+
+
 def derive_relationship_axis_context(history: SessionHistory) -> RelationshipAxisContext:
     """Derive relationship-axis context from bounded session history.
 
     Analyzes triggers and session progression to surface the most salient
     relationship dynamics: which axes matter, what trends are visible, and
     where escalation or resolution is concentrating.
+
+    Task 1C: also uses ``state_changed:<path>`` tokens from ``canonical_consequences``,
+    parsed strictly as dot-paths with bounded segment allowlists.
 
     Args:
         history: A SessionHistory to analyze.
@@ -126,15 +194,14 @@ def derive_relationship_axis_context(history: SessionHistory) -> RelationshipAxi
     if not history.entries:
         return RelationshipAxisContext()
 
-    # Scan for all character pairs mentioned in triggers
-    axis_involvement: dict[tuple[str, str], list[int]] = {}  # (a, b) → [turn1, turn2, ...]
-    axis_triggers: dict[tuple[str, str], set[str]] = {}  # (a, b) → {trigger1, trigger2, ...}
+    axis_involvement: dict[tuple[str, str], list[int]] = {}
+    axis_triggers: dict[tuple[str, str], set[str]] = {}
+    axis_path_valence: dict[tuple[str, str], int] = {}
+    axis_path_hits: dict[tuple[str, str], int] = {}
 
     for entry in history.entries:
         for trigger in entry.detected_triggers:
             chars = _extract_characters_from_trigger(trigger)
-
-            # Create all pairs from extracted characters
             char_list = sorted(chars)
             for i, a in enumerate(char_list):
                 for b in char_list[i + 1 :]:
@@ -142,29 +209,45 @@ def derive_relationship_axis_context(history: SessionHistory) -> RelationshipAxi
                     if axis not in axis_involvement:
                         axis_involvement[axis] = []
                         axis_triggers[axis] = set()
-
                     axis_involvement[axis].append(entry.turn_number)
                     axis_triggers[axis].add(trigger)
 
+        for raw in entry.canonical_consequences:
+            if not raw.startswith(_STATE_CHANGED_PREFIX):
+                continue
+            path = raw[len(_STATE_CHANGED_PREFIX) :].strip()
+            if not path:
+                continue
+            if len(path) > _MAX_STATE_PATH_LEN:
+                path = path[:_MAX_STATE_PATH_LEN]
+            chars = _extract_character_ids_from_state_path(path)
+            char_list = sorted(chars)
+            valence = _path_segment_valence(path)
+            label = f"state_path:{path[:72]}"
+            for i, a in enumerate(char_list):
+                for b in char_list[i + 1 :]:
+                    axis = (a, b)
+                    if axis not in axis_involvement:
+                        axis_involvement[axis] = []
+                        axis_triggers[axis] = set()
+                    axis_involvement[axis].append(entry.turn_number)
+                    axis_triggers[axis].add(label)
+                    axis_path_valence[axis] = axis_path_valence.get(axis, 0) + valence
+                    axis_path_hits[axis] = axis_path_hits.get(axis, 0) + 1
+
     total_axes = len(axis_involvement)
 
-    # Score salience: recency + frequency
     axis_salience: dict[tuple[str, str], float] = {}
 
     for axis, turns in axis_involvement.items():
-        # Recency: how close to current turn
         most_recent_turn = max(turns)
         age = (history.entries[-1].turn_number - most_recent_turn) + 1
         recency_score = max(0, 1.0 - (age / max(10, len(history.entries))))
-
-        # Frequency: how many times involved
         frequency_score = min(1.0, len(turns) / 5.0)
-
-        # Combined salience
         salience = (recency_score * 0.6) + (frequency_score * 0.4)
-        axis_salience[axis] = salience
+        path_boost = min(0.25, axis_path_hits.get(axis, 0) * 0.06)
+        axis_salience[axis] = min(1.0, salience + path_boost)
 
-    # Sort by salience and keep top 10
     sorted_axes = sorted(axis_salience.items(), key=lambda x: -x[1])[:10]
 
     salient_axes = []
@@ -175,15 +258,17 @@ def derive_relationship_axis_context(history: SessionHistory) -> RelationshipAxi
 
     for (a, b), salience in sorted_axes:
         turns = axis_involvement[(a, b)]
-        triggers = list(axis_triggers[(a, b)])
+        triggers = sorted(axis_triggers[(a, b)])
 
-        # Detect trend: escalation vs de-escalation
-        # Simple heuristic: look for escalation/tension keywords vs resolution keywords
         escalation_keywords = {"escalation", "tension", "conflict", "hostility", "accusation", "betrayal"}
         resolution_keywords = {"reconciliation", "resolution", "peace", "alliance", "support"}
 
         escalation_mentions = sum(1 for t in triggers if any(k in t.lower() for k in escalation_keywords))
         resolution_mentions = sum(1 for t in triggers if any(k in t.lower() for k in resolution_keywords))
+
+        path_v = axis_path_valence.get((a, b), 0)
+        escalation_mentions += max(0, path_v)
+        resolution_mentions += max(0, -path_v)
 
         if escalation_mentions > resolution_mentions:
             trend = "escalating"
@@ -194,7 +279,6 @@ def derive_relationship_axis_context(history: SessionHistory) -> RelationshipAxi
         else:
             trend = "stable"
 
-        # Determine signal type based on keywords
         if any("alliance" in t or "support" in t for t in triggers):
             signal = "alliance"
         elif any("hostility" in t or "conflict" in t or "tension" in t for t in triggers):
@@ -204,24 +288,40 @@ def derive_relationship_axis_context(history: SessionHistory) -> RelationshipAxi
         else:
             signal = "stable"
 
-        axis = SalientRelationshipAxis(
+        if signal == "stable" and axis_path_hits.get((a, b), 0) > 0:
+            any_escal_path = any(
+                _path_marks_emotion_or_relationship(t[len("state_path:") :])
+                and _path_segment_valence(t[len("state_path:") :]) > 0
+                for t in triggers
+                if t.startswith("state_path:")
+            )
+            any_calm_path = any(
+                t.startswith("state_path:")
+                and _path_segment_valence(t[len("state_path:") :]) < 0
+                for t in triggers
+            )
+            if any_escal_path:
+                signal = "tension"
+            elif any_calm_path:
+                signal = "alliance"
+
+        axis_model = SalientRelationshipAxis(
             character_a=a,
             character_b=b,
             salience_score=salience,
             recent_change_direction=trend,
             signal_type=signal,
-            involved_in_recent_triggers=triggers[:5],  # Keep top 5 triggers
+            involved_in_recent_triggers=triggers[:5],
             last_involved_turn=max(turns),
         )
 
-        salient_axes.append(axis)
+        salient_axes.append(axis_model)
 
         if highest_salience is None:
             highest_salience = (a, b)
         if highest_tension is None and signal == "tension":
             highest_tension = (a, b)
 
-    # Determine overall stability
     if escalation_count > de_escalation_count:
         stability = "escalating"
     elif de_escalation_count > escalation_count:

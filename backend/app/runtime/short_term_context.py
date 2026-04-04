@@ -13,6 +13,34 @@ from pydantic import BaseModel, Field
 
 from app.runtime.turn_executor import TurnExecutionResult
 
+# Task 1C: bounded narrative fields derived from narrative_commit (JSON-safe).
+_MAX_CANONICAL_CONSEQUENCES = 24
+_MAX_CONSEQUENCE_STRING_LEN = 256
+_MAX_AUTHORITATIVE_REASON_LEN = 500
+
+
+def _cap_str(value: str | None, max_len: int) -> str | None:
+    if value is None:
+        return None
+    s = str(value).strip()
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 1] + "…"
+
+
+def _cap_consequence_list(items: list[str] | None) -> list[str]:
+    if not items:
+        return []
+    out: list[str] = []
+    for raw in items[:_MAX_CANONICAL_CONSEQUENCES]:
+        token = str(raw).strip()
+        if not token:
+            continue
+        if len(token) > _MAX_CONSEQUENCE_STRING_LEN:
+            token = token[: _MAX_CONSEQUENCE_STRING_LEN - 1] + "…"
+        out.append(token)
+    return out
+
 
 class ShortTermTurnContext(BaseModel):
     """Bounded short-term context from a single completed turn.
@@ -24,6 +52,7 @@ class ShortTermTurnContext(BaseModel):
     - what was blocked (rejected delta targets)
     - guard outcome classification
     - scene/ending transitions
+    - Task 1C: authoritative narrative markers from narrative_commit when present
 
     Intentionally excludes:
     - full canonical_state (too large for context window)
@@ -45,6 +74,10 @@ class ShortTermTurnContext(BaseModel):
         ending_id: The ending ID if an ending was reached.
         conflict_pressure: conflict_state.pressure from canonical_state, if present.
         created_at: When this context was derived.
+        situation_status: Post-turn situation from narrative_commit when present.
+        canonical_consequences: Bounded consequence tokens from narrative_commit.
+        authoritative_reason: Bounded commit reason when present.
+        is_terminal: True when commit marks a terminal ending.
     """
 
     turn_number: int
@@ -60,6 +93,11 @@ class ShortTermTurnContext(BaseModel):
     conflict_pressure: int | float | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    situation_status: str = ""
+    canonical_consequences: list[str] = Field(default_factory=list)
+    authoritative_reason: str | None = None
+    is_terminal: bool = False
+
     # W3 Diagnostic Persistence
     execution_result_full: dict | None = None  # Full execution result for UI diagnostics
     ai_decision_log_full: dict | None = None  # Full AI decision log for LLM pipeline visibility
@@ -73,6 +111,8 @@ def build_short_term_context(
     """Derive a short-term turn context from a completed turn execution result.
 
     Selects only immediately relevant information — not a full state dump.
+    When ``result.narrative_commit`` is set, post-turn narrative fields prefer that
+    authoritative record (Task 1C).
 
     Args:
         result: The TurnExecutionResult from the completed turn.
@@ -83,8 +123,7 @@ def build_short_term_context(
     Returns:
         A bounded ShortTermTurnContext for the next AI/runtime step.
     """
-    scene_id = result.updated_scene_id or ""
-    scene_changed = bool(prior_scene_id and scene_id and scene_id != prior_scene_id)
+    nc = result.narrative_commit
 
     conflict_pressure = None
     if result.updated_canonical_state:
@@ -92,24 +131,47 @@ def build_short_term_context(
         if isinstance(conflict_state, dict):
             conflict_pressure = conflict_state.get("pressure")
 
-    # W3 Closure: Fetch latest AIDecisionLog from canonical storage
-    # The real source is session_state.metadata["ai_decision_logs"]
     ai_decision_log_full = None
     try:
-        if (session_state is not None and
-            hasattr(session_state, "metadata") and
-            isinstance(session_state.metadata, dict) and
-            "ai_decision_logs" in session_state.metadata and
-            session_state.metadata["ai_decision_logs"]):
+        if (
+            session_state is not None
+            and hasattr(session_state, "metadata")
+            and isinstance(session_state.metadata, dict)
+            and "ai_decision_logs" in session_state.metadata
+            and session_state.metadata["ai_decision_logs"]
+        ):
             latest_log = session_state.metadata["ai_decision_logs"][-1]
-            # Serialize AIDecisionLog to dict if it's a Pydantic model
             if hasattr(latest_log, "model_dump"):
                 ai_decision_log_full = latest_log.model_dump(mode="json")
             else:
-                ai_decision_log_full = latest_log  # Already a dict
+                ai_decision_log_full = latest_log
     except Exception:
-        # Gracefully handle any access issues
         ai_decision_log_full = None
+
+    if nc is not None:
+        scene_id = nc.committed_scene_id or ""
+        scene_changed = bool(
+            prior_scene_id and scene_id and scene_id != prior_scene_id
+        )
+        ending_id = nc.committed_ending_id
+        ending_reached = (
+            nc.situation_status == "ending_reached"
+            or bool(ending_id)
+            or nc.is_terminal
+        )
+        situation_status = nc.situation_status
+        canonical_consequences = _cap_consequence_list(list(nc.canonical_consequences or []))
+        authoritative_reason = _cap_str(nc.authoritative_reason, _MAX_AUTHORITATIVE_REASON_LEN)
+        is_terminal = nc.is_terminal
+    else:
+        scene_id = result.updated_scene_id or ""
+        scene_changed = bool(prior_scene_id and scene_id and scene_id != prior_scene_id)
+        ending_reached = bool(result.updated_ending_id)
+        ending_id = result.updated_ending_id
+        situation_status = ""
+        canonical_consequences = []
+        authoritative_reason = None
+        is_terminal = False
 
     return ShortTermTurnContext(
         turn_number=result.turn_number,
@@ -120,10 +182,13 @@ def build_short_term_context(
         guard_outcome=result.guard_outcome.value,
         scene_changed=scene_changed,
         prior_scene_id=prior_scene_id if scene_changed else None,
-        ending_reached=bool(result.updated_ending_id),
-        ending_id=result.updated_ending_id,
+        ending_reached=ending_reached,
+        ending_id=ending_id,
         conflict_pressure=conflict_pressure,
-        # W3 Diagnostic Persistence
-        execution_result_full=result.model_dump(mode='json') if hasattr(result, 'model_dump') else result,
+        situation_status=situation_status,
+        canonical_consequences=canonical_consequences,
+        authoritative_reason=authoritative_reason,
+        is_terminal=is_terminal,
+        execution_result_full=result.model_dump(mode="json") if hasattr(result, "model_dump") else result,
         ai_decision_log_full=ai_decision_log_full,
     )

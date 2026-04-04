@@ -18,10 +18,68 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.content.module_models import ContentModule
+from app.content.module_models import ContentModule, RelationshipAxis
 from app.runtime.progression_summary import ProgressionSummary
 from app.runtime.relationship_context import RelationshipAxisContext
 from app.runtime.session_history import SessionHistory
+
+_MAX_SALIENT_AXES_FOR_LORE = 3
+_STATE_CHANGED_PREFIX = "state_changed:"
+
+
+def _module_axes_matching_pair(
+    module: ContentModule, char_a: str, char_b: str
+) -> list[tuple[str, RelationshipAxis]]:
+    """Deterministic module axes whose metadata references both character ids."""
+    a, b = char_a.lower(), char_b.lower()
+    matches: list[tuple[str, RelationshipAxis]] = []
+    for rid, rax in sorted(module.relationship_axes.items(), key=lambda x: x[0]):
+        blob = f"{rid} {rax.name} {' '.join(rax.relationships)}".lower()
+        if a in blob and b in blob:
+            matches.append((rid, rax))
+    return matches
+
+
+def _append_relationship_units_for_pair(
+    selected_units: list[ModuleGuidanceUnit],
+    module: ContentModule,
+    char_a: str,
+    char_b: str,
+    *,
+    relevance: list[str],
+) -> None:
+    for _rid, rax in _module_axes_matching_pair(module, char_a, char_b):
+        if len(selected_units) >= 15:
+            return
+        if any(u.unit_id == rax.id and u.unit_type == "relationship" for u in selected_units):
+            continue
+        selected_units.append(
+            ModuleGuidanceUnit(
+                unit_type="relationship",
+                unit_id=rax.id,
+                guidance_text=rax.description,
+                applicability_scope="relationship",
+                relevance_signals=list(relevance),
+            )
+        )
+
+
+def _character_ids_from_recent_consequences(consequences: list[str]) -> set[str]:
+    """Parse ``state_changed:characters.<id>...`` paths only (bounded, deterministic)."""
+    out: set[str] = set()
+    for c in consequences:
+        if not c.startswith(_STATE_CHANGED_PREFIX):
+            continue
+        path = c[len(_STATE_CHANGED_PREFIX) :].strip()
+        if not path.startswith("characters."):
+            continue
+        rest = path[len("characters.") :]
+        if not rest:
+            continue
+        cid = rest.split(".", 1)[0].strip().lower()
+        if len(cid) > 1:
+            out.add(cid)
+    return out
 
 
 class ModuleGuidanceUnit(BaseModel):
@@ -81,6 +139,7 @@ def derive_lore_direction_context(
     - Progression level (early/middle/late/ended)
     - Active relationship axes and conflicts
     - Ending state
+    - Task 1C: progression momentum, stall count, recent canonical consequences
 
     Args:
         module: The ContentModule to extract guidance from.
@@ -92,11 +151,9 @@ def derive_lore_direction_context(
     Returns:
         A bounded LoreDirectionContext with only relevant guidance.
     """
-    selected_units = []
-    selection_rationale = []
-    total_units = 0
+    selected_units: list[ModuleGuidanceUnit] = []
+    selection_rationale: list[str] = []
 
-    # Count total available guidance units
     total_units = (
         len(module.characters)
         + len(module.relationship_axes)
@@ -105,6 +162,15 @@ def derive_lore_direction_context(
         + len(module.ending_conditions)
         + len(module.phase_transitions)
     )
+
+    # Task 1C: bounded continuity signals (deterministic tags)
+    selection_rationale.append(f"momentum={progression_summary.progression_momentum}")
+    if progression_summary.stalled_turn_count > 0:
+        selection_rationale.append(f"stalled_turns={progression_summary.stalled_turn_count}")
+    if progression_summary.recent_canonical_consequences:
+        sc = sum(1 for x in progression_summary.recent_canonical_consequences if x.startswith(_STATE_CHANGED_PREFIX))
+        if sc > 0:
+            selection_rationale.append("consequence_profile=state_delta_heavy")
 
     # 1. Scene/Phase guidance (highest priority)
     if current_scene_id and current_scene_id in module.scene_phases:
@@ -120,52 +186,70 @@ def derive_lore_direction_context(
         )
         selection_rationale.append(f"current_scene={current_scene_id}")
 
-    # 2. Character guidance for characters involved in recent triggers
-    recent_character_mentions = set()
+    # 2. Character guidance for characters involved in recent triggers + consequence paths
+    recent_character_mentions: set[str] = set()
     if history.entries:
-        # Look at last 5 entries for character mentions from triggers
         for entry in history.entries[-5:]:
             for trigger_name in entry.detected_triggers:
-                # Extract character mentions from trigger names
                 parts = trigger_name.lower().split("_")
                 for part in parts:
                     if part in module.characters:
                         recent_character_mentions.add(part)
 
-        for char_id in sorted(recent_character_mentions):
-            if char_id in module.characters and len(selected_units) < 15:
-                char = module.characters[char_id]
-                selected_units.append(
-                    ModuleGuidanceUnit(
-                        unit_type="character",
-                        unit_id=char.id,
-                        guidance_text=char.baseline_attitude,
-                        applicability_scope="character",
-                        relevance_signals=["recent_trigger_involvement"],
-                    )
-                )
-        if recent_character_mentions:
-            selection_rationale.append(f"recent_characters={','.join(sorted(recent_character_mentions))}")
+    recent_character_mentions.update(
+        _character_ids_from_recent_consequences(progression_summary.recent_canonical_consequences)
+    )
 
-    # 3. Relationship axis guidance for active relationships
-    for axis_pair in relationship_context.highest_salience_axis or []:
-        axis_id = None
-        # Try to find relationship axis by name/character pair
-        for rel_id, rel_axis in module.relationship_axes.items():
-            if len(selected_units) < 15:
-                selected_units.append(
-                    ModuleGuidanceUnit(
-                        unit_type="relationship",
-                        unit_id=rel_axis.id,
-                        guidance_text=rel_axis.description,
-                        applicability_scope="relationship",
-                        relevance_signals=["active_relationship"],
-                    )
+    for char_id in sorted(recent_character_mentions):
+        if char_id in module.characters and len(selected_units) < 15:
+            char = module.characters[char_id]
+            rel_signals = ["recent_trigger_involvement"]
+            if char_id in _character_ids_from_recent_consequences(
+                progression_summary.recent_canonical_consequences
+            ):
+                rel_signals.append("recent_canonical_consequence_path")
+            selected_units.append(
+                ModuleGuidanceUnit(
+                    unit_type="character",
+                    unit_id=char.id,
+                    guidance_text=char.baseline_attitude,
+                    applicability_scope="character",
+                    relevance_signals=rel_signals,
                 )
-                break
+            )
+    if recent_character_mentions:
+        selection_rationale.append(f"recent_characters={','.join(sorted(recent_character_mentions))}")
 
-    if relationship_context.highest_salience_axis:
-        selection_rationale.append(f"salient_relationship={relationship_context.highest_salience_axis}")
+    # 3. Relationship axis guidance — Task 1C / §4: use tuple as pair or top salient_axes (bounded)
+    hs = relationship_context.highest_salience_axis
+    if hs is not None:
+        _append_relationship_units_for_pair(
+            selected_units,
+            module,
+            hs[0],
+            hs[1],
+            relevance=["active_relationship", "highest_salience_pair"],
+        )
+        selection_rationale.append(f"salient_relationship={hs}")
+
+    seen_pairs: set[tuple[str, str]] = set()
+    if hs is not None:
+        seen_pairs.add(tuple(sorted((hs[0], hs[1]))))
+
+    for ax in relationship_context.salient_axes[:_MAX_SALIENT_AXES_FOR_LORE]:
+        if len(selected_units) >= 15:
+            break
+        pair = tuple(sorted((ax.character_a, ax.character_b)))
+        if pair in seen_pairs:
+            continue
+        seen_pairs.add(pair)
+        _append_relationship_units_for_pair(
+            selected_units,
+            module,
+            ax.character_a,
+            ax.character_b,
+            relevance=["active_relationship", "salient_axis_top"],
+        )
 
     # 4. Trigger guidance for recent triggers
     if history.entries:
@@ -190,9 +274,10 @@ def derive_lore_direction_context(
             selection_rationale.append(f"recent_triggers={','.join(sorted(recent_triggers))}")
 
     # 5. Phase transition guidance if approaching phase boundary
+    transitions_added = 0
     if current_scene_id and current_scene_id in module.scene_phases:
         phase = module.scene_phases[current_scene_id]
-        for trans_id, transition in module.phase_transitions.items():
+        for trans_id, transition in sorted(module.phase_transitions.items(), key=lambda x: x[0]):
             if transition.from_phase == phase.id and len(selected_units) < 15:
                 selected_units.append(
                     ModuleGuidanceUnit(
@@ -203,6 +288,9 @@ def derive_lore_direction_context(
                         relevance_signals=["phase_transition"],
                     )
                 )
+                transitions_added += 1
+                if transitions_added >= 2:
+                    break
 
     # 6. Ending guidance if ending reached
     if progression_summary.ending_reached and progression_summary.ending_id:
@@ -219,10 +307,29 @@ def derive_lore_direction_context(
             )
             selection_rationale.append(f"ending_reached={progression_summary.ending_id}")
 
+    # 6b. Approaching resolution (momentum) — one ending preview, bounded
+    if (
+        progression_summary.progression_momentum == "resolving"
+        and not progression_summary.ending_reached
+        and module.ending_conditions
+        and len(selected_units) < 15
+    ):
+        selection_rationale.append("approaching_resolution")
+        eid, ec = sorted(module.ending_conditions.items(), key=lambda x: x[0])[0]
+        if not any(u.unit_id == ec.id and u.unit_type == "ending" for u in selected_units):
+            selected_units.append(
+                ModuleGuidanceUnit(
+                    unit_type="ending",
+                    unit_id=ec.id,
+                    guidance_text=ec.description,
+                    applicability_scope="ending",
+                    relevance_signals=["momentum_resolving"],
+                )
+            )
+
     # 7. Escalation/conflict guidance if relationships escalating
     if relationship_context.has_escalation_markers:
-        # Add general conflict guidance if available
-        for axis_id, axis in module.relationship_axes.items():
+        for axis_id, axis in sorted(module.relationship_axes.items(), key=lambda x: x[0]):
             if axis.escalation and len(selected_units) < 15:
                 selected_units.append(
                     ModuleGuidanceUnit(
@@ -236,8 +343,12 @@ def derive_lore_direction_context(
                 break
         selection_rationale.append("escalation_detected")
 
+    # 8. Stalled momentum — reinforce scene phase direction without new unit explosion
+    if progression_summary.progression_momentum == "stalled" and progression_summary.stalled_turn_count >= 2:
+        selection_rationale.append("continuity_stalled_scene_hold")
+
     return LoreDirectionContext(
-        selected_units=selected_units[:15],  # Enforce bounded limit
+        selected_units=selected_units[:15],
         total_available_units=total_units,
         selection_rationale=selection_rationale,
         module_id=module.metadata.module_id,
