@@ -119,6 +119,7 @@ def test_story_runtime_commits_legal_scene_progression(tmp_path):
 
     assert turn["progression_commit"]["allowed"] is True
     assert turn["progression_commit"]["committed_scene_id"] == "scene_2"
+    assert turn["progression_commit"]["selected_candidate_source"] == "explicit_command"
     assert state["current_scene_id"] == "scene_2"
     assert diagnostics["diagnostics"][-1]["progression_commit"]["committed_scene_id"] == "scene_2"
 
@@ -188,6 +189,7 @@ def test_story_runtime_builds_multi_turn_committed_progression(tmp_path):
     assert "graph" in diagnostics["diagnostics"][-1]
     assert diagnostics["committed_history_tail"][-1].get("committed_state_after", {}).get("current_scene_id") == "scene_3"
     assert "graph" not in diagnostics["committed_history_tail"][-1]
+    assert "committed_interpretation_effect" in diagnostics["committed_history_tail"][-1]
 
 
 def test_story_runtime_natural_language_with_scene_token_commits_progression(tmp_path):
@@ -223,6 +225,7 @@ def test_story_runtime_natural_language_with_scene_token_commits_progression(tmp
 
     assert turn["progression_commit"]["allowed"] is True
     assert turn["progression_commit"]["committed_scene_id"] == "scene_2"
+    assert turn["progression_commit"]["selected_candidate_source"] == "player_input_token_scan"
     assert state["current_scene_id"] == "scene_2"
 
 

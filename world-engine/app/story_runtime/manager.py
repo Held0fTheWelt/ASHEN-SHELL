@@ -102,12 +102,7 @@ class StoryRuntimeManager:
         return mapping
 
     @staticmethod
-    def _extract_scene_candidate(
-        *,
-        player_input: str,
-        interpreted_input: dict[str, Any],
-        known_scene_ids: set[str],
-    ) -> str | None:
+    def _scene_candidate_from_command(interpreted_input: dict[str, Any], known_scene_ids: set[str]) -> str | None:
         kind = str(interpreted_input.get("kind") or "").strip().lower()
         command_name = str(interpreted_input.get("command_name") or "").strip().lower()
         command_args = interpreted_input.get("command_args")
@@ -117,8 +112,10 @@ class StoryRuntimeManager:
                     arg = str(raw_arg).strip()
                     if arg in known_scene_ids:
                         return arg
-            return None
+        return None
 
+    @staticmethod
+    def _scene_candidate_from_token_scan(player_input: str, known_scene_ids: set[str]) -> str | None:
         tokens = re.split(r"[^a-zA-Z0-9_\\-]+", player_input or "")
         for token in tokens:
             candidate = token.strip()
@@ -126,30 +123,101 @@ class StoryRuntimeManager:
                 return candidate
         return None
 
+    @staticmethod
+    def _model_proposed_scene_raw(generation: dict[str, Any] | None) -> str | None:
+        if not isinstance(generation, dict) or generation.get("success") is not True:
+            return None
+        meta = generation.get("metadata")
+        if not isinstance(meta, dict):
+            return None
+        structured = meta.get("structured_output")
+        if not isinstance(structured, dict):
+            return None
+        pid = structured.get("proposed_scene_id")
+        if isinstance(pid, str) and pid.strip():
+            return pid.strip()
+        return None
+
+    @staticmethod
+    def _scene_candidate_from_model(generation: dict[str, Any] | None, known_scene_ids: set[str]) -> str | None:
+        raw = StoryRuntimeManager._model_proposed_scene_raw(generation)
+        if raw is None:
+            return None
+        if known_scene_ids and raw not in known_scene_ids:
+            return None
+        return raw
+
+    def _resolve_scene_proposal(
+        self,
+        *,
+        player_input: str,
+        interpreted_input: dict[str, Any],
+        known_scene_ids: set[str],
+        generation: dict[str, Any] | None,
+    ) -> tuple[str | None, str | None, list[dict[str, Any]], str | None]:
+        """Pick one scene proposal with deterministic priority for authoritative commit.
+
+        Order: explicit travel command args → model structured_output.proposed_scene_id
+        (only when generation succeeded and id is known) → player_input token scan.
+        """
+        candidate_sources: list[dict[str, Any]] = []
+        model_raw = self._model_proposed_scene_raw(generation)
+
+        from_command = self._scene_candidate_from_command(interpreted_input, known_scene_ids)
+        if from_command is not None:
+            candidate_sources.append({"source": "explicit_command", "scene_id": from_command})
+
+        if model_raw is not None:
+            entry: dict[str, Any] = {"source": "model_structured_output", "scene_id": model_raw}
+            if known_scene_ids and model_raw not in known_scene_ids:
+                entry["rejected_unknown_scene"] = True
+            candidate_sources.append(entry)
+
+        from_tokens = self._scene_candidate_from_token_scan(player_input, known_scene_ids)
+        if from_tokens is not None:
+            candidate_sources.append({"source": "player_input_token_scan", "scene_id": from_tokens})
+
+        from_model = self._scene_candidate_from_model(generation, known_scene_ids)
+
+        if from_command is not None:
+            return from_command, "explicit_command", candidate_sources, model_raw
+        if from_model is not None:
+            return from_model, "model_structured_output", candidate_sources, model_raw
+        if from_tokens is not None:
+            return from_tokens, "player_input_token_scan", candidate_sources, model_raw
+        return None, None, candidate_sources, model_raw
+
     def _commit_progression(
         self,
         *,
         session: StorySession,
         player_input: str,
         interpreted_input: dict[str, Any],
+        generation: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         known_scene_ids = self._scene_ids(session.runtime_projection)
         if session.current_scene_id:
             known_scene_ids.add(session.current_scene_id)
         transition_map = self._transition_map(session.runtime_projection)
         has_transition_rules = bool(transition_map)
-        proposed_scene_id = self._extract_scene_candidate(
+
+        proposed_scene_id, selected_source, candidate_sources, model_raw = self._resolve_scene_proposal(
             player_input=player_input,
             interpreted_input=interpreted_input,
             known_scene_ids=known_scene_ids,
+            generation=generation,
         )
-        commit = {
+
+        commit: dict[str, Any] = {
             "from_scene_id": session.current_scene_id,
             "proposed_scene_id": proposed_scene_id,
             "committed_scene_id": session.current_scene_id,
             "allowed": False,
             "reason": "no_scene_proposal",
             "rule_source": "runtime_projection_transition_hints_v1",
+            "candidate_sources": candidate_sources,
+            "selected_candidate_source": selected_source,
+            "model_proposed_scene_id": model_raw,
         }
         if not proposed_scene_id:
             return commit
@@ -217,6 +285,7 @@ class StoryRuntimeManager:
             session=session,
             player_input=player_input,
             interpreted_input=interpreted_input,
+            generation=gen,
         )
         model_ok = gen.get("success") is True
         outcome = "ok" if model_ok and not errors else "degraded"
@@ -243,12 +312,22 @@ class StoryRuntimeManager:
             },
             "graph": graph_state.get("graph_diagnostics", {}),
         }
+        committed_interpretation_effect = {
+            "interpreted_kind": interpreted_input.get("kind"),
+            "interpretation_confidence": interpreted_input.get("confidence"),
+            "progression_selected_source": progression_commit.get("selected_candidate_source"),
+            "progression_commit_allowed": progression_commit.get("allowed"),
+            "note": (
+                "Links interpretation to progression verdict only; not a full canonical world-state delta."
+            ),
+        }
         committed_record = {
             "turn_number": session.turn_counter,
             "trace_id": trace_id or "",
             "raw_input": player_input,
             "interpreted_input": interpreted_input,
             "progression_commit": progression_commit,
+            "committed_interpretation_effect": committed_interpretation_effect,
             "turn_outcome": outcome,
             "committed_state_after": {
                 "current_scene_id": session.current_scene_id,

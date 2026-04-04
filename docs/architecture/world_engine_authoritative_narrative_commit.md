@@ -1,6 +1,6 @@
 # World-Engine Authoritative Narrative Commit Semantics
 
-Status: active runtime behavior (A2 repair).
+Status: active runtime behavior (A2 repair, A2-next hardening).
 
 ## Purpose
 
@@ -9,39 +9,50 @@ Define how story turns transition from AI/runtime proposals to authoritative com
 ## Authoritative commit model
 
 1. A turn is executed through `StoryRuntimeManager.execute_turn(...)`.
-2. Runtime graph output provides interpreted input and diagnostics.
-3. The manager evaluates scene progression proposals against runtime projection legality rules:
-   - known scene ids from `runtime_projection.scenes`
+2. Runtime graph output provides interpreted input, generation metadata (including structured output when parsing succeeds), and diagnostics.
+3. The manager builds **scene progression candidates** from, in strict priority order:
+   1. **Explicit travel command** arguments (`interpreted_input` `explicit_command` with `move` / `goto` / `go` / `scene` / `travel` and a known scene id).
+   2. **Model structured output** — `generation.metadata.structured_output.proposed_scene_id` when `generation.success` is true and the id is in the known scene set.
+   3. **Player input token scan** — first token matching a known scene id (legacy NL hint path).
+4. The manager evaluates the **selected** proposal against runtime projection legality rules:
+   - known scene ids from `runtime_projection.scenes` (plus current scene)
    - legal edges from `runtime_projection.transition_hints`
-4. Only legal transitions are committed to authoritative session state (`current_scene_id`).
-5. Every turn emits a `progression_commit` record in turn history and diagnostics:
+5. Only legal transitions are committed to authoritative session state (`current_scene_id`).
+6. Every turn emits a `progression_commit` record in turn history and diagnostics:
    - `from_scene_id`
-   - `proposed_scene_id`
+   - `proposed_scene_id` (selected candidate, if any)
    - `committed_scene_id`
    - `allowed`
    - `reason`
    - `rule_source`
+   - `candidate_sources` — audit list of discovered candidates (command / model / token scan), including model ids that are **not** selectable because they are unknown to the projection
+   - `selected_candidate_source` — which branch supplied the selected proposal (`explicit_command` | `model_structured_output` | `player_input_token_scan` | null)
+   - `model_proposed_scene_id` — raw model `proposed_scene_id` when present (even if not selected or unknown)
+7. Committed history entries include `committed_interpretation_effect`: a small stub linking interpreted kind/confidence to progression verdict. It is **not** a full canonical world-state delta.
 
 ## Safety semantics
 
 - Illegal or unknown transitions are rejected without mutating committed scene state.
 - Missing transition rules do not permit implicit scene mutation.
-- Diagnostic output reports proposal and verdict, but does not replace state mutation.
+- Model proposals are **never** authoritative on their own: they pass the same legality checks as other candidates, and explicit travel commands override them.
+- Diagnostic envelopes still carry full graph/retrieval orchestration data; committed history entries intentionally omit those blobs.
 
 ## Observable authoritative state
 
-`GET /api/story/sessions/{session_id}/state` now exposes:
+`GET /api/story/sessions/{session_id}/state` exposes:
 
 - authoritative `current_scene_id`
 - `turn_counter`
 - `committed_state` snapshot including `last_progression_commit`
+- `last_committed_turn` including `committed_interpretation_effect` and `progression_commit`
 
 `GET /api/story/sessions/{session_id}/diagnostics` exposes:
 
-- recent turn diagnostics
-- committed state snapshot to keep diagnostics coherent with runtime authority
+- recent turn diagnostics (full envelopes, including `graph` / `retrieval`)
+- `committed_history_tail` without graph blobs, aligned with committed truth
 
-## Scope boundary
+## Scope boundary (intentionally conservative)
 
-- This commit model currently governs scene progression authority.
-- Richer canonical state deltas beyond scene progression can be layered on top of the same pattern in later milestones.
+- This commit model governs **scene id progression** only, not full simulation of physical actions, social outcomes, or inventory.
+- Structured model output that fails JSON parsing does not contribute a model candidate (same as before; no fabricated proposals).
+- Richer canonical state deltas beyond scene progression can be layered on the same audit pattern in later milestones.
