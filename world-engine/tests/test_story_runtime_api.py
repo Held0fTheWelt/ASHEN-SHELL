@@ -60,3 +60,42 @@ def test_story_session_lifecycle_and_nl_interpretation(client, internal_api_key)
     assert diagnostics
     assert "raw_input" in diagnostics[-1]
     assert "retrieval" in diagnostics[-1]
+
+
+def test_story_turns_cover_primary_free_input_paths(client, internal_api_key):
+    create_response = client.post(
+        "/api/story/sessions",
+        headers=_headers(internal_api_key),
+        json={
+            "module_id": "god_of_carnage",
+            "runtime_projection": {"start_scene_id": "scene_1", "scenes": []},
+        },
+    )
+    assert create_response.status_code == 200
+    session_id = create_response.json()["session_id"]
+
+    samples = [
+        ("Tell him I am not leaving.", "speech"),
+        ("I look at her and wait for a reaction.", "action"),
+        ("I open the door and quietly say stop lying.", "mixed"),
+        ("/inspect room", "explicit_command"),
+        ("I do not answer. I just stare at him.", "ambiguous"),
+    ]
+    for raw_input, expected_kind in samples:
+        response = client.post(
+            f"/api/story/sessions/{session_id}/turns",
+            headers=_headers(internal_api_key),
+            json={"player_input": raw_input},
+        )
+        assert response.status_code == 200
+        turn = response.json()["turn"]
+        assert turn["raw_input"] == raw_input
+        assert turn["interpreted_input"]["kind"] == expected_kind
+        assert turn["turn_number"] >= 1
+
+    state_response = client.get(
+        f"/api/story/sessions/{session_id}/state",
+        headers=_headers(internal_api_key),
+    )
+    assert state_response.status_code == 200
+    assert state_response.json()["turn_counter"] == len(samples)

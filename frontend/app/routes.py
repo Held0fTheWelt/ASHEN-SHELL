@@ -281,6 +281,12 @@ def play_create():
     if not run_id:
         flash("Run creation returned no run id.", "error")
         return redirect(url_for("frontend.play_start"))
+    run_modules = session.get("play_shell_run_modules", {})
+    if not isinstance(run_modules, dict):
+        run_modules = {}
+    run_modules[run_id] = template_id
+    session["play_shell_run_modules"] = run_modules
+    session.modified = True
     return redirect(url_for("frontend.play_shell", session_id=run_id))
 
 
@@ -296,7 +302,39 @@ def play_shell(session_id: str):
     ticket_payload = response.json() if response.ok else {}
     if not response.ok:
         flash(ticket_payload.get("error", "Could not create play ticket."), "error")
-    return render_template("session_shell.html", session_id=session_id, ticket=ticket_payload)
+    backend_sessions = session.get("play_shell_backend_sessions", {})
+    if not isinstance(backend_sessions, dict):
+        backend_sessions = {}
+    backend_session_id = backend_sessions.get(session_id)
+    if not backend_session_id:
+        run_modules = session.get("play_shell_run_modules", {})
+        module_id = run_modules.get(session_id) if isinstance(run_modules, dict) else None
+        if module_id:
+            backend_response = request_backend(
+                "POST",
+                "/api/v1/sessions",
+                json_data={"module_id": module_id},
+            )
+            if backend_response.ok:
+                backend_payload = backend_response.json()
+                backend_session_id = backend_payload.get("session_id")
+                if backend_session_id:
+                    backend_sessions[session_id] = backend_session_id
+                    session["play_shell_backend_sessions"] = backend_sessions
+                    session.modified = True
+                else:
+                    flash("Runtime session creation returned no session id.", "error")
+            else:
+                backend_payload = backend_response.json() if backend_response.content else {}
+                flash(backend_payload.get("error", "Could not create runtime session."), "error")
+        else:
+            flash("No module mapping found for this run. Start a new run from Play Start.", "error")
+    return render_template(
+        "session_shell.html",
+        session_id=session_id,
+        ticket=ticket_payload,
+        backend_session_id=backend_session_id,
+    )
 
 
 @frontend_bp.route("/play/<session_id>/execute", methods=["POST"])
@@ -306,13 +344,23 @@ def play_execute(session_id: str):
     if not operator_input:
         flash("Please enter an action.", "error")
         return redirect(url_for("frontend.play_shell", session_id=session_id))
-    history = session.get("play_shell_history", {})
-    entries = history.get(session_id, [])
-    entries.append(operator_input)
-    history[session_id] = entries[-50:]
-    session["play_shell_history"] = history
-    session.modified = True
-    flash("Action queued on frontend shell. Use live websocket controls for runtime execution.", "info")
+    backend_sessions = session.get("play_shell_backend_sessions", {})
+    backend_session_id = backend_sessions.get(session_id) if isinstance(backend_sessions, dict) else None
+    if not backend_session_id:
+        flash("Runtime session is not ready. Re-open the play shell from Play Start.", "error")
+        return redirect(url_for("frontend.play_shell", session_id=session_id))
+    response = request_backend(
+        "POST",
+        f"/api/v1/sessions/{backend_session_id}/turns",
+        json_data={"player_input": operator_input},
+    )
+    try:
+        payload = require_success(response, "Runtime turn execution failed.")
+    except BackendApiError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("frontend.play_shell", session_id=session_id))
+    interpreted = (((payload.get("turn") or {}).get("interpreted_input") or {}).get("kind") or "unknown").strip()
+    flash(f"Turn executed in runtime (input kind: {interpreted}).", "success")
     return redirect(url_for("frontend.play_shell", session_id=session_id))
 
 

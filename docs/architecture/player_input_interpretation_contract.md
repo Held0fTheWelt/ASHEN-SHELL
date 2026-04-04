@@ -54,3 +54,14 @@ Interpreter returns a structured object containing:
 
 - Story turn execution consumes interpreted input objects, not blind raw strings.
 - Diagnostics must expose raw input, interpreted mode, confidence, ambiguity, and selected handling path.
+
+## Primary runtime path contract
+
+Natural language input is treated as the default story-play path end-to-end:
+
+1. Frontend shell form (`/play/<run_id>/execute`) submits `operator_input`.
+2. Frontend route forwards the text to backend session turns as `player_input`.
+3. Backend route (`POST /api/v1/sessions/<session_id>/turns`) invokes the shared interpreter and proxies execution to the World-Engine story runtime.
+4. World-Engine runtime executes the turn through `RuntimeTurnGraphExecutor`, where interpreted input affects routing and execution behavior.
+
+Slash-command input remains supported (`/look`, `/inspect`, `!` forms), but it is handled as an explicit command specialization within the same turn execution pipeline.

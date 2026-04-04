@@ -240,11 +240,11 @@ class TestExecuteTurnEndpoint:
         )
         monkeypatch.setattr(
             "app.api.v1.session_routes.get_story_state",
-            lambda *_: {"turn_counter": 1, "current_scene_id": "scene_1"},
+            lambda *_, **__: {"turn_counter": 1, "current_scene_id": "scene_1"},
         )
         monkeypatch.setattr(
             "app.api.v1.session_routes.get_story_diagnostics",
-            lambda *_: {"diagnostics": [{"interpreted_input": {"kind": "speech"}}]},
+            lambda *_, **__: {"diagnostics": [{"interpreted_input": {"kind": "speech"}}]},
         )
 
         response = client.post(

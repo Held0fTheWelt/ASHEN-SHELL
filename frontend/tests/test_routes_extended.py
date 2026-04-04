@@ -353,18 +353,27 @@ def test_play_create_success(client, monkeypatch):
     r = client.post("/play/start", data={"template_id": "t1"}, follow_redirects=False)
     assert r.status_code == 302
     assert "/play/run-99" in r.headers["Location"]
+    with client.session_transaction() as sess:
+        assert sess.get("play_shell_run_modules", {}).get("run-99") == "t1"
 
 
 def test_play_shell_ticket_ok_and_error(client, monkeypatch):
-    monkeypatch.setattr(
-        "app.routes.request_backend",
-        lambda *a, **k: FakeResponse(payload={"ticket": "abc"}),
-    )
+    def fake_request(method, path, **kwargs):
+        if path == "/api/v1/game/tickets":
+            return FakeResponse(payload={"ticket": "abc"})
+        if path == "/api/v1/sessions":
+            return FakeResponse(payload={"session_id": "backend-session-1"})
+        raise AssertionError(f"unexpected backend call: {method} {path}")
+
+    monkeypatch.setattr("app.routes.request_backend", fake_request)
     with client.session_transaction() as sess:
         sess["access_token"] = "t"
         sess["current_user"] = {"username": "u1"}
+        sess["play_shell_run_modules"] = {"s1": "god_of_carnage"}
     r = client.get("/play/s1")
     assert r.status_code == 200
+    with client.session_transaction() as sess:
+        assert sess.get("play_shell_backend_sessions", {}).get("s1") == "backend-session-1"
 
     monkeypatch.setattr(
         "app.routes.request_backend",
@@ -374,7 +383,24 @@ def test_play_shell_ticket_ok_and_error(client, monkeypatch):
     assert r2.status_code == 200
 
 
-def test_play_execute_empty_and_history_trim(client):
+def test_play_execute_empty_and_runtime_dispatch(client, monkeypatch):
+    calls = []
+
+    def fake_request(method, path, **kwargs):
+        calls.append((method, path, kwargs))
+        if path == "/api/v1/sessions/backend-session-1/turns":
+            return FakeResponse(
+                payload={
+                    "turn": {
+                        "turn_number": 1,
+                        "raw_input": kwargs["json_data"]["player_input"],
+                        "interpreted_input": {"kind": "speech"},
+                    }
+                }
+            )
+        raise AssertionError(f"unexpected backend call: {method} {path}")
+
+    monkeypatch.setattr("app.routes.request_backend", fake_request)
     with client.session_transaction() as sess:
         sess["access_token"] = "t"
     r = client.post("/play/sid/execute", data={"operator_input": ""}, follow_redirects=False)
@@ -382,12 +408,24 @@ def test_play_execute_empty_and_history_trim(client):
 
     with client.session_transaction() as sess:
         sess["access_token"] = "t"
-        sess["play_shell_history"] = {"sid": [str(i) for i in range(55)]}
-    client.post("/play/sid/execute", data={"operator_input": "new"}, follow_redirects=False)
+        sess["play_shell_backend_sessions"] = {"sid": "backend-session-1"}
+    client.post("/play/sid/execute", data={"operator_input": "I look around and wait."}, follow_redirects=False)
+    assert calls
+    method, path, kwargs = calls[-1]
+    assert method == "POST"
+    assert path == "/api/v1/sessions/backend-session-1/turns"
+    assert kwargs["json_data"]["player_input"] == "I look around and wait."
+
+
+def test_play_execute_rejects_missing_backend_session_binding(client, monkeypatch):
+    monkeypatch.setattr(
+        "app.routes.request_backend",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call backend")),
+    )
     with client.session_transaction() as sess:
-        hist = sess.get("play_shell_history", {})
-        assert len(hist["sid"]) == 50
-        assert hist["sid"][-1] == "new"
+        sess["access_token"] = "t"
+    response = client.post("/play/sid/execute", data={"operator_input": "I stay silent."}, follow_redirects=False)
+    assert response.status_code == 302
 
 
 def test_api_proxy_get_and_post(client, monkeypatch):

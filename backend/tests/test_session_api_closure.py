@@ -27,20 +27,52 @@ def test_get_session_returns_501_not_implemented(client, test_user, monkeypatch)
     assert "session_id" in data  # Snapshot structure
 
 
-def test_post_execute_turn_returns_501_not_implemented(client, test_user):
-    """POST /api/v1/sessions/<id>/turns deferred to W3.2."""
+def test_post_execute_turn_proxies_to_world_engine(client, test_user, monkeypatch):
+    """POST /api/v1/sessions/<id>/turns executes through World-Engine bridge."""
     session = create_session("god_of_carnage")
     session_id = session.session_id
 
+    monkeypatch.setattr(
+        "app.api.v1.session_routes.create_story_session",
+        lambda **_: {"session_id": "we_story_1"},
+    )
+    monkeypatch.setattr(
+        "app.api.v1.session_routes.compile_module",
+        lambda *_args, **_kwargs: type(
+            "Compiled",
+            (),
+            {
+                "runtime_projection": type(
+                    "Projection",
+                    (),
+                    {"model_dump": staticmethod(lambda **_: {"start_scene_id": "scene_1"})},
+                )()
+            },
+        )(),
+    )
+    monkeypatch.setattr(
+        "app.api.v1.session_routes.execute_story_turn_in_engine",
+        lambda **_: {"turn": {"turn_number": 1, "raw_input": "test action"}},
+    )
+    monkeypatch.setattr(
+        "app.api.v1.session_routes.get_story_state",
+        lambda *_, **__: {"turn_counter": 1, "current_scene_id": "scene_1"},
+    )
+    monkeypatch.setattr(
+        "app.api.v1.session_routes.get_story_diagnostics",
+        lambda *_, **__: {"diagnostics": [{"interpreted_input": {"kind": "action"}}]},
+    )
+
     response = client.post(
         f"/api/v1/sessions/{session_id}/turns",
-        json={"operator_input": "test action", "turn_number": 1},
+        json={"player_input": "test action"},
         content_type="application/json"
     )
 
-    assert response.status_code == 501
+    assert response.status_code == 200
     data = json.loads(response.data)
-    assert "error" in data
+    assert data["world_engine_story_session_id"] == "we_story_1"
+    assert data["turn"]["turn_number"] == 1
 
 
 def test_get_logs_returns_501_not_implemented(client, test_user, monkeypatch):
