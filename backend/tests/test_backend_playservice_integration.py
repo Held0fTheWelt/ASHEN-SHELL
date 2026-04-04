@@ -128,11 +128,26 @@ def play_service_endpoint(backend_content_feed_endpoint: str) -> dict[str, str]:
     port = _free_port()
 
     env = os.environ.copy()
+    # Isolate from parent env: World Engine import requires test mode or a non-empty shared secret.
+    env["FLASK_ENV"] = "test"
+    env["PLAY_SERVICE_SHARED_SECRET"] = "integration-shared-secret"
     env["PLAY_SERVICE_INTERNAL_API_KEY"] = "ops-key"
     env["BACKEND_CONTENT_SYNC_ENABLED"] = "true"
     env["BACKEND_CONTENT_FEED_URL"] = backend_content_feed_endpoint
     env["BACKEND_CONTENT_TIMEOUT_SECONDS"] = "5.0"
     env["BACKEND_CONTENT_SYNC_INTERVAL_SECONDS"] = "0.0"
+    # Inherited CI env (e.g. postgres run store, proxies) can block startup or localhost probes.
+    env["RUN_STORE_BACKEND"] = "json"
+    env.pop("RUN_STORE_URL", None)
+    for _proxy_key in (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+    ):
+        env.pop(_proxy_key, None)
 
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
@@ -143,12 +158,13 @@ def play_service_endpoint(backend_content_feed_endpoint: str) -> dict[str, str]:
     )
 
     base_url = f"http://127.0.0.1:{port}"
-    deadline = time.time() + 15.0
+    # Lifespan + first template sync can exceed 15s on slow CI; health is enough for bind readiness.
+    deadline = time.time() + 45.0
     while time.time() < deadline:
         if proc.poll() is not None:
             break
         try:
-            response = httpx.get(f"{base_url}/api/templates", timeout=1.0)
+            response = httpx.get(f"{base_url}/api/health", timeout=2.0)
             if response.status_code == 200:
                 break
         except Exception:
