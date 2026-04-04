@@ -1,3 +1,12 @@
+"""LangChain-facing integration layer for World of Shadows.
+
+Primary entry points (use these instead of ad hoc LangChain imports elsewhere):
+
+- ``invoke_runtime_adapter_with_langchain`` — Chat prompt + Pydantic parse around ``BaseModelAdapter`` (runtime turn graph).
+- ``build_langchain_retriever_bridge`` — wraps ``ContextRetriever`` as LangChain ``Document`` lists.
+- ``build_capability_tool_bridge`` — exposes a ``CapabilityRegistry`` entry as a ``StructuredTool`` (e.g. writers-room flows).
+"""
+
 from .bridges import (
     LangChainRetrieverBridge,
     RuntimeInvocationResult,
