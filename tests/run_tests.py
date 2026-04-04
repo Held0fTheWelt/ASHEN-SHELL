@@ -41,6 +41,8 @@ SUITE_DISPLAY_NAMES: dict[str, str] = {
     "administration": "Administration tool (proxy and UI)",
     "engine": "World engine (runtime and HTTP/WS)",
     "database": "Database (migrations and tooling)",
+    "writers_room": "Writers-Room workflow (human-in-the-loop production)",
+    "improvement": "Improvement loop (mutation / evaluation / recommendation)",
     "wos_ai_stack": "WOS AI stack (LangGraph runtime, RAG, Writers-Room / improvement seed graphs)",
 }
 
@@ -64,6 +66,8 @@ SUITE_PYTEST_TARGETS: dict[str, tuple[Path, str]] = {
     "administration": (ADMIN_TOOL_DIR, "tests"),
     "engine": (WORLD_ENGINE_DIR, "tests"),
     "database": (DATABASE_DIR, "tests"),
+    "writers_room": (BACKEND_DIR, "tests/test_writers_room_routes.py"),
+    "improvement": (BACKEND_DIR, "tests/test_improvement_routes.py"),
     # Writers-Room / improvement seed graphs and runtime turn graph; imports require repo root on PYTHONPATH.
     "wos_ai_stack": (PROJECT_ROOT, "wos_ai_stack/tests"),
 }
@@ -135,8 +139,8 @@ def show_test_stats(suites: dict[str, tuple[Path, str]]) -> None:
     print_header("Test collection (collect-only)")
     for suite_name, (suite_cwd, test_path) in suites.items():
         test_root = suite_cwd / test_path
-        if not test_root.is_dir():
-            print_info(f"{suite_name}: no tests directory ({test_root})")
+        if not (test_root.is_dir() or test_root.is_file()):
+            print_info(f"{suite_name}: no tests directory or file ({test_root})")
             continue
         try:
             result = subprocess.run(
@@ -256,8 +260,8 @@ def run_pytest(
 ) -> bool:
     print_header(run_title)
     tests_dir = suite_cwd / test_path
-    if not tests_dir.is_dir():
-        print_error(f"Tests directory not found: {tests_dir}")
+    if not (tests_dir.is_dir() or tests_dir.is_file()):
+        print_error(f"Tests directory or file not found: {tests_dir}")
         return False
 
     junit_report = REPORTS_DIR / f"pytest_{suite_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
@@ -323,16 +327,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Run pytest per component (backend, frontend, administration-tool, world-engine, "
-            "database, wos_ai_stack)."
+            "database, writers-room, improvement, wos_ai_stack)."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python run_tests.py
   python run_tests.py --suite backend
+  python run_tests.py --suite writers_room
+  python run_tests.py --suite improvement
   python run_tests.py --suite frontend
   python run_tests.py --suite backend --scope contracts
-  python run_tests.py --suite backend database --quick
+  python run_tests.py --suite writers_room improvement --quick
   python run_tests.py --suite wos_ai_stack --quick
   python run_tests.py --suite all --coverage
         """,
@@ -341,8 +347,8 @@ Examples:
         "--suite",
         nargs="+",
         default=["all"],
-        choices=["backend", "frontend", "administration", "engine", "database", "wos_ai_stack", "all"],
-        help="Component test tree to run (default: all includes wos_ai_stack Writers-Room seed graph tests)",
+        choices=["backend", "frontend", "administration", "engine", "database", "writers_room", "improvement", "wos_ai_stack", "all"],
+        help="Component test tree to run (default: all)",
     )
     parser.add_argument(
         "--scope",
