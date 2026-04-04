@@ -6,6 +6,12 @@
   const formEl = document.getElementById('game-content-form');
   const statusEl = document.getElementById('game-content-status');
   const publishBtn = document.getElementById('game-content-publish');
+  const unpublishBtn = document.getElementById('game-content-unpublish');
+  const govSubmitBtn = document.getElementById('game-content-gov-submit');
+  const govApproveBtn = document.getElementById('game-content-gov-approve');
+  const govRejectBtn = document.getElementById('game-content-gov-reject');
+  const govRevisionBtn = document.getElementById('game-content-gov-revision');
+  const markPublishableBtn = document.getElementById('game-content-mark-publishable');
   const refreshBtn = document.getElementById('game-content-refresh');
   const createBtn = document.getElementById('game-content-create-default');
   const idEl = document.getElementById('experience-id');
@@ -22,7 +28,13 @@
     if (token()) headers['Authorization'] = 'Bearer ' + token();
     const res = await fetch(apiBase + path, Object.assign({}, opts, { headers }));
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || data.detail || ('Request failed: ' + res.status));
+    if (!res.ok) {
+      let msg = data.error || data.detail || ('Request failed: ' + res.status);
+      if (data.code) {
+        msg += ' [' + data.code + (data.content_lifecycle ? '|' + data.content_lifecycle : '') + ']';
+      }
+      throw new Error(msg);
+    }
     return data;
   }
 
@@ -48,6 +60,12 @@
     };
   }
 
+  function originLabel(item) {
+    const p = item.governance_provenance;
+    if (!p || typeof p !== 'object') return 'origin:?';
+    return 'origin:' + (p.origin_kind || '?');
+  }
+
   function renderList(items) {
     listEl.innerHTML = '';
     if (!items.length) {
@@ -58,7 +76,11 @@
       const card = document.createElement('button');
       card.type = 'button';
       card.className = 'list-card';
-      card.innerHTML = '<strong>' + item.title + '</strong><span>' + item.template_id + '</span><span>' + (item.is_published ? 'Published' : 'Draft') + ' · v' + item.version + '</span>';
+      const lc = item.content_lifecycle || 'draft';
+      const pub = item.is_published ? 'live' : 'offline';
+      card.innerHTML =
+        '<strong>' + item.title + '</strong><span>' + item.template_id + '</span><span>' +
+        lc + ' · ' + pub + ' · ' + originLabel(item) + ' · v' + item.version + '</span>';
       card.addEventListener('click', () => loadIntoEditor(item));
       listEl.appendChild(card);
     });
@@ -67,7 +89,10 @@
   function loadIntoEditor(item) {
     idEl.value = item.id || '';
     payloadEl.value = JSON.stringify(item.payload || canonicalDefaultPayload(), null, 2);
-    statusEl.textContent = 'Loaded ' + item.title + ' (' + (item.is_published ? 'published' : 'draft') + ')';
+    const lc = item.content_lifecycle || 'draft';
+    const allow = item.publish_allowed ? 'publish_allowed' : 'publish_gated';
+    statusEl.textContent =
+      'Loaded ' + item.title + ' — lifecycle:' + lc + ' · ' + allow + ' · ' + originLabel(item);
   }
 
   async function refresh() {
@@ -89,7 +114,7 @@
       } else {
         data = await api('/game/content/experiences', { method: 'POST', body });
       }
-      statusEl.textContent = 'Saved draft for ' + data.experience.title;
+      statusEl.textContent = 'Saved draft for ' + data.experience.title + ' (lifecycle:' + (data.experience.content_lifecycle || '') + ')';
       idEl.value = data.experience.id;
       await refresh();
     } catch (err) {
@@ -110,6 +135,91 @@
       statusEl.textContent = err.message;
     }
   });
+
+  function govPost(suffix) {
+    if (!idEl.value) {
+      statusEl.textContent = 'Save and select an experience first.';
+      return Promise.resolve();
+    }
+    return api('/game/content/experiences/' + idEl.value + suffix, { method: 'POST', body: '{}' });
+  }
+
+  if (unpublishBtn) {
+    unpublishBtn.addEventListener('click', () => {
+      govPost('/unpublish')
+        .then((data) => {
+          statusEl.textContent = 'Unpublished ' + (data.experience && data.experience.title);
+          return refresh();
+        })
+        .catch((err) => { statusEl.textContent = err.message; });
+    });
+  }
+
+  if (govSubmitBtn) {
+    govSubmitBtn.addEventListener('click', () => {
+      govPost('/governance/submit-review')
+        .then(() => refresh())
+        .then(() => { statusEl.textContent = 'Submitted for review.'; })
+        .catch((err) => { statusEl.textContent = err.message; });
+    });
+  }
+
+  if (govApproveBtn) {
+    govApproveBtn.addEventListener('click', () => {
+      if (!idEl.value) {
+        statusEl.textContent = 'Save and select an experience first.';
+        return;
+      }
+      api('/game/content/experiences/' + idEl.value + '/governance/decision', {
+        method: 'POST',
+        body: JSON.stringify({ decision: 'approve' }),
+      })
+        .then(() => refresh())
+        .then(() => { statusEl.textContent = 'Editorial: approved.'; })
+        .catch((err) => { statusEl.textContent = err.message; });
+    });
+  }
+
+  if (govRejectBtn) {
+    govRejectBtn.addEventListener('click', () => {
+      if (!idEl.value) {
+        statusEl.textContent = 'Save and select an experience first.';
+        return;
+      }
+      api('/game/content/experiences/' + idEl.value + '/governance/decision', {
+        method: 'POST',
+        body: JSON.stringify({ decision: 'reject' }),
+      })
+        .then(() => refresh())
+        .then(() => { statusEl.textContent = 'Editorial: rejected.'; })
+        .catch((err) => { statusEl.textContent = err.message; });
+    });
+  }
+
+  if (govRevisionBtn) {
+    govRevisionBtn.addEventListener('click', () => {
+      if (!idEl.value) {
+        statusEl.textContent = 'Save and select an experience first.';
+        return;
+      }
+      api('/game/content/experiences/' + idEl.value + '/governance/decision', {
+        method: 'POST',
+        body: JSON.stringify({ decision: 'request_revision' }),
+      })
+        .then(() => refresh())
+        .then(() => { statusEl.textContent = 'Editorial: revision requested.'; })
+        .catch((err) => { statusEl.textContent = err.message; });
+    });
+  }
+
+  if (markPublishableBtn) {
+    markPublishableBtn.addEventListener('click', () => {
+      govPost('/governance/mark-publishable')
+        .then(() => refresh())
+        .then(() => { statusEl.textContent = 'Marked publishable (moderator readiness step).'; })
+        .catch((err) => { statusEl.textContent = err.message; });
+    });
+  }
 
   createBtn.addEventListener('click', () => {
     idEl.value = '';

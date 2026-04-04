@@ -207,6 +207,7 @@ def test_game_content_endpoints_seed_and_publish(client, moderator_headers):
     seed = experiences[0]
     assert seed['template_id'] == 'god_of_carnage_solo'
     assert seed['is_published'] is True
+    assert seed.get('content_lifecycle') == 'published'
     assert seed['payload']['title'] == 'God of Carnage — Single Adventure'
 
     new_payload = seed['payload'].copy()
@@ -217,6 +218,23 @@ def test_game_content_endpoints_seed_and_publish(client, moderator_headers):
     assert create_response.status_code == 201
     created = create_response.get_json()['experience']
     assert created['is_published'] is False
+    assert created.get('content_lifecycle') == 'draft'
+
+    blocked = client.post(f"/api/v1/game/content/experiences/{created['id']}/publish", headers=moderator_headers)
+    assert blocked.status_code == 409
+    blocked_body = blocked.get_json()
+    assert blocked_body.get('code') == 'lifecycle_blocks_publish'
+
+    assert client.post(
+        f"/api/v1/game/content/experiences/{created['id']}/governance/submit-review",
+        json={},
+        headers=moderator_headers,
+    ).status_code == 200
+    assert client.post(
+        f"/api/v1/game/content/experiences/{created['id']}/governance/decision",
+        json={'decision': 'approve'},
+        headers=moderator_headers,
+    ).status_code == 200
 
     new_payload['summary'] = 'Updated summary for authored content.'
     update_response = client.patch(f"/api/v1/game/content/experiences/{created['id']}", json={'payload': new_payload}, headers=moderator_headers)
@@ -226,6 +244,7 @@ def test_game_content_endpoints_seed_and_publish(client, moderator_headers):
     publish_response = client.post(f"/api/v1/game/content/experiences/{created['id']}/publish", headers=moderator_headers)
     assert publish_response.status_code == 200
     assert publish_response.get_json()['experience']['is_published'] is True
+    assert publish_response.get_json()['experience'].get('content_lifecycle') == 'published'
 
     published_feed = client.get('/api/v1/game/content/published')
     assert published_feed.status_code == 200

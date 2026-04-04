@@ -266,6 +266,9 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
     assert inf["has_transcript_evidence"] is True
     assert inf["has_governance_review_bundle"] is True
     assert inf["evidence_strength_map"]["retrieval_context"] == "moderate"
+    assert inf["governance_pending_review"] is True
+    assert inf["distinct_from_publishable_recommendation"] is True
+    assert inf["governance_terminal_accepted"] is False
     assert "governance_review_bundle" in inf["workflow_stage_ids"]
     et = payload.get("execution_truth") or {}
     assert et.get("last_turn_graph_mode", {}).get("graph_path_summary") == "primary_invoke_langchain_only"

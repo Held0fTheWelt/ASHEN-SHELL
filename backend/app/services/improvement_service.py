@@ -553,6 +553,103 @@ def build_recommendation_package(
         "recommendation_summary": recommendation,
         "review_status": "pending_governance_review",
         "next_action": "admin_review_required",
+        "governance_review_state": {
+            "status": "pending_governance_review",
+            "updated_at": _utc_now(),
+            "updated_by": actor_id,
+            "history": [
+                {
+                    "status": "pending_governance_review",
+                    "changed_at": _utc_now(),
+                    "changed_by": actor_id,
+                    "note": "Initial improvement recommendation package.",
+                }
+            ],
+        },
+    }
+    storage.write_json("recommendations", package_id, package)
+    return package
+
+
+def apply_improvement_recommendation_decision(
+    *,
+    package_id: str,
+    actor_id: str,
+    decision: str,
+    note: str | None = None,
+    store: ImprovementStore | None = None,
+) -> dict[str, Any]:
+    """Human governance decision on a persisted recommendation package (HITL).
+
+    Decisions: accept | reject | revise (revise is non-terminal).
+    """
+    storage = store or ImprovementStore.default()
+    package = storage.read_json("recommendations", package_id)
+    state = package.get("governance_review_state")
+    if not isinstance(state, dict):
+        state = {
+            "status": package.get("review_status") or "pending_governance_review",
+            "updated_at": _utc_now(),
+            "updated_by": actor_id,
+            "history": [],
+        }
+    current = str(state.get("status", "pending_governance_review"))
+    normalized = decision.strip().lower()
+    if normalized not in {"accept", "reject", "revise"}:
+        raise ValueError("decision_must_be_accept_reject_or_revise")
+    if current in {"governance_accepted", "governance_rejected"}:
+        raise ValueError("recommendation_already_finalized")
+    if current not in {"pending_governance_review", "governance_revision_requested"}:
+        raise ValueError("invalid_governance_state_for_decision")
+
+    history = state.get("history")
+    if not isinstance(history, list):
+        history = []
+
+    if normalized == "revise":
+        next_status = "governance_revision_requested"
+        history.append(
+            {
+                "decision": "revise",
+                "status": next_status,
+                "changed_at": _utc_now(),
+                "changed_by": actor_id,
+                "note": note or "",
+            }
+        )
+        state["status"] = next_status
+        state["updated_at"] = _utc_now()
+        state["updated_by"] = actor_id
+        state["history"] = history
+        package["governance_review_state"] = state
+        package["review_status"] = next_status
+        package["next_action"] = "revision_required_before_promotion"
+        package.pop("human_decision", None)
+        storage.write_json("recommendations", package_id, package)
+        return package
+
+    next_status = "governance_accepted" if normalized == "accept" else "governance_rejected"
+    history.append(
+        {
+            "decision": normalized,
+            "status": next_status,
+            "changed_at": _utc_now(),
+            "changed_by": actor_id,
+            "note": note or "",
+        }
+    )
+    state["status"] = next_status
+    state["updated_at"] = _utc_now()
+    state["updated_by"] = actor_id
+    state["history"] = history
+    package["governance_review_state"] = state
+    package["review_status"] = next_status
+    package["next_action"] = "closed_accepted" if next_status == "governance_accepted" else "closed_rejected"
+    package["human_decision"] = {
+        "decision": normalized,
+        "decided_by": actor_id,
+        "decided_at": _utc_now(),
+        "note": note or "",
     }
     storage.write_json("recommendations", package_id, package)
     return package

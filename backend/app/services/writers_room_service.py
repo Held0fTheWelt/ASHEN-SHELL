@@ -502,6 +502,13 @@ def run_writers_room_review(
         "review_id": review_id,
         "review_state": review_state,
         "revision_cycles": [],
+        "artifact_provenance": {
+            "kind": "writers_room_workflow_output",
+            "workflow": "writers_room_unified_stack_workflow",
+            "created_at": _utc_now(),
+            "module_id": module_id,
+            "trace_id": trace_id,
+        },
     }
     storage.write_review(review_id, report)
     return report

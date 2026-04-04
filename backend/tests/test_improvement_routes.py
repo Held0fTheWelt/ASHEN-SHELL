@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import pytest
 from wos_ai_stack import CapabilityInvocationError
 from wos_ai_stack.rag import INDEX_VERSION
 
 from app.services.improvement_service import (
     ImprovementStore,
     _simulate_sandbox_turn,
+    apply_improvement_recommendation_decision,
     build_comparison_package,
+    build_recommendation_package,
     build_recommendation_rationale,
     create_variant,
     evaluate_experiment,
@@ -97,6 +100,9 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
     assert experiment["variant_id"] == variant_id
     assert recommendation["candidate"]["variant_id"] == variant_id
     assert recommendation["review_status"] == "pending_governance_review"
+    grs = recommendation.get("governance_review_state") or {}
+    assert grs.get("status") == "pending_governance_review"
+    assert isinstance(grs.get("history"), list)
     metrics = recommendation["evaluation"]["metrics"]
     baseline_metrics = recommendation["evaluation"]["baseline_metrics"]
     comparison = recommendation["evaluation"]["comparison"]
@@ -363,6 +369,113 @@ def test_improvement_recommendation_suffix_drops_when_transcript_helper_bypassed
     body = experiment_resp.get_json()
     assert "|tr_turns=" not in body["recommendation_package"]["recommendation_summary"]
     assert body.get("transcript_evidence", {}).get("bypassed") is True
+
+
+def test_apply_improvement_recommendation_decision_flow(tmp_path):
+    store = ImprovementStore(root=tmp_path)
+    variant = create_variant(
+        baseline_id="god_of_carnage",
+        candidate_summary="Governance decision coverage.",
+        actor_id="actor_unit",
+        store=store,
+    )
+    experiment = run_sandbox_experiment(
+        variant_id=variant["variant_id"],
+        actor_id="actor_unit",
+        test_inputs=["one"],
+        store=store,
+    )
+    pkg = build_recommendation_package(
+        experiment_id=experiment["experiment_id"],
+        actor_id="actor_unit",
+        store=store,
+    )
+    pid = pkg["package_id"]
+    assert pkg["governance_review_state"]["status"] == "pending_governance_review"
+
+    with pytest.raises(ValueError, match="decision_must_be"):
+        apply_improvement_recommendation_decision(
+            package_id=pid, actor_id="h", decision="maybe", store=store
+        )
+
+    revised = apply_improvement_recommendation_decision(
+        package_id=pid, actor_id="human", decision="revise", note="more evidence", store=store
+    )
+    assert revised["governance_review_state"]["status"] == "governance_revision_requested"
+    assert revised["review_status"] == "governance_revision_requested"
+
+    accepted = apply_improvement_recommendation_decision(
+        package_id=pid, actor_id="human", decision="accept", note="ok", store=store
+    )
+    assert accepted["governance_review_state"]["status"] == "governance_accepted"
+    assert accepted["review_status"] == "governance_accepted"
+    assert accepted["human_decision"]["decision"] == "accept"
+
+    with pytest.raises(ValueError, match="recommendation_already_finalized"):
+        apply_improvement_recommendation_decision(
+            package_id=pid, actor_id="human", decision="reject", store=store
+        )
+
+    variant2 = create_variant(
+        baseline_id="god_of_carnage",
+        candidate_summary="Reject path.",
+        actor_id="actor_unit",
+        store=store,
+    )
+    exp2 = run_sandbox_experiment(
+        variant_id=variant2["variant_id"],
+        actor_id="actor_unit",
+        test_inputs=["two"],
+        store=store,
+    )
+    pkg2 = build_recommendation_package(
+        experiment_id=exp2["experiment_id"], actor_id="actor_unit", store=store
+    )
+    rejected = apply_improvement_recommendation_decision(
+        package_id=pkg2["package_id"], actor_id="human", decision="reject", store=store
+    )
+    assert rejected["governance_review_state"]["status"] == "governance_rejected"
+    assert rejected["review_status"] == "governance_rejected"
+
+
+def test_improvement_recommendation_decision_http_route(client, auth_headers, tmp_path):
+    from unittest.mock import patch
+
+    iso = ImprovementStore(root=tmp_path)
+    variant = create_variant(
+        baseline_id="god_of_carnage",
+        candidate_summary="HTTP route",
+        actor_id="a",
+        store=iso,
+    )
+    experiment = run_sandbox_experiment(
+        variant_id=variant["variant_id"],
+        actor_id="a",
+        test_inputs=["z"],
+        store=iso,
+    )
+    pkg = build_recommendation_package(
+        experiment_id=experiment["experiment_id"], actor_id="a", store=iso
+    )
+    pkg_id = pkg["package_id"]
+
+    def fake_default():
+        return iso
+
+    with patch("app.api.v1.improvement_routes.ImprovementStore.default", fake_default):
+        bad = client.post(
+            f"/api/v1/improvement/recommendations/{pkg_id}/decision",
+            headers=auth_headers,
+            json={"decision": "maybe"},
+        )
+        assert bad.status_code == 400
+        ok = client.post(
+            f"/api/v1/improvement/recommendations/{pkg_id}/decision",
+            headers=auth_headers,
+            json={"decision": "accept"},
+        )
+        assert ok.status_code == 200
+        assert ok.get_json()["governance_review_state"]["status"] == "governance_accepted"
 
 
 def test_governance_accessibility_lists_recommendation_packages(client, auth_headers):

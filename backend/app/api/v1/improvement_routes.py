@@ -13,6 +13,7 @@ from app.observability.audit_log import log_workflow_audit
 from app.observability.trace import get_trace_id
 from app.services.improvement_service import (
     ImprovementStore,
+    apply_improvement_recommendation_decision,
     build_evidence_strength_map,
     build_recommendation_package,
     build_recommendation_rationale,
@@ -354,3 +355,36 @@ def run_improvement_experiment():
 @jwt_required()
 def list_improvement_recommendations():
     return jsonify({"packages": list_recommendation_packages()}), 200
+
+
+@api_v1_bp.route("/improvement/recommendations/<package_id>/decision", methods=["POST"])
+@jwt_required()
+def improvement_recommendation_decision(package_id: str):
+    data = request.get_json(silent=True)
+    if data is None or not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON body"}), 400
+    decision = data.get("decision")
+    if not isinstance(decision, str) or not decision.strip():
+        return jsonify({"error": "decision is required"}), 400
+    note = data.get("note") if isinstance(data.get("note"), str) else None
+    actor_id = str(get_jwt_identity() or "unknown")
+    trace_id = g.get("trace_id") or get_trace_id()
+    try:
+        package = apply_improvement_recommendation_decision(
+            package_id=package_id.strip(),
+            actor_id=actor_id,
+            decision=decision.strip(),
+            note=note,
+        )
+    except FileNotFoundError:
+        return jsonify({"error": "recommendation package not found"}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    log_workflow_audit(
+        trace_id,
+        workflow="improvement_recommendation_decision",
+        actor_id=actor_id,
+        outcome="ok",
+        resource_id=package_id,
+    )
+    return jsonify(package), 200

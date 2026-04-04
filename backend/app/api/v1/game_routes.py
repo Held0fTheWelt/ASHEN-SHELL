@@ -11,13 +11,18 @@ from app.extensions import db, limiter
 from app.models import User
 from app.services.game_content_service import (
     GameContentConflictError,
+    GameContentLifecycleError,
     GameContentNotFoundError,
     GameContentValidationError,
+    apply_editorial_decision,
     create_experience,
     get_experience,
     list_experiences,
     list_published_experience_payloads,
+    mark_experience_publishable,
     publish_experience,
+    submit_experience_for_review,
+    unpublish_experience,
     update_experience,
 )
 from app.services.game_profile_service import (
@@ -92,6 +97,13 @@ def _error_response(exc: Exception):
         return jsonify({"error": str(exc)}), 404
     if isinstance(exc, GameContentConflictError):
         return jsonify({"error": str(exc)}), 409
+    if isinstance(exc, GameContentLifecycleError):
+        body: dict[str, Any] = {"error": str(exc)}
+        if exc.code:
+            body["code"] = exc.code
+        if exc.content_lifecycle is not None:
+            body["content_lifecycle"] = exc.content_lifecycle
+        return jsonify(body), 409
     if isinstance(exc, GameServiceConfigError):
         return jsonify({"error": str(exc)}), exc.status_code
     if isinstance(exc, GameServiceError):
@@ -401,7 +413,10 @@ def game_published_content_feed():
 @require_jwt_moderator_or_admin
 def game_content_list():
     try:
-        return jsonify({"experiences": list_experiences(include_payload=True)})
+        lifecycle = (request.args.get("lifecycle") or "").strip() or None
+        return jsonify(
+            {"experiences": list_experiences(include_payload=True, lifecycle=lifecycle)}
+        )
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -413,7 +428,12 @@ def game_content_create():
         user = _current_user()
         data = request.get_json(silent=True) or {}
         payload = data.get("payload") if isinstance(data.get("payload"), dict) else data
-        experience = create_experience(payload=payload, actor_user_id=user.id if user else None)
+        gov = data.get("governance_provenance") if isinstance(data.get("governance_provenance"), dict) else None
+        experience = create_experience(
+            payload=payload,
+            actor_user_id=user.id if user else None,
+            governance_provenance=gov,
+        )
         return jsonify({"experience": experience}), 201
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
@@ -447,6 +467,78 @@ def game_content_publish(experience_id: int):
     try:
         user = _current_user()
         experience = publish_experience(experience_id, actor_user_id=user.id if user else None)
+        return jsonify({"experience": experience}), 200
+    except Exception as exc:  # pragma: no cover - centralized mapper
+        return _error_response(exc)
+
+
+@api_v1_bp.route("/game/content/experiences/<int:experience_id>/unpublish", methods=["POST"])
+@require_jwt_moderator_or_admin
+def game_content_unpublish(experience_id: int):
+    try:
+        user = _current_user()
+        data = request.get_json(silent=True) or {}
+        note = data.get("note") if isinstance(data.get("note"), str) else None
+        experience = unpublish_experience(
+            experience_id,
+            actor_user_id=user.id if user else None,
+            note=note,
+        )
+        return jsonify({"experience": experience}), 200
+    except Exception as exc:  # pragma: no cover - centralized mapper
+        return _error_response(exc)
+
+
+@api_v1_bp.route("/game/content/experiences/<int:experience_id>/governance/submit-review", methods=["POST"])
+@require_jwt_moderator_or_admin
+def game_content_governance_submit_review(experience_id: int):
+    try:
+        user = _current_user()
+        data = request.get_json(silent=True) or {}
+        note = data.get("note") if isinstance(data.get("note"), str) else None
+        experience = submit_experience_for_review(
+            experience_id,
+            actor_user_id=user.id if user else None,
+            note=note,
+        )
+        return jsonify({"experience": experience}), 200
+    except Exception as exc:  # pragma: no cover - centralized mapper
+        return _error_response(exc)
+
+
+@api_v1_bp.route("/game/content/experiences/<int:experience_id>/governance/decision", methods=["POST"])
+@require_jwt_moderator_or_admin
+def game_content_governance_decision(experience_id: int):
+    try:
+        user = _current_user()
+        data = request.get_json(silent=True) or {}
+        decision = data.get("decision")
+        if not isinstance(decision, str) or not decision.strip():
+            return jsonify({"error": "decision is required"}), 400
+        note = data.get("note") if isinstance(data.get("note"), str) else None
+        experience = apply_editorial_decision(
+            experience_id,
+            decision=decision.strip(),
+            actor_user_id=user.id if user else None,
+            note=note,
+        )
+        return jsonify({"experience": experience}), 200
+    except Exception as exc:  # pragma: no cover - centralized mapper
+        return _error_response(exc)
+
+
+@api_v1_bp.route("/game/content/experiences/<int:experience_id>/governance/mark-publishable", methods=["POST"])
+@require_jwt_moderator_or_admin
+def game_content_governance_mark_publishable(experience_id: int):
+    try:
+        user = _current_user()
+        data = request.get_json(silent=True) or {}
+        note = data.get("note") if isinstance(data.get("note"), str) else None
+        experience = mark_experience_publishable(
+            experience_id,
+            actor_user_id=user.id if user else None,
+            note=note,
+        )
         return jsonify({"experience": experience}), 200
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)

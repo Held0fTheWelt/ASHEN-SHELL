@@ -66,6 +66,18 @@ def test_game_admin_create_and_publish_experience(client, moderator_headers, app
     item = create_response.get_json()
     assert item['template_id'] == 'god_of_carnage_group_authored'
     assert item['is_published'] is False
+    assert item.get('content_lifecycle') == 'draft'
+
+    assert client.post(
+        f"/api/v1/game-admin/experiences/{item['id']}/governance/submit-review",
+        json={},
+        headers=moderator_headers,
+    ).status_code == 200
+    assert client.post(
+        f"/api/v1/game-admin/experiences/{item['id']}/governance/decision",
+        json={'decision': 'approve'},
+        headers=moderator_headers,
+    ).status_code == 200
 
     publish_response = client.post(
         f"/api/v1/game-admin/experiences/{item['id']}/publish",

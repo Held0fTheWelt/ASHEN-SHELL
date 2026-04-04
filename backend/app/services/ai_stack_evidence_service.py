@@ -188,12 +188,24 @@ def _improvement_evidence_influence(package: dict[str, Any]) -> dict[str, Any]:
     tx = evidence.get("transcript_evidence")
     strength = package.get("evidence_strength_map")
     strength_map = strength if isinstance(strength, dict) else None
+    grs = package.get("governance_review_state") if isinstance(package.get("governance_review_state"), dict) else {}
+    human_status = grs.get("status") or package.get("review_status")
+    terminal_accepted = human_status == "governance_accepted"
+    terminal_rejected = human_status == "governance_rejected"
+    revision_requested = human_status == "governance_revision_requested"
+    pending_human = human_status == "pending_governance_review"
     return {
         "workflow_stage_ids": stage_ids,
         "retrieval_source_path_count": path_count,
         "has_transcript_evidence": bool(tx),
         "has_governance_review_bundle": bool(evidence.get("governance_review_bundle_id")),
         "evidence_strength_map": strength_map,
+        "governance_human_status": human_status,
+        "governance_terminal_accepted": terminal_accepted,
+        "governance_terminal_rejected": terminal_rejected,
+        "governance_revision_requested": revision_requested,
+        "governance_pending_review": pending_human,
+        "distinct_from_publishable_recommendation": not terminal_accepted,
         "tool_influence_indicators": {
             "context_pack_sources": path_count > 0,
             "transcript_tool": bool(tx),
@@ -376,9 +388,12 @@ def build_session_evidence_bundle(*, session_id: str, trace_id: str) -> dict[str
     improvement_package = _latest_improvement_package()
     if improvement_package:
         evaluation = improvement_package.get("evaluation", {})
+        grs = improvement_package.get("governance_review_state")
+        grs_status = grs.get("status") if isinstance(grs, dict) else None
         bundle["repaired_layer_signals"]["improvement"] = {
             "package_id": improvement_package.get("package_id"),
             "review_status": improvement_package.get("review_status"),
+            "governance_review_state_status": grs_status,
             "recommendation": improvement_package.get("recommendation_summary"),
             "comparison": evaluation.get("comparison", {}),
             "evidence_influence": _improvement_evidence_influence(improvement_package),

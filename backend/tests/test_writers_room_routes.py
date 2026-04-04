@@ -116,6 +116,10 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert data["module_id"] == "god_of_carnage"
     assert data["outputs_are_recommendations_only"] is True
     assert data["review_state"]["status"] == "pending_human_review"
+    ap = data.get("artifact_provenance") or {}
+    assert ap.get("kind") == "writers_room_workflow_output"
+    assert ap.get("workflow") == "writers_room_unified_stack_workflow"
+    assert ap.get("module_id") == "god_of_carnage"
     assert "workflow_manifest" in data
     assert data["workflow_manifest"]["workflow"] == "writers_room_unified_stack_workflow"
     stage_ids = [s["id"] for s in data["workflow_manifest"]["stages"]]
