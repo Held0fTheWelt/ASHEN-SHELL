@@ -340,8 +340,8 @@ def play_shell(session_id: str):
 @frontend_bp.route("/play/<session_id>/execute", methods=["POST"])
 @require_login
 def play_execute(session_id: str):
-    operator_input = (request.form.get("operator_input") or "").strip()
-    if not operator_input:
+    player_input = (request.form.get("player_input") or "").strip()
+    if not player_input:
         flash("Please enter an action.", "error")
         return redirect(url_for("frontend.play_shell", session_id=session_id))
     backend_sessions = session.get("play_shell_backend_sessions", {})
@@ -352,7 +352,7 @@ def play_execute(session_id: str):
     response = request_backend(
         "POST",
         f"/api/v1/sessions/{backend_session_id}/turns",
-        json_data={"player_input": operator_input},
+        json_data={"player_input": player_input},
     )
     try:
         payload = require_success(response, "Runtime turn execution failed.")

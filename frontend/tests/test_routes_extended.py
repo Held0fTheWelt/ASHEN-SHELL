@@ -403,13 +403,13 @@ def test_play_execute_empty_and_runtime_dispatch(client, monkeypatch):
     monkeypatch.setattr("app.routes.request_backend", fake_request)
     with client.session_transaction() as sess:
         sess["access_token"] = "t"
-    r = client.post("/play/sid/execute", data={"operator_input": ""}, follow_redirects=False)
+    r = client.post("/play/sid/execute", data={"player_input": ""}, follow_redirects=False)
     assert r.status_code == 302
 
     with client.session_transaction() as sess:
         sess["access_token"] = "t"
         sess["play_shell_backend_sessions"] = {"sid": "backend-session-1"}
-    client.post("/play/sid/execute", data={"operator_input": "I look around and wait."}, follow_redirects=False)
+    client.post("/play/sid/execute", data={"player_input": "I look around and wait."}, follow_redirects=False)
     assert calls
     method, path, kwargs = calls[-1]
     assert method == "POST"
@@ -424,7 +424,7 @@ def test_play_execute_rejects_missing_backend_session_binding(client, monkeypatc
     )
     with client.session_transaction() as sess:
         sess["access_token"] = "t"
-    response = client.post("/play/sid/execute", data={"operator_input": "I stay silent."}, follow_redirects=False)
+    response = client.post("/play/sid/execute", data={"player_input": "I stay silent."}, follow_redirects=False)
     assert response.status_code == 302
 
 
