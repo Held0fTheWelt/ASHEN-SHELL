@@ -6,15 +6,18 @@ Status: Canonical Milestone 9 architecture and implementation baseline.
 
 Writers-Room now uses a backend workflow endpoint (`POST /api/v1/writers-room/reviews`) as the primary architecture.
 
-Workflow stages:
+Workflow stages (see `workflow_manifest.stages` in review payloads for timestamps):
 
-1. JWT-authenticated request intake.
-2. LangGraph Writers-Room seed workflow invocation.
-3. Shared retrieval capability call (`wos.context_pack.build`, domain `writers_room`).
-4. Shared model routing invocation (story-runtime-core routing + adapters with fallback).
-5. Recommendation synthesis and evidence collation.
-6. Guarded review bundle capability call (`wos.review_bundle.build`).
-7. Response package for human review (recommendations only, not direct publish edits).
+1. JWT-authenticated request intake (`request_intake`).
+2. LangGraph Writers-Room seed workflow invocation (`workflow_seed`).
+3. Shared retrieval capability call (`wos.context_pack.build`, domain `writers_room`) (`retrieval_analysis`).
+4. Shared model routing invocation (story-runtime-core routing + adapters with fallback) (`proposal_generation`).
+5. Structured artifact packaging (`proposal_package`, `comment_bundle`, patch/variant candidates) (`artifact_packaging`).
+6. Guarded review bundle capability call (`wos.review_bundle.build`) (`governance_envelope`).
+7. LangChain retriever bridge preview (`retrieval_bridge_preview`) for cross-stack visibility.
+8. Human review pending (`human_review_pending`) with explicit HITL decisions: `accept`, `reject`, or `revise` (non-terminal; may repeat).
+
+API: `POST /api/v1/writers-room/reviews/<review_id>/decision` with `decision` in `accept` | `reject` | `revise`.
 
 ## Shared-stack dependencies
 

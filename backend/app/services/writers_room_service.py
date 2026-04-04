@@ -38,6 +38,18 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _append_workflow_stage(
+    manifest_stages: list[dict[str, Any]],
+    *,
+    stage_id: str,
+    artifact_key: str | None = None,
+) -> None:
+    entry: dict[str, Any] = {"id": stage_id, "completed_at": _utc_now()}
+    if artifact_key:
+        entry["artifact_key"] = artifact_key
+    manifest_stages.append(entry)
+
+
 @dataclass
 class WritersRoomStore:
     root: Path
@@ -94,7 +106,10 @@ def run_writers_room_review(
 ) -> dict[str, Any]:
     storage = WritersRoomStore.default()
     workflow = _get_workflow()
+    manifest_stages: list[dict[str, Any]] = []
+    _append_workflow_stage(manifest_stages, stage_id="request_intake")
     seed = workflow.seed_graph.invoke({"module_id": module_id})
+    _append_workflow_stage(manifest_stages, stage_id="workflow_seed", artifact_key="workflow_seed")
     context_payload = workflow.capability_registry.invoke(
         name="wos.context_pack.build",
         mode="writers_room",
@@ -107,6 +122,7 @@ def run_writers_room_review(
             "max_chunks": 6,
         },
     )
+    _append_workflow_stage(manifest_stages, stage_id="retrieval_analysis", artifact_key="retrieval")
     retrieval_inner = context_payload.get("retrieval")
     retrieval_trace = build_retrieval_trace(retrieval_inner if isinstance(retrieval_inner, dict) else {})
     evidence_tag = retrieval_trace["evidence_tier"]
@@ -188,16 +204,22 @@ def run_writers_room_review(
                 ),
             }
 
-    sources = context_payload["retrieval"].get("sources", [])
+    _append_workflow_stage(manifest_stages, stage_id="proposal_generation", artifact_key="model_generation")
+    sources = (
+        context_payload.get("retrieval", {}).get("sources", [])
+        if isinstance(context_payload.get("retrieval"), dict)
+        else []
+    )
+    source_rows = [row for row in sources if isinstance(row, dict)]
     issues = [
         {
             "id": f"issue_{index}",
             "severity": "medium",
             "type": "consistency",
-            "description": f"Review source {source['source_path']} for canon alignment in {module_id}.",
-            "evidence_source": source["source_path"],
+            "description": f"Review source {source.get('source_path', '')} for canon alignment in {module_id}.",
+            "evidence_source": source.get("source_path", ""),
         }
-        for index, source in enumerate(sources[:3], start=1)
+        for index, source in enumerate(source_rows[:3], start=1)
     ]
     recommendations = [
         "Verify scene-level continuity against retrieved evidence before publishing.",
@@ -213,6 +235,9 @@ def run_writers_room_review(
     if generation["content"]:
         recommendations.append(generation["content"][:220])
 
+    _append_workflow_stage(manifest_stages, stage_id="artifact_packaging")
+    proposal_id = f"proposal_{uuid4().hex}"
+    comment_bundle_id = f"comments_{uuid4().hex}"
     review_bundle = workflow.review_bundle_tool.invoke(
         {
             "module_id": module_id,
@@ -220,26 +245,28 @@ def run_writers_room_review(
                 f"[evidence_tier:{evidence_tag}] Writers-Room review for {module_id} with focus '{focus}'."
             ),
             "recommendations": recommendations,
-            "evidence_sources": [source.get("source_path", "") for source in sources],
+            "evidence_sources": [row.get("source_path", "") for row in source_rows],
         }
     )
+    _append_workflow_stage(manifest_stages, stage_id="governance_envelope", artifact_key="review_bundle")
     langchain_documents = workflow.langchain_retriever.get_writers_room_documents(
         query=f"{module_id} {focus} canon consistency dramaturgy structure",
         module_id=module_id,
         max_chunks=3,
     )
+    _append_workflow_stage(manifest_stages, stage_id="retrieval_bridge_preview", artifact_key="langchain_retriever_preview")
     review_id = f"review_{uuid4().hex}"
     proposal_package = {
-        "proposal_id": f"proposal_{uuid4().hex}",
+        "proposal_id": proposal_id,
         "module_id": module_id,
         "focus": focus,
         "generated_at": _utc_now(),
         "issues": issues,
         "recommendations": recommendations,
-        "evidence_sources": [source.get("source_path", "") for source in sources],
+        "evidence_sources": [row.get("source_path", "") for row in source_rows],
     }
     comment_bundle = {
-        "bundle_id": f"comments_{uuid4().hex}",
+        "bundle_id": comment_bundle_id,
         "comments": [
             {
                 "comment_id": f"comment_{idx}",
@@ -265,7 +292,7 @@ def run_writers_room_review(
                 0.7,
             ),
         }
-        for index, source in enumerate(sources[:2], start=1)
+        for index, source in enumerate(source_rows[:2], start=1)
     ]
     variant_candidates = [
         {
@@ -274,6 +301,30 @@ def run_writers_room_review(
         }
         for index, recommendation in enumerate(recommendations[:3], start=1)
     ]
+    retrieval_hit_count = len(source_rows)
+    if isinstance(retrieval_inner, dict):
+        raw_hits = retrieval_inner.get("hit_count")
+        if raw_hits is not None:
+            try:
+                retrieval_hit_count = int(raw_hits)
+            except (TypeError, ValueError):
+                retrieval_hit_count = len(source_rows)
+    review_summary = {
+        "issue_count": len(issues),
+        "recommendation_count": len(recommendations),
+        "evidence_tier": evidence_tag,
+        "retrieval_hit_count": retrieval_hit_count,
+        "bundle_id": review_bundle.get("bundle_id") if isinstance(review_bundle, dict) else None,
+        "bundle_status": review_bundle.get("status") if isinstance(review_bundle, dict) else None,
+        "top_issue_ids": [issue["id"] for issue in issues[:3]],
+        "proposal_id": proposal_id,
+        "comment_bundle_id": comment_bundle_id,
+    }
+    _append_workflow_stage(manifest_stages, stage_id="human_review_pending", artifact_key="review_state")
+    workflow_manifest = {
+        "workflow": "writers_room_unified_stack_workflow",
+        "stages": manifest_stages,
+    }
     review_state = {
         "status": "pending_human_review",
         "updated_at": _utc_now(),
@@ -294,12 +345,18 @@ def run_writers_room_review(
         "module_id": module_id,
         "focus": focus,
         "workflow_seed": seed,
+        "workflow_manifest": workflow_manifest,
         "workflow_stages": [
-            "analysis_completed",
-            "proposal_packaged",
+            "request_intake",
+            "workflow_seed",
+            "retrieval_analysis",
+            "proposal_generation",
+            "artifact_packaging",
+            "governance_envelope",
             "human_review_pending",
         ],
-        "retrieval": context_payload["retrieval"],
+        "review_summary": review_summary,
+        "retrieval": context_payload.get("retrieval", {}),
         "retrieval_trace": retrieval_trace,
         "issues": issues,
         "recommendations": recommendations,
@@ -310,7 +367,7 @@ def run_writers_room_review(
         "patch_candidates": patch_candidates,
         "variant_candidates": variant_candidates,
         "review_state": review_state,
-        "outputs_are_recommendations_only": False,
+        "outputs_are_recommendations_only": True,
         "legacy_paths": [
             {
                 "path": "writers-room legacy oracle route",
@@ -359,16 +416,46 @@ def apply_writers_room_decision(
     state = review.get("review_state", {})
     current_status = str(state.get("status", "pending_human_review"))
     normalized = decision.strip().lower()
-    if normalized not in {"accept", "reject"}:
-        raise ValueError("decision_must_be_accept_or_reject")
+    if normalized not in {"accept", "reject", "revise"}:
+        raise ValueError("decision_must_be_accept_reject_or_revise")
     if current_status in {"accepted", "rejected"}:
         raise ValueError("review_already_finalized")
-    next_status = "accepted" if normalized == "accept" else "rejected"
+    if current_status not in {"pending_human_review", "pending_revision"}:
+        raise ValueError("invalid_review_state_for_decision")
+
     history = state.get("history", [])
     if not isinstance(history, list):
         history = []
+
+    if normalized == "revise":
+        next_status = "pending_revision"
+        history.append(
+            {
+                "decision": "revise",
+                "status": next_status,
+                "changed_at": _utc_now(),
+                "changed_by": actor_id,
+                "note": note or "",
+            }
+        )
+        state["status"] = next_status
+        state["updated_at"] = _utc_now()
+        state["updated_by"] = actor_id
+        state["history"] = history
+        review["review_state"] = state
+        review["last_hitl_action"] = {
+            "decision": "revise",
+            "actor_id": actor_id,
+            "acted_at": _utc_now(),
+            "note": note or "",
+        }
+        storage.write_review(review_id, review)
+        return review
+
+    next_status = "accepted" if normalized == "accept" else "rejected"
     history.append(
         {
+            "decision": normalized,
             "status": next_status,
             "changed_at": _utc_now(),
             "changed_by": actor_id,

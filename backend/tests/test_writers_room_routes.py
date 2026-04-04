@@ -1,5 +1,84 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
+
+from story_runtime_core import RoutingPolicy
+from story_runtime_core.adapters import build_default_model_adapters
+from story_runtime_core.model_registry import build_default_registry
+from wos_ai_stack import (
+    build_capability_tool_bridge,
+    build_langchain_retriever_bridge,
+    build_runtime_retriever,
+    build_seed_writers_room_graph,
+)
+
+from app.services.writers_room_service import _WritersRoomWorkflow
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _context_pack_for_paths(paths: list[str], *, context_tag: str = "") -> dict:
+    return {
+        "retrieval": {
+            "domain": "writers_room",
+            "profile": "writers_review",
+            "status": "ok",
+            "hit_count": len(paths),
+            "sources": [{"source_path": p, "content_class": "canon"} for p in paths],
+            "ranking_notes": [],
+            "index_version": "test",
+            "corpus_fingerprint": "",
+            "storage_path": "",
+            "retrieval_route": "test_route",
+            "embedding_model_id": "",
+            "top_hit_score": "0.91",
+        },
+        "context_text": f"[{context_tag}]\n" + "\n".join(paths),
+    }
+
+
+def _build_controlled_workflow(
+    repo_root: Path,
+    context_pack_body: dict,
+    review_bundle_body: dict,
+) -> _WritersRoomWorkflow:
+    class ControlledRegistry:
+        def __init__(self) -> None:
+            self._audit: list[dict] = []
+
+        def invoke(self, *, name, mode, actor, payload, trace_id=None):
+            if name == "wos.context_pack.build":
+                self._audit.append({"capability_name": name, "outcome": "allowed"})
+                return context_pack_body
+            if name == "wos.review_bundle.build":
+                self._audit.append({"capability_name": name, "outcome": "allowed"})
+                return review_bundle_body
+            raise AssertionError(f"unexpected capability {name}")
+
+        def recent_audit(self, limit=20):
+            return list(self._audit[-limit:])
+
+    retriever, assembler, _corpus = build_runtime_retriever(repo_root)
+    registry = ControlledRegistry()
+    review_tool = build_capability_tool_bridge(
+        capability_registry=registry,
+        capability_name="wos.review_bundle.build",
+        mode="writers_room",
+        actor="writers_room:test_controlled",
+    )
+    return _WritersRoomWorkflow(
+        capability_registry=registry,
+        routing=RoutingPolicy(build_default_registry()),
+        adapters=build_default_model_adapters(),
+        seed_graph=build_seed_writers_room_graph(),
+        langchain_retriever=build_langchain_retriever_bridge(retriever),
+        review_bundle_tool=review_tool,
+    )
+
 
 def test_writers_room_review_requires_jwt(client):
     response = client.post(
@@ -21,8 +100,18 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert data.get("trace_id")
     assert data.get("review_id")
     assert data["module_id"] == "god_of_carnage"
-    assert data["outputs_are_recommendations_only"] is False
+    assert data["outputs_are_recommendations_only"] is True
     assert data["review_state"]["status"] == "pending_human_review"
+    assert "workflow_manifest" in data
+    assert data["workflow_manifest"]["workflow"] == "writers_room_unified_stack_workflow"
+    stage_ids = [s["id"] for s in data["workflow_manifest"]["stages"]]
+    assert "request_intake" in stage_ids
+    assert "retrieval_analysis" in stage_ids
+    assert "governance_envelope" in stage_ids
+    assert "human_review_pending" in stage_ids
+    assert "review_summary" in data
+    assert data["review_summary"]["issue_count"] >= 0
+    assert data["review_summary"]["bundle_id"] == (data.get("review_bundle") or {}).get("bundle_id")
     assert "proposal_package" in data
     assert "comment_bundle" in data
     assert "patch_candidates" in data
@@ -101,3 +190,159 @@ def test_writers_room_review_state_transition_and_fetch(client, auth_headers):
     assert decision_data["review_state"]["status"] == "accepted"
     assert decision_data["human_decision"]["decision"] == "accept"
     assert decision_data["review_state"]["history"][-1]["status"] == "accepted"
+    assert decision_data["review_state"]["history"][-1]["decision"] == "accept"
+
+
+def test_writers_room_retrieval_sources_materially_change_proposal_artifacts(
+    client, auth_headers, monkeypatch
+):
+    """Different context_pack sources must change proposal evidence and issue linkage."""
+    from app.services import writers_room_service as wrs
+
+    repo = _repo_root()
+    rb = {
+        "bundle_id": "bundle_retrieval_test",
+        "status": "recommendation_only",
+        "summary": "s",
+        "recommendations": [],
+        "evidence_sources": [],
+    }
+    alpha = _context_pack_for_paths(["corp/d1_alpha_retrieval_only.md"], context_tag="alpha")
+    monkeypatch.setattr(wrs, "_WORKFLOW", None)
+    monkeypatch.setattr(wrs, "_get_workflow", lambda: _build_controlled_workflow(repo, alpha, rb))
+    r1 = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "retrieval materiality A"},
+    )
+    assert r1.status_code == 200
+    d1 = r1.get_json()
+    assert d1["proposal_package"]["evidence_sources"][0] == "corp/d1_alpha_retrieval_only.md"
+    assert d1["issues"][0]["evidence_source"] == "corp/d1_alpha_retrieval_only.md"
+    assert "corp/d1_alpha_retrieval_only.md" in d1["issues"][0]["description"]
+
+    beta = _context_pack_for_paths(["corp/d1_beta_retrieval_only.md"], context_tag="beta")
+    monkeypatch.setattr(wrs, "_WORKFLOW", None)
+    monkeypatch.setattr(wrs, "_get_workflow", lambda: _build_controlled_workflow(repo, beta, rb))
+    r2 = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "retrieval materiality B"},
+    )
+    assert r2.status_code == 200
+    d2 = r2.get_json()
+    assert d2["proposal_package"]["evidence_sources"][0] == "corp/d1_beta_retrieval_only.md"
+    assert d2["issues"][0]["evidence_source"] == "corp/d1_beta_retrieval_only.md"
+    assert d1["proposal_package"]["evidence_sources"] != d2["proposal_package"]["evidence_sources"]
+
+
+def test_writers_room_review_bundle_tool_output_in_review_summary(client, auth_headers, monkeypatch):
+    """Governance envelope (review bundle) ids must flow into review_summary."""
+    from app.services import writers_room_service as wrs
+
+    repo = _repo_root()
+    ctx = _context_pack_for_paths(["corp/d1_tool_surface.md"])
+    bundle_a = {
+        "bundle_id": "governance_bundle_alpha_001",
+        "status": "recommendation_only",
+        "summary": "alpha summary",
+        "recommendations": ["r1"],
+        "evidence_sources": ["corp/d1_tool_surface.md"],
+    }
+    monkeypatch.setattr(wrs, "_WORKFLOW", None)
+    monkeypatch.setattr(wrs, "_get_workflow", lambda: _build_controlled_workflow(repo, ctx, bundle_a))
+    ra = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "tool surface"},
+    )
+    assert ra.status_code == 200
+    pa = ra.get_json()
+    assert pa["review_summary"]["bundle_id"] == "governance_bundle_alpha_001"
+    assert pa["review_summary"]["bundle_status"] == "recommendation_only"
+    assert pa["review_bundle"]["bundle_id"] == "governance_bundle_alpha_001"
+
+    bundle_b = dict(bundle_a)
+    bundle_b["bundle_id"] = "governance_bundle_beta_002"
+    monkeypatch.setattr(wrs, "_WORKFLOW", None)
+    monkeypatch.setattr(wrs, "_get_workflow", lambda: _build_controlled_workflow(repo, ctx, bundle_b))
+    rb = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "tool surface"},
+    )
+    assert rb.status_code == 200
+    pb = rb.get_json()
+    assert pb["review_summary"]["bundle_id"] == "governance_bundle_beta_002"
+    assert pb["review_summary"]["bundle_id"] != pa["review_summary"]["bundle_id"]
+
+
+def test_writers_room_revise_then_accept_hitl_loop(client, auth_headers):
+    create_resp = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "revise loop"},
+    )
+    assert create_resp.status_code == 200
+    review_id = create_resp.get_json()["review_id"]
+
+    rev = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/decision",
+        headers=auth_headers,
+        json={"decision": "revise", "note": "Needs another dramaturgy pass."},
+    )
+    assert rev.status_code == 200
+    body = rev.get_json()
+    assert body["review_state"]["status"] == "pending_revision"
+    assert body["last_hitl_action"]["decision"] == "revise"
+    assert body["review_state"]["history"][-1]["decision"] == "revise"
+    assert "human_decision" not in body or body.get("human_decision") is None
+
+    acc = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/decision",
+        headers=auth_headers,
+        json={"decision": "accept", "note": "Revised package ok for governance."},
+    )
+    assert acc.status_code == 200
+    final = acc.get_json()
+    assert final["review_state"]["status"] == "accepted"
+    assert final["human_decision"]["decision"] == "accept"
+
+
+@pytest.mark.parametrize("bad_decision", ["", "maybe", "approve"])
+def test_writers_room_invalid_decision_rejected(client, auth_headers, bad_decision):
+    create_resp = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "bad decision"},
+    )
+    review_id = create_resp.get_json()["review_id"]
+    resp = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/decision",
+        headers=auth_headers,
+        json={"decision": bad_decision},
+    )
+    assert resp.status_code == 400
+    assert "decision" in resp.get_json().get("error", "").lower() or "decision" in str(resp.get_json())
+
+
+def test_writers_room_cannot_finalize_twice(client, auth_headers):
+    create_resp = client.post(
+        "/api/v1/writers-room/reviews",
+        headers=auth_headers,
+        json={"module_id": "god_of_carnage", "focus": "double finalize"},
+    )
+    review_id = create_resp.get_json()["review_id"]
+    first = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/decision",
+        headers=auth_headers,
+        json={"decision": "reject"},
+    )
+    assert first.status_code == 200
+    second = client.post(
+        f"/api/v1/writers-room/reviews/{review_id}/decision",
+        headers=auth_headers,
+        json={"decision": "accept"},
+    )
+    assert second.status_code == 400
+    assert "finalized" in second.get_json().get("error", "")

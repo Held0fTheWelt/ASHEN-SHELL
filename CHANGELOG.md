@@ -38,7 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Repair C2 — Improvement experiment path** (`backend/app/api/v1/improvement_routes.py`): Runs invoke **`wos.context_pack.build`** and **`wos.review_bundle.build`** in improvement mode; response includes **`retrieval`**, **`review_bundle`**, **`capability_audit`**; **502** **`capability_workflow_failed`** with audit payload on capability errors.
-- **Writers-Room API payloads**: **`outputs_are_recommendations_only`** is **false** when structured workflow artifacts are primary; legacy behavior still described in payload metadata.
+- **Writers-Room API payloads**: **`outputs_are_recommendations_only`** is **true** (recommendation-only / no auto-publish); structured workflow artifacts (`workflow_manifest`, `review_summary`, bundles) are primary; legacy oracle remains transitional.
 - **Repository hygiene**: Additional **`.gitignore`** rules for local AI-stack and improvement artifacts (e.g. `.wos/`, var trees) as milestones landed.
 
 ### Tests
