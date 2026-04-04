@@ -178,6 +178,9 @@ def test_story_runtime_builds_multi_turn_committed_progression(tmp_path):
     assert state["history_count"] == 2
     assert state["current_scene_id"] == "scene_3"
     assert diagnostics["diagnostics"][-1]["progression_commit"]["committed_scene_id"] == "scene_3"
+    assert "graph" in diagnostics["diagnostics"][-1]
+    assert diagnostics["committed_history_tail"][-1].get("committed_state_after", {}).get("current_scene_id") == "scene_3"
+    assert "graph" not in diagnostics["committed_history_tail"][-1]
 
 
 def test_story_runtime_natural_language_with_scene_token_commits_progression(tmp_path):

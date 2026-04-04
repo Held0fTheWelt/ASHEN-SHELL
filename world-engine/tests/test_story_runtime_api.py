@@ -49,7 +49,10 @@ def test_story_session_lifecycle_and_nl_interpretation(client, internal_api_key)
         headers=_headers(internal_api_key),
     )
     assert state_response.status_code == 200
-    assert state_response.json()["turn_counter"] == 2
+    state_body = state_response.json()
+    assert state_body["turn_counter"] == 2
+    assert state_body.get("last_committed_turn", {}).get("turn_number") == 2
+    assert "graph" not in (state_body.get("last_committed_turn") or {})
 
     diagnostics_response = client.get(
         f"/api/story/sessions/{session_id}/diagnostics",

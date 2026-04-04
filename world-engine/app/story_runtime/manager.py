@@ -243,7 +243,19 @@ class StoryRuntimeManager:
             },
             "graph": graph_state.get("graph_diagnostics", {}),
         }
-        session.history.append(event)
+        committed_record = {
+            "turn_number": session.turn_counter,
+            "trace_id": trace_id or "",
+            "raw_input": player_input,
+            "interpreted_input": interpreted_input,
+            "progression_commit": progression_commit,
+            "turn_outcome": outcome,
+            "committed_state_after": {
+                "current_scene_id": session.current_scene_id,
+                "turn_counter": session.turn_counter,
+            },
+        }
+        session.history.append(committed_record)
         session.diagnostics.append(event)
         return event
 
@@ -262,6 +274,7 @@ class StoryRuntimeManager:
                 maybe_progression = tail.get("progression_commit")
                 if isinstance(maybe_progression, dict):
                     last_progression_commit = maybe_progression
+        last_committed_turn = session.history[-1] if session.history else None
         return {
             "session_id": session.session_id,
             "module_id": session.module_id,
@@ -274,6 +287,7 @@ class StoryRuntimeManager:
                 "turn_counter": session.turn_counter,
                 "last_progression_commit": last_progression_commit,
             },
+            "last_committed_turn": last_committed_turn,
             "updated_at": session.updated_at.isoformat(),
         }
 
@@ -288,8 +302,11 @@ class StoryRuntimeManager:
             "turn_counter": session.turn_counter,
             "committed_state": committed_state,
             "diagnostics": session.diagnostics[-20:],
+            "diagnostics_kind": "full_turn_envelope_includes_graph_and_retrieval",
+            "committed_history_tail": session.history[-5:] if session.history else [],
             "warnings": [
                 "story_runtime_hosted_in_world_engine",
                 "ai_proposals_require_authoritative_runtime_commit",
+                "diagnostics_are_orchestration_envelopes_committed_truth_is_session_fields_and_history",
             ],
         }

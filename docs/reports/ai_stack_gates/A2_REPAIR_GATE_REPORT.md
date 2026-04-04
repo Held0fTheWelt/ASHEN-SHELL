@@ -1,76 +1,65 @@
-# A2 Repair Gate Report — World-Engine Authoritative Narrative Commit
+# A2 Repair Gate Report — Authoritative Narrative Commit (World-Engine)
 
 Date: 2026-04-04
 
+Verification run: 2026-04-04 (repair block re-audit)
+
 ## 1. Scope completed
 
-- Added authoritative scene progression commit logic to World-Engine story runtime turns.
-- Bound progression legality to runtime projection data (`scenes`, `transition_hints`) instead of diagnostics-only flow.
-- Added explicit progression commit records to turn events and diagnostics.
-- Exposed committed state snapshot in state/diagnostics responses.
-- Added regression tests for legal commit, illegal rejection, diagnostics coherence, and multi-turn progression.
+- Split **committed turn history** from **full diagnostic envelopes** inside `StoryRuntimeManager.execute_turn`.
+- `session.history` now stores lean **committed records** (interpretation, progression verdict, post-turn session snapshot, turn outcome) without graph/retrieval payloads.
+- `session.diagnostics` continues to store the **full turn envelope** returned from API responses (includes `graph`, `retrieval`, `model_route`) for orchestration and debugging.
+- Exposed `last_committed_turn` on `GET /api/story/sessions/{id}/state` and `committed_history_tail` plus `diagnostics_kind` on diagnostics for clearer consumer semantics.
+- Extended tests to prove diagnostics still carry graph data while committed tail records do not.
 
 ## 2. Files changed
 
 - `world-engine/app/story_runtime/manager.py`
 - `world-engine/tests/test_story_runtime_rag_runtime.py`
-- `docs/architecture/world_engine_authoritative_narrative_commit.md`
+- `world-engine/tests/test_story_runtime_api.py`
 - `docs/reports/ai_stack_gates/A2_REPAIR_GATE_REPORT.md`
 
-## 3. What is truly wired
+## 3. What is truly committed runtime state
 
-- `StoryRuntimeManager.execute_turn` now performs commit-time progression checks and mutates `session.current_scene_id` only on legal transitions.
-- Commit legality uses runtime projection artifacts at execution time:
-  - known scenes from `runtime_projection.scenes`
-  - allowed edges from `runtime_projection.transition_hints`
-- Turn events now include `progression_commit` with proposal, verdict, and committed result.
-- `get_state` and `get_diagnostics` include committed state snapshots that are distinct from graph diagnostics.
+- Live fields on `StorySession`: `current_scene_id`, `turn_counter`, `updated_at`, `runtime_projection` (immutable projection for the session), `module_id`.
+- Each `session.history` entry: `turn_number`, `raw_input`, `interpreted_input`, `progression_commit`, `turn_outcome` (`ok` | `degraded`), `committed_state_after` (scene + counter after the turn), `trace_id`.
+- HTTP turn responses remain the **full envelope** (backward compatible for callers expecting `graph` on the turn object).
 
-## 4. What remains incomplete
+## 4. What remains diagnostic / orchestration only
 
-- Commit semantics currently target scene progression authority; broader canonical world-state delta commits remain future work.
-- Scene proposal extraction is intentionally conservative and currently strongest for explicit movement commands plus scene-id mentions.
+- `session.diagnostics` entries: full `event` including `retrieval`, `model_route`, LangGraph `graph` diagnostics, capability audit, repro metadata.
+- `diagnostics_kind` explains that the `diagnostics` array holds orchestration envelopes, not a substitute for `current_scene_id` / `history`.
 
 ## 5. Tests added/updated
 
-- Added in `world-engine/tests/test_story_runtime_rag_runtime.py`:
-  - `test_story_runtime_commits_legal_scene_progression`
-  - `test_story_runtime_rejects_illegal_scene_progression`
-  - `test_story_runtime_builds_multi_turn_committed_progression`
-- Existing world-engine runtime tests (`test_story_runtime_api.py`, `test_trace_middleware.py`) re-run to ensure compatibility.
-- Backend bridge regression tests re-run to verify A2 changes remain compatible with backend proxy path.
+- Updated `world-engine/tests/test_story_runtime_rag_runtime.py::test_story_runtime_builds_multi_turn_committed_progression` — asserts full graph in diagnostics, absence of `graph` in committed tail, committed scene in tail.
+- Updated `world-engine/tests/test_story_runtime_api.py::test_story_session_lifecycle_and_nl_interpretation` — asserts `last_committed_turn` on state and no `graph` key there.
+- Regression suite: all `test_story_runtime_rag_runtime.py`, `test_story_runtime_api.py`, `test_trace_middleware.py`.
 
 ## 6. Exact test commands run
 
 ```powershell
 cd world-engine
-python -m pytest tests/test_story_runtime_rag_runtime.py -k "commits_legal_scene_progression or rejects_illegal_scene_progression or multi_turn_committed_progression"
-python -m pytest tests/test_story_runtime_api.py tests/test_story_runtime_rag_runtime.py tests/test_trace_middleware.py
+python -m pytest tests/test_story_runtime_api.py tests/test_story_runtime_rag_runtime.py tests/test_trace_middleware.py -v --tb=short
 ```
 
 ```powershell
 cd ..\backend
-python -m pytest tests/test_session_routes.py -k "execute_turn_proxies_to_world_engine or capability_audit_returns_world_engine_rows"
+python -m pytest tests/test_session_routes.py -k "authoritative or diagnostics_prefers_world_engine or state_prefers_world_engine or execute_turn_proxies" -v --tb=short
+python -m pytest tests/test_session_api_closure.py -k "post_execute_turn_proxies_to_world_engine" -v --tb=short
 ```
 
-```powershell
-cd ..
-$env:PYTHONPATH='.'
-python -m pytest story_runtime_core/tests/test_input_interpreter.py
-```
+## 7. Verdict: Pass / Partial / Fail
 
-## 7. Pass / Partial / Fail
+**Pass**
 
-Pass
+## 8. Reason for verdict
 
-## 8. Reason for the verdict
+- Legal turns still mutate `current_scene_id` only through `_commit_progression` with explicit allow/deny reasons.
+- Multi-turn and illegal-transition tests still pass; diagnostics align with committed progression fields.
+- Committed history is now **structurally distinct** from graph-heavy diagnostics, so consumers are not encouraged to treat diagnostics as the sole source of narrative truth.
 
-- Story turns now produce committed runtime progression when legal (`current_scene_id` mutation is real and persisted in session state).
-- Illegal progression attempts are rejected safely and explicitly without corrupting committed state.
-- Diagnostics now report progression commit outcomes and align with authoritative committed state.
-- Multi-turn tests demonstrate real session progression across repeated turns.
+## 9. Remaining risk
 
-## 9. Risks introduced or remaining
-
-- Projects with sparse or inconsistent `transition_hints` can intentionally block progression commits (`transition_hints_missing`), which is safe but may require content updates.
-- Scene proposal extraction is deterministic but simple; richer intent-to-scene inference can be added later without weakening current legality guardrails.
+- Sparse `transition_hints` still block progression commits by design (`transition_hints_missing`).
+- Scene proposal extraction remains conservative (explicit movement / scene tokens); richer NL-to-scene inference is future work.
