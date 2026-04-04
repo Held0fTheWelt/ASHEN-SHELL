@@ -8,6 +8,7 @@ from langgraph.graph import END, StateGraph
 
 from story_runtime_core.adapters import BaseModelAdapter
 from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy
+from wos_ai_stack.capabilities import CapabilityRegistry
 from wos_ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
 
 
@@ -30,6 +31,7 @@ class RuntimeTurnState(TypedDict, total=False):
     nodes_executed: list[str]
     node_outcomes: dict[str, str]
     graph_errors: list[str]
+    capability_audit: list[dict[str, Any]]
 
 
 def _track(state: RuntimeTurnState, *, node_name: str, outcome: str = "ok") -> RuntimeTurnState:
@@ -48,6 +50,7 @@ class RuntimeTurnGraphExecutor:
     adapters: dict[str, BaseModelAdapter]
     retriever: ContextRetriever
     assembler: ContextPackAssembler
+    capability_registry: CapabilityRegistry | None = None
     graph_name: str = "wos_runtime_turn_graph"
     graph_version: str = "m7_v1"
 
@@ -96,28 +99,52 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _retrieve_context(self, state: RuntimeTurnState) -> RuntimeTurnState:
-        request = RetrievalRequest(
-            domain=RetrievalDomain.RUNTIME,
-            profile="runtime_turn_support",
-            query=f"{state['player_input']}\nscene:{state['current_scene_id']}\nmodule:{state['module_id']}",
-            module_id=state["module_id"],
-            scene_id=state["current_scene_id"],
-            max_chunks=4,
-        )
-        retrieval_result = self.retriever.retrieve(request)
-        pack = self.assembler.assemble(retrieval_result)
-        prompt = state["player_input"] if not pack.compact_context else f"{state['player_input']}\n\n{pack.compact_context}"
-        update = _track(state, node_name="retrieve_context")
-        update["retrieval"] = {
-            "domain": pack.domain,
-            "profile": pack.profile,
-            "status": pack.status,
-            "hit_count": pack.hit_count,
-            "sources": pack.sources,
-            "ranking_notes": pack.ranking_notes,
+        payload = {
+            "domain": RetrievalDomain.RUNTIME.value,
+            "profile": "runtime_turn_support",
+            "query": f"{state['player_input']}\nscene:{state['current_scene_id']}\nmodule:{state['module_id']}",
+            "module_id": state["module_id"],
+            "scene_id": state["current_scene_id"],
+            "max_chunks": 4,
         }
-        update["context_text"] = pack.compact_context
+        capability_audit: list[dict[str, Any]] = []
+        if self.capability_registry is not None:
+            result = self.capability_registry.invoke(
+                name="wos.context_pack.build",
+                mode="runtime",
+                actor="runtime_turn_graph",
+                payload=payload,
+            )
+            retrieval = result["retrieval"]
+            context_text = result["context_text"]
+            capability_audit = self.capability_registry.recent_audit(limit=3)
+        else:
+            request = RetrievalRequest(
+                domain=RetrievalDomain.RUNTIME,
+                profile="runtime_turn_support",
+                query=payload["query"],
+                module_id=state["module_id"],
+                scene_id=state["current_scene_id"],
+                max_chunks=4,
+            )
+            retrieval_result = self.retriever.retrieve(request)
+            pack = self.assembler.assemble(retrieval_result)
+            retrieval = {
+                "domain": pack.domain,
+                "profile": pack.profile,
+                "status": pack.status,
+                "hit_count": pack.hit_count,
+                "sources": pack.sources,
+                "ranking_notes": pack.ranking_notes,
+            }
+            context_text = pack.compact_context
+        prompt = state["player_input"] if not context_text else f"{state['player_input']}\n\n{context_text}"
+        update = _track(state, node_name="retrieve_context")
+        update["retrieval"] = retrieval
+        update["context_text"] = context_text
         update["model_prompt"] = prompt
+        if capability_audit:
+            update["capability_audit"] = capability_audit
         return update
 
     def _route_model(self, state: RuntimeTurnState) -> RuntimeTurnState:
@@ -206,6 +233,7 @@ class RuntimeTurnGraphExecutor:
             "node_outcomes": update["node_outcomes"],
             "fallback_path_taken": fallback_taken,
             "errors": state.get("graph_errors", []),
+            "capability_audit": state.get("capability_audit", []),
         }
         return update
 

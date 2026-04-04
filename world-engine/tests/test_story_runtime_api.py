@@ -34,6 +34,7 @@ def test_story_session_lifecycle_and_nl_interpretation(client, internal_api_key)
     assert "graph" in turn_payload
     assert turn_payload["graph"]["graph_name"] == "wos_runtime_turn_graph"
     assert "nodes_executed" in turn_payload["graph"]
+    assert "capability_audit" in turn_payload["graph"]
 
     command_response = client.post(
         f"/api/story/sessions/{session_id}/turns",

@@ -53,6 +53,10 @@ def test_story_runtime_retrieval_context_influences_authoritative_turn(tmp_path)
     assert "status" in turn["retrieval"]
     assert turn["model_route"]["generation"]["retrieval_context_attached"] is True
     assert adapter.last_retrieval_context
+    assert any(
+        entry["capability_name"] == "wos.context_pack.build"
+        for entry in turn["graph"]["capability_audit"]
+    )
 
 
 def test_story_runtime_graph_uses_fallback_branch_on_model_failure(tmp_path):

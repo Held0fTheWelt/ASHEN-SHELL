@@ -9,7 +9,11 @@ from uuid import uuid4
 from story_runtime_core import ModelRegistry, RoutingPolicy, interpret_player_input
 from story_runtime_core.adapters import BaseModelAdapter, build_default_model_adapters
 from story_runtime_core.model_registry import build_default_registry
-from wos_ai_stack import RuntimeTurnGraphExecutor, build_runtime_retriever
+from wos_ai_stack import (
+    RuntimeTurnGraphExecutor,
+    build_runtime_retriever,
+    create_default_capability_registry,
+)
 
 
 @dataclass
@@ -48,6 +52,11 @@ class StoryRuntimeManager:
             self.retriever = retriever
             self.context_assembler = context_assembler
             self.retrieval_corpus = None
+        self.capability_registry = create_default_capability_registry(
+            retriever=self.retriever,
+            assembler=self.context_assembler,
+            repo_root=self.repo_root,
+        )
         self.turn_graph = RuntimeTurnGraphExecutor(
             interpreter=interpret_player_input,
             routing=self.routing,
@@ -55,6 +64,7 @@ class StoryRuntimeManager:
             adapters=self.adapters,
             retriever=self.retriever,
             assembler=self.context_assembler,
+            capability_registry=self.capability_registry,
         )
 
     def create_session(self, *, module_id: str, runtime_projection: dict[str, Any]) -> StorySession:

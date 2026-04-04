@@ -447,3 +447,60 @@ class TestSessionEndpointStatusCodes:
             json={"player_input": "look around"},
         )
         assert response.status_code == 404
+
+
+class TestCapabilityAuditEndpoint:
+    """Tests for GET /api/v1/sessions/<session_id>/capability-audit."""
+
+    def test_capability_audit_returns_empty_before_story_session_exists(self, client, monkeypatch):
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
+        session_id = create_resp.get_json()["session_id"]
+
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/capability-audit",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["total"] == 0
+        assert "capability_audit_not_available_before_first_turn" in data["warnings"]
+
+    def test_capability_audit_returns_world_engine_rows(self, client, monkeypatch):
+        monkeypatch.setenv("MCP_SERVICE_TOKEN", "test-token")
+        create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
+        session_id = create_resp.get_json()["session_id"]
+
+        from app.runtime.session_store import get_session as get_runtime_session
+
+        runtime_session = get_runtime_session(session_id)
+        runtime_session.current_runtime_state.metadata["world_engine_story_session_id"] = "we_story_1"
+
+        monkeypatch.setattr(
+            "app.api.v1.session_routes.get_story_diagnostics",
+            lambda _sid: {
+                "diagnostics": [
+                    {
+                        "graph": {
+                            "capability_audit": [
+                                {
+                                    "capability_name": "wos.context_pack.build",
+                                    "outcome": "allowed",
+                                    "trace_id": "trace_1",
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+        )
+
+        response = client.get(
+            f"/api/v1/sessions/{session_id}/capability-audit",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["world_engine_story_session_id"] == "we_story_1"
+        assert data["total"] == 1
+        assert data["audit"][0]["capability_name"] == "wos.context_pack.build"

@@ -18,6 +18,16 @@ from .langgraph_runtime import (
     build_seed_improvement_graph,
     build_seed_writers_room_graph,
 )
+from .capabilities import (
+    CapabilityAccessDeniedError,
+    CapabilityDefinition,
+    CapabilityInvocationError,
+    CapabilityKind,
+    CapabilityRegistry,
+    CapabilityValidationError,
+    capability_catalog,
+    create_default_capability_registry,
+)
 
 __all__ = [
     "ContentClass",
@@ -36,4 +46,12 @@ __all__ = [
     "RuntimeTurnGraphExecutor",
     "build_seed_improvement_graph",
     "build_seed_writers_room_graph",
+    "CapabilityAccessDeniedError",
+    "CapabilityDefinition",
+    "CapabilityInvocationError",
+    "CapabilityKind",
+    "CapabilityRegistry",
+    "CapabilityValidationError",
+    "capability_catalog",
+    "create_default_capability_registry",
 ]

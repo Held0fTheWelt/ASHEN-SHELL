@@ -10,9 +10,9 @@ def registry():
             return create_default_registry()
 
 
-def test_tools_list_includes_9_tools(registry):
+def test_tools_list_includes_10_tools(registry):
     tools = registry.list_tools()
-    assert len(tools) == 9
+    assert len(tools) == 10
 
 
 def test_tools_list_has_permissions():
@@ -87,6 +87,16 @@ def test_search_content_tool_handler():
             tool = registry.get("wos.content.search")
             result = tool.handler({"pattern": "god"})
             assert result["hits"] == 2
+
+
+def test_capability_catalog_tool_handler():
+    with patch("tools.mcp_server.tools_registry.BackendClient"):
+        with patch("tools.mcp_server.tools_registry.FileSystemTools"):
+            registry = create_default_registry()
+            tool = registry.get("wos.capabilities.catalog")
+            result = tool.handler({})
+            assert "capabilities" in result
+            assert any(cap["name"] == "wos.context_pack.build" for cap in result["capabilities"])
 
 
 def test_blocked_tool_returns_not_implemented():

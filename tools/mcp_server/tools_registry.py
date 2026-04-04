@@ -6,6 +6,7 @@ from tools.mcp_server.backend_client import BackendClient
 from tools.mcp_server.config import Config
 from tools.mcp_server.errors import JsonRpcError
 from tools.mcp_server.fs_tools import FileSystemTools
+from wos_ai_stack import capability_catalog
 
 
 class ToolDefinition:
@@ -96,6 +97,9 @@ def create_default_registry() -> ToolRegistry:
         case_sensitive = arguments.get("case_sensitive", False)
         return fs.search_content(pattern, case_sensitive)
 
+    def handle_capability_catalog(arguments: dict) -> dict:
+        return {"capabilities": capability_catalog()}
+
     # Blocked tools (deferred)
     def handle_blocked(name: str):
         def handler(arguments: dict) -> dict:
@@ -171,6 +175,16 @@ def create_default_registry() -> ToolRegistry:
                 },
                 "required": ["pattern"],
             },
+            permission="read",
+        )
+    )
+
+    registry.register(
+        ToolDefinition(
+            name="wos.capabilities.catalog",
+            description="List guarded capability surface and mode boundaries",
+            handler=handle_capability_catalog,
+            input_schema={"type": "object", "properties": {}, "required": []},
             permission="read",
         )
     )

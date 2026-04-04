@@ -2,11 +2,11 @@ import pytest
 from tools.mcp_server.tools_registry import create_default_registry
 
 
-def test_tools_list_returns_nine_tools():
+def test_tools_list_returns_ten_tools():
     """tools/list returns expected tool structure."""
     registry = create_default_registry()
     tools = registry.list_tools()
-    assert len(tools) == 9
+    assert len(tools) == 10
 
     # Check tool names are present
     tool_names = {tool["name"] for tool in tools}
@@ -16,6 +16,7 @@ def test_tools_list_returns_nine_tools():
         "wos.goc.list_modules",
         "wos.goc.get_module",
         "wos.content.search",
+        "wos.capabilities.catalog",
         "wos.session.get",
         "wos.session.execute_turn",
         "wos.session.logs",

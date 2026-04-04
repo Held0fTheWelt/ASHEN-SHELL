@@ -196,6 +196,58 @@ def get_session_diagnostics(session_id):
     return jsonify(response), 200
 
 
+@api_v1_bp.route("/sessions/<session_id>/capability-audit", methods=["GET"])
+@require_mcp_service_token
+def get_session_capability_audit(session_id):
+    """Expose capability invocation audit for governance-facing review."""
+    runtime_session = get_runtime_session(session_id)
+    if not runtime_session:
+        return jsonify(
+            {
+                "error": {
+                    "code": "NOT_FOUND",
+                    "message": f"Session {session_id} not found",
+                }
+            }
+        ), 404
+
+    state = runtime_session.current_runtime_state
+    metadata = state.metadata if isinstance(state.metadata, dict) else {}
+    engine_story_session_id = metadata.get("world_engine_story_session_id")
+    if not engine_story_session_id:
+        return jsonify(
+            {
+                "session_id": session_id,
+                "audit": [],
+                "total": 0,
+                "warnings": [
+                    "world_engine_story_session_not_initialized",
+                    "capability_audit_not_available_before_first_turn",
+                ],
+            }
+        ), 200
+
+    diagnostics = get_story_diagnostics(engine_story_session_id)
+    entries = diagnostics.get("diagnostics", []) if isinstance(diagnostics, dict) else []
+    audit_rows: list[dict] = []
+    for entry in entries:
+        graph = entry.get("graph", {}) if isinstance(entry, dict) else {}
+        capability_audit = graph.get("capability_audit", []) if isinstance(graph, dict) else []
+        if isinstance(capability_audit, list):
+            for row in capability_audit:
+                if isinstance(row, dict):
+                    audit_rows.append(row)
+
+    return jsonify(
+        {
+            "session_id": session_id,
+            "world_engine_story_session_id": engine_story_session_id,
+            "audit": audit_rows[-100:],
+            "total": len(audit_rows),
+        }
+    ), 200
+
+
 @api_v1_bp.route("/sessions/<session_id>/turns", methods=["POST"])
 def execute_session_turn(session_id):
     """Execute a turn in World-Engine-hosted story runtime."""
