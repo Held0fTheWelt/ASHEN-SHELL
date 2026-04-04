@@ -58,3 +58,23 @@ Evidence is **materially** more informative than a binary flag; improvement work
 ## Implementation note
 
 - `improvement_routes` resolves the monorepo root with `Path(__file__).resolve().parents[4]` (file lives under `backend/app/api/v1/`) so RAG ingestion and transcript paths align with `world-engine/` at the repository root.
+
+## BC-next verification rerun
+
+Date: 2026-04-04. Host: Windows, Python 3.13.12. Outcome: **Pass** (no code changes required).
+
+```powershell
+cd C:\Users\YvesT\PycharmProjects\WorldOfShadows
+$env:PYTHONPATH="."
+python -m pytest wos_ai_stack/tests/test_capabilities.py -v --tb=short
+```
+
+Result: 9 passed.
+
+```powershell
+cd C:\Users\YvesT\PycharmProjects\WorldOfShadows\backend
+$env:PYTHONPATH=".."
+python -m pytest tests/test_improvement_routes.py tests/test_writers_room_routes.py -v --tb=short
+```
+
+Result: 21 passed.

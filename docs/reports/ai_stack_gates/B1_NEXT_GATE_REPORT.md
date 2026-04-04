@@ -81,3 +81,25 @@ python -m pytest tests/test_writers_room_routes.py -v --tb=short
 ## 12. Dependency / environment notes
 
 - Same as existing stack: `langchain-core`, `pydantic`, `story_runtime_core` adapters; `PYTHONPATH` must include repo root when running `wos_ai_stack` tests from subpackages.
+
+## 13. BC-next verification rerun
+
+Date: 2026-04-04. Host: Windows, Python 3.13.12. Outcome: **Pass** (no code changes required).
+
+Commands executed (PowerShell):
+
+```powershell
+cd C:\Users\YvesT\PycharmProjects\WorldOfShadows
+$env:PYTHONPATH="."
+python -m pytest wos_ai_stack/tests/test_langchain_integration.py wos_ai_stack/tests/test_langgraph_runtime.py -v --tb=short
+```
+
+Result: 16 passed.
+
+```powershell
+cd C:\Users\YvesT\PycharmProjects\WorldOfShadows\backend
+$env:PYTHONPATH=".."
+python -m pytest tests/test_writers_room_routes.py -v --tb=short
+```
+
+Result: 11 passed.

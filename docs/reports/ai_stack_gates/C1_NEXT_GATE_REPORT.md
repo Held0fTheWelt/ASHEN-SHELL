@@ -66,3 +66,15 @@ All C1-next gate conditions are met: materially more semantic retrieval when emb
 
 - **Embedding availability**: environments without `fastembed`/onnx or without model cache fall back to sparse-only (explicit, but weaker retrieval).
 - **Linear dense scan** may become slow if corpus size grows without an ANN layer.
+
+## BC-next verification rerun
+
+Date: 2026-04-04. Host: Windows, Python 3.13.12. Outcome: **Pass** on this host: all `test_rag.py` cases ran, including embedding-backed hybrid tests (none skipped).
+
+```powershell
+cd C:\Users\YvesT\PycharmProjects\WorldOfShadows
+$env:PYTHONPATH="."
+python -m pytest wos_ai_stack/tests/test_rag.py -v --tb=short
+```
+
+Result: 19 passed.

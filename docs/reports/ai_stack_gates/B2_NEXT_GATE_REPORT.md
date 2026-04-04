@@ -77,3 +77,19 @@ python -m pytest tests/test_story_runtime_rag_runtime.py::test_story_runtime_ret
 ## 12. Dependency / environment notes
 
 - Unchanged: `langgraph` required for `RuntimeTurnGraphExecutor`; same `PYTHONPATH` conventions as other stack tests.
+
+## 13. BC-next verification rerun
+
+Date: 2026-04-04. Host: Windows, Python 3.13.12. Outcome: **Pass** (no code changes required).
+
+`wos_ai_stack/tests/test_langgraph_runtime.py` was executed together with LangChain integration tests in the BC-next sweep (16 passed at repository root; see B1-next report section 13).
+
+World-Engine integration spot-check:
+
+```powershell
+cd C:\Users\YvesT\PycharmProjects\WorldOfShadows\world-engine
+$env:PYTHONPATH=".."
+python -m pytest tests/test_story_runtime_rag_runtime.py::test_story_runtime_retrieval_context_influences_authoritative_turn tests/test_story_runtime_rag_runtime.py::test_story_runtime_graph_uses_fallback_branch_on_model_failure -v --tb=short
+```
+
+Result: 2 passed.
