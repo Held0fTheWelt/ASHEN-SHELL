@@ -55,6 +55,9 @@ def test_langchain_retriever_bridge_returns_documents(tmp_path: Path) -> None:
     docs = bridge.get_runtime_documents(query="carnage context", module_id="god_of_carnage", max_chunks=2)
     assert docs
     assert docs[0].metadata.get("source_path")
+    assert docs[0].metadata.get("chunk_id")
+    assert docs[0].metadata.get("source_version")
+    assert docs[0].metadata.get("index_version")
 
 
 def test_langchain_tool_bridge_invokes_capability_registry() -> None:

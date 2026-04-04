@@ -174,6 +174,9 @@ class RuntimeTurnGraphExecutor:
                 "hit_count": pack.hit_count,
                 "sources": pack.sources,
                 "ranking_notes": pack.ranking_notes,
+                "index_version": pack.index_version,
+                "corpus_fingerprint": pack.corpus_fingerprint,
+                "storage_path": pack.storage_path,
             }
             context_text = pack.compact_context
         prompt = state["player_input"] if not context_text else f"{state['player_input']}\n\n{context_text}"

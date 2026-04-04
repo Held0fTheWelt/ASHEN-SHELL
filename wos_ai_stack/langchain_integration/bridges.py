@@ -99,10 +99,14 @@ class LangChainRetrieverBridge:
             Document(
                 page_content=hit.snippet,
                 metadata={
+                    "chunk_id": hit.chunk_id,
                     "source_path": hit.source_path,
+                    "source_version": hit.source_version,
                     "domain": request.domain.value,
                     "content_class": hit.content_class,
                     "score": hit.score,
+                    "index_version": result.index_version,
+                    "corpus_fingerprint": result.corpus_fingerprint,
                 },
             )
             for hit in result.hits

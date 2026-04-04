@@ -189,6 +189,9 @@ def create_default_capability_registry(
                 "hit_count": context_pack.hit_count,
                 "sources": context_pack.sources,
                 "ranking_notes": context_pack.ranking_notes,
+                "index_version": context_pack.index_version,
+                "corpus_fingerprint": context_pack.corpus_fingerprint,
+                "storage_path": context_pack.storage_path,
             },
             "context_text": context_pack.compact_context,
         }

@@ -1,57 +1,81 @@
 # C1 REFOCUS Gate Report — Deepen RAG Into a More Trustworthy Operational Layer
 
-**Date:** 2026-04-04
-**Status:** PASS
+**Date:** 2026-04-04  
+**Verdict:** **PASS**
 
-## Gap Addressed
+## Scope completed
 
-`_build_semantic_terms` in `wos_ai_stack/rag.py` performs semantic canonicalization via
-`SEMANTIC_CANON` (e.g., `"argue"` → `"conflict"`) and expands canonical terms into related
-paraphrases via `SEMANTIC_EXPANSIONS`. While the RAG pipeline was exercised in various tests,
-no test explicitly verified that ingesting content using a canonical term (e.g., `"conflict"`)
-and querying with a domain paraphrase (e.g., `"argue"`) actually returned a result — i.e.,
-that semantic expansion meaningfully lifts recall for non-obvious phrasing.
+- Documented the **lightweight local retrieval** contract at module top of `wos_ai_stack/rag.py` (sparse TF-IDF-style terms + curated semantic expansion; not embeddings; JSON snapshot persistence limits).
+- **Traceability:** `RetrievalResult` and `ContextPack` now carry `index_version`, `corpus_fingerprint`, and `storage_path` (when known). Per-hit `ContextPack.sources` includes `chunk_id` and `score`. Capability and LangGraph retrieval payloads expose the same corpus fields.
+- **Index invalidation:** Bumped `INDEX_VERSION` to `c1_semantic_v2` so stale JSON caches rebuild cleanly.
+- **Canonical truth:** `content/published/<module>/` authored chunks receive higher `canonical_priority` than `content/modules/<module>/`; runtime retrieval prefers published when semantic overlap is otherwise similar.
+- **Module identity:** Replaced the `god_of_carnage`-only heuristic with path-based inference: `content/modules/<id>/`, `content/published/<id>/`, and flat `content/<stem>.md`.
+- **Bounded paraphrase:** Added `tension` / `strained` → `conflict` in `SEMANTIC_CANON` with a focused test.
+- **Persistence:** `PersistentRagStore.save` writes via a temp file in the target directory and `os.replace` for safer atomic update on Windows.
+- **LangChain bridge:** `Document.metadata` now includes `chunk_id`, `source_version`, `index_version`, and `corpus_fingerprint`.
 
-## Work Done
+## Files changed
 
-Added `test_semantic_expansion_boosts_recall_for_paraphrased_query` to
-`wos_ai_stack/tests/test_rag.py`.
+- `wos_ai_stack/rag.py`
+- `wos_ai_stack/capabilities.py` (retrieval payload enrichment)
+- `wos_ai_stack/langgraph_runtime.py` (fallback retrieval dict parity)
+- `wos_ai_stack/langchain_integration/bridges.py`
+- `wos_ai_stack/tests/test_rag.py`
+- `wos_ai_stack/tests/test_langchain_integration.py`
 
-The test:
-1. Ingests a document containing the canonical term `"conflict"` and a distracting document
-   about sports with no relevant terms.
-2. Queries with `"argue about values"` — `"argue"` maps to `"conflict"` via `SEMANTIC_CANON`.
-3. Asserts `status == OK` and that the `god_of_carnage` document appears in the hits.
+## Deepened vs already present
 
-This proves the `_normalize_token` → `_build_semantic_terms` pipeline actually improves recall
-for paraphrased queries, rather than relying on lexical overlap alone.
+| Already present | Deepened in this pass |
+|-----------------|------------------------|
+| Domain/profile separation, semantic expansion, JSON corpus cache | Explicit limits doc + atomic save + `INDEX_VERSION` bump |
+| `RetrievalHit` with `chunk_id` | Trace fields on results/packs + `chunk_id` in `sources` and LangChain metadata |
+| Heuristic `canonical_priority` | Published tree tier + path-based `module_id` |
+| Hand-tuned `SEMANTIC_CANON` | Small additions (`tension`, `strained`) with test proof |
 
-## Semantic Expansion Path Verified
+## Where the improved layer is used
 
-- Raw token: `"argue"`
-- `_normalize_token("argue")` → looks up `SEMANTIC_CANON["argue"]` → returns `"conflict"`
-- `_build_semantic_terms` adds `"conflict"` with weight 1.0 and expands via
-  `SEMANTIC_EXPANSIONS["conflict"]` = `("dispute", "argument", "fight")` at weight 0.35 each
-- Document containing `"conflict"` scores against both the canonical and expansion terms
+- **Runtime-adjacent:** `StoryRuntimeManager` → `RuntimeTurnGraphExecutor` → `wos.context_pack.build` (capability path); LangGraph fallback dict includes trace fields.
+- **Writers-room:** `writers_room_service` → `wos.context_pack.build` (response `retrieval` now includes trace fields from capability handler).
+- **Improvement:** `improvement_routes` → `wos.context_pack.build` (same retrieval payload shape).
 
-## Test Results
+## What remains intentionally lightweight
 
+- No embedding model or vector database; scoring remains sparse cosine over normalized terms.
+- Source selection is glob-capped (`max_sources`); not a full repository crawl.
+- JSON snapshot is suitable for single-host/dev workflows, not a durability or scale story.
+
+## Tests added or updated
+
+- Extended `test_context_pack_exposes_attribution_and_selection_notes` for `chunk_id`, `score`, and corpus trace on the pack.
+- `test_retrieval_gracefully_handles_sparse_or_absent_corpus` asserts trace fields on empty-corpus results.
+- **New:** `test_published_tree_outranks_module_tree_when_content_overlaps`
+- **New:** `test_module_id_inferred_from_modules_path_not_collapsed`
+- **New:** `test_semantic_canon_maps_tension_to_conflict`
+- **New:** `test_improvement_profile_surfaces_evaluation_artifact`
+- **New:** `test_persistent_rag_store_roundtrip_preserves_chunks`
+- **Updated:** `test_langchain_retriever_bridge_returns_documents` metadata assertions.
+
+## Exact test commands run
+
+```text
+python -m pytest wos_ai_stack/tests/test_rag.py wos_ai_stack/tests/test_langchain_integration.py -v --tb=short
+# 19 passed
+
+python -m pytest wos_ai_stack/tests/test_langgraph_runtime.py -v --tb=short
+# 6 passed
+
+cd world-engine && python -m pytest tests/test_story_runtime_rag_runtime.py -v --tb=short
+# 8 passed
+
+cd backend && python -m pytest tests/test_writers_room_routes.py -v --tb=short
+# 4 passed
 ```
-collected 10 items
-test_ingestion_builds_corpus_from_repo_owned_sources                  PASSED
-test_retrieval_is_deterministic_for_known_relevant_content            PASSED
-test_retrieval_supports_semantic_phrasing_not_only_exact_overlap      PASSED
-test_retrieval_domain_separation_excludes_runtime_from_review_only_content PASSED
-test_retrieval_profile_boosts_canonical_content_for_runtime           PASSED
-test_context_pack_exposes_attribution_and_selection_notes             PASSED
-test_runtime_retriever_persists_and_reuses_index                      PASSED
-test_ingestion_metadata_changes_when_source_content_changes           PASSED
-test_semantic_expansion_boosts_recall_for_paraphrased_query           PASSED
-test_retrieval_gracefully_handles_sparse_or_absent_corpus             PASSED
-10 passed in 0.45s
-```
 
-## Verdict
+## Reason for verdict
 
-**PASS** — Semantic expansion (paraphrase → canonical term → retrieval boost) is now explicitly
-verified. The RAG layer is demonstrably more trustworthy than lexical-match-only retrieval.
+Retrieval is **materially more traceable** (corpus fingerprint, index version, chunk IDs in evidence surfaces), **canonical published paths are prioritized** with an automated test, **module scoping is path-derived** instead of a single hard-coded module, persistence is **safer on crash**, and **operational tests** cover runtime-adjacent, writers-room, and improvement-domain behavior.
+
+## Remaining risk
+
+- Semantic quality still depends on small hand-maintained synonym maps; edge paraphrases may miss without further curation.
+- Published vs draft conventions assume `content/published/<module>/` layout; repos that omit it only get module-tree priority.

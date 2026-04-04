@@ -6,6 +6,8 @@ from wos_ai_stack.rag import (
     ContentClass,
     ContextPackAssembler,
     ContextRetriever,
+    INDEX_VERSION,
+    PersistentRagStore,
     RagIngestionPipeline,
     RetrievalDomain,
     RetrievalRequest,
@@ -156,9 +158,13 @@ def test_context_pack_exposes_attribution_and_selection_notes(tmp_path: Path) ->
 
     assert pack.hit_count >= 1
     assert pack.sources
+    assert "chunk_id" in pack.sources[0]
+    assert "score" in pack.sources[0]
     assert "selection_reason" in pack.sources[0]
     assert "source_version" in pack.sources[0]
     assert pack.ranking_notes
+    assert pack.index_version == INDEX_VERSION
+    assert pack.corpus_fingerprint == corpus.corpus_fingerprint
 
 
 def test_runtime_retriever_persists_and_reuses_index(tmp_path: Path) -> None:
@@ -229,3 +235,101 @@ def test_retrieval_gracefully_handles_sparse_or_absent_corpus(tmp_path: Path) ->
     assert result.status == RetrievalStatus.DEGRADED
     assert result.error == "retrieval_corpus_empty"
     assert result.hits == []
+    assert result.index_version == INDEX_VERSION
+    assert result.corpus_fingerprint == corpus.corpus_fingerprint
+
+
+def test_published_tree_outranks_module_tree_when_content_overlaps(tmp_path: Path) -> None:
+    shared = "Dinner dispute between families escalates into civility collapse and chaos."
+    _write(tmp_path / "content" / "modules" / "alpha_mod" / "draft.md", shared)
+    _write(tmp_path / "content" / "published" / "alpha_mod" / "canon.md", shared)
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    retriever = ContextRetriever(corpus)
+    result = retriever.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="dinner dispute families civility chaos",
+            module_id="alpha_mod",
+            max_chunks=1,
+        )
+    )
+    assert result.status == RetrievalStatus.OK
+    assert "content/published/alpha_mod/canon.md" in result.hits[0].source_path.replace("\\", "/")
+
+
+def test_module_id_inferred_from_modules_path_not_collapsed(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "content" / "modules" / "other_module" / "arc.md",
+        "A spaceship expedition discovers an ancient signal.",
+    )
+    _write(
+        tmp_path / "content" / "god_of_carnage.md",
+        "God of Carnage dinner dispute with no spaceship.",
+    )
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    retriever = ContextRetriever(corpus)
+    result = retriever.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="spaceship expedition ancient signal",
+            module_id="other_module",
+            max_chunks=1,
+        )
+    )
+    assert result.status == RetrievalStatus.OK
+    assert "other_module" in result.hits[0].source_path.replace("\\", "/")
+    assert "god_of_carnage.md" not in result.hits[0].source_path
+
+
+def test_semantic_canon_maps_tension_to_conflict(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "content" / "tension_scene.md",
+        "The scene shows deep conflict between rivals over honor.",
+    )
+    _write(tmp_path / "content" / "weather.md", "Gentle rain falls on the quiet meadow.")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    result = ContextRetriever(corpus).retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="interpersonal tension and honor",
+            module_id="tension_scene",
+            max_chunks=1,
+        )
+    )
+    assert result.status == RetrievalStatus.OK
+    assert "tension_scene.md" in result.hits[0].source_path
+
+
+def test_improvement_profile_surfaces_evaluation_artifact(tmp_path: Path) -> None:
+    _write(
+        tmp_path / "docs" / "reports" / "eval_acceptance.md",
+        "Acceptance evaluation metrics for sandbox variant comparison and trigger coverage.",
+    )
+    _write(tmp_path / "content" / "noise.md", "Unrelated cooking recipe without evaluation metrics.")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    result = ContextRetriever(corpus).retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.IMPROVEMENT,
+            profile="improvement_eval",
+            query="sandbox variant evaluation trigger coverage metrics",
+            max_chunks=2,
+        )
+    )
+    assert result.status == RetrievalStatus.OK
+    assert any(hit.content_class == ContentClass.EVALUATION_ARTIFACT.value for hit in result.hits)
+
+
+def test_persistent_rag_store_roundtrip_preserves_chunks(tmp_path: Path) -> None:
+    _write(tmp_path / "content" / "persist.md", "Persistent retrieval corpus sample text.")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    path = tmp_path / "nested" / "corpus.json"
+    store = PersistentRagStore(path)
+    store.save(corpus)
+    loaded = store.load(expected_fingerprint=corpus.corpus_fingerprint)
+    assert loaded is not None
+    assert loaded.index_version == INDEX_VERSION
+    assert len(loaded.chunks) == len(corpus.chunks)
+    assert loaded.chunks[0].chunk_id == corpus.chunks[0].chunk_id

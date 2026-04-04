@@ -1,8 +1,21 @@
+"""Project-scoped retrieval for World of Shadows (RAG layer C).
+
+This is intentionally lightweight local retrieval: hand-tuned token normalization
+(``SEMANTIC_CANON`` / ``SEMANTIC_EXPANSIONS``), sparse TF-IDF-style term weighting,
+and cosine similarity over chunk term vectors. It is not embedding-based and does
+not provide a distributed vector index.
+
+Persistence is a JSON snapshot under ``.wos/rag/runtime_corpus.json`` (see
+``PersistentRagStore``): suitable for dev/single-host workflows; large corpora or
+strict durability requirements would need a different backend.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import sys
+import os
+import tempfile
 try:
     from enum import StrEnum
 except ImportError:
@@ -67,6 +80,9 @@ DOMAIN_CONTENT_ACCESS: dict[RetrievalDomain, set[ContentClass]] = {
 }
 
 
+INDEX_VERSION = "c1_semantic_v2"
+
+
 class RetrievalDomainError(ValueError):
     pass
 
@@ -91,7 +107,7 @@ class InMemoryRetrievalCorpus:
     chunks: list[CorpusChunk]
     built_at: str
     source_count: int
-    index_version: str = "c1_semantic_v1"
+    index_version: str = INDEX_VERSION
     corpus_fingerprint: str = ""
     storage_path: str = ""
     profile_versions: dict[str, str] = field(default_factory=dict)
@@ -102,7 +118,7 @@ class InMemoryRetrievalCorpus:
             chunks=[],
             built_at=datetime.now(timezone.utc).isoformat(),
             source_count=0,
-            index_version="c1_semantic_v1",
+            index_version=INDEX_VERSION,
             corpus_fingerprint="",
             storage_path="",
             profile_versions={},
@@ -167,7 +183,7 @@ class InMemoryRetrievalCorpus:
             chunks=chunks,
             built_at=str(payload.get("built_at", datetime.now(timezone.utc).isoformat())),
             source_count=int(payload.get("source_count", 0)),
-            index_version=str(payload.get("index_version", "c1_semantic_v1")),
+            index_version=str(payload.get("index_version", INDEX_VERSION)),
             corpus_fingerprint=str(payload.get("corpus_fingerprint", "")),
             storage_path=str(payload.get("storage_path", "")),
             profile_versions=payload.get("profile_versions", {}) if isinstance(payload.get("profile_versions"), dict) else {},
@@ -203,6 +219,9 @@ class RetrievalResult:
     hits: list[RetrievalHit]
     ranking_notes: list[str]
     error: str | None = None
+    index_version: str = ""
+    corpus_fingerprint: str = ""
+    storage_path: str = ""
 
 
 @dataclass(slots=True)
@@ -215,8 +234,9 @@ class ContextPack:
     domain: str
     status: str
     ranking_notes: list[str]
-
-INDEX_VERSION = "c1_semantic_v1"
+    index_version: str = ""
+    corpus_fingerprint: str = ""
+    storage_path: str = ""
 
 PROFILE_VERSIONS = {
     "runtime_turn_support": "runtime_profile_v2",
@@ -243,6 +263,8 @@ SEMANTIC_CANON = {
     "manners": "social_norm",
     "canon": "authoritative",
     "published": "authoritative",
+    "tension": "conflict",
+    "strained": "conflict",
 }
 
 SEMANTIC_EXPANSIONS = {
@@ -353,6 +375,31 @@ def _cosine_similarity(query_terms: dict[str, float], query_norm: float, chunk: 
     return dot / (query_norm * chunk.term_norm)
 
 
+_MODULE_PATH = re.compile(r"(?i)^content/modules/([^/]+)/")
+_PUBLISHED_MODULE_PATH = re.compile(r"(?i)^content/published/([^/]+)/")
+
+
+def _infer_module_id(repo_root: Path, file: Path) -> str | None:
+    """Resolve module_id from conventional paths; flat ``content/<stem>.md`` uses file stem."""
+    try:
+        rel = file.relative_to(repo_root).as_posix()
+    except ValueError:
+        return None
+    m = _MODULE_PATH.match(rel)
+    if m:
+        return m.group(1)
+    m = _PUBLISHED_MODULE_PATH.match(rel)
+    if m:
+        return m.group(1)
+    parts = Path(rel).parts
+    if len(parts) == 2 and parts[0].lower() == "content":
+        name = parts[1]
+        stem = Path(name).stem
+        if stem and stem.lower() not in {"modules", "published"}:
+            return stem
+    return None
+
+
 def _detect_content_class(path: Path) -> ContentClass | None:
     normalized = str(path).replace("\\", "/").lower()
     if "/content/" in normalized:
@@ -413,10 +460,12 @@ class RagIngestionPipeline:
     def _canonical_priority(path: Path, content_class: ContentClass) -> int:
         normalized = path.as_posix().lower()
         if content_class == ContentClass.AUTHORED_MODULE:
+            if "/content/published/" in normalized:
+                return 4
             if "/content/modules/" in normalized:
                 return 3
             return 2
-        if "published" in normalized or "canonical" in normalized:
+        if "/content/published/" in normalized or "canonical" in normalized:
             return 2
         if content_class == ContentClass.POLICY_GUIDELINE:
             return 1
@@ -434,7 +483,7 @@ class RagIngestionPipeline:
                 continue
             source_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
             source_version = f"sha256:{source_hash[:16]}"
-            module_id = "god_of_carnage" if "god_of_carnage" in text.lower() or "god_of_carnage" in str(file) else None
+            module_id = _infer_module_id(repo_root, file)
             canonical_priority = self._canonical_priority(file, content_class)
             for index, chunk_text in enumerate(self._chunk_text(text)):
                 if not chunk_text.strip():
@@ -483,9 +532,14 @@ class ContextRetriever:
     def __init__(self, corpus: InMemoryRetrievalCorpus) -> None:
         self.corpus = corpus
 
+    def _corpus_trace(self) -> tuple[str, str, str]:
+        corpus = self.corpus
+        return corpus.index_version, corpus.corpus_fingerprint, corpus.storage_path or ""
+
     def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
         if request.domain not in DOMAIN_CONTENT_ACCESS:
             raise RetrievalDomainError(f"Unknown retrieval domain: {request.domain}")
+        trace = self._corpus_trace()
         if not self.corpus.chunks:
             return RetrievalResult(
                 request=request,
@@ -493,6 +547,9 @@ class ContextRetriever:
                 hits=[],
                 ranking_notes=["retrieval_corpus_empty"],
                 error="retrieval_corpus_empty",
+                index_version=trace[0],
+                corpus_fingerprint=trace[1],
+                storage_path=trace[2],
             )
 
         allowed_classes = DOMAIN_CONTENT_ACCESS[request.domain]
@@ -553,6 +610,9 @@ class ContextRetriever:
                 hits=[],
                 ranking_notes=["no_ranked_hits_for_query"],
                 error="no_ranked_hits",
+                index_version=trace[0],
+                corpus_fingerprint=trace[1],
+                storage_path=trace[2],
             )
         ranking_notes = [f"{hit.source_path} score={hit.score:.2f} ({hit.selection_reason})" for hit in hits]
         return RetrievalResult(
@@ -561,11 +621,15 @@ class ContextRetriever:
             hits=hits,
             ranking_notes=ranking_notes,
             error=None,
+            index_version=trace[0],
+            corpus_fingerprint=trace[1],
+            storage_path=trace[2],
         )
 
 
 class ContextPackAssembler:
     def assemble(self, result: RetrievalResult) -> ContextPack:
+        trace = (result.index_version, result.corpus_fingerprint, result.storage_path)
         if not result.hits:
             return ContextPack(
                 summary="No retrieval context available.",
@@ -576,6 +640,9 @@ class ContextPackAssembler:
                 domain=result.request.domain.value,
                 status=result.status.value,
                 ranking_notes=result.ranking_notes,
+                index_version=trace[0],
+                corpus_fingerprint=trace[1],
+                storage_path=trace[2],
             )
         lines = ["Retrieved context (ranked):"]
         sources: list[dict[str, str]] = []
@@ -583,10 +650,12 @@ class ContextPackAssembler:
             lines.append(f"{index}. [{hit.source_name}] {hit.snippet}")
             sources.append(
                 {
+                    "chunk_id": hit.chunk_id,
                     "source_path": hit.source_path,
                     "content_class": hit.content_class,
                     "selection_reason": hit.selection_reason,
                     "source_version": hit.source_version,
+                    "score": f"{hit.score:.4f}",
                 }
             )
         return ContextPack(
@@ -598,6 +667,9 @@ class ContextPackAssembler:
             domain=result.request.domain.value,
             status=result.status.value,
             ranking_notes=result.ranking_notes,
+            index_version=trace[0],
+            corpus_fingerprint=trace[1],
+            storage_path=trace[2],
         )
 
 
@@ -642,4 +714,25 @@ class PersistentRagStore:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         payload = corpus.to_dict()
         payload["storage_path"] = str(self.storage_path)
-        self.storage_path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+        serialized = json.dumps(payload, ensure_ascii=True, indent=2)
+        tmp_name: str | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                delete=False,
+                dir=self.storage_path.parent,
+                prefix=".rag_",
+                suffix=".json",
+            ) as tmp:
+                tmp.write(serialized)
+                tmp_name = tmp.name
+            if tmp_name:
+                os.replace(tmp_name, self.storage_path)
+        except Exception:
+            if tmp_name:
+                try:
+                    Path(tmp_name).unlink(missing_ok=True)
+                except OSError:
+                    pass
+            raise
