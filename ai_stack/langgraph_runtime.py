@@ -15,11 +15,11 @@ except Exception as exc:  # pragma: no cover
 
 from story_runtime_core.adapters import BaseModelAdapter
 from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy
-from wos_ai_stack.capabilities import CapabilityRegistry
-from wos_ai_stack.langchain_integration import invoke_runtime_adapter_with_langchain
-from wos_ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
-from wos_ai_stack.operational_profile import build_operational_cost_hints_for_runtime_graph
-from wos_ai_stack.runtime_turn_contracts import (
+from ai_stack.capabilities import CapabilityRegistry
+from ai_stack.langchain_integration import invoke_runtime_adapter_with_langchain
+from ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
+from ai_stack.operational_profile import build_operational_cost_hints_for_runtime_graph
+from ai_stack.runtime_turn_contracts import (
     ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
     ADAPTER_INVOCATION_LANGCHAIN_PRIMARY,
     ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK,
@@ -29,7 +29,7 @@ from wos_ai_stack.runtime_turn_contracts import (
     EXECUTION_HEALTH_MODEL_FALLBACK,
     RAW_FALLBACK_BYPASS_NOTE,
 )
-from wos_ai_stack.version import AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
+from ai_stack.version import AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
 
 
 def _dist_version(name: str) -> str:

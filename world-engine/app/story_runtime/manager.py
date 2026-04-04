@@ -10,7 +10,7 @@ import re
 from story_runtime_core import ModelRegistry, RoutingPolicy, interpret_player_input
 from story_runtime_core.adapters import BaseModelAdapter, build_default_model_adapters
 from story_runtime_core.model_registry import build_default_registry
-from wos_ai_stack import (
+from ai_stack import (
     RuntimeTurnGraphExecutor,
     build_runtime_retriever,
     create_default_capability_registry,

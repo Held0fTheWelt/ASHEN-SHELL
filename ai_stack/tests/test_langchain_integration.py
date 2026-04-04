@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
-from wos_ai_stack import ContextRetriever, RagIngestionPipeline
-from wos_ai_stack.langchain_integration import (
+from ai_stack import ContextRetriever, RagIngestionPipeline
+from ai_stack.langchain_integration import (
     build_capability_tool_bridge,
     build_langchain_retriever_bridge,
     bridges,

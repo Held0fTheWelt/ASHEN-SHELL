@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from wos_ai_stack.rag import (
+from ai_stack.rag import (
     ContentClass,
     ContextPackAssembler,
     ContextRetriever,
@@ -16,7 +16,7 @@ from wos_ai_stack.rag import (
     RetrievalStatus,
     build_runtime_retriever,
 )
-from wos_ai_stack.tests.embedding_markers import requires_embeddings
+from ai_stack.tests.embedding_markers import requires_embeddings
 
 
 def _write(path: Path, content: str) -> None:

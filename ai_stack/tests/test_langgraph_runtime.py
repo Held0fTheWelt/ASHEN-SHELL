@@ -6,8 +6,8 @@ import pytest
 from story_runtime_core import RoutingPolicy, interpret_player_input
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
 from story_runtime_core.model_registry import build_default_registry
-import wos_ai_stack.langgraph_runtime as langgraph_runtime
-from wos_ai_stack import (
+import ai_stack.langgraph_runtime as langgraph_runtime
+from ai_stack import (
     ContextPackAssembler,
     ContextRetriever,
     RagIngestionPipeline,
@@ -15,7 +15,7 @@ from wos_ai_stack import (
     build_seed_improvement_graph,
     build_seed_writers_room_graph,
 )
-from wos_ai_stack.runtime_turn_contracts import (
+from ai_stack.runtime_turn_contracts import (
     ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
     ADAPTER_INVOCATION_LANGCHAIN_PRIMARY,
     ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK,

@@ -6,7 +6,7 @@ Status: active and wired in runtime-adjacent and writers-room paths (B1 repair, 
 
 ### 1) Runtime-adjacent turn execution path
 
-- File: `wos_ai_stack/langgraph_runtime.py`
+- File: `ai_stack/langgraph_runtime.py`
 - Integration: `invoke_runtime_adapter_with_langchain(...)`
 - Purpose:
   - LangChain prompt construction (`ChatPromptTemplate`)
@@ -24,7 +24,7 @@ Status: active and wired in runtime-adjacent and writers-room paths (B1 repair, 
 
 ## Integration layer surface
 
-- Package: `wos_ai_stack/langchain_integration/`
+- Package: `ai_stack/langchain_integration/`
 - Key primitives:
   - `invoke_runtime_adapter_with_langchain` / `RuntimeTurnStructuredOutput`
   - `invoke_writers_room_adapter_with_langchain` / `WritersRoomStructuredOutput`

@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Callable
 from uuid import uuid4
 
-from wos_ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
+from ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
 
 
 def _summarize_invocation_result(capability_name: str, result: dict[str, Any]) -> dict[str, Any] | None:

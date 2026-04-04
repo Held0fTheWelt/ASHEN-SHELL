@@ -22,7 +22,7 @@ COPY backend/migrations ./migrations
 
 # Shared runtime packages used by backend imports
 COPY story_runtime_core ./story_runtime_core
-COPY wos_ai_stack ./wos_ai_stack
+COPY ai_stack ./ai_stack
 
 RUN mkdir -p /app/instance && chown -R appuser:appuser /app
 USER appuser

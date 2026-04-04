@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from wos_ai_stack import (
+from ai_stack import (
     CapabilityAccessDeniedError,
     CapabilityInvocationError,
     CapabilityValidationError,

@@ -38,7 +38,7 @@ Each capability defines:
 - audit requirement flag,
 - failure semantics.
 
-This contract is implemented in `wos_ai_stack/capabilities.py`.
+This contract is implemented in `ai_stack/capabilities.py`.
 
 ## Audit requirements
 

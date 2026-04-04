@@ -6,7 +6,7 @@ from tools.mcp_server.backend_client import BackendClient
 from tools.mcp_server.config import Config
 from tools.mcp_server.errors import JsonRpcError
 from tools.mcp_server.fs_tools import FileSystemTools
-from wos_ai_stack import capability_catalog
+from ai_stack import capability_catalog
 
 
 class ToolDefinition:

@@ -63,7 +63,7 @@ When source content changes, chunk source versions change accordingly.
 
 ### Introspection
 
-- `wos_ai_stack.semantic_embedding.embedding_backend_probe()` returns structured availability (`import_ok`, `encode_ok`, `disabled_by_env`, reason codes) without writing RAG files. Use it in tooling or tests instead of inferring capability from retrieval alone.
+- `ai_stack.semantic_embedding.embedding_backend_probe()` returns structured availability (`import_ok`, `encode_ok`, `disabled_by_env`, reason codes) without writing RAG files. Use it in tooling or tests instead of inferring capability from retrieval alone.
 
 ### Profile and context boosts
 

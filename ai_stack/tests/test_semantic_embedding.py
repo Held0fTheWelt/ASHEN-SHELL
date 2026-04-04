@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from wos_ai_stack.semantic_embedding import (
+from ai_stack.semantic_embedding import (
     EMBEDDING_MODEL_ID,
     clear_embedding_model_singleton,
     embedding_backend_probe,
     embedding_cache_dir_from_env,
     encode_texts,
 )
-from wos_ai_stack.tests.embedding_markers import requires_embeddings
+from ai_stack.tests.embedding_markers import requires_embeddings
 
 
 def test_probe_reports_disabled_when_env_disables_embeddings(monkeypatch: pytest.MonkeyPatch) -> None:

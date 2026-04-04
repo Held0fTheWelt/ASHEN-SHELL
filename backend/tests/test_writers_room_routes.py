@@ -7,13 +7,13 @@ import pytest
 from story_runtime_core import RoutingPolicy
 from story_runtime_core.adapters import build_default_model_adapters
 from story_runtime_core.model_registry import build_default_registry
-from wos_ai_stack import (
+from ai_stack import (
     build_capability_tool_bridge,
     build_langchain_retriever_bridge,
     build_runtime_retriever,
     build_seed_writers_room_graph,
 )
-from wos_ai_stack.rag import ContextRetriever
+from ai_stack.rag import ContextRetriever
 
 from app.services import writers_room_service as writers_room_service_module
 from app.services.writers_room_service import _WritersRoomWorkflow

@@ -1,6 +1,6 @@
 # Observability and Governance in World of Shadows
 
-This document is the canonical reference for **cross-stack observability**, **auditability**, and **governance** across the unified AI stack (backend, World-Engine authoritative story runtime, `wos_ai_stack`, Writers-Room, improvement loop, MCP). It complements milestone-specific architecture notes (RAG, LangGraph, MCP, improvement loop) by defining how traces, audits, and human-review surfaces must behave together.
+This document is the canonical reference for **cross-stack observability**, **auditability**, and **governance** across the unified AI stack (backend, World-Engine authoritative story runtime, `ai_stack`, Writers-Room, improvement loop, MCP). It complements milestone-specific architecture notes (RAG, LangGraph, MCP, improvement loop) by defining how traces, audits, and human-review surfaces must behave together.
 
 ## Authority split (unchanged)
 
@@ -134,5 +134,5 @@ Persisted Writers-Room reviews add **`repaired_layer_signals.writers_room`** (in
 
 ## Version constants
 
-- **`wos_ai_stack.version`**: `AI_STACK_SEMANTIC_VERSION`, `RUNTIME_TURN_GRAPH_VERSION` (exported from `wos_ai_stack` package).
+- **`ai_stack.version`**: `AI_STACK_SEMANTIC_VERSION`, `RUNTIME_TURN_GRAPH_VERSION` (exported from `ai_stack` package).
 - **World-Engine** contributes `world_engine_app_version` via `host_versions` into `repro_metadata`.

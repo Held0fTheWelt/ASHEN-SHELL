@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
-from wos_ai_stack import ContextPackAssembler, ContextRetriever, RagIngestionPipeline
+from ai_stack import ContextPackAssembler, ContextRetriever, RagIngestionPipeline
 
 from app.story_runtime import StoryRuntimeManager
 

@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from wos_ai_stack import build_retrieval_trace
+from ai_stack import build_retrieval_trace
 
 from app.runtime.session_store import get_session as get_runtime_session
 from app.services.game_service import GameServiceError, get_story_diagnostics, get_story_state
@@ -504,7 +504,7 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
             "evidence_posture": "repository_contract_verified_by_tests",
             "reason": (
                 "Repository implements RuntimeTurnGraphExecutor with execution_health, "
-                "fallback markers, and repro_metadata (verified in wos_ai_stack/world-engine tests)."
+                "fallback markers, and repro_metadata (verified in ai_stack/world-engine tests)."
             ),
         },
         {

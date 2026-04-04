@@ -35,7 +35,7 @@ import re
 
 import numpy as np
 
-from wos_ai_stack.semantic_embedding import (
+from ai_stack.semantic_embedding import (
     EMBEDDING_INDEX_VERSION,
     EMBEDDING_MODEL_ID,
     embeddings_disabled_by_env,

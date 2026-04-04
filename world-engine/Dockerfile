@@ -14,7 +14,7 @@ COPY world-engine/app ./app
 
 # Shared runtime packages used by world-engine imports
 COPY story_runtime_core ./story_runtime_core
-COPY wos_ai_stack ./wos_ai_stack
+COPY ai_stack ./ai_stack
 
 EXPOSE 8000
 

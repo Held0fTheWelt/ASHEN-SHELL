@@ -11,13 +11,13 @@ Date: 2026-04-04
 
 ## 2. Files changed
 
-- `wos_ai_stack/operational_profile.py` (new)
-- `wos_ai_stack/rag.py`
-- `wos_ai_stack/langgraph_runtime.py`
-- `wos_ai_stack/langchain_integration/bridges.py`
-- `wos_ai_stack/tests/test_langgraph_runtime.py`
-- `wos_ai_stack/tests/test_langchain_integration.py`
-- `wos_ai_stack/tests/test_rag.py`
+- `ai_stack/operational_profile.py` (new)
+- `ai_stack/rag.py`
+- `ai_stack/langgraph_runtime.py`
+- `ai_stack/langchain_integration/bridges.py`
+- `ai_stack/tests/test_langgraph_runtime.py`
+- `ai_stack/tests/test_langchain_integration.py`
+- `ai_stack/tests/test_rag.py`
 - `backend/app/api/v1/improvement_routes.py`
 - `backend/app/services/writers_room_service.py`
 - `backend/tests/test_improvement_routes.py`
@@ -70,7 +70,7 @@ Date: 2026-04-04
 From repository root `c:\Users\YvesT\PycharmProjects\WorldOfShadows` (Windows, PowerShell):
 
 ```text
-python -m pytest wos_ai_stack/tests/test_langgraph_runtime.py wos_ai_stack/tests/test_langchain_integration.py wos_ai_stack/tests/test_rag.py wos_ai_stack/tests/test_capabilities.py -q --tb=short
+python -m pytest ai_stack/tests/test_langgraph_runtime.py ai_stack/tests/test_langchain_integration.py ai_stack/tests/test_rag.py ai_stack/tests/test_capabilities.py -q --tb=short
 ```
 
 Result: **46 passed**

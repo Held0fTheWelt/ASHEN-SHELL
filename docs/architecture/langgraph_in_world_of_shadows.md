@@ -22,7 +22,7 @@ World-Engine authority boundary:
 
 ## Runtime turn graph
 
-Implemented in `wos_ai_stack/langgraph_runtime.py` via `RuntimeTurnGraphExecutor`.
+Implemented in `ai_stack/langgraph_runtime.py` via `RuntimeTurnGraphExecutor`.
 
 Nodes:
 
@@ -62,12 +62,12 @@ Each graph run emits:
 - `nodes_executed`
 - `node_outcomes`
 - `fallback_path_taken`
-- `execution_health` (`healthy` | `model_fallback` | `degraded_generation` | `graph_error`) — see `wos_ai_stack/runtime_turn_contracts.py`
+- `execution_health` (`healthy` | `model_fallback` | `degraded_generation` | `graph_error`) — see `ai_stack/runtime_turn_contracts.py`
 - `repro_metadata.adapter_invocation_mode` — `langchain_structured_primary` on successful primary `invoke_model`, `raw_adapter_graph_managed_fallback` when the `fallback_model` node used raw `mock.generate`, `degraded_no_fallback_adapter` when no adapter or no mock fallback
 - `repro_metadata.graph_path_summary` — short string for audits (e.g. `primary_invoke_langchain_only` vs `used_fallback_model_node_raw_adapter`)
 - graph errors (if any)
 
-Shared vocabulary constants live in `wos_ai_stack/runtime_turn_contracts.py` so tests and reports stay aligned.
+Shared vocabulary constants live in `ai_stack/runtime_turn_contracts.py` so tests and reports stay aligned.
 
 These diagnostics are attached to the authoritative runtime turn event.
 

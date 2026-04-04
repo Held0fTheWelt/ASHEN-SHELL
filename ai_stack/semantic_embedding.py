@@ -3,7 +3,7 @@
 Uses ``fastembed`` with a small ONNX model when available. When the dependency is
 missing, the environment disables embeddings, or encoding fails, callers receive
 ``None`` and the retriever falls back to the sparse path explicitly
-(``retrieval_route=sparse_fallback`` in :mod:`wos_ai_stack.rag`).
+(``retrieval_route=sparse_fallback`` in :mod:`ai_stack.rag`).
 
 **Dependency stance:** ``fastembed`` is optional for sparse-only RAG. For full
 BC-next / C1-next verification that exercises the hybrid path, install

@@ -23,14 +23,14 @@ from app.services.improvement_service import (
     list_recommendation_packages,
     run_sandbox_experiment,
 )
-from wos_ai_stack import (
+from ai_stack import (
     CapabilityAccessDeniedError,
     CapabilityInvocationError,
     build_retrieval_trace,
     build_runtime_retriever,
     create_default_capability_registry,
 )
-from wos_ai_stack.operational_profile import build_operational_cost_hints_from_retrieval
+from ai_stack.operational_profile import build_operational_cost_hints_from_retrieval
 
 _improvement_rag_lock = threading.Lock()
 # Process-lifetime cache: (repo_root, retriever, assembler, capability_registry)

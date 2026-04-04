@@ -3,8 +3,8 @@
 World of Shadows — multi-component test runner.
 
 Runs pytest in each component tree (backend, frontend, administration-tool, world-engine,
-database, wos_ai_stack) with a separate working directory per component (or repo root for
-wos_ai_stack tests). Optional scope filters apply only to the backend suite (pytest markers).
+database, ai_stack) with a separate working directory per component (or repo root for
+ai_stack tests). Optional scope filters apply only to the backend suite (pytest markers).
 
 Usage:
     python run_tests.py
@@ -43,7 +43,7 @@ SUITE_DISPLAY_NAMES: dict[str, str] = {
     "database": "Database (migrations and tooling)",
     "writers_room": "Writers-Room workflow (human-in-the-loop production)",
     "improvement": "Improvement loop (mutation / evaluation / recommendation)",
-    "wos_ai_stack": "WOS AI stack (LangGraph runtime, RAG, Writers-Room / improvement seed graphs)",
+    "ai_stack": "WOS AI stack (LangGraph runtime, RAG, Writers-Room / improvement seed graphs)",
 }
 
 # Optional backend-only filter: CLI value -> pytest -m marker name
@@ -69,7 +69,7 @@ SUITE_PYTEST_TARGETS: dict[str, tuple[Path, str]] = {
     "writers_room": (BACKEND_DIR, "tests/test_writers_room_routes.py"),
     "improvement": (BACKEND_DIR, "tests/test_improvement_routes.py"),
     # Writers-Room / improvement seed graphs and runtime turn graph; imports require repo root on PYTHONPATH.
-    "wos_ai_stack": (PROJECT_ROOT, "wos_ai_stack/tests"),
+    "ai_stack": (PROJECT_ROOT, "ai_stack/tests"),
 }
 
 
@@ -121,8 +121,8 @@ def check_environment() -> bool:
 
 
 def _subprocess_env_for_suite(suite_name: str) -> dict[str, str] | None:
-    """wos_ai_stack tests import sibling packages; ensure repo root is on PYTHONPATH."""
-    if suite_name != "wos_ai_stack":
+    """ai_stack tests import sibling packages; ensure repo root is on PYTHONPATH."""
+    if suite_name != "ai_stack":
         return None
     env = dict(os.environ)
     root = str(PROJECT_ROOT)
@@ -190,8 +190,8 @@ def _cov_fail_under_for_suite(suite_name: str) -> str:
 def _cov_target_for_suite(suite_name: str) -> str:
     if suite_name in ("backend", "frontend"):
         return "app"
-    if suite_name == "wos_ai_stack":
-        return "wos_ai_stack"
+    if suite_name == "ai_stack":
+        return "ai_stack"
     return "."
 
 
@@ -327,7 +327,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Run pytest per component (backend, frontend, administration-tool, world-engine, "
-            "database, writers-room, improvement, wos_ai_stack)."
+            "database, writers-room, improvement, ai_stack)."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
@@ -339,7 +339,7 @@ Examples:
   python run_tests.py --suite frontend
   python run_tests.py --suite backend --scope contracts
   python run_tests.py --suite writers_room improvement --quick
-  python run_tests.py --suite wos_ai_stack --quick
+  python run_tests.py --suite ai_stack --quick
   python run_tests.py --suite all --coverage
         """,
     )
@@ -347,7 +347,7 @@ Examples:
         "--suite",
         nargs="+",
         default=["all"],
-        choices=["backend", "frontend", "administration", "engine", "database", "writers_room", "improvement", "wos_ai_stack", "all"],
+        choices=["backend", "frontend", "administration", "engine", "database", "writers_room", "improvement", "ai_stack", "all"],
         help="Component test tree to run (default: all)",
     )
     parser.add_argument(
