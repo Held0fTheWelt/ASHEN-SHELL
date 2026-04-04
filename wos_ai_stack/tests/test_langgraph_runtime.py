@@ -15,6 +15,15 @@ from wos_ai_stack import (
     build_seed_improvement_graph,
     build_seed_writers_room_graph,
 )
+from wos_ai_stack.runtime_turn_contracts import (
+    ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
+    ADAPTER_INVOCATION_LANGCHAIN_PRIMARY,
+    ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK,
+    EXECUTION_HEALTH_GRAPH_ERROR,
+    EXECUTION_HEALTH_HEALTHY,
+    EXECUTION_HEALTH_MODEL_FALLBACK,
+    EXECUTION_HEALTH_VALUES,
+)
 
 
 class SuccessAdapter(BaseModelAdapter):
@@ -22,6 +31,13 @@ class SuccessAdapter(BaseModelAdapter):
 
     def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
         return ModelCallResult(content="ok", success=True, metadata={"adapter": self.adapter_name})
+
+
+class FailingPrimaryAdapter(BaseModelAdapter):
+    adapter_name = "openai"
+
+    def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
+        return ModelCallResult(content="", success=False, metadata={"error": "forced_primary_failure"})
 
 
 def _build_graph(tmp_path: Path) -> RuntimeTurnGraphExecutor:
@@ -36,6 +52,40 @@ def _build_graph(tmp_path: Path) -> RuntimeTurnGraphExecutor:
         routing=routing,
         registry=registry,
         adapters={"mock": SuccessAdapter(), "openai": SuccessAdapter(), "ollama": SuccessAdapter()},
+        retriever=ContextRetriever(corpus),
+        assembler=ContextPackAssembler(),
+    )
+
+
+def _build_graph_failing_primary(tmp_path: Path) -> RuntimeTurnGraphExecutor:
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("God of Carnage graph fallback sample.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    registry = build_default_registry()
+    routing = RoutingPolicy(registry)
+    return RuntimeTurnGraphExecutor(
+        interpreter=interpret_player_input,
+        routing=routing,
+        registry=registry,
+        adapters={"openai": FailingPrimaryAdapter(), "mock": SuccessAdapter(), "ollama": SuccessAdapter()},
+        retriever=ContextRetriever(corpus),
+        assembler=ContextPackAssembler(),
+    )
+
+
+def _build_graph_no_mock_fallback(tmp_path: Path) -> RuntimeTurnGraphExecutor:
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("God of Carnage degraded path sample.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    registry = build_default_registry()
+    routing = RoutingPolicy(registry)
+    return RuntimeTurnGraphExecutor(
+        interpreter=interpret_player_input,
+        routing=routing,
+        registry=registry,
+        adapters={"openai": FailingPrimaryAdapter(), "ollama": SuccessAdapter()},
         retriever=ContextRetriever(corpus),
         assembler=ContextPackAssembler(),
     )
@@ -73,10 +123,51 @@ def test_runtime_turn_graph_executes_nodes_and_emits_trace(tmp_path: Path) -> No
     assert repro.get("retrieval_profile") == "runtime_turn_support"
     assert "interpret_input" in result["graph_diagnostics"]["nodes_executed"]
     assert "route_model" in result["graph_diagnostics"]["nodes_executed"]
-    assert result["graph_diagnostics"].get("execution_health") == "healthy"
+    assert result["graph_diagnostics"].get("execution_health") == EXECUTION_HEALTH_HEALTHY
     assert "generation" in result
     assert isinstance(result["generation"]["success"], bool)
     assert result["generation"]["metadata"]["langchain_prompt_used"] is True
+    assert result["generation"]["metadata"]["adapter_invocation_mode"] == ADAPTER_INVOCATION_LANGCHAIN_PRIMARY
+    assert repro.get("adapter_invocation_mode") == ADAPTER_INVOCATION_LANGCHAIN_PRIMARY
+    assert repro.get("graph_path_summary") == "primary_invoke_langchain_only"
+
+
+def test_runtime_turn_graph_fallback_uses_raw_adapter_and_marks_invocation_mode(tmp_path: Path) -> None:
+    graph = _build_graph_failing_primary(tmp_path)
+    result = graph.run(
+        session_id="session_1",
+        module_id="god_of_carnage",
+        current_scene_id="scene_1",
+        player_input="I open the door",
+    )
+    assert result["graph_diagnostics"]["fallback_path_taken"] is True
+    assert result["graph_diagnostics"]["execution_health"] == EXECUTION_HEALTH_MODEL_FALLBACK
+    assert "fallback_model" in result["graph_diagnostics"]["nodes_executed"]
+    meta = result["generation"].get("metadata") or {}
+    assert meta.get("adapter_invocation_mode") == ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK
+    assert meta.get("langchain_prompt_used") is False
+    assert meta.get("bypass_note")
+    repro = result["graph_diagnostics"].get("repro_metadata") or {}
+    assert repro.get("adapter_invocation_mode") == ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK
+    assert repro.get("graph_path_summary") == "used_fallback_model_node_raw_adapter"
+
+
+def test_runtime_turn_graph_missing_mock_fallback_is_explicit_degraded(tmp_path: Path) -> None:
+    graph = _build_graph_no_mock_fallback(tmp_path)
+    result = graph.run(
+        session_id="session_1",
+        module_id="god_of_carnage",
+        current_scene_id="scene_1",
+        player_input="I open the door",
+    )
+    assert "fallback_adapter_missing:mock" in result["graph_diagnostics"]["errors"]
+    assert result["graph_diagnostics"]["execution_health"] == EXECUTION_HEALTH_GRAPH_ERROR
+    meta = result["generation"].get("metadata") or {}
+    assert meta.get("adapter_invocation_mode") == ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK
+
+
+def test_execution_health_constants_are_stable_set() -> None:
+    assert set(EXECUTION_HEALTH_VALUES) == {"healthy", "graph_error", "model_fallback", "degraded_generation"}
 
 
 def test_seed_graphs_for_writers_room_and_improvement_are_operational() -> None:

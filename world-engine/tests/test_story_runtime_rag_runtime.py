@@ -57,6 +57,9 @@ def test_story_runtime_retrieval_context_influences_authoritative_turn(tmp_path)
         entry["capability_name"] == "wos.context_pack.build"
         for entry in turn["graph"]["capability_audit"]
     )
+    repro = turn["graph"].get("repro_metadata") or {}
+    assert repro.get("adapter_invocation_mode") == "langchain_structured_primary"
+    assert repro.get("graph_path_summary") == "primary_invoke_langchain_only"
 
 
 def test_story_runtime_graph_uses_fallback_branch_on_model_failure(tmp_path):
@@ -85,6 +88,9 @@ def test_story_runtime_graph_uses_fallback_branch_on_model_failure(tmp_path):
     assert turn["graph"].get("execution_health") == "model_fallback"
     assert "fallback_model" in turn["graph"]["nodes_executed"]
     assert turn["model_route"]["generation"]["fallback_used"] is True
+    repro = turn["graph"].get("repro_metadata") or {}
+    assert repro.get("adapter_invocation_mode") == "raw_adapter_graph_managed_fallback"
+    assert repro.get("graph_path_summary") == "used_fallback_model_node_raw_adapter"
 
 
 def test_story_runtime_commits_legal_scene_progression(tmp_path):

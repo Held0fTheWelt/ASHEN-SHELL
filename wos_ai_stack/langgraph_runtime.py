@@ -18,6 +18,16 @@ from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy
 from wos_ai_stack.capabilities import CapabilityRegistry
 from wos_ai_stack.langchain_integration import invoke_runtime_adapter_with_langchain
 from wos_ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
+from wos_ai_stack.runtime_turn_contracts import (
+    ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
+    ADAPTER_INVOCATION_LANGCHAIN_PRIMARY,
+    ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK,
+    EXECUTION_HEALTH_DEGRADED_GENERATION,
+    EXECUTION_HEALTH_GRAPH_ERROR,
+    EXECUTION_HEALTH_HEALTHY,
+    EXECUTION_HEALTH_MODEL_FALLBACK,
+    RAW_FALLBACK_BYPASS_NOTE,
+)
 from wos_ai_stack.version import AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
 
 
@@ -242,11 +252,19 @@ class RuntimeTurnGraphExecutor:
                 "structured_output": runtime_result.parsed_output.model_dump(mode="json")
                 if runtime_result.parsed_output
                 else None,
+                "adapter_invocation_mode": ADAPTER_INVOCATION_LANGCHAIN_PRIMARY,
             }
             if not call.success:
                 outcome = "error"
         else:
             generation["error"] = f"adapter_not_registered:{provider}"
+            generation["metadata"] = {
+                "adapter_invocation_mode": ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
+                "langchain_prompt_used": False,
+                "langchain_parser_error": None,
+                "structured_output": None,
+                "note": "No adapter registered for routed provider; invoke_model did not call LangChain.",
+            }
             outcome = "error"
         update = _track(state, node_name="invoke_model", outcome=outcome)
         update["generation"] = generation
@@ -268,13 +286,27 @@ class RuntimeTurnGraphExecutor:
             fallback_generation["attempted"] = True
             fallback_generation["success"] = call.success
             fallback_generation["error"] = call.metadata.get("error") if not call.success else None
-            fallback_generation["metadata"] = call.metadata
+            fallback_generation["metadata"] = {
+                **call.metadata,
+                "langchain_prompt_used": False,
+                "langchain_parser_error": None,
+                "structured_output": None,
+                "adapter_invocation_mode": ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK,
+                "bypass_note": RAW_FALLBACK_BYPASS_NOTE,
+            }
             fallback_generation["fallback_used"] = True
             update = _track(state, node_name="fallback_model")
             update["generation"] = fallback_generation
             return update
         errors = list(state.get("graph_errors", []))
         errors.append("fallback_adapter_missing:mock")
+        prior_meta = fallback_generation.get("metadata") if isinstance(fallback_generation.get("metadata"), dict) else {}
+        fallback_generation["metadata"] = {
+            **prior_meta,
+            "adapter_invocation_mode": ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
+            "langchain_prompt_used": False,
+            "note": "fallback_adapter_missing:mock — graph could not run graph-managed raw fallback.",
+        }
         update = _track(state, node_name="fallback_model", outcome="error")
         update["graph_errors"] = errors
         update["generation"] = fallback_generation
@@ -309,13 +341,27 @@ class RuntimeTurnGraphExecutor:
             "host_versions": host_versions,
         }
         graph_errors = list(state.get("graph_errors", []))
-        execution_health = "healthy"
+        execution_health = EXECUTION_HEALTH_HEALTHY
         if graph_errors:
-            execution_health = "graph_error"
+            execution_health = EXECUTION_HEALTH_GRAPH_ERROR
         elif fallback_taken:
-            execution_health = "model_fallback"
+            execution_health = EXECUTION_HEALTH_MODEL_FALLBACK
         elif generation.get("success") is False:
-            execution_health = "degraded_generation"
+            execution_health = EXECUTION_HEALTH_DEGRADED_GENERATION
+
+        gen_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+        adapter_mode = gen_meta.get("adapter_invocation_mode")
+        if fallback_taken:
+            graph_path_summary = "used_fallback_model_node_raw_adapter"
+        elif adapter_mode == ADAPTER_INVOCATION_LANGCHAIN_PRIMARY:
+            graph_path_summary = "primary_invoke_langchain_only"
+        elif adapter_mode == ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK:
+            graph_path_summary = "degraded_adapter_or_fallback_missing"
+        else:
+            graph_path_summary = "primary_path_unknown_adapter_mode"
+
+        repro_metadata["adapter_invocation_mode"] = adapter_mode
+        repro_metadata["graph_path_summary"] = graph_path_summary
 
         update["graph_diagnostics"] = {
             "graph_name": self.graph_name,
