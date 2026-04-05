@@ -64,6 +64,15 @@ async def test_create_app_with_bootstrap_registers_mock_and_staged_runtime_runs(
         assert log.operator_audit is not None
         assert log.operator_audit.get("audit_schema_version")
         summary = log.runtime_orchestration_summary or {}
-        assert summary.get("final_path") in {"slm_only", "slm_then_llm", "degraded_early_skip_then_synthesis"}
+        assert summary.get("final_path") in {
+            "slm_only",
+            "slm_then_llm",
+            "ranked_then_llm",
+            "ranked_slm_only",
+            "degraded_early_skip_then_synthesis",
+            "degraded_parse_forced_synthesis",
+            "degraded_ranking_parse_forcing_synthesis",
+            "degraded_ranking_no_eligible_fallback",
+        }
     finally:
         clear_registry()

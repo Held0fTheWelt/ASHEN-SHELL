@@ -28,7 +28,7 @@ class RequiredRoutingTuple:
     requires_structured_output: bool
 
 
-# Task 1 staged Runtime: preflight, signal, default synthesis (session may override task_kind).
+# Task 1 staged Runtime: preflight, signal, ranking, default synthesis (session may override task_kind).
 RUNTIME_STAGED_REQUIRED: tuple[RequiredRoutingTuple, ...] = (
     RequiredRoutingTuple(
         workflow_phase=WorkflowPhase.preflight,
@@ -38,6 +38,11 @@ RUNTIME_STAGED_REQUIRED: tuple[RequiredRoutingTuple, ...] = (
     RequiredRoutingTuple(
         workflow_phase=WorkflowPhase.interpretation,
         task_kind=TaskKind.repetition_consistency_check,
+        requires_structured_output=True,
+    ),
+    RequiredRoutingTuple(
+        workflow_phase=WorkflowPhase.interpretation,
+        task_kind=TaskKind.ranking,
         requires_structured_output=True,
     ),
     RequiredRoutingTuple(

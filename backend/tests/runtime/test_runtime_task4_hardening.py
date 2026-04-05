@@ -60,7 +60,7 @@ def _slm_preflight_signal_only_spec(name: str) -> AdapterModelSpec:
         latency_class=LatencyClass.low,
         supported_phases=frozenset({WorkflowPhase.preflight, WorkflowPhase.interpretation}),
         supported_task_kinds=frozenset(
-            {TaskKind.cheap_preflight, TaskKind.repetition_consistency_check}
+            {TaskKind.cheap_preflight, TaskKind.repetition_consistency_check, TaskKind.ranking}
         ),
         structured_output_reliability=StructuredOutputReliability.high,
     )
@@ -79,7 +79,7 @@ def _signal_and_synthesis_spec(name: str) -> AdapterModelSpec:
         latency_class=LatencyClass.medium,
         supported_phases=frozenset({WorkflowPhase.interpretation, WorkflowPhase.generation}),
         supported_task_kinds=frozenset(
-            {TaskKind.repetition_consistency_check, TaskKind.narrative_formulation}
+            {TaskKind.repetition_consistency_check, TaskKind.ranking, TaskKind.narrative_formulation}
         ),
         structured_output_reliability=StructuredOutputReliability.high,
     )
@@ -258,6 +258,18 @@ async def test_preflight_skipped_when_spec_lacks_preflight_phase_but_signal_runs
                     "consistency_notes": "",
                     "consistency_flags": [],
                 }
+            elif stage == "ranking":
+                payload = {
+                    "runtime_stage": "ranking",
+                    "ranked_hypotheses": ["h1"],
+                    "preferred_hypothesis_index": 0,
+                    "recommend_skip_synthesis": False,
+                    "skip_synthesis_after_ranking_reason": None,
+                    "synthesis_recommended": True,
+                    "ambiguity_residual": 0.2,
+                    "ranking_confidence": 0.8,
+                    "ranking_notes": [],
+                }
             elif stage == "synthesis":
                 payload = {
                     "scene_interpretation": "syn",
@@ -287,6 +299,7 @@ async def test_preflight_skipped_when_spec_lacks_preflight_phase_but_signal_runs
 
     assert "preflight" not in ad.seen
     assert "signal_consistency" in ad.seen
+    assert "ranking" in ad.seen
     assert "synthesis" in ad.seen
     traces = ((session.metadata.get("ai_decision_logs") or [])[-1].runtime_stage_traces) or []
     pf = next(t for t in traces if t.get("stage_id") == "preflight")
@@ -364,6 +377,19 @@ class _StagedToolSlmAdapter(StoryAIAdapter):
                 "narrative_summary": "need synth",
                 "consistency_notes": "",
                 "consistency_flags": [],
+            }
+            return AdapterResponse(raw_output=json.dumps(pl), structured_payload=pl, error=None)
+        if stage == "ranking":
+            pl = {
+                "runtime_stage": "ranking",
+                "ranked_hypotheses": ["need_llm"],
+                "preferred_hypothesis_index": 0,
+                "recommend_skip_synthesis": False,
+                "skip_synthesis_after_ranking_reason": None,
+                "synthesis_recommended": True,
+                "ambiguity_residual": 0.3,
+                "ranking_confidence": 0.75,
+                "ranking_notes": [],
             }
             return AdapterResponse(raw_output=json.dumps(pl), structured_payload=pl, error=None)
         pl = {"error": "slm_unexpected", "stage": stage}

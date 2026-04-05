@@ -19,6 +19,7 @@ from app.runtime.model_routing_contracts import (
     TaskKind,
     WorkflowPhase,
 )
+from app.runtime.runtime_ai_stages import RANKING_SLM_ONLY_SKIP_REASON
 from app.runtime.runtime_models import SessionState
 
 
@@ -27,6 +28,7 @@ STAGE_TASKS = frozenset(
     {
         TaskKind.cheap_preflight,
         TaskKind.repetition_consistency_check,
+        TaskKind.ranking,
         TaskKind.narrative_formulation,
         TaskKind.classification,
     }
@@ -66,11 +68,20 @@ def _llm_spec(name: str) -> AdapterModelSpec:
 class StagedRecordingAdapter(StoryAIAdapter):
     """Returns stage-shaped structured_payload based on ``request.metadata.runtime_stage``."""
 
-    def __init__(self, name: str, *, slm_sufficient: bool = False):
+    def __init__(
+        self,
+        name: str,
+        *,
+        slm_sufficient: bool = False,
+        rank_recommend_skip: bool = False,
+        rank_skip_reason: str = "test_ranked_single_clear_hypothesis",
+    ):
         self._name = name
         self.calls = 0
         self.stages_seen: list[str] = []
         self._slm_sufficient = slm_sufficient
+        self._rank_recommend_skip = rank_recommend_skip
+        self._rank_skip_reason = rank_skip_reason
 
     @property
     def adapter_name(self) -> str:
@@ -98,6 +109,20 @@ class StagedRecordingAdapter(StoryAIAdapter):
                 "narrative_summary": "SLM packaged narrative summary for the scene.",
                 "consistency_notes": "stable",
                 "consistency_flags": [],
+            }
+        elif stage == "ranking":
+            payload = {
+                "runtime_stage": "ranking",
+                "ranked_hypotheses": ["primary_read"],
+                "preferred_hypothesis_index": 0,
+                "recommend_skip_synthesis": self._rank_recommend_skip,
+                "skip_synthesis_after_ranking_reason": (
+                    self._rank_skip_reason if self._rank_recommend_skip else None
+                ),
+                "synthesis_recommended": not self._rank_recommend_skip,
+                "ambiguity_residual": 0.1,
+                "ranking_confidence": 0.85,
+                "ranking_notes": [],
             }
         elif stage == "synthesis":
             payload = {
@@ -174,30 +199,31 @@ async def test_staged_pipeline_runs_preflight_signal_and_synthesis_when_escalate
 
     await execute_turn_with_ai(session, 1, slm_ad, minimal_module)
 
-    assert slm_ad.calls == 2, "expected preflight + signal on SLM adapter"
+    assert slm_ad.calls == 3, "expected preflight + signal + ranking on SLM adapter"
     assert llm_ad.calls == 1, "expected one synthesis call on LLM adapter"
-    assert slm_ad.stages_seen == ["preflight", "signal_consistency"]
+    assert slm_ad.stages_seen == ["preflight", "signal_consistency", "ranking"]
     assert llm_ad.stages_seen == ["synthesis"]
 
     logs = session.metadata.get("ai_decision_logs") or []
     assert logs
     log = logs[-1]
     assert log.runtime_stage_traces
-    assert len(log.runtime_stage_traces) >= 4
+    assert len(log.runtime_stage_traces) >= 5
     stages = [t.get("stage_id") for t in log.runtime_stage_traces]
     assert "preflight" in stages
     assert "signal_consistency" in stages
+    assert "ranking" in stages
     assert "synthesis" in stages
     assert "packaging" in stages
 
     summary = log.runtime_orchestration_summary or {}
     assert summary.get("synthesis_skipped") is False
-    assert summary.get("final_path") == "slm_then_llm"
+    assert summary.get("final_path") == "ranked_then_llm"
 
     trace = log.model_routing_trace or {}
     assert trace.get("rollup_mode") == "synthesis_stage"
     for st in log.runtime_stage_traces:
-        if st.get("stage_id") in ("preflight", "signal_consistency", "synthesis"):
+        if st.get("stage_id") in ("preflight", "signal_consistency", "ranking", "synthesis"):
             assert "routing_evidence" in st
 
     assert log.operator_audit is not None
@@ -209,7 +235,7 @@ async def test_staged_pipeline_runs_preflight_signal_and_synthesis_when_escalate
     orch = log.runtime_orchestration_summary or {}
     assert "packaging" in orch.get("stages_without_bounded_model_call_by_design", [])
     assert "packaging" not in orch.get("stages_skipped_no_eligible_adapter", [])
-    assert log.operator_audit["audit_summary"].get("final_path") == "slm_then_llm"
+    assert log.operator_audit["audit_summary"].get("final_path") == "ranked_then_llm"
 
 
 @pytest.mark.asyncio
@@ -230,13 +256,21 @@ async def test_staged_pipeline_skips_synthesis_when_slm_sufficient(minimal_modul
 
     await execute_turn_with_ai(session, 1, ad, minimal_module)
 
-    assert ad.calls == 2, "expected preflight + signal only"
+    assert ad.calls == 2, "expected preflight + signal only (ranking suppressed, no bounded call)"
     assert "synthesis" not in ad.stages_seen
+    assert "ranking" not in ad.stages_seen
 
     log = (session.metadata.get("ai_decision_logs") or [])[-1]
     summary = log.runtime_orchestration_summary or {}
     assert summary.get("synthesis_skipped") is True
     assert summary.get("final_path") == "slm_only"
+    assert summary.get("ranking_suppressed_for_slm_only") is True
+
+    rk_trace = next(t for t in (log.runtime_stage_traces or []) if t.get("stage_id") == "ranking")
+    assert rk_trace.get("bounded_model_call") is False
+    assert rk_trace.get("skip_reason") == RANKING_SLM_ONLY_SKIP_REASON
+    assert rk_trace.get("decision") is None
+    assert rk_trace.get("request", {}).get("task_kind") == "ranking"
 
     trace = log.model_routing_trace or {}
     assert trace.get("rollup_mode") == "slm_only_signal_stage"

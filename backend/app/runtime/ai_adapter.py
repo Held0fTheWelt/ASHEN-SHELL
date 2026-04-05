@@ -309,6 +309,29 @@ class MockStoryAIAdapter(StoryAIAdapter):
                 },
                 error=None,
             )
+        if stage == "ranking":
+            structured_payload = {
+                "runtime_stage": "ranking",
+                "ranked_hypotheses": ["[mock] primary interpretation", "[mock] alternate"],
+                "preferred_hypothesis_index": 0,
+                "recommend_skip_synthesis": False,
+                "skip_synthesis_after_ranking_reason": None,
+                "synthesis_recommended": True,
+                "ambiguity_residual": 0.25,
+                "ranking_confidence": 0.72,
+                "ranking_notes": [],
+            }
+            return AdapterResponse(
+                raw_output=raw,
+                structured_payload=structured_payload,
+                backend_metadata={
+                    "adapter": "mock",
+                    "deterministic": True,
+                    "latency_ms": 0,
+                    "runtime_stage": "ranking",
+                },
+                error=None,
+            )
 
         # If role-structured output requested, return AIRoleContract shape
         if request.request_role_structured_output:
