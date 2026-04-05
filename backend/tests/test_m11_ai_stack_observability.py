@@ -274,6 +274,7 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
     assert et.get("last_turn_graph_mode", {}).get("graph_path_summary") == "primary_invoke_langchain_only"
     assert et.get("tool_influence", {}).get("material_influence") is True
     assert et.get("retrieval_influence", {}).get("evidence_tier") == "moderate"
+    assert et.get("retrieval_influence", {}).get("retrieval_trace_schema_version") == "task4_compact_trace_v1"
 
 
 def test_session_evidence_surfaces_degraded_execution_health(client, moderator_headers, monkeypatch):
@@ -406,6 +407,9 @@ def test_release_readiness_sparse_env_does_not_claim_ready(client, moderator_hea
     assert areas_by_name.get("improvement_retrieval_evidence_backing") == "partial"
     assert areas_by_name.get("writers_room_langgraph_orchestration_depth") == "partial"
     assert areas_by_name.get("runtime_turn_graph_contract") == "ready"
+    assert areas_by_name.get("retrieval_subsystem_compact_traces") == "ready"
+    rsum = payload.get("retrieval_readiness_summary") or {}
+    assert "strengths" in rsum and "known_degradations" in rsum
     assert "subsystem_maturity" in payload
     assert "decision_support" in payload
     assert payload["decision_support"]["latest_writers_room_retrieval_tier"] is None

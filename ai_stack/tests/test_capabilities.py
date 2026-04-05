@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from ai_stack import (
+    RETRIEVAL_TRACE_SCHEMA_VERSION,
     CapabilityAccessDeniedError,
     CapabilityInvocationError,
     CapabilityValidationError,
@@ -22,10 +23,72 @@ def test_build_retrieval_trace_evidence_tier_uses_hit_count_and_top_score() -> N
     assert build_retrieval_trace({"hit_count": 1, "status": "ok", "top_hit_score": "9.0"})["evidence_tier"] == "strong"
     assert build_retrieval_trace({"hit_count": 2, "status": "ok", "top_hit_score": "5.0"})["evidence_tier"] == "moderate"
     assert build_retrieval_trace({"hit_count": 2, "status": "ok", "top_hit_score": "8.0"})["evidence_tier"] == "strong"
-    assert build_retrieval_trace({"hit_count": 4, "status": "ok"})["evidence_tier"] == "strong"
+    # Task 4: multi-hit is not strong from count alone without hybrid backing signals.
+    assert build_retrieval_trace({"hit_count": 4, "status": "ok"})["evidence_tier"] == "moderate"
+    canon_row = {"source_evidence_lane": "canonical"}
+    sup_row = {"source_evidence_lane": "supporting"}
+    assert (
+        build_retrieval_trace(
+            {
+                "hit_count": 4,
+                "status": "ok",
+                "retrieval_route": "hybrid",
+                "top_hit_score": "7.5",
+                "sources": [canon_row, sup_row, sup_row, sup_row],
+            }
+        )["evidence_tier"]
+        == "strong"
+    )
+    sparse_many = build_retrieval_trace(
+        {
+            "hit_count": 3,
+            "status": "ok",
+            "retrieval_route": "sparse_fallback",
+            "top_hit_score": "9.0",
+            "sources": [sup_row, sup_row, sup_row],
+        }
+    )
+    assert sparse_many["evidence_tier"] == "moderate"
+    assert "sparse_route_multi_hit_context" in sparse_many["evidence_rationale"]
+    degraded_cap = build_retrieval_trace(
+        {
+            "hit_count": 4,
+            "status": "ok",
+            "retrieval_route": "hybrid",
+            "top_hit_score": "9.0",
+            "degradation_mode": "degraded_due_to_partial_persistence_problem",
+            "sources": [canon_row, canon_row, canon_row, canon_row],
+        }
+    )
+    assert degraded_cap["evidence_tier"] == "moderate"
+    assert "capped_degraded_path" in degraded_cap["evidence_rationale"]
     trace = build_retrieval_trace(None)
     assert trace["evidence_strength"] == trace["evidence_tier"] == "none"
     assert trace.get("evidence_rationale")
+    assert trace.get("retrieval_trace_schema_version") == RETRIEVAL_TRACE_SCHEMA_VERSION
+    assert trace.get("evidence_lane_mix") == "unknown"
+
+
+def test_build_retrieval_trace_compact_governance_hints() -> None:
+    t = build_retrieval_trace(
+        {
+            "hit_count": 2,
+            "status": "ok",
+            "top_hit_score": "8.0",
+            "retrieval_route": "sparse_fallback",
+            "ranking_notes": ["policy_hard_excluded_pool_count=2", "dup_suppressed chunk_id=x (test)"],
+            "sources": [
+                {"source_evidence_lane": "canonical"},
+                {"source_evidence_lane": "canonical"},
+            ],
+        }
+    )
+    assert t["policy_outcome_hint"] == "hard_pool_exclusions_applied"
+    assert t["hard_policy_exclusion_count"] == 2
+    assert t["dedup_shaped_selection"] is True
+    assert t["evidence_lane_mix"] == "canonical_heavy"
+    assert "sparse_signal_path" in t["retrieval_quality_hint"]
+    assert t["readiness_label"].startswith("tier=")
 
 
 def test_context_pack_audit_summary_includes_tier_and_transcript_impact(tmp_path: Path) -> None:
@@ -46,6 +109,16 @@ def test_context_pack_audit_summary_includes_tier_and_transcript_impact(tmp_path
     summary = audit.get("result_summary") or {}
     assert summary.get("evidence_tier") in {"none", "weak", "moderate", "strong"}
     assert summary.get("evidence_rationale")
+    assert summary.get("retrieval_trace_schema_version") == RETRIEVAL_TRACE_SCHEMA_VERSION
+    assert summary.get("evidence_lane_mix") in {
+        None,
+        "unknown",
+        "canonical_heavy",
+        "mixed",
+        "supporting_heavy",
+        "evaluative_present",
+        "evaluative_mixed",
+    }
 
     with pytest.raises(CapabilityInvocationError):
         registry.invoke(

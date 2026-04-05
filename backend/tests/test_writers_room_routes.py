@@ -158,6 +158,8 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert "retrieval_trace" in data
     assert data["retrieval_trace"]["evidence_strength"] in {"none", "weak", "moderate", "strong"}
     assert data["retrieval_trace"]["evidence_tier"] == data["retrieval_trace"]["evidence_strength"]
+    assert data["retrieval_trace"].get("retrieval_trace_schema_version")
+    assert data["retrieval_trace"].get("readiness_label")
     assert "review_bundle" in data
     assert "capability_audit" in data
     assert "langchain_retriever_preview" in data

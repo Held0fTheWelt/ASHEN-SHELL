@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -23,6 +24,7 @@ from ai_stack.rag import (
     build_runtime_retriever,
 )
 from ai_stack.tests.embedding_markers import requires_embeddings
+from ai_stack.tests.retrieval_eval_scenarios import RETRIEVAL_EVAL_SCENARIOS, assert_scenario
 
 
 def _write(path: Path, content: str) -> None:
@@ -1058,3 +1060,27 @@ def test_governance_view_matches_ingested_paths(tmp_path: Path) -> None:
     by_path = {c.source_path.replace("\\", "/"): c for c in corpus.chunks}
     assert governance_view_for_chunk(by_path["content/published/x/a.md"]).evidence_lane == SourceEvidenceLane.CANONICAL
     assert governance_view_for_chunk(by_path["content/modules/x/b.md"]).evidence_lane == SourceEvidenceLane.DRAFT_WORKING
+
+
+@pytest.mark.parametrize("scenario", RETRIEVAL_EVAL_SCENARIOS, ids=lambda s: s.id)
+def test_retrieval_eval_named_scenario(tmp_path: Path, scenario: Any) -> None:
+    """Task 4: named regression scenarios (runtime, writers_room, improvement); see retrieval_eval_scenarios."""
+    assert_scenario(tmp_path, scenario)
+
+
+def test_context_pack_includes_retrieval_posture_footer(tmp_path: Path) -> None:
+    """Production-style pack exposes a single compact posture line (Task 4 polish)."""
+    _write(tmp_path / "content" / "posture.md", "Posture footer dispute civility keyword.")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    res = ContextRetriever(corpus).retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="posture footer dispute civility",
+            max_chunks=1,
+            use_sparse_only=True,
+        )
+    )
+    pack = ContextPackAssembler().assemble(res)
+    assert "retrieval_posture:" in pack.compact_context
+    assert "Evidence pack" in pack.compact_context

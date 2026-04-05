@@ -11,6 +11,7 @@ except ImportError:
         def __str__(self) -> str:
             return self.value
 import json
+import re
 from pathlib import Path
 from typing import Any, Callable
 from uuid import uuid4
@@ -53,6 +54,12 @@ def _summarize_invocation_result(capability_name: str, result: dict[str, Any]) -
         trace_hint = build_retrieval_trace(retrieval)
         summary["evidence_tier"] = trace_hint.get("evidence_tier")
         summary["evidence_rationale"] = trace_hint.get("evidence_rationale")
+        summary["evidence_lane_mix"] = trace_hint.get("evidence_lane_mix")
+        summary["readiness_label"] = trace_hint.get("readiness_label")
+        summary["retrieval_quality_hint"] = trace_hint.get("retrieval_quality_hint")
+        summary["policy_outcome_hint"] = trace_hint.get("policy_outcome_hint")
+        summary["dedup_shaped_selection"] = trace_hint.get("dedup_shaped_selection")
+        summary["retrieval_trace_schema_version"] = trace_hint.get("retrieval_trace_schema_version")
         summary["retrieval_policy_version"] = retrieval.get("retrieval_policy_version") or RETRIEVAL_POLICY_VERSION
         if hit_count > 0:
             sources = retrieval.get("sources")
@@ -114,12 +121,187 @@ def _parse_top_hit_score(retrieval: dict[str, Any]) -> float | None:
         return None
 
 
+# Task 4: explicit trace schema tag for downstream consumers (additive, not a ranking score).
+RETRIEVAL_TRACE_SCHEMA_VERSION = "task4_compact_trace_v1"
+
+# Degradation labels that justify capping ``strong`` to ``moderate`` for multi-hit packs.
+_DEGRADATION_CAP_STRONG_TO_MODERATE: frozenset[str] = frozenset(
+    {
+        "sparse_fallback_due_to_no_backend",
+        "sparse_fallback_due_to_encode_failure",
+        "sparse_fallback_due_to_invalid_or_missing_dense_index",
+        "degraded_due_to_partial_persistence_problem",
+    }
+)
+
+
+def _join_ranking_notes(retrieval: dict[str, Any]) -> str:
+    notes = retrieval.get("ranking_notes")
+    if not isinstance(notes, list):
+        return ""
+    return " ".join(str(n) for n in notes)
+
+
+def _sources_list(retrieval: dict[str, Any]) -> list[dict[str, Any]]:
+    s = retrieval.get("sources")
+    if not isinstance(s, list):
+        return []
+    return [x for x in s if isinstance(x, dict)]
+
+
+def _lanes_from_sources(sources: list[dict[str, Any]]) -> list[str]:
+    out: list[str] = []
+    for row in sources:
+        lane = row.get("source_evidence_lane")
+        if isinstance(lane, str) and lane:
+            out.append(lane)
+    return out
+
+
+def evidence_lane_mix_from_sources(sources: list[dict[str, Any]] | None) -> str:
+    """Compact governance mix over packed sources (lanes only; not a score)."""
+    if not sources:
+        return "unknown"
+    lanes = _lanes_from_sources(sources)
+    if not lanes:
+        return "unknown"
+    if any(l == "evaluative" for l in lanes):
+        if any(l != "evaluative" for l in lanes):
+            return "evaluative_mixed"
+        return "evaluative_present"
+    has_canon = any(l == "canonical" for l in lanes)
+    non_canon = [l for l in lanes if l != "canonical"]
+    if has_canon and non_canon:
+        return "mixed"
+    if has_canon and all(l == "canonical" for l in lanes):
+        return "canonical_heavy"
+    # supporting, draft_working, internal_review only
+    if all(l in ("supporting", "draft_working", "internal_review") for l in lanes):
+        return "supporting_heavy"
+    return "mixed"
+
+
+def _hard_exclusion_count(notes_joined: str) -> int:
+    m = re.search(r"policy_hard_excluded_pool_count=(\d+)", notes_joined)
+    if not m:
+        return 0
+    try:
+        return int(m.group(1))
+    except ValueError:
+        return 0
+
+
+def _dedup_shaped(notes_joined: str) -> bool:
+    return "dup_suppressed" in notes_joined
+
+
+def _policy_outcome_hint(notes_joined: str) -> str:
+    if _hard_exclusion_count(notes_joined) > 0:
+        return "hard_pool_exclusions_applied"
+    return "no_hard_pool_exclusions_in_notes"
+
+
+def _sources_have_lane(sources: list[dict[str, Any]], lane: str) -> bool:
+    return any(row.get("source_evidence_lane") == lane for row in sources)
+
+
+def _compute_evidence_tier_task4(
+    *,
+    hit_count: int,
+    status: Any,
+    top: float | None,
+    route_s: str,
+    degradation_mode: Any,
+    sources: list[dict[str, Any]],
+    lane_mix: str,
+) -> tuple[str, str]:
+    """Four-level tier with explicit Task 4 caps (no hidden second ranker)."""
+    if hit_count <= 0 or status == "fallback":
+        if hit_count <= 0:
+            return "none", "no_usable_hits"
+        return "none", "fallback_status_without_hits"
+
+    if hit_count == 1:
+        if top is not None and top >= 8.0:
+            return "strong", "single_hit_high_score"
+        if top is not None and top >= 4.0:
+            return "moderate", "single_hit_mid_score"
+        return "weak", "single_hit_low_or_unknown_score"
+
+    if hit_count == 2:
+        if top is not None and top >= 7.0:
+            return "strong", "two_hits_with_strong_top_score"
+        return "moderate", "two_hits_typical_scores"
+
+    # Multi-hit (>=3): do not default to strong purely from count.
+    tier = "moderate"
+    rationale = "multi_hit_baseline"
+    if route_s == "hybrid" and top is not None and top >= 7.0 and _sources_have_lane(sources, "canonical"):
+        tier = "strong"
+        rationale = "multi_hit_hybrid_canonical_backed"
+    elif route_s == "hybrid" and top is not None and top >= 8.5:
+        tier = "strong"
+        rationale = "multi_hit_hybrid_very_high_top_score"
+    elif route_s == "hybrid" and top is not None and top >= 7.0 and lane_mix in (
+        "evaluative_present",
+        "evaluative_mixed",
+    ):
+        tier = "strong"
+        rationale = "multi_hit_hybrid_evaluative_backed"
+
+    if tier == "strong" and route_s == "sparse_fallback":
+        tier = "moderate"
+        rationale = f"{rationale};capped_sparse_route"
+
+    deg_s = degradation_mode if isinstance(degradation_mode, str) else ""
+    if tier == "strong" and deg_s in _DEGRADATION_CAP_STRONG_TO_MODERATE:
+        tier = "moderate"
+        rationale = f"{rationale};capped_degraded_path"
+
+    if tier == "strong" and hit_count >= 3 and lane_mix == "supporting_heavy":
+        tier = "moderate"
+        rationale = f"{rationale};capped_supporting_heavy_no_canonical_or_evaluative"
+
+    if hit_count >= 3 and route_s == "sparse_fallback" and "capped_sparse_route" not in rationale:
+        rationale = f"{rationale};sparse_route_multi_hit_context"
+
+    return tier, rationale
+
+
+def _retrieval_quality_hint(
+    *,
+    route_s: str,
+    degradation_mode: Any,
+    dedup: bool,
+    hard_excl: int,
+) -> str:
+    parts: list[str] = []
+    if route_s == "sparse_fallback":
+        parts.append("sparse_signal_path")
+    if dedup:
+        parts.append("dedup_shaped_selection")
+    if hard_excl > 0:
+        parts.append("hard_policy_pool_shaped")
+    deg_s = degradation_mode if isinstance(degradation_mode, str) else ""
+    if deg_s and deg_s not in ("hybrid_ok", "rebuilt_dense_index"):
+        parts.append("degradation_marker_present")
+    if not parts:
+        parts.append("standard_hybrid_or_clean_sparse_context")
+    return ";".join(parts)
+
+
 def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
     """Normalize capability ``retrieval`` dict into workflow-facing trace fields.
 
     ``evidence_tier`` (and ``evidence_strength``, same value) use a four-level scale:
-    ``none`` / ``weak`` / ``moderate`` / ``strong``, derived from hit count, optional
-    top-hit score, and retrieval status—not a binary hit flag.
+    ``none`` / ``weak`` / ``moderate`` / ``strong``. Task 4 adds explicit caps so raw
+    hit count alone cannot label a pack ``strong`` when the signal path is sparse-only,
+    degraded, or the packed lanes are supporting-heavy without canonical or evaluative
+    anchors. This is a small, documented heuristic layer—not a second ranker.
+
+    Additional compact fields (operator-facing, English):
+    ``evidence_lane_mix``, ``retrieval_quality_hint``, ``policy_outcome_hint``,
+    ``dedup_shaped_selection``, ``readiness_label``, ``retrieval_trace_schema_version``.
     """
     if not isinstance(retrieval, dict):
         retrieval = {}
@@ -128,30 +310,37 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
     top = _parse_top_hit_score(retrieval)
     route = retrieval.get("retrieval_route")
     route_s = route if isinstance(route, str) else ""
+    notes_joined = _join_ranking_notes(retrieval)
+    sources = _sources_list(retrieval)
+    lane_mix = evidence_lane_mix_from_sources(sources)
+    hard_excl = _hard_exclusion_count(notes_joined)
+    dedup = _dedup_shaped(notes_joined)
+    policy_hint = _policy_outcome_hint(notes_joined)
+    degradation_mode = retrieval.get("degradation_mode")
 
-    if hit_count <= 0 or status == "fallback":
-        tier = "none"
-        rationale = "no_usable_hits" if hit_count <= 0 else "fallback_status_without_hits"
-    elif hit_count == 1:
-        if top is not None and top >= 8.0:
-            tier = "strong"
-            rationale = "single_hit_high_score"
-        elif top is not None and top >= 4.0:
-            tier = "moderate"
-            rationale = "single_hit_mid_score"
-        else:
-            tier = "weak"
-            rationale = "single_hit_low_or_unknown_score"
-    elif hit_count == 2:
-        if top is not None and top >= 7.0:
-            tier = "strong"
-            rationale = "two_hits_with_strong_top_score"
-        else:
-            tier = "moderate"
-            rationale = "two_hits_typical_scores"
-    else:
-        tier = "strong"
-        rationale = "three_or_more_hits"
+    tier, rationale = _compute_evidence_tier_task4(
+        hit_count=hit_count,
+        status=status,
+        top=top,
+        route_s=route_s,
+        degradation_mode=degradation_mode,
+        sources=sources,
+        lane_mix=lane_mix,
+    )
+
+    quality_hint = _retrieval_quality_hint(
+        route_s=route_s,
+        degradation_mode=degradation_mode,
+        dedup=dedup,
+        hard_excl=hard_excl,
+    )
+
+    readiness_label = (
+        f"tier={tier}; lanes={lane_mix}; route={route_s or 'n/a'}; "
+        f"policy={policy_hint}; quality={quality_hint}"
+    )
+    if len(readiness_label) > 280:
+        readiness_label = readiness_label[:277] + "..."
 
     return {
         "evidence_strength": tier,
@@ -165,6 +354,13 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
         "retrieval_route": route_s or None,
         "top_hit_score": retrieval.get("top_hit_score"),
         "evidence_rationale": rationale,
+        "evidence_lane_mix": lane_mix,
+        "retrieval_quality_hint": quality_hint,
+        "policy_outcome_hint": policy_hint,
+        "dedup_shaped_selection": dedup,
+        "hard_policy_exclusion_count": hard_excl,
+        "readiness_label": readiness_label,
+        "retrieval_trace_schema_version": RETRIEVAL_TRACE_SCHEMA_VERSION,
     }
 
 

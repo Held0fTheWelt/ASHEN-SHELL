@@ -335,6 +335,14 @@ def run_improvement_experiment():
             for d in (rationale_final.get("drivers") or [])
             if isinstance(d, dict) and d.get("category")
         ]
+        evidence_bundle_final["retrieval_readiness"] = {
+            "evidence_tier": retrieval_trace.get("evidence_tier"),
+            "evidence_lane_mix": retrieval_trace.get("evidence_lane_mix"),
+            "readiness_label": retrieval_trace.get("readiness_label"),
+            "policy_outcome_hint": retrieval_trace.get("policy_outcome_hint"),
+            "retrieval_quality_hint": retrieval_trace.get("retrieval_quality_hint"),
+            "retrieval_trace_schema_version": retrieval_trace.get("retrieval_trace_schema_version"),
+        }
 
         package_response["evidence_bundle"] = evidence_bundle_final
         package_response["workflow_stages"] = workflow_stages

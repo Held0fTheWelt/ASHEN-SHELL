@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_stack.capabilities import build_retrieval_trace
+
 # Character buckets for prompt_text / model_prompt (honest coarse bands only).
 _PROMPT_SMALL_MAX = 4000
 _PROMPT_MEDIUM_MAX = 16000
@@ -58,10 +60,16 @@ def build_operational_cost_hints_from_retrieval(
 ) -> dict[str, Any]:
     """Slim hints for backend workflows (Improvement, admin surfaces) using retrieval dict only."""
     retrieval = retrieval if isinstance(retrieval, dict) else {}
+    trace = build_retrieval_trace(retrieval)
     return {
         "disclaimer": "coarse_operational_signals_not_financial_estimates",
         "retrieval_route": str(retrieval.get("retrieval_route") or ""),
         "retrieval_status": str(retrieval.get("status") or ""),
         "embedding_model_id": str(retrieval.get("embedding_model_id") or ""),
         "retrieval_hit_count": retrieval.get("hit_count"),
+        "retrieval_evidence_tier": trace.get("evidence_tier"),
+        "retrieval_readiness_label": trace.get("readiness_label"),
+        "evidence_lane_mix": trace.get("evidence_lane_mix"),
+        "retrieval_quality_hint": trace.get("retrieval_quality_hint"),
+        "retrieval_trace_schema_version": trace.get("retrieval_trace_schema_version"),
     }

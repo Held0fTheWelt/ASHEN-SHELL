@@ -61,6 +61,12 @@ def _retrieval_influence_from_turn(last_turn: dict[str, Any] | None) -> dict[str
         "evidence_strength": trace.get("evidence_strength"),
         "evidence_tier": trace.get("evidence_tier"),
         "evidence_rationale": trace.get("evidence_rationale"),
+        "evidence_lane_mix": trace.get("evidence_lane_mix"),
+        "readiness_label": trace.get("readiness_label"),
+        "retrieval_quality_hint": trace.get("retrieval_quality_hint"),
+        "policy_outcome_hint": trace.get("policy_outcome_hint"),
+        "dedup_shaped_selection": trace.get("dedup_shaped_selection"),
+        "retrieval_trace_schema_version": trace.get("retrieval_trace_schema_version"),
     }
 
 
@@ -561,6 +567,16 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
             "evidence_posture": imp_backing_posture,
             "reason": imp_backing_reason,
         },
+        {
+            "area": "retrieval_subsystem_compact_traces",
+            "status": "ready",
+            "evidence_posture": "task4_trace_schema_and_calibrated_tier",
+            "reason": (
+                "build_retrieval_trace adds evidence_lane_mix, readiness_label, policy/dedup hints, and "
+                "schema version task4_compact_trace_v1; multi-hit evidence_tier is not strong-from-count alone "
+                "on sparse-only or supporting-heavy packs. See docs/rag_task4_readiness_and_trace.md."
+            ),
+        },
     ]
     overall = "ready" if all(area["status"] == "ready" for area in areas) else "partial"
     decision_support = {
@@ -571,11 +587,35 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
         "writers_room_review_ready_for_retrieval_graded_review": wr_evidence_ready,
         "improvement_review_ready_for_retrieval_graded_review": improvement_retrieval_backing_ready,
     }
+    retrieval_readiness_summary = {
+        "trace_schema": "task4_compact_trace_v1_via_build_retrieval_trace",
+        "strengths": [
+            "Hybrid and sparse retrieval paths with explicit degradation_mode and retrieval_route in capability payloads",
+            "Source governance lanes and pack roles preserved from Task 3; traces expose lane mix and policy outcome hints",
+            "Named evaluation scenarios in ai_stack/tests exercise runtime, writers_room, and improvement profiles",
+        ],
+        "known_degradations": [
+            "Sparse-only route caps multi-hit strong tiers unless hybrid canonical/evaluative backing applies",
+            "Local JSON corpus and single-host dense index; not a distributed vector service",
+            "Partial dense persistence marks degraded_due_to_partial_persistence_problem and can cap evidence tiers",
+        ],
+        "evaluation_coverage": (
+            "ai_stack/tests/test_rag.py (retrieval_eval_scenarios harness); "
+            "ai_stack/tests/test_capabilities.py (build_retrieval_trace); "
+            "backend tests for improvement and observability when retrieval payloads are mocked or live"
+        ),
+        "intentionally_deferred": [
+            "External observability platform or long-term trace warehouse",
+            "Full UI dashboards for retrieval analytics",
+            "Cross-session retrieval quality trending",
+        ],
+    }
     return {
         "trace_id": trace_id,
         "overall_status": overall,
         "areas": areas,
         "decision_support": decision_support,
+        "retrieval_readiness_summary": retrieval_readiness_summary,
         "subsystem_maturity": [
             {
                 "subsystem": "story_runtime_world_engine",
@@ -591,6 +631,14 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
                 "subsystem": "runtime_turn_langgraph",
                 "role": "primary_turn_executor",
                 "maturity_note": "Full node chain with explicit execution_health and fallback semantics.",
+            },
+            {
+                "subsystem": "retrieval_rag_task4",
+                "role": "knowledge_layer",
+                "maturity_note": (
+                    "Local hybrid/sparse RAG with governed lanes; compact traces (evidence_tier, lane mix, "
+                    "readiness_label) for operators—no second hidden ranker in the trace layer."
+                ),
             },
         ],
         "known_partiality": [

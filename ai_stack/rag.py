@@ -1667,7 +1667,7 @@ class ContextPackAssembler:
         trace = (result.index_version, result.corpus_fingerprint, result.storage_path)
         if not result.hits:
             return ContextPack(
-                summary="No retrieval context available.",
+                summary="No evidence chunks retrieved for this query.",
                 compact_context="",
                 sources=[],
                 hit_count=0,
@@ -1716,7 +1716,10 @@ class ContextPackAssembler:
             return None
 
         lines: list[str] = [
-            f"Retrieved context (profile={profile}, pipeline={RETRIEVAL_PIPELINE_VERSION}, policy={RETRIEVAL_POLICY_VERSION}):",
+            (
+                f"Evidence pack — domain={result.request.domain.value}, profile={profile}, "
+                f"pipeline={RETRIEVAL_PIPELINE_VERSION}, policy={RETRIEVAL_POLICY_VERSION}:"
+            ),
         ]
         sources: list[dict[str, str]] = []
         current_section: str | None = None
@@ -1753,6 +1756,11 @@ class ContextPackAssembler:
                     "profile_policy_influence": hit.profile_policy_influence,
                 }
             )
+        lines.append(
+            "retrieval_posture: "
+            f"status={result.status.value}; route={result.retrieval_route or 'n/a'}; "
+            f"degradation={result.degradation_mode or 'n/a'}; hits={len(result.hits)}"
+        )
         if profile == "runtime_turn_support":
             lines.append("context_pack_governance=runtime_canonical_first_when_available")
         elif profile == "writers_review":
@@ -1762,8 +1770,8 @@ class ContextPackAssembler:
         lines.append("context_pack_order=workflow_sections_then_ordinal")
         return ContextPack(
             summary=(
-                f"Retrieved {len(result.hits)} chunks for profile={profile} "
-                f"({RETRIEVAL_PIPELINE_VERSION})."
+                f"{len(result.hits)} evidence chunk(s) for {profile} "
+                f"({RETRIEVAL_PIPELINE_VERSION}, {RETRIEVAL_POLICY_VERSION})."
             ),
             compact_context="\n".join(lines),
             sources=sources,

@@ -33,9 +33,11 @@ from .capabilities import (
     CapabilityKind,
     CapabilityRegistry,
     CapabilityValidationError,
+    RETRIEVAL_TRACE_SCHEMA_VERSION,
     build_retrieval_trace,
     capability_catalog,
     create_default_capability_registry,
+    evidence_lane_mix_from_sources,
 )
 from .langchain_integration import (
     LangChainRetrieverBridge,
@@ -82,9 +84,11 @@ __all__ = [
     "CapabilityKind",
     "CapabilityRegistry",
     "CapabilityValidationError",
+    "RETRIEVAL_TRACE_SCHEMA_VERSION",
     "build_retrieval_trace",
     "capability_catalog",
     "create_default_capability_registry",
+    "evidence_lane_mix_from_sources",
     "LangChainRetrieverBridge",
     "RuntimeInvocationResult",
     "RuntimeTurnStructuredOutput",

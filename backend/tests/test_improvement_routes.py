@@ -163,6 +163,14 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
     trace = payload["retrieval_trace"]
     assert trace["evidence_strength"] in {"none", "weak", "moderate", "strong"}
     assert trace["evidence_tier"] == trace["evidence_strength"]
+    assert trace.get("retrieval_trace_schema_version")
+    assert och.get("retrieval_evidence_tier") == trace["evidence_tier"]
+    assert och.get("retrieval_trace_schema_version") == trace.get("retrieval_trace_schema_version")
+    rr = recommendation["evidence_bundle"].get("retrieval_readiness") or {}
+    assert rr.get("evidence_tier") == trace["evidence_tier"]
+    assert rr.get("retrieval_trace_schema_version") == trace.get("retrieval_trace_schema_version")
+    assert trace.get("readiness_label")
+    assert trace.get("evidence_lane_mix")
     assert trace["profile"] == "improvement_eval"
     assert "|tr_turns=3|" in recommendation["recommendation_summary"]
     t2a = recommendation.get("task_2a_routing") or {}
