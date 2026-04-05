@@ -6,6 +6,8 @@ import pytest
 
 from ai_stack.rag import (
     ContentClass,
+    DENSE_INDEX_META_SCHEMA,
+    RetrievalDegradationMode,
     ContextPackAssembler,
     ContextRetriever,
     INDEX_VERSION,
@@ -422,6 +424,7 @@ def test_sparse_fallback_explicit_when_embeddings_disabled(tmp_path: Path, monke
     )
     assert result.retrieval_route == "sparse_fallback"
     assert result.embedding_model_id == ""
+    assert result.degradation_mode == RetrievalDegradationMode.SPARSE_FALLBACK_NO_BACKEND.value
     assert any("retrieval_route=sparse_fallback" in note for note in result.ranking_notes)
 
 
@@ -453,3 +456,199 @@ def test_hybrid_used_for_runtime_and_improvement_profiles(tmp_path: Path) -> Non
     assert r_imp.retrieval_route == "hybrid"
     assert "retrieval_route=hybrid" in r_runtime.ranking_notes[0]
     assert "retrieval_route=hybrid" in r_imp.ranking_notes[0]
+
+
+def test_degradation_metadata_when_embeddings_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("WOS_RAG_DISABLE_EMBEDDINGS", "1")
+    _write(tmp_path / "content" / "x.md", "alpha beta gamma dispute.")
+    retriever, _, _ = build_runtime_retriever(tmp_path)
+    res = retriever.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="dispute",
+            max_chunks=1,
+        )
+    )
+    assert res.degradation_mode == RetrievalDegradationMode.SPARSE_FALLBACK_NO_BACKEND.value
+    assert res.retrieval_route == "sparse_fallback"
+    assert any(res.degradation_mode in n for n in res.ranking_notes)
+
+
+@requires_embeddings
+def test_valid_dense_index_reused_shows_reused_persisted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    _write(tmp_path / "content" / "doc.md", "Koala eucalyptus canopy nocturnal.")
+    r1, _, c1 = build_runtime_retriever(tmp_path)
+    assert c1.rag_dense_index_build_action == RetrievalDegradationMode.REBUILT_DENSE_INDEX.value
+    r2, _, c2 = build_runtime_retriever(tmp_path)
+    assert c2.rag_dense_index_build_action == "reused_persisted"
+    assert r2.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="koala",
+            max_chunks=1,
+        )
+    ).degradation_mode == RetrievalDegradationMode.HYBRID_OK.value
+
+
+@requires_embeddings
+def test_corpus_drift_triggers_dense_rebuild(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    p = tmp_path / "content" / "drift.md"
+    _write(p, "version one text")
+    build_runtime_retriever(tmp_path)
+    _write(p, "version two completely different content for drift")
+    _, _, c2 = build_runtime_retriever(tmp_path)
+    assert c2.rag_dense_index_build_action == RetrievalDegradationMode.REBUILT_DENSE_INDEX.value
+
+
+@requires_embeddings
+def test_embedding_meta_version_mismatch_invalidates_dense(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    _write(tmp_path / "content" / "m.md", "persistent meta drift test corpus")
+    _, _, corpus = build_runtime_retriever(tmp_path)
+    meta_path = Path(corpus.storage_path).parent / "runtime_embeddings.meta.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    meta["embedding_index_version"] = "bogus_version"
+    meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    _, _, c2 = build_runtime_retriever(tmp_path)
+    assert c2.rag_dense_index_build_action == RetrievalDegradationMode.REBUILT_DENSE_INDEX.value
+
+
+@requires_embeddings
+def test_orphan_npz_without_meta_is_not_reused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+
+    from ai_stack.rag import _load_corpus_embedding_index
+
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    _write(tmp_path / "content" / "o.md", "orphan npz without committed meta")
+    _, _, corpus = build_runtime_retriever(tmp_path)
+    meta_path = Path(corpus.storage_path).parent / "runtime_embeddings.meta.json"
+    meta_path.unlink()
+    load_res = _load_corpus_embedding_index(corpus, Path(corpus.storage_path))
+    assert "dense_meta_missing_or_uncommitted" in load_res.reason_codes
+    assert load_res.artifact_validity == "uncommitted_vectors_only"
+    _, _, c2 = build_runtime_retriever(tmp_path)
+    assert c2.rag_dense_index_build_action == RetrievalDegradationMode.REBUILT_DENSE_INDEX.value
+    assert meta_path.is_file()
+    loaded = json.loads(meta_path.read_text(encoding="utf-8"))
+    assert loaded.get("dense_meta_schema") == DENSE_INDEX_META_SCHEMA
+
+
+@requires_embeddings
+def test_vectors_hash_mismatch_rejects_index(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    _write(tmp_path / "content" / "h.md", "hash mismatch rejection case")
+    _, _, corpus = build_runtime_retriever(tmp_path)
+    meta_path = Path(corpus.storage_path).parent / "runtime_embeddings.meta.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    meta["vectors_canonical_sha256"] = "0" * 64
+    meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    _, _, c2 = build_runtime_retriever(tmp_path)
+    assert c2.rag_dense_index_build_action == RetrievalDegradationMode.REBUILT_DENSE_INDEX.value
+
+
+@requires_embeddings
+def test_missing_npz_rebuilds(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    _write(tmp_path / "content" / "n.md", "missing npz file recovery")
+    _, _, corpus = build_runtime_retriever(tmp_path)
+    npz = Path(corpus.storage_path).parent / "runtime_embeddings.npz"
+    npz.unlink()
+    _, _, c2 = build_runtime_retriever(tmp_path)
+    assert "dense_npz_missing" in c2.rag_dense_load_reason_codes or c2.rag_dense_index_build_action == RetrievalDegradationMode.REBUILT_DENSE_INDEX.value
+    assert npz.is_file()
+
+
+def test_sparse_when_fastembed_unavailable(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    import importlib
+
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    real = importlib.import_module
+
+    def fake(name: str, package=None):
+        if name == "fastembed":
+            raise ImportError("no fastembed")
+        return real(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", fake)
+    _write(tmp_path / "content" / "z.md", "sparse only no fastembed")
+    retriever, _, _ = build_runtime_retriever(tmp_path)
+    res = retriever.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="sparse",
+            max_chunks=1,
+        )
+    )
+    assert res.retrieval_route == "sparse_fallback"
+    assert res.degradation_mode == RetrievalDegradationMode.SPARSE_FALLBACK_NO_BACKEND.value
+
+
+@requires_embeddings
+def test_sparse_when_query_encode_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import ai_stack.rag as rag_mod
+
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    _write(tmp_path / "content" / "q.md", "query encode failure sparse path")
+    retriever, _, _ = build_runtime_retriever(tmp_path)
+
+    def boom(_q: str):
+        from ai_stack.semantic_embedding import EncodeOutcome
+
+        return EncodeOutcome(None, ("embedding_runtime_error",))
+
+    monkeypatch.setattr(rag_mod, "encode_query_detailed", boom)
+    res = retriever.retrieve(
+        RetrievalRequest(
+            domain=RetrievalDomain.RUNTIME,
+            profile="runtime_turn_support",
+            query="anything",
+            max_chunks=1,
+        )
+    )
+    assert res.retrieval_route == "sparse_fallback"
+    assert res.degradation_mode == RetrievalDegradationMode.SPARSE_FALLBACK_ENCODE_FAILURE.value
+
+
+@requires_embeddings
+def test_meta_commit_order_survives_replace_failure_on_meta(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+    import os
+
+    monkeypatch.delenv("WOS_RAG_DISABLE_EMBEDDINGS", raising=False)
+    _write(tmp_path / "content" / "a.md", "atomic replace meta failure")
+    _, _, corpus = build_runtime_retriever(tmp_path)
+    meta_path = Path(corpus.storage_path).parent / "runtime_embeddings.meta.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    meta["num_chunks"] = 99999
+    corrupted = json.dumps(meta, indent=2)
+    meta_path.write_text(corrupted, encoding="utf-8")
+    calls = {"n": 0}
+    real_replace = os.replace
+
+    def flaky_replace(src: str, dst: str) -> None:
+        calls["n"] += 1
+        if dst.endswith("runtime_embeddings.meta.json") and calls["n"] >= 2:
+            raise OSError("simulated_meta_replace_failure")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", flaky_replace)
+    from ai_stack.rag import RagIngestionPipeline
+
+    fp = RagIngestionPipeline().compute_source_fingerprint(tmp_path)
+    corpus2 = RagIngestionPipeline().build_corpus(tmp_path, source_fingerprint=fp)
+    corpus2.storage_path = corpus.storage_path
+    from ai_stack.rag import _ensure_corpus_embedding_index
+
+    _ensure_corpus_embedding_index(corpus2, Path(corpus.storage_path))
+    assert corpus2.rag_dense_artifact_validity == "partial_write_failure"
+    assert meta_path.read_text(encoding="utf-8") == corrupted

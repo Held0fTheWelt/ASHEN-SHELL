@@ -2,8 +2,10 @@
 
 Uses ``fastembed`` with a small ONNX model when available. When the dependency is
 missing, the environment disables embeddings, or encoding fails, callers receive
-``None`` and the retriever falls back to the sparse path explicitly
-(``retrieval_route=sparse_fallback`` in :mod:`ai_stack.rag`).
+``None`` from :func:`encode_texts` / :func:`encode_query` and the retriever falls
+back to the sparse path explicitly (``retrieval_route=sparse_fallback`` in
+:mod:`ai_stack.rag`). Use :func:`encode_texts_detailed` / :func:`encode_query_detailed`
+for stable machine-readable reason codes without silent downgrade.
 
 **Dependency stance:** ``fastembed`` is optional for sparse-only RAG. For full
 BC-next / C1-next verification that exercises the hybrid path, install
@@ -23,6 +25,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -36,7 +39,7 @@ _ENV_CACHE_DIR = "WOS_RAG_EMBEDDING_CACHE_DIR"
 
 # One TextEmbedding instance per process (keyed by model id + resolved cache dir).
 _model_singleton: object | None = None
-_model_singleton_key: tuple[str, str | None] | None = None
+_model_singleton_key: tuple[str, str | None] = None
 
 
 def embeddings_disabled_by_env() -> bool:
@@ -49,6 +52,20 @@ def embedding_cache_dir_from_env() -> str | None:
     return raw if raw else None
 
 
+def embedding_cache_dir_identity_for_meta() -> str:
+    """Stable string for RAG dense-index metadata (resolved path or sentinels).
+
+    Used only for observability and drift hints; not a security boundary.
+    """
+    raw = embedding_cache_dir_from_env()
+    if not raw:
+        return "__default__"
+    try:
+        return str(Path(raw).resolve())
+    except OSError:
+        return raw
+
+
 def clear_embedding_model_singleton() -> None:
     """Drop the in-process fastembed model instance.
 
@@ -58,6 +75,23 @@ def clear_embedding_model_singleton() -> None:
     global _model_singleton, _model_singleton_key
     _model_singleton = None
     _model_singleton_key = None
+
+
+def _normalize_reason_codes(codes: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(codes) if codes else ("embedding_unknown_failure",)
+
+
+@dataclass(frozen=True, slots=True)
+class EncodeOutcome:
+    """Result of a dense encode attempt; always carries explicit reason codes."""
+
+    vectors: "np.ndarray | None"
+    reason_codes: tuple[str, ...]
+    """Stable machine-oriented codes; empty tuple only when ``ok``."""
+
+    @property
+    def ok(self) -> bool:
+        return self.vectors is not None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,17 +109,22 @@ class EmbeddingBackendReport:
     model_id: str
     cache_dir: str | None
     """Effective ``cache_dir`` passed to fastembed (from env or ``None`` for default)."""
+    cache_dir_identity: str
+    """Resolved cache path identity for metadata (see :func:`embedding_cache_dir_identity_for_meta`)."""
+    primary_reason_code: str
+    """Single dominant code for operators and tests; ``embedding_backend_ok`` when available."""
     messages: tuple[str, ...]
-    """Stable machine-oriented reason codes; empty when ``available`` is True."""
+    """Full reason chain; empty when ``available`` is True."""
 
 
 def embedding_backend_probe(*, sample_text: str = "ping") -> EmbeddingBackendReport:
     """Probe dense embedding availability without relying on RAG retrieval side effects.
 
     Does not mutate RAG corpus files. Uses the same encode path as
-    :func:`encode_texts` when the backend is enabled.
+    :func:`encode_texts_detailed` when the backend is enabled.
     """
     cache_dir = embedding_cache_dir_from_env()
+    identity = embedding_cache_dir_identity_for_meta()
     if embeddings_disabled_by_env():
         return EmbeddingBackendReport(
             available=False,
@@ -94,6 +133,8 @@ def embedding_backend_probe(*, sample_text: str = "ping") -> EmbeddingBackendRep
             encode_ok=False,
             model_id=EMBEDDING_MODEL_ID,
             cache_dir=cache_dir,
+            cache_dir_identity=identity,
+            primary_reason_code="embeddings_disabled_by_env",
             messages=("embeddings_disabled_by_env",),
         )
     try:
@@ -108,11 +149,14 @@ def embedding_backend_probe(*, sample_text: str = "ping") -> EmbeddingBackendRep
             encode_ok=False,
             model_id=EMBEDDING_MODEL_ID,
             cache_dir=cache_dir,
+            cache_dir_identity=identity,
+            primary_reason_code="fastembed_import_failed",
             messages=("fastembed_import_failed",),
         )
 
-    matrix = encode_texts([sample_text], batch_size=1)
-    if matrix is None:
+    outcome = encode_texts_detailed([sample_text], batch_size=1)
+    if not outcome.ok:
+        codes = _normalize_reason_codes(outcome.reason_codes)
         return EmbeddingBackendReport(
             available=False,
             disabled_by_env=False,
@@ -120,7 +164,9 @@ def embedding_backend_probe(*, sample_text: str = "ping") -> EmbeddingBackendRep
             encode_ok=False,
             model_id=EMBEDDING_MODEL_ID,
             cache_dir=cache_dir,
-            messages=("embedding_encode_failed",),
+            cache_dir_identity=identity,
+            primary_reason_code=codes[0],
+            messages=codes,
         )
     return EmbeddingBackendReport(
         available=True,
@@ -129,6 +175,8 @@ def embedding_backend_probe(*, sample_text: str = "ping") -> EmbeddingBackendRep
         encode_ok=True,
         model_id=EMBEDDING_MODEL_ID,
         cache_dir=cache_dir,
+        cache_dir_identity=identity,
+        primary_reason_code="embedding_backend_ok",
         messages=(),
     )
 
@@ -147,17 +195,17 @@ def _get_text_embedding():
     return _model_singleton
 
 
-def encode_texts(texts: list[str], *, batch_size: int = 32) -> "np.ndarray | None":
-    """Encode texts to an L2-normalized float32 matrix ``(len(texts), dim)``.
+def encode_texts_detailed(texts: list[str], *, batch_size: int = 32) -> EncodeOutcome:
+    """Encode texts to an L2-normalized float32 matrix ``(len(texts), dim)`` with reason codes."""
+    if embeddings_disabled_by_env():
+        return EncodeOutcome(None, ("embeddings_disabled_by_env",))
+    if not texts:
+        return EncodeOutcome(None, ("embedding_empty_input",))
 
-    Returns ``None`` if embeddings are disabled, imports fail, or encoding errors occur.
-    """
-    if embeddings_disabled_by_env() or not texts:
-        return None
     try:
         import numpy as np
     except ImportError:
-        return None
+        return EncodeOutcome(None, ("numpy_import_failed",))
 
     try:
         model = _get_text_embedding()
@@ -167,21 +215,38 @@ def encode_texts(texts: list[str], *, batch_size: int = 32) -> "np.ndarray | Non
             for embedding in model.embed(batch):
                 rows.append(list(embedding))
         if len(rows) != len(texts):
-            return None
+            return EncodeOutcome(None, ("embedding_encode_count_mismatch",))
         arr = np.asarray(rows, dtype=np.float32)
         norms = np.linalg.norm(arr, axis=1, keepdims=True)
         norms = np.maximum(norms, np.float32(1e-12))
         arr = arr / norms
-        return arr
+        return EncodeOutcome(arr, ())
+    except ImportError:
+        return EncodeOutcome(None, ("fastembed_import_failed",))
     except Exception:
-        return None
+        return EncodeOutcome(None, ("embedding_runtime_error",))
+
+
+def encode_texts(texts: list[str], *, batch_size: int = 32) -> "np.ndarray | None":
+    """Encode texts to an L2-normalized float32 matrix ``(len(texts), dim)``.
+
+    Returns ``None`` if embeddings are disabled, imports fail, or encoding errors occur.
+    """
+    return encode_texts_detailed(texts, batch_size=batch_size).vectors
+
+
+def encode_query_detailed(text: str) -> EncodeOutcome:
+    """Encode a single query; returns a 1-D L2-normalized float32 vector or codes."""
+    if not (text or "").strip():
+        return EncodeOutcome(None, ("embedding_empty_query",))
+    outcome = encode_texts_detailed([text], batch_size=1)
+    if not outcome.ok or outcome.vectors is None:
+        return outcome
+    if outcome.vectors.shape[0] < 1:
+        return EncodeOutcome(None, ("embedding_encode_count_mismatch",))
+    return EncodeOutcome(outcome.vectors[0], ())
 
 
 def encode_query(text: str) -> "np.ndarray | None":
     """Encode a single query; returns a 1-D L2-normalized float32 vector or ``None``."""
-    if not (text or "").strip():
-        return None
-    matrix = encode_texts([text], batch_size=1)
-    if matrix is None or matrix.shape[0] < 1:
-        return None
-    return matrix[0]
+    return encode_query_detailed(text).vectors

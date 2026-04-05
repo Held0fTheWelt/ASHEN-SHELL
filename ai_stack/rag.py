@@ -9,8 +9,12 @@ path only and records ``retrieval_route=sparse_fallback`` in ranking notes.
 
 Persistence: JSON corpus under ``.wos/rag/runtime_corpus.json`` (``PersistentRagStore``)
 plus optional ``runtime_embeddings.npz`` + ``runtime_embeddings.meta.json`` for
-reproducible local dense indices. This remains a single-host dev-oriented design,
-not a distributed vector database.
+reproducible local dense indices. The dense index uses `runtime_embeddings.meta.json`
+as the **commit marker**: a canonical SHA-256 over row-major float32 vector bytes
+(not NPZ container bytes) must match the committed meta; orphan NPZ without valid
+meta is never reused. NPZ is replaced first, then meta, so a crash after NPZ but
+before meta leaves the previous meta authoritative and the next load rejects the
+mismatch safely. This remains a single-host local design, not a distributed vector database.
 """
 
 from __future__ import annotations
@@ -38,9 +42,13 @@ import numpy as np
 from ai_stack.semantic_embedding import (
     EMBEDDING_INDEX_VERSION,
     EMBEDDING_MODEL_ID,
+    embedding_backend_probe,
+    embedding_cache_dir_identity_for_meta,
     embeddings_disabled_by_env,
     encode_query,
+    encode_query_detailed,
     encode_texts,
+    encode_texts_detailed,
 )
 
 
@@ -95,6 +103,22 @@ DOMAIN_CONTENT_ACCESS: dict[RetrievalDomain, set[ContentClass]] = {
 
 INDEX_VERSION = "c1_next_hybrid_v1"
 
+# Dense index on disk: meta JSON is the commit marker (see module docstring).
+DENSE_INDEX_META_SCHEMA = "c1_dense_index_meta_v2"
+
+
+class RetrievalDegradationMode(StrEnum):
+    """Stable labels for retrieval health (sparse vs hybrid and why)."""
+
+    HYBRID_OK = "hybrid_ok"
+    SPARSE_FALLBACK_NO_BACKEND = "sparse_fallback_due_to_no_backend"
+    SPARSE_FALLBACK_ENCODE_FAILURE = "sparse_fallback_due_to_encode_failure"
+    SPARSE_FALLBACK_INVALID_OR_MISSING_DENSE_INDEX = "sparse_fallback_due_to_invalid_or_missing_dense_index"
+    REBUILT_DENSE_INDEX = "rebuilt_dense_index"
+    DEGRADED_PARTIAL_PERSISTENCE = "degraded_due_to_partial_persistence_problem"
+    CORPUS_EMPTY = "corpus_empty"
+
+
 # Hybrid base score: dense + sparse cosine (both in ~[0, 1] for typical text matches).
 HYBRID_DENSE_WEIGHT = 0.62
 HYBRID_SPARSE_WEIGHT = 0.38
@@ -128,6 +152,13 @@ class InMemoryRetrievalCorpus:
     corpus_fingerprint: str = ""
     storage_path: str = ""
     profile_versions: dict[str, str] = field(default_factory=dict)
+    rag_dense_artifact_validity: str = ""
+    rag_dense_index_build_action: str = ""
+    rag_dense_rebuild_reason: str | None = None
+    rag_dense_load_reason_codes: tuple[str, ...] = field(default_factory=tuple)
+    rag_embedding_index_version: str = ""
+    rag_embedding_cache_dir_identity: str | None = None
+    rag_embedding_backend_primary_code: str = ""
 
     @classmethod
     def empty(cls) -> "InMemoryRetrievalCorpus":
@@ -139,6 +170,13 @@ class InMemoryRetrievalCorpus:
             corpus_fingerprint="",
             storage_path="",
             profile_versions={},
+            rag_dense_artifact_validity="",
+            rag_dense_index_build_action="",
+            rag_dense_rebuild_reason=None,
+            rag_dense_load_reason_codes=(),
+            rag_embedding_index_version="",
+            rag_embedding_cache_dir_identity=None,
+            rag_embedding_backend_primary_code="",
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -204,6 +242,13 @@ class InMemoryRetrievalCorpus:
             corpus_fingerprint=str(payload.get("corpus_fingerprint", "")),
             storage_path=str(payload.get("storage_path", "")),
             profile_versions=payload.get("profile_versions", {}) if isinstance(payload.get("profile_versions"), dict) else {},
+            rag_dense_artifact_validity="",
+            rag_dense_index_build_action="",
+            rag_dense_rebuild_reason=None,
+            rag_dense_load_reason_codes=(),
+            rag_embedding_index_version="",
+            rag_embedding_cache_dir_identity=None,
+            rag_embedding_backend_primary_code="",
         )
 
 
@@ -242,6 +287,13 @@ class RetrievalResult:
     storage_path: str = ""
     retrieval_route: str = ""
     embedding_model_id: str = ""
+    degradation_mode: str = ""
+    dense_index_build_action: str = ""
+    dense_rebuild_reason: str | None = None
+    dense_artifact_validity: str = ""
+    embedding_reason_codes: tuple[str, ...] = field(default_factory=tuple)
+    embedding_index_version: str = ""
+    embedding_cache_dir_identity: str | None = None
 
 
 @dataclass(slots=True)
@@ -259,6 +311,13 @@ class ContextPack:
     storage_path: str = ""
     retrieval_route: str = ""
     embedding_model_id: str = ""
+    degradation_mode: str = ""
+    dense_index_build_action: str = ""
+    dense_rebuild_reason: str | None = None
+    dense_artifact_validity: str = ""
+    embedding_reason_codes: tuple[str, ...] = field(default_factory=tuple)
+    embedding_index_version: str = ""
+    embedding_cache_dir_identity: str | None = None
 
 PROFILE_VERSIONS = {
     "runtime_turn_support": "runtime_profile_v2",
@@ -566,37 +625,81 @@ def _embedding_npz_path(corpus_json: Path) -> Path:
     return corpus_json.parent / "runtime_embeddings.npz"
 
 
-def _load_corpus_embedding_index(corpus: InMemoryRetrievalCorpus, corpus_json: Path) -> CorpusEmbeddingIndex | None:
+def _canonical_dense_vectors_fingerprint(vectors: np.ndarray) -> str:
+    """SHA-256 over canonical row-major float32 bytes (not NPZ container bytes)."""
+    canon = np.ascontiguousarray(vectors.astype(np.float32, copy=False))
+    return hashlib.sha256(canon.tobytes()).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class DenseIndexLoadResult:
+    index: CorpusEmbeddingIndex | None
+    reason_codes: tuple[str, ...]
+    artifact_validity: str
+
+
+def _load_corpus_embedding_index(corpus: InMemoryRetrievalCorpus, corpus_json: Path) -> DenseIndexLoadResult:
+    """Load dense index only when committed meta matches NPZ canonical fingerprint.
+
+    Orphan ``runtime_embeddings.npz`` without valid meta is never reused.
+    """
     meta_path = _embedding_meta_path(corpus_json)
     npz_path = _embedding_npz_path(corpus_json)
-    if not meta_path.is_file() or not npz_path.is_file():
-        return None
+    if not meta_path.is_file():
+        if npz_path.is_file():
+            return DenseIndexLoadResult(
+                None,
+                ("dense_meta_missing_or_uncommitted", "dense_npz_present_without_meta"),
+                "uncommitted_vectors_only",
+            )
+        return DenseIndexLoadResult(None, ("dense_meta_missing",), "missing")
     try:
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
     except Exception:
-        return None
+        return DenseIndexLoadResult(None, ("dense_meta_json_invalid",), "invalid")
     if not isinstance(meta, dict):
-        return None
+        return DenseIndexLoadResult(None, ("dense_meta_not_object",), "invalid")
+    if str(meta.get("dense_meta_schema", "")) != DENSE_INDEX_META_SCHEMA:
+        return DenseIndexLoadResult(None, ("dense_meta_schema_mismatch",), "invalid")
+    codes: list[str] = []
     if str(meta.get("corpus_fingerprint", "")) != corpus.corpus_fingerprint:
-        return None
+        codes.append("dense_corpus_fingerprint_mismatch")
     if str(meta.get("corpus_index_version", "")) != INDEX_VERSION:
-        return None
+        codes.append("dense_corpus_index_version_mismatch")
     if str(meta.get("embedding_index_version", "")) != EMBEDDING_INDEX_VERSION:
-        return None
+        codes.append("dense_embedding_index_version_mismatch")
     model_id = str(meta.get("embedding_model_id", ""))
     if model_id != EMBEDDING_MODEL_ID:
-        return None
+        codes.append("dense_embedding_model_id_mismatch")
     n = int(meta.get("num_chunks", -1))
     if n != len(corpus.chunks):
-        return None
+        codes.append("dense_num_chunks_mismatch")
+    dim = int(meta.get("embedding_dim", -1))
+    expected_fp = str(meta.get("vectors_canonical_sha256", ""))
+    if not expected_fp:
+        codes.append("dense_vectors_hash_missing")
+    if codes:
+        return DenseIndexLoadResult(None, tuple(codes), "invalid")
+    if not npz_path.is_file():
+        return DenseIndexLoadResult(None, ("dense_npz_missing",), "invalid")
     try:
         data = np.load(npz_path)
         vectors = data["vectors"]
     except Exception:
-        return None
+        return DenseIndexLoadResult(None, ("dense_npz_load_failed",), "invalid")
     if not isinstance(vectors, np.ndarray) or vectors.shape[0] != n:
-        return None
-    return CorpusEmbeddingIndex(vectors=vectors.astype(np.float32, copy=False), model_id=model_id)
+        return DenseIndexLoadResult(None, ("dense_npz_shape_mismatch",), "invalid")
+    if vectors.ndim != 2 or vectors.shape[1] != dim:
+        return DenseIndexLoadResult(None, ("dense_npz_dim_mismatch",), "invalid")
+    vectors_f = vectors.astype(np.float32, copy=False)
+    got_fp = _canonical_dense_vectors_fingerprint(vectors_f)
+    if got_fp != expected_fp:
+        return DenseIndexLoadResult(None, ("dense_vectors_canonical_hash_mismatch",), "invalid")
+    return DenseIndexLoadResult(
+        CorpusEmbeddingIndex(vectors=vectors_f, model_id=model_id),
+        (),
+        "valid",
+    )
 
 
 def _save_corpus_embedding_index(
@@ -604,19 +707,37 @@ def _save_corpus_embedding_index(
     vectors: np.ndarray,
     corpus_json: Path,
 ) -> None:
+    """Write NPZ first, then meta. Meta is the sole commit marker for a valid index."""
     meta_path = _embedding_meta_path(corpus_json)
     npz_path = _embedding_npz_path(corpus_json)
     corpus_json.parent.mkdir(parents=True, exist_ok=True)
+    canon = np.ascontiguousarray(vectors.astype(np.float32, copy=False))
+    if canon.ndim != 2:
+        raise ValueError("dense vectors must be 2-D")
+    fp = _canonical_dense_vectors_fingerprint(canon)
+    dim = int(canon.shape[1])
     meta = {
+        "dense_meta_schema": DENSE_INDEX_META_SCHEMA,
         "corpus_fingerprint": corpus.corpus_fingerprint,
         "corpus_index_version": INDEX_VERSION,
         "embedding_index_version": EMBEDDING_INDEX_VERSION,
         "embedding_model_id": EMBEDDING_MODEL_ID,
         "num_chunks": len(corpus.chunks),
+        "embedding_dim": dim,
+        "vectors_canonical_sha256": fp,
+        "embedding_cache_dir_identity": embedding_cache_dir_identity_for_meta(),
     }
     tmp_meta: str | None = None
     tmp_npz: str | None = None
     try:
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            dir=corpus_json.parent,
+            prefix=".emb_vec_",
+            suffix=".npz",
+        ) as tmp:
+            tmp_npz = tmp.name
+        np.savez_compressed(tmp_npz, vectors=canon)
         with tempfile.NamedTemporaryFile(
             mode="w",
             encoding="utf-8",
@@ -627,18 +748,10 @@ def _save_corpus_embedding_index(
         ) as tmp:
             tmp.write(json.dumps(meta, ensure_ascii=True, indent=2))
             tmp_meta = tmp.name
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            dir=corpus_json.parent,
-            prefix=".emb_vec_",
-            suffix=".npz",
-        ) as tmp:
-            tmp_npz = tmp.name
-        np.savez_compressed(tmp_npz, vectors=vectors.astype(np.float32))
-        if tmp_meta:
-            os.replace(tmp_meta, meta_path)
         if tmp_npz:
             os.replace(tmp_npz, npz_path)
+        if tmp_meta:
+            os.replace(tmp_meta, meta_path)
     except Exception:
         if tmp_meta:
             try:
@@ -654,21 +767,62 @@ def _save_corpus_embedding_index(
 
 
 def _ensure_corpus_embedding_index(corpus: InMemoryRetrievalCorpus, corpus_json: Path) -> CorpusEmbeddingIndex | None:
+    corpus.rag_embedding_cache_dir_identity = embedding_cache_dir_identity_for_meta()
+    corpus.rag_embedding_index_version = EMBEDDING_INDEX_VERSION
+    probe = embedding_backend_probe()
+    corpus.rag_embedding_backend_primary_code = probe.primary_reason_code
+
     if embeddings_disabled_by_env():
+        corpus.rag_dense_index_build_action = "unavailable"
+        corpus.rag_dense_artifact_validity = "skipped_env"
+        corpus.rag_dense_load_reason_codes = ("embeddings_disabled_by_env",)
+        corpus.rag_dense_rebuild_reason = None
         return None
-    cached = _load_corpus_embedding_index(corpus, corpus_json)
-    if cached is not None:
-        return cached
+
+    load_result = _load_corpus_embedding_index(corpus, corpus_json)
+    corpus.rag_dense_load_reason_codes = load_result.reason_codes
+    corpus.rag_dense_artifact_validity = load_result.artifact_validity
+
+    if load_result.index is not None:
+        corpus.rag_dense_index_build_action = "reused_persisted"
+        corpus.rag_dense_rebuild_reason = None
+        return load_result.index
+
+    partial = load_result.artifact_validity == "uncommitted_vectors_only"
+    if partial:
+        corpus.rag_dense_rebuild_reason = "reload_after_uncommitted_npz"
+    else:
+        corpus.rag_dense_rebuild_reason = "reload_after_invalid_or_missing_dense_index"
+
     if not corpus.chunks:
+        corpus.rag_dense_index_build_action = "none"
         return None
+
+    if not probe.available:
+        corpus.rag_dense_index_build_action = "unavailable"
+        return None
+
     texts = [chunk.text for chunk in corpus.chunks]
-    vectors = encode_texts(texts)
-    if vectors is None:
+    enc = encode_texts_detailed(texts)
+    if not enc.ok or enc.vectors is None:
+        corpus.rag_dense_index_build_action = "unavailable"
+        corpus.rag_dense_rebuild_reason = "dense_corpus_encode_failed"
         return None
-    if vectors.shape[0] != len(corpus.chunks):
+    if enc.vectors.shape[0] != len(corpus.chunks):
+        corpus.rag_dense_index_build_action = "unavailable"
+        corpus.rag_dense_rebuild_reason = "dense_corpus_encode_row_mismatch"
         return None
-    _save_corpus_embedding_index(corpus, vectors, corpus_json)
-    return CorpusEmbeddingIndex(vectors=vectors, model_id=EMBEDDING_MODEL_ID)
+    try:
+        _save_corpus_embedding_index(corpus, enc.vectors, corpus_json)
+    except Exception:
+        corpus.rag_dense_index_build_action = "unavailable"
+        corpus.rag_dense_artifact_validity = "partial_write_failure"
+        corpus.rag_dense_rebuild_reason = "dense_save_failed"
+        return None
+    corpus.rag_dense_index_build_action = RetrievalDegradationMode.REBUILT_DENSE_INDEX.value
+    corpus.rag_dense_artifact_validity = "valid"
+    corpus.rag_dense_load_reason_codes = ()
+    return CorpusEmbeddingIndex(vectors=enc.vectors, model_id=EMBEDDING_MODEL_ID)
 
 
 class ContextRetriever:
@@ -696,31 +850,69 @@ class ContextRetriever:
         if request.domain not in DOMAIN_CONTENT_ACCESS:
             raise RetrievalDomainError(f"Unknown retrieval domain: {request.domain}")
         trace = self._corpus_trace()
+        c = self.corpus
+        emb_idx_ver = c.rag_embedding_index_version or EMBEDDING_INDEX_VERSION
+        emb_cache_id = c.rag_embedding_cache_dir_identity
+        dense_action = c.rag_dense_index_build_action
+        dense_validity = c.rag_dense_artifact_validity
+        dense_rebuild_reason = c.rag_dense_rebuild_reason
+        backend_code = c.rag_embedding_backend_primary_code
+
         if not self.corpus.chunks:
             return RetrievalResult(
                 request=request,
                 status=RetrievalStatus.DEGRADED,
                 hits=[],
-                ranking_notes=["retrieval_corpus_empty"],
+                ranking_notes=[
+                    "retrieval_corpus_empty",
+                    f"degradation_mode={RetrievalDegradationMode.CORPUS_EMPTY.value}",
+                ],
                 error="retrieval_corpus_empty",
                 index_version=trace[0],
                 corpus_fingerprint=trace[1],
                 storage_path=trace[2],
                 retrieval_route="",
                 embedding_model_id="",
+                degradation_mode=RetrievalDegradationMode.CORPUS_EMPTY.value,
+                dense_index_build_action=dense_action,
+                dense_rebuild_reason=dense_rebuild_reason,
+                dense_artifact_validity=dense_validity,
+                embedding_reason_codes=c.rag_dense_load_reason_codes,
+                embedding_index_version=emb_idx_ver,
+                embedding_cache_dir_identity=emb_cache_id,
             )
 
         use_hybrid = self._embedding_ready() and not request.use_sparse_only and not embeddings_disabled_by_env()
         query_vec: np.ndarray | None = None
+        query_enc_codes: tuple[str, ...] = ()
         query_encode_failed = False
         if use_hybrid:
-            query_vec = encode_query(request.query)
+            qo = encode_query_detailed(request.query)
+            query_vec = qo.vectors
+            query_enc_codes = qo.reason_codes
             if query_vec is None:
                 use_hybrid = False
                 query_encode_failed = True
 
         retrieval_route = "hybrid" if use_hybrid else "sparse_fallback"
         embedding_mid = self._embedding_model_id if use_hybrid else ""
+
+        if request.use_sparse_only:
+            degradation_mode = RetrievalDegradationMode.HYBRID_OK.value
+        elif use_hybrid:
+            degradation_mode = RetrievalDegradationMode.HYBRID_OK.value
+        elif embeddings_disabled_by_env():
+            degradation_mode = RetrievalDegradationMode.SPARSE_FALLBACK_NO_BACKEND.value
+        elif query_encode_failed:
+            degradation_mode = RetrievalDegradationMode.SPARSE_FALLBACK_ENCODE_FAILURE.value
+        elif dense_validity == "uncommitted_vectors_only":
+            degradation_mode = RetrievalDegradationMode.DEGRADED_PARTIAL_PERSISTENCE.value
+        elif dense_validity == "partial_write_failure":
+            degradation_mode = RetrievalDegradationMode.DEGRADED_PARTIAL_PERSISTENCE.value
+        elif backend_code != "embedding_backend_ok":
+            degradation_mode = RetrievalDegradationMode.SPARSE_FALLBACK_NO_BACKEND.value
+        else:
+            degradation_mode = RetrievalDegradationMode.SPARSE_FALLBACK_INVALID_OR_MISSING_DENSE_INDEX.value
 
         allowed_classes = DOMAIN_CONTENT_ACCESS[request.domain]
         query_terms = _build_semantic_terms(request.query)
@@ -732,10 +924,19 @@ class ContextRetriever:
             PROFILE_CANONICAL_WEIGHT[DOMAIN_DEFAULT_PROFILE[request.domain]],
         )
         ranked: list[tuple[float, CorpusChunk, str]] = []
-        prefix_notes: list[str] = [f"retrieval_route={retrieval_route}"]
+        prefix_notes: list[str] = [
+            f"retrieval_route={retrieval_route}",
+            f"degradation_mode={degradation_mode}",
+            f"dense_index_build_action={dense_action}",
+            f"dense_artifact_validity={dense_validity}",
+        ]
+        if dense_rebuild_reason:
+            prefix_notes.append(f"dense_rebuild_reason={dense_rebuild_reason}")
         if use_hybrid and embedding_mid:
             prefix_notes.append(f"embedding_model_id={embedding_mid}")
-        if query_encode_failed:
+        if query_encode_failed and query_enc_codes:
+            prefix_notes.append("embedding_query_encode_failed=" + ",".join(query_enc_codes))
+        elif query_encode_failed:
             prefix_notes.append("embedding_query_encode_failed")
 
         for chunk_index, chunk in enumerate(self.corpus.chunks):
@@ -803,6 +1004,13 @@ class ContextRetriever:
                 storage_path=trace[2],
                 retrieval_route=retrieval_route,
                 embedding_model_id=embedding_mid,
+                degradation_mode=degradation_mode,
+                dense_index_build_action=dense_action,
+                dense_rebuild_reason=dense_rebuild_reason,
+                dense_artifact_validity=dense_validity,
+                embedding_reason_codes=query_enc_codes if query_encode_failed else c.rag_dense_load_reason_codes,
+                embedding_index_version=emb_idx_ver,
+                embedding_cache_dir_identity=emb_cache_id,
             )
         ranking_notes = prefix_notes + [f"{hit.source_path} score={hit.score:.2f} ({hit.selection_reason})" for hit in hits]
         return RetrievalResult(
@@ -816,6 +1024,13 @@ class ContextRetriever:
             storage_path=trace[2],
             retrieval_route=retrieval_route,
             embedding_model_id=embedding_mid,
+            degradation_mode=degradation_mode,
+            dense_index_build_action=dense_action,
+            dense_rebuild_reason=dense_rebuild_reason,
+            dense_artifact_validity=dense_validity,
+            embedding_reason_codes=query_enc_codes if query_encode_failed else (),
+            embedding_index_version=emb_idx_ver,
+            embedding_cache_dir_identity=emb_cache_id,
         )
 
 
@@ -837,6 +1052,13 @@ class ContextPackAssembler:
                 storage_path=trace[2],
                 retrieval_route=result.retrieval_route,
                 embedding_model_id=result.embedding_model_id,
+                degradation_mode=result.degradation_mode,
+                dense_index_build_action=result.dense_index_build_action,
+                dense_rebuild_reason=result.dense_rebuild_reason,
+                dense_artifact_validity=result.dense_artifact_validity,
+                embedding_reason_codes=result.embedding_reason_codes,
+                embedding_index_version=result.embedding_index_version,
+                embedding_cache_dir_identity=result.embedding_cache_dir_identity,
             )
         lines = ["Retrieved context (ranked):"]
         sources: list[dict[str, str]] = []
@@ -867,6 +1089,13 @@ class ContextPackAssembler:
             storage_path=trace[2],
             retrieval_route=result.retrieval_route,
             embedding_model_id=result.embedding_model_id,
+            degradation_mode=result.degradation_mode,
+            dense_index_build_action=result.dense_index_build_action,
+            dense_rebuild_reason=result.dense_rebuild_reason,
+            dense_artifact_validity=result.dense_artifact_validity,
+            embedding_reason_codes=result.embedding_reason_codes,
+            embedding_index_version=result.embedding_index_version,
+            embedding_cache_dir_identity=result.embedding_cache_dir_identity,
         )
 
 

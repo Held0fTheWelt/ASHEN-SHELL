@@ -13,6 +13,7 @@ from ai_stack.semantic_embedding import (
     embedding_backend_probe,
     embedding_cache_dir_from_env,
     encode_texts,
+    encode_texts_detailed,
 )
 from ai_stack.tests.embedding_markers import requires_embeddings
 
@@ -26,6 +27,8 @@ def test_probe_reports_disabled_when_env_disables_embeddings(monkeypatch: pytest
     assert report.import_ok is False
     assert report.encode_ok is False
     assert "embeddings_disabled_by_env" in report.messages
+    assert report.primary_reason_code == "embeddings_disabled_by_env"
+    assert report.cache_dir_identity == "__default__"
 
 
 def test_probe_reports_import_failure_when_fastembed_missing(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -44,6 +47,7 @@ def test_probe_reports_import_failure_when_fastembed_missing(monkeypatch: pytest
     assert report.import_ok is False
     assert report.encode_ok is False
     assert "fastembed_import_failed" in report.messages
+    assert report.primary_reason_code == "fastembed_import_failed"
 
 
 def test_embedding_cache_dir_from_env_none_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -115,3 +119,11 @@ def test_probe_available_when_backend_works(monkeypatch: pytest.MonkeyPatch, tmp
     assert report.model_id == EMBEDDING_MODEL_ID
     assert report.cache_dir == str(tmp_path)
     assert report.messages == ()
+    assert report.primary_reason_code == "embedding_backend_ok"
+    assert report.cache_dir_identity == str(tmp_path.resolve())
+
+
+def test_encode_texts_detailed_empty_input() -> None:
+    out = encode_texts_detailed([])
+    assert not out.ok
+    assert "embedding_empty_input" in out.reason_codes

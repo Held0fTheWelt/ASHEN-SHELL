@@ -335,6 +335,13 @@ def create_default_capability_registry(
                 "retrieval_route": context_pack.retrieval_route,
                 "embedding_model_id": context_pack.embedding_model_id,
                 "top_hit_score": top_score,
+                "degradation_mode": context_pack.degradation_mode,
+                "dense_index_build_action": context_pack.dense_index_build_action,
+                "dense_rebuild_reason": context_pack.dense_rebuild_reason,
+                "dense_artifact_validity": context_pack.dense_artifact_validity,
+                "embedding_reason_codes": list(context_pack.embedding_reason_codes),
+                "embedding_index_version": context_pack.embedding_index_version,
+                "embedding_cache_dir_identity": context_pack.embedding_cache_dir_identity,
             },
             "context_text": context_pack.compact_context,
         }
