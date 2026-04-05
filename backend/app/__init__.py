@@ -196,6 +196,11 @@ def create_app(config_object=None):
     app.register_blueprint(info_bp, url_prefix="/backend")
     app.register_blueprint(web_bp)
     register_api(app)
+
+    from app.runtime.routing_registry_bootstrap import init_routing_registry_bootstrap
+
+    init_routing_registry_bootstrap(app)
+
     csrf = CSRFProtect(app)
     from app.api.v1 import api_v1_bp
     csrf.exempt(api_v1_bp)

@@ -10,6 +10,8 @@ This document defines the formal contract between the AI story systems and the W
 
 The **executable** routing contracts and policy live in `backend/app/runtime/model_routing_contracts.py` and `backend/app/runtime/model_routing.py`, backed by model specs in `adapter_registry`. They implement cross-model LLM/SLM selection by task kind and phase.
 
+**Task 2 (operational inventory)**: Flask `create_app` calls `routing_registry_bootstrap` when **`ROUTING_REGISTRY_BOOTSTRAP`** is true (default on `Config`; **off on `TestingConfig`** for isolated pytest). That registers the real **`MockStoryAIAdapter`** + `AdapterModelSpec` so Runtime `route_model()` without explicit `specs=` sees a non-empty `iter_model_specs()` in normal non-test processes. Writers-Room and Improvement share specs from `writers_room_model_routing` with honest **`revision_synthesis`** coverage and intentional **`degrade_targets`** to `mock`. Details: [LLM / SLM role stratification](./llm_slm_role_stratification.md) and [model inventory seam map](./model_inventory_seam_map.md).
+
 The SLM helper roles described later in this document are **conceptual** narrative roles for the story stack. They are not interchangeable with the **internal** interpreter/director/responder contract in `role_contract.py`, nor with the Task 2A/2B **cross-model** routing layer. See [LLM / SLM role stratification](./llm_slm_role_stratification.md).
 
 **Task 2B / Task 2C / Task 2E / Task 1 (Runtime) integration (current):**

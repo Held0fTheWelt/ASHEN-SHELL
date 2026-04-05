@@ -73,6 +73,9 @@ class Config:
 
     CORS_ORIGINS = _parse_cors_origins()
 
+    # Task 2: register MockStoryAIAdapter + AdapterModelSpec at app startup when true.
+    ROUTING_REGISTRY_BOOTSTRAP = env_bool("ROUTING_REGISTRY_BOOTSTRAP", True)
+
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = env_bool("PREFER_HTTPS", False)
@@ -174,7 +177,7 @@ class TestingConfig(Config):
     REGISTRATION_REQUIRE_EMAIL = False  # Email optional in tests
     REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = False  # Allow login without verification in tests
     PASSWORD_COMPLEXITY_MIN_LENGTH = 8  # Relaxed requirement for testing (normally 12)
-
+    ROUTING_REGISTRY_BOOTSTRAP = False  # keep process-global registry isolated across tests
 
 # Module-level defaults for runtime configuration (used by app.runtime.manager)
 RUN_STORE_BACKEND = os.environ.get("RUN_STORE_BACKEND", "json")

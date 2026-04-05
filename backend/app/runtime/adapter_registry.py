@@ -130,3 +130,9 @@ def legacy_adapter_without_model_spec(name: str) -> bool:
     key = name.lower()
     return key in _adapter_registry and key not in _model_spec_by_name
 
+
+def snapshot_registry_keys() -> tuple[list[str], list[str]]:
+    """Return sorted legacy adapter names and sorted model-spec names (diagnostics / Task 2 inventory)."""
+
+    return (sorted(_adapter_registry.keys()), sorted(_model_spec_by_name.keys()))
+

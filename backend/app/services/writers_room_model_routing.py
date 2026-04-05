@@ -55,7 +55,10 @@ def _task_kinds_for_use_cases(use_cases: tuple[str, ...]) -> frozenset[TaskKind]
         if mapped is not None:
             kinds.add(mapped)
     if not kinds:
-        return frozenset({TaskKind.narrative_formulation, TaskKind.cheap_preflight})
+        kinds = {TaskKind.narrative_formulation, TaskKind.cheap_preflight}
+    # Improvement bounded calls use revision_synthesis + revision phase on the same provider pool.
+    if TaskKind.narrative_formulation in kinds or TaskKind.scene_direction in kinds:
+        kinds.add(TaskKind.revision_synthesis)
     return frozenset(kinds)
 
 
@@ -72,6 +75,13 @@ def model_spec_to_adapter_model_spec(ms: ModelSpec) -> AdapterModelSpec:
         if ms.structured_output_capable
         else StructuredOutputReliability.low
     )
+    degrade: list[str] = []
+    if ms.provider in ("openai", "ollama"):
+        degrade = ["mock"]
+    task_kinds = _task_kinds_for_use_cases(ms.use_cases)
+    # Default mock provider participates in all bounded routing tasks for honest degrade targets.
+    if ms.provider == "mock":
+        task_kinds = frozenset(TaskKind)
     return AdapterModelSpec(
         adapter_name=ms.provider,
         provider_name=ms.provider,
@@ -81,11 +91,11 @@ def model_spec_to_adapter_model_spec(ms: ModelSpec) -> AdapterModelSpec:
         cost_class=_cost_class(ms.cost_class),
         latency_class=_latency_class(ms.latency_class),
         supported_phases=ALL_PHASES,
-        supported_task_kinds=_task_kinds_for_use_cases(ms.use_cases),
+        supported_task_kinds=task_kinds,
         structured_output_reliability=rel,
         fallback_priority=0,
-        degrade_targets=[],
-        metadata={"source": "story_runtime_core.ModelSpec"},
+        degrade_targets=degrade,
+        metadata={"source": "story_runtime_core.ModelSpec", "degrade_policy": "provider_to_mock"},
     )
 
 
