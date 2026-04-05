@@ -104,23 +104,37 @@ class StructuredOutputReliability(str, Enum):
 
 
 class EscalationHint(str, Enum):
-    """Bounded hints that influence escalation-sensitive routing."""
+    """Bounded hints that influence escalation-sensitive routing (Task 2E+)."""
 
     prefer_llm = "prefer_llm"
     high_stakes = "high_stakes"
     continuity_risk = "continuity_risk"
+    ambiguity_high = "ambiguity_high"
+    conflict_dense = "conflict_dense"
+    social_tradeoff_high = "social_tradeoff_high"
+    unreliable_low_cost_candidate = "unreliable_low_cost_candidate"
 
 
 class RouteReasonCode(str, Enum):
-    """Stable, inspectable reason for the primary route selection."""
+    """Stable, inspectable reason for the primary route selection.
+
+    Task 2E replaces generic escalation codes with specific primary reasons.
+    Legacy enum members remain for backward compatibility when ingesting older
+    persisted traces; ``route_model`` emits only the Task 2E set.
+    """
 
     role_matrix_primary = "role_matrix_primary"
-    structured_output_required = "structured_output_required"
-    escalation_applied = "escalation_applied"
     latency_constraint = "latency_constraint"
     cost_constraint = "cost_constraint"
     no_eligible_adapter = "no_eligible_adapter"
     fallback_only = "fallback_only"
+    escalation_due_to_complexity = "escalation_due_to_complexity"
+    escalation_due_to_high_stakes_task = "escalation_due_to_high_stakes_task"
+    escalation_due_to_structured_output_gap = "escalation_due_to_structured_output_gap"
+    escalation_due_to_explicit_hint = "escalation_due_to_explicit_hint"
+    # Legacy — not emitted by route_model after Task 2E
+    structured_output_required = "structured_output_required"
+    escalation_applied = "escalation_applied"
 
 
 def model_tier_rank(tier: ModelTier) -> int:

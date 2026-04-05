@@ -48,6 +48,10 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _norm_wr_adapter(name: str | None) -> str:
+    return (name or "").strip().lower()
+
+
 def _append_workflow_stage(
     manifest_stages: list[dict[str, Any]],
     *,
@@ -326,12 +330,17 @@ def _execute_writers_room_workflow_package(
     syn_stage = generation["task_2a_routing"]["synthesis"]
     syn_executed = str(generation.get("provider") or "").strip() or None
     syn_bounded = generation.get("adapter_invocation_mode") is not None
+    syn_dev_note = None
+    if syn_executed and syn_decision.selected_adapter_name:
+        if _norm_wr_adapter(syn_executed) != _norm_wr_adapter(syn_decision.selected_adapter_name):
+            syn_dev_note = str(generation.get("raw_fallback_reason") or "executed_adapter_differs_from_routed")
     attach_stage_routing_evidence(
         syn_stage,
         synthesis_req,
         executed_adapter_name=syn_executed,
         bounded_model_call=syn_bounded,
         skip_reason=None,
+        execution_deviation_note=syn_dev_note,
     )
 
     _append_workflow_stage(manifest_stages, stage_id="proposal_generation", artifact_key="model_generation")

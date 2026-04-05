@@ -184,7 +184,11 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
         assert rev.get("requested_workflow_phase") == st.get("workflow_phase")
         assert rev.get("requested_task_kind") == st.get("task_kind")
         assert rev.get("route_reason_code") == (st.get("decision") or {}).get("route_reason_code")
+        assert "routing_overview" in rev
+        assert rev["routing_overview"].get("title")
         assert "no_eligible_spec_selection" in rev
+        assert "policy_execution_aligned" in rev
+        assert "execution_deviation" in rev
     gt = data.get("governance_truth") or {}
     assert gt.get("langgraph_orchestration_depth") == "seed_graph_stub"
     assert gt.get("retrieval_evidence_tier") == data["retrieval_trace"]["evidence_tier"]

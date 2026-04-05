@@ -14,7 +14,10 @@ from app.runtime.ai_adapter import AdapterResponse, StoryAIAdapter
 from app.runtime.model_routing import TASK_ROUTING_MODE, route_model
 from app.runtime.model_routing_contracts import (
     AdapterModelSpec,
+    Complexity,
     CostClass,
+    CostSensitivity,
+    LatencyBudget,
     EscalationHint,
     LLMOrSLM,
     LatencyClass,
@@ -191,7 +194,8 @@ def test_escalation_sensitive_with_hints_prefers_llm():
     )
     assert d.selected_adapter_name == "llm_c"
     assert d.escalation_applied is True
-    assert d.route_reason_code.value == "escalation_applied"
+    assert d.route_reason_code.value == "escalation_due_to_explicit_hint"
+    assert d.decision_factors.get("escalation_trigger") == "explicit_hint"
 
 
 def test_requires_structured_output_drops_low_reliability():
@@ -234,8 +238,9 @@ def test_requires_structured_output_drops_low_reliability():
     )
     assert d_loose.selected_adapter_name == "cheap_slm"
     assert d_strict.selected_adapter_name == "good_slm"
-    assert d_strict.route_reason_code.value == "structured_output_required"
+    assert d_strict.route_reason_code.value == "escalation_due_to_structured_output_gap"
     assert d_strict.degradation_applied is True
+    assert d_strict.decision_factors.get("structured_output_gap") is True
 
 
 def test_fallback_chain_filters_missing_and_phase_task():
@@ -377,3 +382,292 @@ def test_no_eligible_adapter_empty_decision():
     )
     assert d.selected_adapter_name == ""
     assert d.route_reason_code.value == "no_eligible_adapter"
+
+def test_fallback_only_when_llm_first_pool_widens_to_slm_only():
+    clear_registry()
+    slm = _spec(
+        name="only_slm",
+        provider="p",
+        model="m",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.scene_direction}),
+    )
+    register_adapter_model(slm, NamedAdapter("only_slm"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.generation,
+            task_kind=TaskKind.scene_direction,
+        )
+    )
+    assert d.selected_adapter_name == "only_slm"
+    assert d.route_reason_code.value == "fallback_only"
+    assert d.decision_factors["preferred_pool_widened"] is True
+
+
+def test_latency_constraint_only_when_normal_budget_counterfactual_differs():
+    clear_registry()
+    s1 = _spec(
+        name="s1",
+        provider="p",
+        model="a",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.classification}),
+        cost=CostClass.high,
+        latency=LatencyClass.low,
+    )
+    s2 = _spec(
+        name="s2",
+        provider="p",
+        model="b",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.classification}),
+        cost=CostClass.low,
+        latency=LatencyClass.high,
+    )
+    register_adapter_model(s1, NamedAdapter("s1"))
+    register_adapter_model(s2, NamedAdapter("s2"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.preflight,
+            task_kind=TaskKind.classification,
+            latency_budget=LatencyBudget.relaxed,
+            cost_sensitivity=CostSensitivity.high,
+        )
+    )
+    assert d.selected_adapter_name == "s2"
+    assert d.route_reason_code.value == "latency_constraint"
+    assert d.decision_factors["counterfactual_latency_changed"] is True
+    d_norm = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.preflight,
+            task_kind=TaskKind.classification,
+            latency_budget=LatencyBudget.normal,
+            cost_sensitivity=CostSensitivity.high,
+        )
+    )
+    assert d_norm.selected_adapter_name == "s1"
+    assert d_norm.route_reason_code.value == "role_matrix_primary"
+
+
+def test_cost_constraint_only_when_medium_sensitivity_counterfactual_differs():
+    clear_registry()
+    cheap = _spec(
+        name="cheap",
+        provider="p",
+        model="a",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.classification}),
+        cost=CostClass.low,
+        latency=LatencyClass.medium,
+    )
+    expensive = _spec(
+        name="expensive",
+        provider="p",
+        model="b",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.classification}),
+        cost=CostClass.high,
+        latency=LatencyClass.medium,
+    )
+    register_adapter_model(cheap, NamedAdapter("cheap"))
+    register_adapter_model(expensive, NamedAdapter("expensive"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.preflight,
+            task_kind=TaskKind.classification,
+            cost_sensitivity=CostSensitivity.low,
+        )
+    )
+    assert d.selected_adapter_name == "expensive"
+    assert d.route_reason_code.value == "cost_constraint"
+    assert d.decision_factors["counterfactual_cost_changed"] is True
+    d_med = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.preflight,
+            task_kind=TaskKind.classification,
+            cost_sensitivity=CostSensitivity.medium,
+        )
+    )
+    assert d_med.selected_adapter_name == "cheap"
+    assert d_med.route_reason_code.value == "role_matrix_primary"
+
+
+def test_reason_precedence_structured_over_fallback_only_when_both_apply():
+    clear_registry()
+    low_slm = _spec(
+        name="low_rel_slm",
+        provider="p",
+        model="x",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.classification}),
+        structured=StructuredOutputReliability.low,
+    )
+    high_llm = _spec(
+        name="high_rel_llm",
+        provider="p",
+        model="y",
+        role=LLMOrSLM.llm,
+        tier=ModelTier.standard,
+        tasks=frozenset({TaskKind.classification}),
+        structured=StructuredOutputReliability.high,
+    )
+    register_adapter_model(low_slm, NamedAdapter("low_rel_slm"))
+    register_adapter_model(high_llm, NamedAdapter("high_rel_llm"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.preflight,
+            task_kind=TaskKind.classification,
+            requires_structured_output=True,
+        )
+    )
+    assert d.selected_adapter_name == "high_rel_llm"
+    assert d.route_reason_code.value == "escalation_due_to_structured_output_gap"
+    assert d.decision_factors["preferred_pool_widened"] is True
+
+
+def test_reason_precedence_escalation_over_fallback_only():
+    clear_registry()
+    slm = _spec(
+        name="slm_e",
+        provider="p",
+        model="s",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.ambiguity_resolution}),
+    )
+    llm = _spec(
+        name="llm_e",
+        provider="p",
+        model="l",
+        role=LLMOrSLM.llm,
+        tier=ModelTier.standard,
+        tasks=frozenset({TaskKind.ambiguity_resolution}),
+    )
+    register_adapter_model(slm, NamedAdapter("slm_e"))
+    register_adapter_model(llm, NamedAdapter("llm_e"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.interpretation,
+            task_kind=TaskKind.ambiguity_resolution,
+            escalation_hints=[EscalationHint.prefer_llm],
+        )
+    )
+    assert d.route_reason_code.value == "escalation_due_to_explicit_hint"
+    assert d.decision_factors["preferred_pool_widened"] is False
+
+
+def test_high_stakes_task_escalation_without_hints():
+    clear_registry()
+    slm = _spec(
+        name="slm_hs",
+        provider="p",
+        model="s",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.continuity_judgment}),
+    )
+    llm = _spec(
+        name="llm_hs",
+        provider="p",
+        model="l",
+        role=LLMOrSLM.llm,
+        tier=ModelTier.standard,
+        tasks=frozenset({TaskKind.continuity_judgment}),
+    )
+    register_adapter_model(slm, NamedAdapter("slm_hs"))
+    register_adapter_model(llm, NamedAdapter("llm_hs"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.interpretation,
+            task_kind=TaskKind.continuity_judgment,
+            escalation_hints=[],
+        )
+    )
+    assert d.selected_adapter_name == "llm_hs"
+    assert d.route_reason_code.value == "escalation_due_to_high_stakes_task"
+    assert d.decision_factors.get("escalation_trigger") == "high_stakes_task"
+
+
+def test_escalation_due_to_complexity_ranking_generation():
+    clear_registry()
+    slm = _spec(
+        name="slm_rank",
+        provider="p",
+        model="s",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.ranking}),
+    )
+    llm = _spec(
+        name="llm_rank",
+        provider="p",
+        model="l",
+        role=LLMOrSLM.llm,
+        tier=ModelTier.standard,
+        tasks=frozenset({TaskKind.ranking}),
+    )
+    register_adapter_model(slm, NamedAdapter("slm_rank"))
+    register_adapter_model(llm, NamedAdapter("llm_rank"))
+    d_high = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.generation,
+            task_kind=TaskKind.ranking,
+            complexity=Complexity.high,
+        )
+    )
+    d_med = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.generation,
+            task_kind=TaskKind.ranking,
+            complexity=Complexity.medium,
+        )
+    )
+    assert d_med.selected_adapter_name == "slm_rank"
+    assert d_high.selected_adapter_name == "llm_rank"
+    assert d_high.route_reason_code.value == "escalation_due_to_complexity"
+    assert d_high.decision_factors.get("mandatory_llm_pool_applied") is True
+    assert d_high.decision_factors.get("selected_outside_preferred_role_family") is True
+
+
+def test_dual_counterfactual_prefers_latency_reason_code():
+    clear_registry()
+    s1 = _spec(
+        name="s1",
+        provider="p",
+        model="a",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.classification}),
+        cost=CostClass.high,
+        latency=LatencyClass.low,
+    )
+    s2 = _spec(
+        name="s2",
+        provider="p",
+        model="b",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.classification}),
+        cost=CostClass.low,
+        latency=LatencyClass.high,
+    )
+    register_adapter_model(s1, NamedAdapter("s1"))
+    register_adapter_model(s2, NamedAdapter("s2"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.preflight,
+            task_kind=TaskKind.classification,
+            latency_budget=LatencyBudget.relaxed,
+            cost_sensitivity=CostSensitivity.high,
+        )
+    )
+    assert d.decision_factors["counterfactual_latency_changed"] is True
+    assert d.decision_factors["counterfactual_cost_changed"] is False
+    assert d.route_reason_code.value == "latency_constraint"
+

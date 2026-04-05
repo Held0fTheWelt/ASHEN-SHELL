@@ -116,3 +116,17 @@ def adapter_registered(name: str) -> bool:
     if not name:
         return False
     return name.lower() in _adapter_registry
+
+
+def has_model_spec(name: str) -> bool:
+    """Return True if a Task 2A ``AdapterModelSpec`` exists for this adapter name."""
+    return get_model_spec(name) is not None
+
+
+def legacy_adapter_without_model_spec(name: str) -> bool:
+    """True when an adapter instance exists but no model spec is registered for that name."""
+    if not name:
+        return False
+    key = name.lower()
+    return key in _adapter_registry and key not in _model_spec_by_name
+

@@ -175,7 +175,11 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
         assert rev.get("requested_workflow_phase") == tr.get("workflow_phase")
         assert rev.get("requested_task_kind") == tr.get("task_kind")
         assert rev.get("route_reason_code") == tr["decision"]["route_reason_code"]
+        assert "routing_overview" in rev
+        assert rev["routing_overview"].get("title")
         assert "no_eligible_spec_selection" in rev
+        assert "policy_execution_aligned" in rev
+        assert "execution_deviation" in rev
     mai = recommendation.get("model_assisted_interpretation") or {}
     assert mai.get("disclaimer")
     assert "preflight_excerpt" in mai
