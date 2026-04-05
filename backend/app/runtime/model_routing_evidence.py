@@ -50,7 +50,7 @@ def routing_overview_for_reason_code(
         ),
         RouteReasonCode.escalation_due_to_structured_output_gap.value: (
             "Escalated for structure",
-            "Structured output requirements excluded low-reliability specs and changed the viable pool.",
+            "Structured output eligibility changed the deterministic primary adapter versus the full pre-structured candidate set.",
             "elevated",
         ),
         RouteReasonCode.escalation_due_to_explicit_hint.value: (

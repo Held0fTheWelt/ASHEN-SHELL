@@ -269,10 +269,14 @@ def _select_primary_and_meta(
     spec_list: list[AdapterModelSpec],
     eligible: list[AdapterModelSpec],
     eligible_all: list[AdapterModelSpec],
-) -> tuple[AdapterModelSpec, list[AdapterModelSpec], bool, bool, list[str], bool]:
+) -> tuple[AdapterModelSpec, list[AdapterModelSpec], bool, bool, list[str]]:
     """Stages 2–6: mandatory LLM pool, tier floor, role pool, pick, fallback chain.
 
-    Returns (primary, final_pool, widened, mandatory_llm_narrowed, fallback_chain, degradation).
+    ``eligible_all`` is reserved for callers that re-run this pipeline on the full
+    pre-structured candidate set (``eligible_all``, ``eligible_all``) so length-based
+    structured shaping stays inactive inside that counterfactual evaluation.
+
+    Returns (primary, final_pool, widened, mandatory_llm_narrowed, fallback_chain).
     """
     by_name = _spec_by_name(spec_list)
     working, mandatory_narrowed = _apply_mandatory_llm_pool(eligible, request)
@@ -280,9 +284,7 @@ def _select_primary_and_meta(
     final_pool = _apply_complexity_tier_floor(pool, request)
     primary = _pick_primary(final_pool, request)
     chain = _build_fallback_chain(primary, request, by_name)
-    structured_shaped = request.requires_structured_output and len(eligible) < len(eligible_all)
-    degradation = widened or structured_shaped
-    return primary, final_pool, widened, mandatory_narrowed, chain, degradation
+    return primary, final_pool, widened, mandatory_narrowed, chain
 
 
 def _compute_escalation_applied(*, route_reason_code: RouteReasonCode) -> bool:
@@ -298,17 +300,17 @@ def _primary_route_reason_code(
     *,
     request: RoutingRequest,
     eligible: list[AdapterModelSpec],
-    eligible_all: list[AdapterModelSpec],
     primary: AdapterModelSpec,
     widened: bool,
     mandatory_llm_narrowed: bool,
     pool_for_counterfactual: list[AdapterModelSpec],
     counterfactual_primary_name: str,
+    material_structured_output_gap: bool,
 ) -> tuple[RouteReasonCode, dict[str, object]]:
     """Assign exactly one primary reason; escalation precedes fallback/latency/cost."""
 
     factors_extra: dict[str, object] = {}
-    structured_gap = request.requires_structured_output and len(eligible) < len(eligible_all)
+    structured_gap = material_structured_output_gap
     explicit_hint_primary = (
         bool(request.escalation_hints)
         and TASK_ROUTING_MODE[request.task_kind] == TaskRoutingMode.escalation_sensitive
@@ -413,12 +415,21 @@ def route_model(
             degradation_applied=bool(eligible_all),
         )
 
-    primary, final_pool, widened, mandatory_narrowed, chain, degradation = _select_primary_and_meta(
+    primary, final_pool, widened, mandatory_narrowed, chain = _select_primary_and_meta(
         request, spec_list, eligible, eligible_all
     )
 
+    material_structured_output_gap = False
+    if request.requires_structured_output and len(eligible) < len(eligible_all):
+        loose_primary, _, _, _, _ = _select_primary_and_meta(
+            request, spec_list, eligible_all, eligible_all
+        )
+        material_structured_output_gap = primary.adapter_name != loose_primary.adapter_name
+
+    degradation_applied = widened or material_structured_output_gap
+
     req_medium = request.model_copy(update={"complexity": Complexity.medium})
-    _p_med, _, _, _, _, _ = _select_primary_and_meta(
+    _p_med, _, _, _, _ = _select_primary_and_meta(
         req_medium, spec_list, eligible, eligible_all
     )
     counterfactual_primary_name = _p_med.adapter_name
@@ -426,12 +437,12 @@ def route_model(
     code, reason_factors = _primary_route_reason_code(
         request=request,
         eligible=eligible,
-        eligible_all=eligible_all,
         primary=primary,
         widened=widened,
         mandatory_llm_narrowed=mandatory_narrowed,
         pool_for_counterfactual=final_pool,
         counterfactual_primary_name=counterfactual_primary_name,
+        material_structured_output_gap=material_structured_output_gap,
     )
     factors.update(reason_factors)
     factors["preferred_pool_widened"] = widened
@@ -451,9 +462,7 @@ def route_model(
             StructuredOutputReliability.high
         )
     factors["soft_synthesis_heavy_context"] = _synthesis_heavy_for_complexity(request)
-    factors["soft_widened_or_degraded_pool"] = widened or (
-        request.requires_structured_output and len(eligible) < len(eligible_all)
-    )
+    factors["soft_widened_or_degraded_pool"] = widened or material_structured_output_gap
 
     esc = _compute_escalation_applied(route_reason_code=code)
 
@@ -467,5 +476,5 @@ def route_model(
         decision_factors=factors,
         fallback_chain=chain,
         escalation_applied=esc,
-        degradation_applied=degradation,
+        degradation_applied=degradation_applied,
     )

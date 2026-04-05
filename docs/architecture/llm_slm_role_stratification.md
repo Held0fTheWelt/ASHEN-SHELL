@@ -49,11 +49,15 @@ Task 2E **does not** add a second routing pipeline or Runtime multi-stage orches
 3. **Role-family preference** — apply `TASK_ROUTING_MODE` (`slm_first` / `llm_first` / `escalation_sensitive`) on the working set.
 4. **Quality ranking** — deterministic `_pick_primary` / tier and cost/latency alignment keys (same spirit as Task 2A).
 5. **Cost / latency optimization** — reflected in the pick keys; **primary** `latency_constraint` / `cost_constraint` only when counterfactual re-picks on the **same final pool** with neutral budget/sensitivity would change the winner.
-6. **Widening / fallback** — `fallback_chain` from `degrade_targets`; `fallback_only` when the preferred role-family pool was empty **without** mandatory LLM narrowing forcing the widen. `degradation_applied` remains true when structured filtering or class widening shrank or reshaped the viable pool.
+6. **Widening / fallback** — `fallback_chain` from `degrade_targets`; `fallback_only` when the preferred role-family pool was empty **without** mandatory LLM narrowing forcing the widen. `degradation_applied` is true when the preferred pool was widened **or** when structured-output rules materially change the deterministic primary versus the same staged policy run on the full pre-structured candidate set (Task 2E-R1 — not merely because some ineligible-for-structure specs disappeared from the global set).
+
+### Task 2E-R1 (narrow structured-output gap)
+
+The primary code `escalation_due_to_structured_output_gap` fires only when `requires_structured_output` is true **and** structured-output filtering changes the **selected primary adapter** compared to a counterfactual evaluation on the full pre-structured eligible set (`eligible_all` through the same stages). Global shrinkage of the eligible list alone is **not** sufficient. The staged Task 2E ordering inside `route_model` is unchanged; deep Runtime multi-stage orchestration remains out of scope.
 
 ### Hard vs soft escalation signals
 
-- **Hard (can force primary escalation codes or mandatory LLM pool)**: structured-output gap (`requires_structured_output` shrinks eligible vs `eligible_all`); high-stakes task kinds with SLM still eligible and LLM selected; non-empty hints on escalation-sensitive tasks with SLM still eligible and LLM selected; high complexity on synthesis-heavy generation/revision when the medium-complexity counterfactual would pick a different adapter.
+- **Hard (can force primary escalation codes or mandatory LLM pool)**: **material** structured-output gap (strict primary differs from the pre-structured counterfactual primary); high-stakes task kinds with SLM still eligible and LLM selected; non-empty hints on escalation-sensitive tasks with SLM still eligible and LLM selected; high complexity on synthesis-heavy generation/revision when the medium-complexity counterfactual would pick a different adapter.
 - **Soft (informational `decision_factors` only)**: e.g. `soft_preferred_reliability_pressure`, `soft_synthesis_heavy_context`, `soft_widened_or_degraded_pool` — they do **not** add extra primary reason codes.
 
 ### Primary `RouteReasonCode` precedence (exactly one primary)
@@ -69,7 +73,7 @@ Task 2E **does not** add a second routing pipeline or Runtime multi-stage orches
 
 Legacy enum values `structured_output_required` and `escalation_applied` remain for **ingesting old traces**; current `route_model` emits the Task 2E codes above.
 
-`decision_factors` may include: `escalation_trigger`, `structured_output_gap`, `explicit_hint_present`, `preferred_pool_empty`, `mandatory_llm_pool_applied`, `selected_outside_preferred_role_family` (when true), `counterfactual_latency_changed`, `counterfactual_cost_changed`, plus soft keys listed in code.
+`decision_factors` may include: `escalation_trigger`, `structured_output_gap` (material gap only; mirrors the primary structured-output escalation branch), `explicit_hint_present`, `preferred_pool_empty`, `mandatory_llm_pool_applied`, `selected_outside_preferred_role_family` (when true), `counterfactual_latency_changed`, `counterfactual_cost_changed`, plus soft keys listed in code.
 
 ### `routing_overview` (derived summary, not independent reasoning)
 

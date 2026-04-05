@@ -243,6 +243,93 @@ def test_requires_structured_output_drops_low_reliability():
     assert d_strict.decision_factors.get("structured_output_gap") is True
 
 
+def test_structured_filter_removes_only_losing_slm_no_primary_gap():
+    """Low-reliability SLM loses the SLM-first pick; dropping it does not change the winner."""
+    clear_registry()
+    loser = _spec(
+        name="slm_low_lose",
+        provider="p",
+        model="x",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.ranking}),
+        structured=StructuredOutputReliability.low,
+        priority=0,
+    )
+    winner = _spec(
+        name="slm_high_win",
+        provider="p",
+        model="y",
+        role=LLMOrSLM.slm,
+        tier=ModelTier.light,
+        tasks=frozenset({TaskKind.ranking}),
+        structured=StructuredOutputReliability.high,
+        priority=100,
+    )
+    register_adapter_model(loser, NamedAdapter("slm_low_lose"))
+    register_adapter_model(winner, NamedAdapter("slm_high_win"))
+    d = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.preflight,
+            task_kind=TaskKind.ranking,
+            requires_structured_output=True,
+        )
+    )
+    assert d.selected_adapter_name == "slm_high_win"
+    assert d.route_reason_code.value != "escalation_due_to_structured_output_gap"
+    assert d.route_reason_code.value == "role_matrix_primary"
+    assert d.decision_factors.get("structured_output_gap") is False
+    assert d.degradation_applied is False
+    assert d.decision_factors.get("preferred_pool_widened") is False
+
+
+def test_structured_filter_changes_llm_first_winner_emits_gap():
+    """When the LLM-first winner is low structured reliability, strict filtering moves the primary."""
+    clear_registry()
+    premium_low = _spec(
+        name="llm_premium_low",
+        provider="p",
+        model="a",
+        role=LLMOrSLM.llm,
+        tier=ModelTier.premium,
+        tasks=frozenset({TaskKind.scene_direction}),
+        structured=StructuredOutputReliability.low,
+        priority=0,
+    )
+    standard_high = _spec(
+        name="llm_standard_high",
+        provider="p",
+        model="b",
+        role=LLMOrSLM.llm,
+        tier=ModelTier.standard,
+        tasks=frozenset({TaskKind.scene_direction}),
+        structured=StructuredOutputReliability.high,
+        priority=0,
+    )
+    register_adapter_model(premium_low, NamedAdapter("llm_premium_low"))
+    register_adapter_model(standard_high, NamedAdapter("llm_standard_high"))
+    d_loose = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.generation,
+            task_kind=TaskKind.scene_direction,
+            requires_structured_output=False,
+        )
+    )
+    d_strict = route_model(
+        RoutingRequest(
+            workflow_phase=WorkflowPhase.generation,
+            task_kind=TaskKind.scene_direction,
+            requires_structured_output=True,
+        )
+    )
+    assert d_loose.selected_adapter_name == "llm_premium_low"
+    assert d_strict.selected_adapter_name == "llm_standard_high"
+    assert d_strict.route_reason_code.value == "escalation_due_to_structured_output_gap"
+    assert d_strict.escalation_applied is True
+    assert d_strict.degradation_applied is True
+    assert d_strict.decision_factors.get("structured_output_gap") is True
+
+
 def test_fallback_chain_filters_missing_and_phase_task():
     clear_registry()
     primary = _spec(
