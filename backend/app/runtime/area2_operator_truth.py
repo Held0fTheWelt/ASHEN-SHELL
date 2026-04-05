@@ -14,7 +14,10 @@ from app.runtime.area2_startup_profiles import resolve_startup_profile
 from app.runtime.model_inventory_contract import InventorySurface
 from app.runtime.model_inventory_report import validate_surface_coverage
 from app.runtime.model_routing_contracts import RouteReasonCode
-from app.runtime.operator_audit import primary_concern_code
+from app.runtime.operator_audit import (
+    RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS,
+    primary_concern_code,
+)
 
 # Frozen summary aligned with AREA2_AUTHORITY_REGISTRY narrative (no runtime probe).
 _CANONICAL_TASK2A_AUTHORITY_SUMMARY = (
@@ -146,6 +149,17 @@ def _runtime_canonical_coverage(specs: list[Any]) -> tuple[dict[str, bool], bool
     return {InventorySurface.runtime_staged.value: r.all_satisfied}, r.all_satisfied
 
 
+def _runtime_ranking_summary_from_orchestration(
+    summary: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Compact ranking legibility from staged ``runtime_orchestration_summary`` only (no invented values)."""
+    if not summary or not isinstance(summary, dict):
+        return None
+    if not any(k in summary for k in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS):
+        return None
+    return {k: summary.get(k) for k in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS}
+
+
 def _bounded_canonical_coverage(specs: list[Any]) -> tuple[dict[str, bool], bool]:
     wr = validate_surface_coverage(specs, InventorySurface.writers_room)
     imp = validate_surface_coverage(specs, InventorySurface.improvement_bounded)
@@ -166,6 +180,7 @@ def build_area2_operator_truth(
     runtime_stage_traces: list[dict[str, Any]] | None = None,
     model_routing_trace: dict[str, Any] | None = None,
     bounded_traces: list[dict[str, Any]] | None = None,
+    runtime_orchestration_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble additive ``area2_operator_truth`` for operator_audit (English keys only)."""
 
@@ -230,6 +245,11 @@ def build_area2_operator_truth(
         "selected_vs_executed": selected_executed,
         "primary_operational_concern": pcc,
         "startup_profile": _legibility_startup_profile(bootstrap_enabled),
+        "runtime_ranking_summary": (
+            _runtime_ranking_summary_from_orchestration(runtime_orchestration_summary)
+            if surface == "runtime"
+            else None
+        ),
     }
 
     return {
@@ -277,6 +297,7 @@ def enrich_operator_audit_with_area2_truth(
     runtime_stage_traces: list[dict[str, Any]] | None = None,
     model_routing_trace: dict[str, Any] | None = None,
     bounded_traces: list[dict[str, Any]] | None = None,
+    runtime_orchestration_summary: dict[str, Any] | None = None,
 ) -> None:
     """Populate ``area2_operator_truth`` on an existing operator_audit dict."""
     truth = build_area2_operator_truth(
@@ -288,6 +309,7 @@ def enrich_operator_audit_with_area2_truth(
         runtime_stage_traces=runtime_stage_traces,
         model_routing_trace=model_routing_trace,
         bounded_traces=bounded_traces,
+        runtime_orchestration_summary=runtime_orchestration_summary,
     )
     merge_area2_operator_truth(audit, truth)
 

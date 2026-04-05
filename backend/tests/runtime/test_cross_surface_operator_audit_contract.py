@@ -7,7 +7,7 @@ import pytest
 from app.content.module_models import ContentModule, ModuleMetadata
 from app.runtime.adapter_registry import clear_registry, register_adapter_model
 from app.runtime.ai_turn_executor import execute_turn_with_ai
-from app.runtime.operator_audit import AUDIT_SCHEMA_VERSION
+from app.runtime.operator_audit import AUDIT_SCHEMA_VERSION, RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS
 from app.runtime.runtime_models import SessionState
 
 from .test_area2_convergence_gates import assert_area2_truth_shape
@@ -120,6 +120,13 @@ async def test_runtime_staged_operator_audit_matches_cross_surface_contract(
     log = (session.metadata.get("ai_decision_logs") or [])[-1]
     audit = log.operator_audit or {}
     _assert_operator_audit_shell(audit, expected_surface="runtime")
+    aus = audit.get("audit_summary") or {}
+    for rk in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        assert rk in aus, f"runtime audit_summary must expose compact ranking field {rk}"
+    rr = ((audit.get("area2_operator_truth") or {}).get("legibility") or {}).get("runtime_ranking_summary")
+    assert isinstance(rr, dict)
+    for rk in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        assert rk in rr
 
     for tr in log.runtime_stage_traces or []:
         if tr.get("stage_kind") != "routed_model_stage":

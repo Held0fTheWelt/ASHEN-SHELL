@@ -29,6 +29,7 @@ from app.runtime.area2_routing_authority import (
 )
 from app.runtime.model_routing import route_model
 from app.runtime.model_routing_contracts import RouteReasonCode, RoutingRequest, TaskKind, WorkflowPhase
+from app.runtime.operator_audit import RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS
 from app.runtime.routing_registry_bootstrap import bootstrap_routing_registry_from_config
 from app.runtime.runtime_models import SessionState, SessionStatus
 from app.services.writers_room_model_routing import build_writers_room_model_route_specs
@@ -55,6 +56,7 @@ AREA2_LEGIBILITY_KEYS = frozenset(
         "selected_vs_executed",
         "primary_operational_concern",
         "startup_profile",
+        "runtime_ranking_summary",
     }
 )
 
@@ -96,6 +98,7 @@ def test_g_conv_02_healthy_bootstrap_gate_runtime_specs():
     assert iter_model_specs()
     from app.runtime.runtime_ai_stages import (
         build_preflight_routing_request,
+        build_ranking_routing_request,
         build_signal_routing_request,
         build_synthesis_routing_request,
     )
@@ -110,6 +113,7 @@ def test_g_conv_02_healthy_bootstrap_gate_runtime_specs():
     for req in (
         build_preflight_routing_request(session),
         build_signal_routing_request(session, extra_hints=[]),
+        build_ranking_routing_request(session, extra_hints=[]),
         build_synthesis_routing_request(session),
     ):
         d = route_model(req)
@@ -147,6 +151,15 @@ async def test_g_conv_02_healthy_bootstrap_no_routine_no_eligible_on_execute_tur
 
     await execute_turn_with_ai(session, 1, slm_ad, mod)
     log = (session.metadata.get("ai_decision_logs") or [])[-1]
+    audit = log.operator_audit or {}
+    aus = audit.get("audit_summary") or {}
+    for rk in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        assert rk in aus, f"audit_summary must mirror staged ranking truth ({rk})"
+    truth = audit.get("area2_operator_truth") or {}
+    rr = (truth.get("legibility") or {}).get("runtime_ranking_summary")
+    assert isinstance(rr, dict), "canonical staged runtime must expose runtime_ranking_summary dict"
+    for rk in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        assert rk in rr, f"runtime_ranking_summary must include {rk}"
     for tr in log.runtime_stage_traces or []:
         if tr.get("stage_kind") != "routed_model_stage":
             continue
@@ -300,3 +313,5 @@ def assert_area2_truth_shape(truth: dict) -> None:
     assert isinstance(leg, dict), "area2_operator_truth.legibility must be a dict"
     miss_leg = AREA2_LEGIBILITY_KEYS - set(leg.keys())
     assert not miss_leg, f"area2_operator_truth.legibility missing: {miss_leg}"
+    rr = leg.get("runtime_ranking_summary")
+    assert rr is None or isinstance(rr, dict), "runtime_ranking_summary must be None or a dict"

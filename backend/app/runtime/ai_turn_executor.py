@@ -791,6 +791,7 @@ async def execute_turn_with_ai(
             specs_for_coverage=_specs_rt,
             runtime_stage_traces=runtime_stage_traces_for_log,
             model_routing_trace=model_routing_trace,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
         )
 
     def _generate_with_runtime_policy(

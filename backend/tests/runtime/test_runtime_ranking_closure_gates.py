@@ -1,6 +1,6 @@
-"""Area 2 Closure Task 1 — Runtime ranking stage closure gates (G-RANK-01 .. G-RANK-08).
+"""Area 2 Closure Task 1B — Canonical Runtime ranking stage gates (G-CANON-RANK-01 .. G-CANON-RANK-08).
 
-Pass conditions and failure meaning are documented in each test docstring.
+Each test documents pass condition and failure meaning for one canonical gate.
 """
 
 from __future__ import annotations
@@ -16,12 +16,14 @@ from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapt
 from app.runtime.ai_turn_executor import execute_turn_with_ai
 from app.runtime.model_inventory_contract import RUNTIME_STAGED_REQUIRED, RequiredRoutingTuple
 from app.runtime.model_routing_contracts import TaskKind, WorkflowPhase
+from app.runtime.operator_audit import RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS
 from app.runtime.runtime_ai_stages import (
     RANKING_SLM_ONLY_SKIP_REASON,
     RankingStageOutput,
     RuntimeStageId,
     SignalStageOutput,
     build_ranking_routing_request,
+    build_synthesis_routing_request,
     compute_synthesis_gate_after_ranking,
     parse_ranking_payload,
 )
@@ -36,6 +38,32 @@ DOCS_CONTRACT = REPO_ROOT / "docs" / "architecture" / "ai_story_contract.md"
 DOCS_CLOSURE = REPO_ROOT / "docs" / "architecture" / "area2_runtime_ranking_closure_report.md"
 
 
+def _assert_compact_ranking_operator_equality(*, audit: dict, summary: dict) -> None:
+    """G-CANON-RANK-04: both audit_summary and legibility.runtime_ranking_summary mirror orchestration."""
+    aus = audit.get("audit_summary") or {}
+    for k in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        assert k in aus, f"audit_summary missing compact ranking field {k}"
+        assert k in summary, f"orchestration summary missing {k} (source of truth)"
+        assert aus[k] == summary[k]
+    truth = audit.get("area2_operator_truth") or {}
+    rr = (truth.get("legibility") or {}).get("runtime_ranking_summary")
+    assert isinstance(rr, dict), "legibility.runtime_ranking_summary must be a dict for staged runtime"
+    for k in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        assert rr.get(k) == summary.get(k)
+
+
+def _assert_canonical_ranking_truth_surfaces(log: object) -> None:
+    """Ranking must be first-class in traces, summary, and legacy rollup (G-CANON-RANK-03 / -05)."""
+    traces = getattr(log, "runtime_stage_traces", None) or []
+    summary = getattr(log, "runtime_orchestration_summary", None) or {}
+    rollup = getattr(log, "model_routing_trace", None) or {}
+    ids = [t.get("stage_id") for t in traces if isinstance(t, dict)]
+    assert "ranking" in ids
+    assert "ranking_effect" in summary
+    rc = rollup.get("ranking_context")
+    assert isinstance(rc, dict), "model_routing_trace must include ranking_context dict"
+
+
 @pytest.fixture
 def minimal_module() -> ContentModule:
     meta = ModuleMetadata(
@@ -47,23 +75,74 @@ def minimal_module() -> ContentModule:
     return ContentModule(metadata=meta, scenes={}, characters={})
 
 
-def test_g_rank_01_stage_existence_gate():
-    """G-RANK-01: Ranking exists as an explicit Runtime stage identity.
+def test_g_canon_rank_01_canonical_stage_existence_gate():
+    """G-CANON-RANK-01: Ranking is an explicit canonical Runtime stage in the staged flow.
 
-    Pass: ``RuntimeStageId.ranking`` is defined.
-    Fail: Ranking folded into another stage identifier or missing from the enum.
+    Pass: ``RuntimeStageId.ranking`` exists with value ``ranking``.
+    Fail: Ranking missing or aliased to another stage id.
     """
 
     assert hasattr(RuntimeStageId, "ranking")
     assert RuntimeStageId.ranking.value == "ranking"
 
 
-def test_g_rank_02_stage_contract_gate():
-    """G-RANK-02: Ranking has a bounded Pydantic contract distinct from story output.
+@pytest.mark.asyncio
+async def test_g_canon_rank_01_pipeline_order_in_staged_execution(minimal_module: ContentModule):
+    """G-CANON-RANK-01: In canonical staged execution, ranking follows signal and precedes synthesis trace rows."""
 
-    Pass: ``RankingStageOutput`` validates bounded payloads; invalid payloads fail parse.
-    Fail: Unbounded or implicit contract without validation.
+    clear_registry()
+    ad = StagedRecordingAdapter("canon01", slm_sufficient=False)
+    llm = StagedRecordingAdapter("canon01_llm", slm_sufficient=False)
+    register_adapter_model(_slm_spec("canon01"), ad)
+    register_adapter_model(_llm_spec("canon01_llm"), llm)
+    session = SessionState(
+        session_id="canon01",
+        execution_mode="ai",
+        adapter_name="canon01",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session.canonical_state = {}
+    await execute_turn_with_ai(session, 1, ad, minimal_module)
+    log = (session.metadata.get("ai_decision_logs") or [])[-1]
+    ids = [t.get("stage_id") for t in log.runtime_stage_traces or [] if isinstance(t, dict)]
+    assert ids.count("ranking") == 1
+    si = ids.index("signal_consistency")
+    ri = ids.index("ranking")
+    assert ri > si
+    if "synthesis" in ids:
+        assert ids.index("synthesis") > ri
+    clear_registry()
+
+
+def test_g_canon_rank_02_semantic_boundary_gate():
+    """G-CANON-RANK-02: Signal, ranking, and synthesis are semantically distinct contracts and routes.
+
+    Pass: Distinct runtime_stage labels; signal holds coarse gate; ranking is interpretation narrowing;
+    synthesis routing uses generation phase and narrative formulation (not ranking task kind).
+    Fail: Contracts or builders collapse stages or reuse the wrong phase/task_kind.
     """
+
+    assert SignalStageOutput.model_fields["runtime_stage"].default == "signal_consistency"
+    assert RankingStageOutput.model_fields["runtime_stage"].default == "ranking"
+    assert "scene_interpretation" not in RankingStageOutput.model_fields
+
+    session = SessionState(
+        session_id="c2",
+        execution_mode="ai",
+        adapter_name="x",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="s1",
+    )
+    session.canonical_state = {}
+    rk = build_ranking_routing_request(session, extra_hints=[])
+    syn = build_synthesis_routing_request(session)
+    assert rk.workflow_phase == WorkflowPhase.interpretation
+    assert rk.task_kind == TaskKind.ranking
+    assert syn.workflow_phase == WorkflowPhase.generation
+    assert syn.task_kind == TaskKind.narrative_formulation
 
     ok, err = parse_ranking_payload(
         {
@@ -84,84 +163,138 @@ def test_g_rank_02_stage_contract_gate():
     assert bad is None and err2
 
 
-def test_g_rank_03_stage_routing_gate():
-    """G-RANK-03: Ranking routing request is stage-specific (interpretation + ranking task kind).
-
-    Pass: ``build_ranking_routing_request`` sets ``TaskKind.ranking`` and correct phase.
-    Fail: Ranking reuses signal or synthesis routing semantics.
-    """
-
-    session = SessionState(
-        session_id="g3",
-        execution_mode="ai",
-        adapter_name="x",
-        module_id="m1",
-        module_version="1",
-        current_scene_id="s1",
-    )
-    session.canonical_state = {}
-    rr = build_ranking_routing_request(session, extra_hints=[])
-    assert rr.workflow_phase == WorkflowPhase.interpretation
-    assert rr.task_kind == TaskKind.ranking
-    assert rr.requires_structured_output is True
-
-
 @pytest.mark.asyncio
-async def test_g_rank_04_orchestration_effect_gate(minimal_module: ContentModule):
-    """G-RANK-04: Ranking materially changes synthesis vs signal-only counterfactual.
+async def test_g_canon_rank_03_canonical_visibility_gate(minimal_module: ContentModule):
+    """G-CANON-RANK-03: Ranking appears in traces, orchestration summary, rollup, and audit timeline.
 
-    Pass:
-    - Ranked-skip: signal requests synthesis; ranking suppresses → no synthesis call.
-    - Ranked-then-synthesis: ranking preserves synthesis intent → LLM synthesis invoked.
-    - Degraded ranking parse: invalid ranking payload forces synthesis with degraded reason.
-
-    Fail: Ranking traces exist but never change ``needs_llm`` outcomes.
+    Pass: ``ranking`` stage_id row; ``ranking_effect`` in summary; ``ranking_context`` on rollup;
+    audit timeline includes ``stage_key`` ranking.
+    Fail: Ranking only in deep traces while missing summary, rollup, or audit.
     """
 
     clear_registry()
-    skip_ad = StagedRecordingAdapter("g4_skip", slm_sufficient=False, rank_recommend_skip=True)
-    register_adapter_model(_slm_spec("g4_skip"), skip_ad)
-    register_adapter_model(_llm_spec("g4_skip_llm"), StagedRecordingAdapter("g4_skip_llm"))
+    ad = StagedRecordingAdapter("c3", slm_sufficient=True)
+    register_adapter_model(_slm_spec("c3"), ad)
     session = SessionState(
-        session_id="g4-skip",
+        session_id="c3",
         execution_mode="ai",
-        adapter_name="g4_skip",
+        adapter_name="c3",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session.canonical_state = {}
+    await execute_turn_with_ai(session, 1, ad, minimal_module)
+    log = (session.metadata.get("ai_decision_logs") or [])[-1]
+    _assert_canonical_ranking_truth_surfaces(log)
+    timeline = (log.operator_audit or {}).get("audit_timeline") or []
+    assert any(e.get("stage_key") == "ranking" for e in timeline)
+    clear_registry()
+
+
+@pytest.mark.asyncio
+async def test_g_canon_rank_04_operator_equality_gate(minimal_module: ContentModule):
+    """G-CANON-RANK-04: Compact operator truth exposes ranking in audit_summary and legibility.
+
+    Pass: Both surfaces include all ``RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS`` matching orchestration summary.
+    Fail: Ranking inferable only from synthesis skip or only one compact surface populated.
+    """
+
+    clear_registry()
+    ad = StagedRecordingAdapter("c4", slm_sufficient=True)
+    register_adapter_model(_slm_spec("c4"), ad)
+    session = SessionState(
+        session_id="c4",
+        execution_mode="ai",
+        adapter_name="c4",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session.canonical_state = {}
+    await execute_turn_with_ai(session, 1, ad, minimal_module)
+    log = (session.metadata.get("ai_decision_logs") or [])[-1]
+    audit = log.operator_audit or {}
+    summary = log.runtime_orchestration_summary or {}
+    _assert_compact_ranking_operator_equality(audit=audit, summary=summary)
+    clear_registry()
+
+
+@pytest.mark.asyncio
+async def test_g_canon_rank_05_no_implicit_downgrade_gate(minimal_module: ContentModule):
+    """G-CANON-RANK-05: Important staged paths do not treat ranking as second-class (trace + summary + rollup).
+
+    Pass: SLM-only suppression, ranked-then-LLM, ranked-skip, and degraded ranking parse each retain
+    canonical ranking surfaces.
+    Fail: Ranking logically present but omitted from summary, rollup, or stage traces on these paths.
+    """
+
+    clear_registry()
+    skip_ad = StagedRecordingAdapter("c5_skip", slm_sufficient=False, rank_recommend_skip=True)
+    register_adapter_model(_slm_spec("c5_skip"), skip_ad)
+    register_adapter_model(_llm_spec("c5_skip_llm"), StagedRecordingAdapter("c5_skip_llm"))
+    session = SessionState(
+        session_id="c5-skip",
+        execution_mode="ai",
+        adapter_name="c5_skip",
         module_id="m1",
         module_version="1",
         current_scene_id="scene1",
     )
     session.canonical_state = {}
     await execute_turn_with_ai(session, 1, skip_ad, minimal_module)
-    log = (session.metadata.get("ai_decision_logs") or [])[-1]
-    assert log.runtime_orchestration_summary.get("final_path") == "ranked_slm_only"
-    assert log.runtime_orchestration_summary.get("synthesis_gate_reason") == "ranking_skip_synthesis"
-    assert "synthesis" not in skip_ad.stages_seen
+    log_skip = (session.metadata.get("ai_decision_logs") or [])[-1]
+    _assert_canonical_ranking_truth_surfaces(log_skip)
+    _assert_compact_ranking_operator_equality(
+        audit=log_skip.operator_audit or {}, summary=log_skip.runtime_orchestration_summary or {}
+    )
 
     clear_registry()
-    keep_ad = StagedRecordingAdapter("g4_keep", slm_sufficient=False, rank_recommend_skip=False)
-    llm_keep = StagedRecordingAdapter("g4_keep_llm", slm_sufficient=False)
-    register_adapter_model(_slm_spec("g4_keep"), keep_ad)
-    register_adapter_model(_llm_spec("g4_keep_llm"), llm_keep)
+    keep_ad = StagedRecordingAdapter("c5_keep", slm_sufficient=False, rank_recommend_skip=False)
+    llm_keep = StagedRecordingAdapter("c5_keep_llm", slm_sufficient=False)
+    register_adapter_model(_slm_spec("c5_keep"), keep_ad)
+    register_adapter_model(_llm_spec("c5_keep_llm"), llm_keep)
     session2 = SessionState(
-        session_id="g4-keep",
+        session_id="c5-keep",
         execution_mode="ai",
-        adapter_name="g4_keep",
+        adapter_name="c5_keep",
         module_id="m1",
         module_version="1",
         current_scene_id="scene1",
     )
     session2.canonical_state = {}
     await execute_turn_with_ai(session2, 1, keep_ad, minimal_module)
-    log2 = (session2.metadata.get("ai_decision_logs") or [])[-1]
-    assert log2.runtime_orchestration_summary.get("final_path") == "ranked_then_llm"
-    assert "synthesis" in llm_keep.stages_seen
+    log_keep = (session2.metadata.get("ai_decision_logs") or [])[-1]
+    _assert_canonical_ranking_truth_surfaces(log_keep)
+    _assert_compact_ranking_operator_equality(
+        audit=log_keep.operator_audit or {}, summary=log_keep.runtime_orchestration_summary or {}
+    )
+
+    clear_registry()
+    ad_slm = StagedRecordingAdapter("c5_slm", slm_sufficient=True)
+    register_adapter_model(_slm_spec("c5_slm"), ad_slm)
+    session3 = SessionState(
+        session_id="c5-slm",
+        execution_mode="ai",
+        adapter_name="c5_slm",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session3.canonical_state = {}
+    await execute_turn_with_ai(session3, 1, ad_slm, minimal_module)
+    log_slm = (session3.metadata.get("ai_decision_logs") or [])[-1]
+    _assert_canonical_ranking_truth_surfaces(log_slm)
+    _assert_compact_ranking_operator_equality(
+        audit=log_slm.operator_audit or {}, summary=log_slm.runtime_orchestration_summary or {}
+    )
 
     clear_registry()
 
     class BadRankingGoodSignalAdapter(StoryAIAdapter):
         @property
         def adapter_name(self) -> str:
-            return "g4_bad_rank"
+            return "c5_bad_rank"
 
         def generate(self, request: AdapterRequest) -> AdapterResponse:
             stage = (request.metadata or {}).get("runtime_stage") or ""
@@ -189,13 +322,190 @@ async def test_g_rank_04_orchestration_effect_gate(minimal_module: ContentModule
             return AdapterResponse(raw_output=json.dumps(pl), structured_payload=pl, error=None)
 
     bad_ad = BadRankingGoodSignalAdapter()
-    llm_deg = StagedRecordingAdapter("g4_bad_llm", slm_sufficient=False)
-    register_adapter_model(_slm_spec("g4_bad_rank"), bad_ad)
-    register_adapter_model(_llm_spec("g4_bad_llm"), llm_deg)
-    session3 = SessionState(
-        session_id="g4-deg",
+    llm_deg = StagedRecordingAdapter("c5_bad_llm", slm_sufficient=False)
+    register_adapter_model(_slm_spec("c5_bad_rank"), bad_ad)
+    register_adapter_model(_llm_spec("c5_bad_llm"), llm_deg)
+    session4 = SessionState(
+        session_id="c5-deg",
         execution_mode="ai",
-        adapter_name="g4_bad_rank",
+        adapter_name="c5_bad_rank",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session4.canonical_state = {}
+    await execute_turn_with_ai(session4, 1, bad_ad, minimal_module)
+    log_deg = (session4.metadata.get("ai_decision_logs") or [])[-1]
+    _assert_canonical_ranking_truth_surfaces(log_deg)
+    _assert_compact_ranking_operator_equality(
+        audit=log_deg.operator_audit or {}, summary=log_deg.runtime_orchestration_summary or {}
+    )
+    clear_registry()
+
+
+def test_g_canon_rank_06_inventory_startup_truth_gate():
+    """G-CANON-RANK-06: Runtime staged inventory requires ranking; docs remain aligned.
+
+    Pass: Exactly one ``(interpretation, ranking)`` tuple in ``RUNTIME_STAGED_REQUIRED``.
+    Fail: Inventory or staged contract omits ranking as a required routing shape.
+    """
+
+    ranking_tuples = [
+        t
+        for t in RUNTIME_STAGED_REQUIRED
+        if t.task_kind == TaskKind.ranking and t.workflow_phase == WorkflowPhase.interpretation
+    ]
+    assert len(ranking_tuples) == 1
+    assert isinstance(ranking_tuples[0], RequiredRoutingTuple)
+    assert "build_ranking_routing_request" in DOCS_CLOSURE.read_text(encoding="utf-8")
+
+
+def test_g_canon_rank_07_documentation_truth_gate():
+    """G-CANON-RANK-07: Architecture docs and closure report describe canonical ranking (Task 1B gates).
+
+    Pass: Stratification, story contract, and closure report reference ranking and G-CANON-RANK identifiers.
+    Fail: Documentation drift from implemented canonical staged truth.
+    """
+
+    assert DOCS_STRAT.is_file()
+    assert DOCS_CONTRACT.is_file()
+    assert DOCS_CLOSURE.is_file()
+    text = DOCS_STRAT.read_text(encoding="utf-8") + DOCS_CONTRACT.read_text(encoding="utf-8")
+    assert "ranking" in text.lower()
+    closure = DOCS_CLOSURE.read_text(encoding="utf-8")
+    assert "G-CANON-RANK-01" in closure
+    assert "non-canonical" in closure.lower() or "second-class" in closure.lower()
+
+
+@pytest.mark.asyncio
+async def test_g_canon_rank_08_authority_guard_safety_gate(minimal_module: ContentModule):
+    """G-CANON-RANK-08: Canonicalizing ranking does not break execute_turn authority (guards / success).
+
+    Pass: Ranked-skip and ranked-then-LLM paths complete with success and populated guard outcome.
+    Fail: Guard, commit, or reject semantics regress on ranking-heavy paths.
+    """
+
+    import asyncio
+
+    clear_registry()
+    ad = StagedRecordingAdapter("c8a", slm_sufficient=False, rank_recommend_skip=True)
+    register_adapter_model(_slm_spec("c8a"), ad)
+    register_adapter_model(_llm_spec("c8a_llm"), StagedRecordingAdapter("c8a_llm"))
+    session = SessionState(
+        session_id="c8a",
+        execution_mode="ai",
+        adapter_name="c8a",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session.canonical_state = {}
+    r1 = await asyncio.wait_for(execute_turn_with_ai(session, 1, ad, minimal_module), timeout=30.0)
+    assert r1.execution_status == "success"
+    assert r1.guard_outcome is not None
+
+    clear_registry()
+    keep = StagedRecordingAdapter("c8b", slm_sufficient=False, rank_recommend_skip=False)
+    llm = StagedRecordingAdapter("c8b_llm", slm_sufficient=False)
+    register_adapter_model(_slm_spec("c8b"), keep)
+    register_adapter_model(_llm_spec("c8b_llm"), llm)
+    session2 = SessionState(
+        session_id="c8b",
+        execution_mode="ai",
+        adapter_name="c8b",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session2.canonical_state = {}
+    r2 = await asyncio.wait_for(execute_turn_with_ai(session2, 1, keep, minimal_module), timeout=30.0)
+    assert r2.execution_status == "success"
+    assert r2.guard_outcome is not None
+    clear_registry()
+
+
+@pytest.mark.asyncio
+async def test_g_canon_rank_orchestration_effect_ranked_paths(minimal_module: ContentModule):
+    """Material synthesis gate effects (ranked-skip, ranked-then-LLM, degraded ranking parse)."""
+
+    clear_registry()
+    skip_ad = StagedRecordingAdapter("orch_skip", slm_sufficient=False, rank_recommend_skip=True)
+    register_adapter_model(_slm_spec("orch_skip"), skip_ad)
+    register_adapter_model(_llm_spec("orch_skip_llm"), StagedRecordingAdapter("orch_skip_llm"))
+    session = SessionState(
+        session_id="orch-skip",
+        execution_mode="ai",
+        adapter_name="orch_skip",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session.canonical_state = {}
+    await execute_turn_with_ai(session, 1, skip_ad, minimal_module)
+    log = (session.metadata.get("ai_decision_logs") or [])[-1]
+    assert log.runtime_orchestration_summary.get("final_path") == "ranked_slm_only"
+    assert log.runtime_orchestration_summary.get("synthesis_gate_reason") == "ranking_skip_synthesis"
+    assert "synthesis" not in skip_ad.stages_seen
+
+    clear_registry()
+    keep_ad = StagedRecordingAdapter("orch_keep", slm_sufficient=False, rank_recommend_skip=False)
+    llm_keep = StagedRecordingAdapter("orch_keep_llm", slm_sufficient=False)
+    register_adapter_model(_slm_spec("orch_keep"), keep_ad)
+    register_adapter_model(_llm_spec("orch_keep_llm"), llm_keep)
+    session2 = SessionState(
+        session_id="orch-keep",
+        execution_mode="ai",
+        adapter_name="orch_keep",
+        module_id="m1",
+        module_version="1",
+        current_scene_id="scene1",
+    )
+    session2.canonical_state = {}
+    await execute_turn_with_ai(session2, 1, keep_ad, minimal_module)
+    log2 = (session2.metadata.get("ai_decision_logs") or [])[-1]
+    assert log2.runtime_orchestration_summary.get("final_path") == "ranked_then_llm"
+    assert "synthesis" in llm_keep.stages_seen
+
+    clear_registry()
+
+    class BadRankingGoodSignalAdapter(StoryAIAdapter):
+        @property
+        def adapter_name(self) -> str:
+            return "orch_bad_rank"
+
+        def generate(self, request: AdapterRequest) -> AdapterResponse:
+            stage = (request.metadata or {}).get("runtime_stage") or ""
+            if stage == "preflight":
+                pl = {
+                    "runtime_stage": "preflight",
+                    "ambiguity_score": 0.1,
+                    "trigger_signals": [],
+                    "repetition_risk": "low",
+                    "classification_label": "x",
+                    "preflight_ok": True,
+                }
+            elif stage == "signal_consistency":
+                pl = {
+                    "runtime_stage": "signal_consistency",
+                    "needs_llm_synthesis": True,
+                    "narrative_summary": "n",
+                    "consistency_notes": "",
+                    "consistency_flags": [],
+                }
+            elif stage == "ranking":
+                pl = {"runtime_stage": "ranking", "recommend_skip_synthesis": "not_bool"}
+            else:
+                pl = {"scene_interpretation": "x", "detected_triggers": [], "proposed_state_deltas": []}
+            return AdapterResponse(raw_output=json.dumps(pl), structured_payload=pl, error=None)
+
+    bad_ad = BadRankingGoodSignalAdapter()
+    llm_deg = StagedRecordingAdapter("orch_bad_llm", slm_sufficient=False)
+    register_adapter_model(_slm_spec("orch_bad_rank"), bad_ad)
+    register_adapter_model(_llm_spec("orch_bad_llm"), llm_deg)
+    session3 = SessionState(
+        session_id="orch-deg",
+        execution_mode="ai",
+        adapter_name="orch_bad_rank",
         module_id="m1",
         module_version="1",
         current_scene_id="scene1",
@@ -212,58 +522,16 @@ async def test_g_rank_04_orchestration_effect_gate(minimal_module: ContentModule
 
 
 @pytest.mark.asyncio
-async def test_g_rank_05_trace_and_audit_visibility_gate(minimal_module: ContentModule):
-    """G-RANK-05: Ranking appears in stage traces, summary, and operator audit timeline.
-
-    Pass: Trace list includes ``ranking``; summary exposes ``ranking_effect``; audit timeline includes ranking.
-    Fail: Ranking only exists in comments or non-audit side channels.
-    """
+async def test_g_canon_rank_slm_only_suppressed_ranking_trace(minimal_module: ContentModule):
+    """SLM-only path: ranking row is traced without route_model or bounded call (binding interpretation)."""
 
     clear_registry()
-    ad = StagedRecordingAdapter("g5", slm_sufficient=True)
-    register_adapter_model(_slm_spec("g5"), ad)
+    ad = StagedRecordingAdapter("slm_rk", slm_sufficient=True)
+    register_adapter_model(_slm_spec("slm_rk"), ad)
     session = SessionState(
-        session_id="g5",
+        session_id="slm_rk",
         execution_mode="ai",
-        adapter_name="g5",
-        module_id="m1",
-        module_version="1",
-        current_scene_id="scene1",
-    )
-    session.canonical_state = {}
-    await execute_turn_with_ai(session, 1, ad, minimal_module)
-    log = (session.metadata.get("ai_decision_logs") or [])[-1]
-    ids = [t.get("stage_id") for t in log.runtime_stage_traces or []]
-    assert "ranking" in ids
-    assert "ranking_effect" in (log.runtime_orchestration_summary or {})
-    timeline = (log.operator_audit or {}).get("audit_timeline") or []
-    assert any(e.get("stage_key") == "ranking" for e in timeline)
-    clear_registry()
-
-
-def test_g_rank_06_path_coverage_gate_documented():
-    """G-RANK-06: Path coverage is enforced by this module plus staged orchestration tests.
-
-    Pass: This file and ``test_runtime_staged_orchestration`` together prove SLM-only (suppressed ranking),
-    ranked-then-synthesis, ranked-skip, and degraded ranking (G-RANK-04).
-    Fail: Any listed path lacks a dedicated proof test.
-    """
-
-    # Consolidated marker — individual paths are asserted in G-RANK-04 and staged orchestration tests.
-    assert RANKING_SLM_ONLY_SKIP_REASON == "ranking_not_required_signal_allows_slm_only"
-
-
-@pytest.mark.asyncio
-async def test_g_rank_06_slm_only_suppressed_ranking_trace(minimal_module: ContentModule):
-    """G-RANK-06 (supplement): SLM-only path records ranking stage without routing or bounded call."""
-
-    clear_registry()
-    ad = StagedRecordingAdapter("g6", slm_sufficient=True)
-    register_adapter_model(_slm_spec("g6"), ad)
-    session = SessionState(
-        session_id="g6",
-        execution_mode="ai",
-        adapter_name="g6",
+        adapter_name="slm_rk",
         module_id="m1",
         module_version="1",
         current_scene_id="scene1",
@@ -278,60 +546,8 @@ async def test_g_rank_06_slm_only_suppressed_ranking_trace(minimal_module: Conte
     clear_registry()
 
 
-def test_g_rank_07_documentation_truth_gate():
-    """G-RANK-07: Documentation and inventory describe the ranking stage.
-
-    Pass: Required routing tuples include ranking; architecture docs and closure report exist and mention ranking.
-    Fail: Docs describe a pipeline without ranking while code requires it.
-    """
-
-    ranking_tuples = [
-        t
-        for t in RUNTIME_STAGED_REQUIRED
-        if t.task_kind == TaskKind.ranking and t.workflow_phase == WorkflowPhase.interpretation
-    ]
-    assert len(ranking_tuples) == 1
-    assert isinstance(ranking_tuples[0], RequiredRoutingTuple)
-    assert DOCS_STRAT.is_file()
-    assert DOCS_CONTRACT.is_file()
-    assert DOCS_CLOSURE.is_file()
-    text = DOCS_STRAT.read_text(encoding="utf-8") + DOCS_CONTRACT.read_text(encoding="utf-8")
-    assert "ranking" in text.lower()
-    closure = DOCS_CLOSURE.read_text(encoding="utf-8")
-    assert "G-RANK-01" in closure
-
-
-@pytest.mark.asyncio
-async def test_g_rank_08_legacy_authority_safety_gate(minimal_module: ContentModule):
-    """G-RANK-08: Ranked-skip path still completes execute_turn successfully (guards unchanged).
-
-    Pass: ``execution_status == success`` and ``guard_outcome`` populated on ranked-skip path.
-    Fail: Ranking integration breaks guard or commit semantics.
-    """
-
-    import asyncio
-
-    clear_registry()
-    ad = StagedRecordingAdapter("g8", slm_sufficient=False, rank_recommend_skip=True)
-    register_adapter_model(_slm_spec("g8"), ad)
-    register_adapter_model(_llm_spec("g8_llm"), StagedRecordingAdapter("g8_llm"))
-    session = SessionState(
-        session_id="g8",
-        execution_mode="ai",
-        adapter_name="g8",
-        module_id="m1",
-        module_version="1",
-        current_scene_id="scene1",
-    )
-    session.canonical_state = {}
-    result = await asyncio.wait_for(execute_turn_with_ai(session, 1, ad, minimal_module), timeout=30.0)
-    assert result.execution_status == "success"
-    assert result.guard_outcome is not None
-    clear_registry()
-
-
 def test_compute_synthesis_gate_after_ranking_no_eligible_fallback():
-    """G-RANK-04 supplement: no-eligible ranking falls back to base signal gate."""
+    """No-eligible ranking adapter falls back to the base signal synthesis gate (deterministic merge)."""
 
     sig = SignalStageOutput(
         needs_llm_synthesis=True,

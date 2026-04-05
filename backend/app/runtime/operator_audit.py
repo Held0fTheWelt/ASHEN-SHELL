@@ -10,6 +10,14 @@ from typing import Any
 
 AUDIT_SCHEMA_VERSION = "1"
 
+# Mirrored from ``runtime_orchestration_summary`` for compact operator_audit (canonical staged Runtime).
+RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS: tuple[str, ...] = (
+    "ranking_effect",
+    "ranking_bounded_model_call",
+    "ranking_suppressed_for_slm_only",
+    "ranking_no_eligible_adapter",
+)
+
 _SEVERITY_RANK = {"normal": 0, "elevated": 1, "degraded": 2, "failed_selection": 3}
 
 # First matching code wins when scanning merged diagnostics_causes from traces (deterministic).
@@ -339,6 +347,9 @@ def build_runtime_operator_audit(
             "model_routing_trace is the legacy rollup."
         ),
     }
+    for _rk in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        if _rk in summary:
+            audit_summary[_rk] = summary[_rk]
 
     return {
         "audit_schema_version": AUDIT_SCHEMA_VERSION,
