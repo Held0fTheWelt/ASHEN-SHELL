@@ -12,7 +12,7 @@ This layer chooses an **adapter name** (and echoes provider/model from the spec)
 
 ### Task 2B — where routing is wired
 
-- **Canonical runtime AI path** (`execute_turn_with_ai` in `backend/app/runtime/ai_turn_executor.py`): builds a minimal `RoutingRequest` from session/context, calls `route_model(...)` **once** before adapter execution, resolves the executable adapter by name, and falls back to the caller-supplied adapter when no eligible spec-backed adapter exists (e.g. `no_eligible_adapter`). Guard legality, commit semantics, and reject behavior are unchanged. A compact **`model_routing_trace`** is attached to `AIDecisionLog` (full `RoutingRequest` / `RoutingDecision` JSON plus legacy fields). **Task 2C-2** adds a nested **`routing_evidence`** object with a stable cross-surface summary (`requested_workflow_phase`, `requested_task_kind`, selected vs executed adapter, `route_reason_code`, `fallback_chain`, flags, `no_eligible_spec_selection`, runtime-only `passed_adapter_name` / `fallback_to_passed_adapter`). **Task 2D** adds `policy_execution_aligned` and `execution_deviation` where the implementation can know them. This is observability for operators, not a telemetry product.
+- **Canonical runtime AI path** (`execute_turn_with_ai` in `backend/app/runtime/ai_turn_executor.py`): **Task 1** adds **multi-stage Runtime orchestration** in `backend/app/runtime/runtime_ai_stages.py` when `runtime_staged_orchestration` is not disabled in session metadata (default: enabled). The pipeline runs **preflight** (`WorkflowPhase.preflight`, `TaskKind.cheap_preflight`) and **signal / consistency** (`WorkflowPhase.interpretation`, `TaskKind.repetition_consistency_check`) as separate `route_model` + bounded `generate` calls when eligible specs exist; **LLM-heavy synthesis** (`WorkflowPhase.generation`, session-configured task kind, default `narrative_formulation`) runs **only when** the signal stage (plus deterministic parse-safety rules) indicates `needs_llm_synthesis`. Otherwise the runtime uses an **SLM-only packaging** path: deterministic construction of canonical structured story JSON for `process_adapter_response` — still advisory; **guards, commit, and reject semantics in `execute_turn` are unchanged**. When early stages have **no eligible adapter**, traces record honest `skip_reason` values and the pipeline **degrades** toward synthesis-only or passed-adapter execution as implemented. **`model_routing_trace`** remains a **legacy-shaped rollup** (synthesis stage when ran, else signal-stage rollup for SLM-only); per-stage detail lives in **`runtime_stage_traces`** and **`runtime_orchestration_summary`** on `AIDecisionLog`. Each stage record may embed **`routing_evidence`** via `attach_stage_routing_evidence`. **Supervisor `agent_orchestration`** **preempts** the staged pipeline; `runtime_orchestration_summary` records `staged_pipeline_preempted: agent_orchestration`. Set **`runtime_staged_orchestration: false`** to restore the legacy single `route_model` + single generate path (used for regression tests). **Task 2C-2** `routing_evidence` on the rollup trace behaves as before where applicable. **Task 2D** alignment/deviation fields apply per nested stage evidence when populated.
 - **Writers Room** (`backend/app/services/writers_room_service.py`): model choice no longer uses `story_runtime_core.RoutingPolicy`. Specs are built via `backend/app/services/writers_room_model_routing.py` and **two honest routing stages** call `route_model`: **Stage A** (preflight / cheap task kinds) as an optional bounded model call when a routed adapter resolves; **Stage B** (synthesis / generation). `model_generation.task_2a_routing` exposes `preflight` / `synthesis` traces; each stage includes **`routing_evidence`** in the same normalized shape as runtime (bounded-call / skip fields filled where applicable; synthesis uses the provider that actually produced content when known).
 - **Improvement** (`backend/app/api/v1/improvement_routes.py` + `backend/app/services/improvement_task2a_routing.py`): after the deterministic recommendation package is built, **two** `route_model` stages (preflight + synthesis, same spec source as Writers Room) attach **`task_2a_routing`** and **`model_assisted_interpretation`** to the persisted recommendation package. Sandbox metrics and threshold-based recommendation labels remain the truth-bearing base; `deterministic_recommendation_base` is set before transcript suffixes. Bounded model calls are optional; traces stay honest when no adapter resolves (`no_eligible_adapter_or_missing_provider_adapter`). Each stage carries **`routing_evidence`** aligned with the shared helper in `backend/app/runtime/model_routing_evidence.py`.
 
@@ -36,7 +36,7 @@ Task 2A routing is **cross-model** stratification: which registered adapter (LLM
 
 - **2C-1**: Improvement HTTP path uses Task-2A routing as **bounded enrichment** around the deterministic evaluation core (no model override of governance or threshold semantics).
 - **2C-2**: **Normalized `routing_evidence`** is shared across Runtime (`model_routing_trace`), Writers Room (`task_2a_routing` stages), and Improvement (`task_2a_routing` stages). This does **not** add new dashboards, product-wide telemetry, or deeper `RouteReasonCode` semantics than `route_model` actually emits.
-- **Still not claimed**: multi-stage narrative pipelines in runtime (still **route once, execute one adapter** per turn), or “full stack” observability beyond these JSON surfaces.
+- **Runtime Task 1 (implemented)**: chained **preflight → signal → conditional synthesis** with inspectable traces; not “full stack” observability beyond the documented JSON surfaces.
 
 ## Task 2E (escalation policy — single evaluation, honest semantics)
 
@@ -53,7 +53,7 @@ Task 2E **does not** add a second routing pipeline or Runtime multi-stage orches
 
 ### Task 2E-R1 (narrow structured-output gap)
 
-The primary code `escalation_due_to_structured_output_gap` fires only when `requires_structured_output` is true **and** structured-output filtering changes the **selected primary adapter** compared to a counterfactual evaluation on the full pre-structured eligible set (`eligible_all` through the same stages). Global shrinkage of the eligible list alone is **not** sufficient. The staged Task 2E ordering inside `route_model` is unchanged; deep Runtime multi-stage orchestration remains out of scope.
+The primary code `escalation_due_to_structured_output_gap` fires only when `requires_structured_output` is true **and** structured-output filtering changes the **selected primary adapter** compared to a counterfactual evaluation on the full pre-structured eligible set (`eligible_all` through the same stages). Global shrinkage of the eligible list alone is **not** sufficient. The staged Task 2E ordering inside **each** `route_model` call is unchanged. **Task 1** composes multiple such calls across Runtime stages; it does not change Task 2E’s internal precedence.
 
 ### Hard vs soft escalation signals
 
@@ -83,7 +83,7 @@ This field is **unchanged** for backward compatibility. It keeps the Task 2E lon
 
 ### Task 2F — compact operator diagnostics (readability only)
 
-Task 2F adds **additive** keys on the same `routing_evidence` object. It does **not** change `route_model`, guard/commit/reject semantics, or Runtime orchestration (still route once, execute one adapter per canonical turn).
+Task 2F adds **additive** keys on the same `routing_evidence` object. It does **not** change `route_model`, guard/commit/reject semantics, or **authoritative** Runtime execution. **Task 1** may attach Task 2F diagnostics **per stage** inside `runtime_stage_traces` entries where `routing_evidence` is present.
 
 - **`diagnostics_overview`**: `{ title, summary, severity, operator_hint, short_explanation }`.
   - **`summary`** uses a **small fixed vocabulary** (e.g. `Primary route`, `Escalated route`, `Fallback route`, `No eligible spec`, `Execution deviation`, `Degraded route`) so operators can scan outcomes quickly.
@@ -116,7 +116,7 @@ Built by `build_routing_evidence` in `backend/app/runtime/model_routing_evidence
 
 ### Still out of scope
 
-Deep **multi-stage Runtime orchestration** (chained SLM→LLM narrative pipelines inside `execute_turn_with_ai`) remains **out of scope**. Runtime stays **route once, execute one adapter** per canonical turn. **Authoritative truth** for governance and engine state does not move into model output; routing traces are observability only.
+**Task 1** implements **bounded** multi-stage Runtime orchestration; it does **not** add new guard rules, autonomous multi-turn editorial agents, or product-wide telemetry. **Authoritative truth** for governance and engine state remains outside model output; stage outputs and traces are **observability and advisory packaging** only. Optional **legacy** single-pass behavior remains available via `runtime_staged_orchestration: false`.
 
 ## Honest limits
 

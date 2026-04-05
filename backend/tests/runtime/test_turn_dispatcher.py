@@ -5,10 +5,22 @@ routes to mock or AI execution based on session.execution_mode.
 """
 
 import asyncio
+
 import pytest
+
+from app.runtime.adapter_registry import clear_registry
 from app.runtime.ai_adapter import AdapterResponse, StoryAIAdapter
 from app.runtime.turn_dispatcher import dispatch_turn
+from .staged_test_payloads import maybe_staged_prelude_response
 from app.runtime.turn_executor import MockDecision
+
+
+@pytest.fixture(autouse=True)
+def _clear_adapter_registry_for_dispatcher_tests() -> None:
+    """Isolate dispatcher tests from model specs registered elsewhere in the suite."""
+    clear_registry()
+    yield
+    clear_registry()
 
 
 class DeterministicTestAdapter(StoryAIAdapter):
@@ -19,6 +31,9 @@ class DeterministicTestAdapter(StoryAIAdapter):
         return "test-adapter"
 
     def generate(self, request):
+        prelude = maybe_staged_prelude_response(request)
+        if prelude is not None:
+            return prelude
         return AdapterResponse(
             raw_output="[test adapter output]",
             structured_payload={
@@ -41,6 +56,9 @@ class ToolLoopDispatcherAdapter(StoryAIAdapter):
         return "tool-loop-dispatcher-adapter"
 
     def generate(self, request):
+        prelude = maybe_staged_prelude_response(request)
+        if prelude is not None:
+            return prelude
         self._calls += 1
         if self._calls == 1:
             return AdapterResponse(
@@ -73,6 +91,9 @@ class PreviewLoopDispatcherAdapter(StoryAIAdapter):
         return "preview-loop-dispatcher-adapter"
 
     def generate(self, request):
+        prelude = maybe_staged_prelude_response(request)
+        if prelude is not None:
+            return prelude
         self._calls += 1
         if self._calls == 1:
             return AdapterResponse(

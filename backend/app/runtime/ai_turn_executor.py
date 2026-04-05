@@ -504,6 +504,8 @@ def _create_error_decision_log(
     error_type: str,
     *,
     model_routing_trace: dict[str, Any] | None = None,
+    runtime_stage_traces: list[dict[str, Any]] | None = None,
+    runtime_orchestration_summary: dict[str, Any] | None = None,
 ) -> AIDecisionLog:
     """Create AIDecisionLog for error paths (parse error, adapter error).
 
@@ -532,6 +534,8 @@ def _create_error_decision_log(
         guard_notes=guard_notes,
         guard_outcome=GuardOutcome.STRUCTURALLY_INVALID,
         model_routing_trace=model_routing_trace,
+        runtime_stage_traces=runtime_stage_traces,
+        runtime_orchestration_summary=runtime_orchestration_summary,
     )
 
 
@@ -636,21 +640,10 @@ async def execute_turn_with_ai(
     except (TypeError, ValueError):
         adapter_generate_timeout_ms = 30000
 
-    routing_request = build_runtime_routing_request(session)
-    routing_decision = route_model(routing_request)
-    resolved_from_registry = None
-    if routing_decision.selected_adapter_name:
-        resolved_from_registry = get_adapter(routing_decision.selected_adapter_name)
-    execution_adapter = resolved_from_registry if resolved_from_registry is not None else adapter
-    model_routing_trace = build_model_routing_trace_dict(
-        routing_request=routing_request,
-        routing_decision=routing_decision,
-        passed_adapter=adapter,
-        execution_adapter=execution_adapter,
-        resolved_via_get_adapter=resolved_from_registry is not None,
-    )
-    if isinstance(session.metadata, dict):
-        session.metadata["last_model_routing_trace"] = model_routing_trace
+    runtime_stage_traces_for_log: list[dict[str, Any]] | None = None
+    runtime_orchestration_summary_for_log: dict[str, Any] | None = None
+    staged_result_holder = None
+    staged_enabled = session.metadata.get("runtime_staged_orchestration", True) is not False
 
     interpretation_logged_for_turn = False
 
@@ -712,6 +705,63 @@ async def execute_turn_with_ai(
                 session.degraded_state.marker_timestamps[DegradedMarker.DEGRADED] = (
                     datetime.now(timezone.utc)
                 )
+
+    # Routing + optional multi-stage Runtime orchestration (Task 1). ``execution_adapter`` must
+    # be set before ``_generate_with_runtime_policy`` is invoked (legacy / tool-loop paths).
+    if orchestration_enabled:
+        routing_request = build_runtime_routing_request(session)
+        routing_decision = route_model(routing_request)
+        resolved_from_registry = None
+        if routing_decision.selected_adapter_name:
+            resolved_from_registry = get_adapter(routing_decision.selected_adapter_name)
+        execution_adapter = resolved_from_registry if resolved_from_registry is not None else adapter
+        model_routing_trace = build_model_routing_trace_dict(
+            routing_request=routing_request,
+            routing_decision=routing_decision,
+            passed_adapter=adapter,
+            execution_adapter=execution_adapter,
+            resolved_via_get_adapter=resolved_from_registry is not None,
+        )
+        if isinstance(session.metadata, dict):
+            session.metadata["last_model_routing_trace"] = model_routing_trace
+        runtime_orchestration_summary_for_log = {
+            "staged_pipeline_preempted": "agent_orchestration",
+            "reason": "supervisor_orchestrator_handles_full_turn_no_runtime_stages",
+        }
+        runtime_stage_traces_for_log = []
+    elif staged_enabled:
+        from app.runtime.runtime_ai_stages import run_runtime_staged_generation
+
+        staged_result_holder = run_runtime_staged_generation(
+            session=session,
+            passed_adapter=adapter,
+            adapter_generate_timeout_ms=adapter_generate_timeout_ms,
+            build_adapter_request_fn=_build_request,
+            enrich_request_fn=_enrich_request_with_mcp,
+            mark_retry_context_fn=_mark_reduced_context_if_needed,
+        )
+        model_routing_trace = staged_result_holder.model_routing_trace
+        runtime_stage_traces_for_log = staged_result_holder.runtime_stage_traces
+        runtime_orchestration_summary_for_log = staged_result_holder.runtime_orchestration_summary
+        execution_adapter = staged_result_holder.final_execution_adapter or adapter
+        if isinstance(session.metadata, dict):
+            session.metadata["last_model_routing_trace"] = model_routing_trace
+    else:
+        routing_request = build_runtime_routing_request(session)
+        routing_decision = route_model(routing_request)
+        resolved_from_registry = None
+        if routing_decision.selected_adapter_name:
+            resolved_from_registry = get_adapter(routing_decision.selected_adapter_name)
+        execution_adapter = resolved_from_registry if resolved_from_registry is not None else adapter
+        model_routing_trace = build_model_routing_trace_dict(
+            routing_request=routing_request,
+            routing_decision=routing_decision,
+            passed_adapter=adapter,
+            execution_adapter=execution_adapter,
+            resolved_via_get_adapter=resolved_from_registry is not None,
+        )
+        if isinstance(session.metadata, dict):
+            session.metadata["last_model_routing_trace"] = model_routing_trace
 
     def _generate_with_runtime_policy(
         *,
@@ -856,6 +906,12 @@ async def execute_turn_with_ai(
             "finalized_after_tool_use": False,
             "execution_controls": execution_controls,
         }
+    elif staged_enabled and staged_result_holder is not None:
+        response = staged_result_holder.response
+        if staged_result_holder.synthesis_skipped:
+            current_attempt = 1
+        else:
+            current_attempt = max(1, staged_result_holder.synthesis_attempt_count)
     else:
         response, current_attempt = _generate_with_runtime_policy(starting_attempt=1)
 
@@ -869,6 +925,8 @@ async def execute_turn_with_ai(
             [response.error] if response.error else ["Empty AI response"],
             "adapter_error" if response.error else "generation_error",
             model_routing_trace=model_routing_trace,
+            runtime_stage_traces=runtime_stage_traces_for_log,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
         )
         _store_decision_log(session, error_log)
 
@@ -989,6 +1047,8 @@ async def execute_turn_with_ai(
                         orchestration_cache=orchestration_cache,
                         tool_audit=tool_audit,
                         model_routing_trace=model_routing_trace,
+                        runtime_stage_traces=runtime_stage_traces_for_log,
+                        runtime_orchestration_summary=runtime_orchestration_summary_for_log,
                     )
                     # Set recovery_notes with restore metadata
                     decision_log.recovery_notes = restore_notes
@@ -1061,6 +1121,8 @@ async def execute_turn_with_ai(
                 orchestration_cache=orchestration_cache,
                 tool_audit=tool_audit,
                 model_routing_trace=model_routing_trace,
+                runtime_stage_traces=runtime_stage_traces_for_log,
+                runtime_orchestration_summary=runtime_orchestration_summary_for_log,
             )
             _store_decision_log(session, decision_log)
 
@@ -1238,6 +1300,8 @@ async def execute_turn_with_ai(
             orchestration_cache=orchestration_cache,
             tool_audit=tool_audit,
             model_routing_trace=model_routing_trace,
+            runtime_stage_traces=runtime_stage_traces_for_log,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
         )
         _store_decision_log(session, decision_log)
         return turn_result
@@ -1265,6 +1329,8 @@ async def execute_turn_with_ai(
             parse_result.errors,
             "parse_error",
             model_routing_trace=model_routing_trace,
+            runtime_stage_traces=runtime_stage_traces_for_log,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
         )
         _store_decision_log(session, error_log)
 
@@ -1337,6 +1403,8 @@ async def execute_turn_with_ai(
             orchestration_cache=orchestration_cache,
             tool_audit=tool_audit,
             model_routing_trace=model_routing_trace,
+            runtime_stage_traces=runtime_stage_traces_for_log,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
         )
         _store_decision_log(session, decision_log)
 
@@ -1380,6 +1448,8 @@ async def execute_turn_with_ai(
             policy_validation_errors,
             "policy_validation_error",
             model_routing_trace=model_routing_trace,
+            runtime_stage_traces=runtime_stage_traces_for_log,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
         )
         _store_decision_log(session, error_log)
 
@@ -1447,6 +1517,8 @@ async def execute_turn_with_ai(
             orchestration_cache=orchestration_cache,
             tool_audit=tool_audit,
             model_routing_trace=model_routing_trace,
+            runtime_stage_traces=runtime_stage_traces_for_log,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
         )
         _store_decision_log(session, decision_log)
 
@@ -1517,6 +1589,8 @@ async def execute_turn_with_ai(
         orchestration_cache=orchestration_cache,
         tool_audit=tool_audit,
         model_routing_trace=model_routing_trace,
+        runtime_stage_traces=runtime_stage_traces_for_log,
+        runtime_orchestration_summary=runtime_orchestration_summary_for_log,
     )
     _store_decision_log(session, decision_log)
 

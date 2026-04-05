@@ -267,6 +267,49 @@ class MockStoryAIAdapter(StoryAIAdapter):
             f"session={request.session_id[:8]}"
         )
 
+        # Task 1: bounded stage payloads for multi-stage Runtime orchestration tests (metadata-driven).
+        stage = (request.metadata or {}).get("runtime_stage")
+        if stage == "preflight":
+            structured_payload = {
+                "runtime_stage": "preflight",
+                "ambiguity_score": 0.1,
+                "trigger_signals": [],
+                "repetition_risk": "low",
+                "classification_label": "mock",
+                "preflight_ok": True,
+            }
+            return AdapterResponse(
+                raw_output=raw,
+                structured_payload=structured_payload,
+                backend_metadata={
+                    "adapter": "mock",
+                    "deterministic": True,
+                    "latency_ms": 0,
+                    "runtime_stage": "preflight",
+                },
+                error=None,
+            )
+        if stage == "signal_consistency":
+            structured_payload = {
+                "runtime_stage": "signal_consistency",
+                "needs_llm_synthesis": True,
+                "skip_synthesis_reason": None,
+                "narrative_summary": "[mock] signal narrative summary",
+                "consistency_notes": "mock stable",
+                "consistency_flags": [],
+            }
+            return AdapterResponse(
+                raw_output=raw,
+                structured_payload=structured_payload,
+                backend_metadata={
+                    "adapter": "mock",
+                    "deterministic": True,
+                    "latency_ms": 0,
+                    "runtime_stage": "signal_consistency",
+                },
+                error=None,
+            )
+
         # If role-structured output requested, return AIRoleContract shape
         if request.request_role_structured_output:
             structured_payload = _create_mock_role_contract()

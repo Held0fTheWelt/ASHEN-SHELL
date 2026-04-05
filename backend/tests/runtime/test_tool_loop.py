@@ -6,8 +6,12 @@ import asyncio
 import time
 from typing import Any
 
+import pytest
+
+from app.runtime.adapter_registry import clear_registry
 from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapter
 from app.runtime.ai_turn_executor import execute_turn_with_ai
+from .staged_test_payloads import maybe_staged_prelude_response
 from app.runtime.tool_loop import (
     HostToolContext,
     ToolCallStatus,
@@ -16,6 +20,14 @@ from app.runtime.tool_loop import (
     ToolRequest,
     execute_tool_request,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clear_adapter_registry_for_tool_loop_tests() -> None:
+    """Prevent Task 2A model specs from prior tests from hijacking staged routing."""
+    clear_registry()
+    yield
+    clear_registry()
 
 
 FINAL_PAYLOAD = {
@@ -38,6 +50,9 @@ class SequencedToolLoopAdapter(StoryAIAdapter):
         return "sequenced-tool-loop-adapter"
 
     def generate(self, request: AdapterRequest) -> AdapterResponse:
+        prelude = maybe_staged_prelude_response(request)
+        if prelude is not None:
+            return prelude
         payload = self._payloads[min(self._index, len(self._payloads) - 1)]
         self._index += 1
         return AdapterResponse(
@@ -54,6 +69,9 @@ class ForeverToolRequestAdapter(StoryAIAdapter):
         return "forever-tool-request-adapter"
 
     def generate(self, request: AdapterRequest) -> AdapterResponse:
+        prelude = maybe_staged_prelude_response(request)
+        if prelude is not None:
+            return prelude
         return AdapterResponse(
             raw_output="[tool-loop] forever",
             structured_payload={

@@ -686,6 +686,10 @@ class AIDecisionLog(BaseModel):
     # Task 2B: cross-model routing evidence (Task 2A route_model); not full observability closure
     model_routing_trace: dict[str, Any] | None = None
 
+    # Task 1: multi-stage Runtime orchestration (additive diagnostics; not authoritative)
+    runtime_stage_traces: list[dict[str, Any]] | None = None
+    runtime_orchestration_summary: dict[str, Any] | None = None
+
 
 __all__ = [
     "AIDecisionAction",
