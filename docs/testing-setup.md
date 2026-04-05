@@ -4,9 +4,31 @@ This document explains how to install test dependencies, run tests, understand t
 
 ## Quick Start
 
-### Install Test Dependencies
+### CRITICAL: Install Dependencies First
 
-For testing the backend in a clean environment:
+**Tests CANNOT run without installing dependencies.** This is the mandatory first step.
+
+#### Automatic Setup (Recommended)
+
+Run the setup script to install all dependencies automatically:
+
+```bash
+# macOS / Linux
+./setup-test-environment.sh
+
+# Windows
+setup-test-environment.bat
+```
+
+This script will:
+1. Install all production dependencies from `backend/requirements.txt`
+2. Install all test dependencies from `backend/requirements-test.txt`
+3. Verify that critical packages (flask, sqlalchemy, pytest, etc.) are installed
+4. Report any missing packages
+
+#### Manual Setup
+
+If you prefer to install manually, run:
 
 ```bash
 cd backend
@@ -19,6 +41,16 @@ Or, for development (includes testing plus optional dev tools):
 cd backend
 pip install -r requirements-dev.txt
 ```
+
+#### Verify Installation
+
+To verify dependencies are installed:
+
+```bash
+python -c "import flask, sqlalchemy, flask_sqlalchemy, flask_migrate, flask_limiter, pytest, pytest_asyncio; print('All dependencies installed')"
+```
+
+If you see `ModuleNotFoundError`, dependencies are **not installed**. Re-run the setup script.
 
 ### Run Canonical Smoke Suite
 

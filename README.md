@@ -110,9 +110,25 @@ It starts:
 
 ## Testing
 
+### ⚠️ CRITICAL: Install Dependencies First
+
+Tests **CANNOT run without dependencies**. Before running any tests, you MUST install them:
+
+```bash
+# Automatic setup (recommended)
+./setup-test-environment.sh       # macOS/Linux
+setup-test-environment.bat        # Windows
+
+# Or install manually
+cd backend
+pip install -r requirements.txt -r requirements-test.txt
+```
+
+If you see `ModuleNotFoundError: No module named 'flask'` or similar, you **have not installed dependencies**. Run the setup script above.
+
 ### Quick Start: Canonical Smoke Suite
 
-Validate core repository health in seconds:
+After dependencies are installed, validate core repository health in seconds:
 
 ```bash
 # macOS / Linux
