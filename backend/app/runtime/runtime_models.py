@@ -690,6 +690,9 @@ class AIDecisionLog(BaseModel):
     runtime_stage_traces: list[dict[str, Any]] | None = None
     runtime_orchestration_summary: dict[str, Any] | None = None
 
+    # Task 3: operator audit layer (derived-only; does not replace routing_evidence / diagnostics_*)
+    operator_audit: dict[str, Any] | None = None
+
 
 __all__ = [
     "AIDecisionAction",

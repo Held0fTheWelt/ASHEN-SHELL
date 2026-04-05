@@ -200,6 +200,17 @@ async def test_staged_pipeline_runs_preflight_signal_and_synthesis_when_escalate
         if st.get("stage_id") in ("preflight", "signal_consistency", "synthesis"):
             assert "routing_evidence" in st
 
+    assert log.operator_audit is not None
+    assert log.operator_audit.get("audit_schema_version")
+    assert log.operator_audit.get("audit_timeline")
+    packaging_entries = [e for e in log.operator_audit["audit_timeline"] if e.get("stage_key") == "packaging"]
+    assert packaging_entries, "packaging stage must appear on audit timeline"
+    assert packaging_entries[-1].get("stage_kind") == "packaging"
+    orch = log.runtime_orchestration_summary or {}
+    assert "packaging" in orch.get("stages_without_bounded_model_call_by_design", [])
+    assert "packaging" not in orch.get("stages_skipped_no_eligible_adapter", [])
+    assert log.operator_audit["audit_summary"].get("final_path") == "slm_then_llm"
+
 
 @pytest.mark.asyncio
 async def test_staged_pipeline_skips_synthesis_when_slm_sufficient(minimal_module: ContentModule):
@@ -231,6 +242,12 @@ async def test_staged_pipeline_skips_synthesis_when_slm_sufficient(minimal_modul
     assert trace.get("rollup_mode") == "slm_only_signal_stage"
     assert trace.get("synthesis_skipped") is True
 
+    assert log.operator_audit is not None
+    assert log.operator_audit["audit_summary"].get("synthesis_gate_reason") == summary.get(
+        "synthesis_gate_reason"
+    )
+    assert log.operator_audit["audit_summary"].get("synthesis_skipped") is True
+
 
 @pytest.mark.asyncio
 async def test_staged_orchestration_disabled_uses_legacy_single_routing(minimal_module: ContentModule):
@@ -256,6 +273,10 @@ async def test_staged_orchestration_disabled_uses_legacy_single_routing(minimal_
     log = (session.metadata.get("ai_decision_logs") or [])[-1]
     assert log.runtime_stage_traces is None
     assert log.runtime_orchestration_summary is None
+    assert log.operator_audit is not None
+    assert log.operator_audit["audit_summary"].get("surface") == "runtime"
+    tl = log.operator_audit.get("audit_timeline") or []
+    assert any(e.get("stage_key") == "legacy_single_route" for e in tl)
 
 
 @pytest.mark.asyncio

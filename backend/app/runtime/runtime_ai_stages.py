@@ -28,6 +28,7 @@ from app.runtime.model_routing_contracts import (
     WorkflowPhase,
 )
 from app.runtime.model_routing_evidence import attach_stage_routing_evidence, build_routing_evidence
+from app.runtime.operator_audit import build_runtime_operator_audit, runtime_additive_orchestration_fields
 from app.runtime.runtime_models import DegradedMarker, SessionState
 
 
@@ -278,6 +279,7 @@ def _trace_dict_for_stage(
 ) -> dict[str, Any]:
     trace: dict[str, Any] = {
         "stage_id": stage_id.value,
+        "stage_kind": "routed_model_stage",
         "bounded_model_call": bounded_model_call,
         "skip_reason": skip_reason,
         "request": routing_request.model_dump(mode="json"),
@@ -378,6 +380,7 @@ class StagedGenerationResult:
     runtime_stage_traces: list[dict[str, Any]] = field(default_factory=list)
     runtime_orchestration_summary: dict[str, Any] = field(default_factory=dict)
     model_routing_trace: dict[str, Any] = field(default_factory=dict)
+    operator_audit: dict[str, Any] = field(default_factory=dict)
     synthesis_skipped: bool = False
     final_path: OrchestrationFinalPath = OrchestrationFinalPath.slm_then_llm
     synthesis_attempt_count: int = 0
@@ -611,6 +614,8 @@ def run_runtime_staged_generation(
         traces.append(
             {
                 "stage_id": RuntimeStageId.packaging.value,
+                "stage_kind": "packaging",
+                "orchestration_role": "passthrough_synthesis_response",
                 "bounded_model_call": False,
                 "skip_reason": None,
                 "output_summary": {"mode": "passthrough_synthesis_response"},
@@ -639,11 +644,18 @@ def run_runtime_staged_generation(
             "packaging_notes": packaging_notes,
             "staged_pipeline_preempted": None,
         }
+        summary.update(runtime_additive_orchestration_fields(traces))
+        operator_audit = build_runtime_operator_audit(
+            runtime_stage_traces=traces,
+            runtime_orchestration_summary=summary,
+            model_routing_trace=rollup,
+        )
         return StagedGenerationResult(
             response=resp_syn,
             runtime_stage_traces=traces,
             runtime_orchestration_summary=summary,
             model_routing_trace=rollup,
+            operator_audit=operator_audit,
             synthesis_skipped=False,
             final_path=final_path,
             synthesis_attempt_count=syn_attempt,
@@ -668,6 +680,8 @@ def run_runtime_staged_generation(
     traces.append(
         {
             "stage_id": RuntimeStageId.packaging.value,
+            "stage_kind": "packaging",
+            "orchestration_role": "deterministic_slm_only_structured_payload",
             "bounded_model_call": False,
             "skip_reason": None,
             "output_summary": {"mode": "deterministic_slm_only_structured_payload"},
@@ -692,15 +706,23 @@ def run_runtime_staged_generation(
         "stages_skipped": [t["stage_id"] for t in traces if not t.get("bounded_model_call")],
         "synthesis_skipped": True,
         "synthesis_skip_reason": synth_gate_reason,
+        "synthesis_gate_reason": synth_gate_reason,
         "final_path": final_path.value,
         "packaging_notes": packaging_notes,
         "staged_pipeline_preempted": None,
     }
+    summary.update(runtime_additive_orchestration_fields(traces))
+    operator_audit = build_runtime_operator_audit(
+        runtime_stage_traces=traces,
+        runtime_orchestration_summary=summary,
+        model_routing_trace=rollup,
+    )
     return StagedGenerationResult(
         response=resp,
         runtime_stage_traces=traces,
         runtime_orchestration_summary=summary,
         model_routing_trace=rollup,
+        operator_audit=operator_audit,
         synthesis_skipped=True,
         final_path=final_path,
         synthesis_attempt_count=0,

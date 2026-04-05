@@ -177,6 +177,7 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
     assert "preflight" in t2a and "synthesis" in t2a
     for stage_key in ("preflight", "synthesis"):
         tr = t2a[stage_key]
+        assert tr.get("stage_id") == stage_key
         assert tr.get("decision", {}).get("route_reason_code")
         assert "bounded_model_call" in tr
         rev = tr.get("routing_evidence") or {}
@@ -196,6 +197,10 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
     assert mai.get("disclaimer")
     assert "preflight_excerpt" in mai
     assert "synthesis_excerpt" in mai
+    oa = recommendation.get("operator_audit") or {}
+    assert oa.get("audit_schema_version")
+    assert oa.get("audit_summary", {}).get("surface") == "improvement"
+    assert oa.get("audit_timeline")
     assert recommendation["recommendation_summary"].split("|", 1)[0] == recommendation["deterministic_recommendation_base"]
     exp_base = "promote_for_human_review"
     if metrics["guard_reject_rate"] > 0.4 or metrics["repetition_signal"] > 0.5:

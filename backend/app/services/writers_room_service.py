@@ -19,6 +19,7 @@ from app.runtime.model_routing_contracts import (
     WorkflowPhase,
 )
 from app.runtime.model_routing_evidence import attach_stage_routing_evidence
+from app.runtime.operator_audit import build_bounded_surface_operator_audit
 from app.services.writers_room_model_routing import build_writers_room_model_route_specs
 from ai_stack import (
     build_capability_tool_bridge,
@@ -533,6 +534,16 @@ def _execute_writers_room_workflow_package(
     workflow_stages = _workflow_stage_ids(manifest_stages)
 
     capability_audit_rows = workflow.capability_registry.recent_audit(limit=20)
+    t2a_routing = generation.get("task_2a_routing") if isinstance(generation.get("task_2a_routing"), dict) else {}
+    operator_audit_wr = build_bounded_surface_operator_audit(
+        surface="writers_room",
+        task_2a_routing=t2a_routing,
+        execution_hints={
+            "adapter_invocation_mode": generation.get("adapter_invocation_mode"),
+            "raw_fallback_reason": generation.get("raw_fallback_reason"),
+            "executed_provider": generation.get("provider"),
+        },
+    )
     return {
         "canonical_flow": "writers_room_unified_stack_workflow",
         "trace_id": trace_id,
@@ -561,6 +572,7 @@ def _execute_writers_room_workflow_package(
             }
         ],
         "capability_audit": capability_audit_rows,
+        "operator_audit": operator_audit_wr,
         "governance_truth": {
             "retrieval_evidence_tier": evidence_tag,
             "model_generation_path": generation.get("adapter_invocation_mode"),

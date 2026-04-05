@@ -52,6 +52,7 @@ def construct_ai_decision_log(
     model_routing_trace: Optional[dict] = None,
     runtime_stage_traces: Optional[list[dict]] = None,
     runtime_orchestration_summary: Optional[dict] = None,
+    operator_audit: Optional[dict] = None,
 ) -> AIDecisionLog:
     """Construct a fully-populated AIDecisionLog with role diagnostics if available.
 
@@ -70,6 +71,7 @@ def construct_ai_decision_log(
         rejected_deltas: Deltas that failed validation (optional).
         guard_notes: Guard intervention notes (optional).
         recovery_notes: Recovery action notes (optional).
+        operator_audit: Task 3 derived-only audit payload (optional).
 
     Returns:
         AIDecisionLog with role fields populated if role_aware_decision is present.
@@ -132,4 +134,5 @@ def construct_ai_decision_log(
         model_routing_trace=model_routing_trace,
         runtime_stage_traces=runtime_stage_traces,
         runtime_orchestration_summary=runtime_orchestration_summary,
+        operator_audit=operator_audit,
     )

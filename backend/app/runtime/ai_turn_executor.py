@@ -60,6 +60,7 @@ from app.runtime.runtime_models import (
 )
 
 from app.runtime.adapter_registry import get_adapter
+from app.runtime.operator_audit import build_runtime_operator_audit
 from app.runtime.model_routing import route_model
 from app.runtime.model_routing_contracts import (
     CostSensitivity,
@@ -506,6 +507,7 @@ def _create_error_decision_log(
     model_routing_trace: dict[str, Any] | None = None,
     runtime_stage_traces: list[dict[str, Any]] | None = None,
     runtime_orchestration_summary: dict[str, Any] | None = None,
+    operator_audit: dict[str, Any] | None = None,
 ) -> AIDecisionLog:
     """Create AIDecisionLog for error paths (parse error, adapter error).
 
@@ -536,6 +538,7 @@ def _create_error_decision_log(
         model_routing_trace=model_routing_trace,
         runtime_stage_traces=runtime_stage_traces,
         runtime_orchestration_summary=runtime_orchestration_summary,
+        operator_audit=operator_audit,
     )
 
 
@@ -763,6 +766,15 @@ async def execute_turn_with_ai(
         if isinstance(session.metadata, dict):
             session.metadata["last_model_routing_trace"] = model_routing_trace
 
+    if staged_result_holder is not None and staged_result_holder.operator_audit:
+        operator_audit_for_log = staged_result_holder.operator_audit
+    else:
+        operator_audit_for_log = build_runtime_operator_audit(
+            runtime_stage_traces=runtime_stage_traces_for_log,
+            runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+            model_routing_trace=model_routing_trace,
+        )
+
     def _generate_with_runtime_policy(
         *,
         starting_attempt: int = 1,
@@ -927,6 +939,7 @@ async def execute_turn_with_ai(
             model_routing_trace=model_routing_trace,
             runtime_stage_traces=runtime_stage_traces_for_log,
             runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+            operator_audit=operator_audit_for_log,
         )
         _store_decision_log(session, error_log)
 
@@ -1049,6 +1062,7 @@ async def execute_turn_with_ai(
                         model_routing_trace=model_routing_trace,
                         runtime_stage_traces=runtime_stage_traces_for_log,
                         runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+                        operator_audit=operator_audit_for_log,
                     )
                     # Set recovery_notes with restore metadata
                     decision_log.recovery_notes = restore_notes
@@ -1123,6 +1137,7 @@ async def execute_turn_with_ai(
                 model_routing_trace=model_routing_trace,
                 runtime_stage_traces=runtime_stage_traces_for_log,
                 runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+                operator_audit=operator_audit_for_log,
             )
             _store_decision_log(session, decision_log)
 
@@ -1302,6 +1317,7 @@ async def execute_turn_with_ai(
             model_routing_trace=model_routing_trace,
             runtime_stage_traces=runtime_stage_traces_for_log,
             runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+            operator_audit=operator_audit_for_log,
         )
         _store_decision_log(session, decision_log)
         return turn_result
@@ -1331,6 +1347,7 @@ async def execute_turn_with_ai(
             model_routing_trace=model_routing_trace,
             runtime_stage_traces=runtime_stage_traces_for_log,
             runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+            operator_audit=operator_audit_for_log,
         )
         _store_decision_log(session, error_log)
 
@@ -1405,6 +1422,7 @@ async def execute_turn_with_ai(
             model_routing_trace=model_routing_trace,
             runtime_stage_traces=runtime_stage_traces_for_log,
             runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+            operator_audit=operator_audit_for_log,
         )
         _store_decision_log(session, decision_log)
 
@@ -1450,6 +1468,7 @@ async def execute_turn_with_ai(
             model_routing_trace=model_routing_trace,
             runtime_stage_traces=runtime_stage_traces_for_log,
             runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+            operator_audit=operator_audit_for_log,
         )
         _store_decision_log(session, error_log)
 
@@ -1519,6 +1538,7 @@ async def execute_turn_with_ai(
             model_routing_trace=model_routing_trace,
             runtime_stage_traces=runtime_stage_traces_for_log,
             runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+            operator_audit=operator_audit_for_log,
         )
         _store_decision_log(session, decision_log)
 
@@ -1591,6 +1611,7 @@ async def execute_turn_with_ai(
         model_routing_trace=model_routing_trace,
         runtime_stage_traces=runtime_stage_traces_for_log,
         runtime_orchestration_summary=runtime_orchestration_summary_for_log,
+        operator_audit=operator_audit_for_log,
     )
     _store_decision_log(session, decision_log)
 

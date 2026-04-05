@@ -111,6 +111,32 @@ Task 2F adds **additive** keys on the same `routing_evidence` object. It does **
 
 **Honesty limits**: Diagnostics cannot claim telemetry, counterfactuals, or registration state that is not reflected in the evidence dict. They do not replace reading `decision` or specs when debugging.
 
+### Task 3 — operator audit surface (derived-only)
+
+Task 3 adds **`operator_audit`** payloads computed in `backend/app/runtime/operator_audit.py`. Every field is **deterministically derived** from evidence the pipeline already produced (`routing_evidence`, Task 2F `diagnostics_*`, stage traces, orchestration summary keys). It does **not** add routing policy, adapter behavior, guard/commit/reject rules, extra Runtime stages, or a distributed immutable audit log.
+
+**Diagnostics vs operator audit**
+
+- **Diagnostics (Task 2F)** remain on **`routing_evidence`**: per routing decision, compact `diagnostics_overview` / `diagnostics_flags` / `diagnostics_causes`.
+- **Operator audit** is an **additional** cross-cut: ordered **`audit_timeline`** (stage key, bounded-call/skip, route reason echo, diagnostics route class / severity, error count), rollup **`audit_flags`** and **`audit_deviations`**, **`audit_summary`** (surface name, Runtime `final_path` and synthesis gate reason when present, max diagnostics severity, deterministic **`primary_concern_code`** from merged cause codes), and **`audit_review_fingerprint`** for diff-friendly stable rows. Deep truth stays in full traces and `decision` / `routing_evidence`.
+
+**Runtime**
+
+- **`AIDecisionLog.operator_audit`** is populated for staged, legacy single-route, and orchestration-preempted paths (preempted uses a single synthetic timeline row tied to the rollup `routing_evidence` when present).
+- Additive **`runtime_orchestration_summary`** keys (legacy `stages_skipped` unchanged): **`stages_without_bounded_model_call_by_design`** lists stages such as **`packaging`** that never invoke a model by design; **`stages_skipped_no_eligible_adapter`** lists stages where `bounded_model_call` is false and the `skip_reason` indicates no eligible adapter. This separates packaging from “routing skipped the call.”
+- **SLM-only** orchestration summary exposes **`synthesis_gate_reason`** as well as **`synthesis_skip_reason`** (same value) for a consistent gate-reason field.
+- Model stages in traces include **`stage_kind`**: `routed_model_stage`; packaging stages use **`stage_kind`**: `packaging` and **`orchestration_role`**.
+
+**Writers-Room and Improvement**
+
+- Workflow / recommendation payloads include top-level **`operator_audit`** with the same **`audit_schema_version`** and shape as Runtime where meanings align.
+- Bounded traces keep **`stage`**; Task 3 adds **`stage_id`** as an **alias** equal to **`stage`** for comparison with Runtime’s `stage_id`.
+
+**Honesty limits (audit)**
+
+- No new causal claims: `primary_concern_code` is chosen from a fixed priority table over **`diagnostics_causes`** codes already emitted.
+- Audit does not certify external systems, storage durability, or tamper evidence.
+
 ### `routing_evidence` (shared shape)
 
 Built by `build_routing_evidence` in `backend/app/runtime/model_routing_evidence.py`:

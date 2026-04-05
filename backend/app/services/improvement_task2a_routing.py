@@ -15,6 +15,7 @@ from app.runtime.model_routing_contracts import (
     WorkflowPhase,
 )
 from app.runtime.model_routing_evidence import attach_stage_routing_evidence
+from app.runtime.operator_audit import build_bounded_surface_operator_audit
 from app.services.writers_room_model_routing import build_writers_room_model_route_specs
 
 _MODEL_ASSISTED_DISCLAIMER = (
@@ -145,3 +146,15 @@ def enrich_improvement_package_with_task2a_routing(
         "preflight_excerpt": pre_excerpt,
         "synthesis_excerpt": syn_excerpt,
     }
+    det_base = package_response.get("deterministic_recommendation_base")
+    package_response["operator_audit"] = build_bounded_surface_operator_audit(
+        surface="improvement",
+        task_2a_routing=package_response["task_2a_routing"],
+        execution_hints={
+            "deterministic_recommendation_base_present": bool(
+                det_base is not None and str(det_base).strip() != ""
+            ),
+            "preflight_excerpt_nonempty": bool(pre_excerpt.strip()),
+            "synthesis_excerpt_nonempty": bool(syn_excerpt.strip()),
+        },
+    )
