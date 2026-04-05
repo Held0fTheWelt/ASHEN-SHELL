@@ -12,12 +12,13 @@ The **executable** routing contracts and policy live in `backend/app/runtime/mod
 
 The SLM helper roles described later in this document are **conceptual** narrative roles for the story stack. They are not interchangeable with the **internal** interpreter/director/responder contract in `role_contract.py`, nor with the Task 2A/2B **cross-model** routing layer. See [LLM / SLM role stratification](./llm_slm_role_stratification.md).
 
-**Task 2B integration (current):**
+**Task 2B / Task 2C integration (current):**
 
-- **Runtime**: The canonical AI turn path routes **once** per turn (`route_model` before a single adapter execution). When no spec-backed adapter is eligible, execution falls back to the adapter already supplied by the caller; guards and commit semantics are unchanged. `AIDecisionLog` carries a compact `model_routing_trace` for minimal inspectability (not full stack observability).
-- **Writers Room**: Uses the same Task 2A contracts via `route_model` with explicit **preflight** and **synthesis** routing stages where wired; model choice no longer goes through `story_runtime_core.RoutingPolicy`. Response/report fields expose routing evidence (`task_2a_routing`, digest flags) without claiming a full editorial pipeline beyond what the code performs.
+- **Runtime**: The canonical AI turn path still routes **once** per turn (`route_model` before a single adapter execution). When no spec-backed adapter is eligible, execution falls back to the adapter already supplied by the caller; guards and commit semantics are unchanged. `AIDecisionLog` carries `model_routing_trace` (request + decision + execution metadata). **Task 2C-2** adds a nested **`routing_evidence`** block with a stable summary shape (phase, task kind, selected/executed adapters, `route_reason_code`, `fallback_chain`, escalation/degradation flags, `no_eligible_spec_selection`, runtime fallback fields). Values reflect what the policy actually returns — not invented granularity.
+- **Writers Room**: Same Task 2A contracts via `route_model` with **preflight** and **synthesis** stages. `model_generation.task_2a_routing` holds per-stage traces; each stage includes **`routing_evidence`** in the same normalized shape as runtime (plus bounded-call / skip fields where applicable).
+- **Improvement**: After deterministic sandbox evaluation and recommendation thresholds, the Improvement experiment HTTP path runs **two** bounded routing stages (preflight + synthesis) using the same spec source as Writers Room. The package exposes `task_2a_routing`, `deterministic_recommendation_base`, and `model_assisted_interpretation` (advisory only). **Model output does not replace** threshold-based recommendation truth.
 
-**Deferred (Task 2C):** end-to-end observability closure, improvement-flow routing, and any broader integration beyond the seams above.
+**Not in scope:** separate telemetry pipelines, dashboards, or autonomous multi-turn editorial stacks beyond the bounded calls described above.
 
 ---
 

@@ -18,6 +18,7 @@ from app.runtime.model_routing_contracts import (
     TaskKind,
     WorkflowPhase,
 )
+from app.runtime.model_routing_evidence import attach_stage_routing_evidence
 from app.services.writers_room_model_routing import build_writers_room_model_route_specs
 from ai_stack import (
     build_capability_tool_bridge,
@@ -231,6 +232,8 @@ def _execute_writers_room_workflow_package(
         preflight_trace["bounded_model_call"] = False
         preflight_trace["skip_reason"] = "no_eligible_adapter_or_missing_provider_adapter"
 
+    attach_stage_routing_evidence(preflight_trace, preflight_req)
+
     synthesis_req = RoutingRequest(
         workflow_phase=WorkflowPhase.generation,
         task_kind=TaskKind.narrative_formulation,
@@ -319,6 +322,17 @@ def _execute_writers_room_workflow_package(
                     "graph-runtime primary path uses the same pattern."
                 ),
             }
+
+    syn_stage = generation["task_2a_routing"]["synthesis"]
+    syn_executed = str(generation.get("provider") or "").strip() or None
+    syn_bounded = generation.get("adapter_invocation_mode") is not None
+    attach_stage_routing_evidence(
+        syn_stage,
+        synthesis_req,
+        executed_adapter_name=syn_executed,
+        bounded_model_call=syn_bounded,
+        skip_reason=None,
+    )
 
     _append_workflow_stage(manifest_stages, stage_id="proposal_generation", artifact_key="model_generation")
     sources = (

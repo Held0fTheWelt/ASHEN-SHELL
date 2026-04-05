@@ -119,6 +119,13 @@ async def test_execute_turn_with_ai_uses_routed_llm_adapter_when_specs_registere
     req = trace["request"]
     assert req["workflow_phase"] == "generation"
     assert req["task_kind"] == "narrative_formulation"
+    ev = trace.get("routing_evidence") or {}
+    assert ev.get("requested_workflow_phase") == "generation"
+    assert ev.get("requested_task_kind") == "narrative_formulation"
+    assert ev.get("executed_adapter_name") == "routed_llm"
+    assert ev.get("passed_adapter_name") == "passed_slm"
+    assert ev.get("fallback_to_passed_adapter") is False
+    assert ev.get("no_eligible_spec_selection") is False
 
 
 @pytest.mark.asyncio
@@ -142,3 +149,7 @@ async def test_execute_turn_with_ai_falls_back_when_no_model_specs(minimal_modul
     trace = session.metadata["last_model_routing_trace"]
     assert trace["fallback_to_passed_adapter"] is True
     assert trace["decision"]["route_reason_code"] == "no_eligible_adapter"
+    ev = trace.get("routing_evidence") or {}
+    assert ev.get("no_eligible_spec_selection") is True
+    assert ev.get("fallback_to_passed_adapter") is True
+    assert ev.get("route_reason_code") == "no_eligible_adapter"

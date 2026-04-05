@@ -171,6 +171,11 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
         tr = t2a[stage_key]
         assert tr.get("decision", {}).get("route_reason_code")
         assert "bounded_model_call" in tr
+        rev = tr.get("routing_evidence") or {}
+        assert rev.get("requested_workflow_phase") == tr.get("workflow_phase")
+        assert rev.get("requested_task_kind") == tr.get("task_kind")
+        assert rev.get("route_reason_code") == tr["decision"]["route_reason_code"]
+        assert "no_eligible_spec_selection" in rev
     mai = recommendation.get("model_assisted_interpretation") or {}
     assert mai.get("disclaimer")
     assert "preflight_excerpt" in mai

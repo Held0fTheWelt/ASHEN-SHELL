@@ -465,6 +465,8 @@ def build_model_routing_trace_dict(
     execution_adapter: StoryAIAdapter,
     resolved_via_get_adapter: bool,
 ) -> dict[str, Any]:
+    from app.runtime.model_routing_evidence import build_routing_evidence
+
     return {
         "routing_invoked": True,
         "request": routing_request.model_dump(mode="json"),
@@ -477,6 +479,16 @@ def build_model_routing_trace_dict(
         "fallback_to_passed_adapter": not resolved_via_get_adapter,
         "escalation_applied": routing_decision.escalation_applied,
         "degradation_applied": routing_decision.degradation_applied,
+        "routing_evidence": build_routing_evidence(
+            routing_request=routing_request,
+            routing_decision=routing_decision,
+            executed_adapter_name=execution_adapter.adapter_name,
+            passed_adapter_name=passed_adapter.adapter_name,
+            resolved_via_get_adapter=resolved_via_get_adapter,
+            fallback_to_passed_adapter=not resolved_via_get_adapter,
+            bounded_model_call=None,
+            skip_reason=None,
+        ),
     }
 
 

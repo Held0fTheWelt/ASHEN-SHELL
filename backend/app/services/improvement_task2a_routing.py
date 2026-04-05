@@ -14,10 +14,12 @@ from app.runtime.model_routing_contracts import (
     TaskKind,
     WorkflowPhase,
 )
+from app.runtime.model_routing_evidence import attach_stage_routing_evidence
 from app.services.writers_room_model_routing import build_writers_room_model_route_specs
 
 _MODEL_ASSISTED_DISCLAIMER = (
-    "model_assisted_interpretation_is_advisory_only_not_a_substitute_for_human_governance_review"
+    "Advisory prose only: model-assisted text supplements the package and does not replace "
+    "deterministic sandbox metrics, threshold-based recommendation labels, or human governance."
 )
 
 
@@ -46,9 +48,11 @@ def _run_routed_bounded_call(
     if not adapter or not name:
         trace["bounded_model_call"] = False
         trace["skip_reason"] = "no_eligible_adapter_or_missing_provider_adapter"
+        attach_stage_routing_evidence(trace, routing_request)
         return trace, ""
 
     trace["bounded_model_call"] = True
+    trace["adapter_key"] = name
     trace["executed_adapter_name"] = name
     excerpt = ""
     try:
@@ -57,10 +61,12 @@ def _run_routed_bounded_call(
             timeout_seconds=timeout_seconds,
             retrieval_context=context_text or None,
         )
+        trace["call_success"] = call.success
         if call.success and (call.content or "").strip():
             excerpt = (call.content or "").strip()[:500]
     except Exception as exc:  # noqa: BLE001 — bounded diagnostic; package still persists
         trace["call_error"] = str(exc)
+    attach_stage_routing_evidence(trace, routing_request)
     return trace, excerpt
 
 

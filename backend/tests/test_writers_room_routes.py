@@ -177,6 +177,14 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
         data["stack_components"]["langchain_integration"].get("writers_room_generation_bridge")
         == "invoke_writers_room_adapter_with_langchain"
     )
+    t2a = (data.get("model_generation") or {}).get("task_2a_routing") or {}
+    for key in ("preflight", "synthesis"):
+        st = t2a.get(key) or {}
+        rev = st.get("routing_evidence") or {}
+        assert rev.get("requested_workflow_phase") == st.get("workflow_phase")
+        assert rev.get("requested_task_kind") == st.get("task_kind")
+        assert rev.get("route_reason_code") == (st.get("decision") or {}).get("route_reason_code")
+        assert "no_eligible_spec_selection" in rev
     gt = data.get("governance_truth") or {}
     assert gt.get("langgraph_orchestration_depth") == "seed_graph_stub"
     assert gt.get("retrieval_evidence_tier") == data["retrieval_trace"]["evidence_tier"]
