@@ -122,7 +122,9 @@ def test_invalid_command_produces_command_rejected_message(tmp_path):
             websocket.send_json({"action": "say", "text": ""})
             rejection = websocket.receive_json()
 
-        assert rejection == {"type": "command_rejected", "reason": "Say what?"}
+        assert rejection["type"] == "command_rejected"
+        assert rejection["reason"] == "Say what?"
+        assert rejection.get("code") == "engine_rejected"
 
 
 

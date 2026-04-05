@@ -8,13 +8,22 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import WebSocket
-from story_runtime_core import interpret_player_input, natural_input_to_room_command
 
 from app.config import BACKEND_CONTENT_FEED_URL, BACKEND_CONTENT_SYNC_ENABLED, BACKEND_CONTENT_SYNC_INTERVAL_SECONDS, BACKEND_CONTENT_TIMEOUT_SECONDS, RUN_STORE_BACKEND, RUN_STORE_URL
 from app.content.backend_loader import BackendContentLoadError, load_published_templates
 from app.content.builtins import load_builtin_templates
 from app.content.models import ExperienceKind, ExperienceTemplate, JoinPolicy, ParticipantMode, RoleTemplate
+from app.runtime.command_resolution import (
+    LastInputInterpretationRecord,
+    PlayerMessageIngressResult,
+    diagnostics_explicit,
+    diagnostics_from_plan,
+    diagnostics_missing_input,
+    merge_engine_outcome,
+    resolve_plan_to_command,
+)
 from app.runtime.engine import RuntimeEngine
+from app.runtime.input_interpreter import interpret_runtime_input
 from app.runtime.models import LobbySeatState, ParticipantState, PropState, PublicRunSummary, RunStatus, RuntimeInstance
 from app.runtime.store import RunStore, build_run_store
 
@@ -479,44 +488,166 @@ class RuntimeManager:
             return {"action": "start_run"}
         return None
 
-    def _normalize_player_message(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+    def _interpretation_context(self, run_id: str, participant_id: str) -> dict[str, Any]:
+        instance = self.instances[run_id]
+        engine = self.engines[run_id]
+        actor = instance.participants[participant_id]
+        room = engine.rooms[actor.current_room_id]
+        visible_targets = [actor.current_room_id, *room.prop_ids]
+        available_actions = engine.available_actions(instance, actor)
+        reachable_rooms = [
+            {"id": ex.target_room_id, "name": engine.rooms[ex.target_room_id].name} for ex in room.exits
+        ]
+        return {
+            "available_actions": available_actions,
+            "visible_targets": visible_targets,
+            "reachable_rooms": reachable_rooms,
+        }
+
+    def resolve_player_message(self, run_id: str, participant_id: str, payload: dict[str, Any]) -> PlayerMessageIngressResult:
+        """Normalize and interpret incoming player payloads into at most one explicit command plus diagnostics."""
         action = payload.get("action")
+
+        if isinstance(action, str) and action.strip().lower() == "input_text":
+            text_val = payload.get("text")
+            if not isinstance(text_val, str) or not text_val.strip():
+                diag = diagnostics_missing_input(actor_participant_id=participant_id)
+                diag.input_source = "input_text_payload"
+                diag.rejection_reason = "Field input_text.text must be a non-empty string."
+                return PlayerMessageIngressResult(
+                    command=None,
+                    rejection_code=diag.rejection_code,
+                    rejection_reason=diag.rejection_reason,
+                    diagnostics=diag,
+                )
+            text = text_val.strip()
+            ctx = self._interpretation_context(run_id, participant_id)
+            plan = interpret_runtime_input(
+                text,
+                available_actions=ctx["available_actions"],
+                visible_targets=ctx["visible_targets"],
+                reachable_rooms=ctx["reachable_rooms"],
+            )
+            cmd, rcode, rreason = resolve_plan_to_command(plan)
+            resolved = cmd["action"] if cmd else None
+            diag = diagnostics_from_plan(
+                plan,
+                actor_participant_id=participant_id,
+                input_source="input_text_payload",
+                rejection_code=rcode,
+                rejection_reason=rreason,
+                resolved_action=resolved,
+            )
+            return PlayerMessageIngressResult(
+                command=cmd,
+                rejection_code=rcode,
+                rejection_reason=rreason,
+                diagnostics=diag,
+            )
+
         if isinstance(action, str) and action.strip():
-            return payload
+            act = action.strip()
+            diag = diagnostics_explicit(
+                actor_participant_id=participant_id,
+                input_source="explicit_payload",
+                resolved_action=act,
+                rationale="Structured command with explicit action field.",
+            )
+            return PlayerMessageIngressResult(command=dict(payload), diagnostics=diag)
 
         raw_input = payload.get("player_input")
         if raw_input is None:
             raw_input = payload.get("input")
-        if not isinstance(raw_input, str):
-            return None
+        if not isinstance(raw_input, str) or not raw_input.strip():
+            diag = diagnostics_missing_input(actor_participant_id=participant_id)
+            return PlayerMessageIngressResult(
+                command=None,
+                rejection_code=diag.rejection_code,
+                rejection_reason=diag.rejection_reason,
+                diagnostics=diag,
+            )
+
         text = raw_input.strip()
-        if not text:
-            return None
+        slash_cmd = self._map_explicit_command(text)
+        if slash_cmd is not None:
+            act = str(slash_cmd.get("action", ""))
+            diag = diagnostics_explicit(
+                actor_participant_id=participant_id,
+                input_source="slash_in_text",
+                resolved_action=act,
+                rationale="Slash or bang command parsed from free-text field.",
+            )
+            return PlayerMessageIngressResult(command=slash_cmd, diagnostics=diag)
 
-        explicit = self._map_explicit_command(text)
-        if explicit is not None:
-            return explicit
-
-        interpretation = interpret_player_input(text)
-        return natural_input_to_room_command(interpretation, text)
+        ctx = self._interpretation_context(run_id, participant_id)
+        plan = interpret_runtime_input(
+            text,
+            available_actions=ctx["available_actions"],
+            visible_targets=ctx["visible_targets"],
+            reachable_rooms=ctx["reachable_rooms"],
+        )
+        cmd, rcode, rreason = resolve_plan_to_command(plan)
+        resolved = cmd["action"] if cmd else None
+        diag = diagnostics_from_plan(
+            plan,
+            actor_participant_id=participant_id,
+            input_source="natural_language",
+            rejection_code=rcode,
+            rejection_reason=rreason,
+            resolved_action=resolved,
+        )
+        return PlayerMessageIngressResult(
+            command=cmd,
+            rejection_code=rcode,
+            rejection_reason=rreason,
+            diagnostics=diag,
+        )
 
     async def process_command(self, run_id: str, participant_id: str, command: dict[str, Any]) -> None:
-        normalized = self._normalize_player_message(command)
-        if normalized is None:
+        ingress = self.resolve_player_message(run_id, participant_id, command)
+        instance = self.instances[run_id]
+
+        def _apply_metadata(diag: LastInputInterpretationRecord) -> None:
+            instance.metadata["last_input_interpretation"] = diag.as_metadata_dict()
+
+        _apply_metadata(ingress.diagnostics)
+
+        if ingress.command is None:
+            self.store.save(instance)
             websocket = self.connections[run_id].get(participant_id)
             if websocket:
-                await websocket.send_json({"type": "command_rejected", "reason": "Provide action or player_input."})
+                msg: dict[str, Any] = {
+                    "type": "command_rejected",
+                    "reason": ingress.rejection_reason or "Command rejected.",
+                }
+                if ingress.rejection_code:
+                    msg["code"] = ingress.rejection_code
+                await websocket.send_json(msg)
             return
 
         lock = self.locks.setdefault(run_id, asyncio.Lock())
         async with lock:
             instance = self.instances[run_id]
             engine = self.engines[run_id]
-            result = engine.apply_command(instance, participant_id, normalized)
+            result = engine.apply_command(instance, participant_id, ingress.command)
+            final_diag = merge_engine_outcome(
+                ingress.diagnostics,
+                actor_participant_id=participant_id,
+                engine_accepted=result.accepted,
+                engine_reason=result.reason,
+            )
+            instance.metadata["last_input_interpretation"] = final_diag.as_metadata_dict()
             if not result.accepted:
+                self.store.save(instance)
                 websocket = self.connections[run_id].get(participant_id)
                 if websocket:
-                    await websocket.send_json({"type": "command_rejected", "reason": result.reason})
+                    await websocket.send_json(
+                        {
+                            "type": "command_rejected",
+                            "reason": result.reason or "Command rejected.",
+                            "code": "engine_rejected",
+                        }
+                    )
                 return
             engine.run_npc_cycle(instance, participant_id)
             self.store.save(instance)
