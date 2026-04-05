@@ -165,6 +165,23 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
     assert trace["evidence_tier"] == trace["evidence_strength"]
     assert trace["profile"] == "improvement_eval"
     assert "|tr_turns=3|" in recommendation["recommendation_summary"]
+    t2a = recommendation.get("task_2a_routing") or {}
+    assert "preflight" in t2a and "synthesis" in t2a
+    for stage_key in ("preflight", "synthesis"):
+        tr = t2a[stage_key]
+        assert tr.get("decision", {}).get("route_reason_code")
+        assert "bounded_model_call" in tr
+    mai = recommendation.get("model_assisted_interpretation") or {}
+    assert mai.get("disclaimer")
+    assert "preflight_excerpt" in mai
+    assert "synthesis_excerpt" in mai
+    assert recommendation["recommendation_summary"].split("|", 1)[0] == recommendation["deterministic_recommendation_base"]
+    exp_base = "promote_for_human_review"
+    if metrics["guard_reject_rate"] > 0.4 or metrics["repetition_signal"] > 0.5:
+        exp_base = "revise_before_review"
+    if comparison["structure_flow_health_delta"] < 0 or comparison["quality_heuristic_delta"] < 0:
+        exp_base = "revise_before_review"
+    assert recommendation["deterministic_recommendation_base"] == exp_base
     assert payload.get("transcript_evidence", {}).get("turn_count") == 3
     assert any(
         entry["capability_name"] == "wos.transcript.read" and entry["outcome"] == "allowed"
@@ -497,6 +514,38 @@ def test_governance_accessibility_lists_recommendation_packages(client, auth_hea
     data = response.get_json()
     assert "packages" in data
     assert isinstance(data["packages"], list)
+
+
+def test_improvement_experiment_task2a_routing_calls_route_model_twice(client, auth_headers, monkeypatch):
+    """Task 2A enrichment must invoke route_model exactly twice (preflight + synthesis)."""
+    import app.services.improvement_task2a_routing as improvement_task2a_routing
+    from app.runtime import model_routing as runtime_model_routing
+
+    calls = {"n": 0}
+    real_route_model = runtime_model_routing.route_model
+
+    def counting_route_model(request, *, specs=None):
+        calls["n"] += 1
+        return real_route_model(request, specs=specs)
+
+    monkeypatch.setattr(improvement_task2a_routing.model_routing, "route_model", counting_route_model)
+
+    variant_resp = client.post(
+        "/api/v1/improvement/variants",
+        headers=auth_headers,
+        json={
+            "baseline_id": "god_of_carnage",
+            "candidate_summary": "Route model call count wiring.",
+        },
+    )
+    variant_id = variant_resp.get_json()["variant_id"]
+    experiment_resp = client.post(
+        "/api/v1/improvement/experiments/run",
+        headers=auth_headers,
+        json={"variant_id": variant_id, "test_inputs": ["one", "two"]},
+    )
+    assert experiment_resp.status_code == 200
+    assert calls["n"] == 2
 
 
 def test_improvement_experiment_reuses_cached_rag_stack(client, auth_headers, monkeypatch):

@@ -23,6 +23,7 @@ from app.services.improvement_service import (
     list_recommendation_packages,
     run_sandbox_experiment,
 )
+from app.services.improvement_task2a_routing import enrich_improvement_package_with_task2a_routing
 from ai_stack import (
     CapabilityAccessDeniedError,
     CapabilityInvocationError,
@@ -247,6 +248,7 @@ def run_improvement_experiment():
             if isinstance(source, dict)
         ]
         package_response = dict(package)
+        package_response["deterministic_recommendation_base"] = str(package_response["recommendation_summary"])
         base_summary = str(package_response["recommendation_summary"])
         if transcript_meta.get("repetition_turn_count", 0) >= 2:
             package_response["recommendation_summary"] = "revise_before_review" + transcript_suffix
@@ -336,6 +338,12 @@ def run_improvement_experiment():
 
         package_response["evidence_bundle"] = evidence_bundle_final
         package_response["workflow_stages"] = workflow_stages
+        enrich_improvement_package_with_task2a_routing(
+            package_response,
+            context_text=str(context_payload.get("context_text") or ""),
+            baseline_id=experiment["baseline_id"],
+            variant_id=experiment["variant_id"],
+        )
         ImprovementStore.default().write_json(
             "recommendations",
             str(package_response["package_id"]),
