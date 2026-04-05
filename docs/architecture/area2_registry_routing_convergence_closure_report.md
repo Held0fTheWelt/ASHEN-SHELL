@@ -35,13 +35,15 @@ Full gate table: [`area2_task2_closure_gates.md`](./area2_task2_closure_gates.md
 
 ## Tests run and results
 
-From `backend/`:
+From `backend/` (includes **Workstream A/B** dual closure modules; see [`area2_dual_workstream_closure_report.md`](./area2_dual_workstream_closure_report.md)):
 
 ```text
-python -m pytest tests/runtime/test_area2_task2_closure_gates.py tests/runtime/test_area2_convergence_gates.py tests/runtime/test_area2_final_closure_gates.py tests/runtime/test_cross_surface_operator_audit_contract.py tests/test_bootstrap_staged_runtime_integration.py tests/runtime/test_model_inventory_bootstrap.py -q --tb=short --no-cov
+python -m pytest tests/runtime/test_area2_workstream_a_closure_gates.py tests/runtime/test_area2_workstream_b_closure_gates.py tests/runtime/test_area2_task2_closure_gates.py tests/runtime/test_area2_convergence_gates.py tests/runtime/test_area2_final_closure_gates.py tests/runtime/test_cross_surface_operator_audit_contract.py tests/test_bootstrap_staged_runtime_integration.py tests/runtime/test_model_inventory_bootstrap.py -q --tb=short --no-cov
 ```
 
-Last verified: **49 passed**, **0 failed** (single run of the command above with `--no-cov`, local).
+Canonical single-line source: `area2_dual_closure_pytest_invocation()` in [`backend/app/runtime/area2_validation_commands.py`](../../backend/app/runtime/area2_validation_commands.py).
+
+Last verified: **64 passed**, **0 failed** (single run of the command above with `--no-cov`, local).
 
 ---
 

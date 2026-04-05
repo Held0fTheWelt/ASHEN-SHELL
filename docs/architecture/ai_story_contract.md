@@ -46,6 +46,10 @@ Final gates enforce **reproducible bootstrap** (named profiles), **healthy canon
 
 Named closure over **registry/routing operational truth** for canonical Runtime, Writers-Room, and Improvement paths. Gate table: [`area2_task2_closure_gates.md`](./area2_task2_closure_gates.md). Closure report: [`area2_registry_routing_convergence_closure_report.md`](./area2_registry_routing_convergence_closure_report.md). Tests: `backend/tests/runtime/test_area2_task2_closure_gates.py`. Authority registry: [`area2_routing_authority.py`](../../backend/app/runtime/area2_routing_authority.py). **Routing policy and authoritative Runtime semantics remain unchanged.**
 
+### Area 2 — Dual workstream closure (G-A-01, G-A-02, G-A-03, G-A-04, G-A-05, G-A-06, G-A-07, G-B-01, G-B-02, G-B-03, G-B-04, G-B-05, G-B-06, G-B-07)
+
+**Workstream A** (practical convergence) and **Workstream B** (reproducibility) gates with separate enforcement. Tables: [`area2_workstream_a_gates.md`](./area2_workstream_a_gates.md), [`area2_workstream_b_gates.md`](./area2_workstream_b_gates.md). Reports: [`area2_practical_convergence_closure_report.md`](./area2_practical_convergence_closure_report.md), [`area2_reproducibility_closure_report.md`](./area2_reproducibility_closure_report.md), [`area2_dual_workstream_closure_report.md`](./area2_dual_workstream_closure_report.md). Binding: [`area2_dual_workstream_binding.md`](./area2_dual_workstream_binding.md). **Authority map:** `area2_routing_authority`. **Validation command source:** `area2_validation_commands` in [`backend/app/runtime/area2_validation_commands.py`](../../backend/app/runtime/area2_validation_commands.py). Setup and command alignment: [`docs/testing-setup.md`](../testing-setup.md). **Routing policy and authoritative Runtime semantics remain unchanged.**
+
 **Still not claimed:** God-of-Carnage lifecycle E2E does not assert full staged audit fields by default execution mode; no distributed immutable audit; no new telemetry products.
 
 ---

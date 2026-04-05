@@ -189,16 +189,36 @@ This runs ~140 tests covering:
 - **Backend startup:** App creation, config, database connection
 - **Engine startup:** World Engine dependencies and initialization
 - **Content modules:** W0 and W1 contract validation, YAML structure
-- **Core routing:** Area 2 convergence and closure gates
 
 **Expected result:** All pass in ~10–15 seconds.
 
 **What it validates:**
 - Core Flask app starts without errors
 - Database is connectable and has required tables
-- Runtime routing bootstrap works
+- Runtime routing bootstrap works (smoke profile)
 - Content module YAML is valid and internally consistent
 - Core API endpoints respond
+
+**Not covered by smoke:** Area 2 dual-workstream closure gates (**G-A-01** … **G-A-07**, **G-B-01** … **G-B-07**) and the full `backend/tests/runtime` convergence suites — run those explicitly from `backend/` (see below).
+
+---
+
+## Area 2 dual-workstream validation (canonical)
+
+Focused regression for **Workstream A** (practical convergence) and **Workstream B** (reproducibility). Gate tables: [`docs/architecture/area2_workstream_a_gates.md`](architecture/area2_workstream_a_gates.md), [`docs/architecture/area2_workstream_b_gates.md`](architecture/area2_workstream_b_gates.md). Combined report: [`docs/architecture/area2_dual_workstream_closure_report.md`](architecture/area2_dual_workstream_closure_report.md).
+
+**Command surface (code):** [`backend/app/runtime/area2_validation_commands.py`](../backend/app/runtime/area2_validation_commands.py) — `AREA2_DUAL_CLOSURE_PYTEST_MODULES`, `area2_dual_closure_pytest_invocation()`.
+
+**Prerequisites:** Install dependencies (`./setup-test-environment.sh`, `setup-test-environment.bat`, or `pip install -r backend/requirements.txt -r backend/requirements-test.txt`).
+
+**Run from `backend/`** (required so `backend/pytest.ini` sets `pythonpath` and `testpaths`). Pass **`--no-cov`** because `pytest.ini` defaults include coverage `addopts`:
+
+```bash
+cd backend
+python -m pytest tests/runtime/test_area2_workstream_a_closure_gates.py tests/runtime/test_area2_workstream_b_closure_gates.py tests/runtime/test_area2_task2_closure_gates.py tests/runtime/test_area2_convergence_gates.py tests/runtime/test_area2_final_closure_gates.py tests/runtime/test_cross_surface_operator_audit_contract.py tests/test_bootstrap_staged_runtime_integration.py tests/runtime/test_model_inventory_bootstrap.py -q --tb=short --no-cov
+```
+
+**G-B-01** startup profile determinism, **G-B-02** bootstrap reproducibility, **G-B-03** clean-environment validation, **G-B-04** dependency/setup explicitness, **G-B-05** test-profile stability, **G-B-06** validation-command reality, and **G-B-07** documentation truth are enforced in `backend/tests/runtime/test_area2_workstream_b_closure_gates.py`.
 
 ---
 
@@ -355,9 +375,11 @@ To validate that the repository can be tested in a fresh environment:
    python -m pytest tests/ -v --tb=short
    ```
 
-If both pass, the environment is valid. If tests fail, check:
+For Area 2 operational closure, also run the **Area 2 dual-workstream** command from the [`Area 2 dual-workstream validation (canonical)`](#area-2-dual-workstream-validation-canonical) section (same install prerequisites; **`cd backend`** and **`--no-cov`**).
+
+If smoke and backend suites pass, the environment is valid for those scopes. If tests fail, check:
 - All required packages are in requirements files
-- PYTHONPATH is correctly set (pytest.ini handles this)
+- PYTHONPATH is correctly set (`backend/pytest.ini` handles this when cwd is `backend/`)
 - Database is readable/writable (if using file-based SQLite)
 - No local environment assumptions are leaked
 
