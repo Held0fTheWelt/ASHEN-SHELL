@@ -188,10 +188,16 @@ def _cov_fail_under_for_suite(suite_name: str) -> str:
 
 
 def _cov_target_for_suite(suite_name: str) -> str:
+    """Return coverage target (package/module) for a suite."""
     if suite_name in ("backend", "frontend"):
         return "app"
     if suite_name == "ai_stack":
         return "ai_stack"
+    # writers_room and improvement measure app coverage, but only their tests run
+    if suite_name == "writers_room":
+        return "app"
+    if suite_name == "improvement":
+        return "app"
     return "."
 
 
