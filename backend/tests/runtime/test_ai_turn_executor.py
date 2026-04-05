@@ -1466,6 +1466,12 @@ def test_agent_orchestration_executes_real_separate_subagents_and_logs_trace(
     assert controls.get("agent_orchestration_active") is True
     assert controls.get("tool_loop_active") is False
     assert controls.get("tool_loop_requested") is False
+    assert decision_log.operator_audit is not None
+    assert decision_log.operator_audit["audit_summary"].get("staged_pipeline_preempted") == "agent_orchestration"
+    assert decision_log.operator_audit["audit_summary"].get("preempt_reason_detail")
+    timeline = decision_log.operator_audit.get("audit_timeline") or []
+    assert any(e.get("stage_key") == "orchestration_preempted" for e in timeline)
+    assert not (decision_log.runtime_stage_traces or [])
     assert decision_log.merge_finalization.fallback_used is False
     assert decision_log.merge_finalization.finalizer_status == "success"
     assert decision_log.orchestration_budget_summary is not None

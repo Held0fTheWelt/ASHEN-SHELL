@@ -158,6 +158,16 @@ Built by `build_routing_evidence` in `backend/app/runtime/model_routing_evidence
 
 **Task 1** implements **bounded** multi-stage Runtime orchestration; it does **not** add new guard rules, autonomous multi-turn editorial agents, or product-wide telemetry. **Authoritative truth** for governance and engine state remains outside model output; stage outputs and traces are **observability and advisory packaging** only. Optional **legacy** single-pass behavior remains available via `runtime_staged_orchestration: false`.
 
+### Task 4 — Validation surface (no semantic redesign)
+
+Task 4 tightens **proof** and **drift resistance** without changing Task 2E routing precedence, Task 1 stage contracts, or Task 3 derivation rules.
+
+- **Seam map:** [`task4_validation_seam_map.md`](./task4_validation_seam_map.md) — baseline coverage vs gaps closed by tests.
+- **Hardening gates:** [`task4_hardening_gates.md`](./task4_hardening_gates.md) — explicit gate IDs (G-RUN-*, G-BOOT-*, G-XS-*, G-NEG-*, G-DRIFT-01, G-DOC-01).
+- **Closure:** [`task4_maturity_hardening_closure_report.md`](./task4_maturity_hardening_closure_report.md).
+
+**E2E truths actually established in tests (honest scope):** multi-stage Runtime paths including degraded `final_path` values, preempted supervisor path `operator_audit`, tool-loop ordering after staged synthesis emits a tool request, registry bootstrap via real `create_app`, Improvement bounded-call skip when adapters are missing, and cross-surface operator-audit / routing-evidence key alignment where surfaces share shapes. **Not** a claim of full production E2E audit on every session smoke test.
+
 ## Honest limits
 
 - **Tier and alignment scores** are deterministic heuristics until production telemetry informs tuning.

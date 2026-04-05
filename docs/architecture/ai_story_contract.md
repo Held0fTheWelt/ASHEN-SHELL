@@ -24,6 +24,18 @@ The SLM helper roles described later in this document are **conceptual** narrati
 
 **Not in scope:** separate telemetry pipelines, dashboards, or autonomous multi-turn editorial stacks beyond the **bounded** Task 1 Runtime stages described above.
 
+### Task 4 — Maturity hardening (validation and drift resistance)
+
+Task 4 **does not** change routing policy, `StoryAIAdapter`, or guard/commit/reject authority. It adds **documented validation gates**, **stronger automated tests**, and **cross-surface contract checks** so behavior stays honest and regression-visible.
+
+- **Seam map (what was strong vs weak):** [`task4_validation_seam_map.md`](./task4_validation_seam_map.md)
+- **Explicit gate table (reviewable contract):** [`task4_hardening_gates.md`](./task4_hardening_gates.md)
+- **Closure report (PASS/FAIL, commands, residual risks):** [`task4_maturity_hardening_closure_report.md`](./task4_maturity_hardening_closure_report.md)
+
+**What tests now prove (high level):** staged Runtime success, SLM-only, degraded skip/parse-forced synthesis, orchestration-preempted audit shape, legacy single-pass, tool-loop continuation after a staged synthesis tool request, real `create_app` bootstrap-on path, empty-registry / missing-adapter honesty, Improvement `_run_routed_bounded_call` skip when provider adapters are absent, shared `operator_audit` / `routing_evidence` key contracts across Runtime, Writers-Room, and Improvement, and bounded drift checks on `audit_schema_version` and stable evidence keys.
+
+**Still not claimed:** God-of-Carnage lifecycle E2E does not assert full staged audit fields by default execution mode; no distributed immutable audit; no new telemetry products.
+
 ---
 
 ## Authority Rule (Fundamental)
