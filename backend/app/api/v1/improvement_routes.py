@@ -337,7 +337,11 @@ def run_improvement_experiment():
         ]
         evidence_bundle_final["retrieval_readiness"] = {
             "evidence_tier": retrieval_trace.get("evidence_tier"),
+            "confidence_posture": retrieval_trace.get("confidence_posture"),
             "evidence_lane_mix": retrieval_trace.get("evidence_lane_mix"),
+            "lane_anchor_counts": retrieval_trace.get("lane_anchor_counts"),
+            "retrieval_posture_summary": retrieval_trace.get("retrieval_posture_summary"),
+            "governance_influence_compact": retrieval_trace.get("governance_influence_compact"),
             "readiness_label": retrieval_trace.get("readiness_label"),
             "policy_outcome_hint": retrieval_trace.get("policy_outcome_hint"),
             "retrieval_quality_hint": retrieval_trace.get("retrieval_quality_hint"),

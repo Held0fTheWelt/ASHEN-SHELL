@@ -1590,8 +1590,7 @@ class ContextRetriever:
             )
             rule = _profile_policy_influence(profile_name, gov)
             why = (
-                f"initial={cand.initial_score:.2f} final={rerank_score:.2f}; "
-                f"{pack_role.replace('_', ' ')} | policy: {policy_note}"
+                f"score={rerank_score:.2f}; lane={gov.evidence_lane.value}; pack_role={pack_role}; policy={policy_note}"
             )
             hits.append(
                 RetrievalHit(
@@ -1756,11 +1755,28 @@ class ContextPackAssembler:
                     "profile_policy_influence": hit.profile_policy_influence,
                 }
             )
+        from ai_stack.capabilities import build_retrieval_trace
+
+        rdict_for_trace = {
+            "hit_count": len(result.hits),
+            "status": result.status.value,
+            "retrieval_route": result.retrieval_route,
+            "top_hit_score": sources[0].get("score", "") if sources else "",
+            "ranking_notes": result.ranking_notes,
+            "sources": sources,
+            "degradation_mode": result.degradation_mode,
+            "domain": result.request.domain.value,
+            "profile": profile,
+        }
+        pack_trace = build_retrieval_trace(rdict_for_trace)
         lines.append(
             "retrieval_posture: "
             f"status={result.status.value}; route={result.retrieval_route or 'n/a'}; "
-            f"degradation={result.degradation_mode or 'n/a'}; hits={len(result.hits)}"
+            f"degradation={result.degradation_mode or 'n/a'}; hits={len(result.hits)}; "
+            f"lane_mix={pack_trace.get('evidence_lane_mix')}; "
+            f"confidence={pack_trace.get('confidence_posture')}"
         )
+        lines.append(f"pack_trace_summary: {pack_trace.get('retrieval_posture_summary')}")
         if profile == "runtime_turn_support":
             lines.append("context_pack_governance=runtime_canonical_first_when_available")
         elif profile == "writers_review":
@@ -1770,8 +1786,8 @@ class ContextPackAssembler:
         lines.append("context_pack_order=workflow_sections_then_ordinal")
         return ContextPack(
             summary=(
-                f"{len(result.hits)} evidence chunk(s) for {profile} "
-                f"({RETRIEVAL_PIPELINE_VERSION}, {RETRIEVAL_POLICY_VERSION})."
+                f"{len(result.hits)} evidence chunk(s) | domain={result.request.domain.value} | profile={profile} "
+                f"| pipeline={RETRIEVAL_PIPELINE_VERSION} | policy={RETRIEVAL_POLICY_VERSION}"
             ),
             compact_context="\n".join(lines),
             sources=sources,

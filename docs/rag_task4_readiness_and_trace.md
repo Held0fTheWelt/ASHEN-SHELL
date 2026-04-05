@@ -2,7 +2,7 @@
 
 ## Trace schema
 
-`build_retrieval_trace` (in `ai_stack/capabilities.py`) sets `retrieval_trace_schema_version` to **`task4_compact_trace_v1`**. Downstream code can rely on this tag when parsing.
+`build_retrieval_trace` (in `ai_stack/capabilities.py`) sets `retrieval_trace_schema_version` to **`retrieval_closure_v1`** (retrieval subsystem closure; supersedes the earlier `task4_compact_trace_v1` tag). Downstream code can rely on this tag when parsing.
 
 ## Evidence tier (honest, compact heuristics)
 

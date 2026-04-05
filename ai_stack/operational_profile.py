@@ -71,5 +71,7 @@ def build_operational_cost_hints_from_retrieval(
         "retrieval_readiness_label": trace.get("readiness_label"),
         "evidence_lane_mix": trace.get("evidence_lane_mix"),
         "retrieval_quality_hint": trace.get("retrieval_quality_hint"),
+        "retrieval_confidence_posture": trace.get("confidence_posture"),
+        "retrieval_posture_summary": trace.get("retrieval_posture_summary"),
         "retrieval_trace_schema_version": trace.get("retrieval_trace_schema_version"),
     }

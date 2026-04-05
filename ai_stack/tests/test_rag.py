@@ -24,7 +24,12 @@ from ai_stack.rag import (
     build_runtime_retriever,
 )
 from ai_stack.tests.embedding_markers import requires_embeddings
-from ai_stack.tests.retrieval_eval_scenarios import RETRIEVAL_EVAL_SCENARIOS, assert_scenario
+from ai_stack.tests.retrieval_eval_scenarios import (
+    RETRIEVAL_EVAL_SCENARIOS,
+    RETRIEVAL_TRACE_EVAL_CASES,
+    assert_scenario,
+    assert_trace_eval_case,
+)
 
 
 def _write(path: Path, content: str) -> None:
@@ -1064,8 +1069,14 @@ def test_governance_view_matches_ingested_paths(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("scenario", RETRIEVAL_EVAL_SCENARIOS, ids=lambda s: s.id)
 def test_retrieval_eval_named_scenario(tmp_path: Path, scenario: Any) -> None:
-    """Task 4: named regression scenarios (runtime, writers_room, improvement); see retrieval_eval_scenarios."""
+    """Named regression scenarios (runtime, writers_room, improvement); see retrieval_eval_scenarios."""
     assert_scenario(tmp_path, scenario)
+
+
+@pytest.mark.parametrize("case", RETRIEVAL_TRACE_EVAL_CASES, ids=lambda c: c.id)
+def test_retrieval_trace_eval_case(case: Any) -> None:
+    """Deterministic trace/tier expectations without corpus setup (closure gate harness)."""
+    assert_trace_eval_case(case)
 
 
 def test_context_pack_includes_retrieval_posture_footer(tmp_path: Path) -> None:
@@ -1083,4 +1094,6 @@ def test_context_pack_includes_retrieval_posture_footer(tmp_path: Path) -> None:
     )
     pack = ContextPackAssembler().assemble(res)
     assert "retrieval_posture:" in pack.compact_context
+    assert "pack_trace_summary:" in pack.compact_context
+    assert "lane_mix=" in pack.compact_context
     assert "Evidence pack" in pack.compact_context

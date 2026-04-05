@@ -13,6 +13,9 @@ BC-next / C1-next verification that exercises the hybrid path, install
 and provide a writable model cache (``WOS_RAG_EMBEDDING_CACHE_DIR`` and/or
 standard Hugging Face hub cache env vars).
 
+Retrieval routes and degradation flags surfaced in ``ai_stack.rag`` / ``build_retrieval_trace`` are
+the authoritative operator truth when embeddings are absent or encode fails (sparse fallback).
+
 **Cache:** ``WOS_RAG_EMBEDDING_CACHE_DIR`` pins fastembed's ONNX/model download
 location for reproducible CI and local runs. If unset, fastembed uses its
 default (typically under the user cache / HF hub layout).

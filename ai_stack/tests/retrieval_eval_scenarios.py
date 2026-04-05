@@ -1,7 +1,7 @@
-"""Named retrieval evaluation scenarios (Task 4).
+"""Named retrieval evaluation scenarios (closure harness).
 
 Deterministic fixtures only; not imported by production runtime paths.
-Each scenario documents expected governance and packing behavior for regression tests.
+Each scenario documents expected governance, trace, and packing behavior for regression tests.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ai_stack.capabilities import build_retrieval_trace
+from ai_stack.capabilities import RETRIEVAL_TRACE_SCHEMA_VERSION, build_retrieval_trace
 from ai_stack.rag import (
     RETRIEVAL_POLICY_VERSION,
     ContextPackAssembler,
@@ -50,6 +50,10 @@ class RetrievalEvalScenario:
     expect_trace_policy_hint: str | None = None
     expect_retrieval_route: str | None = None
     expect_dedup_in_trace: bool | None = None
+    expect_first_hit_visibility: str | None = None
+    expect_evidence_tier: str | None = None
+    expect_top_pack_role: str | None = None
+    expect_context_contains: str | None = None
 
 
 def _apply_files(tmp_path: Path, files: tuple[tuple[str, str], ...]) -> None:
@@ -142,7 +146,6 @@ def assert_scenario(tmp_path: Path, scenario: RetrievalEvalScenario) -> None:
         assert trace.get("policy_outcome_hint") == scenario.expect_trace_policy_hint, (
             f"[{scenario.id}] policy hint {trace.get('policy_outcome_hint')!r}"
         )
-    assert trace.get("retrieval_trace_schema_version"), f"[{scenario.id}] missing schema version"
     assert trace.get("readiness_label"), f"[{scenario.id}] missing readiness_label"
     if scenario.expect_retrieval_route:
         assert rdict.get("retrieval_route") == scenario.expect_retrieval_route, (
@@ -152,6 +155,27 @@ def assert_scenario(tmp_path: Path, scenario: RetrievalEvalScenario) -> None:
         assert trace.get("dedup_shaped_selection") is scenario.expect_dedup_in_trace, (
             f"[{scenario.id}] dedup_shaped_selection={trace.get('dedup_shaped_selection')!r}"
         )
+    if scenario.expect_first_hit_visibility:
+        assert result.hits[0].source_visibility_class == scenario.expect_first_hit_visibility, (
+            f"[{scenario.id}] visibility {result.hits[0].source_visibility_class!r}"
+        )
+    if scenario.expect_evidence_tier:
+        assert trace.get("evidence_tier") == scenario.expect_evidence_tier, (
+            f"[{scenario.id}] tier={trace.get('evidence_tier')!r}"
+        )
+    if scenario.expect_top_pack_role:
+        assert result.hits[0].pack_role == scenario.expect_top_pack_role, (
+            f"[{scenario.id}] pack_role={result.hits[0].pack_role!r}"
+        )
+    if scenario.expect_context_contains:
+        assert scenario.expect_context_contains in pack.compact_context, (
+            f"[{scenario.id}] missing {scenario.expect_context_contains!r} in pack"
+        )
+    assert trace.get("retrieval_trace_schema_version") == RETRIEVAL_TRACE_SCHEMA_VERSION, (
+        f"[{scenario.id}] schema {trace.get('retrieval_trace_schema_version')!r}"
+    )
+    assert trace.get("confidence_posture"), f"[{scenario.id}] missing confidence_posture"
+    assert trace.get("retrieval_posture_summary"), f"[{scenario.id}] missing retrieval_posture_summary"
 
 
 SHARED_KEYWORDS = (
@@ -269,5 +293,106 @@ RETRIEVAL_EVAL_SCENARIOS: tuple[RetrievalEvalScenario, ...] = (
         expect_ranking_note_substr="policy_hard_excluded_pool_count=",
         forbid_path_substr="content/modules/gate_mod/draft.md",
         expect_trace_policy_hint="hard_pool_exclusions_applied",
+        expect_evidence_tier="moderate",
+        expect_context_contains="pack_trace_summary:",
+    ),
+    RetrievalEvalScenario(
+        id="writers_room_internal_review_lane_metadata",
+        description="Writers-Room review_note chunks expose internal_review lane and writers_working visibility.",
+        files=(
+            ("docs/reports/wr_internal_note.md", f"Internal board note remediation {SHARED_KEYWORDS} visibility."),
+        ),
+        domain=RetrievalDomain.WRITERS_ROOM,
+        profile="writers_review",
+        query="internal board note remediation unique eval scenario",
+        module_id=None,
+        max_chunks=2,
+        expect_min_hits=1,
+        expect_top_path_substr="docs/reports/wr_internal_note",
+        expect_first_hit_lane=SourceEvidenceLane.INTERNAL_REVIEW.value,
+        expect_first_hit_visibility="writers_working",
+        expect_pack_section_substr="Review context",
+        expect_top_pack_role="review_context",
+        expect_context_contains="pack_trace_summary:",
+    ),
+)
+
+
+@dataclass(frozen=True, slots=True)
+class RetrievalTraceEvalCase:
+    """Deterministic ``build_retrieval_trace`` inputs (no corpus I/O)."""
+
+    id: str
+    description: str
+    retrieval: dict[str, Any]
+    expect_tier: str
+    expect_confidence: str
+    rationale_substr: str = ""
+
+
+def assert_trace_eval_case(case: RetrievalTraceEvalCase) -> None:
+    tr = build_retrieval_trace(case.retrieval)
+    assert tr["evidence_tier"] == case.expect_tier, f"[{case.id}] tier={tr['evidence_tier']!r}"
+    assert tr["confidence_posture"] == case.expect_confidence, f"[{case.id}] conf={tr['confidence_posture']!r}"
+    assert tr.get("retrieval_posture_summary"), f"[{case.id}] missing posture summary"
+    assert tr.get("lane_anchor_counts") is not None, f"[{case.id}] missing lane_anchor_counts"
+    if case.rationale_substr:
+        assert case.rationale_substr in tr["evidence_rationale"], (
+            f"[{case.id}] rationale={tr['evidence_rationale']!r}"
+        )
+    assert tr["retrieval_trace_schema_version"] == RETRIEVAL_TRACE_SCHEMA_VERSION, f"[{case.id}] schema"
+
+
+RETRIEVAL_TRACE_EVAL_CASES: tuple[RetrievalTraceEvalCase, ...] = (
+    RetrievalTraceEvalCase(
+        id="trace_degraded_path_caps_multi_hit_strong",
+        description="Persisted degradation marker caps strong multi-hit hybrid tier.",
+        retrieval={
+            "hit_count": 4,
+            "status": "ok",
+            "retrieval_route": "hybrid",
+            "top_hit_score": "9.0",
+            "degradation_mode": "degraded_due_to_partial_persistence_problem",
+            "sources": [{"source_evidence_lane": "canonical"}] * 4,
+        },
+        expect_tier="moderate",
+        expect_confidence="low",
+        rationale_substr="capped_degraded_path",
+    ),
+    RetrievalTraceEvalCase(
+        id="trace_policy_hard_exclusion_caps_two_hit_strong",
+        description="Hard pool exclusions reshape selection; tier must not read as uncapped strong.",
+        retrieval={
+            "hit_count": 2,
+            "status": "ok",
+            "retrieval_route": "hybrid",
+            "top_hit_score": "8.0",
+            "ranking_notes": ["policy_hard_excluded_pool_count=1"],
+            "sources": [
+                {"source_evidence_lane": "canonical"},
+                {"source_evidence_lane": "canonical"},
+            ],
+        },
+        expect_tier="moderate",
+        expect_confidence="medium",
+        rationale_substr="capped_policy_hard_pool_reshape",
+    ),
+    RetrievalTraceEvalCase(
+        id="trace_sparse_multi_hit_supporting_scores_context_note",
+        description="Sparse-only multi-hit adds context note in rationale without claiming strong-by-count.",
+        retrieval={
+            "hit_count": 3,
+            "status": "ok",
+            "retrieval_route": "sparse_fallback",
+            "top_hit_score": "9.0",
+            "sources": [
+                {"source_evidence_lane": "supporting"},
+                {"source_evidence_lane": "supporting"},
+                {"source_evidence_lane": "supporting"},
+            ],
+        },
+        expect_tier="moderate",
+        expect_confidence="low",
+        rationale_substr="sparse_route_multi_hit_context",
     ),
 )

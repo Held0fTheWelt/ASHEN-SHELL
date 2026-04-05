@@ -7,7 +7,7 @@
 
 ## Trace and evidence tier
 
-- Extended [`ai_stack/capabilities.py`](../ai_stack/capabilities.py) `build_retrieval_trace` with lane mix, quality/policy/dedup hints, `readiness_label`, schema version `task4_compact_trace_v1`, and calibrated multi-hit `evidence_tier` (documented in [`docs/rag_task4_readiness_and_trace.md`](rag_task4_readiness_and_trace.md)).
+- Extended [`ai_stack/capabilities.py`](../ai_stack/capabilities.py) `build_retrieval_trace` with lane mix, quality/policy/dedup hints, `readiness_label`, schema version `retrieval_closure_v1`, and calibrated multi-hit `evidence_tier` (documented in [`docs/rag_task4_readiness_and_trace.md`](rag_task4_readiness_and_trace.md) and closure summary [`docs/rag_retrieval_subsystem_closure.md`](rag_retrieval_subsystem_closure.md)).
 - Enriched capability audit summaries for `wos.context_pack.build` with the same compact fields.
 
 ## Context pack

@@ -274,7 +274,7 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
     assert et.get("last_turn_graph_mode", {}).get("graph_path_summary") == "primary_invoke_langchain_only"
     assert et.get("tool_influence", {}).get("material_influence") is True
     assert et.get("retrieval_influence", {}).get("evidence_tier") == "moderate"
-    assert et.get("retrieval_influence", {}).get("retrieval_trace_schema_version") == "task4_compact_trace_v1"
+    assert et.get("retrieval_influence", {}).get("retrieval_trace_schema_version") == "retrieval_closure_v1"
 
 
 def test_session_evidence_surfaces_degraded_execution_health(client, moderator_headers, monkeypatch):

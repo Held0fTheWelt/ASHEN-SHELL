@@ -121,8 +121,8 @@ def _parse_top_hit_score(retrieval: dict[str, Any]) -> float | None:
         return None
 
 
-# Task 4: explicit trace schema tag for downstream consumers (additive, not a ranking score).
-RETRIEVAL_TRACE_SCHEMA_VERSION = "task4_compact_trace_v1"
+# Explicit trace schema tag for downstream consumers (additive, not a ranking score).
+RETRIEVAL_TRACE_SCHEMA_VERSION = "retrieval_closure_v1"
 
 # Degradation labels that justify capping ``strong`` to ``moderate`` for multi-hit packs.
 _DEGRADATION_CAP_STRONG_TO_MODERATE: frozenset[str] = frozenset(
@@ -205,6 +205,10 @@ def _sources_have_lane(sources: list[dict[str, Any]], lane: str) -> bool:
     return any(row.get("source_evidence_lane") == lane for row in sources)
 
 
+def _canonical_lane_hits(sources: list[dict[str, Any]]) -> int:
+    return sum(1 for row in sources if row.get("source_evidence_lane") == "canonical")
+
+
 def _compute_evidence_tier_task4(
     *,
     hit_count: int,
@@ -214,8 +218,14 @@ def _compute_evidence_tier_task4(
     degradation_mode: Any,
     sources: list[dict[str, Any]],
     lane_mix: str,
+    hard_excl: int,
 ) -> tuple[str, str]:
-    """Four-level tier with explicit Task 4 caps (no hidden second ranker)."""
+    """Four-level tier with explicit caps (no hidden second ranker).
+
+    Raw hit count never implies ``strong`` for multi-hit packs without hybrid-backed
+    lane anchors. Policy-hard pool reshapes and thin canonical anchors further cap
+    ``strong`` so operators are not misled by volume alone.
+    """
     if hit_count <= 0 or status == "fallback":
         if hit_count <= 0:
             return "none", "no_usable_hits"
@@ -223,15 +233,30 @@ def _compute_evidence_tier_task4(
 
     if hit_count == 1:
         if top is not None and top >= 8.0:
-            return "strong", "single_hit_high_score"
-        if top is not None and top >= 4.0:
-            return "moderate", "single_hit_mid_score"
-        return "weak", "single_hit_low_or_unknown_score"
+            tier1 = "strong"
+            rationale1 = "single_hit_high_score"
+        elif top is not None and top >= 4.0:
+            tier1 = "moderate"
+            rationale1 = "single_hit_mid_score"
+        else:
+            tier1 = "weak"
+            rationale1 = "single_hit_low_or_unknown_score"
+        if tier1 == "strong" and hard_excl > 0:
+            tier1 = "moderate"
+            rationale1 = f"{rationale1};capped_policy_hard_pool_reshape"
+        return tier1, rationale1
 
     if hit_count == 2:
         if top is not None and top >= 7.0:
-            return "strong", "two_hits_with_strong_top_score"
-        return "moderate", "two_hits_typical_scores"
+            tier2 = "strong"
+            rationale2 = "two_hits_with_strong_top_score"
+        else:
+            tier2 = "moderate"
+            rationale2 = "two_hits_typical_scores"
+        if tier2 == "strong" and hard_excl > 0:
+            tier2 = "moderate"
+            rationale2 = f"{rationale2};capped_policy_hard_pool_reshape"
+        return tier2, rationale2
 
     # Multi-hit (>=3): do not default to strong purely from count.
     tier = "moderate"
@@ -262,10 +287,74 @@ def _compute_evidence_tier_task4(
         tier = "moderate"
         rationale = f"{rationale};capped_supporting_heavy_no_canonical_or_evaluative"
 
+    if tier == "strong" and hard_excl > 0:
+        tier = "moderate"
+        rationale = f"{rationale};capped_policy_hard_pool_reshape"
+
+    if tier == "strong" and hit_count >= 4 and _canonical_lane_hits(sources) == 1:
+        tier = "moderate"
+        rationale = f"{rationale};capped_thin_canonical_anchor_density"
+
     if hit_count >= 3 and route_s == "sparse_fallback" and "capped_sparse_route" not in rationale:
         rationale = f"{rationale};sparse_route_multi_hit_context"
 
     return tier, rationale
+
+
+def _lane_anchor_counts_compact(sources: list[dict[str, Any]]) -> str:
+    """Dense operator token: lane hit counts in stable key order (not a score)."""
+    keys = ("canonical", "supporting", "draft_working", "internal_review", "evaluative", "unknown")
+    counts: dict[str, int] = {k: 0 for k in keys}
+    for row in sources:
+        lane = row.get("source_evidence_lane")
+        lk = lane if isinstance(lane, str) and lane in counts else "unknown"
+        counts[lk] = counts.get(lk, 0) + 1
+    parts = [f"{k[:1]}={counts[k]}" for k in keys if counts[k]]
+    return "|".join(parts) if parts else "none"
+
+
+def _governance_influence_compact(*, hard_excl: int, dedup: bool, policy_hint: str) -> str:
+    return f"hard_excl={hard_excl};dedup={'yes' if dedup else 'no'};policy={policy_hint}"
+
+
+def _confidence_posture(
+    *,
+    tier: str,
+    route_s: str,
+    degradation_mode: Any,
+    rationale: str,
+) -> str:
+    """Honest coarse confidence (implementation-grounded; not a calibrated probability)."""
+    deg_s = degradation_mode if isinstance(degradation_mode, str) else ""
+    degraded_signal = bool(deg_s and deg_s not in ("hybrid_ok", "rebuilt_dense_index", ""))
+    capped = "capped_" in rationale
+    if tier == "none":
+        return "low"
+    if tier == "weak":
+        return "low"
+    if tier == "moderate":
+        if route_s == "sparse_fallback" or degraded_signal:
+            return "low"
+        return "medium"
+    if route_s == "sparse_fallback" or degraded_signal or capped:
+        return "medium"
+    return "high"
+
+
+def _retrieval_posture_summary(
+    *,
+    tier: str,
+    lane_mix: str,
+    route_s: str,
+    confidence_posture: str,
+    quality_hint: str,
+    gov_compact: str,
+) -> str:
+    r = route_s or "n/a"
+    return (
+        f"tier={tier};confidence={confidence_posture};lanes={lane_mix};route={r};"
+        f"quality={quality_hint};gov={gov_compact}"
+    )
 
 
 def _retrieval_quality_hint(
@@ -300,8 +389,10 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
     anchors. This is a small, documented heuristic layer—not a second ranker.
 
     Additional compact fields (operator-facing, English):
-    ``evidence_lane_mix``, ``retrieval_quality_hint``, ``policy_outcome_hint``,
-    ``dedup_shaped_selection``, ``readiness_label``, ``retrieval_trace_schema_version``.
+    ``evidence_lane_mix``, ``lane_anchor_counts``, ``retrieval_quality_hint``,
+    ``policy_outcome_hint``, ``dedup_shaped_selection``, ``readiness_label``,
+    ``confidence_posture``, ``governance_influence_compact``,
+    ``retrieval_posture_summary``, ``retrieval_trace_schema_version``.
     """
     if not isinstance(retrieval, dict):
         retrieval = {}
@@ -326,6 +417,7 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
         degradation_mode=degradation_mode,
         sources=sources,
         lane_mix=lane_mix,
+        hard_excl=hard_excl,
     )
 
     quality_hint = _retrieval_quality_hint(
@@ -335,9 +427,28 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
         hard_excl=hard_excl,
     )
 
+    gov_compact = _governance_influence_compact(
+        hard_excl=hard_excl, dedup=dedup, policy_hint=policy_hint
+    )
+    conf = _confidence_posture(
+        tier=tier,
+        route_s=route_s,
+        degradation_mode=degradation_mode,
+        rationale=rationale,
+    )
+    lane_counts = _lane_anchor_counts_compact(sources)
+    posture_summary = _retrieval_posture_summary(
+        tier=tier,
+        lane_mix=lane_mix,
+        route_s=route_s,
+        confidence_posture=conf,
+        quality_hint=quality_hint,
+        gov_compact=gov_compact,
+    )
+
     readiness_label = (
-        f"tier={tier}; lanes={lane_mix}; route={route_s or 'n/a'}; "
-        f"policy={policy_hint}; quality={quality_hint}"
+        f"confidence={conf}; tier={tier}; lanes={lane_mix}; route={route_s or 'n/a'}; "
+        f"policy={policy_hint}; quality={quality_hint}; anchors={lane_counts}"
     )
     if len(readiness_label) > 280:
         readiness_label = readiness_label[:277] + "..."
@@ -360,6 +471,10 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
         "dedup_shaped_selection": dedup,
         "hard_policy_exclusion_count": hard_excl,
         "readiness_label": readiness_label,
+        "lane_anchor_counts": lane_counts,
+        "confidence_posture": conf,
+        "governance_influence_compact": gov_compact,
+        "retrieval_posture_summary": posture_summary,
         "retrieval_trace_schema_version": RETRIEVAL_TRACE_SCHEMA_VERSION,
     }
 

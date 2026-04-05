@@ -62,6 +62,10 @@ def _retrieval_influence_from_turn(last_turn: dict[str, Any] | None) -> dict[str
         "evidence_tier": trace.get("evidence_tier"),
         "evidence_rationale": trace.get("evidence_rationale"),
         "evidence_lane_mix": trace.get("evidence_lane_mix"),
+        "lane_anchor_counts": trace.get("lane_anchor_counts"),
+        "confidence_posture": trace.get("confidence_posture"),
+        "retrieval_posture_summary": trace.get("retrieval_posture_summary"),
+        "governance_influence_compact": trace.get("governance_influence_compact"),
         "readiness_label": trace.get("readiness_label"),
         "retrieval_quality_hint": trace.get("retrieval_quality_hint"),
         "policy_outcome_hint": trace.get("policy_outcome_hint"),
@@ -245,6 +249,9 @@ def _writers_room_governance_signals(review: dict[str, Any]) -> dict[str, Any]:
             "governance_review_state_present": bool((review.get("review_state") or {}).get("status")),
             "retrieval_evidence_sufficient_for_review": _retrieval_tier_strong_enough_for_governance(wr_tier),
             "retrieval_evidence_tier": wr_tier,
+            "retrieval_confidence_posture": rt.get("confidence_posture"),
+            "retrieval_posture_summary": rt.get("retrieval_posture_summary"),
+            "retrieval_lane_anchor_counts": rt.get("lane_anchor_counts"),
             "langgraph_orchestration": "seed_stub_not_runtime_turn_parity",
         },
         "artifact_counts": {
@@ -573,7 +580,7 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
             "evidence_posture": "task4_trace_schema_and_calibrated_tier",
             "reason": (
                 "build_retrieval_trace adds evidence_lane_mix, readiness_label, policy/dedup hints, and "
-                "schema version task4_compact_trace_v1; multi-hit evidence_tier is not strong-from-count alone "
+                "schema version retrieval_closure_v1; multi-hit evidence_tier is not strong-from-count alone "
                 "on sparse-only or supporting-heavy packs. See docs/rag_task4_readiness_and_trace.md."
             ),
         },
@@ -588,7 +595,7 @@ def build_release_readiness_report(*, trace_id: str) -> dict[str, Any]:
         "improvement_review_ready_for_retrieval_graded_review": improvement_retrieval_backing_ready,
     }
     retrieval_readiness_summary = {
-        "trace_schema": "task4_compact_trace_v1_via_build_retrieval_trace",
+        "trace_schema": "retrieval_closure_v1_via_build_retrieval_trace",
         "strengths": [
             "Hybrid and sparse retrieval paths with explicit degradation_mode and retrieval_route in capability payloads",
             "Source governance lanes and pack roles preserved from Task 3; traces expose lane mix and policy outcome hints",

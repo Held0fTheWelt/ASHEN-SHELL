@@ -27,6 +27,17 @@ def test_build_retrieval_trace_evidence_tier_uses_hit_count_and_top_score() -> N
     assert build_retrieval_trace({"hit_count": 4, "status": "ok"})["evidence_tier"] == "moderate"
     canon_row = {"source_evidence_lane": "canonical"}
     sup_row = {"source_evidence_lane": "supporting"}
+    thin = build_retrieval_trace(
+        {
+            "hit_count": 4,
+            "status": "ok",
+            "retrieval_route": "hybrid",
+            "top_hit_score": "7.5",
+            "sources": [canon_row, sup_row, sup_row, sup_row],
+        }
+    )
+    assert thin["evidence_tier"] == "moderate"
+    assert "capped_thin_canonical_anchor_density" in thin["evidence_rationale"]
     assert (
         build_retrieval_trace(
             {
@@ -34,7 +45,7 @@ def test_build_retrieval_trace_evidence_tier_uses_hit_count_and_top_score() -> N
                 "status": "ok",
                 "retrieval_route": "hybrid",
                 "top_hit_score": "7.5",
-                "sources": [canon_row, sup_row, sup_row, sup_row],
+                "sources": [canon_row, canon_row, canon_row, canon_row],
             }
         )["evidence_tier"]
         == "strong"
@@ -88,7 +99,11 @@ def test_build_retrieval_trace_compact_governance_hints() -> None:
     assert t["dedup_shaped_selection"] is True
     assert t["evidence_lane_mix"] == "canonical_heavy"
     assert "sparse_signal_path" in t["retrieval_quality_hint"]
-    assert t["readiness_label"].startswith("tier=")
+    assert t["evidence_tier"] == "moderate"
+    assert "capped_policy_hard_pool_reshape" in t["evidence_rationale"]
+    assert t["confidence_posture"] == "low"
+    assert t.get("retrieval_posture_summary")
+    assert t["readiness_label"].startswith("confidence=")
 
 
 def test_context_pack_audit_summary_includes_tier_and_transcript_impact(tmp_path: Path) -> None:
