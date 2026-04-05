@@ -19,6 +19,38 @@ from app.runtime.operator_audit import (
     primary_concern_code,
 )
 
+# Stable cross-surface comparison grammar for operator-facing payloads (increment on breaking shape changes).
+AREA2_OPERATOR_COMPARISON_GRAMMAR_VERSION = "area2_operator_comparison_v1"
+
+# Mandatory keys on ``area2_operator_truth["compact_operator_comparison"]`` (all three surfaces).
+COMPACT_OPERATOR_COMPARISON_KEYS: frozenset = frozenset(
+    {
+        "grammar_version",
+        "surface",
+        "authority_source",
+        "startup_profile",
+        "operational_state",
+        "route_status",
+        "primary_operational_concern",
+        "no_eligible_operator_meaning",
+        "policy_execution_comparison",
+        "selected_vs_executed",
+        "stage_outcome_briefs",
+        "runtime_path_summary",
+    }
+)
+
+NO_ELIGIBLE_OPERATOR_MEANING_KEYS: frozenset = frozenset(
+    {
+        "applicable",
+        "operator_meaning_token",
+        "discipline_worst_case",
+        "stages_reporting_no_eligible_adapter",
+    }
+)
+
+POLICY_EXECUTION_COMPARISON_KEYS: frozenset = frozenset({"posture", "per_stage"})
+
 # Frozen summary aligned with AREA2_AUTHORITY_REGISTRY narrative (no runtime probe).
 _CANONICAL_TASK2A_AUTHORITY_SUMMARY = (
     "Authoritative Task 2A policy: app.runtime.model_routing.route_model. "
@@ -170,6 +202,244 @@ def _bounded_canonical_coverage(specs: list[Any]) -> tuple[dict[str, bool], bool
     return m, wr.all_satisfied and imp.all_satisfied
 
 
+def _comparison_trace_rows(
+    *,
+    surface: str,
+    traces_rt: list[dict[str, Any]],
+    traces_bd: list[dict[str, Any]],
+    model_routing_trace: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Traces used for compact comparison rows (includes legacy rollup-only runtime)."""
+    if surface == "runtime":
+        if traces_rt:
+            return traces_rt
+        if model_routing_trace and isinstance(model_routing_trace, dict):
+            rev = model_routing_trace.get("routing_evidence")
+            if isinstance(rev, dict) and rev:
+                return [
+                    {
+                        "stage_id": "legacy_single_route",
+                        "routing_evidence": rev,
+                        "decision": model_routing_trace.get("decision"),
+                    }
+                ]
+        return []
+    return traces_bd
+
+
+def _unified_selected_vs_executed_for_comparison(selected_executed: dict[str, Any]) -> dict[str, Any]:
+    """Same ``per_stage`` + ``legacy_roll_up`` shape on every surface (bounded uses null rollup)."""
+    per_stage = selected_executed.get("per_stage")
+    if not isinstance(per_stage, list):
+        per_stage = []
+    roll = selected_executed.get("legacy_roll_up")
+    if isinstance(roll, dict):
+        rollup = {
+            "route_reason_code": roll.get("route_reason_code"),
+            "selected_adapter_name": roll.get("selected_adapter_name"),
+            "executed_adapter_name": roll.get("executed_adapter_name"),
+        }
+    else:
+        rollup = {"route_reason_code": None, "selected_adapter_name": None, "executed_adapter_name": None}
+    return {"per_stage": per_stage, "legacy_roll_up": rollup}
+
+
+def _routing_evidence_for_row(trace: dict[str, Any]) -> dict[str, Any]:
+    rev = trace.get("routing_evidence")
+    return rev if isinstance(rev, dict) else {}
+
+
+def _policy_execution_rows(traces: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for t in traces:
+        if not isinstance(t, dict):
+            continue
+        sk = str(t.get("stage_id") or t.get("stage") or "")
+        rev = _routing_evidence_for_row(t)
+        dec = t.get("decision") if isinstance(t.get("decision"), dict) else {}
+        if not rev and not dec:
+            continue
+        aligned = rev.get("policy_execution_aligned") if rev else None
+        ed = rev.get("execution_deviation") if rev else None
+        has_dev = isinstance(ed, dict) and bool(ed)
+        rows.append(
+            {
+                "stage_key": sk,
+                "policy_execution_aligned": aligned,
+                "has_execution_deviation": has_dev,
+            }
+        )
+    return rows
+
+
+def _derive_policy_execution_posture(rows: list[dict[str, Any]]) -> str:
+    """Deterministic posture from existing alignment and deviation flags only."""
+    if not rows:
+        return "not_applicable"
+    any_true = False
+    any_false = False
+    any_dev = False
+    any_known_align = False
+    for r in rows:
+        a = r.get("policy_execution_aligned")
+        if a is True:
+            any_true = True
+            any_known_align = True
+        elif a is False:
+            any_false = True
+            any_known_align = True
+        if r.get("has_execution_deviation"):
+            any_dev = True
+    if not any_known_align and not any_dev:
+        return "unknown"
+    if any_dev or any_false:
+        if any_true:
+            return "mixed"
+        return "misaligned"
+    if any_true:
+        return "aligned"
+    return "unknown"
+
+
+def _stage_outcome_briefs(traces: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for t in traces:
+        if not isinstance(t, dict):
+            continue
+        sk = str(t.get("stage_id") or t.get("stage") or "")
+        rev = _routing_evidence_for_row(t)
+        dov = rev.get("diagnostics_overview") if rev else None
+        summary = None
+        if isinstance(dov, dict):
+            s = dov.get("summary")
+            if isinstance(s, str) and s.strip():
+                summary = s
+        code = rev.get("route_reason_code") if rev else None
+        if summary is None and code is not None:
+            summary = str(code)
+        if sk or summary is not None or code is not None:
+            out.append(
+                {
+                    "stage_key": sk,
+                    "outcome_summary": summary,
+                    "route_reason_code": str(code) if code is not None else None,
+                }
+            )
+    return out
+
+
+def _explicit_runtime_path_summary(
+    *,
+    surface: str,
+    runtime_orchestration_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Ranking/Task-1 path fields: values on runtime when present, explicit nulls on bounded surfaces."""
+    keys = RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS
+    if surface != "runtime":
+        return {k: None for k in keys}
+    summary = runtime_orchestration_summary if isinstance(runtime_orchestration_summary, dict) else {}
+    return {k: summary.get(k) for k in keys}
+
+
+def _no_eligible_operator_meaning(
+    *,
+    operational_state: Area2OperationalState,
+    discipline: dict[str, Any],
+    stages_nea: list[str],
+) -> dict[str, Any]:
+    worst = "not_applicable"
+    if isinstance(discipline, dict):
+        w = discipline.get("rollup_worst_case")
+        if isinstance(w, str) and w:
+            worst = w
+
+    token = "no_no_eligible_operator_concern_on_compact_view"
+    if operational_state is Area2OperationalState.test_isolated:
+        token = "operational_test_isolated_empty_registry_expected"
+    elif operational_state is Area2OperationalState.misconfigured:
+        token = "operational_misconfigured_registry_or_inventory"
+    elif operational_state is Area2OperationalState.intentionally_degraded:
+        token = "operational_bootstrap_disabled_intentional"
+    elif stages_nea:
+        if worst == "true_no_eligible_adapter":
+            token = "routing_true_no_eligible_adapter_on_stage"
+        elif worst == "intentional_degraded_route":
+            token = "routing_no_eligible_with_task2e_degrade"
+        elif worst == "bounded_executor_mismatch":
+            token = "routing_bounded_executor_mismatch"
+        elif worst == "test_isolated_empty_registry":
+            token = "routing_no_eligible_test_isolated_discipline"
+        elif worst == "missing_registration_or_specs":
+            token = "routing_no_eligible_missing_specs"
+        else:
+            token = "routing_no_eligible_on_stage_other_discipline"
+    elif worst != "not_applicable":
+        token = "routing_discipline_signal_without_staged_no_eligible_list"
+
+    applicable = (
+        operational_state is not Area2OperationalState.healthy
+        or bool(stages_nea)
+        or (worst != "not_applicable")
+    )
+
+    return {
+        "applicable": applicable,
+        "operator_meaning_token": token,
+        "discipline_worst_case": worst if worst != "not_applicable" else None,
+        "stages_reporting_no_eligible_adapter": list(stages_nea),
+    }
+
+
+def _build_compact_operator_comparison(
+    *,
+    surface: str,
+    authority_source: str,
+    bootstrap_enabled: bool | None,
+    operational_state: Area2OperationalState,
+    route_status: str,
+    primary_operational_concern: str | None,
+    discipline: dict[str, Any],
+    stages_nea: list[str],
+    selected_executed: dict[str, Any],
+    traces_rt: list[dict[str, Any]],
+    traces_bd: list[dict[str, Any]],
+    model_routing_trace: dict[str, Any] | None,
+    runtime_orchestration_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Single structured object for cross-surface operator comparison (derived-only)."""
+    comp_tr = _comparison_trace_rows(
+        surface=surface,
+        traces_rt=traces_rt,
+        traces_bd=traces_bd,
+        model_routing_trace=model_routing_trace,
+    )
+    pe_rows = _policy_execution_rows(comp_tr)
+    return {
+        "grammar_version": AREA2_OPERATOR_COMPARISON_GRAMMAR_VERSION,
+        "surface": surface,
+        "authority_source": authority_source,
+        "startup_profile": _legibility_startup_profile(bootstrap_enabled),
+        "operational_state": operational_state.value,
+        "route_status": route_status,
+        "primary_operational_concern": primary_operational_concern,
+        "no_eligible_operator_meaning": _no_eligible_operator_meaning(
+            operational_state=operational_state,
+            discipline=discipline,
+            stages_nea=stages_nea,
+        ),
+        "policy_execution_comparison": {
+            "posture": _derive_policy_execution_posture(pe_rows),
+            "per_stage": pe_rows,
+        },
+        "selected_vs_executed": _unified_selected_vs_executed_for_comparison(selected_executed),
+        "stage_outcome_briefs": _stage_outcome_briefs(comp_tr),
+        "runtime_path_summary": _explicit_runtime_path_summary(
+            surface=surface,
+            runtime_orchestration_summary=runtime_orchestration_summary,
+        ),
+    }
+
+
 def build_area2_operator_truth(
     *,
     surface: str,
@@ -252,6 +522,22 @@ def build_area2_operator_truth(
         ),
     }
 
+    compact_operator_comparison = _build_compact_operator_comparison(
+        surface=surface,
+        authority_source=authority_source,
+        bootstrap_enabled=bootstrap_enabled,
+        operational_state=operational_state,
+        route_status=route_status,
+        primary_operational_concern=pcc,
+        discipline=discipline,
+        stages_nea=stages_nea,
+        selected_executed=selected_executed,
+        traces_rt=traces_rt,
+        traces_bd=traces_bd,
+        model_routing_trace=model_routing_trace if surface == "runtime" else None,
+        runtime_orchestration_summary=runtime_orchestration_summary if surface == "runtime" else None,
+    )
+
     return {
         "surface": surface,
         "authority_source": authority_source,
@@ -266,6 +552,7 @@ def build_area2_operator_truth(
         "stages_with_no_eligible_adapter": stages_nea,
         "canonical_authority_summary": _CANONICAL_TASK2A_AUTHORITY_SUMMARY,
         "legibility": legibility,
+        "compact_operator_comparison": compact_operator_comparison,
     }
 
 

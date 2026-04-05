@@ -29,6 +29,12 @@ from app.runtime.area2_routing_authority import (
 )
 from app.runtime.model_routing import route_model
 from app.runtime.model_routing_contracts import RouteReasonCode, RoutingRequest, TaskKind, WorkflowPhase
+from app.runtime.area2_operator_truth import (
+    AREA2_OPERATOR_COMPARISON_GRAMMAR_VERSION,
+    COMPACT_OPERATOR_COMPARISON_KEYS,
+    NO_ELIGIBLE_OPERATOR_MEANING_KEYS,
+    POLICY_EXECUTION_COMPARISON_KEYS,
+)
 from app.runtime.operator_audit import RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS
 from app.runtime.routing_registry_bootstrap import bootstrap_routing_registry_from_config
 from app.runtime.runtime_models import SessionState, SessionStatus
@@ -75,6 +81,7 @@ AREA2_TRUTH_KEYS = frozenset(
         "stages_with_no_eligible_adapter",
         "canonical_authority_summary",
         "legibility",
+        "compact_operator_comparison",
     }
 )
 
@@ -315,3 +322,21 @@ def assert_area2_truth_shape(truth: dict) -> None:
     assert not miss_leg, f"area2_operator_truth.legibility missing: {miss_leg}"
     rr = leg.get("runtime_ranking_summary")
     assert rr is None or isinstance(rr, dict), "runtime_ranking_summary must be None or a dict"
+    coc = truth.get("compact_operator_comparison")
+    assert isinstance(coc, dict), "compact_operator_comparison must be a dict"
+    miss_coc = COMPACT_OPERATOR_COMPARISON_KEYS - set(coc.keys())
+    assert not miss_coc, f"compact_operator_comparison missing: {miss_coc}"
+    assert coc.get("grammar_version") == AREA2_OPERATOR_COMPARISON_GRAMMAR_VERSION
+    nem = coc.get("no_eligible_operator_meaning")
+    assert isinstance(nem, dict)
+    assert not NO_ELIGIBLE_OPERATOR_MEANING_KEYS - set(nem.keys())
+    pec = coc.get("policy_execution_comparison")
+    assert isinstance(pec, dict)
+    assert not POLICY_EXECUTION_COMPARISON_KEYS - set(pec.keys())
+    svs = coc.get("selected_vs_executed")
+    assert isinstance(svs, dict)
+    assert "per_stage" in svs and "legacy_roll_up" in svs
+    rps = coc.get("runtime_path_summary")
+    assert isinstance(rps, dict)
+    for k in RUNTIME_RANKING_ORCHESTRATION_SUMMARY_KEYS:
+        assert k in rps

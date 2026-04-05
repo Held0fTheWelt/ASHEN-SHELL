@@ -184,6 +184,8 @@ Task 4 tightens **proof** and **drift resistance** without changing Task 2E rout
 
 **Final operational closure gates:** [`area2_final_closure_gates.md`](./area2_final_closure_gates.md) — **G-FINAL-01**, **G-FINAL-02**, **G-FINAL-03**, **G-FINAL-04**, **G-FINAL-05**, **G-FINAL-06**, **G-FINAL-07**, **G-FINAL-08** (reproducible bootstrap, healthy canonical paths, practical authority convergence, no-eligible non-normalization, operator legibility, cross-surface coherence, legacy compatibility, documentation truth). Named startup profiles: [`backend/app/runtime/area2_startup_profiles.py`](../../backend/app/runtime/area2_startup_profiles.py). **Final report:** [`area2_final_operational_closure_report.md`](./area2_final_operational_closure_report.md).
 
+**Task 3 operator comparison (Area 2 closure):** **G-T3-01**, **G-T3-02**, **G-T3-03**, **G-T3-04**, **G-T3-05**, **G-T3-06**, **G-T3-07**, **G-T3-08** — explicit cross-surface **`compact_operator_comparison`** on `operator_audit.area2_operator_truth` with grammar version **`area2_operator_comparison_v1`** (see [`area2_operator_truth.py`](../../backend/app/runtime/area2_operator_truth.py)). Bounded surfaces use the same mandatory keys with explicit `null` for Runtime-only slots (e.g. `runtime_path_summary`). Gate table: [`area2_task3_closure_gates.md`](./area2_task3_closure_gates.md). Closure report: [`area2_operator_comparison_closure_report.md`](./area2_operator_comparison_closure_report.md). Tests: `backend/tests/runtime/test_area2_task3_closure_gates.py`.
+
 **Unchanged:** `route_model` precedence and semantics, `StoryAIAdapter`, guard/commit/reject authority, and authoritative Runtime mutation rules.
 
 ## Honest limits
