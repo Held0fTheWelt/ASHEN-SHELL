@@ -21,18 +21,20 @@ setup-test-environment.bat
 ```
 
 This script will:
-1. Install all production dependencies from `backend/requirements.txt`
-2. Install all test dependencies from `backend/requirements-test.txt`
-3. Verify that critical packages (flask, sqlalchemy, pytest, etc.) are installed
-4. Report any missing packages
+1. Run `python -m pip install -r backend/requirements-test.txt` from `backend/` (that file starts with `-r requirements.txt`, so **production + test** deps install together)
+2. Verify that critical packages (flask, sqlalchemy, pytest, etc.) are installed
+3. Report any missing packages
 
 #### Manual Setup
 
-If you prefer to install manually, run:
+If you prefer to install manually, run **one** of:
 
 ```bash
-cd backend
-pip install -r requirements.txt -r requirements-test.txt
+python -m pip install -r backend/requirements-test.txt
+```
+
+```bash
+cd backend && python -m pip install -r requirements-test.txt
 ```
 
 Or, for development (includes testing plus optional dev tools):
@@ -209,7 +211,7 @@ Focused regression for **Workstream A** (practical convergence) and **Workstream
 
 **Command surface (code):** [`backend/app/runtime/area2_validation_commands.py`](../backend/app/runtime/area2_validation_commands.py) — `AREA2_DUAL_CLOSURE_PYTEST_MODULES`, `area2_dual_closure_pytest_invocation()`.
 
-**Prerequisites:** Install dependencies (`./setup-test-environment.sh`, `setup-test-environment.bat`, or `pip install -r backend/requirements.txt -r backend/requirements-test.txt`).
+**Prerequisites:** Install dependencies (`./setup-test-environment.sh`, `setup-test-environment.bat`, or `python -m pip install -r backend/requirements-test.txt`).
 
 **Run from `backend/`** (required so `backend/pytest.ini` sets `pythonpath` and `testpaths`). Pass **`--no-cov`** because `pytest.ini` defaults include coverage `addopts`:
 
@@ -294,18 +296,35 @@ Production dependencies only. Used by:
 
 ### `backend/requirements-test.txt`
 
-**Test dependencies explicitly declared** (imports requirements.txt as a base).
+**Test dependencies explicitly declared** (first directive is `-r requirements.txt` in the same directory, so production deps install in one step).
 
-Used for clean-environment testing:
+Used for clean-environment testing (pick one):
+
 ```bash
-pip install -r requirements.txt -r requirements-test.txt
+# From repository root (recommended in CI and fresh clones)
+python -m pip install -r backend/requirements-test.txt
+
+# From backend/
+cd backend && python -m pip install -r requirements-test.txt
 ```
 
-Includes:
+You do **not** need a separate `pip install -r requirements.txt` when using `requirements-test.txt` — the file already includes it.
+
+**Portable checks** (no Flask/app imports; only pytest required):
+
+```bash
+python -m pip install 'pytest>=7,<9'
+python -m pytest tests/requirements_hygiene/ -q
+```
+
+Includes (among others):
+- `flask>=3.0.6,<4` — explicit anchor for the Flask app under test (also in `requirements.txt` via `-r`)
 - `pytest>=7.0,<9` — test runner
 - `pytest-asyncio>=0.21,<1` — async test support (import-time requirement)
 - `pytest-cov>=4.0,<6` — coverage measurement
 - `pytest-timeout>=2.1` — timeout enforcement
+- `anyio` — explicit async primitives for consistent clean installs
+- `exceptiongroup` — Python 3.10 compatibility for pytest/async (environment marker)
 
 **Does NOT include** dev-only tools like formatters, linters, type checkers.
 
@@ -361,7 +380,7 @@ To validate that the repository can be tested in a fresh environment:
 
 1. **Install dependencies:**
    ```bash
-   pip install --no-cache-dir -r backend/requirements.txt -r backend/requirements-test.txt
+   python -m pip install --no-cache-dir -r backend/requirements-test.txt
    ```
 
 2. **Run canonical smoke suite:**

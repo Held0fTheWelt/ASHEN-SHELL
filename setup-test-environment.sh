@@ -25,15 +25,19 @@ echo ""
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"
 
-# Check if python is available
-if ! command -v python &> /dev/null; then
-    echo -e "${RED}Error: Python not found${NC}" >&2
+# Prefer python3 (common on Debian/Ubuntu); fall back to python (Windows/macOS venvs).
+if command -v python3 &> /dev/null; then
+    PYTHON_BIN=python3
+elif command -v python &> /dev/null; then
+    PYTHON_BIN=python
+else
+    echo -e "${RED}Error: Python not found (tried python3, python)${NC}" >&2
     echo "Please install Python 3.10+ and try again." >&2
     exit 1
 fi
 
 echo "Repository: $REPO_ROOT"
-echo "Python: $(python --version)"
+echo "Python: $($PYTHON_BIN --version)"
 echo ""
 
 # Install backend dependencies
@@ -50,11 +54,10 @@ if [[ ! -f "requirements-test.txt" ]]; then
     exit 1
 fi
 
-echo "Installing production dependencies..."
-pip install -r requirements.txt -q
-
-echo "Installing test dependencies..."
-pip install -r requirements-test.txt -q
+# Single install: requirements-test.txt includes "-r requirements.txt" (same directory).
+echo "Installing production + test dependencies (requirements-test.txt)..."
+$PYTHON_BIN -m pip install --upgrade pip -q
+$PYTHON_BIN -m pip install -r requirements-test.txt -q
 
 cd ..
 
@@ -67,7 +70,7 @@ MISSING=()
 packages=("flask" "sqlalchemy" "flask_sqlalchemy" "flask_migrate" "flask_limiter" "pytest" "pytest_asyncio")
 
 for pkg in "${packages[@]}"; do
-    if python -c "import ${pkg}" 2>/dev/null; then
+    if $PYTHON_BIN -c "import ${pkg}" 2>/dev/null; then
         echo "  ✓ $pkg"
     else
         echo "  ✗ $pkg (MISSING)"

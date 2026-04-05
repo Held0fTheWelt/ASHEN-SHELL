@@ -45,18 +45,36 @@ def test_g_b_03_clean_environment_validation_gate() -> None:
     rtest = BACKEND_ROOT / "requirements-test.txt"
     assert req.is_file()
     assert rtest.is_file()
+    hygiene = REPO_ROOT / "tests" / "requirements_hygiene"
+    assert hygiene.is_dir(), "tests/requirements_hygiene must exist for portable requirement checks"
     sh_text = sh.read_text(encoding="utf-8", errors="replace")
     bat_text = bat.read_text(encoding="utf-8", errors="replace")
     assert "requirements.txt" in sh_text and "requirements-test.txt" in sh_text
     assert "requirements.txt" in bat_text and "requirements-test.txt" in bat_text
+    assert "-m pip install" in sh_text and "requirements-test.txt" in sh_text, (
+        "setup-test-environment.sh should use python -m pip and install requirements-test.txt"
+    )
+    assert "-m pip install" in bat_text.lower() or "python -m pip install" in bat_text.lower()
 
 
 def test_g_b_04_dependency_setup_explicitness_gate() -> None:
-    """G-B-04: test requirements explicitly include pytest stack used by Area 2 async suites."""
+    """G-B-04: test requirements explicitly include pytest stack; static file graph is valid."""
     rtest = (BACKEND_ROOT / "requirements-test.txt").read_text(encoding="utf-8")
     lower = rtest.lower()
     assert "pytest" in lower
     assert "pytest-asyncio" in lower or "pytest_asyncio" in lower
+    proc = subprocess.run(
+        [sys.executable, "-m", "pytest", str(REPO_ROOT / "tests" / "requirements_hygiene"), "-q"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    assert proc.returncode == 0, (
+        "requirements hygiene tests must pass from repo root (no backend app imports):\n"
+        f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+    )
 
 
 def test_g_b_05_test_profile_stability_gate() -> None:

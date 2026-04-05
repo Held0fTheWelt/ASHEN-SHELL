@@ -25,6 +25,7 @@ pytest>=7.0,<9          # Core test runner
 pytest-asyncio>=0.21,<1 # Required for async tests (import-time)
 pytest-cov>=4.0,<6      # Coverage measurement
 pytest-timeout>=2.1     # Timeout enforcement
+anyio>=4.0,<5           # Explicit async primitives (clean installs)
 ```
 
 **Why this matters:**
@@ -32,13 +33,19 @@ pytest-timeout>=2.1     # Timeout enforcement
 - Without explicit declaration, tests work locally (plugin installed via IDE setup) but fail in CI.
 - `requirements-test.txt` makes dependencies auditable and clean-environment-reproducible.
 
-**How to validate:**
+**How to validate (no backend install):**
 ```bash
-# Fresh environment test
+# From repository root — only checks that -r chains resolve on disk
+python -m pip install 'pytest>=7,<9'
+python -m pytest tests/requirements_hygiene/ -q
+```
+
+**How to validate (full backend test env):**
+```bash
 python -m venv clean_env
-source clean_env/bin/activate
-pip install -r requirements.txt -r requirements-test.txt
-pytest tests/  # Should work without local venv pollution
+source clean_env/bin/activate  # Windows: clean_env\Scripts\activate
+python -m pip install -r backend/requirements-test.txt
+cd backend && pytest tests/ -q
 ```
 
 ### 2. Deterministic Pytest Configuration (No IDE Magic)

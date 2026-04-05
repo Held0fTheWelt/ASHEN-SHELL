@@ -119,9 +119,9 @@ Tests **CANNOT run without dependencies**. Before running any tests, you MUST in
 ./setup-test-environment.sh       # macOS/Linux
 setup-test-environment.bat        # Windows
 
-# Or install manually
-cd backend
-pip install -r requirements.txt -r requirements-test.txt
+# Or install manually (requirements-test.txt already includes requirements.txt)
+python -m pip install -r backend/requirements-test.txt
+# or: cd backend && python -m pip install -r requirements-test.txt
 ```
 
 If you see `ModuleNotFoundError: No module named 'flask'` or similar, you **have not installed dependencies**. Run the setup script above.

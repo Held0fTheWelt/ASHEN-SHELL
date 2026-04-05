@@ -47,17 +47,16 @@ if not exist "requirements-test.txt" (
     exit /b 1
 )
 
-echo Installing production dependencies...
-pip install -r requirements.txt -q
+echo Installing production and test dependencies via requirements-test.txt...
+python -m pip install --upgrade pip -q
 if errorlevel 1 (
-    echo Error installing production dependencies
+    echo Error upgrading pip
     exit /b 1
 )
 
-echo Installing test dependencies...
-pip install -r requirements-test.txt -q
+python -m pip install -r requirements-test.txt -q
 if errorlevel 1 (
-    echo Error installing test dependencies
+    echo Error installing dependencies
     exit /b 1
 )
 
