@@ -5,13 +5,72 @@ from __future__ import annotations
 from typing import Any
 
 from app.runtime.area2_operational_state import (
+    Area2OperationalState,
     classify_area2_operational_state,
+    pytest_session_active,
     rollup_no_eligible_discipline_for_bounded_traces,
 )
+from app.runtime.area2_startup_profiles import resolve_startup_profile
 from app.runtime.model_inventory_contract import InventorySurface
 from app.runtime.model_inventory_report import validate_surface_coverage
 from app.runtime.model_routing_contracts import RouteReasonCode
 from app.runtime.operator_audit import primary_concern_code
+
+# Frozen summary aligned with AREA2_AUTHORITY_REGISTRY narrative (no runtime probe).
+_CANONICAL_TASK2A_AUTHORITY_SUMMARY = (
+    "Authoritative Task 2A policy: app.runtime.model_routing.route_model. "
+    "Runtime uses adapter_registry model specs when specs=None; Writers-Room and Improvement "
+    "use writers_room_model_routing (story_runtime_core.model_registry rows). "
+    "ai_stack LangGraph RoutingPolicy is compatibility-only, not canonical for these HTTP paths."
+)
+
+
+def _derive_route_status(
+    *,
+    operational_state: Area2OperationalState,
+    no_eligible_rollup: dict[str, Any],
+    stages_with_no_eligible_adapter: list[str],
+) -> str:
+    """Single deterministic routing health label derived from classification + trace rollups."""
+
+    worst = "not_applicable"
+    if isinstance(no_eligible_rollup, dict):
+        w = no_eligible_rollup.get("rollup_worst_case")
+        if isinstance(w, str) and w:
+            worst = w
+
+    if operational_state is Area2OperationalState.test_isolated:
+        return "test_isolated_expected_empty_registry"
+    if operational_state is Area2OperationalState.misconfigured:
+        return "misconfigured_registry_or_inventory"
+    if operational_state is Area2OperationalState.intentionally_degraded:
+        return "bootstrap_disabled_intentional_posture"
+
+    if stages_with_no_eligible_adapter:
+        if worst == "true_no_eligible_adapter":
+            return "no_eligible_on_routed_stage_not_normalized_as_healthy"
+        if worst == "intentional_degraded_route":
+            return "no_eligible_with_task2e_degrade_on_stage"
+        if worst == "bounded_executor_mismatch":
+            return "selected_adapter_missing_from_bounded_executor"
+        if worst == "test_isolated_empty_registry":
+            return "no_eligible_discipline_test_isolated_on_route"
+        if worst == "missing_registration_or_specs":
+            return "no_eligible_discipline_missing_specs_on_route"
+        return "no_eligible_on_routed_stage"
+
+    if worst == "not_applicable":
+        return "canonical_route_eligible"
+    return f"healthy_process_routing_discipline_{worst}"
+
+
+def _legibility_startup_profile(bootstrap_enabled: bool | None) -> str | None:
+    if bootstrap_enabled is None:
+        return None
+    return resolve_startup_profile(
+        routing_registry_bootstrap=bootstrap_enabled,
+        under_pytest=pytest_session_active(),
+    ).value
 
 
 def _selected_executed_summary_runtime(
@@ -158,6 +217,21 @@ def build_area2_operator_truth(
     else:
         selected_executed = _selected_executed_summary_bounded(traces_bd)
 
+    stages_nea = [s for s in no_eligible_stages if s]
+    route_status = _derive_route_status(
+        operational_state=operational_state,
+        no_eligible_rollup=discipline,
+        stages_with_no_eligible_adapter=stages_nea,
+    )
+    legibility = {
+        "authority_source": authority_source,
+        "operational_state": operational_state.value,
+        "route_status": route_status,
+        "selected_vs_executed": selected_executed,
+        "primary_operational_concern": pcc,
+        "startup_profile": _legibility_startup_profile(bootstrap_enabled),
+    }
+
     return {
         "surface": surface,
         "authority_source": authority_source,
@@ -169,7 +243,9 @@ def build_area2_operator_truth(
         "primary_operational_concern": pcc,
         "operational_state": operational_state.value,
         "no_eligible_discipline": discipline,
-        "stages_with_no_eligible_adapter": [s for s in no_eligible_stages if s],
+        "stages_with_no_eligible_adapter": stages_nea,
+        "canonical_authority_summary": _CANONICAL_TASK2A_AUTHORITY_SUMMARY,
+        "legibility": legibility,
     }
 
 

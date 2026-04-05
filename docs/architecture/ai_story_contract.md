@@ -36,7 +36,11 @@ Task 4 **does not** change routing policy, `StoryAIAdapter`, or guard/commit/rej
 
 ### Area 2 — Convergence closure (G-CONV-01, G-CONV-02, G-CONV-03, G-CONV-04, G-CONV-05, G-CONV-06, G-CONV-07, G-CONV-08)
 
-Canonical Task 2A paths expose a single importable **authority map** (`area2_routing_authority`), deterministic **operational state** and **no-eligible discipline** (`area2_operational_state`), and additive **`operator_audit.area2_operator_truth`** (`area2_operator_truth`). Gates and outcomes: [`area2_convergence_gates.md`](./area2_convergence_gates.md), [`area2_evolution_closure_report.md`](./area2_evolution_closure_report.md). **Routing policy and authoritative Runtime semantics are unchanged.**
+Canonical Task 2A paths expose a single importable **authority map** (`area2_routing_authority` — see [`backend/app/runtime/area2_routing_authority.py`](../../backend/app/runtime/area2_routing_authority.py)), deterministic **operational state** and **no-eligible discipline** (`area2_operational_state`), and additive **`operator_audit.area2_operator_truth`** (`area2_operator_truth`) including **`legibility`** and **`canonical_authority_summary`**. Gates and outcomes: [`area2_convergence_gates.md`](./area2_convergence_gates.md), [`area2_evolution_closure_report.md`](./area2_evolution_closure_report.md). **Routing policy and authoritative Runtime semantics are unchanged.**
+
+### Area 2 — Final operational closure (G-FINAL-01, G-FINAL-02, G-FINAL-03, G-FINAL-04, G-FINAL-05, G-FINAL-06, G-FINAL-07, G-FINAL-08)
+
+Final gates enforce **reproducible bootstrap** (named profiles), **healthy canonical paths** under `testing_bootstrap_on`, **authority convergence** in registry + summary text, **no-eligible non-normalization**, **operator legibility**, **cross-surface coherence**, **legacy compatibility**, and **documentation truth**. Table: [`area2_final_closure_gates.md`](./area2_final_closure_gates.md). PASS/FAIL and test commands: [`area2_final_operational_closure_report.md`](./area2_final_operational_closure_report.md). **Routing policy and authoritative Runtime semantics remain unchanged.**
 
 **Still not claimed:** God-of-Carnage lifecycle E2E does not assert full staged audit fields by default execution mode; no distributed immutable audit; no new telemetry products.
 

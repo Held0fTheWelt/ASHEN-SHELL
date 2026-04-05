@@ -117,6 +117,20 @@ AREA2_AUTHORITY_REGISTRY: tuple[Area2AuthorityEntry, ...] = (
         canonical_for_task2a_paths=frozenset(CanonicalSurface),
     ),
     Area2AuthorityEntry(
+        component_id="area2_operator_truth",
+        layer=AuthorityLayer.non_authoritative_support,
+        module_path="app.runtime.area2_operator_truth",
+        description="Derived operator legibility and cross-surface truth from existing traces; no new telemetry.",
+        canonical_for_task2a_paths=frozenset(CanonicalSurface),
+    ),
+    Area2AuthorityEntry(
+        component_id="area2_startup_profiles",
+        layer=AuthorityLayer.non_authoritative_support,
+        module_path="app.runtime.area2_startup_profiles",
+        description="Named startup profiles and expected bootstrap/registry facts for docs and gates.",
+        canonical_for_task2a_paths=frozenset(CanonicalSurface),
+    ),
+    Area2AuthorityEntry(
         component_id="runtime_ai_stages",
         layer=AuthorityLayer.non_authoritative_support,
         module_path="app.runtime.runtime_ai_stages",

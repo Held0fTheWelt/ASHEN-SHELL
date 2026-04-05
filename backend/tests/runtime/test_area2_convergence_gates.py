@@ -47,6 +47,17 @@ ARCH_DOC_NAMES = (
     "area2_evolution_closure_report.md",
 )
 
+AREA2_LEGIBILITY_KEYS = frozenset(
+    {
+        "authority_source",
+        "operational_state",
+        "route_status",
+        "selected_vs_executed",
+        "primary_operational_concern",
+        "startup_profile",
+    }
+)
+
 AREA2_TRUTH_KEYS = frozenset(
     {
         "surface",
@@ -60,6 +71,8 @@ AREA2_TRUTH_KEYS = frozenset(
         "operational_state",
         "no_eligible_discipline",
         "stages_with_no_eligible_adapter",
+        "canonical_authority_summary",
+        "legibility",
     }
 )
 
@@ -282,3 +295,8 @@ def test_bounded_specs_cover_writers_room_and_improvement_surfaces():
 def assert_area2_truth_shape(truth: dict) -> None:
     missing = AREA2_TRUTH_KEYS - set(truth.keys())
     assert not missing, f"area2_operator_truth missing: {missing}"
+    assert isinstance(truth.get("canonical_authority_summary"), str)
+    leg = truth.get("legibility")
+    assert isinstance(leg, dict), "area2_operator_truth.legibility must be a dict"
+    miss_leg = AREA2_LEGIBILITY_KEYS - set(leg.keys())
+    assert not miss_leg, f"area2_operator_truth.legibility missing: {miss_leg}"

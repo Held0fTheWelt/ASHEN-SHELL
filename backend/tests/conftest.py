@@ -59,6 +59,59 @@ def client(app):
 
 
 @pytest.fixture
+def app_bootstrap_on():
+    """Application with ``ROUTING_REGISTRY_BOOTSTRAP=True`` for Area 2 final-gate HTTP proofs."""
+    application = create_app(TestingConfigWithRoutingBootstrap)
+    with application.app_context():
+        db.session.execute(db.text("PRAGMA foreign_keys = ON"))
+        db.session.commit()
+        db.create_all()
+        ensure_roles_seeded()
+        ensure_areas_seeded()
+        yield application
+        db.session.remove()
+        db.drop_all()
+        db.session.commit()
+        db.session.remove()
+
+
+@pytest.fixture
+def client_bootstrap_on(app_bootstrap_on):
+    """Test client for bootstrap-on app (isolated DB lifecycle from default ``app``)."""
+    return app_bootstrap_on.test_client()
+
+
+@pytest.fixture
+def test_user_bootstrap(app_bootstrap_on):
+    """Test user in bootstrap-on app database."""
+    with app_bootstrap_on.app_context():
+        role = Role.query.filter_by(name=Role.NAME_USER).first()
+        user = User(
+            username="testuser_bootstrap",
+            password_hash=generate_password_hash("Testpass1"),
+            role_id=role.id,
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        return user, "Testpass1"
+
+
+@pytest.fixture
+def auth_headers_bootstrap_on(test_user_bootstrap, client_bootstrap_on):
+    """JWT headers for ``test_user_bootstrap`` on bootstrap-on client."""
+    user, password = test_user_bootstrap
+    response = client_bootstrap_on.post(
+        "/api/v1/auth/login",
+        json={"username": user.username, "password": password},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    return {"Authorization": f"Bearer {data['access_token']}"}
+
+
+@pytest.fixture
 def runner(app):
     """CLI runner for flask commands."""
     return app.test_cli_runner()
@@ -99,6 +152,12 @@ def auth_headers(test_user, client):
     data = response.get_json()
     token = data["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+class TestingConfigWithRoutingBootstrap(TestingConfig):
+    """Testing config with routing registry bootstrap enabled (production-like global specs)."""
+
+    ROUTING_REGISTRY_BOOTSTRAP = True
 
 
 class TestingConfigWithCSRF(TestingConfig):

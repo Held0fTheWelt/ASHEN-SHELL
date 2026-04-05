@@ -178,6 +178,8 @@ Task 4 tightens **proof** and **drift resistance** without changing Task 2E rout
 
 **Convergence gates:** [`area2_convergence_gates.md`](./area2_convergence_gates.md) — **G-CONV-01**, **G-CONV-02**, **G-CONV-03**, **G-CONV-04**, **G-CONV-05**, **G-CONV-06**, **G-CONV-07**, **G-CONV-08** (single authority, healthy bootstrap, state classification, no-eligible discipline, operator truth, legacy compatibility, documentation truth, cross-surface coherence). **Closure:** [`area2_evolution_closure_report.md`](./area2_evolution_closure_report.md).
 
+**Final operational closure gates:** [`area2_final_closure_gates.md`](./area2_final_closure_gates.md) — **G-FINAL-01**, **G-FINAL-02**, **G-FINAL-03**, **G-FINAL-04**, **G-FINAL-05**, **G-FINAL-06**, **G-FINAL-07**, **G-FINAL-08** (reproducible bootstrap, healthy canonical paths, practical authority convergence, no-eligible non-normalization, operator legibility, cross-surface coherence, legacy compatibility, documentation truth). Named startup profiles: [`backend/app/runtime/area2_startup_profiles.py`](../../backend/app/runtime/area2_startup_profiles.py). **Final report:** [`area2_final_operational_closure_report.md`](./area2_final_operational_closure_report.md).
+
 **Unchanged:** `route_model` precedence and semantics, `StoryAIAdapter`, guard/commit/reject authority, and authoritative Runtime mutation rules.
 
 ## Honest limits
