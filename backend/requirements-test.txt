@@ -1,0 +1,20 @@
+# Explicit test dependencies for reproducible, clean-environment validation.
+# Use this file when you need a minimal, deterministic test environment.
+# Example: pip install -r requirements.txt -r requirements-test.txt
+#
+# This file includes:
+# - All production dependencies (via requirements.txt)
+# - All test-required packages (pytest, plugins, async support)
+#
+# Does NOT include development-only tools (formatters, linters, type checkers).
+# Those are in requirements-dev.txt for developers who want them.
+
+-r requirements.txt
+
+# ====== TEST EXECUTION (REQUIRED) ======
+# Minimal set of packages required to run tests in any environment.
+
+pytest>=7.0,<9          # Test framework
+pytest-asyncio>=0.21,<1 # Async test support (import-time dependency for async tests)
+pytest-cov>=4.0,<6      # Coverage measurement (optional but required for standard test suite)
+pytest-timeout>=2.1     # Timeout enforcement (prevents hanging tests from blocking CI)

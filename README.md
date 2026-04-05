@@ -110,28 +110,67 @@ It starts:
 
 ## Testing
 
-Run all suites:
+### Quick Start: Canonical Smoke Suite
+
+Validate core repository health in seconds:
+
+```bash
+# macOS / Linux
+./run-smoke-tests.sh
+
+# Windows
+run-smoke-tests.bat
+
+# Or use pytest directly
+python -m pytest tests/smoke/ -v --tb=short
+```
+
+Expected: ~140 tests pass in <15 seconds.
+
+### Comprehensive Testing
+
+**Backend (complete test suite with coverage):**
+
+```bash
+cd backend
+pip install -r requirements-test.txt
+pytest tests/ -v
+```
+
+**Per-service (legacy runner):**
 
 ```bash
 cd tests
-python run_tests.py --suite all
+python run_tests.py --suite backend      # Backend API, auth, models
+python run_tests.py --suite administration  # Admin frontend
+python run_tests.py --suite engine       # World engine (install engine requirements first)
 ```
 
-Run per service:
+### Test Documentation
 
-```bash
-python run_tests.py --suite backend
-python run_tests.py --suite administration
-python run_tests.py --suite engine
-```
+- **[Testing Setup Guide](docs/testing-setup.md)** — Test profiles, fixtures, canonical commands, troubleshooting
+- **[Test Environment Hygiene](docs/test-environment-hygiene.md)** — How dependencies stay explicit, clean-environment reproducibility
 
-**World engine (`engine` suite):** install dependencies first so imports of `ai_stack` and `langchain_core` succeed (matches CI):
+### Test Profiles
+
+The repository supports three explicit test execution profiles:
+
+1. **testing_isolated** (default unit tests) — In-memory DB, no routing bootstrap
+2. **testing_bootstrap_on** — Production-like routing with in-memory DB
+3. **testing_isolated_production_like** (smoke tests) — Production config, real DB file
+
+See [Testing Setup Guide](docs/testing-setup.md) for details.
+
+### World Engine Tests
+
+Install dependencies first so imports of `ai_stack` and `langchain_core` succeed:
 
 ```bash
 pip install -r world-engine/requirements-dev.txt
+python run_tests.py --suite engine
 ```
 
-GitHub Actions installs this automatically in `.github/workflows/engine-tests.yml` and related jobs. For **GitHub Codespaces** or **VS Code Dev Containers**, use `.devcontainer/devcontainer.json` (installs the same requirements on container create).
+GitHub Actions installs this automatically in `.github/workflows/engine-tests.yml`. For **GitHub Codespaces** or **VS Code Dev Containers**, use `.devcontainer/devcontainer.json`.
 
 ## Documentation
 

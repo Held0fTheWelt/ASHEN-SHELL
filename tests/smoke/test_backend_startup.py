@@ -54,14 +54,14 @@ class TestBackendDatabaseConnection:
 
     def test_database_connection_available(self, client):
         """Database is available and connected."""
-        from app.database import db
+        from app.extensions import db
 
         # If we got here, database is available
         assert db is not None
 
     def test_database_tables_exist(self, client):
         """Required database tables exist."""
-        from app.database import db
+        from app.extensions import db
         from app.models import User, Role
 
         # Tables should exist
@@ -74,7 +74,7 @@ class TestBackendDatabaseConnection:
 
     def test_database_migrations_applied(self, client):
         """Database migrations are applied."""
-        from app.database import db
+        from app.extensions import db
 
         # If tables exist, migrations should be applied
         with db.engine.connect() as conn:
