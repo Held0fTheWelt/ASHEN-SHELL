@@ -12,7 +12,11 @@ from story_runtime_core.model_registry import build_default_registry
 
 from ai_stack import ContextPackAssembler, ContextRetriever, RagIngestionPipeline, RuntimeTurnGraphExecutor
 from ai_stack.goc_turn_seams import repro_metadata_complete, strip_director_overwrites_from_structured_output
-from ai_stack.goc_yaml_authority import cached_goc_yaml_title, load_goc_canonical_module_yaml
+from ai_stack.goc_yaml_authority import (
+    cached_goc_yaml_title,
+    clear_goc_yaml_slice_cache,
+    load_goc_canonical_module_yaml,
+)
 from ai_stack.version import RUNTIME_TURN_GRAPH_VERSION
 
 
@@ -23,7 +27,10 @@ class JsonStructuredRuntimeAdapter(BaseModelAdapter):
 
     def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
         payload = {
-            "narrative_response": "The living room tightens; civility still holds, but barely.",
+            "narrative_response": (
+                "Annette meets your stare and admits what she knew; the truth she withheld about "
+                "the children finally surfaces as she confesses the hidden fact."
+            ),
             "proposed_scene_id": None,
             "intent_summary": "escalation_probe",
         }
@@ -58,8 +65,10 @@ def _executor(tmp_path: Path) -> RuntimeTurnGraphExecutor:
 @pytest.fixture(autouse=True)
 def _clear_goc_title_cache() -> None:
     cached_goc_yaml_title.cache_clear()
+    clear_goc_yaml_slice_cache()
     yield
     cached_goc_yaml_title.cache_clear()
+    clear_goc_yaml_slice_cache()
 
 
 def test_goc_non_preview_path_turn_integrity_and_diagnostics(tmp_path: Path) -> None:

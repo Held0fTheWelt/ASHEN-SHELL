@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.14] - 2026-04-07
+
+**Summary**: **God of Carnage (GoC) Phase 2** — bounded **`prior_continuity_impacts`** carry-forward (graph + world-engine session), **YAML slice bundle** (character voice, scene guidance, characters) feeding director assessment and visible staging, **dramatic alignment / anti-seductive rejection** at the validation seam, **multi-pressure resolution** diagnostics on `scene_assessment`, expanded **continuity-on-commit** (up to two frozen classes), and **Phase 2 scenario tests** (multiple non-preview paths). Closure report for operators lives under **`tests/reports/`** (gitignored path; generate locally after runs).
+
+### Added
+
+- **`ai_stack/goc_dramatic_alignment.py`**: Deterministic function-token and boilerplate checks for **`dramatic_quality`**-aligned validation rejects (`dramatic_alignment_*` reasons).
+- **`ai_stack/goc_gate_evaluation.py`**: Observable gate-family helpers for tests (`turn_integrity`, `diagnostic_sufficiency`, `dramatic_quality`, `slice_boundary`).
+- **`ai_stack/tests/test_goc_phase2_scenarios.py`**: Non-preview paths (escalation, thin-edge silence, multi-pressure, containment), anti-seductive reject case, two-turn continuity asymmetry proof.
+
+### Changed
+
+- **`ai_stack/goc_yaml_authority.py`**: **`load_goc_yaml_slice_bundle()`** (cached), merged multi-document **`scene_guidance.yaml`**, **`thin_edge_staging_line_from_guidance`**, **`scene_assessment_phase_hints`**, **`clear_goc_yaml_slice_cache()`**.
+- **`ai_stack/scene_director_goc.py`**: Prior continuity in **`scene_assessment`**, YAML-default responder asymmetry, **`thin_edge` / `containment` / `multi_pressure`** pacing reachability, **`withhold_or_evade`**, **`multi_pressure_resolution`** record, **`prior_continuity_classes`** helper.
+- **`ai_stack/goc_turn_seams.py`**: **`run_validation_seam(..., director_context=...)`**, **`build_goc_continuity_impacts_on_commit`**, **`run_visible_render(..., render_context=...)`** with YAML staging + **`bounded_ambiguity`** when supplement applies.
+- **`ai_stack/langgraph_runtime.py`**: State for **`prior_continuity_impacts`**, **`goc_yaml_slice`**; **`run()`** accepts prior continuity; wires director context into validation, commit continuity builder, visible **`proposed_narrative_excerpt`**; **`graph_diagnostics.dramatic_review`** and extended **`gate_review_hints`**.
+- **`ai_stack/tests/test_goc_phase1_runtime_gate.py`**: Narrative fixture aligned with dramatic validation; clears YAML slice cache in fixture.
+- **`world-engine/app/story_runtime/manager.py`**: **`StorySession.prior_continuity_impacts`**; passes carry-forward into **`RuntimeTurnGraphExecutor.run`**; appends committed continuity (capped).
+
+### Tests
+
+- **`pytest`** `ai_stack/tests/test_goc_phase1_runtime_gate.py`, **`test_goc_phase2_scenarios.py`**, **`test_goc_frozen_vocab.py`**, **`test_langgraph_runtime.py`**; **`world-engine/tests/test_runtime_manager.py`**, **`test_story_runtime_api.py`**.
+
+---
+
 ## [0.3.13] - 2026-04-06
 
 ### Fixed

@@ -48,6 +48,103 @@ def cached_goc_yaml_title() -> str:
     return title.strip()
 
 
+def _safe_load_yaml_mapping(path: Path) -> dict[str, Any]:
+    if yaml is None:
+        raise RuntimeError("PyYAML is required to load canonical GoC module YAML.")
+    if not path.is_file():
+        return {}
+    raw = path.read_text(encoding="utf-8")
+    merged: dict[str, Any] = {}
+    for doc in yaml.safe_load_all(raw):
+        if isinstance(doc, dict):
+            merged.update(doc)
+    return merged
+
+
+def load_goc_characters_yaml() -> dict[str, Any]:
+    """Load content/modules/god_of_carnage/characters.yaml (canonical slice)."""
+    path = goc_module_yaml_dir() / "characters.yaml"
+    data = _safe_load_yaml_mapping(path)
+    ch = data.get("characters")
+    return ch if isinstance(ch, dict) else {}
+
+
+def load_goc_character_voice_yaml() -> dict[str, Any]:
+    """Load direction/character_voice.yaml."""
+    path = goc_module_yaml_dir() / "direction" / "character_voice.yaml"
+    data = _safe_load_yaml_mapping(path)
+    ch = data.get("characters")
+    return ch if isinstance(ch, dict) else {}
+
+
+def load_goc_scene_guidance_yaml() -> dict[str, Any]:
+    """Load direction/scene_guidance.yaml (multi-document YAML merged)."""
+    path = goc_module_yaml_dir() / "direction" / "scene_guidance.yaml"
+    return _safe_load_yaml_mapping(path)
+
+
+# Runtime scene_id hints map to phase blocks in scene_guidance.yaml (slice material).
+GOC_SCENE_ID_TO_GUIDANCE_PHASE: dict[str, str] = {
+    "courtesy": "phase_1_polite_opening",
+    "living_room": "phase_2_moral_negotiation",
+    "phase_3": "phase_3_faction_shifts",
+    "phase_4": "phase_4_emotional_derailment",
+}
+
+
+@lru_cache(maxsize=1)
+def load_goc_yaml_slice_bundle() -> dict[str, Any]:
+    """Bundle of YAML-backed slice surfaces used by the director (VERTICAL_SLICE_CONTRACT_GOC.md §6)."""
+    return {
+        "characters": load_goc_characters_yaml(),
+        "character_voice": load_goc_character_voice_yaml(),
+        "scene_guidance": load_goc_scene_guidance_yaml(),
+    }
+
+
+def clear_goc_yaml_slice_cache() -> None:
+    load_goc_yaml_slice_bundle.cache_clear()
+
+
+def guidance_phase_key_for_scene_id(scene_id: str) -> str:
+    return GOC_SCENE_ID_TO_GUIDANCE_PHASE.get(scene_id.strip(), "phase_2_moral_negotiation")
+
+
+def thin_edge_staging_line_from_guidance(*, scene_guidance: dict[str, Any], scene_id: str) -> str:
+    """First line from YAML narrative_context for bounded non-factual staging (truth-safe supplement)."""
+    if not scene_guidance:
+        return ""
+    phase = guidance_phase_key_for_scene_id(scene_id)
+    block = scene_guidance.get(phase)
+    if not isinstance(block, dict):
+        return ""
+    nc = block.get("narrative_context")
+    if not isinstance(nc, str) or not nc.strip():
+        return ""
+    first_line = nc.strip().split("\n")[0].strip()
+    return first_line[:280]
+
+
+def scene_assessment_phase_hints(*, scene_guidance: dict[str, Any], scene_id: str) -> dict[str, Any]:
+    """Read-only hints from YAML for scene_assessment (not a second truth surface)."""
+    if not scene_guidance:
+        return {}
+    phase = guidance_phase_key_for_scene_id(scene_id)
+    block = scene_guidance.get(phase)
+    if not isinstance(block, dict):
+        return {"guidance_phase_key": phase}
+    title = block.get("title")
+    ce = block.get("constraint_enforcement")
+    civ = None
+    if isinstance(ce, dict):
+        civ = ce.get("civility_required")
+    return {
+        "guidance_phase_key": phase,
+        "guidance_phase_title": title if isinstance(title, str) else None,
+        "guidance_civility_required": civ,
+    }
+
+
 def detect_builtin_yaml_title_conflict(
     *,
     host_template_id: str | None,

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_stack.goc_dramatic_alignment import dramatic_alignment_violation, extract_proposed_narrative_text
 from ai_stack.goc_frozen_vocab import DIRECTOR_IMMUTABLE_FIELDS, GOC_MODULE_ID, assert_transition_pattern
+from ai_stack.goc_yaml_authority import thin_edge_staging_line_from_guidance
 
 
 def strip_director_overwrites_from_structured_output(
@@ -58,6 +60,7 @@ def run_validation_seam(
     module_id: str,
     proposed_state_effects: list[dict[str, Any]],
     generation: dict[str, Any],
+    director_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Emit validation_outcome — no player text (CANONICAL_TURN_CONTRACT_GOC.md §2.1)."""
     if module_id != GOC_MODULE_ID:
@@ -76,6 +79,23 @@ def run_validation_seam(
             return {"status": "rejected", "reason": "malformed_proposed_effect"}
         if "description" not in eff and "effect_type" not in eff:
             return {"status": "rejected", "reason": "incomplete_proposed_effect"}
+
+    ctx = director_context if isinstance(director_context, dict) else {}
+    narr = extract_proposed_narrative_text(proposed_state_effects)
+    viol = dramatic_alignment_violation(
+        selected_scene_function=str(ctx.get("selected_scene_function") or "establish_pressure"),
+        pacing_mode=str(ctx.get("pacing_mode") or "standard"),
+        silence_brevity_decision=ctx.get("silence_brevity_decision")
+        if isinstance(ctx.get("silence_brevity_decision"), dict)
+        else None,
+        proposed_narrative=narr,
+    )
+    if viol:
+        return {
+            "status": "rejected",
+            "reason": viol,
+            "dramatic_quality_gate": "alignment_reject",
+        }
     return {
         "status": "approved",
         "reason": "goc_default_validator_pass",
@@ -105,6 +125,7 @@ def run_visible_render(
     validation_outcome: dict[str, Any],
     generation: dict[str, Any],
     transition_pattern: str,
+    render_context: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Build visible_output_bundle aligned with committed truth (§2.2–§2.3)."""
     _ = transition_pattern  # reserved for future bundle tone selection
@@ -118,6 +139,12 @@ def run_visible_render(
     approved = validation_outcome.get("status") == "approved"
     committed = committed_result.get("committed_effects") or []
     has_commit = bool(committed) and committed_result.get("commit_applied")
+    rc = render_context if isinstance(render_context, dict) else {}
+    pacing_mode = str(rc.get("pacing_mode") or "")
+    silence_dec = rc.get("silence_brevity_decision") if isinstance(rc.get("silence_brevity_decision"), dict) else {}
+    scene_id = str(rc.get("current_scene_id") or "")
+    scene_guidance = rc.get("scene_guidance") if isinstance(rc.get("scene_guidance"), dict) else {}
+    prop_excerpt = str(rc.get("proposed_narrative_excerpt") or "").strip()
 
     if module_id != GOC_MODULE_ID:
         bundle = {
@@ -128,11 +155,29 @@ def run_visible_render(
         return bundle, markers
 
     if has_commit and approved:
+        supplement = ""
+        if scene_guidance and scene_id and (
+            pacing_mode == "thin_edge" or silence_dec.get("mode") == "withheld"
+        ):
+            supplement = thin_edge_staging_line_from_guidance(scene_guidance=scene_guidance, scene_id=scene_id)
+        gm_lines: list[str] = []
+        if content:
+            gm_lines.append(content)
+        narr_len = len(prop_excerpt) if prop_excerpt else len(content)
+        if supplement and (narr_len < 50 or silence_dec.get("mode") == "withheld"):
+            gm_lines.append(f"(Director staging — phase context) {supplement}")
+        if not gm_lines:
+            gm_lines = ["(scene continues — committed effects applied.)"]
         bundle = {
-            "gm_narration": [content] if content else ["(scene continues — committed effects applied.)"],
+            "gm_narration": gm_lines,
             "spoken_lines": [],
         }
         markers.append("truth_aligned")
+        used_supplement = bool(
+            supplement and (narr_len < 50 or silence_dec.get("mode") == "withheld")
+        )
+        if used_supplement:
+            markers.append("bounded_ambiguity")
         return bundle, markers
 
     # No commit: truth-safe staging (GATE_SCORING_POLICY_GOC.md §6.3).
@@ -193,3 +238,40 @@ def repro_metadata_complete(repro: dict[str, Any]) -> bool:
         "graph_path_summary",
     )
     return all(repro.get(k) not in (None, "") for k in required)
+
+
+_SCENE_FN_TO_CONTINUITY_PRIMARY: dict[str, str] = {
+    "reveal_surface": "revealed_fact",
+    "redirect_blame": "blame_pressure",
+    "escalate_conflict": "situational_pressure",
+    "repair_or_stabilize": "repair_attempt",
+    "probe_motive": "situational_pressure",
+    "establish_pressure": "situational_pressure",
+    "withhold_or_evade": "silent_carry",
+    "scene_pivot": "refused_cooperation",
+}
+
+
+def build_goc_continuity_impacts_on_commit(
+    *,
+    module_id: str,
+    selected_scene_function: str,
+    proposed_state_effects: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Emit one or more frozen continuity classes after a successful commit (bounded, YAML-vocabulary aligned)."""
+    if module_id != GOC_MODULE_ID:
+        return []
+    primary = _SCENE_FN_TO_CONTINUITY_PRIMARY.get(selected_scene_function)
+    if not primary:
+        primary = "situational_pressure"
+    impacts: list[dict[str, Any]] = [
+        {"class": primary, "note": f"committed_scene_function:{selected_scene_function}"},
+    ]
+    blob = " ".join(
+        str(e.get("description", "")) for e in proposed_state_effects if isinstance(e, dict)
+    ).lower()
+    if "blame" in blob and primary != "blame_pressure":
+        impacts.append({"class": "blame_pressure", "note": "effect_text_blame_keyword"})
+    if ("sorry" in blob or "apolog" in blob) and primary != "repair_attempt":
+        impacts.append({"class": "repair_attempt", "note": "effect_text_repair_keyword"})
+    return impacts[:2]

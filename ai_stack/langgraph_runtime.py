@@ -31,14 +31,20 @@ from ai_stack.runtime_turn_contracts import (
 )
 from ai_stack.version import AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
 from ai_stack.goc_frozen_vocab import GOC_MODULE_ID
-from ai_stack.goc_yaml_authority import detect_builtin_yaml_title_conflict, load_goc_canonical_module_yaml
+from ai_stack.goc_yaml_authority import (
+    detect_builtin_yaml_title_conflict,
+    load_goc_canonical_module_yaml,
+    load_goc_yaml_slice_bundle,
+)
 from ai_stack.scene_director_goc import (
     build_pacing_and_silence,
     build_responder_and_function,
     build_scene_assessment,
 )
+from ai_stack.goc_dramatic_alignment import extract_proposed_narrative_text
 from ai_stack.goc_turn_seams import (
     build_diagnostics_refs,
+    build_goc_continuity_impacts_on_commit,
     repro_metadata_complete,
     run_commit_seam,
     run_validation_seam,
@@ -94,6 +100,8 @@ class RuntimeTurnState(TypedDict, total=False):
     # Canonical turn field groups (CANONICAL_TURN_CONTRACT_GOC.md §4–§5).
     goc_slice_active: bool
     goc_canonical_yaml: dict[str, Any]
+    goc_yaml_slice: dict[str, Any]
+    prior_continuity_impacts: list[dict[str, Any]]
     scene_assessment: dict[str, Any]
     selected_responder_set: list[dict[str, Any]]
     selected_scene_function: str
@@ -184,6 +192,7 @@ class RuntimeTurnGraphExecutor:
         thread_pressure_summary: str | None = None,
         host_experience_template: dict[str, Any] | None = None,
         force_experiment_preview: bool | None = None,
+        prior_continuity_impacts: list[dict[str, Any]] | None = None,
     ) -> RuntimeTurnState:
         initial_state: RuntimeTurnState = {
             "session_id": session_id,
@@ -206,6 +215,8 @@ class RuntimeTurnGraphExecutor:
         if thread_pressure_summary:
             # Keep in sync with world-engine story_runtime narrative_threads.THREAD_PRESSURE_SUMMARY_MAX (128).
             initial_state["thread_pressure_summary"] = thread_pressure_summary[:128]
+        if prior_continuity_impacts:
+            initial_state["prior_continuity_impacts"] = list(prior_continuity_impacts)
         return self._graph.invoke(initial_state)
 
     def _interpret_input(self, state: RuntimeTurnState) -> RuntimeTurnState:
@@ -320,6 +331,7 @@ class RuntimeTurnGraphExecutor:
             try:
                 yaml_mod = load_goc_canonical_module_yaml()
                 update["goc_canonical_yaml"] = yaml_mod
+                update["goc_yaml_slice"] = load_goc_yaml_slice_bundle()
                 update["goc_slice_active"] = True
                 host = state.get("host_experience_template")
                 if isinstance(host, dict):
@@ -358,10 +370,14 @@ class RuntimeTurnGraphExecutor:
                 "module_slice": module_id,
             }
             return update
+        prior = state.get("prior_continuity_impacts") if isinstance(state.get("prior_continuity_impacts"), list) else None
+        yslice = state.get("goc_yaml_slice") if isinstance(state.get("goc_yaml_slice"), dict) else None
         update["scene_assessment"] = build_scene_assessment(
             module_id=module_id,
             current_scene_id=state.get("current_scene_id") or "",
             canonical_yaml=yaml_blob,
+            prior_continuity_impacts=prior,
+            yaml_slice=yslice,
         )
         return update
 
@@ -381,11 +397,18 @@ class RuntimeTurnGraphExecutor:
             update["pacing_mode"] = pacing
             update["silence_brevity_decision"] = silence
             return update
-        responders, scene_fn, _implied = build_responder_and_function(
+        prior = state.get("prior_continuity_impacts") if isinstance(state.get("prior_continuity_impacts"), list) else None
+        yslice = state.get("goc_yaml_slice") if isinstance(state.get("goc_yaml_slice"), dict) else None
+        base_sa = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
+        responders, scene_fn, _implied, resolution = build_responder_and_function(
             player_input=player_input,
             interpreted_move=interpreted_move,
             pacing_mode=pacing,
+            prior_continuity_impacts=prior,
+            yaml_slice=yslice,
         )
+        merged_sa = {**base_sa, "multi_pressure_resolution": resolution}
+        update["scene_assessment"] = merged_sa
         update["selected_responder_set"] = responders
         update["selected_scene_function"] = scene_fn
         update["pacing_mode"] = pacing
@@ -526,10 +549,16 @@ class RuntimeTurnGraphExecutor:
         update = _track(state, node_name="validate_seam")
         generation = state.get("generation") or {}
         proposed = list(state.get("proposed_state_effects") or [])
+        silence = state.get("silence_brevity_decision") if isinstance(state.get("silence_brevity_decision"), dict) else {}
         outcome = run_validation_seam(
             module_id=state.get("module_id") or "",
             proposed_state_effects=proposed,
             generation=generation if isinstance(generation, dict) else {},
+            director_context={
+                "selected_scene_function": state.get("selected_scene_function") or "",
+                "pacing_mode": state.get("pacing_mode") or "",
+                "silence_brevity_decision": silence,
+            },
         )
         update["validation_outcome"] = outcome
         return update
@@ -548,9 +577,12 @@ class RuntimeTurnGraphExecutor:
             state.get("module_id") == GOC_MODULE_ID
             and validation.get("status") == "approved"
             and committed.get("commit_applied")
-            and state.get("selected_scene_function") == "reveal_surface"
         ):
-            continuity.append({"class": "revealed_fact", "note": "director_selected_reveal_surface_committed"})
+            continuity = build_goc_continuity_impacts_on_commit(
+                module_id=GOC_MODULE_ID,
+                selected_scene_function=str(state.get("selected_scene_function") or ""),
+                proposed_state_effects=proposed,
+            )
         update["committed_result"] = committed
         update["continuity_impacts"] = continuity
         return update
@@ -571,12 +603,25 @@ class RuntimeTurnGraphExecutor:
             tp = "hard"
         elif validation.get("status") == "approved":
             tp = "soft"
+        yslice = state.get("goc_yaml_slice") if isinstance(state.get("goc_yaml_slice"), dict) else {}
+        sg = yslice.get("scene_guidance") if isinstance(yslice.get("scene_guidance"), dict) else {}
+        proposed_fx = list(state.get("proposed_state_effects") or [])
+        prop_narr = extract_proposed_narrative_text(proposed_fx)
         bundle, vis_markers = run_visible_render(
             module_id=state.get("module_id") or "",
             committed_result=committed,
             validation_outcome=validation,
             generation=generation,
             transition_pattern=tp,
+            render_context={
+                "pacing_mode": state.get("pacing_mode") or "",
+                "silence_brevity_decision": state.get("silence_brevity_decision")
+                if isinstance(state.get("silence_brevity_decision"), dict)
+                else {},
+                "current_scene_id": state.get("current_scene_id") or "",
+                "scene_guidance": sg,
+                "proposed_narrative_excerpt": prop_narr,
+            },
         )
         update["generation"] = generation
         update["visible_output_bundle"] = bundle
@@ -673,6 +718,13 @@ class RuntimeTurnGraphExecutor:
             model_prompt=state.get("model_prompt") if isinstance(state.get("model_prompt"), str) else None,
             fallback_path_taken=fallback_taken,
         )
+        vo = validation
+        alignment_note = "alignment_ok"
+        if vo.get("status") == "rejected" and str(vo.get("reason", "")).startswith("dramatic_alignment"):
+            alignment_note = f"alignment_reject:{vo.get('reason')}"
+        prior_ci = state.get("prior_continuity_impacts") if isinstance(state.get("prior_continuity_impacts"), list) else []
+        sa = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
+        mpr = sa.get("multi_pressure_resolution") if isinstance(sa.get("multi_pressure_resolution"), dict) else {}
         gd = {
             "graph_name": self.graph_name,
             "graph_version": self.graph_version,
@@ -684,6 +736,19 @@ class RuntimeTurnGraphExecutor:
             "capability_audit": state.get("capability_audit", []),
             "repro_metadata": repro_metadata,
             "operational_cost_hints": cost_hints,
+            "dramatic_review": {
+                "selected_scene_function": state.get("selected_scene_function"),
+                "pacing_mode": state.get("pacing_mode"),
+                "silence_brevity_decision": state.get("silence_brevity_decision"),
+                "prior_continuity_classes": [
+                    x.get("class") for x in prior_ci if isinstance(x, dict) and x.get("class")
+                ],
+                "multi_pressure_chosen": mpr.get("chosen_scene_function"),
+                "multi_pressure_candidates": mpr.get("candidates"),
+                "multi_pressure_rationale": mpr.get("rationale"),
+                "validation_reason": vo.get("reason"),
+                "dramatic_alignment_summary": alignment_note,
+            },
         }
         update["graph_diagnostics"] = gd
         update["experiment_preview"] = experiment_preview
@@ -695,6 +760,13 @@ class RuntimeTurnGraphExecutor:
             gate_hints={
                 "turn_integrity": "seams_materialized_in_graph",
                 "diagnostic_sufficiency": "repro_complete" if repro_ok else "repro_incomplete",
+                "dramatic_quality": alignment_note,
+                "slice_boundary": "no_scope_breach_marker"
+                if not any(
+                    isinstance(m, dict) and m.get("failure_class") == "scope_breach"
+                    for m in (failure_markers or [])
+                )
+                else "scope_breach_recorded",
             },
         )
         update["diagnostics_refs"] = refs

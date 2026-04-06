@@ -41,6 +41,8 @@ class StorySession:
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
     narrative_threads: StoryNarrativeThreadSet = field(default_factory=StoryNarrativeThreadSet)
     last_thread_update_trace: ThreadUpdateTrace | None = None
+    # Bounded carry-forward of committed GoC continuity classes (not a second memory surface).
+    prior_continuity_impacts: list[dict[str, Any]] = field(default_factory=list)
 
 
 class StoryRuntimeManager:
@@ -112,6 +114,7 @@ class StoryRuntimeManager:
                         "title": str(tit) if tit is not None else None,
                     }
         try:
+            prior_ci = session.prior_continuity_impacts if session.module_id == "god_of_carnage" else None
             graph_state = self.turn_graph.run(
                 session_id=session.session_id,
                 module_id=session.module_id,
@@ -122,6 +125,7 @@ class StoryRuntimeManager:
                 active_narrative_threads=graph_threads or None,
                 thread_pressure_summary=graph_summary,
                 host_experience_template=host_experience_template,
+                prior_continuity_impacts=prior_ci if prior_ci else None,
             )
         except Exception as exc:
             log_story_runtime_failure(
@@ -132,6 +136,14 @@ class StoryRuntimeManager:
                 failure_class="graph_execution_exception",
             )
             raise
+
+        if session.module_id == "god_of_carnage":
+            ci = graph_state.get("continuity_impacts")
+            if isinstance(ci, list):
+                for item in ci:
+                    if isinstance(item, dict):
+                        session.prior_continuity_impacts.append(item)
+                session.prior_continuity_impacts = session.prior_continuity_impacts[-12:]
 
         graph_diag = graph_state.get("graph_diagnostics", {}) if isinstance(graph_state.get("graph_diagnostics"), dict) else {}
         errors = graph_diag.get("errors", []) if isinstance(graph_diag.get("errors"), list) else []
