@@ -117,6 +117,17 @@ _GENERIC_BOILERPLATE_PHRASES: tuple[str, ...] = (
     "the narrative suggests",
     "as a commentator",
     "the player feels",
+    "as an observer",
+    "the conversation illustrates",
+    "this exchange demonstrates",
+)
+
+_COMMENTARY_META_PHRASES: tuple[str, ...] = (
+    "as a narrator",
+    "from a narrative perspective",
+    "in dramatic terms",
+    "the scene symbolizes",
+    "the dialogue represents",
 )
 
 
@@ -154,6 +165,8 @@ def dramatic_alignment_violation(
     if selected_scene_function == "withhold_or_evade" and sm == "withheld":
         if len(text) < 8:
             return "dramatic_alignment_withhold_requires_min_beat"
+        if any(phrase in low for phrase in _COMMENTARY_META_PHRASES):
+            return "dramatic_alignment_meta_commentary"
         return None
 
     if sm in ("withheld", "brief") or pacing_mode in ("thin_edge", "compressed"):
@@ -165,6 +178,8 @@ def dramatic_alignment_violation(
     if selected_scene_function not in high_stakes:
         if len(text) < 8:
             return "dramatic_alignment_narrative_too_short"
+        if any(phrase in low for phrase in _COMMENTARY_META_PHRASES):
+            return "dramatic_alignment_meta_commentary"
         return None
 
     if len(text) < _MIN_CHARS_HIGH_STAKES:
@@ -179,5 +194,7 @@ def dramatic_alignment_violation(
             if tokens and any(t in low for t in tokens):
                 continue
             return "dramatic_alignment_generic_boilerplate"
+    if any(phrase in low for phrase in _COMMENTARY_META_PHRASES):
+        return "dramatic_alignment_meta_commentary"
 
     return None

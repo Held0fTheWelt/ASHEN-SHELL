@@ -2,6 +2,23 @@
 
 This document explains how to install test dependencies, run tests, understand test profiles, and validate the repository in clean environments.
 
+## Environment parity (CI, Dev Container, local)
+
+**Why results can differ:** A laptop may use Python 3.11–3.13 while CI and the default Dev Container use **Python 3.10**. Pip/setuptools versions also differ unless pinned. That alone can change editable-install and test outcomes.
+
+**What we treat as the merge bar:** GitHub Actions workflows under `.github/workflows/` (notably **backend** and **ai-stack** jobs) run on **ubuntu-latest** with **`python-version: '3.10'`**. That is the closest definition of “green in CI” for this repo.
+
+**Aligned local / container installs** — use **one** of these so dependency sets match the documented path:
+
+1. **Repository root** — `./setup-test-environment.sh` or `setup-test-environment.bat`  
+   Installs `backend/requirements-test.txt`, then **editable** `story_runtime_core`, then **editable** `ai_stack[test]`. Fails the script if an editable install errors (no silent success).
+2. **Dev Container** — `.devcontainer/devcontainer.json`  
+   Uses the same **Python 3.10** image and runs the same pip sequence as (1), then adds `world-engine/requirements-dev.txt` so **world-engine** tests work in-container. `PYTHONPATH` includes the repo root (and `world-engine` for engine imports).
+3. **Manual / CI-style** — For `ai_stack` tests only, mirror `.github/workflows/ai-stack-tests.yml`:  
+   `pip install -e ./story_runtime_core` and `pip install -e "./ai_stack[test]"` with `PYTHONPATH` set to the repository root.
+
+**If the container and your host disagree:** Inside the container, run `python --version` and `pip list | head` (or equivalent), then run `./setup-test-environment.sh` from the mounted workspace to reconcile. Rebuild the Dev Container after `postCreateCommand` changes.
+
 ## Quick Start
 
 ### CRITICAL: Install Dependencies First
@@ -22,8 +39,9 @@ setup-test-environment.bat
 
 This script will:
 1. Run `python -m pip install -r backend/requirements-test.txt` from `backend/` (that file starts with `-r requirements.txt`, so **production + test** deps install together)
-2. Verify that critical packages (flask, sqlalchemy, pytest, etc.) are installed
-3. Report any missing packages
+2. Install **editable** `story_runtime_core` and **editable** `ai_stack[test]` from the repository root (required for LangGraph / GoC tests; failures abort the script)
+3. Verify that critical packages (flask, sqlalchemy, pytest, langchain_core, langgraph, etc.) are installed
+4. Exit with an error if any verification import fails
 
 #### Manual Setup
 

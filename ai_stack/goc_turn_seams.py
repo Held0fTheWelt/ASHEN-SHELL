@@ -147,6 +147,14 @@ def run_visible_render(
     prop_excerpt = str(rc.get("proposed_narrative_excerpt") or "").strip()
     profile = rc.get("character_profile_snippet") if isinstance(rc.get("character_profile_snippet"), dict) else {}
     guidance_snips = rc.get("scene_guidance_snippets") if isinstance(rc.get("scene_guidance_snippets"), dict) else {}
+    responder_actor_id = str(rc.get("responder_actor_id") or "").strip()
+
+    responder_name_map = {
+        "veronique_vallon": "Veronique",
+        "annette_reille": "Annette",
+        "michel_longstreet": "Michel",
+        "alain_reille": "Alain",
+    }
 
     if module_id != GOC_MODULE_ID:
         bundle = {
@@ -165,6 +173,9 @@ def run_visible_render(
         gm_lines: list[str] = []
         if content:
             gm_lines.append(content)
+        responder_name = responder_name_map.get(responder_actor_id)
+        if responder_name and content:
+            gm_lines.insert(0, f"{responder_name} reacts immediately.")
         narr_len = len(prop_excerpt) if prop_excerpt else len(content)
         if supplement and (narr_len < 50 or silence_dec.get("mode") == "withheld"):
             gm_lines.append(f"(Director staging — phase context) {supplement}")

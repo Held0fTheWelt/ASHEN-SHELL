@@ -174,24 +174,38 @@ def build_responder_and_function(
 ) -> tuple[list[dict[str, Any]], str, dict[str, str], dict[str, Any]]:
     """Choose responder set, scene function, implied continuity map, and multi-pressure resolution record."""
     text = f"{player_input} {interpreted_move.get('player_intent', '')}".lower()
+    move_class = str(interpreted_move.get("move_class") or "").lower()
+    intent = str(interpreted_move.get("player_intent") or "").lower()
     prior_classes = prior_continuity_classes(prior_continuity_impacts)
     implied: dict[str, str] = {}
     candidates: list[str] = []
+    heuristic_trace: list[str] = []
 
     if pacing_mode == "containment":
         candidates.append("scene_pivot")
         implied["scene_pivot"] = "refused_cooperation"
+        heuristic_trace.append("pacing_mode:containment->scene_pivot")
     elif pacing_mode == "thin_edge":
         if "silent" in text or "say nothing" in text or "nothing" in text:
             candidates.append("withhold_or_evade")
             implied["withhold_or_evade"] = "silent_carry"
+            heuristic_trace.append("thin_edge:silence_keyword->withhold_or_evade")
         else:
             candidates.append("establish_pressure")
             implied["establish_pressure"] = "situational_pressure"
+            heuristic_trace.append("thin_edge:default->establish_pressure")
     else:
-        if "silent" in text or "say nothing" in text:
+        if (
+            "silent" in text
+            or "say nothing" in text
+            or "awkward pause" in text
+            or "long pause" in text
+            or "do not answer" in text
+            or "won't answer" in text
+        ):
             candidates.append("withhold_or_evade")
             implied["withhold_or_evade"] = "silent_carry"
+            heuristic_trace.append("keyword:silence_pause->withhold_or_evade")
         if (
             "humiliat" in text
             or "embarrass" in text
@@ -201,6 +215,7 @@ def build_responder_and_function(
         ):
             candidates.append("redirect_blame")
             implied["redirect_blame"] = "dignity_injury"
+            heuristic_trace.append("keyword:humiliation->redirect_blame")
         if (
             "evade" in text
             or "deflect" in text
@@ -209,21 +224,27 @@ def build_responder_and_function(
         ):
             candidates.append("withhold_or_evade")
             implied["withhold_or_evade"] = "silent_carry"
+            heuristic_trace.append("keyword:evasion->withhold_or_evade")
         if "sorry" in text or "apolog" in text or "repair" in text:
             candidates.append("repair_or_stabilize")
             implied["repair_or_stabilize"] = "repair_attempt"
+            heuristic_trace.append("keyword:repair->repair_or_stabilize")
         if "reveal" in text or "secret" in text or "truth" in text or "admit" in text:
             candidates.append("reveal_surface")
             implied["reveal_surface"] = "revealed_fact"
+            heuristic_trace.append("keyword:reveal->reveal_surface")
         if "blame" in text or "fault" in text:
             candidates.append("redirect_blame")
             implied["redirect_blame"] = "blame_pressure"
+            heuristic_trace.append("keyword:blame->redirect_blame")
         if "why" in text or "motive" in text or "reason" in text:
             candidates.append("probe_motive")
             implied["probe_motive"] = "situational_pressure"
+            heuristic_trace.append("keyword:probe->probe_motive")
         if "escalat" in text or "fight" in text or "angry" in text or "furious" in text or "attack" in text:
             candidates.append("escalate_conflict")
             implied["escalate_conflict"] = "situational_pressure"
+            heuristic_trace.append("keyword:escalation->escalate_conflict")
         if (
             "side with" in text
             or "siding with" in text
@@ -234,23 +255,38 @@ def build_responder_and_function(
         ):
             candidates.append("scene_pivot")
             implied["scene_pivot"] = "alliance_shift"
+            heuristic_trace.append("keyword:alliance_reposition->scene_pivot")
+
+        if (
+            ("question" in move_class or "question" in intent or player_input.strip().endswith("?"))
+            and "probe_motive" not in candidates
+            and "containment" not in pacing_mode
+        ):
+            candidates.append("probe_motive")
+            implied["probe_motive"] = "situational_pressure"
+            heuristic_trace.append("interpreted_move:question_nudge->probe_motive")
 
         if "blame_pressure" in prior_classes and not candidates:
             candidates.append("redirect_blame")
             implied["redirect_blame"] = "blame_pressure"
+            heuristic_trace.append("continuity:blame_pressure_fallback->redirect_blame")
         if "dignity_injury" in prior_classes and not candidates:
             candidates.append("redirect_blame")
             implied["redirect_blame"] = "dignity_injury"
+            heuristic_trace.append("continuity:dignity_injury_fallback->redirect_blame")
         if "alliance_shift" in prior_classes and "probe_motive" not in candidates and "why" in text:
             candidates.append("probe_motive")
             implied["probe_motive"] = "alliance_shift"
+            heuristic_trace.append("continuity:alliance_shift_nudge->probe_motive")
         if "blame_pressure" in prior_classes and "redirect_blame" not in candidates and "watch" in text:
             candidates.append("redirect_blame")
             implied["redirect_blame"] = "blame_pressure"
+            heuristic_trace.append("continuity:watch_under_blame->redirect_blame")
 
         if not candidates:
             candidates.append("establish_pressure")
             implied["establish_pressure"] = "situational_pressure"
+            heuristic_trace.append("default->establish_pressure")
 
     scene_fn = select_single_scene_function(candidates, implied_continuity_by_function=implied)
 
@@ -262,6 +298,7 @@ def build_responder_and_function(
             "CANONICAL_TURN_CONTRACT_GOC.md section 3.5 — ranked implied continuity obligation "
             f"(carry_forward_classes={prior_classes}); tie-break lexicographic smallest label."
         ),
+        "heuristic_trace": heuristic_trace[:16],
     }
 
     if "annette" in text:
@@ -303,12 +340,26 @@ def build_pacing_and_silence(
     module_id: str,
 ) -> tuple[str, dict[str, Any]]:
     text = f"{player_input} {interpreted_move.get('move_class', '')}".lower()
+    intent = str(interpreted_move.get("player_intent") or "").lower()
     if module_id != GOC_MODULE_ID:
         return assert_pacing_mode("standard"), {
             "mode": assert_silence_brevity_mode("normal"),
             "reason": "non_goc_slice_default",
         }
-    off_scope = ("mars" in text or "spaceship" in text or "lighthouse" in text or "dragon" in text) and "carnage" not in text
+    off_scope_keywords = (
+        "mars",
+        "spaceship",
+        "lighthouse",
+        "dragon",
+        "bitcoin",
+        "stock market",
+        "weather forecast",
+        "football match",
+        "tax return",
+        "election campaign",
+        "recipe blog",
+    )
+    off_scope = any(k in text for k in off_scope_keywords) and "carnage" not in text
     if off_scope:
         return assert_pacing_mode("containment"), {
             "mode": assert_silence_brevity_mode("normal"),
@@ -317,8 +368,14 @@ def build_pacing_and_silence(
     trimmed = player_input.strip()
     words = [w for w in trimmed.replace(".", " ").split() if w]
     thin_fragment = len(trimmed) <= 10 and len(words) <= 2 and "?" not in trimmed
-    if "thin edge" in text or "one beat" in text or thin_fragment:
-        if "silent" in text or "say nothing" in text:
+    awkward_pause = (
+        "awkward pause" in text
+        or "long pause" in text
+        or "won't answer" in text
+        or "do not answer" in text
+    )
+    if "thin edge" in text or "one beat" in text or thin_fragment or awkward_pause:
+        if "silent" in text or "say nothing" in text or awkward_pause:
             return assert_pacing_mode("thin_edge"), {
                 "mode": assert_silence_brevity_mode("withheld"),
                 "reason": "thin_edge_plus_withheld",
@@ -336,7 +393,7 @@ def build_pacing_and_silence(
     elif "multi" in text and "pressure" in text:
         pacing = assert_pacing_mode("multi_pressure")
         silence = {"mode": assert_silence_brevity_mode("normal"), "reason": "default_verbal_density"}
-    elif "repair_attempt" in text and "why" in text:
+    elif ("repair_attempt" in text or "repair" in intent) and "why" in text:
         pacing = assert_pacing_mode("compressed")
         silence = {"mode": assert_silence_brevity_mode("brief"), "reason": "continuity_compact_probe_after_repair"}
     elif "repair" in text and ("truth" in text or "reveal" in text or "secret" in text):

@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.18] - 2026-04-07
+
+**Summary**: **God of Carnage (GoC) Phase 5** — final MVP closure: broader non-preview scenario coverage (11 paths, hard gate 7+ gate-strong), four 6+ turn sessions (3 credible + 1 mixed-by-design), reduced heuristic brittleness (interpreted-move nudges, containment/awkward-pause expansion), stronger anti-commentary dramatic validation, truth-safe visible responder beat, `director_heuristic_trace` in diagnostics, and closure test suite with full Phase 1–4 regression command.
+
+### Added
+
+- **`ai_stack/tests/test_goc_phase5_final_mvp_closure.py`**: Phase 5 executable closure evidence (breadth, long runs, character comparison, pressure movement, weak-run diagnostics, binary run distribution).
+
+### Changed
+
+- **`ai_stack/scene_director_goc.py`**: Heuristic trace codes; `interpreted_move` question nudge; awkward-pause / silence patterns; broader safe containment keywords; multi-pressure repair intent nudge.
+- **`ai_stack/langgraph_runtime.py`**: `graph_diagnostics.dramatic_review.director_heuristic_trace` and review explanation hook.
+- **`ai_stack/goc_dramatic_alignment.py`**: Meta-commentary rejection (`dramatic_alignment_meta_commentary`).
+- **`ai_stack/goc_turn_seams.py`**: Responder-first in-scene beat line on committed successful renders.
+
+### Tests
+
+- **`pytest`** `ai_stack/tests/test_goc_phase5_final_mvp_closure.py`.
+- **`pytest`** Phase 1–5 GoC regression bundle: `test_goc_phase1_runtime_gate.py`, `test_goc_phase2_scenarios.py`, `test_goc_phase3_experience_richness.py`, `test_goc_phase4_reliability_breadth_operator.py`, `test_goc_phase5_final_mvp_closure.py`, `test_goc_frozen_vocab.py`, `test_langgraph_runtime.py`.
+- **CI parity (local)**: full `ai_stack/tests` suite per `.github/workflows/ai-stack-tests.yml` (136 passed in dev run).
+
+### Notes
+
+- Phase 5 report path: `tests/reports/GOC_PHASE5_FINAL_MVP_CLOSURE_REPORT.md` (directory `tests/reports/` is gitignored; generate locally).
+
+---
+
+## [0.3.17] - 2026-04-07
+
+**Summary**: **Test environment parity and setuptools fix** — `story_runtime_core` editable installs work on current setuptools (explicit `package-dir` / `packages`); Dev Container `postCreateCommand` now matches root setup scripts plus world-engine dev deps; setup scripts fail fast on editable-install errors; documentation explains CI (Python 3.10) vs local/container drift.
+
+### Fixed
+
+- **`story_runtime_core/pyproject.toml`**: Added `[build-system]` and explicit `[tool.setuptools]` mapping so `pip install -e ./story_runtime_core` no longer hits “Multiple top-level modules discovered in a flat-layout” on newer setuptools.
+
+### Changed
+
+- **`.devcontainer/devcontainer.json`**: Renamed feature to full test parity; `postCreateCommand` installs `backend/requirements-test.txt`, editable `story_runtime_core`, editable `ai_stack[test]`, then `world-engine/requirements-dev.txt` (same core sequence as `setup-test-environment.*`).
+- **`setup-test-environment.bat`** / **`setup-test-environment.sh`**: Exit non-zero if editable `story_runtime_core` or `ai_stack[test]` install fails (no false “success” after stderr errors).
+- **`docs/testing-setup.md`**: New **Environment parity (CI, Dev Container, local)** section; updated automatic-setup bullet list.
+- **`README.md`**: Testing section notes CI/Dev Container Python 3.10 alignment and links to the parity doc.
+
+---
+
 ## [0.3.16] - 2026-04-07
 
 **Summary**: **God of Carnage (GoC) Phase 4** — hard MVP reliability/breadth/operator hardening with six distinct non-preview path families, three 5+ turn runs (including alliance/pressure movement evidence), stronger character pressure differentiation, stricter anti-commentary dramatic validation, and clearer pass/fail/degraded operator diagnostics while preserving frozen contracts and seam discipline.

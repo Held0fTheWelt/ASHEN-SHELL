@@ -80,7 +80,7 @@ Further reading: [docs/architecture/README.md](docs/architecture/README.md), [do
 
 ## Prerequisites
 
-- **Python**: **3.10+** (see `backend/pyproject.toml` `requires-python`; `story_runtime_core` aligns with this).
+- **Python**: **3.10+** per `requires-python` in packages; **CI and the Dev Container pin 3.10** for reproducible test results. Newer interpreters often work but are not the merge bar.
 - **Git** and a virtual environment per service (recommended).
 - **Docker Desktop** (or compatible engine) if you use Compose at the repo root.
 - For **AI stack / LangGraph tests**: editable installs of `story_runtime_core` and `ai_stack[test]` plus repo root on `PYTHONPATH` (see [Testing](#testing)).
@@ -303,6 +303,12 @@ setup-test-environment.bat        # Windows
 # or:
 python -m pip install -r backend/requirements-test.txt
 ```
+
+### Matching CI, Dev Container, and your laptop
+
+GitHub Actions uses **Python 3.10** for backend and `ai_stack` jobs. The **Dev Container** (`.devcontainer/devcontainer.json`) uses the same **3.10** image and runs the **same** install sequence as the setup scripts, then adds `world-engine/requirements-dev.txt`. If you use **Python 3.11+** on the host, behavior can still differ (pip/setuptools); for the closest guarantee to CI green, use **3.10** or open the repo in the Dev Container.
+
+Full write-up: [docs/testing-setup.md](docs/testing-setup.md) — **Environment parity (CI, Dev Container, local)**.
 
 ### Quick start: canonical smoke suite
 

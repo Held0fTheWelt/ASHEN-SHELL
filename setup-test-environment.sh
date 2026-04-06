@@ -66,11 +66,17 @@ cd "$REPO_ROOT"
 # picks up partial installs; `LANGGRAPH_RUNTIME_EXPORT_AVAILABLE` stays False if imports fail.
 if [[ -d "story_runtime_core" ]]; then
     echo -e "${YELLOW}Installing story_runtime_core (editable)...${NC}"
-    $PYTHON_BIN -m pip install -e "./story_runtime_core" -q || echo -e "${YELLOW}  (story_runtime_core editable install skipped or failed)${NC}"
+    if ! $PYTHON_BIN -m pip install -e "./story_runtime_core" -q; then
+        echo -e "${RED}Error: editable install of story_runtime_core failed${NC}" >&2
+        exit 1
+    fi
 fi
 if [[ -d "ai_stack" ]]; then
     echo -e "${YELLOW}Installing ai_stack[test] (editable, includes langchain-core / langgraph)...${NC}"
-    $PYTHON_BIN -m pip install -e "./ai_stack[test]" -q || echo -e "${YELLOW}  (ai_stack[test] editable install skipped or failed)${NC}"
+    if ! $PYTHON_BIN -m pip install -e "./ai_stack[test]" -q; then
+        echo -e "${RED}Error: editable install of ai_stack[test] failed${NC}" >&2
+        exit 1
+    fi
 fi
 
 # Verify critical dependencies

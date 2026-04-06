@@ -66,10 +66,19 @@ REM Editable local packages so ai_stack LangGraph tests and imports match CI / f
 if exist "story_runtime_core\pyproject.toml" (
     echo Installing story_runtime_core ^(editable^)...
     python -m pip install -e "./story_runtime_core" -q
+    if errorlevel 1 (
+        echo Error: editable install of story_runtime_core failed
+        echo Fix pyproject.toml / setuptools layout, then retry.
+        exit /b 1
+    )
 )
 if exist "ai_stack\pyproject.toml" (
     echo Installing ai_stack[test] ^(editable — langchain-core, langgraph, ...^)...
     python -m pip install -e "./ai_stack[test]" -q
+    if errorlevel 1 (
+        echo Error: editable install of ai_stack[test] failed
+        exit /b 1
+    )
 )
 
 REM Verify critical dependencies

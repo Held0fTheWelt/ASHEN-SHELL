@@ -749,6 +749,7 @@ class RuntimeTurnGraphExecutor:
         prior_ci = state.get("prior_continuity_impacts") if isinstance(state.get("prior_continuity_impacts"), list) else []
         sa = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
         mpr = sa.get("multi_pressure_resolution") if isinstance(sa.get("multi_pressure_resolution"), dict) else {}
+        heuristic_trace = mpr.get("heuristic_trace") if isinstance(mpr.get("heuristic_trace"), list) else []
         responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
         primary = responders[0] if responders and isinstance(responders[0], dict) else {}
         silence = state.get("silence_brevity_decision") if isinstance(state.get("silence_brevity_decision"), dict) else {}
@@ -826,6 +827,7 @@ class RuntimeTurnGraphExecutor:
                 "multi_pressure_chosen": mpr.get("chosen_scene_function"),
                 "multi_pressure_candidates": mpr.get("candidates"),
                 "multi_pressure_rationale": mpr.get("rationale"),
+                "director_heuristic_trace": [str(x) for x in heuristic_trace][:16],
                 "validation_reason": vo.get("reason"),
                 "dramatic_alignment_summary": alignment_note,
                 "dramatic_signature": dramatic_signature,
@@ -850,6 +852,7 @@ class RuntimeTurnGraphExecutor:
                 "review_explanations": {
                     "responder": f"selected_responder_reason:{primary.get('reason')}",
                     "scene_function": str(mpr.get("rationale") or "single_path_rule"),
+                    "heuristics": ",".join(str(x) for x in heuristic_trace[:8]) if heuristic_trace else "none",
                     "pacing": f"pacing_mode={state.get('pacing_mode')} silence_reason={silence.get('reason')}",
                     "continuity": (
                         "carry_forward_classes="
