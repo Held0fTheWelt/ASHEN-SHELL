@@ -19,6 +19,32 @@ This document explains how to install test dependencies, run tests, understand t
 
 **If the container and your host disagree:** Inside the container, run `python --version` and `pip list | head` (or equivalent), then run `./setup-test-environment.sh` from the mounted workspace to reconcile. Rebuild the Dev Container after `postCreateCommand` changes.
 
+### PYTHONPATH alone is not enough (LangGraph / GoC)
+
+Setting `PYTHONPATH` to the repo root only makes **source packages importable**; it does **not** install **PyPI** dependencies such as `langchain-core` or `langgraph`. Without those, `ai_stack.langgraph_runtime` cannot load and the GoC / LangGraph tests are **skipped** (by design).
+
+**Platform-neutral, CI-identical minimal install** (only `story_runtime_core` + `ai_stack[test]`, same commands as `.github/workflows/ai-stack-tests.yml`):
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e "./story_runtime_core"
+python -m pip install -e "./ai_stack[test]"
+export PYTHONPATH="$(pwd)"   # Linux / macOS
+```
+
+Windows (PowerShell): `.\scripts\install-ai-stack-test-env.ps1`  
+Windows (cmd) / double-click path: `scripts\install-ai-stack-test-env.bat`  
+macOS / Linux: `./scripts/install-ai-stack-test-env.sh`
+
+**Docker (same stack, any host with Docker):** from repo root:
+
+```bash
+docker build -f docker/Dockerfile.ai-stack-test -t wos-ai-stack-test .
+docker run --rm wos-ai-stack-test
+```
+
+After a successful install, `python -c "import langchain_core, langgraph; import ai_stack.langgraph_runtime"` must exit 0.
+
 ## Quick Start
 
 ### CRITICAL: Install Dependencies First

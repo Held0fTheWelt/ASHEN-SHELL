@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.19] - 2026-04-07
+
+**Summary**: **Reproducible ai_stack / GoC test installs** — CI-identical one-command setup scripts, Docker image, and documentation that **PYTHONPATH without `pip install -e` cannot provide LangChain/LangGraph**.
+
+### Added
+
+- **`scripts/install-ai-stack-test-env.sh`**, **`scripts/install-ai-stack-test-env.ps1`**, **`scripts/install-ai-stack-test-env.bat`**: mirror `.github/workflows/ai-stack-tests.yml` (editable `story_runtime_core` + `ai_stack[test]`) and verify `langchain_core` / `langgraph` / `ai_stack.langgraph_runtime`.
+- **`docker/Dockerfile.ai-stack-test`**: Python 3.10 image running the same install + `pytest ai_stack/tests`.
+- **Root `.dockerignore`**: lean build context for the above image.
+
+### Changed
+
+- **`docs/testing-setup.md`**: New subsection *PYTHONPATH alone is not enough* with script and Docker instructions.
+
+---
+
 ## [0.3.18] - 2026-04-07
 
 **Summary**: **God of Carnage (GoC) Phase 5** — final MVP closure: broader non-preview scenario coverage (11 paths, hard gate 7+ gate-strong), four 6+ turn sessions (3 credible + 1 mixed-by-design), reduced heuristic brittleness (interpreted-move nudges, containment/awkward-pause expansion), stronger anti-commentary dramatic validation, truth-safe visible responder beat, `director_heuristic_trace` in diagnostics, and closure test suite with full Phase 1–4 regression command.
