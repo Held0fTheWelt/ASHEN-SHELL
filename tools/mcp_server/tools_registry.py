@@ -1,71 +1,86 @@
-"""Tool registry and metadata."""
+"""Tool registry and metadata — derived from ai_stack canonical MCP descriptors."""
 
 from typing import Any, Callable, Optional
 
+from ai_stack.mcp_canonical_surface import (
+    CANONICAL_MCP_TOOL_DESCRIPTORS,
+    McpCanonicalToolDescriptor,
+    McpImplementationStatus,
+    build_compact_mcp_operator_truth,
+    capability_records_for_mcp,
+    descriptor_to_public_metadata,
+    verify_catalog_names_alignment,
+)
 from tools.mcp_server.backend_client import BackendClient
 from tools.mcp_server.config import Config
 from tools.mcp_server.errors import JsonRpcError
 from tools.mcp_server.fs_tools import FileSystemTools
-from ai_stack import capability_catalog
 
 
 class ToolDefinition:
-    """Tool metadata and permission."""
+    """Tool metadata: canonical strand + handler (permission_legacy for older clients)."""
 
     def __init__(
         self,
-        name: str,
+        descriptor: McpCanonicalToolDescriptor,
         description: str,
-        handler: Callable,
+        handler: Callable[..., dict[str, Any]],
         input_schema: dict[str, Any],
-        permission: str = "read",
     ):
-        self.name = name
+        self.descriptor = descriptor
+        self.name = descriptor.name
         self.description = description
         self.handler = handler
         self.input_schema = input_schema
-        self.permission = permission  # "read" or "preview"
+        self.tool_class = descriptor.tool_class
+        self.authority_source = descriptor.authority_source
+        self.implementation_status = descriptor.implementation_status
+        self.permission = descriptor.permission_legacy
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to MCP tool definition dict."""
+        meta = descriptor_to_public_metadata(self.descriptor)
         return {
             "name": self.name,
             "description": self.description,
             "inputSchema": self.input_schema,
             "permission": self.permission,
+            "tool_class": meta["tool_class"],
+            "authority_source": meta["authority_source"],
+            "implementation_status": meta["implementation_status"],
+            "governance": meta["governance"],
+            "narrative_mutation_risk": meta["narrative_mutation_risk"],
         }
 
 
 class ToolRegistry:
     """Central registry of available tools."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.tools: dict[str, ToolDefinition] = {}
 
     def register(self, tool: ToolDefinition) -> None:
-        """Register a tool."""
         self.tools[tool.name] = tool
 
     def get(self, name: str) -> Optional[ToolDefinition]:
-        """Get tool by name."""
         return self.tools.get(name)
 
+    def list_tool_names(self) -> list[str]:
+        return sorted(self.tools.keys())
+
     def list_tools(self) -> list[dict[str, Any]]:
-        """List all tools as MCP dicts."""
         return [tool.to_dict() for tool in self.tools.values()]
 
 
 def create_default_registry() -> ToolRegistry:
-    """Create registry with A1.2 tools: 2 P0 (backend) + 3 P1 (filesystem) + 4 blocked."""
     registry = ToolRegistry()
     config = Config()
     backend = BackendClient(base_url=config.backend_url, bearer_token=config.bearer_token)
     fs = FileSystemTools(config)
 
-    # P0: Backend integration
     def handle_system_health(arguments: dict) -> dict:
         try:
             import uuid
+
             trace_id = str(uuid.uuid4())
             result = backend.health(trace_id=trace_id)
             return {"status": "healthy", "backend": result}
@@ -77,16 +92,17 @@ def create_default_registry() -> ToolRegistry:
         module_version = arguments.get("module_version")
         try:
             import uuid
+
             trace_id = str(uuid.uuid4())
-            result = backend.create_session(module_id=module_id, trace_id=trace_id, module_version=module_version)
+            result = backend.create_session(
+                module_id=module_id, trace_id=trace_id, module_version=module_version
+            )
             return result
         except JsonRpcError as e:
             return {"error": e.message}
 
-    # P1: Filesystem utilities
     def handle_list_modules(arguments: dict) -> dict:
-        modules = fs.list_modules()
-        return {"modules": modules}
+        return {"modules": fs.list_modules()}
 
     def handle_get_module(arguments: dict) -> dict:
         module_id = arguments.get("module_id")
@@ -98,111 +114,106 @@ def create_default_registry() -> ToolRegistry:
         return fs.search_content(pattern, case_sensitive)
 
     def handle_capability_catalog(arguments: dict) -> dict:
-        return {"capabilities": capability_catalog()}
+        return {"capabilities": capability_records_for_mcp()}
 
-    # Blocked tools (deferred)
-    def handle_blocked(name: str):
+    def handle_operator_truth(arguments: dict) -> dict:
+        probe = bool(arguments.get("probe_backend"))
+        backend_reachable: bool | None = None
+        if probe:
+            try:
+                import uuid
+
+                backend.health(trace_id=str(uuid.uuid4()))
+                backend_reachable = True
+            except JsonRpcError:
+                backend_reachable = False
+        align = verify_catalog_names_alignment()
+        truth = build_compact_mcp_operator_truth(
+            backend_reachable=backend_reachable,
+            catalog_alignment_ok=bool(align["aligned"]),
+            registry_tool_names=registry.list_tool_names(),
+        )
+        return {"operator_truth": truth, "catalog_alignment": align}
+
+    def handle_blocked(name: str) -> Callable[[dict], dict]:
         def handler(arguments: dict) -> dict:
             return {
                 "code": "NOT_IMPLEMENTED",
                 "reason": f"{name} is not available in this phase",
+                "implementation_status": McpImplementationStatus.deferred_stub.value,
+                "authority_note": "deferred_stub_non_authoritative",
             }
+
         return handler
 
-    # Register P0 tools
-    registry.register(
-        ToolDefinition(
-            name="wos.system.health",
-            description="Check backend system health status",
-            handler=handle_system_health,
-            input_schema={"type": "object", "properties": {}, "required": []},
-            permission="read",
-        )
-    )
+    handlers: dict[str, Callable[..., dict[str, Any]]] = {
+        "wos.system.health": handle_system_health,
+        "wos.session.create": handle_session_create,
+        "wos.goc.list_modules": handle_list_modules,
+        "wos.goc.get_module": handle_get_module,
+        "wos.content.search": handle_search_content,
+        "wos.capabilities.catalog": handle_capability_catalog,
+        "wos.mcp.operator_truth": handle_operator_truth,
+    }
 
-    registry.register(
-        ToolDefinition(
-            name="wos.session.create",
-            description="Create a new session for a module",
-            handler=handle_session_create,
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "module_id": {"type": "string"},
-                    "module_version": {"type": "string"},
-                },
-                "required": ["module_id"],
+    descriptions: dict[str, str] = {
+        "wos.system.health": "Check backend system health status",
+        "wos.session.create": "Create a new session for a module (authority-respecting backend flow only)",
+        "wos.goc.list_modules": "List available modules",
+        "wos.goc.get_module": "Get module metadata and file list",
+        "wos.content.search": "Search content with regex pattern",
+        "wos.capabilities.catalog": "Canonical capability surface with governance metadata (read-only mirror)",
+        "wos.mcp.operator_truth": "Compact MCP operator truth (profile, route, policy, no-eligible discipline)",
+        "wos.session.get": "Session snapshot (deferred — not implemented on MCP)",
+        "wos.session.execute_turn": "Execute turn (deferred — must use runtime authority, not MCP)",
+        "wos.session.logs": "Session logs (deferred — not implemented on MCP)",
+        "wos.session.state": "Session state (deferred — not implemented on MCP)",
+    }
+
+    schemas: dict[str, dict[str, Any]] = {
+        "wos.system.health": {"type": "object", "properties": {}, "required": []},
+        "wos.session.create": {
+            "type": "object",
+            "properties": {
+                "module_id": {"type": "string"},
+                "module_version": {"type": "string"},
             },
-            permission="read",
-        )
-    )
-
-    # Register P1 tools
-    registry.register(
-        ToolDefinition(
-            name="wos.goc.list_modules",
-            description="List available modules",
-            handler=handle_list_modules,
-            input_schema={"type": "object", "properties": {}, "required": []},
-            permission="read",
-        )
-    )
-
-    registry.register(
-        ToolDefinition(
-            name="wos.goc.get_module",
-            description="Get module metadata and file list",
-            handler=handle_get_module,
-            input_schema={
-                "type": "object",
-                "properties": {"module_id": {"type": "string"}},
-                "required": ["module_id"],
+            "required": ["module_id"],
+        },
+        "wos.goc.list_modules": {"type": "object", "properties": {}, "required": []},
+        "wos.goc.get_module": {
+            "type": "object",
+            "properties": {"module_id": {"type": "string"}},
+            "required": ["module_id"],
+        },
+        "wos.content.search": {
+            "type": "object",
+            "properties": {
+                "pattern": {"type": "string"},
+                "case_sensitive": {"type": "boolean"},
             },
-            permission="read",
-        )
-    )
+            "required": ["pattern"],
+        },
+        "wos.capabilities.catalog": {"type": "object", "properties": {}, "required": []},
+        "wos.mcp.operator_truth": {
+            "type": "object",
+            "properties": {"probe_backend": {"type": "boolean"}},
+            "required": [],
+        },
+    }
 
-    registry.register(
-        ToolDefinition(
-            name="wos.content.search",
-            description="Search content with regex pattern",
-            handler=handle_search_content,
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "pattern": {"type": "string"},
-                    "case_sensitive": {"type": "boolean"},
-                },
-                "required": ["pattern"],
-            },
-            permission="read",
-        )
-    )
-
-    registry.register(
-        ToolDefinition(
-            name="wos.capabilities.catalog",
-            description="List guarded capability surface and mode boundaries",
-            handler=handle_capability_catalog,
-            input_schema={"type": "object", "properties": {}, "required": []},
-            permission="read",
-        )
-    )
-
-    # Register blocked tools
-    for blocked_name in [
-        "wos.session.get",
-        "wos.session.execute_turn",
-        "wos.session.logs",
-        "wos.session.state",
-    ]:
+    for desc in CANONICAL_MCP_TOOL_DESCRIPTORS:
+        name = desc.name
+        if name in handlers:
+            handler_fn = handlers[name]
+        else:
+            handler_fn = handle_blocked(name)
         registry.register(
             ToolDefinition(
-                name=blocked_name,
-                description=f"{blocked_name} (not implemented)",
-                handler=handle_blocked(blocked_name),
-                input_schema={"type": "object", "properties": {}, "required": []},
-                permission="read",
+                descriptor=desc,
+                description=descriptions.get(name, name),
+                handler=handler_fn,
+                input_schema=schemas.get(name, {"type": "object", "properties": {}, "required": []}),
             )
         )
 

@@ -14,7 +14,7 @@ def test_tools_list_valid_response():
     assert response["id"] == 1
     assert "result" in response
     assert "tools" in response["result"]
-    assert len(response["result"]["tools"]) == 10
+    assert len(response["result"]["tools"]) == 11
 
 
 def test_unknown_tool_returns_error():

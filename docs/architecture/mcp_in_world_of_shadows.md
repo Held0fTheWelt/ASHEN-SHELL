@@ -78,7 +78,7 @@ Improvement responses now also return `capability_audit` rows in-band for direct
 
 ## MCP server alignment
 
-`tools/mcp_server/tools_registry.py` now includes `wos.capabilities.catalog` to expose the guarded capability catalog through the MCP tool surface.
+`tools/mcp_server/tools_registry.py` derives its tool list from `ai_stack/mcp_canonical_surface.py` and includes `wos.capabilities.catalog` (enriched `capability_records_for_mcp()` mirror) plus `wos.mcp.operator_truth` for compact operator legibility. See `docs/mcp/12_M1_canonical_parity.md`.
 
 ## Current intentionally out of scope
 

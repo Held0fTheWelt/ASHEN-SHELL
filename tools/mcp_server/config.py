@@ -5,7 +5,11 @@ from pathlib import Path
 
 
 class Config:
-    """Load and provide access to configuration from environment variables."""
+    """Load and provide access to configuration from environment variables.
+
+    MCP M1 operating profile (process-wide policy for write_capable tools) is read separately via
+    ``WOS_MCP_OPERATING_PROFILE``: ``healthy`` | ``review_safe`` | ``test_isolated`` | ``degraded``.
+    """
 
     def __init__(self):
         self.backend_url = os.getenv(

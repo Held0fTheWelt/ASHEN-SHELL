@@ -18,6 +18,12 @@ from .errors import (
     PermissionDeniedError,
     InvalidInputError,
 )
+from ai_stack.mcp_canonical_surface import (
+    McpToolClass,
+    operating_profile_allows_write_capable,
+    resolve_mcp_operating_profile,
+)
+
 from .logging_utils import generate_trace_id, log_request, log_response, log_tool_call
 from .rate_limiter import RateLimiter
 from .tools_registry import create_default_registry
@@ -55,23 +61,32 @@ class McpServer:
         if not tool:
             raise ToolNotFoundError(f"Tool not found: {tool_name}")
 
-        # Check permission (block write tools in Phase A)
-        if tool.permission not in ("read", "preview"):
-            raise PermissionDeniedError(f"Tool {tool_name} not allowed in Phase A")
+        profile = resolve_mcp_operating_profile()
+        if tool.tool_class == McpToolClass.write_capable and not operating_profile_allows_write_capable(
+            profile
+        ):
+            raise PermissionDeniedError(
+                f"Tool {tool_name} is write_capable; denied under operating profile {profile.value}"
+            )
 
         # Validate input
         self.validate_input(tool, arguments)
 
         # Call handler
         start = time.time()
+        audit_kw = dict(
+            tool_class=tool.tool_class.value,
+            authority_source=tool.authority_source,
+            operating_profile=profile.value,
+        )
         try:
             result = tool.handler(arguments)
             duration_ms = (time.time() - start) * 1000
-            log_tool_call(trace_id, tool_name, duration_ms, "success")
+            log_tool_call(trace_id, tool_name, duration_ms, "success", **audit_kw)
             return result
         except Exception as e:
             duration_ms = (time.time() - start) * 1000
-            log_tool_call(trace_id, tool_name, duration_ms, "error", "TOOL_ERROR")
+            log_tool_call(trace_id, tool_name, duration_ms, "error", "TOOL_ERROR", **audit_kw)
             raise
 
     def handle_initialize(self, params: dict) -> dict:

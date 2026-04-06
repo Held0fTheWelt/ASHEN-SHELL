@@ -39,9 +39,19 @@ def log_response(trace_id: str, method: str, status: str, duration_ms: float, er
     print(json.dumps(entry), file=sys.stderr)
 
 
-def log_tool_call(trace_id: str, tool_name: str, duration_ms: float, status: str, error_code: str = None) -> None:
-    """Log tool execution."""
-    entry = {
+def log_tool_call(
+    trace_id: str,
+    tool_name: str,
+    duration_ms: float,
+    status: str,
+    error_code: str | None = None,
+    *,
+    tool_class: str | None = None,
+    authority_source: str | None = None,
+    operating_profile: str | None = None,
+) -> None:
+    """Log tool execution (M1: canonical audit fields)."""
+    entry: dict = {
         "type": "tool_call",
         "trace_id": trace_id,
         "timestamp": time.time(),
@@ -51,4 +61,10 @@ def log_tool_call(trace_id: str, tool_name: str, duration_ms: float, status: str
     }
     if error_code:
         entry["error_code"] = error_code
+    if tool_class:
+        entry["tool_class"] = tool_class
+    if authority_source:
+        entry["authority_source"] = authority_source
+    if operating_profile:
+        entry["operating_profile"] = operating_profile
     print(json.dumps(entry), file=sys.stderr)

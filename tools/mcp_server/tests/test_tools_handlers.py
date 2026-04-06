@@ -1,6 +1,7 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from tools.mcp_server.tools_registry import create_default_registry
+from ai_stack.mcp_canonical_surface import CANONICAL_MCP_TOOL_DESCRIPTORS
 
 
 @pytest.fixture
@@ -10,19 +11,21 @@ def registry():
             return create_default_registry()
 
 
-def test_tools_list_includes_10_tools(registry):
+def test_tools_list_includes_all_canonical_tools(registry):
     tools = registry.list_tools()
-    assert len(tools) == 10
+    assert len(tools) == len(CANONICAL_MCP_TOOL_DESCRIPTORS)
 
 
-def test_tools_list_has_permissions():
+def test_tools_list_has_tool_class_and_legacy_permission():
     with patch("tools.mcp_server.tools_registry.BackendClient"):
         with patch("tools.mcp_server.tools_registry.FileSystemTools"):
-            registry = create_default_registry()
-            tools = registry.list_tools()
+            reg = create_default_registry()
+            tools = reg.list_tools()
             for tool in tools:
+                assert "tool_class" in tool
+                assert tool["tool_class"] in ("read_only", "review_bound", "write_capable")
                 assert "permission" in tool
-                assert tool["permission"] in ("read", "preview")
+                assert tool["permission"] in ("read", "preview", "write")
 
 
 def test_health_tool_handler_returns_dict():
@@ -63,7 +66,11 @@ def test_get_module_tool_handler():
     with patch("tools.mcp_server.tools_registry.BackendClient"):
         with patch("tools.mcp_server.tools_registry.FileSystemTools") as MockFS:
             mock_fs = MockFS.return_value
-            mock_fs.get_module.return_value = {"name": "god_of_carnage", "path": "/repo/content/modules/god_of_carnage", "files": ["scenes.yaml", "lore.md"]}
+            mock_fs.get_module.return_value = {
+                "name": "god_of_carnage",
+                "path": "/repo/content/modules/god_of_carnage",
+                "files": ["scenes.yaml", "lore.md"],
+            }
             registry = create_default_registry()
             tool = registry.get("wos.goc.get_module")
             result = tool.handler({"module_id": "god_of_carnage"})
@@ -80,8 +87,8 @@ def test_search_content_tool_handler():
                 "hits": 2,
                 "results": [
                     {"file": "content/modules/god_of_carnage/scenes.yaml", "line": 5, "text": "god_of_carnage"},
-                    {"file": "content/modules/god_of_carnage/lore.md", "line": 1, "text": "The god of carnage"}
-                ]
+                    {"file": "content/modules/god_of_carnage/lore.md", "line": 1, "text": "The god of carnage"},
+                ],
             }
             registry = create_default_registry()
             tool = registry.get("wos.content.search")
@@ -89,14 +96,31 @@ def test_search_content_tool_handler():
             assert result["hits"] == 2
 
 
-def test_capability_catalog_tool_handler():
+def test_capability_catalog_tool_handler_enriched():
     with patch("tools.mcp_server.tools_registry.BackendClient"):
         with patch("tools.mcp_server.tools_registry.FileSystemTools"):
             registry = create_default_registry()
             tool = registry.get("wos.capabilities.catalog")
             result = tool.handler({})
             assert "capabilities" in result
-            assert any(cap["name"] == "wos.context_pack.build" for cap in result["capabilities"])
+            caps = result["capabilities"]
+            row = next(c for c in caps if c["name"] == "wos.context_pack.build")
+            assert row["tool_class"] == "read_only"
+            assert "governance_posture" in row
+            assert row["authority_source"] == "ai_stack_capability_registry_mirror"
+
+
+def test_operator_truth_tool_handler():
+    with patch("tools.mcp_server.tools_registry.BackendClient"):
+        with patch("tools.mcp_server.tools_registry.FileSystemTools"):
+            registry = create_default_registry()
+            tool = registry.get("wos.mcp.operator_truth")
+            result = tool.handler({})
+            assert "operator_truth" in result
+            assert "catalog_alignment" in result
+            ot = result["operator_truth"]
+            assert ot["grammar_version"] == "mcp_operator_truth_v1"
+            assert "runtime_authority_preservation_posture" in ot
 
 
 def test_blocked_tool_returns_not_implemented():
@@ -106,3 +130,4 @@ def test_blocked_tool_returns_not_implemented():
             tool = registry.get("wos.session.get")
             result = tool.handler({})
             assert result.get("code") == "NOT_IMPLEMENTED"
+            assert result.get("implementation_status") == "deferred_stub"
