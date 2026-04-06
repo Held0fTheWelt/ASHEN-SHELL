@@ -187,10 +187,34 @@ def test_g_mcp_07_closure_report_contains_gate_matrix():
     report_path = REPO_ROOT / "tests" / "reports" / "MCP_M1_CLOSURE_REPORT.md"
     assert report_path.is_file()
     text = report_path.read_text(encoding="utf-8")
-    for n in range(1, 8):
+    for n in range(1, 9):
         assert f"G-MCP-{n:02d}" in text
+    assert "Status: final canonical closure evidence" in text
+    assert "Canonical report authority" in text
     assert "Validation Commands" in text
     assert "Actual Results" in text
+    assert (
+        "python -m pytest ai_stack/tests/test_mcp_canonical_surface.py "
+        "tools/mcp_server/tests/test_mcp_m1_gates.py tools/mcp_server/tests/test_rpc.py "
+        "-q --tb=short --no-cov"
+    ) in text
+    assert "python -m pytest backend/tests/runtime/test_mcp_enrichment.py -q --tb=short --no-cov" in text
+
+
+def test_g_mcp_08_closure_report_is_singular_m1_authority():
+    report_dir = REPO_ROOT / "tests" / "reports"
+    canonical = report_dir / "MCP_M1_CLOSURE_REPORT.md"
+    assert canonical.is_file()
+    canonical_text = canonical.read_text(encoding="utf-8")
+    assert "Canonical report authority" in canonical_text
+    candidates = sorted(report_dir.glob("*MCP_M1*REPORT*.md"))
+    assert canonical in candidates
+    for path in candidates:
+        text = path.read_text(encoding="utf-8")
+        if path == canonical:
+            assert "Canonical report authority" in text
+            continue
+        assert "Superseded by tests/reports/MCP_M1_CLOSURE_REPORT.md" in text
 
 
 def test_operating_profiles_resolve(monkeypatch):

@@ -1,6 +1,6 @@
 # MCP M1 Closure Report
 
-Status: in-progress execution evidence capture for **MCP M1 — Canonical External Surface Parity & Governance Closure**.
+Status: final canonical closure evidence for **MCP M1 — Canonical External Surface Parity & Governance Closure**.
 
 ## Gate Matrix
 
@@ -13,6 +13,12 @@ Status: in-progress execution evidence capture for **MCP M1 — Canonical Extern
 | G-MCP-05 Operator-truth gate | PASS | Required-key and compactness checks in `tools/mcp_server/tests/test_mcp_m1_gates.py` |
 | G-MCP-06 Runtime-authority preservation gate | PASS | No invoke-shortcut check + deferred review-bound non-authoritative behavior test in `tools/mcp_server/tests/test_mcp_m1_gates.py` |
 | G-MCP-07 Validation-command reality gate | PASS | Validation commands and actual outcomes listed below |
+| G-MCP-08 Closure-report singularity gate | PASS | This file is the single canonical MCP M1 closure report authority under `tests/reports/` |
+
+## Canonical report authority
+
+- This file is the only canonical closure-report authority for MCP M1.
+- Other closure reports (for example Area2 runtime closure) are adjacent program-level evidence and not alternate MCP M1 closure authority.
 
 ## Validation Commands
 

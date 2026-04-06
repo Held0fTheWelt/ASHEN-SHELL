@@ -1,5 +1,7 @@
 # MCP M1 — Canonical parity & governance closure report
 
+Superseded by tests/reports/MCP_M1_CLOSURE_REPORT.md
+
 ## Scope
 
 External MCP layer aligned to a **single canonical descriptor strand** (`ai_stack/mcp_canonical_surface.py`), with explicit tool classes, operating profiles, enriched capability mirror, compact operator truth, audit fields, and tests. No expansion of deferred session tools; no `CapabilityRegistry` shortcut from MCP.

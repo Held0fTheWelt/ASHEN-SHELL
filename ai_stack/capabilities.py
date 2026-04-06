@@ -13,16 +13,13 @@ except ImportError:
 import json
 import re
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from uuid import uuid4
 
-from ai_stack.rag import (
-    RETRIEVAL_POLICY_VERSION,
-    ContextPackAssembler,
-    ContextRetriever,
-    RetrievalDomain,
-    RetrievalRequest,
-)
+from ai_stack.rag import RETRIEVAL_POLICY_VERSION
+
+if TYPE_CHECKING:
+    from ai_stack.rag import ContextPackAssembler, ContextRetriever
 
 
 def _summarize_invocation_result(capability_name: str, result: dict[str, Any]) -> dict[str, Any] | None:
@@ -629,10 +626,13 @@ class CapabilityRegistry:
 
 def create_default_capability_registry(
     *,
-    retriever: ContextRetriever,
-    assembler: ContextPackAssembler,
+    retriever: "ContextRetriever",
+    assembler: "ContextPackAssembler",
     repo_root: Path,
 ) -> CapabilityRegistry:
+    # Keep lightweight capability metadata imports free from heavy retrieval dependencies.
+    from ai_stack.rag import RetrievalDomain, RetrievalRequest
+
     registry = CapabilityRegistry()
 
     def context_pack_handler(payload: dict[str, Any]) -> dict[str, Any]:

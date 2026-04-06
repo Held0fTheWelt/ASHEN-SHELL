@@ -206,6 +206,32 @@ def create_default_registry() -> ToolRegistry:
             "properties": {"session_id": {"type": "string"}},
             "required": ["session_id"],
         },
+        "wos.session.get": {
+            "type": "object",
+            "properties": {"session_id": {"type": "string"}},
+            "required": ["session_id"],
+        },
+        "wos.session.logs": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string"},
+                "limit": {"type": "integer"},
+            },
+            "required": ["session_id"],
+        },
+        "wos.session.state": {
+            "type": "object",
+            "properties": {"session_id": {"type": "string"}},
+            "required": ["session_id"],
+        },
+        "wos.session.execute_turn": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string"},
+                "prompt": {"type": "string"},
+            },
+            "required": ["session_id"],
+        },
     }
 
     for desc in CANONICAL_MCP_TOOL_DESCRIPTORS:

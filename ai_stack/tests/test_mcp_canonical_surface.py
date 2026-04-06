@@ -1,5 +1,9 @@
 """MCP canonical surface — no network; only ai_stack + stdlib."""
 
+import builtins
+import importlib
+import sys
+
 from ai_stack.mcp_canonical_surface import (
     CANONICAL_MCP_TOOL_DESCRIPTORS,
     MCP_CATALOG_CAPABILITY_NAMES,
@@ -43,3 +47,18 @@ def test_operator_truth_compact_builds():
 def test_resolve_mcp_operating_profile_defaults_healthy(monkeypatch):
     monkeypatch.delenv("WOS_MCP_OPERATING_PROFILE", raising=False)
     assert resolve_mcp_operating_profile().value == "healthy"
+
+
+def test_mcp_canonical_surface_import_does_not_require_optional_heavy_deps(monkeypatch):
+    real_import = builtins.__import__
+
+    def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name.startswith("langchain_core") or name == "numpy" or name.startswith("numpy."):
+            raise ModuleNotFoundError(f"blocked optional dependency: {name}")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+    for module_name in ("ai_stack", "ai_stack.mcp_canonical_surface"):
+        sys.modules.pop(module_name, None)
+    module = importlib.import_module("ai_stack.mcp_canonical_surface")
+    assert module.CANONICAL_MCP_TOOL_DESCRIPTORS
