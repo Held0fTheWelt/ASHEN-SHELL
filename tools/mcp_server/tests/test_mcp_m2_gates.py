@@ -99,24 +99,26 @@ class TestG_MCP_10_03_DeferredHonestyControlledAvailability:
         """Verify remaining deferred tools have clear governance that explains deferral."""
         reg = create_default_registry()
 
-        # execute_turn should remain deferred with blocking rationale
+        # Session tools (logs, state, execute_turn) are now implemented
         execute_turn = reg.get("wos.session.execute_turn")
-        assert execute_turn.descriptor.implementation_status == McpImplementationStatus.deferred_stub
+        assert execute_turn.descriptor.implementation_status == McpImplementationStatus.implemented
 
-        # State should remain deferred with justification
+        logs = reg.get("wos.session.logs")
+        assert logs.descriptor.implementation_status == McpImplementationStatus.implemented
+
         state = reg.get("wos.session.state")
-        assert state.descriptor.implementation_status == McpImplementationStatus.deferred_stub
+        assert state.descriptor.implementation_status == McpImplementationStatus.implemented
 
     def test_deferred_discipline_clearly_stated(self):
         """Verify deferred/available discipline is explicitly classified."""
         discipline = classify_mcp_no_eligible_discipline(
             catalog_alignment_ok=True,
-            implemented_tool_count=7,
-            deferred_stub_count=5,
+            implemented_tool_count=12,
+            deferred_stub_count=0,
             profile=McpOperatingProfile.healthy,
         )
 
-        # Should not be applicable since we have tools
+        # Should not be applicable since all tools are implemented
         assert discipline["applicable"] is False
 
 
@@ -137,9 +139,9 @@ class TestG_MCP_10_04_OperatorDepth:
             "startup_profile",
             "operational_state",
             "route_status",
-            "tool_class_counts",
-            "implemented_tool_count",
-            "deferred_stub_count",
+            "available_vs_deferred",
+            "governance_posture",
+            "readiness_posture",
         }
         assert set(truth.keys()) >= required
 
@@ -151,7 +153,8 @@ class TestG_MCP_10_04_OperatorDepth:
             registry_tool_names=["wos.system.health", "wos.session.get", "wos.session.diag"],
         )
 
-        classes = truth["tool_class_counts"]
+        avail = truth["available_vs_deferred"]
+        classes = avail["tool_classes"]
         assert "read_only" in classes
 
 
@@ -261,9 +264,9 @@ class TestM2_GateSummary:
         # G-MCP-10-02: Runtime-safe session surface
         assert session_get.descriptor.implementation_status == McpImplementationStatus.implemented
 
-        # G-MCP-10-03: Deferred honesty
+        # G-MCP-10-03: Session tools are now implemented (logs, state, execute_turn)
         execute_turn = reg.get("wos.session.execute_turn")
-        assert execute_turn.descriptor.implementation_status == McpImplementationStatus.deferred_stub
+        assert execute_turn.descriptor.implementation_status == McpImplementationStatus.implemented
 
         # G-MCP-10-04: Operator depth
         truth = build_compact_mcp_operator_truth(
@@ -271,7 +274,8 @@ class TestM2_GateSummary:
             catalog_alignment_ok=True,
             registry_tool_names=["wos.system.health"],
         )
-        assert "tool_class_counts" in truth
+        assert "available_vs_deferred" in truth
+        assert "tool_classes" in truth["available_vs_deferred"]
 
         # G-MCP-10-05: Runtime authority preservation
         assert session_get.tool_class == McpToolClass.read_only

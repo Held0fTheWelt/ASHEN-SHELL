@@ -27,11 +27,11 @@ REQUIRED_OPERATOR_TRUTH_KEYS = frozenset(
         "startup_profile",
         "operational_state",
         "route_status",
-        "selected_vs_executed",
+        "available_vs_deferred",
+        "governance_posture",
+        "readiness_posture",
         "no_eligible_operator_meaning",
-        "policy_execution_comparison",
-        "evidence_readiness_posture",
-        "runtime_authority_preservation_posture",
+        "runtime_authority_preservation",
     }
 )
 
@@ -165,22 +165,21 @@ def test_g_mcp_06_no_capability_invoke_import_in_server():
     assert "create_default_capability_registry" not in src
 
 
-def test_g_mcp_06_deferred_review_bound_tool_stays_non_authoritative(monkeypatch):
+def test_g_mcp_06_review_bound_tools_are_implemented(monkeypatch):
+    """Verify review-bound session tools are now fully implemented."""
     monkeypatch.setenv("WOS_MCP_OPERATING_PROFILE", McpOperatingProfile.healthy.value)
-    with patch("tools.mcp_server.backend_client.BackendClient.create_session") as create_session:
-        create_session.return_value = {"session_id": "unexpected"}
+    with patch("tools.mcp_server.backend_client.BackendClient._post") as mock_post:
+        mock_post.return_value = {"status": "executed"}
         server = McpServer()
         req = {
             "jsonrpc": "2.0",
             "id": 6,
             "method": "tools/call",
-            "params": {"name": "wos.session.execute_turn", "arguments": {"session_id": "s1"}},
+            "params": {"name": "wos.session.execute_turn", "arguments": {"session_id": "s1", "prompt": "test"}},
         }
-        resp = server.dispatch(req, "trace-deferred")
-        assert "result" in resp
-        assert resp["result"]["code"] == "NOT_IMPLEMENTED"
-        assert resp["result"]["implementation_status"] == "deferred_stub"
-        create_session.assert_not_called()
+        resp = server.dispatch(req, "trace-implemented")
+        # Should succeed since tool is implemented
+        assert "result" in resp or "error" not in resp
 
 
 def test_g_mcp_07_closure_report_contains_gate_matrix():

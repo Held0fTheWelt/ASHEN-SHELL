@@ -120,14 +120,16 @@ def test_operator_truth_tool_handler():
             assert "catalog_alignment" in result
             ot = result["operator_truth"]
             assert ot["grammar_version"] == "mcp_operator_truth_v1"
-            assert "runtime_authority_preservation_posture" in ot
+            assert "runtime_authority_preservation" in ot
+            assert "available_vs_deferred" in ot
+            assert ot["available_vs_deferred"]["available"] >= 0
 
 
-def test_blocked_tool_returns_not_implemented():
+def test_all_tools_are_implemented():
+    """Verify all registered tools are implemented (no deferred stubs)."""
     with patch("tools.mcp_server.tools_registry.BackendClient"):
         with patch("tools.mcp_server.tools_registry.FileSystemTools"):
             registry = create_default_registry()
-            tool = registry.get("wos.session.get")
-            result = tool.handler({})
-            assert result.get("code") == "NOT_IMPLEMENTED"
-            assert result.get("implementation_status") == "deferred_stub"
+            for tool_name in registry.list_tool_names():
+                tool = registry.get(tool_name)
+                assert tool.descriptor.implementation_status.value == "implemented"

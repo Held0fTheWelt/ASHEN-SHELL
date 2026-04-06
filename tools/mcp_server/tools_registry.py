@@ -173,6 +173,68 @@ def create_default_registry() -> ToolRegistry:
         except Exception as e:
             return {"error": f"session_diag failed: {str(e)}"}
 
+    def handle_session_logs(arguments: dict) -> dict:
+        """Session event logs (read-only, authority-respecting, audit surfaces)."""
+        session_id = arguments.get("session_id")
+        limit = arguments.get("limit", 100)
+        if not session_id:
+            return {"error": "session_id required"}
+        try:
+            import uuid
+            trace_id = str(uuid.uuid4())
+            # Call backend's session logs endpoint (authority-respecting, read-only)
+            result = backend._get(
+                f"{backend.base_url}/api/v1/sessions/{session_id}/logs?limit={limit}",
+                trace_id
+            )
+            return result
+        except JsonRpcError as e:
+            return {"error": e.message}
+        except Exception as e:
+            return {"error": f"session_logs failed: {str(e)}"}
+
+    def handle_session_state(arguments: dict) -> dict:
+        """Session state snapshot (read-only, authority-respecting, runtime state machine)."""
+        session_id = arguments.get("session_id")
+        if not session_id:
+            return {"error": "session_id required"}
+        try:
+            import uuid
+            trace_id = str(uuid.uuid4())
+            # Call backend's session state endpoint (authority-respecting, read-only)
+            result = backend._get(
+                f"{backend.base_url}/api/v1/sessions/{session_id}/state",
+                trace_id
+            )
+            return result
+        except JsonRpcError as e:
+            return {"error": e.message}
+        except Exception as e:
+            return {"error": f"session_state failed: {str(e)}"}
+
+    def handle_session_execute_turn(arguments: dict) -> dict:
+        """Execute turn in session (review-bound, authority-required from runtime)."""
+        session_id = arguments.get("session_id")
+        prompt = arguments.get("prompt")
+        if not session_id:
+            return {"error": "session_id required"}
+        if not prompt:
+            return {"error": "prompt required"}
+        try:
+            import uuid
+            trace_id = str(uuid.uuid4())
+            # Call backend's session turn execution endpoint (authority-required)
+            result = backend._post(
+                f"{backend.base_url}/api/v1/sessions/{session_id}/execute_turn",
+                {"prompt": prompt},
+                trace_id
+            )
+            return result
+        except JsonRpcError as e:
+            return {"error": e.message}
+        except Exception as e:
+            return {"error": f"session_execute_turn failed: {str(e)}"}
+
     def handle_blocked(name: str) -> Callable[[dict], dict]:
         def handler(arguments: dict) -> dict:
             return {
@@ -193,6 +255,9 @@ def create_default_registry() -> ToolRegistry:
         "wos.capabilities.catalog": handle_capability_catalog,
         "wos.mcp.operator_truth": handle_operator_truth,
         "wos.session.get": handle_session_get,
+        "wos.session.logs": handle_session_logs,
+        "wos.session.state": handle_session_state,
+        "wos.session.execute_turn": handle_session_execute_turn,
         "wos.session.diag": handle_session_diag,
     }
 
@@ -205,9 +270,9 @@ def create_default_registry() -> ToolRegistry:
         "wos.capabilities.catalog": "Canonical capability surface with governance metadata (read-only mirror)",
         "wos.mcp.operator_truth": "Compact MCP operator truth (profile, route, policy, no-eligible discipline)",
         "wos.session.get": "Session snapshot (read-only, authority-respecting backend mirror)",
-        "wos.session.execute_turn": "Execute turn (deferred — must use runtime authority, not MCP shortcut)",
-        "wos.session.logs": "Session logs (deferred — audit surfaces in progress)",
-        "wos.session.state": "Session state (deferred — state machine surfaces in scope for Phase 3)",
+        "wos.session.execute_turn": "Execute turn in session (review-bound, authority-required from runtime)",
+        "wos.session.logs": "Session event logs (read-only, authority-respecting audit surfaces)",
+        "wos.session.state": "Session state snapshot (read-only, authority-respecting runtime state machine)",
         "wos.session.diag": "Session diagnostics (read-only, authority-respecting backend mirror)",
     }
 

@@ -216,7 +216,7 @@ CANONICAL_MCP_TOOL_DESCRIPTORS: tuple[McpCanonicalToolDescriptor, ...] = (
         name="wos.session.execute_turn",
         authority_source=AUTH_BACKEND_HTTP,
         tool_class=McpToolClass.review_bound,
-        implementation_status=McpImplementationStatus.deferred_stub,
+        implementation_status=McpImplementationStatus.implemented,
         governance=McpToolGovernanceView(
             published_vs_draft="not_applicable",
             canonical_vs_supporting="runtime_turn_authority_required",
@@ -231,7 +231,7 @@ CANONICAL_MCP_TOOL_DESCRIPTORS: tuple[McpCanonicalToolDescriptor, ...] = (
         name="wos.session.logs",
         authority_source=AUTH_BACKEND_HTTP,
         tool_class=McpToolClass.review_bound,
-        implementation_status=McpImplementationStatus.deferred_stub,
+        implementation_status=McpImplementationStatus.implemented,
         governance=McpToolGovernanceView(
             published_vs_draft="not_applicable",
             canonical_vs_supporting="supporting_observability",
@@ -239,14 +239,14 @@ CANONICAL_MCP_TOOL_DESCRIPTORS: tuple[McpCanonicalToolDescriptor, ...] = (
             writers_room_visible_vs_runtime_hidden="runtime_visible",
             reviewable_vs_publishable_posture="preview_bound",
         ),
-        narrative_mutation_risk="none_stub",
+        narrative_mutation_risk="none_observation_only",
         permission_legacy="preview",
     ),
     McpCanonicalToolDescriptor(
         name="wos.session.state",
         authority_source=AUTH_BACKEND_HTTP,
         tool_class=McpToolClass.review_bound,
-        implementation_status=McpImplementationStatus.deferred_stub,
+        implementation_status=McpImplementationStatus.implemented,
         governance=McpToolGovernanceView(
             published_vs_draft="not_applicable",
             canonical_vs_supporting="canonical_runtime_state_preview",
@@ -321,6 +321,48 @@ def _derive_governance_risk_token(name: str, kind: str) -> str:
     if "diag" in name or "logs" in name or "state" in name:
         return "none_observation_only"
     return "medium_standard"
+
+
+def _derive_runtime_safe_vs_internal(name: str, tool_class: McpToolClass) -> str:
+    """Derive runtime safety from tool name and class (not static parallel field)."""
+    # Session tools (get, diag, logs, state) are runtime-safe observations
+    if name.startswith("wos.session.") and tool_class is McpToolClass.read_only:
+        return "runtime_safe"
+    # execute_turn is internal-only via runtime executor (hidden from shortcut)
+    if name == "wos.session.execute_turn":
+        return "internal_only_via_runtime_executor"
+    # Content/GOC tools are runtime-safe (read-only)
+    if name.startswith("wos.goc.") or name.startswith("wos.content."):
+        return "runtime_safe"
+    # System health is runtime-safe
+    if name == "wos.system.health":
+        return "runtime_safe"
+    # Session.create is runtime-safe (session shell)
+    if name == "wos.session.create":
+        return "runtime_safe"
+    return "runtime_safe"
+
+
+def _derive_canonical_vs_supporting(name: str, tool_class: McpToolClass) -> str:
+    """Derive canonical vs supporting from tool domain and class (derived from semantics)."""
+    if "session" in name and tool_class is McpToolClass.read_only:
+        return "session_observability_canonical"
+    if name == "wos.session.execute_turn":
+        return "runtime_turn_authority_required"
+    if name == "wos.session.create":
+        return "session_shell_not_manuscript"
+    if "goc" in name or "content" in name:
+        return "supporting_content_files"
+    return "supporting"
+
+
+def _derive_permission_legacy(tool_class: McpToolClass, name: str) -> str:
+    """Derive legacy permission from tool class and semantics (not static)."""
+    if tool_class is McpToolClass.read_only:
+        return "read"
+    if tool_class is McpToolClass.review_bound:
+        return "preview"
+    return "write"
 
 
 def capability_records_for_mcp() -> list[dict[str, Any]]:
@@ -489,35 +531,26 @@ def build_compact_mcp_operator_truth(
         "startup_profile": profile.value,
         "operational_state": op_state,
         "route_status": route_status,
+        "available_vs_deferred": {
+            "available": implemented,
+            "deferred": stubs,
+            "tool_classes": classes,
+        },
+        "governance_posture": {
+            "write_capable_allowed": operating_profile_allows_write_capable(profile),
+            "review_bound_allowed": True,
+            "read_only_allowed": True,
+        },
+        "readiness_posture": (
+            "catalog_aligned" if catalog_alignment_ok else "catalog_misaligned_requires_fix"
+        ),
+        "no_eligible_operator_meaning": nea,
+        "runtime_authority_preservation": "no_mcp_invoke_shortcut_to_capability_registry",
+        "execution_model": "mcp_executes_named_tool_only_no_hidden_runtime_shortcut",
         "primary_operational_concern": (
             "catalog_mismatch"
             if not catalog_alignment_ok
             else ("backend_unreachable" if backend_reachable is False else "none")
-        ),
-        "no_eligible_operator_meaning": nea,
-        "policy_execution_comparison": {
-            "posture": "write_capable_requires_healthy_profile_and_backend_authority",
-            "per_stage": [
-                {
-                    "gate": "tools_call",
-                    "write_capable_allowed": operating_profile_allows_write_capable(profile),
-                    "review_bound_allowed": True,
-                    "read_only_allowed": True,
-                }
-            ],
-        },
-        "selected_vs_executed": {
-            "per_stage": [],
-            "note": "mcp_executes_named_tool_only_no_hidden_runtime_shortcut",
-        },
-        "tool_class_counts": classes,
-        "deferred_stub_count": stubs,
-        "implemented_tool_count": implemented,
-        "evidence_readiness_posture": (
-            "catalog_aligned" if catalog_alignment_ok else "catalog_misaligned_requires_fix"
-        ),
-        "runtime_authority_preservation_posture": (
-            "no_mcp_invoke_shortcut_to_capability_registry_or_turn_commit_paths"
         ),
     }
 

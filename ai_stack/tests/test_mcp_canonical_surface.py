@@ -40,8 +40,10 @@ def test_operator_truth_compact_builds():
         registry_tool_names=names,
     )
     assert ot["grammar_version"]
-    assert ot["runtime_authority_preservation_posture"]
+    assert ot["runtime_authority_preservation"]
     assert "no_eligible_operator_meaning" in ot
+    assert "available_vs_deferred" in ot
+    assert "governance_posture" in ot
 
 
 def test_resolve_mcp_operating_profile_defaults_healthy(monkeypatch):
