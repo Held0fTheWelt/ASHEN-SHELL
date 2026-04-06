@@ -13,7 +13,7 @@ class Config:
 
     def __init__(self):
         self.backend_url = os.getenv(
-            "BACKEND_BASE_URL", "https://yvesthx.pythonanywhere.com"
+            "BACKEND_BASE_URL", "http://localhost:8000"
         )
         self.bearer_token = os.getenv("BACKEND_BEARER_TOKEN") or None
         self.request_timeout_s = 5
