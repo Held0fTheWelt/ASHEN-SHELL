@@ -135,8 +135,9 @@ Owns scene-level shaping decisions such as responder choice, scene function, pac
 ### 5.4 World Truth Layer
 Owns validation, canonical consequences, committed state, continuity retention, and truth-aligned visible output.
 
-These are target layers.  
-They are not claims that the current codebase already represents them explicitly.
+These are **target responsibilities**, not yet implementation commitments.  
+They are not claims that the current codebase already represents them explicitly, and they do not by themselves settle the final representation decision.  
+Freeze work must convert these target responsibilities into explicit contracts, seams, and representation choices.
 
 ---
 
@@ -201,7 +202,7 @@ The MVP assumes a canonical dramatic turn model with at least these conceptual p
 11. diagnostics and provenance capture
 
 This is the product target for turn semantics.  
-The freeze must convert this into a starter contract with concrete field names and ownership.
+Freeze work must convert this into a starter contract with concrete field names, ownership, and seams.
 
 ---
 
