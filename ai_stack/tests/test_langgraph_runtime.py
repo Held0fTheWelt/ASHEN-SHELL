@@ -6,15 +6,17 @@ import pytest
 from story_runtime_core import RoutingPolicy, interpret_player_input
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
 from story_runtime_core.model_registry import build_default_registry
-import ai_stack.langgraph_runtime as langgraph_runtime
-from ai_stack import (
-    ContextPackAssembler,
-    ContextRetriever,
-    RagIngestionPipeline,
+
+langgraph_runtime = pytest.importorskip(
+    "ai_stack.langgraph_runtime",
+    reason="LangGraph/LangChain stack required for langgraph runtime tests",
+)
+from ai_stack.langgraph_runtime import (
     RuntimeTurnGraphExecutor,
     build_seed_improvement_graph,
     build_seed_writers_room_graph,
 )
+from ai_stack.rag import ContextPackAssembler, ContextRetriever, RagIngestionPipeline
 from ai_stack.version import RUNTIME_TURN_GRAPH_VERSION
 from ai_stack.runtime_turn_contracts import (
     ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
