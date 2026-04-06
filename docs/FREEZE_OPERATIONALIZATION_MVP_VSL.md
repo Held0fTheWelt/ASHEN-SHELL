@@ -81,7 +81,6 @@ However, the following sections are mandatory **inside** those artifacts, or exp
 
 ---
 
-
 ## 4A. Primary section ownership across the three freeze artifacts
 
 To prevent redundant or drifting definitions, each required freeze section must have a **primary artifact owner**.
@@ -106,6 +105,8 @@ If a section is owned by one artifact and needed by another, the non-owning arti
 ### 4A.3 Conflict rule
 
 If two freeze artifacts appear to define the same concept differently, the primary owner artifact wins, and the mismatch must be corrected before freeze completion.
+
+---
 
 ## 5. Requirement tiers and decision rule
 
@@ -207,16 +208,16 @@ Every Current-vs-Target classification must reference at least one concrete code
 
 This is required to stop freeze work from drifting into architecture-only prose.
 
-### 7.3 Minimal template
+### 7.3 Reality Anchor (current inspection pass)
 
 | Concern | Current state | Classification | Code/content reference | Freeze implication |
 |---|---|---|---|---|
-| Runtime graph / orchestration path | `StateGraph(RuntimeTurnState)` with nodes `interpret_input`, `retrieve_context`, `route_model`, `invoke_model`, `fallback_model`, `package_output`; edges: linear chain through `invoke_model`, conditional to `fallback_model` or `package_output`, then `package_output` → `END`. Entry: `interpret_input`. | partial | [`ai_stack/langgraph_runtime.py`](../ai_stack/langgraph_runtime.py) (`RuntimeTurnGraphExecutor._build_graph`, L101–L120) | Roadmap turn phases beyond model+RAG require additional orchestration nodes or a parallel engine contract — [NOT DISCERNIBLE] in this file. |
-| Runtime state structures | `RuntimeTurnState` (`TypedDict`, `total=False`): `session_id`, `module_id`, `current_scene_id`, `player_input`, `trace_id`, `host_versions`, `active_narrative_threads`, `thread_pressure_summary`, `interpreted_input`, `task_type`, `routing`, `selected_provider`, `selected_timeout`, `retrieval`, `context_text`, `model_prompt`, `generation`, `fallback_needed`, `graph_diagnostics`, `nodes_executed`, `node_outcomes`, `graph_errors`, `capability_audit`. | partial | [`ai_stack/langgraph_runtime.py`](../ai_stack/langgraph_runtime.py) (`RuntimeTurnState`, L50–L74; `run` initial state L134–L150) | Map to canonical turn schema (§11); explicit commit/validation keys — [NOT DISCERNIBLE] in `RuntimeTurnState`. |
-| Turn-related contracts / vocabulary | `AdapterInvocationMode` literals + constants; `ExecutionHealth` literals + `EXECUTION_HEALTH_*`; `EXECUTION_HEALTH_VALUES`; `RAW_FALLBACK_BYPASS_NOTE`. Used in `generation.metadata.adapter_invocation_mode` and `graph_diagnostics.execution_health`. | partial | [`ai_stack/runtime_turn_contracts.py`](../ai_stack/runtime_turn_contracts.py); [`ai_stack/langgraph_runtime.py`](../ai_stack/langgraph_runtime.py) (`_invoke_model`, `_fallback_model`, `_package_output`) | Scene-function / continuity / visibility vocab — [NOT DISCERNIBLE] in `runtime_turn_contracts.py`. |
-| Content/module system (GoC relevance) | `load_builtin_templates()` registers `build_god_of_carnage_solo()` → `ExperienceTemplate` id `god_of_carnage_solo`. Comment: builtins are not primary runtime authority; published feed canonical. `ModuleService` / `ContentModule` types load modules from filesystem root (default `content_modules_root()`). GoC YAML tree — [NOT DISCERNIBLE] from `builtins.py` / `module_models.py` alone (loader schema only). | partial / reusable | [`backend/app/content/builtins.py`](../backend/app/content/builtins.py) (`load_builtin_templates`, `build_god_of_carnage_solo`, L21–L34); [`backend/app/content/module_service.py`](../backend/app/content/module_service.py) (`ModuleService`, `load_and_validate`); [`backend/app/content/module_models.py`](../backend/app/content/module_models.py) (`ContentModule`) | Freeze: which source is authoritative for GoC at runtime — [UNKNOWN] without further call-site inspection. |
-| Mock/fallback/test infrastructure (dry-run) | Primary path: `invoke_runtime_adapter_with_langchain` in `invoke_model`. Fallback: `adapters.get("mock")` → `fallback_adapter.generate(...)` in `fallback_model`; metadata includes `ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK`, `RAW_FALLBACK_BYPASS_NOTE`. If mock missing: `graph_errors` append `fallback_adapter_missing:mock`. Dedicated test harness files — [NOT DISCERNIBLE] in the listed files. | partial | [`ai_stack/langgraph_runtime.py`](../ai_stack/langgraph_runtime.py) (`_invoke_model` L268–L316, `_fallback_model` L321–L357) | Dry-run may reference the fallback path; full test infrastructure — [NOT DISCERNIBLE] here. |
-| Diagnostics / logging surfaces | `package_output` sets `graph_diagnostics`: `graph_name`, `graph_version`, `nodes_executed`, `node_outcomes`, `fallback_path_taken`, `execution_health`, `errors`, `capability_audit`, `repro_metadata` (e.g. `ai_stack_semantic_version`, `runtime_turn_graph_version`, `trace_id`, routing/retrieval/model flags, `adapter_invocation_mode`, `graph_path_summary`), `operational_cost_hints`. | partial | [`ai_stack/langgraph_runtime.py`](../ai_stack/langgraph_runtime.py) (`_package_output`, L359–L428); [`ai_stack/runtime_turn_contracts.py`](../ai_stack/runtime_turn_contracts.py) | Operator logging beyond this dict — [NOT DISCERNIBLE] in the listed files. |
+| Runtime graph / orchestration path | `StateGraph(RuntimeTurnState)` with nodes `interpret_input`, `retrieve_context`, `route_model`, `invoke_model`, `fallback_model`, `package_output`; edges: linear chain through `invoke_model`, conditional to `fallback_model` or `package_output`, then `package_output` → `END`. Entry: `interpret_input`. | partial | `ai_stack/langgraph_runtime.py` (`RuntimeTurnGraphExecutor._build_graph`) | Roadmap turn phases beyond model+RAG require additional orchestration nodes or a parallel engine contract. |
+| Runtime state structures | `RuntimeTurnState` (`TypedDict`, `total=False`): `session_id`, `module_id`, `current_scene_id`, `player_input`, `trace_id`, `host_versions`, `active_narrative_threads`, `thread_pressure_summary`, `interpreted_input`, `task_type`, `routing`, `selected_provider`, `selected_timeout`, `retrieval`, `context_text`, `model_prompt`, `generation`, `fallback_needed`, `graph_diagnostics`, `nodes_executed`, `node_outcomes`, `graph_errors`, `capability_audit`. | partial | `ai_stack/langgraph_runtime.py` (`RuntimeTurnState`; `run` initial state) | Must be mapped to the canonical turn schema; explicit commit/validation keys are not visible in this state shape. |
+| Turn-related contracts / vocabulary | `AdapterInvocationMode` literals + constants; `ExecutionHealth` literals + constants; execution-health values; raw fallback bypass note. Used in `generation.metadata.adapter_invocation_mode` and `graph_diagnostics.execution_health`. | partial | `ai_stack/runtime_turn_contracts.py`; `ai_stack/langgraph_runtime.py` (`_invoke_model`, `_fallback_model`, `_package_output`) | Scene-function / continuity / visibility vocabulary does not currently live here. |
+| Content/module system (GoC relevance) | `load_builtin_templates()` registers `build_god_of_carnage_solo()` → `ExperienceTemplate` id `god_of_carnage_solo`. Builtins are explicitly described as not primary runtime authority. `ModuleService` / `ContentModule` load modules from filesystem content root. | partial / reusable | `backend/app/content/builtins.py`; `backend/app/content/module_service.py`; `backend/app/content/module_models.py` | Freeze must choose which GoC source is canonical for the slice and how the other shapes relate to it. |
+| Mock/fallback/test infrastructure (dry-run) | Primary path uses LangChain/runtime adapter invocation in `_invoke_model`. Fallback path uses `adapters.get("mock")` in `_fallback_model`; metadata marks managed fallback or degraded missing-fallback mode. | partial | `ai_stack/langgraph_runtime.py` (`_invoke_model`, `_fallback_model`) | Dry-run should build on this existing path rather than inventing an abstract separate concept. |
+| Diagnostics / logging surfaces | `package_output` sets `graph_diagnostics`: graph name/version, nodes executed, node outcomes, fallback path taken, execution health, errors, capability audit, repro metadata, operational cost hints. | partial | `ai_stack/langgraph_runtime.py` (`_package_output`) | Strong starting point for operator-facing diagnostics, but not yet the full dramatic replay surface required by the target slice. |
 
 ---
 
@@ -254,24 +255,24 @@ At minimum:
 - scene-director representation
 - operator review mode
 
-### 8.3 Minimal template
+### 8.3 Current-vs-Target bridge (current inspection pass)
 
-| Target concern | Current shape (code) | Target shape (roadmap) | Classification | Justification (code) |
+| Target concern | Current shape | Target shape | Classification | Reuse / replace / build note |
 |---|---|---|---|---|
-| Canonical turn object | `RuntimeTurnState` returned from `run()` / `invoke`; includes `graph_diagnostics` after `package_output`. | Single canonical turn record (roadmap §8, §11). | partial | TypedDict aggregates turn data but is not named “canonical turn”; no `turn_id` field — [NOT DISCERNIBLE]. |
-| Scene assessment | `retrieve_context` builds `model_prompt` from `player_input`, `context_text`, formatted lines from `interpreted_input` (`kind`, `confidence`, `ambiguity`, `intent`, `selected_handling_path`, `runtime_delivery_hint`), optional `active_narrative_threads` / `thread_pressure_summary`. | First-class `scene_assessment` object (roadmap §4.3, §8). | replace | Target schema requires an explicit assessment object; today only text aggregation in `model_prompt` / RAG fields — existing shape should be replaced with a schema-first representation. |
-| Responder selection | `_route_model`: `RoutingPolicy.choose(task_type=...)` → `routing` dict with `selected_model`, `selected_provider`, etc.; `task_type` from `_interpret_input`. | Dramatic responder selection (roadmap §3.3, §8). | new | No NPC/actor responder fields in `RuntimeTurnState`; routing is LLM provider/model selection only ([`langgraph_runtime.py`](../ai_stack/langgraph_runtime.py) L251–L266, L152–L158). |
-| Scene function | [NOT DISCERNIBLE] in `RuntimeTurnState` / inspected graph nodes. | `selected_scene_function` (roadmap §8, §11). | new | No field or node for scene function in referenced code. |
-| Pacing / silence / brevity shaping | [NOT DISCERNIBLE] in `RuntimeTurnState` / inspected graph nodes. | Explicit pacing / silence / brevity (roadmap §8). | new | No such keys in `RuntimeTurnState`; not set in nodes read. |
-| Proposed state effects | `generation` dict; `generation.metadata.structured_output` from `parsed_output.model_dump(mode="json")` when LangChain path succeeds; else null / raw fallback path. | `proposed_state_effects` (roadmap §8, §11). | partial | Proposal-like payload only inside `generation`; not normalized to “state effects” type in this file. |
-| Validation outcome | [NOT DISCERNIBLE] — no `validation_outcome` or validation node in graph. | `validation_outcome` (roadmap §8, §11). | new | No validation phase in [`langgraph_runtime.py`](../ai_stack/langgraph_runtime.py). |
-| Committed result | [NOT DISCERNIBLE] — no `committed_result` in `RuntimeTurnState`. | `committed_result` (roadmap §8, §11). | new | No commit node or committed-state field in referenced code. |
-| Visible output bundle | Output carried under `generation` (and metadata); no `visible_output_bundle` key. | Truth-aligned visible bundle (roadmap §9–10). | partial | Structured output exists under `generation.metadata.structured_output`; UI binding — [NOT DISCERNIBLE] in this file. |
-| Continuity handling | Optional inputs: `active_narrative_threads`, `thread_pressure_summary` (bounded); forwarded into `model_prompt` in `retrieve_context`. | Continuity carry-forward (roadmap §10). | partial | Snapshot pass-through only; no continuity mutation/commit in graph. |
-| Diagnostics / replay surfaces | `graph_diagnostics` + `runtime_turn_contracts` enums; `repro_metadata` includes versions, trace_id, routing/retrieval summary. | Full diagnostic replay (roadmap §7–8). | partial | Replay store / `turn_id` — [NOT DISCERNIBLE] in referenced files. |
-| Source-to-game assets | `builtins.build_god_of_carnage_solo` + generic `ContentModule` loader (paths via `ModuleService`); graph receives `module_id` / `current_scene_id` only. | Dramatic source → playable machinery (roadmap §4.1). | reusable | Assets exist outside graph; graph does not load YAML module content in inspected code. |
-| Scene-director representation | Graph nodes = interpretation, retrieval, routing, invoke, fallback, package. | Explicit scene director layer (roadmap §5.3). | new | No director object separate from this graph in referenced code. |
-| Operator review mode | Diagnostics embedded in `graph_diagnostics` only. | Governance / review mode (roadmap §13 freeze implications). | new | No operator-review API or mode in referenced files — [NOT DISCERNIBLE]. |
+| Canonical turn object | `RuntimeTurnState` returned from graph execution; includes `graph_diagnostics` after `package_output`. | Single canonical dramatic turn record. | partial | Useful as starting surface, but not yet a canonical dramatic turn object. |
+| Scene assessment | `retrieve_context` builds `model_prompt` from `player_input`, `context_text`, formatted `interpreted_input`, optional `active_narrative_threads` / `thread_pressure_summary`. | First-class `scene_assessment` object. | replace | Current shape is text aggregation, not schema-first dramatic assessment. |
+| Responder selection | `_route_model` chooses provider/model via routing policy and task type. | Dramatic responder selection. | new | Current routing is infrastructure/model selection, not actor-level responder choice. |
+| Scene function | Not discernible in inspected runtime state / graph nodes. | `selected_scene_function`. | new | Must be introduced explicitly. |
+| Pacing / silence / brevity shaping | Not discernible in inspected runtime state / graph nodes. | Explicit pacing and silence/brevity decisions. | new | Must be introduced explicitly. |
+| Proposed state effects | Proposal-like payload may exist inside `generation.metadata.structured_output`. | `proposed_state_effects`. | partial | Proposal content exists only indirectly and is not normalized to state-effect semantics. |
+| Validation outcome | No validation field or validation node visible in inspected graph. | `validation_outcome`. | new | Must be introduced explicitly. |
+| Committed result | No `committed_result` visible in inspected runtime state. | `committed_result`. | new | Must be introduced explicitly. |
+| Visible output bundle | Output currently carried under `generation` / metadata rather than dedicated visible-output field. | Truth-aligned visible bundle. | partial | Existing generation output is reusable, but the target bundle shape is new. |
+| Continuity handling | Optional inputs: `active_narrative_threads`, `thread_pressure_summary`; currently passed into prompt path. | Continuity carry-forward and continuity impacts. | partial | Continuity snapshot exists, but continuity mutation / commit semantics are not explicit. |
+| Diagnostics / replay surfaces | `graph_diagnostics` + execution-health / adapter-invocation vocabulary. | Full diagnostic replayability. | partial | Strong base exists, but replay identity and dramatic answerability are not yet complete. |
+| Source-to-game assets | Builtins template plus content-module loader/model surfaces. | Dramatic source transformed into playable slice machinery. | reusable | Existing content surfaces should be classified and reconciled, not ignored. |
+| Scene-director representation | Graph currently focuses on interpretation, retrieval, routing, invoke, fallback, package. | Explicit scene-director responsibility. | new | Requires a deliberate representation decision rather than accidental emergence. |
+| Operator review mode | Diagnostics currently embedded in runtime output only. | Review/governance mode. | new | Must be made explicit. |
 
 ---
 
@@ -329,16 +330,16 @@ This seam definition must be explicit enough that no later execution task can bl
 
 Nothing player-visible may outrun committed truth, except where explicitly permitted by visibility doctrine as non-factual staging, implied affect, or bounded ambiguity.
 
-### 10.2 Minimal seam template
+### 10.2 Seam template (current inspection anchor)
 
 | Seam | Owner | Input | Output | May alter truth? | May alter visibility? |
 |---|---|---|---|---|---|
-| Proposal | `RuntimeTurnGraphExecutor._invoke_model` → `story_runtime_core` adapter + `invoke_runtime_adapter_with_langchain` from [`ai_stack/langchain_integration/`](../ai_stack/langchain_integration/); fallback: `_fallback_model` → `adapters["mock"].generate` | `player_input`, `interpreted_input`, `context_text`, `model_prompt`, `selected_timeout` (from state after `route_model`) | `generation` with `metadata.structured_output` (LangChain path) or raw fallback metadata (`ADAPTER_INVOCATION_RAW_GRAPH_FALLBACK`, `RAW_FALLBACK_BYPASS_NOTE`) | no | yes, proposal-only; player-facing channel [NOT DISCERNIBLE] in `langgraph_runtime.py` |
-| Validation | [NOT DISCERNIBLE] | [UNKNOWN] | [UNKNOWN] | no, shapes only (if present elsewhere) | no direct player output |
-| Commit | [NOT DISCERNIBLE] in `langgraph_runtime.py` | [UNKNOWN] | [UNKNOWN] | yes (only if/when an engine commit exists) | indirectly |
-| Visible render | [NOT DISCERNIBLE] in `langgraph_runtime.py` | [UNKNOWN] | [UNKNOWN] | no | yes |
+| Proposal | Runtime graph invocation path (`_invoke_model`; fallback `_fallback_model`) | interpreted input, context text, model prompt, routing / timeout data | `generation` payload, structured output if available, fallback metadata if not | no | yes, proposal only |
+| Validation | not yet explicit in inspected path | unknown | unknown | no, shapes only | no direct player output |
+| Commit | not yet explicit in inspected path | unknown | unknown | yes | indirectly |
+| Visible render | not yet explicit in inspected path | unknown | unknown | no | yes |
 
-**Diagnostics references:** `RuntimeTurnGraphExecutor._package_output` → `graph_diagnostics` (includes `repro_metadata`, `execution_health`, `operational_cost_hints`); optional `capability_audit` from `CapabilityRegistry.invoke` path in `_retrieve_context`.
+Diagnostics references are currently owned by `graph_diagnostics` packaging and related metadata surfaces.
 
 ---
 
@@ -389,42 +390,35 @@ For each relevant field or group, freeze must state:
 ```json
 {
   "turn_metadata": {
-    "turn_id": "[NOT DISCERNIBLE]",
-    "session_id": "RuntimeTurnState.session_id",
-    "trace_id": "RuntimeTurnState.trace_id",
-    "timestamp": "[NOT DISCERNIBLE]",
-    "module_id": "RuntimeTurnState.module_id",
-    "current_scene_id": "RuntimeTurnState.current_scene_id",
-    "host_versions": "RuntimeTurnState.host_versions"
+    "turn_id": "placeholder-turn-id",
+    "session_id": "placeholder-session-id",
+    "trace_id": "placeholder-trace-id",
+    "module_id": "god_of_carnage",
+    "current_scene_id": "placeholder-scene-id"
   },
   "interpreted_move": {
-    "runtime_field": "RuntimeTurnState.interpreted_input",
-    "keys_echoed_into_model_prompt": [
-      "kind",
-      "confidence",
-      "ambiguity",
-      "intent",
-      "selected_handling_path",
-      "runtime_delivery_hint"
-    ]
+    "player_intent": "placeholder",
+    "move_class": "placeholder"
   },
   "scene_assessment": {
-    "scene_core": "[NOT DISCERNIBLE]",
-    "pressure_state": "[NOT DISCERNIBLE]",
-    "runtime_context_only": "RuntimeTurnState.model_prompt, context_text, retrieval, optional active_narrative_threads / thread_pressure_summary"
+    "scene_core": "placeholder",
+    "pressure_state": "placeholder"
   },
-  "selected_responder_set": [],
-  "selected_scene_function": "[NOT DISCERNIBLE]",
-  "pacing_mode": "[NOT DISCERNIBLE]",
-  "silence_brevity_decision": {
-    "mode": "[NOT DISCERNIBLE]",
-    "reason": "[NOT DISCERNIBLE]"
-  },
-  "proposed_state_effects": [
-    "model-proposed: RuntimeTurnState.generation.metadata.structured_output (shape [NOT DISCERNIBLE] — produced by parser/adapter outside langgraph_runtime.py)"
+  "selected_responder_set": [
+    {
+      "actor_id": "placeholder",
+      "reason": "placeholder"
+    }
   ],
+  "selected_scene_function": "placeholder",
+  "pacing_mode": "placeholder",
+  "silence_brevity_decision": {
+    "mode": "placeholder",
+    "reason": "placeholder"
+  },
+  "proposed_state_effects": [],
   "validation_outcome": {
-    "status": "[NOT DISCERNIBLE]"
+    "status": "placeholder"
   },
   "committed_result": {
     "committed_effects": []
@@ -433,28 +427,11 @@ For each relevant field or group, freeze must state:
     "gm_narration": [],
     "spoken_lines": []
   },
-  "continuity_impacts": [
-    "RuntimeTurnState.active_narrative_threads (bounded snapshot input)",
-    "RuntimeTurnState.thread_pressure_summary (bounded snapshot input)"
-  ],
-  "visibility_class_markers": [
-    "[NOT DISCERNIBLE]"
-  ],
-  "failure_markers": [
-    "RuntimeTurnState.graph_errors",
-    "RuntimeTurnState.generation.error"
-  ],
-  "fallback_markers": [
-    "RuntimeTurnState.generation.fallback_used",
-    "RuntimeTurnState.graph_diagnostics.fallback_path_taken",
-    "generation.metadata.adapter_invocation_mode ∈ { langchain_structured_primary, raw_adapter_graph_managed_fallback, degraded_no_fallback_adapter }",
-    "generation.metadata.bypass_note → RAW_FALLBACK_BYPASS_NOTE"
-  ],
-  "diagnostics_refs": [
-    "RuntimeTurnState.graph_diagnostics",
-    "graph_diagnostics.execution_health ∈ { healthy, graph_error, model_fallback, degraded_generation }",
-    "graph_diagnostics nested: graph_name, graph_version, nodes_executed, node_outcomes, fallback_path_taken, execution_health, errors, capability_audit, repro_metadata, operational_cost_hints"
-  ]
+  "continuity_impacts": [],
+  "visibility_class_markers": [],
+  "failure_markers": [],
+  "fallback_markers": [],
+  "diagnostics_refs": []
 }
 ```
 
@@ -478,41 +455,13 @@ This table must explicitly distinguish:
 
 ### 12.1 Minimal template
 
-Derived from `RuntimeTurnState` ([`ai_stack/langgraph_runtime.py`](../ai_stack/langgraph_runtime.py) L50–L74). **validation-owned** / **commit-owned**: [NOT DISCERNIBLE] — no keys in state. **player-visible-only**: [NOT DISCERNIBLE] — no dedicated player-visibility field in state.
-
-| `RuntimeTurnState` field | Category |
-|---|---|
-| `session_id` | deterministic |
-| `module_id` | deterministic |
-| `current_scene_id` | deterministic |
-| `player_input` | deterministic |
-| `trace_id` | deterministic |
-| `host_versions` | deterministic |
-| `active_narrative_threads` | deterministic |
-| `thread_pressure_summary` | deterministic |
-| `interpreted_input` | deterministic / model-proposed (payload from injected `interpreter`; schema [NOT DISCERNIBLE] outside this file) |
-| `task_type` | deterministic |
-| `routing` | deterministic |
-| `selected_provider` | deterministic |
-| `selected_timeout` | deterministic |
-| `retrieval` | deterministic |
-| `context_text` | deterministic |
-| `model_prompt` | deterministic |
-| `generation` | model-proposed |
-| `fallback_needed` | deterministic |
-| `graph_diagnostics` | diagnostics-only |
-| `nodes_executed` | diagnostics-only |
-| `node_outcomes` | diagnostics-only |
-| `graph_errors` | diagnostics-only |
-| `capability_audit` | diagnostics-only |
-
-| Starter schema group (§11.1) | Nearest `RuntimeTurnState` / contract | Category |
-|---|---|---|
-| `interpreted_move` | `interpreted_input` | see `interpreted_input` |
-| `selected_responder_set` | [NOT DISCERNIBLE] | — |
-| `committed_result` | [NOT DISCERNIBLE] | — |
-| `visible_output_bundle` | `generation` (e.g. `metadata.structured_output`) | model-proposed |
-| `diagnostics_refs` | `graph_diagnostics` (+ `generation.metadata.adapter_invocation_mode` from [`runtime_turn_contracts`](../ai_stack/runtime_turn_contracts.py)) | diagnostics-only |
+| Field / group | Owner | Phase | Optional? | Cardinality | Notes |
+|---|---|---|---|---|---|
+| interpreted_move | | | | | |
+| selected_responder_set | | | | | |
+| committed_result | | | | | |
+| visible_output_bundle | | | | | |
+| diagnostics_refs | | | | | |
 
 ---
 
@@ -616,40 +565,20 @@ At minimum it must classify relevant slice material into:
 
 The asset inventory must not classify slice material as missing, reusable, or newly required before the Reality Anchor and Current-vs-Target bridge have been populated with actual code/content references.
 
-**Concrete ordering (this freeze pass, code/content-anchored):**
-
-1. **Runtime / turn surfaces inspected:** [`ai_stack/langgraph_runtime.py`](../ai_stack/langgraph_runtime.py), [`ai_stack/runtime_turn_contracts.py`](../ai_stack/runtime_turn_contracts.py) — used for §7.3 / §8.3 / §10.2 / §12.1.
-2. **Reality Anchor populated:** §7.3 rows reference the above + GoC content roots.
-3. **Current-vs-Target bridge populated:** §8.3 rows map roadmap targets to those surfaces.
-4. **Asset inventory classified below (§15.2):** only after steps 1–3.
-
 In practice, this means:
 1. inspect relevant content/runtime surfaces,
 2. populate the first Reality Anchor rows,
 3. populate the first Current-vs-Target rows,
 4. then classify God of Carnage slice assets.
 
-**Phase 0 — GoC material visible only in `builtins.py` + `module_models.py` (no other files evaluated in this row):**
-
-| Material | Type | Evidence in code | Missing from these files |
-|---|---|---|---|
-| `god_of_carnage_solo` `ExperienceTemplate` | authored + runtime-usable | [`backend/app/content/builtins.py`](../backend/app/content/builtins.py) `build_god_of_carnage_solo`, `id="god_of_carnage_solo"`; registered in `load_builtin_templates()` | YAML module tree, direction files, writers-room — [NOT DISCERNIBLE] here |
-| Builtins note “not primary runtime authority” | seed (policy text) | Comment in `load_builtin_templates()` L22–L23 | Which feed is “canonical” — [NOT DISCERNIBLE] from these two files alone |
-| `ContentModule`, `ModuleMetadata`, `CharacterDefinition`, phase/trigger models | runtime-usable (generic) | [`backend/app/content/module_models.py`](../backend/app/content/module_models.py) — Pydantic schema for arbitrary modules | GoC-specific types or constants — [NOT DISCERNIBLE] (generic classes only) |
-| Derived / imported dramaturgy from primary source | derived | [NOT DISCERNIBLE] in `builtins.py` / `module_models.py` | Explicit derived asset |
-| Full MVP slice truth in turn graph | — | [NOT DISCERNIBLE] in `builtins.py` / `module_models.py` | Binding to `RuntimeTurnState` / commit — [NOT DISCERNIBLE] here |
-
-### 15.2 Minimal template
+### 15.2 God of Carnage asset inventory (current inspection pass)
 
 | Asset / content surface | Type | Present today? | Slice relevance | Action needed |
 |---|---|---|---|---|
-| Character material | authored (YAML) + runtime-usable (builtins template) | partial | High — defines cast, voice hints, baseline attitudes | Reconcile **two shapes**: formal module [`content/modules/god_of_carnage/characters.yaml`](../content/modules/god_of_carnage/characters.yaml) vs solo template roles in [`backend/app/content/builtins.py`](../backend/app/content/builtins.py) (`veronique`/`michel`/… vs module IDs); decide canonical naming and which runtime loads which. |
-| Scene material | authored (YAML phases) + runtime-usable (builtins rooms/beats) | partial | High — scene progression and pressure | Map module `scene_phases` in [`content/modules/god_of_carnage/scenes.yaml`](../content/modules/god_of_carnage/scenes.yaml) to builtins beat graph (`courtesy`, `first_fracture`, …); **[UNKNOWN]** whether the engine merges both ([NOT DISCERNIBLE] without further integration inspection). |
-| Relationship material | authored | yes (files present) | High — fault lines / axes | Use [`content/modules/god_of_carnage/relationships.yaml`](../content/modules/god_of_carnage/relationships.yaml) (+ `escalation_axes.yaml`) as structured relationship source; wire into runtime truth / turn schema — **[NOT DISCERNIBLE]** whether already consumed on the production path (loader models only in [`backend/app/content/module_models.py`](../backend/app/content/module_models.py)). |
-| Triggers / transitions / endings | authored | yes (listed in `module.yaml`) | High — formal dramatic machinery per module contract | Files: `triggers.yaml`, `transitions.yaml`, `endings.yaml` under [`content/modules/god_of_carnage/`](../content/modules/god_of_carnage/); freeze should require engine adherence or mark gap if only documentary today. |
-| Direction (LLM) | authored | yes | Medium–high — steering and voice | [`content/modules/god_of_carnage/direction/system_prompt.md`](../content/modules/god_of_carnage/direction/system_prompt.md), `scene_guidance.yaml`, `character_voice.yaml` per `module.yaml` `files` list. |
-| Module shell / loader contract | runtime-usable (schema + service) | yes | High — how content enters the system | [`backend/app/content/module_service.py`](../backend/app/content/module_service.py) (`load_and_validate`, `content_modules_root` default beside `backend/`), [`backend/app/content/module_models.py`](../backend/app/content/module_models.py) (`ContentModule`, phases, triggers). |
-| Writers-room prose implementations | seed / loose source | yes | Medium — design aid, not identical to YAML module | Directory `writers-room/app/models/implementations/god_of_carnage/`; treat as **not automatically runtime-canonical** unless explicitly ingested. |
+| Builtins `god_of_carnage_solo` template | authored + runtime-usable | yes | High | Decide whether this remains a convenience/testing surface or becomes slice-canonical. |
+| Content-module YAML tree under `content/modules/god_of_carnage/` | authored / structured module source | yes | High | Determine whether this is the canonical slice source and how it maps to runtime loading. |
+| Writers-room markdown under `writers-room/.../god_of_carnage/` | seed / loose source / implementation notes | yes | Medium | Treat as non-canonical unless explicitly promoted or derived. |
+| Derived dramatic slice assets as a dedicated canonical corpus | derived | not explicit | High | Must be either generated and versioned, or replaced by a clearly declared canonical source shape. |
 
 ### 15.3 Authoring-cost lens
 
@@ -657,7 +586,7 @@ The inventory must include a short note on whether the slice already appears to 
 
 This is not a freeze blocker by default, but it must not remain invisible.
 
-**Authoring-cost note (evidence-based):** God of Carnage material exists in **at least three parallel shapes** today: (1) the formal YAML module tree [`content/modules/god_of_carnage/`](../content/modules/god_of_carnage/) (multi-file, high structure), (2) the built-in `ExperienceTemplate` in [`backend/app/content/builtins.py`](../backend/app/content/builtins.py) (`build_god_of_carnage_solo`, large inline authoring), and (3) extensive markdown under `writers-room/app/models/implementations/god_of_carnage/`. **Derived static assets** from primary script text are **not discernible** as a dedicated, versioned corpus in this inspection pass. Until freeze picks a **single canonical authority** and cutover rules, maintenance cost risks being **disproportionate** (duplicate edits, drift).
+Current risk note: God of Carnage material exists in at least three parallel shapes today (YAML module tree, builtins template, writers-room markdown). Until freeze chooses a single canonical authority and relation rules for the other two, maintenance cost and semantic drift risk are likely disproportionate.
 
 ---
 
