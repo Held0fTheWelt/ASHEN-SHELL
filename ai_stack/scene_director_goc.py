@@ -19,6 +19,20 @@ from ai_stack.goc_yaml_authority import (
     scene_guidance_snippets,
 )
 
+# CANONICAL_TURN_CONTRACT_GOC.md §5.1 — minimal keys for GoC scene_assessment (when slice active).
+GOC_SCENE_ASSESSMENT_MINIMAL_KEYS: frozenset[str] = frozenset({"scene_core", "pressure_state", "module_slice"})
+
+
+def goc_scene_assessment_has_minimal_fields(assessment: dict[str, Any] | None) -> bool:
+    """Return True if assessment dict carries required minimal schema for GoC operator/gate checks."""
+    if not assessment or not isinstance(assessment, dict):
+        return False
+    for key in GOC_SCENE_ASSESSMENT_MINIMAL_KEYS:
+        val = assessment.get(key)
+        if val is None or val == "":
+            return False
+    return True
+
 
 def _severity_index(continuity_class: str) -> int:
     try:

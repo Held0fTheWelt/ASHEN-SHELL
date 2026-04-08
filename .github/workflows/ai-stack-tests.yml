@@ -33,6 +33,7 @@ jobs:
             ai_stack/pyproject.toml
             ai_stack/requirements-test.txt
 
+      # Merge bar for "ai_stack/tests green": keep in sync with scripts/install-ai-stack-test-env.* and README § Testing.
       - name: Install editable packages and test extras
         run: |
           python -m pip install --upgrade pip

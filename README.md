@@ -310,6 +310,10 @@ GitHub Actions uses **Python 3.10** for backend and `ai_stack` jobs. The **Dev C
 
 Full write-up: [docs/testing-setup.md](docs/testing-setup.md) — **Environment parity (CI, Dev Container, local)**.
 
+### Merge bar for `ai_stack` / GoC LangGraph tests
+
+Claims that the full **`ai_stack/tests`** suite (including GoC regression) is green **must** match the install sequence in [`.github/workflows/ai-stack-tests.yml`](.github/workflows/ai-stack-tests.yml): editable `story_runtime_core`, editable `ai_stack[test]`, `PYTHONPATH` = repository root. **Repo checkout + `PYTHONPATH` alone is not sufficient** (PyPI deps such as `langchain-core` / `langgraph` are required). Parity shortcuts: [scripts/install-ai-stack-test-env.sh](scripts/install-ai-stack-test-env.sh) (POSIX), [scripts/install-ai-stack-test-env.ps1](scripts/install-ai-stack-test-env.ps1) / [scripts/install-ai-stack-test-env.bat](scripts/install-ai-stack-test-env.bat) (Windows), or [docker/Dockerfile.ai-stack-test](docker/Dockerfile.ai-stack-test).
+
 ### Quick start: canonical smoke suite
 
 ```bash
@@ -331,10 +335,19 @@ export PYTHONPATH="$(pwd)"        # Linux/macOS
 python -m pytest ai_stack/tests -q --tb=short
 ```
 
-Focused GoC regression example:
+Focused GoC regression example (add [test] install as above):
 
 ```bash
-python -m pytest ai_stack/tests/test_goc_phase4_reliability_breadth_operator.py ai_stack/tests/test_goc_phase1_runtime_gate.py -q
+python -m pytest \
+  ai_stack/tests/test_goc_phase1_runtime_gate.py \
+  ai_stack/tests/test_goc_phase2_scenarios.py \
+  ai_stack/tests/test_goc_phase3_experience_richness.py \
+  ai_stack/tests/test_goc_phase4_reliability_breadth_operator.py \
+  ai_stack/tests/test_goc_phase5_final_mvp_closure.py \
+  ai_stack/tests/test_goc_frozen_vocab.py \
+  ai_stack/tests/test_goc_closure_residuals.py \
+  ai_stack/tests/test_langgraph_runtime.py \
+  -q --tb=short
 ```
 
 If `from ai_stack import RuntimeTurnGraphExecutor` fails, install `[test]` extras and set `PYTHONPATH`; see [docs/testing-setup.md](docs/testing-setup.md) § AI stack / LangGraph.

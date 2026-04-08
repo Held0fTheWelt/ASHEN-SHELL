@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.20] - 2026-04-07
+
+**Summary**: **GoC post–Phase 5 residual closure** — authority docs aligned with implemented LangGraph seams; operator canonical turn projection; explicit validation/commit lane metadata and `validation_reject` failure markers; minimal `scene_assessment` schema helper; closure test module; README/testing-setup merge bar and workflow comment.
+
+### Added
+
+- **`build_operator_canonical_turn_record`** in `ai_stack/goc_turn_seams.py` — single JSON operator view (`CANONICAL_TURN_CONTRACT_GOC.md` §8).
+- **`goc_scene_assessment_has_minimal_fields`** and **`GOC_SCENE_ASSESSMENT_MINIMAL_KEYS`** in `ai_stack/scene_director_goc.py` (`CANONICAL_TURN_CONTRACT_GOC.md` §5.1).
+- **`ai_stack/tests/test_goc_closure_residuals.py`** — projection, preview discipline, validation marker, schema, §3.6 strip-all-immutables, builtin/YAML title conflict unit checks.
+
+### Changed
+
+- **`docs/VERTICAL_SLICE_CONTRACT_GOC.md`**, **`docs/CANONICAL_TURN_CONTRACT_GOC.md`**, **`docs/GATE_SCORING_POLICY_GOC.md`**: Reality Anchor, seam table, §5.1, §8, and shared-basis wording match `langgraph_runtime` (director nodes, `validate_seam` / `commit_seam` / `render_visible`).
+- **`ai_stack/goc_turn_seams.py`**: `validator_lane` / `commit_lane` on seam outcomes; `commit_lane` on non-commit shells.
+- **`ai_stack/langgraph_runtime.py`**: append `failure_class: validation_reject` (non–closure-impacting) when GoC validation rejects.
+- **`README.md`**, **`docs/testing-setup.md`**: explicit **merge bar** = `ai-stack-tests.yml` install + scripts/Docker; expanded GoC regression command list.
+- **`.github/workflows/ai-stack-tests.yml`**: comment linking install step to parity scripts/README.
+
+---
+
 ## [0.3.19] - 2026-04-07
 
 **Summary**: **Reproducible ai_stack / GoC test installs** — CI-identical one-command setup scripts, Docker image, and documentation that **PYTHONPATH without `pip install -e` cannot provide LangChain/LangGraph**.

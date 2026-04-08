@@ -16,6 +16,9 @@ This document explains how to install test dependencies, run tests, understand t
    Uses the same **Python 3.10** image and runs the same pip sequence as (1), then adds `world-engine/requirements-dev.txt` so **world-engine** tests work in-container. `PYTHONPATH` includes the repo root (and `world-engine` for engine imports).
 3. **Manual / CI-style** — For `ai_stack` tests only, mirror `.github/workflows/ai-stack-tests.yml`:  
    `pip install -e ./story_runtime_core` and `pip install -e "./ai_stack[test]"` with `PYTHONPATH` set to the repository root.
+4. **Minimal CI-parity one-shot** — `scripts/install-ai-stack-test-env.sh` or `scripts/install-ai-stack-test-env.ps1` / `.bat` (same pip lines as the workflow). **Docker:** `docker build -f docker/Dockerfile.ai-stack-test -t wos-ai-stack-test .` then `docker run --rm wos-ai-stack-test`.
+
+**Merge bar (explicit):** Any claim that the full `pytest ai_stack/tests` run is merge-ready **must** assume the workflow install sequence above. Environments that only set `PYTHONPATH` without `ai_stack[test]` may see **skipped** GoC/LangGraph tests (`pytest.importorskip`); that is **not** CI parity.
 
 **If the container and your host disagree:** Inside the container, run `python --version` and `pip list | head` (or equivalent), then run `./setup-test-environment.sh` from the mounted workspace to reconcile. Rebuild the Dev Container after `postCreateCommand` changes.
 

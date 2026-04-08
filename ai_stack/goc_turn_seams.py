@@ -67,18 +67,28 @@ def run_validation_seam(
         return {
             "status": "waived",
             "reason": "non_goc_vertical_slice",
+            "validator_lane": "goc_rule_engine_v1",
         }
     success = generation.get("success")
     if success is False or generation.get("error"):
         return {
             "status": "rejected",
             "reason": "model_generation_failed",
+            "validator_lane": "goc_rule_engine_v1",
         }
     for eff in proposed_state_effects:
         if not isinstance(eff, dict):
-            return {"status": "rejected", "reason": "malformed_proposed_effect"}
+            return {
+                "status": "rejected",
+                "reason": "malformed_proposed_effect",
+                "validator_lane": "goc_rule_engine_v1",
+            }
         if "description" not in eff and "effect_type" not in eff:
-            return {"status": "rejected", "reason": "incomplete_proposed_effect"}
+            return {
+                "status": "rejected",
+                "reason": "incomplete_proposed_effect",
+                "validator_lane": "goc_rule_engine_v1",
+            }
 
     ctx = director_context if isinstance(director_context, dict) else {}
     narr = extract_proposed_narrative_text(proposed_state_effects)
@@ -95,10 +105,12 @@ def run_validation_seam(
             "status": "rejected",
             "reason": viol,
             "dramatic_quality_gate": "alignment_reject",
+            "validator_lane": "goc_rule_engine_v1",
         }
     return {
         "status": "approved",
         "reason": "goc_default_validator_pass",
+        "validator_lane": "goc_rule_engine_v1",
     }
 
 
@@ -109,12 +121,21 @@ def run_commit_seam(
     proposed_state_effects: list[dict[str, Any]],
 ) -> dict[str, Any]:
     if validation_outcome.get("status") != "approved":
-        return {"committed_effects": [], "commit_applied": False}
+        return {
+            "committed_effects": [],
+            "commit_applied": False,
+            "commit_lane": "goc_commit_seam_v1",
+        }
     if module_id != GOC_MODULE_ID:
-        return {"committed_effects": [], "commit_applied": False}
+        return {
+            "committed_effects": [],
+            "commit_applied": False,
+            "commit_lane": "goc_commit_seam_v1",
+        }
     return {
         "committed_effects": list(proposed_state_effects),
         "commit_applied": bool(proposed_state_effects),
+        "commit_lane": "goc_commit_seam_v1",
     }
 
 
@@ -263,6 +284,49 @@ def repro_metadata_complete(repro: dict[str, Any]) -> bool:
         "graph_path_summary",
     )
     return all(repro.get(k) not in (None, "") for k in required)
+
+
+def build_operator_canonical_turn_record(state: dict[str, Any]) -> dict[str, Any]:
+    """Single JSON-serializable operator view over post-`package_output` state (CANONICAL_TURN_CONTRACT_GOC.md §8).
+
+    This is a read projection only — same data as `RuntimeTurnState` + nested `graph_diagnostics`, not a second truth surface.
+    """
+    gd = state.get("graph_diagnostics") if isinstance(state.get("graph_diagnostics"), dict) else {}
+    repro = gd.get("repro_metadata") if isinstance(gd.get("repro_metadata"), dict) else {}
+    return {
+        "turn_metadata": {
+            "session_id": state.get("session_id"),
+            "trace_id": state.get("trace_id"),
+            "module_id": state.get("module_id"),
+            "current_scene_id": state.get("current_scene_id"),
+        },
+        "interpreted_move": state.get("interpreted_move"),
+        "scene_assessment": state.get("scene_assessment"),
+        "selected_responder_set": state.get("selected_responder_set"),
+        "selected_scene_function": state.get("selected_scene_function"),
+        "pacing_mode": state.get("pacing_mode"),
+        "silence_brevity_decision": state.get("silence_brevity_decision"),
+        "proposed_state_effects": state.get("proposed_state_effects"),
+        "validation_outcome": state.get("validation_outcome"),
+        "committed_result": state.get("committed_result"),
+        "visible_output_bundle": state.get("visible_output_bundle"),
+        "continuity_impacts": state.get("continuity_impacts"),
+        "visibility_class_markers": state.get("visibility_class_markers"),
+        "failure_markers": state.get("failure_markers"),
+        "fallback_markers": state.get("fallback_markers"),
+        "diagnostics_refs": state.get("diagnostics_refs"),
+        "experiment_preview": state.get("experiment_preview"),
+        "transition_pattern": state.get("transition_pattern"),
+        "graph_diagnostics_summary": {
+            "graph_name": gd.get("graph_name"),
+            "graph_version": gd.get("graph_version"),
+            "nodes_executed": gd.get("nodes_executed"),
+            "node_outcomes": gd.get("node_outcomes"),
+            "execution_health": gd.get("execution_health"),
+            "fallback_path_taken": gd.get("fallback_path_taken"),
+            "repro_complete": repro.get("repro_complete"),
+        },
+    }
 
 
 _SCENE_FN_TO_CONTINUITY_PRIMARY: dict[str, str] = {

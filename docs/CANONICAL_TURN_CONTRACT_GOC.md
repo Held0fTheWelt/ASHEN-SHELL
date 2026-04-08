@@ -14,20 +14,20 @@ A shared, implementation-adjacent turn model so contributors do not invent incom
 
 FREEZE §10.1 applies verbatim: nothing player-visible may precede committed truth except where the visibility doctrine explicitly allows non-factual staging, implied affect, or bounded ambiguity.
 
-### 2.1 Seam table (inspection anchor from FREEZE §10.2)
+### 2.1 Seam table (implementation anchor — GoC slice)
 
-| Seam | Owner | Input | Output | May alter truth? | May alter visibility? |
-|---|---|---|---|---|---|
-| Proposal | Runtime graph invocation path (`_invoke_model`; fallback `_fallback_model`) | interpreted input, context text, model prompt, routing / timeout data | `generation` payload, structured output if available, fallback metadata if not | no | yes, proposal only |
-| Validation | not yet explicit in inspected path | (target) proposed effects + policy context | (target) `validation_outcome` | no, shapes only | no direct player output |
-| Commit | not yet explicit in inspected path | (target) validated or policy-approved payload | (target) `committed_result` | yes | indirectly |
-| Visible render | not yet explicit in inspected path | (target) `committed_result` + visibility markers | (target) `visible_output_bundle` | no | yes |
+| Seam | Owner | Graph locus | Input | Output | May alter truth? | May alter visibility? |
+|---|---|---|---|---|---|---|
+| Proposal | Model invocation path | `invoke_model` / `fallback_model` → `proposal_normalize` | interpreted input, context, `model_prompt`, routing | `generation`, normalized `proposed_state_effects` | no | yes, proposal only |
+| Validation | Rule engine (no player text) | `validate_seam` | `proposed_state_effects`, `generation`, director context | `validation_outcome` (`approved` / `rejected` / `waived`) | no, shapes only | no direct player output |
+| Commit | Engine seam | `commit_seam` | `validation_outcome`, `proposed_state_effects` | `committed_result`, bounded `continuity_impacts` (GoC) | yes | indirectly |
+| Visible render | Presentation seam | `render_visible` | `committed_result`, `validation_outcome`, `generation`, `transition_pattern` | `visible_output_bundle`, `visibility_class_markers` | no | yes |
 
-**Diagnostics:** Today carried by `graph_diagnostics` packaging and related metadata (`_package_output`). Target: stable `diagnostics_refs` in the canonical turn pointing at the same basis (see `GATE_SCORING_POLICY_GOC.md`).
+**Diagnostics:** `package_output` sets `graph_diagnostics`, `diagnostics_refs`, and `experiment_preview` per `GATE_SCORING_POLICY_GOC.md`. **Operator compact view:** `build_operator_canonical_turn_record(state)` in `ai_stack/goc_turn_seams.py` (post-`package_output` state).
 
-### 2.2 Target semantics per seam (roadmap + bridge)
+### 2.2 Semantics per seam (binding)
 
-Until nodes/fields exist, inspection rows are **as-is**; the following is **target direction**, not a claim of finished implementation:
+The following matches the implemented GoC slice; non-GoC modules use `waived` validation and preview-class visibility:
 
 - **Proposal** produces **candidate** dramatic material only (`proposed_state_effects`, generation text). It **never** authorizes world truth.
 - **Validation** consumes `proposed_state_effects` and scene/policy context; emits `validation_outcome`; **no** direct player-facing copy from this seam.
@@ -125,10 +125,14 @@ Structure per FREEZE §11 (required field groups). The JSON skeleton is binding 
   },
   "proposed_state_effects": [],
   "validation_outcome": {
-    "status": "not_yet_implemented"
+    "status": "approved",
+    "reason": "goc_default_validator_pass",
+    "validator_lane": "goc_rule_engine_v1"
   },
   "committed_result": {
-    "committed_effects": []
+    "committed_effects": [],
+    "commit_applied": false,
+    "commit_lane": "goc_commit_seam_v1"
   },
   "visible_output_bundle": {
     "gm_narration": [],
@@ -152,20 +156,32 @@ Phase legend: **deterministic pre-model** · **model-proposed** · **validation-
 |---|---|---|---|---|---|
 | turn_metadata | Runtime / session host | deterministic pre-model | required for a complete turn | 1 | Supports replay; `trace_id` aligns with `graph_diagnostics.repro_metadata` |
 | interpreted_move | Interpretation (deterministic + optional classifying model) | deterministic pre-model → optional model-proposed labels | required | 1 | `move_class` should use slice vocabulary where possible |
-| scene_assessment | Scene director + context aggregation | deterministic pre-model; contents partly from retrieval | required for target slice | 1 | Replaces prompt-only aggregation (bridge: replace) |
+| scene_assessment | Scene director + context aggregation | deterministic pre-model; contents partly from retrieval | required for target slice | 1 | See §5.1 minimal keys; built in `director_assess_scene` |
 | selected_responder_set | Scene director policy | deterministic pre-model (target) | required for target slice | 0..n | Do not confuse with provider routing |
 | selected_scene_function | Scene director policy | deterministic pre-model | required for target slice | 1 | Values: canonical scene functions (`VERTICAL_SLICE_CONTRACT_GOC.md` §5); §3.5 if multiple intentions |
 | pacing_mode | Scene director policy | deterministic pre-model | required for target slice | 1 | Canonical pacing vocabulary (`VERTICAL_SLICE_CONTRACT_GOC.md` §5) |
 | silence_brevity_decision | Scene director policy | deterministic pre-model | required for target slice | 1 | Canonical `mode` vocabulary (`VERTICAL_SLICE_CONTRACT_GOC.md` §5) |
 | proposed_state_effects | Model (proposal seam) | model-proposed | required when model runs | 0..n | May be fed from `generation.metadata.structured_output` until normalized |
-| validation_outcome | World truth / validator | validation-shaped | required once validator exists | 1 | No player text |
-| committed_result | Commit authority (engine) | commit-owned | required when dramatic truth is claimed | 1 | Empty only for aborted/diagnostic turns with explicit marker |
+| validation_outcome | Rule validator (`validate_seam` / `run_validation_seam`) | validation-shaped | required (always set on graph exit) | 1 | No player text; `validator_lane` identifies engine |
+| committed_result | Commit authority (`commit_seam` / `run_commit_seam`) | commit-owned | required when dramatic truth is claimed | 1 | Empty shell when validation not `approved`; `commit_lane` identifies engine |
 | visible_output_bundle | Render / presentation | visible-output-only | required for player-visible turns | 1 | Must match `committed_result` + visibility |
 | continuity_impacts | Commit authority + continuity service | commit-owned / carry-forward | optional until continuity active | 0..n | Entries use **continuity class** labels |
 | visibility_class_markers | Scene director + validator | validation-shaped / commit-adjacent | optional default `truth_aligned` | 0..n | Labels: slice contract §5 |
 | failure_markers | Validator / host | validation-shaped or diagnostics-only | optional | 0..n | Uses **failure class** labels |
 | fallback_markers | Runtime graph | diagnostics-only + visible degradation | optional | 0..n | e.g. model fallback, missing adapter |
 | diagnostics_refs | `package_output` / telemetry | diagnostics-only | recommended | 0..n | Graph name, version, node order, health; may carry `experiment_preview` per gate policy |
+
+### 5.1 `scene_assessment` minimal schema (GoC, binding)
+
+When `module_id == god_of_carnage` and canonical YAML resolved, `scene_assessment` **must** include at least:
+
+| Key | Type | Purpose |
+|---|---|---|
+| `scene_core` | string | Stable scene identity anchor (e.g. `goc_scene:{scene_id}` or `goc_unresolved` if YAML missing). |
+| `pressure_state` | string | Director pressure label (e.g. `high_blame`, `moderate_tension`). |
+| `module_slice` | string | Module id for slice boundary checks. |
+
+Optional keys (director enrichment, same object): `canonical_setting`, `narrative_scope`, `active_continuity_classes`, `continuity_carry_forward_note`, YAML guidance hints (`guidance_phase_key`, …), and `multi_pressure_resolution` after `director_select_dramatic_parameters`. Tests enforce the minimal triple on successful GoC paths.
 
 ---
 
@@ -215,7 +231,7 @@ FREEZE §14: distinguish **hard** / **soft** / **continuity carry-forward** / **
 
 ## 8. Mapping `RuntimeTurnState` → canonical model (informative)
 
-Until implementation lands, `RuntimeTurnState` (FREEZE §7.3) is the transport-near surface. Target: after `package_output`, **project** onto this contract’s fields without duplicate truths. Explicit keys for `validation_outcome` and `committed_result` **are missing** today — bridge classifies as **new**; tasks must add them, not hide them inside `generation`.
+`RuntimeTurnState` is the execution transport. After `package_output`, canonical dramatic fields listed in §4–§5 are populated on the same state object (no duplicate runtime truth). For operators and CI artifacts, **`build_operator_canonical_turn_record(state)`** (`ai_stack/goc_turn_seams.py`) returns a single JSON-serializable dict: turn metadata, `interpreted_move`, director fields, proposal/validation/commit/visible summaries, continuity, markers, `experiment_preview`, `transition_pattern`, and a shallow `graph_diagnostics` summary (`graph_name`, `graph_version`, `nodes_executed`, `execution_health`, `fallback_path_taken`, `repro_complete`).
 
 ---
 

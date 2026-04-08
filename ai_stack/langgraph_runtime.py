@@ -711,6 +711,19 @@ class RuntimeTurnGraphExecutor:
         validation = state.get("validation_outcome") if isinstance(state.get("validation_outcome"), dict) else {}
         committed = state.get("committed_result") if isinstance(state.get("committed_result"), dict) else {}
 
+        if module_id == GOC_MODULE_ID and validation.get("status") == "rejected":
+            if not any(
+                isinstance(m, dict) and m.get("failure_class") == "validation_reject" for m in failure_markers
+            ):
+                failure_markers.append(
+                    {
+                        "failure_class": "validation_reject",
+                        "closure_impacting": False,
+                        "note": "goc_validation_rejected_truth_safe_visible",
+                        "validation_reason": validation.get("reason"),
+                    }
+                )
+
         experiment_preview = True
         if state.get("force_experiment_preview"):
             experiment_preview = True
