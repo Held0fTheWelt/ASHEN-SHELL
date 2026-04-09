@@ -397,6 +397,11 @@ def _register_routes(app):
         """Aggregated system diagnosis for operators (backend GET /api/v1/admin/system-diagnosis)."""
         return render_template("manage/diagnosis.html")
 
+    @app.route("/manage/play-service-control")
+    def manage_play_service_control():
+        """Application-level Play-Service desired state, test, and apply (backend admin APIs via proxy)."""
+        return render_template("manage/play_service_control.html")
+
     @app.errorhandler(500)
     def handle_500_error(error):
         """Log 500 errors with full details for debugging."""

@@ -419,6 +419,7 @@ class TestManagementRoutesContextConsistency:
             "/manage/wiki",
             "/manage/forum",
             "/manage/diagnosis",
+            "/manage/play-service-control",
             "/users/1/profile",
         ],
     )
@@ -447,6 +448,7 @@ class TestManagementRoutesContextConsistency:
             "/manage/wiki",
             "/manage/forum",
             "/manage/diagnosis",
+            "/manage/play-service-control",
             "/users/1/profile",
         ],
     )

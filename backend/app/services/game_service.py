@@ -112,6 +112,8 @@ class PlayJoinContext:
 
 
 def has_complete_play_service_config() -> bool:
+    if current_app.config.get("PLAY_SERVICE_CONTROL_DISABLED"):
+        return False
     public_url = (current_app.config.get("PLAY_SERVICE_PUBLIC_URL") or "").strip()
     internal_url = (current_app.config.get("PLAY_SERVICE_INTERNAL_URL") or "").strip()
     shared_secret = (current_app.config.get("PLAY_SERVICE_SHARED_SECRET") or "").strip()
@@ -152,6 +154,11 @@ def _request(
     internal: bool = False,
     trace_id: str | None = None,
 ) -> dict | list:
+    if current_app.config.get("PLAY_SERVICE_CONTROL_DISABLED"):
+        raise GameServiceError(
+            "Play service integration is disabled by operator control (Play-Service control surface).",
+            status_code=502,
+        )
     base_url = _require_configured_url("internal" if internal else "public")
     timeout = current_app.config.get("PLAY_SERVICE_REQUEST_TIMEOUT", 30)  # Use config timeout (default 30s)
     headers: dict[str, str] | None = None
@@ -189,6 +196,11 @@ def list_runs() -> list[dict]:
 
 
 def create_run(*, template_id: str, account_id: str, display_name: str, character_id: str | None = None) -> dict:
+    if not current_app.config.get("PLAY_SERVICE_ALLOW_NEW_SESSIONS", True):
+        raise GameServiceError(
+            "New play runs are disabled by operator control (Play-Service allow_new_sessions=false).",
+            status_code=502,
+        )
     payload = _request(
         "POST",
         "/api/runs",
@@ -283,6 +295,11 @@ def terminate_run(
 
 
 def create_story_session(*, module_id: str, runtime_projection: dict, trace_id: str | None = None) -> dict:
+    if not current_app.config.get("PLAY_SERVICE_ALLOW_NEW_SESSIONS", True):
+        raise GameServiceError(
+            "New story sessions are disabled by operator control (Play-Service allow_new_sessions=false).",
+            status_code=502,
+        )
     payload = _request(
         "POST",
         "/api/story/sessions",

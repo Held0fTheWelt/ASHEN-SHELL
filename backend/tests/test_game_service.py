@@ -16,6 +16,7 @@ from app.services.game_service import (
     _internal_headers,
     _request,
     create_run,
+    create_story_session,
     get_play_service_public_url,
     get_play_service_websocket_url,
     get_run_details,
@@ -96,6 +97,43 @@ class TestGameServiceClient:
                 issue_play_ticket({"run_id": "run-1"})
             with pytest.raises(GameServiceConfigError, match="PLAY_SERVICE_INTERNAL_URL"):
                 game_service._require_configured_url("internal")
+
+    def test_has_complete_false_when_play_control_disabled(self, app):
+        with app.app_context():
+            app.config["PLAY_SERVICE_CONTROL_DISABLED"] = True
+            app.config["PLAY_SERVICE_PUBLIC_URL"] = "https://play.example.com"
+            app.config["PLAY_SERVICE_INTERNAL_URL"] = "https://internal.example.com"
+            app.config["PLAY_SERVICE_SHARED_SECRET"] = "secret"
+            assert has_complete_play_service_config() is False
+
+    def test_request_blocked_when_play_control_disabled(self, app):
+        with app.app_context():
+            app.config["PLAY_SERVICE_CONTROL_DISABLED"] = True
+            app.config["PLAY_SERVICE_PUBLIC_URL"] = "https://play.example.com"
+            app.config["PLAY_SERVICE_INTERNAL_URL"] = "https://internal.example.com"
+            app.config["PLAY_SERVICE_SHARED_SECRET"] = "secret"
+            with pytest.raises(GameServiceError, match="disabled"):
+                _request("GET", "/api/templates")
+
+    def test_create_run_respects_allow_new_sessions(self, app):
+        with app.app_context():
+            app.config["PLAY_SERVICE_ALLOW_NEW_SESSIONS"] = False
+            app.config["PLAY_SERVICE_PUBLIC_URL"] = "https://play.example.com"
+            app.config["PLAY_SERVICE_INTERNAL_URL"] = "https://internal.example.com"
+            app.config["PLAY_SERVICE_SHARED_SECRET"] = "secret"
+            app.config["PLAY_SERVICE_CONTROL_DISABLED"] = False
+            with pytest.raises(GameServiceError, match="allow_new_sessions"):
+                create_run(template_id="t", account_id="1", display_name="x")
+
+    def test_create_story_session_respects_allow_new_sessions(self, app):
+        with app.app_context():
+            app.config["PLAY_SERVICE_ALLOW_NEW_SESSIONS"] = False
+            app.config["PLAY_SERVICE_PUBLIC_URL"] = "https://play.example.com"
+            app.config["PLAY_SERVICE_INTERNAL_URL"] = "https://internal.example.com"
+            app.config["PLAY_SERVICE_SHARED_SECRET"] = "secret"
+            app.config["PLAY_SERVICE_CONTROL_DISABLED"] = False
+            with pytest.raises(GameServiceError, match="allow_new_sessions"):
+                create_story_session(module_id="m", runtime_projection={})
 
     def test_request_success_error_and_empty_payload_paths(self, app, monkeypatch):
         capture = {}

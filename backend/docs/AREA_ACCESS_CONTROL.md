@@ -28,6 +28,7 @@ Used in API and permission checks:
 - `manage.news`, `manage.users`, `manage.roles`, `manage.wiki`, `manage.slogans`
 - `manage.areas`, `manage.feature_areas`
 - `manage.system_diagnosis` (aggregated operator diagnosis API and `/manage/diagnosis` UI; moderator+ by default)
+- `manage.play_service_control` (Play-Service **desired** state, test/apply admin APIs, `/manage/play-service-control` UI; **admin-only** by default)
 - `dashboard.metrics`, `dashboard.logs`, `dashboard.settings`, `dashboard.user_settings`
 
 ## API

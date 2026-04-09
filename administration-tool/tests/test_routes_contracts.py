@@ -86,6 +86,7 @@ class TestManagementRoutesContract:
             "/manage/data",
             "/manage/forum",
             "/manage/diagnosis",
+            "/manage/play-service-control",
         ],
     )
     def test_management_routes_return_200(self, client, path: str):

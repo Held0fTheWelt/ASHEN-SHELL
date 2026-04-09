@@ -457,3 +457,35 @@ textarea.form-input { min-height: 100px; resize: vertical; }
     margin: 0.25rem 0 0 0;
     font-size: 0.85rem;
 }
+
+/* Play-Service control (/manage/play-service-control) */
+.manage-state--ok {
+    color: #2ea043;
+    font-weight: 500;
+    padding: 0.5rem 0;
+}
+
+.manage-psc-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 900px) {
+    .manage-psc-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.manage-psc-form .form-label {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.manage-psc-json {
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    max-height: 14rem;
+    overflow: auto;
+    margin: 0 0 1rem 0;
+}

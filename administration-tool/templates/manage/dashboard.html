@@ -33,6 +33,10 @@
             <h3>Diagnosis</h3>
             <p>Aggregated system health: backend, database, play service, published content, and AI readiness.</p>
         </a>
+        <a href="{{ url_for('manage_play_service_control') }}" class="card card-link" id="manage-dashboard-play-service-control" data-feature="manage.play_service_control">
+            <h3>Play-Service control</h3>
+            <p>Desired connection posture, validate and apply at application level (no host orchestration).</p>
+        </a>
     </div>
 </div>
 {% endblock %}

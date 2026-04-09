@@ -138,6 +138,7 @@ def test_auth_me_includes_allowed_features(client, admin_headers):
     assert "allowed_features" in data
     assert isinstance(data["allowed_features"], list)
     assert "manage.users" in data["allowed_features"]
+    assert "manage.play_service_control" in data["allowed_features"]
 
 
 

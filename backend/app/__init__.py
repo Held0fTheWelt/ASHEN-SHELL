@@ -137,17 +137,6 @@ def create_app(config_object=None):
                 "This prevents unauthorized account access and protects user accounts."
             )
 
-    # Validate PLAY_SERVICE configuration
-    public_url = (app.config.get("PLAY_SERVICE_PUBLIC_URL") or "").strip()
-    shared_secret = (app.config.get("PLAY_SERVICE_SHARED_SECRET") or "").strip()
-
-    if public_url and not shared_secret:
-        raise ValueError(
-            "PLAY_SERVICE_SHARED_SECRET must be configured when "
-            "PLAY_SERVICE_PUBLIC_URL is set. Without the shared secret, "
-            "play service integration cannot function."
-        )
-
     # Logging: DEBUG in test/dev, WARNING in production
     app.logger.setLevel(logging.DEBUG if (app.config.get("TESTING") or app.debug) else logging.WARNING)
     if not app.logger.handlers:
@@ -179,6 +168,14 @@ def create_app(config_object=None):
 
     init_extensions(app)
     limiter.default_limits = [app.config.get("RATELIMIT_DEFAULT", "100 per minute")]
+
+    from app.services.play_service_control_service import (
+        bootstrap_play_service_control,
+        validate_play_service_env_pairing,
+    )
+
+    bootstrap_play_service_control(app)
+    validate_play_service_env_pairing(app)
 
     # Schedule daily cleanup of expired JWT tokens from blacklist
     _schedule_token_blacklist_cleanup(app)

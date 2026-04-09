@@ -8,6 +8,7 @@ pytest_plugins = ("pytest_asyncio",)
 from app import create_app
 from app.config import TestingConfig
 from app.extensions import db, limiter
+from app.services.play_service_control_service import bootstrap_play_service_control
 from app.models import Role, User
 from app.models.role import ensure_roles_seeded
 from app.models.area import ensure_areas_seeded
@@ -44,6 +45,7 @@ def app():
         db.create_all()
         ensure_roles_seeded()
         ensure_areas_seeded()
+        bootstrap_play_service_control(application)
         yield application
         # Clean up after test: drop all tables to isolate test state
         db.session.remove()
@@ -68,6 +70,7 @@ def app_bootstrap_on():
         db.create_all()
         ensure_roles_seeded()
         ensure_areas_seeded()
+        bootstrap_play_service_control(application)
         yield application
         db.session.remove()
         db.drop_all()
