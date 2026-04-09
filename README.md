@@ -145,7 +145,7 @@ The **canonical** Writers-Room workflow is implemented on the **backend** (JWT, 
 | LangGraph seed + LangChain Writers-Room invocation | `ai_stack/langgraph_runtime.py` (`build_seed_writers_room_graph`), `ai_stack/langchain_integration/` (`invoke_writers_room_adapter_with_langchain`, …) |
 | Standalone browser UI (uses `BACKEND_API_URL` / `BACKEND_BASE_URL` + JWT) | `writers-room/app.py` and `writers-room/app/` |
 | Architecture (stages, HITL, shared stack) | [docs/architecture/writers_room_on_unified_stack.md](docs/architecture/writers_room_on_unified_stack.md) |
-| Governance / operator surfaces | `administration-tool` AI stack governance UI references Writers-Room retrieval signals (e.g. `static/manage_ai_stack_governance.js`) |
+| Governance / operator surfaces | `administration-tool` canonical Inspector Suite workbench: `/manage/inspector-workbench` (`templates/manage/inspector_workbench.html`, `static/manage_inspector_workbench.js`); read-only admin APIs under `/api/v1/admin/ai-stack/...` (see `backend/app/api/v1/ai_stack_governance_routes.py`) |
 
 **Quick check:** OpenAPI or route list is not duplicated here; search the backend for `writers-room` or read `writers_room_routes.py` for exact methods and paths.
 

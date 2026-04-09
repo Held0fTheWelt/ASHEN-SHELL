@@ -81,21 +81,21 @@
         <div class="manage-grid two-col">
             <section class="panel">
                 <header class="panel-header"><h3>Gate outcome</h3></header>
-                <pre id="inspector-gate-outcome" class="code-block"></pre>
+                <div id="inspector-gate-outcome-grid" class="inspector-kv-grid"><p class="manage-empty">No data loaded.</p></div>
             </section>
             <section class="panel">
                 <header class="panel-header"><h3>Validation outcome</h3></header>
-                <pre id="inspector-validation-outcome" class="code-block"></pre>
+                <div id="inspector-validation-outcome-grid" class="inspector-kv-grid"><p class="manage-empty">No data loaded.</p></div>
             </section>
         </div>
         <div class="manage-grid two-col">
             <section class="panel">
                 <header class="panel-header"><h3>Fallback status</h3></header>
-                <pre id="inspector-fallback-status" class="code-block"></pre>
+                <div id="inspector-fallback-status-grid" class="inspector-kv-grid"><p class="manage-empty">No data loaded.</p></div>
             </section>
             <section class="panel">
                 <header class="panel-header"><h3>Rejection analysis</h3></header>
-                <pre id="inspector-rejection-analysis" class="code-block"></pre>
+                <div id="inspector-rejection-analysis-grid" class="inspector-kv-grid"><p class="manage-empty">No data loaded.</p></div>
             </section>
         </div>
         <section class="panel">
@@ -109,7 +109,11 @@
             <h2>Timeline</h2>
             <p>Read-only multi-turn progression view from diagnostic evidence.</p>
         </header>
-        <pre id="inspector-timeline-json" class="code-block"></pre>
+        <div id="inspector-timeline-structured" class="inspector-structured-host"></div>
+        <details class="inspector-json-details">
+            <summary class="inspector-json-details-summary">Vollständiges Endpoint-JSON (sekundär)</summary>
+            <pre id="inspector-timeline-full-json" class="code-block"></pre>
+        </details>
     </section>
 
     <section class="panel inspector-panel" id="inspector-panel-comparison" data-inspector-panel hidden>
@@ -117,7 +121,11 @@
             <h2>Comparison</h2>
             <p>Mandatory bounded turn-to-turn comparison within one session.</p>
         </header>
-        <pre id="inspector-comparison-json" class="code-block"></pre>
+        <div id="inspector-comparison-structured" class="inspector-structured-host"></div>
+        <details class="inspector-json-details">
+            <summary class="inspector-json-details-summary">Vollständiges Endpoint-JSON (sekundär)</summary>
+            <pre id="inspector-comparison-full-json" class="code-block"></pre>
+        </details>
     </section>
 
     <section class="panel inspector-panel" id="inspector-panel-coverage" data-inspector-panel hidden>
@@ -125,15 +133,38 @@
             <h2>Coverage / Health</h2>
             <p>Evidence-backed aggregate distributions and health frequencies.</p>
         </header>
-        <pre id="inspector-coverage-json" class="code-block"></pre>
+        <div id="inspector-coverage-structured" class="inspector-structured-host"></div>
+        <details class="inspector-json-details">
+            <summary class="inspector-json-details-summary">Vollständiges Endpoint-JSON (sekundär)</summary>
+            <pre id="inspector-coverage-full-json" class="code-block"></pre>
+        </details>
     </section>
 
     <section class="panel inspector-panel" id="inspector-panel-provenance-raw" data-inspector-panel hidden>
         <header class="panel-header">
             <h2>Provenance / Raw Explorer</h2>
-            <p>Raw evidence is inspectable but never canonical semantic truth.</p>
+            <p class="manage-lead">
+                Canonical provenance entries are the primary operator surface. Raw evidence is explicitly secondary inspection material and must not replace the canonical view.
+            </p>
         </header>
-        <pre id="inspector-provenance-json" class="code-block"></pre>
+        <section class="panel inspector-provenance-primary">
+            <header class="panel-header">
+                <h3>Canonical provenance entries</h3>
+                <p>Primary operator surface — field values and backend source references only.</p>
+            </header>
+            <div id="inspector-provenance-canonical" class="inspector-structured-host"></div>
+        </section>
+        <section class="panel inspector-provenance-secondary">
+            <header class="panel-header">
+                <h3>Raw evidence bundle</h3>
+                <p>Secondary diagnostic material (loaded only in raw read mode). Not canonical semantic truth.</p>
+            </header>
+            <pre id="inspector-provenance-raw-json" class="code-block inspector-raw-pre" aria-label="Raw evidence JSON"></pre>
+        </section>
+        <details class="inspector-json-details">
+            <summary class="inspector-json-details-summary">Vollständiges Endpoint-JSON (sekundär)</summary>
+            <pre id="inspector-provenance-full-json" class="code-block"></pre>
+        </details>
     </section>
 </section>
 {% endblock %}

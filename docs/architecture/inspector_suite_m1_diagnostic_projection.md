@@ -1,5 +1,7 @@
 # Inspector Suite M1 — Canonical Diagnostic Projection (Single Turn)
 
+> **Superseded for administration-tool routing and UI.** This document remains authoritative for the **backend turn-projection contract** (single-turn envelope, API path, raw-mode posture). For the **current** operator shell, use [`inspector_suite_canonical_workbench.md`](inspector_suite_canonical_workbench.md): canonical route `/manage/inspector-workbench`, template `inspector_workbench.html`, script `manage_inspector_workbench.js`. Legacy admin URLs redirect with `308` to the workbench; the old M1-only template `inspector_suite.html` and script `manage_inspector_suite.js` were **removed** from the repository as non-canonical parallel surfaces.
+
 ## Purpose
 
 This document defines the M1 diagnostic spine for Inspector Suite as a **read-only single-turn projection**.
@@ -74,22 +76,11 @@ Raw mode posture:
 - raw evidence is not authoritative runtime truth;
 - raw mode does not imply backend write capability or semantic completeness.
 
-## Administration-tool posture
+## Administration-tool posture (historical note vs current repo)
 
-- Route: `/manage/inspector-suite` (alias: `/manage/inspector-suite/turn`)
-- Template: `administration-tool/templates/manage/inspector_suite.html`
-- Script: `administration-tool/static/manage_inspector_suite.js`
+At M1 write-up time, the admin shell used `/manage/inspector-suite` with `inspector_suite.html` and `manage_inspector_suite.js`, and reserved placeholder tabs avoided fake completeness.
 
-M1 implemented section:
-- `Turn Inspector` (functional)
-
-M1 reserved, explicitly non-implemented sections:
-- `Timeline`
-- `Comparison`
-- `Coverage / Health`
-- `Provenance / Raw Inspector`
-
-These reserved sections are intentionally visible placeholders to avoid fake completeness.
+**Current repository state:** the unified **Inspector Suite Workbench** implements read-only sections (Turn, Timeline, Comparison, Coverage / Health, Provenance / Raw) on `/manage/inspector-workbench` via `inspector_workbench.html` and `manage_inspector_workbench.js`. Legacy paths above redirect permanently to the workbench; the old standalone templates/scripts are removed.
 
 ## Non-goals for M1
 

@@ -549,3 +549,95 @@ textarea.form-input { min-height: 100px; resize: vertical; }
     overflow: auto;
     background: var(--void);
 }
+
+.inspector-structured-host {
+    margin-bottom: 1rem;
+}
+
+.inspector-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.inspector-data-table th,
+.inspector-data-table td {
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.5rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.inspector-data-table th {
+    background: var(--surface);
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.inspector-section-status {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+}
+
+.inspector-section-reason {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.inspector-subheading {
+    margin: 0.75rem 0 0.35rem 0;
+    font-size: 1rem;
+}
+
+.inspector-dim-list {
+    margin: 0 0 0.75rem 1.25rem;
+    padding: 0;
+}
+
+.inspector-dist-block {
+    margin-bottom: 1rem;
+}
+
+.inspector-json-details {
+    margin-top: 0.75rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    background: var(--void);
+}
+
+.inspector-json-details-summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.inspector-provenance-secondary {
+    opacity: 0.95;
+    border-style: dashed;
+}
+
+.inspector-raw-pre {
+    max-height: 22rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    font-size: 0.8rem;
+}
+
+.inspector-boundary-note {
+    margin-top: 0.75rem;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

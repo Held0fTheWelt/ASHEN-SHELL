@@ -33,6 +33,7 @@ Final closure for Inspector Suite canonicalization and diagnostic completion:
   - Comparison
   - Coverage / Health
   - Provenance / Raw
+- **Final polish (post-closure):** superseded admin templates and JS entrypoints that could read as parallel products were **removed** from the tree; only `inspector_workbench.html` + `manage_inspector_workbench.js` remain. Timeline, Comparison, Coverage / Health, and Provenance / Raw use structured, operator-legible layouts derived from existing projection JSON, with full endpoint JSON available only under collapsed secondary disclosure. **Provenance:** canonical entries stay primary; raw evidence stays labeled secondary inspection material and is never presented as canonical truth.
 
 ### Backend projection endpoints
 

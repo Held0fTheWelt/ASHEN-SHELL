@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Canonical Inspector workbench**: `administration-tool/app.py` route `/manage/inspector-workbench` (`manage_inspector_workbench`); `templates/manage/inspector_workbench.html`; `static/manage_inspector_workbench.js`; `static/manage.css` updates for inspector/workbench chrome; `templates/manage/base.html` single nav entry (replaces separate AI Stack Governance + Inspector Suite links). Legacy shell assets retained as non-canonical references: `templates/manage/inspector_suite.html`, `static/manage_inspector_suite.js`.
+- **Canonical Inspector workbench**: `administration-tool/app.py` route `/manage/inspector-workbench` (`manage_inspector_workbench`); `templates/manage/inspector_workbench.html`; `static/manage_inspector_workbench.js`; `static/manage.css` updates for inspector/workbench chrome; `templates/manage/base.html` single nav entry (replaces separate AI Stack Governance + Inspector Suite links). Superseded standalone templates and scripts (`ai_stack_governance.html`, `inspector_suite.html`, `manage_ai_stack_governance.js`, `manage_inspector_suite.js`) were removed; legacy URLs redirect only.
 - **Read-only Inspector APIs** in `backend/app/api/v1/ai_stack_governance_routes.py` (moderator/admin, `FEATURE_MANAGE_GAME_OPERATIONS`): `GET /api/v1/admin/ai-stack/inspector/timeline/<session_id>`, `.../comparison/<session_id>`, `.../coverage-health/<session_id>`, `.../provenance-raw/<session_id>` (`mode=canonical|raw` where applicable), with activity logging alongside existing turn projection.
 - **`backend/app/services/inspector_projection_service.py`**: timeline rows from World-Engine diagnostics; mandatory session-scoped turn-to-turn comparison when at least two turns exist; coverage/health aggregates (gate/validation distributions, fallback frequency, rejection/rationale and unsupported/unavailable counters); provenance/raw drilldown with explicit canonical-vs-raw boundary.
 - **`backend/app/services/inspector_turn_projection_service.py`** and **`backend/app/contracts/inspector_turn_projection.py`**: turn projection assembly, extended schema version constants, `build_inspector_view_projection_root`; `backend/app/contracts/__init__.py` re-exports.
@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Legacy admin URLs** (`/manage/ai-stack/governance`, `/manage/ai-stack-governance`, `/manage/inspector-suite`, `/manage/inspector-suite/turn`) now respond with **308 Permanent Redirect** to `/manage/inspector-workbench`.
+- **Inspector Suite UI final polish**: removed superseded `ai_stack_governance.html`, `inspector_suite.html`, `manage_ai_stack_governance.js`, and `manage_inspector_suite.js`; workbench panels use structured tables/KV blocks plus secondary full-JSON `<details>`; Provenance tab keeps canonical entries primary and raw bundle explicitly secondary; admin tests assert exact redirect `Location` and follow-through to the workbench template.
 - **AI stack runtime seams** (integration with planner/dramatic paths): `goc_turn_seams.py`, `langgraph_runtime.py`, `scene_director_goc.py`, `goc_dramatic_alignment.py`, `goc_gate_evaluation.py`; scenario tests `tests/test_goc_phase2_scenarios.py`, `tests/test_goc_retrieval_heavy_scenario.py`.
 
 ### Notes

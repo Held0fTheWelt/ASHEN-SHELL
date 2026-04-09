@@ -1,5 +1,16 @@
 # Inspector Suite Canonical Workbench
 
+## Canonical UI surface
+
+The only real Inspector Suite product UI in the administration tool is this pair:
+
+- Template: `administration-tool/templates/manage/inspector_workbench.html`
+- Script: `administration-tool/static/manage_inspector_workbench.js`
+
+Superseded standalone pages (`ai_stack_governance.html`, `inspector_suite.html` and their JS bundles) are **not** present as parallel surfaces; legacy URLs are redirect-only.
+
+**Provenance / Raw UX:** Provenance canonical entries must render as the **primary** operator surface; raw evidence remains **explicitly secondary** diagnostic material and must never replace the canonical view.
+
 ## Canonical entrypoint
 
 - Canonical administration route: `/manage/inspector-workbench`
