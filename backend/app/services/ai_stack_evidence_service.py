@@ -47,13 +47,18 @@ def _summarize_tool_influence(capability_audit: list[Any]) -> dict[str, Any]:
 
 
 def _retrieval_influence_from_turn(last_turn: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Build retrieval diagnostics for session evidence bundles.
+
+    Values are control-plane and diagnostic aggregates from the retrieval trace only.
+    They are not semantic authority and must not be treated as canonical authored truth.
+    """
     if not isinstance(last_turn, dict):
         return None
     retrieval = last_turn.get("retrieval")
     if not isinstance(retrieval, dict):
         retrieval = {}
     trace = build_retrieval_trace(retrieval)
-    return {
+    out: dict[str, Any] = {
         "domain": trace.get("domain"),
         "profile": trace.get("profile"),
         "hit_count": trace.get("hit_count"),
@@ -72,6 +77,10 @@ def _retrieval_influence_from_turn(last_turn: dict[str, Any] | None) -> dict[str
         "dedup_shaped_selection": trace.get("dedup_shaped_selection"),
         "retrieval_trace_schema_version": trace.get("retrieval_trace_schema_version"),
     }
+    rgs = trace.get("retrieval_governance_summary")
+    if isinstance(rgs, dict):
+        out["retrieval_governance_summary"] = rgs
+    return out
 
 
 def _committed_narrative_surface(last_diag: dict[str, Any]) -> dict[str, Any]:
@@ -189,10 +198,13 @@ def _improvement_evidence_influence(package: dict[str, Any]) -> dict[str, Any]:
     evidence = package.get("evidence_bundle") if isinstance(package.get("evidence_bundle"), dict) else {}
     stages = package.get("workflow_stages")
     stage_ids: list[str] = []
+    loop_stages: list[str] = []
     if isinstance(stages, list):
         for s in stages:
             if isinstance(s, dict) and isinstance(s.get("id"), str):
                 stage_ids.append(s["id"])
+            if isinstance(s, dict) and isinstance(s.get("loop_stage"), str):
+                loop_stages.append(s["loop_stage"])
     paths = evidence.get("retrieval_source_paths")
     path_count = len(paths) if isinstance(paths, list) else 0
     tx = evidence.get("transcript_evidence")
@@ -204,8 +216,15 @@ def _improvement_evidence_influence(package: dict[str, Any]) -> dict[str, Any]:
     terminal_rejected = human_status == "governance_rejected"
     revision_requested = human_status == "governance_revision_requested"
     pending_human = human_status == "pending_governance_review"
+    sc = package.get("semantic_compliance_validation")
+    sc_status = sc.get("status") if isinstance(sc, dict) else None
+    ilp = package.get("improvement_loop_progress")
+    ilp_len = len(ilp) if isinstance(ilp, list) else 0
     return {
         "workflow_stage_ids": stage_ids,
+        "improvement_loop_stages": loop_stages,
+        "semantic_compliance_status": sc_status,
+        "improvement_loop_progress_len": ilp_len,
         "retrieval_source_path_count": path_count,
         "has_transcript_evidence": bool(tx),
         "has_governance_review_bundle": bool(evidence.get("governance_review_bundle_id")),

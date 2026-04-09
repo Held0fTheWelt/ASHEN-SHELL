@@ -24,14 +24,20 @@ from ai_stack.goc_yaml_authority import cached_goc_yaml_title, clear_goc_yaml_sl
 HOST_OK = {"template_id": "god_of_carnage_solo", "title": "God of Carnage"}
 
 
-def _executor(tmp_path: Path, *, adapter: BaseModelAdapter) -> RuntimeTurnGraphExecutor:
+def _executor(
+    tmp_path: Path,
+    *,
+    adapter: BaseModelAdapter,
+    graph_fallback_adapter: BaseModelAdapter | None = None,
+) -> RuntimeTurnGraphExecutor:
     content_file = tmp_path / "content" / "god_of_carnage.md"
     content_file.parent.mkdir(parents=True, exist_ok=True)
     content_file.write_text("God of Carnage phase-3 scenario corpus.", encoding="utf-8")
     corpus = RagIngestionPipeline().build_corpus(tmp_path)
     registry = build_default_registry()
     routing = RoutingPolicy(registry)
-    merged = {"mock": adapter, "openai": adapter, "ollama": adapter}
+    mock_ad = graph_fallback_adapter if graph_fallback_adapter is not None else adapter
+    merged = {"mock": mock_ad, "openai": adapter, "ollama": adapter}
     return RuntimeTurnGraphExecutor(
         interpreter=interpret_player_input,
         routing=routing,
@@ -78,6 +84,7 @@ class TurnStep:
     player_input: str
     adapter: BaseModelAdapter
     trace_id: str
+    graph_fallback_adapter: BaseModelAdapter | None = None
 
 
 @pytest.fixture(autouse=True)
@@ -94,7 +101,11 @@ def _run_chain(tmp_path: Path, *, session_id: str, steps: list[TurnStep]) -> lis
     prior_signature: dict[str, str] | None = None
     results: list[dict[str, Any]] = []
     for idx, step in enumerate(steps):
-        graph = _executor(tmp_path, adapter=step.adapter)
+        graph = _executor(
+            tmp_path,
+            adapter=step.adapter,
+            graph_fallback_adapter=step.graph_fallback_adapter,
+        )
         result = graph.run(
             session_id=session_id,
             module_id="god_of_carnage",
@@ -236,22 +247,33 @@ def test_phase3_run_c_fail_and_degraded_are_explained(tmp_path: Path) -> None:
             player_input="I blame you for what happened.",
             adapter=ErrorAdapter(),
             trace_id="trace-p3-c3",
+            graph_fallback_adapter=JsonAdapter(
+                "Annette meets your blame head-on: she refuses to carry the fault alone, snaps that the table "
+                "will not scapegoat her tonight, and forces the accusation back into the open air where everyone "
+                "must answer for what they did."
+            ),
         ),
     ]
     results = _run_chain(tmp_path, session_id="s-p3-c", steps=steps)
     assert len(results) == 3
     assert gate_dramatic_quality(results[0]) == "pass"
     assert gate_dramatic_quality(results[1]) == "fail"
-    assert gate_dramatic_quality(results[2]) == "conditional_pass"
+    assert gate_dramatic_quality(results[2]) == "pass"
 
     dr2 = ((results[1].get("graph_diagnostics") or {}).get("dramatic_review") or {})
     dr3 = ((results[2].get("graph_diagnostics") or {}).get("dramatic_review") or {})
     assert dr2.get("dramatic_quality_status") == "fail"
     assert "alignment_reject" in str(dr2.get("dramatic_alignment_summary") or "")
-    assert dr3.get("dramatic_quality_status") == "degraded_explainable"
-    assert "simulated_generation_failure" in str((results[2].get("validation_outcome") or {}).get("reason") or "") or (
-        (results[2].get("validation_outcome") or {}).get("status") == "rejected"
-    )
+    assert dr3.get("dramatic_quality_status") == "pass"
+    nodes3 = (results[2].get("graph_diagnostics") or {}).get("nodes_executed") or []
+    assert "fallback_model" in nodes3
+    assert (results[2].get("generation") or {}).get("fallback_used") is True
+    repro = ((results[2].get("graph_diagnostics") or {}).get("repro_metadata") or {})
+    assert repro.get("model_fallback_used") is True
+    assert repro.get("model_success") is True
+    assert (results[2].get("validation_outcome") or {}).get("status") == "approved"
+    assert "truth_aligned" in (results[2].get("visibility_class_markers") or [])
+    assert results[2].get("experiment_preview") is False
 
 
 def test_phase3_anti_repetition_same_move_diff_continuity(tmp_path: Path) -> None:

@@ -127,10 +127,18 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert data["module_id"] == "god_of_carnage"
     assert data["outputs_are_recommendations_only"] is True
     assert data["review_state"]["status"] == "pending_human_review"
+    assert "governance_outcome_artifact" not in data
     ap = data.get("artifact_provenance") or {}
-    assert ap.get("kind") == "writers_room_workflow_output"
+    assert "kind" not in ap
     assert ap.get("workflow") == "writers_room_unified_stack_workflow"
     assert ap.get("module_id") == "god_of_carnage"
+    assert ap.get("shared_semantic_contract_version")
+    assert "recommendation_artifacts" in data
+    assert isinstance(data["recommendation_artifacts"], list)
+    assert data["recommendation_artifacts"]
+    assert "recommendations" not in data
+    assert "recommendations" not in data["proposal_package"]
+    assert isinstance(data.get("writers_room_artifact_manifest"), list)
     assert "workflow_manifest" in data
     assert data["workflow_manifest"]["workflow"] == "writers_room_unified_stack_workflow"
     stage_ids = [s["id"] for s in data["workflow_manifest"]["stages"]]
@@ -150,6 +158,18 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert data["review_summary"]["issue_count"] >= 0
     assert data["review_summary"]["bundle_id"] == (data.get("review_bundle") or {}).get("bundle_id")
     assert "proposal_package" in data
+    assert data["proposal_package"].get("artifact_class") == "proposal_artifact"
+    assert data["proposal_package"].get("shared_semantic_contract_version")
+    if data.get("issues"):
+        assert data["issues"][0].get("artifact_class") == "analysis_artifact"
+        for key in (
+            "artifact_id",
+            "source_module_id",
+            "evidence_refs",
+            "proposal_scope",
+            "approval_state",
+        ):
+            assert key in data["issues"][0]
     assert "comment_bundle" in data
     assert "patch_candidates" in data
     assert "variant_candidates" in data
@@ -160,6 +180,8 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert data["retrieval_trace"]["evidence_tier"] == data["retrieval_trace"]["evidence_strength"]
     assert data["retrieval_trace"].get("retrieval_trace_schema_version")
     assert data["retrieval_trace"].get("readiness_label")
+    assert data["retrieval_trace"].get("artifact_class") == "analysis_artifact"
+    assert data["retrieval_trace"].get("artifact_id")
     assert "review_bundle" in data
     assert "capability_audit" in data
     assert "langchain_retriever_preview" in data
@@ -168,6 +190,8 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert "wos.context_pack.build" in data["stack_components"]["capabilities"]
     assert data["stack_components"]["langchain_integration"]["enabled"] is True
     mg = data.get("model_generation") or {}
+    assert mg.get("artifact_class") == "analysis_artifact"
+    assert mg.get("artifact_id")
     assert mg.get("adapter_invocation_mode") in {"langchain_structured_primary", "raw_adapter_fallback"}
     meta = mg.get("metadata") or {}
     if mg.get("adapter_invocation_mode") == "langchain_structured_primary":
@@ -204,6 +228,12 @@ def test_writers_room_review_runs_unified_stack_flow(client, auth_headers):
     assert gt.get("langgraph_orchestration_depth") == "seed_graph_stub"
     assert gt.get("retrieval_evidence_tier") == data["retrieval_trace"]["evidence_tier"]
     assert "wos.context_pack.build" in (gt.get("capabilities_invoked") or [])
+    assert gt.get("artifact_class") == "analysis_artifact"
+    lp = data.get("langchain_retriever_preview") or {}
+    assert lp.get("artifact_class") == "analysis_artifact"
+    leg = (data.get("legacy_paths") or [{}])[0]
+    assert leg.get("artifact_class") == "analysis_artifact"
+    assert leg.get("body")
 
 
 def test_writers_room_patch_candidates_have_preview_summary_and_confidence(client, auth_headers):
@@ -322,6 +352,7 @@ def test_revision_submit_preserves_prior_snapshot_and_refreshes_artifacts(client
     assert final["proposal_package"]["evidence_sources"][0] == "corp/rev_beta.md"
     assert final["proposal_package"]["langchain_preview_paths"] == ["corp/rev_beta.md"]
     assert final["focus"] == "revision cycle B"
+    assert "governance_outcome_artifact" not in final
 
 
 def test_revision_submit_rejected_when_not_pending_revision(client, auth_headers):
@@ -351,7 +382,9 @@ def test_writers_room_review_state_transition_and_fetch(client, auth_headers):
 
     get_resp = client.get(f"/api/v1/writers-room/reviews/{review_id}", headers=auth_headers)
     assert get_resp.status_code == 200
-    assert get_resp.get_json()["review_id"] == review_id
+    fetched = get_resp.get_json()
+    assert fetched["review_id"] == review_id
+    assert "governance_outcome_artifact" not in fetched
 
     decision_resp = client.post(
         f"/api/v1/writers-room/reviews/{review_id}/decision",
@@ -364,6 +397,9 @@ def test_writers_room_review_state_transition_and_fetch(client, auth_headers):
     assert decision_data["human_decision"]["decision"] == "accept"
     assert decision_data["review_state"]["history"][-1]["status"] == "accepted"
     assert decision_data["review_state"]["history"][-1]["decision"] == "accept"
+    goa = decision_data.get("governance_outcome_artifact") or {}
+    assert goa.get("artifact_class") == "approved_authored_artifact"
+    assert goa.get("shared_semantic_contract_version")
 
 
 def test_writers_room_retrieval_sources_materially_change_proposal_artifacts(
@@ -470,6 +506,7 @@ def test_writers_room_revise_then_accept_hitl_loop(client, auth_headers):
     assert body["last_hitl_action"]["decision"] == "revise"
     assert body["review_state"]["history"][-1]["decision"] == "revise"
     assert "human_decision" not in body or body.get("human_decision") is None
+    assert "governance_outcome_artifact" not in body
 
     acc = client.post(
         f"/api/v1/writers-room/reviews/{review_id}/decision",
@@ -480,6 +517,9 @@ def test_writers_room_revise_then_accept_hitl_loop(client, auth_headers):
     final = acc.get_json()
     assert final["review_state"]["status"] == "accepted"
     assert final["human_decision"]["decision"] == "accept"
+    goa = final.get("governance_outcome_artifact") or {}
+    assert goa.get("artifact_class") == "approved_authored_artifact"
+    assert goa.get("approval_state") == "accepted"
 
 
 @pytest.mark.parametrize("bad_decision", ["", "maybe", "approve"])
@@ -512,6 +552,7 @@ def test_writers_room_cannot_finalize_twice(client, auth_headers):
         json={"decision": "reject"},
     )
     assert first.status_code == 200
+    assert (first.get_json() or {}).get("governance_outcome_artifact", {}).get("artifact_class") == "rejected_artifact"
     second = client.post(
         f"/api/v1/writers-room/reviews/{review_id}/decision",
         headers=auth_headers,

@@ -449,7 +449,7 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
     if len(readiness_label) > 280:
         readiness_label = readiness_label[:277] + "..."
 
-    return {
+    out: dict[str, Any] = {
         "evidence_strength": tier,
         "evidence_tier": tier,
         "hit_count": hit_count,
@@ -473,6 +473,11 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
         "retrieval_posture_summary": posture_summary,
         "retrieval_trace_schema_version": RETRIEVAL_TRACE_SCHEMA_VERSION,
     }
+    rgs = retrieval.get("retrieval_governance_summary")
+    if isinstance(rgs, dict):
+        # Passthrough canonical summary only — do not rebuild provenance from sources here.
+        out["retrieval_governance_summary"] = rgs
+    return out
 
 
 class CapabilityKind(StrEnum):

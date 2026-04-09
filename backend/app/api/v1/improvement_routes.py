@@ -10,6 +10,7 @@ from flask import g, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.api.v1 import api_v1_bp
+from app.contracts.improvement_operating_loop import ImprovementLoopStage
 from app.observability.audit_log import log_workflow_audit
 from app.observability.trace import get_trace_id
 from app.services.improvement_service import (
@@ -21,6 +22,7 @@ from app.services.improvement_service import (
     create_variant,
     finalize_recommendation_rationale_with_retrieval_digest,
     list_recommendation_packages,
+    recompute_semantic_compliance_validation,
     run_sandbox_experiment,
 )
 from app.services.improvement_task2a_routing import enrich_improvement_package_with_task2a_routing
@@ -130,12 +132,18 @@ def create_improvement_variant():
         return jsonify({"error": "candidate_summary is required"}), 400
     actor_id = str(get_jwt_identity() or "unknown")
     trace_id = g.get("trace_id") or get_trace_id()
-    variant = create_variant(
-        baseline_id=baseline_id,
-        candidate_summary=candidate_summary,
-        actor_id=actor_id,
-        metadata=data.get("metadata") if isinstance(data.get("metadata"), dict) else None,
-    )
+    raw_iec = data.get("improvement_entry_class")
+    top_iec = raw_iec.strip() if isinstance(raw_iec, str) and raw_iec.strip() else None
+    try:
+        variant = create_variant(
+            baseline_id=baseline_id,
+            candidate_summary=candidate_summary,
+            actor_id=actor_id,
+            metadata=data.get("metadata") if isinstance(data.get("metadata"), dict) else None,
+            improvement_entry_class=top_iec,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
     log_workflow_audit(
         trace_id,
         workflow="improvement_variant_create",
@@ -164,6 +172,7 @@ def run_improvement_experiment():
     workflow_stages: list[dict[str, Any]] = [
         {
             "id": "variant_resolution",
+            "loop_stage": ImprovementLoopStage.issue_selection.value,
             "completed_at": _utc_iso(),
             "artifact_key": "variant_id",
             "resource_id": variant_id,
@@ -177,6 +186,7 @@ def run_improvement_experiment():
     workflow_stages.append(
         {
             "id": "baseline_context",
+            "loop_stage": ImprovementLoopStage.evidence_collection.value,
             "completed_at": _utc_iso(),
             "artifact_key": "baseline_id",
             "resource_id": experiment.get("baseline_id"),
@@ -185,6 +195,7 @@ def run_improvement_experiment():
     workflow_stages.append(
         {
             "id": "sandbox_execution",
+            "loop_stage": ImprovementLoopStage.evidence_collection.value,
             "completed_at": _utc_iso(),
             "artifact_key": "experiment",
             "resource_id": experiment.get("experiment_id"),
@@ -194,6 +205,7 @@ def run_improvement_experiment():
     workflow_stages.append(
         {
             "id": "evaluation_and_recommendation_draft",
+            "loop_stage": ImprovementLoopStage.bounded_proposal_generation.value,
             "completed_at": _utc_iso(),
             "artifact_key": "recommendation_package",
             "resource_id": package.get("package_id"),
@@ -220,6 +232,7 @@ def run_improvement_experiment():
         workflow_stages.append(
             {
                 "id": "retrieval_improvement_context",
+                "loop_stage": ImprovementLoopStage.evidence_collection.value,
                 "completed_at": _utc_iso(),
                 "artifact_key": "wos.context_pack.build",
             }
@@ -237,6 +250,7 @@ def run_improvement_experiment():
         workflow_stages.append(
             {
                 "id": "transcript_tool_evidence",
+                "loop_stage": ImprovementLoopStage.evidence_collection.value,
                 "completed_at": _utc_iso(),
                 "artifact_key": "wos.transcript.read",
                 "resource_id": transcript_meta.get("run_id"),
@@ -248,11 +262,12 @@ def run_improvement_experiment():
             if isinstance(source, dict)
         ]
         package_response = dict(package)
-        package_response["deterministic_recommendation_base"] = str(package_response["recommendation_summary"])
         base_summary = str(package_response["recommendation_summary"])
         if transcript_meta.get("repetition_turn_count", 0) >= 2:
+            package_response["deterministic_recommendation_base"] = "revise_before_review"
             package_response["recommendation_summary"] = "revise_before_review" + transcript_suffix
         else:
+            package_response["deterministic_recommendation_base"] = base_summary
             package_response["recommendation_summary"] = base_summary + transcript_suffix
         package_response["transcript_evidence"] = transcript_meta
 
@@ -288,6 +303,7 @@ def run_improvement_experiment():
         workflow_stages.append(
             {
                 "id": "governance_review_bundle",
+                "loop_stage": ImprovementLoopStage.bounded_proposal_generation.value,
                 "completed_at": _utc_iso(),
                 "artifact_key": "wos.review_bundle.build",
                 "resource_id": (review_bundle.get("bundle_id") if isinstance(review_bundle, dict) else None),
@@ -349,13 +365,23 @@ def run_improvement_experiment():
         }
 
         package_response["evidence_bundle"] = evidence_bundle_final
-        package_response["workflow_stages"] = workflow_stages
         enrich_improvement_package_with_task2a_routing(
             package_response,
             context_text=str(context_payload.get("context_text") or ""),
             baseline_id=experiment["baseline_id"],
             variant_id=experiment["variant_id"],
         )
+        workflow_stages.append(
+            {
+                "id": "semantic_compliance_validation",
+                "loop_stage": ImprovementLoopStage.semantic_compliance_validation.value,
+                "completed_at": _utc_iso(),
+                "artifact_key": "semantic_compliance_validation",
+                "resource_id": package_response.get("package_id"),
+            }
+        )
+        package_response["workflow_stages"] = workflow_stages
+        recompute_semantic_compliance_validation(package_response)
         ImprovementStore.default().write_json(
             "recommendations",
             str(package_response["package_id"]),

@@ -231,7 +231,43 @@ FREEZE §14: distinguish **hard** / **soft** / **continuity carry-forward** / **
 
 ## 8. Mapping `RuntimeTurnState` → canonical model (informative)
 
-`RuntimeTurnState` is the execution transport. After `package_output`, canonical dramatic fields listed in §4–§5 are populated on the same state object (no duplicate runtime truth). For operators and CI artifacts, **`build_operator_canonical_turn_record(state)`** (`ai_stack/goc_turn_seams.py`) returns a single JSON-serializable dict: turn metadata, `interpreted_move`, director fields, proposal/validation/commit/visible summaries, continuity, markers, `experiment_preview`, `transition_pattern`, and a shallow `graph_diagnostics` summary (`graph_name`, `graph_version`, `nodes_executed`, `execution_health`, `fallback_path_taken`, `repro_complete`).
+`RuntimeTurnState` is the execution transport. After `package_output`, canonical dramatic fields listed in §4–§5 are populated on the same state object (no duplicate runtime truth). For operators and CI artifacts, **`build_operator_canonical_turn_record(state)`** (`ai_stack/goc_turn_seams.py`) returns a single JSON-serializable dict: turn metadata (including turn-basis host fields when supplied), `interpreted_move`, director fields, proposal/validation/commit/visible summaries, continuity, markers, `experiment_preview`, `transition_pattern`, `routing` (G2-aligned observation summary from the graph), **`dramatic_turn_record`** (roadmap §6.3 six-block projection; see §8.1), and a shallow `graph_diagnostics` summary (`graph_name`, `graph_version`, `nodes_executed`, `execution_health`, `fallback_path_taken`, `repro_complete`).
+
+### 8.1 Roadmap G3 projection and `goc_uninitialized_field_envelope_v1`
+
+`build_roadmap_dramatic_turn_record(state)` (invoked from `build_operator_canonical_turn_record`) assembles **Turn Basis**, **Decision Boundary Records**, **Routing Record**, **Retrieval Record**, **Realization Record**, and **Outcome Record** as a **read-only projection** from the same `RuntimeTurnState` — not a second writable truth surface.
+
+**Uninitialized fields (single canonical envelope).** If a G3-projected field is genuinely not initialized when the projection runs, its JSON value **must** be exactly one object with **exactly these five keys** (no extras, no omissions):
+
+| Key | Required value / constraint |
+| --- | --- |
+| `envelope_schema_id` | Literal string `goc_uninitialized_field_envelope_v1` |
+| `initialization_state` | Literal string `uninitialized` |
+| `initialization_issue_kind` | Literal string `pending_initialization` (means **initialization backlog**, not ambiguous semantics) |
+| `setter_surface` | Exactly one of: `admin_control_plane`, `writers_room_authored`, `runtime_host_session` |
+| `expected_source` | Non-empty string naming where the value must be supplied next (API parameter, session key, or route) |
+
+**Meaning of `setter_surface`:**
+
+- `admin_control_plane` — Administration Tool: operational setup, policy/profile, publication, or session configuration owned by admin workflows.
+- `writers_room_authored` — Writers' Room: **authored / module-level** dramatic configuration only (not operational session counters).
+- `runtime_host_session` — Runtime / host / session initialization: per-run execution values (e.g. `RuntimeTurnGraphExecutor.run(...)`, backend session store).
+
+**Forbidden as substitutes for uninitialized state:** bare `null`, the string `unknown`, placeholder strings, fake defaults, or ad hoc “missing” objects with different keys.
+
+**`turn_number` (operational).** Do not silently default `turn_number` to `1`. When the host supplies an integer via `RuntimeTurnGraphExecutor.run(..., turn_number=<int>)` (or equivalent session wiring), the projection emits that integer. When not supplied, the Turn Basis uses **`goc_uninitialized_field_envelope_v1`** with `setter_surface: runtime_host_session` (or `admin_control_plane` if session policy is admin-owned) and an `expected_source` that points to the host/session API. **Writers' Room is not** the setter for `turn_number`.
+
+**Implementation helper:** `ai_stack/goc_field_initialization_envelope.py` (`goc_uninitialized_field_envelope`, `is_goc_uninitialized_field_envelope`) is the only supported constructor/validator for this envelope.
+
+### 8.2 Retrieval record and governance summary (G5)
+
+**Single provenance builder.** `ai_stack/retrieval_governance_summary.py` builds **`retrieval_governance_summary`** on the runtime `retrieval` dict (attached by the graph after context pack assembly). That summary is the **only** place that partitions hit rows into **`authored_truth_refs`** vs **`derived_artifact_refs`**, using the existing canonical `content_class` string on each row (`authored_module` vs all other `ContentClass` values in `ai_stack/rag.py`). Full hit payloads remain under `retrieval.sources`; compact ref entries in the two ref lists are projections of those rows only — not a parallel truth system.
+
+**`dominant_visibility_class`** inside the summary is derived from `visibility_counts`: highest count wins; ties break by the declaration order of `SourceVisibilityClass` in `ai_stack/rag.py`; empty counts yield `None`.
+
+**Dramatic turn projection.** `build_roadmap_dramatic_turn_record` copies from `retrieval.retrieval_governance_summary` into `retrieval_record` without re-classifying hits: `authored_truth_refs`, `derived_artifact_refs`, `retrieval_governance_result` (the full summary), and `retrieval_visibility_class` (= `dominant_visibility_class`). `retrieval_lane` continues to reflect the retrieval profile / route fields on `retrieval`.
+
+**Trace and admin evidence.** `build_retrieval_trace` in `ai_stack/capabilities.py` **passthrough-embeds** the same `retrieval_governance_summary` dict under the key `retrieval_governance_summary` (no second derivation from `sources`). Backend session evidence aggregates that trace for **control-plane and diagnostic** use only — not semantic authority.
 
 ---
 

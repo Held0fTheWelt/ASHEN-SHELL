@@ -106,6 +106,29 @@ def test_build_retrieval_trace_compact_governance_hints() -> None:
     assert t["readiness_label"].startswith("confidence=")
 
 
+def test_build_retrieval_trace_passthrough_retrieval_governance_summary() -> None:
+    from ai_stack.retrieval_governance_summary import summarize_retrieval_governance_from_hit_rows
+
+    sources = [
+        {
+            "chunk_id": "z1",
+            "source_path": "x.md",
+            "source_evidence_lane": "canonical",
+            "source_visibility_class": "runtime_safe",
+            "content_class": "authored_module",
+        }
+    ]
+    summary = summarize_retrieval_governance_from_hit_rows(sources)
+    retrieval = {
+        "hit_count": 1,
+        "status": "ok",
+        "sources": sources,
+        "retrieval_governance_summary": summary,
+    }
+    trace = build_retrieval_trace(retrieval)
+    assert trace.get("retrieval_governance_summary") is summary
+
+
 def test_context_pack_audit_summary_includes_tier_and_transcript_impact(tmp_path: Path) -> None:
     registry = _build_registry(tmp_path)
     registry.invoke(

@@ -1,0 +1,15 @@
+audit_run_id: g9_level_a_fullsix_20260410
+assembled_at_utc: 2026-04-09T10:13:06Z
+source_evidence_dir: C:/Users/YvesT/PycharmProjects/WorldOfShadows/tests/reports/evidence/g9_level_a_fullsix_20260410
+
+Included scenario files (SHA-256):
+  scenario_goc_roadmap_s1_direct_provocation.json  3ce561d99cfc5804d3c4fcbca3784da97249aeae6f4d4332312512876b11f2cb
+  scenario_goc_roadmap_s2_deflection_brevity.json  0bcb82ffb500417bc05e74cf1a623332bcd217705ce86c5f68001dfef1e7a1ec
+  scenario_goc_roadmap_s3_pressure_escalation.json  38b0916c19de54d66fea83e37c0ebcaff99b5f75aa880812c224f6223f294ad6
+  scenario_goc_roadmap_s4_misinterpretation_correction.json  d98b97d288cf3265ddb4534102d792a21d2682959c85def88da02427f2f81261
+  scenario_goc_roadmap_s5_primary_failure_fallback.json  0dd46ab60145812b53bd0fc5b8401f2578b2ca8d7327e457248be62f05e7aef6
+  scenario_goc_roadmap_s6_retrieval_heavy.json  be32860176cf9af2d0881be06f44d3b8600c7b95eac3dc457526eaa65cd7d70b
+
+Excluded by design from evidence dir: all non-scenario files (Evaluator A/B matrices, raw sheets, delta, attempt records, validators, witness logs).
+
+Governing plan: docs/plans/PLAN_G9B_STRICT_BLIND_EXTERNAL_EVALUATOR_B_RUN.md

@@ -154,7 +154,12 @@ def test_sandbox_execution_evaluation_and_recommendation_package(client, auth_he
     ws = payload["workflow_stages"]
     assert ws
     assert payload["workflow_stages"] == recommendation["workflow_stages"]
+    assert all("loop_stage" in s for s in ws)
     assert any(s["id"] == "governance_review_bundle" for s in ws)
+    assert any(s["id"] == "semantic_compliance_validation" for s in ws)
+    assert recommendation["semantic_compliance_validation"]["status"] == "pass"
+    assert all(r["passed"] for r in recommendation["semantic_compliance_validation"]["mandatory_check_results"])
+    assert recommendation["improvement_output_artifact_class"] == "proposal_artifact"
     assert retrieval["profile"] == "improvement_eval"
     assert review_bundle["status"] == "recommendation_only"
     assert any(entry["capability_name"] == "wos.context_pack.build" for entry in capability_audit)
@@ -448,6 +453,8 @@ def test_apply_improvement_recommendation_decision_flow(tmp_path):
     )
     pid = pkg["package_id"]
     assert pkg["governance_review_state"]["status"] == "pending_governance_review"
+    assert pkg["improvement_output_artifact_class"] == "proposal_artifact"
+    assert pkg["semantic_compliance_validation"]["status"] == "pass"
 
     with pytest.raises(ValueError, match="decision_must_be"):
         apply_improvement_recommendation_decision(
@@ -459,6 +466,7 @@ def test_apply_improvement_recommendation_decision_flow(tmp_path):
     )
     assert revised["governance_review_state"]["status"] == "governance_revision_requested"
     assert revised["review_status"] == "governance_revision_requested"
+    assert "publication_verification_trace" not in revised
 
     accepted = apply_improvement_recommendation_decision(
         package_id=pid, actor_id="human", decision="accept", note="ok", store=store
@@ -466,6 +474,19 @@ def test_apply_improvement_recommendation_decision_flow(tmp_path):
     assert accepted["governance_review_state"]["status"] == "governance_accepted"
     assert accepted["review_status"] == "governance_accepted"
     assert accepted["human_decision"]["decision"] == "accept"
+    trace = accepted.get("publication_verification_trace")
+    assert isinstance(trace, dict)
+    assert trace.get("contract_version")
+    assert trace.get("terminal_governance_status") == "governance_accepted"
+    assert trace.get("declared_runtime_promotion") is False
+    assert trace.get("publication_surface") == "improvement_recommendation_registry"
+    assert trace.get("published_record_id") == pid
+    assert trace.get("improvement_output_artifact_class") == "approved_authored_artifact"
+    pvc = trace.get("post_change_verification")
+    assert isinstance(pvc, dict)
+    assert pvc.get("outcome") == "verified_against_stored_evaluation"
+    assert accepted["improvement_output_artifact_class"] == "approved_authored_artifact"
+    assert len(accepted.get("improvement_loop_progress", [])) == 3
 
     with pytest.raises(ValueError, match="recommendation_already_finalized"):
         apply_improvement_recommendation_decision(
@@ -492,6 +513,10 @@ def test_apply_improvement_recommendation_decision_flow(tmp_path):
     )
     assert rejected["governance_review_state"]["status"] == "governance_rejected"
     assert rejected["review_status"] == "governance_rejected"
+    assert rejected.get("publication_verification_trace", {}).get("terminal_governance_status") == "governance_rejected"
+    assert rejected["improvement_output_artifact_class"] == "rejected_artifact"
+    rtrace = rejected.get("publication_verification_trace") or {}
+    assert rtrace.get("post_change_verification", {}).get("outcome") == "not_applicable"
 
 
 def test_improvement_recommendation_decision_http_route(client, auth_headers, tmp_path):
@@ -769,6 +794,49 @@ def test_sandbox_experiment_evaluation_uses_interpretation_signals(tmp_path):
     assert "semantic_speech_rate" in metrics
     assert "semantic_action_rate" in metrics
     assert "semantic_command_rate" in metrics
+
+
+def test_create_variant_invalid_improvement_entry_class_returns_400(client, auth_headers):
+    resp = client.post(
+        "/api/v1/improvement/variants",
+        headers=auth_headers,
+        json={
+            "baseline_id": "god_of_carnage",
+            "candidate_summary": "Bad entry class",
+            "improvement_entry_class": "not_valid",
+        },
+    )
+    assert resp.status_code == 400
+    assert "unknown_improvement_entry_class" in resp.get_json().get("error", "")
+
+
+def test_create_variant_metadata_conflict_returns_400(client, auth_headers):
+    resp = client.post(
+        "/api/v1/improvement/variants",
+        headers=auth_headers,
+        json={
+            "baseline_id": "god_of_carnage",
+            "candidate_summary": "Conflict",
+            "improvement_entry_class": "runtime_issue_improvement",
+            "metadata": {"improvement_entry_class": "semantic_quality_improvement"},
+        },
+    )
+    assert resp.status_code == 400
+    assert "improvement_entry_class_metadata_conflict" in resp.get_json().get("error", "")
+
+
+def test_create_variant_top_level_entry_class_persists(client, auth_headers):
+    resp = client.post(
+        "/api/v1/improvement/variants",
+        headers=auth_headers,
+        json={
+            "baseline_id": "god_of_carnage",
+            "candidate_summary": "Typed via API",
+            "improvement_entry_class": "semantic_quality_improvement",
+        },
+    )
+    assert resp.status_code == 201
+    assert resp.get_json()["improvement_entry_class"] == "semantic_quality_improvement"
 
 
 # Extension tests for error-path coverage

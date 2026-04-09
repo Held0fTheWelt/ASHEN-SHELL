@@ -5,7 +5,13 @@ on:
     branches: [ master, main, develop ]
     paths:
       - 'backend/**'
+      # Backend tests under tests/ import ai_stack (e.g. test_goc_evidence_retrieval_governance, test_goc_semantic_parity).
+      - 'ai_stack/**'
+      - 'story_runtime_core/**'
       - 'tests/requirements_hygiene/**'
+      - 'tests/goc_gates/**'
+      - 'scripts/g9_threshold_validator.py'
+      - 'docs/goc_evidence_templates/**'
       - '.github/workflows/backend-tests.yml'
       - 'run_tests.py'
       - 'setup-test-environment.sh'
@@ -14,7 +20,12 @@ on:
     branches: [ master, main, develop ]
     paths:
       - 'backend/**'
+      - 'ai_stack/**'
+      - 'story_runtime_core/**'
       - 'tests/requirements_hygiene/**'
+      - 'tests/goc_gates/**'
+      - 'scripts/g9_threshold_validator.py'
+      - 'docs/goc_evidence_templates/**'
       - '.github/workflows/backend-tests.yml'
       - 'run_tests.py'
       - 'setup-test-environment.sh'
@@ -35,6 +46,8 @@ jobs:
           python -m pip install 'pytest>=7,<9'
       - name: Static requirements chain (repo root)
         run: python -m pytest tests/requirements_hygiene/ -q
+      - name: G9 threshold validator CLI tests (repo root, no backend install)
+        run: python -m pytest tests/goc_gates/ -q --tb=short
 
   backend-fast-tests:
     name: Backend Fast Tests (Unit Tests)
@@ -58,6 +71,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
 
+      # Collects all of backend/tests (pytest.ini testpaths); no per-file allowlist — new modules are always included.
       - name: Run backend fast tests
         working-directory: ./backend
         run: |
@@ -71,10 +85,77 @@ jobs:
           path: test_reports/
           retention-days: 30
 
+  # Explicit path proves Gate G7 Writers' Room tests execute in CI (not only via broad `pytest tests/`).
+  writers-room-g7-contract-tests:
+    name: Writers' Room G7 contract tests (explicit pytest path)
+    runs-on: ubuntu-latest
+    needs: [ requirements-test-hygiene ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.txt
+      - name: Run tests/writers_room (G7 operating contract)
+        working-directory: ./backend
+        run: |
+          python -m pytest tests/writers_room/ -q --tb=short --no-cov
+
+  # Explicit path proves Gate G8 Improvement tests execute in CI (not only via broad `pytest tests/`).
+  improvement-g8-contract-tests:
+    name: Improvement G8 contract tests (explicit pytest path)
+    runs-on: ubuntu-latest
+    needs: [ requirements-test-hygiene ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.txt
+      - name: Run tests/improvement (G8 operating contract)
+        working-directory: ./backend
+        run: |
+          python -m pytest tests/improvement/ -q --tb=short --no-cov
+
+  # Explicit pytest path for audit plan G10 §F backend trio. Green here = the integrated backend pytest surface runs in CI;
+  # roadmap §6.11 step 11 still requires the authoritative G9/G9B repo bundle (e.g. g9_level_a_fullsix_20260410), not this job alone.
+  g10-backend-e2e-evidence-path:
+    name: Gate G10 evidence path (backend E2E trio, explicit pytest)
+    runs-on: ubuntu-latest
+    needs: [ requirements-test-hygiene ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.txt
+      - name: Run G10 audit trio (full lifecycle, bootstrap, area2 closure gates)
+        working-directory: ./backend
+        run: |
+          python -m pytest tests/test_e2e_god_of_carnage_full_lifecycle.py tests/test_bootstrap_staged_runtime_integration.py tests/runtime/test_area2_task4_closure_gates.py -q --tb=short --no-cov
+
   backend-coverage-tests:
     name: Backend Coverage Tests (85% Gate)
     runs-on: ubuntu-latest
-    needs: [ backend-fast-tests ]
+    needs:
+      [
+        backend-fast-tests,
+        writers-room-g7-contract-tests,
+        improvement-g8-contract-tests,
+        g10-backend-e2e-evidence-path,
+      ]
 
     strategy:
       matrix:

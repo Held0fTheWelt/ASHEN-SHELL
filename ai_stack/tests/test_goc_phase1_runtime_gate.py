@@ -16,7 +16,13 @@ pytest.importorskip(
 )
 from ai_stack.langgraph_runtime import RuntimeTurnGraphExecutor
 from ai_stack.rag import ContextPackAssembler, ContextRetriever, RagIngestionPipeline
-from ai_stack.goc_turn_seams import repro_metadata_complete, strip_director_overwrites_from_structured_output
+from ai_stack.goc_field_initialization_envelope import is_goc_uninitialized_field_envelope
+from ai_stack.goc_roadmap_semantic_surface import ROUTING_LABELS, TASK_TYPES
+from ai_stack.goc_turn_seams import (
+    build_operator_canonical_turn_record,
+    repro_metadata_complete,
+    strip_director_overwrites_from_structured_output,
+)
 from ai_stack.goc_yaml_authority import (
     cached_goc_yaml_title,
     clear_goc_yaml_slice_cache,
@@ -121,6 +127,50 @@ def test_goc_non_preview_path_turn_integrity_and_diagnostics(tmp_path: Path) -> 
     yaml_mod = load_goc_canonical_module_yaml()
     assert yaml_mod.get("module_id") == "god_of_carnage"
     assert result["scene_assessment"].get("canonical_setting")
+
+    assert result.get("task_type") in TASK_TYPES
+    routing = result.get("routing") or {}
+    assert routing.get("route_reason_code") in ROUTING_LABELS
+    assert routing.get("policy_id_used")
+    assert routing.get("policy_version_used")
+    assert routing.get("fallback_chain")
+    assert routing.get("fallback_stage_reached") == "primary_only"
+
+    op = build_operator_canonical_turn_record(result)
+    dtr = op.get("dramatic_turn_record") or {}
+    retrieval = result.get("retrieval") or {}
+    gov = retrieval.get("retrieval_governance_summary")
+    assert isinstance(gov, dict)
+    rr = dtr.get("retrieval_record") or {}
+    assert rr.get("authored_truth_refs") == gov.get("authored_truth_refs")
+    assert rr.get("derived_artifact_refs") == gov.get("derived_artifact_refs")
+    assert rr.get("retrieval_governance_result") == gov
+    assert rr.get("retrieval_visibility_class") == gov.get("dominant_visibility_class")
+    assert dtr.get("turn_basis")
+    assert dtr.get("routing_record")
+    tn = dtr["turn_basis"]["turn_number"]
+    assert is_goc_uninitialized_field_envelope(tn), "turn_number must use goc_uninitialized_field_envelope_v1 when not host-supplied"
+    assert dtr["turn_basis"]["turn_id"] == "trace-goc-phase1"
+
+
+def test_turn_number_when_host_supplied_is_scalar_not_envelope(tmp_path: Path) -> None:
+    graph = _executor(tmp_path)
+    result = graph.run(
+        session_id="s-goc-turnn",
+        module_id="god_of_carnage",
+        current_scene_id="living_room",
+        player_input="Hello.",
+        trace_id="trace-turnn",
+        turn_number=3,
+        turn_id="explicit-turn-id",
+        host_experience_template={
+            "template_id": "god_of_carnage_solo",
+            "title": "God of Carnage",
+        },
+    )
+    dtr = build_operator_canonical_turn_record(result)["dramatic_turn_record"]
+    assert dtr["turn_basis"]["turn_number"] == 3
+    assert dtr["turn_basis"]["turn_id"] == "explicit-turn-id"
 
 
 def test_builtin_title_mismatch_marks_scope_breach_and_forces_preview(tmp_path: Path) -> None:

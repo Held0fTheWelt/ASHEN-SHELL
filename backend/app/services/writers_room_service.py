@@ -27,6 +27,11 @@ from app.runtime.area2_operator_truth import (
 from app.runtime.area2_routing_authority import AUTHORITY_SOURCE_WRITERS_ROOM
 from app.runtime.operator_audit import build_bounded_surface_operator_audit
 from app.services.writers_room_model_routing import build_writers_room_model_route_specs
+from app.contracts.writers_room_artifact_class import (
+    GOC_SHARED_SEMANTIC_CONTRACT_VERSION,
+    WritersRoomArtifactClass,
+    build_writers_room_artifact_record,
+)
 from ai_stack import (
     build_capability_tool_bridge,
     build_langchain_retriever_bridge,
@@ -73,6 +78,52 @@ def _append_workflow_stage(
 
 def _workflow_stage_ids(manifest_stages: list[dict[str, Any]]) -> list[str]:
     return [str(s.get("id", "")) for s in manifest_stages if isinstance(s, dict)]
+
+
+def _append_manifest_entry(
+    manifest: list[dict[str, str]],
+    obj: dict[str, Any] | None,
+) -> None:
+    if not isinstance(obj, dict):
+        return
+    aid = obj.get("artifact_id")
+    acl = obj.get("artifact_class")
+    if aid is not None and acl is not None:
+        manifest.append({"artifact_id": str(aid), "artifact_class": str(acl)})
+
+
+def _writers_room_artifact_manifest(package: dict[str, Any]) -> list[dict[str, str]]:
+    """Derived index only — same taxonomy as stamped objects (gate G7)."""
+    manifest: list[dict[str, str]] = []
+    for item in package.get("issues") or []:
+        _append_manifest_entry(manifest, item if isinstance(item, dict) else None)
+    for item in package.get("recommendation_artifacts") or []:
+        _append_manifest_entry(manifest, item if isinstance(item, dict) else None)
+    for item in package.get("patch_candidates") or []:
+        _append_manifest_entry(manifest, item if isinstance(item, dict) else None)
+    for item in package.get("variant_candidates") or []:
+        _append_manifest_entry(manifest, item if isinstance(item, dict) else None)
+    for key in (
+        "proposal_package",
+        "comment_bundle",
+        "review_summary",
+        "model_generation",
+        "retrieval_trace",
+        "review_bundle",
+        "governance_truth",
+        "langchain_retriever_preview",
+    ):
+        _append_manifest_entry(manifest, package.get(key) if isinstance(package.get(key), dict) else None)
+    cb = package.get("comment_bundle")
+    if isinstance(cb, dict):
+        for c in cb.get("comments") or []:
+            _append_manifest_entry(manifest, c if isinstance(c, dict) else None)
+    for notice in package.get("legacy_paths") or []:
+        _append_manifest_entry(manifest, notice if isinstance(notice, dict) else None)
+    goa = package.get("governance_outcome_artifact")
+    if isinstance(goa, dict):
+        _append_manifest_entry(manifest, goa)
+    return manifest
 
 
 def _context_fingerprint(context_text: str, *, max_bytes: int = 2048) -> str:
@@ -196,7 +247,21 @@ def _execute_writers_room_workflow_package(
     )
     _append_workflow_stage(manifest_stages, stage_id="retrieval_analysis", artifact_key="retrieval")
     retrieval_inner = context_payload.get("retrieval")
+    sources_early = retrieval_inner.get("sources", []) if isinstance(retrieval_inner, dict) else []
+    source_rows = [row for row in sources_early if isinstance(row, dict)]
+    early_evidence_paths = [str(r.get("source_path", "") or "") for r in source_rows if r.get("source_path")]
     retrieval_trace = build_retrieval_trace(retrieval_inner if isinstance(retrieval_inner, dict) else {})
+    retrieval_trace = {
+        **retrieval_trace,
+        **build_writers_room_artifact_record(
+            artifact_id=f"retrieval_trace_{module_id}_{uuid4().hex[:10]}",
+            artifact_class=WritersRoomArtifactClass.analysis_artifact,
+            source_module_id=module_id,
+            evidence_refs=early_evidence_paths[:20],
+            proposal_scope="retrieval_governance_trace",
+            approval_state="pending_review",
+        ),
+    }
     evidence_tag = retrieval_trace["evidence_tier"]
     retrieval_text = str(context_payload.get("context_text") or "")
     ctx_fingerprint = _context_fingerprint(retrieval_text)
@@ -351,12 +416,16 @@ def _execute_writers_room_workflow_package(
     )
 
     _append_workflow_stage(manifest_stages, stage_id="proposal_generation", artifact_key="model_generation")
-    sources = (
-        context_payload.get("retrieval", {}).get("sources", [])
-        if isinstance(context_payload.get("retrieval"), dict)
-        else []
+    generation.update(
+        build_writers_room_artifact_record(
+            artifact_id=f"model_gen_{uuid4().hex[:16]}",
+            artifact_class=WritersRoomArtifactClass.analysis_artifact,
+            source_module_id=module_id,
+            evidence_refs=early_evidence_paths[:20],
+            proposal_scope="bounded_model_generation_trace",
+            approval_state="pending_review",
+        )
     )
-    source_rows = [row for row in sources if isinstance(row, dict)]
     meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
     structured = meta.get("structured_output") if isinstance(meta.get("structured_output"), dict) else None
     model_confidence_note = (
@@ -365,22 +434,38 @@ def _execute_writers_room_workflow_package(
         else ("raw_generation_only" if generation.get("content") else "no_model_content")
     )
 
-    issues = [
-        {
-            "id": f"issue_{index}",
-            "severity": "medium",
-            "type": "consistency",
-            "description": f"Review source {source.get('source_path', '')} for canon alignment in {module_id}.",
-            "evidence_source": source.get("source_path", ""),
-            "linked_source_path": source.get("source_path", ""),
-            "evidence_tier": evidence_tag,
-            "confidence_kind": "retrieval_heuristic",
-            "revision_sensitivity": "high" if evidence_tag in {"strong", "moderate"} else "standard",
-            "rationale": f"Issue derived from ranked retrieval hit for {source.get('source_path', 'unknown')}.",
-        }
-        for index, source in enumerate(source_rows[:3], start=1)
-    ]
-    recommendations = [
+    issues: list[dict[str, Any]] = []
+    for index, source in enumerate(source_rows[:3], start=1):
+        path = str(source.get("source_path", "") or "")
+        ib = build_writers_room_artifact_record(
+            artifact_id=f"issue_{index}",
+            artifact_class=WritersRoomArtifactClass.analysis_artifact,
+            source_module_id=module_id,
+            evidence_refs=[path] if path else [],
+            proposal_scope="retrieval_linked_issue",
+            approval_state="pending_review",
+        )
+        issues.append(
+            {
+                **ib,
+                "id": ib["artifact_id"],
+                "severity": "medium",
+                "type": "consistency",
+                "description": f"Review source {path} for canon alignment in {module_id}.",
+                "evidence_source": path,
+                "linked_source_path": path,
+                "evidence_tier": evidence_tag,
+                "confidence_kind": "retrieval_heuristic",
+                "revision_sensitivity": "high" if evidence_tag in {"strong", "moderate"} else "standard",
+                "rationale": f"Issue derived from ranked retrieval hit for {path or 'unknown'}.",
+            }
+        )
+
+    _append_workflow_stage(manifest_stages, stage_id="artifact_packaging")
+    proposal_id = f"proposal_{uuid4().hex}"
+    comment_bundle_id = f"comments_{uuid4().hex}"
+
+    recommendation_texts = [
         "Verify scene-level continuity against retrieved evidence before publishing.",
         "Prioritize contradictory characterization notes for human review.",
         "Preserve recommendation-only status until admin approval.",
@@ -388,25 +473,56 @@ def _execute_writers_room_workflow_package(
     if structured:
         for item in structured.get("recommendations") or []:
             if item:
-                recommendations.append(str(item))
+                recommendation_texts.append(str(item))
     if generation["content"]:
-        recommendations.append(generation["content"][:220])
+        recommendation_texts.append(generation["content"][:220])
 
-    _append_workflow_stage(manifest_stages, stage_id="artifact_packaging")
-    proposal_id = f"proposal_{uuid4().hex}"
-    comment_bundle_id = f"comments_{uuid4().hex}"
+    evidence_paths = [row.get("source_path", "") for row in source_rows]
+    rec_refs = [p for p in evidence_paths if p][:5]
+    recommendation_artifacts: list[dict[str, Any]] = []
+    for idx, body in enumerate(recommendation_texts, start=1):
+        rid = f"rec_{proposal_id}_{idx}"
+        recommendation_artifacts.append(
+            {
+                **build_writers_room_artifact_record(
+                    artifact_id=rid,
+                    artifact_class=WritersRoomArtifactClass.analysis_artifact,
+                    source_module_id=module_id,
+                    evidence_refs=list(rec_refs),
+                    proposal_scope="writers_room_bounded_recommendation",
+                    approval_state="pending_review",
+                ),
+                "body": body,
+            }
+        )
+
     review_bundle = workflow.review_bundle_tool.invoke(
         {
             "module_id": module_id,
             "summary": (
                 f"[evidence_tier:{evidence_tag}] Writers-Room review for {module_id} with focus '{focus}'."
             ),
-            "recommendations": recommendations,
+            "recommendations": [r["body"] for r in recommendation_artifacts],
             "evidence_sources": [row.get("source_path", "") for row in source_rows],
         }
     )
     _append_workflow_stage(manifest_stages, stage_id="governance_envelope", artifact_key="review_bundle")
-    bundle_id = review_bundle.get("bundle_id") if isinstance(review_bundle, dict) else None
+    if not isinstance(review_bundle, dict):
+        review_bundle = {}
+    else:
+        review_bundle = dict(review_bundle)
+    _rb_id = str(review_bundle.get("bundle_id") or f"bundle_pending_{uuid4().hex[:10]}")
+    review_bundle.update(
+        build_writers_room_artifact_record(
+            artifact_id=_rb_id,
+            artifact_class=WritersRoomArtifactClass.proposal_artifact,
+            source_module_id=module_id,
+            evidence_refs=[p for p in evidence_paths if p][:20],
+            proposal_scope="review_bundle_envelope",
+            approval_state="pending_review",
+        )
+    )
+    bundle_id = review_bundle.get("bundle_id")
 
     langchain_documents, langchain_preview_source = _langchain_preview_documents_from_context_pack(
         retrieval_inner if isinstance(retrieval_inner, dict) else {},
@@ -419,7 +535,6 @@ def _execute_writers_room_workflow_package(
     ]
     _append_workflow_stage(manifest_stages, stage_id="retrieval_bridge_preview", artifact_key="langchain_retriever_preview")
 
-    evidence_paths = [row.get("source_path", "") for row in source_rows]
     retrieval_hit_count = len(source_rows)
     if isinstance(retrieval_inner, dict):
         raw_hits = retrieval_inner.get("hit_count")
@@ -429,13 +544,22 @@ def _execute_writers_room_workflow_package(
             except (TypeError, ValueError):
                 retrieval_hit_count = len(source_rows)
 
+    pp_meta = build_writers_room_artifact_record(
+        artifact_id=proposal_id,
+        artifact_class=WritersRoomArtifactClass.proposal_artifact,
+        source_module_id=module_id,
+        evidence_refs=[p for p in evidence_paths if p],
+        proposal_scope="writers_room_proposal_package",
+        approval_state="pending_review",
+    )
     proposal_package = {
+        **pp_meta,
         "proposal_id": proposal_id,
         "module_id": module_id,
         "focus": focus,
         "generated_at": _utc_now(),
         "issues": issues,
-        "recommendations": recommendations,
+        "recommendation_artifacts": recommendation_artifacts,
         "evidence_sources": evidence_paths,
         "retrieval_digest": {
             "hit_count": retrieval_hit_count,
@@ -467,55 +591,102 @@ def _execute_writers_room_workflow_package(
             ],
         },
     }
-    comment_bundle = {
-        "bundle_id": comment_bundle_id,
-        "comments": [
+    cb_root = build_writers_room_artifact_record(
+        artifact_id=comment_bundle_id,
+        artifact_class=WritersRoomArtifactClass.analysis_artifact,
+        source_module_id=module_id,
+        evidence_refs=[p for p in evidence_paths if p][:20],
+        proposal_scope="comment_bundle_aggregate",
+        approval_state="pending_review",
+    )
+    comments_out: list[dict[str, Any]] = []
+    for idx, issue in enumerate(issues, start=1):
+        path = str(issue.get("evidence_source", "") or "")
+        cm = build_writers_room_artifact_record(
+            artifact_id=f"comment_{comment_bundle_id}_{idx}",
+            artifact_class=WritersRoomArtifactClass.analysis_artifact,
+            source_module_id=module_id,
+            evidence_refs=[path] if path else [],
+            proposal_scope="comment_thread_item",
+            approval_state="pending_review",
+        )
+        comments_out.append(
             {
+                **cm,
                 "comment_id": f"comment_{idx}",
                 "severity": issue["severity"],
                 "text": issue["description"],
                 "evidence_source": issue["evidence_source"],
                 "evidence_tier": issue.get("evidence_tier"),
             }
-            for idx, issue in enumerate(issues, start=1)
-        ],
-    }
+        )
+    comment_bundle = {**cb_root, "bundle_id": comment_bundle_id, "comments": comments_out}
     _severity_confidence = {"high": 0.9, "medium": 0.7, "low": 0.4}
-    patch_candidates = [
-        {
-            "candidate_id": f"patch_{index}",
-            "target": source.get("source_path", ""),
-            "change_hint": "Adjust wording to maintain canon consistency.",
-            "preview_summary": (
-                f"Revise {source.get('source_path', 'target')} to resolve canon inconsistency "
-                f"identified during {module_id} review."
-            ),
-            "confidence": _severity_confidence.get(
-                issues[index - 1]["severity"] if index - 1 < len(issues) else "medium",
-                0.7,
-            ),
-            "confidence_kind": "retrieval_heuristic",
-            "evidence_tier": evidence_tag,
-            "review_bundle_id": bundle_id,
-            "linked_source_path": source.get("source_path", ""),
-            "rationale": f"Patch candidate anchored to retrieval path {source.get('source_path', '')!r}.",
-        }
-        for index, source in enumerate(source_rows[:2], start=1)
-    ]
-    variant_candidates = [
-        {
-            "variant_id": f"variant_{index}",
-            "summary": recommendation,
-            "evidence_anchor": evidence_paths[0] if evidence_paths else "",
-            "confidence": 0.55 if index > 1 else 0.62,
-            "confidence_kind": "model_structured" if structured and index == 1 else "workflow_default",
-            "revision_sensitivity": "standard",
-        }
-        for index, recommendation in enumerate(recommendations[:3], start=1)
-    ]
+    patch_candidates: list[dict[str, Any]] = []
+    for index, source in enumerate(source_rows[:2], start=1):
+        spath = str(source.get("source_path", "") or "")
+        pb = build_writers_room_artifact_record(
+            artifact_id=f"patch_{index}",
+            artifact_class=WritersRoomArtifactClass.candidate_authored_artifact,
+            source_module_id=module_id,
+            evidence_refs=[spath] if spath else [],
+            proposal_scope="patch_candidate_hint",
+            approval_state="pending_review",
+        )
+        patch_candidates.append(
+            {
+                **pb,
+                "candidate_id": f"patch_{index}",
+                "target": spath,
+                "change_hint": "Adjust wording to maintain canon consistency.",
+                "preview_summary": (
+                    f"Revise {source.get('source_path', 'target')} to resolve canon inconsistency "
+                    f"identified during {module_id} review."
+                ),
+                "confidence": _severity_confidence.get(
+                    issues[index - 1]["severity"] if index - 1 < len(issues) else "medium",
+                    0.7,
+                ),
+                "confidence_kind": "retrieval_heuristic",
+                "evidence_tier": evidence_tag,
+                "review_bundle_id": bundle_id,
+                "linked_source_path": spath,
+                "rationale": f"Patch candidate anchored to retrieval path {spath!r}.",
+            }
+        )
+    variant_candidates: list[dict[str, Any]] = []
+    for index, rec_art in enumerate(recommendation_artifacts[:3], start=1):
+        vb = build_writers_room_artifact_record(
+            artifact_id=f"variant_{index}",
+            artifact_class=WritersRoomArtifactClass.candidate_authored_artifact,
+            source_module_id=module_id,
+            evidence_refs=list(rec_refs),
+            proposal_scope="variant_candidate_summary",
+            approval_state="pending_review",
+        )
+        variant_candidates.append(
+            {
+                **vb,
+                "variant_id": f"variant_{index}",
+                "summary": rec_art.get("body", ""),
+                "evidence_anchor": evidence_paths[0] if evidence_paths else "",
+                "confidence": 0.55 if index > 1 else 0.62,
+                "confidence_kind": "model_structured" if structured and index == 1 else "workflow_default",
+                "revision_sensitivity": "standard",
+            }
+        )
+    rs_meta = build_writers_room_artifact_record(
+        artifact_id=f"review_summary_{proposal_id}",
+        artifact_class=WritersRoomArtifactClass.analysis_artifact,
+        source_module_id=module_id,
+        evidence_refs=[p for p in evidence_paths if p][:20],
+        proposal_scope="review_summary_aggregate",
+        approval_state="pending_review",
+    )
     review_summary = {
+        **rs_meta,
         "issue_count": len(issues),
-        "recommendation_count": len(recommendations),
+        "recommendation_count": len(recommendation_artifacts),
         "evidence_tier": evidence_tag,
         "retrieval_hit_count": retrieval_hit_count,
         "bundle_id": bundle_id,
@@ -560,8 +731,55 @@ def _execute_writers_room_workflow_package(
         specs_for_coverage=list(_wr_specs),
         bounded_traces=bounded_traces_from_task_2a_routing(t2a_routing),
     )
-    return {
+    gov_truth = {
+        "retrieval_evidence_tier": evidence_tag,
+        "model_generation_path": generation.get("adapter_invocation_mode"),
+        "capabilities_invoked": [
+            row.get("capability_name")
+            for row in capability_audit_rows
+            if isinstance(row, dict) and isinstance(row.get("capability_name"), str)
+        ],
+        "langgraph_orchestration_depth": "seed_graph_stub",
+        "outputs_are_recommendations_only": True,
+    }
+    gov_truth.update(
+        build_writers_room_artifact_record(
+            artifact_id=f"governance_truth_{module_id}_{uuid4().hex[:10]}",
+            artifact_class=WritersRoomArtifactClass.analysis_artifact,
+            source_module_id=module_id,
+            evidence_refs=[p for p in evidence_paths if p][:20],
+            proposal_scope="writers_room_operational_governance_snapshot",
+            approval_state="pending_review",
+        )
+    )
+    lc_preview = {
+        "document_count": len(langchain_documents),
+        "sources": [doc.metadata.get("source_path") for doc in langchain_documents],
+    }
+    lc_preview.update(
+        build_writers_room_artifact_record(
+            artifact_id=f"langchain_preview_{module_id}_{uuid4().hex[:10]}",
+            artifact_class=WritersRoomArtifactClass.analysis_artifact,
+            source_module_id=module_id,
+            evidence_refs=langchain_preview_paths[:10],
+            proposal_scope="langchain_primary_context_preview",
+            approval_state="pending_review",
+        )
+    )
+    legacy_notice = {
+        **build_writers_room_artifact_record(
+            artifact_id="notice_legacy_oracle_route",
+            artifact_class=WritersRoomArtifactClass.analysis_artifact,
+            source_module_id=module_id,
+            evidence_refs=[],
+            proposal_scope="deprecation_policy_notice",
+            approval_state="not_applicable",
+        ),
+        "body": "Legacy direct chat is deprecated and no longer canonical.",
+    }
+    package_out: dict[str, Any] = {
         "canonical_flow": "writers_room_unified_stack_workflow",
+        "shared_semantic_contract_version": GOC_SHARED_SEMANTIC_CONTRACT_VERSION,
         "trace_id": trace_id,
         "module_id": module_id,
         "focus": focus,
@@ -572,7 +790,7 @@ def _execute_writers_room_workflow_package(
         "retrieval": context_payload.get("retrieval", {}),
         "retrieval_trace": retrieval_trace,
         "issues": issues,
-        "recommendations": recommendations,
+        "recommendation_artifacts": recommendation_artifacts,
         "model_generation": generation,
         "review_bundle": review_bundle,
         "proposal_package": proposal_package,
@@ -580,30 +798,11 @@ def _execute_writers_room_workflow_package(
         "patch_candidates": patch_candidates,
         "variant_candidates": variant_candidates,
         "outputs_are_recommendations_only": True,
-        "legacy_paths": [
-            {
-                "path": "writers-room legacy oracle route",
-                "status": "transitional",
-                "message": "Legacy direct chat is deprecated and no longer canonical.",
-            }
-        ],
+        "legacy_paths": [legacy_notice],
         "capability_audit": capability_audit_rows,
         "operator_audit": operator_audit_wr,
-        "governance_truth": {
-            "retrieval_evidence_tier": evidence_tag,
-            "model_generation_path": generation.get("adapter_invocation_mode"),
-            "capabilities_invoked": [
-                row.get("capability_name")
-                for row in capability_audit_rows
-                if isinstance(row, dict) and isinstance(row.get("capability_name"), str)
-            ],
-            "langgraph_orchestration_depth": "seed_graph_stub",
-            "outputs_are_recommendations_only": True,
-        },
-        "langchain_retriever_preview": {
-            "document_count": len(langchain_documents),
-            "sources": [doc.metadata.get("source_path") for doc in langchain_documents],
-        },
+        "governance_truth": gov_truth,
+        "langchain_retriever_preview": lc_preview,
         "stack_components": {
             "retrieval": "wos.context_pack.build",
             "orchestration": "langgraph_seed_writers_room_graph",
@@ -619,6 +818,8 @@ def _execute_writers_room_workflow_package(
             },
         },
     }
+    package_out["writers_room_artifact_manifest"] = _writers_room_artifact_manifest(package_out)
+    return package_out
 
 
 def run_writers_room_review(
@@ -653,13 +854,14 @@ def run_writers_room_review(
         "review_state": review_state,
         "revision_cycles": [],
         "artifact_provenance": {
-            "kind": "writers_room_workflow_output",
             "workflow": "writers_room_unified_stack_workflow",
             "created_at": _utc_now(),
             "module_id": module_id,
             "trace_id": trace_id,
+            "shared_semantic_contract_version": GOC_SHARED_SEMANTIC_CONTRACT_VERSION,
         },
     }
+    report["writers_room_artifact_manifest"] = _writers_room_artifact_manifest(report)
     storage.write_review(review_id, report)
     return report
 
@@ -714,6 +916,8 @@ def apply_writers_room_decision(
             "acted_at": _utc_now(),
             "note": note or "",
         }
+        review.pop("governance_outcome_artifact", None)
+        review["writers_room_artifact_manifest"] = _writers_room_artifact_manifest(review)
         storage.write_review(review_id, review)
         return review
 
@@ -732,12 +936,37 @@ def apply_writers_room_decision(
     state["updated_by"] = actor_id
     state["history"] = history
     review["review_state"] = state
+    decided_at = _utc_now()
     review["human_decision"] = {
         "decision": normalized,
         "decided_by": actor_id,
-        "decided_at": _utc_now(),
+        "decided_at": decided_at,
         "note": note or "",
     }
+    mod_id = str(review.get("module_id") or "")
+    pp = review.get("proposal_package") if isinstance(review.get("proposal_package"), dict) else {}
+    ev_src = pp.get("evidence_sources") if isinstance(pp.get("evidence_sources"), list) else []
+    ev_refs = [str(x) for x in ev_src[:20] if x]
+    outcome_cls = (
+        WritersRoomArtifactClass.approved_authored_artifact
+        if next_status == "accepted"
+        else WritersRoomArtifactClass.rejected_artifact
+    )
+    review["governance_outcome_artifact"] = {
+        **build_writers_room_artifact_record(
+            artifact_id=f"gov_outcome_{review_id}",
+            artifact_class=outcome_cls,
+            source_module_id=mod_id,
+            evidence_refs=ev_refs,
+            proposal_scope="hitl_terminal_decision",
+            approval_state=next_status,
+        ),
+        "review_id": review_id,
+        "terminal_status": next_status,
+        "decided_at": decided_at,
+        "note": "HITL outcome only; does not auto-publish canonical module content.",
+    }
+    review["writers_room_artifact_manifest"] = _writers_room_artifact_manifest(review)
     storage.write_review(review_id, review)
     return review
 
@@ -749,7 +978,7 @@ _REVISION_SNAPSHOT_KEYS = frozenset(
         "review_summary",
         "workflow_manifest",
         "issues",
-        "recommendations",
+        "recommendation_artifacts",
         "patch_candidates",
         "variant_candidates",
         "comment_bundle",
@@ -835,6 +1064,7 @@ def submit_writers_room_revision(
     merged["review_state"] = state
     merged.pop("human_decision", None)
     merged.pop("last_hitl_action", None)
-
+    merged.pop("governance_outcome_artifact", None)
+    merged["writers_room_artifact_manifest"] = _writers_room_artifact_manifest(merged)
     storage.write_review(review_id, merged)
     return merged

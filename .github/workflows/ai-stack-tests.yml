@@ -40,6 +40,7 @@ jobs:
           python -m pip install -e "./story_runtime_core"
           python -m pip install -e "./ai_stack[test]"
 
+      # Full tree under ai_stack/tests (not a file allowlist); new test modules are always collected.
       - name: Run ai_stack test suite
         env:
           PYTHONPATH: ${{ github.workspace }}

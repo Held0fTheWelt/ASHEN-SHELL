@@ -10,6 +10,26 @@ from typing import Any
 from uuid import uuid4
 
 from app.runtime.input_interpreter import interpret_player_input
+from app.contracts.improvement_entry_class import (
+    coalesce_improvement_entry_class_from_stored_record,
+    parse_improvement_entry_class,
+    resolve_improvement_entry_class_for_create,
+)
+from app.contracts.improvement_operating_loop import (
+    IMPROVEMENT_OPERATING_LOOP_CONTRACT_VERSION,
+    ImprovementLoopStage,
+)
+from app.contracts.writers_room_artifact_class import (
+    GOC_SHARED_SEMANTIC_CONTRACT_VERSION,
+    WritersRoomArtifactClass,
+)
+
+IMPROVEMENT_PUBLICATION_CONTRACT_VERSION = "goc_improvement_publication_verification_v1"
+SEMANTIC_COMPLIANCE_VALIDATION_CONTRACT_VERSION = "goc_improvement_semantic_compliance_v1"
+
+IMPROVEMENT_GOVERNANCE_RECOMMENDATION_LABELS = frozenset(
+    {"promote_for_human_review", "revise_before_review"}
+)
 
 
 # Commands that suggest meta/reset intent rather than story escalation.
@@ -62,11 +82,14 @@ def create_variant(
     candidate_summary: str,
     actor_id: str,
     metadata: dict[str, Any] | None = None,
+    improvement_entry_class: str | None = None,
     store: ImprovementStore | None = None,
 ) -> dict[str, Any]:
     storage = store or ImprovementStore.default()
     variant_id = f"variant_{uuid4().hex}"
-    metadata_payload = metadata or {}
+    metadata_payload = dict(metadata or {})
+    entry_cls = resolve_improvement_entry_class_for_create(improvement_entry_class, metadata_payload)
+    metadata_payload.pop("improvement_entry_class", None)
     mutation_plan = metadata_payload.get("mutation_plan")
     if not isinstance(mutation_plan, list) or not mutation_plan:
         mutation_plan = [
@@ -108,6 +131,7 @@ def create_variant(
         "variant_id": variant_id,
         "baseline_id": baseline_id,
         "candidate_summary": candidate_summary,
+        "improvement_entry_class": entry_cls.value,
         "metadata": metadata_payload,
         "created_by": actor_id,
         "created_at": _utc_now(),
@@ -214,6 +238,9 @@ def run_sandbox_experiment(
 ) -> dict[str, Any]:
     storage = store or ImprovementStore.default()
     variant = storage.read_json("variants", variant_id)
+    variant["improvement_entry_class"] = coalesce_improvement_entry_class_from_stored_record(
+        variant.get("improvement_entry_class")
+    )
     inputs = test_inputs or [
         "I try to calm the argument and ask for clarity.",
         "I repeat the same accusation again and again.",
@@ -246,6 +273,7 @@ def run_sandbox_experiment(
             "execution_mode": "sandbox",
             "publish_state": "isolated_non_authoritative",
             "mutation_plan": variant.get("mutation_plan", []),
+            "improvement_entry_class": variant["improvement_entry_class"],
         },
     }
     storage.write_json("experiments", experiment_id, experiment)
@@ -494,6 +522,122 @@ def finalize_recommendation_rationale_with_retrieval_digest(
     return out
 
 
+def _mandatory_check(name: str, passed: bool, reason_code: str | None = None) -> dict[str, Any]:
+    row: dict[str, Any] = {"name": name, "passed": passed}
+    if not passed and reason_code:
+        row["reason_code"] = reason_code
+    return row
+
+
+def _check_improvement_entry_class_valid(package: dict[str, Any]) -> dict[str, Any]:
+    raw = package.get("improvement_entry_class")
+    if not isinstance(raw, str) or not raw.strip():
+        return _mandatory_check("improvement_entry_class_valid", False, "entry_class_not_non_empty_string")
+    try:
+        parse_improvement_entry_class(raw.strip())
+    except ValueError:
+        return _mandatory_check("improvement_entry_class_valid", False, "unknown_entry_class")
+    return _mandatory_check("improvement_entry_class_valid", True)
+
+
+def _check_package_shape_core(package: dict[str, Any]) -> dict[str, Any]:
+    ev = package.get("evaluation")
+    if not isinstance(ev, dict):
+        return _mandatory_check("package_shape_core", False, "evaluation_not_dict")
+    for key in ("metrics", "comparison", "baseline_metrics"):
+        if key not in ev or not isinstance(ev[key], dict):
+            return _mandatory_check("package_shape_core", False, f"evaluation_missing_{key}")
+    eb = package.get("evidence_bundle")
+    if not isinstance(eb, dict):
+        return _mandatory_check("package_shape_core", False, "evidence_bundle_not_dict")
+    refs = eb.get("artifact_refs")
+    if not isinstance(refs, list) or len(refs) < 2:
+        return _mandatory_check("package_shape_core", False, "artifact_refs_length_lt_2")
+    cp = package.get("comparison_package")
+    if not isinstance(cp, dict):
+        return _mandatory_check("package_shape_core", False, "comparison_package_not_dict")
+    dims = cp.get("dimensions")
+    if not isinstance(dims, list) or len(dims) < 1:
+        return _mandatory_check("package_shape_core", False, "dimensions_empty")
+    mp = package.get("mutation_plan")
+    if not isinstance(mp, list) or len(mp) < 1:
+        return _mandatory_check("package_shape_core", False, "mutation_plan_invalid")
+    return _mandatory_check("package_shape_core", True)
+
+
+def _check_recommendation_bounded(package: dict[str, Any]) -> dict[str, Any]:
+    base = package.get("deterministic_recommendation_base")
+    if isinstance(base, str) and base.strip():
+        core = base.strip()
+    else:
+        summary = package.get("recommendation_summary")
+        if not isinstance(summary, str):
+            return _mandatory_check("recommendation_bounded", False, "summary_not_string")
+        core = summary.split("|", 1)[0].strip()
+    if core not in IMPROVEMENT_GOVERNANCE_RECOMMENDATION_LABELS:
+        return _mandatory_check("recommendation_bounded", False, "summary_not_governance_label")
+    return _mandatory_check("recommendation_bounded", True)
+
+
+def _check_shared_semantic_contract_version_present(package: dict[str, Any]) -> dict[str, Any]:
+    v = package.get("shared_semantic_contract_version")
+    if v != GOC_SHARED_SEMANTIC_CONTRACT_VERSION:
+        return _mandatory_check(
+            "shared_semantic_contract_version_present",
+            False,
+            "version_missing_or_not_canonical",
+        )
+    return _mandatory_check("shared_semantic_contract_version_present", True)
+
+
+def _optional_compliance_checks(package: dict[str, Any]) -> list[dict[str, Any]]:
+    eb = package.get("evidence_bundle") if isinstance(package.get("evidence_bundle"), dict) else {}
+    paths = eb.get("retrieval_source_paths")
+    out: list[dict[str, Any]] = [
+        {
+            "name": "retrieval_paths_present",
+            "passed": isinstance(paths, list) and len(paths) > 0,
+        },
+        {
+            "name": "task_2a_routing_present",
+            "passed": isinstance(package.get("task_2a_routing"), dict) and bool(package.get("task_2a_routing")),
+        },
+    ]
+    return out
+
+
+def build_semantic_compliance_validation(package: dict[str, Any]) -> dict[str, Any]:
+    """Fixed mandatory checks; ``status`` is ``pass`` only if every mandatory check passed."""
+    mandatory_fns = (
+        _check_improvement_entry_class_valid,
+        _check_package_shape_core,
+        _check_recommendation_bounded,
+        _check_shared_semantic_contract_version_present,
+    )
+    mandatory_results = [fn(package) for fn in mandatory_fns]
+    optional_results = _optional_compliance_checks(package)
+    all_pass = all(bool(m.get("passed")) for m in mandatory_results)
+    return {
+        "contract_version": SEMANTIC_COMPLIANCE_VALIDATION_CONTRACT_VERSION,
+        "operating_loop_contract_version": IMPROVEMENT_OPERATING_LOOP_CONTRACT_VERSION,
+        "status": "pass" if all_pass else "fail",
+        "mandatory_check_results": mandatory_results,
+        "optional_check_results": optional_results,
+        "evaluated_at": _utc_now(),
+    }
+
+
+def recompute_semantic_compliance_validation(package: dict[str, Any]) -> None:
+    """Mutate ``package`` with a fresh validation block (call after HTTP-layer enrichment)."""
+    package["semantic_compliance_validation"] = build_semantic_compliance_validation(package)
+
+
+def _evaluation_metrics_fingerprint(evaluation: dict[str, Any]) -> str:
+    metrics = evaluation.get("metrics") if isinstance(evaluation.get("metrics"), dict) else {}
+    raw = json.dumps(metrics, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
 def build_recommendation_package(
     *,
     experiment_id: str,
@@ -503,6 +647,7 @@ def build_recommendation_package(
     storage = store or ImprovementStore.default()
     experiment = storage.read_json("experiments", experiment_id)
     variant = storage.read_json("variants", experiment["variant_id"])
+    entry_class_value = coalesce_improvement_entry_class_from_stored_record(variant.get("improvement_entry_class"))
     evaluation = evaluate_experiment(experiment_id=experiment_id, store=storage)
     metrics = evaluation["metrics"]
     comparison = evaluation["comparison"]
@@ -528,6 +673,10 @@ def build_recommendation_package(
     package_id = f"recommendation_{uuid4().hex}"
     package = {
         "package_id": package_id,
+        "improvement_entry_class": entry_class_value,
+        "shared_semantic_contract_version": GOC_SHARED_SEMANTIC_CONTRACT_VERSION,
+        "improvement_output_artifact_class": WritersRoomArtifactClass.proposal_artifact.value,
+        "improvement_loop_progress": [],
         "generated_at": _utc_now(),
         "generated_by": actor_id,
         "baseline": {"baseline_id": variant["baseline_id"]},
@@ -551,6 +700,7 @@ def build_recommendation_package(
             ],
         },
         "recommendation_summary": recommendation,
+        "deterministic_recommendation_base": recommendation,
         "review_status": "pending_governance_review",
         "next_action": "admin_review_required",
         "governance_review_state": {
@@ -567,6 +717,7 @@ def build_recommendation_package(
             ],
         },
     }
+    package["semantic_compliance_validation"] = build_semantic_compliance_validation(package)
     storage.write_json("recommendations", package_id, package)
     return package
 
@@ -625,6 +776,7 @@ def apply_improvement_recommendation_decision(
         package["review_status"] = next_status
         package["next_action"] = "revision_required_before_promotion"
         package.pop("human_decision", None)
+        package.pop("publication_verification_trace", None)
         storage.write_json("recommendations", package_id, package)
         return package
 
@@ -650,6 +802,81 @@ def apply_improvement_recommendation_decision(
         "decided_by": actor_id,
         "decided_at": _utc_now(),
         "note": note or "",
+    }
+    now = _utc_now()
+    exp_block = package.get("experiment") if isinstance(package.get("experiment"), dict) else {}
+    experiment_id = exp_block.get("experiment_id")
+    evaluation = package.get("evaluation") if isinstance(package.get("evaluation"), dict) else {}
+    metrics_fp = _evaluation_metrics_fingerprint(evaluation)
+
+    if next_status == "governance_accepted":
+        package["improvement_output_artifact_class"] = WritersRoomArtifactClass.approved_authored_artifact.value
+        post_verification: dict[str, Any] = {
+            "contract_version": IMPROVEMENT_PUBLICATION_CONTRACT_VERSION,
+            "experiment_id": experiment_id,
+            "evaluation_metrics_sha256_16": metrics_fp,
+            "outcome": "verified_against_stored_evaluation",
+            "recorded_at": now,
+            "scope": "re_read_persisted_evaluation_metrics",
+        }
+    else:
+        package["improvement_output_artifact_class"] = WritersRoomArtifactClass.rejected_artifact.value
+        post_verification = {
+            "contract_version": IMPROVEMENT_PUBLICATION_CONTRACT_VERSION,
+            "experiment_id": experiment_id,
+            "outcome": "not_applicable",
+            "recorded_at": now,
+            "scope": "terminal_rejection_no_publication",
+        }
+
+    progress = package.get("improvement_loop_progress")
+    if not isinstance(progress, list):
+        progress = []
+    progress.append(
+        {
+            "loop_stage": ImprovementLoopStage.approval_rejection.value,
+            "completed_at": now,
+            "id": "human_governance_decision",
+            "resource_id": package_id,
+            "detail": {"decision": normalized},
+        }
+    )
+    progress.append(
+        {
+            "loop_stage": ImprovementLoopStage.publication.value,
+            "completed_at": now,
+            "id": "governance_registry_publication_record",
+            "resource_id": package_id,
+            "detail": {"terminal_governance_status": next_status},
+        }
+    )
+    progress.append(
+        {
+            "loop_stage": ImprovementLoopStage.post_change_verification.value,
+            "completed_at": now,
+            "id": "post_change_verification_trace",
+            "resource_id": package_id,
+            "detail": {"outcome": post_verification.get("outcome")},
+        }
+    )
+    package["improvement_loop_progress"] = progress
+
+    package["publication_verification_trace"] = {
+        "contract_version": IMPROVEMENT_PUBLICATION_CONTRACT_VERSION,
+        "terminal_governance_status": next_status,
+        "recorded_at": now,
+        "declared_runtime_promotion": False,
+        "verification_scope": "governance_registry_with_post_decision_verification_record",
+        "publication_surface": "improvement_recommendation_registry",
+        "published_record_id": package_id,
+        "improvement_entry_class": package.get("improvement_entry_class"),
+        "improvement_output_artifact_class": package.get("improvement_output_artifact_class"),
+        "post_change_verification": post_verification,
+        "requires_follow_up_audit": True,
+        "note": (
+            "Acceptance records HITL approval of the recommendation package only. "
+            "Canonical authored truth promotion remains a separate governed action."
+        ),
     }
     storage.write_json("recommendations", package_id, package)
     return package

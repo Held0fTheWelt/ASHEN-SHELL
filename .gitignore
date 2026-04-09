@@ -33,3 +33,4 @@ backend/.coverage.Hollywood.pid43364.XzoUxncx.H6bw8Dopblmh
 backend/var/improvement/
 backend/var/writers_room/
 .wos/
+.coverage.*

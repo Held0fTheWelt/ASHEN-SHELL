@@ -234,7 +234,11 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
                 "transcript_evidence": {"run_id": "run-1"},
                 "governance_review_bundle_id": "rb-1",
             },
-            "workflow_stages": [{"id": "governance_review_bundle"}],
+            "workflow_stages": [
+                {"id": "governance_review_bundle", "loop_stage": "bounded_proposal_generation"}
+            ],
+            "semantic_compliance_validation": {"status": "pass"},
+            "improvement_loop_progress": [],
         },
     )
 
@@ -270,6 +274,9 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
     assert inf["distinct_from_publishable_recommendation"] is True
     assert inf["governance_terminal_accepted"] is False
     assert "governance_review_bundle" in inf["workflow_stage_ids"]
+    assert inf.get("improvement_loop_stages") == ["bounded_proposal_generation"]
+    assert inf.get("semantic_compliance_status") == "pass"
+    assert inf.get("improvement_loop_progress_len") == 0
     et = payload.get("execution_truth") or {}
     assert et.get("last_turn_graph_mode", {}).get("graph_path_summary") == "primary_invoke_langchain_only"
     assert et.get("tool_influence", {}).get("material_influence") is True

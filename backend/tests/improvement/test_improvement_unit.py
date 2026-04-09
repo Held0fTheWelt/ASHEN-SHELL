@@ -8,13 +8,18 @@ from uuid import uuid4
 
 import pytest
 
+from app.contracts.improvement_entry_class import parse_improvement_entry_class
+from app.contracts.writers_room_artifact_class import WritersRoomArtifactClass
 from app.services.improvement_service import (
     ImprovementStore,
     _evaluate_transcript,
     build_comparison_package,
     build_evidence_strength_map,
     build_recommendation_rationale,
+    build_semantic_compliance_validation,
     create_variant,
+    run_sandbox_experiment,
+    build_recommendation_package,
 )
 
 
@@ -92,6 +97,53 @@ class TestCreateVariant:
         assert len(variant["mutation_plan"]) == 2  # default has 2 operations
         assert variant["review_status"] == "pending_review"
         assert variant["lineage"]["lineage_depth"] == 1
+        assert variant["improvement_entry_class"] == "runtime_issue_improvement"
+
+    def test_create_variant_respects_improvement_entry_class_metadata(self, store_root: Path):
+        store = ImprovementStore(root=store_root)
+        variant = create_variant(
+            baseline_id="baseline_001",
+            candidate_summary="Typed entry",
+            actor_id="test_actor",
+            metadata={"improvement_entry_class": "module_completeness_improvement"},
+            store=store,
+        )
+        assert variant["improvement_entry_class"] == "module_completeness_improvement"
+        assert "improvement_entry_class" not in variant.get("metadata", {})
+
+    def test_create_variant_top_level_improvement_entry_class(self, store_root: Path):
+        store = ImprovementStore(root=store_root)
+        variant = create_variant(
+            baseline_id="baseline_001",
+            candidate_summary="Top-level typed",
+            actor_id="test_actor",
+            improvement_entry_class="semantic_quality_improvement",
+            store=store,
+        )
+        assert variant["improvement_entry_class"] == "semantic_quality_improvement"
+
+    def test_create_variant_rejects_conflicting_entry_class_sources(self, store_root: Path):
+        store = ImprovementStore(root=store_root)
+        with pytest.raises(ValueError, match="improvement_entry_class_metadata_conflict"):
+            create_variant(
+                baseline_id="baseline_001",
+                candidate_summary="Conflict",
+                actor_id="test_actor",
+                improvement_entry_class="runtime_issue_improvement",
+                metadata={"improvement_entry_class": "semantic_quality_improvement"},
+                store=store,
+            )
+
+    def test_create_variant_rejects_unknown_entry_class_in_metadata(self, store_root: Path):
+        store = ImprovementStore(root=store_root)
+        with pytest.raises(ValueError, match="unknown_improvement_entry_class"):
+            create_variant(
+                baseline_id="baseline_001",
+                candidate_summary="Bad class",
+                actor_id="test_actor",
+                metadata={"improvement_entry_class": "not_a_valid_class"},
+                store=store,
+            )
 
     def test_create_variant_with_parent_variant_increments_lineage_depth(
         self, store_root: Path
@@ -154,6 +206,63 @@ class TestCreateVariant:
 
         assert isinstance(variant["mutation_plan"], list)
         assert len(variant["mutation_plan"]) == 2  # fell back to default
+
+
+class TestImprovementEntryClassParsing:
+    def test_parse_rejects_empty(self):
+        with pytest.raises(ValueError, match="improvement_entry_class_required"):
+            parse_improvement_entry_class(None)
+        with pytest.raises(ValueError, match="improvement_entry_class_required"):
+            parse_improvement_entry_class("  ")
+
+    def test_parse_rejects_unknown(self):
+        with pytest.raises(ValueError, match="unknown_improvement_entry_class"):
+            parse_improvement_entry_class("bogus")
+
+    def test_parse_accepts_roadmap_values(self):
+        for raw in (
+            "runtime_issue_improvement",
+            "module_completeness_improvement",
+            "semantic_quality_improvement",
+        ):
+            assert parse_improvement_entry_class(raw).value == raw
+
+
+class TestImprovementRecommendationContract:
+    def test_recommendation_package_propagates_entry_class_and_compliance(self, tmp_path: Path):
+        store = ImprovementStore(root=tmp_path)
+        variant = create_variant(
+            baseline_id="baseline_001",
+            candidate_summary="x",
+            actor_id="a",
+            improvement_entry_class="module_completeness_improvement",
+            store=store,
+        )
+        experiment = run_sandbox_experiment(
+            variant_id=variant["variant_id"], actor_id="a", test_inputs=["hi"], store=store
+        )
+        pkg = build_recommendation_package(experiment_id=experiment["experiment_id"], actor_id="a", store=store)
+        assert pkg["improvement_entry_class"] == "module_completeness_improvement"
+        assert pkg["improvement_output_artifact_class"] == WritersRoomArtifactClass.proposal_artifact.value
+        sc = pkg["semantic_compliance_validation"]
+        assert sc["status"] == "pass"
+        assert all(r["passed"] for r in sc["mandatory_check_results"])
+
+    def test_semantic_compliance_fails_on_bad_entry_class(self, tmp_path: Path):
+        store = ImprovementStore(root=tmp_path)
+        variant = create_variant(
+            baseline_id="baseline_001",
+            candidate_summary="x",
+            actor_id="a",
+            store=store,
+        )
+        experiment = run_sandbox_experiment(
+            variant_id=variant["variant_id"], actor_id="a", test_inputs=["hi"], store=store
+        )
+        pkg = build_recommendation_package(experiment_id=experiment["experiment_id"], actor_id="a", store=store)
+        pkg["improvement_entry_class"] = "invalid_class"
+        bad = build_semantic_compliance_validation(pkg)
+        assert bad["status"] == "fail"
 
 
 class TestEvaluateTranscript:

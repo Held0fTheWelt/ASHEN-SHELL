@@ -34,7 +34,7 @@ Outputs are explicitly recommendation-only and include:
 
 - retrieved evidence sources,
 - identified issues,
-- recommendation list,
+- typed `recommendation_artifacts` (roadmap §7.3 metadata each),
 - review bundle metadata,
 - capability audit trail.
 
@@ -42,8 +42,9 @@ Publishing authority remains in backend/admin governance.
 
 ## Authoritative output semantics
 
-- `recommendations`: advisory output for human review.
-- `review_bundle`: governance artifact, not auto-apply payload.
+- `recommendation_artifacts`: advisory, typed records (`analysis_artifact`) for human review.
+- `review_bundle`: governance envelope (`proposal_artifact` typing on the merged payload), not auto-apply.
+- `governance_outcome_artifact`: present only after terminal `accept` or `reject` (not during `pending_human_review` / `pending_revision`).
 - `outputs_are_recommendations_only`: explicit true flag in response contract.
 
 ## Governance handoff

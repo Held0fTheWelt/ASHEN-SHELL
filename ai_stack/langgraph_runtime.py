@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version as pkg_version
 from typing import Any
 from typing_extensions import TypedDict
@@ -18,6 +20,7 @@ from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy
 from ai_stack.capabilities import CapabilityRegistry
 from ai_stack.langchain_integration import invoke_runtime_adapter_with_langchain
 from ai_stack.rag import ContextPackAssembler, ContextRetriever, RetrievalDomain, RetrievalRequest
+from ai_stack.retrieval_governance_summary import attach_retrieval_governance_summary
 from ai_stack.operational_profile import build_operational_cost_hints_for_runtime_graph
 from ai_stack.runtime_turn_contracts import (
     ADAPTER_INVOCATION_DEGRADED_NO_FALLBACK,
@@ -31,6 +34,7 @@ from ai_stack.runtime_turn_contracts import (
 )
 from ai_stack.version import AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
 from ai_stack.goc_frozen_vocab import GOC_MODULE_ID
+from ai_stack.goc_roadmap_semantic_surface import ROUTING_LABELS
 from ai_stack.goc_yaml_authority import (
     detect_builtin_yaml_title_conflict,
     goc_character_profile_snippet,
@@ -121,6 +125,17 @@ class RuntimeTurnState(TypedDict, total=False):
     diagnostics_refs: list[dict[str, Any]]
     experiment_preview: bool
     transition_pattern: str
+    # Turn execution basis (host/session may supply; see CANONICAL_TURN_CONTRACT_GOC.md G3 projection).
+    turn_id: str
+    turn_number: int
+    turn_timestamp_iso: str
+    turn_initiator_type: str
+    turn_input_class: str
+    turn_execution_mode: str
+
+
+STORY_RUNTIME_ROUTING_POLICY_ID = "story_runtime_core.RoutingPolicy"
+STORY_RUNTIME_ROUTING_POLICY_VERSION = "registry_default_v1"
 
 
 def _track(state: RuntimeTurnState, *, node_name: str, outcome: str = "ok") -> RuntimeTurnState:
@@ -197,7 +212,17 @@ class RuntimeTurnGraphExecutor:
         force_experiment_preview: bool | None = None,
         prior_continuity_impacts: list[dict[str, Any]] | None = None,
         prior_dramatic_signature: dict[str, str] | None = None,
+        turn_number: int | None = None,
+        turn_id: str | None = None,
+        turn_timestamp_iso: str | None = None,
+        turn_initiator_type: str | None = None,
+        turn_input_class: str | None = None,
+        turn_execution_mode: str | None = None,
     ) -> RuntimeTurnState:
+        ts = turn_timestamp_iso
+        if not ts:
+            ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        tid = turn_id if turn_id is not None else (trace_id or "")
         initial_state: RuntimeTurnState = {
             "session_id": session_id,
             "module_id": module_id,
@@ -211,7 +236,15 @@ class RuntimeTurnGraphExecutor:
             "graph_errors": [],
             "failure_markers": [],
             "fallback_markers": [],
+            "turn_timestamp_iso": ts,
+            "turn_id": tid,
+            "turn_initiator_type": turn_initiator_type or "player",
+            "turn_execution_mode": turn_execution_mode or "langgraph_runtime_turn_graph",
         }
+        if turn_number is not None:
+            initial_state["turn_number"] = int(turn_number)
+        if turn_input_class is not None:
+            initial_state["turn_input_class"] = turn_input_class
         if force_experiment_preview is not None:
             initial_state["force_experiment_preview"] = force_experiment_preview
         if active_narrative_threads:
@@ -227,15 +260,18 @@ class RuntimeTurnGraphExecutor:
 
     def _interpret_input(self, state: RuntimeTurnState) -> RuntimeTurnState:
         interpretation = self.interpreter(state["player_input"])
-        task_type = "classification" if interpretation.kind.value in {"explicit_command", "meta"} else "narrative_generation"
+        task_type = "classification" if interpretation.kind.value in {"explicit_command", "meta"} else "narrative_formulation"
         interp_dict = interpretation.model_dump(mode="json")
         update = _track(state, node_name="interpret_input")
         update["interpreted_input"] = interp_dict
+        move_class = str(interp_dict.get("kind") or "unknown")
         update["interpreted_move"] = {
             "player_intent": str(interp_dict.get("intent") or "unspecified"),
-            "move_class": str(interp_dict.get("kind") or "unknown"),
+            "move_class": move_class,
         }
         update["task_type"] = task_type
+        if "turn_input_class" not in state or not state.get("turn_input_class"):
+            update["turn_input_class"] = move_class
         return update
 
     def _retrieve_context(self, state: RuntimeTurnState) -> RuntimeTurnState:
@@ -256,6 +292,8 @@ class RuntimeTurnGraphExecutor:
                 payload=payload,
             )
             retrieval = result["retrieval"]
+            if isinstance(retrieval, dict):
+                attach_retrieval_governance_summary(retrieval)
             context_text = result["context_text"]
             capability_audit = self.capability_registry.recent_audit(limit=3)
         else:
@@ -286,6 +324,7 @@ class RuntimeTurnGraphExecutor:
                 "embedding_model_id": pack.embedding_model_id,
                 "top_hit_score": top_score,
             }
+            attach_retrieval_governance_summary(retrieval)
             context_text = pack.compact_context
         interp = state.get("interpreted_input") if isinstance(state.get("interpreted_input"), dict) else {}
         interpretation_block = (
@@ -426,11 +465,22 @@ class RuntimeTurnGraphExecutor:
         decision = self.routing.choose(task_type=state["task_type"])
         selected = self.registry.get(decision.selected_model)
         update = _track(state, node_name="route_model")
+        fallback_chain: list[str] = [decision.selected_model]
+        if decision.fallback_model:
+            fallback_chain.append(decision.fallback_model)
+        code = decision.route_reason
+        if code not in ROUTING_LABELS:
+            code = "role_matrix_primary"
         update["routing"] = {
             "selected_model": decision.selected_model,
             "selected_provider": decision.selected_provider,
             "reason": decision.route_reason,
+            "route_reason_code": code,
             "fallback_model": decision.fallback_model,
+            "fallback_chain": fallback_chain,
+            "route_mode": "primary_graph_route",
+            "policy_id_used": STORY_RUNTIME_ROUTING_POLICY_ID,
+            "policy_version_used": STORY_RUNTIME_ROUTING_POLICY_VERSION,
             "timeout_seconds": selected.timeout_seconds if selected else None,
             "structured_output_success": bool(selected.structured_output_capable) if selected else False,
             "registered_adapter_providers": sorted(self.adapters.keys()),
@@ -538,6 +588,24 @@ class RuntimeTurnGraphExecutor:
         generation = dict(state.get("generation") or {})
         meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
         structured = meta.get("structured_output")
+        if structured is None:
+            raw = generation.get("content") if isinstance(generation.get("content"), str) else ""
+            if not raw.strip():
+                raw = generation.get("model_raw_text") if isinstance(generation.get("model_raw_text"), str) else ""
+            if raw.strip().startswith("{"):
+                try:
+                    parsed = json.loads(raw)
+                    if (
+                        isinstance(parsed, dict)
+                        and isinstance(parsed.get("narrative_response"), str)
+                        and parsed["narrative_response"].strip()
+                    ):
+                        meta = dict(meta)
+                        meta["structured_output"] = parsed
+                        generation["metadata"] = meta
+                        structured = parsed
+                except json.JSONDecodeError:
+                    pass
         structured_dict = structured if isinstance(structured, dict) else None
         cleaned, strip_markers = strip_director_overwrites_from_structured_output(structured_dict)
         if cleaned is not None:
@@ -604,12 +672,12 @@ class RuntimeTurnGraphExecutor:
         tp = "diagnostics_only"
         if state.get("graph_errors"):
             tp = "diagnostics_only"
-        elif "fallback_model" in (state.get("nodes_executed") or []):
-            tp = "diagnostics_only"
         elif committed.get("commit_applied"):
             tp = "hard"
         elif validation.get("status") == "approved":
             tp = "soft"
+        elif "fallback_model" in (state.get("nodes_executed") or []):
+            tp = "diagnostics_only"
         yslice = state.get("goc_yaml_slice") if isinstance(state.get("goc_yaml_slice"), dict) else {}
         sg = yslice.get("scene_guidance") if isinstance(yslice.get("scene_guidance"), dict) else {}
         responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
@@ -904,6 +972,9 @@ class RuntimeTurnGraphExecutor:
         )
         update["diagnostics_refs"] = refs
         update["failure_markers"] = failure_markers
+        routing_final = dict(state.get("routing") or {})
+        routing_final["fallback_stage_reached"] = "graph_fallback_executed" if fallback_taken else "primary_only"
+        update["routing"] = routing_final
         return update
 
 

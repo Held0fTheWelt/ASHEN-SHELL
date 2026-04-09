@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.0] - 2026-04-09
+
+**Summary**: **GoC gate evidence, G9/G9B audit trail, and product alignment** — authoritative six-scenario G9 capture and threshold tooling; Evaluator B strict-blind handoff ingestion with full A-vs-B delta and honest G9B independence classification (`level_a_capable` only); baseline audit docs and evidence templates; expanded GoC roadmap/scenario/retrieval coverage in `ai_stack` with matching tests; backend improvement and Writers’ Room services, contracts, and routes closer to the unified operating model; CI workflow and testing-setup updates; canonical turn contract and architecture notes.
+
+### Added
+
+- **G9 / G9B evidence**: `scripts/g9_level_a_evidence_capture.py`, `scripts/g9_threshold_validator.py`, `scripts/g9b_compute_score_delta.py`, `scripts/assemble_g9b_strict_blind_outgoing_package.py`; evidence bundle under `tests/reports/evidence/g9_level_a_fullsix_20260410/` (Evaluator A matrix frozen; Evaluator B matrix `evaluator_b_claude_system_20260409`, raw sheet, declaration with `repository_task_b_post_return_bundle_linkage` for repo-only traceability, full `g9b_score_delta_record.json`, manifest and attempt record); **`tests/goc_gates/`** with fixtures and `test_g9_threshold_validator.py`.
+- **Audit and templates**: `docs/audit/*` (gate baselines, closure summary, master report, repo evidence index); `docs/goc_evidence_templates/` (JSON templates and schemas); `docs/g9_evaluator_b_external_package/` and `docs/plans/` (G9B / G9 S4 plans); `docs/ROADMAP_MVP_REPOSITORY_SURFACE_TRUTH_AND_STRUCTURE_CLEANUP.md`; `outgoing/` handoff kits (external evaluator packages).
+- **`ai_stack`**: `goc_g9_roadmap_scenarios.py`, `goc_roadmap_semantic_surface.py`, `goc_s4_misinterpretation_scenario.py`, `goc_field_initialization_envelope.py`, `retrieval_governance_summary.py`, `scene_direction_subdecision_matrix.py` and corresponding `ai_stack/tests/test_goc_*.py`.
+- **Backend**: `backend/app/contracts/` (improvement / Writers’ Room typed entry surfaces); new tests including `test_goc_*`, `test_writers_room_g7_operating_contract.py`, renamed `test_analytics_service.py` / `test_app_init.py` (replacing legacy `*_coverage` modules).
+
+### Changed
+
+- **`ai_stack`**: `capabilities.py`, `goc_turn_seams.py`, `langgraph_runtime.py`, `scene_director_goc.py` and related tests for roadmap semantics, seams, and phase gates.
+- **Backend**: `improvement_service.py`, `writers_room_service.py`, `improvement_routes.py`, `model_routing_contracts.py`, `ai_stack_evidence_service.py`; integration and observability tests.
+- **Docs**: `docs/CANONICAL_TURN_CONTRACT_GOC.md`, `docs/architecture/writers_room_on_unified_stack.md`, `docs/testing-setup.md`.
+- **CI**: `.github/workflows/ai-stack-tests.yml`, `.github/workflows/backend-tests.yml`.
+- **Writers’ Room app**: `writers-room/app/templates/index.html` and app tests.
+- **`story_runtime_core`**: `model_registry.py` and tests.
+
+### Removed
+
+- **`docs/plans/task_1b_narrative_commit.md`** (superseded by current planning artifacts).
+- **Legacy backend test modules**: `backend/tests/test_analytics_service_coverage.py`, `backend/tests/test_app_init_coverage.py` (replaced by consolidated tests above).
+
+### Notes
+
+- **G9B**: `g9b_level_b_attempt_record.json` records `failed_insufficient_independence` with `independence_classification_primary: insufficient_process_separation`; no `level_b_capable` or program/MVP closure claim. See `tests/reports/evidence/g9_level_a_fullsix_20260410/g9b_evaluator_independence_declaration.md` and `docs/audit/gate_G9B_evaluator_independence_baseline.md`.
+- **`tests/reports/`** remains **gitignored** (repository policy); capture scripts and audit docs describe the bundle layout. Regenerate or refresh local evidence with the G9 scripts as needed.
+
+---
+
 ## [0.3.20] - 2026-04-07
 
 **Summary**: **GoC post–Phase 5 residual closure** — authority docs aligned with implemented LangGraph seams; operator canonical turn projection; explicit validation/commit lane metadata and `validation_reject` failure markers; minimal `scene_assessment` schema helper; closure test module; README/testing-setup merge bar and workflow comment.

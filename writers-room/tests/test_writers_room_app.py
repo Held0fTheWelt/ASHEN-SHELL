@@ -45,7 +45,18 @@ def test_unified_review_flow_renders_report(monkeypatch):
             "focus": kwargs["focus"],
             "outputs_are_recommendations_only": True,
             "issues": [],
-            "recommendations": ["Recommend tightening canon references."],
+            "recommendation_artifacts": [
+                {
+                    "artifact_id": "rec_test_1",
+                    "artifact_class": "analysis_artifact",
+                    "source_module_id": "god_of_carnage",
+                    "shared_semantic_contract_version": "goc_frozen_vocab_surface_v1",
+                    "evidence_refs": [],
+                    "proposal_scope": "writers_room_bounded_recommendation",
+                    "approval_state": "pending_review",
+                    "body": "Recommend tightening canon references.",
+                }
+            ],
             "retrieval": {"sources": []},
             "review_bundle": {"bundle_id": "bundle_1"},
         }

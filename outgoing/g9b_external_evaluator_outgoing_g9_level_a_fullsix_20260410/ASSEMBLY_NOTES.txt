@@ -1,0 +1,2 @@
+See PACKAGE_MANIFEST.md for full file inventory, SHA-256 hashes, and exclusion policy.
+PDF included under optional_grounding/ for authorized test/training use only.

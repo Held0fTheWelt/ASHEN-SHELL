@@ -5,6 +5,7 @@ import json
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import threading
 from pathlib import Path
@@ -21,6 +22,16 @@ def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
+
+
+def _stderr_log_tail(path: Path, *, max_chars: int = 12_000) -> str:
+    try:
+        raw = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        return f"(stderr log unreadable: {exc})"
+    if len(raw) <= max_chars:
+        return raw
+    return f"... (truncated, full file: {path})\n" + raw[-max_chars:]
 
 
 @pytest.fixture
@@ -136,9 +147,13 @@ def play_service_endpoint(backend_content_feed_endpoint: str) -> dict[str, str]:
     env["BACKEND_CONTENT_FEED_URL"] = backend_content_feed_endpoint
     env["BACKEND_CONTENT_TIMEOUT_SECONDS"] = "5.0"
     env["BACKEND_CONTENT_SYNC_INTERVAL_SECONDS"] = "0.0"
+    # StoryRuntimeManager builds RAG at import/lifespan; dense embeddings can download ONNX and
+    # encode the corpus — often >45s on cold CI. Integration tests only need HTTP bridge + sparse RAG.
+    env["WOS_RAG_DISABLE_EMBEDDINGS"] = "1"
     # Inherited CI env (e.g. postgres run store, proxies) can block startup or localhost probes.
     env["RUN_STORE_BACKEND"] = "json"
     env.pop("RUN_STORE_URL", None)
+    env["NO_PROXY"] = "127.0.0.1,localhost"
     for _proxy_key in (
         "HTTP_PROXY",
         "HTTPS_PROXY",
@@ -149,47 +164,106 @@ def play_service_endpoint(backend_content_feed_endpoint: str) -> dict[str, str]:
     ):
         env.pop(_proxy_key, None)
 
-    proc = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
-        cwd=str(world_engine_dir),
-        env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+    _fd, stderr_log_str = tempfile.mkstemp(
+        prefix="wos_world_engine_playservice_",
+        suffix=".stderr.log",
     )
-
-    base_url = f"http://127.0.0.1:{port}"
-    # Lifespan + first template sync can exceed 15s on slow CI; health is enough for bind readiness.
-    deadline = time.time() + 45.0
-    while time.time() < deadline:
-        if proc.poll() is not None:
-            break
-        try:
-            response = httpx.get(f"{base_url}/api/health", timeout=2.0)
-            if response.status_code == 200:
-                break
-        except Exception:
-            pass
-        time.sleep(0.2)
-    else:
-        proc.terminate()
-        raise RuntimeError("world-engine test server did not become ready in time")
-
-    if proc.poll() is not None:
-        raise RuntimeError("world-engine test server exited before readiness")
-
+    os.close(_fd)
+    stderr_log = Path(stderr_log_str)
+    stderr_fh = open(stderr_log, "w", encoding="utf-8", errors="replace", buffering=1)
+    stderr_closed = False
+    proc: subprocess.Popen | None = None
+    keep_stderr_log = False
     try:
+        proc = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "app.main:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--log-level",
+                "warning",
+            ],
+            cwd=str(world_engine_dir),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=stderr_fh,
+        )
+
+        base_url = f"http://127.0.0.1:{port}"
+        # Lifespan (RAG corpus build, template sync from feed) can still be slow on shared CI runners.
+        deadline = time.time() + 120.0
+        ready = False
+        while time.time() < deadline:
+            if proc.poll() is not None:
+                break
+            try:
+                response = httpx.get(f"{base_url}/api/health", timeout=2.0)
+                if response.status_code == 200:
+                    ready = True
+                    break
+            except Exception:
+                pass
+            time.sleep(0.2)
+
+        if not ready:
+            keep_stderr_log = True
+            if proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=5)
+            stderr_fh.flush()
+            stderr_fh.close()
+            stderr_closed = True
+            tail = _stderr_log_tail(stderr_log)
+            raise RuntimeError(
+                "world-engine test server did not become ready in time "
+                "(lifespan/RAG/template sync may be slow; WOS_RAG_DISABLE_EMBEDDINGS=1 is set for this fixture). "
+                f"uvicorn stderr log: {stderr_log}\n{tail}"
+            )
+
+        if proc.poll() is not None:
+            keep_stderr_log = True
+            stderr_fh.flush()
+            stderr_fh.close()
+            stderr_closed = True
+            tail = _stderr_log_tail(stderr_log)
+            raise RuntimeError(
+                f"world-engine test server exited before readiness (exit code {proc.returncode}). "
+                f"uvicorn stderr log: {stderr_log}\n{tail}"
+            )
+
         yield {
             "public_url": base_url,
             "internal_url": base_url,
             "internal_key": "ops-key",
         }
     finally:
-        proc.terminate()
-        try:
-            proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait(timeout=5)
+        if proc is not None and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=5)
+        if not stderr_closed:
+            try:
+                stderr_fh.flush()
+                stderr_fh.close()
+            except OSError:
+                pass
+        if not keep_stderr_log:
+            try:
+                stderr_log.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def test_backend_to_playservice_happy_path(app, play_service_endpoint):

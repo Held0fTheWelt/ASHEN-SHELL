@@ -51,8 +51,8 @@
             </ul>
             <h3>Recommendations</h3>
             <ul>
-                {% for item in report.recommendations %}
-                <li>{{ item }}</li>
+                {% for item in report.recommendation_artifacts %}
+                <li>{{ item.body }}</li>
                 {% endfor %}
             </ul>
             <h3>Evidence Sources</h3>

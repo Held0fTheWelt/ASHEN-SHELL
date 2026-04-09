@@ -2,6 +2,35 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# String values must match ``app.runtime.model_routing_contracts.RouteReasonCode`` (backend / G1 parity).
+ROUTE_REASON_ROLE_MATRIX_PRIMARY = "role_matrix_primary"
+ROUTE_REASON_FALLBACK_ONLY = "fallback_only"
+
+# Canonical ``TaskKind``-style strings (see ``ai_stack.goc_roadmap_semantic_surface.TASK_TYPES``).
+_SLM_FIRST_TASKS = frozenset(
+    {
+        "classification",
+        "trigger_signal_extraction",
+        "repetition_consistency_check",
+        "ranking",
+        "cheap_preflight",
+        # Deprecated aliases — normalized internally; do not emit from new code paths.
+        "extraction",
+        "compression",
+    }
+)
+
+_TASK_TYPE_ALIASES: dict[str, str] = {
+    "narrative_generation": "narrative_formulation",
+    "extraction": "trigger_signal_extraction",
+    "compression": "cheap_preflight",
+}
+
+
+def _normalize_task_type(task_type: str) -> str:
+    t = (task_type or "").strip().lower()
+    return _TASK_TYPE_ALIASES.get(t, t)
+
 
 @dataclass(slots=True)
 class ModelSpec:
@@ -42,14 +71,14 @@ class RoutingPolicy:
         self.registry = registry
 
     def choose(self, *, task_type: str) -> RoutingDecision:
-        task = (task_type or "").lower()
-        if task in {"classification", "extraction", "ranking", "compression"}:
+        task = _normalize_task_type(task_type)
+        if task in _SLM_FIRST_TASKS:
             for spec in self.registry.all().values():
                 if spec.llm_or_slm == "slm":
                     return RoutingDecision(
                         selected_model=spec.model_name,
                         selected_provider=spec.provider,
-                        route_reason="slm_for_auxiliary_or_classification_task",
+                        route_reason=ROUTE_REASON_ROLE_MATRIX_PRIMARY,
                     )
 
         for spec in self.registry.all().values():
@@ -58,7 +87,7 @@ class RoutingPolicy:
                 return RoutingDecision(
                     selected_model=spec.model_name,
                     selected_provider=spec.provider,
-                    route_reason="llm_for_narrative_generation_and_complex_synthesis",
+                    route_reason=ROUTE_REASON_ROLE_MATRIX_PRIMARY,
                     fallback_model=fallback,
                 )
 
@@ -66,7 +95,7 @@ class RoutingPolicy:
             return RoutingDecision(
                 selected_model=spec.model_name,
                 selected_provider=spec.provider,
-                route_reason="fallback_first_registered_model",
+                route_reason=ROUTE_REASON_FALLBACK_ONLY,
             )
         raise ValueError("No models registered in ModelRegistry")
 

@@ -18,6 +18,13 @@ from ai_stack.goc_yaml_authority import (
     scene_assessment_phase_hints,
     scene_guidance_snippets,
 )
+from ai_stack.scene_direction_subdecision_matrix import assert_subdecision_label_in_matrix
+
+
+def _finalize_pacing_silence(pacing: str, silence: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    assert_subdecision_label_in_matrix("pacing_mode", pacing)
+    assert_subdecision_label_in_matrix("silence_brevity_mode", silence["mode"])
+    return pacing, silence
 
 # CANONICAL_TURN_CONTRACT_GOC.md §5.1 — minimal keys for GoC scene_assessment (when slice active).
 GOC_SCENE_ASSESSMENT_MINIMAL_KEYS: frozenset[str] = frozenset({"scene_core", "pressure_state", "module_slice"})
@@ -303,6 +310,7 @@ def build_responder_and_function(
             heuristic_trace.append("default->establish_pressure")
 
     scene_fn = select_single_scene_function(candidates, implied_continuity_by_function=implied)
+    assert_subdecision_label_in_matrix("scene_function", scene_fn)
 
     resolution: dict[str, Any] = {
         "candidates": list(candidates),
@@ -356,10 +364,13 @@ def build_pacing_and_silence(
     text = f"{player_input} {interpreted_move.get('move_class', '')}".lower()
     intent = str(interpreted_move.get("player_intent") or "").lower()
     if module_id != GOC_MODULE_ID:
-        return assert_pacing_mode("standard"), {
-            "mode": assert_silence_brevity_mode("normal"),
-            "reason": "non_goc_slice_default",
-        }
+        return _finalize_pacing_silence(
+            assert_pacing_mode("standard"),
+            {
+                "mode": assert_silence_brevity_mode("normal"),
+                "reason": "non_goc_slice_default",
+            },
+        )
     off_scope_keywords = (
         "mars",
         "spaceship",
@@ -375,10 +386,13 @@ def build_pacing_and_silence(
     )
     off_scope = any(k in text for k in off_scope_keywords) and "carnage" not in text
     if off_scope:
-        return assert_pacing_mode("containment"), {
-            "mode": assert_silence_brevity_mode("normal"),
-            "reason": "slice_boundary_containment_move",
-        }
+        return _finalize_pacing_silence(
+            assert_pacing_mode("containment"),
+            {
+                "mode": assert_silence_brevity_mode("normal"),
+                "reason": "slice_boundary_containment_move",
+            },
+        )
     trimmed = player_input.strip()
     words = [w for w in trimmed.replace(".", " ").split() if w]
     thin_fragment = len(trimmed) <= 10 and len(words) <= 2 and "?" not in trimmed
@@ -390,14 +404,20 @@ def build_pacing_and_silence(
     )
     if "thin edge" in text or "one beat" in text or thin_fragment or awkward_pause:
         if "silent" in text or "say nothing" in text or awkward_pause:
-            return assert_pacing_mode("thin_edge"), {
-                "mode": assert_silence_brevity_mode("withheld"),
-                "reason": "thin_edge_plus_withheld",
-            }
-        return assert_pacing_mode("thin_edge"), {
-            "mode": assert_silence_brevity_mode("brief"),
-            "reason": "thin_edge_brevity_pressure",
-        }
+            return _finalize_pacing_silence(
+                assert_pacing_mode("thin_edge"),
+                {
+                    "mode": assert_silence_brevity_mode("withheld"),
+                    "reason": "thin_edge_plus_withheld",
+                },
+            )
+        return _finalize_pacing_silence(
+            assert_pacing_mode("thin_edge"),
+            {
+                "mode": assert_silence_brevity_mode("brief"),
+                "reason": "thin_edge_brevity_pressure",
+            },
+        )
     if "brief" in text or "short" in text:
         pacing = assert_pacing_mode("compressed")
         silence = {"mode": assert_silence_brevity_mode("brief"), "reason": "player_requested_brevity"}
@@ -416,4 +436,4 @@ def build_pacing_and_silence(
     else:
         pacing = assert_pacing_mode("standard")
         silence = {"mode": assert_silence_brevity_mode("normal"), "reason": "default_verbal_density"}
-    return pacing, silence
+    return _finalize_pacing_silence(pacing, silence)

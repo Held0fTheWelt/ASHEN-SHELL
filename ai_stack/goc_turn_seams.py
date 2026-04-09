@@ -2,11 +2,31 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from ai_stack.goc_dramatic_alignment import dramatic_alignment_violation, extract_proposed_narrative_text
+from ai_stack.goc_field_initialization_envelope import (
+    SETTER_SURFACE_RUNTIME_HOST_SESSION,
+    goc_uninitialized_field_envelope,
+)
 from ai_stack.goc_frozen_vocab import DIRECTOR_IMMUTABLE_FIELDS, GOC_MODULE_ID, assert_transition_pattern
 from ai_stack.goc_yaml_authority import thin_edge_staging_line_from_guidance
+
+
+def _gm_display_text_from_generation_content(raw: str) -> str:
+    """Use narrative_response for GM lines when model content is JSON (e.g. raw graph fallback)."""
+    s = raw.strip()
+    if s.startswith("{") and '"narrative_response"' in s:
+        try:
+            parsed = json.loads(s)
+            if isinstance(parsed, dict):
+                narr = parsed.get("narrative_response")
+                if isinstance(narr, str) and narr.strip():
+                    return narr.strip()
+        except json.JSONDecodeError:
+            pass
+    return raw
 
 
 def strip_director_overwrites_from_structured_output(
@@ -156,6 +176,9 @@ def run_visible_render(
         if isinstance(meta.get("raw_content"), str):
             content = meta["raw_content"].strip()
 
+    if content:
+        content = _gm_display_text_from_generation_content(content)
+
     markers: list[str] = []
     approved = validation_outcome.get("status") == "approved"
     committed = committed_result.get("committed_effects") or []
@@ -286,6 +309,147 @@ def repro_metadata_complete(repro: dict[str, Any]) -> bool:
     return all(repro.get(k) not in (None, "") for k in required)
 
 
+def _project_turn_basis_field_str(
+    state: dict[str, Any],
+    key: str,
+    *,
+    expected_source: str,
+) -> str | dict[str, Any]:
+    raw = state.get(key)
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
+    return goc_uninitialized_field_envelope(
+        setter_surface=SETTER_SURFACE_RUNTIME_HOST_SESSION,
+        expected_source=expected_source,
+    )
+
+
+def _project_turn_number(state: dict[str, Any]) -> int | dict[str, Any]:
+    tn = state.get("turn_number")
+    if isinstance(tn, int) and tn >= 0:
+        return tn
+    return goc_uninitialized_field_envelope(
+        setter_surface=SETTER_SURFACE_RUNTIME_HOST_SESSION,
+        expected_source="RuntimeTurnGraphExecutor.run(..., turn_number=<int>) or session store turn counter",
+    )
+
+
+def build_roadmap_dramatic_turn_record(state: dict[str, Any]) -> dict[str, Any]:
+    """Roadmap §6.3 six-block projection — read-only aggregate from ``RuntimeTurnState`` (single truth surface)."""
+    gd = state.get("graph_diagnostics") if isinstance(state.get("graph_diagnostics"), dict) else {}
+    nodes = gd.get("nodes_executed") if isinstance(gd.get("nodes_executed"), list) else []
+    routing = state.get("routing") if isinstance(state.get("routing"), dict) else {}
+    retrieval = state.get("retrieval") if isinstance(state.get("retrieval"), dict) else {}
+    validation = state.get("validation_outcome") if isinstance(state.get("validation_outcome"), dict) else {}
+    committed = state.get("committed_result") if isinstance(state.get("committed_result"), dict) else {}
+    generation = state.get("generation") if isinstance(state.get("generation"), dict) else {}
+    gen_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    vis = state.get("visibility_class_markers") if isinstance(state.get("visibility_class_markers"), list) else []
+
+    turn_basis: dict[str, Any] = {
+        "turn_id": _project_turn_basis_field_str(
+            state,
+            "turn_id",
+            expected_source="RuntimeTurnGraphExecutor.run(..., turn_id=<str>) or host-supplied stable turn id",
+        ),
+        "session_id": _project_turn_basis_field_str(
+            state,
+            "session_id",
+            expected_source="RuntimeTurnGraphExecutor.run(..., session_id=<str>)",
+        ),
+        "turn_number": _project_turn_number(state),
+        "timestamp": _project_turn_basis_field_str(
+            state,
+            "turn_timestamp_iso",
+            expected_source="RuntimeTurnGraphExecutor.run(..., turn_timestamp_iso=<iso8601>)",
+        ),
+        "initiator_type": _project_turn_basis_field_str(
+            state,
+            "turn_initiator_type",
+            expected_source="RuntimeTurnGraphExecutor.run(..., turn_initiator_type=<str>)",
+        ),
+        "input_class": _project_turn_basis_field_str(
+            state,
+            "turn_input_class",
+            expected_source="Derived from interpreted_input.kind unless overridden via run(..., turn_input_class=)",
+        ),
+        "execution_mode": _project_turn_basis_field_str(
+            state,
+            "turn_execution_mode",
+            expected_source="RuntimeTurnGraphExecutor.run(..., turn_execution_mode=<str>)",
+        ),
+    }
+
+    decision_boundary_records: list[dict[str, Any]] = []
+    for node_name in nodes:
+        if not isinstance(node_name, str):
+            continue
+        decision_boundary_records.append(
+            {
+                "decision_name": node_name,
+                "decision_class": "runtime_graph_node",
+                "owner_layer": "ai_stack.langgraph_runtime",
+                "input_seam_ref": f"state_before:{node_name}",
+                "chosen_path": node_name,
+                "validation_result": str((state.get("node_outcomes") or {}).get(node_name) or "ok"),
+                "failure_seam_used": "",
+                "notes_code": "graph_trace_only",
+            }
+        )
+
+    routing_record: dict[str, Any] = {
+        "route_mode": routing.get("route_mode"),
+        "route_reason": routing.get("route_reason_code") or routing.get("reason"),
+        "fallback_chain": routing.get("fallback_chain"),
+        "fallback_stage_reached": routing.get("fallback_stage_reached"),
+        "policy_id_used": routing.get("policy_id_used"),
+        "policy_version_used": routing.get("policy_version_used"),
+        "selected_model": routing.get("selected_model"),
+        "selected_provider": routing.get("selected_provider"),
+    }
+
+    gov = retrieval.get("retrieval_governance_summary") if isinstance(retrieval.get("retrieval_governance_summary"), dict) else {}
+    retrieval_record: dict[str, Any] = {
+        "retrieval_used": bool(retrieval.get("hit_count")) or retrieval.get("status") not in (None, "", "empty"),
+        "retrieval_domain": retrieval.get("domain"),
+        "retrieval_lane": retrieval.get("profile") or retrieval.get("retrieval_route"),
+        "retrieval_visibility_class": gov.get("dominant_visibility_class"),
+        "authored_truth_refs": list(gov.get("authored_truth_refs") or []),
+        "derived_artifact_refs": list(gov.get("derived_artifact_refs") or []),
+        "retrieval_governance_result": gov,
+    }
+
+    responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
+    primary = responders[0] if responders and isinstance(responders[0], dict) else {}
+    realization_record: dict[str, Any] = {
+        "selected_responder": primary.get("actor_id"),
+        "selected_scene_function": state.get("selected_scene_function"),
+        "selected_pacing_label": state.get("pacing_mode"),
+        "visibility_class": vis[0] if vis else None,
+        "realization_mode": gen_meta.get("adapter_invocation_mode"),
+        "degraded_wording_used": bool(generation.get("fallback_used")),
+        "safe_wording_fallback_used": bool(generation.get("fallback_used")),
+    }
+
+    failure_list = state.get("failure_markers") if isinstance(state.get("failure_markers"), list) else []
+    outcome_record: dict[str, Any] = {
+        "commit_outcome": "applied" if committed.get("commit_applied") else "not_applied",
+        "guard_outcomes": [m for m in failure_list if isinstance(m, dict)],
+        "rejected_reasons": [validation.get("reason")] if validation.get("status") == "rejected" else [],
+        "continuity_aftereffects": state.get("continuity_impacts"),
+        "player_visible_response_class": vis,
+    }
+
+    return {
+        "turn_basis": turn_basis,
+        "decision_boundary_records": decision_boundary_records,
+        "routing_record": routing_record,
+        "retrieval_record": retrieval_record,
+        "realization_record": realization_record,
+        "outcome_record": outcome_record,
+    }
+
+
 def build_operator_canonical_turn_record(state: dict[str, Any]) -> dict[str, Any]:
     """Single JSON-serializable operator view over post-`package_output` state (CANONICAL_TURN_CONTRACT_GOC.md §8).
 
@@ -299,6 +463,12 @@ def build_operator_canonical_turn_record(state: dict[str, Any]) -> dict[str, Any
             "trace_id": state.get("trace_id"),
             "module_id": state.get("module_id"),
             "current_scene_id": state.get("current_scene_id"),
+            "turn_id": state.get("turn_id"),
+            "turn_number": state.get("turn_number"),
+            "turn_timestamp_iso": state.get("turn_timestamp_iso"),
+            "turn_initiator_type": state.get("turn_initiator_type"),
+            "turn_input_class": state.get("turn_input_class"),
+            "turn_execution_mode": state.get("turn_execution_mode"),
         },
         "interpreted_move": state.get("interpreted_move"),
         "scene_assessment": state.get("scene_assessment"),
@@ -317,6 +487,8 @@ def build_operator_canonical_turn_record(state: dict[str, Any]) -> dict[str, Any
         "diagnostics_refs": state.get("diagnostics_refs"),
         "experiment_preview": state.get("experiment_preview"),
         "transition_pattern": state.get("transition_pattern"),
+        "routing": state.get("routing"),
+        "dramatic_turn_record": build_roadmap_dramatic_turn_record(state),
         "graph_diagnostics_summary": {
             "graph_name": gd.get("graph_name"),
             "graph_version": gd.get("graph_version"),
