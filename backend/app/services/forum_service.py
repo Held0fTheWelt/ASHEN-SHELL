@@ -7,6 +7,7 @@ from typing import List, Optional, Set, Tuple
 
 import bleach
 from flask import current_app
+from sqlalchemy import case
 
 from app.extensions import db
 from app.models import (
@@ -1070,7 +1071,6 @@ def list_escalation_queue(
         query = query.filter(ForumReport.created_at >= created_after)
 
     # Priority ordering: critical > high > normal > low
-    from sqlalchemy import case
     priority_case = case(
         (ForumReport.priority == "critical", 4),
         (ForumReport.priority == "high", 3),
@@ -1148,7 +1148,6 @@ def list_moderator_assigned_reports(
     offset = (page - 1) * per_page
 
     # Order by: open/reviewed first, then escalated, then by date
-    from sqlalchemy import case
     status_case = case(
         (ForumReport.status == "open", 3),
         (ForumReport.status == "reviewed", 2),
