@@ -35,6 +35,8 @@ def _bundle_with_turn() -> dict:
                 {
                     "turn_number": 2,
                     "trace_id": "trace-turn-2",
+                    "raw_input": "Hello?",
+                    "interpreted_input": {"signals": ["probe"]},
                     "retrieval": {"status": "ok", "hit_count": 2},
                     "model_route": {
                         "route_mode": "primary",
@@ -55,11 +57,19 @@ def _bundle_with_turn() -> dict:
                         "status": "rejected",
                         "reason": "dramatic_effect_reject_unknown",
                         "validator_lane": "goc_rule_engine_v1",
+                        "dramatic_effect_weak_signal": False,
                         "dramatic_effect_gate_outcome": {
                             "gate_result": "rejected_scene_function_mismatch",
                             "dominant_rejection_category": "scene_mismatch",
                             "rejection_reasons": ["scene_function_mismatch"],
+                            "effect_rationale_codes": ["scene_function_mismatch_signal"],
+                            "supports_scene_function": False,
+                            "continues_or_changes_pressure": True,
+                            "character_plausibility_posture": "uncertain",
+                            "continuity_support_posture": "weak",
+                            "empty_fluency_risk": "moderate",
                             "legacy_fallback_used": True,
+                            "diagnostic_trace": [{"code": "gate_eval_complete", "detail": "ok"}],
                         },
                     },
                     "committed_result": {"commit_applied": False, "committed_effects": []},
@@ -85,9 +95,11 @@ def _bundle_with_two_turns() -> dict:
     bundle = _bundle_with_turn()
     rows = bundle["world_engine_diagnostics"]["diagnostics"]
     rows.append(
-        {
+                {
             "turn_number": 3,
             "trace_id": "trace-turn-3",
+            "raw_input": "Next",
+            "interpreted_input": {},
             "retrieval": {"status": "ok", "hit_count": 1},
             "model_route": {
                 "route_mode": "fallback",
@@ -108,10 +120,17 @@ def _bundle_with_two_turns() -> dict:
                 "status": "approved",
                 "reason": "dramatic_effect_pass",
                 "validator_lane": "goc_rule_engine_v1",
+                "dramatic_effect_weak_signal": False,
                 "dramatic_effect_gate_outcome": {
                     "gate_result": "accepted",
                     "dominant_rejection_category": None,
                     "rejection_reasons": [],
+                    "effect_rationale_codes": [],
+                    "supports_scene_function": True,
+                    "continues_or_changes_pressure": False,
+                    "character_plausibility_posture": "plausible",
+                    "continuity_support_posture": "adequate",
+                    "empty_fluency_risk": "low",
                     "legacy_fallback_used": False,
                 },
             },
@@ -188,8 +207,19 @@ def test_service_preserves_authority_fallback_provenance_and_rejection(monkeypat
 
     gate = payload["gate_projection"]
     assert gate["status"] == "supported"
-    assert gate["data"]["dominant_rejection_category"] == "scene_mismatch"
-    assert gate["data"]["rejection_codes"] == ["scene_function_mismatch"]
+    gdata = gate["data"]
+    assert gdata["gate_result"] == "rejected_scene_function_mismatch"
+    assert gdata["rejection_reasons"] == ["scene_function_mismatch"]
+    assert gdata["effect_rationale_codes"] == ["scene_function_mismatch_signal"]
+    assert gdata["empty_fluency_risk"] == "moderate"
+    assert gdata["legacy_compatibility_summary"]["dominant_rejection_category"] == "scene_mismatch"
+
+    dt = payload["decision_trace_projection"]["data"]
+    assert "semantic_decision_flow" in dt
+    stages = dt["semantic_decision_flow"]["stages"]
+    assert any(s["id"] == "player_input" and s["presence"] == "present" for s in stages)
+    assert "graph_execution_flow" in dt
+    assert dt["graph_execution_flow"]["flow_nodes"] == ["input_interpretation", "routing", "validation"]
 
     provenance = payload["provenance_projection"]["data"]
     entries = provenance["entries"]
@@ -197,6 +227,8 @@ def test_service_preserves_authority_fallback_provenance_and_rejection(monkeypat
     assert "commit_applied" in fields
     assert "execution_health" in fields
     assert "legacy_fallback_used" in fields
+    assert "effect_rationale_codes" in fields
+    assert "dramatic_effect_diagnostic_trace" in fields
 
 
 def test_endpoint_returns_canonical_projection_shape(client, moderator_headers, monkeypatch):
@@ -256,6 +288,17 @@ def test_missing_section_template_uses_unavailable_default():
     assert section["unavailable_reason"] == "missing_data"
 
 
+def test_timeline_includes_semantic_planner_columns(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.inspector_projection_service.build_session_evidence_bundle",
+        lambda **_kwargs: _bundle_with_turn(),
+    )
+    payload = build_inspector_timeline_projection(session_id="backend-sid", trace_id="trace-123")
+    turn0 = payload["timeline_projection"]["data"]["turns"][0]
+    assert turn0["semantic_planner_support_level"] == "full_goc"
+    assert turn0["gate_result"] == "rejected_scene_function_mismatch"
+
+
 def test_timeline_projection_returns_multi_turn_rows(monkeypatch):
     monkeypatch.setattr(
         "app.services.inspector_projection_service.build_session_evidence_bundle",
@@ -292,6 +335,7 @@ def test_comparison_projection_includes_turn_to_turn_deltas(monkeypatch):
     section = payload["comparison_projection"]
     assert section["status"] == "supported"
     assert "turn_to_turn_within_session" in section["data"]["supported_dimensions"]
+    assert "planner_gate_posture_delta" in section["data"]["supported_dimensions"]
     assert len(section["data"]["comparisons"]) == 1
     delta = section["data"]["comparisons"][0]
     assert delta["from_turn_number"] == 2
@@ -311,7 +355,8 @@ def test_coverage_health_projection_reports_required_metrics(monkeypatch):
     assert "gate_outcome_distribution" in dist
     assert "validation_outcome_distribution" in dist
     assert "unsupported_unavailable_frequency" in dist
-    assert "rejection_rationale_distribution" in dist
+    assert "effect_and_rejection_rationale_distribution" in dist
+    assert "empty_fluency_risk_distribution" in dist
     fallback = section["data"]["metrics"]["fallback_frequency"]
     assert fallback["total_turns"] == 2
     assert fallback["fallback_turns"] == 1
@@ -329,6 +374,9 @@ def test_provenance_raw_projection_respects_mode(monkeypatch):
     )
     assert canonical["schema_version"] == INSPECTOR_PROVENANCE_RAW_PROJECTION_SCHEMA_VERSION
     assert canonical["provenance_raw_projection"]["status"] == "supported"
+    prov_fields = {e["field"] for e in canonical["provenance_raw_projection"]["data"]["entries"]}
+    assert "semantic_planner_support_level" in prov_fields
+    assert "effect_rationale_codes" in prov_fields
     assert canonical["raw_mode_loaded"] is False
     assert "raw_evidence" not in canonical
 

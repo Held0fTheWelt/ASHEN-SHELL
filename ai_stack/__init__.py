@@ -17,6 +17,17 @@ from .capabilities import (
     create_default_capability_registry,
     evidence_lane_mix_from_sources,
 )
+from .research_contract import (
+    CanonIssueType,
+    ContradictionStatus,
+    CopyrightPosture,
+    ExplorationAbortReason,
+    ExplorationBudget,
+    ExplorationRelationType,
+    ImprovementProposalType,
+    Perspective,
+    ResearchStatus,
+)
 __all__ = [
     "AI_STACK_MILESTONE",
     "AI_STACK_SEMANTIC_VERSION",
@@ -32,6 +43,15 @@ __all__ = [
     "capability_catalog",
     "create_default_capability_registry",
     "evidence_lane_mix_from_sources",
+    "CanonIssueType",
+    "ContradictionStatus",
+    "CopyrightPosture",
+    "ExplorationAbortReason",
+    "ExplorationBudget",
+    "ExplorationRelationType",
+    "ImprovementProposalType",
+    "Perspective",
+    "ResearchStatus",
 ]
 
 # Optional heavy modules are imported defensively so lightweight metadata imports

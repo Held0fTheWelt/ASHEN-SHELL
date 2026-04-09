@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from conftest import captured_templates
@@ -32,7 +34,10 @@ def test_manage_inspector_workbench_contains_turn_inspector_mountpoints(client):
     assert "inspector-fallback-status-grid" in html
     assert "inspector-provenance-canonical" in html
     assert "inspector-provenance-raw-json" in html
-    assert "inspector-rejection-analysis-grid" in html
+    assert "inspector-gate-posture-grid" in html
+    assert "inspector-gate-legacy-block" in html
+    assert "inspector-planner-structured" in html
+    assert "inspector-mermaid-mode" in html
     assert "inspector-raw-json" in html
     assert "inspector-gate-outcome-grid" in html
     assert "inspector-validation-outcome-grid" in html
@@ -65,6 +70,17 @@ def test_manage_base_includes_single_canonical_inspector_nav(client):
     assert CANONICAL_INSPECTOR_PATH in html
     assert "manage-nav-inspector-suite" not in html
     assert "manage-nav-ai-stack-governance" not in html
+
+
+def test_comparison_renderer_includes_mandatory_structured_fields():
+    script_path = Path(__file__).resolve().parents[1] / "static" / "manage_inspector_workbench.js"
+    script = script_path.read_text(encoding="utf-8")
+    assert "Mandatory dimension:" in script
+    assert "from_trace_id" in script
+    assert "to_trace_id" in script
+    assert "continuity_support_posture_from" in script
+    assert "continuity_support_posture_to" in script
+    assert "renderComparisonRowBlocks" in script
 
 
 def test_legacy_inspector_and_governance_paths_redirect_permanently(client):

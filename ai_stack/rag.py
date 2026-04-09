@@ -62,6 +62,7 @@ class RetrievalDomain(StrEnum):
     RUNTIME = "runtime"
     WRITERS_ROOM = "writers_room"
     IMPROVEMENT = "improvement"
+    RESEARCH = "research"
 
 
 class RetrievalStatus(StrEnum):
@@ -190,6 +191,15 @@ DOMAIN_CONTENT_ACCESS: dict[RetrievalDomain, set[ContentClass]] = {
         ContentClass.EVALUATION_ARTIFACT,
         ContentClass.POLICY_GUIDELINE,
     },
+    RetrievalDomain.RESEARCH: {
+        ContentClass.AUTHORED_MODULE,
+        ContentClass.RUNTIME_PROJECTION,
+        ContentClass.TRANSCRIPT,
+        ContentClass.REVIEW_NOTE,
+        ContentClass.EVALUATION_ARTIFACT,
+        ContentClass.POLICY_GUIDELINE,
+        ContentClass.CHARACTER_PROFILE,
+    },
 }
 
 
@@ -226,6 +236,7 @@ PROFILE_HYBRID_WEIGHTS: dict[str, tuple[float, float]] = {
     "runtime_turn_support": (0.58, 0.42),
     "writers_review": (0.60, 0.38),
     "improvement_eval": (0.54, 0.46),
+    "research_eval": (0.57, 0.43),
 }
 
 # Weak dense + strong sparse: do not let a low dense cosine collapse a strong lexical match.
@@ -467,6 +478,7 @@ PROFILE_VERSIONS = {
     "runtime_turn_support": "runtime_profile_v3_source_policy",
     "writers_review": "writers_profile_v3_source_policy",
     "improvement_eval": "improvement_profile_v3_source_policy",
+    "research_eval": "research_profile_v1_source_policy",
 }
 
 SEMANTIC_CANON = {
@@ -522,18 +534,28 @@ PROFILE_CONTENT_BOOSTS: dict[str, dict[ContentClass, float]] = {
         ContentClass.AUTHORED_MODULE: 0.6,
         ContentClass.POLICY_GUIDELINE: 0.4,
     },
+    "research_eval": {
+        ContentClass.AUTHORED_MODULE: 0.9,
+        ContentClass.EVALUATION_ARTIFACT: 0.8,
+        ContentClass.REVIEW_NOTE: 0.7,
+        ContentClass.TRANSCRIPT: 0.6,
+        ContentClass.POLICY_GUIDELINE: 0.6,
+        ContentClass.CHARACTER_PROFILE: 0.5,
+    },
 }
 
 PROFILE_CANONICAL_WEIGHT = {
     "runtime_turn_support": 0.8,
     "writers_review": 0.45,
     "improvement_eval": 0.3,
+    "research_eval": 0.4,
 }
 
 DOMAIN_DEFAULT_PROFILE = {
     RetrievalDomain.RUNTIME: "runtime_turn_support",
     RetrievalDomain.WRITERS_ROOM: "writers_review",
     RetrievalDomain.IMPROVEMENT: "improvement_eval",
+    RetrievalDomain.RESEARCH: "research_eval",
 }
 
 

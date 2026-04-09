@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_stack.dramatic_effect_contract import SemanticPlannerSupportLevel
 from ai_stack.goc_turn_seams import build_operator_canonical_turn_record
+from ai_stack.semantic_planner_effect_surface import (
+    resolve_dramatic_effect_evaluator,
+    support_level_for_module,
+)
 
 from app.contracts.inspector_turn_projection import (
     build_inspector_turn_projection_root,
@@ -17,9 +22,180 @@ from app.services.ai_stack_evidence_service import build_session_evidence_bundle
 _COMPARISON_RESERVED_FIELDS: tuple[str, ...] = (
     "timeline_alignment",
     "cross_run_delta",
-    "candidate_matrix",
     "coverage_heatmap",
 )
+
+_LEGACY_GATE_SUMMARY_KEYS: frozenset[str] = frozenset(
+    {
+        "dominant_rejection_category",
+        "scene_function_mismatch_score",
+        "character_implausibility_score",
+        "continuity_pressure_score",
+        "fluency_risk_score",
+    }
+)
+
+_SEMANTIC_FLOW_STAGES: tuple[tuple[str, str], ...] = (
+    ("player_input", "Player input"),
+    ("semantic_move", "Semantic move"),
+    ("social_state", "Social state"),
+    ("character_mind", "Character mind"),
+    ("scene_plan", "Scene plan"),
+    ("proposed_narrative", "Candidate / proposed narrative"),
+    ("dramatic_effect_gate", "Dramatic effect gate"),
+    ("validation", "Validation"),
+    ("commit", "Commit"),
+    ("visible_output", "Visible output"),
+)
+
+_PLANNER_BOUND_STAGES: frozenset[str] = frozenset(
+    {"semantic_move", "social_state", "character_mind", "scene_plan"}
+)
+
+_SUPPORT_NOTE_FULL_GOC = (
+    "Full GoC dramatic-effect evaluation path; bounded semantic planner contracts apply for this module."
+)
+_SUPPORT_NOTE_NON_GOC = (
+    "Non-GoC module: dramatic-effect evaluation uses the canonical non-GoC evaluator; "
+    "semantic planner maturity is GoC-local — do not assume GoC-equivalent semantics here."
+)
+
+_LAST_TURN_PLANNER_KEYS: tuple[str, ...] = (
+    "semantic_move_record",
+    "social_state_record",
+    "character_mind_records",
+    "scene_plan_record",
+    "interpreted_move",
+    "scene_assessment",
+    "selected_responder_set",
+    "pacing_mode",
+    "silence_brevity_decision",
+    "proposed_state_effects",
+    "dramatic_effect_outcome",
+    "continuity_impacts",
+    "visibility_class_markers",
+    "failure_markers",
+    "fallback_markers",
+    "transition_pattern",
+    "turn_id",
+    "turn_timestamp_iso",
+    "turn_initiator_type",
+    "turn_input_class",
+    "turn_execution_mode",
+)
+
+
+def _non_empty_dict(value: Any) -> bool:
+    return isinstance(value, dict) and bool(value)
+
+
+def _non_empty_list(value: Any) -> bool:
+    return isinstance(value, list) and bool(value)
+
+
+def _planner_fields_from_last_turn(last_turn: dict[str, Any]) -> dict[str, Any]:
+    """Lift planner-shaped fields from a diagnostics row (top-level and graph.planner_state_projection)."""
+    out: dict[str, Any] = {}
+    for key in _LAST_TURN_PLANNER_KEYS:
+        if key in last_turn and last_turn[key] is not None:
+            out[key] = last_turn[key]
+    graph = last_turn.get("graph")
+    if isinstance(graph, dict):
+        psp = graph.get("planner_state_projection")
+        if isinstance(psp, dict):
+            for key in (
+                "semantic_move_record",
+                "social_state_record",
+                "character_mind_records",
+                "scene_plan_record",
+            ):
+                if key not in out and psp.get(key) is not None:
+                    out[key] = psp[key]
+    if "interpreted_move" not in out and isinstance(last_turn.get("interpreted_input"), dict):
+        out["interpreted_move"] = last_turn["interpreted_input"]
+    return out
+
+
+def _support_posture(*, module_id: Any) -> dict[str, Any] | None:
+    if not isinstance(module_id, str) or not module_id.strip():
+        return None
+    mid = module_id.strip()
+    level = support_level_for_module(mid)
+    evaluator = resolve_dramatic_effect_evaluator(mid)
+    note = _SUPPORT_NOTE_FULL_GOC if level == SemanticPlannerSupportLevel.full_goc else _SUPPORT_NOTE_NON_GOC
+    return {
+        "semantic_planner_support_level": level.value,
+        "dramatic_effect_evaluator_class": type(evaluator).__name__,
+        "support_note": note,
+    }
+
+
+def _build_semantic_decision_flow(
+    *,
+    support_level: SemanticPlannerSupportLevel,
+    canonical_record: dict[str, Any],
+    last_turn: dict[str, Any],
+    gate_outcome: dict[str, Any],
+    validation: dict[str, Any],
+    committed: dict[str, Any],
+) -> dict[str, Any]:
+    """Backend-only semantic stage list with explicit per-stage presence (operator Mermaid input)."""
+
+    def presence_for(stage_id: str) -> str:
+        if stage_id in _PLANNER_BOUND_STAGES and support_level != SemanticPlannerSupportLevel.full_goc:
+            return "unsupported"
+        if stage_id == "player_input":
+            raw = last_turn.get("raw_input")
+            if isinstance(raw, str) and raw.strip():
+                return "present"
+            ii = last_turn.get("interpreted_input")
+            if _non_empty_dict(ii):
+                return "present"
+            return "absent"
+        if stage_id == "semantic_move":
+            return "present" if _non_empty_dict(canonical_record.get("semantic_move_record")) else "absent"
+        if stage_id == "social_state":
+            return "present" if _non_empty_dict(canonical_record.get("social_state_record")) else "absent"
+        if stage_id == "character_mind":
+            return "present" if _non_empty_list(canonical_record.get("character_mind_records")) else "absent"
+        if stage_id == "scene_plan":
+            return "present" if _non_empty_dict(canonical_record.get("scene_plan_record")) else "absent"
+        if stage_id == "proposed_narrative":
+            if _non_empty_dict(last_turn.get("narrative_commit")):
+                return "present"
+            gen = (last_turn.get("model_route") or {}).get("generation")
+            if isinstance(gen, dict) and any(
+                gen.get(k) not in (None, "", [], {})
+                for k in ("primary_text", "text", "narrative", "content", "structured_output")
+            ):
+                return "present"
+            return "absent"
+        if stage_id == "dramatic_effect_gate":
+            return "present" if _non_empty_dict(gate_outcome) else "absent"
+        if stage_id == "validation":
+            if isinstance(validation, dict) and validation.get("status") is not None:
+                return "present"
+            return "absent"
+        if stage_id == "commit":
+            return "present" if isinstance(committed, dict) else "absent"
+        if stage_id == "visible_output":
+            vo = last_turn.get("visible_output_bundle")
+            if isinstance(vo, dict) and bool(vo):
+                return "present"
+            if isinstance(vo, list) and bool(vo):
+                return "present"
+            return "absent"
+        return "absent"
+
+    stages_out: list[dict[str, Any]] = []
+    for sid, label in _SEMANTIC_FLOW_STAGES:
+        stages_out.append({"id": sid, "label": label, "presence": presence_for(sid)})
+
+    edges: list[dict[str, str]] = []
+    for idx in range(len(stages_out) - 1):
+        edges.append({"from_stage": stages_out[idx]["id"], "to_stage": stages_out[idx + 1]["id"]})
+
+    return {"stages": stages_out, "edges": edges}
 
 
 def _last_turn_from_bundle(bundle: dict[str, Any]) -> dict[str, Any] | None:
@@ -48,7 +224,7 @@ def _projectable_state(
     current_scene_id = bundle.get("current_scene_id")
     world_engine_story_session_id = bundle.get("world_engine_story_session_id")
     turn_number = last_turn.get("turn_number")
-    return {
+    state: dict[str, Any] = {
         "session_id": world_engine_story_session_id,
         "trace_id": last_turn.get("trace_id"),
         "module_id": module_id,
@@ -71,6 +247,30 @@ def _projectable_state(
         ),
         "selected_scene_function": last_turn.get("selected_scene_function"),
     }
+    state.update(_planner_fields_from_last_turn(last_turn))
+    return state
+
+
+def _character_mind_provenance_summary(canonical_record: dict[str, Any]) -> list[dict[str, Any]] | None:
+    records = canonical_record.get("character_mind_records")
+    if not isinstance(records, list) or not records:
+        return None
+    rows: list[dict[str, Any]] = []
+    for item in records:
+        if not isinstance(item, dict):
+            continue
+        ck = item.get("character_key")
+        prov = item.get("provenance")
+        if not isinstance(prov, dict):
+            field_sources = {}
+        else:
+            field_sources = {
+                str(fk): (fv.get("source") if isinstance(fv, dict) else None)
+                for fk, fv in prov.items()
+                if isinstance(fk, str)
+            }
+        rows.append({"character_key": ck, "field_sources": field_sources})
+    return rows or None
 
 
 def _build_provenance_entries(canonical_record: dict[str, Any], last_turn: dict[str, Any]) -> list[dict[str, Any]]:
@@ -168,7 +368,9 @@ def _build_provenance_entries(canonical_record: dict[str, Any], last_turn: dict[
         code_path="world-engine/app/story_runtime/manager.py:execute_turn.event",
         influence_targets=["validation_projection", "authority_projection"],
         decision_effect="determines approval/rejection presentation",
-        rejected_alternatives=dramatic.get("rejection_reasons") if isinstance(dramatic.get("rejection_reasons"), list) else [],
+        rejected_alternatives=dramatic.get("rejection_reasons")
+        if isinstance(dramatic.get("rejection_reasons"), list)
+        else [],
     )
     add_entry(
         field="commit_applied",
@@ -211,7 +413,68 @@ def _build_provenance_entries(canonical_record: dict[str, Any], last_turn: dict[
         influence_targets=["fallback_projection", "decision_trace_projection"],
         decision_effect="shows fallback chain depth for selected route",
     )
+
+    rationale = dramatic.get("effect_rationale_codes")
+    if isinstance(rationale, list):
+        add_entry(
+            field="effect_rationale_codes",
+            value=list(rationale),
+            source_kind="runtime_derived",
+            source_ref="diagnostics.validation_outcome.dramatic_effect_gate_outcome.effect_rationale_codes",
+            derivation_rule="pass_through_if_supported_by_gate_outcome",
+            code_path="ai_stack/dramatic_effect_gate.py",
+            influence_targets=["gate_projection", "provenance_projection"],
+            decision_effect="bounded rationale codes attached to dramatic-effect evaluation",
+        )
+
+    trace = dramatic.get("diagnostic_trace")
+    if isinstance(trace, list):
+        compact = []
+        for step in trace[:32]:
+            if isinstance(step, dict):
+                compact.append(
+                    {"code": step.get("code"), "detail": (step.get("detail") or "")[:200]}
+                )
+        if compact:
+            add_entry(
+                field="dramatic_effect_diagnostic_trace",
+                value=compact,
+                source_kind="runtime_derived",
+                source_ref="diagnostics.validation_outcome.dramatic_effect_gate_outcome.diagnostic_trace",
+                derivation_rule="pass_through_if_supported_by_gate_outcome",
+                code_path="ai_stack/dramatic_effect_contract.py",
+                influence_targets=["gate_projection", "provenance_projection"],
+                decision_effect="bounded diagnostic trace steps for operators",
+            )
+
+    cm_summary = _character_mind_provenance_summary(canonical_record)
+    if cm_summary is not None:
+        add_entry(
+            field="character_mind_provenance_summary",
+            value=cm_summary,
+            source_kind="runtime_derived",
+            source_ref="operator_canonical_turn_record.character_mind_records[].provenance",
+            derivation_rule="aggregate_field_provenance_per_character_mind_record",
+            code_path="ai_stack/character_mind_contract.py",
+            influence_targets=["planner_state_projection", "provenance_projection"],
+            decision_effect="shows authored vs fallback provenance for tactical identity fields",
+        )
+
     return entries
+
+
+def _gate_projection_payload(gate_outcome: dict[str, Any]) -> dict[str, Any]:
+    """Canonical dramatic-effect pass-through with legacy scores isolated."""
+    legacy: dict[str, Any] = {}
+    canonical: dict[str, Any] = {}
+    for key, value in gate_outcome.items():
+        if key in _LEGACY_GATE_SUMMARY_KEYS:
+            legacy[key] = value
+        else:
+            canonical[key] = value
+    if legacy:
+        canonical["legacy_compatibility_summary"] = legacy
+    return canonical
 
 
 def _build_sections(
@@ -243,7 +506,11 @@ def _build_sections(
     turn_meta = canonical_record.get("turn_metadata")
     if not isinstance(turn_meta, dict):
         turn_meta = {}
-    planner_data = {
+    module_id = bundle.get("module_id")
+    support_level = support_level_for_module(str(module_id if isinstance(module_id, str) else ""))
+    posture = _support_posture(module_id=module_id)
+
+    planner_data: dict[str, Any] = {
         "semantic_move_record": canonical_record.get("semantic_move_record"),
         "social_state_record": canonical_record.get("social_state_record"),
         "character_mind_records": canonical_record.get("character_mind_records"),
@@ -255,7 +522,22 @@ def _build_sections(
         "pacing_mode": canonical_record.get("pacing_mode"),
         "silence_brevity_decision": canonical_record.get("silence_brevity_decision"),
     }
-    if not any(v is not None for v in planner_data.values()):
+    if posture is not None:
+        planner_data["support_posture"] = posture
+    _core_keys = (
+        "semantic_move_record",
+        "social_state_record",
+        "character_mind_records",
+        "scene_plan_record",
+        "interpreted_move",
+        "scene_assessment",
+        "selected_responder_set",
+        "selected_scene_function",
+        "pacing_mode",
+        "silence_brevity_decision",
+    )
+    _core_empty = not any(planner_data.get(k) is not None for k in _core_keys)
+    if _core_empty and posture is None:
         planner_section = make_unavailable_section(
             reason="planner_surface_not_emitted_by_runtime_diagnostics_event",
             data=planner_data,
@@ -270,7 +552,7 @@ def _build_sections(
     if not isinstance(routing, dict):
         routing = {}
     nodes = graph.get("nodes_executed") if isinstance(graph.get("nodes_executed"), list) else []
-    flow_edges = []
+    flow_edges: list[dict[str, str]] = []
     for idx in range(len(nodes) - 1):
         src = nodes[idx]
         dst = nodes[idx + 1]
@@ -290,16 +572,7 @@ def _build_sections(
     if not isinstance(generation, dict):
         generation = {}
 
-    gate_data = {
-        "gate_result": gate_outcome.get("gate_result"),
-        "dominant_rejection_category": gate_outcome.get("dominant_rejection_category"),
-        "rejection_codes": gate_outcome.get("rejection_reasons") if isinstance(gate_outcome.get("rejection_reasons"), list) else [],
-        "legacy_fallback_used": gate_outcome.get("legacy_fallback_used"),
-        "scene_function_mismatch_score": gate_outcome.get("scene_function_mismatch_score"),
-        "character_implausibility_score": gate_outcome.get("character_implausibility_score"),
-        "continuity_pressure_score": gate_outcome.get("continuity_pressure_score"),
-        "fluency_risk_score": gate_outcome.get("fluency_risk_score"),
-    }
+    gate_data = _gate_projection_payload(gate_outcome) if gate_outcome else {}
     gate_section = (
         make_supported_section(gate_data)
         if gate_outcome
@@ -307,6 +580,15 @@ def _build_sections(
             reason="gate_outcome_not_present_in_validation_payload",
             data=gate_data,
         )
+    )
+
+    semantic_flow = _build_semantic_decision_flow(
+        support_level=support_level,
+        canonical_record=canonical_record,
+        last_turn=last_turn,
+        gate_outcome=gate_outcome,
+        validation=validation,
+        committed=committed,
     )
 
     section_data: dict[str, dict[str, Any]] = {
@@ -334,12 +616,15 @@ def _build_sections(
                 "route_reason_code": routing.get("route_reason_code") or routing.get("route_reason"),
                 "fallback_chain": routing.get("fallback_chain"),
                 "fallback_stage_reached": routing.get("fallback_stage_reached"),
-                "graph_path_summary": (
-                    bundle.get("last_turn_repro_metadata") or {}
-                ).get("graph_path_summary"),
-                "adapter_invocation_mode": (
-                    bundle.get("last_turn_repro_metadata") or {}
-                ).get("adapter_invocation_mode"),
+                "graph_path_summary": (bundle.get("last_turn_repro_metadata") or {}).get("graph_path_summary"),
+                "adapter_invocation_mode": (bundle.get("last_turn_repro_metadata") or {}).get(
+                    "adapter_invocation_mode"
+                ),
+                "semantic_decision_flow": semantic_flow,
+                "graph_execution_flow": {
+                    "flow_nodes": [node for node in nodes if isinstance(node, str)],
+                    "flow_edges": flow_edges,
+                },
                 "flow_nodes": [node for node in nodes if isinstance(node, str)],
                 "flow_edges": flow_edges,
             }
@@ -382,8 +667,7 @@ def _build_sections(
                 "model_fallback_used": generation.get("fallback_used"),
                 "legacy_fallback_used": gate_outcome.get("legacy_fallback_used"),
                 "legacy_fallback_reason": (
-                    gate_outcome.get("legacy_fallback_reason")
-                    or gate_outcome.get("legacy_fallback_rationale")
+                    gate_outcome.get("legacy_fallback_reason") or gate_outcome.get("legacy_fallback_rationale")
                 ),
             }
         ),
@@ -404,7 +688,15 @@ def _build_sections(
                     "validation_status": validation.get("status"),
                     "validation_reason": validation.get("reason"),
                     "gate_result": gate_data.get("gate_result"),
-                    "dominant_rejection_category": gate_data.get("dominant_rejection_category"),
+                    "empty_fluency_risk": gate_data.get("empty_fluency_risk"),
+                    "character_plausibility_posture": gate_data.get("character_plausibility_posture"),
+                    "continuity_support_posture": gate_data.get("continuity_support_posture"),
+                    "continues_or_changes_pressure": gate_data.get("continues_or_changes_pressure"),
+                    "supports_scene_function": gate_data.get("supports_scene_function"),
+                    "legacy_fallback_used": gate_data.get("legacy_fallback_used"),
+                    "semantic_planner_support_level": posture.get("semantic_planner_support_level")
+                    if posture
+                    else None,
                     "commit_applied": committed.get("commit_applied"),
                     "selected_scene_function": canonical_record.get("selected_scene_function"),
                     "pacing_mode": canonical_record.get("pacing_mode"),

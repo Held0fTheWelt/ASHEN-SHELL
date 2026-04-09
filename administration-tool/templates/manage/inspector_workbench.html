@@ -56,7 +56,7 @@
     <section class="panel inspector-panel" id="inspector-panel-turn" data-inspector-panel>
         <header class="panel-header">
             <h2>Turn Inspector</h2>
-            <p>Canonical single-turn projection; Mermaid visualizes backend trace only.</p>
+            <p>Canonical single-turn projection. Semantic Mermaid uses backend-declared stage presence only; graph execution flow is secondary.</p>
         </header>
         <div class="manage-grid two-col">
             <section class="panel">
@@ -71,16 +71,25 @@
         <div class="manage-grid two-col">
             <section class="panel">
                 <header class="panel-header"><h3>Planner state</h3></header>
-                <pre id="inspector-planner-state" class="code-block"></pre>
+                <div id="inspector-planner-structured" class="inspector-structured-host"><p class="manage-empty">No planner projection loaded.</p></div>
             </section>
             <section class="panel">
-                <header class="panel-header"><h3>Mermaid decision flow</h3></header>
+                <header class="panel-header">
+                    <h3>Decision flow (Mermaid)</h3>
+                    <div class="inspector-mermaid-toolbar">
+                        <label class="field-label" for="inspector-mermaid-mode">Diagram source</label>
+                        <select id="inspector-mermaid-mode" class="field-input" aria-label="Mermaid diagram source">
+                            <option value="semantic" selected>Semantic decision flow (backend presence)</option>
+                            <option value="graph_execution">Graph execution (nodes executed)</option>
+                        </select>
+                    </div>
+                </header>
                 <div id="inspector-mermaid-host" class="inspector-mermaid-host"><p class="manage-empty">No flow data loaded.</p></div>
             </section>
         </div>
         <div class="manage-grid two-col">
             <section class="panel">
-                <header class="panel-header"><h3>Gate outcome</h3></header>
+                <header class="panel-header"><h3>Gate outcome (envelope)</h3></header>
                 <div id="inspector-gate-outcome-grid" class="inspector-kv-grid"><p class="manage-empty">No data loaded.</p></div>
             </section>
             <section class="panel">
@@ -94,13 +103,20 @@
                 <div id="inspector-fallback-status-grid" class="inspector-kv-grid"><p class="manage-empty">No data loaded.</p></div>
             </section>
             <section class="panel">
-                <header class="panel-header"><h3>Rejection analysis</h3></header>
-                <div id="inspector-rejection-analysis-grid" class="inspector-kv-grid"><p class="manage-empty">No data loaded.</p></div>
+                <header class="panel-header"><h3>Canonical gate posture</h3></header>
+                <div id="inspector-gate-posture-grid" class="inspector-kv-grid"><p class="manage-empty">No gate posture loaded.</p></div>
+                <details class="inspector-json-details inspector-legacy-details">
+                    <summary class="inspector-json-details-summary">Legacy compatibility summary (secondary)</summary>
+                    <div id="inspector-gate-legacy-block" class="inspector-kv-grid inspector-legacy-block"><p class="manage-empty">No legacy compatibility fields.</p></div>
+                </details>
             </section>
         </div>
         <section class="panel">
             <header class="panel-header"><h3>Turn raw projection</h3></header>
-            <pre id="inspector-raw-json" class="code-block"></pre>
+            <details class="inspector-json-details">
+                <summary class="inspector-json-details-summary">Full turn projection JSON (secondary)</summary>
+                <pre id="inspector-raw-json" class="code-block"></pre>
+            </details>
         </section>
     </section>
 

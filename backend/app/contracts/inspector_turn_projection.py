@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-INSPECTOR_TURN_PROJECTION_SCHEMA_VERSION = "inspector_turn_projection_v1"
-INSPECTOR_TIMELINE_PROJECTION_SCHEMA_VERSION = "inspector_timeline_projection_v1"
-INSPECTOR_COMPARISON_PROJECTION_SCHEMA_VERSION = "inspector_comparison_projection_v1"
-INSPECTOR_COVERAGE_HEALTH_PROJECTION_SCHEMA_VERSION = "inspector_coverage_health_projection_v1"
-INSPECTOR_PROVENANCE_RAW_PROJECTION_SCHEMA_VERSION = "inspector_provenance_raw_projection_v1"
+INSPECTOR_TURN_PROJECTION_SCHEMA_VERSION = "inspector_turn_projection_v2"
+INSPECTOR_TIMELINE_PROJECTION_SCHEMA_VERSION = "inspector_timeline_projection_v2"
+INSPECTOR_COMPARISON_PROJECTION_SCHEMA_VERSION = "inspector_comparison_projection_v2"
+INSPECTOR_COVERAGE_HEALTH_PROJECTION_SCHEMA_VERSION = "inspector_coverage_health_projection_v2"
+INSPECTOR_PROVENANCE_RAW_PROJECTION_SCHEMA_VERSION = "inspector_provenance_raw_projection_v2"
 INSPECTOR_SECTION_STATUS_SUPPORTED = "supported"
 INSPECTOR_SECTION_STATUS_UNSUPPORTED = "unsupported"
 INSPECTOR_SECTION_STATUS_UNAVAILABLE = "unavailable"

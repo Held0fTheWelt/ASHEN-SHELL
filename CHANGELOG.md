@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Research closure enforcement tests**: `ai_stack/tests/test_research_contract_enforcement.py` with negative/positive invariants for engine budget requirement, unknown anchor blocking, governance-field integrity, and copyright posture enforcement.
 - **Comparison rendering structure checks** in `administration-tool/tests/test_manage_inspector_suite.py` for mandatory-dimension and structured comparison fields.
+- **Research MVP module surface (new files)** in `ai_stack/`: `canon_improvement_contract.py`, `canon_improvement_engine.py`, `research_contract.py`, `research_store.py`, `research_ingestion.py`, `research_perspectives.py`, `research_aspect_extraction.py`, `research_exploration.py`, `research_validation.py`, `research_langgraph.py`, fixture packs (`research_fixtures.py`, `research_golden_cases.py`), and dedicated golden suites (`test_research_*_golden.py`) plus `tools/mcp_server/tests/test_research_mcp_contracts.py`.
+- **Closure evidence docs**: `docs/research_mvp_implementation_summary.md` and `docs/research_mvp_gate_closure.md`.
 
 ### Changed
 
@@ -33,8 +35,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Capability/MCP audit parity**
   - `ai_stack/capabilities.py` now includes compact consumed/effective budget evidence in `wos.research.explore` result summaries.
   - `ai_stack/tests/test_capabilities.py` adds invalid-budget negative-path coverage for `wos.research.explore`.
+  - `ai_stack/mcp_canonical_surface.py`, `tools/mcp_server/tools_registry.py`, and `ai_stack/__init__.py` updated so the full research/canon tool and contract surface is exported and reachable through canonical MCP/capability paths.
+- **Research retrieval/governance wiring**
+  - `ai_stack/rag.py` extended with research-domain routing metadata for deterministic retrieval use in research workflows.
 - **Inspector comparison mandatory minimum rendering**
   - `administration-tool/static/manage_inspector_workbench.js`: explicit `mandatory_dimension` display, structured supported/unsupported dimension blocks, additional trace/continuity comparison columns, and row-level block rendering for nested comparison fields (`visible_output_surface_comparison`, `multi_pressure_candidates_to`) with full JSON retained as secondary diagnostics.
+  - Backend inspector projection contracts/services (`backend/app/contracts/inspector_turn_projection.py`, `backend/app/services/inspector_projection_service.py`, `backend/app/services/inspector_turn_projection_service.py`, `backend/tests/test_inspector_turn_projection.py`) were aligned so comparison payloads expose the structured fields rendered by the workbench.
 
 ### Tests
 

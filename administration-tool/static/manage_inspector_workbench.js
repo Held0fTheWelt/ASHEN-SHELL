@@ -1,7 +1,11 @@
 /**
  * Canonical Inspector Suite workbench (read-only rendering).
+ * Renders backend projections only — does not infer stage presence from missing nested JSON.
  */
 (function () {
+  var lastTurnPayload = null;
+  var mermaidSeq = 0;
+
   function byId(id) {
     return document.getElementById(id);
   }
@@ -77,6 +81,24 @@
     });
   }
 
+  function kvGridInnerHtml(data) {
+    if (!data || typeof data !== "object") return '<p class="manage-empty">No data.</p>';
+    return toPairs(data)
+      .map(function (row) {
+        return (
+          '<div class="inspector-kv-item">' +
+          '<span class="inspector-kv-key">' +
+          escapeHtml(row.key) +
+          "</span>" +
+          '<span class="inspector-kv-value">' +
+          escapeHtml(formatDisplayValue(row.value)) +
+          "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
+  }
+
   function renderKeyValueGrid(containerId, data, fallback) {
     var el = byId(containerId);
     if (!el) return;
@@ -84,36 +106,71 @@
       el.innerHTML = '<p class="manage-empty">' + (fallback || "No data loaded.") + "</p>";
       return;
     }
-    var rows = toPairs(data).map(function (row) {
-      return (
-        '<div class="inspector-kv-item">' +
-        '<span class="inspector-kv-key">' +
-        escapeHtml(row.key) +
-        "</span>" +
-        '<span class="inspector-kv-value">' +
-        escapeHtml(formatDisplayValue(row.value)) +
-        "</span>" +
-        "</div>"
-      );
-    });
-    el.innerHTML = rows.join("");
+    el.innerHTML = kvGridInnerHtml(data);
   }
 
-  function renderMermaid(decisionTrace) {
-    var host = byId("inspector-mermaid-host");
+  function nextMermaidId() {
+    mermaidSeq += 1;
+    return "inspectorWorkbenchMermaid_" + mermaidSeq;
+  }
+
+  function renderMermaidSource(graphSrc, host) {
     if (!host) return;
-    var data = extractData(decisionTrace);
-    if (!data || !Array.isArray(data.flow_nodes) || !data.flow_nodes.length) {
-      host.innerHTML = '<p class="manage-empty">No flow nodes available.</p>';
+    if (!graphSrc || !String(graphSrc).trim()) {
+      host.innerHTML = '<p class="manage-empty">No diagram source from backend.</p>';
       return;
     }
-    var nodes = data.flow_nodes.map(function (id) {
+    if (!window.mermaid || typeof window.mermaid.render !== "function") {
+      host.innerHTML = '<pre class="code-block">' + escapeHtml(graphSrc) + "</pre>";
+      return;
+    }
+    var graphId = nextMermaidId();
+    window.mermaid
+      .render(graphId, graphSrc)
+      .then(function (result) {
+        host.innerHTML = result.svg;
+      })
+      .catch(function () {
+        host.innerHTML = '<pre class="code-block">' + escapeHtml(graphSrc) + "</pre>";
+      });
+  }
+
+  /** Semantic flow: uses only backend `stages[].presence` — no client-side stage inference. */
+  function buildSemanticMermaidGraph(semanticFlow) {
+    if (!semanticFlow || !Array.isArray(semanticFlow.stages) || !semanticFlow.stages.length) {
+      return "";
+    }
+    var lines = ["flowchart TB"];
+    semanticFlow.stages.forEach(function (s) {
+      if (!s || typeof s !== "object") return;
+      var sid = String(s.id || "").replace(/[^a-zA-Z0-9_]/g, "_");
+      if (!sid) return;
+      var nodeId = "sem_" + sid;
+      var label = String(s.label || s.id || "") + " [" + String(s.presence || "?") + "]";
+      var safeLabel = label.replace(/"/g, "'").replace(/\]/g, ")");
+      lines.push(nodeId + '["' + safeLabel + '"]');
+    });
+    (semanticFlow.edges || []).forEach(function (edge) {
+      if (!edge || typeof edge !== "object") return;
+      var a = "sem_" + String(edge.from_stage || "").replace(/[^a-zA-Z0-9_]/g, "_");
+      var b = "sem_" + String(edge.to_stage || "").replace(/[^a-zA-Z0-9_]/g, "_");
+      if (!a || !b || a === "sem_" || b === "sem_") return;
+      lines.push(a + " --> " + b);
+    });
+    return lines.join("\n");
+  }
+
+  function buildGraphExecutionMermaid(graphExec) {
+    if (!graphExec || !Array.isArray(graphExec.flow_nodes) || !graphExec.flow_nodes.length) {
+      return "";
+    }
+    var nodes = graphExec.flow_nodes.map(function (id) {
       var safeId = String(id).replace(/[^a-zA-Z0-9_]/g, "_");
       return safeId + '["' + String(id).replace(/"/g, '\\"') + '"]';
     });
     var edges = [];
-    if (Array.isArray(data.flow_edges)) {
-      edges = data.flow_edges
+    if (Array.isArray(graphExec.flow_edges)) {
+      edges = graphExec.flow_edges
         .map(function (edge) {
           if (!edge || typeof edge !== "object") return "";
           var src = String(edge.from || "").replace(/[^a-zA-Z0-9_]/g, "_");
@@ -123,19 +180,39 @@
         })
         .filter(Boolean);
     }
-    var graphSrc = ["flowchart LR"].concat(nodes).concat(edges).join("\n");
-    if (!window.mermaid || typeof window.mermaid.render !== "function") {
-      host.innerHTML = '<pre class="code-block">' + escapeHtml(graphSrc) + "</pre>";
+    return ["flowchart LR"].concat(nodes).concat(edges).join("\n");
+  }
+
+  function renderMermaidPanel(decisionTrace) {
+    var host = byId("inspector-mermaid-host");
+    if (!host) return;
+    var data = extractData(decisionTrace) || {};
+    var modeEl = byId("inspector-mermaid-mode");
+    var mode = modeEl && modeEl.value === "graph_execution" ? "graph_execution" : "semantic";
+
+    var semanticSrc = buildSemanticMermaidGraph(data.semantic_decision_flow);
+    var graphSrc = buildGraphExecutionMermaid(data.graph_execution_flow);
+
+    if (mode === "semantic") {
+      if (semanticSrc) {
+        renderMermaidSource(semanticSrc, host);
+        return;
+      }
+      if (graphSrc) {
+        host.innerHTML =
+          '<p class="manage-empty">Semantic decision flow empty; showing graph execution fallback.</p>';
+        renderMermaidSource(graphSrc, host);
+        return;
+      }
+      host.innerHTML = '<p class="manage-empty">No semantic or graph execution flow from backend.</p>';
       return;
     }
-    window.mermaid
-      .render("inspectorWorkbenchMermaidGraph", graphSrc)
-      .then(function (result) {
-        host.innerHTML = result.svg;
-      })
-      .catch(function () {
-        host.innerHTML = '<pre class="code-block">' + escapeHtml(graphSrc) + "</pre>";
-      });
+
+    if (graphSrc) {
+      renderMermaidSource(graphSrc, host);
+      return;
+    }
+    host.innerHTML = '<p class="manage-empty">No graph execution flow nodes from backend.</p>';
   }
 
   function mergeSectionSummary(section) {
@@ -154,7 +231,137 @@
     return base;
   }
 
+  function renderPlannerStructured(plannerSection) {
+    var host = byId("inspector-planner-structured");
+    if (!host) return;
+    var parts = [envelopeBanner(plannerSection)];
+    var pdata = extractData(plannerSection);
+    if (statusText(plannerSection) !== "supported" || !pdata || typeof pdata !== "object") {
+      parts.push('<p class="manage-empty">No structured planner data.</p>');
+      host.innerHTML = parts.join("");
+      return;
+    }
+
+    function card(title, bodyHtml) {
+      return (
+        '<section class="inspector-planner-card"><h4>' +
+        escapeHtml(title) +
+        "</h4>" +
+        bodyHtml +
+        "</section>"
+      );
+    }
+
+    if (pdata.support_posture && typeof pdata.support_posture === "object") {
+      parts.push(card("Support posture (canonical resolver)", '<div class="inspector-kv-grid">' + kvGridInnerHtml(pdata.support_posture) + "</div>"));
+    }
+
+    var sections = [
+      { key: "semantic_move_record", title: "SemanticMoveRecord" },
+      { key: "social_state_record", title: "SocialStateRecord" },
+      { key: "scene_plan_record", title: "ScenePlanRecord" },
+    ];
+    sections.forEach(function (spec) {
+      var v = pdata[spec.key];
+      if (v == null) {
+        parts.push(card(spec.title, '<p class="manage-empty">null</p>'));
+      } else if (typeof v === "object" && !Array.isArray(v)) {
+        parts.push(card(spec.title, '<div class="inspector-kv-grid">' + kvGridInnerHtml(v) + "</div>"));
+      } else {
+        parts.push(card(spec.title, "<pre class=\"code-block\">" + escapeHtml(toPretty(v)) + "</pre>"));
+      }
+    });
+
+    var minds = pdata.character_mind_records;
+    if (minds == null) {
+      parts.push(card("CharacterMindRecord collection", '<p class="manage-empty">null</p>'));
+    } else if (Array.isArray(minds) && minds.length) {
+      var rows = minds
+        .map(function (m, i) {
+          if (!m || typeof m !== "object") return "<tr><td colspan=\"3\">" + escapeHtml(String(m)) + "</td></tr>";
+          return (
+            "<tr><td>" +
+            escapeHtml(String(i)) +
+            "</td><td>" +
+            escapeHtml(String(m.character_key != null ? m.character_key : "")) +
+            "</td><td><pre class=\"code-block\">" +
+            escapeHtml(toPretty(m)) +
+            "</pre></td></tr>"
+          );
+        })
+        .join("");
+      parts.push(
+        card(
+          "CharacterMindRecord collection",
+          '<table class="inspector-data-table"><thead><tr><th>#</th><th>character_key</th><th>record</th></tr></thead><tbody>' +
+            rows +
+            "</tbody></table>"
+        )
+      );
+    } else {
+      parts.push(card("CharacterMindRecord collection", '<p class="manage-empty">empty list</p>'));
+    }
+
+    parts.push(
+      '<details class="inspector-json-details"><summary class="inspector-json-details-summary">Raw planner_state_projection.data (secondary)</summary><pre class="code-block">' +
+        escapeHtml(toPretty(pdata)) +
+        "</pre></details>"
+    );
+
+    host.innerHTML = parts.join("");
+  }
+
+  function renderGatePanels(gateSection) {
+    var gdata = extractData(gateSection) || {};
+    var legacy = gdata.legacy_compatibility_summary;
+
+    renderKeyValueGrid(
+      "inspector-gate-outcome-grid",
+      {
+        envelope_status: statusText(gateSection),
+        envelope_reason: sectionReason(gateSection) || null,
+        gate_result: gdata.gate_result,
+        rejection_reasons: gdata.rejection_reasons,
+        effect_rationale_codes: gdata.effect_rationale_codes,
+        legacy_fallback_used: gdata.legacy_fallback_used,
+      },
+      "No gate projection loaded."
+    );
+
+    var posture = {};
+    [
+      "supports_scene_function",
+      "continues_or_changes_pressure",
+      "character_plausibility_posture",
+      "continuity_support_posture",
+      "empty_fluency_risk",
+      "diagnostic_trace",
+    ].forEach(function (k) {
+      if (Object.prototype.hasOwnProperty.call(gdata, k)) posture[k] = gdata[k];
+    });
+
+    if (Object.keys(posture).length === 0) {
+      renderKeyValueGrid(
+        "inspector-gate-posture-grid",
+        { _note: "No bounded posture fields present on gate payload." },
+        "No gate posture loaded."
+      );
+    } else {
+      renderKeyValueGrid("inspector-gate-posture-grid", posture, "No gate posture loaded.");
+    }
+
+    var leg = byId("inspector-gate-legacy-block");
+    if (leg) {
+      if (legacy && typeof legacy === "object" && Object.keys(legacy).length) {
+        leg.innerHTML = kvGridInnerHtml(legacy);
+      } else {
+        leg.innerHTML = '<p class="manage-empty">No legacy compatibility fields.</p>';
+      }
+    }
+  }
+
   function renderTurnPayload(payload) {
+    lastTurnPayload = payload;
     var turnIdentity = payload.turn_identity || {};
     var decisionTrace = payload.decision_trace_projection || {};
     var authority = payload.authority_projection || {};
@@ -168,6 +375,7 @@
     renderKeyValueGrid(
       "inspector-decision-summary",
       {
+        schema_version: payload.schema_version,
         projection_status: payload.projection_status,
         turn_identity_status: statusText(turnIdentity),
         decision_trace_status: statusText(decisionTrace),
@@ -183,8 +391,9 @@
       extractData(authority),
       "No authority projection loaded."
     );
-    setText("inspector-planner-state", toPretty(planner));
-    renderKeyValueGrid("inspector-gate-outcome-grid", mergeSectionSummary(gate), "No gate projection loaded.");
+
+    renderPlannerStructured(planner);
+    renderGatePanels(gate);
     renderKeyValueGrid(
       "inspector-validation-outcome-grid",
       mergeSectionSummary(validation),
@@ -197,23 +406,7 @@
     );
     setText("inspector-raw-json", toPretty(payload));
 
-    var gateData = extractData(gate) || {};
-    var rejection = {
-      gate_envelope_status: statusText(gate),
-      dominant_rejection_category: gateData.dominant_rejection_category,
-      rejection_codes: gateData.rejection_codes,
-      legacy_fallback_used: gateData.legacy_fallback_used,
-      scene_function_mismatch_score: gateData.scene_function_mismatch_score,
-      character_implausibility_score: gateData.character_implausibility_score,
-      continuity_pressure_score: gateData.continuity_pressure_score,
-      fluency_risk_score: gateData.fluency_risk_score,
-    };
-    renderKeyValueGrid(
-      "inspector-rejection-analysis-grid",
-      rejection,
-      "No rejection analysis loaded."
-    );
-    renderMermaid(decisionTrace);
+    renderMermaidPanel(decisionTrace);
   }
 
   function renderDistributionBlock(title, dist) {
@@ -270,9 +463,40 @@
         .join("");
       html += "</div></section>";
     }
+    if (metrics.not_supported_gate_rate != null) {
+      html +=
+        '<p class="manage-state">not_supported gate rate: ' +
+        escapeHtml(String(metrics.not_supported_gate_rate)) +
+        "</p>";
+    }
     html += renderDistributionBlock("Gate outcome distribution", dist.gate_outcome_distribution);
     html += renderDistributionBlock("Validation outcome distribution", dist.validation_outcome_distribution);
-    html += renderDistributionBlock("Rejection / rationale distribution", dist.rejection_rationale_distribution);
+    html += renderDistributionBlock(
+      "Effect and rejection rationale distribution",
+      dist.effect_and_rejection_rationale_distribution
+    );
+    html += renderDistributionBlock("Empty fluency risk distribution", dist.empty_fluency_risk_distribution);
+    html += renderDistributionBlock(
+      "Character plausibility posture distribution",
+      dist.character_plausibility_posture_distribution
+    );
+    html += renderDistributionBlock(
+      "Continuity support posture distribution",
+      dist.continuity_support_posture_distribution
+    );
+    html += renderDistributionBlock("Legacy fallback used distribution", dist.legacy_fallback_used_distribution);
+    html += renderDistributionBlock(
+      "Dramatic effect weak signal distribution",
+      dist.dramatic_effect_weak_signal_distribution
+    );
+    html += renderDistributionBlock(
+      "Semantic planner support level distribution",
+      dist.semantic_planner_support_level_distribution
+    );
+    html += renderDistributionBlock(
+      "Legacy dominant rejection category distribution",
+      dist.legacy_dominant_rejection_category_distribution
+    );
     html += renderDistributionBlock(
       "Unsupported / unavailable frequency",
       dist.unsupported_unavailable_frequency
@@ -289,18 +513,21 @@
     var parts = [envelopeBanner(section)];
     var data = extractData(section) || {};
     var entries = data.entries;
-    var cols = [
-      { key: "field", label: "Field" },
-      { key: "value", label: "Value" },
-      { key: "source_kind", label: "Source kind" },
-      { key: "source_ref", label: "Source ref" },
-    ];
     if (statusText(section) === "supported" && Array.isArray(entries) && entries.length) {
+      var colSet = {};
+      entries.forEach(function (row) {
+        if (row && typeof row === "object") {
+          Object.keys(row).forEach(function (k) {
+            colSet[k] = true;
+          });
+        }
+      });
+      var cols = Object.keys(colSet);
       var tableHtml =
         '<table class="inspector-data-table"><caption class="visually-hidden">Canonical provenance entries</caption><thead><tr>' +
         cols
           .map(function (c) {
-            return "<th>" + escapeHtml(c.label) + "</th>";
+            return "<th>" + escapeHtml(c) + "</th>";
           })
           .join("") +
         "</tr></thead><tbody>";
@@ -310,7 +537,7 @@
             "<tr>" +
             cols
               .map(function (c) {
-                var v = row[c.key];
+                var v = row && typeof row === "object" ? row[c] : null;
                 return "<td>" + escapeHtml(formatDisplayValue(v)) + "</td>";
               })
               .join("") +
@@ -360,17 +587,30 @@
         { key: "turn_index", label: "Turn index" },
         { key: "turn_number", label: "Turn #" },
         { key: "trace_id", label: "Trace id" },
+        { key: "semantic_planner_support_level", label: "Support level" },
+        { key: "semantic_move_type", label: "Move type" },
+        { key: "scene_risk_band", label: "Scene risk" },
+        { key: "selected_scene_function", label: "Scene function" },
         { key: "gate_result", label: "Gate result" },
+        { key: "empty_fluency_risk", label: "Empty fluency risk" },
+        { key: "character_plausibility_posture", label: "Plausibility" },
+        { key: "continuity_support_posture", label: "Continuity support" },
+        { key: "continues_or_changes_pressure", label: "Continues/changes pressure" },
+        { key: "supports_scene_function", label: "Supports scene fn" },
+        { key: "legacy_fallback_used", label: "Legacy fallback" },
+        { key: "accepted_weak_signal", label: "Weak-signal accept" },
+        { key: "dramatic_effect_weak_signal", label: "Weak signal (validation)" },
         { key: "validation_status", label: "Validation" },
         { key: "validation_reason", label: "Validation reason" },
         { key: "fallback_path_taken", label: "Fallback path" },
         { key: "execution_health", label: "Execution health" },
-        { key: "selected_scene_function", label: "Scene function" },
         { key: "route_mode", label: "Route mode" },
         { key: "route_reason_code", label: "Route reason" },
+        { key: "effect_rationale_codes", label: "Effect rationale codes" },
+        { key: "gate_diagnostic_trace_codes", label: "Gate trace codes" },
       ];
       var tableHtml =
-        '<table class="inspector-data-table"><caption class="visually-hidden">Timeline turns</caption><thead><tr>' +
+        '<div style="overflow-x:auto"><table class="inspector-data-table"><caption class="visually-hidden">Timeline turns</caption><thead><tr>' +
         cols
           .map(function (c) {
             return "<th>" + escapeHtml(c.label) + "</th>";
@@ -391,12 +631,43 @@
           );
         })
         .join("");
-      tableHtml += "</tbody></table>";
+      tableHtml += "</tbody></table></div>";
       parts.push(tableHtml);
     } else {
       parts.push('<p class="manage-empty">No structured timeline rows to display.</p>');
     }
     host.innerHTML = parts.join("");
+  }
+
+  function renderComparisonRowBlocks(row) {
+    var blocks = [];
+    var surface = row && row.visible_output_surface_comparison;
+    if (surface && typeof surface === "object" && !Array.isArray(surface)) {
+      blocks.push(
+        '<section class="inspector-dist-block"><h4 class="inspector-subheading">Visible output surface comparison</h4><div class="inspector-kv-grid">' +
+          kvGridInnerHtml(surface) +
+          "</div></section>"
+      );
+    }
+    var candidates = row && row.multi_pressure_candidates_to;
+    if (Array.isArray(candidates)) {
+      if (candidates.length) {
+        blocks.push(
+          '<section class="inspector-dist-block"><h4 class="inspector-subheading">Multi-pressure candidates (to turn)</h4><ul class="inspector-dim-list">' +
+            candidates
+              .map(function (candidate) {
+                return "<li>" + escapeHtml(formatDisplayValue(candidate)) + "</li>";
+              })
+              .join("") +
+            "</ul></section>"
+        );
+      } else {
+        blocks.push(
+          '<section class="inspector-dist-block"><h4 class="inspector-subheading">Multi-pressure candidates (to turn)</h4><p class="manage-empty">empty list</p></section>'
+        );
+      }
+    }
+    return blocks.join("");
   }
 
   function renderComparisonViewFixed(root) {
@@ -405,6 +676,22 @@
     var section = root && root.comparison_projection;
     var parts = [envelopeBanner(section)];
     var data = extractData(section) || {};
+    if (data.semantic_planner_support_level != null || data.dramatic_effect_evaluator_class != null) {
+      parts.push(
+        '<p class="manage-state">Support level: ' +
+          escapeHtml(String(data.semantic_planner_support_level)) +
+          " · Evaluator: " +
+          escapeHtml(String(data.dramatic_effect_evaluator_class)) +
+          "</p>"
+      );
+    }
+    if (data.mandatory_dimension != null) {
+      parts.push(
+        '<p class="manage-state">Mandatory dimension: <strong>' +
+          escapeHtml(String(data.mandatory_dimension)) +
+          "</strong></p>"
+      );
+    }
     if (Array.isArray(data.unsupported_dimensions) && data.unsupported_dimensions.length) {
       parts.push('<h4 class="inspector-subheading">Unsupported dimensions (explicit)</h4><ul class="inspector-dim-list">');
       data.unsupported_dimensions.forEach(function (d) {
@@ -413,19 +700,33 @@
       parts.push("</ul>");
     }
     if (Array.isArray(data.supported_dimensions) && data.supported_dimensions.length) {
-      parts.push(
-        '<h4 class="inspector-subheading">Supported dimensions</h4><p>' +
-          escapeHtml(data.supported_dimensions.join(", ")) +
-          "</p>"
-      );
+      parts.push('<h4 class="inspector-subheading">Supported dimensions</h4><ul class="inspector-dim-list">');
+      data.supported_dimensions.forEach(function (d) {
+        parts.push("<li>" + escapeHtml(String(d)) + "</li>");
+      });
+      parts.push("</ul>");
     }
     var comparisons = data.comparisons;
     if (statusText(section) === "supported" && Array.isArray(comparisons) && comparisons.length) {
       var cols = [
         { key: "from_turn_number", label: "From turn" },
         { key: "to_turn_number", label: "To turn" },
+        { key: "from_trace_id", label: "Trace id (from)" },
+        { key: "to_trace_id", label: "Trace id (to)" },
         { key: "gate_result_from", label: "Gate (from)" },
         { key: "gate_result_to", label: "Gate (to)" },
+        { key: "empty_fluency_risk_from", label: "Fluency (from)" },
+        { key: "empty_fluency_risk_to", label: "Fluency (to)" },
+        { key: "character_plausibility_posture_from", label: "Plaus. (from)" },
+        { key: "character_plausibility_posture_to", label: "Plaus. (to)" },
+        { key: "continuity_support_posture_from", label: "Continuity (from)" },
+        { key: "continuity_support_posture_to", label: "Continuity (to)" },
+        { key: "legacy_fallback_used_from", label: "Legacy fb (from)" },
+        { key: "legacy_fallback_used_to", label: "Legacy fb (to)" },
+        { key: "semantic_move_type_from", label: "Move (from)" },
+        { key: "semantic_move_type_to", label: "Move (to)" },
+        { key: "scene_risk_band_from", label: "Risk (from)" },
+        { key: "scene_risk_band_to", label: "Risk (to)" },
         { key: "validation_status_from", label: "Validation (from)" },
         { key: "validation_status_to", label: "Validation (to)" },
         { key: "fallback_path_taken_from", label: "Fallback (from)" },
@@ -434,7 +735,7 @@
         { key: "selected_scene_function_to", label: "Scene fn (to)" },
       ];
       var tableHtml =
-        '<table class="inspector-data-table"><caption class="visually-hidden">Turn comparisons</caption><thead><tr>' +
+        '<div style="overflow-x:auto"><table class="inspector-data-table"><caption class="visually-hidden">Turn comparisons</caption><thead><tr>' +
         cols
           .map(function (c) {
             return "<th>" + escapeHtml(c.label) + "</th>";
@@ -455,8 +756,11 @@
           );
         })
         .join("");
-      tableHtml += "</tbody></table>";
+      tableHtml += "</tbody></table></div>";
       parts.push(tableHtml);
+      comparisons.forEach(function (row) {
+        parts.push(renderComparisonRowBlocks(row));
+      });
     } else {
       parts.push(
         '<p class="manage-empty">No turn-to-turn comparison rows (need at least two turns in session evidence).</p>'
@@ -496,6 +800,15 @@
       startOnLoad: false,
       securityLevel: "strict",
       theme: "default",
+    });
+  }
+
+  function initMermaidModeToggle() {
+    var sel = byId("inspector-mermaid-mode");
+    if (!sel) return;
+    sel.addEventListener("change", function () {
+      if (!lastTurnPayload) return;
+      renderMermaidPanel(lastTurnPayload.decision_trace_projection || {});
     });
   }
 
@@ -561,6 +874,7 @@
     if (!window.ManageAuth) return;
     initTabs();
     initMermaid();
+    initMermaidModeToggle();
     var loadBtn = byId("inspector-load-all");
     if (loadBtn) {
       loadBtn.addEventListener("click", loadWorkbench);

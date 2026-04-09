@@ -630,6 +630,36 @@ textarea.form-input { min-height: 100px; resize: vertical; }
     margin-top: 0.75rem;
 }
 
+.inspector-mermaid-toolbar {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 28rem;
+}
+
+.inspector-planner-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.75rem;
+    background: var(--surface);
+}
+
+.inspector-planner-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+}
+
+.inspector-legacy-details {
+    margin-top: 0.75rem;
+    opacity: 0.92;
+}
+
+.inspector-legacy-block {
+    margin-top: 0.5rem;
+}
+
 .visually-hidden {
     position: absolute;
     width: 1px;

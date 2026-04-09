@@ -325,3 +325,30 @@ def test_transcript_read_success_audit_records_parsed_turn_counts(tmp_path: Path
     assert audit["result_summary"]["transcript_turn_count"] == 2
     assert audit["result_summary"]["repetition_turn_count"] == 1
     assert audit["result_summary"]["workflow_impact"] == "drives_improvement_recommendation_suffix"
+
+
+def test_research_explore_capability_requires_valid_budget(tmp_path: Path) -> None:
+    registry = _build_registry(tmp_path)
+    with pytest.raises(CapabilityInvocationError):
+        registry.invoke(
+            name="wos.research.explore",
+            mode="improvement",
+            actor="improvement:test",
+            payload={
+                "work_id": "god_of_carnage",
+                "module_id": "god_of_carnage",
+                "source_inputs": [
+                    {
+                        "source_type": "scene_note",
+                        "title": "fixture",
+                        "raw_text": "scene pressure rises with tactic shift",
+                        "provenance": {"origin": "test"},
+                        "visibility": "internal",
+                        "copyright_posture": "internal_approved",
+                        "metadata": {"fixture": "cap-neg"},
+                    }
+                ],
+                "seed_question": "where is escalation weak",
+                "budget": {},
+            },
+        )

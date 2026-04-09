@@ -104,6 +104,40 @@ def _summarize_invocation_result(capability_name: str, result: dict[str, Any]) -
                 else "no_parsed_transcript_rows"
             ),
         }
+    if capability_name == "wos.research.explore":
+        summary = result.get("exploration_summary", {})
+        if not isinstance(summary, dict):
+            summary = {}
+        consumed = summary.get("consumed_budget")
+        effective = summary.get("effective_budget")
+        return {
+            "kind": "research_explore",
+            "run_id": result.get("run_id"),
+            "node_count": summary.get("node_count", 0),
+            "edge_count": summary.get("edge_count", 0),
+            "abort_reason": summary.get("abort_reason"),
+            "promoted_candidate_count": summary.get("promoted_candidate_count", 0),
+            "consumed_budget": consumed if isinstance(consumed, dict) else {},
+            "effective_budget": effective if isinstance(effective, dict) else {},
+        }
+    if capability_name == "wos.research.bundle.build":
+        bundle = result.get("bundle", {})
+        if not isinstance(bundle, dict):
+            bundle = {}
+        return {
+            "kind": "research_bundle",
+            "run_id": bundle.get("run_id"),
+            "section_count": len(bundle.get("sections", [])) if isinstance(bundle.get("sections"), list) else 0,
+            "review_safe": (bundle.get("governance") or {}).get("review_safe"),
+        }
+    if capability_name == "wos.canon.improvement.propose":
+        issues = result.get("issues", [])
+        proposals = result.get("proposals", [])
+        return {
+            "kind": "canon_improvement_propose",
+            "issue_count": len(issues) if isinstance(issues, list) else 0,
+            "proposal_count": len(proposals) if isinstance(proposals, list) else 0,
+        }
     return None
 
 
@@ -636,8 +670,22 @@ def create_default_capability_registry(
 ) -> CapabilityRegistry:
     # Keep lightweight capability metadata imports free from heavy retrieval dependencies.
     from ai_stack.rag import RetrievalDomain, RetrievalRequest
+    from ai_stack.research_contract import ExplorationBudget
+    from ai_stack.research_langgraph import (
+        build_research_bundle,
+        exploration_graph,
+        get_run,
+        inspect_canon_issue,
+        inspect_source,
+        list_claims,
+        preview_canon_improvement,
+        propose_canon_improvement,
+        research_store_from_repo_root,
+        run_research_pipeline,
+    )
 
     registry = CapabilityRegistry()
+    research_store = research_store_from_repo_root(repo_root)
 
     def context_pack_handler(payload: dict[str, Any]) -> dict[str, Any]:
         domain = RetrievalDomain(payload.get("domain", RetrievalDomain.RUNTIME.value))
@@ -697,6 +745,69 @@ def create_default_capability_registry(
             "evidence_sources": payload.get("evidence_sources", []),
             "status": "recommendation_only",
         }
+
+    def research_source_inspect_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return inspect_source(store=research_store, source_id=str(payload["source_id"]))
+
+    def research_aspect_extract_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        source_id = str(payload["source_id"])
+        inspected = inspect_source(store=research_store, source_id=source_id)
+        if inspected.get("error"):
+            return inspected
+        return {
+            "source_id": source_id,
+            "aspects": inspected.get("aspects", []),
+        }
+
+    def research_claim_list_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return list_claims(store=research_store, work_id=payload.get("work_id"))
+
+    def research_run_get_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return get_run(store=research_store, run_id=str(payload["run_id"]))
+
+    def research_exploration_graph_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return exploration_graph(store=research_store, run_id=str(payload["run_id"]))
+
+    def canon_issue_inspect_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return inspect_canon_issue(store=research_store, module_id=payload.get("module_id"))
+
+    def research_explore_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        # Hard budget validation at capability level.
+        budget = ExplorationBudget.from_payload(payload.get("budget", {}))
+        run = run_research_pipeline(
+            store=research_store,
+            work_id=str(payload["work_id"]),
+            module_id=str(payload["module_id"]),
+            source_inputs=list(payload["source_inputs"]),
+            seed_question=str(payload.get("seed_question", "")),
+            budget_payload=budget.to_dict(),
+            mode="capability_explore",
+        )
+        return {
+            "run_id": run["run_id"],
+            "exploration_summary": (run.get("outputs", {}) or {}).get("exploration_summary", {}),
+            "effective_budget": budget.to_dict(),
+        }
+
+    def research_validate_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        run_id = str(payload["run_id"])
+        run = get_run(store=research_store, run_id=run_id)
+        if run.get("error"):
+            return run
+        return {
+            "run_id": run_id,
+            "claims": ((run.get("run", {}) or {}).get("outputs", {}) or {}).get("claim_ids", []),
+            "status": "validated_from_run_outputs",
+        }
+
+    def research_bundle_build_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return build_research_bundle(store=research_store, run_id=str(payload["run_id"]))
+
+    def canon_improvement_propose_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return propose_canon_improvement(store=research_store, module_id=str(payload["module_id"]))
+
+    def canon_improvement_preview_handler(payload: dict[str, Any]) -> dict[str, Any]:
+        return preview_canon_improvement(store=research_store, module_id=str(payload["module_id"]))
 
     registry.register(
         CapabilityDefinition(
@@ -776,6 +887,189 @@ def create_default_capability_registry(
             handler=review_bundle_handler,
         )
     )
+
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.source.inspect",
+            kind=CapabilityKind.RETRIEVAL,
+            input_schema={
+                "type": "object",
+                "properties": {"source_id": {"type": "string"}},
+                "required": ["source_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns source_not_found when unknown",
+            handler=research_source_inspect_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.aspect.extract",
+            kind=CapabilityKind.RETRIEVAL,
+            input_schema={
+                "type": "object",
+                "properties": {"source_id": {"type": "string"}},
+                "required": ["source_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns stored deterministic aspect rows",
+            handler=research_aspect_extract_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.claim.list",
+            kind=CapabilityKind.RETRIEVAL,
+            input_schema={
+                "type": "object",
+                "properties": {"work_id": {"type": "string"}},
+                "required": [],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns deterministic claim listing",
+            handler=research_claim_list_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.run.get",
+            kind=CapabilityKind.RETRIEVAL,
+            input_schema={
+                "type": "object",
+                "properties": {"run_id": {"type": "string"}},
+                "required": ["run_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns run_not_found when unknown",
+            handler=research_run_get_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.exploration.graph",
+            kind=CapabilityKind.RETRIEVAL,
+            input_schema={
+                "type": "object",
+                "properties": {"run_id": {"type": "string"}},
+                "required": ["run_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns bounded run graph",
+            handler=research_exploration_graph_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.canon.issue.inspect",
+            kind=CapabilityKind.RETRIEVAL,
+            input_schema={
+                "type": "object",
+                "properties": {"module_id": {"type": "string"}},
+                "required": [],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns deterministic issue listing",
+            handler=canon_issue_inspect_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.explore",
+            kind=CapabilityKind.ACTION,
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "work_id": {"type": "string"},
+                    "module_id": {"type": "string"},
+                    "seed_question": {"type": "string"},
+                    "source_inputs": {"type": "array"},
+                    "budget": {"type": "object"},
+                },
+                "required": ["work_id", "module_id", "source_inputs", "budget"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="fails if budget object is missing or invalid",
+            handler=research_explore_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.validate",
+            kind=CapabilityKind.ACTION,
+            input_schema={
+                "type": "object",
+                "properties": {"run_id": {"type": "string"}},
+                "required": ["run_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="validates run outputs in deterministic flow",
+            handler=research_validate_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.research.bundle.build",
+            kind=CapabilityKind.ACTION,
+            input_schema={
+                "type": "object",
+                "properties": {"run_id": {"type": "string"}},
+                "required": ["run_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns review-safe bundle only",
+            handler=research_bundle_build_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.canon.improvement.propose",
+            kind=CapabilityKind.ACTION,
+            input_schema={
+                "type": "object",
+                "properties": {"module_id": {"type": "string"}},
+                "required": ["module_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns taxonomy-constrained issues and proposals",
+            handler=canon_improvement_propose_handler,
+        )
+    )
+    registry.register(
+        CapabilityDefinition(
+            name="wos.canon.improvement.preview",
+            kind=CapabilityKind.ACTION,
+            input_schema={
+                "type": "object",
+                "properties": {"module_id": {"type": "string"}},
+                "required": ["module_id"],
+            },
+            result_schema={"type": "object"},
+            allowed_modes={"research", "admin", "improvement"},
+            audit_required=True,
+            failure_semantics="returns preview payloads, no mutation",
+            handler=canon_improvement_preview_handler,
+        )
+    )
     return registry
 
 
@@ -795,5 +1089,60 @@ def capability_catalog() -> list[dict[str, Any]]:
             "name": "wos.review_bundle.build",
             "kind": CapabilityKind.ACTION.value,
             "allowed_modes": ["writers_room", "improvement", "admin"],
+        },
+        {
+            "name": "wos.research.source.inspect",
+            "kind": CapabilityKind.RETRIEVAL.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.research.aspect.extract",
+            "kind": CapabilityKind.RETRIEVAL.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.research.claim.list",
+            "kind": CapabilityKind.RETRIEVAL.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.research.run.get",
+            "kind": CapabilityKind.RETRIEVAL.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.research.exploration.graph",
+            "kind": CapabilityKind.RETRIEVAL.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.canon.issue.inspect",
+            "kind": CapabilityKind.RETRIEVAL.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.research.explore",
+            "kind": CapabilityKind.ACTION.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.research.validate",
+            "kind": CapabilityKind.ACTION.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.research.bundle.build",
+            "kind": CapabilityKind.ACTION.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.canon.improvement.propose",
+            "kind": CapabilityKind.ACTION.value,
+            "allowed_modes": ["research", "admin", "improvement"],
+        },
+        {
+            "name": "wos.canon.improvement.preview",
+            "kind": CapabilityKind.ACTION.value,
+            "allowed_modes": ["research", "admin", "improvement"],
         },
     ]
