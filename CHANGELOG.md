@@ -8,53 +8,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.4.0] - 2026-04-09
 
-**Summary**: **GoC gate evidence, G9/G9B audit trail, and product alignment** — authoritative six-scenario G9 capture and threshold tooling; Evaluator B strict-blind handoff ingestion with full A-vs-B delta and honest G9B independence classification (`level_a_capable` only); baseline audit docs and evidence templates; expanded GoC roadmap/scenario/retrieval coverage in `ai_stack` with matching tests; backend improvement and Writers’ Room services, contracts, and routes closer to the unified operating model; CI workflow and testing-setup updates; canonical turn contract and architecture notes.
+**Summary**: This release improves reliability and auditability for gate evaluation and operating workflows. It adds stronger evidence capture and comparison tooling, expands scenario and retrieval coverage in the AI stack, aligns backend services with the unified operating model, and tightens CI/testing documentation around the canonical turn flow.
 
 ### Added
 
-- **G9 / G9B evidence**: `scripts/g9_level_a_evidence_capture.py`, `scripts/g9_threshold_validator.py`, `scripts/g9b_compute_score_delta.py`, `scripts/assemble_g9b_strict_blind_outgoing_package.py`; evidence bundle under `tests/reports/evidence/g9_level_a_fullsix_20260410/` (Evaluator A matrix frozen; Evaluator B matrix `evaluator_b_claude_system_20260409`, raw sheet, declaration with `repository_task_b_post_return_bundle_linkage` for repo-only traceability, full `g9b_score_delta_record.json`, manifest and attempt record); **`tests/goc_gates/`** with fixtures and `test_g9_threshold_validator.py`.
-- **Audit and templates**: `docs/audit/*` (gate baselines, closure summary, master report, repo evidence index); `docs/goc_evidence_templates/` (JSON templates and schemas); `docs/g9_evaluator_b_external_package/` and `docs/plans/` (G9B / G9 S4 plans); `docs/ROADMAP_MVP_REPOSITORY_SURFACE_TRUTH_AND_STRUCTURE_CLEANUP.md`; `outgoing/` handoff kits (external evaluator packages).
-- **`ai_stack`**: `goc_g9_roadmap_scenarios.py`, `goc_roadmap_semantic_surface.py`, `goc_s4_misinterpretation_scenario.py`, `goc_field_initialization_envelope.py`, `retrieval_governance_summary.py`, `scene_direction_subdecision_matrix.py` and corresponding `ai_stack/tests/test_goc_*.py`.
-- **Backend**: `backend/app/contracts/` (improvement / Writers’ Room typed entry surfaces); new tests including `test_goc_*`, `test_writers_room_g7_operating_contract.py`, renamed `test_analytics_service.py` / `test_app_init.py` (replacing legacy `*_coverage` modules).
+- Added scripts and test coverage to capture six-scenario gate evidence, validate thresholds, package strict-blind handoffs, and compute score deltas between evaluator runs.
+- Added structured audit baselines and reusable evidence templates so gate outcomes can be reviewed consistently and reproduced across runs.
+- Added broader AI-stack coverage for roadmap scenarios, semantic-surface checks, retrieval-governance summaries, and scene-direction subdecision handling, with matching unit tests.
+- Added typed backend contract surfaces and expanded test coverage for improvement and Writers' Room operating paths.
 
 ### Changed
 
-- **`ai_stack`**: `capabilities.py`, `goc_turn_seams.py`, `langgraph_runtime.py`, `scene_director_goc.py` and related tests for roadmap semantics, seams, and phase gates.
-- **Backend**: `improvement_service.py`, `writers_room_service.py`, `improvement_routes.py`, `model_routing_contracts.py`, `ai_stack_evidence_service.py`; integration and observability tests.
-- **Docs**: `docs/CANONICAL_TURN_CONTRACT_GOC.md`, `docs/architecture/writers_room_on_unified_stack.md`, `docs/testing-setup.md`.
-- **CI**: `.github/workflows/ai-stack-tests.yml`, `.github/workflows/backend-tests.yml`.
-- **Writers’ Room app**: `writers-room/app/templates/index.html` and app tests.
-- **`story_runtime_core`**: `model_registry.py` and tests.
+- Updated AI-stack runtime components and seam handling for clearer roadmap semantics, stronger phase-gate behavior, and more legible diagnostics.
+- Updated backend services and routes to better align improvement and Writers' Room behavior with the unified operating model.
+- Updated canonical-turn and architecture documentation to match the implemented runtime behavior.
+- Updated CI workflows and local test setup guidance to reflect the current validation and regression path.
+- Updated Writers' Room UI/test coverage and story-runtime model registry integration.
 
 ### Removed
 
-- **`docs/plans/task_1b_narrative_commit.md`** (superseded by current planning artifacts).
-- **Legacy backend test modules**: `backend/tests/test_analytics_service_coverage.py`, `backend/tests/test_app_init_coverage.py` (replaced by consolidated tests above).
+- Removed an obsolete planning artifact that no longer matched the active implementation.
+- Removed legacy backend coverage-style test modules in favor of consolidated test suites.
 
 ### Notes
 
-- **G9B**: `g9b_level_b_attempt_record.json` records `failed_insufficient_independence` with `independence_classification_primary: insufficient_process_separation`; no `level_b_capable` or program/MVP closure claim. See `tests/reports/evidence/g9_level_a_fullsix_20260410/g9b_evaluator_independence_declaration.md` and `docs/audit/gate_G9B_evaluator_independence_baseline.md`.
-- **`tests/reports/`** remains **gitignored** (repository policy); capture scripts and audit docs describe the bundle layout. Regenerate or refresh local evidence with the G9 scripts as needed.
+- The strict-blind Evaluator-B run is recorded as not independent enough for stronger certification claims; it remains valid for comparative analysis only.
+- Generated evidence artifacts remain local by policy and are recreated through the capture scripts when needed.
 
 ---
 
 ## [0.3.20] - 2026-04-07
 
-**Summary**: **GoC post–Phase 5 residual closure** — authority docs aligned with implemented LangGraph seams; operator canonical turn projection; explicit validation/commit lane metadata and `validation_reject` failure markers; minimal `scene_assessment` schema helper; closure test module; README/testing-setup merge bar and workflow comment.
+**Summary**: This release completes post-Phase-5 cleanup by making operator output clearer and more consistent. It adds a canonical turn projection helper, formalizes minimum scene-assessment fields, records validation-reject outcomes explicitly, and aligns docs/CI guidance with the runtime seam behavior.
 
 ### Added
 
-- **`build_operator_canonical_turn_record`** in `ai_stack/goc_turn_seams.py` — single JSON operator view (`CANONICAL_TURN_CONTRACT_GOC.md` §8).
-- **`goc_scene_assessment_has_minimal_fields`** and **`GOC_SCENE_ASSESSMENT_MINIMAL_KEYS`** in `ai_stack/scene_director_goc.py` (`CANONICAL_TURN_CONTRACT_GOC.md` §5.1).
-- **`ai_stack/tests/test_goc_closure_residuals.py`** — projection, preview discipline, validation marker, schema, §3.6 strip-all-immutables, builtin/YAML title conflict unit checks.
+- Added a canonical turn-record builder that produces one stable operator-facing JSON projection.
+- Added a minimal scene-assessment field contract and helper checks to enforce that contract consistently.
+- Added a closure-focused test module covering projection behavior, preview discipline, validation markers, immutable-field stripping, and title-conflict safeguards.
 
 ### Changed
 
-- **`docs/VERTICAL_SLICE_CONTRACT_GOC.md`**, **`docs/CANONICAL_TURN_CONTRACT_GOC.md`**, **`docs/GATE_SCORING_POLICY_GOC.md`**: Reality Anchor, seam table, §5.1, §8, and shared-basis wording match `langgraph_runtime` (director nodes, `validate_seam` / `commit_seam` / `render_visible`).
-- **`ai_stack/goc_turn_seams.py`**: `validator_lane` / `commit_lane` on seam outcomes; `commit_lane` on non-commit shells.
-- **`ai_stack/langgraph_runtime.py`**: append `failure_class: validation_reject` (non–closure-impacting) when GoC validation rejects.
-- **`README.md`**, **`docs/testing-setup.md`**: explicit **merge bar** = `ai-stack-tests.yml` install + scripts/Docker; expanded GoC regression command list.
-- **`.github/workflows/ai-stack-tests.yml`**: comment linking install step to parity scripts/README.
+- Updated core GoC documentation so terminology and seam descriptions match runtime behavior.
+- Updated turn-seam outputs with explicit validation and commit lane metadata, including commit-lane information on non-commit shells.
+- Updated runtime failure reporting to emit a dedicated validation-reject class when validation blocks a turn.
+- Updated README/testing setup with explicit merge requirements and an expanded GoC regression command set.
+- Updated the AI-stack CI workflow comments to clarify install-step parity expectations.
 
 ---
 
