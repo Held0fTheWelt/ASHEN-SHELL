@@ -38,7 +38,7 @@
 
 | command | status | basis | execution evidence |
 | --- | --- | --- | --- |
-| `cd backend && python -m pytest tests/writers_room/ -q --tb=short --no-cov` | `repo-verified` | Gate G7 Writers' Room tree; includes routes, routing, unit, and `test_writers_room_g7_operating_contract.py`. | run locally and in CI job `writers-room-g7-contract-tests` (`.github/workflows/backend-tests.yml`) |
+| `cd backend && python -m pytest tests/writers_room/ -q --tb=short --no-cov` | `repo-verified` | Gate G7 Writers' Room tree; includes routes, routing, unit, and `test_writers_room_g7_operating_contract.py`. | CI job `writers-room-g7-contract-tests` and archived rerun: `tests/reports/evidence/all_gates_closure_20260409/g7_writers_room.txt` |
 
 ## Baseline Findings
 

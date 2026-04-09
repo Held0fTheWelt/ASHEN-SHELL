@@ -32,30 +32,27 @@
 
 | command | status | basis | promotion requirement |
 | --- | --- | --- | --- |
-| `python -m pytest ai_stack/tests/test_goc_phase1_runtime_gate.py -q --tb=short` | `pending-finalization-after-phase-0` | Path exists; not executed in this block. | Execute with scene-direction matrix evidence capture. |
-| `python -m pytest ai_stack/tests/test_goc_phase2_scenarios.py -q --tb=short` | `pending-finalization-after-phase-0` | Path exists; not executed in this block. | Execute with bounded-behavior assertions and trace samples. |
+| `python -m pytest ai_stack/tests/test_scene_direction_subdecision_matrix.py ai_stack/tests/test_goc_phase2_scenarios.py -q --tb=short` | `repo-verified` | Canonical matrix + bounded scenario behavior path for G4. | Archived: `tests/reports/evidence/all_gates_closure_20260409/g4_scene_direction_boundary.txt` |
 
 ## Baseline Findings
 
 1. `scene_director_goc.py` contains deterministic selection helpers (`select_single_scene_function`) and frozen-vocab assertions for scene/pacing/silence decisions.
 2. Runtime and seam code include validation and projection boundaries around model generation and commit seams.
-3. Explicit standalone subdecision matrix artifact mapping is incomplete in this block; matrix semantics are partially embedded in code but not fully enumerated as one canonical matrix reference.
-4. No executed scenario evidence is attached yet for forbidden-behavior absence.
+3. Explicit subdecision matrix behavior is now covered by executed `test_scene_direction_subdecision_matrix.py` plus scenario behavior checks.
+4. Executed scenario evidence is attached in the closure bundle and shows bounded behavior on the canonical path.
 
 ## Status Baseline
 
-- structural_status: `yellow`
+- structural_status: `green`
 - closure_level_status: `level_a_capable`
 
-Rationale: deterministic-first bounded architecture is materially present, but complete matrix traceability and runtime scenario enforcement evidence remain incomplete.
+Rationale: deterministic-first bounded architecture is present and canonical matrix/scenario verification passed with archived evidence.
 
 ## Evidence Quality
 
-- evidence_quality: `medium`
-- justification: substantial static seam evidence exists, but required scenario/runtime proof was not executed in this block.
+- evidence_quality: `high`
+- justification: static seam evidence plus executed canonical matrix/scenario transcript in `all_gates_closure_20260409`.
 
 ## Execution Risks Carried Forward
 
-- incomplete explicit subdecision matrix traceability
-- potential hidden unclassified branches without executed scenario coverage
-- pending runtime scenario verification commands
+- Keep matrix/scenario command pair as required regression evidence for scene-direction changes.

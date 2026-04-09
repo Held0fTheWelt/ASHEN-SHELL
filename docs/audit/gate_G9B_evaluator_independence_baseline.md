@@ -62,6 +62,7 @@ Both matrices are **complete** (six scenarios, five criteria). G9 §6.9 threshol
 **Status:** **Present.** Computed from frozen A and B matrices (authoritative: `scripts/g9b_compute_score_delta.py`).
 
 - `tests/reports/evidence/g9_level_a_fullsix_20260410/g9b_score_delta_record.json` — `not_applicable_level_a: false`, full `per_cell_delta` (semantics: score_a minus score_b), additive `disagreement_summary` (does not replace the grid).
+- Closure rerun check (no regeneration required): `tests/reports/evidence/all_gates_closure_20260409/g9b_delta_recompute_check.json` recomputes the same `per_cell_delta` from preserved A/B matrices.
 
 ## Reconciliation evidence
 
@@ -97,6 +98,8 @@ Both matrices are **complete** (six scenarios, five criteria). G9 §6.9 threshol
 - closure_level_status: `level_a_capable` *(complete G9 grid passes §6.9 on Evaluator A; Level B independence not evidenced; program-wide closure still governed by G10 and global aggregation — not asserted here.)*
 
 **Rationale:** Roadmap §6.10 Level A discipline for G9B is satisfied with **honest** dual-artifact and delta hygiene. **`level_b_capable` is not** used because independence is **insufficient** per declaration. **No** Level B or program closure language is implied.
+
+**Preservation policy applied:** Existing authoritative G9B artifacts under `g9_level_a_fullsix_20260410` remain authoritative because closure rerun validation did not contradict them; no cosmetic regeneration was performed.
 
 ## Evidence quality
 

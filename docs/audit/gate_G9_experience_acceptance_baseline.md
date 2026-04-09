@@ -103,13 +103,15 @@ ai_stack/tests/test_goc_retrieval_heavy_scenario.py::test_roadmap_scenario_retri
 
 Each acceptance scenario is scored **1–5** on: dramatic responsiveness; truth consistency; character credibility; conflict continuity; graceful degradation. Graceful degradation ≥ 3.5 applies to failure-oriented scenarios per validator mapping (`goc_roadmap_s5_primary_failure_fallback` has `failure_oriented: true`).
 
-## Command Strategy (this run)
+## Command Strategy (authoritative + closure rerun policy)
 
 | command | status | execution evidence |
 | --- | --- | --- |
-| Six-test pytest bundle (see list above) | `repo-verified` | `tests/reports/evidence/g9_level_a_fullsix_20260410/pytest_g9_roadmap_bundle.txt` |
+| Six-test pytest bundle (authoritative run) | `repo-verified` | `tests/reports/evidence/g9_level_a_fullsix_20260410/pytest_g9_roadmap_bundle.txt` |
 | `python scripts/g9_level_a_evidence_capture.py tests/reports/evidence/g9_level_a_fullsix_20260410 --audit-run-id g9_level_a_fullsix_20260410` (+ note) | `repo-verified` | Scenario JSON files + `run_metadata.json` in same directory |
 | `python scripts/g9_threshold_validator.py tests/reports/evidence/g9_level_a_fullsix_20260410/g9_experience_score_matrix.json` | `repo-verified` | `g9_threshold_validator_output.json`, `g9_threshold_validator_stdout.txt`, `g9_threshold_validator_stderr.txt`, `g9_threshold_validator_exitcode.txt` |
+| Six-test pytest bundle rerun for all-gates closure adjudication | `repo-verified` | `tests/reports/evidence/all_gates_closure_20260409/g9_pytest_six_scenarios_rerun.txt` (6 passed) |
+| Validator rerun on preserved authoritative matrix | `repo-verified` | `tests/reports/evidence/all_gates_closure_20260409/g9_validator_a_on_authoritative_matrix.json` (`pass_all: true`) |
 
 ## Status Baseline (updated for `g9_level_a_fullsix_20260410`)
 
@@ -118,6 +120,8 @@ Each acceptance scenario is scored **1–5** on: dramatic responsiveness; truth 
 - **g9_roadmap_threshold_pass (§6.9):** `true` (complete matrix; thresholds computed; `pass_all: true`)
 
 **Rationale:** Full six-scenario pytest witness, structured capture, complete 6×5 score matrix with per-cell rationale grounded in this bundle, and validator `pass_all: true`. **No** MVP or program-wide Level A closure is asserted from G9 alone (G10 integrative chain and other gates still govern global closure).
+
+**Preservation policy applied:** Existing authoritative G9 evidence (`g9_level_a_fullsix_20260410`) is preserved as authoritative in this closure pass because rerun validation remained consistent and no contradiction required matrix regeneration.
 
 ## Immediate follow-ups
 

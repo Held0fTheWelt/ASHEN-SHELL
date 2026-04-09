@@ -38,7 +38,7 @@
 
 | command | status | basis | execution evidence |
 | --- | --- | --- | --- |
-| `cd backend && python -m pytest tests/improvement/ -q --tb=short --no-cov` | `repo-verified` | Canonical G8 directory; matches CI job `improvement-g8-contract-tests` in `.github/workflows/backend-tests.yml`. | executed (local agent run), 60 passed |
+| `cd backend && python -m pytest tests/improvement/ -q --tb=short --no-cov` | `repo-verified` | Canonical G8 directory; matches CI job `improvement-g8-contract-tests` in `.github/workflows/backend-tests.yml`. | CI job and archived rerun: `tests/reports/evidence/all_gates_closure_20260409/g8_improvement.txt` (60 passed) |
 
 ## Baseline Findings
 

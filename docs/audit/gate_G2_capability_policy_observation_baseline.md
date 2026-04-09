@@ -35,8 +35,7 @@
 
 | command | status | basis | promotion requirement |
 | --- | --- | --- | --- |
-| `cd backend && python -m pytest tests/runtime/test_model_routing_evidence.py -q --tb=short --no-cov` | `repo-verified` | Path exists; backend command pattern documented in `docs/testing-setup.md` and `backend/app/runtime/area2_validation_commands.py`. | Execute and attach output evidence when running verification pass. |
-| `cd backend && python -m pytest tests/runtime/test_decision_policy.py -q --tb=short --no-cov` | `repo-verified` | Path exists; backend command pattern and flags documented. | Execute and attach output evidence when running verification pass. |
+| `cd backend && python -m pytest tests/runtime/test_model_routing_evidence.py tests/runtime/test_decision_policy.py -q --tb=short --no-cov` | `repo-verified` | Canonical G2 routing evidence and policy taxonomy path. | Archived: `tests/reports/evidence/all_gates_closure_20260409/g2_routing_policy_observation.txt` |
 
 ## Baseline Findings
 
@@ -46,21 +45,20 @@
    - observation payload in `model_routing_evidence.py`
 2. Routing evidence includes route reason, fallback chain, escalation/degradation flags, and policy/selection alignment diagnostics.
 3. Tests directly target routing evidence shape and policy taxonomy validation.
-4. This block did not execute runtime tests, so behavioral confirmation remains pending despite strong static readiness.
+4. Canonical runtime tests were executed; behavioral confirmation and evidence-shape validation are now attached in the closure bundle.
 
 ## Status Baseline
 
-- structural_status: `yellow`
+- structural_status: `green`
 - closure_level_status: `level_a_capable`
 
-Rationale: structural separation is well represented and test surfaces are present, but runtime execution evidence is not yet attached in this block.
+Rationale: structural separation is explicit and the canonical runtime evidence/policy tests passed with archived transcript evidence.
 
 ## Evidence Quality
 
-- evidence_quality: `medium`
-- justification: comprehensive static contracts and tests exist, but no executed runtime proof is included in this baseline output.
+- evidence_quality: `high`
+- justification: comprehensive static contracts plus executed canonical runtime proof (`g2_routing_policy_observation.txt`).
 
 ## Execution Risks Carried Forward
 
-- unexecuted test commands leave runtime behavior confirmation pending
-- policy-version identity presence in live routing traces still requires run-time capture evidence
+- Preserve the executed G2 command as canonical regression path for future policy/routing changes.

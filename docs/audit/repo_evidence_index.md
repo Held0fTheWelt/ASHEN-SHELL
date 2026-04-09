@@ -1,11 +1,12 @@
-# Repo Evidence Index (Task1 Block: Phase 0 + G1-G6)
+# Repo Evidence Index (All-Gates Baseline + Closure Rerun)
 
 ## Purpose
 
-This index enumerates repository evidence used for the first audit block execution:
+This index enumerates repository evidence used across the gate baseline and all-gates closure rerun:
 
-- Phase 0 mapping
-- G1-G6 structural baselines
+- Phase 0 mapping and canonical references
+- G1-G10 + G9B baseline and aggregation surfaces
+- closure rerun evidence and authoritative-preservation records
 
 Each item is tagged by gate relevance and evidence role.
 
@@ -70,6 +71,7 @@ Each item is tagged by gate relevance and evidence role.
 | `tests/reports/evidence/g9_level_a_20260408/` | Partial G9 state (S4 unscored; validator incomplete) | G9, G9B | artifact | Historical; superseded for threshold story by `g9_level_a_fullsix_20260410`. |
 | `tests/reports/evidence/g9_level_a_fullsix_20260410/` | Full six-scenario G9 matrix (A), pytest log, scenario JSON, validator output (A); Evaluator B matrix + `g9b_raw_score_sheet_evaluator_b.json` (current B: `evaluator_b_claude_system_20260409`, ingested strict-blind handoff return); `g9b_score_delta_record.json` (full 6×5 `per_cell_delta`, score_a−score_b); G9B manifest `level_b_attempt_insufficient_independence`; `g9b_level_b_attempt_record.json` (`failed_insufficient_independence`, `independence_classification_primary: insufficient_process_separation`); `g9b_evaluator_b_declaration.json` includes `repository_task_b_post_return_bundle_linkage` (repo-only; external return left top-level A/delta refs empty) | G9, G9B | artifact | **Authoritative** evaluative run; G9 §6.9 `pass_all: true` on Evaluator A. See `gate_G9_experience_acceptance_baseline.md` / `gate_G9B_evaluator_independence_baseline.md`. |
 | `tests/reports/evidence/g10_backend_e2e_20260409/` | Backend G10 audit-plan pytest trio transcript + `run_metadata.json` | G10 | artifact | **Current** integrated backend E2E witness: 15 passed, `exit_code: 0` (`pytest_g10_backend_trio.txt`). Step 11 of §6.11 remains anchored on `g9_level_a_fullsix_20260410`, not superseded. See `gate_G10_end_to_end_closure_baseline.md`. |
+| `tests/reports/evidence/all_gates_closure_20260409/` | Canonical rerun transcript bundle for G1–G8 plus G9/G9B/G10 validation checks and preservation-policy metadata | G1-G10, G9B | artifact | All canonical execution paths that can run in-repo were rerun and archived; G9/G9B/G10 authoritative artifacts were preserved unless contradiction required regeneration. |
 | `tests/reports/evidence/g9_level_a_fullsix_20260409/` | Full six-scenario G9 matrix (historical) | G9, G9B | artifact | Complete failed §6.9 run (`pass_all: false`); **historical context only** — superseded by `g9_level_a_fullsix_20260410`. |
 | `tests/reports/evidence/g9_s4_closure_20260409/` | S4-only closure partial bundle (`evidence_run_scope: s4_closure_partial`) | G9 | artifact | Scenario JSON + `run_metadata.json` + S4 pytest witness files; not a full six-scenario G9 rerun. |
 | `tests/reports/evidence/g9_s5_targeted_20260409/` | S5-only targeted partial bundle (`evidence_run_scope: s5_targeted_partial`) | G9 | artifact | S5 scenario JSON, `run_metadata.json`, `pytest_s5_anchor.txt`, notes, provisional S5-only evaluator row; not a full six-scenario G9 matrix; see `gate_G9_experience_acceptance_baseline.md`. |
@@ -80,8 +82,7 @@ Each item is tagged by gate relevance and evidence role.
 - **Medium:** authoritative docs + implementation evidence without runtime execution in this block.
 - **Low:** indirect or partial mapping where canonical relevance is plausible but not fully resolved.
 
-## Known Coverage Gaps (To Carry Into Gate Reports)
+## Known Coverage Gaps (Current)
 
-- No runtime test execution was performed in this block, so runtime-dependent assertions rely on static evidence.
-- Some canonical naming in roadmap G1 does not map one-to-one to existing symbol names without a normalization map.
-- Scene-direction matrix traceability is partially implemented in code but not fully represented as a standalone matrix artifact.
+- Level B evaluator independence evidence remains insufficient (`failed_insufficient_independence`); this is an evidential blocker, not a repo-local implementation blocker.
+- CI parity remains Python 3.10 while this closure rerun was on Python 3.13.12 (`docs/testing-setup.md`).

@@ -32,31 +32,29 @@
 
 | command | status | basis | promotion requirement |
 | --- | --- | --- | --- |
-| `python -m pytest ai_stack/tests/test_goc_phase1_runtime_gate.py -q --tb=short` | `pending-finalization-after-phase-0` | Path exists; execution deferred in this block. | Execute with finalized turn-record evidence capture and attach outputs. |
-| additional turn-record module checks | `pending-finalization-after-phase-0` | Exact module set not frozen. | Freeze module selection and execute under documented environment. |
+| `python -m pytest ai_stack/tests/test_goc_phase1_runtime_gate.py -q --tb=short` | `repo-verified` | Canonical runtime turn-record gate path in `ai_stack/tests/`. | Archived: `tests/reports/evidence/all_gates_closure_20260409/g3_turn_record_ai_stack.txt` |
+| `cd backend && python -m pytest tests/runtime/test_cross_surface_operator_audit_contract.py -q --tb=short --no-cov` | `repo-verified` | Cross-surface operator-audit contract continuity for emitted turn records. | Archived: `tests/reports/evidence/all_gates_closure_20260409/g3_cross_surface_contract_backend.txt` |
 
 ## Baseline Findings
 
 1. A canonical turn-record contract document exists and is explicitly referenced by runtime seam code.
 2. Runtime state and packaging in `ai_stack/langgraph_runtime.py` include session/turn/routing/retrieval/validation/graph diagnostics fields.
 3. `ai_stack/goc_turn_seams.py` provides operator-canonical projection helpers and references canonical contract sections.
-4. `ai_stack/runtime_turn_contracts.py` currently defines stable runtime constants but does not alone represent full contract section coverage.
-5. Full field-completeness proof against all required record sections is incomplete without runtime trace evidence.
+4. `ai_stack/runtime_turn_contracts.py` defines stable runtime constants and the executed test surfaces confirm canonical turn record coverage for the audited paths.
+5. Runtime trace-backed checks were executed in this closure run; no field-group contradiction was found on canonical paths.
 
 ## Status Baseline
 
-- structural_status: `yellow`
+- structural_status: `green`
 - closure_level_status: `level_a_capable`
 
-Rationale: canonical contract and projection architecture are present, but complete section-level runtime parity is not fully evidenced in this static-only baseline.
+Rationale: canonical contract/projection architecture is present and canonical runtime + cross-surface contract paths passed with archived evidence.
 
 ## Evidence Quality
 
-- evidence_quality: `medium`
-- justification: strong contract + implementation references exist, but no executed turn traces were collected in this block.
+- evidence_quality: `high`
+- justification: direct contract/implementation evidence plus executed turn-record test transcripts in `all_gates_closure_20260409`.
 
 ## Execution Risks Carried Forward
 
-- possible drift between documented canonical section schema and emitted runtime field shape
-- compact/expanded projection parity needs runtime sample verification
-- turn-record test execution remains pending
+- Continue enforcing this two-command G3 verification pair for future turn-record schema changes.

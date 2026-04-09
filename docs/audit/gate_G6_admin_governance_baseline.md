@@ -32,8 +32,8 @@
 
 | command | status | basis | promotion requirement |
 | --- | --- | --- | --- |
-| `python -m pytest tests/smoke/test_admin_startup.py -v --tb=short` | `pending-finalization-after-phase-0` | Path exists; test quality is lightweight and environment-sensitive. | Execute in controlled environment and attach startup evidence. |
-| `cd backend && python -m pytest tests/test_game_admin_routes.py tests/test_admin_security.py -q --tb=short --no-cov` | `repo-verified` | Paths exist; backend command conventions documented. | Execute and attach authorization/governance outcomes. |
+| `cd backend && python -m pytest tests/test_game_admin_routes.py tests/test_admin_security.py tests/test_goc_admin_semantic_boundary.py -q --tb=short --no-cov` | `repo-verified` | Canonical admin route/security/semantic-boundary path. | Archived: `tests/reports/evidence/all_gates_closure_20260409/g6_admin_backend.txt` |
+| `python -m pytest tests/smoke/test_admin_startup.py -v --tb=short` | `repo-verified` | Canonical startup smoke path for admin service readiness. | Archived: `tests/reports/evidence/all_gates_closure_20260409/g6_admin_smoke.txt` |
 
 ## Baseline Findings
 
@@ -41,22 +41,20 @@
 2. Governance APIs in `backend/app/api/v1/ai_stack_governance_routes.py` are moderator/admin protected and primarily evidence-oriented (`session-evidence`, `improvement-packages`, `release-readiness`).
 3. Improvement governance state in `improvement_service.py` includes explicit review states (`pending_governance_review`, `governance_accepted`, `governance_rejected`) and decision history.
 4. Security test coverage exists (`test_admin_security.py`), and admin game-route governance flows are tested (`test_game_admin_routes.py`).
-5. Full proof that no admin path can introduce shared semantic truth drift still requires combined route-level runtime evidence beyond static review.
+5. Combined route/security/semantic-boundary runtime evidence now exists in this closure run; no canonical admin drift contradiction was observed.
 
 ## Status Baseline
 
-- structural_status: `yellow`
+- structural_status: `green`
 - closure_level_status: `level_a_capable`
 
-Rationale: strong governance and security scaffolding is present, but strict semantic-boundary proof is not fully closed without executed route/security evidence.
+Rationale: governance/security scaffolding plus canonical route/security/semantic-boundary/smoke paths are executed and archived.
 
 ## Evidence Quality
 
-- evidence_quality: `medium`
-- justification: direct implementation and tests are available, but this baseline does not include command execution output for final behavioral confirmation.
+- evidence_quality: `high`
+- justification: direct implementation evidence and executed canonical command transcripts in `all_gates_closure_20260409`.
 
 ## Execution Risks Carried Forward
 
-- semantic-boundary enforcement across all admin-capable write paths requires explicit runtime verification
-- smoke startup tests are lightweight placeholders and may underrepresent production boundary behavior
-- pending execution of verified backend commands for conclusive route/security evidence
+- Keep backend admin-governance and smoke command pair as mandatory regression evidence paths.
