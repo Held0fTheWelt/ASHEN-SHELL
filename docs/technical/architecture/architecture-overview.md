@@ -28,6 +28,7 @@ Natural-language input is the **primary** contract at the play UI; structured co
 
 ## Where to read next
 
+- **World Engine (canonical spine):** [`world_engine_authoritative_runtime_and_system_interactions.md`](../runtime/world_engine_authoritative_runtime_and_system_interactions.md) — play service in isolation and in system context (backend, player flow, AI, MCP, content, ops)
 - **Service boundaries and URLs:** [`service-boundaries.md`](service-boundaries.md)
 - **AI/RAG/orchestration:** [`../ai/ai-stack-overview.md`](../ai/ai-stack-overview.md)
 - **Session/trace observability:** [`../operations/observability-and-governance.md`](../operations/observability-and-governance.md) — traces, audits, governance APIs

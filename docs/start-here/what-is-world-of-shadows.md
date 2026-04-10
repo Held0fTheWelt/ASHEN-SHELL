@@ -28,6 +28,7 @@ The repository README also introduces the product line as **Better Tomorrow (Wor
 
 ## Where to go next
 
+- **World Engine (deep dive):** [World Engine — authoritative runtime and system interactions](../technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md)
 - **How services connect:** [System map: services and data stores](system-map-services-and-data-stores.md)
 - **First dramatic slice:** [God of Carnage as an experience](god-of-carnage-as-an-experience.md)
 - **Plain-language system story:** [How World of Shadows works](how-world-of-shadows-works.md)

@@ -1,5 +1,7 @@
 # AI stack overview
 
+**Connected system reference (spine):** [AI in World of Shadows — Connected System Reference](../../ai/ai_system_in_world_of_shadows.md) ties together RAG, LangGraph, LangChain, routing, runtime authority, Writers’ Room, and MCP.
+
 Current **AI stack** for World of Shadows: retrieval (RAG), **LangGraph** turn orchestration in world-engine, **LangChain** for structured adapter invocation, a governed **capability** layer (MCP-aligned), and model routing/adapters in `story_runtime_core` and backend services. **Runtime authority** stays in world-engine; models produce **proposals** until validation and commit.
 
 ## Layers (what exists now)

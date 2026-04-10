@@ -1,5 +1,7 @@
 # How AI fits the platform
 
+For a **single end-to-end narrative** across layers (including diagrams), see the spine: [`AI in World of Shadows — Connected System Reference`](../ai/ai_system_in_world_of_shadows.md).
+
 This page is **layered**: a short plain-language summary first, then technical pointers for implementers.
 
 ## Plain language

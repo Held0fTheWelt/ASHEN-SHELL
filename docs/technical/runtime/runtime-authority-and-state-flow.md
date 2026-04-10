@@ -48,6 +48,7 @@ The backend calls the play service using `PLAY_SERVICE_*` environment variables 
 
 ## Related
 
+- [`world_engine_authoritative_runtime_and_system_interactions.md`](world_engine_authoritative_runtime_and_system_interactions.md) — canonical World Engine spine (two play-service faces, integration, diagrams)
 - [`player_input_interpretation_contract.md`](player_input_interpretation_contract.md) — structured interpretation contract
 - [`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md) — commit semantics
 - [`../integration/LangGraph.md`](../integration/LangGraph.md) — turn graph orchestration
