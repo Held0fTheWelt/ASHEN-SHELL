@@ -13,4 +13,4 @@ Kanonische Einstiegspunkte:
 - `EXECUTION_GOVERNANCE.md`
 - `WORKSTREAM_INDEX.md`
 
-Strukturelle Code-Refactors (Spaghetti / Modulgrenzen) mit denselben Pre/Post-Pfaden: [`../dev/despaghettification_implementation_input.md`](../dev/despaghettification_implementation_input.md).
+Strukturelle Code-Refactors (Spaghetti / Modulgrenzen) mit denselben Pre/Post-Pfaden: [`despaghettify/despaghettification_implementation_input.md`](../despaghettification_implementation_input.md).

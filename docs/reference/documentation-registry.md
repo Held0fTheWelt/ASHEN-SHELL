@@ -8,9 +8,9 @@ See [baseline-validation-note.md](baseline-validation-note.md) for Task 1A–4 a
 
 ## Execution governance
 
-- Canonical state hub: [../state/README.md](../state/README.md)
-- Repository-wide governance contract: [../state/EXECUTION_GOVERNANCE.md](../state/EXECUTION_GOVERNANCE.md)
-- Workstream continuity index: [../state/WORKSTREAM_INDEX.md](../state/WORKSTREAM_INDEX.md)
+- Canonical state hub: [../../despaghettify/state/README.md](../../despaghettify/state/README.md)
+- Repository-wide governance contract: [../../despaghettify/state/EXECUTION_GOVERNANCE.md](../../despaghettify/state/EXECUTION_GOVERNANCE.md)
+- Workstream continuity index: [../../despaghettify/state/WORKSTREAM_INDEX.md](../../despaghettify/state/WORKSTREAM_INDEX.md)
 
 ## Start here (all audiences)
 

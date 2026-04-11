@@ -22,9 +22,9 @@ Die **Pre/Post-Ordner** sind Zielpfade für künftige Wellen; sie können im Arb
 ## Bootstrap-Entscheidungen
 
 - Vorhandene Governance-/Audit-Dokumente unter `docs/audit/`, `docs/audits/` und `audits/` bleiben erhalten.
-- `docs/state/` ist der neue kanonische Restart-Anker fuer laufende Ausfuehrungsgouvernanz.
+- `despaghettify/state/` ist der kanonische Restart-Anker fuer laufende Ausfuehrungsgouvernanz (Despaghettify-Hub).
 - Historische Claims ohne verlinkte Evidenz gelten nicht als Abschlussbeweis.
 
 ## Strukturelle Code-Arbeit (Despaghettifizierung)
 
-Refactors gegen Spaghetti/Modulgrenzen nutzen **dieselben** Pre/Post-Pfade wie die Workstreams oben (pro betroffenem `artifacts/workstreams/<slug>/pre|post/`). Kanonische Arbeitsvorlage (Inputliste, **DS-ID → Workstream**-Tabelle, Umsetzungsreihenfolge, Arbeitslog — derzeit als Templates vorbereitet): [`../dev/despaghettification_implementation_input.md`](../dev/despaghettification_implementation_input.md).
+Refactors gegen Spaghetti/Modulgrenzen nutzen **dieselben** Pre/Post-Pfade wie die Workstreams oben (pro betroffenem `artifacts/workstreams/<slug>/pre|post/`). Kanonische Arbeitsvorlage (Inputliste, **DS-ID → Workstream**-Tabelle, Umsetzungsreihenfolge, Arbeitslog — derzeit als Templates vorbereitet): [`despaghettify/despaghettification_implementation_input.md`](../despaghettification_implementation_input.md).

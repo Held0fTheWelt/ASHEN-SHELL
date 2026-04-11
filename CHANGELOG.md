@@ -8,204 +8,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Changed
-
-- **Despaghettification — DS-REPLAY-G (2026-04-12):** Einphasige Vollverifikation der dokumentierten DS-001…010 (Spaghetti-Scan, DS-005-Import-Check, gebündelte Pytest-Suites für Backend-Runtime, ai_stack inkl. LangGraph/Capabilities, MCP-Server, Administration Tool, Builtins-Drift Backend/World-Engine). Zugehörige Session-Dateien lagen unter `docs/state/artifacts/repo_governance_rollout/post/` (im Arbeitsbaum später entfernt; Nachweis: Git-Historie). Runtime-`TYPE_CHECKING`-Stichprobe (`session_store` ohne `TYPE_CHECKING`) war in der Inputliste dokumentiert.
-- **Phase F (Despaghettification DS-009):** `create_default_capability_registry` moved from `ai_stack/capabilities.py` to `ai_stack/capabilities_default_registry.py`; lazy export via `capabilities.__getattr__`; `ai_stack` package API unchanged. *(Zugehörige Post-Artefakte unter `docs/state/artifacts/workstreams/ai_stack/post/` historisch; nicht mehr im Tree.)*
-- **Phase F (Despaghettification DS-010):** `execute_turn` in `backend/app/runtime/turn_executor.py` split into `_turn_source_gate_rejection` and `_execute_turn_validated_pipeline` (behavior-preserving). *(Zugehörige Post-Artefakte unter `docs/state/artifacts/workstreams/backend_runtime_services/post/` historisch; nicht mehr im Tree.)*
-- **State- und Despag-Dokumentation (Template-Pflege):** `WORKSTREAM_*_STATE.md` und `ROLLOUT_EXECUTION_REPORT.md` auf kurze Vorlagen ohne gebrochene `session_*`-Pfadlisten; [`docs/dev/despaghettification_implementation_input.md`](docs/dev/despaghettification_implementation_input.md) mit leerer **DS-ID → Workstream**-Tabelle und Platzhalter-**Struktur-Scan**; [`doc/tasks/spaghetti-check-task.md`](doc/tasks/spaghetti-check-task.md) ohne absoluten Cursor-Plan-Pfad.
+_No unreleased changes yet._
 
 ---
 
-## [0.5.7] - 2026-04-10
+## [0.6.0] - 2026-04-11
 
-**Summary**: Sammelstand fuer alle aktuell laufenden Arbeiten im Working Tree (Governance-Rollout, Dokumentations-Strict-Remediation, World-Engine-Console/Admin/API-Erweiterungen, Runtime/AI/Forum/Frontend-Weiterentwicklung, OpenAPI- und Testausbau).
+This release collects work that was previously under-released or unreleased, and adds the commits recorded after `07534ad` (2026-04-11). Headings follow this file’s Keep a Changelog layout; bullets replace working-tree snapshots. Together, the items below are intended to represent **everything since the last published version line** (`[0.5.6]`) that belongs in `0.6.0`, including governance and documentation moves that never shipped under a correct patch number.
 
 ### Added
 
-- **Execution Governance State Hub** unter `docs/state/` (Governance-Vertrag, Workstream-Index, State-Dateien, Rollout-Report, Pre/Post-Artefaktordner).
-- **Dokumentations-Remediation-Artefakte** unter `docs/state/artifacts/workstreams/documentation/...` (session-basierte Pre/Post-Logs und Vergleichsartefakte).
-- **Builtins-Deduplizierungs-Artefakte** unter:
-  - `docs/state/artifacts/workstreams/backend_runtime_services/...`
-  - `docs/state/artifacts/workstreams/world_engine/...`
-- **Neue/erweiterte API- und Runtime-Flächen** (u. a. neue Dateien unter `backend/app/api/v1/`, `backend/app/runtime/`, `backend/app/services/`, `backend/scripts/`).
-- **Neue OpenAPI-/Doku-Dateien** unter `docs/api/` und `docs/dev/`.
+- **Despaghettify hub** under `despaghettify/`: implementation input list (`despaghettification_implementation_input.md`), reproducible structure-scan task (`spaghetti-check-task.md`), wave-by-wave implementation task (`spaghetti-solve-task.md`), and package `README`.
+- **Execution governance state** under `despaghettify/state/`: governance contract, workstream index, per-workstream state files, rollout report, and artifact tree layout (`artifacts/workstreams/<slug>/pre|post/`, optional repo-wide rollout folder).
+- **Documentation and API surface files** under `docs/api/` (OpenAPI-related sources and taxonomy) and continued developer notes under `docs/dev/`.
+- **Automated tests (commits after `07534ad`)** with raised line coverage on: research claims, operational profile edge cases, gate evaluation for God-of-Carnage solo flow, dramatic alignment constants, research store helpers, canonical tool-surface package, scene director decision paths, LangGraph research helpers, capability registry handler helpers, bounded research exploration, and canon improvement contract paths; see individual commit messages on `main` after `07534ad` for file-level detail.
 
 ### Changed
 
-- **`mkdocs.yml`**: Strict-Build-Remediation durch Validation-Policy-Anpassung.
-- **`world-engine/app/content/builtins.py`**: von großer statischer Kopie auf delegierende Kanonik-Nutzung umgestellt.
-- **Drift-/Verifikations-Tests**:
-  - `backend/tests/test_content_builtins_drift.py`
-  - `world-engine/tests/test_builtins_drift.py`
-- **`backend/app/runtime/ai_turn_executor.py`**: P0-Refactoring in zehn Waves fortgesetzt: u. a. `_build_orchestration_log_bundle` / `_attachments_from_orchestration_bundle`, gemeinsames `log_bundle` fuer Generation-Failure und Tool-Loop-Stop-Recovery, schlankeres `execute_turn_with_ai` neben Pre-Adapter-Zustand, Erstresponse-Aufloesung, Parse-/Policy-/Erfolgspfad-Pipeline, Request-/MCP-Pipeline, Routing/Retry-Generation und Primary-Tool-Loop.
-- **Wave-2/3/4/5/6/7/8/9/10-Artefakte** fuer `ai_turn_executor` unter `docs/state/artifacts/workstreams/backend_runtime_services/` (Pre/Post-Snapshots, Test-/Collect-Exitcodes, Vergleichs-/Size-Delta-JSON).
-- **MCP-Tool-Registry (DS-002 Wave 1):** `tools/mcp_server/tools_registry.py` — `create_default_registry` nur noch duenne Fabrik; Beschreibungen/JSON-Schemas in `tools_registry_metadata.py`, Handler in `build_default_mcp_tool_handlers` (`tools_registry_handlers.py`). Governance: `docs/state/WORKSTREAM_ADMIN_TOOL_STATE.md`, Artefakte `docs/state/artifacts/workstreams/administration_tool/post/session_20260410_DS-002_wave1_*`.
-- **MCP-Tool-Registry (DS-002 Wave 2):** Handler nach Domäne aufgeteilt (`tools_registry_handlers_filesystem`, `tools_registry_handlers_backend_session`, `tools_registry_handlers_governance`, `tools_registry_handlers_research`, `tools_registry_handlers_deferred`, `tools_registry_handlers_protocol`); `tools_registry_handlers.py` nur noch Komposition. Artefakte `.../administration_tool/post/session_20260410_DS-002_wave2_*`.
-- **Changelog/Docs/Registry/Index** und weitere aktive Doku-Einstiegspunkte wurden fortlaufend aktualisiert.
-- **DS-006 (`ai_stack/langgraph_runtime`):** Aufteilung in `langgraph_runtime_state.py`, `langgraph_runtime_tracking.py`, `langgraph_runtime_seed_graphs.py`, `langgraph_runtime_executor.py`; duenne Facade `langgraph_runtime.py` mit LangGraph-Shim und `ensure_langgraph_available`; Re-Exports und Testpfade unveraendert. Governance: `docs/state/artifacts/workstreams/ai_stack/post/session_20260410_DS-006_C1_C4_*`, `WORKSTREAM_AI_STACK_STATE.md`.
-- **DS-003 (Builtins/Experience-Modelle):** Kanonik nach `story_runtime_core/experience_template_models.py` und `story_runtime_core/builtin_experience_templates.py`; `backend/app/content` und `world-engine/app/content` nur Re-Exports; World-Engine-Tests mit `pythonpath = . ..`; CI `engine-tests` installiert `story_runtime_core` editable. Governance: `session_20260410_DS-003_*` unter `backend_runtime_services` und `world_engine`, State-Dokumente aktualisiert.
+- **Despaghettification (structural, behaviour-preserving):** large runtime and AI surfaces were split into smaller modules with clearer boundaries while keeping outward behaviour stable.
+  - `backend/app/runtime/ai_turn_executor.py` — staged refactor across logging, tool loop, recovery, parsing, routing, and related helpers.
+  - `backend/app/runtime/turn_executor.py` — `execute_turn` split into an early source-gate rejection path and a validated execution pipeline.
+  - `ai_stack/capabilities.py` — default capability registry moved to a dedicated module with lazy attribute access so imports stay stable.
+  - `ai_stack/langgraph_runtime` — state, tracking, seed graphs, and executor logic separated; thin facade module keeps public exports.
+  - `tools/mcp_server` — tool registry split into metadata, handler modules by domain, and a small composition entrypoint.
+  - `story_runtime_core` — shared builtins and experience templates as the canonical home; backend and world-engine content layers delegate instead of duplicating large static copies; drift tests guard divergence.
+- **MkDocs** — strict-build remediation via configuration and validation policy so the docs site builds reliably.
+- **Governance narrative hygiene** — workstream state files and rollout report shortened to maintainable templates without stale session path lists; evidence may live only in history for older waves.
+- **Retrospective verification pass** — bundled automated runs across backend runtime, AI stack (including LangGraph and capabilities paths), MCP server, administration UI, and builtins drift between backend and world-engine, with evidence recorded under `despaghettify/state/` where applicable.
+- **Ongoing API and product surfaces** — forum, session, game, user, administration, play-facing frontend, OpenAPI generation and drift checks, improvement and writers-room services, and related configuration continued to evolve; specifics remain in the touched modules and tests rather than this changelog.
+- **World Engine administration console** — follow-up wiring, templates, client scripts, and tests on top of the `[0.5.6]` feature drop (same product area, continued iteration).
+- **Continuous integration** — GitHub Actions workflows for backend, AI stack, engine, and documentation pipelines updated to track new suites and install paths.
+- **Environment templates** — root and `backend/.env.example` refreshed for new flags and service endpoints where required by the above surfaces.
+- **Runtime package classification** (`7e35459`) — module classification metadata updated so new backend runtime modules are included consistently.
 
-### Working Tree Snapshot (alle aktuellen Änderungen)
+### Removed
 
-_Quelle: `git status --short` zum Zeitpunkt dieses Eintrags._
-
-```text
- M .env.example
- M .github/workflows/ai-stack-tests.yml
- M .github/workflows/backend-tests.yml
- M .github/workflows/engine-tests.yml
- M CHANGELOG.md
- M README.md
- M administration-tool/app.py
- M administration-tool/static/manage.css
- M administration-tool/static/manage_auth.js
- M administration-tool/static/manage_inspector_workbench.js
- M administration-tool/static/styles.css
- M administration-tool/templates/manage/base.html
- M administration-tool/templates/manage/dashboard.html
- M administration-tool/templates/manage/diagnosis.html
- M administration-tool/templates/manage/inspector_workbench.html
- M administration-tool/templates/manage/login.html
- M administration-tool/templates/manage/news.html
- M administration-tool/templates/manage/play_service_control.html
- M administration-tool/templates/manage/users.html
- M administration-tool/templates/manage/wiki.html
- M administration-tool/tests/test_manage_play_service_control.py
- M administration-tool/tests/test_manage_routes.py
- M administration-tool/tests/test_routes.py
- M administration-tool/tests/test_routes_and_rendering.py
- M administration-tool/tests/test_routes_contracts.py
- M ai_stack/rag.py
- M ai_stack/semantic_move_interpretation_goc.py
- M backend/.env.example
- M backend/Dockerfile
- M backend/app/api/v1/__init__.py
- M backend/app/api/v1/forum_routes.py
- M backend/app/api/v1/game_routes.py
- M backend/app/api/v1/session_routes.py
- M backend/app/api/v1/user_routes.py
- M backend/app/auth/feature_registry.py
- M backend/app/auth/permissions.py
- M backend/app/config.py
- M backend/app/content/builtins.py
- M backend/app/content/module_loader.py
- M backend/app/extensions.py
- M backend/app/info/routes.py
- M backend/app/info/static/backend-info.css
- M backend/app/info/templates/ai.html
- M backend/app/info/templates/api.html
- M backend/app/info/templates/auth.html
- M backend/app/info/templates/base.html
- M backend/app/info/templates/engine.html
- M backend/app/info/templates/home.html
- M backend/app/info/templates/ops.html
- M backend/app/runtime/__init__.py
- M backend/app/runtime/ai_decision.py
- M backend/app/runtime/ai_decision_logging.py
- M backend/app/runtime/ai_turn_executor.py
- M backend/app/runtime/input_interpreter.py
- M backend/app/runtime/role_structured_decision.py
- M backend/app/runtime/session_start.py
- M backend/app/runtime/short_term_context.py
- M backend/app/runtime/supervisor_orchestrator.py
- M backend/app/runtime/tool_loop.py
- M backend/app/runtime/turn_dispatcher.py
- M backend/app/runtime/turn_executor.py
- M backend/app/services/forum_service.py
- M backend/app/services/game_content_service.py
- M backend/app/services/game_service.py
- M backend/app/services/mcp_operations_service.py
- M backend/app/services/session_service.py
- M backend/app/services/writers_room_service.py
- M backend/docs/AREA_ACCESS_CONTROL.md
- M backend/tests/content/test_module_loader.py
- M backend/tests/runtime/test_session_start.py
- M backend/tests/test_areas_api.py
- M backend/tests/test_forum_routes.py
- M backend/tests/test_game_content_service.py
- M backend/tests/test_game_routes.py
- M backend/tests/test_game_service.py
- M backend/tests/test_session_api_contracts.py
- M backend/tests/writers_room/test_writers_room_routes.py
- M backend/tests/writers_room/test_writers_room_unit.py
- M docker-compose.yml
- M docker-up.py
- M docs/INDEX.md
- M docs/api/README.md
- M docs/dev/README.md
- M docs/dev/api/openapi-and-api-explorer-strategy.md
- M docs/dev/onboarding.md
- M docs/easy/README.md
- M docs/reference/documentation-registry.md
- M docs/start-here/README.md
- M docs/technical/ai/llm-slm-role-stratification.md
- M docs/technical/architecture/backend-runtime-classification.md
- M docs/technical/runtime/a1_free_input_primary_runtime_path.md
- M frontend/app/routes.py
- M frontend/static/play_shell.js
- M frontend/static/style.css
- M frontend/templates/session_shell.html
- M frontend/tests/test_api_client.py
- M frontend/tests/test_routes.py
- M frontend/tests/test_routes_extended.py
- M mkdocs.yml
- M world-engine/app/api/http.py
- M world-engine/app/content/builtins.py
- M world-engine/app/main.py
- M world-engine/app/story_runtime/manager.py
- M world-engine/tests/conftest.py
- M world-engine/tests/test_http_api_contracts.py
- M world-engine/tests/test_story_runtime_api.py
-?? .state_tmp/
-?? administration-tool/static/manage_world_engine_console.js
-?? administration-tool/templates/manage/world_engine_console.html
-?? administration-tool/tests/test_manage_world_engine_console.py
-?? ai_stack/goc_semantic_priority_rules.py
-?? backend/app/api/v1/forum_routes_helpers.py
-?? backend/app/api/v1/forum_routes_notifications.py
-?? backend/app/api/v1/forum_routes_tag_discovery.py
-?? backend/app/api/v1/world_engine_console_routes.py
-?? backend/app/auth/jwt_revocation.py
-?? backend/app/info/static/api_explorer_redoc.js
-?? backend/app/info/templates/api_explorer.html
-?? backend/app/info/templates/info_sections.html
-?? backend/app/runtime/ai_turn_constants.py
-?? backend/app/runtime/ai_turn_generation.py
-?? backend/app/runtime/ai_turn_orchestration_branch.py
-?? backend/app/runtime/ai_turn_preview.py
-?? backend/app/runtime/ai_turn_primary_tool_loop.py
-?? backend/app/runtime/ai_turn_routing_builders.py
-?? backend/app/runtime/canonical/
-?? backend/app/runtime/package_classification.py
-?? backend/app/runtime/parsed_ai_decision_types.py
-?? backend/app/runtime/supervisor_orchestration_audit.py
-?? backend/app/runtime/transitional/
-?? backend/app/runtime/turn_execution_types.py
-?? backend/app/services/forum_service_permissions.py
-?? backend/app/services/writers_room_pipeline.py
-?? backend/scripts/
-?? backend/tests/runtime/test_runtime_package_classification.py
-?? backend/tests/test_content_builtins_drift.py
-?? backend/tests/test_openapi_drift.py
-?? backend/tests/test_world_engine_console_routes.py
-?? docs/api/openapi-spec.md
-?? docs/api/openapi-taxonomy.md
-?? docs/api/openapi.yaml
-?? docs/backend/openapi.yaml
-?? docs/dev/play_shell_ux.md
-?? docs/dev/world_engine_console_a11y.md
-?? docs/dev/world_engine_console_wireframes.md
-?? docs/state/
-?? frontend/app/frontend_blueprint.py
-?? frontend/app/player_backend.py
-?? frontend/app/routes_play.py
-?? frontend/static/play_live_ws.js
-?? frontend/tests/test_frontend_blueprint_routes.py
-?? world-engine/app/story_runtime/module_turn_hooks.py
-?? world-engine/app/web/templates/ops.html
-?? world-engine/tests/test_builtins_drift.py
-```
+- **`docs/state/`** stub redirect — canonical execution state now lives only under `despaghettify/state/`; remove stale bookmark path.
 
 ---
 

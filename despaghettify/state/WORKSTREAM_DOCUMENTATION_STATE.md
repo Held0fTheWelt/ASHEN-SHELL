@@ -2,7 +2,7 @@
 
 ## Current Objective
 
-Dokumentationsänderungen (MkDocs, Nav, Links) unter objektiver Validierung; keine ungestützten Abschlussclaims. Regeln: [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Struktur-/Doku-Bezug zur Despag-Spur: [`docs/dev/despaghettification_implementation_input.md`](../dev/despaghettification_implementation_input.md).
+Dokumentationsänderungen (MkDocs, Nav, Links) unter objektiver Validierung; keine ungestützten Abschlussclaims. Regeln: [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Struktur-/Doku-Bezug zur Despag-Spur: [`despaghettify/despaghettification_implementation_input.md`](../despaghettification_implementation_input.md).
 
 ## Current Repository Status
 

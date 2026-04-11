@@ -2,7 +2,7 @@
 
 ## Current Objective
 
-World-Engine-Änderungen unter [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Gemeinsame Kanten mit Backend/`story_runtime_core`: Inputliste [`docs/dev/despaghettification_implementation_input.md`](../dev/despaghettification_implementation_input.md).
+World-Engine-Änderungen unter [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Gemeinsame Kanten mit Backend/`story_runtime_core`: Inputliste [`despaghettify/despaghettification_implementation_input.md`](../despaghettification_implementation_input.md).
 
 ## Current Repository Status
 

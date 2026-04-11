@@ -2,7 +2,7 @@
 
 ## Current Objective
 
-Backend-Runtime- und Service-Änderungen unter [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md) führen. Strukturelle Refactors: [`docs/dev/despaghettification_implementation_input.md`](../dev/despaghettification_implementation_input.md) (Inputliste, Struktur-Scan, optional Arbeitslog). Orientierungszahlen und Hotspots nur dort pflegen, nicht hier duplizieren.
+Backend-Runtime- und Service-Änderungen unter [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md) führen. Strukturelle Refactors: [`despaghettify/despaghettification_implementation_input.md`](../despaghettification_implementation_input.md) (Inputliste, Struktur-Scan, optional Arbeitslog). Orientierungszahlen und Hotspots nur dort pflegen, nicht hier duplizieren.
 
 ## Current Repository Status
 
@@ -15,7 +15,7 @@ Backend-Runtime- und Service-Änderungen unter [`EXECUTION_GOVERNANCE.md`](EXECU
 
 ## Last Completed Wave/Session
 
-- — *(Datum, **DS-ID(s)**, Kurzfassung; Links zu `pre|post`-Artefakten relativ zu `docs/state/`.)*
+- — *(Datum, **DS-ID(s)**, Kurzfassung; Links zu `pre|post`-Artefakten relativ zu `despaghettify/state/`.)*
 
 ## Pre-Work Baseline Reference
 

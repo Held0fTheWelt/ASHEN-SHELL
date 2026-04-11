@@ -17,7 +17,7 @@ BACKEND_ROOT = Path(__file__).resolve().parent.parent / "backend"
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-# Order matches docs/state/artifacts/.../session_*_DS-005b_pre_scope_frozen_modules.txt
+# Order matches despaghettify/state/artifacts/.../session_*_DS-005b_pre_scope_frozen_modules.txt
 FROZEN_RUNTIME_MODULES = [
     "app.runtime.turn_executor",
     "app.runtime.role_structured_decision",

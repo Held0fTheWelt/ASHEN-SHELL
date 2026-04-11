@@ -2,7 +2,7 @@
 
 ## Current Objective
 
-Änderungen unter `ai_stack/` mit denselben Pre/Post-Regeln wie [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Strukturthemen: [`docs/dev/despaghettification_implementation_input.md`](../dev/despaghettification_implementation_input.md).
+Änderungen unter `ai_stack/` mit denselben Pre/Post-Regeln wie [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Strukturthemen: [`despaghettify/despaghettification_implementation_input.md`](../despaghettification_implementation_input.md).
 
 ## Current Repository Status
 

@@ -2,7 +2,7 @@
 
 ## Current Objective
 
-Admin-UI, Management-Routen und MCP unter `tools/mcp_server/` nach [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Kanonische fachliche Spur: [`docs/dev/despaghettification_implementation_input.md`](../dev/despaghettification_implementation_input.md) (Workstream-Zuordnung in der Inputliste).
+Admin-UI, Management-Routen und MCP unter `tools/mcp_server/` nach [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md). Kanonische fachliche Spur: [`despaghettify/despaghettification_implementation_input.md`](../despaghettification_implementation_input.md) (Workstream-Zuordnung in der Inputliste).
 
 ## Current Repository Status
 

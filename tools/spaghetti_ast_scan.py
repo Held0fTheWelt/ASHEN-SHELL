@@ -1,4 +1,4 @@
-"""AST metrics for structure / spaghetti reviews. See doc/tasks/spaghetti-check-task.md."""
+"""AST metrics for structure / spaghetti reviews. See despaghettify/spaghetti-check-task.md."""
 from __future__ import annotations
 
 import ast
