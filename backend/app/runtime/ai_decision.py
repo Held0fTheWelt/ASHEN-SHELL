@@ -13,13 +13,16 @@ All steps are inspectable; diagnostic trace is preserved.
 
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import BaseModel, ValidationError
 
 from app.runtime.ai_adapter import AdapterResponse
 from app.runtime.ai_output import ProposedDelta, StructuredAIStoryOutput
 from app.runtime.parsed_ai_decision_types import ParsedAIDecision
+from app.runtime.role_structured_decision import (
+    ParsedRoleAwareDecision,
+    _is_role_structured_payload,
+    parse_role_contract,
+)
 
 
 class ParseResult(BaseModel):
@@ -35,12 +38,7 @@ class ParseResult(BaseModel):
 
     success: bool
     decision: ParsedAIDecision | None = None
-    # DS-007 Task 4: ParsedRoleAwareDecision from role_structured_decision.py
-    # Cannot be imported directly due to circular import:
-    # ai_decision → role_structured_decision → ai_output → ai_decision (cycle)
-    # Mitigation: Use Any type hint + local import in parse_adapter_response()
-    # Future: Consider breaking cycle via intermediate DTO module
-    role_aware_decision: Any | None = None
+    role_aware_decision: ParsedRoleAwareDecision | None = None
     errors: list[str] = []
     raw_output: str
 
@@ -63,12 +61,6 @@ def parse_adapter_response(response: AdapterResponse) -> ParseResult:
     Returns:
         ParseResult with success/decision/errors/raw_output (role_aware_decision set if W2.4.1 format)
     """
-    # Local imports to avoid circular dependency with role_structured_decision
-    from app.runtime.role_structured_decision import (
-        _is_role_structured_payload,
-        parse_role_contract,
-    )
-
     raw_output = response.raw_output
 
     # Step 1: Check adapter error
