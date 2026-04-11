@@ -29,15 +29,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_mail import Mail
 from functools import wraps
-
-# Rate-limit strings like "5 per hour" → window length (shared by TestLimiter + LimiterProxy).
-_RATE_LIMIT_PERIOD_TO_SECONDS: dict[str, int] = {
-    "second": 1,
-    "minute": 60,
-    "hour": 3600,
-    "day": 86400,
-}
-_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 3600
+from app.config.limiter_config import limiter_period_map, limiter_defaults, get_period_seconds
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -74,9 +66,7 @@ class TestLimiter:
         max_requests = int(parts[0])
         period_str = parts[-1]
 
-        period_seconds = _RATE_LIMIT_PERIOD_TO_SECONDS.get(
-            period_str, _DEFAULT_RATE_LIMIT_WINDOW_SECONDS
-        )
+        period_seconds = get_period_seconds(period_str)
 
         def decorator(f):
             @wraps(f)
@@ -117,7 +107,7 @@ class TestLimiter:
                 # Check if limit exceeded
                 if len(self.request_times[key]) >= max_requests:
                     from flask import jsonify
-                    return jsonify({"error": "Too many requests"}), 429
+                    return jsonify({"error": "Too many requests"}), limiter_defaults.http_status_too_many_requests
 
                 # Add current request
                 self.request_times[key].append(current_time)
@@ -183,9 +173,7 @@ class LimiterProxy:
                     if match:
                         max_requests = int(match.group(1))
                         period_str = match.group(2)
-                        period_seconds = _RATE_LIMIT_PERIOD_TO_SECONDS.get(
-                            period_str, _DEFAULT_RATE_LIMIT_WINDOW_SECONDS
-                        )
+                        period_seconds = get_period_seconds(period_str)
 
                         current_time = datetime.now(timezone.utc).timestamp()
                         if key not in test_limiter.request_times:
@@ -198,7 +186,7 @@ class LimiterProxy:
                         # Check limit
                         if len(test_limiter.request_times[key]) >= max_requests:
                             from flask import jsonify
-                            return jsonify({"error": "Too many requests"}), 429
+                            return jsonify({"error": "Too many requests"}), limiter_defaults.http_status_too_many_requests
 
                         test_limiter.request_times[key].append(current_time)
 
