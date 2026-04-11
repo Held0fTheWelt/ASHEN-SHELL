@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from app.runtime.ai_output import DialogueImpulse, ProposedDelta
 from app.runtime.parsed_ai_decision_types import ParsedAIDecision
 from app.runtime.role_contract import (
+    AIRoleContract,
     DirectorSection,
     InterpreterSection,
     ResponderSection,
@@ -59,9 +60,6 @@ def parse_role_contract(
     Raises:
         ValueError: If required role sections are missing or malformed
     """
-    # Import here to avoid circular imports
-    from app.runtime.role_contract import AIRoleContract
-
     # Validate payload is AIRoleContract-shaped
     try:
         role_contract = AIRoleContract(**payload)
