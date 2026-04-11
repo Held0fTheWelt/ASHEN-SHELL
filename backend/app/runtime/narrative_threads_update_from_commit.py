@@ -2,6 +2,9 @@
 
 DS-007 Task 2: Updated to accept NarrativeCommitEvent DTO for type-safe
 state transfer between turn_executor and narrative layers.
+
+DS-007 Task 4: Added type hints referencing NarrativeCommitEvent and ThreadUpdateResult.
+Documented narrative protocol (NarrativeCommitEvent → ThreadUpdateResult contract).
 """
 
 from __future__ import annotations
@@ -28,7 +31,10 @@ from app.runtime.narrative_threads import (
     _MAX_RESOLVED_RECENT,
     _STATE_CHANGED_PREFIX,
 )
-from app.runtime.narrative_state_transfer_dto import NarrativeCommitEvent
+from app.runtime.narrative_state_transfer_dto import (
+    NarrativeCommitEvent,
+    ThreadUpdateResult,
+)
 
 
 def _paths_from_consequences(consequences: list[str]) -> list[str]:
@@ -119,6 +125,44 @@ def update_narrative_threads_from_commit_impl(
 ) -> NarrativeThreadSet:
     """Derive next thread snapshot from authoritative commit and existing layers.
 
+    **Narrative Protocol (DS-007 Task 4)**
+
+    **Input Contract (NarrativeCommitEvent):**
+    - commit_id: Unique identifier for this commit
+    - turn_id: Turn number triggering the update
+    - narrative_id: Session/narrative identifier
+    - user_id: Player identifier
+    - commit_payload: Dict with keys:
+      * canonical_consequences: list[str] describing state changes
+      * turn_number: int, current turn
+      * committed_scene_id: str, scene after commit
+      * is_terminal: bool, whether session ending
+      * situation_status: str, one of ["continue", "transitioned", "ending_reached"]
+    - timestamp: datetime when commit occurred
+    - metadata: Optional dict for extensibility
+
+    **Output Contract (NarrativeThreadSet):**
+    - active: list[NarrativeThreadState], currently active narrative threads
+    - resolved_recent: list[NarrativeThreadState], recently resolved threads (history)
+
+    Each thread captures:
+    - thread_id: Stable identifier (hash-based from context)
+    - thread_kind: Type ("interpersonal_tension", "interpersonal_pressure", "avoidance_deadlock")
+    - status: One of ["active", "escalating", "de_escalating", "holding", "resolved"]
+    - intensity: 0-5 scale of narrative pressure
+    - evidence_consequences: Supporting state change tokens
+    - related_characters: Character IDs involved in this thread
+    - related_paths: State paths impacted by this thread
+
+    **Semantics:**
+    1. Extracts canonical_consequences from commit payload
+    2. Parses character IDs and state paths from consequences
+    3. Detects escalation/de-escalation signals in paths
+    4. Creates/updates threads for detected interpersonal dynamics
+    5. Manages thread lifecycle (active → resolved) based on signals
+    6. Evicts lowest-priority threads if max active threads exceeded
+    7. Returns updated thread set for downstream narrative systems
+
     Args:
         prior: Current narrative thread set to update.
         narrative_commit: Either NarrativeCommitRecord (legacy) or NarrativeCommitEvent (DS-007).
@@ -127,7 +171,7 @@ def update_narrative_threads_from_commit_impl(
         relationship: Relationship axis context for character tensions.
 
     Returns:
-        Updated NarrativeThreadSet with derived thread state.
+        Updated NarrativeThreadSet with derived thread state (active and resolved).
     """
     # Extract payload and consequences from either DTO type
     if isinstance(narrative_commit, NarrativeCommitEvent):

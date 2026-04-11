@@ -35,7 +35,12 @@ class ParseResult(BaseModel):
 
     success: bool
     decision: ParsedAIDecision | None = None
-    role_aware_decision: Any | None = None  # ParsedRoleAwareDecision from W2.4.3, use Any to avoid circular import
+    # DS-007 Task 4: ParsedRoleAwareDecision from role_structured_decision.py
+    # Cannot be imported directly due to circular import:
+    # ai_decision → role_structured_decision → ai_output → ai_decision (cycle)
+    # Mitigation: Use Any type hint + local import in parse_adapter_response()
+    # Future: Consider breaking cycle via intermediate DTO module
+    role_aware_decision: Any | None = None
     errors: list[str] = []
     raw_output: str
 
