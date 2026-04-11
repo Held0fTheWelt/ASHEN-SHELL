@@ -5,7 +5,7 @@ Central place for the **despaghettification** and **structure / spaghetti-check 
 | File | Role |
 |------|------|
 | [`despaghettification_implementation_input.md`](despaghettification_implementation_input.md) | Canonical **input list**, coordination of structural IDs, structure-scan table, implementation order, work log (templates). |
-| [`spaghetti-check-task.md`](spaghetti-check-task.md) | **Analysis track:** AST / spaghetti check; **always** maintain § *Latest structure scan* (including **S**); **Information input list** and **Recommended implementation order** only when **S > 19%** (no code changes). |
+| [`spaghetti-check-task.md`](spaghetti-check-task.md) | **Analysis track:** AST + architecture spaghetti check; **always** maintain § *Latest structure scan* (including **M7** and category breakdown); **Information input list** and **Recommended implementation order** when **M7 is elevated** per threshold policy (no code changes). |
 | [`spaghetti-solve-task.md`](spaghetti-solve-task.md) | **Implementation track:** review or revise order, then implement **wave by wave** until a factual **success** message is justified (pre/post, completion gate); **open hotspots** in the input list are cleared or updated when waves fix those known structure issues. |
 
 **Tools** (remain under `tools/`): `spaghetti_ast_scan.py`, `ds005_runtime_import_check.py`.

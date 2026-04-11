@@ -34,7 +34,11 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](sta
 
 | ID | Primary workstream (`artifacts/workstreams/…`) | Also involved (own pre/post only for real scope) |
 |----|--------------------------------------------------|-----------------------------------------------------|
-| — | — | — |
+| DS-001 (runtime cycle break) | `backend_runtime_services` | `ai_stack` (if turn-execution interfaces need AI-stack adapters) |
+| DS-002 (writers room pipeline split) | `backend_runtime_services` | `ai_stack` |
+| DS-003 (RAG module decomposition) | `ai_stack` | `backend_runtime_services` |
+| DS-004 (global state + constants hardening) | `backend_runtime_services` | `ai_stack`, `world_engine` |
+| DS-005 (control-flow simplification in API/service handlers) | `backend_runtime_services` | `administration_tool` (if shared handler patterns are extracted) |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
 
@@ -63,7 +67,7 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 | What | Content |
 |------|---------|
 | **Information input list** | Per **DS-***: maintain columns (*hint / measurement idea*, *direction*, *collision hint*); mark completed waves briefly. |
-| **§ Latest structure scan** | After measurable change: **main table** (as-of date, **N**, **L₅₀**, **L₁₀₀**, **D₆**, **S**, counter) + subsection **score *S***; optional **extra checks**; **open hotspots** on **every** [spaghetti-check-task.md](spaghetti-check-task.md) run (**prune** solved items — never list resolved problems); [spaghetti-solve-task.md](spaghetti-solve-task.md) when a wave **resolves** listed hotspots (clear, shorten, or rewrite remaining risk). For runtime edges `tools/ds005_runtime_import_check.py`. Rankings: script output only. |
+| **§ Latest structure scan** | After measurable change: **main table** (as-of date, **M7** overall, 7 category scores, and AST telemetry **N / L₅₀ / L₁₀₀ / D₆**); subsection **M7 calculation and thresholds**; optional **extra checks**; **open hotspots** on **every** [spaghetti-check-task.md](spaghetti-check-task.md) run (**prune** solved items — never list resolved problems); [spaghetti-solve-task.md](spaghetti-solve-task.md) when a wave **resolves** listed hotspots (clear, shorten, or rewrite remaining risk). For runtime edges `tools/ds005_runtime_import_check.py`. Rankings: script output only. |
 | **§ Recommended implementation order** | Update when priority, dependency, or phase changes; optional Mermaid. |
 | **§ Progress / work log** | Optional **one** new row: DS-ID(s), short summary, gates/tests, pre/post paths (or “see PR”). |
 | **DS-ID → workstream table** | Place new or moved **DS-*** here; note co-involved workstreams. |
@@ -72,36 +76,48 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 ## Latest structure scan (orientation, no warranty)
 
-**Purpose:** A **fillable** overview after measurable runs — after larger refactors update **date**, **main table**, **score inputs**, and optional **extra checks** / **open hotspots**. Measurement flow, builtins grep, runtime spot check: [spaghetti-check-task.md](spaghetti-check-task.md). The spaghetti check maintains the **information input list** and **recommended implementation order** there **only** when the heuristic score **S > 19%**; otherwise this scan section (including **S**) is enough. **Rankings** and longest functions: output of `python tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots** (known structural callouts in the table row below): [spaghetti-solve-task.md](spaghetti-solve-task.md) **independently** clears or narrows items when a wave resolves them — same PR as the code, even when **S ≤ 19%** so the check task does not edit other cells. On every [spaghetti-check-task.md](spaghetti-check-task.md) run, **prune** **Open hotspots** so it never lists **already solved** problems (only current unresolved callouts).
+**Purpose:** A **fillable** overview after measurable runs — after larger refactors update **date**, **M7 inputs**, and optional **extra checks** / **open hotspots**. Measurement flow, builtins grep, runtime spot check: [spaghetti-check-task.md](spaghetti-check-task.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when **M7 is elevated** (`M7 >= 40%`) **or** at least one category score is **critical** (`>= 70%`); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings** and longest functions: output of `python tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots** (known structural callouts in the table row below): [spaghetti-solve-task.md](spaghetti-solve-task.md) **independently** clears or narrows items when a wave resolves them — same PR as the code, even when thresholds are below trigger so the check task does not edit other cells. On every [spaghetti-check-task.md](spaghetti-check-task.md) run, **prune** **Open hotspots** so it never lists **already solved** problems (only current unresolved callouts).
 
 | Field | Value (adjust when updating scan) |
 |-------|-------------------------------------|
-| **As of (date)** | **2026-04-11** (spaghetti-check-task run) |
+| **As of (date)** | **2026-04-11** (spaghetti-check-task + 7-category review) |
 | Spaghetti scan command | `python tools/spaghetti_ast_scan.py` (ROOTS = *measurement scope* column) |
 | Measurement scope (ROOTS) | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` |
-| **N** — total functions | **4143** |
-| **L₅₀** / **L₁₀₀** — functions />50 / />100 AST lines | **257** / **70** |
-| **D₆** — nesting ≥6 (total) | **0** |
-| **S** — heuristic aggregate score | **≈ 14.7%** (≈ 14.65%; **S ≤ 19%** → check task does **not** update § *Information input list* / § *Recommended implementation order*) |
-| **Counter for S** (L₅₀ + 5·L₁₀₀ + 25·D₆) | **607** (= 257 + 350 + 0) |
+| **M7** — weighted 7-category spaghetti score | **≈ 61.9%** (elevated: update DS list and implementation order) |
+| C1: Circular dependencies | **48%** |
+| C2: Nesting depth | **30%** |
+| C3: Long functions + complexity | **78%** |
+| C4: Multi-responsibility modules | **72%** |
+| C5: Magic numbers + global state | **66%** |
+| C6: Missing abstractions / duplication | **62%** |
+| C7: Confusing control flow | **69%** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | **4143 / 257 / 70 / 0** |
 | Extra check builtins | Grep `def build_god_of_carnage_solo` in `**/builtins.py`: **0** hits (**2026-04-11**) |
 | Extra check runtime | `python tools/ds005_runtime_import_check.py` **exit 0**; no `TYPE_CHECKING` under `backend/app/runtime/**/*.py`; comments / local imports for cycle avoidance e.g. `turn_executor`, `ai_decision`, `role_structured_decision`, `ai_failure_recovery` (**2026-04-11** spot check) |
-| **Open hotspots** | **—** No separate curated structural callouts beyond the row above; longest functions and paths are **only** in `python tools/spaghetti_ast_scan.py` output (this cell must not duplicate the script leaderboard). **S ≤ 19%** → no new DS rows from this check run. |
+| **Open hotspots** | `backend/app/services/writers_room_pipeline.py:_execute_writers_room_workflow_package` (603L), `backend/app/runtime/turn_executor.py` ↔ `turn_executor_validated_pipeline.py` import cycle, and `ai_stack/rag.py` (2k+ LOC multi-domain orchestration) remain unresolved and should map to dedicated DS rows. |
 
-### Score *S* — inputs and calculation
+### Score *M7* — inputs, weights, and calculation
 
 | Symbol | Meaning | Value |
 |--------|---------|-------|
-| **N** | Total functions | **4143** |
-| **L₅₀** | />50 AST lines | **257** |
-| **L₁₀₀** | />100 AST lines | **70** |
-| **D₆** | Nesting ≥6 | **0** |
+| **C1** | Circular dependencies | **48** |
+| **C2** | Nesting depth | **30** |
+| **C3** | Long functions + complexity | **78** |
+| **C4** | Multi-responsibility modules | **72** |
+| **C5** | Magic numbers + global state | **66** |
+| **C6** | Missing abstractions / duplication | **62** |
+| **C7** | Confusing control flow | **69** |
 
-**Formula:** `S = 100 × (L₅₀ + 5·L₁₀₀ + 25·D₆) / N`
+**Formula:** `M7 = 0.20*C1 + 0.10*C2 + 0.20*C3 + 0.15*C4 + 0.10*C5 + 0.15*C6 + 0.10*C7`
 
-**Counter:** **607** (= 257 + 5×70 + 25×0). **Evaluation:** 100 × 607 ÷ 4143 ≈ **14.65** → one decimal **≈ 14.7%** (copy **S** into the main table).
+**Evaluation:** `0.20*48 + 0.10*30 + 0.20*78 + 0.15*72 + 0.10*66 + 0.15*62 + 0.10*69 = 61.9` → one decimal **≈ 61.9%** (copy **M7** into the main table).
 
-*Note:* Heuristic with roughly ±2–3% noise (see task document).
+**Trigger policy for check task updates:**
+
+- If **M7 >= 40%** or **any category >= 70%**: update § *Information input list* and § *Recommended implementation order*.
+- If **M7 < 40%** and no category is critical: update only § *Latest structure scan*.
+
+*Note:* M7 is still heuristic; AST telemetry (`N/L₅₀/L₁₀₀/D₆`) remains mandatory context for trend comparability.
 
 ## Information input list (extensible)
 
@@ -109,7 +125,11 @@ Each row: **ID**, **pattern**, **location**, **hint / measurement idea**, **dire
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
-| — | — | — | — | — | — |
+| DS-001 | Runtime import cycles and local-import workaround drift | `backend/app/runtime/turn_executor.py`, `backend/app/runtime/turn_executor_validated_pipeline.py`, related runtime cycle SCCs | Track SCC count and largest SCC size from internal import graph; verify with `tools/ds005_runtime_import_check.py` | Introduce neutral execution-core interfaces (DTO/protocol module), invert dependencies, remove cycle-causing cross-imports | High: touches core turn path; do not run parallel edits on same runtime files |
+| DS-002 | God-function / orchestration monolith | `backend/app/services/writers_room_pipeline.py:_execute_writers_room_workflow_package` | Function length, branch count, number of responsibilities in one function | Slice into bounded pipeline stages with typed input/output payloads and explicit stage contracts | High: large blast radius in one file; split by stage owners only with strict integration checkpoints |
+| DS-003 | Multi-responsibility RAG monolith and mixed policy/scoring/persistence concerns | `ai_stack/rag.py` | File-level function/class density, import breadth, duplicate helper patterns | Split into `rag_policy`, `rag_scoring`, `rag_embeddings`, `rag_persistence`, `rag_pack_assembly` while preserving public facade | High: many call sites; coordinate adapter/facade changes first to avoid API breakage |
+| DS-004 | Magic numbers and mutable module-level state | `backend/app/api/v1/*_routes.py`, `ai_stack/rag.py`, `backend/app/extensions.py`, runtime input interpreters | Count non-trivial numeric literals and mutable globals per file; track decreases wave by wave | Centralize thresholds in typed config objects and replace mutable globals with scoped state containers/factories | Medium: easy to create hidden behavior drift if constants move without tests |
+| DS-005 | Confusing control flow (many branches/returns in handlers) | `backend/app/api/v1/user_routes_users_update.py`, `backend/app/services/user_service.py`, `backend/app/services/news_service.py` | Branch/return density and error-path fan-out | Extract guard-policy evaluators and dedicated error handlers; flatten nested/branchy flows | Medium: endpoint semantics can regress; requires strong request/response regression tests |
 
 **New rows:** consecutive **DS-001**, **DS-002**, … (or your ID scheme); briefly justify why it is a structure/spaghetti topic. Per § *DS-ID → primary workstream* pick `artifacts/workstreams/<slug>/pre|post/` paths.
 
@@ -119,7 +139,11 @@ Prioritised **phases**, **order**, and **dependencies** — aligned with § **in
 
 | Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
 |------------------|----------|-------------|----------------------|----------------------------|
-| — | — | — | — | — |
+| Phase 1: dependency untangle | DS-001 | Break runtime cycles before deeper refactors to stabilize module boundaries | `backend_runtime_services` | Must pass `tools/ds005_runtime_import_check.py` and runtime regression tests before next phase |
+| Phase 2: monolith split (service layer) | DS-002 | Decompose biggest backend orchestration hotspot into composable steps | `backend_runtime_services` | Start only after DS-001 interfaces are in place; require pre/post complexity evidence |
+| Phase 3: monolith split (AI stack) | DS-003 | Decompose `ai_stack/rag.py` by concern while preserving facade compatibility | `ai_stack` | Can overlap late DS-002 only if interfaces are frozen; strict API compatibility checks |
+| Phase 4: state and constant hardening | DS-004 | Remove brittle magic values/global mutable state after architecture seams exist | `backend_runtime_services` | Prefer small waves by subsystem to reduce behavior drift |
+| Phase 5: control-flow cleanup | DS-005 | Flatten high-risk handlers and service methods with policy/guard extraction | `backend_runtime_services` | End with focused endpoint regression suite and updated hotspots list |
 
 **Fill in:** take rows from the input table; make hard chains explicit (e.g. interfaces before large moves). Coordination § *Maintaining this file*: when priority changes or new **DS-*** appear, update this section and Mermaid if used.
 
@@ -131,7 +155,7 @@ Implementers may **briefly** record visible progress (for reviewers and the next
 
 | date | ID(s) | short description | pre artefacts (rel. to `despaghettify/state/`) | post artefacts (rel. to `despaghettify/state/`) | state doc(s) updated | PR / commit |
 |------|-------|-------------------|----------------------------------------|----------------------------------------|----------------------|-------------|
-| 2026-04-11 | — (spaghetti-check) | [spaghetti-check-task.md](spaghetti-check-task.md): `spaghetti_ast_scan.py` — **N=4143**, **L₅₀=257**, **L₁₀₀=70**, **D₆=0**, counter **607**, **S≈14.7%** (<19% → § *Information input list* / § *Recommended implementation order* unchanged). Builtins grep **0**; `ds005_runtime_import_check.py` **exit 0**; runtime spot check as in scan table. | — | — | — | — |
+| 2026-04-11 | — (spaghetti-check) | [spaghetti-check-task.md](spaghetti-check-task.md): `spaghetti_ast_scan.py` telemetry **N=4143**, **L₅₀=257**, **L₁₀₀=70**, **D₆=0**; 7-category score **M7≈61.9%** with critical C3/C4. Builtins grep **0**; `ds005_runtime_import_check.py` **exit 0**; runtime spot check as in scan table. | — | — | — | — |
 | — | — | — | — | — | — | — |
 
 **New rows:** chronologically (**newest first** recommended); **DS-ID(s)**, gates/tests run, pre/post paths as in [`EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md); for scan/docs-only updates note briefly. Longer history: Git, PRs, `WORKSTREAM_*_STATE.md`.
