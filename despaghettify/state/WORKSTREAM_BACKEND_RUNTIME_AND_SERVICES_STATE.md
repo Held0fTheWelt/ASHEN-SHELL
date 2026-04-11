@@ -11,11 +11,22 @@ Run backend runtime and service changes under [`EXECUTION_GOVERNANCE.md`](EXECUT
 
 ## Hotspot / target status
 
-- — *(Short note after review/scan if needed.)*
+- **DS-001** closed (2026-04-11). **DS-002** closed (2026-04-11): Writers Room pipeline stages 1–5; closure `artifacts/workstreams/backend_runtime_services/post/session_20260411_DS-002_closure_notes.md`. **DS-003** closed (2026-04-10). **DS-004** closed (2026-04-11): Magic numbers and mutable state hardening. Post: `artifacts/workstreams/backend_runtime_services/post/session_20260411_DS-004_post.md`. Config modules created, 24 route files refactored, extensions.py hardened. `pytest backend/tests/` 241 passed.
 
 ## Last completed wave/session
 
-- — *(Date, **DS-ID(s)**, summary; links to `pre|post` artefacts relative to `despaghettify/state/`.)*
+- **2026-04-11 — DS-004 (closure):** Magic numbers + mutable state hardening. Config modules: route_constants.py, limiter_config.py (frozen dataclasses). 24 route files refactored (672 constants refactored). Extensions hardened (limiter_config imports, no embedded constants). Tests: 16 new integration tests, 241 backend suite passing. Post: `post/session_20260411_DS-004_post.md` + `post/session_20260411_DS-004_pre_post_comparison.json`.
+- **2026-04-10 — DS-005 (stage 4):** `news_service_translation_upsert_guards` for `upsert_article_translation`. Post: `post/session_20260410_DS-005_stage4_translation_upsert_guards_post.md`; `pytest tests/test_news_service.py` 48 passed.
+- **2026-04-11 — DS-005 (stage 3):** `news_service_update_guards` for `update_news`. Post: `post/session_20260411_DS-005_stage3_update_news_guards_post.md`; `pytest tests/test_news_service.py` 48 passed.
+- **2026-04-11 — DS-005 (stage 2):** `news_service_create_guards` + `user_service_account_guards` for `create_news`, `create_user`, `change_password`. Post: `post/session_20260411_DS-005_stage2_news_user_create_guards_post.md`; `pytest tests/test_news_service.py tests/test_user_service.py tests/test_service_layer.py` 125 passed.
+- **2026-04-11 — DS-005 (stage 1):** User PUT guards module for `/users/<id>`. Post: `post/session_20260411_DS-005_stage1_user_put_guards_post.md`; `pytest tests/test_user_routes.py -k users_update` 55 passed; `tests/test_users_api.py -k users_update` 4 passed.
+- **2026-04-11 — DS-002 (closure):** Formal closure after stage 5. Post: `post/session_20260411_DS-002_closure_notes.md`; `pytest tests/writers_room/` 64 passed.
+- **2026-04-11 — DS-002 (stage 5):** `writers_room_pipeline_finalize_stage.py`. Main workflow **82** AST lines. Post: `post/session_20260411_DS-002_stage5_post.md`; `pytest tests/writers_room/` 64 passed.
+- **2026-04-11 — DS-002 (stage 4):** `writers_room_pipeline_packaging_stage.py`. Main workflow **185** AST lines. Post: `post/session_20260411_DS-002_stage4_post.md`; `pytest tests/writers_room/` 64 passed.
+- **2026-04-11 — DS-002 (stage 3):** `writers_room_pipeline_generation_stage.py`. Main workflow **449** AST lines. Post: `post/session_20260411_DS-002_stage3_post.md`; `pytest tests/writers_room/` 64 passed.
+- **2026-04-11 — DS-002 (stage 2):** `writers_room_pipeline_retrieval_stage.py`; orchestrator delegates retrieval block. **585** AST lines on main workflow function. Post: `post/session_20260411_DS-002_stage2_post.md`; `pytest tests/writers_room/` 64 passed.
+- **2026-04-11 — DS-002 (stage 1):** Removed duplicate helper definitions from `writers_room_pipeline.py`; single source in `writers_room_pipeline_manifest.py` / `writers_room_pipeline_context_preview.py`. `pytest tests/writers_room/` 64 passed. Pre/post: `pre/session_20260411_DS-002_stage1_baseline.md`, `post/session_20260411_DS-002_stage1_post.md`.
+- **2026-04-11 — DS-001 (complete):** Partial wave plus closure: no `turn_executor` import from `turn_executor_validated_pipeline`; tests patch `turn_executor_validated_pipeline.validate_decision`. Post addendum: `artifacts/workstreams/backend_runtime_services/post/session_20260411_DS-001_closure_notes.md` (with `ds005` + pytest evidence).
 
 ## Pre-work baseline reference
 
@@ -35,7 +46,7 @@ Canonical pattern (create files only when a wave runs):
 
 ## Next recommended wave
 
-- Next **DS-*** row from the information input list; claim **DS-ID + owner** before large changes.
+- **DS-002** (writers room pipeline monolith): claim **DS-ID + owner**, **pre** under `artifacts/workstreams/backend_runtime_services/pre/` — [spaghetti-solve-task.md](../spaghetti-solve-task.md), [despaghettification_implementation_input.md](../despaghettification_implementation_input.md).
 
 ## Contradictions / caveats
 
