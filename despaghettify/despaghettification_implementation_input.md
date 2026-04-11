@@ -157,12 +157,17 @@ Each row: **ID**, **pattern**, **location**, **hint / measurement idea**, **dire
 
 Prioritised **phases**, **order**, and **dependencies** — aligned with § **information input list** and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). After filling: optional subsections per phase, Mermaid `flowchart`, gates per wave, short priority list.
 
-| Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
-|------------------|----------|-------------|----------------------|----------------------------|
-| Phase 1 | DS-002 | Stabilise runtime narrative + validated-pipeline seams before deeper service moves | `backend_runtime_services` | `ds005` + targeted `pytest` under `backend/tests` for runtime/turn |
-| Phase 2 | DS-001 | Shrink largest backend orchestration (Writers Room, closure bundles, inspector projections) | `backend_runtime_services` | Incremental stage extractions; Writers Room tests as gate |
-| Phase 3 | DS-003 | Flatten user-update PUT handler branches | `backend_runtime_services` | Route + handler tests |
-| Phase 4 | DS-004 | Trim long ai_stack evaluation/integration callables | `ai_stack` | Run `ai_stack` pytest slices after each change |
+| Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) | status |
+|------------------|----------|-------------|----------------------|----------------------------|--------|
+| Phase 0 | DS-001 | Turn executor import decoupling (remove circular imports in turn path) | `backend_runtime_services` | Turn executor test patches verify isolation | ✓ CLOSED 2026-04-11 |
+| Phase 1 | DS-002 | Writers Room pipeline monolith (stages 1–5 extraction + helpers) | `backend_runtime_services` | 64 writers room tests as gate | ✓ CLOSED 2026-04-11 |
+| Phase 2 | DS-003 | AI stack RAG despaghettification (1973→175 LOC extraction) | `ai_stack` | AI stack test bundles as gate | ✓ CLOSED 2026-04-10 |
+| Phase 3 | DS-004 | Magic numbers + mutable state hardening (routes + extensions) | `backend_runtime_services` | 241 backend tests as gate | ✓ CLOSED 2026-04-11 |
+| Phase 4 | DS-005 | User/news control-flow guards (6 service stages) | `backend_runtime_services` | 321 integration tests as gate | ✓ CLOSED 2026-04-11 |
+| Phase 5 | DS-006 | Writers Room packaging + inspector orchestration shrinking | `backend_runtime_services` | 79 tests (64+15) as gate | ✓ CLOSED 2026-04-12 |
+| Phase 6 | DS-007 | Runtime narrative DTO integration + pipeline guards | `backend_runtime_services` | Runtime tests as gate | ✓ CLOSED 2026-04-12 |
+| Phase 7 | DS-008 | Improvement recommendation decision flattening | `backend_runtime_services` | 60 improvement tests as gate | ✓ CLOSED 2026-04-12 |
+| Phase 8 | DS-009 | RAG context-pack + closure bundles extraction | `ai_stack` + `backend_runtime_services` | AI stack + backend test bundles as gate | ⏳ PLANNED |
 
 **Fill in:** take rows from the input table; make hard chains explicit (e.g. interfaces before large moves). Coordination § *Maintaining this file*: when priority changes or new **DS-*** appear, update this section and Mermaid if used.
 
