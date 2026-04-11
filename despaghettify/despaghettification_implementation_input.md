@@ -37,12 +37,8 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../
 | DS-001 | `backend_runtime_services` | — |
 | DS-002 | `backend_runtime_services` | — |
 | DS-003 | `backend_runtime_services` | — |
-| DS-004 | `backend_runtime_services` | — |
+| DS-004 | `backend_runtime_services` | `ai_stack` (callers / semantics; no separate pre/post unless scope crosses package) |
 | DS-005 | `backend_runtime_services` | — |
-| DS-006 | `backend_runtime_services` | — |
-| DS-007 | `backend_runtime_services` | — |
-| DS-008 | `backend_runtime_services` | — |
-| DS-009 | `ai_stack` | `backend_runtime_services` |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](../state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
 
@@ -71,7 +67,7 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 | What | Content |
 |------|---------|
 | **Information input list** | Per **DS-***: maintain columns (*hint / measurement idea*, *direction*, *collision hint*); mark completed waves briefly. |
-| **§ Latest structure scan** | After measurable change: **main table** (as-of date, **M7** overall, 7 category scores, and AST telemetry **N / L₅₀ / L₁₀₀ / D₆**); subsection **M7 calculation and thresholds**; optional **extra checks**; **open hotspots** on every [spaghetti-check-task.md](../spaghetti-check-task.md) run (**prune** solved items). For runtime edges `tools/ds005_runtime_import_check.py`. Rankings: script output only. |
+| **§ Latest structure scan** | After measurable change: **main table** (as-of **date and time**, **M7** overall, 7 category scores, and AST telemetry **N / L₅₀ / L₁₀₀ / D₆**); subsection **M7 calculation and thresholds**; optional **extra checks**; **open hotspots** on every [spaghetti-check-task.md](../spaghetti-check-task.md) run (**prune** solved items). For runtime edges `tools/ds005_runtime_import_check.py`. Rankings: script output only. |
 | **§ Recommended implementation order** | Update when priority, dependency, or phase changes; optional Mermaid. |
 | **§ Progress / work log** | Optional **one** new row: DS-ID(s), short summary, gates/tests, pre/post paths (or “see PR”). |
 | **DS-ID → workstream table** | Place new or moved **DS-*** here; note co-involved workstreams. |
@@ -80,37 +76,37 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 ## Latest structure scan (orientation, no warranty)
 
-**Purpose:** A **fillable** overview after measurable runs — after larger refactors update **date**, **M7 inputs**, and optional **extra checks** / **open hotspots**. Measurement flow, builtins grep, runtime spot check: [spaghetti-check-task.md](../spaghetti-check-task.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when the **trigger policy** in § *Trigger policy for check task updates* fires (per-category thresholds **or** **`M7 ≥ M7_ref`**); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings** and longest functions: output of `python tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
+**Purpose:** A **fillable** overview after measurable runs — after larger refactors update **date and time**, **M7 inputs**, and optional **extra checks** / **open hotspots**. Measurement flow, builtins grep, runtime spot check: [spaghetti-check-task.md](../spaghetti-check-task.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when the **trigger policy** in § *Trigger policy for check task updates* fires (per-category score thresholds **or** composite **`M7 ≥ M7_ref`**); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings** and longest functions: output of `python tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
 
 | Field | Value (adjust when updating scan) |
 |-------|-------------------------------------|
-| **As of (date)** | **2026-04-12** (DS-006/007/008 closed) |
+| **As of (date & time)** | **2026-04-11 23:37:21** *(Europe/Berlin)* |
 | Spaghetti scan command | `python tools/spaghetti_ast_scan.py` (ROOTS = *measurement scope* column) |
 | Measurement scope (ROOTS) | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` |
-| **M7** — weighted 7-category spaghetti score | **33%** (heuristic; trigger **met** — several **C** above per-category bars **and** **`M7 ≥ M7_ref` (19%)**; see § *Trigger policy*) |
-| C1: Circular dependencies | **20%** |
-| C2: Nesting depth | **12%** |
-| C3: Long functions + complexity | **52%** |
-| C4: Multi-responsibility modules | **44%** |
-| C5: Magic numbers + global state | **24%** |
-| C6: Missing abstractions / duplication | **32%** |
-| C7: Confusing control flow | **38%** |
+| **M7** — weighted 7-category spaghetti score | **≈ 25.4%** |
+| C1: Circular dependencies | **18** |
+| C2: Nesting depth | **12** |
+| C3: Long functions + complexity | **45** |
+| C4: Multi-responsibility modules | **27** |
+| C5: Magic numbers + global state | **18** |
+| C6: Missing abstractions / duplication | **22** |
+| C7: Confusing control flow | **24** |
 | **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | **4230** / **263** / **71** / **0** |
-| Extra check builtins | `def build_god_of_carnage_solo`: **1** hit (`story_runtime_core/goc_solo_builtin_template.py`); **0** in `**/builtins.py` — **2026-04-13** |
-| Extra check runtime | `python tools/ds005_runtime_import_check.py` — **exit 0** (all `import_ok`). Spot grep: a few “avoid circular” local-import comments under `backend/app/runtime`; **no** `TYPE_CHECKING` matches there |
-| **Open hotspots** | Remaining targets after DS-006/007/008 closure: Writers Room generation stage (~160L), closure cockpit report assembly (~182L), evidence session bundle (~167L) — deferred to DS-009. `execute_users_update_put` candidate for future optimization. AI stack: `evaluate_dramatic_effect_gate` (~146L) for DS-009. `ds005` clean; GoC solo builtin single canonical definition. |
+| Extra check builtins | **One** `def build_god_of_carnage_solo` in `story_runtime_core/goc_solo_builtin_template.py`; **0** duplicate defs in `**/builtins.py` (backend + world-engine) — **2026-04-11 23:37:21** *(Europe/Berlin)* |
+| Extra check runtime | `python tools/ds005_runtime_import_check.py` — exit **0**; grep under `backend/app/runtime` for deferred-import / cycle comments (`avoid circular`, `circular dependency`, `circular imports`): **4** sites; **0** `TYPE_CHECKING` hits in that tree — **2026-04-11 23:37:21** *(Europe/Berlin)* |
+| **Open hotspots** | Dense orchestration: Writers Room `run_writers_room_packaging_stage` (~**277** AST lines), `update_narrative_threads_from_commit_impl` (~**225** L), AI stack `assemble_closure_cockpit_report` / `assemble_session_evidence_bundle` (~**155–160** L), `build_inspector_coverage_health_projection` (~**153** L), `execute_users_update_put` (~**152** L), `run_validated_turn_pipeline` (~**143** L). `execute_turn_with_ai` ~**39** L. **D₆ = 0**; telemetry **N / L₅₀ / L₁₀₀ / D₆** unchanged vs prior scan (**4230 / 263 / 71 / 0**). |
 
 ### Score *M7* — inputs, weights, and calculation
 
 | Symbol | Meaning | Value |
 |--------|---------|-------|
-| **C1** | Circular dependencies | **20** |
+| **C1** | Circular dependencies | **18** |
 | **C2** | Nesting depth | **12** |
-| **C3** | Long functions + complexity | **52** |
-| **C4** | Multi-responsibility modules | **44** |
-| **C5** | Magic numbers + global state | **24** |
-| **C6** | Missing abstractions / duplication | **32** |
-| **C7** | Confusing control flow | **38** |
+| **C3** | Long functions + complexity | **45** |
+| **C4** | Multi-responsibility modules | **27** |
+| **C5** | Magic numbers + global state | **18** |
+| **C6** | Missing abstractions / duplication | **22** |
+| **C7** | Confusing control flow | **24** |
 
 **Formula:** `M7 = 0.20*C1 + 0.10*C2 + 0.20*C3 + 0.15*C4 + 0.10*C5 + 0.15*C6 + 0.10*C7`
 
@@ -141,15 +137,11 @@ Each row: **ID**, **pattern**, **location**, **hint / measurement idea**, **dire
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
-| DS-001 | **(CLOSED 2026-04-11)** Turn executor import decoupling | `turn_executor_validated_pipeline.py`; circular imports in turn executor test patches | Import coupling + testing isolation | Remove `turn_executor` import from `turn_executor_validated_pipeline`; tests patch instead ✓ DONE | High: turn path coupling |
-| DS-002 | **(CLOSED 2026-04-11)** Writers Room pipeline monolith | Writers Room stages 1–5 refactoring (~585→82 AST LOC main workflow) | Multi-stage orchestration density | Stage-by-stage extraction + helper deduplication ✓ DONE | High: 64 writers room tests |
-| DS-003 | **(CLOSED 2026-04-10)** AI stack RAG despaghettification | RAG module (1973→175 LOC) | Extraction + modularization | Helper consolidation + context pack assembly ✓ DONE | Medium: AI stack test bundles |
-| DS-004 | **(CLOSED 2026-04-11)** Magic numbers + mutable state | 500–800 literals across routes + extensions.py mutable globals | Constants extraction + state hardening | Config modules (route_constants.py, limiter_config.py) + 24 route files refactored ✓ DONE | High: route handler tests |
-| DS-005 | **(CLOSED 2026-04-11)** User/news control-flow guards | `user_service`, `news_service`, routes (6 stages) | Guard extraction + policy validation | Service guard modules + route guards ✓ DONE | High: 321 integration tests |
-| DS-006 | **(CLOSED 2026-04-12)** Writers Room packaging + inspector | `writers_room_pipeline_packaging_stage.py` (354→317L), `inspector_turn_projection_sections_assembly_filled.py` (248→157L) | Sub-stage + helper extraction | 2 packaging sub-stages + 16 inspector helpers ✓ DONE | High: 79 tests (64+15) |
-| DS-007 | **(CLOSED 2026-04-12)** Runtime narrative DTO integration | `narrative_threads_update_from_commit.py`, `turn_executor_validated_pipeline.py` | DTO extraction + pipeline refactoring | Narrative state transfer DTOs + pipeline guards ✓ DONE | High: runtime narrative layer |
-| DS-008 | **(CLOSED 2026-04-12)** Improvement recommendation decision | `improvement_service_recommendation_decision.py` (176→136L) | Policy guard + builder extraction | 3 guards + 3 builders in policy_evaluators module ✓ DONE | Medium: 60 improvement tests |
-| DS-009 | **(PLANNED)** RAG context-pack + closure bundles | `rag_context_pack_*`, closure cockpit (~182L), evidence bundle (~167L) | Sub-stage extraction + helper consolidation | World engine bridge + G9/G9B/G10 extraction | Medium: ai_stack + backend tests |
+| ~~DS-001~~ ✓ CLOSED (2026-04-11) | ~~Deferred imports / cycle-avoidance pattern~~ | ~~`backend/app/runtime` (four modules with local-import comments)~~ | ~~`ds005` clean; grep cycle-hint comments~~ | ✓ Seams tightened; 4 deferred imports promoted; type narrowing applied | Completed |
+| DS-002 | Very long stage callable | `writers_room_pipeline_packaging_stage.py` — `run_writers_room_packaging_stage` (~**277** AST lines) | AST leaderboard | Further stage extractions; stable Writers Room API | High: `tests/writers_room/` |
+| DS-003 | Long commit-path orchestration | `narrative_threads_update_from_commit.py` — `update_narrative_threads_from_commit_impl` (~**225** L) | AST + narrative tests | Sub-steps with explicit result shapes | Medium: persistence / commit edges |
+| DS-004 | Multi-section report assembly | `ai_stack_closure_cockpit_report_assembly.py`, `ai_stack_evidence_session_bundle.py` (~**155–160** L) | AST; callers | Section helpers; preserve payload contracts | Medium: admin / AI consumers |
+| DS-005 | API + pipeline orchestration | `user_routes_users_update.py` — `execute_users_update_put` (~**152** L); `turn_executor_validated_pipeline.py` — `run_validated_turn_pipeline` (~**143** L) | AST; route tests | Thin handlers; pipeline modules | High: user API + runtime |
 
 **New rows:** consecutive **DS-001**, **DS-002**, … (or your ID scheme); briefly justify why it is a structure/spaghetti topic. Per § *DS-ID → primary workstream* pick `artifacts/workstreams/<slug>/pre|post/` paths.
 
@@ -157,19 +149,15 @@ Each row: **ID**, **pattern**, **location**, **hint / measurement idea**, **dire
 
 Prioritised **phases**, **order**, and **dependencies** — aligned with § **information input list** and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). After filling: optional subsections per phase, Mermaid `flowchart`, gates per wave, short priority list.
 
-| Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) | status |
-|------------------|----------|-------------|----------------------|----------------------------|--------|
-| Phase 0 | DS-001 | Turn executor import decoupling (remove circular imports in turn path) | `backend_runtime_services` | Turn executor test patches verify isolation | ✓ CLOSED 2026-04-11 |
-| Phase 1 | DS-002 | Writers Room pipeline monolith (stages 1–5 extraction + helpers) | `backend_runtime_services` | 64 writers room tests as gate | ✓ CLOSED 2026-04-11 |
-| Phase 2 | DS-003 | AI stack RAG despaghettification (1973→175 LOC extraction) | `ai_stack` | AI stack test bundles as gate | ✓ CLOSED 2026-04-10 |
-| Phase 3 | DS-004 | Magic numbers + mutable state hardening (routes + extensions) | `backend_runtime_services` | 241 backend tests as gate | ✓ CLOSED 2026-04-11 |
-| Phase 4 | DS-005 | User/news control-flow guards (6 service stages) | `backend_runtime_services` | 321 integration tests as gate | ✓ CLOSED 2026-04-11 |
-| Phase 5 | DS-006 | Writers Room packaging + inspector orchestration shrinking | `backend_runtime_services` | 79 tests (64+15) as gate | ✓ CLOSED 2026-04-12 |
-| Phase 6 | DS-007 | Runtime narrative DTO integration + pipeline guards | `backend_runtime_services` | Runtime tests as gate | ✓ CLOSED 2026-04-12 |
-| Phase 7 | DS-008 | Improvement recommendation decision flattening | `backend_runtime_services` | 60 improvement tests as gate | ✓ CLOSED 2026-04-12 |
-| Phase 8 | DS-009 | RAG context-pack + closure bundles extraction | `ai_stack` + `backend_runtime_services` | AI stack + backend test bundles as gate | ⏳ PLANNED |
+| Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
+|------------------|----------|-------------|----------------------|----------------------------|
+| 1 | DS-001 | Stabilise runtime import / cycle-hint seams before wide service churn | `backend_runtime_services` | `python tools/ds005_runtime_import_check.py`; targeted runtime pytest if touched |
+| 2 | DS-005 | Thin user PUT + validated turn pipeline surfaces | `backend_runtime_services` | `ds005`; user routes + pipeline-related pytest |
+| 3 | DS-003 | Decompose narrative commit orchestration with explicit contracts | `backend_runtime_services` | Narrative / commit tests after slices |
+| 4 | DS-004 | Split closure cockpit + evidence bundle assembly by section | `backend_runtime_services` | Service-level pytest for report payloads |
+| 5 | DS-002 | Tackle Writers Room packaging stage last (largest AST body) | `backend_runtime_services` | `cd backend && python -m pytest tests/writers_room/ -q`; `ds005` |
 
-**Fill in:** take rows from the input table; make hard chains explicit (e.g. interfaces before large moves). Coordination § *Maintaining this file*: when priority changes or new **DS-*** appear, update this section and Mermaid if used.
+**Fill in:** one phase row per open **DS-*** (or an explicit merge noted in **note**). Order by **risk**: stabilise **runtime / import seams** (`backend_runtime_services` under `app.runtime`, `ds005`-touched paths) before very large **service orchestration** waves; **`ai_stack`**-only (or other packages) typically **later** unless the scan shows a hard blocker. **Workstream (primary)** must match [WORKSTREAM_INDEX.md](../state/WORKSTREAM_INDEX.md) for pre/post paths. **note** column: concrete **gates** (`pytest …`, `ds005`). Full rules: [spaghetti-check-task.md](../spaghetti-check-task.md) § *Maintaining the input list* → **Recommended implementation order** → *How to build a suitable phase table*. Coordination § *Maintaining this file*: when priority changes or new **DS-*** appear, update this section and Mermaid if used.
 
 **Implementation** of phases until documented closure (completion gate, session by session): [spaghetti-solve-task.md](../spaghetti-solve-task.md).
 
@@ -179,8 +167,9 @@ Implementers may **briefly** record visible progress (for reviewers and the next
 
 | date | ID(s) | short description | pre artefacts (rel. to `despaghettify/state/`) | post artefacts (rel. to `despaghettify/state/`) | state doc(s) updated | PR / commit |
 |------|-------|-------------------|----------------------------------------|----------------------------------------|----------------------|-------------|
-| 2026-04-13 | — | **Spaghetti-reset-task:** ephemeral dirs cleaned per reset doc; `despaghettification_implementation_input.md` reset from `templates/…EMPTY.md`; **spaghetti-check** once — AST (N=4230, L₅₀=263, L₁₀₀=71, D₆=0), builtins grep, runtime grep, `ds005` exit 0. Trigger (per policy then in § *Trigger policy*) → § *Latest structure scan*, **DS-001..004**, § *Recommended implementation order*, **DS-ID → workstream** table. | — | — | — | — |
-| — | — | — | — | — | — | — |
+| 2026-04-11 | DS-001 | **Closure (2026-04-11):** Deferred imports / cycle-avoidance pattern resolved. Tasks 1–4: promoted 4 deferred imports to module-level top-level (role_structured_decision.py, ai_decision.py, ai_failure_recovery.py, turn_executor.py). Type narrowing applied: `ParseResult.role_aware_decision` now `ParsedRoleAwareDecision \| None`. Backwards compatible. All tests: 207/207 passing (role_structured_decision, ai_decision, ai_decision_logging, ai_failure_recovery, turn_executor, session_history). | `session_20260411_DS-001_baseline.md` (plan reference) | See `WORKSTREAM_BACKEND_RUNTIME_AND_SERVICES_STATE.md` § *Hotspot / target status* | `WORKSTREAM_BACKEND_RUNTIME_AND_SERVICES_STATE.md` | `3b0e27a` (turn_executor), `d834e4b` (ai_failure_recovery), prior (ai_decision, role_structured_decision) |
+| 2026-04-11 | — | **spaghetti-check-task** (standalone): `spaghetti_ast_scan.py` (**N=4230**, **L₅₀=263**, **L₁₀₀=71**, **D₆=0**); builtins grep; runtime grep (**4** cycle-hint sites); `ds005` exit **0**. § *Latest structure scan* refreshed (**As of** + extra-check stamps + **Open hotspots**). **M7** / **C1..C7** and **DS / phase** tables **unchanged** — same telemetry and thesis as prior row (per check task: confirm when only numbers stable). | — | — | — | — |
+| 2026-04-11 | — | **spaghetti-reset-task:** Steps 1–2 (temp cleanup where present; input reset from `templates/…EMPTY.md`); Step 3 one **spaghetti-check** — AST **N=4230**, **L₅₀=263**, **L₁₀₀=71**, **D₆=0**; builtins grep; runtime grep; `ds005` exit **0**. Trigger met (**M7 ≈ 25.4% ≥ 19%**); filled scan, **DS-001..005**, workstream map, phase table. | — | — | — | — |
 
 **New rows:** chronologically (**newest first** recommended); **DS-ID(s)**, gates/tests run, pre/post paths as in [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md); for scan/docs-only updates note briefly. Longer history: Git, PRs, `WORKSTREAM_*_STATE.md`.
 
