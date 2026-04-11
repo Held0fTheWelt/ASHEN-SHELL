@@ -31,6 +31,8 @@ from app.runtime.runtime_models import (
     TurnStatus,
 )
 from app.runtime.turn_execution_types import TurnExecutionResult
+from app.runtime.session_history import HistoryEntry, SessionHistory
+from app.runtime.short_term_context import build_short_term_context
 from app.runtime.turn_executor_decision_delta import (
     DeltaApplicationError,
     _compute_guard_outcome,
@@ -83,10 +85,6 @@ def _accumulate_turn_context(
         - Maintains bounded history (max_size=100)
         - Works for all guard_outcome values (accepted, partially_accepted, rejected, structurally_invalid)
     """
-    # Local imports to avoid circular dependency
-    from app.runtime.session_history import HistoryEntry, SessionHistory
-    from app.runtime.short_term_context import build_short_term_context
-
     # Initialize SessionHistory if not present
     if session.context_layers.session_history is None:
         session.context_layers.session_history = SessionHistory(max_size=100)
