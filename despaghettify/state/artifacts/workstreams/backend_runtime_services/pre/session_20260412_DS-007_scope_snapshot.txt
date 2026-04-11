@@ -1,0 +1,344 @@
+DS-007 PRE-ARTIFACT SCOPE SNAPSHOT
+Session: 2026-04-12
+Task 1: Analyze Runtime Narrative Patterns
+Phase: Phase 1 / 3-Wave Service Control Flow Hardening Initiative
+
+==================== FILE INVENTORY ====================
+
+1. turn_executor_validated_pipeline.py
+   Size: 6.5K | LOC: 180 | Role: Validation→Delta→Apply→Narrative commit orchestrator
+
+2. narrative_threads_update_from_commit.py
+   Size: 9.5K | LOC: 270 | Role: Derives narrative thread states from commit artifacts
+
+3. turn_executor.py
+   Size: 17K | LOC: 473 | Role: Main turn execution orchestrator with deferred imports
+
+4. ai_decision.py
+   Size: 8.4K | LOC: 239 | Role: AI output parsing, normalization, pre-validation
+
+5. ai_failure_recovery.py
+   Size: 36K | LOC: 991 | Role: Failure classification, recovery policies, restore semantics
+
+Total: 77.4K across 2,153 LOC
+
+==================== ARCHITECTURE OVERVIEW ====================
+
+NARRATIVE COMMIT PIPELINE (turn_executor_validated_pipeline.py):
+  1. Validation phase: validate_decision() → ValidationOutcome
+  2. Delta construction: construct_deltas() → (accepted_deltas, rejected_deltas)
+  3. Delta application: apply_deltas() → updated_state (dict)
+  4. Narrative commit: resolve_narrative_commit() → NarrativeCommitRecord
+  5. Output: TurnExecutionResult with complete execution trace
+
+NARRATIVE THREAD UPDATE (narrative_threads_update_from_commit.py):
+  Entry: update_narrative_threads_from_commit_impl()
+  Input: (prior: NarrativeThreadSet, narrative_commit: NarrativeCommitRecord, ...)
+  Processing:
+    - Extract consequences from commit → _paths_from_consequences()
+    - Identify character IDs → _character_ids_from_paths()
+    - Detect escalation/de-escalation signals → _path_signal()
+    - Generate stable thread IDs → _stable_anchor_id()
+    - Upsert thread states with intensity/persistence tracking
+    - Evict lowest priority threads → _evict_lowest_priority()
+  Output: NarrativeThreadSet (active threads + resolved_recent)
+
+CONTROL FLOW:
+  execute_turn()
+    └─ if enforce_responder_only:
+       └─ _turn_source_gate_rejection() → TurnExecutionResult
+    └─ else:
+       └─ _execute_turn_validated_pipeline()
+          └─ run_validated_turn_pipeline() → TurnExecutionResult
+
+  [Post-execution for all paths]
+  _finalize_success_turn()
+    └─ _accumulate_turn_context() → updates session history
+    └─ _derive_runtime_context()
+       └─ update_narrative_threads_from_commit() → updates narrative threads
+
+==================== DTO/PROTOCOL BOUNDARIES ====================
+
+BOUNDARY 1: Decision → Validation
+  Input: MockDecision (proposal_source, proposed_deltas, detected_triggers, proposed_scene_id)
+  Output: ValidationOutcome (status, is_valid, accepted_delta_indices, rejected_delta_indices, errors)
+  Issue: Dict payloads in delta structures; could be extracted to TypedDict
+
+BOUNDARY 2: Validation → Delta Construction
+  Input: (MockDecision, SessionState, ValidationOutcome, current_turn)
+  Output: (List[StateDelta], List[StateDelta]) — accepted and rejected
+  StateDelta contains:
+    - delta_type, target_path, target_entity, previous_value, next_value
+    - source, turn_number, validation_status
+  Issue: StateDelta is already a Pydantic model; good abstraction
+
+BOUNDARY 3: Deltas → State Application
+  Input: (canonical_state: dict, accepted_deltas: List[StateDelta])
+  Output: updated_state: dict
+  Issue: Raw dict in/out; no DTO wrapping the state mutation protocol
+
+BOUNDARY 4: State + Deltas → Narrative Commit
+  Input: (turn_number, prior_scene_id, post_delta_state, decision, module, ...)
+  Output: NarrativeCommitRecord
+  Fields: turn_number, committed_scene_id, committed_ending_id, situation_status,
+          canonical_consequences, is_terminal
+  Issue: resolve_narrative_commit() has many parameters; candidates for DTO grouping
+
+BOUNDARY 5: Commit → Thread Update
+  Input: NarrativeCommitRecord + SessionHistory + ProgressionSummary + RelationshipAxisContext
+  Output: NarrativeThreadSet (active, resolved_recent)
+  Issue: Multiple context inputs should be grouped; no formal NarrativeCommitEvent DTO yet
+
+BOUNDARY 6: Thread Update → Result Accumulation
+  Input: NarrativeThreadSet
+  Output: Updates session.context_layers.narrative_threads
+  Issue: State is mutated in-place; no transactional wrapper
+
+==================== DEFERRED IMPORTS & CIRCULAR DEPENDENCY AVOIDANCE ====================
+
+FILE: turn_executor.py
+  Line 87:   from app.runtime.session_history import HistoryEntry, SessionHistory
+  Line 88:   from app.runtime.short_term_context import build_short_term_context
+  Line 135:  from app.runtime.lore_direction_context import derive_lore_direction_context
+  Line 136:  from app.runtime.narrative_threads import (...)
+  Line 143:  from app.runtime.progression_summary import derive_progression_summary
+  Line 144:  from app.runtime.relationship_context import derive_relationship_axis_context
+  Line 302:  from app.runtime.turn_executor_validated_pipeline import run_validated_turn_pipeline
+
+  Reason: _accumulate_turn_context() and _derive_runtime_context() are called post-execution.
+          Deferring imports avoids circular dependency with context layer modules that may
+          import turn_executor functions.
+
+FILE: ai_decision.py
+  Line 62-65: from app.runtime.role_structured_decision import (
+              _is_role_structured_payload, parse_role_contract)
+
+  Reason: parse_adapter_response() supports optional W2.4.1 role-structured format.
+          Role decision parsing may import ai_decision for ParsedAIDecision, causing cycle.
+
+FILE: ai_failure_recovery.py
+  Line 979:  from app.runtime.ai_decision import ParsedAIDecision
+             (inside generate_fallback_responder_proposal())
+
+  Reason: generate_fallback_responder_proposal() is a fallback factory function.
+          ParsedAIDecision is only needed when fallback is actually triggered.
+
+==================== STATE HANDOFF POINTS ====================
+
+HANDOFF 1: Decision → Turn Executor
+  Location: execute_turn() receives MockDecision
+  State: (proposal_source, proposed_deltas, detected_triggers, proposed_scene_id)
+  Mutation: None (decision is read-only)
+
+HANDOFF 2: Validator → Delta Constructor
+  Location: construct_deltas() receives ValidationOutcome
+  State: Which delta indices were accepted vs. rejected
+  Mutation: None (indices are copied; deltas are created anew)
+
+HANDOFF 3: Deltas → State Applier
+  Location: apply_deltas() receives canonical_state and accepted_deltas
+  State: Current world state dict
+  Mutation: YES — canonical_state is mutated in apply_deltas
+  Risk: Deep mutation without DTO wrapper; hard to track provenance
+
+HANDOFF 4: Updated State + Deltas → Commit Resolver
+  Location: resolve_narrative_commit() receives updated_state, deltas, decision
+  State: New state, old state, decision rationale
+  Mutation: None (creates NarrativeCommitRecord)
+
+HANDOFF 5: Commit → Thread Updater
+  Location: update_narrative_threads_from_commit() receives NarrativeCommitRecord
+  State: Narrative consequences, scene_id, situation_status, is_terminal
+  Mutation: YES — prior.active threads are mutated in-place via upsert_thread()
+  Risk: Thread state is modified directly; no transaction boundary
+
+HANDOFF 6: Thread Set → Context Layer
+  Location: _derive_runtime_context() calls sync_narrative_thread_set(session, updated)
+  State: NarrativeThreadSet is written to session.context_layers.narrative_threads
+  Mutation: YES — session.context_layers is mutated
+  Risk: No rollback capability; context layers are stateful
+
+HANDOFF 7: Result → Session Commitment
+  Location: commit_turn_result() receives TurnExecutionResult
+  State: Result contains updated_canonical_state, updated_scene_id, narrative_commit
+  Mutation: YES — creates new SessionState with committed progress
+  Risk: Partial commits possible if narrative_commit validation fails downstream
+
+==================== CURRENT ARCHITECTURE PAIN POINTS ====================
+
+1. DICT MUTATION WITHOUT PROVENANCE TRACKING
+   Problem: apply_deltas() mutates canonical_state dict in-place. No wrapper tracks
+            what was changed, why, or rollback point.
+   Impact: Hard to debug state anomalies; no transactional safety.
+
+2. MULTIPLE CONTEXT INPUTS TO THREAD UPDATE
+   Problem: update_narrative_threads_from_commit() has 4 context inputs (history, progression,
+            relationship) plus NarrativeCommitRecord. No unifying DTO.
+   Impact: Callers must assemble all contexts; easy to pass wrong version or miss update.
+
+3. NARRATIVE COMMIT PARAMETER EXPLOSION
+   Problem: resolve_narrative_commit() has ~10 parameters (turn_number, prior_scene_id,
+            post_delta_state, session_template, decision, module, guard_outcome, deltas...).
+   Impact: Hard to add new narrative metadata; callers must update all call sites.
+
+4. DEFERRED IMPORTS HIDING DEPENDENCIES
+   Problem: Deferred imports in turn_executor.py (line 87-144) obscure true dependency graph.
+            Circular dependencies exist but are invisible at module import time.
+   Impact: Static analysis tools can't see real dependency structure; runtime errors
+           if deferred imports are moved/renamed.
+
+5. NO FORMAL "NARRATIVE COMMIT EVENT" DTO
+   Problem: NarrativeCommitRecord exists but is designed for persistence, not as a formal
+            event in the turn execution pipeline. No DTO bridges commit→thread update.
+   Impact: Thread update function signature is unclear about input contract.
+
+6. NARRATIVE THREAD STATE MUTATIONS IN UPSERT
+   Problem: update_narrative_threads_from_commit_impl() mutates thread objects in-place
+            (e.g., by_id[thread_id].intensity += 1). No immutable protocol.
+   Impact: Hard to reason about side effects; testing requires deep inspection of state.
+
+7. RESULT ACCUMULATION LACKS TRANSACTIONAL BOUNDARIES
+   Problem: _finalize_success_turn() calls _accumulate_turn_context() then _derive_runtime_context().
+            If second fails, first has already mutated session.context_layers.session_history.
+   Impact: Sessions can end up in inconsistent state (history recorded but threads not updated).
+
+==================== PROPOSED DTO EXTRACTION TARGETS ====================
+
+TARGET 1: NarrativeCommitEvent (NEW)
+  Purpose: Formal DTO for "commit ready to drive narrative thread update"
+  Fields:
+    - turn_number: int
+    - prior_scene_id: str
+    - situation_status: str ("continue", "transitioned", "ending_reached")
+    - canonical_consequences: list[str]
+    - is_terminal: bool
+    - committed_scene_id: str
+    - committed_ending_id: str | None
+  Source: Extract from NarrativeCommitRecord; de-persist for runtime event semantics
+  Usage: Pass from resolve_narrative_commit() → update_narrative_threads_from_commit()
+
+TARGET 2: ThreadUpdateResult (NEW)
+  Purpose: Formal DTO for "narrative thread update completion"
+  Fields:
+    - active_threads: list[NarrativeThreadState]
+    - resolved_recent: list[NarrativeThreadState]
+    - threads_modified_count: int
+    - threads_escalated_count: int
+    - threads_resolved_count: int
+  Source: Wrap return from update_narrative_threads_from_commit_impl()
+  Usage: Result type for _derive_runtime_context(); enables better logging/debugging
+
+TARGET 3: ThreadUpdateInput (NEW)
+  Purpose: Formal DTO for "all inputs to thread update"
+  Fields:
+    - prior_threads: NarrativeThreadSet
+    - commit_event: NarrativeCommitEvent
+    - session_history: SessionHistory
+    - progression: ProgressionSummary
+    - relationship: RelationshipAxisContext
+  Source: Group the 4 separate context inputs currently passed to update_narrative_threads_from_commit()
+  Usage: update_narrative_threads_from_commit(input: ThreadUpdateInput) → NarrativeThreadSet
+
+TARGET 4: StateDeltaApplication (NEW)
+  Purpose: Formal DTO for "state delta application result"
+  Fields:
+    - original_state: dict
+    - updated_state: dict
+    - applied_deltas: list[StateDelta]
+    - failed_deltas: list[tuple[StateDelta, str]]  # (delta, error_reason)
+    - application_metadata: dict  # paths changed, values mutated, etc.
+  Source: Wrap apply_deltas() return to track provenance
+  Usage: Result from apply_deltas(); enables rollback and debugging
+
+TARGET 5: CommitResolverInput (NEW)
+  Purpose: Formal DTO for "all inputs to resolve_narrative_commit()"
+  Fields:
+    - turn_number: int
+    - prior_scene_id: str
+    - post_delta_state: dict
+    - session_template: SessionState
+    - decision: MockDecision
+    - module: ContentModule
+    - guard_outcome: GuardOutcome
+    - accepted_deltas: list[StateDelta]
+    - rejected_deltas: list[StateDelta]
+  Source: Group ~10 parameters currently scattered across resolve_narrative_commit() signature
+  Usage: resolve_narrative_commit(input: CommitResolverInput) → NarrativeCommitRecord
+
+==================== DEFERRED IMPORT ELIMINATION PLAN ====================
+
+Removal Target 1: turn_executor.py line 302
+  Current: from app.runtime.turn_executor_validated_pipeline import run_validated_turn_pipeline
+  Why: Used only in _execute_turn_validated_pipeline(); could be moved to function body
+  Risk: Low; _execute_turn_validated_pipeline is simple wrapper
+  Action: Move import to top-level after full dependency analysis
+
+Removal Target 2: turn_executor.py lines 87-144
+  Current: Deferred imports in _accumulate_turn_context() and _derive_runtime_context()
+  Why: Avoid circular dependency with context layer modules
+  Mitigation: Once context layer imports are analyzed, may be able to move to top-level
+             or use TYPE_CHECKING block
+  Risk: Moderate; requires verifying no circular dependency exists
+  Action: Full dependency graph analysis required (DS-007 Task 2)
+
+Removal Target 3: ai_decision.py lines 62-65
+  Current: Deferred import of role_structured_decision in parse_adapter_response()
+  Why: Role decision parsing is optional feature (W2.4.1)
+  Mitigation: Could move to top-level after verifying role_structured_decision doesn't
+             import ai_decision
+  Risk: Low-Moderate; role system may be experimental
+  Action: Verify role_structured_decision → ai_decision import direction
+
+Removal Target 4: ai_failure_recovery.py line 979
+  Current: from app.runtime.ai_decision import ParsedAIDecision in generate_fallback_responder_proposal()
+  Why: Fallback function is only called on failure; deferred to delay import cost
+  Mitigation: Could use TYPE_CHECKING or move import to top-level
+  Risk: Very Low; function is rarely called
+  Action: Move to top-level; import cost is negligible relative to fallback rarity
+
+==================== EXTRACTION SEQUENCE (DS-007 TASKS 2-3) ====================
+
+Task 2: Extract DTOs
+  1. NarrativeCommitEvent — de-persist NarrativeCommitRecord into runtime event form
+  2. ThreadUpdateResult — wrap update result with metadata
+  3. ThreadUpdateInput — group 4 context inputs
+  4. CommitResolverInput — group resolve_narrative_commit parameters
+  5. StateDeltaApplication — track state mutation provenance
+
+Task 3: Refactor Deferred Imports
+  1. Analyze full dependency graph (all modules importing turn_executor, ai_decision, etc.)
+  2. Determine if cycles are real or avoidable
+  3. Move deferred imports to top-level where safe
+  4. Use TYPE_CHECKING block for type-only imports
+
+==================== SUCCESS CRITERIA FOR EXTRACTION ====================
+
+Upon completion of DS-007 Task 2-3:
+
+✓ All DTO extraction targets created as new classes in app/runtime/narrative_*_dto.py
+✓ run_validated_turn_pipeline() signature unchanged (no DTO forced on callers)
+✓ update_narrative_threads_from_commit() accepts ThreadUpdateInput DTO
+✓ resolve_narrative_commit() accepts CommitResolverInput DTO (optional; defer if high risk)
+✓ apply_deltas() returns StateDeltaApplication DTO (optional; may stay as dict for backward compat)
+✓ No deferred imports remain in turn_executor.py (moved to top-level or TYPE_CHECKING)
+✓ No deferred imports in ai_decision.py (move to top-level after role analysis)
+✓ Circular dependencies documented in ARCHITECTURE.md if they remain
+✓ All tests pass without modification (backward-compatible extraction)
+
+==================== NOTES FOR REVIEWERS ====================
+
+This pre-artifact is scoped to runtime narrative patterns only (turn execution, commit,
+thread updates). Other runtime subsystems (AI adapter, event logging, validation, etc.)
+are in scope but not analyzed in detail here.
+
+The proposed DTO extractions are additive (no breaking changes) and enable:
+- Clearer method signatures
+- Better type safety
+- Easier testing and debugging
+- Future transactional/rollback capability
+
+Deferred imports indicate real circular dependencies that should be visualized and
+documented before Tasks 2-3. Recommend graphing import structure as part of Task 2.
+
+No code changes are proposed in this pre-artifact; all work is exploratory and
+preparatory for Tasks 2-3 implementation.
