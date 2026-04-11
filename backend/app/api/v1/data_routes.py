@@ -10,6 +10,7 @@ from app.auth.permissions import current_user_is_admin, current_user_is_super_ad
 from app.services import data_export_service, data_import_service
 from app.extensions import limiter
 from app.utils.error_handler import log_full_error, ERROR_MESSAGES
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 def _get_user_id_for_rate_limit():
@@ -43,7 +44,7 @@ def export_data():
     - password (str): Required if encrypt=true. User-provided password for encryption
     """
     if not current_user_is_admin():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     payload = request.get_json(silent=True) or {}
     scope = (payload.get("scope") or "").strip().lower()
@@ -56,33 +57,33 @@ def export_data():
         elif scope == "table":
             table = (payload.get("table") or "").strip()
             if not table:
-                return jsonify({"error": "Missing table for scope=table"}), 400
+                return jsonify({"error": "Missing table for scope=table"}), route_status_codes.bad_request
             export = data_export_service.export_table(table)
         elif scope == "rows":
             table = (payload.get("table") or "").strip()
             ids = payload.get("primary_keys")
             if not table or not isinstance(ids, list) or not ids:
-                return jsonify({"error": "Missing table or primary_keys for scope=rows"}), 400
+                return jsonify({"error": "Missing table or primary_keys for scope=rows"}), route_status_codes.bad_request
             export = data_export_service.export_table_rows(table, ids)
         else:
-            return jsonify({"error": "Invalid or missing scope"}), 400
+            return jsonify({"error": "Invalid or missing scope"}), route_status_codes.bad_request
 
         # Apply encryption if requested
         if encrypt:
             if not password:
-                return jsonify({"error": "Password required for encryption"}), 400
+                return jsonify({"error": "Password required for encryption"}), route_status_codes.bad_request
             try:
                 export = data_export_service.encrypt_export(export, password)
                 export["encrypted"] = True
             except ValueError as exc:
                 log_full_error(exc, "Data export encryption failed", route=request.path, method=request.method)
-                return jsonify({"error": ERROR_MESSAGES["validation_error"]}), 400
+                return jsonify({"error": ERROR_MESSAGES["validation_error"]}), route_status_codes.bad_request
 
     except ValueError as exc:
         log_full_error(exc, "Data export validation failed", route=request.path, method=request.method)
-        return jsonify({"error": ERROR_MESSAGES["validation_error"]}), 400
+        return jsonify({"error": ERROR_MESSAGES["validation_error"]}), route_status_codes.bad_request
 
-    return jsonify(export), 200
+    return jsonify(export), route_status_codes.ok
 
 
 @api_v1_bp.route("/data/export/decrypt", methods=["POST"])
@@ -101,30 +102,30 @@ def decrypt_export():
     - (optional fields: version, algorithm, pbkdf2_iterations)
     """
     if not current_user_is_admin():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     payload = request.get_json(silent=True) or {}
     password = payload.get("password", "")
 
     if not password:
-        return jsonify({"error": "Password required for decryption"}), 400
+        return jsonify({"error": "Password required for decryption"}), route_status_codes.bad_request
 
     # Validate encrypted payload structure
     required_fields = ["encrypted_data", "iv", "salt"]
     for field in required_fields:
         if field not in payload:
-            return jsonify({"error": f"Missing required field: {field}"}), 400
+            return jsonify({"error": f"Missing required field: {field}"}), route_status_codes.bad_request
 
     try:
         decrypted_data = data_export_service.decrypt_export(payload, password)
     except ValueError as exc:
         log_full_error(exc, "Data export decryption failed", route=request.path, method=request.method)
-        return jsonify({"error": "Decryption failed. Invalid password or corrupted data."}), 400
+        return jsonify({"error": "Decryption failed. Invalid password or corrupted data."}), route_status_codes.bad_request
     except TypeError as exc:
         log_full_error(exc, "Invalid decrypted data format", route=request.path, method=request.method)
-        return jsonify({"error": "Decryption failed. Invalid data format."}), 400
+        return jsonify({"error": "Decryption failed. Invalid data format."}), route_status_codes.bad_request
 
-    return jsonify(decrypted_data), 200
+    return jsonify(decrypted_data), route_status_codes.ok
 
 
 @api_v1_bp.route("/data/import/preflight", methods=["POST"])
@@ -133,11 +134,11 @@ def decrypt_export():
 def import_preflight():
     """Validate an import payload without writing to the database."""
     if not current_user_is_admin():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     payload = request.get_json(silent=True)
     if payload is None:
-        return jsonify({"error": "Missing JSON body"}), 400
+        return jsonify({"error": "Missing JSON body"}), route_status_codes.bad_request
     result = data_import_service.preflight_validate_payload(payload)
     return (
         jsonify(
@@ -148,8 +149,7 @@ def import_preflight():
                 ],
                 "metadata": result.metadata,
             }
-        ),
-        200,
+        ), route_status_codes.ok,
     )
 
 
@@ -160,11 +160,11 @@ def import_preflight():
 def import_execute():
     """Execute an import. SuperAdmin-only due to high risk."""
     if not current_user_is_super_admin():
-        return jsonify({"error": "Forbidden. SuperAdmin required for import."}), 403
+        return jsonify({"error": "Forbidden. SuperAdmin required for import."}), route_status_codes.forbidden
 
     payload = request.get_json(silent=True)
     if payload is None:
-        return jsonify({"error": "Missing JSON body"}), 400
+        return jsonify({"error": "Missing JSON body"}), route_status_codes.bad_request
 
     pre = data_import_service.preflight_validate_payload(payload)
     if not pre.ok:
@@ -177,8 +177,7 @@ def import_execute():
                     ],
                     "metadata": pre.metadata,
                 }
-            ),
-            400,
+            ), route_status_codes.bad_request,
         )
 
     try:
@@ -194,8 +193,7 @@ def import_execute():
                     ],
                     "metadata": pre.metadata,
                 }
-            ),
-            400,
+            ), route_status_codes.bad_request,
         )
 
     return (
@@ -207,7 +205,6 @@ def import_execute():
                 ],
                 "metadata": result.metadata,
             }
-        ),
-        200,
+        ), route_status_codes.ok,
     )
 

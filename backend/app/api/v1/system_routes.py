@@ -4,6 +4,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.api.v1 import api_v1_bp
 from app.extensions import limiter
 from app.models import User
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 @api_v1_bp.route("/languages", methods=["GET"])
@@ -13,14 +14,14 @@ def languages_list():
     return jsonify({
         "supported": current_app.config.get("SUPPORTED_LANGUAGES", ["de", "en"]),
         "default": current_app.config.get("DEFAULT_LANGUAGE", "de"),
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/health")
 @limiter.limit("100 per minute")
 def health():
     """API health check."""
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "ok"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/test/protected", methods=["GET"])
@@ -35,4 +36,4 @@ def protected_test():
         "message": "ok",
         "user_id": int(uid),
         "username": user.username if user else None,
-    }), 200
+    }), route_status_codes.ok

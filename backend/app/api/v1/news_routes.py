@@ -48,6 +48,7 @@ from app.services.news_service import (
     _translation_to_dict,
     list_related_threads_for_article,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 def _parse_int(value, default, min_val=None, max_val=None):
@@ -102,7 +103,7 @@ def news_list():
     if direction not in SORT_ORDERS:
         direction = "desc"
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     category = request.args.get("category", "").strip() or None
     lang = request.args.get("lang", "").strip() or None
     published_only = not _request_wants_include_drafts()
@@ -122,7 +123,7 @@ def news_list():
         "total": total,
         "page": page,
         "per_page": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<id_or_slug>", methods=["GET"])
@@ -141,14 +142,14 @@ def news_detail(id_or_slug):
     else:
         news = get_news_by_slug(id_or_slug, lang=lang)
     if not news:
-        return jsonify({"error": "Not found"}), 404
+        return jsonify({"error": "Not found"}), route_status_codes.not_found
     if not news.get("is_published"):
         try:
             if get_jwt_identity() is not None and current_user_can_write_news():
-                return jsonify(news), 200
+                return jsonify(news), route_status_codes.ok
         except Exception:
             pass
-        return jsonify({"error": "Not found"}), 404
+        return jsonify({"error": "Not found"}), route_status_codes.not_found
     now = datetime.now(timezone.utc)
     pub_at = news.get("published_at")
     if pub_at:
@@ -157,7 +158,7 @@ def news_detail(id_or_slug):
             if hasattr(dt, "tzinfo") and dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             if dt > now:
-                return jsonify({"error": "Not found"}), 404
+                return jsonify({"error": "Not found"}), route_status_codes.not_found
         except (ValueError, TypeError):
             pass
     # Attach discussion context for integration layer (public, safe subset).
@@ -195,7 +196,7 @@ def news_detail(id_or_slug):
                 {**t, "type": "suggested"} for t in unique_suggested
             ]
 
-    return jsonify(news), 200
+    return jsonify(news), route_status_codes.ok
 
 
 # --- Protected write endpoints (JWT required) ---
@@ -211,16 +212,16 @@ def news_create():
     """
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     title = (data.get("title") or "").strip()
     slug = (data.get("slug") or "").strip()
     content = (data.get("content") or "").strip()
     if not title or not slug or not content:
-        return jsonify({"error": "title, slug, and content are required"}), 400
+        return jsonify({"error": "title, slug, and content are required"}), route_status_codes.bad_request
     try:
         author_id = int(get_jwt_identity())
     except (TypeError, ValueError):
-        return jsonify({"error": "Invalid token"}), 401
+        return jsonify({"error": "Invalid token"}), route_status_codes.unauthorized
     summary = data.get("summary")
     if summary is not None:
         summary = (summary or "").strip() or None
@@ -257,7 +258,7 @@ def news_create():
         target_id=str(article.id),
     )
     out = get_news_by_id(article.id, lang=article.default_language)
-    return jsonify(out), 201
+    return jsonify(out), route_status_codes.created
 
 
 @api_v1_bp.route("/news/<int:article_id>", methods=["PUT"])
@@ -269,7 +270,7 @@ def news_update(article_id):
     """
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     kwargs = {}
     if "title" in data:
         kwargs["title"] = (data.get("title") or "").strip() or None
@@ -300,7 +301,7 @@ def news_update(article_id):
         target_id=str(article.id),
     )
     out = get_news_by_id(article.id, lang=article.default_language)
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>", methods=["DELETE"])
@@ -310,7 +311,7 @@ def news_delete(article_id):
     """Delete a news article. Requires JWT and moderator/admin role."""
     ok, err = delete_news(article_id)
     if err:
-        return jsonify({"error": err}), 404
+        return jsonify({"error": err}), route_status_codes.not_found
     log_activity(
         actor=get_current_user(),
         category="news",
@@ -322,7 +323,7 @@ def news_delete(article_id):
         target_type="news",
         target_id=str(article_id),
     )
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Deleted"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/publish", methods=["POST"])
@@ -332,7 +333,7 @@ def news_publish(article_id):
     """Set article as published. Requires JWT and moderator/admin role."""
     article, err = publish_news(article_id)
     if err:
-        return jsonify({"error": err}), 404
+        return jsonify({"error": err}), route_status_codes.not_found
     log_activity(
         actor=get_current_user(),
         category="news",
@@ -345,7 +346,7 @@ def news_publish(article_id):
         target_id=str(article.id),
     )
     out = get_news_by_id(article.id, lang=article.default_language)
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/unpublish", methods=["POST"])
@@ -355,7 +356,7 @@ def news_unpublish(article_id):
     """Set article as unpublished. Requires JWT and moderator/admin role."""
     article, err = unpublish_news(article_id)
     if err:
-        return jsonify({"error": err}), 404
+        return jsonify({"error": err}), route_status_codes.not_found
     log_activity(
         actor=get_current_user(),
         category="news",
@@ -368,7 +369,7 @@ def news_unpublish(article_id):
         target_id=str(article.id),
     )
     out = get_news_by_id(article.id, lang=article.default_language)
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 # --- Article translations (editorial) ---
@@ -381,8 +382,8 @@ def news_translations_list(article_id):
     """List translation status per language for article. Requires moderator/admin."""
     items, err = list_article_translations(article_id)
     if err:
-        return jsonify({"error": err}), 404
-    return jsonify({"items": items}), 200
+        return jsonify({"error": err}), route_status_codes.not_found
+    return jsonify({"items": items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/translations/<lang>", methods=["GET"])
@@ -392,11 +393,11 @@ def news_translation_get(article_id, lang):
     """Get one translation by language. Requires moderator/admin or n8n X-Service-Key."""
     validated_lang, err = validate_language_code(lang)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     trans = get_article_translation(article_id, validated_lang)
     if not trans:
-        return jsonify({"error": "Translation not found"}), 404
-    return jsonify(_translation_to_dict(trans)), 200
+        return jsonify({"error": "Translation not found"}), route_status_codes.not_found
+    return jsonify(_translation_to_dict(trans)), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/translations/<lang>", methods=["PUT"])
@@ -406,10 +407,10 @@ def news_translation_put(article_id, lang):
     """Create or update a translation. Body: title, slug, summary, content, seo_title, seo_description, translation_status. Requires moderator/admin or n8n X-Service-Key (machine_draft only)."""
     validated_lang, err = validate_language_code(lang)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     translation_status = data.get("translation_status")
     if getattr(g, "is_n8n_service", False):
         translation_status = "machine_draft"
@@ -431,7 +432,7 @@ def news_translation_put(article_id, lang):
         if err.startswith("Slug already"):
             status = 409
         return jsonify({"error": err}), status
-    return jsonify(_translation_to_dict(trans)), 200
+    return jsonify(_translation_to_dict(trans)), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/translations/<lang>/submit-review", methods=["POST"])
@@ -441,10 +442,10 @@ def news_translation_submit_review(article_id, lang):
     """Set translation status to review_required. Requires moderator/admin."""
     validated_lang, err = validate_language_code(lang)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     trans, err = submit_review_article_translation(article_id, validated_lang)
     if err:
-        return jsonify({"error": err}), 404
+        return jsonify({"error": err}), route_status_codes.not_found
     log_activity(
         actor=get_current_user(),
         category="news",
@@ -456,7 +457,7 @@ def news_translation_submit_review(article_id, lang):
         target_type="news_translation",
         target_id=f"{article_id}:{validated_lang}",
     )
-    return jsonify(_translation_to_dict(trans)), 200
+    return jsonify(_translation_to_dict(trans)), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/translations/<lang>/approve", methods=["POST"])
@@ -466,12 +467,12 @@ def news_translation_approve(article_id, lang):
     """Set translation status to approved and set reviewed_by. Requires moderator/admin."""
     validated_lang, err = validate_language_code(lang)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     user = get_current_user()
     reviewer_id = user.id if user else None
     trans, err = approve_article_translation(article_id, validated_lang, reviewer_id=reviewer_id)
     if err:
-        return jsonify({"error": err}), 404
+        return jsonify({"error": err}), route_status_codes.not_found
     log_activity(
         actor=user,
         category="news",
@@ -483,7 +484,7 @@ def news_translation_approve(article_id, lang):
         target_type="news_translation",
         target_id=f"{article_id}:{validated_lang}",
     )
-    return jsonify(_translation_to_dict(trans)), 200
+    return jsonify(_translation_to_dict(trans)), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/translations/<lang>/publish", methods=["POST"])
@@ -493,10 +494,10 @@ def news_translation_publish(article_id, lang):
     """Set translation status to published. Requires moderator/admin."""
     validated_lang, err = validate_language_code(lang)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     trans, err = publish_article_translation(article_id, validated_lang)
     if err:
-        return jsonify({"error": err}), 404
+        return jsonify({"error": err}), route_status_codes.not_found
     log_activity(
         actor=get_current_user(),
         category="news",
@@ -508,7 +509,7 @@ def news_translation_publish(article_id, lang):
         target_type="news_translation",
         target_id=f"{article_id}:{validated_lang}",
     )
-    return jsonify(_translation_to_dict(trans)), 200
+    return jsonify(_translation_to_dict(trans)), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/translations/auto-translate", methods=["POST"])
@@ -525,9 +526,9 @@ def news_auto_translate(article_id):
     supported = get_supported_languages()
     article = get_news_article_by_id(article_id)
     if not article:
-        return jsonify({"error": "News not found"}), 404
+        return jsonify({"error": "News not found"}), route_status_codes.not_found
     if target_lang and target_lang not in supported:
-        return jsonify({"error": "Unsupported target language"}), 400
+        return jsonify({"error": "Unsupported target language"}), route_status_codes.bad_request
     items, _ = list_article_translations(article_id)
     missing = [it["language_code"] for it in items if it.get("translation_status") == "missing"]
     if target_lang:
@@ -559,24 +560,24 @@ def news_link_discussion_thread(article_id: int):
     """
     user = get_current_user()
     if not user or not current_user_can_write_news():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     article = get_news_article_by_id(article_id)
     if not article:
-        return jsonify({"error": "News article not found"}), 404
+        return jsonify({"error": "News article not found"}), route_status_codes.not_found
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
 
     try:
         thread_id = int(data.get("discussion_thread_id"))
     except (TypeError, ValueError):
-        return jsonify({"error": "discussion_thread_id must be an integer"}), 400
+        return jsonify({"error": "discussion_thread_id must be an integer"}), route_status_codes.bad_request
 
     thread = ForumThread.query.get(thread_id)
     if not thread:
-        return jsonify({"error": "Discussion thread not found"}), 404
+        return jsonify({"error": "Discussion thread not found"}), route_status_codes.not_found
 
     article.discussion_thread_id = thread_id
     db.session.commit()
@@ -594,7 +595,7 @@ def news_link_discussion_thread(article_id: int):
     return jsonify({
         "id": article.id,
         "discussion_thread_id": article.discussion_thread_id,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/discussion-thread", methods=["DELETE"])
@@ -606,11 +607,11 @@ def news_unlink_discussion_thread(article_id: int):
     """
     user = get_current_user()
     if not user or not current_user_can_write_news():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     article = get_news_article_by_id(article_id)
     if not article:
-        return jsonify({"error": "News article not found"}), 404
+        return jsonify({"error": "News article not found"}), route_status_codes.not_found
 
     article.discussion_thread_id = None
     db.session.commit()
@@ -625,7 +626,7 @@ def news_unlink_discussion_thread(article_id: int):
         target_type="news_article",
         target_id=str(article_id),
     )
-    return jsonify({"message": "Discussion thread unlinked"}), 200
+    return jsonify({"message": "Discussion thread unlinked"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/related-threads", methods=["GET"])
@@ -638,9 +639,9 @@ def news_related_threads_get(article_id: int):
     """
     article = get_news_article_by_id(article_id)
     if not article:
-        return jsonify({"error": "News article not found"}), 404
+        return jsonify({"error": "News article not found"}), route_status_codes.not_found
     items = list_related_threads_for_article(article.id, limit=10)
-    return jsonify({"items": items}), 200
+    return jsonify({"items": items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/related-threads", methods=["POST"])
@@ -653,19 +654,19 @@ def news_related_threads_add(article_id: int):
     """
     article = get_news_article_by_id(article_id)
     if not article:
-        return jsonify({"error": "News article not found"}), 404
+        return jsonify({"error": "News article not found"}), route_status_codes.not_found
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     try:
         thread_id = int(data.get("thread_id"))
     except (TypeError, ValueError):
-        return jsonify({"error": "thread_id must be an integer"}), 400
+        return jsonify({"error": "thread_id must be an integer"}), route_status_codes.bad_request
 
     thread = ForumThread.query.get(thread_id)
     if not thread or thread.deleted_at is not None:
-        return jsonify({"error": "Forum thread not found"}), 404
+        return jsonify({"error": "Forum thread not found"}), route_status_codes.not_found
 
     from app.models import NewsArticleForumThread
 
@@ -693,7 +694,7 @@ def news_related_threads_add(article_id: int):
         target_id=str(article.id),
     )
     items = list_related_threads_for_article(article.id, limit=10)
-    return jsonify({"items": items}), 200
+    return jsonify({"items": items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/related-threads/<int:thread_id>", methods=["DELETE"])
@@ -705,13 +706,13 @@ def news_related_threads_delete(article_id: int, thread_id: int):
     """
     article = get_news_article_by_id(article_id)
     if not article:
-        return jsonify({"error": "News article not found"}), 404
+        return jsonify({"error": "News article not found"}), route_status_codes.not_found
 
     from app.models import NewsArticleForumThread
 
     mapping = NewsArticleForumThread.query.filter_by(article_id=article.id, thread_id=thread_id).first()
     if not mapping:
-        return jsonify({"error": "Related thread mapping not found"}), 404
+        return jsonify({"error": "Related thread mapping not found"}), route_status_codes.not_found
     db.session.delete(mapping)
     db.session.commit()
 
@@ -727,7 +728,7 @@ def news_related_threads_delete(article_id: int, thread_id: int):
         target_id=str(article.id),
     )
     items = list_related_threads_for_article(article.id, limit=10)
-    return jsonify({"items": items}), 200
+    return jsonify({"items": items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/news/<int:article_id>/suggested-threads", methods=["GET"])
@@ -752,12 +753,12 @@ def news_suggested_threads_get(article_id: int):
     """
     article = get_news_article_by_id(article_id)
     if not article:
-        return jsonify({"error": "Article not found"}), 404
+        return jsonify({"error": "Article not found"}), route_status_codes.not_found
     if article.status != "published":
         # Non-published articles don't show suggestions to public
-        return jsonify({"items": [], "total": 0}), 200
+        return jsonify({"items": [], "total": 0}), route_status_codes.ok
 
     # Get auto-suggested threads (already excludes manual links and primary)
     suggested = get_suggested_threads_for_article(article_id, limit=10)
 
-    return jsonify({"items": suggested, "total": len(suggested)}), 200
+    return jsonify({"items": suggested, "total": len(suggested)}), route_status_codes.ok

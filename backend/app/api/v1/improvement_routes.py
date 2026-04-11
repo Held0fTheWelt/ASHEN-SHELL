@@ -22,6 +22,7 @@ from app.services.improvement_service import (
     list_recommendation_packages,
     run_sandbox_experiment,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 # Imported for stable test patch path ``app.api.v1.improvement_routes.ImprovementStore`` (pipeline calls Store.default()).
 from ai_stack import (
@@ -120,13 +121,13 @@ def _transcript_tool_evidence_for_improvement(
 def create_improvement_variant():
     data = request.get_json(silent=True)
     if data is None or not isinstance(data, dict):
-        return jsonify({"error": "Invalid JSON body"}), 400
+        return jsonify({"error": "Invalid JSON body"}), route_status_codes.bad_request
     baseline_id = (data.get("baseline_id") or "").strip()
     candidate_summary = (data.get("candidate_summary") or "").strip()
     if not baseline_id:
-        return jsonify({"error": "baseline_id is required"}), 400
+        return jsonify({"error": "baseline_id is required"}), route_status_codes.bad_request
     if not candidate_summary:
-        return jsonify({"error": "candidate_summary is required"}), 400
+        return jsonify({"error": "candidate_summary is required"}), route_status_codes.bad_request
     actor_id = str(get_jwt_identity() or "unknown")
     trace_id = g.get("trace_id") or get_trace_id()
     raw_iec = data.get("improvement_entry_class")
@@ -140,7 +141,7 @@ def create_improvement_variant():
             improvement_entry_class=top_iec,
         )
     except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": str(exc)}), route_status_codes.bad_request
     log_workflow_audit(
         trace_id,
         workflow="improvement_variant_create",
@@ -148,7 +149,7 @@ def create_improvement_variant():
         outcome="ok",
         resource_id=variant.get("variant_id"),
     )
-    return jsonify(variant), 201
+    return jsonify(variant), route_status_codes.created
 
 
 @api_v1_bp.route("/improvement/experiments/run", methods=["POST"])
@@ -156,15 +157,15 @@ def create_improvement_variant():
 def run_improvement_experiment():
     data = request.get_json(silent=True)
     if data is None or not isinstance(data, dict):
-        return jsonify({"error": "Invalid JSON body"}), 400
+        return jsonify({"error": "Invalid JSON body"}), route_status_codes.bad_request
     variant_id = (data.get("variant_id") or "").strip()
     if not variant_id:
-        return jsonify({"error": "variant_id is required"}), 400
+        return jsonify({"error": "variant_id is required"}), route_status_codes.bad_request
     actor_id = str(get_jwt_identity() or "unknown")
     trace_id = g.get("trace_id") or get_trace_id()
     test_inputs = data.get("test_inputs")
     if test_inputs is not None and not isinstance(test_inputs, list):
-        return jsonify({"error": "test_inputs must be a list when provided"}), 400
+        return jsonify({"error": "test_inputs must be a list when provided"}), route_status_codes.bad_request
 
     workflow_stages: list[dict[str, Any]] = [
         {
@@ -262,13 +263,13 @@ def run_improvement_experiment():
                 context_payload.get("retrieval") if isinstance(context_payload.get("retrieval"), dict) else {}
             ),
         }
-    ), 200
+    ), route_status_codes.ok
 
 
 @api_v1_bp.route("/improvement/recommendations", methods=["GET"])
 @jwt_required()
 def list_improvement_recommendations():
-    return jsonify({"packages": list_recommendation_packages()}), 200
+    return jsonify({"packages": list_recommendation_packages()}), route_status_codes.ok
 
 
 @api_v1_bp.route("/improvement/recommendations/<package_id>/decision", methods=["POST"])
@@ -276,10 +277,10 @@ def list_improvement_recommendations():
 def improvement_recommendation_decision(package_id: str):
     data = request.get_json(silent=True)
     if data is None or not isinstance(data, dict):
-        return jsonify({"error": "Invalid JSON body"}), 400
+        return jsonify({"error": "Invalid JSON body"}), route_status_codes.bad_request
     decision = data.get("decision")
     if not isinstance(decision, str) or not decision.strip():
-        return jsonify({"error": "decision is required"}), 400
+        return jsonify({"error": "decision is required"}), route_status_codes.bad_request
     note = data.get("note") if isinstance(data.get("note"), str) else None
     actor_id = str(get_jwt_identity() or "unknown")
     trace_id = g.get("trace_id") or get_trace_id()
@@ -291,9 +292,9 @@ def improvement_recommendation_decision(package_id: str):
             note=note,
         )
     except FileNotFoundError:
-        return jsonify({"error": "recommendation package not found"}), 404
+        return jsonify({"error": "recommendation package not found"}), route_status_codes.not_found
     except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": str(exc)}), route_status_codes.bad_request
     log_workflow_audit(
         trace_id,
         workflow="improvement_recommendation_decision",
@@ -301,4 +302,4 @@ def improvement_recommendation_decision(package_id: str):
         outcome="ok",
         resource_id=package_id,
     )
-    return jsonify(package), 200
+    return jsonify(package), route_status_codes.ok

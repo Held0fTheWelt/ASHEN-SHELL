@@ -11,6 +11,7 @@ from app.services import log_activity
 from app.services.metrics_service import get_metrics
 from app.utils.csv_safe import csv_safe_cell
 from app.models import User, ForumCategory, ModeratorAssignment
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 def _parse_int(value, default, min_val=None, max_val=None):
@@ -36,7 +37,7 @@ def admin_logs_list():
     Response: items, total, page, limit. Newest first.
     """
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
     q = request.args.get("q", "").strip() or None
     category = request.args.get("category", "").strip() or None
     status = request.args.get("status", "").strip() or None
@@ -57,7 +58,7 @@ def admin_logs_list():
         "total": total,
         "page": page,
         "limit": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/metrics", methods=["GET"])
@@ -66,7 +67,7 @@ def admin_logs_list():
 def admin_metrics():
     """User growth and activity metrics for admin dashboards. Query: range=24h|7d|30d|12m (invalid → 24h)."""
     range_key = (request.args.get("range") or "24h").strip()
-    return jsonify(get_metrics(range_key)), 200
+    return jsonify(get_metrics(range_key)), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/logs/export", methods=["GET"])
@@ -74,7 +75,7 @@ def admin_metrics():
 @admin_security(require_2fa=False, require_super_admin=False, rate_limit="5/minute", audit_log=True)
 def admin_logs_export():
     """Export activity logs as CSV (admin only). Same filters as list; limit max 5000."""
-    limit = _parse_int(request.args.get("limit"), 5000, min_val=1, max_val=5000)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_max, min_val=1, max_val=route_pagination_config.page_size_max)
     q = request.args.get("q", "").strip() or None
     category = request.args.get("category", "").strip() or None
     status = request.args.get("status", "").strip() or None
@@ -135,7 +136,7 @@ def admin_list_moderator_assignments():
     Query: page, limit, user_id (filter), category_id (filter).
     """
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
     user_id_filter = _parse_int(request.args.get("user_id"), None)
     category_id_filter = _parse_int(request.args.get("category_id"), None)
 
@@ -153,7 +154,7 @@ def admin_list_moderator_assignments():
         "total": total,
         "page": page,
         "limit": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/moderator-assignments", methods=["POST"])
@@ -167,23 +168,23 @@ def admin_create_moderator_assignment():
     admin_user = get_current_user()
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
 
     try:
         user_id = int(data.get("user_id"))
         category_id = int(data.get("category_id"))
     except (TypeError, ValueError):
-        return jsonify({"error": "user_id and category_id must be integers"}), 400
+        return jsonify({"error": "user_id and category_id must be integers"}), route_status_codes.bad_request
 
     # Verify user exists and is a moderator
     user = User.query.get(user_id)
     if not user or not user.is_moderator_or_admin:
-        return jsonify({"error": "User not found or is not a moderator/admin"}), 404
+        return jsonify({"error": "User not found or is not a moderator/admin"}), route_status_codes.not_found
 
     # Verify category exists
     category = ForumCategory.query.get(category_id)
     if not category:
-        return jsonify({"error": "Category not found"}), 404
+        return jsonify({"error": "Category not found"}), route_status_codes.not_found
 
     # Check for existing assignment
     existing = ModeratorAssignment.query.filter_by(
@@ -191,7 +192,7 @@ def admin_create_moderator_assignment():
         category_id=category_id,
     ).first()
     if existing:
-        return jsonify({"error": "Moderator is already assigned to this category"}), 409
+        return jsonify({"error": "Moderator is already assigned to this category"}), route_status_codes.conflict
 
     # Create assignment
     assignment = ModeratorAssignment(
@@ -215,7 +216,7 @@ def admin_create_moderator_assignment():
         metadata={"user_id": user_id, "category_id": category_id},
     )
 
-    return jsonify(assignment.to_dict()), 201
+    return jsonify(assignment.to_dict()), route_status_codes.created
 
 
 @api_v1_bp.route("/admin/moderator-assignments/<int:assignment_id>", methods=["DELETE"])
@@ -228,7 +229,7 @@ def admin_delete_moderator_assignment(assignment_id: int):
     admin_user = get_current_user()
     assignment = ModeratorAssignment.query.get(assignment_id)
     if not assignment:
-        return jsonify({"error": "Assignment not found"}), 404
+        return jsonify({"error": "Assignment not found"}), route_status_codes.not_found
 
     user = User.query.get(assignment.user_id)
     category = ForumCategory.query.get(assignment.category_id)
@@ -252,7 +253,7 @@ def admin_delete_moderator_assignment(assignment_id: int):
         metadata={"user_id": assignment.user_id, "category_id": assignment.category_id},
     )
 
-    return jsonify({"message": "Unassigned"}), 200
+    return jsonify({"message": "Unassigned"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/moderator-assignments/user/<int:user_id>", methods=["GET"])
@@ -264,7 +265,7 @@ def admin_list_user_assignments(user_id: int):
     """
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
 
     assignments = ModeratorAssignment.query.filter_by(user_id=user_id).all()
     categories = []
@@ -278,4 +279,4 @@ def admin_list_user_assignments(user_id: int):
         "username": user.username,
         "categories": categories,
         "total": len(categories),
-    }), 200
+    }), route_status_codes.ok

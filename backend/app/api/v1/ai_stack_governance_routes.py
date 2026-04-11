@@ -20,6 +20,7 @@ from app.services.inspector_projection_service import (
 )
 from app.services.inspector_turn_projection_service import build_inspector_turn_projection
 from app.services.improvement_service import list_recommendation_packages
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 @api_v1_bp.route("/admin/ai-stack/session-evidence/<session_id>", methods=["GET"])
@@ -190,7 +191,7 @@ def admin_ai_stack_improvement_packages():
     """List improvement recommendation packages (same store as authenticated improvement API)."""
     trace_id = g.get("trace_id") or get_trace_id()
     packages = list_recommendation_packages()
-    return jsonify({"trace_id": trace_id, "packages": packages, "total": len(packages)}), 200
+    return jsonify({"trace_id": trace_id, "packages": packages, "total": len(packages)}), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/ai-stack/release-readiness", methods=["GET"])
@@ -201,7 +202,7 @@ def admin_ai_stack_release_readiness():
     """Return honest release-readiness state for repaired AI stack paths."""
     trace_id = g.get("trace_id") or get_trace_id()
     report = build_release_readiness_report(trace_id=trace_id)
-    return jsonify(report), 200
+    return jsonify(report), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/ai-stack/closure-cockpit", methods=["GET"])
@@ -212,4 +213,4 @@ def admin_ai_stack_closure_cockpit():
     """Return normalized closure cockpit state from canonical GoC audit artifacts."""
     trace_id = g.get("trace_id") or get_trace_id()
     report = build_closure_cockpit_report(trace_id=trace_id)
-    return jsonify(report), 200
+    return jsonify(report), route_status_codes.ok

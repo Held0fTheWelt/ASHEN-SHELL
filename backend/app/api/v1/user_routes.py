@@ -40,7 +40,7 @@ from app.services.user_service import (
     validate_email_format,
     USERNAME_MAX_LENGTH,
 )
-from app.config.route_constants import route_user_config
+from app.config.route_constants import route_user_config, route_status_codes, route_pagination_config
 
 logger = logging.getLogger(__name__)
 
@@ -321,11 +321,11 @@ def _validate_birthday(birthday: str) -> tuple[bool, str | None]:
 def users_list():
     """List users (admin only). Query: page, limit, q (search username/email)."""
     if not current_user_is_admin():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
-        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), route_status_codes.forbidden
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     search = request.args.get("q", "").strip() or None
     items, total = list_users(page=page, per_page=limit, search=search)
     return jsonify({
@@ -333,7 +333,7 @@ def users_list():
         "total": total,
         "page": page,
         "per_page": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>", methods=["GET"])
@@ -349,7 +349,7 @@ def users_get(user_id):
     """
     current = get_current_user()
     if current is None:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
 
     # SECURITY: Strict permission check - only allow admin or self
     # Non-admin users cannot view other users' private data
@@ -358,20 +358,20 @@ def users_get(user_id):
 
     if not is_viewing_self and not is_admin:
         # Non-admin attempting cross-user access
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     # If admin is viewing another user, verify feature access
     if not is_viewing_self and is_admin:
         if not user_can_access_feature(current, FEATURE_MANAGE_USERS):
-            return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
+            return jsonify({"error": "Forbidden. You do not have access to this feature."}), route_status_codes.forbidden
 
     user = get_user_by_id(user_id)
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
 
     # Check if viewing self and account is banned
     if is_viewing_self and getattr(user, "is_banned", False):
-        return jsonify({"error": "Account is restricted."}), 403
+        return jsonify({"error": "Account is restricted."}), route_status_codes.forbidden
 
     # Determine what data to include based on viewer role
     include_email = is_admin or is_viewing_self
@@ -382,7 +382,7 @@ def users_get(user_id):
         include_email=include_email,
         include_ban=include_ban,
         include_areas=include_areas
-    )), 200
+    )), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>/preferences", methods=["PUT"])
@@ -392,17 +392,17 @@ def users_preferences(user_id):
     """Update user preferences (e.g. preferred_language). User can update self; admin can update any."""
     current = get_current_user()
     if current is None:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
     if current.id != user_id and not current_user_is_admin():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     kwargs = {}
     if "preferred_language" in data:
         kwargs["preferred_language"] = data.get("preferred_language")
     if not kwargs:
-        return jsonify({"error": "No preference fields to update"}), 400
+        return jsonify({"error": "No preference fields to update"}), route_status_codes.bad_request
     user, err = update_user_service(user_id, **kwargs)
     if err:
         status = 400 if err == "Unsupported language" else 404
@@ -410,7 +410,7 @@ def users_preferences(user_id):
     include_email = current_user_is_admin() or current.id == user.id
     include_ban = current_user_is_admin()
     include_areas = current_user_is_admin()
-    return jsonify(user.to_dict(include_email=include_email, include_ban=include_ban, include_areas=include_areas)), 200
+    return jsonify(user.to_dict(include_email=include_email, include_ban=include_ban, include_areas=include_areas)), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>/password", methods=["PUT"])
@@ -423,28 +423,28 @@ def users_change_password(user_id):
     """
     current = get_current_user()
     if current is None:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
     if current.id != user_id:
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     current_password = data.get("current_password")
     new_password = data.get("new_password")
     if current_password is None or new_password is None:
-        return jsonify({"error": "current_password and new_password are required"}), 400
+        return jsonify({"error": "current_password and new_password are required"}), route_status_codes.bad_request
     # Validate password complexity
     is_valid, error_msg = validate_password_complexity(new_password)
     if not is_valid:
-        return jsonify({"error": error_msg, "code": "PASSWORD_WEAK"}), 400
+        return jsonify({"error": error_msg, "code": "PASSWORD_WEAK"}), route_status_codes.bad_request
     user, err = change_password_service(
         user_id,
         current_password=current_password,
         new_password=new_password,
     )
     if err:
-        return jsonify({"error": err}), 400
-    return jsonify({"message": "Password updated"}), 200
+        return jsonify({"error": err}), route_status_codes.bad_request
+    return jsonify({"message": "Password updated"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>", methods=["PUT"])
@@ -466,20 +466,20 @@ def users_update(user_id):
 def users_delete(user_id):
     """Delete a user (admin only, SuperAdmin required, 2FA required). Admin may only delete users with strictly lower role_level."""
     if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
-        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), route_status_codes.forbidden
 
     current = get_current_user()
     target_user = get_user_by_id(user_id)
     if not target_user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
     actor_level = getattr(current, "role_level", 0) or 0
     target_level = getattr(target_user, "role_level", 0) or 0
     if not admin_may_edit_target(actor_level, target_level):
-        return jsonify({"error": "Forbidden. You may only delete users with a lower role level."}), 403
+        return jsonify({"error": "Forbidden. You may only delete users with a lower role level."}), route_status_codes.forbidden
 
     ok, err = delete_user_service(user_id)
     if not ok:
-        return jsonify({"error": err or "User not found"}), 404
+        return jsonify({"error": err or "User not found"}), route_status_codes.not_found
 
     log_activity(
         actor=current,
@@ -493,7 +493,7 @@ def users_delete(user_id):
         target_id=str(user_id),
     )
 
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Deleted"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>/role", methods=["PATCH"])
@@ -502,17 +502,17 @@ def users_delete(user_id):
 def users_assign_role(user_id):
     """Assign role to a user (admin only, 2FA required). Admin may only assign to users with strictly lower role_level. Body: role (user, qa, moderator, admin), optional reason."""
     if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
-        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), route_status_codes.forbidden
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     role_name = data.get("role")
     if role_name is None:
-        return jsonify({"error": "role is required"}), 400
+        return jsonify({"error": "role is required"}), route_status_codes.bad_request
     current = get_current_user()
     target = get_user_by_id(user_id)
     if not target:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
     actor_level = getattr(current, "role_level", 0) or 0
     target_level = getattr(target, "role_level", 0) or 0
 
@@ -520,7 +520,7 @@ def users_assign_role(user_id):
     from app.models import Role
     role_obj = Role.query.filter_by(name=(role_name or "").strip().lower()).first()
     if not role_obj:
-        return jsonify({"error": "Invalid role"}), 400
+        return jsonify({"error": "Invalid role"}), route_status_codes.bad_request
 
     # Determine the new role_level
     # If role_level is explicitly provided, use it; otherwise keep the target's existing level
@@ -529,11 +529,11 @@ def users_assign_role(user_id):
         try:
             new_role_level = int(data.get("role_level"))
         except (TypeError, ValueError):
-            return jsonify({"error": "role_level must be an integer"}), 400
+            return jsonify({"error": "role_level must be an integer"}), route_status_codes.bad_request
         # Bounds check: must be 0-9999
         is_valid, err = _validate_role_level_bounds(new_role_level)
         if not is_valid:
-            return jsonify({"error": err}), 400
+            return jsonify({"error": err}), route_status_codes.bad_request
     else:
         new_role_level = target_level  # Keep existing level
 
@@ -548,7 +548,7 @@ def users_assign_role(user_id):
             return jsonify({
                 "error": "Cannot modify your own role or role level via this endpoint. Use PUT /users/<id> for self-changes if allowed.",
                 "code": "PRIVILEGE_ESCALATION_DENIED"
-            }), 403
+            }), route_status_codes.forbidden
 
         # SuperAdmin users can modify their own level, but not higher than their own current level
         if is_super_admin and has_role_level_in_request:
@@ -556,12 +556,12 @@ def users_assign_role(user_id):
                 return jsonify({
                     "error": f"Cannot elevate yourself higher than your own role level ({actor_level}). You may only assign equal or lower levels.",
                     "code": "INSUFFICIENT_PRIVILEGE"
-                }), 403
+                }), route_status_codes.forbidden
 
     # If assigning to someone else, they must have strictly lower role_level
     if user_id != current.id:
         if not admin_may_edit_target(actor_level, target_level):
-            return jsonify({"error": "Forbidden. You may only assign roles to users with a lower role level."}), 403
+            return jsonify({"error": "Forbidden. You may only assign roles to users with a lower role level."}), route_status_codes.forbidden
 
     # Capture before value for role change
     old_role = target.role
@@ -576,20 +576,20 @@ def users_assign_role(user_id):
                 return jsonify({
                     "error": "Cannot elevate yourself to SuperAdmin. Only SuperAdmin may assign themselves a higher role level.",
                     "code": "PRIVILEGE_ESCALATION_DENIED"
-                }), 403
+                }), route_status_codes.forbidden
             # Also check that SuperAdmin doesn't elevate themselves above their current level
             if new_role_level > actor_level:
                 return jsonify({
                     "error": f"Cannot elevate yourself higher than your own role level ({actor_level}). You may only assign equal or lower levels.",
                     "code": "INSUFFICIENT_PRIVILEGE"
-                }), 403
+                }), route_status_codes.forbidden
         else:
             # Other user: new role_level must be strictly lower than actor's level
             if new_role_level >= actor_level:
                 return jsonify({
                     "error": f"Cannot assign a role level higher than your own ({actor_level}). You may only assign strictly lower levels.",
                     "code": "PRIVILEGE_ESCALATION_DENIED"
-                }), 403
+                }), route_status_codes.forbidden
 
     user, err = assign_role_service(user_id, role_name, actor_id=current.id if current else None)
     if err:
@@ -627,7 +627,7 @@ def users_assign_role(user_id):
         reason=reason_str,
     )
 
-    return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), 200
+    return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>/ban", methods=["POST"])
@@ -636,15 +636,15 @@ def users_assign_role(user_id):
 def users_ban(user_id):
     """Ban a user (admin only). Admin may only ban users with strictly lower role_level. Body: optional reason."""
     if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
-        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), route_status_codes.forbidden
     current = get_current_user()
     target = get_user_by_id(user_id)
     if not target:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
     actor_level = getattr(current, "role_level", 0) or 0
     target_level = getattr(target, "role_level", 0) or 0
     if not admin_may_edit_target(actor_level, target_level):
-        return jsonify({"error": "Forbidden. You may only ban users with a lower role level."}), 403
+        return jsonify({"error": "Forbidden. You may only ban users with a lower role level."}), route_status_codes.forbidden
     data = request.get_json(silent=True) or {}
     reason = data.get("reason") if isinstance(data.get("reason"), str) else None
     if reason is not None:
@@ -664,7 +664,7 @@ def users_ban(user_id):
         target_type="user",
         target_id=str(user.id),
     )
-    return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), 200
+    return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>/unban", methods=["POST"])
@@ -673,15 +673,15 @@ def users_ban(user_id):
 def users_unban(user_id):
     """Unban a user (admin only, 2FA required). Admin may only unban users with strictly lower role_level."""
     if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
-        return jsonify({"error": "Forbidden. You do not have access to this feature."}), 403
+        return jsonify({"error": "Forbidden. You do not have access to this feature."}), route_status_codes.forbidden
     current = get_current_user()
     target = get_user_by_id(user_id)
     if not target:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
     actor_level = getattr(current, "role_level", 0) or 0
     target_level = getattr(target, "role_level", 0) or 0
     if not admin_may_edit_target(actor_level, target_level):
-        return jsonify({"error": "Forbidden. You may only unban users with a lower role level."}), 403
+        return jsonify({"error": "Forbidden. You may only unban users with a lower role level."}), route_status_codes.forbidden
     user, err = unban_user_service(user_id)
     if err:
         status = 404 if err == "User not found" else 400
@@ -697,7 +697,7 @@ def users_unban(user_id):
         target_type="user",
         target_id=str(user.id),
     )
-    return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), 200
+    return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), route_status_codes.ok
 
 
 # --- User Profiles (Phase 4) ---
@@ -714,7 +714,7 @@ def users_profile(user_id):
     """
     user = get_user_by_id(user_id)
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
 
     # Basic user info (public safe data)
     profile = {
@@ -739,7 +739,7 @@ def users_profile(user_id):
     # Tags used by this user
     profile["tags"] = get_user_tags(user.id, limit=15)
 
-    return jsonify(profile), 200
+    return jsonify(profile), route_status_codes.ok
 
 
 @api_v1_bp.route("/users/<int:user_id>/bookmarks", methods=["GET"])
@@ -753,14 +753,14 @@ def users_bookmarks(user_id):
     """
     current = get_current_user()
     if current is None:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
 
     # Users can only view their own bookmarks
     if current.id != user_id and not current_user_is_admin():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
 
     bookmarks, total = get_user_bookmarks(user_id, limit=limit, page=page)
 
@@ -769,4 +769,4 @@ def users_bookmarks(user_id):
         "total": total,
         "page": page,
         "per_page": limit,
-    }), 200
+    }), route_status_codes.ok

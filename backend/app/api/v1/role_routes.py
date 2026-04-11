@@ -12,6 +12,7 @@ from app.services.role_service import (
     list_roles as list_roles_service,
     update_role as update_role_service,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 def _parse_int(value, default, min_val=None, max_val=None):
@@ -35,7 +36,7 @@ def _parse_int(value, default, min_val=None, max_val=None):
 def roles_list():
     """List roles (admin only). Query: page, limit, q (search name)."""
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
     q = request.args.get("q", "").strip() or None
     items, total = list_roles_service(page=page, per_page=limit, q=q)
     return jsonify({
@@ -43,7 +44,7 @@ def roles_list():
         "total": total,
         "page": page,
         "per_page": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/roles/<int:role_id>", methods=["GET"])
@@ -54,8 +55,8 @@ def roles_get(role_id):
     """Get one role by id (admin only)."""
     role = get_role_by_id(role_id)
     if not role:
-        return jsonify({"error": "Role not found"}), 404
-    return jsonify(role.to_dict()), 200
+        return jsonify({"error": "Role not found"}), route_status_codes.not_found
+    return jsonify(role.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/roles", methods=["POST"])
@@ -66,7 +67,7 @@ def roles_create():
     """Create a role (admin only). Body: name; optional description, default_role_level."""
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     name = (data.get("name") or "").strip() if data.get("name") is not None else ""
     description = data.get("description")
     if description is not None:
@@ -76,7 +77,7 @@ def roles_create():
     if err:
         status = 409 if err == "Role name already exists" else 400
         return jsonify({"error": err}), status
-    return jsonify(role.to_dict()), 201
+    return jsonify(role.to_dict()), route_status_codes.created
 
 
 @api_v1_bp.route("/roles/<int:role_id>", methods=["PUT"])
@@ -87,7 +88,7 @@ def roles_update(role_id):
     """Update a role (admin only). Body: optional name, description, default_role_level."""
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     name = data.get("name")
     if name is not None:
         name = (name or "").strip() or None
@@ -105,7 +106,7 @@ def roles_update(role_id):
     if err:
         status = 409 if err == "Role name already exists" else (404 if err == "Role not found" else 400)
         return jsonify({"error": err}), status
-    return jsonify(role.to_dict()), 200
+    return jsonify(role.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/roles/<int:role_id>", methods=["DELETE"])
@@ -118,4 +119,4 @@ def roles_delete(role_id):
     if not ok:
         status = 404 if err == "Role not found" else 400
         return jsonify({"error": err or "Role not found"}), status
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Deleted"}), route_status_codes.ok

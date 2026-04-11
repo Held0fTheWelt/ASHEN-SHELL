@@ -12,6 +12,7 @@ from app.services.analytics_service import (
     get_analytics_content,
     get_analytics_moderation,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 @api_v1_bp.route("/admin/analytics/summary", methods=["GET"])
@@ -26,17 +27,17 @@ def admin_analytics_summary():
     """
     current_user = get_current_user()
     if not current_user or not current_user.is_admin:
-        return jsonify({"error": "Admin access required"}), 403
+        return jsonify({"error": "Admin access required"}), route_status_codes.forbidden
 
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
     try:
         result = get_analytics_summary(date_from=date_from, date_to=date_to)
-        return jsonify(result), 200
+        return jsonify(result), route_status_codes.ok
     except Exception as e:
         current_app.logger.exception("Analytics error in admin_analytics_summary")
-        return jsonify({"error": "Failed to fetch analytics"}), 500
+        return jsonify({"error": "Failed to fetch analytics"}), route_status_codes.internal_error
 
 
 @api_v1_bp.route("/admin/analytics/timeline", methods=["GET"])
@@ -51,7 +52,7 @@ def admin_analytics_timeline():
     """
     current_user = get_current_user()
     if not current_user or not (current_user.is_admin or current_user.has_role("moderator")):
-        return jsonify({"error": "Admin or moderator access required"}), 403
+        return jsonify({"error": "Admin or moderator access required"}), route_status_codes.forbidden
 
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
@@ -59,10 +60,10 @@ def admin_analytics_timeline():
 
     try:
         result = get_analytics_timeline(date_from=date_from, date_to=date_to, metric=metric)
-        return jsonify(result), 200
+        return jsonify(result), route_status_codes.ok
     except Exception as e:
         current_app.logger.exception("Analytics error in admin_analytics_timeline")
-        return jsonify({"error": "Failed to fetch timeline"}), 500
+        return jsonify({"error": "Failed to fetch timeline"}), route_status_codes.internal_error
 
 
 @api_v1_bp.route("/admin/analytics/users", methods=["GET"])
@@ -77,7 +78,7 @@ def admin_analytics_users():
     """
     current_user = get_current_user()
     if not current_user or not current_user.is_admin:
-        return jsonify({"error": "Admin access required"}), 403
+        return jsonify({"error": "Admin access required"}), route_status_codes.forbidden
 
     try:
         limit_param = request.args.get("limit", "10")
@@ -90,10 +91,10 @@ def admin_analytics_users():
 
     try:
         result = get_analytics_users(limit=limit, sort_by=sort_by)
-        return jsonify(result), 200
+        return jsonify(result), route_status_codes.ok
     except Exception as e:
         current_app.logger.exception("Analytics error in admin_analytics_users")
-        return jsonify({"error": "Failed to fetch user analytics"}), 500
+        return jsonify({"error": "Failed to fetch user analytics"}), route_status_codes.internal_error
 
 
 @api_v1_bp.route("/admin/analytics/content", methods=["GET"])
@@ -108,7 +109,7 @@ def admin_analytics_content():
     """
     current_user = get_current_user()
     if not current_user or not (current_user.is_admin or current_user.has_role("moderator")):
-        return jsonify({"error": "Admin or moderator access required"}), 403
+        return jsonify({"error": "Admin or moderator access required"}), route_status_codes.forbidden
 
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
@@ -122,10 +123,10 @@ def admin_analytics_content():
 
     try:
         result = get_analytics_content(date_from=date_from, date_to=date_to, limit=limit)
-        return jsonify(result), 200
+        return jsonify(result), route_status_codes.ok
     except Exception as e:
         current_app.logger.exception("Analytics error in admin_analytics_content")
-        return jsonify({"error": "Failed to fetch content analytics"}), 500
+        return jsonify({"error": "Failed to fetch content analytics"}), route_status_codes.internal_error
 
 
 @api_v1_bp.route("/admin/analytics/moderation", methods=["GET"])
@@ -140,7 +141,7 @@ def admin_analytics_moderation():
     """
     current_user = get_current_user()
     if not current_user or not (current_user.is_admin or current_user.has_role("moderator")):
-        return jsonify({"error": "Admin or moderator access required"}), 403
+        return jsonify({"error": "Admin or moderator access required"}), route_status_codes.forbidden
 
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
@@ -148,7 +149,7 @@ def admin_analytics_moderation():
 
     try:
         result = get_analytics_moderation(date_from=date_from, date_to=date_to, priority_filter=priority_filter)
-        return jsonify(result), 200
+        return jsonify(result), route_status_codes.ok
     except Exception as e:
         current_app.logger.exception("Analytics error in admin_analytics_moderation")
-        return jsonify({"error": "Failed to fetch moderation analytics"}), 500
+        return jsonify({"error": "Failed to fetch moderation analytics"}), route_status_codes.internal_error

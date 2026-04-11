@@ -6,7 +6,7 @@ from app.auth.permissions import require_jwt_admin
 from app.extensions import db, limiter
 from app.i18n import validate_language_code
 from app.services.slogan_service import list_slogans_for_placement, resolve_slogan_for_placement
-from app.config.route_constants import route_site_config
+from app.config.route_constants import route_site_config, route_status_codes, route_pagination_config
 
 
 def _public_site_settings():
@@ -72,7 +72,7 @@ def _upsert_site_setting(key: str, value: str) -> None:
 @limiter.limit("60 per minute")
 def site_settings():
     """Public read-only site settings (e.g. slogan_rotation_interval_seconds, slogan_rotation_enabled)."""
-    return jsonify(_public_site_settings()), 200
+    return jsonify(_public_site_settings()), route_status_codes.ok
 
 
 @api_v1_bp.route("/site/settings", methods=["PUT"])
@@ -82,10 +82,10 @@ def site_settings_put():
     """Admin-only: update slogan rotation interval and/or enabled flag."""
     ct = (request.content_type or "").lower()
     if "application/json" not in ct:
-        return jsonify({"error": "Expected JSON body"}), 400
+        return jsonify({"error": "Expected JSON body"}), route_status_codes.bad_request
     data = request.get_json(silent=True)
     if data is None or not isinstance(data, dict):
-        return jsonify({"error": "Invalid JSON"}), 400
+        return jsonify({"error": "Invalid JSON"}), route_status_codes.bad_request
 
     if "slogan_rotation_interval_seconds" in data:
         coerced = _coerce_rotation_interval(data["slogan_rotation_interval_seconds"])
@@ -103,7 +103,7 @@ def site_settings_put():
         _upsert_site_setting("slogan_rotation_enabled", "true" if en else "false")
 
     db.session.commit()
-    return jsonify(_public_site_settings()), 200
+    return jsonify(_public_site_settings()), route_status_codes.ok
 
 
 @api_v1_bp.route("/site/slogans", methods=["GET"])
@@ -116,17 +116,17 @@ def site_slogans():
     """
     placement = (request.args.get("placement") or "").strip()
     if not placement:
-        return jsonify({"error": "placement is required"}), 400
+        return jsonify({"error": "placement is required"}), route_status_codes.bad_request
     lang = (request.args.get("lang") or "").strip() or current_app.config.get("DEFAULT_LANGUAGE", "de")
     validated_lang, err = validate_language_code(lang)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     slogans = list_slogans_for_placement(placement, validated_lang)
     items = [
         {"text": s.text, "placement_key": s.placement_key, "language_code": s.language_code}
         for s in slogans
     ]
-    return jsonify({"items": items}), 200
+    return jsonify({"items": items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/site/slogan", methods=["GET"])
@@ -139,16 +139,16 @@ def site_slogan():
     """
     placement = (request.args.get("placement") or "").strip()
     if not placement:
-        return jsonify({"error": "placement is required"}), 400
+        return jsonify({"error": "placement is required"}), route_status_codes.bad_request
     lang = (request.args.get("lang") or "").strip() or current_app.config.get("DEFAULT_LANGUAGE", "de")
     validated_lang, err = validate_language_code(lang)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     slogan = resolve_slogan_for_placement(placement, validated_lang)
     if not slogan:
-        return jsonify({"text": None, "placement_key": placement, "language_code": validated_lang}), 200
+        return jsonify({"text": None, "placement_key": placement, "language_code": validated_lang}), route_status_codes.ok
     return jsonify({
         "text": slogan.text,
         "placement_key": slogan.placement_key,
         "language_code": slogan.language_code,
-    }), 200
+    }), route_status_codes.ok

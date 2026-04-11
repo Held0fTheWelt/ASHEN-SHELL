@@ -15,6 +15,7 @@ from app.services.play_service_control_service import (
     run_test_persist,
     save_desired,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 def _operator_user_id() -> int | None:
@@ -33,7 +34,7 @@ def _operator_user_id() -> int | None:
 @require_feature(FEATURE_MANAGE_PLAY_SERVICE_CONTROL)
 def admin_play_service_control_get():
     app = current_app._get_current_object()
-    return jsonify(get_control_payload(app)), 200
+    return jsonify(get_control_payload(app)), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/play-service-control", methods=["POST"])
@@ -51,8 +52,7 @@ def admin_play_service_control_post():
                     "desired_state": None,
                     "validation_errors": ["JSON object body required"],
                 }
-            ),
-            400,
+            ), route_status_codes.bad_request,
         )
     out = save_desired(app, body, user_id=_operator_user_id())
     status = 200 if out["saved"] else 400
@@ -66,7 +66,7 @@ def admin_play_service_control_post():
 def admin_play_service_control_test():
     app = current_app._get_current_object()
     out = run_test_persist(app, user_id=_operator_user_id())
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/play-service-control/apply", methods=["POST"])
@@ -76,4 +76,4 @@ def admin_play_service_control_test():
 def admin_play_service_control_apply():
     app = current_app._get_current_object()
     out = apply_desired(app, user_id=_operator_user_id())
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok

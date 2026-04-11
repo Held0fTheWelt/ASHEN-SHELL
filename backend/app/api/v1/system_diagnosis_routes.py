@@ -10,6 +10,7 @@ from app.auth.permissions import require_feature, require_jwt_moderator_or_admin
 from app.extensions import limiter
 from app.observability.trace import get_trace_id
 from app.services.system_diagnosis_service import get_system_diagnosis
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 @api_v1_bp.route("/admin/system-diagnosis", methods=["GET"])
@@ -27,4 +28,4 @@ def admin_system_diagnosis():
         refresh=refresh,
         trace_id=trace_id,
     )
-    return jsonify(payload), 200
+    return jsonify(payload), route_status_codes.ok

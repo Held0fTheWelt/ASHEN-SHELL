@@ -26,6 +26,7 @@ from app.services.mcp_operations_service import (
     rebuild_automatic_cases,
     reclassify_case,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 def _parse_int(q: str | None, default: int, *, min_v: int = 1, max_v: int = 500) -> int:
@@ -45,25 +46,25 @@ def mcp_telemetry_ingest():
     """Append-only ingest for MCP process JSON log lines (Bearer MCP_SERVICE_TOKEN)."""
     raw = request.get_data(cache=False, as_text=False) or b""
     if len(raw) > INGEST_MAX_BODY_BYTES:
-        return jsonify({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "Body exceeds limit"}}), 400
+        return jsonify({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "Body exceeds limit"}}), route_status_codes.bad_request
     try:
         body = json.loads(raw.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return jsonify({"error": {"code": "INVALID_JSON", "message": "Invalid JSON"}}), 400
+        return jsonify({"error": {"code": "INVALID_JSON", "message": "Invalid JSON"}}), route_status_codes.bad_request
     if not isinstance(body, dict):
-        return jsonify({"error": {"code": "INVALID_BODY", "message": "JSON object required"}}), 400
+        return jsonify({"error": {"code": "INVALID_BODY", "message": "JSON object required"}}), route_status_codes.bad_request
     records = body.get("records")
     if not isinstance(records, list):
-        return jsonify({"error": {"code": "INVALID_RECORDS", "message": "records array required"}}), 400
+        return jsonify({"error": {"code": "INVALID_RECORDS", "message": "records array required"}}), route_status_codes.bad_request
     if len(records) > 200:
-        return jsonify({"error": {"code": "TOO_MANY_RECORDS", "message": "Max 200 records per request"}}), 400
+        return jsonify({"error": {"code": "TOO_MANY_RECORDS", "message": "Max 200 records per request"}}), route_status_codes.bad_request
     try:
         out = ingest_telemetry_batch(records)
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
-        return jsonify({"error": {"code": "INGEST_FAILED", "message": str(exc)}}), 500
-    return jsonify(out), 200
+        return jsonify({"error": {"code": "INGEST_FAILED", "message": str(exc)}}), route_status_codes.internal_error
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/overview", methods=["GET"])
@@ -71,7 +72,7 @@ def mcp_telemetry_ingest():
 @require_jwt_moderator_or_admin
 @require_feature(FEATURE_MANAGE_MCP_OPERATIONS)
 def admin_mcp_overview():
-    return jsonify(get_overview(current_app._get_current_object())), 200
+    return jsonify(get_overview(current_app._get_current_object())), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/suites", methods=["GET"])
@@ -79,7 +80,7 @@ def admin_mcp_overview():
 @require_jwt_moderator_or_admin
 @require_feature(FEATURE_MANAGE_MCP_OPERATIONS)
 def admin_mcp_suites():
-    return jsonify(get_suites_detail()), 200
+    return jsonify(get_suites_detail()), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/activity", methods=["GET"])
@@ -93,7 +94,7 @@ def admin_mcp_activity():
     trace_id = (request.args.get("trace_id") or "").strip() or None
     errors_only = (request.args.get("errors_only") or "").strip().lower() in ("1", "true", "yes")
     items, total = query_activity(page=page, limit=limit, suite=suite, trace_id=trace_id, errors_only=errors_only)
-    return jsonify({"items": items, "total": total, "page": page, "limit": limit}), 200
+    return jsonify({"items": items, "total": total, "page": page, "limit": limit}), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/logs", methods=["GET"])
@@ -123,7 +124,7 @@ def admin_mcp_logs():
         date_from=date_from,
         date_to=date_to,
     )
-    return jsonify({"items": items, "total": total, "page": page, "limit": limit}), 200
+    return jsonify({"items": items, "total": total, "page": page, "limit": limit}), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/diagnostics", methods=["GET"])
@@ -135,7 +136,7 @@ def admin_mcp_diagnostics_list():
     limit = _parse_int(request.args.get("limit"), 50, min_v=1, max_v=200)
     status = (request.args.get("status") or "").strip() or None
     items, total = query_diagnostics(page=page, limit=limit, status=status)
-    return jsonify({"items": items, "total": total, "page": page, "limit": limit}), 200
+    return jsonify({"items": items, "total": total, "page": page, "limit": limit}), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/diagnostics/manual", methods=["POST"])
@@ -145,11 +146,11 @@ def admin_mcp_diagnostics_list():
 def admin_mcp_diagnostics_manual():
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
-        return jsonify({"error": "JSON object required"}), 400
+        return jsonify({"error": "JSON object required"}), route_status_codes.bad_request
     case_type = (body.get("case_type") or "").strip()
     summary = (body.get("summary") or "").strip()
     if not case_type or not summary:
-        return jsonify({"error": "case_type and summary required"}), 400
+        return jsonify({"error": "case_type and summary required"}), route_status_codes.bad_request
     suite_name = (body.get("suite_name") or "unknown").strip()[:40] or "unknown"
     severity = (body.get("severity") or "medium").strip()[:16]
     rec = body.get("recommended_next_action")
@@ -165,8 +166,8 @@ def admin_mcp_diagnostics_manual():
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
-        return jsonify({"error": str(exc)}), 500
-    return jsonify(case_to_dict(c)), 201
+        return jsonify({"error": str(exc)}), route_status_codes.internal_error
+    return jsonify(case_to_dict(c)), route_status_codes.created
 
 
 @api_v1_bp.route("/admin/mcp/actions/refresh-catalog", methods=["POST"])
@@ -174,7 +175,7 @@ def admin_mcp_diagnostics_manual():
 @require_jwt_moderator_or_admin
 @require_feature(FEATURE_MANAGE_MCP_OPERATIONS)
 def admin_mcp_action_refresh_catalog():
-    return jsonify(action_refresh_catalog(current_app._get_current_object())), 200
+    return jsonify(action_refresh_catalog(current_app._get_current_object())), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/actions/retry-job", methods=["POST"])
@@ -195,8 +196,8 @@ def admin_mcp_action_retry_job():
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
-        return jsonify({"error": str(exc)}), 500
-    return jsonify(out), 200
+        return jsonify({"error": str(exc)}), route_status_codes.internal_error
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/actions/generate-audit-bundle", methods=["POST"])
@@ -212,7 +213,7 @@ def admin_mcp_action_audit_bundle():
         except (TypeError, ValueError):
             pass
     lim = max(1, min(lim, 2000))
-    return jsonify(action_audit_bundle(limit_events=lim)), 200
+    return jsonify(action_audit_bundle(limit_events=lim)), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/mcp/actions/reclassify-diagnostic", methods=["POST"])
@@ -222,10 +223,10 @@ def admin_mcp_action_audit_bundle():
 def admin_mcp_action_reclassify():
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
-        return jsonify({"error": "JSON object required"}), 400
+        return jsonify({"error": "JSON object required"}), route_status_codes.bad_request
     case_id = (body.get("case_id") or "").strip()
     if not case_id:
-        return jsonify({"error": "case_id required"}), 400
+        return jsonify({"error": "case_id required"}), route_status_codes.bad_request
     try:
         c = reclassify_case(
             public_id=case_id,
@@ -234,9 +235,9 @@ def admin_mcp_action_reclassify():
             suite_display_override=body.get("suite_display_override"),
         )
         if not c:
-            return jsonify({"error": "case not found"}), 404
+            return jsonify({"error": "case not found"}), route_status_codes.not_found
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
-        return jsonify({"error": str(exc)}), 500
-    return jsonify(case_to_dict(c)), 200
+        return jsonify({"error": str(exc)}), route_status_codes.internal_error
+    return jsonify(case_to_dict(c)), route_status_codes.ok

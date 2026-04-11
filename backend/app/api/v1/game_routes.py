@@ -52,6 +52,7 @@ from app.services.game_service import (
     list_templates as list_play_templates,
     resolve_join_context,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 class GameIdentityContext(dict):
@@ -88,27 +89,27 @@ def _require_game_user() -> User:
 
 def _error_response(exc: Exception):
     if isinstance(exc, PermissionError):
-        return jsonify({"error": str(exc)}), 401 if "Authentication" in str(exc) else 403
+        return jsonify({"error": str(exc)}), route_status_codes.unauthorized if "Authentication" in str(exc) else 403
     if isinstance(exc, NotFoundError):
-        return jsonify({"error": str(exc)}), 404
+        return jsonify({"error": str(exc)}), route_status_codes.not_found
     if isinstance(exc, (OwnershipError, ValidationError, GameContentValidationError)):
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": str(exc)}), route_status_codes.bad_request
     if isinstance(exc, GameContentNotFoundError):
-        return jsonify({"error": str(exc)}), 404
+        return jsonify({"error": str(exc)}), route_status_codes.not_found
     if isinstance(exc, GameContentConflictError):
-        return jsonify({"error": str(exc)}), 409
+        return jsonify({"error": str(exc)}), route_status_codes.conflict
     if isinstance(exc, GameContentLifecycleError):
         body: dict[str, Any] = {"error": str(exc)}
         if exc.code:
             body["code"] = exc.code
         if exc.content_lifecycle is not None:
             body["content_lifecycle"] = exc.content_lifecycle
-        return jsonify(body), 409
+        return jsonify(body), route_status_codes.conflict
     if isinstance(exc, GameServiceConfigError):
         return jsonify({"error": str(exc)}), exc.status_code
     if isinstance(exc, GameServiceError):
         return jsonify({"error": str(exc)}), exc.status_code
-    return jsonify({"error": "Unexpected game launcher error."}), 500
+    return jsonify({"error": "Unexpected game launcher error."}), route_status_codes.internal_error
 
 
 
@@ -263,7 +264,7 @@ def game_create_run():
         data = request.get_json(silent=True) or {}
         template_id = (data.get("template_id") or "").strip()
         if not template_id:
-            return jsonify({"error": "template_id is required."}), 400
+            return jsonify({"error": "template_id is required."}), route_status_codes.bad_request
         identity = _resolve_identity_context(user, data)
         result = create_play_run(
             template_id=template_id,
@@ -273,7 +274,7 @@ def game_create_run():
         )
         if identity["character_id"]:
             touch_character_last_used(user.id, int(identity["character_id"]))
-        return jsonify(result), 200
+        return jsonify(result), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -286,7 +287,7 @@ def game_create_ticket():
         data = request.get_json(silent=True) or {}
         run_id = (data.get("run_id") or "").strip()
         if not run_id:
-            return jsonify({"error": "run_id is required."}), 400
+            return jsonify({"error": "run_id is required."}), route_status_codes.bad_request
 
         identity = _resolve_identity_context(user, data)
         preferred_role_id = (data.get("preferred_role_id") or None)
@@ -320,7 +321,7 @@ def game_create_ticket():
                 "character_id": identity["character_id"],
                 "ws_base_url": get_play_service_websocket_url(),
             }
-        ), 200
+        ), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -348,7 +349,7 @@ def game_characters_create():
             bio=data.get("bio"),
             is_default=bool(data.get("is_default")),
         )
-        return jsonify({"character": character.to_dict()}), 201
+        return jsonify({"character": character.to_dict()}), route_status_codes.created
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -368,7 +369,7 @@ def game_characters_update(character_id: int):
             is_default=data.get("is_default"),
             is_archived=data.get("is_archived"),
         )
-        return jsonify({"character": character.to_dict()}), 200
+        return jsonify({"character": character.to_dict()}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -379,7 +380,7 @@ def game_characters_delete(character_id: int):
     try:
         user = _require_game_user()
         character = update_character_for_user(user.id, character_id, is_archived=True)
-        return jsonify({"character": character.to_dict(), "archived": True}), 200
+        return jsonify({"character": character.to_dict(), "archived": True}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -412,7 +413,7 @@ def game_save_slots_upsert():
             character_id=_parse_optional_int(data.get("character_id"), field_name="character_id"),
             metadata=data.get("metadata") if isinstance(data.get("metadata"), dict) else None,
         )
-        return jsonify({"save_slot": slot.to_dict()}), 200
+        return jsonify({"save_slot": slot.to_dict()}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -423,7 +424,7 @@ def game_save_slots_delete(slot_id: int):
     try:
         user = _require_game_user()
         delete_save_slot_for_user(user.id, slot_id)
-        return jsonify({"deleted": True, "slot_id": slot_id}), 200
+        return jsonify({"deleted": True, "slot_id": slot_id}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -462,7 +463,7 @@ def game_content_create():
             actor_user_id=user.id if user else None,
             governance_provenance=gov,
         )
-        return jsonify({"experience": experience}), 201
+        return jsonify({"experience": experience}), route_status_codes.created
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -484,7 +485,7 @@ def game_content_update(experience_id: int):
         data = request.get_json(silent=True) or {}
         payload = data.get("payload") if isinstance(data.get("payload"), dict) else data
         experience = update_experience(experience_id, payload=payload, actor_user_id=user.id if user else None)
-        return jsonify({"experience": experience}), 200
+        return jsonify({"experience": experience}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -495,7 +496,7 @@ def game_content_publish(experience_id: int):
     try:
         user = _current_user()
         experience = publish_experience(experience_id, actor_user_id=user.id if user else None)
-        return jsonify({"experience": experience}), 200
+        return jsonify({"experience": experience}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -512,7 +513,7 @@ def game_content_unpublish(experience_id: int):
             actor_user_id=user.id if user else None,
             note=note,
         )
-        return jsonify({"experience": experience}), 200
+        return jsonify({"experience": experience}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -529,7 +530,7 @@ def game_content_governance_submit_review(experience_id: int):
             actor_user_id=user.id if user else None,
             note=note,
         )
-        return jsonify({"experience": experience}), 200
+        return jsonify({"experience": experience}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -542,7 +543,7 @@ def game_content_governance_decision(experience_id: int):
         data = request.get_json(silent=True) or {}
         decision = data.get("decision")
         if not isinstance(decision, str) or not decision.strip():
-            return jsonify({"error": "decision is required"}), 400
+            return jsonify({"error": "decision is required"}), route_status_codes.bad_request
         note = data.get("note") if isinstance(data.get("note"), str) else None
         experience = apply_editorial_decision(
             experience_id,
@@ -550,7 +551,7 @@ def game_content_governance_decision(experience_id: int):
             actor_user_id=user.id if user else None,
             note=note,
         )
-        return jsonify({"experience": experience}), 200
+        return jsonify({"experience": experience}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 
@@ -567,7 +568,7 @@ def game_content_governance_mark_publishable(experience_id: int):
             actor_user_id=user.id if user else None,
             note=note,
         )
-        return jsonify({"experience": experience}), 200
+        return jsonify({"experience": experience}), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper
         return _error_response(exc)
 

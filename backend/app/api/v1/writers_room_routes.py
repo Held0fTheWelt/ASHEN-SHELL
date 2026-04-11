@@ -12,6 +12,7 @@ from app.services.writers_room_service import (
     run_writers_room_review,
     submit_writers_room_revision,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 @api_v1_bp.route("/writers-room/reviews", methods=["POST"])
@@ -19,11 +20,11 @@ from app.services.writers_room_service import (
 def create_writers_room_review():
     data = request.get_json(silent=True)
     if data is None or not isinstance(data, dict):
-        return jsonify({"error": "Invalid JSON body"}), 400
+        return jsonify({"error": "Invalid JSON body"}), route_status_codes.bad_request
     module_id = (data.get("module_id") or "").strip()
     focus = (data.get("focus") or "canon consistency and dramaturgy").strip()
     if not module_id:
-        return jsonify({"error": "module_id is required"}), 400
+        return jsonify({"error": "module_id is required"}), route_status_codes.bad_request
 
     actor_id = str(get_jwt_identity() or "unknown")
     trace_id = g.get("trace_id") or get_trace_id()
@@ -37,7 +38,7 @@ def create_writers_room_review():
         outcome="ok",
         resource_id=module_id,
     )
-    return jsonify(report), 200
+    return jsonify(report), route_status_codes.ok
 
 
 @api_v1_bp.route("/writers-room/reviews/<review_id>", methods=["GET"])
@@ -46,8 +47,8 @@ def get_writers_room_review_by_id(review_id: str):
     try:
         review = get_writers_room_review(review_id=review_id)
     except FileNotFoundError:
-        return jsonify({"error": "review_not_found"}), 404
-    return jsonify(review), 200
+        return jsonify({"error": "review_not_found"}), route_status_codes.not_found
+    return jsonify(review), route_status_codes.ok
 
 
 @api_v1_bp.route("/writers-room/reviews/<review_id>/revision-submit", methods=["POST"])
@@ -69,9 +70,9 @@ def submit_writers_room_review_revision(review_id: str):
             trace_id=trace_id,
         )
     except FileNotFoundError:
-        return jsonify({"error": "review_not_found"}), 404
+        return jsonify({"error": "review_not_found"}), route_status_codes.not_found
     except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": str(exc)}), route_status_codes.bad_request
     log_workflow_audit(
         trace_id,
         workflow="writers_room_revision_submit",
@@ -79,7 +80,7 @@ def submit_writers_room_review_revision(review_id: str):
         outcome="ok",
         resource_id=review_id,
     )
-    return jsonify(review), 200
+    return jsonify(review), route_status_codes.ok
 
 
 @api_v1_bp.route("/writers-room/reviews/<review_id>/decision", methods=["POST"])
@@ -87,10 +88,10 @@ def submit_writers_room_review_revision(review_id: str):
 def set_writers_room_review_decision(review_id: str):
     data = request.get_json(silent=True)
     if data is None or not isinstance(data, dict):
-        return jsonify({"error": "Invalid JSON body"}), 400
+        return jsonify({"error": "Invalid JSON body"}), route_status_codes.bad_request
     decision = str(data.get("decision") or "").strip()
     if not decision:
-        return jsonify({"error": "decision is required"}), 400
+        return jsonify({"error": "decision is required"}), route_status_codes.bad_request
     actor_id = str(get_jwt_identity() or "unknown")
     trace_id = g.get("trace_id") or get_trace_id()
     try:
@@ -101,9 +102,9 @@ def set_writers_room_review_decision(review_id: str):
             note=str(data.get("note") or "").strip(),
         )
     except FileNotFoundError:
-        return jsonify({"error": "review_not_found"}), 404
+        return jsonify({"error": "review_not_found"}), route_status_codes.not_found
     except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": str(exc)}), route_status_codes.bad_request
     log_workflow_audit(
         trace_id,
         workflow="writers_room_review_decision",
@@ -111,4 +112,4 @@ def set_writers_room_review_decision(review_id: str):
         outcome="ok",
         resource_id=review_id,
     )
-    return jsonify(review), 200
+    return jsonify(review), route_status_codes.ok

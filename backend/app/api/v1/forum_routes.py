@@ -104,6 +104,7 @@ from app.services.forum_service import (
     set_thread_tags,
     list_tags_for_thread,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 # --- Public / community -------------------------------------------------------
 
@@ -118,7 +119,7 @@ def forum_categories_list():
     """
     user = _current_user_optional()
     cats = list_categories_for_user(user)
-    return jsonify({"items": [c.to_dict() for c in cats], "total": len(cats)}), 200
+    return jsonify({"items": [c.to_dict() for c in cats], "total": len(cats)}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/categories/<slug>", methods=["GET"])
@@ -132,7 +133,7 @@ def forum_category_detail(slug):
     user = _current_user_optional()
     cat = get_category_by_slug_for_user(user, slug)
     if not cat:
-        return jsonify({"error": "Category not found"}), 404
+        return jsonify({"error": "Category not found"}), route_status_codes.not_found
     # Basic stats: non-deleted threads count
     total_threads = (
         ForumThread.query.filter_by(category_id=cat.id)
@@ -141,7 +142,7 @@ def forum_category_detail(slug):
     )
     data = cat.to_dict()
     data["thread_count"] = total_threads
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/categories/<slug>/threads", methods=["GET"])
@@ -157,10 +158,10 @@ def forum_category_threads(slug):
     user = _current_user_optional()
     cat = get_category_by_slug_for_user(user, slug)
     if not cat:
-        return jsonify({"error": "Category not found"}), 404
+        return jsonify({"error": "Category not found"}), route_status_codes.not_found
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
 
     # Moderators/admins see all statuses (hidden, archived); others get SQL-level filter.
     is_mod = user is not None and (current_user_is_moderator() or current_user_is_admin())
@@ -188,7 +189,7 @@ def forum_category_threads(slug):
             "page": page,
             "per_page": limit,
         }
-    ), 200
+    ), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<slug>", methods=["GET"])
@@ -202,7 +203,7 @@ def forum_thread_detail(slug):
     user = _current_user_optional()
     thread = get_thread_by_slug(slug)
     if not thread or not user_can_view_thread(user, thread):
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user_id = user.id if user else None
     increment_thread_view(thread, user_id=user_id)
     data = thread.to_dict()
@@ -219,7 +220,7 @@ def forum_thread_detail(slug):
     tags = list_tags_for_thread(thread)
     if tags:
         data["tags"] = [{"slug": t.slug, "label": t.label} for t in tags]
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/posts", methods=["GET"])
@@ -236,10 +237,10 @@ def forum_thread_posts(thread_id: int):
     user = _current_user_optional()
     thread = get_thread_by_id(thread_id)
     if not thread or not user_can_view_thread(user, thread):
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     include_hidden = False
     include_deleted = False
     if user and (current_user_is_moderator() or current_user_is_admin()):
@@ -269,7 +270,7 @@ def forum_thread_posts(thread_id: int):
             "page": page,
             "per_page": limit,
         }
-    ), 200
+    ), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/search", methods=["GET"])
@@ -320,36 +321,36 @@ def forum_thread_create(slug):
         return err_resp
     cat = ForumCategory.query.filter_by(slug=slug).first()
     if not cat:
-        return jsonify({"error": "Category not found"}), 404
+        return jsonify({"error": "Category not found"}), route_status_codes.not_found
     if not user_can_create_thread(user, cat):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
 
     # Type check before stripping
     title_raw = data.get("title")
     content_raw = data.get("content")
     if title_raw is not None and not isinstance(title_raw, str):
-        return jsonify({"error": "Title must be a string"}), 400
+        return jsonify({"error": "Title must be a string"}), route_status_codes.bad_request
     if content_raw is not None and not isinstance(content_raw, str):
-        return jsonify({"error": "Content must be a string"}), 400
+        return jsonify({"error": "Content must be a string"}), route_status_codes.bad_request
 
     title = (title_raw or "").strip()
     content = (content_raw or "").strip()
     if not title or not content:
-        return jsonify({"error": "title and content are required"}), 400
+        return jsonify({"error": "title and content are required"}), route_status_codes.bad_request
 
     # Validate title length (5-500 characters)
     is_valid, error_msg = _validate_title_length(title, min_len=5, max_len=500)
     if not is_valid:
-        return jsonify({"error": error_msg}), 400
+        return jsonify({"error": error_msg}), route_status_codes.bad_request
 
     # Validate content length (10-50000 characters)
     is_valid, error_msg = _validate_content_length(content, min_len=10, max_len=50000)
     if not is_valid:
-        return jsonify({"error": error_msg}), 400
+        return jsonify({"error": error_msg}), route_status_codes.bad_request
 
     thread, post, err = create_thread(
         category=cat,
@@ -358,7 +359,7 @@ def forum_thread_create(slug):
         content=content,
     )
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     log_activity(
         actor=user,
         category="forum",
@@ -374,7 +375,7 @@ def forum_thread_create(slug):
     data["author_username"] = thread.author.username if thread.author else None
     if thread.category:
         data["category"] = thread.category.to_dict()
-    return jsonify(data), 201
+    return jsonify(data), route_status_codes.created
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>", methods=["PUT"])
@@ -391,28 +392,28 @@ def forum_thread_update(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     if not thread.category:
-        return jsonify({"error": "Thread has no category"}), 400
+        return jsonify({"error": "Thread has no category"}), route_status_codes.bad_request
     # Author can update their own thread
     if thread.author_id == user.id:
         pass
     # Moderators/admins must be assigned to the category
     elif not user_can_moderate_category(user, thread.category):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     title = data.get("title")
     if title is not None:
         # Type check before attempting to strip
         if not isinstance(title, str):
-            return jsonify({"error": "Title must be a string"}), 400
+            return jsonify({"error": "Title must be a string"}), route_status_codes.bad_request
         title = title.strip()
         # Validate title length (5-500 characters)
         is_valid, error_msg = _validate_title_length(title, min_len=5, max_len=500)
         if not is_valid:
-            return jsonify({"error": error_msg}), 400
+            return jsonify({"error": error_msg}), route_status_codes.bad_request
     thread = update_thread(thread, title=title)
     log_activity(
         actor=user,
@@ -429,7 +430,7 @@ def forum_thread_update(thread_id: int):
     data["author_username"] = thread.author.username if thread.author else None
     if thread.category:
         data["category"] = thread.category.to_dict()
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>", methods=["DELETE"])
@@ -445,15 +446,15 @@ def forum_thread_delete(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     if not thread.category:
-        return jsonify({"error": "Thread has no category"}), 400
+        return jsonify({"error": "Thread has no category"}), route_status_codes.bad_request
     # Author can delete their own thread
     if thread.author_id == user.id:
         pass
     # Moderators/admins must be assigned to the category
     elif not user_can_moderate_category(user, thread.category):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     thread = soft_delete_thread(thread)
     log_activity(
         actor=user,
@@ -466,7 +467,7 @@ def forum_thread_delete(thread_id: int):
         target_type="forum_thread",
         target_id=str(thread.id),
     )
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Deleted"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/posts", methods=["POST"])
@@ -482,18 +483,18 @@ def forum_post_create(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     if not user_can_post_in_thread(user, thread):
-        return jsonify({"error": "Forbidden. Thread is locked or not accessible."}), 403
+        return jsonify({"error": "Forbidden. Thread is locked or not accessible."}), route_status_codes.forbidden
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
 
     # Type check before stripping
     content_raw = data.get("content")
     if content_raw is not None and not isinstance(content_raw, str):
-        return jsonify({"error": "Content must be a string"}), 400
+        return jsonify({"error": "Content must be a string"}), route_status_codes.bad_request
 
     content = (content_raw or "").strip()
     parent_post_id = data.get("parent_post_id")
@@ -502,12 +503,12 @@ def forum_post_create(thread_id: int):
         try:
             parent_id_int = int(parent_post_id)
         except (TypeError, ValueError):
-            return jsonify({"error": "parent_post_id must be an integer"}), 400
+            return jsonify({"error": "parent_post_id must be an integer"}), route_status_codes.bad_request
 
     # Validate content length (10-50000 characters)
     is_valid, error_msg = _validate_content_length(content, min_len=10, max_len=50000)
     if not is_valid:
-        return jsonify({"error": error_msg}), 400
+        return jsonify({"error": error_msg}), route_status_codes.bad_request
 
     post, err = create_post(
         thread=thread,
@@ -516,7 +517,7 @@ def forum_post_create(thread_id: int):
         parent_post_id=parent_id_int,
     )
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     create_notifications_for_thread_reply(thread, post, user.id)
     log_activity(
         actor=user,
@@ -529,7 +530,7 @@ def forum_post_create(thread_id: int):
         target_type="forum_post",
         target_id=str(post.id),
     )
-    return jsonify(post.to_dict()), 201
+    return jsonify(post.to_dict()), route_status_codes.created
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/bookmark", methods=["POST"])
@@ -544,9 +545,9 @@ def forum_thread_bookmark(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread or not user_can_view_thread(user, thread):
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     bookmark_thread(user, thread)
-    return jsonify({"message": "Bookmarked"}), 200
+    return jsonify({"message": "Bookmarked"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/bookmark", methods=["DELETE"])
@@ -561,9 +562,9 @@ def forum_thread_unbookmark(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     unbookmark_thread(user, thread)
-    return jsonify({"message": "Unbookmarked"}), 200
+    return jsonify({"message": "Unbookmarked"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/bookmarks", methods=["GET"])
@@ -579,7 +580,7 @@ def forum_bookmarks_list():
     if err_resp:
         return err_resp
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     threads, total = list_bookmarked_threads(user, page=page, per_page=limit)
     items = []
     for t in threads:
@@ -591,7 +592,7 @@ def forum_bookmarks_list():
         if tags:
             d["tags"] = [{"slug": tag.slug, "label": tag.label} for tag in tags]
         items.append(d)
-    return jsonify({"items": items, "total": total, "page": page, "per_page": limit}), 200
+    return jsonify({"items": items, "total": total, "page": page, "per_page": limit}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/tags", methods=["PUT"])
@@ -607,19 +608,19 @@ def forum_thread_set_tags(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     if not (thread.author_id == user.id or current_user_is_moderator() or current_user_is_admin()):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     raw_tags = data.get("tags") or []
     if not isinstance(raw_tags, list):
-        return jsonify({"error": "tags must be a list of strings"}), 400
+        return jsonify({"error": "tags must be a list of strings"}), route_status_codes.bad_request
     tags = [str(t) for t in raw_tags if isinstance(t, (str, bytes))]
     tag_rows = set_thread_tags(thread, tags=tags)
     out = [{"slug": t.slug, "label": t.label} for t in tag_rows]
-    return jsonify({"tags": out}), 200
+    return jsonify({"tags": out}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>", methods=["PUT"])
@@ -636,24 +637,24 @@ def forum_post_update(post_id: int):
         return err_resp
     post = get_post_by_id(post_id)
     if not post:
-        return jsonify({"error": "Post not found"}), 404
+        return jsonify({"error": "Post not found"}), route_status_codes.not_found
     if not user_can_edit_post(user, post):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     content = data.get("content")
     if content is None:
-        return jsonify({"error": "content is required"}), 400
+        return jsonify({"error": "content is required"}), route_status_codes.bad_request
 
     # Type check before validation
     if not isinstance(content, str):
-        return jsonify({"error": "Content must be a string"}), 400
+        return jsonify({"error": "Content must be a string"}), route_status_codes.bad_request
 
     # Validate content length (10-50000 characters)
     is_valid, error_msg = _validate_content_length(content, min_len=10, max_len=50000)
     if not is_valid:
-        return jsonify({"error": error_msg}), 400
+        return jsonify({"error": error_msg}), route_status_codes.bad_request
 
     post = update_post(post, content=content, editor_id=user.id)
     log_activity(
@@ -667,7 +668,7 @@ def forum_post_update(post_id: int):
         target_type="forum_post",
         target_id=str(post.id),
     )
-    return jsonify(post.to_dict()), 200
+    return jsonify(post.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>", methods=["DELETE"])
@@ -682,9 +683,9 @@ def forum_post_delete(post_id: int):
         return err_resp
     post = get_post_by_id(post_id)
     if not post:
-        return jsonify({"error": "Post not found"}), 404
+        return jsonify({"error": "Post not found"}), route_status_codes.not_found
     if not user_can_soft_delete_post(user, post):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     post = soft_delete_post(post)
     log_activity(
         actor=user,
@@ -697,7 +698,7 @@ def forum_post_delete(post_id: int):
         target_type="forum_post",
         target_id=str(post.id),
     )
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Deleted"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>/like", methods=["POST"])
@@ -712,14 +713,14 @@ def forum_post_like(post_id: int):
         return err_resp
     post = get_post_by_id(post_id)
     if not post:
-        return jsonify({"error": "Post not found"}), 404
+        return jsonify({"error": "Post not found"}), route_status_codes.not_found
     if not user_can_like_post(user, post):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     like, err = like_post(user, post)
     if err:
         # Duplicate like - return 200 for idempotency (user already liked this post)
-        return jsonify({"message": "Already liked", "like_count": post.like_count, "liked_by_me": True}), 200
-    return jsonify({"message": "Liked", "like_count": post.like_count, "liked_by_me": True}), 200
+        return jsonify({"message": "Already liked", "like_count": post.like_count, "liked_by_me": True}), route_status_codes.ok
+    return jsonify({"message": "Liked", "like_count": post.like_count, "liked_by_me": True}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>/like", methods=["DELETE"])
@@ -734,9 +735,9 @@ def forum_post_unlike(post_id: int):
         return err_resp
     post = get_post_by_id(post_id)
     if not post:
-        return jsonify({"error": "Post not found"}), 404
+        return jsonify({"error": "Post not found"}), route_status_codes.not_found
     unlike_post(user, post)
-    return jsonify({"message": "Unliked", "like_count": post.like_count, "liked_by_me": False}), 200
+    return jsonify({"message": "Unliked", "like_count": post.like_count, "liked_by_me": False}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/subscribe", methods=["POST"])
@@ -751,9 +752,9 @@ def forum_thread_subscribe(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread or not user_can_view_thread(user, thread):
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     sub = subscribe_thread(user, thread)
-    return jsonify({"message": "Subscribed", "subscription_id": sub.id}), 200
+    return jsonify({"message": "Subscribed", "subscription_id": sub.id}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/subscribe", methods=["DELETE"])
@@ -768,9 +769,9 @@ def forum_thread_unsubscribe(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     unsubscribe_thread(user, thread)
-    return jsonify({"message": "Unsubscribed"}), 200
+    return jsonify({"message": "Unsubscribed"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/reports", methods=["POST"])
@@ -786,23 +787,23 @@ def forum_report_create():
         return err_resp
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     target_type = (data.get("target_type") or "").strip()
     try:
         target_id = int(data.get("target_id"))
     except (TypeError, ValueError):
-        return jsonify({"error": "target_id must be an integer"}), 400
+        return jsonify({"error": "target_id must be an integer"}), route_status_codes.bad_request
     reason = data.get("reason")
     if target_type == "thread":
         target = get_thread_by_id(target_id)
         if not target or not user_can_view_thread(user, target):
-            return jsonify({"error": "Thread not found"}), 404
+            return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     elif target_type == "post":
         target = get_post_by_id(target_id)
         if not target or not user_can_view_post(user, target):
-            return jsonify({"error": "Post not found"}), 404
+            return jsonify({"error": "Post not found"}), route_status_codes.not_found
     else:
-        return jsonify({"error": "Invalid target_type"}), 400
+        return jsonify({"error": "Invalid target_type"}), route_status_codes.bad_request
 
     report, err = create_report(
         target_type=target_type,
@@ -811,7 +812,7 @@ def forum_report_create():
         reason=reason,
     )
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     log_activity(
         actor=user,
         category="forum",
@@ -823,7 +824,7 @@ def forum_report_create():
         target_type="forum_report",
         target_id=str(report.id),
     )
-    return jsonify(report.to_dict()), 201
+    return jsonify(report.to_dict()), route_status_codes.created
 
 
 # --- Moderator/admin actions --------------------------------------------------
@@ -832,23 +833,23 @@ def forum_report_create():
 def _require_moderator_for_category(cat: ForumCategory):
     user = get_current_user()
     if not user:
-        return None, (jsonify({"error": "Authorization required"}), 401)
+        return None, (jsonify({"error": "Authorization required"}), route_status_codes.unauthorized)
     if not user_can_moderate_category(user, cat):
-        return None, (jsonify({"error": "Forbidden"}), 403)
+        return None, (jsonify({"error": "Forbidden"}), route_status_codes.forbidden)
     return user, None
 
 
 def _require_admin():
     user = get_current_user()
     if not user or not current_user_is_admin():
-        return None, (jsonify({"error": "Forbidden"}), 403)
+        return None, (jsonify({"error": "Forbidden"}), route_status_codes.forbidden)
     return user, None
 
 
 def _require_moderator_or_admin():
     user = get_current_user()
     if not user or not current_user_is_moderator_or_admin():
-        return None, (jsonify({"error": "Forbidden"}), 403)
+        return None, (jsonify({"error": "Forbidden"}), route_status_codes.forbidden)
     return user, None
 
 
@@ -859,7 +860,7 @@ def forum_thread_lock(thread_id: int):
     """Lock a thread (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -878,7 +879,7 @@ def forum_thread_lock(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"is_locked": old_locked, "status": old_status}, "after": {"is_locked": True, "status": thread.status}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/unlock", methods=["POST"])
@@ -888,7 +889,7 @@ def forum_thread_unlock(thread_id: int):
     """Unlock a thread (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -907,7 +908,7 @@ def forum_thread_unlock(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"is_locked": old_locked, "status": old_status}, "after": {"is_locked": False, "status": thread.status}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/pin", methods=["POST"])
@@ -917,7 +918,7 @@ def forum_thread_pin(thread_id: int):
     """Pin a thread in its category (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -935,7 +936,7 @@ def forum_thread_pin(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"is_pinned": old_pinned}, "after": {"is_pinned": True}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/unpin", methods=["POST"])
@@ -945,7 +946,7 @@ def forum_thread_unpin(thread_id: int):
     """Unpin a thread in its category (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -963,7 +964,7 @@ def forum_thread_unpin(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"is_pinned": old_pinned}, "after": {"is_pinned": False}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/feature", methods=["POST"])
@@ -973,7 +974,7 @@ def forum_thread_feature(thread_id: int):
     """Mark a thread as featured (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -991,7 +992,7 @@ def forum_thread_feature(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"is_featured": old_featured}, "after": {"is_featured": True}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/unfeature", methods=["POST"])
@@ -1001,7 +1002,7 @@ def forum_thread_unfeature(thread_id: int):
     """Remove featured flag from a thread (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -1019,7 +1020,7 @@ def forum_thread_unfeature(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"is_featured": old_featured}, "after": {"is_featured": False}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/move", methods=["POST"])
@@ -1029,25 +1030,25 @@ def forum_thread_move(thread_id: int):
     """Move a thread to another category (moderator/admin only). Body: category_id (int)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     try:
         category_id = int(data.get("category_id"))
     except (TypeError, ValueError):
-        return jsonify({"error": "category_id must be an integer"}), 400
+        return jsonify({"error": "category_id must be an integer"}), route_status_codes.bad_request
     new_cat = ForumCategory.query.get(category_id)
     if not new_cat:
-        return jsonify({"error": "Category not found"}), 404
+        return jsonify({"error": "Category not found"}), route_status_codes.not_found
     if not user_can_moderate_category(user, new_cat):
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
     thread, err = move_thread(thread, new_cat)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
     log_activity(
         actor=user,
         category="forum",
@@ -1063,7 +1064,7 @@ def forum_thread_move(thread_id: int):
     data["author_username"] = thread.author.username if thread.author else None
     if thread.category:
         data["category"] = thread.category.to_dict()
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/archive", methods=["POST"])
@@ -1073,7 +1074,7 @@ def forum_thread_archive(thread_id: int):
     """Archive a thread (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -1091,7 +1092,7 @@ def forum_thread_archive(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"status": old_status}, "after": {"status": "archived"}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/unarchive", methods=["POST"])
@@ -1101,7 +1102,7 @@ def forum_thread_unarchive(thread_id: int):
     """Unarchive a thread (moderator/admin only)."""
     thread = get_thread_by_id(thread_id)
     if not thread or not thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(thread.category)
     if err_resp:
         return err_resp
@@ -1119,7 +1120,7 @@ def forum_thread_unarchive(thread_id: int):
         target_id=str(thread.id),
         metadata={"before": {"status": old_status}, "after": {"status": thread.status}},
     )
-    return jsonify(thread.to_dict()), 200
+    return jsonify(thread.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:source_thread_id>/merge", methods=["POST"])
@@ -1133,22 +1134,22 @@ def forum_thread_merge(source_thread_id: int):
     """
     source = get_thread_by_id(source_thread_id)
     if not source or not source.category:
-        return jsonify({"error": "Source thread not found"}), 404
+        return jsonify({"error": "Source thread not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(source.category)
     if err_resp:
         return err_resp
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     try:
         target_thread_id = int(data.get("target_thread_id"))
     except (TypeError, ValueError):
-        return jsonify({"error": "target_thread_id must be an integer"}), 400
+        return jsonify({"error": "target_thread_id must be an integer"}), route_status_codes.bad_request
 
     target = get_thread_by_id(target_thread_id)
     if not target or not target.category:
-        return jsonify({"error": "Target thread not found"}), 404
+        return jsonify({"error": "Target thread not found"}), route_status_codes.not_found
 
     # Ensure the user may moderate the target category as well.
     _, err_resp_target = _require_moderator_for_category(target.category)
@@ -1157,7 +1158,7 @@ def forum_thread_merge(source_thread_id: int):
 
     err = merge_threads(source, target)
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
 
     log_activity(
         actor=user,
@@ -1174,7 +1175,7 @@ def forum_thread_merge(source_thread_id: int):
     data["author_username"] = target.author.username if target.author else None
     if target.category:
         data["category"] = target.category.to_dict()
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/threads/<int:thread_id>/split", methods=["POST"])
@@ -1192,7 +1193,7 @@ def forum_thread_split(thread_id: int):
     """
     source_thread = get_thread_by_id(thread_id)
     if not source_thread or not source_thread.category:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
 
     user, err_resp = _require_moderator_for_category(source_thread.category)
     if err_resp:
@@ -1200,16 +1201,16 @@ def forum_thread_split(thread_id: int):
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
 
     try:
         root_post_id = int(data.get("root_post_id"))
     except (TypeError, ValueError):
-        return jsonify({"error": "root_post_id must be an integer"}), 400
+        return jsonify({"error": "root_post_id must be an integer"}), route_status_codes.bad_request
 
     title = (data.get("title") or "").strip()
     if not title:
-        return jsonify({"error": "title is required"}), 400
+        return jsonify({"error": "title is required"}), route_status_codes.bad_request
 
     category_id = data.get("category_id")
     target_category: Optional[ForumCategory] = None
@@ -1217,16 +1218,16 @@ def forum_thread_split(thread_id: int):
         try:
             category_id_int = int(category_id)
         except (TypeError, ValueError):
-            return jsonify({"error": "category_id must be an integer"}), 400
+            return jsonify({"error": "category_id must be an integer"}), route_status_codes.bad_request
         target_category = ForumCategory.query.get(category_id_int)
         if not target_category:
-            return jsonify({"error": "Category not found"}), 404
+            return jsonify({"error": "Category not found"}), route_status_codes.not_found
         if not user_can_moderate_category(user, target_category):
-            return jsonify({"error": "Forbidden"}), 403
+            return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     root_post = get_post_by_id(root_post_id)
     if not root_post:
-        return jsonify({"error": "Root post not found"}), 404
+        return jsonify({"error": "Root post not found"}), route_status_codes.not_found
 
     new_thread, err = split_thread_from_post(
         source_thread=source_thread,
@@ -1235,7 +1236,7 @@ def forum_thread_split(thread_id: int):
         new_category=target_category,
     )
     if err:
-        return jsonify({"error": err}), 400
+        return jsonify({"error": err}), route_status_codes.bad_request
 
     log_activity(
         actor=user,
@@ -1252,7 +1253,7 @@ def forum_thread_split(thread_id: int):
     resp_data["author_username"] = new_thread.author.username if new_thread.author else None
     if new_thread.category:
         resp_data["category"] = new_thread.category.to_dict()
-    return jsonify(resp_data), 201
+    return jsonify(resp_data), route_status_codes.created
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>/hide", methods=["POST"])
@@ -1262,7 +1263,7 @@ def forum_post_hide(post_id: int):
     """Hide a post (moderator/admin only)."""
     post = get_post_by_id(post_id)
     if not post or not post.thread or not post.thread.category:
-        return jsonify({"error": "Post not found"}), 404
+        return jsonify({"error": "Post not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(post.thread.category)
     if err_resp:
         return err_resp
@@ -1280,7 +1281,7 @@ def forum_post_hide(post_id: int):
         target_id=str(post.id),
         metadata={"before": {"status": old_post_status}, "after": {"status": "hidden"}},
     )
-    return jsonify(post.to_dict()), 200
+    return jsonify(post.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/posts/<int:post_id>/unhide", methods=["POST"])
@@ -1290,7 +1291,7 @@ def forum_post_unhide(post_id: int):
     """Unhide a post (moderator/admin only)."""
     post = get_post_by_id(post_id)
     if not post or not post.thread or not post.thread.category:
-        return jsonify({"error": "Post not found"}), 404
+        return jsonify({"error": "Post not found"}), route_status_codes.not_found
     user, err_resp = _require_moderator_for_category(post.thread.category)
     if err_resp:
         return err_resp
@@ -1308,7 +1309,7 @@ def forum_post_unhide(post_id: int):
         target_id=str(post.id),
         metadata={"before": {"status": old_post_status}, "after": {"status": post.status}},
     )
-    return jsonify(post.to_dict()), 200
+    return jsonify(post.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/reports", methods=["GET"])
@@ -1325,9 +1326,9 @@ def forum_reports_list():
     status = (request.args.get("status") or "").strip() or None
     target_type = (request.args.get("target_type") or "").strip() or None
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     items, total = list_reports(status=status, target_type=target_type, page=page, limit=limit)
-    return jsonify({"items": [r.to_dict() for r in items], "total": total, "page": page, "limit": limit}), 200
+    return jsonify({"items": [r.to_dict() for r in items], "total": total, "page": page, "limit": limit}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/reports/<int:report_id>", methods=["GET"])
@@ -1340,8 +1341,8 @@ def forum_report_get(report_id: int):
         return err_resp
     report = get_report_by_id(report_id)
     if not report:
-        return jsonify({"error": "Report not found"}), 404
-    return jsonify(report.to_dict()), 200
+        return jsonify({"error": "Report not found"}), route_status_codes.not_found
+    return jsonify(report.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/reports/<int:report_id>", methods=["PUT"])
@@ -1362,17 +1363,17 @@ def forum_report_update(report_id: int):
         return err_resp
     report = get_report_by_id(report_id)
     if not report:
-        return jsonify({"error": "Report not found"}), 404
+        return jsonify({"error": "Report not found"}), route_status_codes.not_found
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     status = (data.get("status") or "").strip()
     old_status = report.status
     old_priority = report.priority
 
     priority = data.get("priority")
     if priority and priority not in ("low", "normal", "high", "critical"):
-        return jsonify({"error": "Invalid priority"}), 400
+        return jsonify({"error": "Invalid priority"}), route_status_codes.bad_request
 
     escalation_reason = data.get("escalation_reason")
     if escalation_reason is not None:
@@ -1393,7 +1394,7 @@ def forum_report_update(report_id: int):
         )
     except ValueError as e:
         log_full_error(e, "Report status update validation failed", user_id=user.id, route=request.path, method=request.method)
-        return jsonify({"error": ERROR_MESSAGES["validation_error"]}), 400
+        return jsonify({"error": ERROR_MESSAGES["validation_error"]}), route_status_codes.bad_request
     log_activity(
         actor=user,
         category="forum",
@@ -1409,7 +1410,7 @@ def forum_report_update(report_id: int):
             "after": {"status": report.status, "priority": report.priority},
         },
     )
-    return jsonify(report.to_dict()), 200
+    return jsonify(report.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/reports/bulk-status", methods=["POST"])
@@ -1431,21 +1432,21 @@ def forum_reports_bulk_status():
         return err_resp
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     ids = data.get("report_ids") or []
     if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "report_ids must be a non-empty list"}), 400
+        return jsonify({"error": "report_ids must be a non-empty list"}), route_status_codes.bad_request
     try:
         id_list = [int(x) for x in ids]
     except (TypeError, ValueError):
-        return jsonify({"error": "report_ids must contain integers"}), 400
+        return jsonify({"error": "report_ids must contain integers"}), route_status_codes.bad_request
     status = (data.get("status") or "").strip()
     if status not in ("reviewed", "escalated", "resolved", "dismissed"):
-        return jsonify({"error": "Invalid status for bulk update"}), 400
+        return jsonify({"error": "Invalid status for bulk update"}), route_status_codes.bad_request
 
     priority = data.get("priority")
     if priority and priority not in ("low", "normal", "high", "critical"):
-        return jsonify({"error": "Invalid priority"}), 400
+        return jsonify({"error": "Invalid priority"}), route_status_codes.bad_request
 
     resolution_note = data.get("resolution_note")
     if resolution_note is not None:
@@ -1476,7 +1477,7 @@ def forum_reports_bulk_status():
                 "after": {"status": status, "count": len(success_ids)},
             },
         )
-    return jsonify({"updated_ids": success_ids, "failed_items": failed_items}), 200
+    return jsonify({"updated_ids": success_ids, "failed_items": failed_items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/escalation-queue", methods=["GET"])
@@ -1493,7 +1494,7 @@ def forum_escalation_queue():
         return err_resp
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
     priority_filter = request.args.get("priority", "").strip() or None
 
     items, total = list_escalation_queue(
@@ -1507,7 +1508,7 @@ def forum_escalation_queue():
         "total": total,
         "page": page,
         "limit": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/review-queue", methods=["GET"])
@@ -1524,7 +1525,7 @@ def forum_review_queue():
         return err_resp
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
 
     items, total = list_review_queue(page=page, per_page=limit)
 
@@ -1533,7 +1534,7 @@ def forum_review_queue():
         "total": total,
         "page": page,
         "limit": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/moderator-assigned", methods=["GET"])
@@ -1550,7 +1551,7 @@ def forum_moderator_assigned():
         return err_resp
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
 
     items, total = list_moderator_assigned_reports(user.id, page=page, per_page=limit)
 
@@ -1559,7 +1560,7 @@ def forum_moderator_assigned():
         "total": total,
         "page": page,
         "limit": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/handled-reports", methods=["GET"])
@@ -1576,7 +1577,7 @@ def forum_handled_reports():
         return err_resp
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
     status_filter = request.args.get("status", "").strip() or None
 
     items, total = list_handled_reports(page=page, per_page=limit, status_filter=status_filter)
@@ -1586,7 +1587,7 @@ def forum_handled_reports():
         "total": total,
         "page": page,
         "limit": limit,
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/reports/<int:report_id>/assign", methods=["POST"])
@@ -1603,7 +1604,7 @@ def forum_report_assign(report_id: int):
 
     report = get_report_by_id(report_id)
     if not report:
-        return jsonify({"error": "Report not found"}), 404
+        return jsonify({"error": "Report not found"}), route_status_codes.not_found
 
     data = request.get_json(silent=True) or {}
     assign_to_me = data.get("assign_to_me", False)
@@ -1613,11 +1614,11 @@ def forum_report_assign(report_id: int):
     else:
         moderator_id = data.get("moderator_id")
         if not moderator_id:
-            return jsonify({"error": "moderator_id or assign_to_me required"}), 400
+            return jsonify({"error": "moderator_id or assign_to_me required"}), route_status_codes.bad_request
         try:
             moderator_id = int(moderator_id)
         except (TypeError, ValueError):
-            return jsonify({"error": "moderator_id must be integer"}), 400
+            return jsonify({"error": "moderator_id must be integer"}), route_status_codes.bad_request
 
     before_assigned = report.assigned_to
     report = assign_report_to_moderator(report, moderator_id)
@@ -1635,7 +1636,7 @@ def forum_report_assign(report_id: int):
         metadata={"before": {"assigned_to": before_assigned}, "after": {"assigned_to": moderator_id}},
     )
 
-    return jsonify({"id": report.id, "assigned_to": report.assigned_to}), 200
+    return jsonify({"id": report.id, "assigned_to": report.assigned_to}), route_status_codes.ok
 
 
 # --- Category admin -----------------------------------------------------------
@@ -1654,12 +1655,12 @@ def forum_admin_category_create():
         return err_resp
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
 
     # Type check title before stripping
     title_raw = data.get("title")
     if title_raw is not None and not isinstance(title_raw, str):
-        return jsonify({"error": "Title must be a string"}), 400
+        return jsonify({"error": "Title must be a string"}), route_status_codes.bad_request
 
     slug = (data.get("slug") or "").strip()
     title = (title_raw or "").strip()
@@ -1674,7 +1675,7 @@ def forum_admin_category_create():
         try:
             parent_id_int = int(parent_id)
         except (TypeError, ValueError):
-            return jsonify({"error": "parent_id must be an integer"}), 400
+            return jsonify({"error": "parent_id must be an integer"}), route_status_codes.bad_request
     try:
         sort_order_int = int(sort_order)
     except (TypeError, ValueError):
@@ -1683,7 +1684,7 @@ def forum_admin_category_create():
     # Validate category title length (5-200 characters)
     is_valid, error_msg = _validate_category_title_length(title, min_len=5, max_len=200)
     if not is_valid:
-        return jsonify({"error": error_msg}), 400
+        return jsonify({"error": error_msg}), route_status_codes.bad_request
 
     cat, err = create_category(
         slug=slug,
@@ -1709,7 +1710,7 @@ def forum_admin_category_create():
         target_type="forum_category",
         target_id=str(cat.id),
     )
-    return jsonify(cat.to_dict()), 201
+    return jsonify(cat.to_dict()), route_status_codes.created
 
 
 @api_v1_bp.route("/forum/admin/categories/<int:category_id>", methods=["PUT"])
@@ -1725,10 +1726,10 @@ def forum_admin_category_update(category_id: int):
         return err_resp
     cat = ForumCategory.query.get(category_id)
     if not cat:
-        return jsonify({"error": "Category not found"}), 404
+        return jsonify({"error": "Category not found"}), route_status_codes.not_found
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     title = data.get("title")
     description = data.get("description")
     sort_order = data.get("sort_order")
@@ -1740,17 +1741,17 @@ def forum_admin_category_update(category_id: int):
         try:
             sort_order_int = int(sort_order)
         except (TypeError, ValueError):
-            return jsonify({"error": "sort_order must be an integer"}), 400
+            return jsonify({"error": "sort_order must be an integer"}), route_status_codes.bad_request
 
     # Validate category title length if provided (5-200 characters)
     if title is not None:
         # Type check first
         if not isinstance(title, str):
-            return jsonify({"error": "Title must be a string"}), 400
+            return jsonify({"error": "Title must be a string"}), route_status_codes.bad_request
         title = title.strip()
         is_valid, error_msg = _validate_category_title_length(title, min_len=5, max_len=200)
         if not is_valid:
-            return jsonify({"error": error_msg}), 400
+            return jsonify({"error": error_msg}), route_status_codes.bad_request
 
     cat = update_category(
         cat,
@@ -1772,7 +1773,7 @@ def forum_admin_category_update(category_id: int):
         target_type="forum_category",
         target_id=str(cat.id),
     )
-    return jsonify(cat.to_dict()), 200
+    return jsonify(cat.to_dict()), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/admin/categories/<int:category_id>", methods=["DELETE"])
@@ -1788,7 +1789,7 @@ def forum_admin_category_delete(category_id: int):
         return err_resp
     cat = ForumCategory.query.get(category_id)
     if not cat:
-        return jsonify({"error": "Category not found"}), 404
+        return jsonify({"error": "Category not found"}), route_status_codes.not_found
     delete_category(cat)
     log_activity(
         actor=user,
@@ -1801,7 +1802,7 @@ def forum_admin_category_delete(category_id: int):
         target_type="forum_category",
         target_id=str(category_id),
     )
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Deleted"}), route_status_codes.ok
 
 
 # --- Tag admin ---------------------------------------------------------------
@@ -1819,7 +1820,7 @@ def forum_tags_list():
     if err_resp:
         return err_resp
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
     q = (request.args.get("q") or "").strip() or None
     tags, total = list_all_tags(page=page, per_page=limit, q=q)
     counts = batch_tag_thread_counts([t.id for t in tags])
@@ -1832,7 +1833,7 @@ def forum_tags_list():
             "thread_count": counts.get(t.id, 0),
             "created_at": t.created_at.isoformat() if t.created_at else None,
         })
-    return jsonify({"items": items, "total": total, "page": page, "per_page": limit}), 200
+    return jsonify({"items": items, "total": total, "page": page, "per_page": limit}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/tags/<int:tag_id>", methods=["DELETE"])
@@ -1847,10 +1848,10 @@ def forum_tag_delete(tag_id: int):
         return err_resp
     tag = ForumTag.query.get(tag_id)
     if not tag:
-        return jsonify({"error": "Tag not found"}), 404
+        return jsonify({"error": "Tag not found"}), route_status_codes.not_found
     err = delete_tag(tag)
     if err:
-        return jsonify({"error": err}), 409
+        return jsonify({"error": err}), route_status_codes.conflict
     log_activity(
         actor=user,
         category="forum",
@@ -1862,7 +1863,7 @@ def forum_tag_delete(tag_id: int):
         target_type="forum_tag",
         target_id=str(tag_id),
     )
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Deleted"}), route_status_codes.ok
 
 
 # --- Subscriptions (thread subscribers list) --------------------------------
@@ -1880,7 +1881,7 @@ def forum_thread_subscribers(thread_id: int):
         return err_resp
     thread = get_thread_by_id(thread_id)
     if not thread:
-        return jsonify({"error": "Thread not found"}), 404
+        return jsonify({"error": "Thread not found"}), route_status_codes.not_found
 
     subs = ForumThreadSubscription.query.filter_by(thread_id=thread_id).all()
     items = []
@@ -1892,7 +1893,7 @@ def forum_thread_subscribers(thread_id: int):
             "username": sub.user.username if hasattr(sub, 'user') and sub.user else None,
             "created_at": sub.created_at.isoformat() if sub.created_at else None,
         })
-    return jsonify({"items": items, "total": len(items)}), 200
+    return jsonify({"items": items, "total": len(items)}), route_status_codes.ok
 
 
 # --- Moderation Dashboard ---------------------------------------------------
@@ -1920,7 +1921,7 @@ def forum_moderation_metrics():
         "hidden_posts": hidden_posts,
         "locked_threads": locked_threads,
         "pinned_threads": pinned_threads,
-    }), 200
+    }), route_status_codes.ok
 
 
 def _enrich_report_dict(r):
@@ -1956,11 +1957,11 @@ def forum_moderation_recent_reports():
     if err_resp:
         return err_resp
 
-    limit = _parse_int(request.args.get("limit"), 10, min_val=1, max_val=50)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_small, min_val=1, max_val=50)
 
     reports = ForumReport.query.filter_by(status="open").order_by(ForumReport.created_at.desc()).limit(limit).all()
     items = [_enrich_report_dict(r) for r in reports]
-    return jsonify({"items": items, "total": len(items)}), 200
+    return jsonify({"items": items, "total": len(items)}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/recently-handled", methods=["GET"])
@@ -1974,7 +1975,7 @@ def forum_moderation_recently_handled():
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
         return err_resp
-    limit = _parse_int(request.args.get("limit"), 10, min_val=1, max_val=50)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_small, min_val=1, max_val=50)
     reports = (
         ForumReport.query.filter(ForumReport.status.in_(["reviewed", "escalated", "resolved", "dismissed"]))
         .filter(ForumReport.handled_at.isnot(None))
@@ -1983,7 +1984,7 @@ def forum_moderation_recently_handled():
         .all()
     )
     items = [_enrich_report_dict(r) for r in reports]
-    return jsonify({"items": items, "total": len(items)}), 200
+    return jsonify({"items": items, "total": len(items)}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/locked-threads", methods=["GET"])
@@ -1994,7 +1995,7 @@ def forum_moderation_locked_threads():
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
         return err_resp
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     threads = (
         ForumThread.query.filter_by(is_locked=True)
         .filter(ForumThread.status != "deleted")
@@ -2011,7 +2012,7 @@ def forum_moderation_locked_threads():
             "category_slug": t.category.slug if t.category else None,
             "updated_at": t.updated_at.isoformat() if t.updated_at else None,
         })
-    return jsonify({"items": items, "total": len(items)}), 200
+    return jsonify({"items": items, "total": len(items)}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/bulk-threads/status", methods=["POST"])
@@ -2028,18 +2029,18 @@ def forum_moderation_bulk_threads_status():
         return err_resp
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     ids = data.get("thread_ids") or []
     if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "thread_ids must be a non-empty list"}), 400
+        return jsonify({"error": "thread_ids must be a non-empty list"}), route_status_codes.bad_request
     try:
         thread_ids = [int(x) for x in ids]
     except (TypeError, ValueError):
-        return jsonify({"error": "thread_ids must contain integers"}), 400
+        return jsonify({"error": "thread_ids must contain integers"}), route_status_codes.bad_request
     lock = data.get("lock")
     archive = data.get("archive")
     if lock is None and archive is None:
-        return jsonify({"error": "At least one of lock or archive must be provided"}), 400
+        return jsonify({"error": "At least one of lock or archive must be provided"}), route_status_codes.bad_request
 
     before_states: dict[int, dict] = {}
     updated: list[int] = []
@@ -2081,7 +2082,7 @@ def forum_moderation_bulk_threads_status():
             target_id=",".join(str(x) for x in updated),
             metadata={"before": {str(tid): before_states.get(tid, {}) for tid in updated}, "after": after_state},
         )
-    return jsonify({"updated_ids": updated}), 200
+    return jsonify({"updated_ids": updated}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/bulk-posts/hide", methods=["POST"])
@@ -2097,17 +2098,17 @@ def forum_moderation_bulk_posts_hide():
         return err_resp
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     ids = data.get("post_ids") or []
     if not isinstance(ids, list) or not ids:
-        return jsonify({"error": "post_ids must be a non-empty list"}), 400
+        return jsonify({"error": "post_ids must be a non-empty list"}), route_status_codes.bad_request
     try:
         post_ids = [int(x) for x in ids]
     except (TypeError, ValueError):
-        return jsonify({"error": "post_ids must contain integers"}), 400
+        return jsonify({"error": "post_ids must contain integers"}), route_status_codes.bad_request
     hidden = data.get("hidden")
     if hidden is None:
-        return jsonify({"error": "hidden must be provided"}), 400
+        return jsonify({"error": "hidden must be provided"}), route_status_codes.bad_request
 
     before_states: dict[int, dict] = {}
     updated: list[int] = []
@@ -2138,7 +2139,7 @@ def forum_moderation_bulk_posts_hide():
             target_id=",".join(str(x) for x in updated),
             metadata={"before": {str(pid): before_states.get(pid, {}) for pid in updated}, "after": {"status": new_status}},
         )
-    return jsonify({"updated_ids": updated, "hidden": bool(hidden)}), 200
+    return jsonify({"updated_ids": updated, "hidden": bool(hidden)}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/log", methods=["GET"])
@@ -2153,10 +2154,10 @@ def forum_moderation_log():
     """
     user = get_current_user()
     if not user or not current_user_is_moderator_or_admin():
-        return jsonify({"error": "Forbidden"}), 403
+        return jsonify({"error": "Forbidden"}), route_status_codes.forbidden
 
     page = _parse_int(request.args.get("page"), 1, min_val=1)
-    limit = _parse_int(request.args.get("limit"), 50, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), route_pagination_config.page_size_medium, min_val=1, max_val=route_pagination_config.page_size_large)
     q = request.args.get("q", "").strip() or None
     status = request.args.get("status", "").strip() or None
     date_from = request.args.get("date_from", "").strip() or None
@@ -2178,7 +2179,7 @@ def forum_moderation_log():
             "page": page,
             "limit": limit,
         }
-    ), 200
+    ), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/pinned-threads", methods=["GET"])
@@ -2189,7 +2190,7 @@ def forum_moderation_pinned_threads():
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
         return err_resp
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     threads = (
         ForumThread.query.filter_by(is_pinned=True)
         .filter(ForumThread.status != "deleted")
@@ -2206,7 +2207,7 @@ def forum_moderation_pinned_threads():
             "category_slug": t.category.slug if t.category else None,
             "updated_at": t.updated_at.isoformat() if t.updated_at else None,
         })
-    return jsonify({"items": items, "total": len(items)}), 200
+    return jsonify({"items": items, "total": len(items)}), route_status_codes.ok
 
 
 @api_v1_bp.route("/forum/moderation/hidden-posts", methods=["GET"])
@@ -2217,7 +2218,7 @@ def forum_moderation_hidden_posts():
     user, err_resp = _require_moderator_or_admin()
     if err_resp:
         return err_resp
-    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=100)
+    limit = _parse_int(request.args.get("limit"), 20, min_val=1, max_val=route_pagination_config.page_size_large)
     posts = (
         ForumPost.query.filter_by(status="hidden")
         .order_by(ForumPost.updated_at.desc().nullslast())
@@ -2235,5 +2236,5 @@ def forum_moderation_hidden_posts():
             "content_snippet": (p.content or "")[:120] + ("..." if len(p.content or "") > 120 else ""),
             "updated_at": p.updated_at.isoformat() if p.updated_at else None,
         })
-    return jsonify({"items": items, "total": len(items)}), 200
+    return jsonify({"items": items, "total": len(items)}), route_status_codes.ok
 

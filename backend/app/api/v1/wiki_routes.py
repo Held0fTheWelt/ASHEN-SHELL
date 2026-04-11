@@ -15,6 +15,7 @@ from app.services.wiki_service import (
     get_suggested_threads_for_wiki_page,
     list_related_threads_for_page,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 def _wiki_path():
     """Return Path to Backend/content/wiki.md. Resolved from a fixed base path."""
@@ -29,7 +30,7 @@ def wiki_page_get(slug):
     lang = request.args.get("lang", "").strip() or None
     page, trans = get_wiki_page_by_slug(slug, lang=lang)
     if not page or not trans:
-        return jsonify({"error": "Not found"}), 404
+        return jsonify({"error": "Not found"}), route_status_codes.not_found
     try:
         raw_html = markdown.markdown(trans.content_markdown or "", extensions=["extra"])
         html = sanitize_wiki_html(raw_html) if raw_html else None
@@ -76,7 +77,7 @@ def wiki_page_get(slug):
             {**t, "type": "suggested"} for t in unique_suggested
         ]
 
-    return jsonify(payload), 200
+    return jsonify(payload), route_status_codes.ok
 
 
 @api_v1_bp.route("/wiki/<int:page_id>/suggested-threads", methods=["GET"])
@@ -103,14 +104,14 @@ def wiki_suggested_threads_get(page_id: int):
 
     page = db.session.get(WikiPage, page_id)
     if not page:
-        return jsonify({"error": "Wiki page not found"}), 404
+        return jsonify({"error": "Wiki page not found"}), route_status_codes.not_found
 
     suggested = get_suggested_threads_for_wiki_page(page_id, limit=10)
 
     return jsonify({
         "items": suggested,
         "total": len(suggested),
-    }), 200
+    }), route_status_codes.ok
 
 
 @api_v1_bp.route("/wiki", methods=["GET"])
@@ -123,17 +124,17 @@ def wiki_get():
     """
     path = _wiki_path()
     if not path.is_file():
-        return jsonify({"content": "", "html": None}), 200
+        return jsonify({"content": "", "html": None}), route_status_codes.ok
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
-        return jsonify({"error": "Could not read wiki file"}), 500
+        return jsonify({"error": "Could not read wiki file"}), route_status_codes.internal_error
     try:
         raw_html = markdown.markdown(text, extensions=["extra"])
         html = sanitize_wiki_html(raw_html) if raw_html else None
     except Exception:
         html = None
-    return jsonify({"content": text, "html": html}), 200
+    return jsonify({"content": text, "html": html}), route_status_codes.ok
 
 
 @api_v1_bp.route("/wiki", methods=["PUT"])
@@ -146,12 +147,12 @@ def wiki_put():
     """
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     content = data.get("content")
     if content is None:
-        return jsonify({"error": "content is required"}), 400
+        return jsonify({"error": "content is required"}), route_status_codes.bad_request
     if not isinstance(content, str):
-        return jsonify({"error": "content must be a string"}), 400
+        return jsonify({"error": "content must be a string"}), route_status_codes.bad_request
 
     path = _wiki_path()
     try:
@@ -159,7 +160,7 @@ def wiki_put():
         path.write_text(content, encoding="utf-8")
     except OSError as e:
         current_app.logger.warning("Wiki write failed: %s", e)
-        return jsonify({"error": "Could not write wiki file"}), 500
+        return jsonify({"error": "Could not write wiki file"}), route_status_codes.internal_error
 
     log_activity(
         actor=get_current_user(),
@@ -172,4 +173,4 @@ def wiki_put():
         target_type="wiki",
         target_id="wiki.md",
     )
-    return jsonify({"message": "Updated", "content": content}), 200
+    return jsonify({"message": "Updated", "content": content}), route_status_codes.ok

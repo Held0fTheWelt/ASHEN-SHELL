@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from flask import current_app, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity, get_jwt, jwt_required
 from app.api.v1 import api_v1_bp
-from app.config.route_constants import route_auth_config
+from app.config.route_constants import route_auth_config, route_status_codes, route_pagination_config
 from app.extensions import limiter, db
 from app.models import User
 from app.services import create_user, log_activity
@@ -27,7 +27,7 @@ def register():
     """Register a new user; return 201 with id and username or error."""
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     username = (data.get("username") or "").strip()
     password = data.get("password")
     email_raw = data.get("email")
@@ -35,11 +35,11 @@ def register():
     email = (email_raw or "").strip().lower() if email_raw is not None else ""
     require_email = current_app.config.get("REGISTRATION_REQUIRE_EMAIL", False)
     if require_email and not email:
-        return jsonify({"error": "Email is required"}), 400
+        return jsonify({"error": "Email is required"}), route_status_codes.bad_request
     # Validate password complexity
     is_valid, error_msg = validate_password_complexity(password)
     if not is_valid:
-        return jsonify({"error": error_msg, "code": "PASSWORD_WEAK"}), 400
+        return jsonify({"error": error_msg, "code": "PASSWORD_WEAK"}), route_status_codes.bad_request
     user, err = create_user(username, password, email or None)
     if err:
         status = 409 if err in ("Username already taken", "Email already registered") else 400
@@ -68,7 +68,7 @@ def register():
             method=request.method,
             tags=["api", "email"],
         )
-    return jsonify({"id": user.id, "username": user.username}), 201
+    return jsonify({"id": user.id, "username": user.username}), route_status_codes.created
 
 
 @api_v1_bp.route("/auth/login", methods=["POST"])
@@ -89,10 +89,10 @@ def resend_verification():
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     email_raw = data.get("email")
     if not email_raw:
-        return jsonify({"error": "Email is required"}), 400
+        return jsonify({"error": "Email is required"}), route_status_codes.bad_request
     # Validate email format
     is_valid, email = validate_email_format(email_raw)
     if not is_valid:
@@ -101,7 +101,7 @@ def resend_verification():
         delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
         if delay_needed > 0:
             time.sleep(delay_needed)
-        return jsonify({"error": "Invalid email format"}), 400
+        return jsonify({"error": "Invalid email format"}), route_status_codes.bad_request
     user = db.session.execute(
         db.select(User).filter(db.func.lower(User.email) == email)
     ).scalar_one_or_none()
@@ -112,7 +112,7 @@ def resend_verification():
         if delay_needed > 0:
             time.sleep(delay_needed)
         # Return success anyway to prevent email enumeration
-        return jsonify({"message": "If the email exists, a verification link has been sent"}), 200
+        return jsonify({"message": "If the email exists, a verification link has been sent"}), route_status_codes.ok
     if user.email_verified_at is not None:
         # Apply constant-time delay before responding
         elapsed = time.time() - start_time
@@ -120,7 +120,7 @@ def resend_verification():
         if delay_needed > 0:
             time.sleep(delay_needed)
         # User is already verified
-        return jsonify({"message": "This email is already verified"}), 200
+        return jsonify({"message": "This email is already verified"}), route_status_codes.ok
     ttl = current_app.config.get("EMAIL_VERIFICATION_TTL_HOURS", 24)
     raw_token = create_email_verification_token(user, ttl_hours=ttl)
     send_verification_email(user, raw_token)
@@ -139,7 +139,7 @@ def resend_verification():
     delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
     if delay_needed > 0:
         time.sleep(delay_needed)
-    return jsonify({"message": "Verification email sent"}), 200
+    return jsonify({"message": "Verification email sent"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/auth/me", methods=["GET"])
@@ -152,14 +152,14 @@ def me():
     uid = get_jwt_identity()
     user = db.session.get(User, int(uid))
     if user is None:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "User not found"}), route_status_codes.not_found
     if getattr(user, "is_banned", False):
-        return jsonify({"error": "Account is restricted."}), 403
+        return jsonify({"error": "Account is restricted."}), route_status_codes.forbidden
     from app.auth.feature_registry import FEATURE_IDS, user_can_access_feature
     allowed = [fid for fid in FEATURE_IDS if user_can_access_feature(user, fid)]
     out = user.to_dict(include_email=True, include_areas=True)
     out["allowed_features"] = allowed
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/auth/logout", methods=["POST"])
@@ -196,7 +196,7 @@ def logout():
         tags=["api"],
     )
 
-    return jsonify({"message": "Logged out successfully"}), 200
+    return jsonify({"message": "Logged out successfully"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/auth/forgot-password", methods=["POST"])
@@ -212,10 +212,10 @@ def forgot_password():
 
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     email_raw = data.get("email")
     if not email_raw:
-        return jsonify({"error": "Email is required"}), 400
+        return jsonify({"error": "Email is required"}), route_status_codes.bad_request
     # Validate email format
     is_valid, email = validate_email_format(email_raw)
     if not is_valid:
@@ -224,7 +224,7 @@ def forgot_password():
         delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
         if delay_needed > 0:
             time.sleep(delay_needed)
-        return jsonify({"error": "Invalid email format"}), 400
+        return jsonify({"error": "Invalid email format"}), route_status_codes.bad_request
     user = get_user_by_email(email)
     if not user:
         # Apply constant-time delay before responding (prevents timing-based email enumeration)
@@ -233,7 +233,7 @@ def forgot_password():
         if delay_needed > 0:
             time.sleep(delay_needed)
         # Return success anyway to prevent email enumeration
-        return jsonify({"message": "If the email exists, a password reset link has been sent"}), 200
+        return jsonify({"message": "If the email exists, a password reset link has been sent"}), route_status_codes.ok
     # Create reset token and send email
     raw_token = create_password_reset_token(user)
     send_password_reset_email(user, raw_token)
@@ -252,7 +252,7 @@ def forgot_password():
     delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
     if delay_needed > 0:
         time.sleep(delay_needed)
-    return jsonify({"message": "If the email exists, a password reset link has been sent"}), 200
+    return jsonify({"message": "If the email exists, a password reset link has been sent"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/auth/reset-password", methods=["POST"])
@@ -266,21 +266,21 @@ def reset_password():
     """
     data = request.get_json(silent=True)
     if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
+        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
     token = data.get("token")
     new_password = data.get("new_password")
     if not token:
-        return jsonify({"error": "Reset token is required"}), 400
+        return jsonify({"error": "Reset token is required"}), route_status_codes.bad_request
     if not new_password:
-        return jsonify({"error": "new_password is required"}), 400
+        return jsonify({"error": "new_password is required"}), route_status_codes.bad_request
     # Validate password complexity
     is_valid, error_msg = validate_password_complexity(new_password)
     if not is_valid:
-        return jsonify({"error": error_msg, "code": "PASSWORD_WEAK"}), 400
+        return jsonify({"error": error_msg, "code": "PASSWORD_WEAK"}), route_status_codes.bad_request
     # Reset the password
     ok, err = reset_password_with_token(token, new_password)
     if not ok:
-        return jsonify({"error": err or "Reset link is invalid or has expired."}), 400
+        return jsonify({"error": err or "Reset link is invalid or has expired."}), route_status_codes.bad_request
     log_activity(
         actor=None,
         category="auth",
@@ -291,7 +291,7 @@ def reset_password():
         method=request.method,
         tags=["api"],
     )
-    return jsonify({"message": "Password reset successfully"}), 200
+    return jsonify({"message": "Password reset successfully"}), route_status_codes.ok
 
 
 @api_v1_bp.route("/auth/refresh", methods=["POST"])
@@ -322,7 +322,7 @@ def refresh():
     # Manual JWT extraction and validation
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+        return jsonify({"error": "Missing or invalid Authorization header"}), route_status_codes.unauthorized
 
     token = auth_header.split(" ", 1)[1]
 
@@ -330,7 +330,7 @@ def refresh():
         jwt_payload = decode_token(token)
     except Exception as e:
         log_full_error(e, "Failed to decode refresh token", route=request.path, method=request.method)
-        return jsonify({"error": ERROR_MESSAGES["invalid_token"]}), 401
+        return jsonify({"error": ERROR_MESSAGES["invalid_token"]}), route_status_codes.unauthorized
 
     uid = jwt_payload.get("sub")
     token_type = jwt_payload.get("type", "access")
@@ -338,7 +338,7 @@ def refresh():
 
     # Only allow refresh tokens to be used for refresh
     if token_type != "refresh":
-        return jsonify({"error": "Only refresh tokens can be used for refresh endpoint"}), 401
+        return jsonify({"error": "Only refresh tokens can be used for refresh endpoint"}), route_status_codes.unauthorized
 
     try:
         # Verify and refresh
@@ -363,7 +363,7 @@ def refresh():
             "expires_in": new_tokens["expires_in"],
             "refresh_expires_at": new_tokens["refresh_expires_at"],
             "message": "Token refreshed successfully",
-        }), 200
+        }), route_status_codes.ok
 
     except ValueError as e:
         log_full_error(e, "Token refresh validation failed", user_id=uid, route=request.path, method=request.method)
@@ -378,4 +378,4 @@ def refresh():
             tags=["api"],
             metadata={"user_id": uid},
         )
-        return jsonify({"error": ERROR_MESSAGES["invalid_token"]}), 401
+        return jsonify({"error": ERROR_MESSAGES["invalid_token"]}), route_status_codes.unauthorized

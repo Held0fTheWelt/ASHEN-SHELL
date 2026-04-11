@@ -21,6 +21,7 @@ from app.services.game_service import (
     list_templates,
     terminate_run,
 )
+from app.config.route_constants import route_status_codes, route_pagination_config
 
 
 def _trace() -> str | None:
@@ -42,7 +43,7 @@ def world_engine_console_health():
         out = get_play_service_ready(trace_id=_trace())
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/templates", methods=["GET"])
@@ -54,7 +55,7 @@ def world_engine_console_templates():
         items = list_templates()
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify({"items": items}), 200
+    return jsonify({"items": items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/runs", methods=["GET"])
@@ -66,7 +67,7 @@ def world_engine_console_runs():
         items = list_runs()
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify({"items": items}), 200
+    return jsonify({"items": items}), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/runs/<run_id>", methods=["GET"])
@@ -78,7 +79,7 @@ def world_engine_console_run_detail(run_id: str):
         detail = get_run_details(run_id)
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(detail), 200
+    return jsonify(detail), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/runs/<run_id>/transcript", methods=["GET"])
@@ -90,7 +91,7 @@ def world_engine_console_run_transcript(run_id: str):
         data = get_run_transcript(run_id)
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/runs/<run_id>/terminate", methods=["POST"])
@@ -105,7 +106,7 @@ def world_engine_console_run_terminate(run_id: str):
         out = terminate_run(run_id, actor_display_name=actor, reason=reason)
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/story/sessions", methods=["GET"])
@@ -117,7 +118,7 @@ def world_engine_console_story_sessions_list():
         data = list_story_sessions(trace_id=_trace())
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/story/sessions", methods=["POST"])
@@ -127,13 +128,13 @@ def world_engine_console_story_sessions_list():
 def world_engine_console_story_sessions_create():
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
-        return jsonify({"error": "JSON object body required"}), 400
+        return jsonify({"error": "JSON object body required"}), route_status_codes.bad_request
     module_id = body.get("module_id")
     projection = body.get("runtime_projection")
     if not isinstance(module_id, str) or not module_id.strip():
-        return jsonify({"error": "module_id is required"}), 400
+        return jsonify({"error": "module_id is required"}), route_status_codes.bad_request
     if not isinstance(projection, dict):
-        return jsonify({"error": "runtime_projection object is required"}), 400
+        return jsonify({"error": "runtime_projection object is required"}), route_status_codes.bad_request
     try:
         out = create_story_session(
             module_id=module_id.strip(),
@@ -142,7 +143,7 @@ def world_engine_console_story_sessions_create():
         )
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/story/sessions/<session_id>/state", methods=["GET"])
@@ -154,7 +155,7 @@ def world_engine_console_story_state(session_id: str):
         data = get_story_state(session_id, trace_id=_trace())
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/story/sessions/<session_id>/diagnostics", methods=["GET"])
@@ -166,7 +167,7 @@ def world_engine_console_story_diagnostics(session_id: str):
         data = get_story_diagnostics(session_id, trace_id=_trace())
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(data), 200
+    return jsonify(data), route_status_codes.ok
 
 
 @api_v1_bp.route("/admin/world-engine/story/sessions/<session_id>/turns", methods=["POST"])
@@ -176,10 +177,10 @@ def world_engine_console_story_diagnostics(session_id: str):
 def world_engine_console_story_turn(session_id: str):
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
-        return jsonify({"error": "JSON object body required"}), 400
+        return jsonify({"error": "JSON object body required"}), route_status_codes.bad_request
     player_input = body.get("player_input")
     if not isinstance(player_input, str) or not player_input.strip():
-        return jsonify({"error": "player_input is required"}), 400
+        return jsonify({"error": "player_input is required"}), route_status_codes.bad_request
     try:
         out = execute_story_turn(
             session_id=session_id,
@@ -188,4 +189,4 @@ def world_engine_console_story_turn(session_id: str):
         )
     except GameServiceError as exc:
         return _gs_err(exc)
-    return jsonify(out), 200
+    return jsonify(out), route_status_codes.ok
