@@ -40,12 +40,9 @@ from app.services.user_service import (
     validate_email_format,
     USERNAME_MAX_LENGTH,
 )
+from app.config.route_constants import route_user_config
 
 logger = logging.getLogger(__name__)
-
-# Role level bounds (0-9999)
-ROLE_LEVEL_MIN = 0
-ROLE_LEVEL_MAX = 9999
 
 
 def _validate_role_level_bounds(level: int) -> tuple[bool, str | None]:
@@ -53,8 +50,8 @@ def _validate_role_level_bounds(level: int) -> tuple[bool, str | None]:
     Validate that role_level is within bounds [0, 9999].
     Returns (is_valid, error_message) tuple.
     """
-    if level < ROLE_LEVEL_MIN or level > ROLE_LEVEL_MAX:
-        return False, f"role_level must be between {ROLE_LEVEL_MIN} and {ROLE_LEVEL_MAX}"
+    if level < route_user_config.role_level_min or level > route_user_config.role_level_max:
+        return False, f"role_level must be between {route_user_config.role_level_min} and {route_user_config.role_level_max}"
     return True, None
 
 
