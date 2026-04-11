@@ -35,6 +35,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.runtime.parsed_ai_decision_types import ParsedAIDecision
+
 
 class AIFailureClass(str, Enum):
     """Canonical failure classification for AI-driven turn execution.
@@ -960,7 +962,7 @@ class RestorePolicy:
         }
 
 
-def generate_fallback_responder_proposal() -> "ParsedAIDecision":
+def generate_fallback_responder_proposal() -> ParsedAIDecision:
     """Generate minimal, conservative fallback responder proposal.
 
     W2.5 Phase 3: Fallback Responder - Generate safe, minimal proposal when parse/structure fails.
@@ -975,9 +977,6 @@ def generate_fallback_responder_proposal() -> "ParsedAIDecision":
         ParsedAIDecision with empty deltas (safe-turn equivalent).
         This allows the session to survive a parse failure while maintaining state.
     """
-    # Import here to avoid circular dependency
-    from app.runtime.ai_decision import ParsedAIDecision
-
     # Create minimal ParsedAIDecision for fallback
     # Empty deltas means no state mutations - conservative fallback
     return ParsedAIDecision(
