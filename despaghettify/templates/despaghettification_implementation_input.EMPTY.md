@@ -72,7 +72,7 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 ## Latest structure scan (orientation, no warranty)
 
-**Purpose:** A **fillable** overview after measurable runs — after larger refactors update **date**, **M7 inputs**, and optional **extra checks** / **open hotspots**. Measurement flow, builtins grep, runtime spot check: [spaghetti-check-task.md](../spaghetti-check-task.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when **M7 is elevated** (`M7 >= 25%`) **or** at least one category score is **critical** (`>= 45%`); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings** and longest functions: output of `python tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
+**Purpose:** A **fillable** overview after measurable runs — after larger refactors update **date**, **M7 inputs**, and optional **extra checks** / **open hotspots**. Measurement flow, builtins grep, runtime spot check: [spaghetti-check-task.md](../spaghetti-check-task.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when the **trigger policy** in § *Trigger policy for check task updates* fires (per-category score thresholds **or** composite **`M7 ≥ M7_ref`**); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings** and longest functions: output of `python tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
 
 | Field | Value (adjust when updating scan) |
 |-------|-------------------------------------|
@@ -110,8 +110,20 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 **Trigger policy for check task updates:**
 
-- If **M7 >= 25%** or **any category >= 45%**: update § *Information input list* and § *Recommended implementation order*.
-- If **M7 < 25%** and **no category >= 45%**: update only § *Latest structure scan*.
+Update § *Information input list*, § *Recommended implementation order*, and § *DS-ID → primary workstream* (for new IDs) when **any** of the following holds (scores **C1..C7** are the same 0–100 style values as in the tables above; use strict **>** for per-category lines):
+
+| Condition | Rule |
+|-----------|------|
+| **C1** — Circular dependencies | **C1 > 5** |
+| **C2** — Nesting depth | **C2 > 10** |
+| **C3** — Long functions + complexity | **C3 > 35** |
+| **C4** — Multi-responsibility modules | **C4 > 25** |
+| **C5** — Magic numbers + global state | **C5 > 20** *(default bar; change here by team agreement if needed)* |
+| **C6** — Missing abstractions / duplication | **C6 > 15** |
+| **C7** — Confusing control flow | **C7 > 20** |
+| **Composite** | **`M7 ≥ M7_ref`** with **`M7_ref = 19%`** — the value of **M7** when each **C1..C7** is set to its trigger boundary (**C5** uses **20** in that calculation): `0.20×5 + 0.10×10 + 0.20×35 + 0.15×25 + 0.10×20 + 0.15×15 + 0.10×20 = 19.0%`. |
+
+**Otherwise** (no per-category trigger **and** **`M7 < 19%`**): update **only** § *Latest structure scan*.
 
 *Note:* M7 is heuristic; AST telemetry (`N/L₅₀/L₁₀₀/D₆`) remains mandatory context for trend comparability.
 

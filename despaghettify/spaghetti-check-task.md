@@ -4,13 +4,29 @@
 
 This task describes the **full** analysis track for the Despaghettify hub: collect **structure metrics**, name **hotspots**, maintain the canonical [input list](despaghettification_implementation_input.md) — **without** code refactors (implementation stays with the implementer and follows [`EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md) for real waves).
 
-**Threshold:** Compute the weighted 7-category score **M7** as defined in the input list. **If M7 >= 25% or any single category >= 45%**, also edit or newly propose the **information input list** (DS table including workstream mapping) and **recommended implementation order**. If below both trigger conditions, do **not** touch those two sections in the spaghetti check (no new DS rows, no phase reshuffle) — updating **Latest structure scan** including **M7**, category breakdown, AST telemetry, and the **Open hotspots** field is still required (see below), but only with **still-unresolved** items.
+**Threshold:** Compute the weighted 7-category score **M7** as defined in the input list. **Update § *Information input list* and § *Recommended implementation order* (and § *DS-ID → primary workstream* for new IDs)** when **any** trigger below fires; otherwise do **not** touch those sections (no new DS rows, no phase reshuffle) — **Latest structure scan** including **M7**, category breakdown, AST telemetry, and **Open hotspots** is **always** updated (see below).
+
+**Per-category triggers** (each **C** is the same 0–100 style score as in the input list; strict **>**):
+
+| Category | Symbol | Trigger (update DS + phases if score is **greater than**) |
+|----------|--------|---------------------------------------------------------------|
+| Circular dependencies | **C1** | **5** |
+| Nesting depth | **C2** | **10** |
+| Long functions + complexity | **C3** | **35** |
+| Multi-responsibility modules | **C4** | **25** |
+| Magic numbers + global state | **C5** | **20** *(default; tune in input list if team agrees a different bar)* |
+| Missing abstractions / duplication | **C6** | **15** |
+| Confusing control flow | **C7** | **20** |
+
+**Composite M7 trigger:** also update those sections if **`M7 ≥ M7_ref`**, where **`M7_ref`** is the weighted score obtained when **each** category **C1..C7** is set to its trigger value from the table above (including **C5 = 20**). With the standard weights: **`M7_ref = 0.20×5 + 0.10×10 + 0.20×35 + 0.15×25 + 0.10×20 + 0.15×15 + 0.10×20 = 19.0%`**. So: **if `M7 ≥ 19%`** (same unit as the main table), treat as trigger **even if** no single per-category line crossed yet *(rare; mainly aligns composite with the chosen per-category bars)*.
+
+**Scan-only pass:** update **only** § *Latest structure scan* when **no** per-category trigger fires **and** **`M7 < 19%`**.
 
 ## Binding sources
 
 | Document | Role |
 |----------|------|
-| [despaghettification_implementation_input.md](despaghettification_implementation_input.md) | **Always:** **Latest structure scan** (date, **M7**, category scores C1..C7, AST telemetry **N/L₅₀/L₁₀₀/D₆**, extra checks, **Open hotspots** — **prune resolved items**, never re-list solved hotspots; see §1). **Only if trigger policy is met (M7 >= 25% or any category >= 45%)**: **information input list** (DS rows), **recommended implementation order** (phase proposal), § **DS-ID → primary workstream** for new IDs. |
+| [despaghettification_implementation_input.md](despaghettification_implementation_input.md) | **Always:** **Latest structure scan** (date, **M7**, category scores C1..C7, AST telemetry **N/L₅₀/L₁₀₀/D₆**, extra checks, **Open hotspots** — **prune resolved items**, never re-list solved hotspots; see §1). **Only if trigger policy is met** (per-category thresholds **or** **`M7 ≥ M7_ref`**; see **Threshold** above): **information input list** (DS rows), **recommended implementation order** (phase proposal), § **DS-ID → primary workstream** for new IDs. |
 | [tools/spaghetti_ast_scan.py](../tools/spaghetti_ast_scan.py) | Canonical metric run (repository root = CWD). |
 | [state/EXECUTION_GOVERNANCE.md](state/EXECUTION_GOVERNANCE.md) | Analysis and Markdown maintenance create **no** new pre/post artefacts; those appear only when a **wave** with evidence runs. |
 | Local planning / issues | Always share scan numbers; mirror proposed order / new DS rows to external tickets only after agreement — and in-repo **only** if trigger policy is met (otherwise the scan section suffices). |
@@ -136,7 +152,7 @@ python tools/spaghetti_ast_scan.py
 
 ## Maintaining the input list
 
-All in [despaghettification_implementation_input.md](despaghettification_implementation_input.md). The trigger policy refers to the weighted 7-category score **M7** and critical category cutoffs documented in the input list.
+All in [despaghettification_implementation_input.md](despaghettification_implementation_input.md). The trigger policy is the per-category table **plus** composite **`M7 ≥ M7_ref`** (see **Threshold** above); the input list mirrors the same rules under § *Trigger policy for check task updates*.
 
 ### 1) Latest structure scan — **always**
 
@@ -167,7 +183,7 @@ All in [despaghettification_implementation_input.md](despaghettification_impleme
 
 ## Output format for the requester (short)
 
-After the run: **3–8 sentences** on **M7**, category outliers, and whether **Open hotspots** shrank or cleared (no solved items left listed). **Only if trigger policy is met:** additionally **1–3 sentences** on **proposed implementation order** (first phase and why) plus pointer to changed sections (**scan**, **DS table**, **phase table**). If trigger policy is not met: reference **Latest structure scan** (including **Open hotspots** pruned to unresolved only) — no obligation to change DS / phases.
+After the run: **3–8 sentences** on **M7**, category outliers, and whether **Open hotspots** shrank or cleared (no solved items left listed). **Only if trigger policy is met** (any **C** above its bar **or** **`M7 ≥ M7_ref`**): additionally **1–3 sentences** on **proposed implementation order** (first phase and why) plus pointer to changed sections (**scan**, **DS table**, **phase table**). If trigger policy is not met: reference **Latest structure scan** (including **Open hotspots** pruned to unresolved only) — no obligation to change DS / phases.
 
 ## Counterpart: implementation wave by wave
 

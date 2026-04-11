@@ -120,7 +120,7 @@ Execute the full procedure from that document **in order**, at minimum:
 3. `python tools/ds005_runtime_import_check.py` as described there.
 4. Update [`despaghettification_implementation_input.md`](despaghettification_implementation_input.md) per **Maintaining the input list** in `spaghetti-check-task.md`:
    - **Always:** § *Latest structure scan* (date, **M7**, **C1..C7**, telemetry, extra checks, **Open hotspots** pruned to **unresolved** only).
-   - **Only if trigger met** (`M7 >= 25%` **or** any category **>= 45%**): § *Information input list* and § *Recommended implementation order*.
+   - **Only if trigger met** (per-category thresholds **or** composite **`M7 ≥ M7_ref`** — see [`spaghetti-check-task.md`](spaghetti-check-task.md) **Threshold**): § *Information input list* and § *Recommended implementation order*.
    - **If trigger not met:** do **not** change the DS table or phase table beyond what the reset already set to placeholders.
 
 **Output to requester:** follow the short **Output format** paragraph at the end of `spaghetti-check-task.md`.
