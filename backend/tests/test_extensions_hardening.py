@@ -2,7 +2,7 @@
 
 import pytest
 from flask import Flask
-from app.extensions import limiter, TestLimiter, LimiterProxy
+from app.extensions import limiter, MockRateLimiter, LimiterProxy
 from app.config.limiter_config import limiter_defaults
 
 
@@ -28,9 +28,9 @@ class TestTestLimiterStateScoping:
     """TestLimiter state is properly scoped to instances."""
 
     def test_test_limiter_instances_have_separate_state(self):
-        """Each TestLimiter instance has its own request_times dict."""
-        tl1 = TestLimiter()
-        tl2 = TestLimiter()
+        """Each MockRateLimiter instance has its own request_times dict."""
+        tl1 = MockRateLimiter()
+        tl2 = MockRateLimiter()
 
         # Each instance has separate request_times
         assert tl1.request_times is not tl2.request_times

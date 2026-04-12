@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify
 from flask_jwt_extended import create_access_token
 
-from app.extensions import TestLimiter as ExtensionsTestLimiter, get_rate_limit_key, jwt
+from app.extensions import MockRateLimiter as ExtensionsTestLimiter, get_rate_limit_key, jwt
 from app.models import RefreshToken, TokenBlacklist
 
 

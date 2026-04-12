@@ -9,7 +9,7 @@ Global              Role
 ``jwt``             Flask-JWT-Extended; callbacks for revocation live in
                     ``app.auth.jwt_revocation`` (registered from ``init_app``).
 ``limiter``         ``LimiterProxy``: production ``Flask-Limiter`` or
-                    ``TestLimiter`` when ``app.config['TESTING']``.
+                    ``MockRateLimiter`` when ``app.config['TESTING']``.
 ``migrate``         Flask-Migrate (CLI); bound only when not testing.
 ``mail``            Flask-Mail for outbound email.
 
@@ -53,7 +53,7 @@ def get_rate_limit_key():
     return get_remote_address()
 
 
-class TestLimiter:
+class MockRateLimiter:
     """Rate limiter that works in tests by actually tracking request counts."""
     def __init__(self):
         self.request_times = {}
@@ -121,12 +121,12 @@ class TestLimiter:
         pass
 
 
-# Global instance that will hold either Limiter or TestLimiter
+# Global instance that will hold either Limiter or MockRateLimiter
 _limiter_instance = None
 
 
 class LimiterProxy:
-    """Proxy that delegates to either Flask-Limiter or TestLimiter based on app mode."""
+    """Proxy that delegates to either Flask-Limiter or MockRateLimiter based on app mode."""
 
     def limit(self, limit_str, key_func=None):
         """Create a rate limit decorator that works in both test and production modes."""
@@ -139,9 +139,9 @@ class LimiterProxy:
 
                 # Determine which limiter to use based on app config
                 if current_app.config.get("TESTING"):
-                    if not isinstance(_limiter_instance, TestLimiter):
-                        _limiter_instance = TestLimiter()
-                    # Apply TestLimiter's rate limiting at request time
+                    if not isinstance(_limiter_instance, MockRateLimiter):
+                        _limiter_instance = MockRateLimiter()
+                    # Apply MockRateLimiter's rate limiting at request time
                     test_limiter = _limiter_instance
                     # Get the rate limit key
                     key = None
@@ -198,7 +198,7 @@ class LimiterProxy:
         """Initialize the limiter with the app."""
         global _limiter_instance
         if app.config.get("TESTING"):
-            _limiter_instance = TestLimiter()
+            _limiter_instance = MockRateLimiter()
         else:
             _limiter_instance = Limiter(key_func=get_rate_limit_key, default_limits=[])
             _limiter_instance.init_app(app)

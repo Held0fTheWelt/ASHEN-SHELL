@@ -7,7 +7,7 @@ narrative layer.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -24,7 +24,7 @@ class TestNarrativeCommitEvent:
 
     def test_instantiate_with_valid_data(self) -> None:
         """Create NarrativeCommitEvent with all valid required fields."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         event = NarrativeCommitEvent(
             commit_id="commit_001",
             turn_id="turn_5",
@@ -43,7 +43,7 @@ class TestNarrativeCommitEvent:
 
     def test_instantiate_with_optional_metadata(self) -> None:
         """Create NarrativeCommitEvent with optional metadata dict."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         metadata = {"source": "ai_adapter", "priority": 1}
         event = NarrativeCommitEvent(
             commit_id="commit_002",
@@ -59,7 +59,7 @@ class TestNarrativeCommitEvent:
 
     def test_frozen_prevents_modification(self) -> None:
         """Frozen dataclass prevents field modification after creation."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         event = NarrativeCommitEvent(
             commit_id="commit_003",
             turn_id="turn_7",
@@ -73,7 +73,7 @@ class TestNarrativeCommitEvent:
 
     def test_missing_commit_id_raises_error(self) -> None:
         """Empty commit_id raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="commit_id is required"):
             NarrativeCommitEvent(
                 commit_id="",
@@ -86,7 +86,7 @@ class TestNarrativeCommitEvent:
 
     def test_missing_turn_id_raises_error(self) -> None:
         """Empty turn_id raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="turn_id is required"):
             NarrativeCommitEvent(
                 commit_id="commit_004",
@@ -99,7 +99,7 @@ class TestNarrativeCommitEvent:
 
     def test_missing_narrative_id_raises_error(self) -> None:
         """Empty narrative_id raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="narrative_id is required"):
             NarrativeCommitEvent(
                 commit_id="commit_005",
@@ -112,7 +112,7 @@ class TestNarrativeCommitEvent:
 
     def test_missing_user_id_raises_error(self) -> None:
         """Empty user_id raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="user_id is required"):
             NarrativeCommitEvent(
                 commit_id="commit_006",
@@ -137,7 +137,7 @@ class TestNarrativeCommitEvent:
 
     def test_commit_payload_preserves_complex_data(self) -> None:
         """commit_payload correctly preserves nested dict data."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         complex_payload = {
             "scene_id": "scene_1",
             "consequences": ["escalation", "new_thread"],
@@ -163,7 +163,7 @@ class TestThreadUpdateResult:
 
     def test_instantiate_with_valid_data(self) -> None:
         """Create ThreadUpdateResult with all valid required fields."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         result = ThreadUpdateResult(
             thread_id="thread_001",
             escalated_count=2,
@@ -180,7 +180,7 @@ class TestThreadUpdateResult:
 
     def test_instantiate_with_optional_metadata(self) -> None:
         """Create ThreadUpdateResult with optional metadata."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         metadata = {"reason": "escalation_signal", "source_event": "commit_009"}
         result = ThreadUpdateResult(
             thread_id="thread_002",
@@ -194,7 +194,7 @@ class TestThreadUpdateResult:
 
     def test_frozen_prevents_modification(self) -> None:
         """Frozen dataclass prevents field modification after creation."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         result = ThreadUpdateResult(
             thread_id="thread_003",
             escalated_count=0,
@@ -207,7 +207,7 @@ class TestThreadUpdateResult:
 
     def test_missing_thread_id_raises_error(self) -> None:
         """Empty thread_id raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="thread_id is required"):
             ThreadUpdateResult(
                 thread_id="",
@@ -219,7 +219,7 @@ class TestThreadUpdateResult:
 
     def test_negative_escalated_count_raises_error(self) -> None:
         """Negative escalated_count raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="escalated_count must be non-negative"):
             ThreadUpdateResult(
                 thread_id="thread_004",
@@ -231,7 +231,7 @@ class TestThreadUpdateResult:
 
     def test_negative_resolved_count_raises_error(self) -> None:
         """Negative resolved_count raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="resolved_count must be non-negative"):
             ThreadUpdateResult(
                 thread_id="thread_005",
@@ -243,7 +243,7 @@ class TestThreadUpdateResult:
 
     def test_negative_thread_version_raises_error(self) -> None:
         """Negative thread_version raises ValueError."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         with pytest.raises(ValueError, match="thread_version must be non-negative"):
             ThreadUpdateResult(
                 thread_id="thread_006",
@@ -266,7 +266,7 @@ class TestThreadUpdateResult:
 
     def test_zero_counts_valid(self) -> None:
         """Zero counts are valid and meaningful."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         result = ThreadUpdateResult(
             thread_id="thread_008",
             escalated_count=0,
@@ -291,7 +291,7 @@ class TestThreadUpdateInput:
             narrative_id="session_xyz",
             user_id="user_606",
             commit_payload={"status": "active"},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
     def test_instantiate_with_valid_data(self, valid_commit_event: NarrativeCommitEvent) -> None:
@@ -435,7 +435,7 @@ class TestThreadUpdateInput:
                 "consequences": ["escalation_signal"],
                 "triggers": ["conflict"],
             },
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             metadata={"source": "ai_executor"},
         )
 
@@ -444,7 +444,7 @@ class TestThreadUpdateInput:
             escalated_count=3,
             resolved_count=0,
             thread_version=7,
-            updated_at=datetime.utcnow(),
+            updated_at=datetime.now(timezone.utc),
             metadata={"reason": "character_conflict"},
         )
 
