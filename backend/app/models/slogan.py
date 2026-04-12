@@ -1,11 +1,6 @@
 """Slogan model for managed site copy: landing teaser, hero, promo, ad slots, etc."""
-from datetime import datetime, timezone
-
 from app.extensions import db
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
+from app.utils.time_utils import utc_now as _utc_now
 
 
 class Slogan(db.Model):

@@ -1,12 +1,7 @@
 """Wiki: page (language-neutral) plus per-language translations."""
-from datetime import datetime, timezone
-
 from app.extensions import db
 from app.i18n import TRANSLATION_STATUS_APPROVED
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
+from app.utils.time_utils import utc_now as _utc_now
 
 
 class WikiPage(db.Model):

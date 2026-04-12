@@ -1,11 +1,6 @@
 """Area model for area-based access control. Users can be assigned to one or many areas; 'all' is wildcard."""
-from datetime import datetime, timezone
-
 from app.extensions import db
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
+from app.utils.time_utils import utc_now as _utc_now
 
 
 # Many-to-many: users <-> areas

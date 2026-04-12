@@ -1,17 +1,13 @@
-from datetime import datetime, timezone
 import json
 
 from werkzeug.security import check_password_hash
 
 from app.extensions import db
 from app.models.area import user_areas
+from app.utils.time_utils import utc_now as _utc_now
 
 # SuperAdmin: admin role with role_level >= this value. Used for hierarchy and self-elevation.
 SUPERADMIN_THRESHOLD = 100
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
 
 
 class PasswordHistory(db.Model):
