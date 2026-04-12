@@ -161,8 +161,8 @@ Implementers may **briefly** record visible progress (for reviewers and the next
 
 | date | ID(s) | short description | pre artefacts (rel. to `despaghettify/state/`) | post artefacts (rel. to `despaghettify/state/`) | state doc(s) updated | PR / commit |
 |------|-------|-------------------|----------------------------------------|----------------------------------------|----------------------|-------------|
+| 2026-04-12 | DS-001 | **W01 + W02 in-progress:** W01 identified 35 files in C1 cycles (10.77%) with detailed SCC analysis. W02 removed NarrativeThreadSet import edge from narrative_threads_update_from_commit.py (using string annotations). C1 unchanged: cycles are interconnected, require deeper boundary refactoring (DTOs, facades). Tests: 31/31 passing. Plan: W03 will tackle orchestrator boundaries with DTO modules. | `session_20260412_DS-001_wave_plan.md/.json`, `session_20260412_DS-001_w01_cycle_analysis.txt`, `ds001_check_baseline.json`, `ds001_w02_check.json` | See pre artefacts; baseline metrics documented | — | `2cda407` (W01 plan), `1e42d71` (W02 import refactor) |
 | 2026-04-12 | — | `spaghetti-reset-task` + one **`spaghetti-check`**: workstreams wiped, EMPTY → live input, metrics from `check --with-metrics` (same timestamps as § *Latest structure scan*). | — | — | — | Evidence: `despaghettify/reports/reset_check_with_metrics.json`, `despaghettify/reports/reset_ast_scan_capture.txt` |
-| — | — | — | — | — | — | — |
 
 **New rows:** chronologically (**newest first** recommended); **DS-ID(s)**, gates/tests run, pre/post paths as in [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md); for scan/docs-only updates note briefly. Longer history: Git, PRs, `WORKSTREAM_*_STATE.md`.
 
