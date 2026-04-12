@@ -11,6 +11,14 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from app.story_runtime.narrative_commit_resolution import (
+    build_base_consequences,
+    build_interpretation_summary,
+    eval_core_transition_rules,
+    overlay_terminal_scene,
+    prepare_open_pressures,
+)
+
 SituationStatus = Literal["continue", "transitioned", "blocked", "terminal"]
 
 # Stable codes for programmatic checks (aligned with former progression_commit.reason).
@@ -215,113 +223,45 @@ def resolve_narrative_commit(
     )
 
     kind = interpreted_input.get("kind")
-    conf = interpreted_input.get("confidence")
-    ambiguity = interpreted_input.get("ambiguity")
 
-    open_pressures: list[str] = []
-    if isinstance(ambiguity, str) and ambiguity.strip():
-        open_pressures.append(f"interpretation_ambiguity:{ambiguity.strip()}")
+    open_pressures = prepare_open_pressures(interpreted_input)
+    consequences = build_base_consequences(kind=kind, model_raw=model_raw)
 
-    committed_scene_id = prior_scene_id
-    allowed = False
-    code: CommitReasonCode = "no_scene_proposal"
-    situation: SituationStatus = "continue"
-    auth_reason = "No scene change was proposed; the session remains in the current scene."
+    work = eval_core_transition_rules(
+        proposed_scene_id=proposed_scene_id,
+        prior_scene_id=prior_scene_id,
+        known_scene_ids=known_scene_ids,
+        has_transition_rules=has_transition_rules,
+        transition_map=transition_map,
+        model_raw=model_raw,
+        consequences=consequences,
+    )
+    overlay_terminal_scene(work, terminal_ids=terminal_ids)
 
-    consequences: list[str] = [f"interpretation_kind:{_interpretation_kind_tag(kind)}"]
-
-    if model_raw is not None:
-        consequences.append(f"model_proposal_considered:{model_raw}")
-
-    if not proposed_scene_id:
-        if model_raw is not None and known_scene_ids and model_raw not in known_scene_ids:
-            auth_reason = (
-                "The model proposed a scene that is not in the runtime projection; "
-                "no scene candidate was selected for progression."
-            )
-        else:
-            auth_reason = "No scene change was proposed; the session remains in the current scene."
-        code = "no_scene_proposal"
-        situation = "continue"
-    elif proposed_scene_id == prior_scene_id:
-        code = "already_in_scene"
-        situation = "continue"
-        auth_reason = "A scene was proposed but it matches the current scene; no transition applies."
-        consequences.append(f"scene_continue:{prior_scene_id}")
-    elif known_scene_ids and proposed_scene_id not in known_scene_ids:
-        code = "unknown_target_scene"
-        situation = "blocked"
-        auth_reason = "The proposed target scene is unknown to this runtime projection; progression is blocked."
-        consequences.append("proposal_blocked:unknown_target_scene")
-    elif not has_transition_rules:
-        code = "transition_hints_missing"
-        situation = "blocked"
-        auth_reason = "Transition hints are missing in the runtime projection; progression is blocked."
-        consequences.append("proposal_blocked:transition_hints_missing")
-    else:
-        allowed_targets = transition_map.get(prior_scene_id, set())
-        if proposed_scene_id not in allowed_targets:
-            code = "illegal_transition_not_allowed"
-            situation = "blocked"
-            auth_reason = (
-                "The proposed transition is not allowed by runtime transition hints; progression is blocked."
-            )
-            consequences.append("proposal_blocked:illegal_transition")
-        else:
-            committed_scene_id = proposed_scene_id
-            allowed = True
-            code = "legal_transition_committed"
-            situation = "transitioned"
-            auth_reason = f"Legal transition committed from {prior_scene_id!r} to {committed_scene_id!r}."
-            consequences.append(f"scene_transition:{prior_scene_id}->{committed_scene_id}")
-
-    at_terminal_scene = committed_scene_id in terminal_ids
-    # Blocked progression stays blocked even when the current scene is terminal.
-    if at_terminal_scene and situation != "blocked":
-        situation = "terminal"
-        if code == "legal_transition_committed":
-            auth_reason = (
-                f"Legal transition committed to terminal scene {committed_scene_id!r}."
-            )
-        elif code == "already_in_scene":
-            auth_reason = f"The session remains on terminal scene {committed_scene_id!r}."
-        elif code == "no_scene_proposal":
-            auth_reason = f"No scene change proposed; session remains on terminal scene {committed_scene_id!r}."
-        else:
-            auth_reason = f"The session is at terminal scene {committed_scene_id!r}."
-
-    model_considered = model_raw is not None
-    state_changed = committed_scene_id != prior_scene_id
-    interpretation_influenced = selected_source is not None or str(kind or "").lower() == "explicit_command"
-    local_continuation_only = (not state_changed) and situation == "continue"
-
-    summary: dict[str, Any] = {
-        "interpreted_kind": kind,
-        "interpretation_confidence": conf,
-        "interpretation_ambiguity": ambiguity,
-        "interpretation_influenced_progression": interpretation_influenced,
-        "model_proposal_considered": model_considered,
-        "proposal_changed_committed_state": state_changed,
-        "local_narrative_continuation_only": local_continuation_only,
-        "note": (
-            "Bounded interpretation-to-progression linkage only; not a full canonical world-state delta."
-        ),
-    }
+    at_terminal_scene = work.committed_scene_id in terminal_ids
+    summary = build_interpretation_summary(
+        interpreted_input=interpreted_input,
+        model_raw=model_raw,
+        selected_source=selected_source,
+        prior_scene_id=prior_scene_id,
+        committed_scene_id=work.committed_scene_id,
+        situation_status=work.situation_status,
+    )
 
     return StoryNarrativeCommitRecord(
         turn_number=turn_number,
         prior_scene_id=prior_scene_id or None,
         proposed_scene_id=proposed_scene_id,
-        committed_scene_id=committed_scene_id,
-        situation_status=situation,
-        allowed=allowed,
-        authoritative_reason=auth_reason,
-        commit_reason_code=code,
+        committed_scene_id=work.committed_scene_id,
+        situation_status=work.situation_status,  # type: ignore[arg-type]
+        allowed=work.allowed,
+        authoritative_reason=work.authoritative_reason,
+        commit_reason_code=work.commit_reason_code,  # type: ignore[arg-type]
         selected_candidate_source=selected_source,
         candidate_sources=candidate_sources,
         model_structured_proposed_scene_id=model_raw,
         committed_interpretation_summary=summary,
-        committed_consequences=consequences,
+        committed_consequences=work.committed_consequences,
         open_pressures=open_pressures,
         resolved_pressures=[],
         is_terminal=at_terminal_scene,

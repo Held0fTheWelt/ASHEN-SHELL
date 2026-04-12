@@ -201,7 +201,7 @@ class TestMutationPolicyIntegration:
 
     def test_validate_delta_rejects_blocked_path(self):
         """Blocked mutations are rejected in validation pipeline."""
-        from app.runtime.turn_executor import ProposedStateDelta
+        from app.runtime.runtime_models import ProposedStateDelta
         from app.runtime.validators import _validate_delta
 
         delta = ProposedStateDelta(
@@ -225,7 +225,7 @@ class TestMutationPolicyIntegration:
 
     def test_validate_delta_accepts_allowed_path(self):
         """Allowed mutations are accepted in validation pipeline."""
-        from app.runtime.turn_executor import ProposedStateDelta
+        from app.runtime.runtime_models import ProposedStateDelta
         from app.runtime.validators import _validate_delta
 
         delta = ProposedStateDelta(

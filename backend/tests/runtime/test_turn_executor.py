@@ -14,9 +14,6 @@ import pytest
 from app.runtime.validators import validate_decision, ValidationStatus, ValidationOutcome
 from app.runtime.turn_executor import (
     DeltaApplicationError,
-    MockDecision,
-    ProposedStateDelta,
-    TurnExecutionResult,
     _accumulate_turn_context,
     _compute_guard_outcome,
     _derive_runtime_context,
@@ -33,13 +30,16 @@ from app.runtime.runtime_models import (
     AIDecisionAction,
     AIActionType,
     AIValidationOutcome,
+    MockDecision,
     NarrativeCommitRecord,
     DeltaType,
     DeltaValidationStatus,
     GuardOutcome,
+    ProposedStateDelta,
     SessionState,
     StateDelta,
 )
+from app.runtime.turn_execution_types import TurnExecutionResult
 
 
 class TestTurnExecutorBasics:

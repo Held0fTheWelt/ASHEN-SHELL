@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 from typing import Any
 
 from ai_stack.semantic_planner_effect_surface import (
@@ -13,13 +12,19 @@ from ai_stack.semantic_planner_effect_surface import (
 from app.contracts.inspector_turn_projection import (
     INSPECTOR_COMPARISON_PROJECTION_SCHEMA_VERSION,
     INSPECTOR_PROVENANCE_RAW_PROJECTION_SCHEMA_VERSION,
-    INSPECTOR_SECTION_STATUS_SUPPORTED,
     INSPECTOR_TIMELINE_PROJECTION_SCHEMA_VERSION,
     build_inspector_view_projection_root,
     make_supported_section,
     make_unavailable_section,
 )
 from app.services.ai_stack_evidence_service import build_session_evidence_bundle
+from app.services.inspector_projection_comparison import (
+    build_turn_comparisons,
+    comparison_dimension_lists,
+    session_has_candidate_matrix,
+)
+from app.services.inspector_projection_provenance_raw_entries import build_provenance_entries
+from app.services.inspector_projection_turn_view import extract_turn_view
 
 
 def _diagnostics_rows(bundle: dict[str, Any]) -> list[dict[str, Any]]:
@@ -30,46 +35,6 @@ def _diagnostics_rows(bundle: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(rows, list):
         return []
     return [row for row in rows if isinstance(row, dict)]
-
-
-def _planner_slice(row: dict[str, Any]) -> dict[str, Any]:
-    graph = row.get("graph")
-    if isinstance(graph, dict):
-        psp = graph.get("planner_state_projection")
-        if isinstance(psp, dict):
-            return psp
-    return {}
-
-
-def _semantic_move_record(row: dict[str, Any]) -> dict[str, Any] | None:
-    sm = row.get("semantic_move_record")
-    if isinstance(sm, dict):
-        return sm
-    ps = _planner_slice(row)
-    inner = ps.get("semantic_move_record")
-    return inner if isinstance(inner, dict) else None
-
-
-def _dramatic_review(row: dict[str, Any]) -> dict[str, Any]:
-    graph = row.get("graph")
-    if not isinstance(graph, dict):
-        return {}
-    dr = graph.get("dramatic_review")
-    return dr if isinstance(dr, dict) else {}
-
-
-def _visible_narration_fingerprint(row: dict[str, Any]) -> str | None:
-    vo = row.get("visible_output_bundle")
-    if not isinstance(vo, dict):
-        return None
-    narr = vo.get("gm_narration")
-    if not isinstance(narr, list):
-        return None
-    parts = [str(x) for x in narr if x is not None]
-    if not parts:
-        return None
-    payload = "\n".join(parts).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()[:24]
 
 
 def _build_root(
@@ -96,64 +61,6 @@ def _build_root(
     )
 
 
-def _extract_turn_view(row: dict[str, Any], idx: int, *, module_id: Any) -> dict[str, Any]:
-    validation = row.get("validation_outcome")
-    if not isinstance(validation, dict):
-        validation = {}
-    gate = validation.get("dramatic_effect_gate_outcome")
-    if not isinstance(gate, dict):
-        gate = {}
-    model_route = row.get("model_route")
-    if not isinstance(model_route, dict):
-        model_route = {}
-    graph = row.get("graph")
-    if not isinstance(graph, dict):
-        graph = {}
-
-    sm = _semantic_move_record(row)
-    move_type = sm.get("move_type") if isinstance(sm, dict) else None
-    scene_risk_band = sm.get("scene_risk_band") if isinstance(sm, dict) else None
-
-    trace = gate.get("diagnostic_trace")
-    trace_codes: list[str] = []
-    if isinstance(trace, list):
-        for step in trace[:12]:
-            if isinstance(step, dict) and step.get("code") is not None:
-                trace_codes.append(str(step.get("code")))
-
-    mid = module_id if isinstance(module_id, str) else ""
-    support_level = support_level_for_module(mid).value
-
-    return {
-        "turn_index": idx + 1,
-        "turn_number": row.get("turn_number") if isinstance(row.get("turn_number"), int) else idx + 1,
-        "trace_id": row.get("trace_id"),
-        "gate_result": gate.get("gate_result"),
-        "validation_status": validation.get("status"),
-        "validation_reason": validation.get("reason"),
-        "dramatic_effect_weak_signal": validation.get("dramatic_effect_weak_signal"),
-        "fallback_path_taken": bool(graph.get("fallback_path_taken") or model_route.get("fallback_stage_reached")),
-        "execution_health": graph.get("execution_health"),
-        "selected_scene_function": row.get("selected_scene_function"),
-        "route_mode": model_route.get("route_mode"),
-        "route_reason_code": model_route.get("route_reason_code") or model_route.get("route_reason"),
-        "semantic_move_type": move_type,
-        "scene_risk_band": scene_risk_band,
-        "empty_fluency_risk": gate.get("empty_fluency_risk"),
-        "character_plausibility_posture": gate.get("character_plausibility_posture"),
-        "continuity_support_posture": gate.get("continuity_support_posture"),
-        "continues_or_changes_pressure": gate.get("continues_or_changes_pressure"),
-        "supports_scene_function": gate.get("supports_scene_function"),
-        "legacy_fallback_used": gate.get("legacy_fallback_used"),
-        "effect_rationale_codes": list(gate["effect_rationale_codes"])
-        if isinstance(gate.get("effect_rationale_codes"), list)
-        else None,
-        "gate_diagnostic_trace_codes": trace_codes or None,
-        "accepted_weak_signal": bool(gate.get("gate_result") == "accepted_with_weak_signal"),
-        "semantic_planner_support_level": support_level,
-    }
-
-
 def build_inspector_timeline_projection(*, session_id: str, trace_id: str) -> dict[str, Any]:
     """Return per-turn timeline projection from existing diagnostics rows."""
     bundle = build_session_evidence_bundle(session_id=session_id, trace_id=trace_id)
@@ -172,7 +79,7 @@ def build_inspector_timeline_projection(*, session_id: str, trace_id: str) -> di
         )
 
     mid = bundle.get("module_id")
-    turns = [_extract_turn_view(row, idx, module_id=mid) for idx, row in enumerate(rows)]
+    turns = [extract_turn_view(row, idx, module_id=mid) for idx, row in enumerate(rows)]
     section = make_supported_section(
         {
             "total_turns": len(turns),
@@ -187,15 +94,6 @@ def build_inspector_timeline_projection(*, session_id: str, trace_id: str) -> di
         section_key="timeline_projection",
         section=section,
     )
-
-
-def _session_has_candidate_matrix(rows: list[dict[str, Any]]) -> bool:
-    for row in rows:
-        dr = _dramatic_review(row)
-        c = dr.get("multi_pressure_candidates")
-        if isinstance(c, list) and len(c) > 0:
-            return True
-    return False
 
 
 def build_inspector_comparison_projection(*, session_id: str, trace_id: str) -> dict[str, Any]:
@@ -227,70 +125,10 @@ def build_inspector_comparison_projection(*, session_id: str, trace_id: str) -> 
         )
 
     mid = bundle.get("module_id")
-    turns = [_extract_turn_view(row, idx, module_id=mid) for idx, row in enumerate(rows)]
-    has_candidates = _session_has_candidate_matrix(rows)
-    unsupported_dimensions: list[str] = [
-        "cross_session_comparison_no_shared_projection_source",
-        "cross_run_version_delta_not_emitted",
-    ]
-    if not has_candidates:
-        unsupported_dimensions.append("candidate_matrix_not_emitted_in_diagnostics")
-
-    supported_dimensions = ["turn_to_turn_within_session", "planner_gate_posture_delta"]
-    if has_candidates:
-        supported_dimensions.append("candidate_matrix_when_present")
-
-    comparisons: list[dict[str, Any]] = []
-    for idx in range(1, len(rows)):
-        prev_row, current_row = rows[idx - 1], rows[idx]
-        prev, current = turns[idx - 1], turns[idx]
-        dr_to = _dramatic_review(current_row)
-        candidates_to = dr_to.get("multi_pressure_candidates") if has_candidates else None
-        if has_candidates and not isinstance(candidates_to, list):
-            candidates_to = None
-
-        fp_prev = _visible_narration_fingerprint(prev_row)
-        fp_curr = _visible_narration_fingerprint(current_row)
-        surface_comparison: dict[str, Any] | str
-        if fp_prev is None or fp_curr is None:
-            surface_comparison = "unavailable_missing_visible_output_bundle"
-        else:
-            surface_comparison = {
-                "visible_output_fingerprint_from": fp_prev,
-                "visible_output_fingerprint_to": fp_curr,
-                "phrasing_identical": fp_prev == fp_curr,
-            }
-
-        comparisons.append(
-            {
-                "from_turn_number": prev["turn_number"],
-                "to_turn_number": current["turn_number"],
-                "from_trace_id": prev["trace_id"],
-                "to_trace_id": current["trace_id"],
-                "gate_result_from": prev["gate_result"],
-                "gate_result_to": current["gate_result"],
-                "validation_status_from": prev["validation_status"],
-                "validation_status_to": current["validation_status"],
-                "fallback_path_taken_from": prev["fallback_path_taken"],
-                "fallback_path_taken_to": current["fallback_path_taken"],
-                "selected_scene_function_from": prev["selected_scene_function"],
-                "selected_scene_function_to": current["selected_scene_function"],
-                "empty_fluency_risk_from": prev["empty_fluency_risk"],
-                "empty_fluency_risk_to": current["empty_fluency_risk"],
-                "character_plausibility_posture_from": prev["character_plausibility_posture"],
-                "character_plausibility_posture_to": current["character_plausibility_posture"],
-                "continuity_support_posture_from": prev["continuity_support_posture"],
-                "continuity_support_posture_to": current["continuity_support_posture"],
-                "legacy_fallback_used_from": prev["legacy_fallback_used"],
-                "legacy_fallback_used_to": current["legacy_fallback_used"],
-                "semantic_move_type_from": prev["semantic_move_type"],
-                "semantic_move_type_to": current["semantic_move_type"],
-                "scene_risk_band_from": prev["scene_risk_band"],
-                "scene_risk_band_to": current["scene_risk_band"],
-                "multi_pressure_candidates_to": candidates_to,
-                "visible_output_surface_comparison": surface_comparison,
-            }
-        )
+    turns = [extract_turn_view(row, idx, module_id=mid) for idx, row in enumerate(rows)]
+    has_candidates = session_has_candidate_matrix(rows)
+    supported_dimensions, unsupported_dimensions = comparison_dimension_lists(has_candidates=has_candidates)
+    comparisons = build_turn_comparisons(rows, turns, has_candidates=has_candidates)
 
     section = make_supported_section(
         {
@@ -348,90 +186,7 @@ def build_inspector_provenance_raw_projection(
         return payload
 
     last = rows[-1]
-    validation = last.get("validation_outcome")
-    if not isinstance(validation, dict):
-        validation = {}
-    gate = validation.get("dramatic_effect_gate_outcome")
-    if not isinstance(gate, dict):
-        gate = {}
-    model_route = last.get("model_route")
-    if not isinstance(model_route, dict):
-        model_route = {}
-    graph = last.get("graph")
-    if not isinstance(graph, dict):
-        graph = {}
-
-    mid = bundle.get("module_id")
-    mid_str = mid if isinstance(mid, str) else ""
-    support_level = support_level_for_module(mid_str).value
-    evaluator_class = type(resolve_dramatic_effect_evaluator(mid_str)).__name__
-
-    trace_compact = None
-    if isinstance(gate.get("diagnostic_trace"), list):
-        trace_compact = [
-            {"code": (s or {}).get("code"), "detail": str((s or {}).get("detail") or "")[:160]}
-            for s in gate["diagnostic_trace"][:24]
-            if isinstance(s, dict)
-        ]
-
-    entries = [
-        {
-            "field": "validation_status",
-            "value": validation.get("status"),
-            "source_kind": "runtime_derived",
-            "source_ref": "world_engine_diagnostics.diagnostics[-1].validation_outcome.status",
-        },
-        {
-            "field": "gate_result",
-            "value": gate.get("gate_result"),
-            "source_kind": "runtime_derived",
-            "source_ref": "world_engine_diagnostics.diagnostics[-1].validation_outcome.dramatic_effect_gate_outcome.gate_result",
-        },
-        {
-            "field": "effect_rationale_codes",
-            "value": list(gate["effect_rationale_codes"])
-            if isinstance(gate.get("effect_rationale_codes"), list)
-            else None,
-            "source_kind": "runtime_derived",
-            "source_ref": "world_engine_diagnostics.diagnostics[-1].validation_outcome.dramatic_effect_gate_outcome.effect_rationale_codes",
-        },
-        {
-            "field": "dramatic_effect_diagnostic_trace",
-            "value": trace_compact,
-            "source_kind": "runtime_derived",
-            "source_ref": "world_engine_diagnostics.diagnostics[-1].validation_outcome.dramatic_effect_gate_outcome.diagnostic_trace",
-        },
-        {
-            "field": "legacy_fallback_used",
-            "value": gate.get("legacy_fallback_used"),
-            "source_kind": "runtime_derived",
-            "source_ref": "world_engine_diagnostics.diagnostics[-1].validation_outcome.dramatic_effect_gate_outcome.legacy_fallback_used",
-        },
-        {
-            "field": "semantic_planner_support_level",
-            "value": support_level,
-            "source_kind": "capability_metadata",
-            "source_ref": "ai_stack.semantic_planner_effect_surface.support_level_for_module",
-        },
-        {
-            "field": "dramatic_effect_evaluator_class",
-            "value": evaluator_class,
-            "source_kind": "capability_metadata",
-            "source_ref": "ai_stack.semantic_planner_effect_surface.resolve_dramatic_effect_evaluator",
-        },
-        {
-            "field": "fallback_path_taken",
-            "value": bool(graph.get("fallback_path_taken") or model_route.get("fallback_stage_reached")),
-            "source_kind": "runtime_derived",
-            "source_ref": "world_engine_diagnostics.diagnostics[-1].graph.fallback_path_taken|model_route.fallback_stage_reached",
-        },
-        {
-            "field": "selected_scene_function",
-            "value": last.get("selected_scene_function"),
-            "source_kind": "runtime_derived",
-            "source_ref": "world_engine_diagnostics.diagnostics[-1].selected_scene_function",
-        },
-    ]
+    entries = build_provenance_entries(last=last, bundle=bundle)
     section = make_supported_section(
         {
             "entries": entries,

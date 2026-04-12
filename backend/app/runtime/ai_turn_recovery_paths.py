@@ -19,10 +19,12 @@ from app.runtime.runtime_models import (
     DegradedMarker,
     ExecutionFailureReason,
     GuardOutcome,
+    MockDecision,
     SessionState,
 )
 from app.runtime.tool_loop import ToolLoopStopReason
-from app.runtime.turn_executor import MockDecision, TurnExecutionResult, execute_turn
+from app.runtime.turn_execution_types import TurnExecutionResult
+from app.runtime.turn_executor import execute_turn
 
 
 def store_decision_log(session: SessionState, log: AIDecisionLog) -> None:

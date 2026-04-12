@@ -1,7 +1,8 @@
 """Pydantic types for turn execution results — acyclic leaf module for import graph hygiene.
 
-``TurnExecutionResult`` lives here so context helpers (e.g. ``short_term_context``) do not
-need to import ``turn_executor``, breaking the runtime SCC with ``turn_executor``.
+``TurnExecutionResult`` lives here so context helpers (e.g. ``short_term_context``) and AI
+integration modules do not import ``turn_executor`` for this type alone (DS-015: leaf
+DTO seam). ``MockDecision`` / proposal shapes remain on ``runtime_models``.
 """
 
 from __future__ import annotations

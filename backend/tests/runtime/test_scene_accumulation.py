@@ -10,7 +10,8 @@ import pytest
 
 from app.runtime.session_history import SessionHistory, HistoryEntry
 from app.runtime.short_term_context import ShortTermTurnContext
-from app.runtime.turn_executor import MockDecision, ProposedStateDelta, execute_turn
+from app.runtime.runtime_models import MockDecision, ProposedStateDelta
+from app.runtime.turn_executor import execute_turn
 from app.runtime.runtime_models import SessionState, GuardOutcome
 
 

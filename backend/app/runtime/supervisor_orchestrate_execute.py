@@ -9,10 +9,10 @@ from app.runtime.ai_adapter import AdapterRequest, StoryAIAdapter
 from app.runtime.orchestration_cache import OrchestrationTurnCache
 from app.runtime.supervisor_execution_types import SupervisorExecutionResult
 from app.runtime.supervisor_orchestrate_execute_sections import (
-    SupervisorOrchestrateWorkingState,
     orchestrate_merge_finalize_and_package,
     orchestrate_run_non_finalizer_agents,
 )
+from app.runtime.supervisor_orchestrate_working_state import SupervisorOrchestrateWorkingState
 
 
 def execute_supervisor_orchestration(

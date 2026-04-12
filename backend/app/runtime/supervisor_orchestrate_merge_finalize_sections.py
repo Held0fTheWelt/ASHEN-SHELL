@@ -11,7 +11,7 @@ from app.runtime.supervisor_merge_finalize_finalizer_budget import (
     supervisor_build_budget_summary,
     supervisor_invoke_finalizer_or_deterministic_fallback,
 )
-from app.runtime.supervisor_orchestrate_execute_sections import SupervisorOrchestrateWorkingState
+from app.runtime.supervisor_orchestrate_working_state import SupervisorOrchestrateWorkingState
 
 
 def supervisor_merge_finalize_response_and_budget(

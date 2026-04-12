@@ -28,13 +28,14 @@ from app.runtime.ai_turn_executor import (
 )
 from app.runtime.operator_audit import AUDIT_SCHEMA_VERSION
 from app.runtime.input_interpreter import InputPrimaryMode
-from app.runtime.turn_executor import MockDecision, ProposedStateDelta
 from app.runtime.runtime_models import (
     AIValidationOutcome,
     DeltaType,
     DeltaValidationStatus,
     ExecutionFailureReason,
     GuardOutcome,
+    MockDecision,
+    ProposedStateDelta,
     SessionState,
     StateDelta,
 )
@@ -755,7 +756,8 @@ class TestAIDecisionLogOutcomes:
         # This test verifies the fix: all-rejected deltas should produce REJECTED, not PARTIAL.
         # We use direct unit test instead of integration to avoid adapter complexities.
         from app.runtime.ai_turn_executor import _create_decision_log
-        from app.runtime.turn_executor import TurnExecutionResult, MockDecision
+        from app.runtime.runtime_models import MockDecision
+        from app.runtime.turn_execution_types import TurnExecutionResult
 
         session = god_of_carnage_module_with_state
 
@@ -808,7 +810,8 @@ class TestAIDecisionLogOutcomes:
     ):
         """Test that guard_notes is normalized with error count and outcome label."""
         from app.runtime.ai_turn_executor import _create_decision_log
-        from app.runtime.turn_executor import TurnExecutionResult, MockDecision
+        from app.runtime.runtime_models import MockDecision
+        from app.runtime.turn_execution_types import TurnExecutionResult
 
         session = god_of_carnage_module_with_state
 

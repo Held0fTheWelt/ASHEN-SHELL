@@ -99,141 +99,148 @@ def _pred_provocation(_f: dict[str, Any], combined: str, intent_s: str, _mv: dic
     return "cynic" in intent_s or "provok" in combined
 
 
+# (rule_id, trace_detail, predicate, move_type, family, direct, tactic, risk) — first match wins.
+_RULE_SPEC_ROWS: tuple[tuple[str, str, RulePredicate, str, str, str, str | None, str], ...] = (
+    (
+        "off_scope_containment",
+        "rule:off_scope_containment",
+        _pred_off_scope,
+        "off_scope_containment",
+        "neutral",
+        "ambiguous",
+        "slice_boundary",
+        "low",
+    ),
+    (
+        "silence_withdrawal",
+        "rule:silence_or_pause",
+        _pred_silence_pause,
+        "silence_withdrawal",
+        "withdraw",
+        "ambiguous",
+        "withhold_response",
+        "moderate",
+    ),
+    (
+        "alliance_reposition",
+        "rule:alliance_synset",
+        _pred_alliance,
+        "alliance_reposition",
+        "alliance",
+        "",
+        "faction_shift",
+        "high",
+    ),
+    (
+        "humiliating_exposure",
+        "rule:exposure_synset",
+        _pred_expose,
+        "humiliating_exposure",
+        "expose",
+        "",
+        "dignity_strike",
+        "high",
+    ),
+    (
+        "competing_repair_and_reveal",
+        "rule:repair_reveal_compete",
+        _pred_repair_reveal,
+        "competing_repair_and_reveal",
+        "repair",
+        "ambiguous",
+        "repair_truth_compete",
+        "high",
+    ),
+    (
+        "repair_attempt_probe",
+        "rule:repair_plus_probe",
+        _pred_repair_probe,
+        "repair_attempt",
+        "repair",
+        "ambiguous",
+        "repair_under_inquiry",
+        "moderate",
+    ),
+    (
+        "repair_attempt",
+        "rule:repair_synset",
+        _pred_repair,
+        "repair_attempt",
+        "repair",
+        "direct",
+        "stabilize",
+        "moderate",
+    ),
+    (
+        "evasive_deflection",
+        "rule:deflect_synset",
+        _pred_deflect,
+        "evasive_deflection",
+        "deflect",
+        "indirect",
+        "avoid_accountability",
+        "moderate",
+    ),
+    (
+        "direct_accusation",
+        "rule:accusation_synset",
+        _pred_accusation,
+        "direct_accusation",
+        "attack",
+        "direct",
+        "blame_assignment",
+        "high",
+    ),
+    (
+        "reveal_surface",
+        "rule:reveal_synset",
+        _pred_reveal,
+        "reveal_surface",
+        "reveal",
+        "direct",
+        "truth_surface",
+        "high",
+    ),
+    (
+        "escalation_threat",
+        "rule:escalate_synset",
+        _pred_escalate,
+        "escalation_threat",
+        "escalate",
+        "direct",
+        "heat_increase",
+        "high",
+    ),
+    (
+        "probe_inquiry",
+        "rule:probe_or_question_shape",
+        _pred_probe_or_question,
+        "probe_inquiry",
+        "probe",
+        "indirect",
+        "motive_inquiry",
+        "moderate",
+    ),
+    (
+        "indirect_provocation",
+        "rule:intent_provocation_cue",
+        _pred_provocation,
+        "indirect_provocation",
+        "attack",
+        "indirect",
+        "social_needle",
+        "moderate",
+    ),
+)
+
+_GOC_PRIORITY_RULES: tuple[SemanticPriorityRule, ...] = tuple(
+    SemanticPriorityRule(*row) for row in _RULE_SPEC_ROWS
+)
+
+
 def build_goc_priority_rules() -> tuple[SemanticPriorityRule, ...]:
     """Ordered stack: first matching rule wins (after non-GoC handled upstream)."""
-
-    return (
-        SemanticPriorityRule(
-            "off_scope_containment",
-            "rule:off_scope_containment",
-            _pred_off_scope,
-            "off_scope_containment",
-            "neutral",
-            "ambiguous",
-            "slice_boundary",
-            "low",
-        ),
-        SemanticPriorityRule(
-            "silence_withdrawal",
-            "rule:silence_or_pause",
-            _pred_silence_pause,
-            "silence_withdrawal",
-            "withdraw",
-            "ambiguous",
-            "withhold_response",
-            "moderate",
-        ),
-        SemanticPriorityRule(
-            "alliance_reposition",
-            "rule:alliance_synset",
-            _pred_alliance,
-            "alliance_reposition",
-            "alliance",
-            "",  # filled from question_end
-            "faction_shift",
-            "high",
-        ),
-        SemanticPriorityRule(
-            "humiliating_exposure",
-            "rule:exposure_synset",
-            _pred_expose,
-            "humiliating_exposure",
-            "expose",
-            "",  # from syn_accusation
-            "dignity_strike",
-            "high",
-        ),
-        SemanticPriorityRule(
-            "competing_repair_and_reveal",
-            "rule:repair_reveal_compete",
-            _pred_repair_reveal,
-            "competing_repair_and_reveal",
-            "repair",
-            "ambiguous",
-            "repair_truth_compete",
-            "high",
-        ),
-        SemanticPriorityRule(
-            "repair_attempt_probe",
-            "rule:repair_plus_probe",
-            _pred_repair_probe,
-            "repair_attempt",
-            "repair",
-            "ambiguous",
-            "repair_under_inquiry",
-            "moderate",
-        ),
-        SemanticPriorityRule(
-            "repair_attempt",
-            "rule:repair_synset",
-            _pred_repair,
-            "repair_attempt",
-            "repair",
-            "direct",
-            "stabilize",
-            "moderate",
-        ),
-        SemanticPriorityRule(
-            "evasive_deflection",
-            "rule:deflect_synset",
-            _pred_deflect,
-            "evasive_deflection",
-            "deflect",
-            "indirect",
-            "avoid_accountability",
-            "moderate",
-        ),
-        SemanticPriorityRule(
-            "direct_accusation",
-            "rule:accusation_synset",
-            _pred_accusation,
-            "direct_accusation",
-            "attack",
-            "direct",
-            "blame_assignment",
-            "high",
-        ),
-        SemanticPriorityRule(
-            "reveal_surface",
-            "rule:reveal_synset",
-            _pred_reveal,
-            "reveal_surface",
-            "reveal",
-            "direct",
-            "truth_surface",
-            "high",
-        ),
-        SemanticPriorityRule(
-            "escalation_threat",
-            "rule:escalate_synset",
-            _pred_escalate,
-            "escalation_threat",
-            "escalate",
-            "direct",
-            "heat_increase",
-            "high",
-        ),
-        SemanticPriorityRule(
-            "probe_inquiry",
-            "rule:probe_or_question_shape",
-            _pred_probe_or_question,
-            "probe_inquiry",
-            "probe",
-            "indirect",
-            "motive_inquiry",
-            "moderate",
-        ),
-        SemanticPriorityRule(
-            "indirect_provocation",
-            "rule:intent_provocation_cue",
-            _pred_provocation,
-            "indirect_provocation",
-            "attack",
-            "indirect",
-            "social_needle",
-            "moderate",
-        ),
-    )
+    return _GOC_PRIORITY_RULES
 
 
 _DEFAULT_RULE = SemanticPriorityRule(
@@ -257,7 +264,7 @@ def resolve_goc_move_from_rules(
     trace: list[InterpretationTraceItem],
 ) -> tuple[str, str, str, str | None, str]:
     """Apply priority stack; mutates trace with the winning rule id."""
-    rules = build_goc_priority_rules()
+    rules = _GOC_PRIORITY_RULES
     for rule in rules:
         if not rule.predicate(features, combined, intent_s, interpreted_move):
             continue

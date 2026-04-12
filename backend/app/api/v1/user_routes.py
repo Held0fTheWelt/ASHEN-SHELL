@@ -9,7 +9,6 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.api.v1 import api_v1_bp
 from app.auth.feature_registry import FEATURE_MANAGE_USERS, user_can_access_feature
 from app.auth.permissions import (
-    admin_may_assign_role_level,
     admin_may_edit_target,
     current_user_is_admin,
     current_user_is_super_admin,
@@ -21,7 +20,6 @@ from app.extensions import limiter, db
 from app.models.user import SUPERADMIN_THRESHOLD
 from app.services import log_activity
 from app.services.user_service import (
-    assign_role as assign_role_service,
     ban_user as ban_user_service,
     change_password as change_password_service,
     get_user_by_id,
@@ -501,133 +499,9 @@ def users_delete(user_id):
 @admin_security(require_2fa=True, require_super_admin=False, rate_limit="10/minute", audit_log=True)
 def users_assign_role(user_id):
     """Assign role to a user (admin only, 2FA required). Admin may only assign to users with strictly lower role_level. Body: role (user, qa, moderator, admin), optional reason."""
-    if not user_can_access_feature(get_current_user(), FEATURE_MANAGE_USERS):
-        return jsonify({"error": "Forbidden. You do not have access to this feature."}), route_status_codes.forbidden
-    data = request.get_json(silent=True)
-    if data is None:
-        return jsonify({"error": "Invalid or missing JSON body"}), route_status_codes.bad_request
-    role_name = data.get("role")
-    if role_name is None:
-        return jsonify({"error": "role is required"}), route_status_codes.bad_request
-    current = get_current_user()
-    target = get_user_by_id(user_id)
-    if not target:
-        return jsonify({"error": "User not found"}), route_status_codes.not_found
-    actor_level = getattr(current, "role_level", 0) or 0
-    target_level = getattr(target, "role_level", 0) or 0
+    from app.api.v1.user_routes_users_assign_role import execute_users_assign_role_patch
 
-    # SECURITY: Prevent privilege escalation/elevation
-    from app.models import Role
-    role_obj = Role.query.filter_by(name=(role_name or "").strip().lower()).first()
-    if not role_obj:
-        return jsonify({"error": "Invalid role"}), route_status_codes.bad_request
-
-    # Determine the new role_level
-    # If role_level is explicitly provided, use it; otherwise keep the target's existing level
-    has_role_level_in_request = "role_level" in data
-    if has_role_level_in_request:
-        try:
-            new_role_level = int(data.get("role_level"))
-        except (TypeError, ValueError):
-            return jsonify({"error": "role_level must be an integer"}), route_status_codes.bad_request
-        # Bounds check: must be 0-9999
-        is_valid, err = _validate_role_level_bounds(new_role_level)
-        if not is_valid:
-            return jsonify({"error": err}), route_status_codes.bad_request
-    else:
-        new_role_level = target_level  # Keep existing level
-
-    # SECURITY: Check for privilege escalation
-    # For self-assignment: Special rules apply
-    if user_id == current.id:
-        from app.auth.permissions import current_user_is_super_admin
-        is_super_admin = current_user_is_super_admin()
-
-        # Non-SuperAdmin users cannot modify their own role/level via PATCH
-        if not is_super_admin and (has_role_level_in_request or role_name != current.role):
-            return jsonify({
-                "error": "Cannot modify your own role or role level via this endpoint. Use PUT /users/<id> for self-changes if allowed.",
-                "code": "PRIVILEGE_ESCALATION_DENIED"
-            }), route_status_codes.forbidden
-
-        # SuperAdmin users can modify their own level, but not higher than their own current level
-        if is_super_admin and has_role_level_in_request:
-            if new_role_level > actor_level:
-                return jsonify({
-                    "error": f"Cannot elevate yourself higher than your own role level ({actor_level}). You may only assign equal or lower levels.",
-                    "code": "INSUFFICIENT_PRIVILEGE"
-                }), route_status_codes.forbidden
-
-    # If assigning to someone else, they must have strictly lower role_level
-    if user_id != current.id:
-        if not admin_may_edit_target(actor_level, target_level):
-            return jsonify({"error": "Forbidden. You may only assign roles to users with a lower role level."}), route_status_codes.forbidden
-
-    # Capture before value for role change
-    old_role = target.role
-
-    # SECURITY: Verify privilege escalation is not possible when updating role_level
-    if has_role_level_in_request:
-        from app.auth.permissions import current_user_is_super_admin
-        # Check if the new level assignment is allowed
-        if user_id == current.id:
-            # Self-assignment: must be SuperAdmin and level must be >= SUPERADMIN_THRESHOLD
-            if not current_user_is_super_admin():
-                return jsonify({
-                    "error": "Cannot elevate yourself to SuperAdmin. Only SuperAdmin may assign themselves a higher role level.",
-                    "code": "PRIVILEGE_ESCALATION_DENIED"
-                }), route_status_codes.forbidden
-            # Also check that SuperAdmin doesn't elevate themselves above their current level
-            if new_role_level > actor_level:
-                return jsonify({
-                    "error": f"Cannot elevate yourself higher than your own role level ({actor_level}). You may only assign equal or lower levels.",
-                    "code": "INSUFFICIENT_PRIVILEGE"
-                }), route_status_codes.forbidden
-        else:
-            # Other user: new role_level must be strictly lower than actor's level
-            if new_role_level >= actor_level:
-                return jsonify({
-                    "error": f"Cannot assign a role level higher than your own ({actor_level}). You may only assign strictly lower levels.",
-                    "code": "PRIVILEGE_ESCALATION_DENIED"
-                }), route_status_codes.forbidden
-
-    user, err = assign_role_service(user_id, role_name, actor_id=current.id if current else None)
-    if err:
-        status = 404 if err == "User not found" else 400
-        return jsonify({"error": err}), status
-
-    # If role_level was provided, update it
-    if has_role_level_in_request:
-        from app.extensions import db
-        user.role_level = new_role_level
-        db.session.commit()
-
-    log_activity(
-        actor=current,
-        category="admin",
-        action="user_role_changed",
-        status="success",
-        message=f"User role set to {user.role}",
-        route=request.path,
-        method=request.method,
-        target_type="user",
-        target_id=str(user.id),
-        metadata={"new_role": user.role},
-    )
-
-    # Log privilege change with security alerts
-    reason_str = data.get("reason") if isinstance(data.get("reason"), str) else None
-    _log_privilege_change(
-        admin_id=current.id,
-        user_id=user.id,
-        old_role=old_role,
-        new_role=user.role,
-        old_level=target.role_level,
-        new_level=user.role_level,
-        reason=reason_str,
-    )
-
-    return jsonify(user.to_dict(include_email=True, include_ban=True, include_areas=True)), route_status_codes.ok
+    return execute_users_assign_role_patch(user_id)
 
 
 @api_v1_bp.route("/users/<int:user_id>/ban", methods=["POST"])

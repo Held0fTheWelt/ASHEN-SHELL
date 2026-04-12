@@ -17,6 +17,11 @@ from app.extensions import db
 from app.services.ai_stack_evidence_service import build_release_readiness_report
 from app.services.game_content_service import list_published_experience_payloads
 from app.services.game_service import has_complete_play_service_config
+from app.services.system_diagnosis_play_http import (
+    fetch_play_internal_get,
+    play_http_check_failure_result,
+    play_http_check_result_from_response,
+)
 
 UPSTREAM_TIMEOUT_S = 0.75
 INTERNAL_TIMEOUT_S = 0.25
@@ -189,120 +194,45 @@ def _check_play_http(
     t0 = time.perf_counter()
     timed_out = False
     try:
-        with httpx.Client(base_url=base, timeout=UPSTREAM_TIMEOUT_S, headers=headers) as client:
-            r = client.get(path)
-        latency_ms = int((time.perf_counter() - t0) * 1000)
-        if r.status_code != 200:
-            return {
-                "id": check_id,
-                "label": label,
-                "status": "fail",
-                "message": f"HTTP {r.status_code} from play service",
-                "latency_ms": latency_ms,
-                "timed_out": False,
-                "critical": True,
-                "source": f"GET {path}",
-                "details": {"url": url, "http_status": r.status_code},
-            }
-        body = r.json() if r.content else {}
-        if not isinstance(body, dict):
-            return {
-                "id": check_id,
-                "label": label,
-                "status": "fail",
-                "message": "Invalid JSON from play service",
-                "latency_ms": latency_ms,
-                "timed_out": False,
-                "critical": True,
-                "source": f"GET {path}",
-                "details": {"url": url},
-            }
-        st = body.get("status")
-        if st != "ok" and not ready_semantics:
-            return {
-                "id": check_id,
-                "label": label,
-                "status": "fail",
-                "message": f"Unexpected status field: {st!r}",
-                "latency_ms": latency_ms,
-                "timed_out": False,
-                "critical": True,
-                "source": f"GET {path}",
-                "details": {"url": url, "body": body},
-            }
-        if ready_semantics:
-            if st == "ready":
-                return {
-                    "id": check_id,
-                    "label": label,
-                    "status": "running",
-                    "message": "Play-service readiness reports ready",
-                    "latency_ms": latency_ms,
-                    "timed_out": False,
-                    "critical": True,
-                    "source": f"GET {path}",
-                    "details": {"url": url},
-                }
-            if st in ("initializing", "partial", "degraded"):
-                return {
-                    "id": check_id,
-                    "label": label,
-                    "status": "initialized",
-                    "message": f"Readiness status is {st!r}",
-                    "latency_ms": latency_ms,
-                    "timed_out": False,
-                    "critical": True,
-                    "source": f"GET {path}",
-                    "details": {"url": url, "body": body},
-                }
-            return {
-                "id": check_id,
-                "label": label,
-                "status": "initialized",
-                "message": f"Readiness not confirmed (status={st!r})",
-                "latency_ms": latency_ms,
-                "timed_out": False,
-                "critical": True,
-                "source": f"GET {path}",
-                "details": {"url": url, "body": body},
-            }
-        return {
-            "id": check_id,
-            "label": label,
-            "status": "running",
-            "message": "Play-service health returned status ok",
-            "latency_ms": latency_ms,
-            "timed_out": False,
-            "critical": True,
-            "source": f"GET {path}",
-            "details": {"url": url},
-        }
+        url, latency_ms, r = fetch_play_internal_get(
+            internal_base_url=internal_base_url,
+            path=path,
+            headers=headers,
+            timeout_s=UPSTREAM_TIMEOUT_S,
+        )
+        return play_http_check_result_from_response(
+            check_id=check_id,
+            label=label,
+            path=path,
+            url=url,
+            latency_ms=latency_ms,
+            response=r,
+            ready_semantics=ready_semantics,
+        )
     except httpx.TimeoutException:
         timed_out = True
         latency_ms = int((time.perf_counter() - t0) * 1000)
     except Exception as exc:
-        return {
-            "id": check_id,
-            "label": label,
-            "status": "fail",
-            "message": str(exc),
-            "latency_ms": int((time.perf_counter() - t0) * 1000),
-            "timed_out": False,
-            "critical": True,
-            "source": f"GET {path}",
-            "details": {"url": url, "error": str(exc)},
-        }
-    return {
-        "id": check_id,
-        "label": label,
-        "status": "fail",
-        "message": "timeout",
-        "latency_ms": latency_ms,
-        "timed_out": timed_out,
-        "critical": True,
-        "source": f"GET {path}",
-        "details": {"url": url, "reason": "timeout"},
-    }
+        return play_http_check_failure_result(
+            check_id=check_id,
+            label=label,
+            path=path,
+            url=url,
+            message=str(exc),
+            latency_ms=int((time.perf_counter() - t0) * 1000),
+            timed_out=False,
+            details={"url": url, "error": str(exc)},
+        )
+    return play_http_check_failure_result(
+        check_id=check_id,
+        label=label,
+        path=path,
+        url=url,
+        message="timeout",
+        latency_ms=latency_ms,
+        timed_out=timed_out,
+        details={"url": url, "reason": "timeout"},
+    )
 
 
 def _check_published_feed() -> dict[str, Any]:

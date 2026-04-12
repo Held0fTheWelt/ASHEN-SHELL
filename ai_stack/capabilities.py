@@ -10,7 +10,6 @@ except ImportError:
     class StrEnum(str, Enum):
         def __str__(self) -> str:
             return self.value
-import json
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
@@ -19,126 +18,7 @@ from uuid import uuid4
 if TYPE_CHECKING:
     from ai_stack.rag import ContextPackAssembler, ContextRetriever
 
-
-def _summarize_invocation_result(capability_name: str, result: dict[str, Any]) -> dict[str, Any] | None:
-    """Small, workflow-safe audit hints (no full payloads)."""
-    if capability_name == "wos.context_pack.build":
-        retrieval = result.get("retrieval")
-        if not isinstance(retrieval, dict):
-            return {"kind": "context_pack", "hit_count": 0, "note": "missing_retrieval_dict"}
-        hit_count = int(retrieval.get("hit_count") or 0)
-        summary: dict[str, Any] = {
-            "kind": "context_pack",
-            "hit_count": hit_count,
-            "status": retrieval.get("status"),
-            "domain": retrieval.get("domain"),
-            "profile": retrieval.get("profile"),
-        }
-        fp = retrieval.get("corpus_fingerprint")
-        if isinstance(fp, str) and fp:
-            summary["corpus_fingerprint_prefix"] = fp[:24]
-        iv = retrieval.get("index_version")
-        if isinstance(iv, str) and iv:
-            summary["index_version"] = iv
-        route = retrieval.get("retrieval_route")
-        if isinstance(route, str) and route:
-            summary["retrieval_route"] = route
-        top_hit = retrieval.get("top_hit_score")
-        if isinstance(top_hit, str) and top_hit:
-            summary["top_hit_score"] = top_hit
-        trace_hint = build_retrieval_trace(retrieval)
-        summary["evidence_tier"] = trace_hint.get("evidence_tier")
-        summary["evidence_rationale"] = trace_hint.get("evidence_rationale")
-        summary["evidence_lane_mix"] = trace_hint.get("evidence_lane_mix")
-        summary["readiness_label"] = trace_hint.get("readiness_label")
-        summary["retrieval_quality_hint"] = trace_hint.get("retrieval_quality_hint")
-        summary["policy_outcome_hint"] = trace_hint.get("policy_outcome_hint")
-        summary["dedup_shaped_selection"] = trace_hint.get("dedup_shaped_selection")
-        summary["retrieval_trace_schema_version"] = trace_hint.get("retrieval_trace_schema_version")
-        from ai_stack.rag import RETRIEVAL_POLICY_VERSION
-        summary["retrieval_policy_version"] = retrieval.get("retrieval_policy_version") or RETRIEVAL_POLICY_VERSION
-        if hit_count > 0:
-            sources = retrieval.get("sources")
-            if isinstance(sources, list) and sources:
-                first = sources[0]
-                if isinstance(first, dict):
-                    lane = first.get("source_evidence_lane")
-                    if isinstance(lane, str) and lane:
-                        summary["primary_source_evidence_lane"] = lane
-                    inf = first.get("profile_policy_influence")
-                    if isinstance(inf, str) and inf:
-                        summary["primary_profile_policy_influence"] = inf
-        return summary
-    if capability_name == "wos.review_bundle.build":
-        evidence = result.get("evidence_sources", [])
-        n_evidence = len(evidence) if isinstance(evidence, list) else 0
-        return {
-            "kind": "review_bundle",
-            "bundle_id": result.get("bundle_id"),
-            "status": result.get("status"),
-            "evidence_source_count": n_evidence,
-            "workflow_impact": "feeds_governance_review_package" if n_evidence else "metadata_only_bundle",
-        }
-    if capability_name == "wos.transcript.read":
-        content = result.get("content", "")
-        turn_count = 0
-        repetition_turns = 0
-        try:
-            parsed = json.loads(str(content))
-            if isinstance(parsed, dict):
-                turns = parsed.get("transcript")
-                if isinstance(turns, list):
-                    turn_count = len(turns)
-                    repetition_turns = sum(1 for row in turns if isinstance(row, dict) and row.get("repetition_flag"))
-        except (json.JSONDecodeError, TypeError, ValueError):
-            pass
-        return {
-            "kind": "transcript_read",
-            "run_id": result.get("run_id"),
-            "content_length": len(str(content)),
-            "transcript_turn_count": turn_count,
-            "repetition_turn_count": repetition_turns,
-            "workflow_impact": (
-                "drives_improvement_recommendation_suffix"
-                if turn_count
-                else "no_parsed_transcript_rows"
-            ),
-        }
-    if capability_name == "wos.research.explore":
-        summary = result.get("exploration_summary", {})
-        if not isinstance(summary, dict):
-            summary = {}
-        consumed = summary.get("consumed_budget")
-        effective = summary.get("effective_budget")
-        return {
-            "kind": "research_explore",
-            "run_id": result.get("run_id"),
-            "node_count": summary.get("node_count", 0),
-            "edge_count": summary.get("edge_count", 0),
-            "abort_reason": summary.get("abort_reason"),
-            "promoted_candidate_count": summary.get("promoted_candidate_count", 0),
-            "consumed_budget": consumed if isinstance(consumed, dict) else {},
-            "effective_budget": effective if isinstance(effective, dict) else {},
-        }
-    if capability_name == "wos.research.bundle.build":
-        bundle = result.get("bundle", {})
-        if not isinstance(bundle, dict):
-            bundle = {}
-        return {
-            "kind": "research_bundle",
-            "run_id": bundle.get("run_id"),
-            "section_count": len(bundle.get("sections", [])) if isinstance(bundle.get("sections"), list) else 0,
-            "review_safe": (bundle.get("governance") or {}).get("review_safe"),
-        }
-    if capability_name == "wos.canon.improvement.propose":
-        issues = result.get("issues", [])
-        proposals = result.get("proposals", [])
-        return {
-            "kind": "canon_improvement_propose",
-            "issue_count": len(issues) if isinstance(issues, list) else 0,
-            "proposal_count": len(proposals) if isinstance(proposals, list) else 0,
-        }
-    return None
+from ai_stack.capabilities_invocation_summaries import summarize_invocation_result as _summarize_invocation_result
 
 
 def _parse_top_hit_score(retrieval: dict[str, Any]) -> float | None:

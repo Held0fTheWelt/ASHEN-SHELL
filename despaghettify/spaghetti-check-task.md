@@ -4,43 +4,24 @@
 
 This task describes the **full** analysis track for the Despaghettify hub: collect **structure metrics**, name **hotspots**, maintain the canonical [input list](despaghettification_implementation_input.md) — **without** code refactors (implementation stays with the implementer and follows `[EXECUTION_GOVERNANCE.md](state/EXECUTION_GOVERNANCE.md)` for real waves).
 
+**Single source of truth — split:** **Numeric** trigger policy (**C1..C7** bars, **M7** weights, derived **`M7_ref`**, composite vs scan-only **thresholds**) is **canonical** in [`spaghetti-setup.md`](spaghetti-setup.md) — edit numbers **only** there. **Procedural** rules (**Open hotspots** including **Conditions → hotspots**, binding tables, scan steps, DS row rules, Mermaid, extra checks) are **canonical in this file** only. Cursor skills and hub READMEs **route** here for procedure and to **setup** for digits; `python -m despaghettify.tools check` emits **machine metrics** (JSON). With **`--with-metrics`** (and `despaghettify/spaghetti-setup.json` present), the JSON embeds **`metrics_bundle`**: **`ast_heuristic_v2`** **`category_scores`** / **`m7`** (heuristic **Trigger v2**, advisory) plus **`score`** (**`trigger_v2`** / **`anteil_pct`**, **`m7_trigger_v2`**, **`m7_anteil_pct_gewichtet`**). **Formal gates** (`per_category_trigger_fires`, `composite_trigger_fires`, `trigger_policy_basis`: `anteil_pct`) compare **`anteil_pct`** / **`metric_a.m7`** to **bars** / **`M7_ref`** per [`spaghetti-setup.md`](spaghetti-setup.md). The input list § *Latest structure scan* shows **both** columns from **`metrics_bundle.score`** (§1).
+
 **Scan timestamp (non-negotiable):** Any run that updates § *Latest structure scan* in the input list **must** set **As of (date & time)** to the **actual moment** the scan steps were executed (see §1 under *Maintaining the input list*).
 
-**Threshold:** Compute the weighted 7-category score **M7** as defined in the input list. **Update § *Information input list* and § *Recommended implementation order* (and § *DS-ID → primary workstream* for new IDs)** when **any** trigger below fires; otherwise do **not** touch those sections (no new DS rows, no phase reshuffle) — **Latest structure scan** including **M7**, category breakdown, AST telemetry, and **Open hotspots** is **always** updated (see below).
+**Threshold:** **Bars** and **`M7_ref`** apply to **`anteil_pct`** / **`metric_a.m7`** (**`M7_anteil`**), **not** to **`m7`** / **`category_scores`** (heuristic). **Update § *Information input list* …** when **`trigger_policy_fires`** is true (**any** **Anteil(C*n*) > bar*n*** **or** **`M7_anteil ≥ M7_ref`**); otherwise do **not** touch those sections — **Latest structure scan** is **always** updated (see below).
 
-**Per-category triggers** (each **C** is the same 0–100 style score as in the input list; strict **>**):
+**Numeric policy (canonical):** Open [`spaghetti-setup.md`](spaghetti-setup.md) — § *Per-category trigger bars*, § *M7 category weights*, § *Composite reference (**M7_ref**)*, and the **scan-only** rule. **Do not** copy evolving bar/weight/`M7_ref` digits into this file; that would fork the policy.
 
-
-| Category                           | Symbol | Trigger (update DS + phases if score is **greater than**) |
-| ---------------------------------- | ------ | --------------------------------------------------------- |
-| Circular dependencies              | **C1** | **5**                                                     |
-| Nesting depth                      | **C2** | **8**                                                     |
-| Long functions + complexity        | **C3** | **25**                                                    |
-| Multi-responsibility modules       | **C4** | **20**                                                    |
-| Magic numbers + global state       | **C5** | **12**                                                    |
-| Missing abstractions / duplication | **C6** | **14**                                                    |
-| Confusing control flow             | **C7** | **10**                                                    |
-
-
-**Composite M7 trigger:** also update those sections if **`M7 ≥ M7_ref`**, where **`M7_ref`** is the weighted **M7** obtained when **each** of **C1..C7** is set to **exactly** its **trigger value** from the **Per-category triggers** table above (same 0–100 numbers as in the input list, **before** the `%` suffix in Markdown). With the weights from [despaghettification_implementation_input.md](despaghettification_implementation_input.md) § *Score M7*:
-
-`M7_ref = 0.20×C1 + 0.10×C2 + 0.20×C3 + 0.15×C4 + 0.10×C5 + 0.15×C6 + 0.10×C7`
-
-Substituting the current trigger row (**C1=5, C2=8, C3=25, C4=20, C5=12, C6=14, C7=10**):
-
-`**M7_ref = 0.20×5 + 0.10×8 + 0.20×25 + 0.15×20 + 0.10×12 + 0.15×14 + 0.10×10 = 14.1%**` (i.e. **14.1** on the 0–100 scale).
-
-So: **if `M7 ≥ 14.1%`** (same unit as the main table), treat as trigger **even if** no single per-category line crossed yet *(rare; aligns composite with the chosen per-category bars)*.
-
-**Scan-only pass:** update **only** § *Latest structure scan* when **no** per-category trigger fires **and** **`M7 < 14.1%`** (strictly below **M7_ref**).
+**Quick read (non-authoritative summary):** per-category fire when **Anteil(C*n*) > bar_n** (strict **>**). Composite fire when **`M7_anteil ≥ M7_ref`**. Scan-only when **no** per-category fire **and** **`M7_anteil < M7_ref`** — exact numbers always from **setup**. **Trigger v2** is **not** gated by bars (advisory; see **setup** § *Heuristic trigger scale*).
 
 ## Binding sources
 
 
 | Document                                                                                   | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [despaghettification_implementation_input.md](despaghettification_implementation_input.md) | **Always:** **Latest structure scan** (as-of **date and time**; **M7** and **C1..C7** with **`%`**; AST telemetry in the main table **and** the **extra row under C7** in the § *Score M7* three-column table — §1); extra checks; **Open hotspots** — **prune resolved items**, never re-list solved hotspots. **Only if trigger policy is met** (per-category thresholds **or** **`M7 ≥ M7_ref`**; see **Threshold** above): **information input list** (DS rows), **recommended implementation order** (phase table **plus mandatory** Mermaid `flowchart` — see §3), § **DS-ID → primary workstream** for new IDs. |
-| [tools/spaghetti_ast_scan.py](../tools/spaghetti_ast_scan.py)                              | Canonical metric run (repository root = CWD).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| [`spaghetti-setup.md`](spaghetti-setup.md)                                                                 | **Numeric** trigger policy: **C1..C7** bars, **M7** weights, **`M7_ref`**, composite vs scan-only thresholds — **edit here** when you retune conditions. |
+| [despaghettification_implementation_input.md](despaghettification_implementation_input.md) | **Always:** **Latest structure scan** (as-of **date and time**; **Trigger v2** + **Anteil %** for **M7** / **C1..C7** from **`metrics_bundle.score`** after **`check --with-metrics`** — same dual columns in **Score *M7*** + **AST telemetry** row under **C7**; §1); **`spaghetti_ast_scan`**; extra checks; **Open hotspots** — **prune resolved items**. **Only if trigger policy is met**: **information input list**, **recommended implementation order** (+ Mermaid §3), § **DS-ID → primary workstream**. |
+| [despaghettify/tools/spaghetti_ast_scan.py](tools/spaghetti_ast_scan.py)                              | Canonical metric run; script resolves **repo root** from its path (CWD need not be repo root).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | [state/EXECUTION_GOVERNANCE.md](state/EXECUTION_GOVERNANCE.md)                             | Analysis and Markdown maintenance create **no** new pre/post artefacts; those appear only when a **wave** with evidence runs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Local planning / issues                                                                    | Always share scan numbers; mirror proposed order / new DS rows to external tickets only after agreement — and in-repo **only** if trigger policy is met (otherwise the scan section suffices).                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
@@ -48,7 +29,7 @@ So: **if `M7 ≥ 14.1%`** (same unit as the main table), treat as trigger **even
 ## Do not
 
 - Do **not** change `docs/archive/documentation-consolidation-2026/`*.
-- Do **not** sell percentage scores as “objective” truth — at most **heuristic** placement in the scan table.
+- Do **not** hand-edit **Trigger v2** / **Anteil %** / **`M7_anteil`** cells in the input list’s scan tables — copy from **`metrics_bundle.score`** (and **`metric_a.m7`**) produced by **`python -m despaghettify.tools check --with-metrics`**. Qualitative **Open hotspots** interprets; it does **not** replace machine values with ad-hoc numbers.
 - Do **not** leave **resolved** items in the **Open hotspots** field of the structure scan (no stale callouts; no re-copying hotspots that the repo or a prior solve wave already fixed — see §1).
 - Not a substitute for green CI: the scan is **read-side**; tests remain authoritative.
 
@@ -63,11 +44,11 @@ Always include these directories (paths relative to repository root):
 - `tools/mcp_server`
 - `administration-tool`
 
-**Ignore:** `.state_tmp`, `site/`, `node_modules`, `.venv`, `venv`, `__pycache_`_ (and everything under them).
+**Ignore:** `.state_tmp`, `site/`, `node_modules`, `.venv`, `venv`, `__pycache__` (and everything under them).
 
 ## Reproduction: AST scan script
 
-**In repository:** [tools/spaghetti_ast_scan.py](../tools/spaghetti_ast_scan.py) — if metric definitions change, maintain **task document and script together**.
+**In repository:** [despaghettify/tools/spaghetti_ast_scan.py](tools/spaghetti_ast_scan.py) — if metric definitions change, maintain **task document and script together**.
 
 The following block is a **copy** of the logic (if the script is missing or diverges):
 
@@ -77,14 +58,16 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]  # repo root when this file is despaghettify/tools/spaghetti_ast_scan.py
+
 IGNORE = (".state_tmp", "/site/", "node_modules", ".venv", "venv", "__pycache__")
 ROOTS = [
-    Path("backend/app"),
-    Path("world-engine/app"),
-    Path("ai_stack"),
-    Path("story_runtime_core"),
-    Path("tools/mcp_server"),
-    Path("administration-tool"),
+    _REPO_ROOT / "backend" / "app",
+    _REPO_ROOT / "world-engine" / "app",
+    _REPO_ROOT / "ai_stack",
+    _REPO_ROOT / "story_runtime_core",
+    _REPO_ROOT / "tools" / "mcp_server",
+    _REPO_ROOT / "administration-tool",
 ]
 
 
@@ -135,12 +118,14 @@ def main() -> None:
     long100.sort(key=lambda x: -x[1])
     print("Top 12 longest:")
     for name, lines, nd, p in long100[:12]:
-        print(f"  {lines:4d}L depth~{nd} {p.as_posix()}:{name}")
+        rel = p.relative_to(_REPO_ROOT).as_posix() if p.is_relative_to(_REPO_ROOT) else p.as_posix()
+        print(f"  {lines:4d}L depth~{nd} {rel}:{name}")
     deep6.sort(key=lambda x: (-x[2], -x[1]))
     print("Top 6 nesting:")
     for name, lines, nd, p in deep6[:6]:
-        print(f"  depth {nd} {lines:4d}L {p.as_posix()}:{name}")
-    ate = Path("backend/app/runtime/ai_turn_executor.py")
+        rel = p.relative_to(_REPO_ROOT).as_posix() if p.is_relative_to(_REPO_ROOT) else p.as_posix()
+        print(f"  depth {nd} {lines:4d}L {rel}:{name}")
+    ate = _REPO_ROOT / "backend" / "app" / "runtime" / "ai_turn_executor.py"
     if ate.exists():
         raw = len(ate.read_text(encoding="utf-8", errors="replace").splitlines())
         ex = [x for x in metrics(ate) if x[0] == "execute_turn_with_ai"]
@@ -153,11 +138,13 @@ if __name__ == "__main__":
     main()
 ```
 
-Run from **repository root**:
+Invoke (the in-repo script resolves **repo root** from `__file__`; **CWD** need not be the repo root):
 
 ```bash
-python tools/spaghetti_ast_scan.py
+python despaghettify/tools/spaghetti_ast_scan.py
 ```
+
+The same AST logic (plus `ds005` and greps) is available as JSON via `python -m despaghettify.tools check` (see [`superpowers/references/CLI.md`](superpowers/references/CLI.md)). For **C1..C7** and **M7** Richtwerte in Markdown, run **`python -m despaghettify.tools check --with-metrics`** so the payload includes **`metrics_bundle`** (requires **`despaghettify/spaghetti-setup.json`**).
 
 ## Extra checks (fixed)
 
@@ -166,24 +153,26 @@ python tools/spaghetti_ast_scan.py
 
 ## Maintaining the input list
 
-All in [despaghettification_implementation_input.md](despaghettification_implementation_input.md). The trigger policy is the per-category table **plus** composite `**M7 ≥ M7_ref`** (see **Threshold** above); the input list mirrors the same rules under § *Trigger policy for check task updates*.
+All in [despaghettification_implementation_input.md](despaghettification_implementation_input.md). The trigger policy is defined numerically in [`spaghetti-setup.md`](spaghetti-setup.md) (per-category bars **plus** composite **`M7 ≥ M7_ref`**); the input list mirrors the same rules under § *Trigger policy for check task updates*.
 
 ### 1) Latest structure scan — **always**
 
 - **As of (date & time) — required:** Fill the **As of (date & time)** cell with the **timestamp when this check run’s scan commands ran** (not a hand-waved day only). Use `**YYYY-MM-DD HH:mm:ss`** (24-hour). **Timezone:** optional; add **once** in parentheses after the time if it matters (e.g. `(Europe/Berlin)` or `(UTC)`). If the repo assumes one zone everywhere, a single sentence in the input list header is enough and the cell may omit the suffix.
-- **Metrics — percent display:** In the **main** § *Latest structure scan* table, write **C1..C7** with a trailing **percent sign** (e.g. `**17%`**, not bare `**17**`). **M7** must also read as a **percentage** (e.g. `**≈ 24.3%`**). Triggers and the **M7** formula still use the **numeric** 0–100 values (17 for 17%); the `**%`** in Markdown is for human readers and consistency with **M7_ref** wording.
-- **AST telemetry:** In the **main** § *Latest structure scan* table, keep the row **AST telemetry N / L₅₀ / L₁₀₀ / D₆** with the four **counts** from `python tools/spaghetti_ast_scan.py` (not **%**).
-- **Score *M7* subsection:** In the **Symbol | Meaning | Value** table, copy **C1..C7** with the **same** `**%`** values as the main scan table, then add **one** extra row **immediately below** **C7**: first column `**AST telemetry`**, second column `**N / L₅₀ / L₁₀₀ / D₆**`, third column the **same** four counts as the main scan row. **Do not** duplicate telemetry in the trigger-policy table; **do not** add a separate mini-table or filler comments in cells.
+- **Metrics — machine Richtwerte (zwei Spalten):** In der **Haupt**-Scan-Tabelle und in **Score *M7*** jeweils **zwei** numerische Spalten: (1) **Trigger v2** — aus **`metrics_bundle.score.categories.Cn.trigger_v2`** / **`m7_trigger_v2`** (gleich **`category_scores`** / **`m7`**); zwei Dezimalstellen; **kein** Balkenvergleich. (2) **Anteil %** — aus **`anteil_pct`** / **`m7_anteil_pct_gewichtet`**; **dieselbe** Spalte vs. **`trigger_bars`** / **`M7_ref`** in **`spaghetti-setup.json`** (**`trigger_policy_basis`:** `anteil_pct`). **Gleiche** Zahlen in Haupttabelle und **Score *M7***-Tabelle. **Do not** invent numbers “by feel”.
+- **AST telemetry:** In the **main** § *Latest structure scan* table, keep the row **AST telemetry N / L₅₀ / L₁₀₀ / D₆** with the four **counts** from `python despaghettify/tools/spaghetti_ast_scan.py` (not **%**).
+- **Cross-section consistency:** Any **Progress / work log** row in [despaghettification_implementation_input.md](despaghettification_implementation_input.md) that describes the **same** spaghetti-check run as § *Latest structure scan* must use the **identical** **N / L₅₀ / L₁₀₀ / D₆** (copy from that scan table in the **same** edit). Do not retype counts from an older terminal buffer or a prior scan — that is how log and scan drift apart.
+- **Score *M7* subsection:** Tabelle **Symbol | Meaning | Trigger v2 | Anteil %** (plus oberste **M7**-Zeile mit beiden Summen). Unter **C7** eine Zeile **AST telemetry**: **Trigger**-Spalte **—**, **Anteil**-Spalte dieselben vier **Zählwerte** wie in der Haupttabelle. **Do not** duplicate telemetry in the trigger-policy table; **do not** add a separate mini-table or filler comments in cells.
 - **Extra checks** (builtins, runtime spot check `TYPE_CHECKING` / cycle hints) briefly in the scan section if you run them.
 - Longest functions and top nesting **fully** only in **script output**; in Markdown **core findings** and the **Open hotspots** table row as follows:
   - **Open hotspots must not show solved problems.** Before writing, read the previous **Open hotspots** text and reconcile with the **current** repo and this run’s script output (line counts, paths, names). If a named function or theme is **no longer** a top offender or was **split / moved / shortened** by an implemented wave, **drop** that fragment from **Open hotspots**; use **—** when nothing structural remains to call out beyond the numeric row.
   - Only list **still-open** structural issues (typically 2–5 short clauses aligned with current top lines / nesting or checks). Do **not** reintroduce text that [spaghetti-solve-task.md](spaghetti-solve-task.md) already cleared unless the problem has **regressed** in the tree.
   - Do **not** duplicate the full script leaderboard in **Open hotspots** — that belongs in terminal output only; the cell is for **curated, unresolved** callouts.
+  - **Conditions → hotspots (mandatory):** Nach dem Eintragen der Spalten **`Anteil %`** mit [`spaghetti-setup.md`](spaghetti-setup.md) abgleichen (**strict >** je Balken; Komposit **`M7_anteil ≥ M7_ref`**). **Open hotspots** müssen jede **feuernde** Policy-Bedingung (Anteil-basiert) verankern; **Trigger v2** optional zur Einordnung zitieren. **Scan-only**, wenn **keine** Anteil-Überschreitung **und** **`M7_anteil < M7_ref`**.
 
 ### 2) Information input list (table) — **only if trigger policy is met**
 
 - Each recognised or worsened **structure / spaghetti gap** gets its **own row** with columns: **ID**, **pattern**, **location**, **hint / measurement idea**, **direction** (one-sentence sketch), **collision hint** (what would be risky in parallel).
-- **Pattern column:** Begin **pattern** with the **M7 category symbol(s)** this wave primarily addresses — **C1** … **C7** as in the **Per-category triggers** table above (same names as § *Latest structure scan* / input list triggers). Use `**C3 · short free-text hook`**; if several categories apply, `**C2 · C3 · hook**`. Pick symbols from the current scan story (length, nesting, cycles, duplication, etc.), not arbitrary tags.
+- **Pattern column:** Begin **pattern** with the **M7 category symbol(s)** this wave primarily addresses — **C1** … **C7** as in [`spaghetti-setup.md`](spaghetti-setup.md) § *Per-category trigger bars* (same names as § *Latest structure scan* / input list triggers). Use **C3 ·** then a short free-text hook; if several categories apply, **C2 · C3 ·** then the hook. Pick symbols from the current scan story (length, nesting, cycles, duplication, etc.), not arbitrary tags.
 - **IDs:** **update** existing **DS-*** rows (measurements, location, collision) instead of inventing duplicates; assign the next free **DS-*** number only for **new** topics.
 - Then maintain the **DS-ID → primary workstream** table in the same document (slug → `artifacts/workstreams/<slug>/pre|post/` per [state/WORKSTREAM_INDEX.md](state/WORKSTREAM_INDEX.md)).
 - **If trigger policy is not met:** do **not** change this section or the workstream table within the spaghetti check.
@@ -191,8 +180,8 @@ All in [despaghettification_implementation_input.md](despaghettification_impleme
 ### 3) Recommended implementation order — **only if trigger policy is met**
 
 - Section **“Recommended implementation order”** as the analysis agent’s **proposal**: table **priority / phase**, **DS-ID(s)**, **short logic**, **workstream (primary)**, **note** (dependencies, gates).
-- **Mermaid (mandatory when phases are filled):** If the phase table still contains only placeholders (`—`), **omit** the diagram until a pass fills real rows. Once **any** phase row has real **DS-ID(s)**, immediately **below** the table include a **fenced** `mermaid` code block ( ````mermaid` … `````) with a `**flowchart**` or `**graph**` that reflects the **same** sequencing **and parallelism** as the table:
-  - **Node labels (readability + compatibility):** **one source line per node**, shape `**id["label"]`**. Put **phase · DS-ID · very short hook** in `label`, parts separated by `**·`** (U+00B7 middle dot, spaces around it). Example: `P1["1 · DS-010 · AI turn"]`. **Do not** break labels across multiple lines in the repo file, **do not** use `\n`, `<br/>`, or inner ``` “markdown string” wrappers in hub diagrams — different viewers disagree on those, and the result is often worse than one dense line.
+- **Mermaid (mandatory when phases are filled):** If the phase table still contains only placeholders (`—`), **omit** the diagram until a pass fills real rows. Once **any** phase row has real **DS-ID(s)**, immediately **below** the table include a **fenced** `mermaid` code block (` ```mermaid` … ` ``` `) with a **`flowchart`** or **`graph`** that reflects the **same** sequencing **and parallelism** as the table:
+  - **Node labels (readability + compatibility):** **one source line per node**, shape **`id["label"]`**. Put **phase · DS-ID · very short hook** in `label`, parts separated by **` · `** (U+00B7 middle dot, spaces around it). Example: `P1["1 · DS-010 · AI turn"]`. **Do not** break labels across multiple lines in the repo file, **do not** use `\n`, `<br/>`, or inner backtick “markdown string” wrappers in hub diagrams — different viewers disagree on those, and the result is often worse than one dense line.
   - **Edges:** draw a **hard** dependency as a single arrow. For **parallel** work (independent DS phases after a common predecessor, separate workstreams, no import conflict), use a **fork** (`Predecessor --> A` and `Predecessor --> B`) and a **join** (`A --> Merge`, `B --> Merge`) when a later phase truly requires both; if independence is documented but no join is needed, fork only and end branches on leaf phases.
   - **Linear fallback:** use a simple chain **only** when every phase is strictly sequential or soft-ordered with no credible parallel band.
   - **Do not** omit the diagram when non-placeholder phase rows exist — keep syntax valid for MkDocs / GitHub Mermaid.
@@ -212,12 +201,12 @@ All in [despaghettification_implementation_input.md](despaghettification_impleme
 
 ### Optional
 
-- **Progress / work log** and `WORKSTREAM_*_STATE.md`: only for a **formal wave** with pre/post (see governance).
+- **Progress / work log** and `WORKSTREAM_*_STATE.md`: primary use is a **formal wave** with pre/post (see governance). **If** the input list’s optional log also records a **spaghetti-check** / scan-maintenance summary in the same maintenance pass, reuse § *Latest structure scan* **AST telemetry** and **`metrics_bundle`** **M7** / **C1..C7** verbatim — the scan section is the **single source of truth** for those numbers in that pass.
 
 ## Output format for the requester (short)
 
-After the run: **3–8 sentences** on **M7**, category outliers, and whether **Open hotspots** shrank or cleared (no solved items left listed). When citing **C1..C7**, use **percent** wording consistent with the input list (e.g. “C3 at 44%”). **Only if trigger policy is met** (any **C** above its bar **or** `**M7 ≥ M7_ref`**): additionally **1–3 sentences** on **proposed implementation order** (first phase and why), whether **parallel** bands were identified and how the **Mermaid** shows fork/join, confirm diagram nodes use **single-line** `["phase · DS-ID · hook"]` labels, and point to changed sections (**scan**, **DS table**, **phase table + diagram**). If trigger policy is not met: reference **Latest structure scan** (including **Open hotspots** pruned to unresolved only) — no obligation to change DS / phases / Mermaid.
+After the run: **3–8 sentences** on **`M7_anteil` vs `M7_ref`**, per-category **Anteil** vs bars, **Trigger v2** outliers (advisory), and **Open hotspots**. Confirm **Open hotspots** covers **every** firing **Anteil**-based condition. **Only if trigger policy is met**: add **1–3 sentences** on implementation order, parallelism, **Mermaid**, and changed sections. If trigger policy is not met: **Latest structure scan** (+ pruned hotspots) only.
 
 ## Counterpart: implementation wave by wave
 
-The **execution track** (review order, adjust if needed, then Despaghettify waves with pre/post until the list is empty): [spaghetti-solve-task.md](spaghetti-solve-task.md).
+The **execution track** (one **DS-ID** per invocation, e.g. `run spaghetti-solve-task DS-016`; sub-waves with pre/post until that **DS-ID** is closed in the input list): [spaghetti-solve-task.md](spaghetti-solve-task.md).

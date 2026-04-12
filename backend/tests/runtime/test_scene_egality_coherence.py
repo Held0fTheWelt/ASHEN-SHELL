@@ -104,7 +104,7 @@ class TestSceneTransitionLegalityCoherence:
 
     def test_validator_uses_canonical_legality(self, simple_module, session_a):
         """Validator uses SceneTransitionLegality for checks."""
-        from app.runtime.turn_executor import MockDecision
+        from app.runtime.runtime_models import MockDecision
 
         # Valid transition
         decision = MockDecision(proposed_scene_id="scene_b", proposed_deltas=[])
@@ -308,7 +308,7 @@ class TestConditionalTransitionCoherence:
         self, conditional_module, session_s2
     ):
         """validate_decision rejects conditional transition (validator path)."""
-        from app.runtime.turn_executor import MockDecision
+        from app.runtime.runtime_models import MockDecision
 
         # Validator calls with detected_triggers=None
         decision = MockDecision(proposed_scene_id="s3", proposed_deltas=[])
@@ -370,7 +370,7 @@ class TestNoIllegalNarrativeForcing:
 
     def test_validator_rejects_unreachable_scene(self, gated_module, session_s2):
         """Validator blocks jump to unreachable scene (no direct transition)."""
-        from app.runtime.turn_executor import MockDecision
+        from app.runtime.runtime_models import MockDecision
 
         # No transition exists from s2 to s1
         decision = MockDecision(proposed_scene_id="s1", proposed_deltas=[])
@@ -433,7 +433,8 @@ class TestTurnExecutorLegalityEnforcement:
     def test_execute_turn_applies_legal_scene_transition(self, conditional_module, session_s2):
         """execute_turn applies scene transition when canonical legality check passes."""
         import asyncio
-        from app.runtime.turn_executor import MockDecision, execute_turn
+        from app.runtime.runtime_models import MockDecision
+        from app.runtime.turn_executor import execute_turn
 
         # Propose transition s2->s3 with required trigger detected
         decision = MockDecision(
@@ -453,7 +454,8 @@ class TestTurnExecutorLegalityEnforcement:
     def test_execute_turn_blocks_illegal_scene_transition(self, conditional_module, session_s2):
         """execute_turn blocks scene transition when canonical legality check fails."""
         import asyncio
-        from app.runtime.turn_executor import MockDecision, execute_turn
+        from app.runtime.runtime_models import MockDecision
+        from app.runtime.turn_executor import execute_turn
 
         # Propose transition s2->s3 WITHOUT required trigger
         decision = MockDecision(
@@ -480,7 +482,8 @@ class TestTurnExecutorLegalityEnforcement:
         ensuring coherent semantics.
         """
         import asyncio
-        from app.runtime.turn_executor import MockDecision, execute_turn
+        from app.runtime.runtime_models import MockDecision
+        from app.runtime.turn_executor import execute_turn
 
         # This transition is now legal at both validation time and execution time
         # because the validator uses the actual detected_triggers from the decision
@@ -505,7 +508,8 @@ class TestTurnExecutorLegalityEnforcement:
     def test_ending_legality_checked_in_execution(self, conditional_module, session_s2):
         """Turn execution checks ending legality and includes it in result."""
         import asyncio
-        from app.runtime.turn_executor import MockDecision, execute_turn
+        from app.runtime.runtime_models import MockDecision
+        from app.runtime.turn_executor import execute_turn
         from app.content.module_models import EndingCondition
 
         # Create module with unconditional ending

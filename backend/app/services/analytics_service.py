@@ -6,9 +6,11 @@ from sqlalchemy import func, and_, or_
 
 from app.extensions import db
 from app.models import (
-    User, ForumThread, ForumPost, ForumCategory, ForumTag, ForumThreadTag,
+    User, ForumThread, ForumPost,
     ForumReport, ActivityLog, Role
 )
+from app.services.analytics_service_content import build_analytics_content_payload
+from app.services.analytics_service_timeline import build_analytics_timeline_payload
 
 
 def _utc_now():
@@ -129,134 +131,7 @@ def get_analytics_timeline(
     Return daily activity counts: threads, posts, reports, moderation actions.
     metric filter: 'threads', 'posts', 'reports', 'actions' or None (all).
     """
-    now = _utc_now()
-    default_from = now - timedelta(days=30)
-
-    dt_from = _parse_date(date_from) or default_from
-    dt_to = _parse_date(date_to)
-    if dt_to:
-        dt_to = _date_to_end_of_day(dt_to)
-    else:
-        dt_to = now
-
-    if dt_from > dt_to:
-        dt_from = dt_to - timedelta(days=30)
-
-    # Generate date labels for the range
-    current = dt_from.replace(hour=0, minute=0, second=0, microsecond=0)
-    dates = []
-    while current < dt_to:
-        dates.append(current)
-        current += timedelta(days=1)
-
-    result = {
-        "timeline": {},
-        "query_date": now.isoformat(),
-        "date_range": {
-            "from": dt_from.isoformat(),
-            "to": dt_to.isoformat(),
-        },
-    }
-
-    # Threads per day
-    if not metric or metric == "threads":
-        thread_counts = db.session.query(
-            func.date(ForumThread.created_at).label("date"),
-            func.count(ForumThread.id).label("count")
-        ).filter(
-            and_(
-                ForumThread.created_at >= dt_from,
-                ForumThread.created_at < dt_to,
-                ForumThread.deleted_at.is_(None)
-            )
-        ).group_by(func.date(ForumThread.created_at)).all()
-
-        thread_dict = {}
-        for d in thread_counts:
-            if d[0]:
-                date_str = d[0].isoformat() if hasattr(d[0], 'isoformat') else str(d[0])
-                thread_dict[date_str] = d[1]
-            else:
-                thread_dict[None] = d[1]
-        result["timeline"]["threads"] = [
-            thread_dict.get(d.isoformat(), 0) for d in dates
-        ]
-
-    # Posts per day
-    if not metric or metric == "posts":
-        post_counts = db.session.query(
-            func.date(ForumPost.created_at).label("date"),
-            func.count(ForumPost.id).label("count")
-        ).filter(
-            and_(
-                ForumPost.created_at >= dt_from,
-                ForumPost.created_at < dt_to,
-                ForumPost.deleted_at.is_(None)
-            )
-        ).group_by(func.date(ForumPost.created_at)).all()
-
-        post_dict = {}
-        for d in post_counts:
-            if d[0]:
-                date_str = d[0].isoformat() if hasattr(d[0], 'isoformat') else str(d[0])
-                post_dict[date_str] = d[1]
-            else:
-                post_dict[None] = d[1]
-        result["timeline"]["posts"] = [
-            post_dict.get(d.isoformat(), 0) for d in dates
-        ]
-
-    # Reports per day
-    if not metric or metric == "reports":
-        report_counts = db.session.query(
-            func.date(ForumReport.created_at).label("date"),
-            func.count(ForumReport.id).label("count")
-        ).filter(
-            and_(
-                ForumReport.created_at >= dt_from,
-                ForumReport.created_at < dt_to
-            )
-        ).group_by(func.date(ForumReport.created_at)).all()
-
-        report_dict = {}
-        for d in report_counts:
-            if d[0]:
-                date_str = d[0].isoformat() if hasattr(d[0], 'isoformat') else str(d[0])
-                report_dict[date_str] = d[1]
-            else:
-                report_dict[None] = d[1]
-        result["timeline"]["reports"] = [
-            report_dict.get(d.isoformat(), 0) for d in dates
-        ]
-
-    # Moderation actions per day
-    if not metric or metric == "actions":
-        action_counts = db.session.query(
-            func.date(ActivityLog.created_at).label("date"),
-            func.count(ActivityLog.id).label("count")
-        ).filter(
-            and_(
-                ActivityLog.category == "moderation",
-                ActivityLog.created_at >= dt_from,
-                ActivityLog.created_at < dt_to
-            )
-        ).group_by(func.date(ActivityLog.created_at)).all()
-
-        action_dict = {}
-        for d in action_counts:
-            if d[0]:
-                date_str = d[0].isoformat() if hasattr(d[0], 'isoformat') else str(d[0])
-                action_dict[date_str] = d[1]
-            else:
-                action_dict[None] = d[1]
-        result["timeline"]["actions"] = [
-            action_dict.get(d.isoformat(), 0) for d in dates
-        ]
-
-    # Include date labels
-    result["timeline"]["dates"] = [d.isoformat() for d in dates]
-
-    return result
+    return build_analytics_timeline_payload(date_from=date_from, date_to=date_to, metric=metric)
 
 
 def get_analytics_users(limit: int = 10, sort_by: Optional[str] = None) -> Dict[str, Any]:
@@ -332,109 +207,7 @@ def get_analytics_content(
     else:
         dt_to = now
 
-    limit = max(1, min(limit, 100))
-
-    # Popular tags (by thread count)
-    popular_tags = db.session.query(
-        ForumTag.id,
-        ForumTag.label,
-        ForumTag.slug,
-        func.count(ForumThreadTag.thread_id).label("thread_count")
-    ).outerjoin(
-        ForumThreadTag, ForumThreadTag.tag_id == ForumTag.id
-    ).group_by(ForumTag.id).order_by(
-        func.count(ForumThreadTag.thread_id).desc()
-    ).limit(limit).all()
-
-    tags_result = [
-        {
-            "tag_id": t[0],
-            "label": t[1],
-            "slug": t[2],
-            "thread_count": t[3] or 0,
-        }
-        for t in popular_tags
-    ]
-
-    # Trending threads (recent, high engagement)
-    trending_threads = db.session.query(
-        ForumThread.id,
-        ForumThread.title,
-        ForumThread.slug,
-        ForumThread.reply_count,
-        ForumThread.view_count,
-        ForumThread.created_at,
-        ForumThread.last_post_at,
-        User.username
-    ).join(
-        User, ForumThread.author_id == User.id, isouter=True
-    ).filter(
-        and_(
-            ForumThread.created_at >= dt_from,
-            ForumThread.created_at < dt_to,
-            ForumThread.deleted_at.is_(None)
-        )
-    ).order_by(
-        ForumThread.last_post_at.desc().nulls_last()
-    ).limit(limit).all()
-
-    threads_result = [
-        {
-            "thread_id": t[0],
-            "title": t[1],
-            "slug": t[2],
-            "replies": t[3],
-            "views": t[4],
-            "created_at": t[5].isoformat() if t[5] else None,
-            "last_activity": t[6].isoformat() if t[6] else None,
-            "author": t[7],
-        }
-        for t in trending_threads
-    ]
-
-    # Content freshness distribution
-    now_dt = _utc_now()
-    cutoff_new = now_dt - timedelta(days=7)
-    cutoff_recent = now_dt - timedelta(days=30)
-
-    new_count = db.session.query(func.count(ForumThread.id)).filter(
-        and_(
-            ForumThread.created_at >= cutoff_new,
-            ForumThread.deleted_at.is_(None)
-        )
-    ).scalar() or 0
-
-    recent_count = db.session.query(func.count(ForumThread.id)).filter(
-        and_(
-            ForumThread.created_at >= cutoff_recent,
-            ForumThread.created_at < cutoff_new,
-            ForumThread.deleted_at.is_(None)
-        )
-    ).scalar() or 0
-
-    old_count = db.session.query(func.count(ForumThread.id)).filter(
-        and_(
-            ForumThread.created_at < cutoff_recent,
-            ForumThread.deleted_at.is_(None)
-        )
-    ).scalar() or 0
-
-    freshness = {
-        "new": {"label": "< 7 days", "count": new_count},
-        "recent": {"label": "7-30 days", "count": recent_count},
-        "old": {"label": "> 30 days", "count": old_count},
-    }
-
-    return {
-        "popular_tags": tags_result,
-        "trending_threads": threads_result,
-        "content_freshness": freshness,
-        "query_date": now.isoformat(),
-        "date_range": {
-            "from": dt_from.isoformat(),
-            "to": dt_to.isoformat(),
-        },
-    }
+    return build_analytics_content_payload(dt_from=dt_from, dt_to=dt_to, now=now, limit=limit)
 
 
 def get_analytics_moderation(

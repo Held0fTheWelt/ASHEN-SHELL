@@ -11,11 +11,13 @@ World Engine changes under [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md).
 
 ## Hotspot / target status
 
-- —
+- **DS-012** (narrative commit resolver split): **closed** 2026-04-10 — `narrative_commit_resolution.py` + thin `resolve_narrative_commit`; see post artefacts below.
 
 ## Last completed wave/session
 
-- —
+- **2026-04-10 · DS-012** — Narrative commit phase split (`world-engine/app/story_runtime/`).  
+  - Post: `artifacts/workstreams/world_engine/post/session_20260410_DS-012_narrative_commit_post.md`, `…/session_20260410_DS-012_pytest_narrative_commit.exit.txt`, `…/session_20260410_DS-012_spaghetti_ast_scan_post.txt`, `…/session_20260410_DS-012_pre_post_comparison.json`  
+  - Pre: `artifacts/workstreams/world_engine/pre/session_20260410_DS-012_narrative_commit_pre.md`
 
 ## Pre-work baseline reference
 
@@ -32,7 +34,7 @@ World Engine changes under [`EXECUTION_GOVERNANCE.md`](EXECUTION_GOVERNANCE.md).
 
 ## Next recommended wave
 
-- Pre/post collect and scope snapshot for every structural wave; align drift topics (builtins / models) with backend and `story_runtime_core`.
+- Continue despaghettify input list (**DS-013** GoC rules, `ai_stack`); keep pre/post discipline for further `world_engine` structural waves.
 
 ## Contradictions / caveats
 

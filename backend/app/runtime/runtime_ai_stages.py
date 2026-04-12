@@ -397,29 +397,15 @@ def resolve_staged_orchestration_final_path(
     return OrchestrationFinalPath.slm_then_llm
 
 
-def build_legacy_model_routing_rollup(
+def _legacy_model_routing_ranking_context(
     *,
-    synthesis_ran: bool,
-    synthesis_request: RoutingRequest | None,
-    synthesis_decision: RoutingDecision | None,
-    synthesis_execution_adapter: StoryAIAdapter | None,
-    synthesis_resolved_via_registry: bool | None,
-    passed_adapter: StoryAIAdapter,
-    signal_request: RoutingRequest,
-    signal_decision: RoutingDecision,
-    signal_execution_adapter: StoryAIAdapter,
-    signal_resolved: bool,
-    final_path: OrchestrationFinalPath,
-    ranking_request: RoutingRequest | None = None,
-    ranking_decision: RoutingDecision | None = None,
-    ranking_execution_adapter: StoryAIAdapter | None = None,
-    ranking_resolved_via_registry: bool | None = None,
-    ranking_suppressed_slm_only: bool = False,
-    ranked_skip_synthesis: bool = False,
-    synthesis_gate_reason: str | None = None,
+    ranking_suppressed_slm_only: bool,
+    ranked_skip_synthesis: bool,
+    synthesis_gate_reason: str | None,
+    ranking_request: RoutingRequest | None,
+    ranking_decision: RoutingDecision | None,
+    ranking_execution_adapter: StoryAIAdapter | None,
 ) -> dict[str, Any]:
-    """Legacy-shaped trace for ``last_model_routing_trace`` / ``AIDecisionLog.model_routing_trace``."""
-
     ranking_context: dict[str, Any] = {
         "ranking_suppressed_slm_only": ranking_suppressed_slm_only,
         "ranked_skip_synthesis": ranked_skip_synthesis,
@@ -431,67 +417,98 @@ def build_legacy_model_routing_rollup(
         ranking_context["ranking_decision"] = ranking_decision.model_dump(mode="json")
     if ranking_execution_adapter is not None:
         ranking_context["ranking_executed_adapter_name"] = ranking_execution_adapter.adapter_name
+    return ranking_context
 
-    if synthesis_ran and synthesis_request and synthesis_decision and synthesis_execution_adapter:
-        out = {
-            "routing_invoked": True,
-            "rollup_mode": "synthesis_stage",
-            "final_path": final_path.value,
-            "request": synthesis_request.model_dump(mode="json"),
-            "decision": synthesis_decision.model_dump(mode="json"),
-            "passed_adapter_name": passed_adapter.adapter_name,
-            "executed_adapter_name": synthesis_execution_adapter.adapter_name,
-            "selected_adapter_name": synthesis_decision.selected_adapter_name,
-            "selected_model": synthesis_decision.selected_model,
-            "resolved_via_get_adapter": bool(synthesis_resolved_via_registry),
-            "fallback_to_passed_adapter": not bool(synthesis_resolved_via_registry),
-            "escalation_applied": synthesis_decision.escalation_applied,
-            "degradation_applied": synthesis_decision.degradation_applied,
-            "routing_evidence": build_routing_evidence(
-                routing_request=synthesis_request,
-                routing_decision=synthesis_decision,
-                executed_adapter_name=synthesis_execution_adapter.adapter_name,
-                passed_adapter_name=passed_adapter.adapter_name,
-                resolved_via_get_adapter=bool(synthesis_resolved_via_registry),
-                fallback_to_passed_adapter=not bool(synthesis_resolved_via_registry),
-                bounded_model_call=True,
-                skip_reason=None,
-            ),
-            "ranking_context": ranking_context,
-        }
-        return out
 
-    if ranked_skip_synthesis and ranking_request and ranking_decision and ranking_execution_adapter:
-        rk_resolved = bool(ranking_resolved_via_registry)
-        return {
-            "routing_invoked": True,
-            "rollup_mode": "slm_only_after_ranking_skip",
-            "final_path": final_path.value,
-            "synthesis_skipped": True,
-            "request": ranking_request.model_dump(mode="json"),
-            "decision": ranking_decision.model_dump(mode="json"),
-            "passed_adapter_name": passed_adapter.adapter_name,
-            "executed_adapter_name": ranking_execution_adapter.adapter_name if rk_resolved else passed_adapter.adapter_name,
-            "selected_adapter_name": ranking_decision.selected_adapter_name,
-            "selected_model": ranking_decision.selected_model,
-            "resolved_via_get_adapter": rk_resolved,
-            "fallback_to_passed_adapter": not rk_resolved,
-            "escalation_applied": ranking_decision.escalation_applied,
-            "degradation_applied": ranking_decision.degradation_applied,
-            "routing_evidence": build_routing_evidence(
-                routing_request=ranking_request,
-                routing_decision=ranking_decision,
-                executed_adapter_name=ranking_execution_adapter.adapter_name,
-                passed_adapter_name=passed_adapter.adapter_name,
-                resolved_via_get_adapter=rk_resolved,
-                fallback_to_passed_adapter=not rk_resolved,
-                bounded_model_call=True,
-                skip_reason=None,
-            ),
-            "ranking_context": ranking_context,
-        }
+def _legacy_model_routing_rollup_synthesis_stage(
+    *,
+    synthesis_request: RoutingRequest,
+    synthesis_decision: RoutingDecision,
+    synthesis_execution_adapter: StoryAIAdapter,
+    synthesis_resolved_via_registry: bool | None,
+    passed_adapter: StoryAIAdapter,
+    final_path: OrchestrationFinalPath,
+    ranking_context: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "routing_invoked": True,
+        "rollup_mode": "synthesis_stage",
+        "final_path": final_path.value,
+        "request": synthesis_request.model_dump(mode="json"),
+        "decision": synthesis_decision.model_dump(mode="json"),
+        "passed_adapter_name": passed_adapter.adapter_name,
+        "executed_adapter_name": synthesis_execution_adapter.adapter_name,
+        "selected_adapter_name": synthesis_decision.selected_adapter_name,
+        "selected_model": synthesis_decision.selected_model,
+        "resolved_via_get_adapter": bool(synthesis_resolved_via_registry),
+        "fallback_to_passed_adapter": not bool(synthesis_resolved_via_registry),
+        "escalation_applied": synthesis_decision.escalation_applied,
+        "degradation_applied": synthesis_decision.degradation_applied,
+        "routing_evidence": build_routing_evidence(
+            routing_request=synthesis_request,
+            routing_decision=synthesis_decision,
+            executed_adapter_name=synthesis_execution_adapter.adapter_name,
+            passed_adapter_name=passed_adapter.adapter_name,
+            resolved_via_get_adapter=bool(synthesis_resolved_via_registry),
+            fallback_to_passed_adapter=not bool(synthesis_resolved_via_registry),
+            bounded_model_call=True,
+            skip_reason=None,
+        ),
+        "ranking_context": ranking_context,
+    }
 
-    base_rollup = {
+
+def _legacy_model_routing_rollup_ranking_skip_slm_only(
+    *,
+    ranking_request: RoutingRequest,
+    ranking_decision: RoutingDecision,
+    ranking_execution_adapter: StoryAIAdapter,
+    ranking_resolved_via_registry: bool | None,
+    passed_adapter: StoryAIAdapter,
+    final_path: OrchestrationFinalPath,
+    ranking_context: dict[str, Any],
+) -> dict[str, Any]:
+    rk_resolved = bool(ranking_resolved_via_registry)
+    return {
+        "routing_invoked": True,
+        "rollup_mode": "slm_only_after_ranking_skip",
+        "final_path": final_path.value,
+        "synthesis_skipped": True,
+        "request": ranking_request.model_dump(mode="json"),
+        "decision": ranking_decision.model_dump(mode="json"),
+        "passed_adapter_name": passed_adapter.adapter_name,
+        "executed_adapter_name": ranking_execution_adapter.adapter_name if rk_resolved else passed_adapter.adapter_name,
+        "selected_adapter_name": ranking_decision.selected_adapter_name,
+        "selected_model": ranking_decision.selected_model,
+        "resolved_via_get_adapter": rk_resolved,
+        "fallback_to_passed_adapter": not rk_resolved,
+        "escalation_applied": ranking_decision.escalation_applied,
+        "degradation_applied": ranking_decision.degradation_applied,
+        "routing_evidence": build_routing_evidence(
+            routing_request=ranking_request,
+            routing_decision=ranking_decision,
+            executed_adapter_name=ranking_execution_adapter.adapter_name,
+            passed_adapter_name=passed_adapter.adapter_name,
+            resolved_via_get_adapter=rk_resolved,
+            fallback_to_passed_adapter=not rk_resolved,
+            bounded_model_call=True,
+            skip_reason=None,
+        ),
+        "ranking_context": ranking_context,
+    }
+
+
+def _legacy_model_routing_rollup_signal_slm_only(
+    *,
+    signal_request: RoutingRequest,
+    signal_decision: RoutingDecision,
+    signal_execution_adapter: StoryAIAdapter,
+    signal_resolved: bool,
+    passed_adapter: StoryAIAdapter,
+    final_path: OrchestrationFinalPath,
+    ranking_context: dict[str, Any],
+) -> dict[str, Any]:
+    return {
         "routing_invoked": True,
         "rollup_mode": "slm_only_signal_stage",
         "final_path": final_path.value,
@@ -518,7 +535,71 @@ def build_legacy_model_routing_rollup(
         ),
         "ranking_context": ranking_context,
     }
-    return base_rollup
+
+
+def build_legacy_model_routing_rollup(
+    *,
+    synthesis_ran: bool,
+    synthesis_request: RoutingRequest | None,
+    synthesis_decision: RoutingDecision | None,
+    synthesis_execution_adapter: StoryAIAdapter | None,
+    synthesis_resolved_via_registry: bool | None,
+    passed_adapter: StoryAIAdapter,
+    signal_request: RoutingRequest,
+    signal_decision: RoutingDecision,
+    signal_execution_adapter: StoryAIAdapter,
+    signal_resolved: bool,
+    final_path: OrchestrationFinalPath,
+    ranking_request: RoutingRequest | None = None,
+    ranking_decision: RoutingDecision | None = None,
+    ranking_execution_adapter: StoryAIAdapter | None = None,
+    ranking_resolved_via_registry: bool | None = None,
+    ranking_suppressed_slm_only: bool = False,
+    ranked_skip_synthesis: bool = False,
+    synthesis_gate_reason: str | None = None,
+) -> dict[str, Any]:
+    """Legacy-shaped trace for ``last_model_routing_trace`` / ``AIDecisionLog.model_routing_trace``."""
+
+    ranking_context = _legacy_model_routing_ranking_context(
+        ranking_suppressed_slm_only=ranking_suppressed_slm_only,
+        ranked_skip_synthesis=ranked_skip_synthesis,
+        synthesis_gate_reason=synthesis_gate_reason,
+        ranking_request=ranking_request,
+        ranking_decision=ranking_decision,
+        ranking_execution_adapter=ranking_execution_adapter,
+    )
+
+    if synthesis_ran and synthesis_request and synthesis_decision and synthesis_execution_adapter:
+        return _legacy_model_routing_rollup_synthesis_stage(
+            synthesis_request=synthesis_request,
+            synthesis_decision=synthesis_decision,
+            synthesis_execution_adapter=synthesis_execution_adapter,
+            synthesis_resolved_via_registry=synthesis_resolved_via_registry,
+            passed_adapter=passed_adapter,
+            final_path=final_path,
+            ranking_context=ranking_context,
+        )
+
+    if ranked_skip_synthesis and ranking_request and ranking_decision and ranking_execution_adapter:
+        return _legacy_model_routing_rollup_ranking_skip_slm_only(
+            ranking_request=ranking_request,
+            ranking_decision=ranking_decision,
+            ranking_execution_adapter=ranking_execution_adapter,
+            ranking_resolved_via_registry=ranking_resolved_via_registry,
+            passed_adapter=passed_adapter,
+            final_path=final_path,
+            ranking_context=ranking_context,
+        )
+
+    return _legacy_model_routing_rollup_signal_slm_only(
+        signal_request=signal_request,
+        signal_decision=signal_decision,
+        signal_execution_adapter=signal_execution_adapter,
+        signal_resolved=signal_resolved,
+        passed_adapter=passed_adapter,
+        final_path=final_path,
+        ranking_context=ranking_context,
+    )
 
 
 @dataclass

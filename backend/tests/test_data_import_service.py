@@ -5,7 +5,7 @@ Coverage targets:
 - _get_table(): return Table, None for alembic_version, None for missing (lines 52-54)
 - _required_columns(): skip autoincrement, nullable, defaults (lines 58-66)
 - _parse_datetime_if_needed(): None, string parse, parse error, non-string (lines 70-77)
-- preflight_validate_payload(): all 11 issue codes + success path (lines 82-206)
+- preflight_validate_payload(): all 11 issue codes + success path (thin entry → data_import_preflight)
 - execute_import(): success, preflight failure, DB error, rollback, atomicity (lines 209-244)
 
 Test patterns:
@@ -198,7 +198,7 @@ class TestParseDatetimeIfNeeded:
 
 
 class TestPreflightValidatePayload:
-    """Test preflight_validate_payload() (lines 82-206)."""
+    """Test preflight_validate_payload() via data_import_preflight phases."""
 
     def test_preflight_success_with_empty_tables(self, app):
         """Preflight can pass with valid metadata and empty tables (when schema_revision matches)."""

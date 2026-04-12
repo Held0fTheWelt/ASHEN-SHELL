@@ -16,9 +16,9 @@ from app.observability.trace import ensure_trace_id, get_trace_id
 from app.runtime.adapter_registry import get_adapter
 from app.runtime.ai_adapter import StoryAIAdapter
 from app.runtime.ai_turn_executor import execute_turn_with_ai
-from app.runtime.runtime_models import SessionState
+from app.runtime.runtime_models import MockDecision, SessionState
 from app.runtime.turn_execution_types import TurnExecutionResult
-from app.runtime.turn_executor import MockDecision, execute_turn
+from app.runtime.turn_executor import execute_turn
 
 
 async def dispatch_turn(

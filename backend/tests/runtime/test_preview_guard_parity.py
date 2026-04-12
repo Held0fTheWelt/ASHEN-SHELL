@@ -7,7 +7,8 @@ from copy import deepcopy
 
 from app.runtime.preview_delta import preview_delta_dry_run
 from app.runtime.preview_models import PreviewDeltaRequest
-from app.runtime.turn_executor import MockDecision, ProposedStateDelta, execute_turn
+from app.runtime.runtime_models import MockDecision, ProposedStateDelta
+from app.runtime.turn_executor import execute_turn
 
 
 def _decision_from_preview_request(request: PreviewDeltaRequest) -> MockDecision:

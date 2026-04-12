@@ -30,8 +30,8 @@ from app.runtime.ai_turn_recovery_paths import (
     _create_error_decision_log,
     _make_parse_failure_result,
 )
-from app.runtime.turn_executor import TurnExecutionResult
 from app.runtime.runtime_models import SessionState
+from app.runtime.turn_execution_types import TurnExecutionResult
 
 # Set only after successful parse in post-parse pipeline (reserved; log bundle reads this slot).
 _PREVIEW_DIAGNOSTICS_BEFORE_PARSE: dict[str, Any] | None = None

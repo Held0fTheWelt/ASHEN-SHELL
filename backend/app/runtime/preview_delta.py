@@ -7,8 +7,14 @@ from copy import deepcopy
 
 from app.content.module_models import ContentModule
 from app.runtime.preview_models import PreviewDeltaRequest, PreviewDeltaResult
-from app.runtime.turn_executor import MockDecision, ProposedStateDelta, execute_turn
-from app.runtime.runtime_models import DeltaType, SessionContextLayers, SessionState
+from app.runtime.runtime_models import (
+    DeltaType,
+    MockDecision,
+    ProposedStateDelta,
+    SessionContextLayers,
+    SessionState,
+)
+from app.runtime.turn_executor import execute_turn
 
 
 def _coerce_delta_type(raw_delta_type: str | None) -> DeltaType | None:

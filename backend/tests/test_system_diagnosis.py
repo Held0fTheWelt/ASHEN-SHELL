@@ -23,8 +23,9 @@ def _reset_diagnosis_cache():
 
 
 def _install_diagnosis_httpx_mock(monkeypatch, *, backend_ok=True, play_timeout=False, play_health_status=200):
-    """Patch httpx.Client in system_diagnosis_service for backend + play HTTP checks."""
+    """Patch httpx.Client in diagnosis service + play-http helper (play uses its own httpx binding)."""
 
+    import app.services.system_diagnosis_play_http as play_mod
     import app.services.system_diagnosis_service as mod
 
     class Resp:
@@ -70,6 +71,7 @@ def _install_diagnosis_httpx_mock(monkeypatch, *, backend_ok=True, play_timeout=
             return Resp(502, {"error": "unexpected", "url": u})
 
     monkeypatch.setattr(mod.httpx, "Client", Client)
+    monkeypatch.setattr(play_mod.httpx, "Client", Client)
 
 
 def _install_ai_report_mock(monkeypatch, overall="partial"):

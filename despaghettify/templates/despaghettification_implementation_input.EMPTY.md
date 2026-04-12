@@ -62,9 +62,9 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 | What | Content |
 |------|---------|
-| **Information input list** | Per **DS-***: maintain columns (*hint / measurement idea*, *direction*, *collision hint*); mark completed waves briefly. |
-| **§ Latest structure scan** | After measurable change: **main table** (as-of **date and time**, **M7** overall, 7 category scores, and AST telemetry **N / L₅₀ / L₁₀₀ / D₆**); subsection **M7 calculation and thresholds**; optional **extra checks**; **open hotspots** on every [spaghetti-check-task.md](../spaghetti-check-task.md) run (**prune** solved items). For runtime edges `tools/ds005_runtime_import_check.py`. Rankings: script output only. |
-| **§ Recommended implementation order** | Update when priority, dependency, or phase changes; optional Mermaid. |
+| **Information input list** | Per **DS-***: maintain columns; **pattern** starts with **C1..C7** (`**C3 ·**` …) per [spaghetti-check-task.md](../spaghetti-check-task.md) §2; mark completed waves briefly. |
+| **§ Latest structure scan** | After measurable change: **main table** — **Trigger v2** + **Anteil %** for **M7** / **C1..C7** from **`metrics_bundle.score`** via `check --with-metrics` ([spaghetti-check-task.md](../spaghetti-check-task.md) §1); telemetry **N / L₅₀ / L₁₀₀ / D₆** from `spaghetti_ast_scan`; § *Score M7* **same** dual columns + **AST telemetry** row **under C7**; optional **extra checks**; **open hotspots** (**prune** solved items). For runtime edges `despaghettify/tools/ds005_runtime_import_check.py`. Rankings: script output only. |
+| **§ Recommended implementation order** | Update when priority, dependency, or phase changes; **mandatory** Mermaid `flowchart` below the phase table on every [spaghetti-check-task.md](../spaghetti-check-task.md) pass that fills phases (see that doc §3). |
 | **§ Progress / work log** | Optional **one** new row: DS-ID(s), short summary, gates/tests, pre/post paths (or “see PR”). |
 | **DS-ID → workstream table** | Place new or moved **DS-*** here; note co-involved workstreams. |
 
@@ -72,82 +72,78 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 ## Latest structure scan (orientation, no warranty)
 
-**Purpose:** A **fillable** overview after measurable runs — after larger refactors update **date and time**, **M7 inputs**, and optional **extra checks** / **open hotspots**. Measurement flow, builtins grep, runtime spot check: [spaghetti-check-task.md](../spaghetti-check-task.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when the **trigger policy** in § *Trigger policy for check task updates* fires (per-category score thresholds **or** composite **`M7 ≥ M7_ref`**); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings** and longest functions: output of `python tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
+**Purpose:** A **fillable** overview after measurable runs — update **date and time**, **`metrics_bundle.score`** (**Trigger v2** + **Anteil %**), **AST telemetry**, optional **extra checks**, and **open hotspots** per [spaghetti-check-task.md](../spaghetti-check-task.md). **Numeric** thresholds (**bars**, **weights**, **`M7_ref`**) are canonical in [spaghetti-setup.md](../spaghetti-setup.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when the **trigger policy** in § *Trigger policy for check task updates* fires (per **setup**); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings:** `python despaghettify/tools/spaghetti_ast_scan.py` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
 
-| Field | Value (adjust when updating scan) |
-|-------|-------------------------------------|
-| **As of (date & time)** | **—** *(required on every scan: `YYYY-MM-DD HH:mm:ss`; optional `(IANA or UTC)`)* |
-| Spaghetti scan command | `python tools/spaghetti_ast_scan.py` (ROOTS = *measurement scope* column) |
-| Measurement scope (ROOTS) | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` |
-| **M7** — weighted 7-category spaghetti score | **—** |
-| C1: Circular dependencies | **—** |
-| C2: Nesting depth | **—** |
-| C3: Long functions + complexity | **—** |
-| C4: Multi-responsibility modules | **—** |
-| C5: Magic numbers + global state | **—** |
-| C6: Missing abstractions / duplication | **—** |
-| C7: Confusing control flow | **—** |
-| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | **—** / **—** / **—** / **—** |
-| Extra check builtins | *optional:* grep as in task doc — **hit count** and **date**, else **—** |
-| Extra check runtime | *optional:* `python tools/ds005_runtime_import_check.py` — **exit code**; if odd, **short** note (e.g. `TYPE_CHECKING`, lazy imports), else **—** |
-| **Open hotspots** | **—** (after reset: fill on first [spaghetti-check-task.md](../spaghetti-check-task.md) pass; never list solved items) |
+| Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
+|-------|-------------------------------------|-------------------------------------|
+| **As of (date & time)** | — | **—** *(required: `YYYY-MM-DD HH:mm:ss`; optional `(IANA or UTC)`)* |
+| Spaghetti scan command | — | `python despaghettify/tools/spaghetti_ast_scan.py` (ROOTS = *measurement scope*) |
+| Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` |
+| **M7** — gewichtete 7-Kategorien-Summe | **—** | **—** |
+| C1: Circular dependencies | **—** | **—** |
+| C2: Nesting depth | **—** | **—** |
+| C3: Long functions + complexity | **—** | **—** |
+| C4: Multi-responsibility modules | **—** | **—** |
+| C5: Magic numbers + global state | **—** | **—** |
+| C6: Missing abstractions / duplication | **—** | **—** |
+| C7: Confusing control flow | **—** | **—** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **—** / **—** / **—** / **—** |
+| Extra check builtins | — | *optional:* grep as in task doc — **hit count** and **date**, else **—** |
+| Extra check runtime | — | *optional:* `ds005` — **exit code**; if odd, short note, else **—** |
+| **Open hotspots** | — | **—** (fill on [spaghetti-check-task.md](../spaghetti-check-task.md) pass; never list solved items) |
 
 ### Score *M7* — inputs, weights, and calculation
 
-| Symbol | Meaning | Value |
-|--------|---------|-------|
-| **C1** | Circular dependencies | **—** |
-| **C2** | Nesting depth | **—** |
-| **C3** | Long functions + complexity | **—** |
-| **C4** | Multi-responsibility modules | **—** |
-| **C5** | Magic numbers + global state | **—** |
-| **C6** | Missing abstractions / duplication | **—** |
-| **C7** | Confusing control flow | **—** |
+| Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
+|--------|---------|------------------------|--------------|
+| **M7** | Gewichtete Summe | **—** | **—** |
+| **C1** | Circular dependencies | **—** | **—** |
+| **C2** | Nesting depth | **—** | **—** |
+| **C3** | Long functions + complexity | **—** | **—** |
+| **C4** | Multi-responsibility modules | **—** | **—** |
+| **C5** | Magic numbers + global state | **—** | **—** |
+| **C6** | Missing abstractions / duplication | **—** | **—** |
+| **C7** | Confusing control flow | **—** | **—** |
+| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **—** / **—** / **—** / **—** |
 
-**Formula:** `M7 = 0.20*C1 + 0.10*C2 + 0.20*C3 + 0.15*C4 + 0.10*C5 + 0.15*C6 + 0.10*C7`
+**Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
 
-**Evaluation:** After filling **C1..C7**, compute **M7** and copy into the main table.
+**Evaluation:** From **`check --with-metrics`**: fill **`metrics_bundle.score`** (both columns); **AST** from **`spaghetti_ast_scan`**. **Bars** apply to **Anteil %** / **`metric_a.m7`** only (see [spaghetti-check-task.md](../spaghetti-check-task.md) §1).
 
 **Trigger policy for check task updates:**
 
-Update § *Information input list*, § *Recommended implementation order*, and § *DS-ID → primary workstream* (for new IDs) when **any** of the following holds (scores **C1..C7** are the same 0–100 style values as in the tables above; use strict **>** for per-category lines):
+Update § *Information input list*, § *Recommended implementation order*, and § *DS-ID → primary workstream* when **`metrics_bundle.trigger_policy_fires`** is true — i.e. **Anteil(C*n*) > bar*n*** or **`M7_anteil ≥ M7_ref`** per [spaghetti-setup.md](../spaghetti-setup.md).
 
 | Condition | Rule |
 |-----------|------|
-| **C1** — Circular dependencies | **C1 > 5** |
-| **C2** — Nesting depth | **C2 > 10** |
-| **C3** — Long functions + complexity | **C3 > 35** |
-| **C4** — Multi-responsibility modules | **C4 > 25** |
-| **C5** — Magic numbers + global state | **C5 > 20** *(default bar; change here by team agreement if needed)* |
-| **C6** — Missing abstractions / duplication | **C6 > 15** |
-| **C7** — Confusing control flow | **C7 > 20** |
-| **Composite** | **`M7 ≥ M7_ref`** with **`M7_ref = 19%`** — the value of **M7** when each **C1..C7** is set to its trigger boundary (**C5** uses **20** in that calculation): `0.20×5 + 0.10×10 + 0.20×35 + 0.15×25 + 0.10×20 + 0.15×15 + 0.10×20 = 19.0%`. |
+| **Per-category** | **Anteil(C*n*)** **>** **bar*n*** per [spaghetti-setup.md](../spaghetti-setup.md) § *Per-category trigger bars*. |
+| **Composite** | **`M7_anteil` ≥ `M7_ref`** (`metric_a.m7`). |
 
-**Otherwise** (no per-category trigger **and** **`M7 < 19%`**): update **only** § *Latest structure scan*.
+**Otherwise** (no per-category exceedance **and** **`M7_anteil` < `M7_ref`**): update **only** § *Latest structure scan*.
 
-*Note:* M7 is heuristic; AST telemetry (`N/L₅₀/L₁₀₀/D₆`) remains mandatory context for trend comparability.
+*Note:* **`trigger_policy_basis`:** `anteil_pct`. **Trigger v2** is advisory. No hand edits.
 
 ## Information input list (extensible)
 
-Each row: **ID**, **pattern**, **location**, **hint / measurement idea**, **direction**, **collision hint** (what is risky in parallel).
+Each row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-setup.md](../spaghetti-setup.md) § *Per-category trigger bars*, e.g. **`C3 ·`** …), **location**, **hint / measurement idea**, **direction**, **collision hint** (what is risky in parallel).
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
 | — | — | — | — | — | — |
 
-**New rows:** consecutive **DS-001**, **DS-002**, … (or your ID scheme); briefly justify why it is a structure/spaghetti topic. Per § *DS-ID → primary workstream* pick `artifacts/workstreams/<slug>/pre|post/` paths.
+**New rows:** consecutive **DS-001**, **DS-002**, … (or your ID scheme); **pattern** starts with **C1..C7** per [spaghetti-check-task.md](../spaghetti-check-task.md) §2; briefly justify the topic. Per § *DS-ID → primary workstream* pick `artifacts/workstreams/<slug>/pre|post/` paths.
 
 ## Recommended implementation order
 
-Prioritised **phases**, **order**, and **dependencies** — aligned with § **information input list** and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). After filling: optional subsections per phase, Mermaid `flowchart`, gates per wave, short priority list.
+Prioritised **phases**, **order**, and **dependencies** — aligned with § **information input list** and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). After filling the phase table: **mandatory** Mermaid `flowchart` (or `graph`) **immediately below** the table, per [spaghetti-check-task.md](../spaghetti-check-task.md) §3; optional extra subsections per phase.
 
 | Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
 |------------------|----------|-------------|----------------------|----------------------------|
 | — | — | — | — | — |
 
-**Fill in:** one phase row per open **DS-*** (or an explicit merge noted in **note**). Order by **risk**: stabilise **runtime / import seams** (`backend_runtime_services` under `app.runtime`, `ds005`-touched paths) before very large **service orchestration** waves; **`ai_stack`**-only (or other packages) typically **later** unless the scan shows a hard blocker. **Workstream (primary)** must match [WORKSTREAM_INDEX.md](../state/WORKSTREAM_INDEX.md) for pre/post paths. **note** column: concrete **gates** (`pytest …`, `ds005`). Full rules: [spaghetti-check-task.md](../spaghetti-check-task.md) § *Maintaining the input list* → **Recommended implementation order** → *How to build a suitable phase table*. Coordination § *Maintaining this file*: when priority changes or new **DS-*** appear, update this section and Mermaid if used.
+**Fill in:** one phase row per open **DS-*** (or an explicit merge noted in **note**). Order by **risk**: stabilise **runtime / import seams** (`backend_runtime_services` under `app.runtime`, `ds005`-touched paths) before very large **service orchestration** waves; **`ai_stack`**-only (or other packages) typically **later** unless the scan shows a hard blocker. **Parallel:** when two DS waves are independent (different primary workstream, no hard import coupling), use parallel phase bands (e.g. `3a`/`3b`) and document in **note** — do not invent a linear order by default. **Workstream (primary)** must match [WORKSTREAM_INDEX.md](../state/WORKSTREAM_INDEX.md) for pre/post paths. **note** column: concrete **gates** (`pytest …`, `ds005`). **Mermaid:** mandatory diagram **under** the table once phase rows are real (omit while the table is only `—`); **one line per node**, `["phase · DS-ID · short hook"]`, fork/join for parallel bands — [spaghetti-check-task.md](../spaghetti-check-task.md) §3. Full rules: same doc § *Maintaining the input list* → **Recommended implementation order** → *How to build a suitable phase table*. Coordination § *Maintaining this file*: when priority changes or new **DS-*** appear, update this section **and** the Mermaid block.
 
-**Implementation** of phases until documented closure (completion gate, session by session): [spaghetti-solve-task.md](../spaghetti-solve-task.md).
+**Implementation:** invoke [spaghetti-solve-task.md](../spaghetti-solve-task.md) with **one** **DS-ID** per run (e.g. `run spaghetti-solve-task DS-016`); sub-waves and autonomous closure per that doc (completion gate each sub-wave).
 
 ## Progress / work log (optional, in addition to mandatory maintenance above)
 

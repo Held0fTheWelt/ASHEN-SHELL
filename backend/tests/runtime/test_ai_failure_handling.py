@@ -14,7 +14,7 @@ Comprehensive test suite for safe handling of AI execution failures:
 import asyncio
 import pytest
 from app.runtime.ai_adapter import AdapterResponse, StoryAIAdapter
-from app.runtime.turn_executor import MockDecision
+from app.runtime.runtime_models import MockDecision
 
 
 def test_execution_failure_reason_enum_exists():
@@ -30,7 +30,7 @@ def test_execution_failure_reason_enum_exists():
 
 def test_turn_execution_result_has_failure_reason():
     """TurnExecutionResult tracks explicit failure reason."""
-    from app.runtime.turn_executor import TurnExecutionResult
+    from app.runtime.turn_execution_types import TurnExecutionResult
     from app.runtime.runtime_models import ExecutionFailureReason
 
     result = TurnExecutionResult(

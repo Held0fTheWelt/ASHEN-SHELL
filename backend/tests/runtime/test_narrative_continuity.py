@@ -11,11 +11,12 @@ from app.runtime.relationship_context import derive_relationship_axis_context
 from app.runtime.runtime_models import (
     ExecutionFailureReason,
     GuardOutcome,
+    MockDecision,
     NarrativeCommitRecord,
 )
 from app.runtime.session_history import HistoryEntry, SessionHistory
 from app.runtime.short_term_context import ShortTermTurnContext, build_short_term_context
-from app.runtime.turn_executor import MockDecision, TurnExecutionResult
+from app.runtime.turn_execution_types import TurnExecutionResult
 
 
 def _minimal_result(

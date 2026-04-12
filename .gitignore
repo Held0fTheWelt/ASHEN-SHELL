@@ -2,7 +2,10 @@
 venv
 source
 .idea
-.cursor/
+# Cursor: ignore local workspace data; **commit** shared agent skills under `.cursor/skills/` (see `despaghettify/tools/sync_despag_skills.py`).
+.cursor/*
+!.cursor/skills/
+!.cursor/skills/**
 .report
 .claude
 WorldOfShadows.code-workspace

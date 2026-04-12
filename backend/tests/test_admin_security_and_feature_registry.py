@@ -10,6 +10,7 @@ from flask import Flask, jsonify
 from werkzeug.security import generate_password_hash
 
 from app.auth import admin_security as admin_security_module
+from app.auth import admin_security_policy as admin_security_policy_module
 from app.auth.admin_security import AdminSecurityConfig
 from app.auth.feature_registry import (
     FEATURE_DASHBOARD_METRICS,
@@ -90,7 +91,7 @@ def test_admin_security_config_and_context_helpers(monkeypatch):
 
     user = _make_security_user()
     monkeypatch.setattr(admin_security_module, "get_current_user", lambda: user)
-    monkeypatch.setattr(admin_security_module, "current_user_is_super_admin", lambda: True)
+    monkeypatch.setattr(admin_security_policy_module, "current_user_is_super_admin", lambda: True)
 
     logs = []
     monkeypatch.setattr(admin_security_module, "_log_admin_action", lambda *args, **kwargs: logs.append((args, kwargs)))
@@ -142,14 +143,14 @@ def test_admin_security_rejects_unauthorized_conditions(monkeypatch):
 
     with app.test_request_context("/admin", environ_base={"REMOTE_ADDR": "127.0.0.1"}):
         monkeypatch.setattr(admin_security_module, "get_current_user", lambda: _make_security_user(role_level=50))
-        monkeypatch.setattr(admin_security_module, "current_user_is_super_admin", lambda: False)
+        monkeypatch.setattr(admin_security_policy_module, "current_user_is_super_admin", lambda: False)
         response, status = endpoint()
         assert status == 403
         assert response.get_json()["code"] == "INSUFFICIENT_PRIVILEGE"
 
     with app.test_request_context("/admin", environ_base={"REMOTE_ADDR": "10.0.0.1"}):
         monkeypatch.setattr(admin_security_module, "get_current_user", lambda: _make_security_user(role_level=100))
-        monkeypatch.setattr(admin_security_module, "current_user_is_super_admin", lambda: True)
+        monkeypatch.setattr(admin_security_policy_module, "current_user_is_super_admin", lambda: True)
         response, status = endpoint()
         assert status == 403
         assert response.get_json()["code"] == "IP_NOT_WHITELISTED"
@@ -159,7 +160,7 @@ def test_admin_security_rejects_unauthorized_conditions(monkeypatch):
         user_with_2fa.two_factor_enabled = True
         user_with_2fa.two_factor_verified_at = None
         monkeypatch.setattr(admin_security_module, "get_current_user", lambda: user_with_2fa)
-        monkeypatch.setattr(admin_security_module, "current_user_is_super_admin", lambda: True)
+        monkeypatch.setattr(admin_security_policy_module, "current_user_is_super_admin", lambda: True)
         response, status = endpoint()
         assert status == 403
         assert response.get_json()["code"] == "2FA_REQUIRED"
@@ -170,13 +171,13 @@ def test_admin_security_rejects_unauthorized_conditions(monkeypatch):
     fresh_user.two_factor_verified_at = datetime.now(timezone.utc)
     with app.test_request_context("/admin", environ_base={"REMOTE_ADDR": "127.0.0.1"}):
         monkeypatch.setattr(admin_security_module, "get_current_user", lambda: fresh_user)
-        monkeypatch.setattr(admin_security_module, "current_user_is_super_admin", lambda: True)
+        monkeypatch.setattr(admin_security_policy_module, "current_user_is_super_admin", lambda: True)
         response = endpoint()
         assert response.status_code == 200
 
     with app.test_request_context("/admin", environ_base={"REMOTE_ADDR": "127.0.0.1"}):
         monkeypatch.setattr(admin_security_module, "get_current_user", lambda: fresh_user)
-        monkeypatch.setattr(admin_security_module, "current_user_is_super_admin", lambda: True)
+        monkeypatch.setattr(admin_security_policy_module, "current_user_is_super_admin", lambda: True)
         response, status = endpoint()
         assert status == 429
         assert response.get_json()["code"] == "RATE_LIMIT_EXCEEDED"
@@ -189,7 +190,7 @@ def test_admin_security_logs_and_reraises_errors(monkeypatch):
     app.config.update(TESTING=True)
     monkeypatch.setattr(admin_security_module, "jwt_required", lambda *args, **kwargs: (lambda f: f))
     monkeypatch.setattr(admin_security_module, "get_current_user", lambda: _make_security_user())
-    monkeypatch.setattr(admin_security_module, "current_user_is_super_admin", lambda: True)
+    monkeypatch.setattr(admin_security_policy_module, "current_user_is_super_admin", lambda: True)
 
     violations = []
     monkeypatch.setattr(admin_security_module, "_log_admin_action", lambda *args, **kwargs: None)

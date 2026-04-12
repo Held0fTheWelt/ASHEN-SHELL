@@ -16,10 +16,17 @@ from app.runtime.narrative_threads import (
 )
 from app.runtime.progression_summary import ProgressionSummary
 from app.runtime.relationship_context import RelationshipAxisContext
-from app.runtime.runtime_models import GuardOutcome, NarrativeCommitRecord, SessionContextLayers, SessionState
+from app.runtime.runtime_models import (
+    GuardOutcome,
+    MockDecision,
+    NarrativeCommitRecord,
+    SessionContextLayers,
+    SessionState,
+)
 from app.runtime.session_history import HistoryEntry, SessionHistory
 from app.runtime.short_term_context import ShortTermTurnContext
-from app.runtime.turn_executor import MockDecision, TurnExecutionResult, _derive_runtime_context
+from app.runtime.turn_execution_types import TurnExecutionResult
+from app.runtime.turn_executor import _derive_runtime_context
 
 
 def _nc(

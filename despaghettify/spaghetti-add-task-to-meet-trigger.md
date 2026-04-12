@@ -4,9 +4,11 @@
 
 **Language:** English (hub policy).
 
-**Purpose:** Given a **single target category** **C1**–**C7** from the [M7 per-category triggers](spaghetti-check-task.md) / [input list](despaghettification_implementation_input.md) § *Trigger policy*, **propose or extend** **DS-*** rows in § *Information input list* so implementers have concrete waves that **pull that category’s score below** its threshold once executed. In the **same pass**, **re-sort and re-validate** § *Recommended implementation order* (all active phases): **dependencies**, **parallelism** (e.g. `3a` / `3b`), **collision hints**, and the **mandatory Mermaid** `flowchart` so the plan stays consistent with [spaghetti-check-task.md](spaghetti-check-task.md) §2–§3.
+**Purpose:** Given a **single target category** **C1**–**C7** from [spaghetti-setup.md](spaghetti-setup.md) § *Per-category trigger bars* / [input list](despaghettification_implementation_input.md) § *Trigger policy*, **propose or extend** **DS-*** rows in § *Information input list* so implementers have concrete waves that **pull that category’s score below** its threshold once executed. In the **same pass**, **re-sort and re-validate** § *Recommended implementation order* (all active phases): **dependencies**, **parallelism** (e.g. `3a` / `3b`), **collision hints**, and the **mandatory Mermaid** `flowchart` so the plan stays consistent with [spaghetti-check-task.md](spaghetti-check-task.md) §2–§3.
 
 This task is **planning and Markdown only** — it does **not** replace a full [spaghetti-check-task.md](spaghetti-check-task.md) run for fresh **M7** / telemetry / *Open hotspots* numbers. After editing the input list, prefer a follow-up **spaghetti-check** when the repo or scan materially changed.
+
+**Single source of truth (this file):** Required inputs, binding sources, checklists, and **Markdown-only** edit rules for this **add-task** pass are defined **only here**. **Per-category numeric trigger values** (bars, weights, **`M7_ref`**) are authoritative in [spaghetti-setup.md](spaghetti-setup.md) — read that file; do not copy numbers into skills. Cursor skills route here; they must not duplicate this task’s steps.
 
 ---
 
@@ -15,9 +17,10 @@ This task is **planning and Markdown only** — it does **not** replace a full [
 | Document | Role |
 |----------|------|
 | [despaghettification_implementation_input.md](despaghettification_implementation_input.md) | **Edit:** § *Information input list* (DS table), § *Recommended implementation order* (phase table + Mermaid), § *DS-ID → primary workstream* when new IDs appear. **Read:** § *Latest structure scan* for current **C1..C7** **`%`**, **M7**, **Open hotspots**, AST telemetry. |
-| [spaghetti-check-task.md](spaghetti-check-task.md) | **Threshold** table (per-category bars), §1 scan rules, §2 DS row rules (**pattern** must lead with **C1..C7**), §3 Mermaid and parallelism. |
+| [spaghetti-setup.md](spaghetti-setup.md) | **Numeric** policy: per-category **bars**, **M7** weights, **`M7_ref`**, composite vs scan-only. |
+| [spaghetti-check-task.md](spaghetti-check-task.md) | §1 scan rules, §2 DS row rules (**pattern** must lead with **C1..C7**), §3 Mermaid and parallelism. |
 | [state/WORKSTREAM_INDEX.md](state/WORKSTREAM_INDEX.md) | **Primary workstream** slug for each **DS-*** (`artifacts/workstreams/<slug>/pre|post/`). |
-| [tools/spaghetti_ast_scan.py](../tools/spaghetti_ast_scan.py) | Evidence for **C3** (length), **C2** (nesting in script output where applicable), leaderboard paths — run from repo root when you need current numbers. |
+| [despaghettify/tools/spaghetti_ast_scan.py](tools/spaghetti_ast_scan.py) | Evidence for **C3** (length), **C2** (nesting in script output where applicable), leaderboard paths — script resolves repo root from its path. |
 
 ---
 
@@ -54,8 +57,8 @@ Each new or updated **pattern** cell must start with the **target** **C*n*** fir
 ### 1) Read current truth
 
 1. Open [despaghettification_implementation_input.md](despaghettification_implementation_input.md): § *Latest structure scan* (**C1..C7** **`%`**, **M7**, **Open hotspots**, telemetry).
-2. Open [spaghetti-check-task.md](spaghetti-check-task.md): confirm **C*n*** **trigger** (strict `>` vs bar in the input list trigger table — they must match for the same **C*n***).
-3. If **C3** / **C2** / length-nesting evidence is stale or missing, run `python tools/spaghetti_ast_scan.py` from repo root and use **top longest** / **top nesting** lines as candidates (do not paste the full leaderboard into *Open hotspots*; the check task curates that).
+2. Open [spaghetti-setup.md](spaghetti-setup.md): confirm **C*n*** **trigger** (strict `>` vs bar — same numbers as in the input list trigger policy, which mirrors **setup**).
+3. If **C3** / **C2** / length-nesting evidence is stale or missing, run `python despaghettify/tools/spaghetti_ast_scan.py` from repo root and use **top longest** / **top nesting** lines as candidates (do not paste the full leaderboard into *Open hotspots*; the check task curates that).
 
 ### 2) Propose one or more **DS-*** rows for **C*n***
 

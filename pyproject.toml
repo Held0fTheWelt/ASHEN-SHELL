@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "world-of-shadows-hub"
+version = "0.0.0"
+description = "Optional editable package: Despaghettify hub CLI entry points for the World of Shadows monorepo."
+requires-python = ">=3.10"
+
+[project.scripts]
+despag-check = "despaghettify.tools.despaghettify:main"
+wos-despag = "despaghettify.tools.despaghettify:main"
+
+[tool.setuptools]
+packages = ["despaghettify", "despaghettify.tools"]

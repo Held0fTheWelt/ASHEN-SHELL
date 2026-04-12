@@ -10,15 +10,12 @@ from app.runtime.ai_adapter import AdapterRequest, AdapterResponse, StoryAIAdapt
 from app.runtime.ai_decision import ParsedAIDecision, process_adapter_response
 from app.runtime.orchestration_cache import OrchestrationTurnCache
 from app.runtime.runtime_models import AgentInvocationRecord, AgentResultRecord
-from app.runtime.supervisor_orchestration_audit import enrich_preview_delta_transcript_entry
-from app.runtime.tool_loop import (
-    HostToolContext,
-    ToolCallTranscriptEntry,
-    ToolCallStatus,
-    ToolLoopPolicy,
-    detect_tool_request_payload,
-    execute_tool_request,
+from app.runtime.supervisor_invoke_agent_tool_loop_phases import (
+    build_supervisor_tool_loop_policy_and_context,
+    resolve_supervisor_tool_call_entry_and_result,
 )
+from app.runtime.supervisor_orchestration_audit import enrich_preview_delta_transcript_entry
+from app.runtime.tool_loop import ToolCallStatus, detect_tool_request_payload
 
 
 def run_supervisor_agent_tool_loop(
@@ -42,19 +39,12 @@ def run_supervisor_agent_tool_loop(
     tool_call_transcript: list[dict[str, Any]] = []
     policy_violations: list[str] = []
     tool_results: list[dict[str, Any]] = []
-    max_tool_calls = max(agent.budget_profile.max_tool_calls, 0)
-    tool_context = HostToolContext(
+    tool_policy, tool_context = build_supervisor_tool_loop_policy_and_context(
+        agent=agent,
         session=session,
         module=module,
         current_turn=current_turn,
         recent_events=recent_events,
-    )
-    tool_policy = ToolLoopPolicy(
-        enabled=max_tool_calls > 0,
-        allowed_tools=list(agent.allowed_tools),
-        max_tool_calls_per_turn=max_tool_calls,
-        per_tool_timeout_ms=agent.budget_profile.per_tool_timeout_ms,
-        max_retries_per_tool_call=agent.budget_profile.max_retries_per_tool_call,
     )
     response = initial_response
     tool_calls = 0
@@ -65,51 +55,14 @@ def run_supervisor_agent_tool_loop(
         )
         if tool_request is None:
             break
-        cache_key: str | None = None
-        if orchestrator._is_cacheable_tool(tool_request.tool_name):
-            cache_key = OrchestrationTurnCache.make_tool_key(
-                tool_request.tool_name,
-                tool_request.arguments,
-            )
-            cached = turn_cache.get(cache_key)
-            if cached is not None:
-                entry = ToolCallTranscriptEntry(
-                    sequence_index=tool_request.sequence_index,
-                    tool_name=tool_request.tool_name,
-                    sanitized_arguments={},
-                    status=ToolCallStatus.SUCCESS,
-                    attempts=1,
-                    duration_ms=0,
-                    result_summary="cache_hit",
-                )
-                tool_result = {
-                    "request_id": tool_request.request_id,
-                    "sequence_index": tool_request.sequence_index,
-                    "tool_name": tool_request.tool_name,
-                    "status": ToolCallStatus.SUCCESS,
-                    "result": cached.get("result"),
-                    "cache_hit": True,
-                }
-            else:
-                entry, tool_result = execute_tool_request(
-                    tool_request,
-                    policy=tool_policy,
-                    context=tool_context,
-                    registry=tool_registry,
-                )
-                if (
-                    entry.status == ToolCallStatus.SUCCESS
-                    and isinstance(tool_result.get("result"), dict)
-                ):
-                    turn_cache.put(cache_key, {"result": tool_result.get("result")})
-        else:
-            turn_cache.mark_bypass()
-            entry, tool_result = execute_tool_request(
-                tool_request,
-                policy=tool_policy,
-                context=tool_context,
-                registry=tool_registry,
-            )
+        entry, tool_result = resolve_supervisor_tool_call_entry_and_result(
+            orchestrator,
+            tool_request=tool_request,
+            tool_policy=tool_policy,
+            tool_context=tool_context,
+            tool_registry=tool_registry,
+            turn_cache=turn_cache,
+        )
         entry_dict = entry.model_dump()
         entry_dict["agent_id"] = agent.agent_id
         if tool_result.get("cache_hit"):

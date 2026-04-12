@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from time import perf_counter
 from typing import Any
 
 from app.runtime.agent_registry import (
@@ -15,10 +14,9 @@ from app.runtime.ai_adapter import (
     AdapterRequest,
     AdapterResponse,
     StoryAIAdapter,
-    generate_with_timeout,
     normalize_token_usage,
 )
-from app.runtime.ai_decision import ParsedAIDecision, process_adapter_response
+from app.runtime.ai_decision import ParsedAIDecision
 from app.runtime.orchestration_cache import OrchestrationTurnCache
 from app.runtime.supervisor_execution_types import SupervisorExecutionResult
 from app.runtime.supervisor_invoke_agent import invoke_supervisor_agent
@@ -195,125 +193,17 @@ class SupervisorOrchestrator:
         all_results: list[AgentResultRecord],
         allow_fallback: bool,
     ) -> tuple[AgentInvocationRecord, AgentResultRecord, AdapterResponse, bool, str | None]:
-        merged_payload = self._build_merged_payload(merged_decision)
-        finalizer_request = self._build_agent_request(
-            base_request=base_request,
-            agent=finalizer_agent,
+        from app.runtime.supervisor_orchestrator_finalize_with_agent import run_finalize_with_agent
+
+        return run_finalize_with_agent(
+            self,
+            finalizer_agent=finalizer_agent,
             sequence_index=sequence_index,
-            tool_results=[],
-        )
-        finalizer_request.metadata["supervisor_merge_payload"] = merged_payload
-        finalizer_request.metadata["supervisor_subagent_result_summaries"] = [
-            {"agent_id": item.agent_id, "summary": item.bounded_summary}
-            for item in all_results
-        ]
-
-        started = perf_counter()
-        final_response = generate_with_timeout(
+            base_request=base_request,
             adapter=adapter,
-            request=finalizer_request,
-            timeout_ms=max(finalizer_agent.budget_profile.max_agent_duration_ms, 1),
-        )
-        parse_result = process_adapter_response(final_response)
-        duration_ms = int((perf_counter() - started) * 1000)
-        finalizer_fallback_used = False
-        finalizer_fallback_reason: str | None = None
-        if not parse_result.success:
-            if not allow_fallback:
-                raise RuntimeError("finalizer_failed_no_fallback")
-            finalizer_fallback_used = True
-            reason = "; ".join(parse_result.errors) if parse_result.errors else "finalizer_parse_failed"
-            finalizer_fallback_reason = f"finalizer_unavailable_or_invalid: {reason}"
-            fallback_raw = "[supervisor finalizer fallback] using deterministic merged payload"
-            final_response = AdapterResponse(
-                raw_output=fallback_raw,
-                structured_payload=merged_payload,
-                backend_metadata={
-                    "adapter": adapter.adapter_name,
-                    "supervisor_finalizer_fallback": True,
-                    "supervisor_finalizer_fallback_reason": finalizer_fallback_reason,
-                },
-                error=None,
-            )
-            parse_result = process_adapter_response(final_response)
-
-        token_consumed, token_usage = self._build_token_consumption(final_response)
-        max_agent_tokens = max(finalizer_agent.budget_profile.max_agent_tokens, 0)
-        if max_agent_tokens > 0 and int(token_consumed.get("consumed_total_tokens", 0)) > max_agent_tokens:
-            reason = (
-                "agent_token_budget_exhausted:"
-                f"{int(token_consumed.get('consumed_total_tokens', 0))}>{max_agent_tokens}"
-            )
-            if not allow_fallback:
-                raise RuntimeError(reason)
-            finalizer_fallback_used = True
-            finalizer_fallback_reason = f"finalizer_unavailable_or_invalid: {reason}"
-            final_response = AdapterResponse(
-                raw_output="[supervisor finalizer fallback] using deterministic merged payload",
-                structured_payload=merged_payload,
-                backend_metadata={
-                    "adapter": adapter.adapter_name,
-                    "supervisor_finalizer_fallback": True,
-                    "supervisor_finalizer_fallback_reason": finalizer_fallback_reason,
-                },
-                error=None,
-            )
-            parse_result = process_adapter_response(final_response)
-            token_consumed, token_usage = self._build_token_consumption(final_response)
-        invocation = AgentInvocationRecord(
-            agent_id=finalizer_agent.agent_id,
-            role=finalizer_agent.role,
-            invocation_sequence=sequence_index,
-            input_summary=(finalizer_request.operator_input or "")[:200],
-            tool_policy_snapshot={
-                "allowed_tools": [],
-                "max_tool_calls": 0,
-                "per_tool_timeout_ms": finalizer_agent.budget_profile.per_tool_timeout_ms,
-            },
-            model_profile=finalizer_agent.model_selection.model_profile,
-            adapter_name=(finalizer_agent.model_selection.adapter_name or adapter.adapter_name),
-            execution_status="success" if parse_result.success else "error",
-            duration_ms=duration_ms,
-            retry_count=0,
-            budget_snapshot={
-                "max_attempts": finalizer_agent.budget_profile.max_attempts,
-                "max_tool_calls": 0,
-                "max_agent_duration_ms": finalizer_agent.budget_profile.max_agent_duration_ms,
-                "max_agent_tokens": finalizer_agent.budget_profile.max_agent_tokens,
-            },
-            budget_consumed={"tool_calls": 0, **token_consumed},
-            token_usage=token_usage,
-            error_summary="; ".join(parse_result.errors) if parse_result.errors else None,
-            tool_call_transcript=[],
-            policy_violations=[],
-        )
-        if finalizer_fallback_reason:
-            invocation.error_summary = finalizer_fallback_reason
-        result = AgentResultRecord(
-            agent_id=finalizer_agent.agent_id,
-            payload=final_response.structured_payload or {},
-            confidence="low" if finalizer_fallback_used else ("high" if parse_result.success else "low"),
-            bounded_summary=(
-                "Deterministic merge payload used because finalizer produced no valid decision."
-                if finalizer_fallback_used
-                else (
-                    parse_result.decision.rationale[:220]
-                    if parse_result.success and parse_result.decision
-                    else final_response.raw_output[:220]
-                )
-            ),
-            result_shape=(
-                "finalizer_fallback_payload"
-                if finalizer_fallback_used
-                else "finalized_decision"
-            ),
-        )
-        return (
-            invocation,
-            result,
-            final_response,
-            finalizer_fallback_used,
-            finalizer_fallback_reason,
+            merged_decision=merged_decision,
+            all_results=all_results,
+            allow_fallback=allow_fallback,
         )
 
     def _build_merged_payload(self, merged_decision: ParsedAIDecision) -> dict[str, Any]:

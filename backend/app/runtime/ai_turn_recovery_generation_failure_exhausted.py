@@ -15,9 +15,11 @@ from app.runtime.ai_turn_shared_types import _AiTurnOrchestrationLogBundle
 from app.runtime.runtime_models import (
     ExecutionFailureReason,
     GuardOutcome,
+    MockDecision,
     SessionState,
 )
-from app.runtime.turn_executor import MockDecision, TurnExecutionResult, execute_turn
+from app.runtime.turn_execution_types import TurnExecutionResult
+from app.runtime.turn_executor import execute_turn
 
 
 def try_restore_turn_after_generation_retry_exhausted(

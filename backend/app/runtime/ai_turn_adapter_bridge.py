@@ -14,10 +14,11 @@ from app.runtime.input_interpreter import interpret_operator_input
 from app.runtime.narrative_threads import coerce_narrative_thread_set, compact_threads_for_adapter
 from app.runtime.role_structured_decision import ParsedRoleAwareDecision
 from app.runtime.short_term_context import ShortTermTurnContext
-from app.runtime.turn_executor import MockDecision, ProposedStateDelta
 from app.runtime.runtime_models import (
     DeltaType,
+    MockDecision,
     ProposalSource,
+    ProposedStateDelta,
     SessionState,
 )
 

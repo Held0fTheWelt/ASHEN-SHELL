@@ -32,8 +32,9 @@ from app.runtime.ai_turn_recovery_paths import (
     store_decision_log as _store_decision_log,
 )
 from app.runtime.ai_turn_shared_types import _AiTurnOrchestrationLogBundle
-from app.runtime.turn_executor import TurnExecutionResult, execute_turn
 from app.runtime.runtime_models import ExecutionFailureReason, SessionState
+from app.runtime.turn_execution_types import TurnExecutionResult
+from app.runtime.turn_executor import execute_turn
 
 
 def _collect_policy_validation_errors(

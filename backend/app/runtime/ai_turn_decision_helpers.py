@@ -8,10 +8,11 @@ from app.runtime.runtime_models import (
     AIValidationOutcome,
     DeltaValidationStatus,
     GuardOutcome,
+    ProposedStateDelta,
     SessionState,
     StateDelta,
 )
-from app.runtime.turn_executor import ProposedStateDelta, TurnExecutionResult
+from app.runtime.turn_execution_types import TurnExecutionResult
 
 
 def convert_proposed_delta_to_state_delta(
