@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from app.services.improvement_constants import IMPROVEMENT_PUBLICATION_CONTRACT_VERSION
+
 
 @dataclass(frozen=True)
 class ImprovementRecommendationPolicy:
@@ -80,7 +82,6 @@ def build_artifact_class_and_verification(
         Tuple of (artifact_class_value, post_verification_dict)
     """
     from app.contracts.writers_room_artifact_class import WritersRoomArtifactClass
-    from app.services.improvement_service import IMPROVEMENT_PUBLICATION_CONTRACT_VERSION
 
     if decision == "accept":
         artifact_class = WritersRoomArtifactClass.approved_authored_artifact.value
@@ -175,8 +176,6 @@ def build_publication_verification_trace(
     Returns:
         Publication verification trace dict
     """
-    from app.services.improvement_service import IMPROVEMENT_PUBLICATION_CONTRACT_VERSION
-
     return {
         "contract_version": IMPROVEMENT_PUBLICATION_CONTRACT_VERSION,
         "terminal_governance_status": next_status,

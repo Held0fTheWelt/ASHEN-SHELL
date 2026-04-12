@@ -20,8 +20,7 @@ from app.contracts.writers_room_artifact_class import (
     GOC_SHARED_SEMANTIC_CONTRACT_VERSION,
     WritersRoomArtifactClass,
 )
-
-IMPROVEMENT_PUBLICATION_CONTRACT_VERSION = "goc_improvement_publication_verification_v1"
+from app.services.improvement_constants import IMPROVEMENT_PUBLICATION_CONTRACT_VERSION  # noqa: F401
 SEMANTIC_COMPLIANCE_VALIDATION_CONTRACT_VERSION = "goc_improvement_semantic_compliance_v1"
 
 IMPROVEMENT_GOVERNANCE_RECOMMENDATION_LABELS = frozenset(
