@@ -4,7 +4,7 @@
 
 **Purpose:** If [despaghettification_implementation_input.md](despaghettification_implementation_input.md) still has **open backlog** **DS-*** rows at session start (**Step 0**), **drain them first** with [spaghetti-solve-task.md](spaghetti-solve-task.md) (**one DS-ID per invocation**) **before** the **main cycle** begins — **without** faking closure in the state machine: after **each** slice run **`check --out …`**, then **`autonomous-advance --kind backlog-implement --ds DS-0xx --check-json <repo-relative path>`** while the row stays **open**; **only after** the row is **closed** in the input list, **`autonomous-advance --kind backlog-solve --ds DS-0xx`** (that command **exit 2** while the row is still open). **Main cycle:** run a **full** [spaghetti-check-task.md](spaghetti-check-task.md) pass, then **autonomously** close **open** **DS-*** rows using **solve**, then **check** again; **repeat** until **success conditions** hold **or** a **hard stop** from **in-scope** work fires. Failures that are **clearly outside** the current DS scope or **pre-existing** in the repo **must not** abort this loop by themselves (see **Error scope**).
 
-**Language:** English (hub policy).
+**Language:** [Repository language](../docs/dev/contributing.md#repository-language).
 
 **Single source of truth (this file):** The **macro loop** (ordering, when to stop, what counts as an abort) is defined **only here**. **Numeric** stop/target rules (**C1..C7**, **`M7_ref`**) are **only** in [spaghetti-setup.md](spaghetti-setup.md). **Check** procedure, **solve** procedure, and governance gates are **only** in their respective task files — do not fork them here.
 

@@ -11,7 +11,7 @@
 3. **`setup-audit`** — asks: *Does on-disk JSON still match the projection from this Markdown?* If not, the JSON is **stale or wrong** (or Markdown is internally inconsistent), not “two equal truths disagree.”
 4. **Parser** — tolerates normal Markdown table styling (e.g. bar cell `12` or `**12**`); semantic structure is the contract, not cosmetic bold.
 
-**Language:** English (hub policy).
+**Language:** [Repository language](../docs/dev/contributing.md#repository-language).
 
 **Authority:** Values in **this file** are what **“the system”** means for:
 

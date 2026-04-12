@@ -2,7 +2,7 @@
 
 **Purpose:** Remove **all** session pre/post files under [`state/artifacts/workstreams/`](state/artifacts/workstreams/) (every governed workstream slug), then recreate **empty** `pre/` and `post/` directories so the tree stays usable for the next wave. **Also** clears **machine session** paths under [`state/artifacts/autonomous_loop/`](state/artifacts/autonomous_loop/) (see **Step 1b**) and an optional **last-check** JSON at `state/artifacts/spaghetti_check_last.json` if present. Optionally continues with the same **ephemeral** repo cleanup as [`spaghetti-reset-task.md`](spaghetti-reset-task.md) (caches, `var/` scratch, hub `*.tmp`).
 
-**Language:** English (hub policy).
+**Language:** [Repository language](../docs/dev/contributing.md#repository-language).
 
 **Binding index:** Workstream slugs and paths — [`state/WORKSTREAM_INDEX.md`](state/WORKSTREAM_INDEX.md).
 

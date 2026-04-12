@@ -5,6 +5,8 @@
 This document defines binding governance for all state-changing workstreams in `WorldOfShadows`.
 It complements existing functional and audit documentation; it does not replace it.
 
+**Language:** Human-readable artefacts (`.md` / `.txt`), state-document prose, and pre→post comparison notes written under this model must be **strict English**, per the canonical policy in [`../../docs/dev/contributing.md#repository-language`](../../docs/dev/contributing.md#repository-language) (do not paraphrase from other entry points).
+
 Authority order when sources disagree:
 1. Repository reality (files, code, current behaviour)
 2. Objective artefacts in the repository

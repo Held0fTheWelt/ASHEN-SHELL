@@ -2,7 +2,7 @@
 
 *Path:* `despaghettify/spaghetti-add-task-to-meet-trigger.md` — Hub overview: [README.md](README.md).
 
-**Language:** English (hub policy).
+**Language:** [Repository language](../docs/dev/contributing.md#repository-language).
 
 **Purpose:** Given a **single target category** **C1**–**C7** from [spaghetti-setup.md](spaghetti-setup.md) § *Per-category trigger bars* / [input list](despaghettification_implementation_input.md) § *Trigger policy*, **propose or extend** **DS-*** rows in § *Information input list* so implementers have concrete waves that **pull that category’s score below** its threshold once executed. In the **same pass**, **re-sort and re-validate** § *Recommended implementation order* (all active phases): **dependencies**, **parallelism** (e.g. `3a` / `3b`), **collision hints**, and the **mandatory Mermaid** `flowchart` so the plan stays consistent with [spaghetti-check-task.md](spaghetti-check-task.md) §2–§3.
 

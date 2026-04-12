@@ -2,6 +2,14 @@
 
 Orientation for **developers** working across World of Shadows services. For plain-language system context, read [Start here](../start-here/README.md) first.
 
+## Repository language
+
+**Canonical policy (single source of truth):** Change **only this section** when repository language rules change. Root **`AGENTS.md`**, **`CONTRIBUTING.md`**, `despaghettify/**`, and `despaghettify/state/**` must **not** duplicate this text — they **link here** so wording cannot drift or break across entry points.
+
+**Policy:** **Strict English** for all **committed**, maintainer- and operator-facing text: `docs/`, package and root READMEs, code **comments** and **docstrings**, **commit messages**, logs and messages intended for developers or operators (unless a feature is explicitly internationalized with documented locale rules), and **human-readable** governance and evidence (including everything under `despaghettify/` and `despaghettify/state/artifacts/`). Fictional or in-world **player-facing narrative** under `content/modules/` may follow creative tone for that layer; **keys, inline hints to authors, schemas, and tooling** around that content stay English.
+
+**Layering:** Procedure-specific docs (for example each Despaghettify task Markdown `**Language:**` line) add **scope for that procedure only** and link to this heading — they do **not** restate or narrow the policy above.
+
 ## Top-level layout
 
 | Path | Responsibility |

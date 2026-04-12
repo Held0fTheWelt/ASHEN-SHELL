@@ -4,7 +4,7 @@
 
 **Order (this task only):** **Reset first, check second.** Steps **1–2** only clean and restore placeholders — they do **not** run the AST scan or fill **C1..C7** / **M7**. Step **3** is the **first and only** analysis pass after the reset: run [`spaghetti-check-task.md`](spaghetti-check-task.md) once; that pass updates the input list from the EMPTY baseline.
 
-**Language:** English (hub policy).
+**Language:** [Repository language](../docs/dev/contributing.md#repository-language).
 
 ---
 

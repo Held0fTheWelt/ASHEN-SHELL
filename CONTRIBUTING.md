@@ -2,6 +2,10 @@
 
 Full workflow, layout, and conventions: **[docs/dev/contributing.md](docs/dev/contributing.md)**.
 
+## Language (repository)
+
+Single source of truth: **[`docs/dev/contributing.md`](docs/dev/contributing.md#repository-language)** — heading **Repository language**. Do not maintain a parallel policy copy here or in **`AGENTS.md`**.
+
 ## Despaghettify · Cursor skills (repo standard)
 
 - **Author** agent skills only under **`despaghettify/superpowers/<skill-name>/SKILL.md`**.

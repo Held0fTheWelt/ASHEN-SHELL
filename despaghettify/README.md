@@ -19,4 +19,4 @@ Central place for the **despaghettification** and **structure / spaghetti-check 
 
 **Governance / pre–post:** [`state/README.md`](state/README.md), [`state/EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md).
 
-**Language:** All documents under `despaghettify/` are maintained in **English**, consistent with project documentation policy.
+**Language:** [Repository language](../docs/dev/contributing.md#repository-language) (canonical). **Hub scope only:** all Markdown under `despaghettify/`, Despaghettify-maintained sections of [`despaghettification_implementation_input.md`](despaghettification_implementation_input.md), and human-readable hub artefacts (e.g. pre/post `.md` / `.txt` under `state/artifacts/`) — English for scan tables, DS rows, Open hotspots, coordination notes, and session narratives.
