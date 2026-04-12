@@ -8,13 +8,15 @@ from __future__ import annotations
 
 from typing import Any, Literal, Union
 
-from pydantic import BaseModel, Field
-
+from app.runtime.context_types import NarrativeThreadState, NarrativeThreadSet
 from app.runtime.progression_summary import ProgressionSummary
 from app.runtime.relationship_context import RelationshipAxisContext
 from app.runtime.runtime_models import NarrativeCommitRecord, SessionState
 from app.runtime.session_history import SessionHistory
 from app.runtime.narrative_state_transfer_dto import NarrativeCommitEvent
+
+# Re-export ThreadStatus type alias for backwards compatibility
+ThreadStatus = Literal["active", "holding", "escalating", "de_escalating", "resolved"]
 
 _STATE_CHANGED_PREFIX = "state_changed:"
 _MAX_ACTIVE_THREADS = 8
@@ -49,31 +51,6 @@ _DE_ESCALATION_SEGMENTS = frozenset(
         "forgiveness",
     }
 )
-
-ThreadStatus = Literal["active", "holding", "escalating", "de_escalating", "resolved"]
-
-
-class NarrativeThreadState(BaseModel):
-    """Single bounded narrative consequence thread (derived, not authoritative)."""
-
-    thread_id: str
-    thread_kind: str
-    status: ThreadStatus
-    scene_anchor: str | None = None
-    related_paths: list[str] = Field(default_factory=list)
-    related_characters: list[str] = Field(default_factory=list)
-    evidence_consequences: list[str] = Field(default_factory=list)
-    intensity: int = Field(default=0, ge=0, le=5)
-    persistence_turns: int = Field(default=0, ge=0)
-    last_updated_turn: int = 0
-    resolution_hint: str | None = None
-
-
-class NarrativeThreadSet(BaseModel):
-    """Bounded set of active threads plus a small resolved-recent window."""
-
-    active: list[NarrativeThreadState] = Field(default_factory=list)
-    resolved_recent: list[NarrativeThreadState] = Field(default_factory=list)
 
 
 def _cap_str(s: str | None, max_len: int) -> str | None:
