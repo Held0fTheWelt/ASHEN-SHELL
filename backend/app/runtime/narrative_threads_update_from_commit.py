@@ -12,13 +12,14 @@ DS-003: Parsing, terminal resolution, and non-terminal mutation live in companio
 
 from __future__ import annotations
 
+from __future__ import annotations
+
 from typing import Union
 
 from app.runtime.progression_summary import ProgressionSummary
 from app.runtime.relationship_context import RelationshipAxisContext
 from app.runtime.runtime_models import NarrativeCommitRecord
 from app.runtime.session_history import SessionHistory
-from app.runtime.narrative_threads import NarrativeThreadSet
 from app.runtime.narrative_state_transfer_dto import NarrativeCommitEvent
 from app.runtime.narrative_threads_update_from_commit_phases import (
     apply_non_terminal_thread_updates,
