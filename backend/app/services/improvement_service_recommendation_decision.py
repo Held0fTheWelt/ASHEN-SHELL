@@ -6,7 +6,7 @@ from typing import Any
 
 from app.contracts.improvement_operating_loop import ImprovementLoopStage
 
-from app.services.improvement_service import (
+from app.services.improvement_store import (
     ImprovementStore,
     _evaluation_metrics_fingerprint,
     _utc_now,

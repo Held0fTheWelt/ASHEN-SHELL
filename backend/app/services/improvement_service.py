@@ -21,6 +21,12 @@ from app.contracts.writers_room_artifact_class import (
     WritersRoomArtifactClass,
 )
 from app.services.improvement_constants import IMPROVEMENT_PUBLICATION_CONTRACT_VERSION  # noqa: F401
+from app.services.improvement_store import (  # noqa: F401
+    ImprovementStore,
+    _evaluation_metrics_fingerprint,
+    _utc_now,
+)
+
 SEMANTIC_COMPLIANCE_VALIDATION_CONTRACT_VERSION = "goc_improvement_semantic_compliance_v1"
 
 IMPROVEMENT_GOVERNANCE_RECOMMENDATION_LABELS = frozenset(
@@ -34,42 +40,6 @@ _META_COMMAND_NAMES = frozenset(
 )
 
 
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-@dataclass
-class ImprovementStore:
-    root: Path
-
-    @classmethod
-    def default(cls) -> "ImprovementStore":
-        root = Path(__file__).resolve().parents[2] / "var" / "improvement"
-        return cls(root=root)
-
-    def ensure_dirs(self) -> None:
-        (self.root / "variants").mkdir(parents=True, exist_ok=True)
-        (self.root / "experiments").mkdir(parents=True, exist_ok=True)
-        (self.root / "recommendations").mkdir(parents=True, exist_ok=True)
-
-    def write_json(self, category: str, item_id: str, payload: dict[str, Any]) -> Path:
-        self.ensure_dirs()
-        path = self.root / category / f"{item_id}.json"
-        path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
-        return path
-
-    def read_json(self, category: str, item_id: str) -> dict[str, Any]:
-        path = self.root / category / f"{item_id}.json"
-        return json.loads(path.read_text(encoding="utf-8"))
-
-    def list_json(self, category: str) -> list[dict[str, Any]]:
-        folder = self.root / category
-        if not folder.exists():
-            return []
-        items: list[dict[str, Any]] = []
-        for file in sorted(folder.glob("*.json")):
-            items.append(json.loads(file.read_text(encoding="utf-8")))
-        return items
 
 
 def create_variant(
@@ -628,10 +598,6 @@ def recompute_semantic_compliance_validation(package: dict[str, Any]) -> None:
     package["semantic_compliance_validation"] = build_semantic_compliance_validation(package)
 
 
-def _evaluation_metrics_fingerprint(evaluation: dict[str, Any]) -> str:
-    metrics = evaluation.get("metrics") if isinstance(evaluation.get("metrics"), dict) else {}
-    raw = json.dumps(metrics, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
 def build_recommendation_package(
