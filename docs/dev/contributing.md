@@ -32,6 +32,24 @@ Orientation for **developers** working across World of Shadows services. For pla
 - **Two “world-engine” paths:** canonical play service code lives in **root** `world-engine/`. A nested `backend/world-engine/` tree has been flagged as **confusing** in audit baselines—verify before editing or documenting paths.
 - **Gitignored evidence:** `tests/reports/` is largely ignored; do not cite it as clone-guaranteed in user/admin docs.
 
+## Monorepo Python bootstrap (import hygiene)
+
+- Run **pytest from each service root** (`backend/`, `world-engine/`) so the top-level `app` package resolves to that service only. Avoid a single shell `PYTHONPATH` that mixes `backend/` and `world-engine/` when importing `app`.
+- CI workflows should keep **working-directory scoped** install and test steps per service; mirror that locally when debugging import collisions.
+
+### Supported test invocation matrix (M2)
+
+Use the same **working directory** as CI so `app` resolves to the intended package. **Do not** run the backend or world-engine pytest trees **from the repository root** with a bare `pytest` invocation that collects those packages without `cd` into the service directory first (both trees expose a top-level `app` package name; root-level collection risks the wrong `app`).
+
+| Intent | Supported invocation | CI equivalent |
+|--------|----------------------|---------------|
+| Backend tests | `cd backend` then `python -m pytest tests/ …` | [`.github/workflows/backend-tests.yml`](../../.github/workflows/backend-tests.yml) `working-directory: backend` |
+| World Engine tests | `cd world-engine` then `python -m pytest tests/ …` | [`.github/workflows/engine-tests.yml`](../../.github/workflows/engine-tests.yml) `working-directory: world-engine` |
+| AI stack tests | Repo root: `PYTHONPATH=<repo>` `python -m pytest ai_stack/tests …` (see `ai_stack` README / workflow) | [`.github/workflows/ai-stack-tests.yml`](../../.github/workflows/ai-stack-tests.yml) |
+| **Forbidden for backend / world-engine suites** | `pytest` from repo root collecting `backend/tests` or `world-engine/tests` without matching CI cwd / env | Same as above — wrong `app` |
+
+**Convenience (optional):** from repo root, GNU Make: `make test-backend`, `make test-engine`, `make test-ai-stack`. On Windows, PowerShell: `.\scripts\run_backend_tests.ps1`, `.\scripts\run_world_engine_tests.ps1`, `.\scripts\run_ai_stack_tests.ps1`.
+
 ## Package READMEs
 
 Each major service maintains its own README with install and test hints:

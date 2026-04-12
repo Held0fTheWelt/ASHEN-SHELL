@@ -106,7 +106,7 @@ This means the shared secret must match across both services:
 
 ## Tests
 
-Run from `backend/`:
+Run from `backend/` (required so the `app` package resolves to this tree — see the **Supported test invocation matrix** in [`docs/dev/contributing.md`](../docs/dev/contributing.md#supported-test-invocation-matrix-m2)):
 
 ```bash
 PYTHONPATH=. pytest --no-cov

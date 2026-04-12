@@ -19,6 +19,7 @@ def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
     for scene_id, phase in sorted(module.scene_phases.items(), key=lambda item: item[1].sequence):
         scenes.append(
             {
+                "id": scene_id,
                 "scene_id": scene_id,
                 "name": phase.name,
                 "sequence": phase.sequence,

@@ -87,3 +87,7 @@ Earlier drift allowed the backend to expect flat `run_id` on create/details and 
 ## MCP scope note
 
 For this run-lifecycle boundary (`/api/runs*`, join-context, transcript, terminate), MCP is not part of the direct execution chain. MCP-backed endpoints exist on backend operator/session surfaces and are documented separately in `backend_runtime_classification.md`.
+
+## Story runtime projection (authoritative story sessions)
+
+For **world-engine** story sessions (`POST /api/story/sessions`), the `runtime_projection` payload is the cross-service contract between the **backend content compiler** and the **narrative commit resolver**. Each scene row in `runtime_projection.scenes` **must** expose a canonical string scene identifier: the compiler emits both `id` and `scene_id` with the **same** value so consumers that read either key remain aligned. The world-engine resolver accepts **both** keys for backward compatibility with older snapshots.

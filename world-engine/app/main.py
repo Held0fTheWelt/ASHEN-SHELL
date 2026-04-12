@@ -15,10 +15,11 @@ from fastapi.staticfiles import StaticFiles
 from app.api.http import router as http_router
 from app.api.ws import router as ws_router
 from app.auth.tickets import TicketManager
-from app.config import APP_TITLE, APP_VERSION, RUN_STORE_DIR
+from app.config import APP_TITLE, APP_VERSION, RUN_STORE_DIR, STORY_SESSION_STORE_DIR
 from app.middleware.trace_middleware import install_trace_middleware
 from app.runtime.manager import RuntimeManager
 from app.story_runtime import StoryRuntimeManager
+from app.story_runtime.story_session_store import JsonStorySessionStore
 
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 
@@ -26,7 +27,9 @@ WEB_ROOT = Path(__file__).resolve().parent / "web"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.manager = RuntimeManager(store_root=RUN_STORE_DIR)
-    app.state.story_manager = StoryRuntimeManager()
+    app.state.story_manager = StoryRuntimeManager(
+        session_store=JsonStorySessionStore(STORY_SESSION_STORE_DIR),
+    )
     app.state.ticket_manager = TicketManager()
     yield
 

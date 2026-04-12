@@ -61,6 +61,8 @@ cd world-engine
 python -m pytest tests/ -q --tb=short
 ```
 
+**Import hygiene:** always `cd world-engine` before `pytest` for this suite (same cwd as CI); see **Supported test invocation matrix** in [`docs/dev/contributing.md`](../docs/dev/contributing.md#supported-test-invocation-matrix-m2).
+
 **GitHub Actions:** `.github/workflows/engine-tests.yml` and `.github/workflows/pre-deployment.yml` run `pip install -r world-engine/requirements-dev.txt` before engine tests. A Windows-only `.venv` checked into or copied from an archive is **not** usable on Linux (CI, Codespaces, Dev Containers); always install with `pip` in that environment.
 
 **Dev Containers / GitHub Codespaces:** open the repo using `.devcontainer/devcontainer.json`; `postCreateCommand` performs the install above and sets `PYTHONPATH` for `ai_stack` imports.

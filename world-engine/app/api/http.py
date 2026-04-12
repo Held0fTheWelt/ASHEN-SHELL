@@ -214,6 +214,7 @@ class TerminateRunRequest(BaseModel):
 class CreateStorySessionRequest(BaseModel):
     module_id: str
     runtime_projection: dict[str, Any]
+    content_provenance: dict[str, Any] | None = None
 
 
 class ExecuteStoryTurnRequest(BaseModel):
@@ -268,12 +269,17 @@ def list_story_sessions(manager: StoryRuntimeManager = Depends(get_story_manager
 
 @router.post("/story/sessions", dependencies=[Depends(_require_internal_api_key)])
 def create_story_session(payload: CreateStorySessionRequest, manager: StoryRuntimeManager = Depends(get_story_manager)) -> dict[str, Any]:
-    session = manager.create_session(module_id=payload.module_id, runtime_projection=payload.runtime_projection)
+    session = manager.create_session(
+        module_id=payload.module_id,
+        runtime_projection=payload.runtime_projection,
+        content_provenance=payload.content_provenance,
+    )
     return {
         "session_id": session.session_id,
         "module_id": session.module_id,
         "turn_counter": session.turn_counter,
         "current_scene_id": session.current_scene_id,
+        "content_provenance": session.content_provenance,
         "warnings": ["world_engine_authoritative_story_runtime"],
     }
 

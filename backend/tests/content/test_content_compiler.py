@@ -8,6 +8,9 @@ def test_compile_god_of_carnage_produces_deterministic_projection():
     assert output.runtime_projection.module_id == "god_of_carnage"
     assert output.runtime_projection.start_scene_id
     assert output.runtime_projection.scenes
+    for row in output.runtime_projection.scenes:
+        assert row.get("id") == row.get("scene_id")
+        assert row.get("id")
     assert output.runtime_projection.triggers
     assert output.runtime_projection.endings
     assert output.retrieval_corpus_seed.chunks

@@ -6,12 +6,14 @@ on:
     paths:
       - 'ai_stack/**'
       - 'story_runtime_core/**'
+      - 'tools/verify_goc_scene_identity_single_source.py'
       - '.github/workflows/ai-stack-tests.yml'
   pull_request:
     branches: [ master, main, develop ]
     paths:
       - 'ai_stack/**'
       - 'story_runtime_core/**'
+      - 'tools/verify_goc_scene_identity_single_source.py'
       - '.github/workflows/ai-stack-tests.yml'
 
 jobs:
@@ -45,6 +47,9 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python -c "import story_runtime_core; import ai_stack; print('ok', ai_stack.__name__)"
+
+      - name: Verify sole GoC scene→guidance mapping (ADR-0003)
+        run: python tools/verify_goc_scene_identity_single_source.py
 
       # Full tree under ai_stack/tests (not a file allowlist); new test modules are always collected.
       - name: Run ai_stack test suite

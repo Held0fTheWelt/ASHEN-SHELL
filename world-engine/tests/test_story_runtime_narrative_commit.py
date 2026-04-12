@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 from typing import Any
 
 import pytest
@@ -58,6 +59,37 @@ def test_no_proposal_continues_current_scene_with_bounded_consequences(manager: 
     assert nc["situation_status"] == "continue"
     assert nc["committed_scene_id"] == "scene_1"
     assert any(c.startswith("interpretation_kind:") for c in nc["committed_consequences"])
+
+
+def test_runtime_projection_scene_id_only_shape_commits_legal_transition(manager: StoryRuntimeManager) -> None:
+    """Backward-compat: compiler-shaped rows used ``scene_id`` without ``id`` (audit F-C1)."""
+    manager.turn_graph = _FakeTurnGraph(
+        _envelope(
+            interpreted_input={
+                "kind": "explicit_command",
+                "command_name": "go",
+                "command_args": ["phase_2"],
+                "confidence": 0.99,
+            },
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    session = manager.create_session(
+        module_id="god_of_carnage",
+        runtime_projection={
+            "start_scene_id": "phase_1",
+            "scenes": [
+                {"scene_id": "phase_1", "name": "p1", "sequence": 1, "description": ""},
+                {"scene_id": "phase_2", "name": "p2", "sequence": 2, "description": ""},
+            ],
+            "transition_hints": [{"from": "phase_1", "to": "phase_2"}],
+        },
+    )
+    turn = manager.execute_turn(session_id=session.session_id, player_input="/go phase_2")
+    nc = turn["narrative_commit"]
+    assert nc["allowed"] is True
+    assert nc["committed_scene_id"] == "phase_2"
+    assert nc["selected_candidate_source"] == "explicit_command"
 
 
 def test_explicit_command_beats_model_and_token_scan(manager: StoryRuntimeManager) -> None:
@@ -291,6 +323,27 @@ def test_unknown_target_scene_blocked(monkeypatch: pytest.MonkeyPatch) -> None:
     nc = turn["narrative_commit"]
     assert nc["commit_reason_code"] == "unknown_target_scene"
     assert nc["situation_status"] == "blocked"
+
+
+def test_concurrent_turns_serialize_per_session(manager: StoryRuntimeManager) -> None:
+    manager.turn_graph = _FakeTurnGraph(
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    session = manager.create_session(
+        module_id="m",
+        runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
+    )
+
+    def _one() -> None:
+        manager.execute_turn(session_id=session.session_id, player_input="ping")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(lambda _: _one(), range(16)))
+
+    assert manager.get_session(session.session_id).turn_counter == 16
 
 
 def test_terminal_scene_sets_terminal_status(manager: StoryRuntimeManager) -> None:

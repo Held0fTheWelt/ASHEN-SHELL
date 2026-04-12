@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from ai_stack.character_mind_contract import CharacterMindRecord, FieldProvenance
-from ai_stack.goc_yaml_authority import guidance_phase_key_for_scene_id
+from ai_stack.goc_scene_identity import guidance_phase_key_for_scene_id
 
 _RUNTIME_ACTOR_IDS: dict[str, str] = {
     "veronique": "veronique_vallon",

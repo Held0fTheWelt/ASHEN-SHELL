@@ -7,6 +7,8 @@ This directory holds **lightweight ADRs** for decisions that affect multiple ser
 | ADR | Title | Status |
 |-----|--------|--------|
 | [ADR-0001](adr-0001-runtime-authority-in-world-engine.md) | Runtime authority in world-engine | Accepted |
+| [ADR-0002](adr-0002-backend-session-surface-quarantine.md) | Backend session / transitional runtime quarantine | Accepted |
+| [ADR-0003](adr-0003-scene-identity-canonical-surface.md) | Canonical scene identity across compile, AI, commit | Accepted |
 
 ## When to write an ADR
 
@@ -22,3 +24,4 @@ Use [adr-template.md](adr-template.md) for new decisions.
 
 - [Architecture overview](../architecture/README.md)
 - [Normative contracts index](../dev/contracts/normative-contracts-index.md)
+- [Audit resolution (master prompt, case input, living state)](audit_resolution/README.md) — not ADRs; closure governance for audit programs

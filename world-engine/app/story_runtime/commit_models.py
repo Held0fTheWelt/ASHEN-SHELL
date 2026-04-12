@@ -6,10 +6,13 @@ scene progression and interpretation linkage only.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 from app.story_runtime.narrative_commit_resolution import (
     build_base_consequences,
@@ -64,15 +67,28 @@ class StoryNarrativeCommitRecord(BaseModel):
     is_terminal: bool = False
 
 
+def _scene_row_canonical_id(scene: dict[str, Any]) -> str | None:
+    """Canonical scene id for runtime projection rows (compiler + hand-built payloads).
+
+    Backend compiler historically emitted ``scene_id``; story-runtime originally read
+    ``id`` only. Accept both to prevent an empty known-scene set at the commit seam (F-C1).
+    """
+    for key in ("id", "scene_id"):
+        raw = scene.get(key)
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip()
+    return None
+
+
 def _scene_ids(runtime_projection: dict[str, Any]) -> set[str]:
     scenes = runtime_projection.get("scenes", [])
     scene_ids: set[str] = set()
     if isinstance(scenes, list):
         for scene in scenes:
             if isinstance(scene, dict):
-                scene_id = scene.get("id")
-                if isinstance(scene_id, str) and scene_id.strip():
-                    scene_ids.add(scene_id.strip())
+                sid = _scene_row_canonical_id(scene)
+                if sid:
+                    scene_ids.add(sid)
     return scene_ids
 
 
@@ -87,9 +103,9 @@ def _terminal_scene_ids(runtime_projection: dict[str, Any]) -> set[str]:
     if isinstance(scenes, list):
         for scene in scenes:
             if isinstance(scene, dict) and scene.get("terminal") is True:
-                sid = scene.get("id")
-                if isinstance(sid, str) and sid.strip():
-                    ids.add(sid.strip())
+                sid = _scene_row_canonical_id(scene)
+                if sid:
+                    ids.add(sid)
     return ids
 
 
@@ -208,9 +224,27 @@ def resolve_narrative_commit(
     runtime_projection: dict[str, Any],
 ) -> StoryNarrativeCommitRecord:
     """Compute the authoritative narrative commit without mutating session state."""
-    known_scene_ids = _scene_ids(runtime_projection)
+    ids_from_scene_rows = _scene_ids(runtime_projection)
+    known_scene_ids = set(ids_from_scene_rows)
     if prior_scene_id:
         known_scene_ids.add(prior_scene_id)
+    start_sid = runtime_projection.get("start_scene_id")
+    scenes_raw = runtime_projection.get("scenes", [])
+    if (
+        isinstance(start_sid, str)
+        and start_sid.strip()
+        and isinstance(scenes_raw, list)
+        and len(scenes_raw) > 0
+        and not ids_from_scene_rows
+    ):
+        # Legibility failure: scene rows present but no id/scene_id extracted (broken projection).
+        logger.warning(
+            "story_runtime.runtime_projection scene rows have no usable id/scene_id; "
+            "commit resolver would lack scene vocabulary aside from prior_scene_id. "
+            "start_scene_id=%r scene_count=%s",
+            start_sid.strip(),
+            len(scenes_raw),
+        )
     transition_map = _transition_map(runtime_projection)
     has_transition_rules = bool(transition_map)
     terminal_ids = _terminal_scene_ids(runtime_projection)

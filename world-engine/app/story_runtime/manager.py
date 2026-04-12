@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,7 @@ from ai_stack import (
 from app.config import APP_VERSION
 from app.observability.audit_log import log_story_runtime_failure, log_story_turn_event
 from app.story_runtime.commit_models import resolve_narrative_commit
+from app.story_runtime.story_session_store import JsonStorySessionStore
 from app.story_runtime.module_turn_hooks import (
     goc_append_continuity_impacts,
     goc_host_experience_template,
@@ -48,6 +50,74 @@ class StorySession:
     last_thread_update_trace: ThreadUpdateTrace | None = None
     # Bounded carry-forward of committed GoC continuity classes (not a second memory surface).
     prior_continuity_impacts: list[dict[str, Any]] = field(default_factory=list)
+    # Immutable-ish snapshot of published content identity at session birth (audit F-M3).
+    content_provenance: dict[str, Any] = field(default_factory=dict)
+
+
+def _parse_iso_datetime(value: str) -> datetime:
+    if value.endswith("Z"):
+        value = value[:-1] + "+00:00"
+    dt = datetime.fromisoformat(value)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def story_session_to_payload(session: StorySession) -> dict[str, Any]:
+    trace = session.last_thread_update_trace
+    return {
+        "format_version": 1,
+        "session_id": session.session_id,
+        "module_id": session.module_id,
+        "runtime_projection": session.runtime_projection,
+        "created_at": session.created_at.isoformat(),
+        "updated_at": session.updated_at.isoformat(),
+        "turn_counter": session.turn_counter,
+        "current_scene_id": session.current_scene_id,
+        "history": session.history,
+        "diagnostics": session.diagnostics,
+        "narrative_threads": session.narrative_threads.model_dump(mode="json"),
+        "last_thread_update_trace": trace.model_dump(mode="json") if trace is not None else None,
+        "prior_continuity_impacts": session.prior_continuity_impacts,
+        "content_provenance": session.content_provenance,
+    }
+
+
+def story_session_from_payload(data: dict[str, Any]) -> StorySession:
+    fv = data.get("format_version", 1)
+    if fv != 1:
+        raise ValueError(f"Unsupported story session snapshot format_version: {fv!r}")
+
+    raw_trace = data.get("last_thread_update_trace")
+    trace: ThreadUpdateTrace | None = None
+    if isinstance(raw_trace, dict):
+        trace = ThreadUpdateTrace.model_validate(raw_trace)
+
+    threads_raw = data.get("narrative_threads") or {}
+    threads = StoryNarrativeThreadSet.model_validate(threads_raw)
+
+    created_at = _parse_iso_datetime(str(data["created_at"]))
+    updated_at = _parse_iso_datetime(str(data["updated_at"]))
+
+    provenance = data.get("content_provenance")
+    if not isinstance(provenance, dict):
+        provenance = {}
+
+    return StorySession(
+        session_id=str(data["session_id"]),
+        module_id=str(data["module_id"]),
+        runtime_projection=dict(data["runtime_projection"]),
+        created_at=created_at,
+        updated_at=updated_at,
+        turn_counter=int(data.get("turn_counter", 0)),
+        current_scene_id=str(data.get("current_scene_id") or ""),
+        history=list(data.get("history") or []),
+        diagnostics=list(data.get("diagnostics") or []),
+        narrative_threads=threads,
+        last_thread_update_trace=trace,
+        prior_continuity_impacts=list(data.get("prior_continuity_impacts") or []),
+        content_provenance=provenance,
+    )
 
 
 class StoryRuntimeManager:
@@ -58,8 +128,12 @@ class StoryRuntimeManager:
         adapters: dict[str, BaseModelAdapter] | None = None,
         retriever: Any | None = None,
         context_assembler: Any | None = None,
+        session_store: JsonStorySessionStore | None = None,
     ) -> None:
         self.sessions: dict[str, StorySession] = {}
+        self._session_store = session_store
+        self._session_turn_locks: dict[str, threading.Lock] = {}
+        self._session_locks_guard = threading.Lock()
         self.registry = registry or build_default_registry()
         self.routing = RoutingPolicy(self.registry)
         self.adapters: dict[str, BaseModelAdapter] = adapters or build_default_model_adapters()
@@ -87,20 +161,62 @@ class StoryRuntimeManager:
             assembler=self.context_assembler,
             capability_registry=self.capability_registry,
         )
+        if self._session_store is not None:
+            for _sid, raw in self._session_store.load_all_raw().items():
+                try:
+                    loaded = story_session_from_payload(raw)
+                    self.sessions[loaded.session_id] = loaded
+                    with self._session_locks_guard:
+                        self._session_turn_locks.setdefault(loaded.session_id, threading.Lock())
+                except Exception:
+                    continue
 
-    def create_session(self, *, module_id: str, runtime_projection: dict[str, Any]) -> StorySession:
+    def _session_turn_lock(self, session_id: str) -> threading.Lock:
+        with self._session_locks_guard:
+            return self._session_turn_locks.setdefault(session_id, threading.Lock())
+
+    def _persist_session(self, session: StorySession) -> None:
+        if self._session_store is None:
+            return
+        self._session_store.save(session.session_id, story_session_to_payload(session))
+
+    def create_session(
+        self,
+        *,
+        module_id: str,
+        runtime_projection: dict[str, Any],
+        content_provenance: dict[str, Any] | None = None,
+    ) -> StorySession:
         session_id = uuid4().hex
         current_scene_id = str(runtime_projection.get("start_scene_id") or "")
+        prov = dict(content_provenance) if isinstance(content_provenance, dict) else {}
+        if not prov:
+            mid = runtime_projection.get("module_id")
+            ver = runtime_projection.get("module_version")
+            if isinstance(mid, str) and mid.strip():
+                prov.setdefault("runtime_projection_module_id", mid.strip())
+            if isinstance(ver, str) and ver.strip():
+                prov.setdefault("runtime_projection_module_version", ver.strip())
         session = StorySession(
             session_id=session_id,
             module_id=module_id,
             runtime_projection=runtime_projection,
             current_scene_id=current_scene_id,
+            content_provenance=prov,
         )
         self.sessions[session_id] = session
+        with self._session_locks_guard:
+            self._session_turn_locks.setdefault(session_id, threading.Lock())
+        self._persist_session(session)
         return session
 
     def execute_turn(self, *, session_id: str, player_input: str, trace_id: str | None = None) -> dict[str, Any]:
+        with self._session_turn_lock(session_id):
+            return self._execute_turn_locked(
+                session_id=session_id, player_input=player_input, trace_id=trace_id
+            )
+
+    def _execute_turn_locked(self, *, session_id: str, player_input: str, trace_id: str | None = None) -> dict[str, Any]:
         session = self.get_session(session_id)
         session.turn_counter += 1
         session.updated_at = datetime.now(timezone.utc)
@@ -206,6 +322,7 @@ class StoryRuntimeManager:
         }
         session.history.append(committed_record)
         session.diagnostics.append(event)
+        self._persist_session(session)
         return event
 
     def get_session(self, session_id: str) -> StorySession:
@@ -224,6 +341,7 @@ class StoryRuntimeManager:
                     "module_id": session.module_id,
                     "turn_counter": session.turn_counter,
                     "current_scene_id": session.current_scene_id,
+                    "content_provenance": session.content_provenance,
                     "updated_at": session.updated_at.isoformat(),
                     "created_at": session.created_at.isoformat(),
                 }
@@ -272,6 +390,7 @@ class StoryRuntimeManager:
             "module_id": session.module_id,
             "turn_counter": session.turn_counter,
             "current_scene_id": session.current_scene_id,
+            "content_provenance": session.content_provenance,
             "runtime_projection": session.runtime_projection,
             "history_count": len(session.history),
             "committed_state": {

@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from ai_stack.goc_frozen_vocab import GOC_MODULE_ID
+from ai_stack.goc_scene_identity import (
+    GOC_SCENE_ID_TO_GUIDANCE_PHASE,
+    GUIDANCE_PHASE_TO_ESCALATION_ARC_KEY,
+    guidance_phase_key_for_scene_id,
+)
 
 try:
     import yaml
@@ -83,15 +88,6 @@ def load_goc_scene_guidance_yaml() -> dict[str, Any]:
     return _safe_load_yaml_mapping(path)
 
 
-# Runtime scene_id hints map to phase blocks in scene_guidance.yaml (slice material).
-GOC_SCENE_ID_TO_GUIDANCE_PHASE: dict[str, str] = {
-    "courtesy": "phase_1_polite_opening",
-    "living_room": "phase_2_moral_negotiation",
-    "phase_3": "phase_3_faction_shifts",
-    "phase_4": "phase_4_emotional_derailment",
-}
-
-
 @lru_cache(maxsize=1)
 def load_goc_yaml_slice_bundle() -> dict[str, Any]:
     """Bundle of YAML-backed slice surfaces used by the director (VERTICAL_SLICE_CONTRACT_GOC.md §6)."""
@@ -104,10 +100,6 @@ def load_goc_yaml_slice_bundle() -> dict[str, Any]:
 
 def clear_goc_yaml_slice_cache() -> None:
     load_goc_yaml_slice_bundle.cache_clear()
-
-
-def guidance_phase_key_for_scene_id(scene_id: str) -> str:
-    return GOC_SCENE_ID_TO_GUIDANCE_PHASE.get(scene_id.strip(), "phase_2_moral_negotiation")
 
 
 def thin_edge_staging_line_from_guidance(*, scene_guidance: dict[str, Any], scene_id: str) -> str:
@@ -205,13 +197,7 @@ def goc_character_profile_snippet(
         phase_key = guidance_phase_key_for_scene_id(scene_id)
         arc = vblock.get("escalation_arc")
         if isinstance(arc, dict):
-            phase_map = {
-                "phase_1_polite_opening": "phase_1",
-                "phase_2_moral_negotiation": "phase_2",
-                "phase_3_faction_shifts": "phase_3",
-                "phase_4_emotional_derailment": "phase_4",
-            }
-            phase_arc_key = phase_map.get(phase_key)
+            phase_arc_key = GUIDANCE_PHASE_TO_ESCALATION_ARC_KEY.get(phase_key)
             if phase_arc_key:
                 arc_text = arc.get(phase_arc_key)
                 if isinstance(arc_text, str) and arc_text.strip():

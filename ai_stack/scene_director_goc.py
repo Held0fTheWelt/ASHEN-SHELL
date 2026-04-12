@@ -13,11 +13,8 @@ from ai_stack.goc_frozen_vocab import (
     assert_scene_function,
     assert_silence_brevity_mode,
 )
-from ai_stack.goc_yaml_authority import (
-    guidance_phase_key_for_scene_id,
-    scene_assessment_phase_hints,
-    scene_guidance_snippets,
-)
+from ai_stack.goc_scene_identity import GOC_DEFAULT_GUIDANCE_PHASE_KEY, guidance_phase_key_for_scene_id
+from ai_stack.goc_yaml_authority import scene_assessment_phase_hints, scene_guidance_snippets
 from ai_stack.scene_direction_subdecision_matrix import assert_subdecision_label_in_matrix
 from ai_stack.scene_director_goc_legacy_keyword_candidates import (
     legacy_keyword_scene_candidates as _legacy_keyword_scene_candidates,
@@ -167,7 +164,7 @@ def _yaml_default_responder(
     michel_role = michel.get("formal_role") if isinstance(michel.get("formal_role"), str) else "pragmatist_host_spouse"
     annette_role = annette.get("formal_role") if isinstance(annette.get("formal_role"), str) else "guest_cynic"
     alain_role = alain.get("formal_role") if isinstance(alain.get("formal_role"), str) else "guest_mediator"
-    phase_key = guidance_phase_key_for_scene_id(scene_id) if scene_id.strip() else "phase_2_moral_negotiation"
+    phase_key = guidance_phase_key_for_scene_id(scene_id) if scene_id.strip() else GOC_DEFAULT_GUIDANCE_PHASE_KEY
 
     if "repair_attempt" in prior_classes:
         return "alain_reille", f"yaml_voice_bias:{alain_role}"
