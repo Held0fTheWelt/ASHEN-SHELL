@@ -11,6 +11,7 @@ from app.i18n import (
     normalize_language,
 )
 from app.models import WikiPage, WikiPageTranslation, WikiPageForumThread
+from app.utils.time_utils import utc_now as _utc_now
 
 
 def get_wiki_page_by_key(key: str):
@@ -203,10 +204,6 @@ def get_wiki_page_translation(page_id: int, language_code: str):
     if not lang:
         return None
     return WikiPageTranslation.query.filter_by(page_id=page_id, language_code=lang).first()
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
 
 
 def mark_wiki_translations_outdated(page_id: int, exclude_language: str | None = None):

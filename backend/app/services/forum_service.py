@@ -38,15 +38,12 @@ from app.services.forum_service_permissions import (
     user_is_admin,
     user_is_moderator,
 )
+from app.utils.time_utils import utc_now as _utc_now
 
 # View rate limiting cache: {f"{user_id}:{thread_id}": timestamp}
 # 5-minute TTL window for view counting
 _VIEW_RATE_LIMIT_CACHE = {}
 _VIEW_RATE_LIMIT_TTL_SECONDS = 300  # 5 minutes
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 # --- HTML Sanitization helpers -----------------------------------------------

@@ -10,10 +10,7 @@ from sqlalchemy import or_
 from app.extensions import db
 from app.models import Slogan
 from flask import current_app
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
+from app.utils.time_utils import utc_now as _utc_now
 
 
 def _parse_dt(value):

@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from app.extensions import db
 from app.models import GameCharacter, GameSaveSlot, User
+from app.utils.time_utils import utc_now as _utc_now
 
 
 class GameProfileError(ValueError):
@@ -22,10 +23,6 @@ class OwnershipError(GameProfileError):
 
 class ValidationError(GameProfileError):
     pass
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 def list_characters_for_user(user_id: int, *, include_archived: bool = False) -> list[GameCharacter]:

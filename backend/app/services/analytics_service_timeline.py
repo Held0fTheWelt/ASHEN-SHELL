@@ -9,10 +9,7 @@ from sqlalchemy import and_, func
 
 from app.extensions import db
 from app.models import ActivityLog, ForumPost, ForumReport, ForumThread
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+from app.utils.time_utils import utc_now as _utc_now
 
 
 def _parse_date(date_str: Optional[str]) -> Optional[datetime]:

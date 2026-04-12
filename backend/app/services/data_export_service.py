@@ -24,6 +24,7 @@ from sqlalchemy.sql.schema import Table
 
 from app.extensions import db
 from app.services import encryption_service
+from app.utils.time_utils import utc_now as _utc_now
 
 try:
     from app.version import APP_VERSION
@@ -32,10 +33,6 @@ except Exception:  # pragma: no cover - fallback if version module missing
 
 
 EXPORT_FORMAT_VERSION = 1
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 def _get_schema_revision() -> str:

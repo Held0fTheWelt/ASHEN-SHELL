@@ -11,13 +11,10 @@ from sqlalchemy import and_, distinct, func, or_
 
 from app.extensions import db
 from app.models import User
+from app.utils.time_utils import utc_now as _utc_now
 
 ACTIVE_NOW_WINDOW_MINUTES = 15
 VALID_RANGES = ("24h", "7d", "30d", "12m")
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
 
 
 def _range_end_and_buckets(range_key: str):

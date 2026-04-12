@@ -5,9 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+from app.utils.time_utils import utc_now_iso as _utc_now
 
 
 def _append_workflow_stage(

@@ -11,10 +11,7 @@ from app.models import (
 )
 from app.services.analytics_service_content import build_analytics_content_payload
 from app.services.analytics_service_timeline import build_analytics_timeline_payload
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
+from app.utils.time_utils import utc_now as _utc_now
 
 
 def _parse_date(date_str: Optional[str]) -> Optional[datetime]:

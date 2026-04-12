@@ -25,6 +25,7 @@ from app.services.news_service_translation_upsert_guards import (
     validate_upsert_translation_update_patch,
 )
 from app.services.news_service_update_guards import validate_news_update_patch
+from app.utils.time_utils import utc_now as _utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +38,6 @@ COVER_IMAGE_MAX_LENGTH = 512
 
 SORT_FIELDS = {"created_at", "updated_at", "published_at", "title"}
 SORT_ORDERS = {"asc", "desc"}
-
-
-def _utc_now():
-    return datetime.now(timezone.utc)
 
 
 def _normalize_slug(slug: str) -> str | None:
