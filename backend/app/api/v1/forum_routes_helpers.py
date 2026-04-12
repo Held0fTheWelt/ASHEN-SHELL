@@ -5,20 +5,7 @@ from __future__ import annotations
 from flask import jsonify
 
 from app.auth.permissions import get_current_user
-
-
-def _parse_int(value, default, min_val=None, max_val=None):
-    if value is None:
-        return default
-    try:
-        n = int(value)
-        if min_val is not None and n < min_val:
-            return default
-        if max_val is not None and n > max_val:
-            return max_val
-        return n
-    except (TypeError, ValueError):
-        return default
+from app.api.v1._route_utils import _parse_int
 
 
 def _current_user_optional():

@@ -29,7 +29,7 @@ from app.services.mcp_operations_service import (
 from app.config.route_constants import route_status_codes, route_pagination_config
 
 
-def _parse_int(q: str | None, default: int, *, min_v: int = 1, max_v: int = 500) -> int:
+def _parse_int_q(q: str | None, default: int, *, min_v: int = 1, max_v: int = 500) -> int:
     if q is None or q == "":
         return default
     try:
@@ -88,8 +88,8 @@ def admin_mcp_suites():
 @require_jwt_moderator_or_admin
 @require_feature(FEATURE_MANAGE_MCP_OPERATIONS)
 def admin_mcp_activity():
-    page = _parse_int(request.args.get("page"), 1, min_v=1, max_v=10_000)
-    limit = _parse_int(request.args.get("limit"), 50, min_v=1, max_v=200)
+    page = _parse_int_q(request.args.get("page"), 1, min_v=1, max_v=10_000)
+    limit = _parse_int_q(request.args.get("limit"), 50, min_v=1, max_v=200)
     suite = (request.args.get("suite") or "").strip() or None
     trace_id = (request.args.get("trace_id") or "").strip() or None
     errors_only = (request.args.get("errors_only") or "").strip().lower() in ("1", "true", "yes")
@@ -102,8 +102,8 @@ def admin_mcp_activity():
 @require_jwt_moderator_or_admin
 @require_feature(FEATURE_MANAGE_MCP_OPERATIONS)
 def admin_mcp_logs():
-    page = _parse_int(request.args.get("page"), 1, min_v=1, max_v=10_000)
-    limit = _parse_int(request.args.get("limit"), 50, min_v=1, max_v=200)
+    page = _parse_int_q(request.args.get("page"), 1, min_v=1, max_v=10_000)
+    limit = _parse_int_q(request.args.get("limit"), 50, min_v=1, max_v=200)
     log_level = (request.args.get("log_level") or "").strip().lower() or None
     if log_level not in (None, "", "info", "error", "warning"):
         log_level = None
@@ -132,8 +132,8 @@ def admin_mcp_logs():
 @require_jwt_moderator_or_admin
 @require_feature(FEATURE_MANAGE_MCP_OPERATIONS)
 def admin_mcp_diagnostics_list():
-    page = _parse_int(request.args.get("page"), 1, min_v=1, max_v=10_000)
-    limit = _parse_int(request.args.get("limit"), 50, min_v=1, max_v=200)
+    page = _parse_int_q(request.args.get("page"), 1, min_v=1, max_v=10_000)
+    limit = _parse_int_q(request.args.get("limit"), 50, min_v=1, max_v=200)
     status = (request.args.get("status") or "").strip() or None
     items, total = query_diagnostics(page=page, limit=limit, status=status)
     return jsonify({"items": items, "total": total, "page": page, "limit": limit}), route_status_codes.ok

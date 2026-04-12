@@ -39,6 +39,7 @@ from app.services.user_service import (
     USERNAME_MAX_LENGTH,
 )
 from app.config.route_constants import route_user_config, route_status_codes, route_pagination_config
+from app.api.v1._route_utils import _parse_int
 
 logger = logging.getLogger(__name__)
 
@@ -142,20 +143,6 @@ def _log_privilege_change(admin_id: int, user_id: int, old_role: str, new_role: 
         target_id=str(user_id),
         metadata=metadata,
     )
-
-
-def _parse_int(value, default, min_val=None, max_val=None):
-    if value is None:
-        return default
-    try:
-        n = int(value)
-        if min_val is not None and n < min_val:
-            return default
-        if max_val is not None and n > max_val:
-            return max_val
-        return n
-    except (TypeError, ValueError):
-        return default
 
 
 def _validate_username(username: str) -> tuple[bool, str | None]:

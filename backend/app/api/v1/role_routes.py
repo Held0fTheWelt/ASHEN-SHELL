@@ -13,20 +13,7 @@ from app.services.role_service import (
     update_role as update_role_service,
 )
 from app.config.route_constants import route_status_codes, route_pagination_config
-
-
-def _parse_int(value, default, min_val=None, max_val=None):
-    if value is None:
-        return default
-    try:
-        n = int(value)
-        if min_val is not None and n < min_val:
-            return default
-        if max_val is not None and n > max_val:
-            return max_val
-        return n
-    except (TypeError, ValueError):
-        return default
+from app.api.v1._route_utils import _parse_int
 
 
 @api_v1_bp.route("/roles", methods=["GET"])
