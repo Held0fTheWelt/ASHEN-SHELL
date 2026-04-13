@@ -25,6 +25,16 @@ INPUT_LIST_NAME = "documentation_implementation_input.md"
 OPEN_DOC_ROW = re.compile(r"^\|\s*\*\*(DOC-\d+)\*\*\s*\|")
 
 
+def parse_open_doc_ids(markdown: str) -> list[str]:
+    """Return sorted open **DOC-*** ids from backlog table rows (no filesystem access)."""
+    seen: set[str] = set()
+    for line in markdown.splitlines():
+        m = OPEN_DOC_ROW.match(line)
+        if m:
+            seen.add(m.group(1))
+    return sorted(seen, key=lambda s: int(s.split("-")[1]))
+
+
 def _print_global_help() -> None:
     print(
         "Docify hub CLI\n\n"
@@ -38,21 +48,22 @@ def _print_global_help() -> None:
     )
 
 
-def cmd_open_doc(_args: argparse.Namespace) -> int:
+def cmd_open_doc(args: argparse.Namespace) -> int:
     """Print open DOC-* IDs (Markdown table rows using | **DOC-nnn** |)."""
-    root = repo_root()
-    hub = docify_hub_dir(root)
-    path = hub / INPUT_LIST_NAME
-    if not path.is_file():
-        print(f"Missing {path.relative_to(root)}", file=sys.stderr)
-        return 3
+    if args.input is not None:
+        path = Path(args.input).expanduser().resolve()
+        if not path.is_file():
+            print(f"Missing backlog file: {path}", file=sys.stderr)
+            return 3
+    else:
+        root = repo_root()
+        hub = docify_hub_dir(root)
+        path = hub / INPUT_LIST_NAME
+        if not path.is_file():
+            print(f"Missing {path.relative_to(root)}", file=sys.stderr)
+            return 3
     text = path.read_text(encoding="utf-8", errors="replace")
-    seen: set[str] = set()
-    for line in text.splitlines():
-        m = OPEN_DOC_ROW.match(line)
-        if m:
-            seen.add(m.group(1))
-    for item in sorted(seen, key=lambda s: int(s.split("-")[1])):
+    for item in parse_open_doc_ids(text):
         print(item)
     return 0
 
@@ -83,6 +94,15 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if cmd == "open-doc":
         parser = argparse.ArgumentParser(description="List open DOC-* backlog rows.")
+        parser.add_argument(
+            "--input",
+            type=Path,
+            default=None,
+            help=(
+                "Path to documentation_implementation_input.md "
+                "(default: resolve hub file via repo_root())."
+            ),
+        )
         ns = parser.parse_args(tail)
         return cmd_open_doc(ns)
 

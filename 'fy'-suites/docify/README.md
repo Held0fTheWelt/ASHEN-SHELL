@@ -40,7 +40,7 @@ With **`pip install -e .`** at the repository root ([`pyproject.toml`](../../pyp
 |---------|------|
 | `docify audit …` | Same flags as [`tools/python_documentation_audit.py`](tools/python_documentation_audit.py) |
 | `docify drift …` | Path-only drift hints from `git diff` (or `--paths-file`) → JSON/text |
-| `docify open-doc` | Print open **DOC-*** IDs from [`documentation_implementation_input.md`](documentation_implementation_input.md) |
+| `docify open-doc` | Print open **DOC-*** IDs from the hub backlog (or pass **`--input path/to/documentation_implementation_input.md`** for archives and CI without monorepo discovery). |
 
 Examples:
 
