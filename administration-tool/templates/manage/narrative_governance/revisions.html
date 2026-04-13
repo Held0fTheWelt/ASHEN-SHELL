@@ -1,0 +1,13 @@
+{% extends "manage/base.html" %}
+{% block title %}Narrative Revisions{% endblock %}
+{% block content %}
+<section class="manage-card narrative-governance-page" data-narrative-page="revisions">
+    <h1>Narrative Revisions</h1>
+    <p class="manage-muted">Revision workflow state machine with inline conflict visibility.</p>
+    <div id="narrative-revisions-panel" class="narrative-grid"></div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='narrative_governance.css') }}">
+<script src="{{ url_for('static', filename='narrative_governance.js') }}"></script>
+{% endblock %}

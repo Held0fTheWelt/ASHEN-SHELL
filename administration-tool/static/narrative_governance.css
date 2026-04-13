@@ -1,0 +1,38 @@
+.narrative-governance-page {
+    display: grid;
+    gap: 1rem;
+}
+
+.narrative-nav-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.narrative-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.narrative-card {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 0.75rem;
+    background: rgba(6, 10, 24, 0.35);
+}
+
+.narrative-card h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.narrative-card pre {
+    margin: 0;
+    max-height: 28rem;
+    overflow: auto;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 0.75rem;
+    border-radius: 6px;
+}

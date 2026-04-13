@@ -21,6 +21,7 @@ from app.services.writers_room_pipeline import (
     _writers_room_artifact_manifest,
 )
 from app.services.writers_room_store import WritersRoomStore
+from app.models.narrative_contracts import DraftPatchBundle
 
 
 def run_writers_room_review(
@@ -269,3 +270,29 @@ def submit_writers_room_revision(
     merged["writers_room_artifact_manifest"] = _writers_room_artifact_manifest(merged)
     storage.write_review(review_id, merged)
     return merged
+
+
+def validate_and_attach_draft_patch_bundle(
+    *,
+    review_id: str,
+    patch_bundle: DraftPatchBundle,
+    actor_id: str,
+) -> dict[str, Any]:
+    """Attach canonical DraftPatchBundle metadata to a review artifact safely."""
+    storage = WritersRoomStore.default()
+    review = storage.read_review(review_id)
+    if not patch_bundle.revision_ids:
+        raise ValueError("patch_bundle_requires_revision_ids")
+    if not patch_bundle.target_refs:
+        raise ValueError("patch_bundle_requires_target_refs")
+    review["draft_patch_bundle"] = patch_bundle.model_dump(mode="json")
+    review["draft_patch_bundle_provenance"] = {
+        "attached_by": actor_id,
+        "attached_at": _utc_now(),
+        "finding_ids": patch_bundle.finding_ids,
+        "revision_ids": patch_bundle.revision_ids,
+        "preview_id": patch_bundle.preview_id,
+    }
+    review["writers_room_artifact_manifest"] = _writers_room_artifact_manifest(review)
+    storage.write_review(review_id, review)
+    return review

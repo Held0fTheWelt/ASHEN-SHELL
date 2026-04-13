@@ -12,6 +12,18 @@ from app.models.wiki_page import WikiPage, WikiPageTranslation, WikiPageForumThr
 from app.models.slogan import Slogan
 from app.models.site_setting import SiteSetting
 from app.models.notification import Notification
+from app.models.narrative_package import NarrativePackage
+from app.models.narrative_package_history_event import NarrativePackageHistoryEvent
+from app.models.narrative_preview import NarrativePreview
+from app.models.narrative_revision_candidate import NarrativeRevisionCandidate
+from app.models.narrative_revision_conflict import NarrativeRevisionConflict
+from app.models.narrative_revision_status_history import NarrativeRevisionStatusHistory
+from app.models.narrative_evaluation_run import NarrativeEvaluationRun
+from app.models.narrative_evaluation_coverage import NarrativeEvaluationCoverage
+from app.models.narrative_notification_rule import NarrativeNotificationRule
+from app.models.narrative_notification import NarrativeNotification
+from app.models.narrative_runtime_health_event import NarrativeRuntimeHealthEvent
+from app.models.narrative_runtime_health_rollup import NarrativeRuntimeHealthRollup
 
 from app.models.game_character import GameCharacter
 from app.models.game_save_slot import GameSaveSlot
@@ -51,6 +63,18 @@ __all__ = [
     "Slogan",
     "SiteSetting",
     "Notification",
+    "NarrativePackage",
+    "NarrativePackageHistoryEvent",
+    "NarrativePreview",
+    "NarrativeRevisionCandidate",
+    "NarrativeRevisionConflict",
+    "NarrativeRevisionStatusHistory",
+    "NarrativeEvaluationRun",
+    "NarrativeEvaluationCoverage",
+    "NarrativeNotificationRule",
+    "NarrativeNotification",
+    "NarrativeRuntimeHealthEvent",
+    "NarrativeRuntimeHealthRollup",
     "GameCharacter",
     "GameSaveSlot",
     "GameExperienceTemplate",

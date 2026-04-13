@@ -87,6 +87,7 @@ def _register_api_v1_blueprint_routes() -> None:
     from app.api.v1 import writers_room_routes  # noqa: F401
     from app.api.v1 import improvement_routes  # noqa: F401
     from app.api.v1 import ai_stack_governance_routes  # noqa: F401
+    from app.api.v1 import narrative_governance_routes  # noqa: F401
     from app.api.v1 import system_diagnosis_routes  # noqa: F401
     from app.api.v1 import play_service_control_routes  # noqa: F401
     from app.api.v1 import world_engine_console_routes  # noqa: F401

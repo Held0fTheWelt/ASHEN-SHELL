@@ -101,6 +101,53 @@ def register_manage_inspector_legacy_redirects(app: Flask) -> None:
         return redirect(url_for("manage_inspector_workbench"), code=308)
 
 
+def register_manage_narrative_governance_pages(app: Flask) -> None:
+    @app.route("/manage/narrative/overview")
+    def manage_narrative_overview():
+        """Narrative governance overview page."""
+        return render_template("manage/narrative_governance/overview.html")
+
+    @app.route("/manage/narrative/runtime")
+    def manage_narrative_runtime():
+        """Narrative governance runtime configuration page."""
+        return render_template("manage/narrative_governance/runtime.html")
+
+    @app.route("/manage/narrative/runtime-health")
+    def manage_narrative_runtime_health():
+        """Narrative governance runtime health page."""
+        return render_template("manage/narrative_governance/runtime_health.html")
+
+    @app.route("/manage/narrative/packages")
+    def manage_narrative_packages():
+        """Narrative governance packages page."""
+        return render_template("manage/narrative_governance/packages.html")
+
+    @app.route("/manage/narrative/policies")
+    def manage_narrative_policies():
+        """Narrative governance policies page."""
+        return render_template("manage/narrative_governance/policies.html")
+
+    @app.route("/manage/narrative/findings")
+    def manage_narrative_findings():
+        """Narrative governance findings page."""
+        return render_template("manage/narrative_governance/findings.html")
+
+    @app.route("/manage/narrative/revisions")
+    def manage_narrative_revisions():
+        """Narrative governance revisions page."""
+        return render_template("manage/narrative_governance/revisions.html")
+
+    @app.route("/manage/narrative/evaluations")
+    def manage_narrative_evaluations():
+        """Narrative governance evaluations page."""
+        return render_template("manage/narrative_governance/evaluations.html")
+
+    @app.route("/manage/narrative/notifications")
+    def manage_narrative_notifications():
+        """Narrative governance notifications page."""
+        return render_template("manage/narrative_governance/notifications.html")
+
+
 def register_manage_data_ops_and_platform_pages(app: Flask) -> None:
     @app.route("/manage/data")
     def manage_data():

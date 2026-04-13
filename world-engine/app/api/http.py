@@ -1,11 +1,21 @@
 from __future__ import annotations
 
 from typing import Any
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from app.config import PLAY_SERVICE_INTERNAL_API_KEY
+from app.narrative.corrective_retry import apply_corrective_retry
+from app.narrative.fallback_generator import build_safe_fallback_output
+from app.narrative.output_validator import validate_runtime_output
+from app.narrative.package_loader import NarrativePackageLoader
+from app.narrative.preview_isolation import PreviewIsolationRegistry
+from app.narrative.runtime_health import RuntimeHealthCounters
+from app.narrative.runtime_output_models import RuntimeTurnStructuredOutputV2
+from app.narrative.validation_feedback import ValidationFeedback
+from app.narrative.validator_strategies import OutputValidatorConfig
 from app.runtime.manager import RuntimeManager
 from app.story_runtime import StoryRuntimeManager
 
@@ -41,6 +51,47 @@ def get_manager(request: Request) -> RuntimeManager:
 
 def get_story_manager(request: Request) -> StoryRuntimeManager:
     return request.app.state.story_manager
+
+
+def _get_narrative_loader(request: Request) -> NarrativePackageLoader:
+    loader = getattr(request.app.state, "narrative_package_loader", None)
+    if loader is None:
+        repo_root = Path(__file__).resolve().parents[3]
+        loader = NarrativePackageLoader(repo_root=repo_root)
+        request.app.state.narrative_package_loader = loader
+    return loader
+
+
+def _get_preview_registry(request: Request) -> PreviewIsolationRegistry:
+    registry = getattr(request.app.state, "preview_isolation_registry", None)
+    if registry is None:
+        registry = PreviewIsolationRegistry()
+        request.app.state.preview_isolation_registry = registry
+    return registry
+
+
+def _get_runtime_health(request: Request) -> RuntimeHealthCounters:
+    counters = getattr(request.app.state, "narrative_runtime_health", None)
+    if counters is None:
+        counters = RuntimeHealthCounters()
+        request.app.state.narrative_runtime_health = counters
+    return counters
+
+
+def _get_validator_config(request: Request) -> OutputValidatorConfig:
+    config = getattr(request.app.state, "narrative_validator_config", None)
+    if config is None:
+        from app.narrative.validator_strategies import ValidationStrategy
+
+        config = OutputValidatorConfig(
+            strategy=ValidationStrategy.SCHEMA_PLUS_SEMANTIC,
+            semantic_policy_check=True,
+            enable_corrective_feedback=True,
+            max_retry_attempts=1,
+            fast_feedback_mode=True,
+        )
+        request.app.state.narrative_validator_config = config
+    return config
 
 
 
@@ -221,6 +272,38 @@ class ExecuteStoryTurnRequest(BaseModel):
     player_input: str = Field(min_length=1)
 
 
+class NarrativeReloadRequest(BaseModel):
+    module_id: str
+    expected_active_version: str
+
+
+class NarrativePreviewLoadRequest(BaseModel):
+    module_id: str
+    preview_id: str
+    isolation_mode: str = "session_namespace"
+
+
+class NarrativePreviewUnloadRequest(BaseModel):
+    module_id: str
+    preview_id: str
+
+
+class NarrativePreviewSessionStartRequest(BaseModel):
+    module_id: str
+    preview_id: str
+    isolation_mode: str = "session_namespace"
+    session_seed: str
+
+
+class NarrativePreviewSessionEndRequest(BaseModel):
+    preview_session_id: str
+
+
+class NarrativeTurnValidationRequest(BaseModel):
+    packet: dict[str, Any]
+    output: dict[str, Any]
+
+
 @router.post("/internal/runs/{run_id}/terminate", dependencies=[Depends(_require_internal_api_key)])
 def terminate_run_internal(run_id: str, payload: TerminateRunRequest, manager: RuntimeManager = Depends(get_manager)) -> dict[str, Any]:
     try:
@@ -317,3 +400,124 @@ def get_story_diagnostics(session_id: str, manager: StoryRuntimeManager = Depend
         return manager.get_diagnostics(session_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Story session not found") from exc
+
+
+@router.post("/internal/narrative/packages/reload-active", dependencies=[Depends(_require_internal_api_key)])
+def narrative_reload_active(payload: NarrativeReloadRequest, request: Request) -> dict[str, Any]:
+    loader = _get_narrative_loader(request)
+    try:
+        result = loader.reload_active(module_id=payload.module_id, expected_active_version=payload.expected_active_version)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="module_not_found") from exc
+    return {"ok": True, "data": result}
+
+
+@router.post("/internal/narrative/packages/load-preview", dependencies=[Depends(_require_internal_api_key)])
+def narrative_load_preview(payload: NarrativePreviewLoadRequest, request: Request) -> dict[str, Any]:
+    loader = _get_narrative_loader(request)
+    registry = _get_preview_registry(request)
+    try:
+        result = loader.load_preview(module_id=payload.module_id, preview_id=payload.preview_id)
+        registry.load_preview(module_id=payload.module_id, preview_id=payload.preview_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="preview_not_found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return {"ok": True, "data": result}
+
+
+@router.post("/internal/narrative/packages/unload-preview", dependencies=[Depends(_require_internal_api_key)])
+def narrative_unload_preview(payload: NarrativePreviewUnloadRequest, request: Request) -> dict[str, Any]:
+    loader = _get_narrative_loader(request)
+    registry = _get_preview_registry(request)
+    try:
+        result = loader.unload_preview(module_id=payload.module_id, preview_id=payload.preview_id)
+        registry.unload_preview(module_id=payload.module_id, preview_id=payload.preview_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="preview_not_loaded") from exc
+    return {"ok": True, "data": result}
+
+
+@router.post("/internal/narrative/preview/start-session", dependencies=[Depends(_require_internal_api_key)])
+def narrative_preview_start_session(payload: NarrativePreviewSessionStartRequest, request: Request) -> dict[str, Any]:
+    registry = _get_preview_registry(request)
+    try:
+        session = registry.start_session(
+            module_id=payload.module_id,
+            preview_id=payload.preview_id,
+            session_seed=payload.session_seed,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="preview_not_loaded") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return {"ok": True, "data": {"preview_session_id": session.preview_session_id, "namespace": session.namespace}}
+
+
+@router.post("/internal/narrative/preview/end-session", dependencies=[Depends(_require_internal_api_key)])
+def narrative_preview_end_session(payload: NarrativePreviewSessionEndRequest, request: Request) -> dict[str, Any]:
+    registry = _get_preview_registry(request)
+    try:
+        registry.end_session(payload.preview_session_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="preview_session_not_found") from exc
+    return {"ok": True, "data": {"preview_session_id": payload.preview_session_id, "ended": True}}
+
+
+@router.get("/internal/narrative/runtime/state", dependencies=[Depends(_require_internal_api_key)])
+def narrative_runtime_state(module_id: str, request: Request) -> dict[str, Any]:
+    loader = _get_narrative_loader(request)
+    state = loader.state(module_id)
+    return {"ok": True, "data": state}
+
+
+@router.get("/internal/narrative/runtime/validator-config", dependencies=[Depends(_require_internal_api_key)])
+def narrative_runtime_validator_config(request: Request) -> dict[str, Any]:
+    config = _get_validator_config(request)
+    return {"ok": True, "data": config.model_dump(mode="json")}
+
+
+@router.get("/internal/narrative/runtime/health", dependencies=[Depends(_require_internal_api_key)])
+def narrative_runtime_health(request: Request) -> dict[str, Any]:
+    counters = _get_runtime_health(request)
+    return {"ok": True, "data": counters.summary()}
+
+
+@router.post("/internal/narrative/runtime/validate-and-recover", dependencies=[Depends(_require_internal_api_key)])
+def narrative_runtime_validate_and_recover(payload: NarrativeTurnValidationRequest, request: Request) -> dict[str, Any]:
+    config = _get_validator_config(request)
+    counters = _get_runtime_health(request)
+    from app.narrative.package_models import NarrativeDirectorScenePacket, SceneFallbackBundle
+
+    packet = NarrativeDirectorScenePacket.model_validate(payload.packet)
+    output = RuntimeTurnStructuredOutputV2.model_validate(payload.output)
+    feedback = validate_runtime_output(packet=packet, output=output, config=config)
+    if feedback.passed:
+        counters.record_first_pass_success(packet.module_id, packet.scene_id)
+        return {"ok": True, "data": {"mode": "first_pass", "output": output.model_dump(mode="json")}}
+    if config.enable_corrective_feedback and config.max_retry_attempts > 0:
+        retried = apply_corrective_retry(original_output=output, feedback=feedback)
+        retry_feedback: ValidationFeedback = validate_runtime_output(packet=packet, output=retried, config=config)
+        if retry_feedback.passed:
+            counters.record_corrective_retry(packet.module_id, packet.scene_id)
+            return {
+                "ok": True,
+                "data": {
+                    "mode": "corrective_retry",
+                    "validation_feedback": feedback.model_dump(mode="json"),
+                    "output": retried.model_dump(mode="json"),
+                },
+            }
+    fallback = build_safe_fallback_output(
+        fallback_bundle=SceneFallbackBundle(),
+        reason="validation_failed_after_retry",
+    )
+    counters.record_safe_fallback(packet.module_id, packet.scene_id)
+    return {
+        "ok": True,
+        "data": {
+            "mode": "safe_fallback",
+            "validation_feedback": feedback.model_dump(mode="json"),
+            "output": fallback.model_dump(mode="json"),
+        },
+    }

@@ -1,0 +1,13 @@
+{% extends "manage/base.html" %}
+{% block title %}Narrative Runtime Health{% endblock %}
+{% block content %}
+<section class="manage-card narrative-governance-page" data-narrative-page="runtime_health">
+    <h1>Narrative Runtime Health</h1>
+    <p class="manage-muted">Live quality counters for first pass, corrective retry, and safe fallback usage.</p>
+    <div id="narrative-runtime-health-panel" class="narrative-grid"></div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='narrative_governance.css') }}">
+<script src="{{ url_for('static', filename='narrative_governance.js') }}"></script>
+{% endblock %}
