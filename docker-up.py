@@ -38,10 +38,13 @@ Requires ``docker compose`` (v2) or legacy ``docker-compose``.
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 REPO_ROOT = Path(__file__).resolve().parent
 DEFAULT_COMPOSE = REPO_ROOT / "docker-compose.yml"
@@ -113,7 +116,51 @@ def _run(args: argparse.Namespace, compose_args: list[str]) -> int:
         print(" ".join(shlex_quote(a) for a in cmd))
         return 0
     print("$", " ".join(cmd), flush=True)
-    return subprocess.call(cmd, cwd=REPO_ROOT)
+    exit_code = subprocess.call(cmd, cwd=REPO_ROOT)
+    if exit_code == 0 and compose_args and compose_args[0] == "up":
+        gate_code = _bootstrap_gate_after_up()
+        if gate_code != 0:
+            return gate_code
+    return exit_code
+
+
+def _bootstrap_gate_after_up() -> int:
+    """Guide operators through bootstrap setup before normal runtime assumptions."""
+    status_url = "http://localhost:8000/api/v1/bootstrap/public-status"
+    req = Request(status_url, headers={"Accept": "application/json"})
+    try:
+        with urlopen(req, timeout=2.5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except URLError:
+        print(
+            "Notice: Backend bootstrap status is currently unreachable.\n"
+            "If this is the first startup, open the Administration Tool and complete bootstrap:\n"
+            "  - Recommended web setup: http://localhost:5002/manage/operational-governance/bootstrap\n"
+            "  - CLI fallback: set BOOTSTRAP_RECOVERY_TOKEN + call /api/v1/admin/bootstrap/initialize via curl\n",
+            file=sys.stderr,
+        )
+        return 0
+    except Exception as exc:
+        print(f"Warning: Could not parse bootstrap status response: {exc}", file=sys.stderr)
+        return 0
+
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict):
+        return 0
+    if data.get("bootstrap_required"):
+        print(
+            "Bootstrap is required before normal operation is considered complete.\n"
+            "Next steps:\n"
+            "  1) Open web setup: http://localhost:5002/manage/operational-governance/bootstrap\n"
+            "  2) Select preset + initialize trust-anchor/first provider\n"
+            "  3) Re-run `python docker-up.py up` after bootstrap completes\n"
+            "CLI fallback (if web unavailable):\n"
+            "  - POST /api/v1/admin/bootstrap/initialize with admin JWT\n",
+            file=sys.stderr,
+        )
+        return 2
+    print("Bootstrap already initialized. Stack is ready.")
+    return 0
 
 
 def shlex_quote(s: str) -> str:

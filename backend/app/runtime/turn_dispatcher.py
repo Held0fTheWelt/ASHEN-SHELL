@@ -19,6 +19,7 @@ from app.runtime.ai_turn_executor import execute_turn_with_ai
 from app.runtime.runtime_models import MockDecision, SessionState
 from app.runtime.turn_execution_types import TurnExecutionResult
 from app.runtime.turn_executor import execute_turn
+from app.services.governance_runtime_service import get_active_runtime_snapshot
 
 
 async def dispatch_turn(
@@ -60,6 +61,14 @@ async def dispatch_turn(
         ValueError: If execution_mode=="ai" but adapter cannot be resolved
     """
     execution_mode = session.execution_mode.lower() if session.execution_mode else "mock"
+    active_snapshot = get_active_runtime_snapshot()
+    if active_snapshot:
+        governed_mode = (active_snapshot.get("generation_execution_mode") or "").strip().lower()
+        if governed_mode == "mock_only":
+            execution_mode = "mock"
+        elif governed_mode in {"ai_only", "routed_llm_slm", "hybrid_routed_with_mock_fallback"} and execution_mode != "ai":
+            # Governance can elevate execution to AI-capable path if session is stale.
+            execution_mode = "ai"
 
     # Ensure trace_id is set for observability (works with/without Flask request context)
     trace_id = get_trace_id() or ensure_trace_id(None)

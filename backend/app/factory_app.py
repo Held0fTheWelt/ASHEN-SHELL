@@ -43,6 +43,11 @@ def create_app(config_object=None):
 
     init_routing_registry_bootstrap(app)
 
+    from app.services.governance_runtime_service import ensure_governance_baseline
+
+    with app.app_context():
+        ensure_governance_baseline()
+
     csrf = CSRFProtect(app)
     from app.api.v1 import api_v1_bp
 

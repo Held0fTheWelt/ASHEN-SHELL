@@ -136,6 +136,8 @@ class Config:
         or ""
     ).strip() or None
     PLAY_SERVICE_INTERNAL_API_KEY = os.environ.get("PLAY_SERVICE_INTERNAL_API_KEY", "").strip() or None
+    INTERNAL_RUNTIME_CONFIG_TOKEN = os.environ.get("INTERNAL_RUNTIME_CONFIG_TOKEN", "").strip() or None
+    BOOTSTRAP_RECOVERY_TOKEN = os.environ.get("BOOTSTRAP_RECOVERY_TOKEN", "").strip() or None
 
     # Game ticket TTL with bounds validation (5 min to 24 hours).
     _ttl_raw = os.environ.get("GAME_TICKET_TTL_SECONDS", "300")
@@ -180,6 +182,8 @@ class TestingConfig(Config):
     PLAY_SERVICE_INTERNAL_URL = "http://play.example.test"
     PLAY_SERVICE_SHARED_SECRET = "test-play-secret"
     PLAY_SERVICE_INTERNAL_API_KEY = "test-play-key"
+    INTERNAL_RUNTIME_CONFIG_TOKEN = "test-internal-runtime-config-token"
+    BOOTSTRAP_RECOVERY_TOKEN = "test-bootstrap-recovery-token"
     REGISTRATION_REQUIRE_EMAIL = False  # Email optional in tests
     REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN = False  # Allow login without verification in tests
     PASSWORD_COMPLEXITY_MIN_LENGTH = 8  # Relaxed requirement for testing (normally 12)

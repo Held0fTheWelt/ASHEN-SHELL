@@ -29,6 +29,12 @@ OUTPUT_PATHS: list[Path] = [
 
 # Longest prefix wins (specific before general).
 _TAG_PREFIXES: list[tuple[str, str]] = [
+    ("/api/v1/admin/bootstrap", "OperationalGovernance"),
+    ("/api/v1/admin/ai", "OperationalGovernance"),
+    ("/api/v1/admin/runtime", "OperationalGovernance"),
+    ("/api/v1/admin/settings", "OperationalGovernance"),
+    ("/api/v1/admin/costs", "OperationalGovernance"),
+    ("/api/v1/admin/audit/governance", "OperationalGovernance"),
     ("/api/v1/admin/ai-stack", "AIStackGovernance"),
     ("/api/v1/admin/mcp", "MCP"),
     ("/api/v1/admin/analytics", "Analytics"),
@@ -59,6 +65,8 @@ _TAG_PREFIXES: list[tuple[str, str]] = [
     ("/api/v1/writers-room", "WritersRoom"),
     ("/api/v1/health", "System"),
     ("/api/v1/test", "System"),
+    ("/api/v1/bootstrap/public-status", "OperationalGovernance"),
+    ("/api/v1/internal/runtime-config", "OperationalGovernance"),
 ]
 
 _TAG_DESCRIPTIONS: dict[str, str] = {
@@ -79,6 +87,7 @@ _TAG_DESCRIPTIONS: dict[str, str] = {
     "System": "Health, system diagnosis, internal probes.",
     "WorldEngineConsole": "Admin proxy to the play service: readiness, runs, story sessions, diagnostics.",
     "Areas": "Feature areas and navigational areas CRUD.",
+    "OperationalGovernance": "Bootstrap, provider/model/route governance, runtime modes, settings, and cost control plane.",
 }
 
 _FLASK_VAR = re.compile(r"^<(?:(\w+):)?([\w_]+)>$")

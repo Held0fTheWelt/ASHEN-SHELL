@@ -35,6 +35,7 @@ class RuntimeManager:
         *,
         store_backend: str | None = None,
         store_url: str | None = None,
+        governed_runtime_config: dict[str, Any] | None = None,
     ) -> None:
         self.templates: dict[str, ExperienceTemplate] = load_builtin_templates()
         self.template_sources: dict[str, str] = {template_id: "builtin" for template_id in self.templates}
@@ -42,6 +43,19 @@ class RuntimeManager:
         self.backend_content_sync_enabled = BACKEND_CONTENT_SYNC_ENABLED
         self.backend_content_timeout_seconds = BACKEND_CONTENT_TIMEOUT_SECONDS
         self.backend_content_sync_interval = timedelta(seconds=BACKEND_CONTENT_SYNC_INTERVAL_SECONDS)
+        if governed_runtime_config:
+            world_engine_settings = governed_runtime_config.get("world_engine_settings") or {}
+            backend_settings = governed_runtime_config.get("backend_settings") or {}
+            self.backend_content_sync_enabled = bool(world_engine_settings.get("content_sync_enabled", self.backend_content_sync_enabled))
+            self.backend_content_sync_interval = timedelta(
+                seconds=float(world_engine_settings.get("content_sync_interval", self.backend_content_sync_interval.total_seconds()))
+            )
+            self.backend_content_timeout_seconds = float(
+                world_engine_settings.get("content_timeout_seconds", self.backend_content_timeout_seconds)
+            )
+            governed_feed = backend_settings.get("content_feed_url")
+            if isinstance(governed_feed, str) and governed_feed.strip():
+                self.backend_content_feed_url = governed_feed.strip()
         self._last_backend_content_sync_at: datetime | None = None
         self.instances: dict[str, RuntimeInstance] = {}
         self.engines: dict[str, RuntimeEngine] = {}

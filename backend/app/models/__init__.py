@@ -30,6 +30,21 @@ from app.models.game_save_slot import GameSaveSlot
 from app.models.game_experience_template import GameExperienceTemplate
 from app.models.mcp_diagnostic_case import McpDiagnosticCase
 from app.models.mcp_ops_telemetry import McpOpsTelemetry
+from app.models.governance_core import (
+    BootstrapConfig,
+    BootstrapPreset,
+    AIProviderConfig,
+    AIProviderCredential,
+    AIModelConfig,
+    AITaskRoute,
+    SystemSettingRecord,
+    ResolvedRuntimeConfigSnapshot,
+    ProviderHealthCheck,
+    AIUsageEvent,
+    CostBudgetPolicy,
+    CostRollup,
+    SettingAuditEvent,
+)
 from app.models.forum import (
     ForumCategory,
     ForumThread,
@@ -80,6 +95,19 @@ __all__ = [
     "GameExperienceTemplate",
     "McpDiagnosticCase",
     "McpOpsTelemetry",
+    "BootstrapConfig",
+    "BootstrapPreset",
+    "AIProviderConfig",
+    "AIProviderCredential",
+    "AIModelConfig",
+    "AITaskRoute",
+    "SystemSettingRecord",
+    "ResolvedRuntimeConfigSnapshot",
+    "ProviderHealthCheck",
+    "AIUsageEvent",
+    "CostBudgetPolicy",
+    "CostRollup",
+    "SettingAuditEvent",
     "ForumCategory",
     "ForumThread",
     "ForumPost",

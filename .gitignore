@@ -45,6 +45,9 @@ backend/var/writers_room/
 /site/
 # Local documentation bundle (not source of truth)
 docs.zip
+# Accidental zip archives next to committed fy-suite hubs (never track)
+'fy'-suites/*.zip
+/'fy'-suites.rar
 /.state_tmp
 # Do not use blanket **/pre or **/post here: they hide `despaghettify/state/artifacts/**/pre|post/`,
 # which are required evidence paths per despaghettify/state/EXECUTION_GOVERNANCE.md.

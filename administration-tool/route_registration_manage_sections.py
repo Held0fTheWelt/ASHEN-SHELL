@@ -188,3 +188,40 @@ def register_manage_data_ops_and_platform_pages(app: Flask) -> None:
     def manage_mcp_operations():
         """MCP operations cockpit: overview, activity, diagnostics, logs, actions (backend admin APIs via proxy)."""
         return render_template("manage/mcp_operations.html")
+
+
+def register_manage_operational_governance_pages(app: Flask) -> None:
+    @app.route("/manage/operational-governance")
+    def manage_operational_governance():
+        """Operational settings and AI runtime governance dashboard."""
+        return render_template("manage/operational_governance.html", active_section="overview")
+
+    @app.route("/manage/operational-governance/bootstrap")
+    def manage_operational_governance_bootstrap():
+        """Bootstrap and trust-anchor operational controls."""
+        return render_template("manage/operational_governance.html", active_section="bootstrap")
+
+    @app.route("/manage/operational-governance/providers")
+    def manage_operational_governance_providers():
+        """Provider governance controls."""
+        return render_template("manage/operational_governance.html", active_section="providers")
+
+    @app.route("/manage/operational-governance/models")
+    def manage_operational_governance_models():
+        """Model governance controls."""
+        return render_template("manage/operational_governance.html", active_section="models")
+
+    @app.route("/manage/operational-governance/routes")
+    def manage_operational_governance_routes():
+        """Task route governance controls."""
+        return render_template("manage/operational_governance.html", active_section="routes")
+
+    @app.route("/manage/operational-governance/runtime")
+    def manage_operational_governance_runtime():
+        """Runtime mode and resolved config controls."""
+        return render_template("manage/operational_governance.html", active_section="runtime")
+
+    @app.route("/manage/operational-governance/costs")
+    def manage_operational_governance_costs():
+        """Cost, usage, and budget controls."""
+        return render_template("manage/operational_governance.html", active_section="costs")
