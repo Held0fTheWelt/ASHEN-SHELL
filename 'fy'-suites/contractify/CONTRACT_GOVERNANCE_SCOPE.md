@@ -43,6 +43,7 @@ Audit JSON **`conflicts[]`** rows use **`classification`**, **`severity`** (same
 | **`projection_anchor_mismatch`** | A projection’s **`contract_version_ref`** (16-hex OpenAPI SHA prefix) disagrees with the current on-disk OpenAPI prefix **or** a projection references a missing **`source_contract_id`**. | Refresh Postmanify output, fix projection metadata, or widen discovery so the anchor id exists. |
 | **`supersession_gap`** | ADR header **`Status:`** is **`Deprecated`** / **`Superseded`** but navigation cues to the successor are missing or thin. | Add explicit supersession links or ADR front-matter. |
 | **`superseded_still_referenced_as_current`** | A normative index table row is labelled **Active** / **Binding** but links to an ADR whose declared status is **superseded** / **deprecated** (row labelling heuristic). | Relabel the row (e.g. Retired/History) or replace the link with the current-truth anchor. |
+| **`lifecycle_projection_vs_retired_anchor`** | A projection’s **`source_contract_id`** resolves to a discovered contract whose lifecycle is **superseded** / **deprecated**. | Repoint projections to the successor anchor or mark the projection explicitly as historical. |
 
 Treat **`requires_human_review: true`** on any conflict as blocking silent automation, even when **`confidence`** is high.
 

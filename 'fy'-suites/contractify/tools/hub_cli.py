@@ -7,11 +7,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from contractify.tools.audit_pipeline import run_audit
-from contractify.tools.conflicts import detect_all_conflicts
-from contractify.tools.discovery import discover_contracts_and_projections
-from contractify.tools.models import automation_tier, serialise
-from contractify.tools.relations import extend_relations
+from contractify.tools.audit_pipeline import build_discover_payload, run_audit
 from contractify.tools.repo_paths import repo_root
 
 
@@ -30,23 +26,7 @@ def _print_global_help() -> None:
 
 def cmd_discover(args: argparse.Namespace) -> int:
     root = repo_root()
-    contracts, projections, relations = discover_contracts_and_projections(
-        root,
-        max_contracts=args.max_contracts,
-    )
-    cids = frozenset(c.id for c in contracts)
-    conflicts = detect_all_conflicts(root, projections, contract_ids=cids)
-    relations = extend_relations(root, contracts, projections, relations, conflicts=conflicts)
-    payload = {
-        "contracts": [serialise(c) for c in contracts],
-        "projections": [serialise(p) for p in projections],
-        "relations": [serialise(r) for r in relations],
-        "automation_tiers_sample": {
-            "0.95": automation_tier(0.95),
-            "0.75": automation_tier(0.75),
-            "0.4": automation_tier(0.4),
-        },
-    }
+    payload = build_discover_payload(root, max_contracts=args.max_contracts)
     text = json.dumps(payload, indent=2)
     if args.out:
         out = (root / args.out).resolve()

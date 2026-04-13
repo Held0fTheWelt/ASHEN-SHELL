@@ -19,7 +19,7 @@ def test_extend_relations_supersedes_and_conflict_shadow_with_conflicts() -> Non
     root = repo_paths.repo_root()
     contracts, projections, base = discover_contracts_and_projections(root, max_contracts=40)
     cids = frozenset(c.id for c in contracts)
-    conflicts = detect_all_conflicts(root, projections, contract_ids=cids)
+    conflicts = detect_all_conflicts(root, projections, contract_ids=cids, contracts=contracts)
     extended = extend_relations(root, contracts, projections, base, conflicts=conflicts)
     kinds = {(r.relation, r.source_id, r.target_id) for r in extended}
     assert any(k[0] == "supersedes" for k in kinds)

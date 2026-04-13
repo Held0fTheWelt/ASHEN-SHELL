@@ -13,6 +13,40 @@ from contractify.tools.models import automation_tier, serialise
 from contractify.tools.relations import extend_relations
 
 
+def build_discover_payload(
+    repo: Path,
+    *,
+    max_contracts: int = 30,
+    frozen_generated_at: str | None = None,
+) -> dict[str, Any]:
+    """Same JSON shape as ``hub_cli discover`` (conflict-aware relations)."""
+    repo = repo.resolve()
+    contracts, projections, relations = discover_contracts_and_projections(
+        repo,
+        max_contracts=max_contracts,
+    )
+    cids = frozenset(c.id for c in contracts)
+    conflicts = detect_all_conflicts(
+        repo,
+        projections,
+        contract_ids=cids,
+        contracts=contracts,
+    )
+    relations = extend_relations(repo, contracts, projections, relations, conflicts=conflicts)
+    return {
+        "generated_at": frozen_generated_at or datetime.now(timezone.utc).isoformat(),
+        "repo_root": str(repo),
+        "contracts": [serialise(c) for c in contracts],
+        "projections": [serialise(p) for p in projections],
+        "relations": [serialise(r) for r in relations],
+        "automation_tiers_sample": {
+            "0.95": automation_tier(0.95),
+            "0.75": automation_tier(0.75),
+            "0.4": automation_tier(0.4),
+        },
+    }
+
+
 def build_actionable_units(drifts: list[Any], conflicts: list[Any]) -> list[str]:
     """Human-oriented backlog strings (not raw counts)."""
     units: list[str] = []
@@ -31,6 +65,7 @@ def run_audit(
     repo: Path,
     *,
     max_contracts: int = 30,
+    frozen_generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Full machine-readable audit (restart-safe JSON contract)."""
     repo = repo.resolve()
@@ -40,7 +75,12 @@ def run_audit(
     )
     drifts = run_all_drifts(repo, contracts)
     cids = frozenset(c.id for c in contracts)
-    conflicts = detect_all_conflicts(repo, projections, contract_ids=cids)
+    conflicts = detect_all_conflicts(
+        repo,
+        projections,
+        contract_ids=cids,
+        contracts=contracts,
+    )
     relations = extend_relations(repo, contracts, projections, relations, conflicts=conflicts)
 
     # attach drift ids onto contracts (lightweight cross-index)
@@ -52,7 +92,7 @@ def run_audit(
         c.drift_signals = drift_by_contract.get(c.id, [])
 
     payload: dict[str, Any] = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": frozen_generated_at or datetime.now(timezone.utc).isoformat(),
         "repo_root": str(repo),
         "prework_reality_doc": "'fy'-suites/contractify/state/PREWORK_REPOSITORY_CONTRACT_REALITY.md",
         "governance_scope_doc": "'fy'-suites/contractify/CONTRACT_GOVERNANCE_SCOPE.md",
@@ -85,7 +125,13 @@ def run_audit(
     return payload
 
 
-def write_audit_json(repo: Path, out_path: Path, *, max_contracts: int = 30) -> None:
-    payload = run_audit(repo, max_contracts=max_contracts)
+def write_audit_json(
+    repo: Path,
+    out_path: Path,
+    *,
+    max_contracts: int = 30,
+    frozen_generated_at: str | None = None,
+) -> None:
+    payload = run_audit(repo, max_contracts=max_contracts, frozen_generated_at=frozen_generated_at)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

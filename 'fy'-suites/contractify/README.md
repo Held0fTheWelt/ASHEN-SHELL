@@ -9,7 +9,7 @@
 - **Projections** — audience/mode views (easy, AI-reading, specialist) that **must** trace back to anchors.
 - **Relations** — discovery emits core edges; [`contractify.tools.relations`](tools/relations.py) **`extend_relations()`** adds bounded **`references`**, **`indexes`**, **`implements`**, **`operationalizes`**, explicit ADR **`supersedes`**, workflow→OpenAPI **`validates`**, and index-ambiguity **`conflicts_with`** (plus fy-suite handoff cross-links) when evidence exists.
 - **Drift analysis (`driftify`)** — [`contractify.tools.drift_analysis`](tools/drift_analysis.py): deterministic checks first, heuristics labelled honestly.
-- **Conflicts** — [`contractify.tools.conflicts`](tools/conflicts.py) **`detect_all_conflicts()`**: duplicate normative index targets, ADR vocabulary buckets, projection↔OpenAPI fingerprint mismatches, orphan **`source_contract_id`**, Active/Binding index rows vs retired ADRs, and bounded lifecycle/supersession header gaps — each row carries **`classification`**, **`severity`**, **`kind`**, optional candidate buckets, and normative vs projection source lists.
+- **Conflicts** — [`contractify.tools.conflicts`](tools/conflicts.py) **`detect_all_conflicts()`**: duplicate normative index targets, ADR vocabulary buckets, projection↔OpenAPI fingerprint mismatches, orphan **`source_contract_id`**, projections pinning **superseded**/**deprecated** contract ids, Active/Binding index rows vs retired ADRs, and bounded lifecycle/supersession header gaps — each row carries **`classification`**, **`severity`**, **`kind`**, optional candidate buckets, and normative vs projection source lists.
 - **Versioning (operational)** — [`contractify.tools.versioning`](tools/versioning.py) parses **`info.version`** from OpenAPI and explicit **`Status:`** lines in ADR headers so `ContractRecord.version` / lifecycle **`status`** reflect declared anchors (not inferred code behaviour).
 
 ## What Contractify is not
@@ -66,6 +66,7 @@ Heuristic findings use **low** severity by default; deterministic OpenAPI hash m
 | Two+ ADRs hit the same bounded vocabulary bucket | No (keyword bucket) | `normative_vocabulary_overlap` |
 | Projection `contract_version_ref` (16-hex OpenAPI prefix) ≠ current file SHA prefix | Yes | `projection_anchor_mismatch` |
 | Projection `source_contract_id` not present in the discovery inventory for this pass | Yes (inventory) | `projection_anchor_mismatch` (kind: `projection_to_anchor_mismatch`) |
+| Projection pins a **superseded** / **deprecated** discovered contract id | Inventory + lifecycle | `lifecycle_projection_vs_retired_anchor` |
 | `Status: Deprecated/Superseded` in ADR head without supersession navigation cues | No | `supersession_gap` |
 | Normative index row reads **Active**/**Binding** but links to a **superseded**/**deprecated** ADR | Row heuristic | `superseded_still_referenced_as_current` |
 
@@ -108,8 +109,9 @@ python -m contractify.tools discover --max-contracts 25 --out "'fy'-suites/contr
 | [`state/PREWORK_REPOSITORY_CONTRACT_REALITY.md`](state/PREWORK_REPOSITORY_CONTRACT_REALITY.md) | Human snapshot of pre-suite reality |
 | [`state/COMPLETION_PASS_STATE.md`](state/COMPLETION_PASS_STATE.md) | Completion / hardening pass record |
 | [`state/FINALIZATION_PASS_2026-04-13.md`](state/FINALIZATION_PASS_2026-04-13.md) | Final bounded completion: baseline, slices, evidence, honest limits |
+| [`state/LAST_MILE_CLOSURE_2026-04-13.md`](state/LAST_MILE_CLOSURE_2026-04-13.md) | Last-mile closure: committed report fixtures, projection↔retired signal, evidence alignment |
 | [`examples/`](examples/) | Committed JSON **shape** samples + [`examples/README.md`](examples/README.md) |
-| [`reports/`](reports/) | JSON exports (local `*.json` gitignored) + [`reports/README.md`](reports/README.md) |
+| [`reports/`](reports/) | Ephemeral JSON at `reports/*.json` (gitignored) + [`reports/README.md`](reports/README.md) + tracked [`reports/committed/`](reports/committed/) hermetic **discover/audit** fixtures |
 
 ## Cursor skills
 
@@ -130,7 +132,7 @@ python -m pytest "'fy'-suites/contractify/tools/tests" -q
 
 **Optional CLI override:** set ``CONTRACTIFY_REPO_ROOT`` to an existing directory that contains a hub ``pyproject.toml`` marker for ``world-of-shadows-hub`` so ``python -m contractify.tools …`` resolves the repo without walking from the installed package path.
 
-**Committed samples:** ``examples/contract_discovery.sample.json`` and ``examples/contract_audit.sample.json`` illustrate JSON shape; ``tools/tests/test_example_artifacts.py`` guards compatibility when fields change.
+**Committed samples:** ``examples/contract_discovery.sample.json`` and ``examples/contract_audit.sample.json`` illustrate JSON shape; ``tools/tests/test_example_artifacts.py`` guards compatibility when fields change. **Full hermetic payloads:** ``reports/committed/*.hermetic-fixture.json`` (regenerate via ``python -m contractify.tools.freeze_committed_reports``); ``tools/tests/test_committed_reports.py`` guards substance.
 
 ## Extending the suite
 

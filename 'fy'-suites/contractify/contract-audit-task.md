@@ -42,6 +42,7 @@ This is the **analysis** counterpart to [`contract-solve-task.md`](contract-solv
 ## Outputs (verification artefacts)
 
 - `reports/contract_audit.json` (or slice-local path).
+- For **reviewable frozen payloads** matching the hermetic tree, see [`reports/committed/`](reports/committed/) (regenerate with `python -m contractify.tools.freeze_committed_reports`).
 - Updated **CG-*** rows in `contract_governance_input.md` when work is scheduled.
 
 ## Completion (analysis slice)

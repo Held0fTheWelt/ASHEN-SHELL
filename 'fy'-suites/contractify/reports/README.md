@@ -1,10 +1,10 @@
 # Contractify `reports/`
 
-This directory holds **machine-generated JSON** from `discover` / `audit` runs. Only **`.gitkeep`** is committed so local exports do not pollute git history.
+This directory holds **machine-generated JSON** from `discover` / `audit` runs. **Ephemeral** exports stay local; **reviewable** full payloads from the hermetic fixture live under [`committed/`](committed/README.md).
 
-## Why it looks empty
+## Ephemeral vs committed
 
-Root [`.gitignore`](../../../.gitignore) ignores `**/contractify/reports/*.json`. Treat anything you drop here as **ephemeral evidence** unless you rename it and store it elsewhere (for example a release bundle or ticket attachment).
+Root [`.gitignore`](../../../.gitignore) ignores `**/contractify/reports/*.json` **only for files directly under** `reports/` (single path segment). The subdirectory [`committed/`](committed/) holds **tracked** `*.hermetic-fixture.json` files — regenerate with [`../tools/freeze_committed_reports.py`](../tools/freeze_committed_reports.py).
 
 ## Regenerate locally
 
@@ -17,4 +17,4 @@ python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/
 
 ## Committed shape samples
 
-For **small, stable JSON shapes** used in docs and CI, see [`../examples/`](../examples/) (`*.sample.json`). Refresh those when the payload schema changes; keep `reports/` for full-fidelity local runs only.
+For **small** schema samples see [`../examples/`](../examples/) (`*.sample.json`). For **full** discover/audit payloads matching the hermetic test tree, see [`committed/`](committed/).

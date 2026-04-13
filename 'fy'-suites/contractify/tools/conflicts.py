@@ -12,7 +12,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from contractify.tools.discovery import NORMATIVE_INDEX, OPENAPI_DEFAULT, POSTMAN_MANIFEST
-from contractify.tools.models import ConflictFinding, ProjectionRecord
+from contractify.tools.models import ConflictFinding, ContractRecord, ProjectionRecord
 from contractify.tools.versioning import adr_declared_status, openapi_sha256_prefix
 
 # Markdown table / inline link targets from normative index (same cell patterns as human editors use).
@@ -239,6 +239,43 @@ def detect_active_index_row_links_retired_adr(repo: Path) -> list[ConflictFindin
     return out
 
 
+def detect_projection_pins_retired_source_contract(
+    projections: list[ProjectionRecord],
+    contract_status_by_id: dict[str, str],
+) -> list[ConflictFinding]:
+    """Projection declares a ``source_contract_id`` whose discovered lifecycle is retired (bounded inventory check)."""
+    if not contract_status_by_id:
+        return []
+    out: list[ConflictFinding] = []
+    for pr in projections:
+        sid = (pr.source_contract_id or "").strip()
+        if not sid:
+            continue
+        st = contract_status_by_id.get(sid)
+        if st not in ("superseded", "deprecated"):
+            continue
+        out.append(
+            ConflictFinding(
+                id=f"CNF-PRJ-RET-{hashlib.sha256((pr.id + sid).encode()).hexdigest()[:10]}",
+                conflict_type="projection_pins_retired_contract",
+                summary=f"Projection {pr.path} pins source_contract_id={sid!r} but that contract's lifecycle is {st!r} "
+                "— verify whether the projection should migrate to the successor anchor.",
+                sources=[pr.path, sid],
+                confidence=0.85,
+                requires_human_review=True,
+                notes="History/museum projections may be intentional; this is a visibility signal, not auto-fail.",
+                classification="lifecycle_projection_vs_retired_anchor",
+                normative_sources=[sid],
+                observed_or_projection_sources=[pr.path],
+                kind="stale_projection_vs_lifecycle_anchor",
+                severity="high",
+                normative_candidates=[sid],
+                projection_candidates=[pr.path],
+            )
+        )
+    return out
+
+
 def detect_projection_orphan_source_contract(
     projections: list[ProjectionRecord],
     contract_ids: frozenset[str],
@@ -278,6 +315,7 @@ def detect_all_conflicts(
     projections: list[ProjectionRecord],
     *,
     contract_ids: frozenset[str] | None = None,
+    contracts: list[ContractRecord] | None = None,
 ) -> list[ConflictFinding]:
     """Run all conflict passes; de-duplicate by ``id``."""
     all_c: list[ConflictFinding] = []
@@ -286,6 +324,13 @@ def detect_all_conflicts(
     all_c.extend(detect_projection_fingerprint_mismatch(repo, projections))
     all_c.extend(detect_deprecated_adr_without_supersession_link(repo))
     all_c.extend(detect_active_index_row_links_retired_adr(repo))
+    if contracts is not None:
+        all_c.extend(
+            detect_projection_pins_retired_source_contract(
+                projections,
+                {c.id: c.status for c in contracts},
+            )
+        )
     if contract_ids:
         all_c.extend(detect_projection_orphan_source_contract(projections, contract_ids))
     seen: set[str] = set()

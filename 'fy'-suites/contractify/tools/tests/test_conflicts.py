@@ -9,6 +9,7 @@ from contractify.tools.conflicts import (
     detect_duplicate_normative_index_targets,
     detect_projection_fingerprint_mismatch,
     detect_projection_orphan_source_contract,
+    detect_projection_pins_retired_source_contract,
 )
 from contractify.tools.models import ProjectionRecord
 
@@ -31,6 +32,27 @@ def test_active_index_row_vs_retired_adr_fixture() -> None:
     conflicts = detect_all_conflicts(root, [])
     life = [c for c in conflicts if c.classification == "superseded_still_referenced_as_current"]
     assert life, "expected Active/Binding row vs retired ADR signal"
+
+
+def test_projection_pins_retired_source_contract_unit() -> None:
+    pr = ProjectionRecord(
+        id="PRJ-RET",
+        title="t",
+        path="z.md",
+        audience="developer",
+        mode="easy",
+        source_contract_id="CTR-ADR_RETIRED",
+        anchor_location="x",
+        authoritative=False,
+        confidence=0.5,
+        evidence="unit",
+    )
+    hits = detect_projection_pins_retired_source_contract(
+        [pr],
+        {"CTR-ADR_RETIRED": "superseded"},
+    )
+    assert len(hits) == 1
+    assert hits[0].classification == "lifecycle_projection_vs_retired_anchor"
 
 
 def test_projection_orphan_source_contract_unit() -> None:

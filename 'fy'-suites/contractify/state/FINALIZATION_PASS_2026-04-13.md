@@ -2,6 +2,8 @@
 
 **Date:** 2026-04-13. **Scope:** last bounded completion pass for the existing hub (no greenfield rewrite).
 
+**Last-mile follow-up:** committed full JSON under [`../reports/committed/`](../reports/committed/) + closure note [`LAST_MILE_CLOSURE_2026-04-13.md`](LAST_MILE_CLOSURE_2026-04-13.md).
+
 ## 1. Verified baseline (before this pass)
 
 | Area | Baseline |
