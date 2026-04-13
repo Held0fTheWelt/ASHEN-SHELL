@@ -12,8 +12,12 @@ emits English messages only.
 
 Examples:
 
+    # Preferred (editable install): same flags via the hub CLI
+    python -m docify.tools audit --json --out doc_audit.json
+
     # Default scan: backend, world-engine, ai_stack, frontend, administration-tool,
-    # story_runtime_core, 'fy'-suites/despaghettify, postmanify, tools/mcp_server
+    # story_runtime_core, 'fy'-suites/despaghettify, postmanify, tools/mcp_server,
+    # 'fy'-suites/docify (self-governance slice included)
     python "./'fy'-suites/docify/tools/python_documentation_audit.py"
 
     # Machine-readable backlog for an agent
@@ -68,6 +72,7 @@ DEFAULT_RELATIVE_ROOTS: tuple[str, ...] = (
     "story_runtime_core",
     "'fy'-suites/despaghettify",
     "'fy'-suites/postmanify",
+    "'fy'-suites/docify",
     "tools/mcp_server",
 )
 
@@ -149,12 +154,14 @@ class _DocstringAuditor(ast.NodeVisitor):
         rel_path: str,
         include_private: bool,
     ) -> None:
+        """Configure the visitor for one module path."""
         self._rel_path = rel_path
         self._include_private = include_private
         self.findings: list[Finding] = []
         self._function_depth = 0
 
     def visit_Module(self, node: ast.Module) -> None:
+        """Record missing module docstrings and recurse."""
         doc = ast.get_docstring(node, clean=False)
         if doc is None or not doc.strip():
             self.findings.append(
@@ -169,6 +176,7 @@ class _DocstringAuditor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Record missing class docstrings for in-scope classes and recurse."""
         if not self._include_private and _is_private_name(node.name):
             self.generic_visit(node)
             return
@@ -186,9 +194,11 @@ class _DocstringAuditor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Inspect top-level functions and class members for usable docstrings."""
         self._visit_functionlike(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        """Async variant of ``visit_FunctionDef``."""
         self._visit_functionlike(node)
 
     def _visit_functionlike(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
@@ -196,12 +206,22 @@ class _DocstringAuditor(ast.NodeVisitor):
             # Skip nested helpers; focus backlog on module and class members.
             self.generic_visit(node)
             return
+        parent = getattr(node, "parent", None)
+        if (
+            isinstance(parent, ast.ClassDef)
+            and parent.name.startswith("_")
+            and node.name.startswith("visit_")
+        ):
+            # Private ``ast.NodeVisitor`` helpers: docstrings are optional noise here.
+            self._function_depth += 1
+            self.generic_visit(node)
+            self._function_depth -= 1
+            return
         if not self._include_private and _is_private_name(node.name):
             self.generic_visit(node)
             return
         doc = ast.get_docstring(node, clean=False)
         if doc is None or not doc.strip():
-            parent = getattr(node, "parent", None)
             kind = "function" if isinstance(parent, ast.Module) else "method"
             self.findings.append(
                 Finding(
@@ -254,6 +274,7 @@ class _GoogleStyleDocstringAuditor(ast.NodeVisitor):
     """Optional checks: PEP 8 docstring width, Google ``Args`` / ``Returns`` sections."""
 
     def __init__(self, *, rel_path: str, include_private: bool, max_line: int) -> None:
+        """Configure Google-style layout checks for one module path."""
         self._rel_path = rel_path
         self._include_private = include_private
         self.findings: list[Finding] = []
@@ -261,12 +282,14 @@ class _GoogleStyleDocstringAuditor(ast.NodeVisitor):
         self._max_line = max_line
 
     def visit_Module(self, node: ast.Module) -> None:
+        """Check module docstring width when present."""
         doc = ast.get_docstring(node, clean=False)
         if doc and doc.strip():
             self._check_line_lengths(kind="module", name="<module>", line=1, doc=doc)
         self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Check class docstring width when present."""
         if not self._include_private and _is_private_name(node.name):
             self.generic_visit(node)
             return
@@ -276,14 +299,26 @@ class _GoogleStyleDocstringAuditor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Inspect callables for Google layout hints."""
         self._visit_functionlike(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        """Async variant of ``visit_FunctionDef``."""
         self._visit_functionlike(node)
 
     def _visit_functionlike(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         if self._function_depth > 0:
             self.generic_visit(node)
+            return
+        parent = getattr(node, "parent", None)
+        if (
+            isinstance(parent, ast.ClassDef)
+            and parent.name.startswith("_")
+            and node.name.startswith("visit_")
+        ):
+            self._function_depth += 1
+            self.generic_visit(node)
+            self._function_depth -= 1
             return
         if not self._include_private and _is_private_name(node.name):
             self.generic_visit(node)
@@ -295,7 +330,6 @@ class _GoogleStyleDocstringAuditor(ast.NodeVisitor):
             self._function_depth -= 1
             return
 
-        parent = getattr(node, "parent", None)
         kind = "function" if isinstance(parent, ast.Module) else "method"
         self._check_line_lengths(kind=kind, name=node.name, line=int(node.lineno), doc=doc)
         self._check_google_sections(node, kind=kind, doc=doc)
@@ -450,6 +484,7 @@ def _emit_json(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """CLI entry for the documentation audit (also reachable as ``docify audit``)."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--root",

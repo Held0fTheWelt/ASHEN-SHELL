@@ -4,24 +4,14 @@ name: Docify skill paths
 on:
   pull_request:
     paths:
-      - "'fy'-suites/docify/superpowers/**"
-      - "'fy'-suites/docify/tools/sync_docify_skills.py"
-      - "'fy'-suites/docify/tools/validate_docify_skill_paths.py"
-      - "'fy'-suites/docify/documentation-audit-task.md"
-      - "'fy'-suites/docify/documentation-docstring-synthesize-task.md"
-      - "'fy'-suites/docify/tools/python_docstring_synthesize.py"
-      - "'fy'-suites/docify/README.md"
+      - "'fy'-suites/docify/**"
+      - "pyproject.toml"
       - ".github/workflows/docify-skills-validate.yml"
   push:
     branches: [main, master]
     paths:
-      - "'fy'-suites/docify/superpowers/**"
-      - "'fy'-suites/docify/tools/sync_docify_skills.py"
-      - "'fy'-suites/docify/tools/validate_docify_skill_paths.py"
-      - "'fy'-suites/docify/documentation-audit-task.md"
-      - "'fy'-suites/docify/documentation-docstring-synthesize-task.md"
-      - "'fy'-suites/docify/tools/python_docstring_synthesize.py"
-      - "'fy'-suites/docify/README.md"
+      - "'fy'-suites/docify/**"
+      - "pyproject.toml"
       - ".github/workflows/docify-skills-validate.yml"
 
 jobs:
@@ -29,7 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install editable hub package (Docify imports)
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e .
+          python -m pip install pytest
       - name: Validate Docify skill markdown paths
         run: python "./'fy'-suites/docify/tools/validate_docify_skill_paths.py"
       - name: Check Cursor Docify skill copies match hub
         run: python "./'fy'-suites/docify/tools/sync_docify_skills.py" --check
+      - name: Docify unit tests
+        run: python -m pytest "'fy'-suites/docify/tools/tests" -q

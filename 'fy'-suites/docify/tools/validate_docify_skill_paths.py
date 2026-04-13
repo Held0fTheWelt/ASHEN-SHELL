@@ -78,6 +78,7 @@ def collect_paths(md_path: Path, text: str) -> list[tuple[str, str]]:
 
 
 def main() -> int:
+    """Validate repo-relative targets referenced from Docify router skills."""
     if not SCAN_ROOT.is_dir():
         print(f"Missing {SCAN_ROOT}", file=sys.stderr)
         return 2

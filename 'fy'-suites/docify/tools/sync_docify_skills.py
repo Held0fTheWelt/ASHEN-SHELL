@@ -25,6 +25,7 @@ DST_ROOT = REPO_ROOT / ".cursor" / "skills"
 
 
 def sync(*, check_only: bool) -> int:
+    """Copy Docify router skills to ``.cursor/skills`` or verify they match."""
     if not SRC_ROOT.is_dir():
         print(f"Missing source: {SRC_ROOT}", file=sys.stderr)
         return 2
@@ -58,6 +59,7 @@ def sync(*, check_only: bool) -> int:
 
 
 def main() -> int:
+    """CLI entry for skill sync / drift check."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument(
         "--check",

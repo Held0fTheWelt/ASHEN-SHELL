@@ -15,6 +15,7 @@ dependencies = [
 despag-check = "despaghettify.tools.hub_cli:main"
 wos-despag = "despaghettify.tools.hub_cli:main"
 postmanify = "postmanify.tools.cli:main"
+docify = "docify.tools.hub_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["'fy'-suites"]
