@@ -28,6 +28,14 @@ _ENTITY_BUCKETS: tuple[str, ...] = (
 
 
 def _empty_state() -> dict[str, Any]:
+    """``_empty_state`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "schema_version": RESEARCH_STORE_SCHEMA_VERSION,
         "updated_at": utc_now_iso(),
@@ -45,6 +53,17 @@ def _empty_state() -> dict[str, Any]:
 
 
 def _to_plain_dict(record: Any) -> dict[str, Any]:
+    """``_to_plain_dict`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        record: ``record`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if hasattr(record, "to_dict") and callable(record.to_dict):
         value = record.to_dict()
         if isinstance(value, dict):
@@ -59,6 +78,15 @@ def _to_plain_dict(record: Any) -> dict[str, Any]:
 
 
 def _ensure_required_fields(record: dict[str, Any], required_fields: tuple[str, ...]) -> None:
+    """``_ensure_required_fields`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        record: ``record`` (dict[str, Any]); meaning follows the type and call sites.
+        required_fields: ``required_fields`` (tuple[str,
+            ...]); meaning follows the type and call sites.
+    """
     for field in required_fields:
         value = record.get(field)
         if value is None:
@@ -75,15 +103,38 @@ class ResearchStore:
     """Persistent structured store used by all research MVP phases."""
 
     def __init__(self, storage_path: Path) -> None:
+        """``__init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            storage_path: ``storage_path`` (Path); meaning follows the type and call sites.
+        """
         self.storage_path = storage_path
         self._state: dict[str, Any] = _empty_state()
         self._load()
 
     @classmethod
     def from_repo_root(cls, repo_root: Path) -> "ResearchStore":
+        """``from_repo_root`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            repo_root: ``repo_root`` (Path); meaning follows the type and call sites.
+        
+        Returns:
+            ResearchStore:
+                Returns a value of type ``ResearchStore``; see the function body for structure, error paths, and sentinels.
+        """
         return cls(repo_root / ".wos" / "research" / "research_store.json")
 
     def _load(self) -> None:
+        """Describe what ``_load`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        """
         if not self.storage_path.exists():
             self._state = _empty_state()
             return
@@ -105,6 +156,11 @@ class ResearchStore:
         self._state = state
 
     def _save(self) -> None:
+        """Describe what ``_save`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        """
         self._state["updated_at"] = utc_now_iso()
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         payload = json.dumps(self._state, ensure_ascii=True, indent=2, sort_keys=True)
@@ -131,6 +187,18 @@ class ResearchStore:
             raise
 
     def next_id(self, prefix: str) -> str:
+        """Describe what ``next_id`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            prefix: ``prefix`` (str); meaning follows the type and call sites.
+        
+        Returns:
+            str:
+                Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+        """
         counters = self._state["counters"]
         current = int(counters.get(prefix, 0)) + 1
         counters[prefix] = current
@@ -138,6 +206,21 @@ class ResearchStore:
         return f"{prefix}_{current:06d}"
 
     def _upsert(self, bucket: str, record: Any, *, id_field: str, required_fields: tuple[str, ...]) -> dict[str, Any]:
+        """Describe what ``_upsert`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            bucket: ``bucket`` (str); meaning follows the type and call sites.
+            record: ``record`` (Any); meaning follows the type and call sites.
+            id_field: ``id_field`` (str); meaning follows the type and call sites.
+            required_fields: ``required_fields`` (tuple[str, ...]); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         plain = _to_plain_dict(record)
         _ensure_required_fields(plain, required_fields)
         self._validate_record_references(bucket=bucket, record=plain)
@@ -149,6 +232,15 @@ class ResearchStore:
         return plain
 
     def _validate_record_references(self, *, bucket: str, record: dict[str, Any]) -> None:
+        """Describe what ``_validate_record_references`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            bucket: ``bucket`` (str); meaning follows the type and call sites.
+            record: ``record`` (dict[str, Any]); meaning follows the type and call sites.
+        """
         if bucket == "anchors":
             source_id = record.get("source_id")
             if source_id not in self._state["sources"]:
@@ -189,9 +281,33 @@ class ResearchStore:
                     raise ValueError(f"unknown_claim_reference:{claim_id}")
 
     def _list(self, bucket: str) -> list[dict[str, Any]]:
+        """Describe what ``_list`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            bucket: ``bucket`` (str); meaning follows the type and call sites.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return [self._state[bucket][key] for key in sorted(self._state[bucket].keys())]
 
     def upsert_source(self, record: Any) -> dict[str, Any]:
+        """``upsert_source`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "sources",
             record,
@@ -210,6 +326,17 @@ class ResearchStore:
         )
 
     def upsert_anchor(self, record: Any) -> dict[str, Any]:
+        """``upsert_anchor`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "anchors",
             record,
@@ -226,6 +353,17 @@ class ResearchStore:
         )
 
     def upsert_aspect(self, record: Any) -> dict[str, Any]:
+        """``upsert_aspect`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "aspects",
             record,
@@ -243,6 +381,18 @@ class ResearchStore:
         )
 
     def upsert_exploration_node(self, record: Any) -> dict[str, Any]:
+        """Describe what ``upsert_exploration_node`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "exploration_nodes",
             record,
@@ -262,6 +412,18 @@ class ResearchStore:
         )
 
     def upsert_exploration_edge(self, record: Any) -> dict[str, Any]:
+        """Describe what ``upsert_exploration_edge`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "exploration_edges",
             record,
@@ -270,6 +432,17 @@ class ResearchStore:
         )
 
     def upsert_claim(self, record: Any) -> dict[str, Any]:
+        """``upsert_claim`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "claims",
             record,
@@ -289,6 +462,17 @@ class ResearchStore:
         )
 
     def upsert_issue(self, record: Any) -> dict[str, Any]:
+        """``upsert_issue`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "issues",
             record,
@@ -305,6 +489,17 @@ class ResearchStore:
         )
 
     def upsert_proposal(self, record: Any) -> dict[str, Any]:
+        """``upsert_proposal`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "proposals",
             record,
@@ -322,6 +517,17 @@ class ResearchStore:
         )
 
     def upsert_run(self, record: Any) -> dict[str, Any]:
+        """``upsert_run`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            record: ``record`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._upsert(
             "runs",
             record,
@@ -339,40 +545,160 @@ class ResearchStore:
         )
 
     def list_sources(self) -> list[dict[str, Any]]:
+        """``list_sources`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("sources")
 
     def list_anchors(self) -> list[dict[str, Any]]:
+        """``list_anchors`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("anchors")
 
     def list_aspects(self) -> list[dict[str, Any]]:
+        """``list_aspects`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("aspects")
 
     def list_exploration_nodes(self) -> list[dict[str, Any]]:
+        """Describe what ``list_exploration_nodes`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("exploration_nodes")
 
     def list_exploration_edges(self) -> list[dict[str, Any]]:
+        """Describe what ``list_exploration_edges`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("exploration_edges")
 
     def list_claims(self) -> list[dict[str, Any]]:
+        """``list_claims`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("claims")
 
     def list_issues(self) -> list[dict[str, Any]]:
+        """``list_issues`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("issues")
 
     def list_proposals(self) -> list[dict[str, Any]]:
+        """``list_proposals`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("proposals")
 
     def list_runs(self) -> list[dict[str, Any]]:
+        """``list_runs`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._list("runs")
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
+        """Describe what ``get_run`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            run_id: ``run_id`` (str); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any] | None:
+                Returns a value of type ``dict[str, Any] |
+                None``; see the function body for structure, error paths, and sentinels.
+        """
         run = self._state["runs"].get(run_id)
         return dict(run) if isinstance(run, dict) else None
 
     def get_source(self, source_id: str) -> dict[str, Any] | None:
+        """``get_source`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            source_id: ``source_id`` (str); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any] | None:
+                Returns a value of type ``dict[str, Any] |
+                None``; see the function body for structure, error paths, and sentinels.
+        """
         source = self._state["sources"].get(source_id)
         return dict(source) if isinstance(source, dict) else None
 
     def get_claim(self, claim_id: str) -> dict[str, Any] | None:
+        """``get_claim`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            claim_id: ``claim_id`` (str); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any] | None:
+                Returns a value of type ``dict[str, Any] |
+                None``; see the function body for structure, error paths, and sentinels.
+        """
         claim = self._state["claims"].get(claim_id)
         return dict(claim) if isinstance(claim, dict) else None

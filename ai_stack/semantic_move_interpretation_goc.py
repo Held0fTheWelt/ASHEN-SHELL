@@ -1,6 +1,9 @@
-"""Deterministic semantic move interpretation for GoC — not a rename of keyword heuristics.
+"""
+Deterministic semantic move interpretation for GoC — not a rename of
+keyword heuristics.
 
-Uses normalization, interpreted_input signals, feature synsets, and explicit priority rules.
+Uses normalization, interpreted_input signals, feature synsets, and
+explicit priority rules.
 """
 
 from __future__ import annotations
@@ -114,13 +117,37 @@ _ESCALATE_SYN = (
 
 
 def _normalize(text: str) -> str:
+    """Describe what ``_normalize`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     s = unicodedata.normalize("NFC", text or "").lower()
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
 
 def _contains_syn(text: str, syn: tuple[str, ...]) -> bool:
-    """Whole-phrase or substring match without first-hit keyword racing between synsets."""
+    """Whole-phrase or substring match without first-hit keyword racing
+    between synsets.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+        syn: ``syn`` (tuple[str, ...]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     for phrase in syn:
         if phrase in text:
             return True
@@ -128,6 +155,17 @@ def _contains_syn(text: str, syn: tuple[str, ...]) -> bool:
 
 
 def _named_target_hint(text: str) -> str | None:
+    """``_named_target_hint`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str | None:
+            Returns a value of type ``str | None``; see the function body for structure, error paths, and sentinels.
+    """
     if "annette" in text:
         return "annette_reille"
     if "alain" in text:
@@ -147,7 +185,22 @@ def interpret_goc_semantic_move(
     interpreted_move: dict[str, Any] | None,
     prior_continuity_classes: list[str] | None = None,
 ) -> SemanticMoveRecord:
-    """Produce SemanticMoveRecord; deterministic for fixed inputs."""
+    """Produce SemanticMoveRecord; deterministic for fixed inputs.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        interpreted_input: ``interpreted_input`` (dict[str, Any] | None); meaning follows the type and call sites.
+        interpreted_move: ``interpreted_move`` (dict[str,
+            Any] | None); meaning follows the type and call sites.
+        prior_continuity_classes: ``prior_continuity_classes`` (list[str] | None); meaning follows the type and call sites.
+    
+    Returns:
+        SemanticMoveRecord:
+            Returns a value of type ``SemanticMoveRecord``; see the function body for structure, error paths, and sentinels.
+    """
     trace: list[InterpretationTraceItem] = []
     trace.append(InterpretationTraceItem(step_id="normalize_input", detail_code="start"))
 
@@ -225,5 +278,17 @@ def interpret_goc_semantic_move(
 
 
 def semantic_move_fingerprint(record: SemanticMoveRecord) -> str:
+    """Describe what ``semantic_move_fingerprint`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        record: ``record`` (SemanticMoveRecord); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     payload = f"{record.move_type}|{record.social_move_family}|{record.directness}|{record.pressure_tactic or ''}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]

@@ -1,4 +1,7 @@
-"""Deterministic CharacterMind construction from canonical YAML (no LLM fill)."""
+"""
+Deterministic CharacterMind construction from canonical YAML (no LLM
+fill).
+"""
 
 from __future__ import annotations
 
@@ -23,6 +26,18 @@ _TACTICAL_FROM_FORMAL: dict[str, str] = {
 
 
 def _derive_tactical_posture(formal_role: str) -> tuple[str, str]:
+    """Describe what ``_derive_tactical_posture`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        formal_role: ``formal_role`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, str]:
+            Returns a value of type ``tuple[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     fr = formal_role.strip().lower() if formal_role else ""
     for key, tact in _TACTICAL_FROM_FORMAL.items():
         if key in fr.replace(",", " ").replace("'", " "):
@@ -39,6 +54,17 @@ def _derive_tactical_posture(formal_role: str) -> tuple[str, str]:
 
 
 def _bias_for_phase(phase_key: str) -> tuple[str, str]:
+    """``_bias_for_phase`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        phase_key: ``phase_key`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, str]:
+            Returns a value of type ``tuple[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     if phase_key == "phase_1_polite_opening":
         return "civility_first", "guidance_phase_derived"
     if phase_key == "phase_3_faction_shifts":
@@ -54,7 +80,21 @@ def build_character_mind_records_for_goc(
     active_character_keys: list[str],
     current_scene_id: str,
 ) -> list[CharacterMindRecord]:
-    """Build mind records for listed character keys (typically primary responder + scene anchors)."""
+    """Build mind records for listed character keys (typically primary
+    responder + scene anchors).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        yaml_slice: ``yaml_slice`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+        active_character_keys: ``active_character_keys`` (list[str]); meaning follows the type and call sites.
+        current_scene_id: ``current_scene_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        list[CharacterMindRecord]:
+            Returns a value of type ``list[CharacterMindRecord]``; see the function body for structure, error paths, and sentinels.
+    """
     voice_root: dict[str, Any] = {}
     chars_root: dict[str, Any] = {}
     if yaml_slice:

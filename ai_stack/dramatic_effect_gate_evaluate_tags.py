@@ -1,4 +1,7 @@
-"""Tag clusters and scene-function satisfaction for dramatic effect gate (DS-008)."""
+"""
+Tag clusters and scene-function satisfaction for dramatic effect gate
+(DS-008).
+"""
 
 from __future__ import annotations
 
@@ -48,11 +51,37 @@ _SCENE_FUNCTION_TAG_GROUPS: dict[str, tuple[tuple[str, ...], ...]] = {
 
 
 def tag_active(low: str, tag: str) -> bool:
+    """Describe what ``tag_active`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        low: ``low`` (str); meaning follows the type and call sites.
+        tag: ``tag`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     clusters = _EFFECT_TAG_CLUSTERS.get(tag, ())
     return any(c in low for c in clusters)
 
 
 def scene_function_tags_satisfied(low: str, scene_function: str) -> bool:
+    """Describe what ``scene_function_tags_satisfied`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        low: ``low`` (str); meaning follows the type and call sites.
+        scene_function: ``scene_function`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     groups = _SCENE_FUNCTION_TAG_GROUPS.get(scene_function)
     if not groups:
         return True

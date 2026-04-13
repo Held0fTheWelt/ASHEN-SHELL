@@ -1,4 +1,7 @@
-"""Bounded exploration — Re-Export; Implementierung in research_exploration_bounded_core (DS-022)."""
+"""
+Bounded exploration — Re-Export; Implementierung in
+research_exploration_bounded_core (DS-022).
+"""
 
 from __future__ import annotations
 

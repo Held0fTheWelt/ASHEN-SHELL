@@ -17,6 +17,17 @@ from ai_stack.goc_frozen_vocab import GOC_MODULE_ID
 
 
 def outcome_not_goc(ctx: DramaticEffectEvaluationContext) -> DramaticEffectGateOutcome | None:
+    """``outcome_not_goc`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        ctx: ``ctx`` (DramaticEffectEvaluationContext); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome | None:
+            Returns a value of type ``DramaticEffectGateOutcome | None``; see the function body for structure, error paths, and sentinels.
+    """
     if ctx.module_id != GOC_MODULE_ID:
         return DramaticEffectGateOutcome(
             gate_result=DramaticEffectGateResult.not_supported,
@@ -29,7 +40,18 @@ def outcome_not_goc(ctx: DramaticEffectEvaluationContext) -> DramaticEffectGateO
 
 
 def outcome_from_legacy(reason: str) -> DramaticEffectGateOutcome:
-    """Legacy structural/meta failures map to empty-fluency style hard reject for gate_result."""
+    """Legacy structural/meta failures map to empty-fluency style hard
+    reject for gate_result.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        reason: ``reason`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome:
+            Returns a value of type ``DramaticEffectGateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     return DramaticEffectGateOutcome(
         gate_result=DramaticEffectGateResult.rejected_empty_fluency,
         rejection_reasons=[reason],
@@ -47,6 +69,17 @@ def outcome_from_legacy(reason: str) -> DramaticEffectGateOutcome:
 
 
 def try_legacy_alignment(ctx: DramaticEffectEvaluationContext) -> DramaticEffectGateOutcome | None:
+    """``try_legacy_alignment`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        ctx: ``ctx`` (DramaticEffectEvaluationContext); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome | None:
+            Returns a value of type ``DramaticEffectGateOutcome | None``; see the function body for structure, error paths, and sentinels.
+    """
     legacy_reason = dramatic_alignment_legacy_fallback_only(
         selected_scene_function=ctx.selected_scene_function,
         pacing_mode=ctx.pacing_mode,
@@ -61,6 +94,19 @@ def try_legacy_alignment(ctx: DramaticEffectEvaluationContext) -> DramaticEffect
 def try_off_scope_containment_mismatch(
     ctx: DramaticEffectEvaluationContext, *, sf: str
 ) -> DramaticEffectGateOutcome | None:
+    """Describe what ``try_off_scope_containment_mismatch`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        ctx: ``ctx`` (DramaticEffectEvaluationContext); meaning follows the type and call sites.
+        sf: ``sf`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome | None:
+            Returns a value of type ``DramaticEffectGateOutcome | None``; see the function body for structure, error paths, and sentinels.
+    """
     sem = ctx.validated_semantic_move()
     if sem is not None and sem.move_type == "off_scope_containment" and sf not in ("scene_pivot", "establish_pressure"):
         return DramaticEffectGateOutcome(
@@ -78,6 +124,20 @@ def try_off_scope_containment_mismatch(
 def try_prior_blame_continuity_pressure(
     ctx: DramaticEffectEvaluationContext, *, low: str, sf: str
 ) -> DramaticEffectGateOutcome | None:
+    """Describe what ``try_prior_blame_continuity_pressure`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        ctx: ``ctx`` (DramaticEffectEvaluationContext); meaning follows the type and call sites.
+        low: ``low`` (str); meaning follows the type and call sites.
+        sf: ``sf`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome | None:
+            Returns a value of type ``DramaticEffectGateOutcome | None``; see the function body for structure, error paths, and sentinels.
+    """
     prior_classes = [
         str(x.get("class") or "")
         for x in (ctx.prior_continuity_impacts or [])
@@ -108,6 +168,20 @@ def try_prior_blame_continuity_pressure(
 def try_repair_scene_character_conflict(
     ctx: DramaticEffectEvaluationContext, *, low: str, sf: str
 ) -> DramaticEffectGateOutcome | None:
+    """Describe what ``try_repair_scene_character_conflict`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        ctx: ``ctx`` (DramaticEffectEvaluationContext); meaning follows the type and call sites.
+        low: ``low`` (str); meaning follows the type and call sites.
+        sf: ``sf`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome | None:
+            Returns a value of type ``DramaticEffectGateOutcome | None``; see the function body for structure, error paths, and sentinels.
+    """
     if sf != "repair_or_stabilize":
         return None
     mind = ctx.validated_character_mind()
@@ -128,6 +202,20 @@ def try_repair_scene_character_conflict(
 
 
 def try_boilerplate_without_tags(*, low: str, sf: str, tags_ok: bool) -> DramaticEffectGateOutcome | None:
+    """Describe what ``try_boilerplate_without_tags`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        low: ``low`` (str); meaning follows the type and call sites.
+        sf: ``sf`` (str); meaning follows the type and call sites.
+        tags_ok: ``tags_ok`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome | None:
+            Returns a value of type ``DramaticEffectGateOutcome | None``; see the function body for structure, error paths, and sentinels.
+    """
     boilerplate_hit = any(p in low for p in _GENERIC_BOILERPLATE_PHRASES)
     if boilerplate_hit and not tags_ok:
         return DramaticEffectGateOutcome(
@@ -143,6 +231,19 @@ def try_boilerplate_without_tags(*, low: str, sf: str, tags_ok: bool) -> Dramati
 
 
 def outcome_tags_unsatisfied(*, low: str, sf: str) -> DramaticEffectGateOutcome:
+    """Describe what ``outcome_tags_unsatisfied`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        low: ``low`` (str); meaning follows the type and call sites.
+        sf: ``sf`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome:
+            Returns a value of type ``DramaticEffectGateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     return DramaticEffectGateOutcome(
         gate_result=DramaticEffectGateResult.rejected_empty_fluency,
         rejection_reasons=["dramatic_effect_reject_empty_fluency"],
@@ -160,6 +261,20 @@ def outcome_weak_signal_accepted(
     char_post: CharacterPlausibilityPosture,
     cont_posture: ContinuitySupportPosture,
 ) -> DramaticEffectGateOutcome:
+    """Describe what ``outcome_weak_signal_accepted`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pressure_cont: ``pressure_cont`` (bool); meaning follows the type and call sites.
+        char_post: ``char_post`` (CharacterPlausibilityPosture); meaning follows the type and call sites.
+        cont_posture: ``cont_posture`` (ContinuitySupportPosture); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome:
+            Returns a value of type ``DramaticEffectGateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     return DramaticEffectGateOutcome(
         gate_result=DramaticEffectGateResult.accepted_with_weak_signal,
         rejection_reasons=[],
@@ -181,6 +296,21 @@ def outcome_primary_accepted(
     cont_posture: ContinuitySupportPosture,
     trace: list[DramaticEffectTraceItem],
 ) -> DramaticEffectGateOutcome:
+    """Describe what ``outcome_primary_accepted`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pressure_cont: ``pressure_cont`` (bool); meaning follows the type and call sites.
+        char_post: ``char_post`` (CharacterPlausibilityPosture); meaning follows the type and call sites.
+        cont_posture: ``cont_posture`` (ContinuitySupportPosture); meaning follows the type and call sites.
+        trace: ``trace`` (list[DramaticEffectTraceItem]); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome:
+            Returns a value of type ``DramaticEffectGateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     return DramaticEffectGateOutcome(
         gate_result=DramaticEffectGateResult.accepted,
         supports_scene_function=True,
@@ -197,6 +327,19 @@ def outcome_primary_accepted(
 def continuity_posture_for_social(
     soc: object | None, *, tags_ok: bool
 ) -> ContinuitySupportPosture:
+    """Describe what ``continuity_posture_for_social`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        soc: ``soc`` (object | None); meaning follows the type and call sites.
+        tags_ok: ``tags_ok`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        ContinuitySupportPosture:
+            Returns a value of type ``ContinuitySupportPosture``; see the function body for structure, error paths, and sentinels.
+    """
     cont_posture = ContinuitySupportPosture.adequate
     if soc and getattr(soc, "scene_pressure_state", None) in ("high_tension", "high"):
         cont_posture = ContinuitySupportPosture.strong if tags_ok else ContinuitySupportPosture.weak
@@ -204,6 +347,18 @@ def continuity_posture_for_social(
 
 
 def pressure_continuation_signal(low: str) -> bool:
+    """Describe what ``pressure_continuation_signal`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        low: ``low`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(
         tag_active(low, "pressure_intensification")
         or tag_active(low, "interpersonal_blame")

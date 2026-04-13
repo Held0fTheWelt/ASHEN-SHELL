@@ -1,7 +1,10 @@
-"""Coarse operational signals for cost/performance awareness (non-financial).
+"""
+Coarse operational signals for cost/performance awareness
+(non-financial).
 
-These hints help operators and reviewers compare modes (retrieval route, fallback usage,
-prompt size bands) without implying dollar estimates or production latency SLAs.
+These hints help operators and reviewers compare modes (retrieval route,
+fallback usage, prompt size bands) without implying dollar estimates or
+production latency SLAs.
 """
 
 from __future__ import annotations
@@ -16,6 +19,17 @@ _PROMPT_MEDIUM_MAX = 16000
 
 
 def prompt_length_bucket(char_len: int) -> str:
+    """``prompt_length_bucket`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        char_len: ``char_len`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if char_len < 0:
         char_len = 0
     if char_len < _PROMPT_SMALL_MAX:
@@ -33,7 +47,23 @@ def build_operational_cost_hints_for_runtime_graph(
     model_prompt: str | None,
     fallback_path_taken: bool,
 ) -> dict[str, Any]:
-    """Hints for LangGraph runtime turn diagnostics (World-Engine story path)."""
+    """Hints for LangGraph runtime turn diagnostics (World-Engine story
+    path).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retrieval: ``retrieval`` (dict[str, Any] | None); meaning follows the type and call sites.
+        generation: ``generation`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+        graph_execution_health: ``graph_execution_health`` (str); meaning follows the type and call sites.
+        model_prompt: ``model_prompt`` (str | None); meaning follows the type and call sites.
+        fallback_path_taken: ``fallback_path_taken`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     retrieval = retrieval if isinstance(retrieval, dict) else {}
     generation = generation if isinstance(generation, dict) else {}
     meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
@@ -58,7 +88,18 @@ def build_operational_cost_hints_for_runtime_graph(
 def build_operational_cost_hints_from_retrieval(
     retrieval: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """Slim hints for backend workflows (Improvement, admin surfaces) using retrieval dict only."""
+    """Slim hints for backend workflows (Improvement, admin surfaces) using
+    retrieval dict only.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retrieval: ``retrieval`` (dict[str, Any] | None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     retrieval = retrieval if isinstance(retrieval, dict) else {}
     trace = build_retrieval_trace(retrieval)
     return {

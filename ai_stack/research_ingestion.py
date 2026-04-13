@@ -23,6 +23,17 @@ MVP_ALLOWED_INPUT_POSTURES: frozenset[CopyrightPosture] = frozenset(
 
 
 def _resolve_posture(value: str | None) -> CopyrightPosture:
+    """``_resolve_posture`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        CopyrightPosture:
+            Returns a value of type ``CopyrightPosture``; see the function body for structure, error paths, and sentinels.
+    """
     raw = (value or CopyrightPosture.INTERNAL_APPROVED.value).strip()
     try:
         return CopyrightPosture(raw)
@@ -31,6 +42,14 @@ def _resolve_posture(value: str | None) -> CopyrightPosture:
 
 
 def enforce_mvp_copyright_posture(posture: CopyrightPosture) -> None:
+    """Describe what ``enforce_mvp_copyright_posture`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        posture: ``posture`` (CopyrightPosture); meaning follows the type and call sites.
+    """
     if posture not in MVP_ALLOWED_INPUT_POSTURES:
         raise ValueError(f"copyright_posture_blocked_in_mvp:{posture.value}")
 
@@ -46,6 +65,26 @@ def normalize_resource(
     copyright_posture: str | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """``normalize_resource`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        work_id: ``work_id`` (str); meaning follows the type and call sites.
+        source_type: ``source_type`` (str); meaning follows the type and call sites.
+        title: ``title`` (str); meaning follows the type and call sites.
+        raw_text: ``raw_text`` (str); meaning follows the type and call sites.
+        provenance: ``provenance`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+        visibility: ``visibility`` (str); meaning follows the type and call sites.
+        copyright_posture: ``copyright_posture`` (str |
+            None); meaning follows the type and call sites.
+        metadata: ``metadata`` (dict[str, Any] | None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     posture = _resolve_posture(copyright_posture)
     enforce_mvp_copyright_posture(posture)
     text = (raw_text or "").strip()
@@ -84,6 +123,20 @@ def ingest_resource(
     segment_target_words: int = 90,
     segment_overlap_words: int = 15,
 ) -> dict[str, Any]:
+    """``ingest_resource`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        normalized_source: ``normalized_source`` (dict[str, Any]); meaning follows the type and call sites.
+        segment_target_words: ``segment_target_words`` (int); meaning follows the type and call sites.
+        segment_overlap_words: ``segment_overlap_words`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     source_record = ResearchSourceRecord(
         source_id=normalized_source["source_id"],
         work_id=normalized_source["work_id"],

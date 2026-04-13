@@ -142,28 +142,87 @@ _T = TypeVar("_T", bound=str)
 
 
 def _in_set(value: str, allowed: FrozenSet[str]) -> bool:
+    """Describe what ``_in_set`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str); meaning follows the type and call sites.
+        allowed: ``allowed`` (FrozenSet[str]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return value in allowed
 
 
 def assert_scene_function(value: str) -> str:
+    """``assert_scene_function`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if value not in SCENE_FUNCTIONS:
         raise ValueError(f"Invalid scene_function label: {value!r}")
     return value
 
 
 def assert_pacing_mode(value: str) -> str:
+    """``assert_pacing_mode`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if value not in PACING_MODES:
         raise ValueError(f"Invalid pacing_mode label: {value!r}")
     return value
 
 
 def assert_silence_brevity_mode(value: str) -> str:
+    """Describe what ``assert_silence_brevity_mode`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if value not in SILENCE_BREVITY_MODES:
         raise ValueError(f"Invalid silence_brevity mode: {value!r}")
     return value
 
 
 def assert_transition_pattern(value: str) -> str:
+    """Describe what ``assert_transition_pattern`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if value not in TRANSITION_PATTERNS:
         raise ValueError(f"Invalid transition_pattern label: {value!r}")
     return value

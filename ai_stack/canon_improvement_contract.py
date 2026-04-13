@@ -20,6 +20,18 @@ ISSUE_TO_PROPOSAL_DEFAULT: dict[CanonIssueType, ImprovementProposalType] = {
 
 
 def ensure_issue_type(value: str) -> CanonIssueType:
+    """Parse *value* into a ``CanonIssueType`` member for validated
+    payloads.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        CanonIssueType:
+            Returns a value of type ``CanonIssueType``; see the function body for structure, error paths, and sentinels.
+    """
     try:
         return CanonIssueType(value)
     except ValueError as exc:
@@ -27,6 +39,17 @@ def ensure_issue_type(value: str) -> CanonIssueType:
 
 
 def ensure_proposal_type(value: str) -> ImprovementProposalType:
+    """Parse *value* into an ``ImprovementProposalType`` member.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        ImprovementProposalType:
+            Returns a value of type ``ImprovementProposalType``; see the function body for structure, error paths, and sentinels.
+    """
     try:
         return ImprovementProposalType(value)
     except ValueError as exc:
@@ -34,4 +57,17 @@ def ensure_proposal_type(value: str) -> ImprovementProposalType:
 
 
 def proposal_for_issue(issue_type: CanonIssueType) -> ImprovementProposalType:
+    """Return the default improvement proposal kind for a canon issue
+        archetype.
+    
+    Args:
+        issue_type: Classified issue used when mapping research to
+            actionables.
+    
+    Returns:
+        ImprovementProposalType:
+            Default proposal template from
+                ``ISSUE_TO_PROPOSAL_DEFAULT`` for the
+            given *issue_type*.
+    """
     return ISSUE_TO_PROPOSAL_DEFAULT[issue_type]

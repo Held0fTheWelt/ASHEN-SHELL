@@ -1,6 +1,9 @@
-"""GoC semantic move priority stack — table-driven rules (first match wins).
+"""
+GoC semantic move priority stack — table-driven rules (first match
+wins).
 
-Extracted from semantic_move_interpretation_goc to keep the main interpreter flat.
+Extracted from semantic_move_interpretation_goc to keep the main
+interpreter flat.
 """
 
 from __future__ import annotations
@@ -16,6 +19,8 @@ RulePredicate = Callable[[dict[str, Any], str, str, dict[str, Any]], bool]
 
 @dataclass(frozen=True)
 class SemanticPriorityRule:
+    """``SemanticPriorityRule`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     rule_id: str
     trace_detail: str  # e.g. rule:accusation_synset — stable contract for logs/tests
     predicate: RulePredicate
@@ -27,6 +32,18 @@ class SemanticPriorityRule:
 
 
 def _off_scope(combined: str) -> bool:
+    """Describe what ``_off_scope`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        combined: ``combined`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     off_scope_keywords = (
         "mars",
         "spaceship",
@@ -44,58 +61,240 @@ def _off_scope(combined: str) -> bool:
 
 
 def _pred_off_scope(_f: dict[str, Any], combined: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_off_scope`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        _f: ``_f`` (dict[str, Any]); meaning follows the type and call sites.
+        combined: ``combined`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return _off_scope(combined)
 
 
 def _pred_silence_pause(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_silence_pause`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_pause"] or (f["syn_silence"] and not f["syn_repair"]))
 
 
 def _pred_alliance(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_alliance`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_alliance"])
 
 
 def _pred_expose(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_expose`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_expose"])
 
 
 def _pred_repair_reveal(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_repair_reveal`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_repair"] and f["syn_reveal"])
 
 
 def _pred_repair_probe(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_repair_probe`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_repair"] and f["syn_probe"])
 
 
 def _pred_repair(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_repair`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_repair"])
 
 
 def _pred_deflect(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_deflect`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_deflect"])
 
 
 def _pred_accusation(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_accusation`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_accusation"])
 
 
 def _pred_reveal(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_reveal`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_reveal"])
 
 
 def _pred_escalate(f: dict[str, Any], _c: str, _i: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_escalate`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(f["syn_escalate"])
 
 
 def _pred_probe_or_question(
     f: dict[str, Any], _c: str, _i: str, mv: dict[str, Any]
 ) -> bool:
+    """``_pred_probe_or_question`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        f: ``f`` (dict[str, Any]); meaning follows the type and call sites.
+        _c: ``_c`` (str); meaning follows the type and call sites.
+        _i: ``_i`` (str); meaning follows the type and call sites.
+        mv: ``mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return bool(
         f["syn_probe"] or f["question_end"] or "question" in str(mv.get("move_class", "")).lower()
     )
 
 
 def _pred_provocation(_f: dict[str, Any], combined: str, intent_s: str, _mv: dict[str, Any]) -> bool:
+    """``_pred_provocation`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        _f: ``_f`` (dict[str, Any]); meaning follows the type and call sites.
+        combined: ``combined`` (str); meaning follows the type and call sites.
+        intent_s: ``intent_s`` (str); meaning follows the type and call sites.
+        _mv: ``_mv`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return "cynic" in intent_s or "provok" in combined
 
 
@@ -239,7 +438,15 @@ _GOC_PRIORITY_RULES: tuple[SemanticPriorityRule, ...] = tuple(
 
 
 def build_goc_priority_rules() -> tuple[SemanticPriorityRule, ...]:
-    """Ordered stack: first matching rule wins (after non-GoC handled upstream)."""
+    """Ordered stack: first matching rule wins (after non-GoC handled
+    upstream).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        tuple[SemanticPriorityRule, ...]:
+            Returns a value of type ``tuple[SemanticPriorityRule, ...]``; see the function body for structure, error paths, and sentinels.
+    """
     return _GOC_PRIORITY_RULES
 
 
@@ -263,7 +470,22 @@ def resolve_goc_move_from_rules(
     interpreted_move: dict[str, Any],
     trace: list[InterpretationTraceItem],
 ) -> tuple[str, str, str, str | None, str]:
-    """Apply priority stack; mutates trace with the winning rule id."""
+    """Apply priority stack; mutates trace with the winning rule id.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        features: ``features`` (dict[str, Any]); meaning follows the type and call sites.
+        combined: ``combined`` (str); meaning follows the type and call sites.
+        intent_s: ``intent_s`` (str); meaning follows the type and call sites.
+        interpreted_move: ``interpreted_move`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        trace: ``trace`` (list[InterpretationTraceItem]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, str, str, str | None, str]:
+            Returns a value of type ``tuple[str, str, str, str | None, str]``; see the function body for structure, error paths, and sentinels.
+    """
     rules = _GOC_PRIORITY_RULES
     for rule in rules:
         if not rule.predicate(features, combined, intent_s, interpreted_move):

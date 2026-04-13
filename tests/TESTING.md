@@ -1,21 +1,20 @@
 # Testing guide — World of Shadows
 
-This document describes how to run the **multi-component** test suites from the repository `tests/` directory. Tests live in **four separate trees** (not merged):
+This document describes how to run the **multi-component** test suites using the orchestrator [`run_tests.py`](run_tests.py) in this directory. Pytest trees live in **several repositories** under the monorepo; the runner exposes **eight** named suites (seven distinct pytest cwd/path pairs — `writers_room` and `improvement` share `backend/` as cwd).
 
-| Component | Directory |
-|-----------|-----------|
-| Backend | `backend/tests/` |
-| Administration tool | `administration-tool/tests/` |
-| World engine | `world-engine/tests/` |
-| Database | `database/tests/` |
-
-The root `tests/` folder holds the **orchestrator** (`run_tests.py`), smoke tests (`tests/smoke/`), and this file. It does **not** replace the component `tests/` roots.
+The root `tests/` folder holds the **orchestrator** (`run_tests.py`), smoke assets (`tests/smoke/`), reports (`tests/reports/`), and this file. It does **not** replace each component’s own `tests/` root.
 
 ---
 
 ## Quick start
 
-From the `tests/` directory (repository root: `WorldOfShadows/tests/`):
+From the **repository root** (recommended):
+
+```bash
+python tests/run_tests.py
+```
+
+Or from `tests/`:
 
 ```bash
 cd tests
@@ -26,48 +25,109 @@ Cross-platform; use `python3` on Linux/macOS if needed.
 
 ---
 
-## `run_tests.py` — options
+## Canonical `--suite` list
 
-| Option | Meaning |
-|--------|---------|
-| `--suite backend` | Run only the backend test tree (`cd backend && pytest …`). |
-| `--suite administration` | Administration tool only. |
-| `--suite engine` | World engine only. |
-| `--suite database` | Database only. |
-| `--suite backend database` | Run those two components in sequence. |
-| `--suite all` | All four components (default if `--suite` is omitted). |
-| `--quick` | No coverage; `-x` (stop on first failure). |
-| `--coverage` | Extra HTML coverage report (`term-missing:skip-covered` + `html`). |
-| `--verbose` | `-vv`, long tracebacks, `-s`. |
-| `--scope …` | **Backend only:** filter by pytest marker (see below). |
-
-### Backend scope (`--scope`)
-
-Applies **only** when the backend suite is included. Other components always run their **full** `tests/` tree for that run.
-
-| `--scope` value | Pytest filter |
-|-----------------|---------------|
-| `all` (default) | No marker filter. |
-| `contracts` | `-m contract` |
-| `integration` | `-m integration` |
-| `e2e` | `-m e2e` |
-| `security` | `-m security` |
-
-Examples:
-
-```bash
-python run_tests.py --suite backend --scope contracts
-python run_tests.py --suite all --quick
-```
-
-Marker definitions for the backend are in `backend/pytest.ini`.
+| CLI name | Working directory | Pytest path | Notes |
+|----------|-------------------|-------------|--------|
+| `backend` | `backend/` | `tests` | Collects entire `backend/tests/`, including `writers_room/` and `improvement/` subtrees. |
+| `frontend` | `frontend/` | `tests` | Player/public Flask UI tests. |
+| `administration` | `administration-tool/` | `tests` | Admin proxy and UI tests. |
+| `engine` | `world-engine/` | `tests` | FastAPI runtime, HTTP/WS. |
+| `database` | `database/` | `tests` | Schema/migration tests (often import `backend/app` models). |
+| `writers_room` | `backend/` | `tests/writers_room` | **Slice** run: Writers-Room tests only (also collected under full `backend`). |
+| `improvement` | `backend/` | `tests/improvement` | **Slice** run: improvement-loop tests only. |
+| `ai_stack` | **repo root** | `ai_stack/tests` | Requires `PYTHONPATH` including repo root (runner sets this). |
 
 ---
 
-## Coverage thresholds
+## `--suite all` semantics
 
-- **Backend:** `run_tests.py` uses `--cov-fail-under=85` when running the backend suite, matching `backend/pytest.ini`.
-- **Other components:** default fail-under is **80** in this runner (adjust in `run_tests.py` if you align their `pytest.ini`).
+`--suite all` (or default `--suite` omitted) runs **six** suites **in order**:
+
+1. `backend`  
+2. `frontend`  
+3. `administration`  
+4. `engine`  
+5. `database`  
+6. `ai_stack`  
+
+`writers_room` and `improvement` are **not** separate orchestrator steps here: they are already part of `backend`’s `pytest tests` collection. That avoids **double-running** the same tests when you also had explicit slice suites.
+
+To run **only** Writers-Room or improvement tests (e.g. focused coverage):
+
+```bash
+python tests/run_tests.py --suite writers_room
+python tests/run_tests.py --suite improvement
+```
+
+---
+
+## `--scope` (pytest marker filter)
+
+`--scope` maps to `pytest -m <marker>` **only** for suites that define the markers in their `pytest.ini` / `pyproject.toml`.
+
+| Suite | `contracts` | `integration` | `e2e` | `security` |
+|-------|-------------|-----------------|-------|-------------|
+| `backend` | `-m contract` | `-m integration` | `-m e2e` | `-m security` |
+| `writers_room` | same | same | same | same |
+| `improvement` | same | same | same | same |
+| `administration` | `-m contract` | `-m integration` | **full suite** (no `e2e` marker) | `-m security` |
+| `engine` | `-m contract` | `-m integration` | **full suite** (no `e2e` marker) | `-m security` |
+| `frontend` | **ignored** — always full suite | | | |
+| `database` | **ignored** — always full suite | | | |
+| `ai_stack` | **ignored** — always full suite | | | |
+
+When scope is set but not applied, the runner prints an `[INFO]` line (see `run_tests.py`).
+
+---
+
+## `--quick`, `--stats`, `--continue-on-failure`
+
+| Flag | Effect |
+|------|--------|
+| `--quick` | Each suite: `pytest --no-cov -x` (stop on first **test** failure in that suite). **Skips** the pre-run `pytest --collect-only` stats pass (unless `--stats`). **Stops the orchestrator** after the first **suite** that fails (unless `--continue-on-failure`). |
+| `--stats` | With `--quick`, still run the collect-only stats pass first. |
+| `--continue-on-failure` | With `--quick`, run all selected suites even if one fails. |
+
+Without `--quick`, the runner always runs collect-only first; a non-zero collection exit code **fails the whole run** before pytest executes.
+
+---
+
+## Coverage (`pytest-cov`) per suite
+
+Behavior is implemented in [`run_tests.py`](run_tests.py) (`_cov_sources_for_suite`, `_cov_fail_under_for_suite`, `build_pytest_argv`).
+
+| Suite | `--cov=` roots (each passed as its own flag) | `--cov-fail-under` |
+|-------|-----------------------------------------------|---------------------|
+| `backend` | `backend/app` | 85 |
+| `frontend` | `frontend/app` | 92 |
+| `writers_room` | `backend/app` | 50 |
+| `improvement` | `backend/app` | 50 |
+| `administration` | `--cov=.` + `administration-tool/.coveragerc` (flat tree; tests omitted) | 80 |
+| `engine` | `world-engine/app` (path) | 80 |
+| `database` | `backend/app` | *(none — instrumentation only; see semantics doc)* |
+| `ai_stack` | `ai_stack/` (repo path) | 80 |
+
+- **Default** (no `--coverage`, no `--verbose`): `-v --tb=short`, term-missing report, fail-under as above.  
+- **`--coverage`**: adds HTML report and `term-missing:skip-covered`.  
+- **`--verbose`**: `-vv --tb=long -s` plus same cov flags as default.  
+- **`--quick`**: **no** coverage flags for pytest (`--no-cov`).
+
+**Semantics:** coverage measures **in-process** Python lines touched by tests. It does **not** measure production realism (real network, browser, DB load, or LLM variability). See [`docs/testing/COVERAGE_SEMANTICS.md`](../docs/testing/COVERAGE_SEMANTICS.md).
+
+---
+
+## `run_tests.py` — option summary
+
+| Option | Meaning |
+|--------|---------|
+| `--suite …` | One or more suite names, or `all` (see above). |
+| `--scope …` | Marker filter where supported (see matrix). |
+| `--quick` | Fast fail; see table above. |
+| `--stats` | Force collect-only with `--quick`. |
+| `--continue-on-failure` | Run all suites with `--quick` even after a failure. |
+| `--coverage` | HTML + stricter cov reporting. |
+| `--verbose` | Verbose pytest + long tracebacks. |
 
 ---
 
@@ -81,14 +141,13 @@ From `tests/`:
 | `make test-quick` | `python3 run_tests.py --quick` |
 | `make test-coverage` | `python3 run_tests.py --coverage` |
 | `make test-contracts` | `python3 run_tests.py --suite backend --scope contracts` |
-
-Run `make help` after syncing the Makefile with this file.
+| `make test-integration` | `python3 run_tests.py --suite backend --scope integration` |
 
 ---
 
 ## JUnit reports
 
-`run_tests.py` writes JUnit XML under `tests/reports/` (`pytest_<component>_YYYYMMDD_HHMMSS.xml`).
+`run_tests.py` writes JUnit XML under `tests/reports/` (`pytest_<suite>_YYYYMMDD_HHMMSS.xml`).
 
 ---
 
@@ -101,23 +160,17 @@ cd backend
 python -m pytest tests -v
 ```
 
-Use markers as needed:
+---
 
-```bash
-cd backend
-python -m pytest tests -m security -v
-```
+## Optional: Compose smoke lane
+
+For a **production-narrow** path (real HTTP/WS, services up), see [`smoke/compose_smoke/README.md`](smoke/compose_smoke/README.md).
 
 ---
 
-## Backend test layout (overview)
+## Optional: Browser E2E (Playwright)
 
-The backend tree already uses meaningful subfolders, for example:
-
-- `backend/tests/content/` — content modules
-- `backend/tests/runtime/` — runtime engine tests
-
-Large flat files may be split over time; prefer **descriptive file names** (what behavior is under test), not internal release codenames.
+Critical UI flows (login, play shell) are scaffolded under [`e2e/`](e2e/README.md) (`@playwright/test`). Not part of the default `run_tests.py` Python orchestrator.
 
 ---
 
@@ -125,10 +178,10 @@ Large flat files may be split over time; prefer **descriptive file names** (what
 
 ```yaml
 - run: pip install -r backend/requirements-dev.txt
-- run: cd tests && python run_tests.py --suite backend --quick
+- run: python tests/run_tests.py --suite backend --quick
 ```
 
-For a full multi-component run in CI, install dependencies for each component as required, then `cd tests && python run_tests.py`.
+Install dependencies per component before `python tests/run_tests.py --suite all`.
 
 ---
 

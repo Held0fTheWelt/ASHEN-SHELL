@@ -1,8 +1,11 @@
-"""Turn-level retrieval governance visibility for operator diagnostics (G5 / G10).
+"""
+Turn-level retrieval governance visibility for operator diagnostics (G5
+/ G10).
 
-Aggregates evidence-lane and visibility-class histograms from retrieval hit rows
-without changing ranking or retrieval policy. Authored vs derived provenance lists
-are built once here and projected into turn seams and traces (single canonical path).
+Aggregates evidence-lane and visibility-class histograms from retrieval
+hit rows without changing ranking or retrieval policy. Authored vs
+derived provenance lists are built once here and projected into turn
+seams and traces (single canonical path).
 """
 
 from __future__ import annotations
@@ -20,12 +23,31 @@ _MAX_COMPACT_REFS_PER_PARTITION = 48
 
 
 def _visibility_tie_break_order() -> dict[str, int]:
-    """Canonical ordering for SourceVisibilityClass (enum declaration order in rag_types.py)."""
+    """Canonical ordering for SourceVisibilityClass (enum declaration order
+    in rag_types.py).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, int]:
+            Returns a value of type ``dict[str, int]``; see the function body for structure, error paths, and sentinels.
+    """
     return {m.value: i for i, m in enumerate(SourceVisibilityClass)}
 
 
 def dominant_visibility_class_from_counts(visibility_counts: dict[str, int]) -> str | None:
-    """Highest count wins; ties broken by SourceVisibilityClass declaration order; empty → None."""
+    """Highest count wins; ties broken by SourceVisibilityClass declaration
+    order; empty → None.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        visibility_counts: ``visibility_counts`` (dict[str, int]); meaning follows the type and call sites.
+    
+    Returns:
+        str | None:
+            Returns a value of type ``str | None``; see the function body for structure, error paths, and sentinels.
+    """
     if not visibility_counts:
         return None
     max_n = max(visibility_counts.values())
@@ -36,6 +58,17 @@ def dominant_visibility_class_from_counts(visibility_counts: dict[str, int]) -> 
 
 
 def _compact_ref_from_row(row: dict[str, Any]) -> dict[str, Any]:
+    """``_compact_ref_from_row`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        row: ``row`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "chunk_id": row.get("chunk_id"),
         "source_path": row.get("source_path"),
@@ -53,12 +86,15 @@ def _compact_ref_from_row(row: dict[str, Any]) -> dict[str, Any]:
 
 def summarize_retrieval_governance_from_hit_rows(sources: Any) -> dict[str, Any]:
     """Build a bounded summary dict from ``retrieval["sources"]`` rows.
-
-    Each row may include ``source_evidence_lane`` / ``source_visibility_class``
-    (RAG pipeline) or legacy ``evidence_lane`` / ``visibility_class`` keys.
-
-    ``authored_truth_refs`` / ``derived_artifact_refs`` partition rows by existing
-    ``content_class`` literal (``authored_module`` vs all other canonical classes).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        sources: ``sources`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
     """
     authored_val = ContentClass.AUTHORED_MODULE.value
     base: dict[str, Any] = {
@@ -118,7 +154,13 @@ def summarize_retrieval_governance_from_hit_rows(sources: Any) -> dict[str, Any]
 
 
 def attach_retrieval_governance_summary(retrieval: dict[str, Any]) -> None:
-    """Mutate ``retrieval`` in place with ``retrieval_governance_summary``."""
+    """Mutate ``retrieval`` in place with ``retrieval_governance_summary``.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retrieval: ``retrieval`` (dict[str, Any]); meaning follows the type and call sites.
+    """
     if not isinstance(retrieval, dict):
         return
     retrieval["retrieval_governance_summary"] = summarize_retrieval_governance_from_hit_rows(

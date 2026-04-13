@@ -48,6 +48,13 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: python -c "import story_runtime_core; import ai_stack; print('ok', ai_stack.__name__)"
 
+      # Fail CI if LangGraph runtime is missing — graph-heavy tests use importorskip locally;
+      # this lane must not silently skip the whole graph surface.
+      - name: Verify LangGraph runtime import (graph lane prerequisite)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python -c "import ai_stack.langgraph_runtime as lg; print('langgraph_runtime', lg.__file__)"
+
       - name: Verify sole GoC scene→guidance mapping (ADR-0003)
         run: python tools/verify_goc_scene_identity_single_source.py
 

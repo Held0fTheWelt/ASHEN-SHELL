@@ -1,4 +1,7 @@
-"""Retrieval query context, ranking notes, rerank merge, and RetrievalResult builders (DS-003 stage 6)."""
+"""
+Retrieval query context, ranking notes, rerank merge, and
+RetrievalResult builders (DS-003 stage 6).
+"""
 
 from __future__ import annotations
 
@@ -28,37 +31,51 @@ from ai_stack.rag_types import RetrievalDegradationMode, RetrievalDomain, Retrie
 
 
 class _CorpusPrefixLike(Protocol):
+    """``_CorpusPrefixLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     rag_dense_index_build_action: str
     rag_dense_artifact_validity: str
     rag_dense_rebuild_reason: str | None
 
 
 class _RequestForQPC(Protocol):
+    """``_RequestForQPC`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     domain: RetrievalDomain
     profile: str
     query: str
 
 
 class _RequestForPoolSort(Protocol):
+    """``_RequestForPoolSort`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     module_id: str | None
     max_chunks: int
 
 
 class _ChunkIdLike(Protocol):
+    """``_ChunkIdLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunk_id: str
 
 
 class _InitialScoredLike(Protocol):
+    """``_InitialScoredLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     initial_score: float
     chunk: _ChunkIdLike
 
 
 class _RerankCandidateLike(Protocol):
+    """``_RerankCandidateLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunk: Any
     initial_score: float
 
 
 class _HitRankLineLike(Protocol):
+    """``_HitRankLineLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     source_path: str
     score: float
     source_evidence_lane: str
@@ -69,6 +86,8 @@ class _HitRankLineLike(Protocol):
 
 @dataclass(slots=True)
 class _RetrievalQueryProfileContext:
+    """``_RetrievalQueryProfileContext`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     allowed_classes: set[Any]
     query_terms: dict[str, float]
     query_norm: float
@@ -80,6 +99,18 @@ class _RetrievalQueryProfileContext:
 
 
 def _build_retrieval_query_profile_context(request: _RequestForQPC) -> _RetrievalQueryProfileContext:
+    """Describe what ``_build_retrieval_query_profile_context`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        request: ``request`` (_RequestForQPC); meaning follows the type and call sites.
+    
+    Returns:
+        _RetrievalQueryProfileContext:
+            Returns a value of type ``_RetrievalQueryProfileContext``; see the function body for structure, error paths, and sentinels.
+    """
     allowed_classes = DOMAIN_CONTENT_ACCESS[request.domain]
     query_terms = _build_semantic_terms(request.query)
     query_norm = math.sqrt(sum(weight * weight for weight in query_terms.values()))
@@ -110,6 +141,19 @@ def _build_retrieval_prefix_notes(
     *,
     hybrid_state: _RetrievalHybridEncodingState,
 ) -> list[str]:
+    """Describe what ``_build_retrieval_prefix_notes`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        corpus: ``corpus`` (_CorpusPrefixLike); meaning follows the type and call sites.
+        hybrid_state: ``hybrid_state`` (_RetrievalHybridEncodingState); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     c = corpus
     dense_action = c.rag_dense_index_build_action
     dense_validity = c.rag_dense_artifact_validity
@@ -133,6 +177,19 @@ def _build_retrieval_prefix_notes(
 
 
 def _build_retrieval_quality_seed_notes(*, w_dense: float, w_sparse: float) -> list[str]:
+    """Describe what ``_build_retrieval_quality_seed_notes`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        w_dense: ``w_dense`` (float); meaning follows the type and call sites.
+        w_sparse: ``w_sparse`` (float); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     return [
         f"retrieval_pipeline_version={RETRIEVAL_PIPELINE_VERSION}",
         f"hybrid_v2_weights_dense={w_dense:.2f}_sparse={w_sparse:.2f}",
@@ -147,7 +204,23 @@ def _rerank_retrieval_candidate_pool(
     use_hybrid: bool,
     strong_authored_for_module: bool,
 ) -> list[tuple[float, _RerankCandidateLike, list[str]]]:
-    """Task 2 rerank + Task 3 policy-soft adjustments over the hard-filtered pool."""
+    """Task 2 rerank + Task 3 policy-soft adjustments over the
+    hard-filtered pool.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pool: ``pool`` (list[_RerankCandidateLike]); meaning follows the type and call sites.
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        request: ``request`` (Any); meaning follows the type and call sites.
+        use_hybrid: ``use_hybrid`` (bool); meaning follows the type and call sites.
+        strong_authored_for_module: ``strong_authored_for_module`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        list[tuple[float, _RerankCandidateLike, list[str]]]:
+            Returns a value of type ``list[tuple[float, _RerankCandidateLike,
+            list[str]]]``; see the function body for structure, error paths, and sentinels.
+    """
     from ai_stack.rag_retrieval_rerank_adjustments import compute_rerank_adjustments as _rerank_adjustments
 
     reranked: list[tuple[float, _RerankCandidateLike, list[str]]] = []
@@ -183,12 +256,33 @@ def _rerank_retrieval_candidate_pool(
 
 
 def _append_dedup_suppression_quality_notes(quality_notes: list[str], dup_notes: list[str]) -> None:
+    """Describe what ``_append_dedup_suppression_quality_notes`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        quality_notes: ``quality_notes`` (list[str]); meaning follows the type and call sites.
+        dup_notes: ``dup_notes`` (list[str]); meaning follows the type and call sites.
+    """
     quality_notes.extend(dup_notes[:8])
     if len(dup_notes) > 8:
         quality_notes.append(f"dup_suppressed_more={len(dup_notes) - 8}")
 
 
 def _retrieval_hit_ranking_detail_lines(hits: list[_HitRankLineLike]) -> list[str]:
+    """Describe what ``_retrieval_hit_ranking_detail_lines`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        hits: ``hits`` (list[_HitRankLineLike]); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     return [
         (
             f"{h.source_path} score={h.score:.2f} lane={h.source_evidence_lane} "
@@ -217,6 +311,33 @@ def _retrieval_result_fallback_empty_hits(
     embedding_index_version: str,
     embedding_cache_dir_identity: str | None,
 ) -> Any:
+    """Describe what ``_retrieval_result_fallback_empty_hits`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        request: ``request`` (Any); meaning follows the type and call sites.
+        index_version: ``index_version`` (str); meaning follows the type and call sites.
+        corpus_fingerprint: ``corpus_fingerprint`` (str); meaning follows the type and call sites.
+        storage_path: ``storage_path`` (str); meaning follows the type and call sites.
+        prefix_notes: ``prefix_notes`` (list[str]); meaning follows the type and call sites.
+        quality_notes: ``quality_notes`` (list[str]); meaning follows the type and call sites.
+        policy_notes: ``policy_notes`` (list[str]); meaning follows the type and call sites.
+        retrieval_route: ``retrieval_route`` (str); meaning follows the type and call sites.
+        embedding_model_id: ``embedding_model_id`` (str); meaning follows the type and call sites.
+        degradation_mode: ``degradation_mode`` (str); meaning follows the type and call sites.
+        dense_index_build_action: ``dense_index_build_action`` (str); meaning follows the type and call sites.
+        dense_rebuild_reason: ``dense_rebuild_reason`` (str | None); meaning follows the type and call sites.
+        dense_artifact_validity: ``dense_artifact_validity`` (str); meaning follows the type and call sites.
+        embedding_reason_codes: ``embedding_reason_codes`` (tuple[str, ...]); meaning follows the type and call sites.
+        embedding_index_version: ``embedding_index_version`` (str); meaning follows the type and call sites.
+        embedding_cache_dir_identity: ``embedding_cache_dir_identity`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        Any:
+            Returns a value of type ``Any``; see the function body for structure, error paths, and sentinels.
+    """
     notes = prefix_notes + quality_notes + policy_notes + ["no_ranked_hits_for_query"]
     return RetrievalResult(
         request=request,
@@ -259,6 +380,34 @@ def _retrieval_result_ok_with_hits(
     embedding_index_version: str,
     embedding_cache_dir_identity: str | None,
 ) -> Any:
+    """Describe what ``_retrieval_result_ok_with_hits`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        request: ``request`` (Any); meaning follows the type and call sites.
+        index_version: ``index_version`` (str); meaning follows the type and call sites.
+        corpus_fingerprint: ``corpus_fingerprint`` (str); meaning follows the type and call sites.
+        storage_path: ``storage_path`` (str); meaning follows the type and call sites.
+        hits: ``hits`` (list[Any]); meaning follows the type and call sites.
+        prefix_notes: ``prefix_notes`` (list[str]); meaning follows the type and call sites.
+        quality_notes: ``quality_notes`` (list[str]); meaning follows the type and call sites.
+        policy_notes: ``policy_notes`` (list[str]); meaning follows the type and call sites.
+        retrieval_route: ``retrieval_route`` (str); meaning follows the type and call sites.
+        embedding_model_id: ``embedding_model_id`` (str); meaning follows the type and call sites.
+        degradation_mode: ``degradation_mode`` (str); meaning follows the type and call sites.
+        dense_index_build_action: ``dense_index_build_action`` (str); meaning follows the type and call sites.
+        dense_rebuild_reason: ``dense_rebuild_reason`` (str | None); meaning follows the type and call sites.
+        dense_artifact_validity: ``dense_artifact_validity`` (str); meaning follows the type and call sites.
+        embedding_reason_codes: ``embedding_reason_codes`` (tuple[str, ...]); meaning follows the type and call sites.
+        embedding_index_version: ``embedding_index_version`` (str); meaning follows the type and call sites.
+        embedding_cache_dir_identity: ``embedding_cache_dir_identity`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        Any:
+            Returns a value of type ``Any``; see the function body for structure, error paths, and sentinels.
+    """
     detail_lines = _retrieval_hit_ranking_detail_lines(hits)
     ranking_notes = prefix_notes + quality_notes + policy_notes + detail_lines
     return RetrievalResult(
@@ -295,6 +444,27 @@ def _retrieval_result_degraded_empty_corpus(
     embedding_index_version: str,
     embedding_cache_dir_identity: str | None,
 ) -> Any:
+    """Describe what ``_retrieval_result_degraded_empty_corpus`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        request: ``request`` (Any); meaning follows the type and call sites.
+        index_version: ``index_version`` (str); meaning follows the type and call sites.
+        corpus_fingerprint: ``corpus_fingerprint`` (str); meaning follows the type and call sites.
+        storage_path: ``storage_path`` (str); meaning follows the type and call sites.
+        dense_index_build_action: ``dense_index_build_action`` (str); meaning follows the type and call sites.
+        dense_rebuild_reason: ``dense_rebuild_reason`` (str | None); meaning follows the type and call sites.
+        dense_artifact_validity: ``dense_artifact_validity`` (str); meaning follows the type and call sites.
+        embedding_reason_codes: ``embedding_reason_codes`` (tuple[str, ...]); meaning follows the type and call sites.
+        embedding_index_version: ``embedding_index_version`` (str); meaning follows the type and call sites.
+        embedding_cache_dir_identity: ``embedding_cache_dir_identity`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        Any:
+            Returns a value of type ``Any``; see the function body for structure, error paths, and sentinels.
+    """
     return RetrievalResult(
         request=request,
         status=RetrievalStatus.DEGRADED,
@@ -325,7 +495,21 @@ def _sorted_candidates_to_hard_filtered_pool(
     request: _RequestForPoolSort,
     profile_name: str,
 ) -> tuple[list[_InitialScoredLike], list[str], bool, bool, str]:
-    """Sort by initial score, cap pool, apply hard policy; return pool metadata for rerank."""
+    """Sort by initial score, cap pool, apply hard policy; return pool
+    metadata for rerank.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        candidates: ``candidates`` (list[_InitialScoredLike]); meaning follows the type and call sites.
+        request: ``request`` (_RequestForPoolSort); meaning follows the type and call sites.
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[list[_InitialScoredLike], list[str], bool, bool, str]:
+            Returns a value of type ``tuple[list[_InitialScoredLike], list[str],
+            bool, bool, str]``; see the function body for structure, error paths, and sentinels.
+    """
 
     candidates.sort(key=lambda x: (x.initial_score, x.chunk.chunk_id), reverse=True)
     pool_n = _pool_size(request.max_chunks)
@@ -343,7 +527,9 @@ def _sorted_candidates_to_hard_filtered_pool(
 
 @dataclass(frozen=True, slots=True)
 class _RetrievalEncodeScorePoolPhase:
-    """Hybrid/query encoding, initial scoring, and hard-filtered rerank pool (pre-dedup)."""
+    """Hybrid/query encoding, initial scoring, and hard-filtered rerank pool
+    (pre-dedup).
+    """
 
     qpc: _RetrievalQueryProfileContext
     hybrid_state: _RetrievalHybridEncodingState

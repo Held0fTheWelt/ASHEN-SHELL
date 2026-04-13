@@ -1,4 +1,7 @@
-"""Corpus chunk model, in-memory corpus container, and scored retrieval candidates (DS-003 stage 10)."""
+"""
+Corpus chunk model, in-memory corpus container, and scored retrieval
+candidates (DS-003 stage 10).
+"""
 
 from __future__ import annotations
 
@@ -11,6 +14,8 @@ from ai_stack.rag_types import ContentClass
 
 @dataclass(slots=True)
 class CorpusChunk:
+    """``CorpusChunk`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunk_id: str
     source_path: str
     source_name: str
@@ -26,6 +31,8 @@ class CorpusChunk:
 
 @dataclass(slots=True)
 class InMemoryRetrievalCorpus:
+    """``InMemoryRetrievalCorpus`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunks: list[CorpusChunk]
     built_at: str
     source_count: int
@@ -43,6 +50,15 @@ class InMemoryRetrievalCorpus:
 
     @classmethod
     def empty(cls) -> "InMemoryRetrievalCorpus":
+        """Describe what ``empty`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            InMemoryRetrievalCorpus:
+                Returns a value of type ``InMemoryRetrievalCorpus``; see the function body for structure, error paths, and sentinels.
+        """
         return cls(
             chunks=[],
             built_at=datetime.now(timezone.utc).isoformat(),
@@ -61,6 +77,16 @@ class InMemoryRetrievalCorpus:
         )
 
     def to_dict(self) -> dict[str, object]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, object]:
+                Returns a value of type ``dict[str,
+                object]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "chunks": [
                 {
@@ -88,6 +114,17 @@ class InMemoryRetrievalCorpus:
 
     @classmethod
     def from_dict(cls, payload: dict[str, object]) -> "InMemoryRetrievalCorpus":
+        """``from_dict`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            payload: ``payload`` (dict[str, object]); meaning follows the type and call sites.
+        
+        Returns:
+            InMemoryRetrievalCorpus:
+                Returns a value of type ``InMemoryRetrievalCorpus``; see the function body for structure, error paths, and sentinels.
+        """
         raw_chunks = payload.get("chunks", [])
         chunks: list[CorpusChunk] = []
         if isinstance(raw_chunks, list):
@@ -135,6 +172,8 @@ class InMemoryRetrievalCorpus:
 
 @dataclass(slots=True)
 class _ScoredCandidate:
+    """``_ScoredCandidate`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunk_index: int
     chunk: CorpusChunk
     dense_sim: float

@@ -1,26 +1,31 @@
-"""Project-scoped retrieval for World of Shadows (RAG layer C).
+"""
+Project-scoped retrieval for World of Shadows (RAG layer C).
 
-Hybrid retrieval (Task 2 quality pass): with a committed local embedding index,
-queries use profile-tuned dense/sparse fusion (hybrid v2), a deterministic
-reranking pass over a candidate pool, near-duplicate suppression, and profile-aware
-context packing. Dense/sparse agreement is applied once in reranking (explicit
-bonus), not duplicated in the initial hybrid core. Without embeddings, the path
-is sparse-only with ``retrieval_route=sparse_fallback`` in ranking notes.
+Hybrid retrieval (Task 2 quality pass): with a committed local embedding
+index, queries use profile-tuned dense/sparse fusion (hybrid v2), a
+deterministic reranking pass over a candidate pool, near-duplicate
+suppression, and profile-aware context packing. Dense/sparse agreement
+is applied once in reranking (explicit bonus), not duplicated in the
+initial hybrid core. Without embeddings, the path is sparse-only with
+``retrieval_route=sparse_fallback`` in ranking notes.
 
-Task 3 (source governance): explicit evidence lanes, visibility classes, a hard
-policy gate on the rerank pool (runtime draft suppression when published canonical
-exists for the same module), and additive ``policy_soft_*`` adjustments that are
-separate from Task 2 rerank signals. Lifecycle/degradation notes (Task 1) and
-quality/rerank notes (Task 2) stay distinct from ``policy_*`` notes.
+Task 3 (source governance): explicit evidence lanes, visibility classes,
+a hard policy gate on the rerank pool (runtime draft suppression when
+published canonical exists for the same module), and additive
+``policy_soft_*`` adjustments that are separate from Task 2 rerank
+signals. Lifecycle/degradation notes (Task 1) and quality/rerank notes
+(Task 2) stay distinct from ``policy_*`` notes.
 
-Persistence: JSON corpus under ``.wos/rag/runtime_corpus.json`` (``PersistentRagStore``)
-plus optional ``runtime_embeddings.npz`` + ``runtime_embeddings.meta.json`` for
-reproducible local dense indices. The dense index uses `runtime_embeddings.meta.json`
-as the **commit marker**: a canonical SHA-256 over row-major float32 vector bytes
-(not NPZ container bytes) must match the committed meta; orphan NPZ without valid
-meta is never reused. NPZ is replaced first, then meta, so a crash after NPZ but
-before meta leaves the previous meta authoritative and the next load rejects the
-mismatch safely. This remains a single-host local design, not a distributed vector database.
+Persistence: JSON corpus under ``.wos/rag/runtime_corpus.json``
+(``PersistentRagStore``) plus optional ``runtime_embeddings.npz`` +
+``runtime_embeddings.meta.json`` for reproducible local dense indices.
+The dense index uses `runtime_embeddings.meta.json` as the **commit
+marker**: a canonical SHA-256 over row-major float32 vector bytes (not
+NPZ container bytes) must match the committed meta; orphan NPZ without
+valid meta is never reused. NPZ is replaced first, then meta, so a crash
+after NPZ but before meta leaves the previous meta authoritative and the
+next load rejects the mismatch safely. This remains a single-host local
+design, not a distributed vector database.
 """
 
 from __future__ import annotations
@@ -82,7 +87,19 @@ from ai_stack.rag_context_retriever import ContextRetriever
 
 
 def build_runtime_retriever(repo_root: Path) -> tuple[ContextRetriever, ContextPackAssembler, InMemoryRetrievalCorpus]:
-    """Delegate to ``rag_runtime_bootstrap`` after ``rag`` is fully initialized (avoids import cycles)."""
+    """Delegate to ``rag_runtime_bootstrap`` after ``rag`` is fully
+    initialized (avoids import cycles).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        repo_root: ``repo_root`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[ContextRetriever, ContextPackAssembler, InMemoryRetriev..:
+            Returns a value of type ``tuple[ContextRetriever,
+            ContextPackAssembler, InMemoryRetriev...``; see the function body for structure, error paths, and sentinels.
+    """
     from ai_stack.rag_runtime_bootstrap import build_runtime_retriever as _build_runtime_retriever
 
     return _build_runtime_retriever(repo_root)

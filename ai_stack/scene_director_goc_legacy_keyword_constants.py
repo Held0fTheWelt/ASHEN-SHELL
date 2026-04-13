@@ -1,4 +1,7 @@
-"""Named pacing / keyword fragments for GoC legacy keyword heuristic (readability batch for DS-003)."""
+"""
+Named pacing / keyword fragments for GoC legacy keyword heuristic
+(readability batch for DS-003).
+"""
 
 from __future__ import annotations
 
@@ -44,8 +47,32 @@ ALLIANCE_REPOSITION_PHRASES: Final[tuple[str, ...]] = (
 
 
 def combined_player_text(player_input: str, intent: str) -> str:
+    """``combined_player_text`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        intent: ``intent`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return f"{player_input} {intent}".lower()
 
 
 def contains_any(haystack: str, phrases: tuple[str, ...]) -> bool:
+    """``contains_any`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        haystack: ``haystack`` (str); meaning follows the type and call sites.
+        phrases: ``phrases`` (tuple[str, ...]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return any(p in haystack for p in phrases)

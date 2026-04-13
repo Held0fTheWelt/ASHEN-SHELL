@@ -1,4 +1,7 @@
-"""Explicit bounded social-state projection for planner use (derived only, not world truth)."""
+"""
+Explicit bounded social-state projection for planner use (derived only,
+not world truth).
+"""
 
 from __future__ import annotations
 
@@ -6,7 +9,9 @@ from pydantic import BaseModel, Field
 
 
 class SocialStateRecord(BaseModel):
-    """Consolidates continuity, threads, and scene-pressure signals for the planner."""
+    """Consolidates continuity, threads, and scene-pressure signals for the
+    planner.
+    """
 
     model_config = {"extra": "forbid"}
 
@@ -22,4 +27,12 @@ class SocialStateRecord(BaseModel):
     social_risk_band: str = Field(default="moderate", description="low|moderate|high")
 
     def to_runtime_dict(self) -> dict:
+        """``to_runtime_dict`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict:
+                Returns a value of type ``dict``; see the function body for structure, error paths, and sentinels.
+        """
         return self.model_dump(mode="json")

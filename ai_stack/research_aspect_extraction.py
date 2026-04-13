@@ -13,6 +13,20 @@ def extract_and_store_aspects(
     source_id: str,
     segments: list[dict],
 ) -> list[dict]:
+    """Describe what ``extract_and_store_aspects`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        source_id: ``source_id`` (str); meaning follows the type and call sites.
+        segments: ``segments`` (list[dict]); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict]:
+            Returns a value of type ``list[dict]``; see the function body for structure, error paths, and sentinels.
+    """
     generated = extract_perspective_aspects(
         source_id=source_id,
         segments=segments,

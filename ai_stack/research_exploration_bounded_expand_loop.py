@@ -31,6 +31,8 @@ from ai_stack.research_exploration_bounded_primitives import (
 
 @dataclass
 class _ExplorationExpandCounters:
+    """``_ExplorationExpandCounters`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     llm_calls: int = 0
     token_use: int = 0
     branch_count: int = 0
@@ -65,7 +67,25 @@ def run_bounded_exploration_expand_loop(
     counters: _ExplorationExpandCounters,
     abort_reason: str,
 ) -> str:
-    """Run main BFS expansion until queue empty or budget/abort."""
+    """Run main BFS expansion until queue empty or budget/abort.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        budget: ``budget`` (ExplorationBudget); meaning follows the type and call sites.
+        start: ``start`` (float); meaning follows the type and call sites.
+        queue: ``queue`` (deque[tuple[dict[str, Any],
+            int]]); meaning follows the type and call sites.
+        nodes: ``nodes`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        edges: ``edges`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        seen_hypothesis: ``seen_hypothesis`` (set[str]); meaning follows the type and call sites.
+        counters: ``counters`` (_ExplorationExpandCounters); meaning follows the type and call sites.
+        abort_reason: ``abort_reason`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     ar = abort_reason
     while queue:
         current, depth = queue.popleft()
@@ -173,4 +193,13 @@ def run_bounded_exploration_expand_loop(
 
 
 def exploration_expand_counters_factory() -> _ExplorationExpandCounters:
+    """Describe what ``exploration_expand_counters_factory`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        _ExplorationExpandCounters:
+            Returns a value of type ``_ExplorationExpandCounters``; see the function body for structure, error paths, and sentinels.
+    """
     return _ExplorationExpandCounters()

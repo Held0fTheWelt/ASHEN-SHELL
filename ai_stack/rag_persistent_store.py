@@ -14,9 +14,23 @@ from ai_stack.rag_constants import INDEX_VERSION
 
 @dataclass(slots=True)
 class PersistentRagStore:
+    """``PersistentRagStore`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     storage_path: Path
 
     def load(self, *, expected_fingerprint: str) -> Any:
+        """Describe what ``load`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            expected_fingerprint: ``expected_fingerprint`` (str); meaning follows the type and call sites.
+        
+        Returns:
+            Any:
+                Returns a value of type ``Any``; see the function body for structure, error paths, and sentinels.
+        """
         if not self.storage_path.exists():
             return None
         try:
@@ -36,6 +50,14 @@ class PersistentRagStore:
         return corpus
 
     def save(self, corpus: Any) -> None:
+        """Describe what ``save`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            corpus: ``corpus`` (Any); meaning follows the type and call sites.
+        """
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         payload = corpus.to_dict()
         payload["storage_path"] = str(self.storage_path)

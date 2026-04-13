@@ -13,7 +13,9 @@ on:
       - 'story_runtime_core/**'
       - 'tests/requirements_hygiene/**'
       - 'tests/experience_scoring_cli/**'
+      - 'tests/tools/**'
       - 'scripts/g9_threshold_validator.py'
+      - "'fy'-suites/docify/**"
       - 'docs/goc_evidence_templates/**'
       - '.github/workflows/backend-tests.yml'
       - 'run_tests.py'
@@ -29,7 +31,9 @@ on:
       - 'story_runtime_core/**'
       - 'tests/requirements_hygiene/**'
       - 'tests/experience_scoring_cli/**'
+      - 'tests/tools/**'
       - 'scripts/g9_threshold_validator.py'
+      - "'fy'-suites/docify/**"
       - 'docs/goc_evidence_templates/**'
       - '.github/workflows/backend-tests.yml'
       - 'run_tests.py'

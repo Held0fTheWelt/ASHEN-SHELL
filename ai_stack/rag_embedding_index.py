@@ -1,4 +1,7 @@
-"""Dense embedding index persistence and load for the local RAG corpus (DS-003 split from rag.py)."""
+"""
+Dense embedding index persistence and load for the local RAG corpus
+(DS-003 split from rag.py).
+"""
 
 from __future__ import annotations
 
@@ -25,6 +28,8 @@ from ai_stack.semantic_embedding import (
 
 
 class _EmbeddingChunkLike(Protocol):
+    """``_EmbeddingChunkLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     text: str
 
 
@@ -44,37 +49,83 @@ class EmbeddingIndexCorpus(Protocol):
 
 @dataclass(slots=True)
 class CorpusEmbeddingIndex:
-    """Dense vectors aligned with ``corpus.chunks`` row order (L2-normalized float32)."""
+    """Dense vectors aligned with ``corpus.chunks`` row order (L2-normalized
+    float32).
+    """
 
     vectors: np.ndarray
     model_id: str
 
 
 def _embedding_meta_path(corpus_json: Path) -> Path:
+    """``_embedding_meta_path`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        corpus_json: ``corpus_json`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        Path:
+            Returns a value of type ``Path``; see the function body for structure, error paths, and sentinels.
+    """
     return corpus_json.parent / "runtime_embeddings.meta.json"
 
 
 def _embedding_npz_path(corpus_json: Path) -> Path:
+    """``_embedding_npz_path`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        corpus_json: ``corpus_json`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        Path:
+            Returns a value of type ``Path``; see the function body for structure, error paths, and sentinels.
+    """
     return corpus_json.parent / "runtime_embeddings.npz"
 
 
 def _canonical_dense_vectors_fingerprint(vectors: np.ndarray) -> str:
-    """SHA-256 over canonical row-major float32 bytes (not NPZ container bytes)."""
+    """SHA-256 over canonical row-major float32 bytes (not NPZ container
+    bytes).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        vectors: ``vectors`` (np.ndarray); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     canon = np.ascontiguousarray(vectors.astype(np.float32, copy=False))
     return hashlib.sha256(canon.tobytes()).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
 class DenseIndexLoadResult:
+    """``DenseIndexLoadResult`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     index: CorpusEmbeddingIndex | None
     reason_codes: tuple[str, ...]
     artifact_validity: str
 
 
 def _load_corpus_embedding_index(corpus: EmbeddingIndexCorpus, corpus_json: Path) -> DenseIndexLoadResult:
-    """Load dense index only when committed meta matches NPZ canonical fingerprint.
-
-    Orphan ``runtime_embeddings.npz`` without valid meta is never reused.
+    """Load dense index only when committed meta matches NPZ canonical
+    fingerprint.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        corpus: ``corpus`` (EmbeddingIndexCorpus); meaning follows the type and call sites.
+        corpus_json: ``corpus_json`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        DenseIndexLoadResult:
+            Returns a value of type ``DenseIndexLoadResult``; see the function body for structure, error paths, and sentinels.
     """
     meta_path = _embedding_meta_path(corpus_json)
     npz_path = _embedding_npz_path(corpus_json)
@@ -140,7 +191,16 @@ def _save_corpus_embedding_index(
     vectors: np.ndarray,
     corpus_json: Path,
 ) -> None:
-    """Write NPZ first, then meta. Meta is the sole commit marker for a valid index."""
+    """Write NPZ first, then meta. Meta is the sole commit marker for a
+    valid index.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        corpus: ``corpus`` (EmbeddingIndexCorpus); meaning follows the type and call sites.
+        vectors: ``vectors`` (np.ndarray); meaning follows the type and call sites.
+        corpus_json: ``corpus_json`` (Path); meaning follows the type and call sites.
+    """
     meta_path = _embedding_meta_path(corpus_json)
     npz_path = _embedding_npz_path(corpus_json)
     corpus_json.parent.mkdir(parents=True, exist_ok=True)
@@ -200,6 +260,19 @@ def _save_corpus_embedding_index(
 
 
 def _ensure_corpus_embedding_index(corpus: EmbeddingIndexCorpus, corpus_json: Path) -> CorpusEmbeddingIndex | None:
+    """Describe what ``_ensure_corpus_embedding_index`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        corpus: ``corpus`` (EmbeddingIndexCorpus); meaning follows the type and call sites.
+        corpus_json: ``corpus_json`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        CorpusEmbeddingIndex | None:
+            Returns a value of type ``CorpusEmbeddingIndex | None``; see the function body for structure, error paths, and sentinels.
+    """
     corpus.rag_embedding_cache_dir_identity = embedding_cache_dir_identity_for_meta()
     corpus.rag_embedding_index_version = EMBEDDING_INDEX_VERSION
     probe = embedding_backend_probe()

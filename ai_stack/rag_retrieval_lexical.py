@@ -1,4 +1,7 @@
-"""Lexical / semantic term building, sparse weights, and hybrid-core helpers for RAG retrieval (DS-003 stage 4)."""
+"""
+Lexical / semantic term building, sparse weights, and hybrid-core
+helpers for RAG retrieval (DS-003 stage 4).
+"""
 
 from __future__ import annotations
 
@@ -104,15 +107,40 @@ DOMAIN_DEFAULT_PROFILE = {
 
 
 class _SparseVectorChunk(Protocol):
+    """``_SparseVectorChunk`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     semantic_terms: dict[str, float]
     term_norm: float
 
 
 def _raw_tokens(text: str) -> list[str]:
+    """Describe what ``_raw_tokens`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     return [token for token in re.findall(r"[a-z0-9_]+", text.lower()) if len(token) >= 3]
 
 
 def _normalize_token(token: str) -> str:
+    """``_normalize_token`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        token: ``token`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     normalized = token.strip().lower()
     if not normalized:
         return normalized
@@ -129,6 +157,17 @@ def _normalize_token(token: str) -> str:
 
 
 def _build_semantic_terms(text: str) -> dict[str, float]:
+    """``_build_semantic_terms`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, float]:
+            Returns a value of type ``dict[str, float]``; see the function body for structure, error paths, and sentinels.
+    """
     terms: dict[str, float] = {}
     tokens = [_normalize_token(token) for token in _raw_tokens(text)]
     tokens = [token for token in tokens if len(token) >= 3]
@@ -143,6 +182,14 @@ def _build_semantic_terms(text: str) -> dict[str, float]:
 
 
 def _apply_sparse_vector_weights(chunks: list[_SparseVectorChunk]) -> None:
+    """Describe what ``_apply_sparse_vector_weights`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        chunks: ``chunks`` (list[_SparseVectorChunk]); meaning follows the type and call sites.
+    """
     if not chunks:
         return
     document_frequency: dict[str, int] = {}
@@ -161,6 +208,19 @@ def _apply_sparse_vector_weights(chunks: list[_SparseVectorChunk]) -> None:
 
 
 def _cosine_similarity(query_terms: dict[str, float], query_norm: float, chunk: _SparseVectorChunk) -> float:
+    """``_cosine_similarity`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        query_terms: ``query_terms`` (dict[str, float]); meaning follows the type and call sites.
+        query_norm: ``query_norm`` (float); meaning follows the type and call sites.
+        chunk: ``chunk`` (_SparseVectorChunk); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     if query_norm <= 0 or chunk.term_norm <= 0:
         return 0.0
     dot = 0.0
@@ -172,6 +232,18 @@ def _cosine_similarity(query_terms: dict[str, float], query_norm: float, chunk: 
 
 
 def _profile_hybrid_weights(profile_name: str, domain: RetrievalDomain) -> tuple[float, float]:
+    """``_profile_hybrid_weights`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        domain: ``domain`` (RetrievalDomain); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, float]:
+            Returns a value of type ``tuple[float, float]``; see the function body for structure, error paths, and sentinels.
+    """
     default_prof = DOMAIN_DEFAULT_PROFILE[domain]
     key = profile_name or default_prof
     return PROFILE_HYBRID_WEIGHTS.get(key, PROFILE_HYBRID_WEIGHTS.get(default_prof, (HYBRID_DENSE_WEIGHT, HYBRID_SPARSE_WEIGHT)))
@@ -185,7 +257,22 @@ def _hybrid_core_initial(
     w_dense: float,
     w_sparse: float,
 ) -> float:
-    """Initial hybrid core: weighted blend plus an explicit weak-dense rescue rule."""
+    """Initial hybrid core: weighted blend plus an explicit weak-dense
+    rescue rule.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        dense_sim: ``dense_sim`` (float); meaning follows the type and call sites.
+        sparse_sim: ``sparse_sim`` (float); meaning follows the type and call sites.
+        use_hybrid: ``use_hybrid`` (bool); meaning follows the type and call sites.
+        w_dense: ``w_dense`` (float); meaning follows the type and call sites.
+        w_sparse: ``w_sparse`` (float); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     if not use_hybrid:
         return sparse_sim
     linear = w_dense * dense_sim + w_sparse * sparse_sim
@@ -196,7 +283,19 @@ def _hybrid_core_initial(
 
 
 def _rerank_agreement_bonus(dense_sim: float, sparse_sim: float, *, use_hybrid: bool) -> float:
-    """Single-stage dense/sparse agreement signal (rerank only)."""
+    """Single-stage dense/sparse agreement signal (rerank only).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        dense_sim: ``dense_sim`` (float); meaning follows the type and call sites.
+        sparse_sim: ``sparse_sim`` (float); meaning follows the type and call sites.
+        use_hybrid: ``use_hybrid`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     if not use_hybrid:
         return 0.0
     if dense_sim < RERANK_AGREEMENT_MIN_SIGNAL or sparse_sim < RERANK_AGREEMENT_MIN_SIGNAL:
@@ -205,11 +304,44 @@ def _rerank_agreement_bonus(dense_sim: float, sparse_sim: float, *, use_hybrid: 
 
 
 def _normalize_for_dup(text: str) -> str:
+    """``_normalize_for_dup`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return " ".join(text.lower().split())
 
 
 def _char_trigram_jaccard(a: str, b: str) -> float:
+    """``_char_trigram_jaccard`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        a: ``a`` (str); meaning follows the type and call sites.
+        b: ``b`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     def trigrams(s: str) -> set[str]:
+        """3-gram set over normalized *s* (see ``_normalize_for_dup``).
+        
+        Args:
+            s: Input string (may be shorter than three characters).
+        
+        Returns:
+            set[str]:
+                Shingles; short inputs collapse to ``{s}`` or ``set()``.
+        """
+
         s = _normalize_for_dup(s)
         if len(s) < 3:
             return {s} if s else set()

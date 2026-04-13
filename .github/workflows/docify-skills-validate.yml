@@ -1,0 +1,35 @@
+# Validates markdown links under 'fy'-suites/docify/superpowers/ and Cursor skill copies vs hub.
+name: Docify skill paths
+
+on:
+  pull_request:
+    paths:
+      - "'fy'-suites/docify/superpowers/**"
+      - "'fy'-suites/docify/tools/sync_docify_skills.py"
+      - "'fy'-suites/docify/tools/validate_docify_skill_paths.py"
+      - "'fy'-suites/docify/documentation-audit-task.md"
+      - "'fy'-suites/docify/documentation-docstring-synthesize-task.md"
+      - "'fy'-suites/docify/tools/python_docstring_synthesize.py"
+      - "'fy'-suites/docify/README.md"
+      - ".github/workflows/docify-skills-validate.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "'fy'-suites/docify/superpowers/**"
+      - "'fy'-suites/docify/tools/sync_docify_skills.py"
+      - "'fy'-suites/docify/tools/validate_docify_skill_paths.py"
+      - "'fy'-suites/docify/documentation-audit-task.md"
+      - "'fy'-suites/docify/documentation-docstring-synthesize-task.md"
+      - "'fy'-suites/docify/tools/python_docstring_synthesize.py"
+      - "'fy'-suites/docify/README.md"
+      - ".github/workflows/docify-skills-validate.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Docify skill markdown paths
+        run: python "./'fy'-suites/docify/tools/validate_docify_skill_paths.py"
+      - name: Check Cursor Docify skill copies match hub
+        run: python "./'fy'-suites/docify/tools/sync_docify_skills.py" --check

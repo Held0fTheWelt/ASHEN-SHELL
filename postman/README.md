@@ -1,62 +1,50 @@
-# Postman Test Suite – World of Shadows
+# Postman — World of Shadows
 
-This package contains a comprehensive Postman suite for the **current backend + world-engine state**.
+Collections here are **generated from** `docs/api/openapi.yaml` via **Postmanify** (`'fy'-suites/postmanify/`). Re-run after OpenAPI changes so Postman stays aligned with the API inventory.
 
 ## Files
 
-- `WorldOfShadows_Complete.postman_collection.json` – full suite
-- `WorldOfShadows_Smoke.postman_collection.json` – smaller smoke pass
-- `WorldOfShadows_Local.postman_environment.json` – localhost environment
-- `WorldOfShadows_Docker.postman_environment.json` – container-to-container environment
-- `WEBSOCKET_MANUAL.md` – WebSocket validation flow for Postman
+| File / directory | Role |
+|------------------|------|
+| **`WorldOfShadows_Complete_OpenAPI.postman_collection.json`** | **Full suite** — one folder per OpenAPI tag, one request per operation. |
+| **`suites/WorldOfShadows_Suite_<Tag>.postman_collection.json`** | **Sub-suites** — same requests, scoped to a single tag (e.g. Forum, Auth). |
+| **`postmanify-manifest.json`** | Last generation metadata (OpenAPI path, sha256, output list). |
+| `WorldOfShadows_Local.postman_environment.json` | Localhost targets (`backendBaseUrl`, `backendApiPrefix`, …). |
+| `WorldOfShadows_Docker.postman_environment.json` | Docker / compose-style targets. |
+| `WorldOfShadows_Test.postman_environment.json` | Test-oriented defaults (if used by your workflow). |
+| `WEBSOCKET_MANUAL.md` | WebSocket checks (not covered by the OpenAPI HTTP generator). |
+| `generated/README.md` | Note: the **master** JSON lives in this directory (`WorldOfShadows_Complete_OpenAPI…`), not under `generated/`. |
 
-## What is covered
+## Regenerate everything
 
-### Backend
-- auth and identity
-- public site/news/wiki/forum endpoints
-- users, roles, areas, feature-area mapping
-- slogans, news, wiki admin flows
-- forum creation, moderation, reports, bulk actions, tags, subscriptions
-- admin logs and analytics
-- data export / import preflight / optional execute
-- backend ↔ world-engine game bridge
+From the **repository root** (after `pip install -e .`):
 
-### World-engine
-- health
-- templates
-- runs
-- tickets
-- internal join-context
-- snapshot
-- transcript
+```bash
+python -m postmanify.tools generate
+```
 
-## Required local services
+Equivalent explicit path:
 
-For the **complete** suite, start both services:
+```bash
+python -m postmanify.tools generate --out-master postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json
+```
 
-1. Flask backend
-2. world-engine
+This overwrites the **complete** collection, all **`suites/*.json`**, and **`postmanify-manifest.json`**.
 
-The game bridge requests require the backend to be configured against a running world-engine instance.
+## Import order
 
-## Recommended runner order
+1. Import **`WorldOfShadows_Local`** or **`WorldOfShadows_Docker`** (environment).
+2. Import **`WorldOfShadows_Complete_OpenAPI.postman_collection.json`** for a full run, **or** import one or more files from **`suites/`** for a narrower pass.
+3. Set real credentials in the environment where your flows need JWTs. Generated requests use **`{{backendBaseUrl}}{{backendApiPrefix}}/…`**; they do **not** include the old hand-written auth pre-request scripts — add tokens in the environment or extend requests locally as needed.
 
-1. Import the collection and one environment
-2. Fill in real credentials for `admin`, `moderator`, and `user`
-3. Run the full collection from top to bottom
-4. Run the `90 - High-Risk / Cleanup / Optional` folder last
+## Coverage
 
-## Notes
-
-- The collection creates temporary resources using a fresh `runSuffix` on every run.
-- The first request resets collection variables and generates all dynamic names.
-- Some endpoints depend on feature permissions existing for the admin/moderator users in your local dataset.
-- `Data Import Execute` is intentionally flexible: depending on your local role setup it may return `200`, `400`, or `403`.
-- WebSocket validation is documented separately in `WEBSOCKET_MANUAL.md`.
+Route coverage matches **`docs/api/openapi.yaml`** (backend `/api/v1` surface). For human-oriented examples and prose, see **`docs/api/REFERENCE.md`**.
 
 ## Suggested use
 
-- Use the **smoke suite** during rapid local iteration
-- Use the **complete suite** before merging bigger backend or runtime changes
-- For CI, consider exporting the collection to Newman later
+- **Day-to-day:** import one **`suites/WorldOfShadows_Suite_*.postman_collection.json`** for the area you are changing.
+- **Pre-merge / wide sweep:** run the **complete** collection; expect bare **method + URL** requests unless you have added scripts locally.
+- **CI:** consider Newman against **`WorldOfShadows_Complete_OpenAPI`** or a subset of **`suites/`** once you pin auth and ordering.
+
+See **`'fy'-suites/postmanify/README.md`** for hub details and the **`postmanify-sync`** Cursor skill.

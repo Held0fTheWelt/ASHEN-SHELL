@@ -15,4 +15,13 @@ def register_research_canon_capabilities(
     *,
     research_store: Any,
 ) -> None:
+    """Describe what ``register_research_canon_capabilities`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        registry: ``registry`` (CapabilityRegistry); meaning follows the type and call sites.
+        research_store: ``research_store`` (Any); meaning follows the type and call sites.
+    """
     _register(registry, research_store=research_store)

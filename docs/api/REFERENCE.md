@@ -1393,13 +1393,11 @@ BACKEND_API_URL=https://yourusername.pythonanywhere.com
 
 ## Postman Collection
 
-Import the Postman collection at `postman/WorldOfShadows_API.postman_collection.json` to test all endpoints.
+Import **`postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json`** (or a tag slice under **`postman/suites/`**) to exercise HTTP routes listed in this reference. Collections are **regenerated from** `docs/api/openapi.yaml` via Postmanify — see **`postman/README.md`**.
 
-**Collection Features:**
-- Pre-configured base URL variable (`baseUrl`)
-- JWT token variable (`jwt_token`) — populate after login
-- Example requests for all endpoints
-- Common error cases documented
+**Collection notes:**
+- Requests use **`{{backendBaseUrl}}`** and **`{{backendApiPrefix}}`** (see **`WorldOfShadows_Local.postman_environment.json`**).
+- JWT and other auth flows are **not** auto-generated; set tokens in the environment or extend requests as needed.
 
 ---
 

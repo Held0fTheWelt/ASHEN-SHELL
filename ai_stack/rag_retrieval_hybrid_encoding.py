@@ -1,4 +1,7 @@
-"""Hybrid vs sparse encoding resolution for RAG retrieve (DS-033) — behavior-preserving."""
+"""
+Hybrid vs sparse encoding resolution for RAG retrieve (DS-033) —
+behavior-preserving.
+"""
 
 from __future__ import annotations
 
@@ -14,7 +17,9 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class _RetrievalHybridEncodingState:
-    """Dense/hybrid vs sparse route, query encoding outcome, and degradation label (retrieve pre-rerank)."""
+    """Dense/hybrid vs sparse route, query encoding outcome, and degradation
+    label (retrieve pre-rerank).
+    """
 
     use_hybrid: bool
     query_vec: np.ndarray | None
@@ -33,7 +38,22 @@ def _sparse_fallback_degradation_mode(
     embeddings_env_disabled: bool,
     rdm: type,
 ) -> str:
-    """Pick degradation label when not on hybrid OK path (flat branches for lower AST nesting)."""
+    """Pick degradation label when not on hybrid OK path (flat branches for
+    lower AST nesting).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        dense_validity: ``dense_validity`` (str); meaning follows the type and call sites.
+        backend_code: ``backend_code`` (str); meaning follows the type and call sites.
+        query_encode_failed: ``query_encode_failed`` (bool); meaning follows the type and call sites.
+        embeddings_env_disabled: ``embeddings_env_disabled`` (bool); meaning follows the type and call sites.
+        rdm: ``rdm`` (type); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if embeddings_env_disabled:
         return rdm.SPARSE_FALLBACK_NO_BACKEND.value
     if query_encode_failed:
@@ -56,6 +76,21 @@ def _resolve_retrieval_hybrid_encoding_state(
 ) -> _RetrievalHybridEncodingState:
     # Bind through ``ai_stack.rag`` so tests and callers can monkeypatch
     # ``rag.encode_query_detailed`` / ``rag.embeddings_disabled_by_env``.
+    """Describe what ``_resolve_retrieval_hybrid_encoding_state`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        corpus: ``corpus`` (InMemoryRetrievalCorpus); meaning follows the type and call sites.
+        request: ``request`` (RetrievalRequest); meaning follows the type and call sites.
+        embedding_index_ready: ``embedding_index_ready`` (bool); meaning follows the type and call sites.
+        embedding_model_id: ``embedding_model_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        _RetrievalHybridEncodingState:
+            Returns a value of type ``_RetrievalHybridEncodingState``; see the function body for structure, error paths, and sentinels.
+    """
     from ai_stack.rag import (
         RetrievalDegradationMode,
         embeddings_disabled_by_env,

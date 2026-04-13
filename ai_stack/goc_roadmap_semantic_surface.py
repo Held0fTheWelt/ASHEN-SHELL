@@ -1,11 +1,15 @@
-"""Roadmap §4.2 / G1 shared semantic surface — canonical label bundles for GoC.
+"""
+Roadmap §4.2 / G1 shared semantic surface — canonical label bundles for
+GoC.
 
-Maps roadmap mandatory vocabulary families to concrete frozen string sets implemented
-in this repository. Consumers should import labels from here or from the underlying
-modules referenced in ``ROADMAP_SEMANTIC_REGISTRY`` — do not introduce parallel
-productive enums for the same roadmap family.
+Maps roadmap mandatory vocabulary families to concrete frozen string
+sets implemented in this repository. Consumers should import labels from
+here or from the underlying modules referenced in
+``ROADMAP_SEMANTIC_REGISTRY`` — do not introduce parallel productive
+enums for the same roadmap family.
 
-Parity with backend routing enums is enforced by ``backend/tests/test_goc_semantic_parity.py``.
+Parity with backend routing enums is enforced by
+``backend/tests/test_goc_semantic_parity.py``.
 """
 
 from __future__ import annotations

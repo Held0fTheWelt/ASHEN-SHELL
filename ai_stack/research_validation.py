@@ -20,12 +20,37 @@ DEFAULT_SUPPORT_THRESHOLD = 0.6
 
 
 def _support_level(anchor_count: int, avg_confidence: float) -> float:
+    """``_support_level`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        anchor_count: ``anchor_count`` (int); meaning follows the type and call sites.
+        avg_confidence: ``avg_confidence`` (float); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     coverage = min(1.0, anchor_count / 3.0)
     score = (0.55 * coverage) + (0.45 * avg_confidence)
     return round(max(0.0, min(1.0, score)), 4)
 
 
 def _avg_anchor_confidence(anchor_ids: list[str], anchors_by_id: dict[str, dict[str, Any]]) -> float:
+    """``_avg_anchor_confidence`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        anchor_ids: ``anchor_ids`` (list[str]); meaning follows the type and call sites.
+        anchors_by_id: ``anchors_by_id`` (dict[str,
+            dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     if not anchor_ids:
         return 0.0
     values: list[float] = []
@@ -42,6 +67,18 @@ def _avg_anchor_confidence(anchor_ids: list[str], anchors_by_id: dict[str, dict[
 
 
 def evaluate_candidate_from_exploration_node(node: dict[str, Any]) -> tuple[bool, str]:
+    """Describe what ``evaluate_candidate_from_exploration_node`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        node: ``node`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[bool, str]:
+            Returns a value of type ``tuple[bool, str]``; see the function body for structure, error paths, and sentinels.
+    """
     payload = {
         "claim_type": "improvement_lead",
         "statement": node.get("hypothesis"),
@@ -69,6 +106,21 @@ def verify_and_promote_claims(
     candidate_payloads: list[dict[str, Any]],
     support_threshold: float = DEFAULT_SUPPORT_THRESHOLD,
 ) -> dict[str, Any]:
+    """Describe what ``verify_and_promote_claims`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        work_id: ``work_id`` (str); meaning follows the type and call sites.
+        candidate_payloads: ``candidate_payloads`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        support_threshold: ``support_threshold`` (float); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     anchors = store.list_anchors()
     anchors_by_id = {row["anchor_id"]: row for row in anchors}
     decisions: list[dict[str, Any]] = []

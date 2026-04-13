@@ -4,9 +4,9 @@ Orientation for **developers** working across World of Shadows services. For pla
 
 ## Repository language
 
-**Canonical policy (single source of truth):** Change **only this section** when repository language rules change. Root **`AGENTS.md`**, **`CONTRIBUTING.md`**, `despaghettify/**`, and `despaghettify/state/**` must **not** duplicate this text — they **link here** so wording cannot drift or break across entry points.
+**Canonical policy (single source of truth):** Change **only this section** when repository language rules change. Root **`AGENTS.md`**, **`CONTRIBUTING.md`**, `'fy'-suites/despaghettify/**`, and `'fy'-suites/despaghettify/state/**` must **not** duplicate this text — they **link here** so wording cannot drift or break across entry points.
 
-**Policy:** **Strict English** for all **committed**, maintainer- and operator-facing text: `docs/`, package and root READMEs, code **comments** and **docstrings**, **commit messages**, logs and messages intended for developers or operators (unless a feature is explicitly internationalized with documented locale rules), and **human-readable** governance and evidence (including everything under `despaghettify/` and `despaghettify/state/artifacts/`). Fictional or in-world **player-facing narrative** under `content/modules/` may follow creative tone for that layer; **keys, inline hints to authors, schemas, and tooling** around that content stay English.
+**Policy:** **Strict English** for all **committed**, maintainer- and operator-facing text: `docs/`, package and root READMEs, code **comments** and **docstrings**, **commit messages**, logs and messages intended for developers or operators (unless a feature is explicitly internationalized with documented locale rules), and **human-readable** governance and evidence (including everything under `'fy'-suites/despaghettify/` and `'fy'-suites/despaghettify/state/artifacts/`). Fictional or in-world **player-facing narrative** under `content/modules/` may follow creative tone for that layer; **keys, inline hints to authors, schemas, and tooling** around that content stay English.
 
 **Layering:** Procedure-specific docs (for example each Despaghettify task Markdown `**Language:**` line) add **scope for that procedure only** and link to this heading — they do **not** restate or narrow the policy above.
 
@@ -71,19 +71,19 @@ Cross-stack edits often touch `ai_stack/`, `world-engine/`, and `content/modules
 
 ## Despaghettify and Cursor agent skills
 
-**Repo standard:** Despaghettify **agent skills** under **`despaghettify/superpowers/`** are **thin routers** (they point at task Markdown only — **no** duplicated M7 thresholds or checklists). **Trigger values** and the full analysis procedure are **only** in `despaghettify/spaghetti-check-task.md`. Cursor loads **project** skills from **`.cursor/skills/`**; this repository **commits** mirrored copies so every clone gets the same skills.
+**Repo standard:** Despaghettify **agent skills** under **`'fy'-suites/despaghettify/superpowers/`** are **thin routers** (they point at task Markdown only — **no** duplicated M7 thresholds or checklists). **Trigger values** and the full analysis procedure are **only** in `'fy'-suites/despaghettify/spaghetti-check-task.md`. Cursor loads **project** skills from **`.cursor/skills/`**; this repository **commits** mirrored copies so every clone gets the same skills.
 
-After **any** edit to `despaghettify/superpowers/*/SKILL.md`, run from the repository root:
+After **any** edit to `'fy'-suites/despaghettify/superpowers/*/SKILL.md`, run from the repository root:
 
 ```bash
-python despaghettify/tools/sync_despag_skills.py
+python "./'fy'-suites/despaghettify/tools/sync_despag_skills.py"
 ```
 
-Optional drift check (e.g. in CI): `python despaghettify/tools/sync_despag_skills.py --check` (exit **1** if `.cursor/skills` is out of date). Do not edit `.cursor/skills/` in isolation — sync will overwrite it.
+Optional drift check (e.g. in CI): `python "./'fy'-suites/despaghettify/tools/sync_despag_skills.py" --check` (exit **1** if `.cursor/skills` is out of date). Do not edit `.cursor/skills/` in isolation — sync will overwrite it.
 
-**Skill markdown links:** run `python despaghettify/tools/validate_despag_skill_paths.py` after changing paths under `despaghettify/superpowers/` (CI: `.github/workflows/despaghettify-skills-validate.yml`). See [`despaghettify/superpowers/references/VALIDATION.md`](../../despaghettify/superpowers/references/VALIDATION.md).
+**Skill markdown links:** run `python "./'fy'-suites/despaghettify/tools/validate_despag_skill_paths.py"` after changing paths under `'fy'-suites/despaghettify/superpowers/` (CI: `.github/workflows/despaghettify-skills-validate.yml`). See [`'fy'-suites/despaghettify/superpowers/references/VALIDATION.md`](../../'fy'-suites/despaghettify/superpowers/references/VALIDATION.md).
 
-See also root **`AGENTS.md`**, [`despaghettify/superpowers/README.md`](../../despaghettify/superpowers/README.md), and [`despaghettify/README.md`](../../despaghettify/README.md).
+See also root **`AGENTS.md`**, [`'fy'-suites/despaghettify/superpowers/README.md`](../../'fy'-suites/despaghettify/superpowers/README.md), and [`'fy'-suites/despaghettify/README.md`](../../'fy'-suites/despaghettify/README.md).
 
 ## Related
 

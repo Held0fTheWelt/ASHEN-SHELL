@@ -1,12 +1,20 @@
-# Forum Module - Postman Collection Update Guide
+# Forum module — Postman alignment (historical checklist)
 
-**Status:** Forum endpoints identified and documented for Postman integration
-**File to Update:** `postman/WorldOfShadows_API.postman_collection.json`
-**Collection Name:** WorldOfShadows_API
+**Status:** Historical implementation guide. **Postman collections are no longer hand-maintained in-repo** at `WorldOfShadows_API.postman_collection.json` (removed). Forum (and all other) HTTP routes are exported from **`docs/api/openapi.yaml`** via **Postmanify** into:
 
-## Implementation Note
+- **`postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json`**
+- **`postman/suites/WorldOfShadows_Suite_Forum.postman_collection.json`**
 
-The following endpoints should be added as a new folder "Forum" in the existing Postman collection, maintaining the current folder structure and auth pattern used for other API endpoints.
+## Current workflow
+
+1. Update **`docs/api/openapi.yaml`** (and this doc / `REFERENCE.md` as needed).
+2. Run **`python -m postmanify.tools generate`** from the repository root (`postman/README.md`).
+
+The sections below remain a **checklist** of forum behaviours to verify in OpenAPI and in generated Postman requests; they do **not** describe a separate JSON file to edit by hand.
+
+## Historical implementation note (pre-Postmanify)
+
+The following endpoints were originally tracked for manual Postman folder layout and auth patterns.
 
 ---
 

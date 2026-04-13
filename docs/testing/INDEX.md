@@ -39,6 +39,8 @@
   - Use for: Quick answers during implementation
 
 ### Level 4: Execution Strategy
+- **[COVERAGE_SEMANTICS.md](COVERAGE_SEMANTICS.md)** - What `pytest-cov` measures per orchestrator suite and what it does **not** prove (production risk).
+- **[../../tests/TESTING.md](../../tests/TESTING.md)** - Canonical `tests/run_tests.py` behavior: eight suites, `--suite all`, `--scope`, `--quick`, coverage roots.
 - **[TEST_EXECUTION_PROFILES.md](TEST_EXECUTION_PROFILES.md)** - How to run tests
   - Local development profiles
   - CI/CD integration

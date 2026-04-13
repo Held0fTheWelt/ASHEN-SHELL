@@ -1,4 +1,7 @@
-"""Deterministic scene director for God of Carnage (CANONICAL_TURN_CONTRACT_GOC.md §3)."""
+"""
+Deterministic scene director for God of Carnage
+(CANONICAL_TURN_CONTRACT_GOC.md §3).
+"""
 
 from __future__ import annotations
 
@@ -22,6 +25,19 @@ from ai_stack.scene_director_goc_legacy_keyword_candidates import (
 
 
 def _finalize_pacing_silence(pacing: str, silence: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """Describe what ``_finalize_pacing_silence`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pacing: ``pacing`` (str); meaning follows the type and call sites.
+        silence: ``silence`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, dict[str, Any]]:
+            Returns a value of type ``tuple[str, dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     assert_subdecision_label_in_matrix("pacing_mode", pacing)
     assert_subdecision_label_in_matrix("silence_brevity_mode", silence["mode"])
     return pacing, silence
@@ -31,7 +47,19 @@ GOC_SCENE_ASSESSMENT_MINIMAL_KEYS: frozenset[str] = frozenset({"scene_core", "pr
 
 
 def goc_scene_assessment_has_minimal_fields(assessment: dict[str, Any] | None) -> bool:
-    """Return True if assessment dict carries required minimal schema for GoC operator/gate checks."""
+    """Return True if assessment dict carries required minimal schema for
+    GoC operator/gate checks.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        assessment: ``assessment`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     if not assessment or not isinstance(assessment, dict):
         return False
     for key in GOC_SCENE_ASSESSMENT_MINIMAL_KEYS:
@@ -42,6 +70,17 @@ def goc_scene_assessment_has_minimal_fields(assessment: dict[str, Any] | None) -
 
 
 def _severity_index(continuity_class: str) -> int:
+    """``_severity_index`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        continuity_class: ``continuity_class`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        int:
+            Returns a value of type ``int``; see the function body for structure, error paths, and sentinels.
+    """
     try:
         return CONTINUITY_CLASS_SEVERITY_ORDER.index(continuity_class)
     except ValueError:
@@ -49,7 +88,18 @@ def _severity_index(continuity_class: str) -> int:
 
 
 def prior_continuity_classes(prior_continuity_impacts: list[dict[str, Any]] | None) -> list[str]:
-    """Extract frozen continuity class labels from carry-forward impacts (bounded, not a memory system)."""
+    """Extract frozen continuity class labels from carry-forward impacts
+    (bounded, not a memory system).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] | None); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     if not prior_continuity_impacts:
         return []
     out: list[str] = []
@@ -67,7 +117,19 @@ def select_single_scene_function(
     *,
     implied_continuity_by_function: dict[str, str],
 ) -> str:
-    """CANONICAL_TURN_CONTRACT_GOC.md §3.5 — single function from competing candidates."""
+    """CANONICAL_TURN_CONTRACT_GOC.md §3.5 — single function from competing
+    candidates.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        candidates: ``candidates`` (list[str]); meaning follows the type and call sites.
+        implied_continuity_by_function: ``implied_continuity_by_function`` (dict[str, str]); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     valid = [c for c in candidates if c in SCENE_FUNCTIONS]
     if not valid:
         return "establish_pressure"
@@ -92,6 +154,23 @@ def build_scene_assessment(
     prior_continuity_impacts: list[dict[str, Any]] | None = None,
     yaml_slice: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """``build_scene_assessment`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        current_scene_id: ``current_scene_id`` (str); meaning follows the type and call sites.
+        canonical_yaml: ``canonical_yaml`` (dict[str,
+            Any] | None); meaning follows the type and call sites.
+        prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] | None); meaning follows the type and call sites.
+        yaml_slice: ``yaml_slice`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     setting = "unknown"
     narrative_scope = "unknown"
     if canonical_yaml:
@@ -147,7 +226,22 @@ def _yaml_default_responder(
     scene_id: str = "",
     selected_scene_function: str = "",
 ) -> tuple[str, str]:
-    """Asymmetry: unnamed moves route pressure to different actors under comparable carry-forward."""
+    """Asymmetry: unnamed moves route pressure to different actors under
+    comparable carry-forward.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        yaml_slice: ``yaml_slice`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+        prior_classes: ``prior_classes`` (list[str]); meaning follows the type and call sites.
+        scene_id: ``scene_id`` (str); meaning follows the type and call sites.
+        selected_scene_function: ``selected_scene_function`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, str]:
+            Returns a value of type ``tuple[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     voice = {}
     chars = {}
     if yaml_slice and isinstance(yaml_slice.get("character_voice"), dict):
@@ -192,7 +286,24 @@ def semantic_move_to_scene_candidates(
     player_input: str,
     interpreted_move: dict[str, Any],
 ) -> tuple[list[str], dict[str, str], list[str]]:
-    """Map semantic move_type to scene-function candidates — planner-primary (not keyword surface)."""
+    """Map semantic move_type to scene-function candidates —
+    planner-primary (not keyword surface).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        move_type: ``move_type`` (str); meaning follows the type and call sites.
+        pacing_mode: ``pacing_mode`` (str); meaning follows the type and call sites.
+        prior_classes: ``prior_classes`` (list[str]); meaning follows the type and call sites.
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        interpreted_move: ``interpreted_move`` (dict[str,
+            Any]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[list[str], dict[str, str], list[str]]:
+            Returns a value of type ``tuple[list[str], dict[str, str],
+            list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     text = f"{player_input} {interpreted_move.get('player_intent', '')}".lower()
     move_class = str(interpreted_move.get("move_class") or "").lower()
     intent = str(interpreted_move.get("player_intent") or "").lower()
@@ -301,7 +412,22 @@ def _merge_continuity_supplements(
     player_input: str,
     pacing_mode: str,
 ) -> None:
-    """Add carry-forward and structural nudges (bounded compatibility layer)."""
+    """Add carry-forward and structural nudges (bounded compatibility
+    layer).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        candidates: ``candidates`` (list[str]); meaning follows the type and call sites.
+        implied: ``implied`` (dict[str, str]); meaning follows the type and call sites.
+        heuristic_trace: ``heuristic_trace`` (list[str]); meaning follows the type and call sites.
+        prior_classes: ``prior_classes`` (list[str]); meaning follows the type and call sites.
+        text: ``text`` (str); meaning follows the type and call sites.
+        move_class: ``move_class`` (str); meaning follows the type and call sites.
+        intent: ``intent`` (str); meaning follows the type and call sites.
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        pacing_mode: ``pacing_mode`` (str); meaning follows the type and call sites.
+    """
     if (
         ("question" in move_class or "question" in intent or player_input.strip().endswith("?"))
         and "probe_motive" not in candidates
@@ -339,6 +465,25 @@ def _goc_primary_responder_from_context(
     scene_fn: str,
     implied: dict[str, str],
 ) -> tuple[str, str]:
+    """Describe what ``_goc_primary_responder_from_context`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+        hint: ``hint`` (str | None); meaning follows the type and call sites.
+        yaml_slice: ``yaml_slice`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+        prior_classes: ``prior_classes`` (list[str]); meaning follows the type and call sites.
+        current_scene_id: ``current_scene_id`` (str); meaning follows the type and call sites.
+        scene_fn: ``scene_fn`` (str); meaning follows the type and call sites.
+        implied: ``implied`` (dict[str, str]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, str]:
+            Returns a value of type ``tuple[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     if hint and (
         hint.endswith("_reille") or hint.endswith("longstreet") or hint.endswith("vallon")
     ):
@@ -376,7 +521,28 @@ def build_responder_and_function(
     semantic_move_record: dict[str, Any] | None = None,
     social_state_record: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], str, dict[str, str], dict[str, Any]]:
-    """Choose responder set, scene function, implied continuity map, and multi-pressure resolution record."""
+    """Choose responder set, scene function, implied continuity map, and
+    multi-pressure resolution record.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        interpreted_move: ``interpreted_move`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        pacing_mode: ``pacing_mode`` (str); meaning follows the type and call sites.
+        prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] | None); meaning follows the type and call sites.
+        yaml_slice: ``yaml_slice`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+        current_scene_id: ``current_scene_id`` (str); meaning follows the type and call sites.
+        semantic_move_record: ``semantic_move_record`` (dict[str, Any] | None); meaning follows the type and call sites.
+        social_state_record: ``social_state_record`` (dict[str, Any] | None); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[list[dict[str, Any]], str, dict[str, str], dict[str, A...:
+            Returns a value of type ``tuple[list[dict[str, Any]], str, dict[str,
+            str], dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     text = f"{player_input} {interpreted_move.get('player_intent', '')}".lower()
     prior_classes = prior_continuity_classes(prior_continuity_impacts)
     selection_source = "semantic_pipeline_v1"
@@ -448,6 +614,21 @@ def build_pacing_and_silence(
     interpreted_move: dict[str, Any],
     module_id: str,
 ) -> tuple[str, dict[str, Any]]:
+    """Describe what ``build_pacing_and_silence`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        interpreted_move: ``interpreted_move`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, dict[str, Any]]:
+            Returns a value of type ``tuple[str, dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     text = f"{player_input} {interpreted_move.get('move_class', '')}".lower()
     intent = str(interpreted_move.get("player_intent") or "").lower()
     if module_id != GOC_MODULE_ID:

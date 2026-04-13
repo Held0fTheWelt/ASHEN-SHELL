@@ -1,4 +1,7 @@
-"""Handler factories for wos.context_pack / transcript / review_bundle capabilities (Feinsplit)."""
+"""
+Handler factories for wos.context_pack / transcript / review_bundle
+capabilities (Feinsplit).
+"""
 
 from __future__ import annotations
 
@@ -13,6 +16,20 @@ def build_context_pack_handler(
     retriever: "ContextRetriever",
     assembler: "ContextPackAssembler",
 ) -> Callable[[dict[str, Any]], dict[str, Any]]:
+    """Describe what ``build_context_pack_handler`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retriever: ``retriever`` ('ContextRetriever'); meaning follows the type and call sites.
+        assembler: ``assembler`` ('ContextPackAssembler'); meaning follows the type and call sites.
+    
+    Returns:
+        Callable[[dict[str, Any]], dict[str, Any]]:
+            Returns a value of type ``Callable[[dict[str, Any]], dict[str,
+            Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     def context_pack_handler(payload: dict[str, Any]) -> dict[str, Any]:
         from ai_stack.rag_constants import RETRIEVAL_POLICY_VERSION
         from ai_stack.rag_retrieval_dtos import RetrievalRequest
@@ -63,6 +80,19 @@ def build_context_pack_handler(
 
 
 def build_transcript_read_handler(repo_root: Path) -> Callable[[dict[str, Any]], dict[str, Any]]:
+    """Describe what ``build_transcript_read_handler`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        repo_root: ``repo_root`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        Callable[[dict[str, Any]], dict[str, Any]]:
+            Returns a value of type ``Callable[[dict[str, Any]], dict[str,
+            Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     from ai_stack.capabilities import CapabilityInvocationError
 
     def transcript_read_handler(payload: dict[str, Any]) -> dict[str, Any]:
@@ -79,6 +109,16 @@ def build_transcript_read_handler(repo_root: Path) -> Callable[[dict[str, Any]],
 
 
 def build_review_bundle_handler() -> Callable[[dict[str, Any]], dict[str, Any]]:
+    """Describe what ``build_review_bundle_handler`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        Callable[[dict[str, Any]], dict[str, Any]]:
+            Returns a value of type ``Callable[[dict[str, Any]], dict[str,
+            Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     from uuid import uuid4
 
     def review_bundle_handler(payload: dict[str, Any]) -> dict[str, Any]:

@@ -1,4 +1,7 @@
-"""Dramatic review section for package_output — decomposed from *_sections (DS-026)."""
+"""
+Dramatic review section for package_output — decomposed from *_sections
+(DS-026).
+"""
 
 from __future__ import annotations
 
@@ -8,20 +11,68 @@ from ai_stack.langgraph_runtime_state import RuntimeTurnState
 
 
 def _validation_reason_str(vo: dict[str, Any]) -> str:
+    """``_validation_reason_str`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        vo: ``vo`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return str(vo.get("reason") or "")
 
 
 def _dramatic_quality_reject(reason_str: str) -> bool:
+    """Describe what ``_dramatic_quality_reject`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        reason_str: ``reason_str`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return reason_str.startswith("dramatic_alignment") or reason_str.startswith("dramatic_effect_")
 
 
 def _alignment_note(vo: dict[str, Any], reason_str: str, dramatic_quality_reject: bool) -> str:
+    """``_alignment_note`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        vo: ``vo`` (dict[str, Any]); meaning follows the type and call sites.
+        reason_str: ``reason_str`` (str); meaning follows the type and call sites.
+        dramatic_quality_reject: ``dramatic_quality_reject`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if vo.get("status") == "rejected" and dramatic_quality_reject:
         return f"alignment_reject:{reason_str}"
     return "alignment_ok"
 
 
 def _prior_continuity_impacts(state: RuntimeTurnState) -> list[Any]:
+    """Describe what ``_prior_continuity_impacts`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        list[Any]:
+            Returns a value of type ``list[Any]``; see the function body for structure, error paths, and sentinels.
+    """
     pci = state.get("prior_continuity_impacts")
     return pci if isinstance(pci, list) else []
 
@@ -29,6 +80,19 @@ def _prior_continuity_impacts(state: RuntimeTurnState) -> list[Any]:
 def _scene_assessment_and_mpr(
     state: RuntimeTurnState,
 ) -> tuple[dict[str, Any], dict[str, Any], list[Any]]:
+    """Describe what ``_scene_assessment_and_mpr`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[dict[str, Any], dict[str, Any], list[Any]]:
+            Returns a value of type ``tuple[dict[str, Any], dict[str, Any],
+            list[Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     sa = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
     mpr = sa.get("multi_pressure_resolution") if isinstance(sa.get("multi_pressure_resolution"), dict) else {}
     ht = mpr.get("heuristic_trace") if isinstance(mpr.get("heuristic_trace"), list) else []
@@ -36,6 +100,17 @@ def _scene_assessment_and_mpr(
 
 
 def _primary_responder_dict(state: RuntimeTurnState) -> dict[str, Any]:
+    """``_primary_responder_dict`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
     if responders and isinstance(responders[0], dict):
         return responders[0]
@@ -43,6 +118,17 @@ def _primary_responder_dict(state: RuntimeTurnState) -> dict[str, Any]:
 
 
 def _silence_decision(state: RuntimeTurnState) -> dict[str, Any]:
+    """``_silence_decision`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     s = state.get("silence_brevity_decision")
     return s if isinstance(s, dict) else {}
 
@@ -52,6 +138,19 @@ def _dramatic_signature(
     primary: dict[str, Any],
     silence: dict[str, Any],
 ) -> dict[str, str]:
+    """``_dramatic_signature`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        primary: ``primary`` (dict[str, Any]); meaning follows the type and call sites.
+        silence: ``silence`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, str]:
+            Returns a value of type ``dict[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "scene_function": str(state.get("selected_scene_function") or ""),
         "responder": str(primary.get("actor_id") or ""),
@@ -61,6 +160,18 @@ def _dramatic_signature(
 
 
 def _current_continuity_classes(state: RuntimeTurnState) -> list[str]:
+    """Describe what ``_current_continuity_classes`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     return [
         x.get("class")
         for x in (state.get("continuity_impacts") or [])
@@ -72,6 +183,19 @@ def _stale_pattern_and_similar_move(
     state: RuntimeTurnState,
     dramatic_signature: dict[str, str],
 ) -> tuple[bool, bool]:
+    """Describe what ``_stale_pattern_and_similar_move`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        dramatic_signature: ``dramatic_signature`` (dict[str, str]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[bool, bool]:
+            Returns a value of type ``tuple[bool, bool]``; see the function body for structure, error paths, and sentinels.
+    """
     prior_sig = state.get("prior_dramatic_signature") if isinstance(state.get("prior_dramatic_signature"), dict) else {}
     interp = state.get("interpreted_move") if isinstance(state.get("interpreted_move"), dict) else {}
     prior_intent = str(prior_sig.get("player_intent") or "")
@@ -91,6 +215,19 @@ def _quality_status(
     dramatic_quality_reject: bool,
     state: RuntimeTurnState,
 ) -> str:
+    """``_quality_status`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        vo: ``vo`` (dict[str, Any]); meaning follows the type and call sites.
+        dramatic_quality_reject: ``dramatic_quality_reject`` (bool); meaning follows the type and call sites.
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if vo.get("status") == "rejected" and dramatic_quality_reject:
         return "fail"
     if vo.get("status") != "approved" or "truth_aligned" not in (state.get("visibility_class_markers") or []):
@@ -105,6 +242,20 @@ def _weak_run_explanation(
     alignment_note: str,
     state: RuntimeTurnState,
 ) -> str:
+    """``_weak_run_explanation`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        run_classification: ``run_classification`` (str); meaning follows the type and call sites.
+        vo: ``vo`` (dict[str, Any]); meaning follows the type and call sites.
+        alignment_note: ``alignment_note`` (str); meaning follows the type and call sites.
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if run_classification == "pass":
         return "none"
     return (
@@ -114,6 +265,19 @@ def _weak_run_explanation(
 
 
 def _pressure_shift_detected(current_continuity: list[str], prior_ci: list[Any]) -> bool:
+    """Describe what ``_pressure_shift_detected`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        current_continuity: ``current_continuity`` (list[str]); meaning follows the type and call sites.
+        prior_ci: ``prior_ci`` (list[Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     prior_classes = {x.get("class") for x in prior_ci if isinstance(x, dict) and x.get("class")}
     return bool(set(current_continuity) and set(current_continuity) != prior_classes)
 
@@ -130,6 +294,26 @@ def _build_review_explanations(
     alignment_note: str,
     current_continuity: list[str],
 ) -> dict[str, str]:
+    """Describe what ``_build_review_explanations`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        primary: ``primary`` (dict[str, Any]); meaning follows the type and call sites.
+        mpr: ``mpr`` (dict[str, Any]); meaning follows the type and call sites.
+        heuristic_trace: ``heuristic_trace`` (list[Any]); meaning follows the type and call sites.
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        silence: ``silence`` (dict[str, Any]); meaning follows the type and call sites.
+        prior_ci: ``prior_ci`` (list[Any]); meaning follows the type and call sites.
+        quality_status: ``quality_status`` (str); meaning follows the type and call sites.
+        alignment_note: ``alignment_note`` (str); meaning follows the type and call sites.
+        current_continuity: ``current_continuity`` (list[str]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, str]:
+            Returns a value of type ``dict[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "responder": f"selected_responder_reason:{primary.get('reason')}",
         "scene_function": str(mpr.get("rationale") or "single_path_rule"),
@@ -152,6 +336,19 @@ def _build_review_explanations(
 
 
 def build_dramatic_review_section(state: RuntimeTurnState, vo: dict[str, Any]) -> dict[str, Any]:
+    """Describe what ``build_dramatic_review_section`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        vo: ``vo`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     reason_str = _validation_reason_str(vo)
     dramatic_quality_reject = _dramatic_quality_reject(reason_str)
     alignment_note = _alignment_note(vo, reason_str, dramatic_quality_reject)

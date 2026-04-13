@@ -1,4 +1,7 @@
-"""Workflow-safe invocation result summaries for capability audit (no full payloads)."""
+"""
+Workflow-safe invocation result summaries for capability audit (no full
+payloads).
+"""
 
 from __future__ import annotations
 
@@ -9,6 +12,18 @@ _Handler = Callable[[dict[str, Any]], dict[str, Any] | None]
 
 
 def _summarize_wos_context_pack_build(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Describe what ``_summarize_wos_context_pack_build`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
+    """
     from ai_stack.capabilities import build_retrieval_trace  # noqa: PLC0415 — avoid import cycle at load time
 
     retrieval = result.get("retrieval")
@@ -61,6 +76,18 @@ def _summarize_wos_context_pack_build(result: dict[str, Any]) -> dict[str, Any] 
 
 
 def _summarize_wos_review_bundle_build(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Describe what ``_summarize_wos_review_bundle_build`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
+    """
     evidence = result.get("evidence_sources", [])
     n_evidence = len(evidence) if isinstance(evidence, list) else 0
     return {
@@ -73,6 +100,18 @@ def _summarize_wos_review_bundle_build(result: dict[str, Any]) -> dict[str, Any]
 
 
 def _summarize_wos_transcript_read(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Describe what ``_summarize_wos_transcript_read`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
+    """
     content = result.get("content", "")
     turn_count = 0
     repetition_turns = 0
@@ -100,6 +139,18 @@ def _summarize_wos_transcript_read(result: dict[str, Any]) -> dict[str, Any] | N
 
 
 def _summarize_wos_research_explore(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Describe what ``_summarize_wos_research_explore`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
+    """
     summary = result.get("exploration_summary", {})
     if not isinstance(summary, dict):
         summary = {}
@@ -118,6 +169,18 @@ def _summarize_wos_research_explore(result: dict[str, Any]) -> dict[str, Any] | 
 
 
 def _summarize_wos_research_bundle_build(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Describe what ``_summarize_wos_research_bundle_build`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
+    """
     bundle = result.get("bundle", {})
     if not isinstance(bundle, dict):
         bundle = {}
@@ -130,6 +193,18 @@ def _summarize_wos_research_bundle_build(result: dict[str, Any]) -> dict[str, An
 
 
 def _summarize_wos_canon_improvement_propose(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Describe what ``_summarize_wos_canon_improvement_propose`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
+    """
     issues = result.get("issues", [])
     proposals = result.get("proposals", [])
     return {
@@ -150,7 +225,18 @@ _INVOCATION_SUMMARY_HANDLERS: dict[str, _Handler] = {
 
 
 def summarize_invocation_result(capability_name: str, result: dict[str, Any]) -> dict[str, Any] | None:
-    """Small, workflow-safe audit hints (no full payloads)."""
+    """Small, workflow-safe audit hints (no full payloads).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        capability_name: ``capability_name`` (str); meaning follows the type and call sites.
+        result: ``result`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
+    """
     handler = _INVOCATION_SUMMARY_HANDLERS.get(capability_name)
     if handler is None:
         return None

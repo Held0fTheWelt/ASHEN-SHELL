@@ -1,4 +1,7 @@
-"""Bounded social-state projection from continuity, threads, and scene assessment (derived only)."""
+"""
+Bounded social-state projection from continuity, threads, and scene
+assessment (derived only).
+"""
 
 from __future__ import annotations
 
@@ -16,6 +19,22 @@ def build_social_state_record(
     thread_pressure_summary: str | None,
     scene_assessment: dict[str, Any] | None,
 ) -> SocialStateRecord:
+    """Describe what ``build_social_state_record`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] | None); meaning follows the type and call sites.
+        active_narrative_threads: ``active_narrative_threads`` (list[dict[str, Any]] | None); meaning follows the type and call sites.
+        thread_pressure_summary: ``thread_pressure_summary`` (str | None); meaning follows the type and call sites.
+        scene_assessment: ``scene_assessment`` (dict[str,
+            Any] | None); meaning follows the type and call sites.
+    
+    Returns:
+        SocialStateRecord:
+            Returns a value of type ``SocialStateRecord``; see the function body for structure, error paths, and sentinels.
+    """
     prior_classes = prior_continuity_classes(prior_continuity_impacts)
     threads = active_narrative_threads if isinstance(active_narrative_threads, list) else []
     n = sum(1 for t in threads if isinstance(t, dict))
@@ -51,6 +70,18 @@ def build_social_state_record(
 
 
 def social_state_fingerprint(record: SocialStateRecord) -> str:
+    """Describe what ``social_state_fingerprint`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        record: ``record`` (SocialStateRecord); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     payload = "|".join(
         [
             ",".join(record.prior_continuity_classes),

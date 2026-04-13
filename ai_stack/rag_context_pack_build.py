@@ -1,4 +1,7 @@
-"""Build ``ContextPack`` from ``RetrievalResult`` (orchestrator; DS-009 + optional submodules)."""
+"""
+Build ``ContextPack`` from ``RetrievalResult`` (orchestrator; DS-009 +
+optional submodules).
+"""
 
 from __future__ import annotations
 
@@ -15,11 +18,33 @@ from ai_stack.rag_retrieval_lexical import DOMAIN_DEFAULT_PROFILE
 
 
 def _resolved_profile(result: RetrievalResult) -> str:
+    """``_resolved_profile`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (RetrievalResult); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return result.request.profile or DOMAIN_DEFAULT_PROFILE[result.request.domain]
 
 
 def assemble_context_pack(result: RetrievalResult) -> ContextPack:
-    """Turn a retrieval result into a ``ContextPack`` (same contract as ``ContextPackAssembler.assemble``)."""
+    """Turn a retrieval result into a ``ContextPack`` (same contract as
+    ``ContextPackAssembler.assemble``).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (RetrievalResult); meaning follows the type and call sites.
+    
+    Returns:
+        ContextPack:
+            Returns a value of type ``ContextPack``; see the function body for structure, error paths, and sentinels.
+    """
     trace = pack_index_trace_tuple(result)
     if not result.hits:
         return empty_context_pack(result)

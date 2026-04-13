@@ -36,6 +36,26 @@ def build_review_bundle(
     proposals: list[dict[str, Any]],
     exploration_summary: dict[str, Any],
 ) -> dict[str, Any]:
+    """``build_review_bundle`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        run_id: ``run_id`` (str); meaning follows the type and call sites.
+        work_id: ``work_id`` (str); meaning follows the type and call sites.
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        sources: ``sources`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        anchors: ``anchors`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        aspects: ``aspects`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        claims: ``claims`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        issues: ``issues`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        proposals: ``proposals`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        exploration_summary: ``exploration_summary`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     contradiction_summary: dict[str, int] = {}
     for claim in claims:
         key = str(claim.get("contradiction_status", "none"))
@@ -103,6 +123,27 @@ def run_research_pipeline(
     audit_refs: list[str] | None = None,
     run_id: str | None = None,
 ) -> dict[str, Any]:
+    """``run_research_pipeline`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        work_id: ``work_id`` (str); meaning follows the type and call sites.
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        source_inputs: ``source_inputs`` (list[dict[str,
+            Any]]); meaning follows the type and call sites.
+        seed_question: ``seed_question`` (str); meaning follows the type and call sites.
+        budget_payload: ``budget_payload`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        mode: ``mode`` (str); meaning follows the type and call sites.
+        audit_refs: ``audit_refs`` (list[str] | None); meaning follows the type and call sites.
+        run_id: ``run_id`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     budget = ExplorationBudget.from_payload(budget_payload)
     run_identifier = run_id or store.next_id("run")
 
@@ -178,10 +219,34 @@ def run_research_pipeline(
 
 
 def research_store_from_repo_root(repo_root: Path) -> ResearchStore:
+    """Describe what ``research_store_from_repo_root`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        repo_root: ``repo_root`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        ResearchStore:
+            Returns a value of type ``ResearchStore``; see the function body for structure, error paths, and sentinels.
+    """
     return ResearchStore.from_repo_root(repo_root)
 
 
 def inspect_source(*, store: ResearchStore, source_id: str) -> dict[str, Any]:
+    """``inspect_source`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        source_id: ``source_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     source = store.get_source(source_id)
     if source is None:
         return {"error": "source_not_found", "source_id": source_id}
@@ -195,6 +260,19 @@ def inspect_source(*, store: ResearchStore, source_id: str) -> dict[str, Any]:
 
 
 def list_claims(*, store: ResearchStore, work_id: str | None = None) -> dict[str, Any]:
+    """Describe what ``list_claims`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        work_id: ``work_id`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     claims = store.list_claims()
     if work_id:
         claims = [c for c in claims if c.get("work_id") == work_id]
@@ -202,6 +280,19 @@ def list_claims(*, store: ResearchStore, work_id: str | None = None) -> dict[str
 
 
 def get_run(*, store: ResearchStore, run_id: str) -> dict[str, Any]:
+    """Describe what ``get_run`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        run_id: ``run_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     run = store.get_run(run_id)
     if run is None:
         return {"error": "run_not_found", "run_id": run_id}
@@ -209,6 +300,18 @@ def get_run(*, store: ResearchStore, run_id: str) -> dict[str, Any]:
 
 
 def exploration_graph(*, store: ResearchStore, run_id: str) -> dict[str, Any]:
+    """``exploration_graph`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        run_id: ``run_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     run = store.get_run(run_id)
     if run is None:
         return {"error": "run_not_found", "run_id": run_id}
@@ -228,6 +331,18 @@ def exploration_graph(*, store: ResearchStore, run_id: str) -> dict[str, Any]:
 
 
 def inspect_canon_issue(*, store: ResearchStore, module_id: str | None = None) -> dict[str, Any]:
+    """``inspect_canon_issue`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        module_id: ``module_id`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     issues = store.list_issues()
     if module_id:
         issues = [i for i in issues if i.get("module_id") == module_id]
@@ -235,6 +350,18 @@ def inspect_canon_issue(*, store: ResearchStore, module_id: str | None = None) -
 
 
 def build_research_bundle(*, store: ResearchStore, run_id: str) -> dict[str, Any]:
+    """``build_research_bundle`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        run_id: ``run_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     run = store.get_run(run_id)
     if run is None:
         return {"error": "run_not_found", "run_id": run_id}
@@ -246,12 +373,38 @@ def build_research_bundle(*, store: ResearchStore, run_id: str) -> dict[str, Any
 
 
 def propose_canon_improvement(*, store: ResearchStore, module_id: str) -> dict[str, Any]:
+    """Describe what ``propose_canon_improvement`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     claims = [c for c in store.list_claims() if c.get("status") == ResearchStatus.CANON_APPLICABLE.value]
     result = derive_canon_improvements(store=store, module_id=module_id, claims=claims)
     return result
 
 
 def preview_canon_improvement(*, store: ResearchStore, module_id: str) -> dict[str, Any]:
+    """Describe what ``preview_canon_improvement`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        store: ``store`` (ResearchStore); meaning follows the type and call sites.
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     proposals = [p for p in store.list_proposals() if p.get("module_id") == module_id]
     return {
         "module_id": module_id,

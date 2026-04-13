@@ -1,4 +1,7 @@
-"""Gruppierte Capability-Registrierungen Research/Canon (Feinsplit von capabilities_registry_research_canon_impl)."""
+"""
+Gruppierte Capability-Registrierungen Research/Canon (Feinsplit von
+capabilities_registry_research_canon_impl).
+"""
 
 from __future__ import annotations
 
@@ -22,6 +25,15 @@ from ai_stack.capabilities_registry_research_canon_handlers import (
 
 
 def register_research_source_and_aspect_capabilities(registry: CapabilityRegistry, research_store: Any) -> None:
+    """Describe what ``register_research_source_and_aspect_capabilities``
+    does in one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        registry: ``registry`` (CapabilityRegistry); meaning follows the type and call sites.
+        research_store: ``research_store`` (Any); meaning follows the type and call sites.
+    """
     registry.register(
         CapabilityDefinition(
             name="wos.research.source.inspect",
@@ -57,6 +69,15 @@ def register_research_source_and_aspect_capabilities(registry: CapabilityRegistr
 
 
 def register_research_claim_run_graph_capabilities(registry: CapabilityRegistry, research_store: Any) -> None:
+    """Describe what ``register_research_claim_run_graph_capabilities``
+    does in one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        registry: ``registry`` (CapabilityRegistry); meaning follows the type and call sites.
+        research_store: ``research_store`` (Any); meaning follows the type and call sites.
+    """
     registry.register(
         CapabilityDefinition(
             name="wos.research.claim.list",
@@ -108,6 +129,15 @@ def register_research_claim_run_graph_capabilities(registry: CapabilityRegistry,
 
 
 def register_canon_inspect_and_research_actions(registry: CapabilityRegistry, research_store: Any) -> None:
+    """Describe what ``register_canon_inspect_and_research_actions`` does
+    in one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        registry: ``registry`` (CapabilityRegistry); meaning follows the type and call sites.
+        research_store: ``research_store`` (Any); meaning follows the type and call sites.
+    """
     registry.register(
         CapabilityDefinition(
             name="wos.canon.issue.inspect",
@@ -181,6 +211,15 @@ def register_canon_inspect_and_research_actions(registry: CapabilityRegistry, re
 
 
 def register_canon_improvement_actions(registry: CapabilityRegistry, research_store: Any) -> None:
+    """Describe what ``register_canon_improvement_actions`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        registry: ``registry`` (CapabilityRegistry); meaning follows the type and call sites.
+        research_store: ``research_store`` (Any); meaning follows the type and call sites.
+    """
     registry.register(
         CapabilityDefinition(
             name="wos.canon.improvement.propose",

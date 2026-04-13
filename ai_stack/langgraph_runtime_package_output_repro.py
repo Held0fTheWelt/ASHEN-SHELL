@@ -25,7 +25,21 @@ def build_repro_metadata_and_health(
     graph_version: str,
     fallback_taken: bool,
 ) -> tuple[dict[str, Any], str, bool]:
-    """Return repro_metadata (incl. graph_path_summary, repro_complete), execution_health, repro_ok."""
+    """Return repro_metadata (incl. graph_path_summary, repro_complete),
+    execution_health, repro_ok.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        graph_name: ``graph_name`` (str); meaning follows the type and call sites.
+        graph_version: ``graph_version`` (str); meaning follows the type and call sites.
+        fallback_taken: ``fallback_taken`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[dict[str, Any], str, bool]:
+            Returns a value of type ``tuple[dict[str, Any], str, bool]``; see the function body for structure, error paths, and sentinels.
+    """
     routing = state.get("routing") or {}
     retrieval = state.get("retrieval") or {}
     generation = state.get("generation") or {}

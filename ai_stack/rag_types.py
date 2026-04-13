@@ -1,4 +1,7 @@
-"""RAG layer: shared StrEnum types, governance view record, and domain errors (DS-003 split from rag.py)."""
+"""
+RAG layer: shared StrEnum types, governance view record, and domain
+errors (DS-003 split from rag.py).
+"""
 
 from __future__ import annotations
 
@@ -11,11 +14,23 @@ except ImportError:
     from enum import Enum
 
     class StrEnum(str, Enum):
+        """``StrEnum`` groups related behaviour; callers should read members for contracts and threading assumptions.
+        """
         def __str__(self) -> str:
+            """``__str__`` — see implementation for behaviour and contracts.
+            
+            Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+            
+            Returns:
+                str:
+                    Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+            """
             return self.value
 
 
 class RetrievalDomain(StrEnum):
+    """``RetrievalDomain`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     RUNTIME = "runtime"
     WRITERS_ROOM = "writers_room"
     IMPROVEMENT = "improvement"
@@ -23,12 +38,16 @@ class RetrievalDomain(StrEnum):
 
 
 class RetrievalStatus(StrEnum):
+    """``RetrievalStatus`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     OK = "ok"
     DEGRADED = "degraded"
     FALLBACK = "fallback"
 
 
 class ContentClass(StrEnum):
+    """``ContentClass`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     AUTHORED_MODULE = "authored_module"
     RUNTIME_PROJECTION = "runtime_projection"
     CHARACTER_PROFILE = "character_profile"
@@ -39,7 +58,9 @@ class ContentClass(StrEnum):
 
 
 class SourceEvidenceLane(StrEnum):
-    """Stable governance lane derived from content class and corpus signals (not a ranking score)."""
+    """Stable governance lane derived from content class and corpus signals
+    (not a ranking score).
+    """
 
     CANONICAL = "canonical"
     SUPPORTING = "supporting"
@@ -49,7 +70,9 @@ class SourceEvidenceLane(StrEnum):
 
 
 class SourceVisibilityClass(StrEnum):
-    """Who this material is intended for at a visibility (not authorization) level."""
+    """Who this material is intended for at a visibility (not authorization)
+    level.
+    """
 
     RUNTIME_SAFE = "runtime_safe"
     WRITERS_WORKING = "writers_working"
@@ -69,12 +92,16 @@ class RetrievalDegradationMode(StrEnum):
 
 
 class RetrievalDomainError(ValueError):
+    """``RetrievalDomainError`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     pass
 
 
 @dataclass(frozen=True, slots=True)
 class SourceGovernanceView:
-    """Compact, inspectable policy view for one chunk (pure function of chunk fields)."""
+    """Compact, inspectable policy view for one chunk (pure function of chunk
+    fields).
+    """
 
     evidence_lane: SourceEvidenceLane
     visibility_class: SourceVisibilityClass

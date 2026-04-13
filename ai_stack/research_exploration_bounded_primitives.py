@@ -1,4 +1,7 @@
-"""Hilfsfunktionen und Datentypen für bounded exploration (Feinsplit von research_exploration_bounded_core)."""
+"""
+Hilfsfunktionen und Datentypen für bounded exploration (Feinsplit von
+research_exploration_bounded_core).
+"""
 
 from __future__ import annotations
 
@@ -22,10 +25,32 @@ RELATION_ORDER: tuple[ExplorationRelationType, ...] = (
 
 
 def normalize_text(text: str) -> str:
+    """``normalize_text`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return " ".join(str(text or "").strip().lower().split())
 
 
 def novelty_score(hypothesis: str) -> float:
+    """``novelty_score`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        hypothesis: ``hypothesis`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     tokens = normalize_text(hypothesis).split()
     if not tokens:
         return 0.0
@@ -35,18 +60,57 @@ def novelty_score(hypothesis: str) -> float:
 
 
 def deterministic_node_id(seed: str, relation: ExplorationRelationType, depth: int, ordinal: int) -> str:
+    """``deterministic_node_id`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        seed: ``seed`` (str); meaning follows the type and call sites.
+        relation: ``relation`` (ExplorationRelationType); meaning follows the type and call sites.
+        depth: ``depth`` (int); meaning follows the type and call sites.
+        ordinal: ``ordinal`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     raw = f"{seed}|{relation.value}|{depth}|{ordinal}"
     digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:14]
     return f"node_{digest}"
 
 
 def deterministic_edge_id(from_node: str, to_node: str, relation: ExplorationRelationType) -> str:
+    """``deterministic_edge_id`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        from_node: ``from_node`` (str); meaning follows the type and call sites.
+        to_node: ``to_node`` (str); meaning follows the type and call sites.
+        relation: ``relation`` (ExplorationRelationType); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     raw = f"{from_node}|{to_node}|{relation.value}"
     digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:14]
     return f"edge_{digest}"
 
 
 def branch_hypothesis(base: str, relation: ExplorationRelationType) -> str:
+    """``branch_hypothesis`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        base: ``base`` (str); meaning follows the type and call sites.
+        relation: ``relation`` (ExplorationRelationType); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     prefix_map = {
         ExplorationRelationType.EXTEND: "extended_reading",
         ExplorationRelationType.CONTRAST: "contrast_reading",
@@ -63,6 +127,19 @@ def branch_hypothesis(base: str, relation: ExplorationRelationType) -> str:
 
 
 def speculative_level_for_relation(relation: ExplorationRelationType, depth: int) -> float:
+    """Describe what ``speculative_level_for_relation`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        relation: ``relation`` (ExplorationRelationType); meaning follows the type and call sites.
+        depth: ``depth`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     base = {
         ExplorationRelationType.EXTEND: 0.25,
         ExplorationRelationType.CONTRAST: 0.35,
@@ -78,6 +155,17 @@ def speculative_level_for_relation(relation: ExplorationRelationType, depth: int
 
 
 def candidate_eligible(node: dict[str, Any]) -> bool:
+    """``candidate_eligible`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        node: ``node`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return (
         bool(node.get("evidence_anchor_ids"))
         and node.get("status") == ResearchStatus.EXPLORATORY.value
@@ -88,6 +176,8 @@ def candidate_eligible(node: dict[str, Any]) -> bool:
 
 @dataclass(slots=True)
 class ExplorationResult:
+    """``ExplorationResult`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
     abort_reason: str
@@ -98,6 +188,15 @@ class ExplorationResult:
     consumed_budget: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "nodes": list(self.nodes),
             "edges": list(self.edges),

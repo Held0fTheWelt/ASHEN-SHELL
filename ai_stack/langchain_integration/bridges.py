@@ -1,3 +1,7 @@
+"""
+``ai_stack/langchain_integration/bridges.py`` — expand purpose, primary
+entrypoints, and invariants for maintainers.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -22,7 +26,9 @@ class RuntimeTurnStructuredOutput(BaseModel):
 
 
 class WritersRoomStructuredOutput(BaseModel):
-    """Writers-room review generation output parsed through LangChain parser primitives."""
+    """Writers-room review generation output parsed through LangChain parser
+    primitives.
+    """
 
     review_notes: str = Field(default="")
     recommendations: list[str] = Field(default_factory=list)
@@ -66,6 +72,8 @@ _WRITERS_ROOM_OUTPUT_PARSER = PydanticOutputParser(pydantic_object=WritersRoomSt
 
 @dataclass
 class RuntimeInvocationResult:
+    """``RuntimeInvocationResult`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     call: ModelCallResult
     prompt_text: str
     parsed_output: RuntimeTurnStructuredOutput | None
@@ -80,6 +88,23 @@ def invoke_runtime_adapter_with_langchain(
     retrieval_context: str | None,
     timeout_seconds: float,
 ) -> RuntimeInvocationResult:
+    """Describe what ``invoke_runtime_adapter_with_langchain`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        adapter: ``adapter`` (BaseModelAdapter); meaning follows the type and call sites.
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        interpreted_input: ``interpreted_input`` (dict[str, Any]); meaning follows the type and call sites.
+        retrieval_context: ``retrieval_context`` (str |
+            None); meaning follows the type and call sites.
+        timeout_seconds: ``timeout_seconds`` (float); meaning follows the type and call sites.
+    
+    Returns:
+        RuntimeInvocationResult:
+            Returns a value of type ``RuntimeInvocationResult``; see the function body for structure, error paths, and sentinels.
+    """
     parser = _RUNTIME_OUTPUT_PARSER
     rendered_messages = _RUNTIME_PROMPT_TEMPLATE.format_messages(
         player_input=player_input,
@@ -104,6 +129,8 @@ def invoke_runtime_adapter_with_langchain(
 
 @dataclass
 class WritersRoomInvocationResult:
+    """``WritersRoomInvocationResult`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     call: ModelCallResult
     prompt_text: str
     parsed_output: WritersRoomStructuredOutput | None
@@ -118,6 +145,23 @@ def invoke_writers_room_adapter_with_langchain(
     retrieval_context: str | None,
     timeout_seconds: float,
 ) -> WritersRoomInvocationResult:
+    """Describe what ``invoke_writers_room_adapter_with_langchain`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        adapter: ``adapter`` (BaseModelAdapter); meaning follows the type and call sites.
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        focus: ``focus`` (str); meaning follows the type and call sites.
+        retrieval_context: ``retrieval_context`` (str |
+            None); meaning follows the type and call sites.
+        timeout_seconds: ``timeout_seconds`` (float); meaning follows the type and call sites.
+    
+    Returns:
+        WritersRoomInvocationResult:
+            Returns a value of type ``WritersRoomInvocationResult``; see the function body for structure, error paths, and sentinels.
+    """
     parser = _WRITERS_ROOM_OUTPUT_PARSER
     rendered_messages = _WRITERS_ROOM_PROMPT_TEMPLATE.format_messages(
         module_id=module_id,
@@ -142,6 +186,8 @@ def invoke_writers_room_adapter_with_langchain(
 
 @dataclass
 class LangChainRetrieverBridge:
+    """``LangChainRetrieverBridge`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     retriever: Any
 
     def get_runtime_documents(
@@ -152,6 +198,21 @@ class LangChainRetrieverBridge:
         scene_id: str | None = None,
         max_chunks: int = 4,
     ) -> list[Document]:
+        """Describe what ``get_runtime_documents`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            query: ``query`` (str); meaning follows the type and call sites.
+            module_id: ``module_id`` (str); meaning follows the type and call sites.
+            scene_id: ``scene_id`` (str | None); meaning follows the type and call sites.
+            max_chunks: ``max_chunks`` (int); meaning follows the type and call sites.
+        
+        Returns:
+            list[Document]:
+                Returns a value of type ``list[Document]``; see the function body for structure, error paths, and sentinels.
+        """
         request = RetrievalRequest(
             domain=RetrievalDomain.RUNTIME,
             profile="runtime_turn_support",
@@ -185,7 +246,20 @@ class LangChainRetrieverBridge:
         module_id: str,
         max_chunks: int = 6,
     ) -> list[Document]:
-        """LangChain Document preview for writers-room domain (aligns with wos.context_pack.build writers_review)."""
+        """LangChain Document preview for writers-room domain (aligns with
+        wos.context_pack.build writers_review).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            query: ``query`` (str); meaning follows the type and call sites.
+            module_id: ``module_id`` (str); meaning follows the type and call sites.
+            max_chunks: ``max_chunks`` (int); meaning follows the type and call sites.
+        
+        Returns:
+            list[Document]:
+                Returns a value of type ``list[Document]``; see the function body for structure, error paths, and sentinels.
+        """
         request = RetrievalRequest(
             domain=RetrievalDomain.WRITERS_ROOM,
             profile="writers_review",
@@ -214,6 +288,18 @@ class LangChainRetrieverBridge:
 
 
 def build_langchain_retriever_bridge(retriever: Any) -> LangChainRetrieverBridge:
+    """Describe what ``build_langchain_retriever_bridge`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retriever: ``retriever`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        LangChainRetrieverBridge:
+            Returns a value of type ``LangChainRetrieverBridge``; see the function body for structure, error paths, and sentinels.
+    """
     return LangChainRetrieverBridge(retriever=retriever)
 
 
@@ -224,6 +310,21 @@ def build_capability_tool_bridge(
     mode: str,
     actor: str,
 ) -> StructuredTool:
+    """Describe what ``build_capability_tool_bridge`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        capability_registry: ``capability_registry`` (Any); meaning follows the type and call sites.
+        capability_name: ``capability_name`` (str); meaning follows the type and call sites.
+        mode: ``mode`` (str); meaning follows the type and call sites.
+        actor: ``actor`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        StructuredTool:
+            Returns a value of type ``StructuredTool``; see the function body for structure, error paths, and sentinels.
+    """
     def _invoke_capability(
         module_id: str,
         summary: str,

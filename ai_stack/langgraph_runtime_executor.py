@@ -1,3 +1,7 @@
+"""
+``ai_stack/langgraph_runtime_executor.py`` — expand purpose, primary
+entrypoints, and invariants for maintainers.
+"""
 from __future__ import annotations
 
 import json
@@ -74,6 +78,8 @@ from ai_stack.langgraph_runtime_tracking import _dist_version, _track
 
 @dataclass
 class RuntimeTurnGraphExecutor:
+    """``RuntimeTurnGraphExecutor`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     interpreter: Any
     routing: RoutingPolicy
     registry: ModelRegistry
@@ -85,12 +91,20 @@ class RuntimeTurnGraphExecutor:
     graph_version: str = RUNTIME_TURN_GRAPH_VERSION
 
     def __post_init__(self) -> None:
+        """``__post_init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        """
         from ai_stack.langgraph_runtime import ensure_langgraph_available
 
         ensure_langgraph_available()
         self._graph = self._build_graph()
 
     def _build_graph(self):
+        """``_build_graph`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        """
         graph = StateGraph(RuntimeTurnState)
         graph.add_node("interpret_input", self._interpret_input)
         graph.add_node("retrieve_context", self._retrieve_context)
@@ -147,6 +161,39 @@ class RuntimeTurnGraphExecutor:
         turn_input_class: str | None = None,
         turn_execution_mode: str | None = None,
     ) -> RuntimeTurnState:
+        """Describe what ``run`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            session_id: ``session_id`` (str); meaning follows the type and call sites.
+            module_id: ``module_id`` (str); meaning follows the type and call sites.
+            current_scene_id: ``current_scene_id`` (str); meaning follows the type and call sites.
+            player_input: ``player_input`` (str); meaning follows the type and call sites.
+            trace_id: ``trace_id`` (str | None); meaning follows the type and call sites.
+            host_versions: ``host_versions`` (dict[str,
+                Any] | None); meaning follows the type and call sites.
+            active_narrative_threads: ``active_narrative_threads`` (list[dict[str, Any]] |
+                None); meaning follows the type and call sites.
+            thread_pressure_summary: ``thread_pressure_summary`` (str | None); meaning follows the type and call sites.
+            host_experience_template: ``host_experience_template`` (dict[str, Any] | None); meaning follows the type and call sites.
+            force_experiment_preview: ``force_experiment_preview`` (bool | None); meaning follows the type and call sites.
+            prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] |
+                None); meaning follows the type and call sites.
+            prior_dramatic_signature: ``prior_dramatic_signature`` (dict[str, str] | None); meaning follows the type and call sites.
+            turn_number: ``turn_number`` (int | None); meaning follows the type and call sites.
+            turn_id: ``turn_id`` (str | None); meaning follows the type and call sites.
+            turn_timestamp_iso: ``turn_timestamp_iso`` (str | None); meaning follows the type and call sites.
+            turn_initiator_type: ``turn_initiator_type`` (str | None); meaning follows the type and call sites.
+            turn_input_class: ``turn_input_class`` (str |
+                None); meaning follows the type and call sites.
+            turn_execution_mode: ``turn_execution_mode`` (str | None); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         ts = turn_timestamp_iso
         if not ts:
             ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -187,6 +234,17 @@ class RuntimeTurnGraphExecutor:
         return self._graph.invoke(initial_state)
 
     def _interpret_input(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_interpret_input`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         interpretation = self.interpreter(state["player_input"])
         task_type = "classification" if interpretation.kind.value in {"explicit_command", "meta"} else "narrative_formulation"
         interp_dict = interpretation.model_dump(mode="json")
@@ -203,6 +261,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _retrieve_context(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_retrieve_context`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         payload = {
             "domain": RetrievalDomain.RUNTIME.value,
             "profile": "runtime_turn_support",
@@ -297,6 +366,18 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _goc_resolve_canonical_content(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """Describe what ``_goc_resolve_canonical_content`` does in one
+        line (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         update = _track(state, node_name="goc_resolve_canonical_content")
         failure_markers = list(state.get("failure_markers") or [])
         module_id = state.get("module_id") or ""
@@ -323,6 +404,18 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _director_assess_scene(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """Describe what ``_director_assess_scene`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         update = _track(state, node_name="director_assess_scene")
         module_id = state.get("module_id") or ""
         yaml_blob = state.get("goc_canonical_yaml") if isinstance(state.get("goc_canonical_yaml"), dict) else None
@@ -426,6 +519,18 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _director_select_dramatic_parameters(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """Describe what ``_director_select_dramatic_parameters`` does in
+        one line (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         update = _track(state, node_name="director_select_dramatic_parameters")
         module_id = state.get("module_id") or ""
         interpreted_move = state.get("interpreted_move") if isinstance(state.get("interpreted_move"), dict) else {}
@@ -520,6 +625,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _route_model(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_route_model`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         decision = self.routing.choose(task_type=state["task_type"])
         selected = self.registry.get(decision.selected_model)
         update = _track(state, node_name="route_model")
@@ -548,6 +664,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _invoke_model(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_invoke_model`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         provider = state.get("selected_provider") or ""
         adapter = self.adapters.get(provider)
         generation: dict[str, Any] = {
@@ -600,9 +727,32 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _next_step_after_invoke(self, state: RuntimeTurnState) -> str:
+        """Describe what ``_next_step_after_invoke`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            str:
+                Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+        """
         return "fallback_model" if state.get("fallback_needed") else "proposal_normalize"
 
     def _fallback_model(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_fallback_model`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         fallback_generation = dict(state.get("generation", {}))
         fallback_adapter = self.adapters.get("mock")
         if fallback_adapter:
@@ -642,6 +792,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _proposal_normalize(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_proposal_normalize`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         update = _track(state, node_name="proposal_normalize")
         generation = dict(state.get("generation") or {})
         meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
@@ -679,6 +840,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _validate_seam(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_validate_seam`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         update = _track(state, node_name="validate_seam")
         generation = state.get("generation") or {}
         proposed = list(state.get("proposed_state_effects") or [])
@@ -716,6 +888,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _commit_seam(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_commit_seam`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         update = _track(state, node_name="commit_seam")
         validation = state.get("validation_outcome") if isinstance(state.get("validation_outcome"), dict) else {}
         proposed = list(state.get("proposed_state_effects") or [])
@@ -740,6 +923,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _render_visible(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_render_visible`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         update = _track(state, node_name="render_visible")
         generation = dict(state.get("generation") or {})
         if "content" not in generation and generation.get("model_raw_text"):
@@ -799,6 +993,17 @@ class RuntimeTurnGraphExecutor:
         return update
 
     def _package_output(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """``_package_output`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        
+        Returns:
+            RuntimeTurnState:
+                Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+        """
         from ai_stack.langgraph_runtime_package_output import package_runtime_graph_output
 
         return package_runtime_graph_output(

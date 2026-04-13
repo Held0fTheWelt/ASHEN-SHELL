@@ -1,6 +1,9 @@
-"""Canonical bounded dramatic-effect evaluation contract (ROADMAP Phase 5–6).
+"""
+Canonical bounded dramatic-effect evaluation contract (ROADMAP Phase
+5–6).
 
-Advisory until validation seam; serializable and inspectable — not a second truth surface.
+Advisory until validation seam; serializable and inspectable — not a
+second truth surface.
 """
 
 from __future__ import annotations
@@ -33,18 +36,24 @@ class DramaticEffectGateResult(str, Enum):
 
 
 class EmptyFluencyRisk(str, Enum):
+    """``EmptyFluencyRisk`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     low = "low"
     moderate = "moderate"
     elevated = "elevated"
 
 
 class CharacterPlausibilityPosture(str, Enum):
+    """``CharacterPlausibilityPosture`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     plausible = "plausible"
     uncertain = "uncertain"
     implausible = "implausible"
 
 
 class ContinuitySupportPosture(str, Enum):
+    """``ContinuitySupportPosture`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     none = "none"
     weak = "weak"
     adequate = "adequate"
@@ -52,6 +61,8 @@ class ContinuitySupportPosture(str, Enum):
 
 
 class PressureContinuationPosture(str, Enum):
+    """``PressureContinuationPosture`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     none = "none"
     stabilizes = "stabilizes"
     continues = "continues"
@@ -59,6 +70,8 @@ class PressureContinuationPosture(str, Enum):
 
 
 class DramaticEffectTraceItem(BaseModel):
+    """``DramaticEffectTraceItem`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     model_config = {"extra": "forbid"}
 
     code: str = Field(..., description="Bounded machine-readable trace step.")
@@ -66,7 +79,9 @@ class DramaticEffectTraceItem(BaseModel):
 
 
 class DramaticEffectGateOutcome(BaseModel):
-    """Bounded dramatic-effect evaluation result — no free prose as hidden truth."""
+    """Bounded dramatic-effect evaluation result — no free prose as hidden
+    truth.
+    """
 
     model_config = {"extra": "forbid"}
 
@@ -82,11 +97,21 @@ class DramaticEffectGateOutcome(BaseModel):
     diagnostic_trace: list[DramaticEffectTraceItem] = Field(default_factory=list)
 
     def to_runtime_dict(self) -> dict[str, Any]:
+        """``to_runtime_dict`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return self.model_dump(mode="json")
 
 
 class DramaticEffectEvaluationContext(BaseModel):
-    """Typed seam input for dramatic-effect evaluation — not a loose dict at the validation boundary."""
+    """Typed seam input for dramatic-effect evaluation — not a loose dict at
+    the validation boundary.
+    """
 
     model_config = {"extra": "forbid"}
 
@@ -104,11 +129,32 @@ class DramaticEffectEvaluationContext(BaseModel):
     @field_validator("semantic_move_record", "social_state_record", "primary_character_mind", "scene_plan_record", mode="before")
     @classmethod
     def _none_empty_dict(cls, v: Any) -> Any:
+        """``_none_empty_dict`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            v: ``v`` (Any); meaning follows the type and call sites.
+        
+        Returns:
+            Any:
+                Returns a value of type ``Any``; see the function body for structure, error paths, and sentinels.
+        """
         if v is None:
             return None
         return v
 
     def validated_semantic_move(self) -> SemanticMoveRecord | None:
+        """Describe what ``validated_semantic_move`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            SemanticMoveRecord | None:
+                Returns a value of type ``SemanticMoveRecord
+                | None``; see the function body for structure, error paths, and sentinels.
+        """
         raw = self.semantic_move_record
         if not raw:
             return None
@@ -118,6 +164,16 @@ class DramaticEffectEvaluationContext(BaseModel):
             return None
 
     def validated_social_state(self) -> SocialStateRecord | None:
+        """Describe what ``validated_social_state`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            SocialStateRecord | None:
+                Returns a value of type ``SocialStateRecord |
+                None``; see the function body for structure, error paths, and sentinels.
+        """
         raw = self.social_state_record
         if not raw:
             return None
@@ -127,6 +183,16 @@ class DramaticEffectEvaluationContext(BaseModel):
             return None
 
     def validated_character_mind(self) -> CharacterMindRecord | None:
+        """Describe what ``validated_character_mind`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            CharacterMindRecord | None:
+                Returns a value of type ``CharacterMindRecord
+                | None``; see the function body for structure, error paths, and sentinels.
+        """
         raw = self.primary_character_mind
         if not raw:
             return None
@@ -136,6 +202,16 @@ class DramaticEffectEvaluationContext(BaseModel):
             return None
 
     def validated_scene_plan(self) -> ScenePlanRecord | None:
+        """Describe what ``validated_scene_plan`` does in one line
+        (verb-led summary for this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            ScenePlanRecord | None:
+                Returns a value of type ``ScenePlanRecord |
+                None``; see the function body for structure, error paths, and sentinels.
+        """
         raw = self.scene_plan_record
         if not raw:
             return None
@@ -146,7 +222,9 @@ class DramaticEffectEvaluationContext(BaseModel):
 
 
 class SemanticPlannerSupportLevel(str, Enum):
-    """Capability metadata only — gate truth remains ``DramaticEffectGateResult``."""
+    """Capability metadata only — gate truth remains
+    ``DramaticEffectGateResult``.
+    """
 
     full_goc = "full_goc"
     non_goc_waived = "non_goc_waived"

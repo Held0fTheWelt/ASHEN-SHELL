@@ -25,7 +25,17 @@ from ai_stack.dramatic_effect_gate_evaluate_tags import scene_function_tags_sati
 
 
 def evaluate_dramatic_effect_gate(ctx: DramaticEffectEvaluationContext) -> DramaticEffectGateOutcome:
-    """Evaluate proposed narrative against planner state (GoC)."""
+    """Evaluate proposed narrative against planner state (GoC).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        ctx: ``ctx`` (DramaticEffectEvaluationContext); meaning follows the type and call sites.
+    
+    Returns:
+        DramaticEffectGateOutcome:
+            Returns a value of type ``DramaticEffectGateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     if (early := outcome_not_goc(ctx)) is not None:
         return early
     if (legacy := try_legacy_alignment(ctx)) is not None:

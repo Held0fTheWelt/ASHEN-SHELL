@@ -1,3 +1,7 @@
+"""
+``ai_stack/capabilities.py`` — expand purpose, primary entrypoints, and
+invariants for maintainers.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,7 +12,17 @@ except ImportError:
     # Python < 3.11 fallback
     from enum import Enum
     class StrEnum(str, Enum):
+        """``StrEnum`` groups related behaviour; callers should read members for contracts and threading assumptions.
+        """
         def __str__(self) -> str:
+            """``__str__`` — see implementation for behaviour and contracts.
+            
+            Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+            
+            Returns:
+                str:
+                    Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+            """
             return self.value
 import re
 from pathlib import Path
@@ -22,6 +36,17 @@ from ai_stack.capabilities_invocation_summaries import summarize_invocation_resu
 
 
 def _parse_top_hit_score(retrieval: dict[str, Any]) -> float | None:
+    """``_parse_top_hit_score`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retrieval: ``retrieval`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        float | None:
+            Returns a value of type ``float | None``; see the function body for structure, error paths, and sentinels.
+    """
     raw = retrieval.get("top_hit_score")
     if raw is None or raw == "":
         return None
@@ -46,6 +71,17 @@ _DEGRADATION_CAP_STRONG_TO_MODERATE: frozenset[str] = frozenset(
 
 
 def _join_ranking_notes(retrieval: dict[str, Any]) -> str:
+    """``_join_ranking_notes`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retrieval: ``retrieval`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     notes = retrieval.get("ranking_notes")
     if not isinstance(notes, list):
         return ""
@@ -53,6 +89,17 @@ def _join_ranking_notes(retrieval: dict[str, Any]) -> str:
 
 
 def _sources_list(retrieval: dict[str, Any]) -> list[dict[str, Any]]:
+    """``_sources_list`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retrieval: ``retrieval`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     s = retrieval.get("sources")
     if not isinstance(s, list):
         return []
@@ -60,6 +107,17 @@ def _sources_list(retrieval: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _lanes_from_sources(sources: list[dict[str, Any]]) -> list[str]:
+    """``_lanes_from_sources`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        sources: ``sources`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     out: list[str] = []
     for row in sources:
         lane = row.get("source_evidence_lane")
@@ -69,7 +127,19 @@ def _lanes_from_sources(sources: list[dict[str, Any]]) -> list[str]:
 
 
 def evidence_lane_mix_from_sources(sources: list[dict[str, Any]] | None) -> str:
-    """Compact governance mix over packed sources (lanes only; not a score)."""
+    """Compact governance mix over packed sources (lanes only; not a
+    score).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        sources: ``sources`` (list[dict[str, Any]] |
+            None); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if not sources:
         return "unknown"
     lanes = _lanes_from_sources(sources)
@@ -92,6 +162,17 @@ def evidence_lane_mix_from_sources(sources: list[dict[str, Any]] | None) -> str:
 
 
 def _hard_exclusion_count(notes_joined: str) -> int:
+    """``_hard_exclusion_count`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        notes_joined: ``notes_joined`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        int:
+            Returns a value of type ``int``; see the function body for structure, error paths, and sentinels.
+    """
     m = re.search(r"policy_hard_excluded_pool_count=(\d+)", notes_joined)
     if not m:
         return 0
@@ -102,20 +183,65 @@ def _hard_exclusion_count(notes_joined: str) -> int:
 
 
 def _dedup_shaped(notes_joined: str) -> bool:
+    """``_dedup_shaped`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        notes_joined: ``notes_joined`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return "dup_suppressed" in notes_joined
 
 
 def _policy_outcome_hint(notes_joined: str) -> str:
+    """``_policy_outcome_hint`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        notes_joined: ``notes_joined`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if _hard_exclusion_count(notes_joined) > 0:
         return "hard_pool_exclusions_applied"
     return "no_hard_pool_exclusions_in_notes"
 
 
 def _sources_have_lane(sources: list[dict[str, Any]], lane: str) -> bool:
+    """``_sources_have_lane`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        sources: ``sources`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        lane: ``lane`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return any(row.get("source_evidence_lane") == lane for row in sources)
 
 
 def _canonical_lane_hits(sources: list[dict[str, Any]]) -> int:
+    """``_canonical_lane_hits`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        sources: ``sources`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        int:
+            Returns a value of type ``int``; see the function body for structure, error paths, and sentinels.
+    """
     return sum(1 for row in sources if row.get("source_evidence_lane") == "canonical")
 
 
@@ -131,10 +257,22 @@ def _compute_evidence_tier_task4(
     hard_excl: int,
 ) -> tuple[str, str]:
     """Four-level tier with explicit caps (no hidden second ranker).
-
-    Raw hit count never implies ``strong`` for multi-hit packs without hybrid-backed
-    lane anchors. Policy-hard pool reshapes and thin canonical anchors further cap
-    ``strong`` so operators are not misled by volume alone.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        hit_count: ``hit_count`` (int); meaning follows the type and call sites.
+        status: ``status`` (Any); meaning follows the type and call sites.
+        top: ``top`` (float | None); meaning follows the type and call sites.
+        route_s: ``route_s`` (str); meaning follows the type and call sites.
+        degradation_mode: ``degradation_mode`` (Any); meaning follows the type and call sites.
+        sources: ``sources`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        lane_mix: ``lane_mix`` (str); meaning follows the type and call sites.
+        hard_excl: ``hard_excl`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, str]:
+            Returns a value of type ``tuple[str, str]``; see the function body for structure, error paths, and sentinels.
     """
     if hit_count <= 0 or status == "fallback":
         if hit_count <= 0:
@@ -212,7 +350,18 @@ def _compute_evidence_tier_task4(
 
 
 def _lane_anchor_counts_compact(sources: list[dict[str, Any]]) -> str:
-    """Dense operator token: lane hit counts in stable key order (not a score)."""
+    """Dense operator token: lane hit counts in stable key order (not a
+    score).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        sources: ``sources`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     keys = ("canonical", "supporting", "draft_working", "internal_review", "evaluative", "unknown")
     counts: dict[str, int] = {k: 0 for k in keys}
     for row in sources:
@@ -224,6 +373,20 @@ def _lane_anchor_counts_compact(sources: list[dict[str, Any]]) -> str:
 
 
 def _governance_influence_compact(*, hard_excl: int, dedup: bool, policy_hint: str) -> str:
+    """Describe what ``_governance_influence_compact`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        hard_excl: ``hard_excl`` (int); meaning follows the type and call sites.
+        dedup: ``dedup`` (bool); meaning follows the type and call sites.
+        policy_hint: ``policy_hint`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return f"hard_excl={hard_excl};dedup={'yes' if dedup else 'no'};policy={policy_hint}"
 
 
@@ -234,7 +397,21 @@ def _confidence_posture(
     degradation_mode: Any,
     rationale: str,
 ) -> str:
-    """Honest coarse confidence (implementation-grounded; not a calibrated probability)."""
+    """Honest coarse confidence (implementation-grounded; not a calibrated
+    probability).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        tier: ``tier`` (str); meaning follows the type and call sites.
+        route_s: ``route_s`` (str); meaning follows the type and call sites.
+        degradation_mode: ``degradation_mode`` (Any); meaning follows the type and call sites.
+        rationale: ``rationale`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     deg_s = degradation_mode if isinstance(degradation_mode, str) else ""
     degraded_signal = bool(deg_s and deg_s not in ("hybrid_ok", "rebuilt_dense_index", ""))
     capped = "capped_" in rationale
@@ -260,6 +437,23 @@ def _retrieval_posture_summary(
     quality_hint: str,
     gov_compact: str,
 ) -> str:
+    """Describe what ``_retrieval_posture_summary`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        tier: ``tier`` (str); meaning follows the type and call sites.
+        lane_mix: ``lane_mix`` (str); meaning follows the type and call sites.
+        route_s: ``route_s`` (str); meaning follows the type and call sites.
+        confidence_posture: ``confidence_posture`` (str); meaning follows the type and call sites.
+        quality_hint: ``quality_hint`` (str); meaning follows the type and call sites.
+        gov_compact: ``gov_compact`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     r = route_s or "n/a"
     return (
         f"tier={tier};confidence={confidence_posture};lanes={lane_mix};route={r};"
@@ -274,6 +468,20 @@ def _retrieval_quality_hint(
     dedup: bool,
     hard_excl: int,
 ) -> str:
+    """``_retrieval_quality_hint`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        route_s: ``route_s`` (str); meaning follows the type and call sites.
+        degradation_mode: ``degradation_mode`` (Any); meaning follows the type and call sites.
+        dedup: ``dedup`` (bool); meaning follows the type and call sites.
+        hard_excl: ``hard_excl`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     parts: list[str] = []
     if route_s == "sparse_fallback":
         parts.append("sparse_signal_path")
@@ -290,19 +498,17 @@ def _retrieval_quality_hint(
 
 
 def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
-    """Normalize capability ``retrieval`` dict into workflow-facing trace fields.
-
-    ``evidence_tier`` (and ``evidence_strength``, same value) use a four-level scale:
-    ``none`` / ``weak`` / ``moderate`` / ``strong``. Task 4 adds explicit caps so raw
-    hit count alone cannot label a pack ``strong`` when the signal path is sparse-only,
-    degraded, or the packed lanes are supporting-heavy without canonical or evaluative
-    anchors. This is a small, documented heuristic layer—not a second ranker.
-
-    Additional compact fields (operator-facing, English):
-    ``evidence_lane_mix``, ``lane_anchor_counts``, ``retrieval_quality_hint``,
-    ``policy_outcome_hint``, ``dedup_shaped_selection``, ``readiness_label``,
-    ``confidence_posture``, ``governance_influence_compact``,
-    ``retrieval_posture_summary``, ``retrieval_trace_schema_version``.
+    """Normalize capability ``retrieval`` dict into workflow-facing trace
+    fields.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retrieval: ``retrieval`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
     """
     if not isinstance(retrieval, dict):
         retrieval = {}
@@ -395,26 +601,58 @@ def build_retrieval_trace(retrieval: Any) -> dict[str, Any]:
 
 
 class CapabilityKind(StrEnum):
+    """``CapabilityKind`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     RETRIEVAL = "retrieval"
     ACTION = "action"
 
 
 class CapabilityAccessDeniedError(PermissionError):
+    """``CapabilityAccessDeniedError`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     def __init__(self, capability_name: str, mode: str) -> None:
+        """``__init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            capability_name: ``capability_name`` (str); meaning follows the type and call sites.
+            mode: ``mode`` (str); meaning follows the type and call sites.
+        """
         super().__init__(f"Capability '{capability_name}' denied for mode '{mode}'")
         self.capability_name = capability_name
         self.mode = mode
 
 
 class CapabilityValidationError(ValueError):
+    """``CapabilityValidationError`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     def __init__(self, capability_name: str, field_name: str) -> None:
+        """``__init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            capability_name: ``capability_name`` (str); meaning follows the type and call sites.
+            field_name: ``field_name`` (str); meaning follows the type and call sites.
+        """
         super().__init__(f"Capability '{capability_name}' missing required field '{field_name}'")
         self.capability_name = capability_name
         self.field_name = field_name
 
 
 class CapabilityInvocationError(RuntimeError):
+    """``CapabilityInvocationError`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     def __init__(self, capability_name: str, detail: str) -> None:
+        """``__init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            capability_name: ``capability_name`` (str); meaning follows the type and call sites.
+            detail: ``detail`` (str); meaning follows the type and call sites.
+        """
         super().__init__(f"Capability '{capability_name}' failed: {detail}")
         self.capability_name = capability_name
         self.detail = detail
@@ -422,6 +660,8 @@ class CapabilityInvocationError(RuntimeError):
 
 @dataclass(slots=True)
 class CapabilityDefinition:
+    """``CapabilityDefinition`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     name: str
     kind: CapabilityKind
     input_schema: dict[str, Any]
@@ -433,14 +673,36 @@ class CapabilityDefinition:
 
 
 class CapabilityRegistry:
+    """``CapabilityRegistry`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     def __init__(self) -> None:
+        """``__init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        """
         self._capabilities: dict[str, CapabilityDefinition] = {}
         self._audit_log: list[dict[str, Any]] = []
 
     def register(self, definition: CapabilityDefinition) -> None:
+        """``register`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            definition: ``definition`` (CapabilityDefinition); meaning follows the type and call sites.
+        """
         self._capabilities[definition.name] = definition
 
     def list_capabilities(self) -> list[dict[str, Any]]:
+        """``list_capabilities`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return [
             {
                 "name": definition.name,
@@ -455,6 +717,18 @@ class CapabilityRegistry:
         ]
 
     def recent_audit(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """``recent_audit`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            limit: ``limit`` (int); meaning follows the type and call sites.
+        
+        Returns:
+            list[dict[str, Any]]:
+                Returns a value of type ``list[dict[str,
+                Any]]``; see the function body for structure, error paths, and sentinels.
+        """
         return self._audit_log[-limit:]
 
     def invoke(
@@ -466,6 +740,22 @@ class CapabilityRegistry:
         payload: dict[str, Any],
         trace_id: str | None = None,
     ) -> dict[str, Any]:
+        """Describe what ``invoke`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            name: ``name`` (str); meaning follows the type and call sites.
+            mode: ``mode`` (str); meaning follows the type and call sites.
+            actor: ``actor`` (str); meaning follows the type and call sites.
+            payload: ``payload`` (dict[str, Any]); meaning follows the type and call sites.
+            trace_id: ``trace_id`` (str | None); meaning follows the type and call sites.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         definition = self._capabilities.get(name)
         if not definition:
             raise CapabilityInvocationError(name, "unknown_capability")
@@ -511,6 +801,14 @@ class CapabilityRegistry:
             raise CapabilityInvocationError(name, str(exc)) from exc
 
     def _validate_payload(self, definition: CapabilityDefinition, payload: dict[str, Any]) -> None:
+        """``_validate_payload`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            definition: ``definition`` (CapabilityDefinition); meaning follows the type and call sites.
+            payload: ``payload`` (dict[str, Any]); meaning follows the type and call sites.
+        """
         required = definition.input_schema.get("required", [])
         for field_name in required:
             if field_name not in payload:
@@ -527,6 +825,20 @@ class CapabilityRegistry:
         error: str | None,
         result_summary: dict[str, Any] | None = None,
     ) -> None:
+        """``_append_audit`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            capability_name: ``capability_name`` (str); meaning follows the type and call sites.
+            mode: ``mode`` (str); meaning follows the type and call sites.
+            actor: ``actor`` (str); meaning follows the type and call sites.
+            outcome: ``outcome`` (str); meaning follows the type and call sites.
+            trace_id: ``trace_id`` (str); meaning follows the type and call sites.
+            error: ``error`` (str | None); meaning follows the type and call sites.
+            result_summary: ``result_summary`` (dict[str,
+                Any] | None); meaning follows the type and call sites.
+        """
         entry: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "capability_name": capability_name,
@@ -543,6 +855,18 @@ class CapabilityRegistry:
 
 
 def __getattr__(name: str) -> Any:
+    """Describe what ``__getattr__`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        name: ``name`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        Any:
+            Returns a value of type ``Any``; see the function body for structure, error paths, and sentinels.
+    """
     if name == "create_default_capability_registry":
         from ai_stack.capabilities_default_registry import create_default_capability_registry as _factory
 
@@ -551,6 +875,14 @@ def __getattr__(name: str) -> Any:
 
 
 def capability_catalog() -> list[dict[str, Any]]:
+    """``capability_catalog`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     return [
         {
             "name": "wos.context_pack.build",

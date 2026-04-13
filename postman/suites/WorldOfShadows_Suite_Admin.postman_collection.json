@@ -1,0 +1,125 @@
+{
+  "info": {
+    "name": "World of Shadows — Suite · Admin",
+    "description": "Sub-suite for OpenAPI tag **Admin** (generated).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Admin",
+      "description": "Generated requests grouped by OpenAPI tag **Admin**.",
+      "item": [
+        {
+          "name": "GET /admin/logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/logs",
+            "description": "GET /admin/logs"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /admin/logs/export",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/logs/export",
+            "description": "GET /admin/logs/export"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /admin/metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/metrics",
+            "description": "GET /admin/metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /admin/moderator-assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/moderator-assignments",
+            "description": "GET /admin/moderator-assignments"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /admin/moderator-assignments",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/moderator-assignments",
+            "description": "POST /admin/moderator-assignments"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /admin/moderator-assignments/user/{user_id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/moderator-assignments/user/{user_id}",
+            "description": "GET /admin/moderator-assignments/user/{user_id}"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/moderator-assignments/{assignment_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/moderator-assignments/{assignment_id}",
+            "description": "DELETE /admin/moderator-assignments/{assignment_id}"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /data/export",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/data/export",
+            "description": "POST /data/export"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /data/export/decrypt",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/data/export/decrypt",
+            "description": "POST /data/export/decrypt"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /data/import/execute",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/data/import/execute",
+            "description": "POST /data/import/execute"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /data/import/preflight",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/data/import/preflight",
+            "description": "POST /data/import/preflight"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -22,11 +22,23 @@ except ImportError:
     from enum import Enum
 
     class StrEnum(str, Enum):
+        """``StrEnum`` groups related behaviour; callers should read members for contracts and threading assumptions.
+        """
         def __str__(self) -> str:
+            """``__str__`` — see implementation for behaviour and contracts.
+            
+            Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+            
+            Returns:
+                str:
+                    Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+            """
             return self.value
 
 
 class ResearchStatus(StrEnum):
+    """``ResearchStatus`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     EXPLORATORY = "exploratory"
     CANDIDATE = "candidate"
     VALIDATED = "validated"
@@ -36,6 +48,8 @@ class ResearchStatus(StrEnum):
 
 
 class ContradictionStatus(StrEnum):
+    """``ContradictionStatus`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     NONE = "none"
     COUNTERVIEW_PRESENT = "counterview_present"
     SOFT_CONFLICT = "soft_conflict"
@@ -44,6 +58,8 @@ class ContradictionStatus(StrEnum):
 
 
 class Perspective(StrEnum):
+    """``Perspective`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     PLAYWRIGHT = "playwright"
     DIRECTOR = "director"
     ACTOR = "actor"
@@ -51,6 +67,8 @@ class Perspective(StrEnum):
 
 
 class CopyrightPosture(StrEnum):
+    """``CopyrightPosture`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     INTERNAL_APPROVED = "internal_approved"
     INTERNAL_RESTRICTED = "internal_restricted"
     EXTERNAL_BLOCKED = "external_blocked"
@@ -58,6 +76,8 @@ class CopyrightPosture(StrEnum):
 
 
 class ExplorationRelationType(StrEnum):
+    """``ExplorationRelationType`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     EXTEND = "extend"
     CONTRAST = "contrast"
     COUNTERREAD = "counterread"
@@ -70,6 +90,8 @@ class ExplorationRelationType(StrEnum):
 
 
 class ExplorationOutcome(StrEnum):
+    """``ExplorationOutcome`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     KEPT_FOR_VALIDATION = "kept_for_validation"
     REJECTED = "rejected"
     UNRESOLVED = "unresolved"
@@ -78,6 +100,8 @@ class ExplorationOutcome(StrEnum):
 
 
 class ExplorationAbortReason(StrEnum):
+    """``ExplorationAbortReason`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     DEPTH_LIMIT_REACHED = "depth_limit_reached"
     NODE_BUDGET_EXHAUSTED = "node_budget_exhausted"
     BRANCH_BUDGET_EXHAUSTED = "branch_budget_exhausted"
@@ -91,6 +115,8 @@ class ExplorationAbortReason(StrEnum):
 
 
 class CanonIssueType(StrEnum):
+    """``CanonIssueType`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     WEAK_ESCALATION = "weak_escalation"
     UNCLEAR_SCENE_FUNCTION = "unclear_scene_function"
     INSUFFICIENT_SUBTEXT = "insufficient_subtext"
@@ -104,6 +130,8 @@ class CanonIssueType(StrEnum):
 
 
 class ImprovementProposalType(StrEnum):
+    """``ImprovementProposalType`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     TIGHTEN_CONFLICT_CORE = "tighten_conflict_core"
     INTRODUCE_EARLIER_TACTIC_SHIFT = "introduce_earlier_tactic_shift"
     STRENGTHEN_STATUS_REVERSAL = "strengthen_status_reversal"
@@ -141,27 +169,81 @@ LEGAL_STATUS_TRANSITIONS: dict[ResearchStatus, set[ResearchStatus]] = {
 
 
 def utc_now_iso() -> str:
+    """Describe what ``utc_now_iso`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return datetime.now(timezone.utc).isoformat()
 
 
 def deterministic_digest(payload: dict[str, Any], *, prefix: str) -> str:
+    """``deterministic_digest`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        payload: ``payload`` (dict[str, Any]); meaning follows the type and call sites.
+        prefix: ``prefix`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     encoded = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
     return f"{prefix}_{hashlib.sha256(encoded.encode('utf-8')).hexdigest()[:16]}"
 
 
 def ensure_non_empty_str(name: str, value: Any) -> str:
+    """``ensure_non_empty_str`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        name: ``name`` (str); meaning follows the type and call sites.
+        value: ``value`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"invalid_or_empty_{name}")
     return value.strip()
 
 
 def ensure_non_empty_list(name: str, value: Any) -> list[Any]:
+    """``ensure_non_empty_list`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        name: ``name`` (str); meaning follows the type and call sites.
+        value: ``value`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        list[Any]:
+            Returns a value of type ``list[Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if not isinstance(value, list) or not value:
         raise ValueError(f"invalid_or_empty_{name}")
     return value
 
 
 def ensure_status_transition_allowed(from_status: ResearchStatus, to_status: ResearchStatus) -> None:
+    """Describe what ``ensure_status_transition_allowed`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        from_status: ``from_status`` (ResearchStatus); meaning follows the type and call sites.
+        to_status: ``to_status`` (ResearchStatus); meaning follows the type and call sites.
+    """
     legal_targets = LEGAL_STATUS_TRANSITIONS.get(from_status, set())
     if to_status not in legal_targets:
         raise ValueError(f"illegal_status_transition:{from_status.value}->{to_status.value}")
@@ -169,6 +251,8 @@ def ensure_status_transition_allowed(from_status: ResearchStatus, to_status: Res
 
 @dataclass(slots=True)
 class ExplorationBudget:
+    """``ExplorationBudget`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     max_depth: int
     max_branches_per_node: int
     max_total_nodes: int
@@ -182,6 +266,17 @@ class ExplorationBudget:
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "ExplorationBudget":
+        """``from_payload`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            payload: ``payload`` (dict[str, Any]); meaning follows the type and call sites.
+        
+        Returns:
+            ExplorationBudget:
+                Returns a value of type ``ExplorationBudget``; see the function body for structure, error paths, and sentinels.
+        """
         missing = [f for f in MANDATORY_EXPLORATION_BUDGET_FIELDS if f not in payload]
         if missing:
             raise ValueError(f"missing_exploration_budget_fields:{','.join(sorted(missing))}")
@@ -201,6 +296,10 @@ class ExplorationBudget:
         return budget
 
     def validate(self) -> None:
+        """``validate`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        """
         if self.max_depth < 0:
             raise ValueError("invalid_budget:max_depth")
         if self.max_branches_per_node <= 0:
@@ -217,6 +316,15 @@ class ExplorationBudget:
             raise ValueError("invalid_budget:time_budget_ms")
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "max_depth": self.max_depth,
             "max_branches_per_node": self.max_branches_per_node,
@@ -233,6 +341,8 @@ class ExplorationBudget:
 
 @dataclass(slots=True)
 class ResearchSourceRecord:
+    """``ResearchSourceRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     source_id: str
     work_id: str
     source_type: str
@@ -244,6 +354,15 @@ class ResearchSourceRecord:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "source_id": self.source_id,
             "work_id": self.work_id,
@@ -259,6 +378,8 @@ class ResearchSourceRecord:
 
 @dataclass(slots=True)
 class EvidenceAnchorRecord:
+    """``EvidenceAnchorRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     anchor_id: str
     source_id: str
     segment_ref: str
@@ -268,6 +389,15 @@ class EvidenceAnchorRecord:
     notes: str
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "anchor_id": self.anchor_id,
             "source_id": self.source_id,
@@ -281,6 +411,8 @@ class EvidenceAnchorRecord:
 
 @dataclass(slots=True)
 class AspectRecord:
+    """``AspectRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     aspect_id: str
     source_id: str
     perspective: Perspective
@@ -291,6 +423,15 @@ class AspectRecord:
     status: ResearchStatus = ResearchStatus.EXPLORATORY
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "aspect_id": self.aspect_id,
             "source_id": self.source_id,
@@ -305,6 +446,8 @@ class AspectRecord:
 
 @dataclass(slots=True)
 class ExplorationNodeRecord:
+    """``ExplorationNodeRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     node_id: str
     parent_node_id: str | None
     seed_aspect_id: str
@@ -318,6 +461,15 @@ class ExplorationNodeRecord:
     outcome: ExplorationOutcome
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "node_id": self.node_id,
             "parent_node_id": self.parent_node_id,
@@ -335,12 +487,23 @@ class ExplorationNodeRecord:
 
 @dataclass(slots=True)
 class ExplorationEdgeRecord:
+    """``ExplorationEdgeRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     edge_id: str
     from_node_id: str
     to_node_id: str
     relation_type: ExplorationRelationType
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "edge_id": self.edge_id,
             "from_node_id": self.from_node_id,
@@ -351,6 +514,8 @@ class ExplorationEdgeRecord:
 
 @dataclass(slots=True)
 class ResearchClaimRecord:
+    """``ResearchClaimRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     claim_id: str
     work_id: str
     perspective: Perspective
@@ -363,6 +528,15 @@ class ResearchClaimRecord:
     notes: str
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "claim_id": self.claim_id,
             "work_id": self.work_id,
@@ -379,6 +553,8 @@ class ResearchClaimRecord:
 
 @dataclass(slots=True)
 class CanonIssueRecord:
+    """``CanonIssueRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     issue_id: str
     module_id: str
     issue_type: CanonIssueType
@@ -388,6 +564,15 @@ class CanonIssueRecord:
     status: ResearchStatus
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "issue_id": self.issue_id,
             "module_id": self.module_id,
@@ -401,6 +586,8 @@ class CanonIssueRecord:
 
 @dataclass(slots=True)
 class ImprovementProposalRecord:
+    """``ImprovementProposalRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     proposal_id: str
     module_id: str
     proposal_type: ImprovementProposalType
@@ -411,6 +598,15 @@ class ImprovementProposalRecord:
     status: ResearchStatus
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "proposal_id": self.proposal_id,
             "module_id": self.module_id,
@@ -425,6 +621,8 @@ class ImprovementProposalRecord:
 
 @dataclass(slots=True)
 class ResearchRunRecord:
+    """``ResearchRunRecord`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     run_id: str
     mode: str
     source_ids: list[str]
@@ -435,6 +633,15 @@ class ResearchRunRecord:
     created_at: str
 
     def to_dict(self) -> dict[str, Any]:
+        """Describe what ``to_dict`` does in one line (verb-led summary for
+        this method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict[str, Any]:
+                Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+        """
         return {
             "run_id": self.run_id,
             "mode": self.mode,

@@ -1,3 +1,6 @@
+"""
+``ai_stack/langgraph_runtime.py`` — public surface of this module; see exports and call sites for contracts.
+"""
 from __future__ import annotations
 
 LANGGRAPH_IMPORT_ERROR: Exception | None = None
@@ -10,6 +13,11 @@ except Exception as exc:  # pragma: no cover
 
 
 def ensure_langgraph_available() -> None:
+    """Describe what ``ensure_langgraph_available`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    """
     if LANGGRAPH_IMPORT_ERROR is not None:
         raise RuntimeError(
             "LangGraph runtime dependency is unavailable. Install 'langgraph' in the runtime environment "

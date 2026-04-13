@@ -1,27 +1,32 @@
-"""Dense embedding backend for hybrid RAG (C1-next).
+"""
+Dense embedding backend for hybrid RAG (C1-next).
 
-Uses ``fastembed`` with a small ONNX model when available. When the dependency is
-missing, the environment disables embeddings, or encoding fails, callers receive
-``None`` from :func:`encode_texts` / :func:`encode_query` and the retriever falls
-back to the sparse path explicitly (``retrieval_route=sparse_fallback`` in
-:mod:`ai_stack.rag`). Use :func:`encode_texts_detailed` / :func:`encode_query_detailed`
-for stable machine-readable reason codes without silent downgrade.
+Uses ``fastembed`` with a small ONNX model when available. When the
+dependency is missing, the environment disables embeddings, or encoding
+fails, callers receive ``None`` from :func:`encode_texts` /
+:func:`encode_query` and the retriever falls back to the sparse path
+explicitly (``retrieval_route=sparse_fallback`` in :mod:`ai_stack.rag`).
+Use :func:`encode_texts_detailed` / :func:`encode_query_detailed` for
+stable machine-readable reason codes without silent downgrade.
 
-**Dependency stance:** ``fastembed`` is optional for sparse-only RAG. For full
-BC-next / C1-next verification that exercises the hybrid path, install
-``fastembed`` (see ``world-engine/requirements.txt`` / ``backend/requirements.txt``)
-and provide a writable model cache (``WOS_RAG_EMBEDDING_CACHE_DIR`` and/or
-standard Hugging Face hub cache env vars).
+**Dependency stance:** ``fastembed`` is optional for sparse-only RAG.
+For full BC-next / C1-next verification that exercises the hybrid path,
+install ``fastembed`` (see ``world-engine/requirements.txt`` /
+``backend/requirements.txt``) and provide a writable model cache
+(``WOS_RAG_EMBEDDING_CACHE_DIR`` and/or standard Hugging Face hub cache
+env vars).
 
-Retrieval routes and degradation flags surfaced in ``ai_stack.rag`` / ``build_retrieval_trace`` are
-the authoritative operator truth when embeddings are absent or encode fails (sparse fallback).
+Retrieval routes and degradation flags surfaced in ``ai_stack.rag`` /
+``build_retrieval_trace`` are the authoritative operator truth when
+embeddings are absent or encode fails (sparse fallback).
 
-**Cache:** ``WOS_RAG_EMBEDDING_CACHE_DIR`` pins fastembed's ONNX/model download
-location for reproducible CI and local runs. If unset, fastembed uses its
-default (typically under the user cache / HF hub layout).
+**Cache:** ``WOS_RAG_EMBEDDING_CACHE_DIR`` pins fastembed's ONNX/model
+download location for reproducible CI and local runs. If unset,
+fastembed uses its default (typically under the user cache / HF hub
+layout).
 
-Use :func:`embedding_backend_probe` for explicit available/unavailable reporting
-without guessing from retrieval routes alone.
+Use :func:`embedding_backend_probe` for explicit available/unavailable
+reporting without guessing from retrieval routes alone.
 """
 
 from __future__ import annotations
@@ -46,19 +51,41 @@ _model_singleton_key: tuple[str, str | None] = None
 
 
 def embeddings_disabled_by_env() -> bool:
+    """Describe what ``embeddings_disabled_by_env`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return os.environ.get(_ENV_DISABLE, "").strip().lower() in ("1", "true", "yes")
 
 
 def embedding_cache_dir_from_env() -> str | None:
-    """Return fastembed ``cache_dir`` from ``WOS_RAG_EMBEDDING_CACHE_DIR``, or ``None``."""
+    """Return fastembed ``cache_dir`` from ``WOS_RAG_EMBEDDING_CACHE_DIR``,
+    or ``None``.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        str | None:
+            Returns a value of type ``str | None``; see the function body for structure, error paths, and sentinels.
+    """
     raw = os.environ.get(_ENV_CACHE_DIR, "").strip()
     return raw if raw else None
 
 
 def embedding_cache_dir_identity_for_meta() -> str:
-    """Stable string for RAG dense-index metadata (resolved path or sentinels).
-
-    Used only for observability and drift hints; not a security boundary.
+    """Stable string for RAG dense-index metadata (resolved path or
+    sentinels).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
     """
     raw = embedding_cache_dir_from_env()
     if not raw:
@@ -70,10 +97,10 @@ def embedding_cache_dir_identity_for_meta() -> str:
 
 
 def clear_embedding_model_singleton() -> None:
-    """Drop the in-process fastembed model instance.
-
-    Call after changing ``WOS_RAG_EMBEDDING_CACHE_DIR`` or when tests need a
-    clean embedding runtime. Safe to call from application code (e.g. config reload).
+    """Drop the in-process FastEmbed singleton.
+    
+    Call after changing ``WOS_RAG_EMBEDDING_CACHE_DIR`` or when tests
+    need a clean runtime (for example before reloading configuration).
     """
     global _model_singleton, _model_singleton_key
     _model_singleton = None
@@ -81,6 +108,17 @@ def clear_embedding_model_singleton() -> None:
 
 
 def _normalize_reason_codes(codes: tuple[str, ...]) -> tuple[str, ...]:
+    """``_normalize_reason_codes`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        codes: ``codes`` (tuple[str, ...]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, ...]:
+            Returns a value of type ``tuple[str, ...]``; see the function body for structure, error paths, and sentinels.
+    """
     return tuple(codes) if codes else ("embedding_unknown_failure",)
 
 
@@ -94,12 +132,23 @@ class EncodeOutcome:
 
     @property
     def ok(self) -> bool:
+        """Describe what ``ok`` does in one line (verb-led summary for this
+        method).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            bool:
+                Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+        """
         return self.vectors is not None
 
 
 @dataclass(frozen=True, slots=True)
 class EmbeddingBackendReport:
-    """Outcome of :func:`embedding_backend_probe` (explicit, no silent downgrade)."""
+    """Outcome of :func:`embedding_backend_probe` (explicit, no silent
+    downgrade).
+    """
 
     available: bool
     """True only if embeddings are enabled, fastembed imports, and a sample encode succeeds."""
@@ -121,10 +170,17 @@ class EmbeddingBackendReport:
 
 
 def embedding_backend_probe(*, sample_text: str = "ping") -> EmbeddingBackendReport:
-    """Probe dense embedding availability without relying on RAG retrieval side effects.
-
-    Does not mutate RAG corpus files. Uses the same encode path as
-    :func:`encode_texts_detailed` when the backend is enabled.
+    """Probe dense embedding availability without relying on RAG retrieval
+    side effects.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        sample_text: ``sample_text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        EmbeddingBackendReport:
+            Returns a value of type ``EmbeddingBackendReport``; see the function body for structure, error paths, and sentinels.
     """
     cache_dir = embedding_cache_dir_from_env()
     identity = embedding_cache_dir_identity_for_meta()
@@ -199,7 +255,19 @@ def _get_text_embedding():
 
 
 def encode_texts_detailed(texts: list[str], *, batch_size: int = 32) -> EncodeOutcome:
-    """Encode texts to an L2-normalized float32 matrix ``(len(texts), dim)`` with reason codes."""
+    """Encode texts to an L2-normalized float32 matrix ``(len(texts),
+    dim)`` with reason codes.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        texts: ``texts`` (list[str]); meaning follows the type and call sites.
+        batch_size: ``batch_size`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        EncodeOutcome:
+            Returns a value of type ``EncodeOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     if embeddings_disabled_by_env():
         return EncodeOutcome(None, ("embeddings_disabled_by_env",))
     if not texts:
@@ -231,15 +299,35 @@ def encode_texts_detailed(texts: list[str], *, batch_size: int = 32) -> EncodeOu
 
 
 def encode_texts(texts: list[str], *, batch_size: int = 32) -> "np.ndarray | None":
-    """Encode texts to an L2-normalized float32 matrix ``(len(texts), dim)``.
-
-    Returns ``None`` if embeddings are disabled, imports fail, or encoding errors occur.
+    """Encode texts to an L2-normalized float32 matrix ``(len(texts),
+    dim)``.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        texts: ``texts`` (list[str]); meaning follows the type and call sites.
+        batch_size: ``batch_size`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        np.ndarray | None:
+            Returns a value of type ``np.ndarray | None``; see the function body for structure, error paths, and sentinels.
     """
     return encode_texts_detailed(texts, batch_size=batch_size).vectors
 
 
 def encode_query_detailed(text: str) -> EncodeOutcome:
-    """Encode a single query; returns a 1-D L2-normalized float32 vector or codes."""
+    """Encode a single query; returns a 1-D L2-normalized float32 vector or
+    codes.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        EncodeOutcome:
+            Returns a value of type ``EncodeOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     if not (text or "").strip():
         return EncodeOutcome(None, ("embedding_empty_query",))
     outcome = encode_texts_detailed([text], batch_size=1)
@@ -251,5 +339,16 @@ def encode_query_detailed(text: str) -> EncodeOutcome:
 
 
 def encode_query(text: str) -> "np.ndarray | None":
-    """Encode a single query; returns a 1-D L2-normalized float32 vector or ``None``."""
+    """Encode a single query; returns a 1-D L2-normalized float32 vector or
+    ``None``.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        np.ndarray | None:
+            Returns a value of type ``np.ndarray | None``; see the function body for structure, error paths, and sentinels.
+    """
     return encode_query_detailed(text).vectors

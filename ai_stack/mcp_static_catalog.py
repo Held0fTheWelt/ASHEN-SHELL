@@ -1,6 +1,8 @@
-"""Static MCP resource and prompt catalog specs (suite attribution).
+"""
+Static MCP resource and prompt catalog specs (suite attribution).
 
-Single source for ``tools.mcp_server.resource_prompt_support`` and backend cockpit counts.
+Single source for ``tools.mcp_server.resource_prompt_support`` and
+backend cockpit counts.
 """
 
 from __future__ import annotations
@@ -98,7 +100,14 @@ MCP_PROMPT_SPECS: tuple[tuple[str, str, str, McpSuite], ...] = (
 
 
 def mcp_exposure_counts_by_suite() -> dict[str, dict[str, int]]:
-    """Return tool/resource/prompt counts per suite id (e.g. wos-admin)."""
+    """Return tool/resource/prompt counts per suite id (e.g. wos-admin).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, dict[str, int]]:
+            Returns a value of type ``dict[str, dict[str, int]]``; see the function body for structure, error paths, and sentinels.
+    """
     out: dict[str, dict[str, int]] = defaultdict(lambda: {"tools": 0, "resources": 0, "prompts": 0})
     for d in CANONICAL_MCP_TOOL_DESCRIPTORS:
         key = d.mcp_suite.value
@@ -111,7 +120,15 @@ def mcp_exposure_counts_by_suite() -> dict[str, dict[str, int]]:
 
 
 def mcp_suite_registry_rows() -> list[dict[str, Any]]:
-    """Stable suite list for cockpit overview (all five suites, zeros if no tools)."""
+    """Stable suite list for cockpit overview (all five suites, zeros if no
+    tools).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     canonical = {s.value for s in McpSuite}
     counts = mcp_exposure_counts_by_suite()
     rows = []

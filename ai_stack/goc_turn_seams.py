@@ -1,4 +1,7 @@
-"""Proposal, validation, commit, visible seams helpers (CANONICAL_TURN_CONTRACT_GOC.md §2)."""
+"""
+Proposal, validation, commit, visible seams helpers
+(CANONICAL_TURN_CONTRACT_GOC.md §2).
+"""
 
 from __future__ import annotations
 
@@ -17,7 +20,18 @@ from ai_stack.goc_yaml_authority import thin_edge_staging_line_from_guidance
 
 
 def _gm_display_text_from_generation_content(raw: str) -> str:
-    """Use narrative_response for GM lines when model content is JSON (e.g. raw graph fallback)."""
+    """Use narrative_response for GM lines when model content is JSON (e.g.
+    raw graph fallback).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        raw: ``raw`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     s = raw.strip()
     if s.startswith("{") and '"narrative_response"' in s:
         try:
@@ -34,7 +48,20 @@ def _gm_display_text_from_generation_content(raw: str) -> str:
 def strip_director_overwrites_from_structured_output(
     structured: dict[str, Any] | None,
 ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
-    """Remove immutable director fields from model structured output (§3.6)."""
+    """Remove immutable director fields from model structured output
+    (§3.6).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        structured: ``structured`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+            Returns a value of type ``tuple[dict[str, Any] | None,
+            list[dict[str, Any]]]``; see the function body for structure, error paths, and sentinels.
+    """
     if not structured or not isinstance(structured, dict):
         return structured, []
     markers: list[dict[str, Any]] = []
@@ -53,7 +80,18 @@ def strip_director_overwrites_from_structured_output(
 
 
 def structured_output_to_proposed_effects(structured: dict[str, Any] | None) -> list[dict[str, Any]]:
-    """Map structured output into proposed_state_effects list."""
+    """Map structured output into proposed_state_effects list.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        structured: ``structured`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     if not structured or not isinstance(structured, dict):
         return []
     raw = structured.get("proposed_state_effects")
@@ -84,7 +122,21 @@ def run_validation_seam(
     generation: dict[str, Any],
     evaluation_context: DramaticEffectEvaluationContext | None = None,
 ) -> dict[str, Any]:
-    """Emit validation_outcome — no player text (CANONICAL_TURN_CONTRACT_GOC.md §2.1)."""
+    """Emit validation_outcome — no player text
+    (CANONICAL_TURN_CONTRACT_GOC.md §2.1).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        proposed_state_effects: ``proposed_state_effects`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        generation: ``generation`` (dict[str, Any]); meaning follows the type and call sites.
+        evaluation_context: ``evaluation_context`` (DramaticEffectEvaluationContext | None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if module_id != GOC_MODULE_ID:
         return {
             "status": "waived",
@@ -182,6 +234,19 @@ def run_commit_seam(
     validation_outcome: dict[str, Any],
     proposed_state_effects: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    """``run_commit_seam`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        validation_outcome: ``validation_outcome`` (dict[str, Any]); meaning follows the type and call sites.
+        proposed_state_effects: ``proposed_state_effects`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if validation_outcome.get("status") != "approved":
         return {
             "committed_effects": [],
@@ -210,7 +275,25 @@ def run_visible_render(
     transition_pattern: str,
     render_context: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
-    """Build visible_output_bundle aligned with committed truth (§2.2–§2.3)."""
+    """Build visible_output_bundle aligned with committed truth
+    (§2.2–§2.3).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        committed_result: ``committed_result`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        validation_outcome: ``validation_outcome`` (dict[str, Any]); meaning follows the type and call sites.
+        generation: ``generation`` (dict[str, Any]); meaning follows the type and call sites.
+        transition_pattern: ``transition_pattern`` (str); meaning follows the type and call sites.
+        render_context: ``render_context`` (dict[str,
+            Any] | None); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[dict[str, Any], list[str]]:
+            Returns a value of type ``tuple[dict[str, Any], list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     _ = transition_pattern  # reserved for future bundle tone selection
     content = str(generation.get("content") or generation.get("text") or "").strip()
     if not content and isinstance(generation.get("metadata"), dict):
@@ -308,7 +391,22 @@ def build_diagnostics_refs(
     transition_pattern: str,
     gate_hints: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Project operational diagnostics into canonical refs (CANONICAL_TURN_CONTRACT_GOC.md §5)."""
+    """Project operational diagnostics into canonical refs
+    (CANONICAL_TURN_CONTRACT_GOC.md §5).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        graph_diagnostics: ``graph_diagnostics`` (dict[str, Any]); meaning follows the type and call sites.
+        experiment_preview: ``experiment_preview`` (bool); meaning follows the type and call sites.
+        transition_pattern: ``transition_pattern`` (str); meaning follows the type and call sites.
+        gate_hints: ``gate_hints`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     tp = assert_transition_pattern(transition_pattern)
     refs: list[dict[str, Any]] = [
         {
@@ -335,7 +433,18 @@ def build_diagnostics_refs(
 
 
 def repro_metadata_complete(repro: dict[str, Any]) -> bool:
-    """GATE_SCORING_POLICY_GOC.md §5.2 — required fields for operator questions."""
+    """GATE_SCORING_POLICY_GOC.md §5.2 — required fields for operator
+    questions.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        repro: ``repro`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     required = (
         "graph_name",
         "trace_id",
@@ -357,6 +466,20 @@ def _project_turn_basis_field_str(
     *,
     expected_source: str,
 ) -> str | dict[str, Any]:
+    """Describe what ``_project_turn_basis_field_str`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+        key: ``key`` (str); meaning follows the type and call sites.
+        expected_source: ``expected_source`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str | dict[str, Any]:
+            Returns a value of type ``str | dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     raw = state.get(key)
     if isinstance(raw, str) and raw.strip():
         return raw.strip()
@@ -367,6 +490,17 @@ def _project_turn_basis_field_str(
 
 
 def _project_turn_number(state: dict[str, Any]) -> int | dict[str, Any]:
+    """``_project_turn_number`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        int | dict[str, Any]:
+            Returns a value of type ``int | dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     tn = state.get("turn_number")
     if isinstance(tn, int) and tn >= 0:
         return tn
@@ -377,7 +511,18 @@ def _project_turn_number(state: dict[str, Any]) -> int | dict[str, Any]:
 
 
 def build_roadmap_dramatic_turn_record(state: dict[str, Any]) -> dict[str, Any]:
-    """Roadmap §6.3 six-block projection — read-only aggregate from ``RuntimeTurnState`` (single truth surface)."""
+    """Roadmap §6.3 six-block projection — read-only aggregate from
+    ``RuntimeTurnState`` (single truth surface).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     gd = state.get("graph_diagnostics") if isinstance(state.get("graph_diagnostics"), dict) else {}
     nodes = gd.get("nodes_executed") if isinstance(gd.get("nodes_executed"), list) else []
     routing = state.get("routing") if isinstance(state.get("routing"), dict) else {}
@@ -493,9 +638,17 @@ def build_roadmap_dramatic_turn_record(state: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_operator_canonical_turn_record(state: dict[str, Any]) -> dict[str, Any]:
-    """Single JSON-serializable operator view over post-`package_output` state (CANONICAL_TURN_CONTRACT_GOC.md §8).
-
-    This is a read projection only — same data as `RuntimeTurnState` + nested `graph_diagnostics`, not a second truth surface.
+    """Single JSON-serializable operator view over post-`package_output`
+    state (CANONICAL_TURN_CONTRACT_GOC.md §8).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
     """
     gd = state.get("graph_diagnostics") if isinstance(state.get("graph_diagnostics"), dict) else {}
     repro = gd.get("repro_metadata") if isinstance(gd.get("repro_metadata"), dict) else {}
@@ -566,7 +719,20 @@ def build_goc_continuity_impacts_on_commit(
     selected_scene_function: str,
     proposed_state_effects: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Emit one or more frozen continuity classes after a successful commit (bounded, YAML-vocabulary aligned)."""
+    """Emit one or more frozen continuity classes after a successful commit
+    (bounded, YAML-vocabulary aligned).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        selected_scene_function: ``selected_scene_function`` (str); meaning follows the type and call sites.
+        proposed_state_effects: ``proposed_state_effects`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     if module_id != GOC_MODULE_ID:
         return []
     primary = _SCENE_FN_TO_CONTINUITY_PRIMARY.get(selected_scene_function)

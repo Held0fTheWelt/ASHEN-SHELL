@@ -1,3 +1,7 @@
+"""
+``ai_stack/langgraph_runtime_seed_graphs.py`` — expand purpose, primary
+entrypoints, and invariants for maintainers.
+"""
 from __future__ import annotations
 
 from typing_extensions import TypedDict
@@ -10,11 +14,18 @@ except Exception:  # pragma: no cover
 
 
 def build_seed_writers_room_graph():
+    """Describe what ``build_seed_writers_room_graph`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    """
     from ai_stack.langgraph_runtime import ensure_langgraph_available
 
     ensure_langgraph_available()
 
     class WritersRoomSeedState(TypedDict, total=False):
+        """``WritersRoomSeedState`` groups related behaviour; callers should read members for contracts and threading assumptions.
+        """
         module_id: str
         workflow: str
         status: str
@@ -31,11 +42,18 @@ def build_seed_writers_room_graph():
 
 
 def build_seed_improvement_graph():
+    """Describe what ``build_seed_improvement_graph`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    """
     from ai_stack.langgraph_runtime import ensure_langgraph_available
 
     ensure_langgraph_available()
 
     class ImprovementSeedState(TypedDict, total=False):
+        """``ImprovementSeedState`` groups related behaviour; callers should read members for contracts and threading assumptions.
+        """
         baseline_id: str
         workflow: str
         status: str

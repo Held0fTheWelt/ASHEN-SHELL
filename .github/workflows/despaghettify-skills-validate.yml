@@ -1,56 +1,58 @@
-# Validates markdown links / repo paths under despaghettify/superpowers/ (skills + references),
+# Validates markdown links / repo paths under 'fy'-suites/despaghettify/superpowers/ (skills + references),
 # Cursor skill copies vs hub, and despaghettify CLI + wave_plan fixture.
 name: Despaghettify skill paths
 
 on:
   pull_request:
     paths:
-      - "despaghettify/superpowers/**"
-      - "despaghettify/tools/**"
-      - "despaghettify/spaghetti-solve-task.md"
-      - "despaghettify/tools/validate_despag_skill_paths.py"
-      - "despaghettify/tools/sync_despag_skills.py"
-      - "despaghettify/tools/despaghettify.py"
-      - "despaghettify/tools/__main__.py"
-      - "despaghettify/__init__.py"
+      - "'fy'-suites/despaghettify/superpowers/**"
+      - "'fy'-suites/despaghettify/tools/**"
+      - "'fy'-suites/despaghettify/spaghetti-solve-task.md"
+      - "'fy'-suites/despaghettify/tools/validate_despag_skill_paths.py"
+      - "'fy'-suites/despaghettify/tools/sync_despag_skills.py"
+      - "'fy'-suites/despaghettify/tools/hub_cli.py"
+      - "'fy'-suites/despaghettify/tools/__main__.py"
+      - "'fy'-suites/despaghettify/tools/repo_paths.py"
+      - "'fy'-suites/despaghettify/__init__.py"
       - "pyproject.toml"
       - "tools/spaghetti_ast_scan.py"
       - "tools/ds005_runtime_import_check.py"
-      - "despaghettify/tools/fixtures/despag_wave_plan_example_valid.json"
-      - "despaghettify/tools/fixtures/wave_plan_embed_example.md"
-      - "despaghettify/tools/fixtures/ci_stub_implementation_input.md"
-      - "despaghettify/tools/wave_plan_emit.py"
-      - "despaghettify/tools/autonomous_loop.py"
-      - "despaghettify/tools/metrics_bundle.py"
-      - "despaghettify/tools/tests/**"
-      - "despaghettify/spaghetti-setup.json"
-      - "despaghettify/tools/schemas/**"
+      - "'fy'-suites/despaghettify/tools/fixtures/despag_wave_plan_example_valid.json"
+      - "'fy'-suites/despaghettify/tools/fixtures/wave_plan_embed_example.md"
+      - "'fy'-suites/despaghettify/tools/fixtures/ci_stub_implementation_input.md"
+      - "'fy'-suites/despaghettify/tools/wave_plan_emit.py"
+      - "'fy'-suites/despaghettify/tools/autonomous_loop.py"
+      - "'fy'-suites/despaghettify/tools/metrics_bundle.py"
+      - "'fy'-suites/despaghettify/tools/tests/**"
+      - "'fy'-suites/despaghettify/spaghetti-setup.json"
+      - "'fy'-suites/despaghettify/tools/schemas/**"
       - ".github/workflows/despaghettify-skills-validate.yml"
   push:
     branches:
       - main
       - master
     paths:
-      - "despaghettify/superpowers/**"
-      - "despaghettify/tools/**"
-      - "despaghettify/spaghetti-solve-task.md"
-      - "despaghettify/tools/validate_despag_skill_paths.py"
-      - "despaghettify/tools/sync_despag_skills.py"
-      - "despaghettify/tools/despaghettify.py"
-      - "despaghettify/tools/__main__.py"
-      - "despaghettify/__init__.py"
+      - "'fy'-suites/despaghettify/superpowers/**"
+      - "'fy'-suites/despaghettify/tools/**"
+      - "'fy'-suites/despaghettify/spaghetti-solve-task.md"
+      - "'fy'-suites/despaghettify/tools/validate_despag_skill_paths.py"
+      - "'fy'-suites/despaghettify/tools/sync_despag_skills.py"
+      - "'fy'-suites/despaghettify/tools/hub_cli.py"
+      - "'fy'-suites/despaghettify/tools/__main__.py"
+      - "'fy'-suites/despaghettify/tools/repo_paths.py"
+      - "'fy'-suites/despaghettify/__init__.py"
       - "pyproject.toml"
       - "tools/spaghetti_ast_scan.py"
       - "tools/ds005_runtime_import_check.py"
-      - "despaghettify/tools/fixtures/despag_wave_plan_example_valid.json"
-      - "despaghettify/tools/fixtures/wave_plan_embed_example.md"
-      - "despaghettify/tools/fixtures/ci_stub_implementation_input.md"
-      - "despaghettify/tools/wave_plan_emit.py"
-      - "despaghettify/tools/autonomous_loop.py"
-      - "despaghettify/tools/metrics_bundle.py"
-      - "despaghettify/tools/tests/**"
-      - "despaghettify/spaghetti-setup.json"
-      - "despaghettify/tools/schemas/**"
+      - "'fy'-suites/despaghettify/tools/fixtures/despag_wave_plan_example_valid.json"
+      - "'fy'-suites/despaghettify/tools/fixtures/wave_plan_embed_example.md"
+      - "'fy'-suites/despaghettify/tools/fixtures/ci_stub_implementation_input.md"
+      - "'fy'-suites/despaghettify/tools/wave_plan_emit.py"
+      - "'fy'-suites/despaghettify/tools/autonomous_loop.py"
+      - "'fy'-suites/despaghettify/tools/metrics_bundle.py"
+      - "'fy'-suites/despaghettify/tools/tests/**"
+      - "'fy'-suites/despaghettify/spaghetti-setup.json"
+      - "'fy'-suites/despaghettify/tools/schemas/**"
       - ".github/workflows/despaghettify-skills-validate.yml"
 
 jobs:
@@ -58,22 +60,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install hub package (editable)
+        run: pip install -e .
       - name: Validate skill markdown paths
-        run: python despaghettify/tools/validate_despag_skill_paths.py
+        run: python "./'fy'-suites/despaghettify/tools/validate_despag_skill_paths.py"
       - name: Check Cursor skill copies match hub
-        run: python despaghettify/tools/sync_despag_skills.py --check
+        run: python "./'fy'-suites/despaghettify/tools/sync_despag_skills.py" --check
       - name: Validate example wave_plan.json
-        run: python -m despaghettify.tools wave-plan-validate --file despaghettify/tools/fixtures/despag_wave_plan_example_valid.json
+        run: python -m despaghettify.tools wave-plan-validate --file "'fy'-suites/despaghettify/tools/fixtures/despag_wave_plan_example_valid.json"
       - name: wave_plan_emit + strict path check (embed)
         run: |
           mkdir -p .state_tmp
-          python despaghettify/tools/wave_plan_emit.py md2json --md despaghettify/tools/fixtures/wave_plan_embed_example.md --out .state_tmp/wp_embed.json
+          python "./'fy'-suites/despaghettify/tools/wave_plan_emit.py" md2json --md "'fy'-suites/despaghettify/tools/fixtures/wave_plan_embed_example.md" --out .state_tmp/wp_embed.json
           python -m despaghettify.tools wave-plan-validate --file .state_tmp/wp_embed.json --check-primary-paths
       - name: wave_plan_emit table round-trip (json → md → json)
         run: |
           mkdir -p .state_tmp
-          python despaghettify/tools/wave_plan_emit.py json2md --json despaghettify/tools/fixtures/despag_wave_plan_example_valid.json --out .state_tmp/wp_table.md --table-only
-          python despaghettify/tools/wave_plan_emit.py md2json --from-wave-table --md .state_tmp/wp_table.md --out .state_tmp/wp_from_table.json --ds-id DS-099
+          python "./'fy'-suites/despaghettify/tools/wave_plan_emit.py" json2md --json "'fy'-suites/despaghettify/tools/fixtures/despag_wave_plan_example_valid.json" --out .state_tmp/wp_table.md --table-only
+          python "./'fy'-suites/despaghettify/tools/wave_plan_emit.py" md2json --from-wave-table --md .state_tmp/wp_table.md --out .state_tmp/wp_from_table.json --ds-id DS-099
           python -m despaghettify.tools wave-plan-validate --file .state_tmp/wp_from_table.json --check-primary-paths
       - name: Smoke solve-preflight (first open DS, else CI stub)
         run: |
@@ -83,10 +87,10 @@ jobs:
             python -m despaghettify.tools solve-preflight --ds "$DS"
           else
             echo "No open DS rows; using CI stub input list (DS-990)"
-            python -m despaghettify.tools solve-preflight --ds DS-990 --override-input-list despaghettify/tools/fixtures/ci_stub_implementation_input.md
+            python -m despaghettify.tools solve-preflight --ds DS-990 --override-input-list "'fy'-suites/despaghettify/tools/fixtures/ci_stub_implementation_input.md"
           fi
       - name: Autonomous loop + metrics unit tests
-        run: python -m unittest discover -s despaghettify/tools/tests -p "test_*.py" -v
+        run: python -m unittest discover -s "'fy'-suites/despaghettify/tools/tests" -p "test_*.py" -v
       - name: trigger-eval smoke (check JSON + setup mirror)
         run: |
           set -e

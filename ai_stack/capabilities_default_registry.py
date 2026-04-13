@@ -19,6 +19,20 @@ def create_default_capability_registry(
     assembler: "ContextPackAssembler",
     repo_root: Path,
 ) -> CapabilityRegistry:
+    """Describe what ``create_default_capability_registry`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retriever: ``retriever`` ('ContextRetriever'); meaning follows the type and call sites.
+        assembler: ``assembler`` ('ContextPackAssembler'); meaning follows the type and call sites.
+        repo_root: ``repo_root`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        CapabilityRegistry:
+            Returns a value of type ``CapabilityRegistry``; see the function body for structure, error paths, and sentinels.
+    """
     from ai_stack.research_langgraph import research_store_from_repo_root
 
     registry = CapabilityRegistry()

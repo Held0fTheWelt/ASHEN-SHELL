@@ -1,3 +1,7 @@
+"""
+``ai_stack/langgraph_runtime_state.py`` — expand purpose, primary
+entrypoints, and invariants for maintainers.
+"""
 from __future__ import annotations
 
 from typing import Any
@@ -6,6 +10,8 @@ from typing_extensions import TypedDict
 
 
 class RuntimeTurnState(TypedDict, total=False):
+    """``RuntimeTurnState`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     session_id: str
     module_id: str
     current_scene_id: str

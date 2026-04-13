@@ -1,4 +1,7 @@
-"""Planner-canonical scene plan record — advisory until validation/commit; not committed_result."""
+"""
+Planner-canonical scene plan record — advisory until validation/commit;
+not committed_result.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +11,9 @@ from pydantic import BaseModel, Field
 
 
 class ScenePlanRecord(BaseModel):
-    """Canonical planner-facing selection surface for scene function, responder, pacing within the graph."""
+    """Canonical planner-facing selection surface for scene function,
+    responder, pacing within the graph.
+    """
 
     model_config = {"extra": "forbid"}
 
@@ -29,4 +34,12 @@ class ScenePlanRecord(BaseModel):
     )
 
     def to_runtime_dict(self) -> dict:
+        """``to_runtime_dict`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict:
+                Returns a value of type ``dict``; see the function body for structure, error paths, and sentinels.
+        """
         return self.model_dump(mode="json")

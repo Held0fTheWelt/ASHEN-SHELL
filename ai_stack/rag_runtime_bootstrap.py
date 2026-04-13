@@ -1,4 +1,7 @@
-"""Wire ingestion, persistence, embedding index, and ``ContextRetriever`` for a repo root (DS-003 stage 11)."""
+"""
+Wire ingestion, persistence, embedding index, and ``ContextRetriever``
+for a repo root (DS-003 stage 11).
+"""
 
 from __future__ import annotations
 
@@ -13,6 +16,18 @@ from ai_stack.rag_persistent_store import PersistentRagStore
 
 
 def build_runtime_retriever(repo_root: Path) -> tuple[ContextRetriever, ContextPackAssembler, InMemoryRetrievalCorpus]:
+    """``build_runtime_retriever`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        repo_root: ``repo_root`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[ContextRetriever, ContextPackAssembler, InMemoryRetriev..:
+            Returns a value of type ``tuple[ContextRetriever,
+            ContextPackAssembler, InMemoryRetriev...``; see the function body for structure, error paths, and sentinels.
+    """
     persistence_path = repo_root / ".wos" / "rag" / "runtime_corpus.json"
     pipeline = RagIngestionPipeline()
     fingerprint = pipeline.compute_source_fingerprint(repo_root)

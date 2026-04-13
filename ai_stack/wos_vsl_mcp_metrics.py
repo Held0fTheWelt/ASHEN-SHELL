@@ -1,6 +1,8 @@
-"""WOS_VSL MVP MCP measurement helpers (ROADMAP_MVP_WOS_VSL §10.3–10.5).
+"""
+WOS_VSL MVP MCP measurement helpers (ROADMAP_MVP_WOS_VSL §10.3–10.5).
 
-Used by tests and release-check scripts. Thresholds match the roadmap pilot table where noted.
+Used by tests and release-check scripts. Thresholds match the roadmap
+pilot table where noted.
 """
 
 from __future__ import annotations
@@ -50,12 +52,28 @@ TOOLS_WITH_MCP_RESOURCE_IMPL: frozenset[str] = frozenset(
 
 
 def write_capable_tool_count() -> int:
-    """Count ``McpToolClass.write_capable`` tools in the canonical MCP strand."""
+    """Count ``McpToolClass.write_capable`` tools in the canonical MCP
+    strand.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        int:
+            Returns a value of type ``int``; see the function body for structure, error paths, and sentinels.
+    """
     return sum(1 for d in CANONICAL_MCP_TOOL_DESCRIPTORS if d.tool_class is McpToolClass.write_capable)
 
 
 def high_risk_mcp_mutation_tool_count() -> int:
-    """MVP pilot static count: write_capable tools plus ``wos.session.execute_turn`` (runtime mutation)."""
+    """MVP pilot static count: write_capable tools plus
+    ``wos.session.execute_turn`` (runtime mutation).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        int:
+            Returns a value of type ``int``; see the function body for structure, error paths, and sentinels.
+    """
     names = {d.name for d in CANONICAL_MCP_TOOL_DESCRIPTORS}
     n = write_capable_tool_count()
     if "wos.session.execute_turn" in names:
@@ -64,7 +82,15 @@ def high_risk_mcp_mutation_tool_count() -> int:
 
 
 def read_via_resource_share() -> float:
-    """Share of stable read tools that have an MCP resource twin implemented (roadmap §10.3)."""
+    """Share of stable read tools that have an MCP resource twin
+    implemented (roadmap §10.3).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     stable = STABLE_READ_TOOLS_FOR_RESOURCE_METRIC
     if not stable:
         return 0.0

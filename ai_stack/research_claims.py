@@ -18,10 +18,34 @@ RECOGNIZED_CLAIM_TYPES: tuple[str, ...] = (
 
 
 def is_recognized_claim_type(value: Any) -> bool:
+    """Describe what ``is_recognized_claim_type`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        value: ``value`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return isinstance(value, str) and value in RECOGNIZED_CLAIM_TYPES
 
 
 def is_schema_valid_claim_payload(payload: dict[str, Any]) -> bool:
+    """Describe what ``is_schema_valid_claim_payload`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        payload: ``payload`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     required = (
         "claim_type",
         "statement",

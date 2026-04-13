@@ -1,4 +1,7 @@
-"""Single canonical envelope for uninitialized G3-projected fields (CANONICAL_TURN_CONTRACT_GOC.md)."""
+"""
+Single canonical envelope for uninitialized G3-projected fields
+(CANONICAL_TURN_CONTRACT_GOC.md).
+"""
 
 from __future__ import annotations
 
@@ -30,7 +33,19 @@ _ENVELOPE_KEYS: Final[frozenset[str]] = frozenset(
 
 
 def goc_uninitialized_field_envelope(*, setter_surface: str, expected_source: str) -> dict[str, Any]:
-    """Build the only valid JSON object for a G3 field that is not initialized yet."""
+    """Build the only valid JSON object for a G3 field that is not
+    initialized yet.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        setter_surface: ``setter_surface`` (str); meaning follows the type and call sites.
+        expected_source: ``expected_source`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if setter_surface not in ALLOWED_SETTER_SURFACES:
         raise ValueError(f"setter_surface must be one of {sorted(ALLOWED_SETTER_SURFACES)}, got {setter_surface!r}")
     src = (expected_source or "").strip()
@@ -46,7 +61,18 @@ def goc_uninitialized_field_envelope(*, setter_surface: str, expected_source: st
 
 
 def is_goc_uninitialized_field_envelope(obj: Any) -> bool:
-    """Return True only if obj matches goc_uninitialized_field_envelope_v1 exactly (no extra keys)."""
+    """Return True only if obj matches goc_uninitialized_field_envelope_v1
+    exactly (no extra keys).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        obj: ``obj`` (Any); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     if not isinstance(obj, dict):
         return False
     if set(obj.keys()) != _ENVELOPE_KEYS:
@@ -66,6 +92,13 @@ def is_goc_uninitialized_field_envelope(obj: Any) -> bool:
 
 
 def assert_goc_uninitialized_field_envelope(obj: Any) -> None:
-    """Raise AssertionError if obj is not a valid goc_uninitialized_field_envelope_v1."""
+    """Raise AssertionError if obj is not a valid
+    goc_uninitialized_field_envelope_v1.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        obj: ``obj`` (Any); meaning follows the type and call sites.
+    """
     if not is_goc_uninitialized_field_envelope(obj):
         raise AssertionError(f"invalid goc_uninitialized_field_envelope_v1: {obj!r}")

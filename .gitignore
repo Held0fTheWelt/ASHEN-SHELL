@@ -30,6 +30,9 @@ Task.md
 .clockwork_integration
 /.ollama
 /tests/reports
+/tests/e2e/node_modules/
+/tests/e2e/playwright-report/
+/tests/e2e/test-results/
 /patch
 /world-engine/app/var/runs
 /world-engine/app/var/story_sessions

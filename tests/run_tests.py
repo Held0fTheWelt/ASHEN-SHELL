@@ -2,18 +2,27 @@
 """
 World of Shadows — multi-component test runner.
 
-Runs pytest in each component tree (backend, frontend, administration-tool, world-engine,
-database, ai_stack) with a separate working directory per component (or repo root for
-ai_stack tests). Optional ``--scope`` maps to pytest ``-m`` markers where each suite
-defines them (backend, writers_room, improvement, administration-tool, world-engine).
+Orchestrates pytest for **eight** selectable suites: ``backend``, ``frontend``,
+``administration``, ``engine``, ``database``, ``writers_room``, ``improvement``,
+``ai_stack``. Each suite uses its own working directory (repo root for ``ai_stack``).
 
-Usage:
-    python run_tests.py
-    python run_tests.py --suite backend
-    python run_tests.py --suite backend --scope contracts
-    python run_tests.py --suite engine --scope security
-    python run_tests.py --suite all --quick
-    python run_tests.py --help
+``--suite all`` runs six suites in order (**backend**, **frontend**, **administration**,
+**engine**, **database**, **ai_stack**). ``writers_room`` and ``improvement`` are **not**
+duplicated as extra runs: their tests live under ``backend/tests/`` and are already
+collected by the backend suite. Use ``--suite writers_room`` or ``--suite improvement``
+for isolated slice runs (e.g. coverage focused on those modules).
+
+Optional ``--scope`` maps to ``pytest -m`` for backend, writers_room, improvement,
+administration, and engine (see ``--help``).
+
+**Invocation** (from repository root)::
+
+    python tests/run_tests.py
+    python tests/run_tests.py --suite backend --scope contracts
+    python tests/run_tests.py --suite all --quick
+
+Or ``cd tests`` then ``python run_tests.py …``. See ``tests/TESTING.md`` for full runner
+contracts (``--quick``, ``--scope``, coverage roots, and ``--suite all`` semantics).
 """
 
 from __future__ import annotations
@@ -35,6 +44,15 @@ WORLD_ENGINE_DIR = PROJECT_ROOT / "world-engine"
 DATABASE_DIR = PROJECT_ROOT / "database"
 REPORTS_DIR = TESTS_DIR / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Authoritative pytest-cov roots (single source of truth). Mirrors component ``pytest.ini``
+# where noted: ``administration-tool`` uses ``--cov=.`` + ``.coveragerc``; ``world-engine`` and
+# ``database`` use explicit ``--cov=`` targets; ``database`` omits ``--cov-fail-under`` (thin slice
+# of ``backend/app``). See ``docs/testing/COVERAGE_SEMANTICS.md``.
+BACKEND_APP_ROOT = str(BACKEND_DIR / "app")
+FRONTEND_APP_ROOT = str(FRONTEND_DIR / "app")
+WORLD_ENGINE_APP_ROOT = str(WORLD_ENGINE_DIR / "app")
+AI_STACK_ROOT = str(PROJECT_ROOT / "ai_stack")
 
 # Human-readable titles for each component (English)
 SUITE_DISPLAY_NAMES: dict[str, str] = {
@@ -87,16 +105,8 @@ DEFAULT_COV_FAIL_UNDER = "80"
 WRITERS_ROOM_COV_FAIL_UNDER = "50"  # Realistic: only 3 modules tested out of ~30+ in app
 IMPROVEMENT_COV_FAIL_UNDER = "50"   # Realistic: only 3 modules tested out of ~30+ in app
 
-# administration-tool ships as top-level modules (no ``app`` package tree). Keep in sync with new roots.
-ADMINISTRATION_TOOL_COV_MODULES: tuple[str, ...] = (
-    "app",
-    "route_registration",
-    "route_registration_pages",
-    "route_registration_security",
-    "route_registration_proxy",
-    "route_registration_manage",
-    "route_registration_manage_sections",
-)
+# administration-tool: use ``--cov=.`` + ``administration-tool/.coveragerc`` (single source
+# trace) — do not list multiple ``--cov=module`` names; Coverage 7.x warns on import order.
 
 # Suite -> (pytest cwd, path argument to pytest, relative to cwd)
 SUITE_PYTEST_TARGETS: dict[str, tuple[Path, str]] = {
@@ -110,6 +120,18 @@ SUITE_PYTEST_TARGETS: dict[str, tuple[Path, str]] = {
     # Writers-Room / improvement seed graphs and runtime turn graph; imports require repo root on PYTHONPATH.
     "ai_stack": (PROJECT_ROOT, "ai_stack/tests"),
 }
+
+# Suites run for ``--suite all`` (order preserved). ``writers_room`` / ``improvement`` are
+# omitted here because ``backend`` already runs ``pytest tests``, which collects those
+# subtrees — separate entries would execute the same tests twice.
+ALL_SUITE_SEQUENCE: tuple[str, ...] = (
+    "backend",
+    "frontend",
+    "administration",
+    "engine",
+    "database",
+    "ai_stack",
+)
 
 
 class Colors:
@@ -306,8 +328,10 @@ def _subprocess_env_for_suite(suite_name: str) -> dict[str, str] | None:
     return env
 
 
-def show_test_stats(suites: dict[str, tuple[Path, str]], *, scope: str = "all") -> None:
+def show_test_stats(suites: dict[str, tuple[Path, str]], *, scope: str = "all") -> bool:
+    """Run collect-only per suite. Returns False if any collection subprocess fails."""
     print_header("Test collection (collect-only)")
+    all_ok = True
     for suite_name, (suite_cwd, test_path) in suites.items():
         test_root = suite_cwd / test_path
         if not (test_root.is_dir() or test_root.is_file()):
@@ -328,6 +352,15 @@ def show_test_stats(suites: dict[str, tuple[Path, str]], *, scope: str = "all") 
                 env=_subprocess_env_for_suite(suite_name) or os.environ,
             )
             out = (result.stdout or "") + (result.stderr or "")
+            if result.returncode != 0:
+                all_ok = False
+                print_error(
+                    f"{suite_name}: pytest --collect-only failed (exit {result.returncode})."
+                )
+                tail = "\n".join((result.stderr or result.stdout or "").strip().split("\n")[-12:])
+                if tail.strip():
+                    print_info(tail)
+                continue
             collected_line = None
             for line in out.split("\n"):
                 if "collected" in line.lower() and any(c.isdigit() for c in line):
@@ -336,16 +369,19 @@ def show_test_stats(suites: dict[str, tuple[Path, str]], *, scope: str = "all") 
             if collected_line:
                 print_info(f"{suite_name}: {collected_line}")
             else:
-                print_info(f"{suite_name}: (could not parse collection output)")
+                all_ok = False
+                print_error(f"{suite_name}: could not parse collection output (exit 0).")
         except Exception as exc:
-            print_info(f"{suite_name}: collect-only failed ({exc})")
+            all_ok = False
+            print_error(f"{suite_name}: collect-only failed ({exc})")
     print()
+    return all_ok
 
 
 def get_suite_configs(suite_names: list[str]) -> dict[str, tuple[Path, str]]:
     all_suites = dict(SUITE_PYTEST_TARGETS)
     if "all" in suite_names:
-        return dict(all_suites)
+        return {name: all_suites[name] for name in ALL_SUITE_SEQUENCE if name in all_suites}
     result: dict[str, tuple[Path, str]] = {}
     for name in suite_names:
         if name in all_suites:
@@ -355,7 +391,7 @@ def get_suite_configs(suite_names: list[str]) -> dict[str, tuple[Path, str]]:
     return result if result else dict(all_suites)
 
 
-def _cov_fail_under_for_suite(suite_name: str) -> str:
+def _cov_fail_under_for_suite(suite_name: str) -> str | None:
     if suite_name == "backend":
         return BACKEND_COV_FAIL_UNDER
     if suite_name == "frontend":
@@ -364,6 +400,9 @@ def _cov_fail_under_for_suite(suite_name: str) -> str:
         return WRITERS_ROOM_COV_FAIL_UNDER
     if suite_name == "improvement":
         return IMPROVEMENT_COV_FAIL_UNDER
+    if suite_name == "database":
+        # ``database/tests`` touch a thin slice of ``backend/app``; gating the whole tree is misleading.
+        return None
     return DEFAULT_COV_FAIL_UNDER
 
 
@@ -371,24 +410,30 @@ def _cov_sources_for_suite(suite_name: str) -> list[str]:
     """Return one or more ``pytest-cov`` ``--cov=`` sources (explicit paths or import names).
 
     Avoids ``--cov=.`` for monorepo components so reports target the real package(s) under test.
+    Exception: **administration** uses ``--cov=.`` with a local ``.coveragerc`` (flat layout;
+    multiple named modules break Coverage.py tracing). See :func:`_append_cov_flags`.
+    ``database`` suite measures ``backend/app`` because schema tests import ORM models there
+    (there is no separate ``database/`` Python package — only ``database/tests``).
     """
-    if suite_name in ("backend", "writers_room", "improvement"):
-        return [str(BACKEND_DIR / "app")]
+    if suite_name in ("backend", "writers_room", "improvement", "database"):
+        return [BACKEND_APP_ROOT]
     if suite_name == "frontend":
-        return [str(FRONTEND_DIR / "app")]
+        return [FRONTEND_APP_ROOT]
     if suite_name == "engine":
-        return [str(WORLD_ENGINE_DIR / "app")]
+        return [WORLD_ENGINE_APP_ROOT]
     if suite_name == "administration":
-        return list(ADMINISTRATION_TOOL_COV_MODULES)
-    if suite_name == "database":
-        return [str(BACKEND_DIR / "app")]
+        return []
     if suite_name == "ai_stack":
-        return [str(PROJECT_ROOT / "ai_stack")]
+        return [AI_STACK_ROOT]
     return ["."]
 
 
 def _append_cov_flags(argv: list[str], suite_name: str) -> None:
-    """Append ``--cov=…`` for each source from :func:`_cov_sources_for_suite`."""
+    """Append ``--cov=…`` (and administration ``--cov-config``) for the suite."""
+    if suite_name == "administration":
+        argv.append("--cov=.")
+        argv.append(f"--cov-config={ADMIN_TOOL_DIR / '.coveragerc'}")
+        return
     for src in _cov_sources_for_suite(suite_name):
         argv.append(f"--cov={src}")
 
@@ -405,6 +450,10 @@ def build_pytest_argv(
     """Build pytest arguments for one component run (cwd = suite working directory)."""
     cov_under = _cov_fail_under_for_suite(suite_name)
 
+    def _append_cov_fail_under(argv_inner: list[str]) -> None:
+        if cov_under is not None:
+            argv_inner.append(f"--cov-fail-under={cov_under}")
+
     if quick:
         argv = ["-v", "--tb=short", "--no-cov", "-x"]
         m = marker_filter_for_suite(suite_name, scope)
@@ -420,27 +469,27 @@ def build_pytest_argv(
             [
                 "--cov-report=term-missing:skip-covered",
                 "--cov-report=html",
-                f"--cov-fail-under={cov_under}",
             ]
         )
+        _append_cov_fail_under(argv)
     elif verbose:
         argv = ["-vv", "--tb=long", "-s"]
         _append_cov_flags(argv, suite_name)
         argv.extend(
             [
                 "--cov-report=term-missing",
-                f"--cov-fail-under={cov_under}",
             ]
         )
+        _append_cov_fail_under(argv)
     else:
         argv = ["-v", "--tb=short"]
         _append_cov_flags(argv, suite_name)
         argv.extend(
             [
                 "--cov-report=term-missing",
-                f"--cov-fail-under={cov_under}",
             ]
         )
+        _append_cov_fail_under(argv)
 
     m = marker_filter_for_suite(suite_name, scope)
     if m:
@@ -484,6 +533,7 @@ def run_tests_for_suites(
     coverage_mode: bool,
     verbose: bool,
     scope: str,
+    continue_on_failure: bool,
 ) -> tuple[bool, dict[str, bool]]:
     all_passed = True
     results: dict[str, bool] = {}
@@ -522,6 +572,13 @@ def run_tests_for_suites(
             print_success(f"{suite_name} tests passed")
         print()
 
+        if not ok and quick and not continue_on_failure:
+            print_info(
+                "Stopping orchestrator after first failing suite (--quick). "
+                "Re-run with --continue-on-failure to execute remaining suites anyway."
+            )
+            break
+
     return all_passed, results
 
 
@@ -533,18 +590,21 @@ def main() -> int:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  python run_tests.py
-  python run_tests.py --suite backend
-  python run_tests.py --suite writers_room
-  python run_tests.py --suite improvement
-  python run_tests.py --suite frontend
-  python run_tests.py --suite backend --scope contracts
-  python run_tests.py --suite administration --scope security
-  python run_tests.py --suite engine --scope integration
-  python run_tests.py --suite writers_room improvement --quick
-  python run_tests.py --suite ai_stack --quick
-  python run_tests.py --suite all --coverage
+Examples (from repository root):
+  python tests/run_tests.py
+  python tests/run_tests.py --suite backend
+  python tests/run_tests.py --suite writers_room
+  python tests/run_tests.py --suite improvement
+  python tests/run_tests.py --suite frontend
+  python tests/run_tests.py --suite backend --scope contracts
+  python tests/run_tests.py --suite administration --scope security
+  python tests/run_tests.py --suite engine --scope integration
+  python tests/run_tests.py --suite writers_room improvement --quick
+  python tests/run_tests.py --suite ai_stack --quick
+  python tests/run_tests.py --suite all --coverage
+
+``--suite all`` runs: backend, frontend, administration, engine, database, ai_stack
+(writers_room + improvement are included inside the backend tree; see tests/TESTING.md).
         """,
     )
     parser.add_argument(
@@ -552,7 +612,10 @@ Examples:
         nargs="+",
         default=["all"],
         choices=["backend", "frontend", "administration", "engine", "database", "writers_room", "improvement", "ai_stack", "all"],
-        help="Component test tree to run (default: all)",
+        help=(
+            "Component test tree to run (default: all). ``all`` runs six suites without "
+            "duplicating writers_room/improvement (they are under backend/tests/)."
+        ),
     )
     parser.add_argument(
         "--scope",
@@ -561,11 +624,29 @@ Examples:
         help=(
             "Filter by pytest marker where supported: backend, writers_room, improvement "
             "(contract, integration, e2e, security); administration and engine "
-            "(contract, integration, security — no e2e marker). "
+            "(contract, integration, security - no e2e marker). "
             "frontend, database, and ai_stack ignore --scope and run the full suite."
         ),
     )
-    parser.add_argument("--quick", action="store_true", help="No coverage; stop on first failure")
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help=(
+            "Per suite: pytest --no-cov -x (stop on first test failure). Orchestrator: skip "
+            "pre-run collect-only stats unless --stats; stop after the first failing suite "
+            "unless --continue-on-failure."
+        ),
+    )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="With --quick, still run collect-only stats before pytest (default: skip when --quick).",
+    )
+    parser.add_argument(
+        "--continue-on-failure",
+        action="store_true",
+        help="With --quick, run every suite even if an earlier suite failed (default: stop early).",
+    )
     parser.add_argument("--coverage", action="store_true", help="Coverage with HTML report")
     parser.add_argument("--verbose", action="store_true", help="Verbose pytest and long tracebacks")
 
@@ -579,7 +660,12 @@ Examples:
     if not check_environment(suites):
         return 1
 
-    show_test_stats(suites, scope=args.scope)
+    if args.quick and not args.stats:
+        print_info("Skipping pre-run collect-only stats (--quick). Use --stats to force collection.")
+    else:
+        if not show_test_stats(suites, scope=args.scope):
+            print_error("Test collection (collect-only) failed; fix errors above before running tests.")
+            return 1
 
     all_passed, results = run_tests_for_suites(
         suites,
@@ -587,6 +673,7 @@ Examples:
         coverage_mode=args.coverage,
         verbose=args.verbose,
         scope=args.scope,
+        continue_on_failure=args.continue_on_failure,
     )
 
     print_header("Summary")

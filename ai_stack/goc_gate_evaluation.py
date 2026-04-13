@@ -1,4 +1,7 @@
-"""Observable gate-family evaluation for tests and reports (GATE_SCORING_POLICY_GOC.md §1)."""
+"""
+Observable gate-family evaluation for tests and reports
+(GATE_SCORING_POLICY_GOC.md §1).
+"""
 
 from __future__ import annotations
 
@@ -10,6 +13,17 @@ GateOutcome = Literal["pass", "fail", "conditional_pass"]
 
 
 def gate_turn_integrity(state: dict[str, Any]) -> GateOutcome:
+    """``gate_turn_integrity`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        GateOutcome:
+            Returns a value of type ``GateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     nodes = (state.get("graph_diagnostics") or {}).get("nodes_executed") or []
     required = (
         "goc_resolve_canonical_content",
@@ -31,6 +45,18 @@ def gate_turn_integrity(state: dict[str, Any]) -> GateOutcome:
 
 
 def gate_diagnostic_sufficiency(state: dict[str, Any]) -> GateOutcome:
+    """Describe what ``gate_diagnostic_sufficiency`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        GateOutcome:
+            Returns a value of type ``GateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     repro = (state.get("graph_diagnostics") or {}).get("repro_metadata") or {}
     if not isinstance(repro, dict):
         return "fail"
@@ -40,6 +66,17 @@ def gate_diagnostic_sufficiency(state: dict[str, Any]) -> GateOutcome:
 
 
 def gate_dramatic_quality(state: dict[str, Any]) -> GateOutcome:
+    """``gate_dramatic_quality`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        GateOutcome:
+            Returns a value of type ``GateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     vo = state.get("validation_outcome") if isinstance(state.get("validation_outcome"), dict) else {}
     reason = str(vo.get("reason", ""))
     if vo.get("status") == "rejected" and (
@@ -64,6 +101,17 @@ def gate_dramatic_quality(state: dict[str, Any]) -> GateOutcome:
 
 
 def gate_slice_boundary(state: dict[str, Any]) -> GateOutcome:
+    """``gate_slice_boundary`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (dict[str, Any]); meaning follows the type and call sites.
+    
+    Returns:
+        GateOutcome:
+            Returns a value of type ``GateOutcome``; see the function body for structure, error paths, and sentinels.
+    """
     markers = state.get("failure_markers") or []
     if not isinstance(markers, list):
         return "pass"

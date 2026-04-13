@@ -1,3 +1,7 @@
+"""
+``ai_stack/__init__.py`` — expand purpose, primary entrypoints, and
+invariants for maintainers.
+"""
 from .version import AI_STACK_MILESTONE, AI_STACK_SEMANTIC_VERSION, RUNTIME_TURN_GRAPH_VERSION
 
 # True only when LangGraph + LangChain imports succeeded (see try/ blocks below).

@@ -1,4 +1,7 @@
-"""Profil-spezifische Rerank-Deltas (DS-045) — flache Helfer für ``compute_rerank_adjustments``."""
+"""
+Profil-spezifische Rerank-Deltas (DS-045) — flache Helfer für
+``compute_rerank_adjustments``.
+"""
 
 from __future__ import annotations
 
@@ -20,6 +23,21 @@ def apply_module_match_and_agreement_deltas(
     request: RetrievalRequest,
     use_hybrid: bool,
 ) -> tuple[float, list[str]]:
+    """Describe what ``apply_module_match_and_agreement_deltas`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        cand: ``cand`` (_ScoredCandidate); meaning follows the type and call sites.
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        request: ``request`` (RetrievalRequest); meaning follows the type and call sites.
+        use_hybrid: ``use_hybrid`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, list[str]]:
+            Returns a value of type ``tuple[float, list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     delta = 0.0
     parts: list[str] = []
     mod_ex = RERANK_MODULE_MATCH_EXTRA.get(
@@ -41,6 +59,19 @@ def apply_runtime_turn_support_content_deltas(
     *,
     strong_authored_for_module: bool,
 ) -> tuple[float, list[str]]:
+    """Describe what ``apply_runtime_turn_support_content_deltas`` does in
+    one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        cand: ``cand`` (_ScoredCandidate); meaning follows the type and call sites.
+        strong_authored_for_module: ``strong_authored_for_module`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, list[str]]:
+            Returns a value of type ``tuple[float, list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     delta = 0.0
     parts: list[str] = []
     cc = cand.chunk.content_class
@@ -56,6 +87,18 @@ def apply_runtime_turn_support_content_deltas(
 
 
 def apply_writers_review_content_deltas(cand: _ScoredCandidate) -> tuple[float, list[str]]:
+    """Describe what ``apply_writers_review_content_deltas`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        cand: ``cand`` (_ScoredCandidate); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, list[str]]:
+            Returns a value of type ``tuple[float, list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     delta = 0.0
     parts: list[str] = []
     cc = cand.chunk.content_class
@@ -71,6 +114,18 @@ def apply_writers_review_content_deltas(cand: _ScoredCandidate) -> tuple[float, 
 
 
 def apply_improvement_eval_content_deltas(cand: _ScoredCandidate) -> tuple[float, list[str]]:
+    """Describe what ``apply_improvement_eval_content_deltas`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        cand: ``cand`` (_ScoredCandidate); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, list[str]]:
+            Returns a value of type ``tuple[float, list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     delta = 0.0
     parts: list[str] = []
     cc = cand.chunk.content_class
@@ -95,6 +150,20 @@ def apply_profile_content_class_deltas(
     profile_name: str,
     strong_authored_for_module: bool,
 ) -> tuple[float, list[str]]:
+    """Describe what ``apply_profile_content_class_deltas`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        cand: ``cand`` (_ScoredCandidate); meaning follows the type and call sites.
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        strong_authored_for_module: ``strong_authored_for_module`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, list[str]]:
+            Returns a value of type ``tuple[float, list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     if profile_name == "runtime_turn_support":
         return apply_runtime_turn_support_content_deltas(
             cand, strong_authored_for_module=strong_authored_for_module
@@ -107,6 +176,19 @@ def apply_profile_content_class_deltas(
 
 
 def apply_pool_redundancy_penalty(cand: _ScoredCandidate, pool: list[_ScoredCandidate]) -> tuple[float, list[str]]:
+    """Describe what ``apply_pool_redundancy_penalty`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        cand: ``cand`` (_ScoredCandidate); meaning follows the type and call sites.
+        pool: ``pool`` (list[_ScoredCandidate]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, list[str]]:
+            Returns a value of type ``tuple[float, list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     higher = [p for p in pool if p.initial_score > cand.initial_score + 1e-9]
     if not higher:
         return 0.0, []

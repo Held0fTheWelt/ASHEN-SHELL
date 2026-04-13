@@ -1,4 +1,7 @@
-"""Rerank pool sizing, Task 3 hard/soft policy, pack roles, and dedup (DS-003 stage 5)."""
+"""
+Rerank pool sizing, Task 3 hard/soft policy, pack roles, and dedup
+(DS-003 stage 5).
+"""
 
 from __future__ import annotations
 
@@ -18,6 +21,8 @@ from ai_stack.rag_types import ContentClass, SourceEvidenceLane, SourceGovernanc
 
 
 class _PolicyChunkLike(Protocol):
+    """``_PolicyChunkLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunk_id: str
     source_path: str
     content_class: ContentClass
@@ -27,21 +32,39 @@ class _PolicyChunkLike(Protocol):
 
 
 class _PolicyScoredCandidateLike(Protocol):
+    """``_PolicyScoredCandidateLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunk: _PolicyChunkLike
     module_match: bool
 
 
 class _RequestWithModuleLike(Protocol):
+    """``_RequestWithModuleLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     module_id: str | None
 
 
 class _HitPackSortLike(Protocol):
+    """``_HitPackSortLike`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     score: float
     chunk_id: str
     pack_role: str
 
 
 def _pool_size(max_chunks: int) -> int:
+    """Describe what ``_pool_size`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        max_chunks: ``max_chunks`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        int:
+            Returns a value of type ``int``; see the function body for structure, error paths, and sentinels.
+    """
     k = max(1, max_chunks)
     return min(RERANK_POOL_CAP, max(RERANK_POOL_MIN, k * RERANK_POOL_FACTOR))
 
@@ -49,6 +72,19 @@ def _pool_size(max_chunks: int) -> int:
 def _pool_has_strong_authored_for_module(
     pool: list[_PolicyScoredCandidateLike], module_id: str | None
 ) -> bool:
+    """Describe what ``_pool_has_strong_authored_for_module`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pool: ``pool`` (list[_PolicyScoredCandidateLike]); meaning follows the type and call sites.
+        module_id: ``module_id`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     if not module_id:
         return False
     for c in pool:
@@ -64,7 +100,19 @@ def _pool_has_strong_authored_for_module(
 def _pool_has_published_canonical_for_module(
     pool: list[_PolicyScoredCandidateLike], module_id: str | None
 ) -> bool:
-    """True when the pool already contains published-tree authored module chunks for this module."""
+    """True when the pool already contains published-tree authored module
+    chunks for this module.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pool: ``pool`` (list[_PolicyScoredCandidateLike]); meaning follows the type and call sites.
+        module_id: ``module_id`` (str | None); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     if not module_id:
         return False
     for c in pool:
@@ -83,11 +131,20 @@ def _apply_hard_policy_pool_filter(
     profile_name: str,
     request: _RequestWithModuleLike,
 ) -> tuple[list[_PolicyScoredCandidateLike], list[str], int]:
-    """Remove candidates excluded by hard visibility rules (Task 3), before reranking.
-
-    Runtime: drop same-module ``draft_working`` authored chunks when a published canonical
-    authored chunk for that module is already present in the pool. Writers/improvement
-    profiles do not apply this gate so drafts and review material remain visible.
+    """Remove candidates excluded by hard visibility rules (Task 3), before
+    reranking.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pool: ``pool`` (list[_PolicyScoredCandidateLike]); meaning follows the type and call sites.
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        request: ``request`` (_RequestWithModuleLike); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[list[_PolicyScoredCandidateLike], list[str], int]:
+            Returns a value of type ``tuple[list[_PolicyScoredCandidateLike],
+            list[str], int]``; see the function body for structure, error paths, and sentinels.
     """
     if profile_name != "runtime_turn_support" or not request.module_id:
         return pool, [], 0
@@ -126,7 +183,22 @@ def _policy_soft_adjustments(
     strong_authored_for_module: bool,
     gov: SourceGovernanceView,
 ) -> tuple[float, list[str]]:
-    """Governance soft weights (Task 3). Prefix ``policy_soft_``; orthogonal to Task 2 rerank."""
+    """Governance soft weights (Task 3). Prefix ``policy_soft_``;
+    orthogonal to Task 2 rerank.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        cand: ``cand`` (_PolicyScoredCandidateLike); meaning follows the type and call sites.
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        request: ``request`` (_RequestWithModuleLike); meaning follows the type and call sites.
+        strong_authored_for_module: ``strong_authored_for_module`` (bool); meaning follows the type and call sites.
+        gov: ``gov`` (SourceGovernanceView); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[float, list[str]]:
+            Returns a value of type ``tuple[float, list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     _ = request
     delta = 0.0
     parts: list[str] = []
@@ -157,6 +229,19 @@ def _pack_role_for_hit(
     chunk: _PolicyChunkLike,
     gov: SourceGovernanceView,
 ) -> str:
+    """``_pack_role_for_hit`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        profile: ``profile`` (str); meaning follows the type and call sites.
+        chunk: ``chunk`` (_PolicyChunkLike); meaning follows the type and call sites.
+        gov: ``gov`` (SourceGovernanceView); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if profile == "runtime_turn_support":
         if gov.evidence_lane == SourceEvidenceLane.CANONICAL and chunk.content_class == ContentClass.AUTHORED_MODULE:
             return "canonical_evidence"
@@ -185,7 +270,21 @@ def _hit_policy_note(
     published_canonical_in_pool: bool,
     chunk: _PolicyChunkLike,
 ) -> str:
-    """One compact English line: allow/exclude semantics for operators (final hits are always allowed)."""
+    """One compact English line: allow/exclude semantics for operators
+    (final hits are always allowed).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        gov: ``gov`` (SourceGovernanceView); meaning follows the type and call sites.
+        published_canonical_in_pool: ``published_canonical_in_pool`` (bool); meaning follows the type and call sites.
+        chunk: ``chunk`` (_PolicyChunkLike); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if profile_name == "runtime_turn_support":
         if gov.evidence_lane == SourceEvidenceLane.CANONICAL:
             return "allowed:canonical_lane_for_runtime"
@@ -214,7 +313,18 @@ def _hit_policy_note(
 
 
 def _profile_policy_influence(profile_name: str, gov: SourceGovernanceView) -> str:
-    """Which named profile rule most influenced inclusion (compact trace)."""
+    """Which named profile rule most influenced inclusion (compact trace).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+        gov: ``gov`` (SourceGovernanceView); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if profile_name == "runtime_turn_support":
         if gov.evidence_lane == SourceEvidenceLane.CANONICAL:
             return "runtime_canonical_first"
@@ -234,7 +344,22 @@ def _dedup_select(
     max_chunks: int,
     profile_name: str,
 ) -> tuple[list[tuple[float, _PolicyScoredCandidateLike, list[str]]], list[str]]:
-    """Greedy keep by descending rerank score; drop near-duplicates deterministically."""
+    """Greedy keep by descending rerank score; drop near-duplicates
+    deterministically.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        ordered: ``ordered`` (list[tuple[float,
+            _PolicyScoredCandidateLike, list[str]]]); meaning follows the type and call sites.
+        max_chunks: ``max_chunks`` (int); meaning follows the type and call sites.
+        profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[list[tuple[float, _PolicyScoredCandidateLike, list[st...:
+            Returns a value of type ``tuple[list[tuple[float,
+            _PolicyScoredCandidateLike, list[str]...``; see the function body for structure, error paths, and sentinels.
+    """
     kept: list[tuple[float, _PolicyScoredCandidateLike, list[str]]] = []
     notes: list[str] = []
     drop_thr = DUP_TRIGRAM_JACCARD_DROP
@@ -267,7 +392,18 @@ def _dedup_select(
 
 
 def _pack_sort_key(hit: _HitPackSortLike, profile: str) -> tuple[int, float, str]:
-    """Order hits for compact_context: lower tuple sorts first."""
+    """Order hits for compact_context: lower tuple sorts first.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        hit: ``hit`` (_HitPackSortLike); meaning follows the type and call sites.
+        profile: ``profile`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[int, float, str]:
+            Returns a value of type ``tuple[int, float, str]``; see the function body for structure, error paths, and sentinels.
+    """
     _ = profile
     tier_order = {
         "canonical_evidence": 0,

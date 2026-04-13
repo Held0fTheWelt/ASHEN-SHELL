@@ -1,4 +1,7 @@
-"""Pre-semantic keyword / pacing heuristic for GoC scene candidates (legacy fallback path)."""
+"""
+Pre-semantic keyword / pacing heuristic for GoC scene candidates (legacy
+fallback path).
+"""
 
 from __future__ import annotations
 
@@ -30,7 +33,23 @@ def legacy_keyword_scene_candidates(
     interpreted_move: dict[str, Any],
     prior_classes: list[str],
 ) -> tuple[list[str], dict[str, str], list[str]]:
-    """Pre-semantic keyword/tie-break heuristic — bounded fallback only when semantic record absent."""
+    """Pre-semantic keyword/tie-break heuristic — bounded fallback only
+    when semantic record absent.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        pacing_mode: ``pacing_mode`` (str); meaning follows the type and call sites.
+        player_input: ``player_input`` (str); meaning follows the type and call sites.
+        interpreted_move: ``interpreted_move`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        prior_classes: ``prior_classes`` (list[str]); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[list[str], dict[str, str], list[str]]:
+            Returns a value of type ``tuple[list[str], dict[str, str],
+            list[str]]``; see the function body for structure, error paths, and sentinels.
+    """
     move_class = str(interpreted_move.get("move_class") or "").lower()
     intent = str(interpreted_move.get("player_intent") or "").lower()
     text = combined_player_text(player_input, intent)

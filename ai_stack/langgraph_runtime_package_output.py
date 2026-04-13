@@ -1,4 +1,7 @@
-"""LangGraph runtime: package_output node logic (extracted from langgraph_runtime_executor)."""
+"""
+LangGraph runtime: package_output node logic (extracted from
+langgraph_runtime_executor).
+"""
 
 from __future__ import annotations
 
@@ -21,6 +24,20 @@ def package_runtime_graph_output(
     graph_name: str,
     graph_version: str,
 ) -> RuntimeTurnState:
+    """Describe what ``package_runtime_graph_output`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        graph_name: ``graph_name`` (str); meaning follows the type and call sites.
+        graph_version: ``graph_version`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        RuntimeTurnState:
+            Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
+    """
     fallback_taken = "fallback_model" in state.get("nodes_executed", [])
     update = _track(state, node_name="package_output")
     routing = state.get("routing") or {}

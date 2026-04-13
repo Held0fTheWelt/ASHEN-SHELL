@@ -1,4 +1,7 @@
-"""Thematic sections for package_output (DS-037) — dramatic review and planner projection."""
+"""
+Thematic sections for package_output (DS-037) — dramatic review and
+planner projection.
+"""
 
 from __future__ import annotations
 
@@ -15,6 +18,16 @@ def append_goc_validation_reject_failure_marker(
     validation: dict[str, Any],
     failure_markers: list[Any],
 ) -> None:
+    """Describe what ``append_goc_validation_reject_failure_marker`` does
+    in one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        validation: ``validation`` (dict[str, Any]); meaning follows the type and call sites.
+        failure_markers: ``failure_markers`` (list[Any]); meaning follows the type and call sites.
+    """
     if module_id != GOC_MODULE_ID or validation.get("status") != "rejected":
         return
     if any(isinstance(m, dict) and m.get("failure_class") == "validation_reject" for m in failure_markers):
@@ -37,6 +50,22 @@ def compute_experiment_preview_for_package_output(
     committed: dict[str, Any],
     failure_markers: list[Any],
 ) -> bool:
+    """Describe what ``compute_experiment_preview_for_package_output`` does
+    in one line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+        module_id: ``module_id`` (str); meaning follows the type and call sites.
+        validation: ``validation`` (dict[str, Any]); meaning follows the type and call sites.
+        committed: ``committed`` (dict[str, Any]); meaning follows the type and call sites.
+        failure_markers: ``failure_markers`` (list[Any]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     experiment_preview = True
     if state.get("force_experiment_preview"):
         experiment_preview = True
@@ -63,6 +92,18 @@ def compute_experiment_preview_for_package_output(
 
 
 def build_planner_state_projection(state: RuntimeTurnState) -> dict[str, Any]:
+    """Describe what ``build_planner_state_projection`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "semantic_move_record": state.get("semantic_move_record"),
         "social_state_record": state.get("social_state_record"),

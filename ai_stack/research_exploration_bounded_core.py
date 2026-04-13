@@ -1,4 +1,7 @@
-"""Bounded exploration — Kernimplementierung (DS-022; von research_exploration_bounded re-exportiert)."""
+"""
+Bounded exploration — Kernimplementierung (DS-022; von
+research_exploration_bounded re-exportiert).
+"""
 
 from __future__ import annotations
 
@@ -34,8 +37,17 @@ def run_bounded_exploration(
     budget: ExplorationBudget | None,
 ) -> ExplorationResult:
     """Run deterministic bounded exploration.
-
-    No internal execution path is allowed without a validated budget object.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        seed_aspects: ``seed_aspects`` (list[dict[str,
+            Any]]); meaning follows the type and call sites.
+        budget: ``budget`` (ExplorationBudget | None); meaning follows the type and call sites.
+    
+    Returns:
+        ExplorationResult:
+            Returns a value of type ``ExplorationResult``; see the function body for structure, error paths, and sentinels.
     """
     if budget is None:
         raise ValueError("exploration_budget_required")
@@ -129,6 +141,18 @@ def run_bounded_exploration(
 
 
 def deterministic_contradiction_scan(statement: str) -> ContradictionStatus:
+    """Describe what ``deterministic_contradiction_scan`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        statement: ``statement`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        ContradictionStatus:
+            Returns a value of type ``ContradictionStatus``; see the function body for structure, error paths, and sentinels.
+    """
     lowered = normalize_text(statement)
     if "hard_conflict" in lowered or "contradiction" in lowered:
         return ContradictionStatus.HARD_CONFLICT

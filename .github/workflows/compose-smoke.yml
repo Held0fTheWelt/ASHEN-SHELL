@@ -1,0 +1,36 @@
+# Optional: bring up the local stack and hit health endpoints.
+# Trigger: Actions → Compose smoke → Run workflow (workflow_dispatch only).
+
+name: Compose smoke (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare .env for compose
+        run: cp .env.example .env
+
+      - name: Build and start stack
+        run: docker compose up -d --build
+
+      - name: Wait for play-service health
+        run: |
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:8001/api/health >/dev/null; then
+              echo "play-service OK"; exit 0; fi
+            sleep 3
+          done
+          echo "timeout waiting for play-service"; docker compose ps; exit 1
+
+      - name: Backend health
+        run: curl -sf http://127.0.0.1:8000/api/v1/health | head -c 500
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v --remove-orphans

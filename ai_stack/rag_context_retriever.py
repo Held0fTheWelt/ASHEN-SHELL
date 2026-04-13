@@ -1,4 +1,7 @@
-"""Hybrid retrieval orchestration: scoring, pool phase, and hit assembly (DS-003 stage 8)."""
+"""
+Hybrid retrieval orchestration: scoring, pool phase, and hit assembly
+(DS-003 stage 8).
+"""
 
 from __future__ import annotations
 
@@ -43,6 +46,8 @@ from ai_stack.rag_retrieval_dtos import RetrievalHit, RetrievalRequest, Retrieva
 
 
 class ContextRetriever:
+    """``ContextRetriever`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     def __init__(
         self,
         corpus: InMemoryRetrievalCorpus,
@@ -50,15 +55,41 @@ class ContextRetriever:
         embedding_index: CorpusEmbeddingIndex | None = None,
         embedding_model_id: str = "",
     ) -> None:
+        """``__init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            corpus: ``corpus`` (InMemoryRetrievalCorpus); meaning follows the type and call sites.
+            embedding_index: ``embedding_index`` (CorpusEmbeddingIndex | None); meaning follows the type and call sites.
+            embedding_model_id: ``embedding_model_id`` (str); meaning follows the type and call sites.
+        """
         self.corpus = corpus
         self._embedding_index = embedding_index
         self._embedding_model_id = embedding_model_id or (embedding_index.model_id if embedding_index else "")
 
     def _corpus_trace(self) -> tuple[str, str, str]:
+        """``_corpus_trace`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            tuple[str, str, str]:
+                Returns a value of type ``tuple[str, str,
+                str]``; see the function body for structure, error paths, and sentinels.
+        """
         corpus = self.corpus
         return corpus.index_version, corpus.corpus_fingerprint, corpus.storage_path or ""
 
     def _embedding_ready(self) -> bool:
+        """``_embedding_ready`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            bool:
+                Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+        """
         if self._embedding_index is None:
             return False
         return self._embedding_index.vectors.shape[0] == len(self.corpus.chunks)
@@ -78,7 +109,30 @@ class ContextRetriever:
         w_dense: float,
         w_sparse: float,
     ) -> list[_ScoredCandidate]:
-        """Dense/sparse hybrid scoring over corpus chunks (initial pool, pre-policy rerank)."""
+        """Dense/sparse hybrid scoring over corpus chunks (initial pool,
+        pre-policy rerank).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            request: ``request`` (RetrievalRequest); meaning follows the type and call sites.
+            allowed_classes: ``allowed_classes`` (set[Any]); meaning follows the type and call sites.
+            query_terms: ``query_terms`` (dict[str,
+                float]); meaning follows the type and call sites.
+            query_norm: ``query_norm`` (float); meaning follows the type and call sites.
+            use_hybrid: ``use_hybrid`` (bool); meaning follows the type and call sites.
+            query_vec: ``query_vec`` (np.ndarray | None); meaning follows the type and call sites.
+            profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+            profile_boosts: ``profile_boosts`` (dict[Any,
+                float]); meaning follows the type and call sites.
+            canonical_weight: ``canonical_weight`` (float); meaning follows the type and call sites.
+            w_dense: ``w_dense`` (float); meaning follows the type and call sites.
+            w_sparse: ``w_sparse`` (float); meaning follows the type and call sites.
+        
+        Returns:
+            list[_ScoredCandidate]:
+                Returns a value of type ``list[_ScoredCandidate]``; see the function body for structure, error paths, and sentinels.
+        """
         candidates: list[_ScoredCandidate] = []
         for chunk_index, chunk in enumerate(self.corpus.chunks):
             if chunk.content_class not in allowed_classes:
@@ -145,7 +199,20 @@ class ContextRetriever:
         profile_name: str,
         published_canonical_in_pool: bool,
     ) -> list[RetrievalHit]:
-        """Map reranked/scored candidates to ``RetrievalHit`` rows (governance + policy notes)."""
+        """Map reranked/scored candidates to ``RetrievalHit`` rows
+        (governance + policy notes).
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            selected_tuples: ``selected_tuples`` (list[tuple[float, _ScoredCandidate, list[str]]]); meaning follows the type and call sites.
+            profile_name: ``profile_name`` (str); meaning follows the type and call sites.
+            published_canonical_in_pool: ``published_canonical_in_pool`` (bool); meaning follows the type and call sites.
+        
+        Returns:
+            list[RetrievalHit]:
+                Returns a value of type ``list[RetrievalHit]``; see the function body for structure, error paths, and sentinels.
+        """
         hits: list[RetrievalHit] = []
         for rerank_score, cand, rparts in selected_tuples:
             reason_core = cand.initial_reason
@@ -184,6 +251,17 @@ class ContextRetriever:
         return hits
 
     def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
+        """``retrieve`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            request: ``request`` (RetrievalRequest); meaning follows the type and call sites.
+        
+        Returns:
+            RetrievalResult:
+                Returns a value of type ``RetrievalResult``; see the function body for structure, error paths, and sentinels.
+        """
         if request.domain not in DOMAIN_CONTENT_ACCESS:
             raise RetrievalDomainError(f"Unknown retrieval domain: {request.domain}")
         trace = self._corpus_trace()
@@ -294,6 +372,19 @@ def _run_retrieval_encode_score_pool_phase(
     retriever: ContextRetriever,
     request: RetrievalRequest,
 ) -> _RetrievalEncodeScorePoolPhase:
+    """Describe what ``_run_retrieval_encode_score_pool_phase`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        retriever: ``retriever`` (ContextRetriever); meaning follows the type and call sites.
+        request: ``request`` (RetrievalRequest); meaning follows the type and call sites.
+    
+    Returns:
+        _RetrievalEncodeScorePoolPhase:
+            Returns a value of type ``_RetrievalEncodeScorePoolPhase``; see the function body for structure, error paths, and sentinels.
+    """
     c = retriever.corpus
     hybrid_state = _resolve_retrieval_hybrid_encoding_state(
         c,

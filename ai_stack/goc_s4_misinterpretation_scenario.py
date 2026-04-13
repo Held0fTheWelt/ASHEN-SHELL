@@ -1,10 +1,13 @@
-"""Canonical Roadmap §8.2 S4 chain: misinterpretation / correction (scenario id S4).
+"""
+Canonical Roadmap §8.2 S4 chain: misinterpretation / correction
+(scenario id S4).
 
-Single source for the pytest anchor and G9 Level-A S4 JSON. Turn 1 uses a pronominal
-accountability line in ``phase_3`` without naming Veronique; scene director defaults the
-primary responder to Michel. Turn 2 is an explicit player correction naming Veronique and
-rejecting Michel as the intended target. Turn 3 sustains pressure on Veronique with visible
-narration that names her.
+Single source for the pytest anchor and G9 Level-A S4 JSON. Turn 1 uses
+a pronominal accountability line in ``phase_3`` without naming
+Veronique; scene director defaults the primary responder to Michel. Turn
+2 is an explicit player correction naming Veronique and rejecting Michel
+as the intended target. Turn 3 sustains pressure on Veronique with
+visible narration that names her.
 """
 
 from __future__ import annotations
@@ -36,6 +39,8 @@ TRACE_S4_T3 = "trace-roadmap-s4-t3-incorporation"
 
 @dataclass(frozen=True)
 class RoadmapS4TurnSpec:
+    """``RoadmapS4TurnSpec`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     current_scene_id: str
     player_input: str
     model_narrative_stub: str
@@ -43,6 +48,14 @@ class RoadmapS4TurnSpec:
 
 
 def roadmap_s4_turn_specs() -> tuple[RoadmapS4TurnSpec, ...]:
+    """``roadmap_s4_turn_specs`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        tuple[RoadmapS4TurnSpec, ...]:
+            Returns a value of type ``tuple[RoadmapS4TurnSpec, ...]``; see the function body for structure, error paths, and sentinels.
+    """
     return (
         RoadmapS4TurnSpec(
             current_scene_id="phase_3",
@@ -78,12 +91,35 @@ def roadmap_s4_turn_specs() -> tuple[RoadmapS4TurnSpec, ...]:
 
 
 class _RoadmapS4JsonAdapter(BaseModelAdapter):
+    """``_RoadmapS4JsonAdapter`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     adapter_name = "openai"
 
     def __init__(self, narrative: str) -> None:
+        """``__init__`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            narrative: ``narrative`` (str); meaning follows the type and call sites.
+        """
         self._narrative = narrative
 
     def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
+        """``generate`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Args:
+            prompt: ``prompt`` (str); meaning follows the type and call sites.
+            timeout_seconds: ``timeout_seconds`` (float); meaning follows the type and call sites.
+            retrieval_context: ``retrieval_context`` (str
+                | None); meaning follows the type and call sites.
+        
+        Returns:
+            ModelCallResult:
+                Returns a value of type ``ModelCallResult``; see the function body for structure, error paths, and sentinels.
+        """
         payload = {
             "narrative_response": self._narrative,
             "proposed_scene_id": None,
@@ -97,6 +133,19 @@ class _RoadmapS4JsonAdapter(BaseModelAdapter):
 
 
 def _executor(tmp_path: Path, *, adapter: BaseModelAdapter) -> RuntimeTurnGraphExecutor:
+    """Describe what ``_executor`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        tmp_path: ``tmp_path`` (Path); meaning follows the type and call sites.
+        adapter: ``adapter`` (BaseModelAdapter); meaning follows the type and call sites.
+    
+    Returns:
+        RuntimeTurnGraphExecutor:
+            Returns a value of type ``RuntimeTurnGraphExecutor``; see the function body for structure, error paths, and sentinels.
+    """
     content_file = tmp_path / "content" / "god_of_carnage.md"
     content_file.parent.mkdir(parents=True, exist_ok=True)
     content_file.write_text("God of Carnage roadmap S4 misinterpretation/correction corpus.", encoding="utf-8")
@@ -115,7 +164,18 @@ def _executor(tmp_path: Path, *, adapter: BaseModelAdapter) -> RuntimeTurnGraphE
 
 
 def run_roadmap_s4_misinterpretation_chain(tmp_path: Path) -> list[dict[str, Any]]:
-    """Execute the three-turn S4 chain; returns raw graph.run dicts in order."""
+    """Execute the three-turn S4 chain; returns raw graph.run dicts in
+    order.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        tmp_path: ``tmp_path`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     prior_continuity: list[dict[str, Any]] = []
     prior_signature: dict[str, str] | None = None
     results: list[dict[str, Any]] = []
@@ -147,6 +207,13 @@ def run_roadmap_s4_misinterpretation_chain(tmp_path: Path) -> list[dict[str, Any
 
 
 def assert_roadmap_s4_truth(results: list[dict[str, Any]]) -> None:
+    """``assert_roadmap_s4_truth`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        results: ``results`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    """
     assert len(results) == 3, "S4 chain must be exactly three turns"
     r1, r2, r3 = results
 
@@ -184,6 +251,18 @@ def assert_roadmap_s4_truth(results: list[dict[str, Any]]) -> None:
 
 
 def assess_roadmap_s4_evidence(results: list[dict[str, Any]]) -> dict[str, Any]:
+    """Describe what ``assess_roadmap_s4_evidence`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        results: ``results`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     r1, r2, r3 = results[0], results[1], results[2]
     im1 = r1.get("interpreted_move") if isinstance(r1.get("interpreted_move"), dict) else {}
     im2 = r2.get("interpreted_move") if isinstance(r2.get("interpreted_move"), dict) else {}

@@ -1,4 +1,7 @@
-"""Canonical YAML authority for God of Carnage (VERTICAL_SLICE_CONTRACT_GOC.md §6.1)."""
+"""
+Canonical YAML authority for God of Carnage
+(VERTICAL_SLICE_CONTRACT_GOC.md §6.1).
+"""
 
 from __future__ import annotations
 
@@ -20,15 +23,40 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 def _repo_root() -> Path:
+    """Describe what ``_repo_root`` does in one line (verb-led summary for
+    this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        Path:
+            Returns a value of type ``Path``; see the function body for structure, error paths, and sentinels.
+    """
     return Path(__file__).resolve().parent.parent
 
 
 def goc_module_yaml_dir() -> Path:
+    """``goc_module_yaml_dir`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        Path:
+            Returns a value of type ``Path``; see the function body for structure, error paths, and sentinels.
+    """
     return _repo_root() / "content" / "modules" / GOC_MODULE_ID
 
 
 def load_goc_canonical_module_yaml() -> dict[str, Any]:
-    """Load authoritative module.yaml for god_of_carnage from the repository tree."""
+    """Load authoritative module.yaml for god_of_carnage from the
+    repository tree.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if yaml is None:
         raise RuntimeError("PyYAML is required to load canonical GoC module YAML.")
     path = goc_module_yaml_dir() / "module.yaml"
@@ -46,6 +74,14 @@ def load_goc_canonical_module_yaml() -> dict[str, Any]:
 
 @lru_cache(maxsize=1)
 def cached_goc_yaml_title() -> str:
+    """``cached_goc_yaml_title`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     mod = load_goc_canonical_module_yaml()
     title = mod.get("title")
     if not isinstance(title, str) or not title.strip():
@@ -54,6 +90,17 @@ def cached_goc_yaml_title() -> str:
 
 
 def _safe_load_yaml_mapping(path: Path) -> dict[str, Any]:
+    """``_safe_load_yaml_mapping`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        path: ``path`` (Path); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if yaml is None:
         raise RuntimeError("PyYAML is required to load canonical GoC module YAML.")
     if not path.is_file():
@@ -67,7 +114,15 @@ def _safe_load_yaml_mapping(path: Path) -> dict[str, Any]:
 
 
 def load_goc_characters_yaml() -> dict[str, Any]:
-    """Load content/modules/god_of_carnage/characters.yaml (canonical slice)."""
+    """Load content/modules/god_of_carnage/characters.yaml (canonical
+    slice).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     path = goc_module_yaml_dir() / "characters.yaml"
     data = _safe_load_yaml_mapping(path)
     ch = data.get("characters")
@@ -75,7 +130,14 @@ def load_goc_characters_yaml() -> dict[str, Any]:
 
 
 def load_goc_character_voice_yaml() -> dict[str, Any]:
-    """Load direction/character_voice.yaml."""
+    """Load direction/character_voice.yaml.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     path = goc_module_yaml_dir() / "direction" / "character_voice.yaml"
     data = _safe_load_yaml_mapping(path)
     ch = data.get("characters")
@@ -83,14 +145,29 @@ def load_goc_character_voice_yaml() -> dict[str, Any]:
 
 
 def load_goc_scene_guidance_yaml() -> dict[str, Any]:
-    """Load direction/scene_guidance.yaml (multi-document YAML merged)."""
+    """Load direction/scene_guidance.yaml (multi-document YAML merged).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     path = goc_module_yaml_dir() / "direction" / "scene_guidance.yaml"
     return _safe_load_yaml_mapping(path)
 
 
 @lru_cache(maxsize=1)
 def load_goc_yaml_slice_bundle() -> dict[str, Any]:
-    """Bundle of YAML-backed slice surfaces used by the director (VERTICAL_SLICE_CONTRACT_GOC.md §6)."""
+    """Bundle of YAML-backed slice surfaces used by the director
+    (VERTICAL_SLICE_CONTRACT_GOC.md §6).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "characters": load_goc_characters_yaml(),
         "character_voice": load_goc_character_voice_yaml(),
@@ -99,11 +176,29 @@ def load_goc_yaml_slice_bundle() -> dict[str, Any]:
 
 
 def clear_goc_yaml_slice_cache() -> None:
+    """Describe what ``clear_goc_yaml_slice_cache`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    """
     load_goc_yaml_slice_bundle.cache_clear()
 
 
 def thin_edge_staging_line_from_guidance(*, scene_guidance: dict[str, Any], scene_id: str) -> str:
-    """First line from YAML narrative_context for bounded non-factual staging (truth-safe supplement)."""
+    """First line from YAML narrative_context for bounded non-factual
+    staging (truth-safe supplement).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        scene_guidance: ``scene_guidance`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        scene_id: ``scene_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if not scene_guidance:
         return ""
     phase = guidance_phase_key_for_scene_id(scene_id)
@@ -118,7 +213,20 @@ def thin_edge_staging_line_from_guidance(*, scene_guidance: dict[str, Any], scen
 
 
 def scene_assessment_phase_hints(*, scene_guidance: dict[str, Any], scene_id: str) -> dict[str, Any]:
-    """Read-only hints from YAML for scene_assessment (not a second truth surface)."""
+    """Read-only hints from YAML for scene_assessment (not a second truth
+    surface).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        scene_guidance: ``scene_guidance`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        scene_id: ``scene_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if not scene_guidance:
         return {}
     phase = guidance_phase_key_for_scene_id(scene_id)
@@ -138,7 +246,20 @@ def scene_assessment_phase_hints(*, scene_guidance: dict[str, Any], scene_id: st
 
 
 def scene_guidance_snippets(*, scene_guidance: dict[str, Any], scene_id: str) -> dict[str, str]:
-    """Read short operator/render snippets from scene_guidance without creating new truth."""
+    """Read short operator/render snippets from scene_guidance without
+    creating new truth.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        scene_guidance: ``scene_guidance`` (dict[str,
+            Any]); meaning follows the type and call sites.
+        scene_id: ``scene_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, str]:
+            Returns a value of type ``dict[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     if not scene_guidance:
         return {}
     phase = guidance_phase_key_for_scene_id(scene_id)
@@ -164,7 +285,21 @@ def goc_character_profile_snippet(
     yaml_slice: dict[str, Any] | None,
     scene_id: str = "",
 ) -> dict[str, str]:
-    """Return short YAML-backed role/voice snippets for responder-specific rendering."""
+    """Return short YAML-backed role/voice snippets for responder-specific
+    rendering.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        actor_id: ``actor_id`` (str); meaning follows the type and call sites.
+        yaml_slice: ``yaml_slice`` (dict[str, Any] |
+            None); meaning follows the type and call sites.
+        scene_id: ``scene_id`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, str]:
+            Returns a value of type ``dict[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     if not isinstance(yaml_slice, dict):
         return {}
     actor_key_map = {
@@ -210,9 +345,20 @@ def detect_builtin_yaml_title_conflict(
     host_template_id: str | None,
     host_template_title: str | None,
 ) -> dict[str, Any] | None:
-    """If a secondary builtin template contradicts YAML title, return a failure marker payload.
-
-    VERTICAL_SLICE_CONTRACT_GOC.md §6.1 — builtins must not override YAML truth.
+    """If a secondary builtin template contradicts YAML title, return a
+    failure marker payload.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        host_template_id: ``host_template_id`` (str |
+            None); meaning follows the type and call sites.
+        host_template_title: ``host_template_title`` (str
+            | None); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any] | None:
+            Returns a value of type ``dict[str, Any] | None``; see the function body for structure, error paths, and sentinels.
     """
     if not host_template_id or host_template_id != "god_of_carnage_solo":
         return None

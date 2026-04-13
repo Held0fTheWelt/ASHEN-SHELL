@@ -1,4 +1,7 @@
-"""Retrieval trace summary lines and profile governance tags appended to ``compact_context`` (DS-009 optional)."""
+"""
+Retrieval trace summary lines and profile governance tags appended to
+``compact_context`` (DS-009 optional).
+"""
 
 from __future__ import annotations
 
@@ -12,6 +15,17 @@ def append_trace_and_governance_footer(
     lines: list[str],
     sources: list[dict[str, str]],
 ) -> None:
+    """Describe what ``append_trace_and_governance_footer`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        result: ``result`` (RetrievalResult); meaning follows the type and call sites.
+        profile: ``profile`` (str); meaning follows the type and call sites.
+        lines: ``lines`` (list[str]); meaning follows the type and call sites.
+        sources: ``sources`` (list[dict[str, str]]); meaning follows the type and call sites.
+    """
     rdict_for_trace = {
         "hit_count": len(result.hits),
         "status": result.status.value,

@@ -1,7 +1,9 @@
-"""Frozen roadmap §6.9 experience-acceptance scenario set (G9).
+"""
+Frozen roadmap §6.9 experience-acceptance scenario set (G9).
 
-Single non-substitutable ordering: six scenarios exactly as in docs/ROADMAP_MVP_GoC.md §6.9.
-Templates and validators should align with these ids — do not introduce parallel scenario vocab.
+Single non-substitutable ordering: six scenarios exactly as in
+docs/ROADMAP_MVP_GoC.md §6.9. Templates and validators should align with
+these ids — do not introduce parallel scenario vocab.
 """
 
 from __future__ import annotations
@@ -59,4 +61,13 @@ ROADMAP_SCENARIO_ID_RETRIEVAL_HEAVY = "goc_roadmap_s6_retrieval_heavy"
 
 
 def expected_failure_oriented_by_id() -> dict[str, bool]:
+    """Describe what ``expected_failure_oriented_by_id`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, bool]:
+            Returns a value of type ``dict[str, bool]``; see the function body for structure, error paths, and sentinels.
+    """
     return {s.scenario_id: s.failure_oriented for s in G9_ROADMAP_SCENARIOS}

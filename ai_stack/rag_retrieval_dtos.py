@@ -1,4 +1,7 @@
-"""Retrieval request/hit/result and context pack dataclasses (DS-003 optional: slim ``rag`` facade)."""
+"""
+Retrieval request/hit/result and context pack dataclasses (DS-003
+optional: slim ``rag`` facade).
+"""
 
 from __future__ import annotations
 
@@ -9,6 +12,8 @@ from ai_stack.rag_types import RetrievalDomain, RetrievalStatus
 
 @dataclass(slots=True)
 class RetrievalRequest:
+    """``RetrievalRequest`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     domain: RetrievalDomain
     profile: str
     query: str
@@ -20,6 +25,8 @@ class RetrievalRequest:
 
 @dataclass(slots=True)
 class RetrievalHit:
+    """``RetrievalHit`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     chunk_id: str
     source_path: str
     source_name: str
@@ -38,6 +45,8 @@ class RetrievalHit:
 
 @dataclass(slots=True)
 class RetrievalResult:
+    """``RetrievalResult`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     request: RetrievalRequest
     status: RetrievalStatus
     hits: list[RetrievalHit]
@@ -59,6 +68,8 @@ class RetrievalResult:
 
 @dataclass(slots=True)
 class ContextPack:
+    """``ContextPack`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     summary: str
     compact_context: str
     sources: list[dict[str, str]]

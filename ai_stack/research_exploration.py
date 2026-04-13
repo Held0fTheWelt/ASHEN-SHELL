@@ -1,4 +1,7 @@
-"""Bounded deterministic exploration engine (single owner for branching/pruning/budget/abort)."""
+"""
+Bounded deterministic exploration engine (single owner for
+branching/pruning/budget/abort).
+"""
 
 from __future__ import annotations
 

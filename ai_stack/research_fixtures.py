@@ -6,6 +6,14 @@ from typing import Any
 
 
 def fixture_a_intake_input() -> dict[str, Any]:
+    """``fixture_a_intake_input`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "work_id": "god_of_carnage",
         "source_type": "scene_note",
@@ -23,6 +31,14 @@ def fixture_a_intake_input() -> dict[str, Any]:
 
 
 def fixture_b_aspect_input() -> dict[str, Any]:
+    """``fixture_b_aspect_input`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "work_id": "god_of_carnage",
         "source_type": "scene_note",
@@ -40,6 +56,15 @@ def fixture_b_aspect_input() -> dict[str, Any]:
 
 
 def fixture_c_exploration_budget() -> dict[str, Any]:
+    """Describe what ``fixture_c_exploration_budget`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "max_depth": 2,
         "max_branches_per_node": 3,
@@ -55,6 +80,18 @@ def fixture_c_exploration_budget() -> dict[str, Any]:
 
 
 def fixture_d_candidate_payloads(anchor_ids: list[str]) -> list[dict[str, Any]]:
+    """Describe what ``fixture_d_candidate_payloads`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        anchor_ids: ``anchor_ids`` (list[str]); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     anchor = anchor_ids[:1]
     return [
         {
@@ -85,10 +122,27 @@ def fixture_d_candidate_payloads(anchor_ids: list[str]) -> list[dict[str, Any]]:
 
 
 def fixture_e_module_id() -> str:
+    """``fixture_e_module_id`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     return "god_of_carnage"
 
 
 def fixture_f_full_run_input() -> dict[str, Any]:
+    """Describe what ``fixture_f_full_run_input`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "work_id": "god_of_carnage",
         "module_id": "god_of_carnage",

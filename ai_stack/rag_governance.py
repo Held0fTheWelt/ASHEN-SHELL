@@ -1,4 +1,7 @@
-"""RAG source governance: evidence lane and visibility from chunk fields (DS-003 split from rag.py)."""
+"""
+RAG source governance: evidence lane and visibility from chunk fields
+(DS-003 split from rag.py).
+"""
 
 from __future__ import annotations
 
@@ -13,7 +16,9 @@ from ai_stack.rag_types import (
 
 
 class GovernanceChunkView(Protocol):
-    """Structural type for anything passed to ``governance_view_for_chunk`` (e.g. ``CorpusChunk``)."""
+    """Structural type for anything passed to ``governance_view_for_chunk``
+    (e.g. ``CorpusChunk``).
+    """
 
     content_class: ContentClass
     source_path: str
@@ -21,7 +26,18 @@ class GovernanceChunkView(Protocol):
 
 
 def governance_view_for_chunk(chunk: GovernanceChunkView) -> SourceGovernanceView:
-    """Map persisted chunk fields to evidence lane and visibility (deterministic, no I/O)."""
+    """Map persisted chunk fields to evidence lane and visibility
+    (deterministic, no I/O).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        chunk: ``chunk`` (GovernanceChunkView); meaning follows the type and call sites.
+    
+    Returns:
+        SourceGovernanceView:
+            Returns a value of type ``SourceGovernanceView``; see the function body for structure, error paths, and sentinels.
+    """
     cc = chunk.content_class
     path = chunk.source_path.replace("\\", "/").lower()
     cp = chunk.canonical_priority

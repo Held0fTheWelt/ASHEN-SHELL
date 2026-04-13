@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-04-12T23:51:29.999725+00:00",
+  "openapi_path": "docs\\api\\openapi.yaml",
+  "openapi_sha256": "dc816e7cac81102224ce6d3ecc71a623bd0cb55571e8049b42e38a47d9e3aaf0",
+  "backend_api_prefix": "/api/v1",
+  "master_collection": "postman\\WorldOfShadows_Complete_OpenAPI.postman_collection.json",
+  "suites_dir": "postman\\suites",
+  "sub_suite_files": [
+    "WorldOfShadows_Suite_AIStackGovernance.postman_collection.json",
+    "WorldOfShadows_Suite_Admin.postman_collection.json",
+    "WorldOfShadows_Suite_Analytics.postman_collection.json",
+    "WorldOfShadows_Suite_Areas.postman_collection.json",
+    "WorldOfShadows_Suite_Auth.postman_collection.json",
+    "WorldOfShadows_Suite_Forum.postman_collection.json",
+    "WorldOfShadows_Suite_GameAdmin.postman_collection.json",
+    "WorldOfShadows_Suite_GameBootstrap.postman_collection.json",
+    "WorldOfShadows_Suite_Improvement.postman_collection.json",
+    "WorldOfShadows_Suite_MCP.postman_collection.json",
+    "WorldOfShadows_Suite_Roles.postman_collection.json",
+    "WorldOfShadows_Suite_SessionsBridge.postman_collection.json",
+    "WorldOfShadows_Suite_SiteContent.postman_collection.json",
+    "WorldOfShadows_Suite_System.postman_collection.json",
+    "WorldOfShadows_Suite_Users.postman_collection.json",
+    "WorldOfShadows_Suite_WorldEngineConsole.postman_collection.json",
+    "WorldOfShadows_Suite_WritersRoom.postman_collection.json"
+  ]
+}

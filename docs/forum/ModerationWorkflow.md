@@ -119,4 +119,4 @@ Moderators can split off a coherent sub-thread starting from a **top-level** pos
 - Notification list and detail include `thread_slug` and `target_post_id` (for post targets) so the UI can link to the exact thread and post.
 - `PUT /api/v1/notifications/read-all` marks all of the current user’s notifications as read.
 
-See `postman/WorldOfShadows_API.postman_collection.json` (Forum and Moderation folders) for request examples.
+See **`postman/suites/WorldOfShadows_Suite_Forum.postman_collection.json`** or the **Forum** folder inside **`postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json`** for generated request URLs (regenerate with Postmanify after OpenAPI changes).

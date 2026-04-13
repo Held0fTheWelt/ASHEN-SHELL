@@ -1,7 +1,10 @@
-"""Explicit scene-direction subdecision matrix for GoC (roadmap §4.2, gate G4).
+"""
+Explicit scene-direction subdecision matrix for GoC (roadmap §4.2, gate
+G4).
 
-Machine-readable source of truth for frozen subdecision labels and G4 seam metadata.
-Must stay consistent with ``ai_stack.scene_director_goc`` and ``ai_stack.goc_frozen_vocab``.
+Machine-readable source of truth for frozen subdecision labels and G4
+seam metadata. Must stay consistent with ``ai_stack.scene_director_goc``
+and ``ai_stack.goc_frozen_vocab``.
 """
 
 from __future__ import annotations
@@ -88,7 +91,19 @@ _CATEGORY_G4_DEFAULTS: Final[dict[str, dict[str, str]]] = {
 
 
 def assert_subdecision_label_in_matrix(category: str, value: str) -> str:
-    """Return ``value`` if it is a registered matrix label for ``category``; else raise."""
+    """Return ``value`` if it is a registered matrix label for
+    ``category``; else raise.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        category: ``category`` (str); meaning follows the type and call sites.
+        value: ``value`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     allowed = _CATEGORY_MEMBERS.get(category)
     if allowed is None:
         raise ValueError(f"unknown scene-direction matrix category: {category!r}")
@@ -103,6 +118,19 @@ def _rows_for_frozen_set(
     members: frozenset[str],
     impl_ref: str,
 ) -> list[dict[str, Any]]:
+    """``_rows_for_frozen_set`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        category: ``category`` (str); meaning follows the type and call sites.
+        members: ``members`` (frozenset[str]); meaning follows the type and call sites.
+        impl_ref: ``impl_ref`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     g4 = _CATEGORY_G4_DEFAULTS[category]
     rows: list[dict[str, Any]] = []
     for label in sorted(members):
@@ -160,12 +188,21 @@ SCENE_DIRECTION_SUBDECISION_ROWS: Final[list[dict[str, Any]]] = (
 
 
 def scene_direction_labels_from_matrix() -> frozenset[str]:
-    """Return the set of all ``frozen_vocab_value`` entries in the matrix."""
+    """Return the set of all ``frozen_vocab_value`` entries in the matrix.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        frozenset[str]:
+            Returns a value of type ``frozenset[str]``; see the function body for structure, error paths, and sentinels.
+    """
     return frozenset(str(r["frozen_vocab_value"]) for r in SCENE_DIRECTION_SUBDECISION_ROWS)
 
 
 def assert_matrix_aligned_with_roadmap_registry() -> None:
-    """Cross-check matrix coverage vs ``goc_roadmap_semantic_surface`` union (development / tests)."""
+    """Cross-check matrix coverage vs ``goc_roadmap_semantic_surface`` union
+        (development / tests).
+    """
     from ai_stack.goc_roadmap_semantic_surface import SCENE_DIRECTION_SUBDECISION_LABELS
 
     derived = scene_direction_labels_from_matrix()

@@ -1,4 +1,7 @@
-"""Canonical CharacterMind tactical identity records with explicit provenance (GoC planner)."""
+"""
+Canonical CharacterMind tactical identity records with explicit
+provenance (GoC planner).
+"""
 
 from __future__ import annotations
 
@@ -10,6 +13,8 @@ FieldProvenanceSource = Literal["authored", "authored_derived", "fallback_defaul
 
 
 class FieldProvenance(BaseModel):
+    """``FieldProvenance`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     model_config = {"extra": "forbid"}
 
     source: FieldProvenanceSource
@@ -41,4 +46,12 @@ class CharacterMindRecord(BaseModel):
     provenance: dict[str, FieldProvenance] = Field(default_factory=dict)
 
     def to_runtime_dict(self) -> dict:
+        """``to_runtime_dict`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict:
+                Returns a value of type ``dict``; see the function body for structure, error paths, and sentinels.
+        """
         return self.model_dump(mode="json")

@@ -12,11 +12,34 @@ _WORD_RE = re.compile(r"[a-z0-9_]+", re.IGNORECASE)
 
 
 def _contains_any(text: str, tokens: tuple[str, ...]) -> bool:
+    """``_contains_any`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+        tokens: ``tokens`` (tuple[str, ...]); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     lowered = text.lower()
     return any(token in lowered for token in tokens)
 
 
 def _token_count(text: str) -> int:
+    """``_token_count`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        int:
+            Returns a value of type ``int``; see the function body for structure, error paths, and sentinels.
+    """
     return len(_WORD_RE.findall(text.lower()))
 
 
@@ -50,7 +73,20 @@ def extract_perspective_aspects(
     segments: list[dict[str, Any]],
     aspect_id_factory: callable,
 ) -> list[dict[str, Any]]:
-    """Extract deterministic aspect records from segments across all perspectives."""
+    """Extract deterministic aspect records from segments across all
+    perspectives.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        source_id: ``source_id`` (str); meaning follows the type and call sites.
+        segments: ``segments`` (list[dict[str, Any]]); meaning follows the type and call sites.
+        aspect_id_factory: ``aspect_id_factory`` (callable); meaning follows the type and call sites.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     aspects: list[dict[str, Any]] = []
     ordered_segments = sorted(segments, key=lambda s: str(s.get("segment_ref", "")))
 
@@ -131,6 +167,19 @@ def extract_perspective_aspects(
 
 
 def summarize_segment_for_anchor(text: str, *, max_len: int = 180) -> str:
+    """Describe what ``summarize_segment_for_anchor`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+        max_len: ``max_len`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     cleaned = " ".join(text.split())
     if len(cleaned) <= max_len:
         return cleaned
@@ -138,6 +187,20 @@ def summarize_segment_for_anchor(text: str, *, max_len: int = 180) -> str:
 
 
 def segment_text_deterministically(text: str, *, target_words: int = 90, overlap_words: int = 15) -> list[str]:
+    """Describe what ``segment_text_deterministically`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        text: ``text`` (str); meaning follows the type and call sites.
+        target_words: ``target_words`` (int); meaning follows the type and call sites.
+        overlap_words: ``overlap_words`` (int); meaning follows the type and call sites.
+    
+    Returns:
+        list[str]:
+            Returns a value of type ``list[str]``; see the function body for structure, error paths, and sentinels.
+    """
     words = _WORD_RE.findall(text)
     if not words:
         return []
@@ -154,6 +217,18 @@ def segment_text_deterministically(text: str, *, target_words: int = 90, overlap
 
 
 def estimate_anchor_confidence(segment_text: str) -> float:
+    """Describe what ``estimate_anchor_confidence`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        segment_text: ``segment_text`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        float:
+            Returns a value of type ``float``; see the function body for structure, error paths, and sentinels.
+    """
     count = _token_count(segment_text)
     if count <= 20:
         return 0.62

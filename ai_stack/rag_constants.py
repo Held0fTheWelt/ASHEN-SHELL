@@ -1,4 +1,7 @@
-"""RAG layer: version strings, tuning weights, and domain access map (DS-003 split from rag.py)."""
+"""
+RAG layer: version strings, tuning weights, and domain access map
+(DS-003 split from rag.py).
+"""
 
 from __future__ import annotations
 

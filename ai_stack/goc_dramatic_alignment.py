@@ -1,7 +1,10 @@
-"""Deterministic dramatic-alignment checks for validation (GATE_SCORING_POLICY_GOC.md §1 dramatic_quality).
+"""
+Deterministic dramatic-alignment checks for validation
+(GATE_SCORING_POLICY_GOC.md §1 dramatic_quality).
 
-Implements anti-seductive rejection: fluent prose that does not support the committed scene_function
-or that relies only on generic boilerplate is rejected at the validation seam — not ad hoc taste.
+Implements anti-seductive rejection: fluent prose that does not support
+the committed scene_function or that relies only on generic boilerplate
+is rejected at the validation seam — not ad hoc taste.
 """
 
 from __future__ import annotations
@@ -132,7 +135,17 @@ _COMMENTARY_META_PHRASES: tuple[str, ...] = (
 
 
 def extract_proposed_narrative_text(proposed_state_effects: list[dict[str, Any]]) -> str:
-    """Concatenate narrative-bearing proposal fields for alignment checks."""
+    """Concatenate narrative-bearing proposal fields for alignment checks.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        proposed_state_effects: ``proposed_state_effects`` (list[dict[str, Any]]); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     parts: list[str] = []
     for eff in proposed_state_effects:
         if not isinstance(eff, dict):
@@ -144,6 +157,17 @@ def extract_proposed_narrative_text(proposed_state_effects: list[dict[str, Any]]
 
 
 def _silence_mode(silence_brevity_decision: dict[str, Any] | None) -> str:
+    """``_silence_mode`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        silence_brevity_decision: ``silence_brevity_decision`` (dict[str, Any] | None); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if not isinstance(silence_brevity_decision, dict):
         return "normal"
     m = silence_brevity_decision.get("mode")
@@ -157,10 +181,20 @@ def dramatic_alignment_legacy_fallback_only(
     silence_brevity_decision: dict[str, Any] | None,
     proposed_narrative: str,
 ) -> str | None:
-    """Bounded legacy seam: length thresholds, withhold beat, meta-commentary bans only.
-
-    Does **not** perform scene-function token-list checks or generic-boilerplate primary logic;
-    those are owned by ``dramatic_effect_gate`` (planner-aware path).
+    """Bounded legacy seam: length thresholds, withhold beat,
+    meta-commentary bans only.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        selected_scene_function: ``selected_scene_function`` (str); meaning follows the type and call sites.
+        pacing_mode: ``pacing_mode`` (str); meaning follows the type and call sites.
+        silence_brevity_decision: ``silence_brevity_decision`` (dict[str, Any] | None); meaning follows the type and call sites.
+        proposed_narrative: ``proposed_narrative`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str | None:
+            Returns a value of type ``str | None``; see the function body for structure, error paths, and sentinels.
     """
     text = proposed_narrative.strip()
     sm = _silence_mode(silence_brevity_decision)
@@ -202,9 +236,20 @@ def dramatic_alignment_violation(
     silence_brevity_decision: dict[str, Any] | None,
     proposed_narrative: str,
 ) -> str | None:
-    """Deprecated full surface path: legacy structural + token/boilerplate checks.
-
-    Prefer ``dramatic_effect_gate`` + ``dramatic_alignment_legacy_fallback_only`` for new code.
+    """Deprecated full surface path: legacy structural + token/boilerplate
+    checks.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        selected_scene_function: ``selected_scene_function`` (str); meaning follows the type and call sites.
+        pacing_mode: ``pacing_mode`` (str); meaning follows the type and call sites.
+        silence_brevity_decision: ``silence_brevity_decision`` (dict[str, Any] | None); meaning follows the type and call sites.
+        proposed_narrative: ``proposed_narrative`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str | None:
+            Returns a value of type ``str | None``; see the function body for structure, error paths, and sentinels.
     """
     text = proposed_narrative.strip()
     low = text.lower()

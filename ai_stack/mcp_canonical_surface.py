@@ -1,13 +1,18 @@
-"""MCP M1 — single canonical descriptor strand for the external MCP tool surface.
+"""
+MCP M1 — single canonical descriptor strand for the external MCP tool
+surface.
 
-Registry entries in ``tools.mcp_server`` are derived from ``CANONICAL_MCP_TOOL_DESCRIPTORS``.
-Capability-facing truth is mirrored only through ``wos.capabilities.catalog`` via
-:func:`capability_records_for_mcp` (built on :func:`ai_stack.capabilities.capability_catalog`).
+Registry entries in ``tools.mcp_server`` are derived from
+``CANONICAL_MCP_TOOL_DESCRIPTORS``. Capability-facing truth is mirrored
+only through ``wos.capabilities.catalog`` via
+:func:`capability_records_for_mcp` (built on
+:func:`ai_stack.capabilities.capability_catalog`).
 
-Strict translation (no parallel MCP-only capability names):
-- Internal capabilities are listed by name only inside enriched catalog records.
-- MCP does not expose :class:`ai_stack.capabilities.CapabilityRegistry` ``invoke``; no shortcut
-  around runtime guard/commit/reject or review/publish authority.
+Strict translation (no parallel MCP-only capability names): - Internal
+capabilities are listed by name only inside enriched catalog records. -
+MCP does not expose :class:`ai_stack.capabilities.CapabilityRegistry`
+``invoke``; no shortcut around runtime guard/commit/reject or
+review/publish authority.
 """
 
 from __future__ import annotations
@@ -24,17 +29,31 @@ except ImportError:
     from enum import Enum as _Enum
 
     class StrEnum(str, _Enum):
+        """``StrEnum`` groups related behaviour; callers should read members for contracts and threading assumptions.
+        """
         def __str__(self) -> str:
+            """``__str__`` — see implementation for behaviour and contracts.
+            
+            Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+            
+            Returns:
+                str:
+                    Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+            """
             return str(self.value)
 
 
 class McpToolClass(StrEnum):
+    """``McpToolClass`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     read_only = "read_only"
     review_bound = "review_bound"
     write_capable = "write_capable"
 
 
 class McpOperatingProfile(StrEnum):
+    """``McpOperatingProfile`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     healthy = "healthy"
     review_safe = "review_safe"
     test_isolated = "test_isolated"
@@ -42,12 +61,16 @@ class McpOperatingProfile(StrEnum):
 
 
 class McpImplementationStatus(StrEnum):
+    """``McpImplementationStatus`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     implemented = "implemented"
     deferred_stub = "deferred_stub"
 
 
 class McpSuite(StrEnum):
-    """MVP MCP suite family (ROADMAP_MVP_WOS_VSL §7.2). Used for filtering and misrouting metrics."""
+    """MVP MCP suite family (ROADMAP_MVP_WOS_VSL §7.2). Used for filtering and
+    misrouting metrics.
+    """
 
     wos_admin = "wos-admin"
     wos_author = "wos-author"
@@ -67,6 +90,15 @@ MCP_CATALOG_CAPABILITY_NAMES: Final[tuple[str, ...]] = tuple(
 
 
 def resolve_mcp_operating_profile() -> McpOperatingProfile:
+    """Describe what ``resolve_mcp_operating_profile`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        McpOperatingProfile:
+            Returns a value of type ``McpOperatingProfile``; see the function body for structure, error paths, and sentinels.
+    """
     raw = (os.environ.get("WOS_MCP_OPERATING_PROFILE") or "healthy").strip().lower()
     try:
         return McpOperatingProfile(raw)
@@ -75,11 +107,25 @@ def resolve_mcp_operating_profile() -> McpOperatingProfile:
 
 
 def operating_profile_allows_write_capable(profile: McpOperatingProfile) -> bool:
+    """Describe what ``operating_profile_allows_write_capable`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        profile: ``profile`` (McpOperatingProfile); meaning follows the type and call sites.
+    
+    Returns:
+        bool:
+            Returns a value of type ``bool``; see the function body for structure, error paths, and sentinels.
+    """
     return profile is McpOperatingProfile.healthy
 
 
 @dataclass(frozen=True, slots=True)
 class McpToolGovernanceView:
+    """``McpToolGovernanceView`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     published_vs_draft: str
     canonical_vs_supporting: str
     runtime_safe_vs_internal_only: str
@@ -89,6 +135,8 @@ class McpToolGovernanceView:
 
 @dataclass(frozen=True, slots=True)
 class McpCanonicalToolDescriptor:
+    """``McpCanonicalToolDescriptor`` groups related behaviour; callers should read members for contracts and threading assumptions.
+    """
     name: str
     authority_source: str
     tool_class: McpToolClass
@@ -478,16 +526,44 @@ CANONICAL_MCP_TOOL_DESCRIPTORS: tuple[McpCanonicalToolDescriptor, ...] = (
 
 
 def canonical_mcp_tool_descriptors_by_name() -> dict[str, McpCanonicalToolDescriptor]:
+    """Describe what ``canonical_mcp_tool_descriptors_by_name`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, McpCanonicalToolDescriptor]:
+            Returns a value of type ``dict[str, McpCanonicalToolDescriptor]``; see the function body for structure, error paths, and sentinels.
+    """
     return {d.name: d for d in CANONICAL_MCP_TOOL_DESCRIPTORS}
 
 
 def canonical_tool_names_for_suite(suite: McpSuite) -> tuple[str, ...]:
-    """Tool names belonging to a single MVP MCP suite (for ``WOS_MCP_SUITE`` filtering)."""
+    """Tool names belonging to a single MVP MCP suite (for
+    ``WOS_MCP_SUITE`` filtering).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        suite: ``suite`` (McpSuite); meaning follows the type and call sites.
+    
+    Returns:
+        tuple[str, ...]:
+            Returns a value of type ``tuple[str, ...]``; see the function body for structure, error paths, and sentinels.
+    """
     return tuple(d.name for d in CANONICAL_MCP_TOOL_DESCRIPTORS if d.mcp_suite == suite)
 
 
 def resolve_active_mcp_suite_filter() -> McpSuite | None:
-    """If ``WOS_MCP_SUITE`` is set to a suite id, restrict exposed tools/resources/prompts; ``all`` = no filter."""
+    """If ``WOS_MCP_SUITE`` is set to a suite id, restrict exposed
+    tools/resources/prompts; ``all`` = no filter.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        McpSuite | None:
+            Returns a value of type ``McpSuite | None``; see the function body for structure, error paths, and sentinels.
+    """
     raw = (os.environ.get("WOS_MCP_SUITE") or "all").strip().lower()
     if raw in ("", "all", "*"):
         return None
@@ -498,7 +574,19 @@ def resolve_active_mcp_suite_filter() -> McpSuite | None:
 
 
 def _tool_class_for_capability_row(name: str, kind: str) -> McpToolClass:
-    """Derive tool class strictly from capability kind and name (not static mapping)."""
+    """Derive tool class strictly from capability kind and name (not static
+    mapping).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        name: ``name`` (str); meaning follows the type and call sites.
+        kind: ``kind`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        McpToolClass:
+            Returns a value of type ``McpToolClass``; see the function body for structure, error paths, and sentinels.
+    """
     if kind == CapabilityKind.RETRIEVAL.value:
         return McpToolClass.read_only
     if name == "wos.review_bundle.build":
@@ -507,7 +595,17 @@ def _tool_class_for_capability_row(name: str, kind: str) -> McpToolClass:
 
 
 def _writers_room_visibility_token(modes: list[str]) -> str:
-    """Derive writers room visibility from allowed modes (not static)."""
+    """Derive writers room visibility from allowed modes (not static).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        modes: ``modes`` (list[str]); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     wr_visible = "writers_room" in modes
     runtime_in = "runtime" in modes
     if wr_visible and not runtime_in:
@@ -520,7 +618,19 @@ def _writers_room_visibility_token(modes: list[str]) -> str:
 
 
 def _derive_reviewable_posture(tool_class: McpToolClass, name: str) -> str:
-    """Derive reviewable posture from tool class and function (derived, not static)."""
+    """Derive reviewable posture from tool class and function (derived, not
+    static).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        tool_class: ``tool_class`` (McpToolClass); meaning follows the type and call sites.
+        name: ``name`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if tool_class is McpToolClass.read_only:
         return "read_only_no_review_path"
     if "build" in name or "create" in name or "execute" in name:
@@ -529,7 +639,19 @@ def _derive_reviewable_posture(tool_class: McpToolClass, name: str) -> str:
 
 
 def _derive_governance_risk_token(name: str, kind: str) -> str:
-    """Derive narrative mutation risk from tool name and kind (derived, not static)."""
+    """Derive narrative mutation risk from tool name and kind (derived, not
+    static).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        name: ``name`` (str); meaning follows the type and call sites.
+        kind: ``kind`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if kind == CapabilityKind.RETRIEVAL.value:
         return "none_read_only"
     if "execute" in name or "commit" in name or "publish" in name:
@@ -542,7 +664,19 @@ def _derive_governance_risk_token(name: str, kind: str) -> str:
 
 
 def _derive_runtime_safe_vs_internal(name: str, tool_class: McpToolClass) -> str:
-    """Derive runtime safety from tool name and class (not static parallel field)."""
+    """Derive runtime safety from tool name and class (not static parallel
+    field).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        name: ``name`` (str); meaning follows the type and call sites.
+        tool_class: ``tool_class`` (McpToolClass); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     # Session tools (get, diag, logs, state) are runtime-safe observations
     if name.startswith("wos.session.") and tool_class is McpToolClass.read_only:
         return "runtime_safe"
@@ -562,7 +696,19 @@ def _derive_runtime_safe_vs_internal(name: str, tool_class: McpToolClass) -> str
 
 
 def _derive_canonical_vs_supporting(name: str, tool_class: McpToolClass) -> str:
-    """Derive canonical vs supporting from tool domain and class (derived from semantics)."""
+    """Derive canonical vs supporting from tool domain and class (derived
+    from semantics).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        name: ``name`` (str); meaning follows the type and call sites.
+        tool_class: ``tool_class`` (McpToolClass); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if "session" in name and tool_class is McpToolClass.read_only:
         return "session_observability_canonical"
     if name == "wos.session.execute_turn":
@@ -575,7 +721,18 @@ def _derive_canonical_vs_supporting(name: str, tool_class: McpToolClass) -> str:
 
 
 def _derive_permission_legacy(tool_class: McpToolClass, name: str) -> str:
-    """Derive legacy permission from tool class and semantics (not static)."""
+    """Derive legacy permission from tool class and semantics (not static).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        tool_class: ``tool_class`` (McpToolClass); meaning follows the type and call sites.
+        name: ``name`` (str); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if tool_class is McpToolClass.read_only:
         return "read"
     if tool_class is McpToolClass.review_bound:
@@ -584,6 +741,15 @@ def _derive_permission_legacy(tool_class: McpToolClass, name: str) -> str:
 
 
 def capability_records_for_mcp() -> list[dict[str, Any]]:
+    """Describe what ``capability_records_for_mcp`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        list[dict[str, Any]]:
+            Returns a value of type ``list[dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
+    """
     out: list[dict[str, Any]] = []
     for row in capability_catalog():
         name = row["name"]
@@ -618,6 +784,15 @@ def capability_records_for_mcp() -> list[dict[str, Any]]:
 
 
 def verify_catalog_names_alignment() -> dict[str, Any]:
+    """Describe what ``verify_catalog_names_alignment`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     names = tuple(sorted(row["name"] for row in capability_records_for_mcp()))
     return {
         "aligned": names == MCP_CATALOG_CAPABILITY_NAMES,
@@ -633,6 +808,21 @@ def classify_mcp_no_eligible_discipline(
     deferred_stub_count: int,
     profile: McpOperatingProfile,
 ) -> dict[str, Any]:
+    """Describe what ``classify_mcp_no_eligible_discipline`` does in one
+    line (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        catalog_alignment_ok: ``catalog_alignment_ok`` (bool); meaning follows the type and call sites.
+        implemented_tool_count: ``implemented_tool_count`` (int); meaning follows the type and call sites.
+        deferred_stub_count: ``deferred_stub_count`` (int); meaning follows the type and call sites.
+        profile: ``profile`` (McpOperatingProfile); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     if not catalog_alignment_ok:
         return {
             "applicable": True,
@@ -675,6 +865,20 @@ def _route_status_token(
     backend_reachable: bool | None,
     catalog_alignment_ok: bool,
 ) -> str:
+    """``_route_status_token`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        profile: ``profile`` (McpOperatingProfile); meaning follows the type and call sites.
+        backend_reachable: ``backend_reachable`` (bool |
+            None); meaning follows the type and call sites.
+        catalog_alignment_ok: ``catalog_alignment_ok`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if not catalog_alignment_ok:
         return "misconfigured_catalog_translation"
     if profile is McpOperatingProfile.test_isolated:
@@ -694,6 +898,21 @@ def _operational_state_token(
     backend_reachable: bool | None,
     catalog_alignment_ok: bool,
 ) -> str:
+    """Describe what ``_operational_state_token`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        profile: ``profile`` (McpOperatingProfile); meaning follows the type and call sites.
+        backend_reachable: ``backend_reachable`` (bool |
+            None); meaning follows the type and call sites.
+        catalog_alignment_ok: ``catalog_alignment_ok`` (bool); meaning follows the type and call sites.
+    
+    Returns:
+        str:
+            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
+    """
     if not catalog_alignment_ok:
         return "misconfigured"
     if profile is McpOperatingProfile.degraded:
@@ -711,6 +930,21 @@ def build_compact_mcp_operator_truth(
     catalog_alignment_ok: bool,
     registry_tool_names: list[str],
 ) -> dict[str, Any]:
+    """Describe what ``build_compact_mcp_operator_truth`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        backend_reachable: ``backend_reachable`` (bool |
+            None); meaning follows the type and call sites.
+        catalog_alignment_ok: ``catalog_alignment_ok`` (bool); meaning follows the type and call sites.
+        registry_tool_names: ``registry_tool_names`` (list[str]); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     profile = resolve_mcp_operating_profile()
     desc_by = canonical_mcp_tool_descriptors_by_name()
     implemented = sum(
@@ -774,6 +1008,17 @@ def build_compact_mcp_operator_truth(
 
 
 def governance_dict(view: McpToolGovernanceView) -> dict[str, str]:
+    """``governance_dict`` — see implementation for behaviour and contracts.
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        view: ``view`` (McpToolGovernanceView); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, str]:
+            Returns a value of type ``dict[str, str]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "published_vs_draft": view.published_vs_draft,
         "canonical_vs_supporting": view.canonical_vs_supporting,
@@ -784,6 +1029,18 @@ def governance_dict(view: McpToolGovernanceView) -> dict[str, str]:
 
 
 def descriptor_to_public_metadata(d: McpCanonicalToolDescriptor) -> dict[str, Any]:
+    """Describe what ``descriptor_to_public_metadata`` does in one line
+    (verb-led summary for this function).
+    
+    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+    
+    Args:
+        d: ``d`` (McpCanonicalToolDescriptor); meaning follows the type and call sites.
+    
+    Returns:
+        dict[str, Any]:
+            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """
     return {
         "authority_source": d.authority_source,
         "tool_class": d.tool_class.value,

@@ -1,4 +1,7 @@
-"""Canonical serializable contract for bounded semantic move interpretation (GoC planner)."""
+"""
+Canonical serializable contract for bounded semantic move interpretation
+(GoC planner).
+"""
 
 from __future__ import annotations
 
@@ -61,7 +64,9 @@ class InterpretationTraceItem(BaseModel):
 
 
 class SemanticMoveRecord(BaseModel):
-    """Planner-facing semantic move — deterministic for fixed inputs on the GoC path."""
+    """Planner-facing semantic move — deterministic for fixed inputs on the GoC
+    path.
+    """
 
     model_config = {"extra": "forbid"}
 
@@ -85,4 +90,12 @@ class SemanticMoveRecord(BaseModel):
     )
 
     def to_runtime_dict(self) -> dict:
+        """``to_runtime_dict`` — see implementation for behaviour and contracts.
+        
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+        
+        Returns:
+            dict:
+                Returns a value of type ``dict``; see the function body for structure, error paths, and sentinels.
+        """
         return self.model_dump(mode="json")
