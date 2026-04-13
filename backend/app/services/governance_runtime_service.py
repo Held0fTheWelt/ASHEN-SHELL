@@ -1190,11 +1190,18 @@ def evaluate_runtime_readiness() -> dict:
         readiness_headline = "Review readiness signals before enabling ai_only."
         readiness_severity = "degraded"
 
+    readiness_legend: list[str] = [
+        "mock_only_required=true means at least one governed AI precondition is still missing; keep generation_execution_mode on mock_only until blockers clear.",
+        "ai_only_valid=true means an eligible non-mock provider, a runtime-eligible model on it, and at least one enabled route with a working AI model chain are all satisfied.",
+        "Each blocker lists entity_type/entity_id when a specific provider or route is at fault; global rows (no entity_id) describe missing prerequisites.",
+    ]
+
     return {
         "mock_only_required": mock_only_required,
         "ai_only_valid": ai_only_valid,
         "readiness_headline": readiness_headline,
         "readiness_severity": readiness_severity,
+        "readiness_legend": readiness_legend,
         "enabled_non_mock_provider_present": enabled_non_mock_provider,
         "enabled_non_mock_model_present": enabled_non_mock_model,
         "enabled_ai_route_present": enabled_ai_route,

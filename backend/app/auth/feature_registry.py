@@ -56,32 +56,23 @@ FEATURE_IDS = [
     FEATURE_DASHBOARD_USER_SETTINGS,
 ]
 
-# Required role names for each feature (user must have one of these). Admin-only by default.
-FEATURE_REQUIRED_ROLES = {
-    FEATURE_MANAGE_NEWS: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_USERS: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_ROLES: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_WIKI: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_SLOGANS: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_AREAS: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_FEATURE_AREAS: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_DATA_EXPORT: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_DATA_IMPORT: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_FORUM: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_GAME_CONTENT: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_GAME_OPERATIONS: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_SYSTEM_DIAGNOSIS: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_PLAY_SERVICE_CONTROL: (User.ROLE_ADMIN,),
-    FEATURE_MANAGE_WORLD_ENGINE_OBSERVE: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_WORLD_ENGINE_OPERATE: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_WORLD_ENGINE_AUTHOR: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_MANAGE_MCP_OPERATIONS: (User.ROLE_MODERATOR, User.ROLE_ADMIN),
-    FEATURE_DASHBOARD_METRICS: (User.ROLE_ADMIN,),
-    FEATURE_DASHBOARD_LOGS: (User.ROLE_ADMIN,),
-    FEATURE_DASHBOARD_SETTINGS: (User.ROLE_ADMIN,),
-    FEATURE_DASHBOARD_USER_SETTINGS: (),  # any logged-in user
-}
+# Legacy tuple view derived from ``app.auth.feature_access_resolver.FEATURE_ACCESS_RULES`` (import lazily).
+def feature_required_roles_legacy(feature_id: str) -> tuple[str, ...]:
+    """Approximate previous FEATURE_REQUIRED_ROLES tuples for migration notes and tooling."""
+    from app.auth.feature_access_resolver import (
+        ACCESS_TIER_ADMIN,
+        ACCESS_TIER_MODERATOR,
+        ACCESS_TIER_AUTHENTICATED,
+        FEATURE_ACCESS_RULES,
+    )
+
+    meta = FEATURE_ACCESS_RULES.get(feature_id) or {}
+    tier = int(meta.get("min_tier", ACCESS_TIER_ADMIN))
+    if tier >= ACCESS_TIER_ADMIN:
+        return (User.ROLE_ADMIN,)
+    if tier >= ACCESS_TIER_MODERATOR:
+        return (User.ROLE_MODERATOR, User.ROLE_ADMIN)
+    return ()  # authenticated-only (e.g. dashboard user settings)
 
 
 def is_valid_feature_id(feature_id: str) -> bool:
@@ -143,30 +134,13 @@ def user_can_access_world_engine_capability(user: User | None, min_capability: s
     return False
 
 
-def user_can_access_feature(user: User, feature_id: str) -> bool:
+def user_can_access_feature(user: User | None, feature_id: str) -> bool:
     """
-    True if user may access the feature: role, not banned, and area check.
-    - Role: user must have one of FEATURE_REQUIRED_ROLES[feature_id] (empty = any).
-    - Area: if feature has no area assignments, allow.
-      If the feature is area-scoped: users with **no** area assignments are not restricted
-      (see AREA_ACCESS_CONTROL.md). Otherwise user must have 'all' or overlap with the feature's areas.
+    True if the user may access the feature (JWT-backed admin/manage surfaces).
+
+    Delegates to ``app.auth.feature_access_resolver`` so backend routes, ``/auth/me``,
+    and the same tier + area rules stay aligned. See ``resolve_feature_access`` for diagnostics.
     """
-    if not user:
-        return False
-    if getattr(user, "is_banned", False):
-        return False
-    if not is_valid_feature_id(feature_id):
-        return False
-    required = FEATURE_REQUIRED_ROLES.get(feature_id, (User.ROLE_ADMIN,))
-    if required and not user.has_any_role(required):
-        return False
-    feature_areas = get_feature_area_ids(feature_id)
-    if not feature_areas:
-        return True  # no area restriction = global
-    # No rows in user_areas → do not apply feature_areas filter (legacy / full access until areas are assigned).
-    if not list(user.areas or []):
-        return True
-    if _user_has_area_all(user):
-        return True
-    user_aids = _user_area_ids(user)
-    return bool(user_aids & set(feature_areas))
+    from app.auth.feature_access_resolver import user_can_access_feature_resolved
+
+    return user_can_access_feature_resolved(user, feature_id)

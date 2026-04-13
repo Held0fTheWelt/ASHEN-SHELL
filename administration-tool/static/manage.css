@@ -1105,6 +1105,135 @@ textarea:focus-visible {
     min-height: 10rem;
 }
 
+/* Operator surfaces: AI Runtime Governance + World-Engine Control Center */
+.manage-og-readiness-panel .manage-og-readiness-headline {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.manage-og-severity-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: rgba(148, 121, 239, 0.06);
+}
+
+.manage-severity-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.manage-severity-badge--ok {
+    border-color: rgba(46, 160, 67, 0.45);
+    color: #2ea043;
+    background: rgba(46, 160, 67, 0.12);
+}
+
+.manage-severity-badge--degraded {
+    border-color: rgba(210, 153, 34, 0.55);
+    color: #d29922;
+    background: rgba(210, 153, 34, 0.12);
+}
+
+.manage-severity-badge--blocked {
+    border-color: rgba(248, 81, 73, 0.55);
+    color: #f85149;
+    background: rgba(248, 81, 73, 0.1);
+}
+
+.manage-og-blocker-list,
+.wecc-blocker-list {
+    list-style: none;
+    margin-left: 0 !important;
+    padding-left: 0;
+}
+
+.manage-og-blocker-item,
+.wecc-blocker-item {
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.manage-og-blocker-item:last-child,
+.wecc-blocker-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.manage-og-blocker-kind,
+.wecc-blocker-kind {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 0.2rem;
+}
+
+.manage-og-blocker-msg,
+.wecc-blocker-msg {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.manage-og-blocker-next,
+.wecc-blocker-next {
+    margin-top: 0.35rem;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.manage-og-panel-hint {
+    margin-bottom: 0.65rem;
+    line-height: 1.45;
+}
+
+.manage-og-technical-details summary {
+    cursor: pointer;
+}
+
+.wecc-overview-badges {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.wecc-overview-badges--ok {
+    color: #2ea043;
+}
+
+.wecc-overview-badges--blocked {
+    color: #f85149;
+}
+
+.wecc-technical-audit summary.wecc-technical-audit-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.5rem 0;
+}
+
+.wecc-technical-audit summary::-webkit-details-marker {
+    display: none;
+}
+
+.wecc-headline {
+    font-weight: 600;
+}
+
 @media (max-width: 1200px) {
     .manage-grid.two-col,
     .manage-grid-2,

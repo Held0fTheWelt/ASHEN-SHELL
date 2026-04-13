@@ -2,11 +2,21 @@
 
 ## Overview
 
-Access to admin/dashboard and management features is controlled by **Role**, **RoleLevel**, and **RoleAreas**. A user may use a feature only if:
+Access to admin/dashboard and management features is controlled by a **central feature access resolver** (`app.auth.feature_access_resolver`), **RoleLevel** (for user-on-user admin actions), and **RoleAreas**. A user receives a feature in `allowed_features` from `/api/v1/auth/me` and passes `@require_feature` on admin APIs only if the resolver allows it.
 
-1. **Role** permits it (e.g. admin for user management).
-2. **RoleLevel** hierarchy permits it (e.g. admin may only edit users with lower level).
-3. **Area** access permits it: the user has the "all" area or at least one of the areas assigned to that feature.
+### Feature access decision path (canonical)
+
+1. **Explicit override** (reserved): `get_feature_access_override(user, feature_id)` may return `True`/`False` to force allow/deny; default is `None` (no override). Use this hook later for per-user or per-tenant policy without changing route code.
+2. **Minimum privilege tier**: each feature has `min_tier` in `FEATURE_ACCESS_RULES` — `authenticated` (any logged-in non-banned user), `moderator` (moderator or admin), or `admin` (admin only). The user's **privilege tier** is derived from their primary role name (admin > moderator > other authenticated). This replaces scattered per-feature role tuples while preserving the same effective gates as before Phase 1.5.
+3. **Area** access: if `feature_areas` has rows for that `feature_id`, the user must satisfy the same overlap / `all` / legacy “no user areas” rules as documented below.
+
+**User-on-user admin operations** (e.g. editing another user's `role_level`) still use **RoleLevel** checks in route handlers; that is separate from feature tier gating.
+
+### Coherence
+
+- Backend: `@require_feature` → `user_can_access_feature` → `feature_access_resolver.resolve_feature_access`.
+- `/api/v1/auth/me`: `allowed_features` lists every `FEATURE_IDS` entry for which `user_can_access_feature` is true.
+- Administration tool: nav and dashboard `data-feature` attributes use the same feature IDs; visibility follows `allowed_features` from `/auth/me` (no second truth source).
 
 ## Area model
 
@@ -29,7 +39,7 @@ Used in API and permission checks:
 - `manage.areas`, `manage.feature_areas`
 - `manage.system_diagnosis` (aggregated operator diagnosis API and `/manage/diagnosis` UI; moderator+ by default)
 - `manage.play_service_control` (Play-Service **desired** state, test/apply admin APIs, `/manage/play-service-control` UI; **admin-only** by default)
-- `manage.ai_runtime_governance` — operational bootstrap plus AI providers/models/routes, runtime modes, resolved config, costs/audit admin APIs, and `/manage/ai-runtime-governance` / `/manage/operational-governance*` UI (**admin-only** by default; matches `@require_feature` on those routes).
+- `manage.ai_runtime_governance` — operational bootstrap plus AI providers/models/routes, runtime modes, resolved config, costs/audit admin APIs, and `/manage/ai-runtime-governance` / `/manage/operational-governance*` UI (**admin-only** by default; matches `@require_feature` on those routes). Administration nav shows the **AI Runtime Governance** entry only; legacy `/manage/operational-governance*` URLs stay valid for bookmarks.
 - `manage.world_engine_observe`, `manage.world_engine_operate`, `manage.world_engine_author` — hierarchical World Engine console (`/manage/world-engine-console`) and **World-Engine Control Center** overview (`/manage/world-engine-control-center`); **author ⊃ operate ⊃ observe** for API checks (`user_can_access_world_engine_capability`). Moderator+ by default for each; assign via Feature access to split read vs terminate vs story turn/create.
 - `dashboard.metrics`, `dashboard.logs`, `dashboard.settings`, `dashboard.user_settings`
 

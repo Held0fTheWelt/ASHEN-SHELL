@@ -6,40 +6,50 @@
         <div>
             <p class="manage-eyebrow">Operations</p>
             <h1>AI Runtime Governance</h1>
-            <p class="manage-lead">Canonical <strong>admin-only</strong> surface for governed providers, models, task routes, runtime modes, and readiness. For play-service posture and connectivity, use <a href="{{ url_for('manage_world_engine_control_center') }}">World-Engine Control Center</a>.</p>
+            <p class="manage-lead">Canonical <strong>admin-only</strong> surface for governed providers, models, task routes, runtime modes, and readiness. Bookmark paths under <code>/manage/operational-governance/…</code> remain aliases of this page. For play-service posture and connectivity, start on <a href="{{ url_for('manage_world_engine_control_center') }}">World-Engine Control Center</a>, then use <a href="{{ url_for('manage_play_service_control') }}">Play-Service control</a> or <a href="{{ url_for('manage_diagnosis') }}">System diagnosis</a> when directed below.</p>
         </div>
         <div class="manage-actions-row">
-            <button type="button" class="btn" id="manage-og-refresh">Refresh</button>
+            <button type="button" class="btn" id="manage-og-refresh">Reload governance data</button>
         </div>
     </div>
 
     <p id="manage-og-banner" class="form-error" style="display:none;" role="status" aria-live="polite"></p>
     <p id="manage-og-success" class="manage-state manage-state--ok" style="display:none;" role="status" aria-live="polite"></p>
 
-    <section class="panel" style="margin-bottom:1rem;">
-        <header class="panel-header"><h2>Runtime readiness overview</h2></header>
-        <p id="manage-og-readiness-headline" class="manage-lead" style="margin-top:0;"></p>
-        <p class="muted" id="manage-og-readiness-severity" style="display:none;"></p>
-        <div class="manage-grid two-col">
+    <section class="panel manage-og-readiness-panel" style="margin-bottom:1rem;">
+        <header class="panel-header"><h2>Runtime readiness</h2></header>
+        <p class="muted" style="margin-top:0;">Start here: headline and severity describe whether AI-only paths are safe. Blockers explain what is missing or misconfigured; the numbered list is the suggested order of work.</p>
+        <p id="manage-og-readiness-headline" class="manage-lead manage-og-readiness-headline" style="margin-top:0.5rem;"></p>
+        <div id="manage-og-readiness-severity-row" class="manage-og-severity-row" style="display:none;" role="status">
+            <span id="manage-og-readiness-badge" class="manage-severity-badge" aria-hidden="true"></span>
+            <p id="manage-og-readiness-severity" class="muted manage-og-severity-text" style="margin:0;"></p>
+        </div>
+        <p id="manage-og-readiness-inventory" class="muted manage-og-inventory-line" style="margin-top:0.5rem;"></p>
+        <details class="manage-og-readiness-legend-wrap" style="margin-top:0.75rem;">
+            <summary class="muted">How to read readiness fields</summary>
+            <ul id="manage-og-readiness-legend" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+        </details>
+        <div class="manage-grid two-col" style="margin-top:1rem;">
             <div>
-                <h3 class="manage-eyebrow">Top blockers</h3>
-                <ul id="manage-og-readiness-blockers" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+                <h3 class="manage-eyebrow">What is blocking</h3>
+                <ul id="manage-og-readiness-blockers" class="muted manage-og-blocker-list" style="margin:0.35rem 0 0 1.25rem;"></ul>
             </div>
             <div>
-                <h3 class="manage-eyebrow">Recommended next steps</h3>
-                <ol id="manage-og-readiness-next" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ol>
+                <h3 class="manage-eyebrow">What to do next</h3>
+                <ol id="manage-og-readiness-next" class="muted manage-og-next-actions" style="margin:0.35rem 0 0 1.25rem;"></ol>
             </div>
         </div>
-        <details style="margin-top:0.75rem;">
-            <summary class="muted">Technical detail: raw readiness JSON</summary>
+        <details class="manage-og-technical-details" style="margin-top:0.85rem;">
+            <summary class="muted">Technical audit: full readiness JSON</summary>
             <pre id="manage-og-readiness-json" class="manage-psc-json muted"></pre>
         </details>
     </section>
 
     <div class="manage-grid two-col">
         <section class="panel">
-            <header class="panel-header"><h2>Provider governance</h2></header>
-            <label class="form-label">Edit provider
+            <header class="panel-header"><h2>Providers</h2></header>
+            <p id="manage-og-hint-providers" class="muted manage-og-panel-hint" style="margin-top:0;"></p>
+            <label class="form-label">Select provider to edit
                 <select id="manage-og-provider-select" class="form-input"></select>
             </label>
             <label class="form-label">Provider type
@@ -66,17 +76,18 @@
             <div class="manage-actions-row">
                 <button type="button" class="btn" id="manage-og-provider-create">Create provider</button>
                 <button type="button" class="btn btn-primary" id="manage-og-provider-update">Update provider</button>
-                <button type="button" class="btn" id="manage-og-provider-test">Test provider health</button>
+                <button type="button" class="btn" id="manage-og-provider-test">Test connection health</button>
             </div>
-            <details>
-                <summary class="muted">Raw provider inventory</summary>
+            <details class="manage-og-technical-details">
+                <summary class="muted">Technical audit: provider inventory JSON</summary>
                 <pre id="manage-og-providers-json" class="manage-psc-json muted"></pre>
             </details>
         </section>
 
         <section class="panel">
-            <header class="panel-header"><h2>Model governance</h2></header>
-            <label class="form-label">Edit model
+            <header class="panel-header"><h2>Models</h2></header>
+            <p id="manage-og-hint-models" class="muted manage-og-panel-hint" style="margin-top:0;"></p>
+            <label class="form-label">Select model to edit
                 <select id="manage-og-model-select" class="form-input"></select>
             </label>
             <label class="form-label">Provider
@@ -105,8 +116,8 @@
                 <button type="button" class="btn" id="manage-og-model-create">Create model</button>
                 <button type="button" class="btn btn-primary" id="manage-og-model-update">Update model</button>
             </div>
-            <details>
-                <summary class="muted">Raw model inventory</summary>
+            <details class="manage-og-technical-details">
+                <summary class="muted">Technical audit: model inventory JSON</summary>
                 <pre id="manage-og-models-json" class="manage-psc-json muted"></pre>
             </details>
         </section>
@@ -114,8 +125,9 @@
 
     <div class="manage-grid two-col" style="margin-top:1rem;">
         <section class="panel">
-            <header class="panel-header"><h2>Route governance</h2></header>
-            <label class="form-label">Edit route
+            <header class="panel-header"><h2>Task routes</h2></header>
+            <p id="manage-og-hint-routes" class="muted manage-og-panel-hint" style="margin-top:0;"></p>
+            <label class="form-label">Select route to edit
                 <select id="manage-og-route-select" class="form-input"></select>
             </label>
             <label class="form-label">Task kind
@@ -124,13 +136,13 @@
             <label class="form-label">Workflow scope
                 <input type="text" id="manage-og-route-workflow-scope" class="form-input" value="global" />
             </label>
-            <label class="form-label">Preferred model
+            <label class="form-label">Preferred model (primary AI path)
                 <select id="manage-og-route-preferred-model" class="form-input"></select>
             </label>
-            <label class="form-label">Fallback model
+            <label class="form-label">Fallback model (when preferred unavailable)
                 <select id="manage-og-route-fallback-model" class="form-input"></select>
             </label>
-            <label class="form-label">Mock model
+            <label class="form-label">Mock model (deterministic / offline path)
                 <select id="manage-og-route-mock-model" class="form-input"></select>
             </label>
             <label class="form-label"><input type="checkbox" id="manage-og-route-enabled" checked /> Enabled</label>
@@ -140,14 +152,15 @@
                 <button type="button" class="btn" id="manage-og-route-create">Create route</button>
                 <button type="button" class="btn btn-primary" id="manage-og-route-update">Update route</button>
             </div>
-            <details>
-                <summary class="muted">Raw route inventory</summary>
+            <details class="manage-og-technical-details">
+                <summary class="muted">Technical audit: route inventory JSON</summary>
                 <pre id="manage-og-routes-json" class="manage-psc-json muted"></pre>
             </details>
         </section>
 
         <section class="panel">
             <header class="panel-header"><h2>Runtime modes</h2></header>
+            <p class="muted" style="margin-top:0;">Execution posture for generation, retrieval, and validation. Save only after readiness above is acceptable for the mode you need.</p>
             <label class="form-label">Generation mode
                 <select id="manage-og-generation-mode" class="form-input">
                     <option value="mock_only">mock_only</option>
@@ -188,11 +201,11 @@
                 </select>
             </label>
             <div class="manage-actions-row">
-                <button type="button" class="btn btn-primary" id="manage-og-save-modes">Save modes</button>
-                <button type="button" class="btn" id="manage-og-bootstrap-reload">Reload resolved config</button>
+                <button type="button" class="btn btn-primary" id="manage-og-save-modes">Save runtime modes</button>
+                <button type="button" class="btn" id="manage-og-bootstrap-reload">Rebuild resolved config</button>
             </div>
-            <details>
-                <summary class="muted">Resolved runtime config (JSON)</summary>
+            <details class="manage-og-technical-details">
+                <summary class="muted">Technical audit: resolved runtime config JSON</summary>
                 <pre id="manage-og-runtime-config" class="manage-psc-json muted"></pre>
             </details>
         </section>

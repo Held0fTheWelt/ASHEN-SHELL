@@ -22,14 +22,14 @@ def test_manage_operational_governance_template(app, client):
     assert templates[-1][0] == "manage/operational_governance.html"
 
 
-def test_manage_base_includes_operational_governance_nav(client):
+def test_manage_base_includes_ai_runtime_governance_nav_only(client):
+    """Single canonical nav entry; legacy /manage/operational-governance URLs remain registered."""
     response = client.get("/manage")
     html = response.get_data(as_text=True)
-    assert "manage-nav-operational-governance" in html
-    assert "/manage/operational-governance" in html
     assert "manage-nav-ai-runtime-governance" in html
     assert "/manage/ai-runtime-governance" in html
     assert 'data-feature="manage.ai_runtime_governance"' in html
+    assert "manage-nav-operational-governance" not in html
 
 
 def test_manage_ai_runtime_governance_renders_readiness_overview(client):
@@ -37,4 +37,11 @@ def test_manage_ai_runtime_governance_renders_readiness_overview(client):
     html = response.get_data(as_text=True)
     assert "manage-og-readiness-headline" in html
     assert "manage-og-readiness-blockers" in html
-    assert "Runtime readiness overview" in html
+    assert "manage-og-readiness-legend" in html
+    assert "manage-og-readiness-inventory" in html
+    assert "manage-og-readiness-severity-row" in html
+    assert "manage-og-readiness-badge" in html
+    assert "manage-og-readiness-panel" in html
+    assert "manage-og-hint-providers" in html
+    assert "Technical audit: full readiness JSON" in html
+    assert "Runtime readiness" in html

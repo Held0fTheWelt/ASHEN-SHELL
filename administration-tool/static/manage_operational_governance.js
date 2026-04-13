@@ -54,7 +54,7 @@
     if (includeEmpty) {
       var emptyOption = document.createElement("option");
       emptyOption.value = "";
-      emptyOption.textContent = "—";
+      emptyOption.textContent = "Select…";
       select.appendChild(emptyOption);
     }
     (values || []).forEach(function (item) {
@@ -96,26 +96,75 @@
   }
 
   function providerOptionLabel(p) {
-    var on = p.is_enabled ? "on" : "off";
-    var elig = p.eligible_for_runtime_assignment ? "eligible" : "blocked";
-    return p.provider_id + " — " + p.provider_type + " — " + on + " — " + (p.health_status || "?") + " — " + elig;
+    var bits = [];
+    bits.push(p.is_enabled ? "ON" : "OFF");
+    bits.push((p.display_name && String(p.display_name).trim()) || p.provider_id);
+    bits.push("id:" + p.provider_id);
+    bits.push(String(p.provider_type || "?"));
+    bits.push("health:" + (p.health_status || "?"));
+    bits.push(p.eligible_for_runtime_assignment ? "eligible" : "not eligible");
+    return bits.join(" · ");
   }
 
   function modelOptionLabel(m) {
-    var on = m.is_enabled ? "on" : "off";
-    var ok = m.runtime_eligible ? "ready" : "blocked";
-    return m.model_id + " — " + m.provider_id + " — " + on + " — " + ok;
+    var bits = [];
+    bits.push(m.is_enabled ? "ON" : "OFF");
+    bits.push((m.display_name && String(m.display_name).trim()) || m.model_id);
+    bits.push("id:" + m.model_id);
+    bits.push("provider:" + (m.provider_id || "?"));
+    bits.push(m.runtime_eligible ? "runtime-eligible" : "blocked");
+    return bits.join(" · ");
   }
 
   function routeOptionLabel(r) {
-    var on = r.is_enabled ? "on" : "off";
-    var ai = r.ai_path_ready ? "ai-ok" : "ai-blocked";
-    return r.route_id + " — " + (r.task_kind || "?") + " — " + on + " — " + ai;
+    var bits = [];
+    bits.push(r.is_enabled ? "ON" : "OFF");
+    bits.push("route " + r.route_id);
+    bits.push("task " + (r.task_kind || "?"));
+    bits.push(r.ai_path_ready ? "AI path OK" : "AI path blocked");
+    bits.push(r.runtime_eligible ? "eligible for runtime" : "not eligible");
+    return bits.join(" · ");
+  }
+
+  function blockerKindLabel(code) {
+    var c = (code || "").toLowerCase();
+    if (c.indexOf("missing") >= 0 || c.indexOf("_missing") >= 0) return "Missing setup";
+    if (c.indexOf("health") >= 0 || c.indexOf("connect") >= 0 || c.indexOf("unavailable") >= 0) return "External / health";
+    if (c.lastIndexOf("route_", 0) === 0 || c.indexOf("enabled_ai") >= 0) return "Route configuration";
+    if (c.lastIndexOf("provider_", 0) === 0) return "Provider configuration";
+    return "Configuration";
+  }
+
+  function appendReadinessBlocker(ul, b) {
+    var li = document.createElement("li");
+    li.className = "manage-og-blocker-item";
+    var kind = document.createElement("div");
+    kind.className = "manage-og-blocker-kind";
+    kind.textContent = blockerKindLabel(b.code);
+    var msg = document.createElement("div");
+    msg.className = "manage-og-blocker-msg";
+    var body = (b.message || b.code || "").trim();
+    if (b.entity_type && b.entity_id) body = "(" + b.entity_type + " " + b.entity_id + ") " + body;
+    else if (b.entity_type && !b.entity_id) body = "(Global — " + b.entity_type + ") " + body;
+    msg.textContent = body;
+    li.appendChild(kind);
+    li.appendChild(msg);
+    if (b.suggested_action) {
+      var act = document.createElement("div");
+      act.className = "manage-og-blocker-next";
+      act.textContent = "Next step: " + String(b.suggested_action).replace(/\*\*/g, "");
+      li.appendChild(act);
+    }
+    ul.appendChild(li);
   }
 
   function renderReadinessPanel(data) {
     var head = document.getElementById("manage-og-readiness-headline");
     var sev = document.getElementById("manage-og-readiness-severity");
+    var sevRow = document.getElementById("manage-og-readiness-severity-row");
+    var badge = document.getElementById("manage-og-readiness-badge");
+    var inv = document.getElementById("manage-og-readiness-inventory");
+    var leg = document.getElementById("manage-og-readiness-legend");
     var ulB = document.getElementById("manage-og-readiness-blockers");
     var olN = document.getElementById("manage-og-readiness-next");
     if (head) {
@@ -123,39 +172,64 @@
         ? "AI-only generation is currently valid for governed routes."
         : "mock_only remains the safe default until the blockers below are resolved.");
     }
-    if (sev) {
+    if (sev && sevRow && badge) {
       var s = data.readiness_severity || "";
       if (s) {
-        sev.style.display = "";
-        var extra = data.mock_only_required ? " mock_only is expected until AI path preconditions pass." : "";
-        sev.textContent = "State: " + s + "." + extra;
+        sevRow.style.display = "";
+        badge.textContent = s === "ok" ? "OK" : s === "blocked" ? "Blocked" : "Degraded";
+        badge.className = "manage-severity-badge manage-severity-badge--" + s;
+        var parts = [];
+        parts.push("Severity is " + s + ".");
+        if (data.mock_only_required) parts.push("The stack still requires mock-only or hybrid fallback until every blocker is cleared.");
+        if (data.ai_only_valid) parts.push("Preconditions for AI-only generation are satisfied — change modes only after operational sign-off.");
+        sev.textContent = parts.join(" ");
       } else {
-        sev.style.display = "none";
+        sevRow.style.display = "none";
         sev.textContent = "";
+        badge.textContent = "";
+        badge.className = "manage-severity-badge";
       }
+    }
+    if (inv) {
+      var ps = data.provider_summary || {};
+      var ms = data.model_summary || {};
+      var rs = data.route_summary || {};
+      inv.textContent = "Inventory snapshot: " + (ps.total || 0) + " providers (" + (ps.eligible_non_mock || 0) + " non-mock eligible), "
+        + (ms.total || 0) + " models (" + (ms.runtime_eligible_non_mock || 0) + " non-mock runtime-eligible), "
+        + (rs.total || 0) + " routes (" + (rs.ai_ready || 0) + " with AI path ready, " + (rs.runtime_eligible || 0) + " runtime-eligible).";
+    }
+    if (leg) {
+      leg.innerHTML = "";
+      var legend = data.readiness_legend || [];
+      if (!legend.length) {
+        legend = [
+          "mock_only_required explains why the stack is not ready for ai_only.",
+          "ai_only_valid confirms provider, model, and route preconditions.",
+        ];
+      }
+      legend.forEach(function (line) {
+        var li = document.createElement("li");
+        li.textContent = line;
+        leg.appendChild(li);
+      });
     }
     if (ulB) {
       ulB.innerHTML = "";
       var blockers = data.blockers || [];
       var cap = 18;
       for (var i = 0; i < blockers.length && i < cap; i++) {
-        var b = blockers[i];
-        var li = document.createElement("li");
-        var line = (b.message || b.code || "").trim();
-        if (b.suggested_action) {
-          line += " Action: " + String(b.suggested_action).replace(/\*\*/g, "");
-        }
-        li.textContent = line;
-        ulB.appendChild(li);
+        appendReadinessBlocker(ulB, blockers[i]);
       }
       if (blockers.length > cap) {
         var more = document.createElement("li");
-        more.textContent = "… and " + (blockers.length - cap) + " more (expand raw JSON below).";
+        more.className = "manage-og-blocker-item";
+        more.textContent = "… and " + (blockers.length - cap) + " more — open technical audit JSON below for the full list.";
         ulB.appendChild(more);
       }
       if (!blockers.length) {
         var none = document.createElement("li");
-        none.textContent = "No blocking issues reported — verify inventory and health tests before switching modes.";
+        none.className = "manage-og-blocker-item";
+        none.textContent = "No blocking issues reported. Still run provider health checks before switching away from mock_only.";
         ulB.appendChild(none);
       }
     }
@@ -225,6 +299,30 @@
     });
   }
 
+  function renderPanelHints() {
+    var hp = document.getElementById("manage-og-hint-providers");
+    var hm = document.getElementById("manage-og-hint-models");
+    var hr = document.getElementById("manage-og-hint-routes");
+    var pc = (state.providers || []).length;
+    var mc = (state.models || []).length;
+    var rc = (state.routes || []).length;
+    if (hp) {
+      hp.textContent = pc === 0
+        ? "No providers yet. Create a provider, then add credentials for non-mock types before attaching models."
+        : pc + " provider(s) loaded. Choose one to inspect health, eligibility, and limitations.";
+    }
+    if (hm) {
+      hm.textContent = mc === 0
+        ? "No models yet. Models must reference a provider; create a provider first."
+        : mc + " model(s) loaded. Each model belongs to one provider — align roles and timeouts before wiring routes.";
+    }
+    if (hr) {
+      hr.textContent = rc === 0
+        ? "No routes yet. Routes bind task kinds to preferred/fallback/mock models."
+        : rc + " route(s) loaded. Preferred and fallback models should point at healthy, enabled models for AI paths.";
+    }
+  }
+
   function refreshAll(opts) {
     if (!(opts && opts.preserveBanner)) show(null, "");
     return Promise.all([
@@ -234,7 +332,9 @@
       loadModes(),
       loadResolved(),
       loadReadiness(),
-    ]);
+    ]).then(function () {
+      renderPanelHints();
+    });
   }
 
   function selectedProviderId() {
@@ -264,11 +364,11 @@
           var pb = [];
           pb.push(row.is_enabled ? "Enabled" : "Disabled");
           pb.push("Health: " + (row.health_status || "unknown"));
-          pb.push(row.eligible_for_runtime_assignment ? "Eligible for runtime assignment" : "Not eligible for assignment");
+          pb.push(row.eligible_for_runtime_assignment ? "Eligible for runtime assignment" : "Not eligible — fix limitations or credentials");
           if (row.limitations && row.limitations.length) {
             pb.push("Limitations: " + row.limitations.join(", "));
           }
-          if (row.stage_support) pb.push("Stage: " + row.stage_support);
+          if (row.stage_support) pb.push("Stage support: " + row.stage_support);
           pmeta.textContent = pb.join(" · ");
         }
       });
@@ -290,10 +390,10 @@
         if (mmeta) {
           var mb = [];
           mb.push(row.is_enabled ? "Enabled" : "Disabled");
-          mb.push(row.runtime_eligible ? "Runtime-eligible" : "Not runtime-eligible");
-          if (row.provider_runtime_eligible === false) mb.push("Provider not runtime-eligible");
+          mb.push(row.runtime_eligible ? "Runtime-eligible" : "Not runtime-eligible for governed paths");
+          if (row.provider_runtime_eligible === false) mb.push("Upstream provider is not runtime-eligible");
           if (row.readiness_blockers && row.readiness_blockers.length) {
-            mb.push("Blockers: " + row.readiness_blockers.join(", "));
+            mb.push("Model blockers: " + row.readiness_blockers.join(", "));
           }
           mmeta.textContent = mb.join(" · ");
         }
@@ -316,10 +416,10 @@
         if (rmeta) {
           var rb = [];
           rb.push(row.is_enabled ? "Enabled" : "Disabled");
-          rb.push(row.ai_path_ready ? "AI path ready" : "AI path blocked");
-          rb.push(row.runtime_eligible ? "Route runtime-eligible" : "Route not runtime-eligible");
+          rb.push(row.ai_path_ready ? "AI path resolves" : "AI path does not resolve — check models");
+          rb.push(row.runtime_eligible ? "Eligible for governed runtime" : "Not eligible — adjust models or mock fallback");
           if (row.readiness_blockers && row.readiness_blockers.length) {
-            rb.push("Blockers: " + row.readiness_blockers.join(", "));
+            rb.push("Route blockers: " + row.readiness_blockers.join(", "));
           }
           rmeta.textContent = rb.join(" · ");
         }
@@ -343,7 +443,7 @@
           body: JSON.stringify(body),
         }).then(function () {
           return refreshAll({ preserveBanner: true }).then(function () {
-            show("ok", "Runtime modes updated.");
+            show("ok", "Runtime modes saved. Re-check readiness before promoting generation away from mock_only.");
           });
         }).catch(function (err) {
           show("err", parseError(err));
@@ -359,7 +459,7 @@
           body: "{}",
         }).then(function () {
           return refreshAll({ preserveBanner: true }).then(function () {
-            show("ok", "Resolved config regenerated.");
+            show("ok", "Resolved configuration rebuilt from the database.");
           });
         }).catch(function (err) {
           show("err", parseError(err));
@@ -445,7 +545,7 @@
         }).then(function (res) {
           var data = res.data || {};
           return refreshAll({ preserveBanner: true }).then(function () {
-            show("ok", "Provider health: " + (data.health_status || "unknown"));
+            show("ok", "Provider test finished — health: " + (data.health_status || "unknown") + ".");
           });
         }).catch(function (err) {
           show("err", parseError(err));

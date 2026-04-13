@@ -4,7 +4,7 @@ Phase 1 establishes operator-usable administration surfaces for the minimum viab
 
 ## Access control
 
-- **AI Runtime Governance** (`/manage/ai-runtime-governance` and `/manage/operational-governance*`) requires the **`manage.ai_runtime_governance`** feature (admin-only by default). This matches the backend admin governance APIs, which are gated with the same feature identifier plus JWT.
+- **AI Runtime Governance** (`/manage/ai-runtime-governance` and `/manage/operational-governance*`) requires the **`manage.ai_runtime_governance`** feature (admin-only by default). This matches the backend admin governance APIs, which are gated with the same feature identifier plus JWT. Enforcement uses the central feature access resolver (`app.auth.feature_access_resolver`); see [`backend/docs/AREA_ACCESS_CONTROL.md`](../../backend/docs/AREA_ACCESS_CONTROL.md) for the decision path.
 - **World-Engine Control Center** reuses the hierarchical **`manage.world_engine_*`** capabilities (observe as minimum) because it shares the same play-service proxy surface as the console.
 
 ## Canonical behavior
@@ -32,6 +32,12 @@ Phase 1 establishes operator-usable administration surfaces for the minimum viab
 ## Integration guardrail
 
 Legacy env/default paths may remain only as documented bootstrap or emergency fallback seams and must never silently override resolved governance values during normal operation.
+
+## Phase 1.5 refinements
+
+- **Navigation:** the administration header exposes **AI Runtime Governance** as the single nav label for this surface (no duplicate “Operational Governance” row). Legacy URLs under `/manage/operational-governance/…` remain registered and render the same page.
+- **Runtime readiness:** `GET /api/v1/admin/ai/runtime-readiness` adds `readiness_legend` (plain-language decoding of `mock_only_required` and `ai_only_valid`) and keeps structured `provider_summary` / `model_summary` / `route_summary` for inventory-at-a-glance in the admin UI.
+- **World-Engine Control Center:** `GET /api/v1/admin/world-engine/control-center` adds `posture_at_a_glance` (desired vs observed lines without echoing secret material), `drill_down` (canonical manage paths and hints), and `operator_controls` entries annotated with `requires_path_parameter` / `ui_surface` where the backend action is not directly invokable from the control-center buttons.
 
 ## Operator UI
 

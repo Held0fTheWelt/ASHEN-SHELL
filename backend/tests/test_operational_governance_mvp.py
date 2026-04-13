@@ -96,6 +96,9 @@ def test_runtime_readiness_payload_includes_actionable_fields(client, admin_head
     data = response.get_json()["data"]
     assert data.get("readiness_headline")
     assert data.get("readiness_severity") in {"ok", "blocked", "degraded"}
+    assert isinstance(data.get("readiness_legend"), list)
+    assert len(data["readiness_legend"]) >= 2
+    assert isinstance(data.get("provider_summary"), dict)
     assert isinstance(data.get("blockers"), list)
     for row in data["blockers"]:
         assert row.get("suggested_action"), f"missing suggested_action on {row!r}"

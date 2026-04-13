@@ -6,66 +6,91 @@
         <div>
             <p class="manage-eyebrow">Operations</p>
             <h1>World-Engine Control Center</h1>
-            <p class="manage-lead">Canonical operator entrypoint for play-service posture, backend connectivity, active sessions/runs, and safe runtime controls. Use this page first; drill down only when you need per-run or per-session detail.</p>
+            <p class="manage-lead">Overview of play-service posture, backend connectivity, and active runs/sessions. Use the actions on the right to refresh this page or to run the same <strong>test</strong> / <strong>apply</strong> flows as on Play-Service control. Open deeper tools only when you need fine-grained control or cross-service health.</p>
             <p class="muted">
-                <a href="{{ url_for('manage_play_service_control') }}">Play-Service control</a> (desired URL / validate / apply) ·
-                <a href="{{ url_for('manage_diagnosis') }}">System diagnosis</a> ·
-                <a href="{{ url_for('manage_world_engine_console') }}">World Engine console</a> (runs / sessions detail) ·
+                <a href="{{ url_for('manage_play_service_control') }}">Play-Service control</a> — edit URLs/secrets, validate, apply ·
+                <a href="{{ url_for('manage_diagnosis') }}">System diagnosis</a> — aggregated health ·
+                <a href="{{ url_for('manage_world_engine_console') }}">World Engine console</a> — runs and sessions ·
+                <a href="{{ url_for('manage_ai_runtime_governance') }}">AI Runtime Governance</a> — providers/models/routes ·
                 <a href="{{ url_for('manage_game_operations') }}">Game operations</a>
             </p>
         </div>
         <div class="manage-actions-row">
-            <button type="button" class="btn" id="wecc-refresh">Refresh</button>
-            <button type="button" class="btn" id="wecc-test">Test desired config</button>
-            <button type="button" class="btn btn-primary" id="wecc-apply">Apply desired config</button>
+            <button type="button" class="btn" id="wecc-refresh">Reload overview</button>
+            <button type="button" class="btn" id="wecc-test">Test saved desired config</button>
+            <button type="button" class="btn btn-primary" id="wecc-apply">Apply saved desired config</button>
         </div>
     </div>
 
     <p id="wecc-banner" class="form-error" style="display:none;" role="status" aria-live="polite"></p>
     <p id="wecc-success" class="manage-state manage-state--ok" style="display:none;" role="status" aria-live="polite"></p>
 
-    <section class="panel" style="margin-bottom:1rem;">
+    <section class="panel wecc-summary-panel" style="margin-bottom:1rem;">
         <header class="panel-header"><h2>Operator summary</h2></header>
-        <p id="wecc-headline" class="manage-lead" style="margin-top:0;"></p>
+        <div id="wecc-overview-badges" class="wecc-overview-badges muted" style="margin-top:0;" role="status" aria-live="polite"></div>
+        <p id="wecc-headline" class="manage-lead wecc-headline" style="margin-top:0.75rem;"></p>
         <ul id="wecc-sub-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
         <p id="wecc-deep-dive" class="muted" style="margin-top:0.5rem;"></p>
-        <h3 class="manage-eyebrow">Backend-declared safe controls</h3>
-        <p class="muted" style="margin:0;">The buttons above cover refresh, test, and apply. Additional controls may require parameters (for example a run id) — use the World Engine console for those.</p>
+        <h3 class="manage-eyebrow">Declared API controls</h3>
+        <p class="muted" style="margin:0;">The three buttons in the header run safe, parameterless calls. Actions that need a run id stay on the World Engine console.</p>
         <ul id="wecc-operator-controls" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
     </section>
 
-    <div class="manage-grid two-col">
-        <section class="panel">
-            <header class="panel-header"><h2>Desired play-service posture</h2></header>
-            <pre id="wecc-desired" class="code-block"></pre>
-        </section>
-        <section class="panel">
-            <header class="panel-header"><h2>Observed play-service posture</h2></header>
-            <pre id="wecc-observed" class="code-block"></pre>
-        </section>
-    </div>
+    <section class="panel" style="margin-bottom:1rem;">
+        <header class="panel-header"><h2>Posture at a glance</h2></header>
+        <p class="muted" style="margin-top:0;">Human-readable lines derived from the same data as the technical section — no secret values, only presence and mode flags.</p>
+        <div class="manage-grid two-col">
+            <div>
+                <h3 class="manage-eyebrow">Desired (saved or env baseline)</h3>
+                <ul id="wecc-desired-glance" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+            </div>
+            <div>
+                <h3 class="manage-eyebrow">Observed (effective app config)</h3>
+                <ul id="wecc-observed-glance" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+            </div>
+        </div>
+        <h3 class="manage-eyebrow" style="margin-top:0.85rem;">Connectivity (summary)</h3>
+        <ul id="wecc-connectivity-glance" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+        <h3 class="manage-eyebrow" style="margin-top:0.85rem;">Where to go next</h3>
+        <ul id="wecc-drill-down" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+    </section>
 
     <div class="manage-grid two-col" style="margin-top: 1rem;">
         <section class="panel">
-            <header class="panel-header"><h2>Connectivity and readiness</h2></header>
-            <pre id="wecc-connectivity" class="code-block"></pre>
-        </section>
-        <section class="panel">
-            <header class="panel-header"><h2>Active runtime summary</h2></header>
-            <pre id="wecc-summary" class="code-block"></pre>
-        </section>
-    </div>
-
-    <div class="manage-grid two-col" style="margin-top: 1rem;">
-        <section class="panel">
-            <header class="panel-header"><h2>Top blockers</h2></header>
-            <pre id="wecc-blockers" class="code-block"></pre>
+            <header class="panel-header"><h2>Blockers</h2></header>
+            <p class="muted" style="margin-top:0;">Issues that prevent a healthy control plane until configuration or connectivity is fixed.</p>
+            <ul id="wecc-blockers" class="muted wecc-blocker-list" style="margin:0.35rem 0 0 1.25rem;"></ul>
         </section>
         <section class="panel">
             <header class="panel-header"><h2>Warnings</h2></header>
-            <pre id="wecc-warnings" class="code-block"></pre>
+            <p class="muted" style="margin-top:0;">Degraded signals worth investigating; may clear after play-service or engine recovery.</p>
+            <ul id="wecc-warnings" class="muted wecc-blocker-list" style="margin:0.35rem 0 0 1.25rem;"></ul>
         </section>
     </div>
+
+    <details id="wecc-technical-audit" class="panel wecc-technical-audit" style="margin-top: 1rem;">
+        <summary class="wecc-technical-audit-summary"><span class="manage-eyebrow" style="display:block;">Technical audit</span><span class="muted">Raw JSON payloads for support and diffing — use the sections above for daily operations.</span></summary>
+        <div class="manage-grid two-col" style="margin-top:1rem;">
+            <section class="panel" style="margin:0;">
+                <header class="panel-header"><h3>Desired play-service posture</h3></header>
+                <pre id="wecc-desired" class="code-block"></pre>
+            </section>
+            <section class="panel" style="margin:0;">
+                <header class="panel-header"><h3>Observed play-service posture</h3></header>
+                <pre id="wecc-observed" class="code-block"></pre>
+            </section>
+        </div>
+        <div class="manage-grid two-col" style="margin-top: 1rem;">
+            <section class="panel" style="margin:0;">
+                <header class="panel-header"><h3>Connectivity and readiness</h3></header>
+                <pre id="wecc-connectivity" class="code-block"></pre>
+            </section>
+            <section class="panel" style="margin:0;">
+                <header class="panel-header"><h3>Active runtime summary</h3></header>
+                <pre id="wecc-summary" class="code-block"></pre>
+            </section>
+        </div>
+    </details>
 </section>
 {% endblock %}
 {% block extra_scripts %}

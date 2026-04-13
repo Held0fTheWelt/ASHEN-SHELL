@@ -22,10 +22,18 @@ def test_manage_world_engine_control_center_contains_mount_points(client):
     html = response.get_data(as_text=True)
     assert "wecc-desired" in html
     assert "wecc-observed" in html
+    assert "wecc-desired-glance" in html
+    assert "wecc-observed-glance" in html
+    assert "wecc-connectivity-glance" in html
+    assert "wecc-drill-down" in html
     assert "wecc-connectivity" in html
     assert "wecc-summary" in html
     assert "wecc-headline" in html
     assert "wecc-operator-controls" in html
+    assert "wecc-overview-badges" in html
+    assert "wecc-technical-audit" in html
+    assert "Technical audit" in html
+    assert "wecc-blockers" in html
     assert "manage_world_engine_control_center.js" in html
 
 
