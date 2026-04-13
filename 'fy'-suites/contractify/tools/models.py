@@ -116,6 +116,10 @@ class ConflictFinding:
     confidence: float
     requires_human_review: bool
     notes: str = ""
+    # Triage metadata (optional; keep JSON stable with explicit defaults).
+    classification: str = "other"
+    normative_sources: list[str] = field(default_factory=list)
+    observed_or_projection_sources: list[str] = field(default_factory=list)
 
 
 @dataclass

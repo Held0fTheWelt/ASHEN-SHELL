@@ -10,6 +10,7 @@ from typing import Sequence
 from contractify.tools.audit_pipeline import run_audit
 from contractify.tools.discovery import discover_contracts_and_projections
 from contractify.tools.models import automation_tier, serialise
+from contractify.tools.relations import extend_relations
 from contractify.tools.repo_paths import repo_root
 
 
@@ -32,6 +33,7 @@ def cmd_discover(args: argparse.Namespace) -> int:
         root,
         max_contracts=args.max_contracts,
     )
+    relations = extend_relations(root, contracts, projections, relations)
     payload = {
         "contracts": [serialise(c) for c in contracts],
         "projections": [serialise(p) for p in projections],

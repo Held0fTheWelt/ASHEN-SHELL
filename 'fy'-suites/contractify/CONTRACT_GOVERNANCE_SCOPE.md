@@ -32,6 +32,19 @@ False authority is worse than incomplete discovery.
 | **low** | Localised audience doc drift with limited impact. |
 | **informational** | Suite handoffs, naming, optional derived artifacts missing. |
 
+## Conflict classifications (machine rows)
+
+Audit JSON **`conflicts[]`** rows use **`classification`** (stable string), **`normative_sources`**, and **`observed_or_projection_sources`** so curators can route work without re-parsing prose.
+
+| `classification` | Meaning | Typical response |
+|------------------|---------|------------------|
+| **`normative_anchor_ambiguity`** | The normative index links the same resolved markdown path more than once (duplicate “truth” anchors). | Deduplicate index rows or split distinct contracts with clearer IDs. |
+| **`normative_vocabulary_overlap`** | Two or more ADRs hit the same bounded keyword bucket (heuristic overlap, not semantic equivalence). | Human triage: merge, narrow scope, or accept with explicit disambiguation in backlog. |
+| **`projection_anchor_mismatch`** | A projection’s **`contract_version_ref`** (16-hex OpenAPI SHA prefix) disagrees with the current on-disk OpenAPI prefix. | Refresh Postmanify output or fix the projection marker — deterministic. |
+| **`supersession_gap`** | ADR header **`Status:`** is **`Deprecated`** / **`Superseded`** but navigation cues to the successor are missing or thin. | Add explicit supersession links or ADR front-matter. |
+
+Treat **`requires_human_review: true`** on any conflict as blocking silent automation, even when **`confidence`** is high.
+
 ## Projections (non-negotiable rule)
 
 Every projection must declare **which anchored contract** it represents. Preferred mechanisms:

@@ -1,11 +1,11 @@
 import json
 
+import contractify.tools.repo_paths as repo_paths
 from contractify.tools.hub_cli import main
-from contractify.tools.repo_paths import repo_root
 
 
 def test_discover_writes_json() -> None:
-    root = repo_root()
+    root = repo_paths.repo_root()
     out_path = root / "'fy'-suites" / "contractify" / "reports" / "_pytest_contractify_discover.json"
     out_arg = out_path.relative_to(root).as_posix()
     try:

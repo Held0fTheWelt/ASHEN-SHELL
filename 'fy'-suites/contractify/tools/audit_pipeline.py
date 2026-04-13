@@ -6,9 +6,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from contractify.tools.conflicts import detect_all_conflicts
 from contractify.tools.discovery import discover_contracts_and_projections
-from contractify.tools.drift_analysis import detect_conflicts, run_all_drifts
+from contractify.tools.drift_analysis import run_all_drifts
 from contractify.tools.models import automation_tier, serialise
+from contractify.tools.relations import extend_relations
 
 
 def build_actionable_units(drifts: list[Any], conflicts: list[Any]) -> list[str]:
@@ -17,8 +19,10 @@ def build_actionable_units(drifts: list[Any], conflicts: list[Any]) -> list[str]
     for d in drifts:
         units.append(f"[{d.severity}] {d.summary} → {d.recommended_follow_up}")
     for c in conflicts:
-        if c.requires_human_review:
-            units.append(f"[conflict] {c.summary} (review: {', '.join(c.sources[:5])})")
+        if c.requires_human_review or c.confidence >= 0.9:
+            tag = "conflict" if c.requires_human_review else "conflict-deterministic"
+            who = ", ".join(c.sources[:5])
+            units.append(f"[{tag}] {c.summary} (sources: {who})")
     return units
 
 
@@ -33,8 +37,9 @@ def run_audit(
         repo,
         max_contracts=max_contracts,
     )
+    relations = extend_relations(repo, contracts, projections, relations)
     drifts = run_all_drifts(repo)
-    conflicts = detect_conflicts(repo)
+    conflicts = detect_all_conflicts(repo, projections)
 
     # attach drift ids onto contracts (lightweight cross-index)
     drift_by_contract: dict[str, list[str]] = {}

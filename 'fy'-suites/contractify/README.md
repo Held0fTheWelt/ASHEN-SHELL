@@ -7,9 +7,10 @@
 - **Discovery** — finds likely contracts using explicit A–E heuristics (see below).
 - **Anchoring model** — distinguishes **normative** anchors vs **observed** surfaces vs **verification** artifacts.
 - **Projections** — audience/mode views (easy, AI-reading, specialist) that **must** trace back to anchors.
-- **Relations** — `derives_from`, `projects`, `documents`, … as machine edges (phase-1 subset).
-- **Drift analysis (`driftify`)** — submodule `contractify.tools.drift_analysis`: deterministic checks first, heuristics labelled honestly.
-- **Conflicts** — surfaces ambiguity; **no silent auto-winner** beyond documented low-risk rules.
+- **Relations** — discovery emits core edges; [`contractify.tools.relations`](tools/relations.py) **`extend_relations()`** adds bounded **`references`**, **`indexes`**, **`implements`**, and **`operationalizes`** links where evidence is explicit.
+- **Drift analysis (`driftify`)** — [`contractify.tools.drift_analysis`](tools/drift_analysis.py): deterministic checks first, heuristics labelled honestly.
+- **Conflicts** — [`contractify.tools.conflicts`](tools/conflicts.py) **`detect_all_conflicts()`**: duplicate normative index targets, ADR vocabulary buckets, projection↔OpenAPI fingerprint mismatches, and bounded lifecycle/supersession header gaps — each row carries **`classification`** plus normative vs projection source lists.
+- **Versioning (operational)** — [`contractify.tools.versioning`](tools/versioning.py) parses **`info.version`** from OpenAPI and explicit **`Status:`** lines in ADR headers so `ContractRecord.version` / lifecycle **`status`** reflect declared anchors (not inferred code behaviour).
 
 ## What Contractify is not
 
@@ -33,7 +34,7 @@
 | Tier | Meaning | Examples in this repo |
 |------|---------|------------------------|
 | **A** | Explicit markers or known canonical paths | `docs/dev/contracts/normative-contracts-index.md`, `docs/api/openapi.yaml`, `docs/governance/adr-*.md`, `spaghetti-setup.md` |
-| **B** | Structural workflow / CI definitions | `.github/workflows/*.yml` |
+| **B** | Structural workflow / CI / ops / shared schemas | `.github/workflows/*.yml`, `docs/operations/OPERATIONAL_GOVERNANCE_RUNTIME.md` (when present), up to **two** `schemas/*.json` files per pass |
 | **C** | Referencing / audience artefacts | `docs/easy/**`, `docs/start-here/**` modelled as projections |
 | **D** | Out of scope by default | Private helpers — not scanned |
 | **E** | Confidence | Stored per record; automation policy in [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md) |
@@ -50,6 +51,15 @@ Every discovered row includes `discovery_reason` so classification is **inspecta
 | **missing_propagation** | `spaghetti-setup.md` present without `spaghetti-setup.json` | Yes (presence) |
 
 Heuristic findings use **low** severity by default; deterministic OpenAPI hash mismatch uses **high**.
+
+## Conflict detection (implemented)
+
+| Signal | Deterministic? | `classification` (typical) |
+|--------|----------------|-----------------------------|
+| Same resolved markdown target linked twice from the normative index | Yes | `normative_anchor_ambiguity` |
+| Two+ ADRs hit the same bounded vocabulary bucket | No (keyword bucket) | `normative_vocabulary_overlap` |
+| Projection `contract_version_ref` (16-hex OpenAPI prefix) ≠ current file SHA prefix | Yes | `projection_anchor_mismatch` |
+| `Status: Deprecated/Superseded` in ADR head without supersession navigation cues | No | `supersession_gap` |
 
 ## Integration with sibling fy suites
 
@@ -88,7 +98,9 @@ python -m contractify.tools discover --max-contracts 25 --out "'fy'-suites/contr
 | [`contract-reset-task.md`](contract-reset-task.md) | Recovery |
 | [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md) | Ceilings + automation thresholds |
 | [`state/PREWORK_REPOSITORY_CONTRACT_REALITY.md`](state/PREWORK_REPOSITORY_CONTRACT_REALITY.md) | Human snapshot of pre-suite reality |
-| [`reports/`](reports/) | JSON exports |
+| [`state/COMPLETION_PASS_STATE.md`](state/COMPLETION_PASS_STATE.md) | Completion / hardening pass record |
+| [`examples/`](examples/) | Committed JSON **shape** samples + [`examples/README.md`](examples/README.md) |
+| [`reports/`](reports/) | JSON exports (local `*.json` gitignored) |
 
 ## Cursor skills
 
@@ -105,13 +117,19 @@ Do **not** hand-edit only `.cursor/skills/` copies for Contractify — sync over
 python -m pytest "'fy'-suites/contractify/tools/tests" -q
 ```
 
+**Hermetic default:** unit tests patch ``repo_root()`` to a **synthetic mini-repo** (see ``tools/tests/conftest.py``) so ``pytest`` passes in **ZIP extracts** and partial trees without the full monorepo ``pyproject.toml`` next to your checkout layout. Pure logic tests (``test_models.py``, sample JSON shape tests) skip the patch.
+
+**Optional CLI override:** set ``CONTRACTIFY_REPO_ROOT`` to an existing directory that contains a hub ``pyproject.toml`` marker for ``world-of-shadows-hub`` so ``python -m contractify.tools …`` resolves the repo without walking from the installed package path.
+
+**Committed samples:** ``examples/contract_discovery.sample.json`` and ``examples/contract_audit.sample.json`` illustrate JSON shape; ``tools/tests/test_example_artifacts.py`` guards compatibility when fields change.
+
 ## Extending the suite
 
 1. Add a **deterministic** check when a new machine manifest exists (copy the Postmanify pattern).
 2. Add **heuristics** with conservative confidence and clear `discovery_reason` text.
-3. Never mark `<0.6` confidence items as `source_of_truth: true`.
+3. Never mark `<0.60` confidence items as `source_of_truth: true`.
 4. Prefer new **relations** over duplicating contract rows.
 
 ## Versioning
 
-Contract rows carry a `version` string (`unversioned` until the repository adopts explicit semver per contract). Breaking vs non-breaking change tracking is **manual** in backlog rows for v0.1; future tooling can read front-matter.
+OpenAPI contracts use **`info.version`** when present; ADRs use explicit **`Status:`** lines for lifecycle (`active`, `deprecated`, `superseded`, …). Other anchors remain **`unversioned`** until the repository adds machine-readable markers. Breaking vs non-breaking change tracking stays **manual** in **CG-*** backlog rows; projection rows may carry **`contract_version_ref`** (e.g. manifest SHA prefix) for drift and conflict checks.

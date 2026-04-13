@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from pathlib import Path
 
 from contractify.tools.discovery import (
@@ -14,7 +13,7 @@ from contractify.tools.discovery import (
     POSTMAN_MANIFEST,
     projection_backref_ok,
 )
-from contractify.tools.models import ConflictFinding, DriftFinding, DriftSeverity
+from contractify.tools.models import DriftFinding, DriftSeverity
 
 DOCIFY_AUDIT_ROOTS_MARKER = "'fy'-suites/contractify"
 
@@ -188,33 +187,6 @@ def drift_despag_setup_derived_json(repo: Path) -> list[DriftFinding]:
         )
     )
     return out
-
-
-def detect_conflicts(repo: Path) -> list[ConflictFinding]:
-    """Surface ambiguity without silent winners (lightweight v1)."""
-    conflicts: list[ConflictFinding] = []
-    # Example: multiple ADR files referencing "single source of truth" for same subsystem — heuristic only
-    adr_dir = repo / "docs" / "governance"
-    if not adr_dir.is_dir():
-        return conflicts
-    bodies: list[tuple[str, str]] = []
-    for adr in sorted(adr_dir.glob("adr-*.md")):
-        text = adr.read_text(encoding="utf-8", errors="replace")
-        if re.search(r"scene identity|session surface|runtime authority", text, re.IGNORECASE):
-            bodies.append((adr.name, text[:4000]))
-    if len(bodies) >= 2:
-        conflicts.append(
-            ConflictFinding(
-                id="CNF-ADR-OVERLAP-001",
-                conflict_type="potential_normative_overlap",
-                summary="Multiple ADRs touch overlapping runtime/session vocabulary; review for supersession links.",
-                sources=[n for n, _ in bodies],
-                confidence=0.4,
-                requires_human_review=True,
-                notes="Heuristic keyword overlap only — not semantic proof of contradiction.",
-            )
-        )
-    return conflicts
 
 
 def run_all_drifts(repo: Path) -> list[DriftFinding]:

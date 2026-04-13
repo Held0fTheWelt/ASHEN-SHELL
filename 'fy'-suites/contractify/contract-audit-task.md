@@ -24,11 +24,15 @@ This is the **analysis** counterpart to [`contract-solve-task.md`](contract-solv
    python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
    ```
 
-4. **Interpret** — treat `drift_findings` as **evidence**:
+4. **Interpret drift** — treat `drift_findings` as **evidence**:
    - `deterministic: true` → fix or acknowledge promptly when severity ≥ medium.
    - `deterministic: false` → human triage; do not auto-rewrite normative docs from heuristics.
-5. **Backlog** — translate `actionable_units` into **one row per coherent slice** in [`contract_governance_input.md`](contract_governance_input.md) (prefer concrete scopes, not counts).
-6. **Cursor skill sync** — if `superpowers/*/SKILL.md` changed:
+5. **Interpret conflicts** — read `conflicts[]` alongside drift (implemented in [`contractify.tools.conflicts`](tools/conflicts.py); versioning helpers in [`contractify.tools.versioning`](tools/versioning.py); bounded graph edges in [`contractify.tools.relations`](tools/relations.py)):
+   - Use **`classification`** (see [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md) **Conflict classifications**) to pick the remediation pattern.
+   - Prefer **`normative_sources`** vs **`observed_or_projection_sources`** when filing **CG-*** rows so ownership is obvious.
+   - High-confidence deterministic conflicts may also appear under `actionable_units` with kind **`conflict-deterministic`** — dedupe with `conflicts[]` when scheduling work.
+6. **Backlog** — translate `actionable_units` into **one row per coherent slice** in [`contract_governance_input.md`](contract_governance_input.md) (prefer concrete scopes, not counts).
+7. **Cursor skill sync** — if `superpowers/*/SKILL.md` changed:
 
    ```bash
    python "./'fy'-suites/contractify/tools/sync_contractify_skills.py"
@@ -41,10 +45,11 @@ This is the **analysis** counterpart to [`contract-solve-task.md`](contract-solv
 
 ## Completion (analysis slice)
 
-Done when JSON is reviewed, high-severity deterministic drifts are triaged, and the backlog lists the next **solve** slices with owners or ordering notes.
+Done when JSON is reviewed, high-severity deterministic drifts and material **`conflicts[]`** rows are triaged (or explicitly deferred with rationale), and the backlog lists the next **solve** slices with owners or ordering notes.
 
 ## References
 
 - Drift methods: [`README.md`](README.md) section **Drift detection (implemented methods)**.
+- Conflict table: [`README.md`](README.md) section **Conflict detection (implemented)** and scope doc **Conflict classifications** in [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md).
 - Solve track: [`contract-solve-task.md`](contract-solve-task.md)
 - Reset: [`contract-reset-task.md`](contract-reset-task.md)

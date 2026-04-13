@@ -22,6 +22,7 @@ from contractify.tools.models import (
     ProjectionRecord,
     RelationEdge,
 )
+from contractify.tools.versioning import adr_declared_status, read_openapi_version_from_file
 
 EXPLICIT_MARKER_PATTERNS = (
     re.compile(r"\bnormative\b", re.IGNORECASE),
@@ -49,6 +50,21 @@ def _read_head(path: Path, *, max_bytes: int = 48_000) -> str:
         return raw.decode("utf-8", errors="replace")
     except OSError:
         return ""
+
+
+def _adr_contract_status(raw: str) -> ContractStatus:
+    """Map explicit ADR ``Status:`` text to lifecycle enum (conservative default: active)."""
+    m: dict[str, ContractStatus] = {
+        "accepted": "active",
+        "active": "active",
+        "adopted": "active",
+        "proposed": "experimental",
+        "draft": "experimental",
+        "deprecated": "deprecated",
+        "superseded": "superseded",
+        "archived": "archived",
+    }
+    return m.get(raw, "active")
 
 
 def _marker_boost(text: str) -> float:
@@ -166,6 +182,7 @@ def discover_contracts_and_projections(
     if p_openapi.is_file():
         head = _read_head(p_openapi, max_bytes=8000)
         conf = 0.94 if "openapi" in head.lower() else 0.75
+        api_ver = read_openapi_version_from_file(p_openapi)
         add(
             _contract(
                 cid="CTR-API-OPENAPI-001",
@@ -174,7 +191,7 @@ def discover_contracts_and_projections(
                 contract_type="api_schema",
                 layer="api",
                 status="active",
-                version="unversioned",
+                version=api_ver,
                 authority_level="normative",
                 anchor_kind="machine_schema",
                 anchor_location=OPENAPI_DEFAULT,
@@ -197,6 +214,8 @@ def discover_contracts_and_projections(
                 continue
             rel = _safe_rel(adr, repo)
             head = _read_head(adr)
+            st_raw = adr_declared_status(head)
+            adr_status = _adr_contract_status(st_raw)
             conf = 0.9 + _marker_boost(head)
             slug = adr.stem.upper().replace("-", "_")
             add(
@@ -206,7 +225,7 @@ def discover_contracts_and_projections(
                     summary="Architecture decision record with governance force when accepted.",
                     contract_type="adr",
                     layer="governance",
-                    status="active",
+                    status=adr_status,
                     version="unversioned",
                     authority_level="normative",
                     anchor_kind="document",
@@ -215,8 +234,63 @@ def discover_contracts_and_projections(
                     confidence=min(0.98, conf),
                     discovery_reason="A: ADR filename pattern under docs/governance/",
                     tags=["adr", "architecture"],
+                    notes=f"adr_status_line={st_raw}" if st_raw != "unknown" else "",
                 )
             )
+
+    # B2 — Operations runbook (operator contract surface)
+    p_ops = repo / "docs" / "operations" / "OPERATIONAL_GOVERNANCE_RUNTIME.md"
+    if p_ops.is_file() and len(contracts) < max_contracts:
+        head = _read_head(p_ops)
+        conf = 0.78 + _marker_boost(head)
+        add(
+            _contract(
+                cid="CTR-OPS-RUNTIME-001",
+                title="Operational governance runtime (runbook)",
+                summary="Operator-facing procedures and guarantees for runtime governance controls.",
+                contract_type="operational_runbook",
+                layer="operations",
+                status="active",
+                version="unversioned",
+                authority_level="normative",
+                anchor_kind="document",
+                anchor_location=_safe_rel(p_ops, repo),
+                source_of_truth=True,
+                confidence=min(0.9, conf),
+                discovery_reason="B: explicit operations markdown under docs/operations/",
+                tags=["operations", "operator"],
+                owner_or_area="operations",
+            )
+        )
+
+    # B3 — Shared JSON schemas (cross-boundary data contracts, capped at two files)
+    schema_dir = repo / "schemas"
+    if schema_dir.is_dir():
+        schema_added = 0
+        for sf in sorted(schema_dir.glob("*.json")):
+            if len(contracts) >= max_contracts or schema_added >= 2:
+                break
+            rel = _safe_rel(sf, repo)
+            stem = hashlib.sha256(rel.encode()).hexdigest()[:10].upper()
+            add(
+                _contract(
+                    cid=f"CTR-SCHEMA-{stem}",
+                    title=f"JSON schema: {sf.name}",
+                    summary="Shared machine-readable schema constraining data exchanged across components.",
+                    contract_type="json_schema",
+                    layer="implementation",
+                    status="active",
+                    version="unversioned",
+                    authority_level="normative",
+                    anchor_kind="machine_schema",
+                    anchor_location=rel,
+                    source_of_truth=True,
+                    confidence=0.74,
+                    discovery_reason="B: top-level schemas/*.json with bounded scan (max 2 files per pass ceiling)",
+                    tags=["schema", "data-contract"],
+                )
+            )
+            schema_added += 1
 
     # A4 — Despaghettify setup (explicit machine + prose contract)
     p_setup = repo / DESPAG_SETUP
