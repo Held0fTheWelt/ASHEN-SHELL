@@ -48,6 +48,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Iterator, Sequence
 
+from fy_platform.core.artifact_envelope import build_envelope, write_envelope
+from fy_platform.core.manifest import load_manifest, roots_for_suite
+from fy_platform.core.project_resolver import resolve_project_root
+
+SUITE_VERSION = "0.1.0"
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -91,8 +97,8 @@ DEFAULT_EXCLUDE_GLOBS: tuple[str, ...] = (
 
 
 def _repo_root() -> Path:
-    """Return repository root (three levels above ``'fy'-suites/docify/tools/``)."""
-    return Path(__file__).resolve().parents[3]
+    """Return repository root using shared resolver with backward-compatible marker."""
+    return resolve_project_root(start=Path(__file__), marker_text=None)
 
 
 def _posix_relative(path: Path, root: Path) -> str:
@@ -418,7 +424,10 @@ def _parse_roots(repo_root: Path, raw: Sequence[str] | None) -> list[Path]:
             path = Path(item)
             resolved.append(path.resolve() if path.is_absolute() else (repo_root / path).resolve())
         return resolved
-    return [(repo_root / rel).resolve() for rel in DEFAULT_RELATIVE_ROOTS]
+    manifest, _warnings = load_manifest(repo_root)
+    manifest_roots = roots_for_suite(manifest=manifest, suite_name="docify")
+    selected = tuple(manifest_roots) if manifest_roots else DEFAULT_RELATIVE_ROOTS
+    return [(repo_root / rel).resolve() for rel in selected]
 
 
 def _maybe_run_ruff(roots: Sequence[Path]) -> tuple[int, str]:
@@ -525,6 +534,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Write JSON output to this file (implies --json).",
     )
     parser.add_argument(
+        "--envelope-out",
+        type=Path,
+        default=None,
+        help="Optional path to write shared versioned envelope JSON.",
+    )
+    parser.add_argument(
         "--max-files",
         type=int,
         default=None,
@@ -558,6 +573,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     repo_root = (args.repo_root or _repo_root()).resolve()
+    manifest, _manifest_warnings = load_manifest(repo_root)
     roots = _parse_roots(repo_root, args.roots)
     exclude_globs = tuple(dict.fromkeys([*DEFAULT_EXCLUDE_GLOBS, *args.exclude_globs]))
 
@@ -605,6 +621,42 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.out.write_text(text, encoding="utf-8")
         else:
             sys.stdout.write(text)
+        if args.envelope_out is not None:
+            payload = json.loads(text)
+            deprecations: list[dict[str, str]] = []
+            if manifest is None:
+                msg = "No fy-manifest.yaml detected; Docify is running in legacy fallback mode."
+                print(f"DEPRECATION: {msg}", file=sys.stderr)
+                deprecations.append(
+                    {
+                        "id": "DOCIFY-LEGACY-FALLBACK-001",
+                        "message": msg,
+                        "replacement": "Run fy-platform bootstrap and configure suites.docify.roots",
+                        "removal_target": "wave-2",
+                    }
+                )
+            env = build_envelope(
+                suite="docify",
+                suite_version=SUITE_VERSION,
+                payload=payload,
+                manifest_ref="fy-manifest.yaml",
+                deprecations=deprecations,
+                findings=payload.get("findings", []),
+                evidence=[{"kind": "parse_error", "source_path": pe, "deterministic": True} for pe in payload.get("parse_errors", [])],
+                stats=payload.get("summary", {}),
+            )
+            out_path = args.envelope_out
+            if not out_path.is_absolute():
+                out_path = repo_root / out_path
+            write_envelope(out_path, env)
+            if deprecations:
+                dep_path = out_path.with_suffix(out_path.suffix + ".deprecations.md")
+                lines = ["# Deprecations", ""]
+                for item in deprecations:
+                    lines.append(f"- `{item['id']}`: {item['message']}")
+                    lines.append(f"  - replacement: `{item['replacement']}`")
+                    lines.append(f"  - removal_target: `{item['removal_target']}`")
+                dep_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     else:
         print(f"Repo root: {repo_root}")
         print(f"Roots: {', '.join(_posix_relative(p, repo_root) for p in roots)}")

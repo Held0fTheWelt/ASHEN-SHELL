@@ -17,6 +17,7 @@ wos-despag = "despaghettify.tools.hub_cli:main"
 postmanify = "postmanify.tools.cli:main"
 docify = "docify.tools.hub_cli:main"
 contractify = "contractify.tools.hub_cli:main"
+fy-platform = "fy_platform.tools.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["'fy'-suites"]

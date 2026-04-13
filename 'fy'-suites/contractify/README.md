@@ -95,6 +95,11 @@ contractify audit --json --out "'fy'-suites/contractify/reports/contract_audit.j
 python -m contractify.tools discover --max-contracts 25 --out "'fy'-suites/contractify/reports/contract_discovery.json" --quiet
 ```
 
+Optional shared-platform output:
+
+- `--envelope-out path/to/contractify.envelope.json` writes a versioned envelope around discover/audit payloads.
+- If `fy-manifest.yaml` defines `suites.contractify.openapi`, contract discovery/drift/conflict checks use that anchor default.
+
 ## Layout
 
 | Path | Role |

@@ -12,6 +12,11 @@ python -m postmanify.tools generate --out-master postman/WorldOfShadows_Complete
 
 The **`--out-master`** path controls where the **single full-tree** collection is written; `postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json` is the recommended location for a repo-visible “complete OpenAPI” suite next to the hand-maintained **`WorldOfShadows_Complete`** file.
 
+Optional shared-platform outputs:
+
+- `--envelope-out path/to/postmanify.envelope.json` emits a versioned machine-readable envelope.
+- When `fy-manifest.yaml` defines `suites.postmanify.openapi`, `out_master`, or `suites_dir`, those values become defaults.
+
 ## Layout
 
 | Path | Role |

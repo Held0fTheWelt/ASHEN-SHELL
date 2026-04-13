@@ -10,6 +10,7 @@ Use this file as the **catalog**: scan the table, jump to a suite’s `README.md
 
 | Suite | What it does | Python package / CLI | Cursor skills (source → sync) |
 |-------|----------------|----------------------|--------------------------------|
+| [**`fy_platform/`](fy_platform/README.md)** | Shared portability primitives: project root resolution, manifest loading, versioned artifact envelope, bootstrap utilities. | `python -m fy_platform.tools` · `fy-platform` | _N/A (platform core, no router skills)_ |
 | [**`despaghettify/`](despaghettify/README.md)** | Structure / “spaghetti” checks, DS-style workflow Markdown, metrics, autonomous loop helpers. | `python -m despaghettify.tools` · `despag-check` / `wos-despag` | [`superpowers/`](despaghettify/superpowers/README.md) → `python "./'fy'-suites/despaghettify/tools/sync_despag_skills.py"` |
 | [**`postmanify/`](postmanify/README.md)** | Refresh Postman collections from OpenAPI; emit **master** + **per-tag sub-suites** under `postman/`. | `python -m postmanify.tools` · `postmanify` | [`postmanify-sync`](postmanify/superpowers/postmanify-sync/SKILL.md) → `python "./'fy'-suites/postmanify/tools/sync_postmanify_skills.py"` |
 | [**`docify/`](docify/README.md)** | Python docstring backlog audit (AST), optional Google-layout checks, PEP 8 `#` comment / Google docstring assists for a single file. | `python "./'fy'-suites/docify/tools/python_documentation_audit.py"` · `python "./'fy'-suites/docify/tools/python_docstring_synthesize.py"` | [`superpowers/`](docify/superpowers/README.md) → `python "./'fy'-suites/docify/tools/sync_docify_skills.py"` |
@@ -42,6 +43,7 @@ Use this file as the **catalog**: scan the table, jump to a suite’s `README.md
 2. Register the package in **[`pyproject.toml`](../pyproject.toml)** (editable install must discover it; avoid overlapping `include` filters that drop other suites).
 3. Add a row to the **Suite catalog** table above and, if applicable, a **Superpower** under `superpowers/` plus a `sync_<suite>_skills.py` script pattern.
 4. Point **`AGENTS.md`** and **`CONTRIBUTING.md`** at the new suite so agents and humans share one discovery path.
+5. If shared platform behavior is added, update **`fy_platform/compatibility_matrix.wave1_baseline.json`** and related tests.
 
 ---
 

@@ -22,7 +22,10 @@ if _ins not in sys.path:
 
 from despaghettify.tools.repo_paths import repo_root
 
-_REPO_ROOT = repo_root()
+try:
+    _REPO_ROOT = repo_root()
+except RuntimeError:
+    _REPO_ROOT = Path.cwd()
 BACKEND_ROOT = _REPO_ROOT / "backend"
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))

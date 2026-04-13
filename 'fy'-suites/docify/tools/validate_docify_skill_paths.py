@@ -18,8 +18,10 @@ import re
 import sys
 from pathlib import Path
 
+from fy_platform.core.project_resolver import resolve_project_root
+
 DOCIFY_ROOT = Path(__file__).resolve().parents[1]
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = resolve_project_root(start=Path(__file__), marker_text=None)
 SCAN_ROOT = DOCIFY_ROOT / "superpowers"
 
 LINK_RE = re.compile(r"\]\(([^)]+)\)")

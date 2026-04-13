@@ -12,9 +12,18 @@ from typing import Any, Literal
 
 from despaghettify.tools.repo_paths import despag_hub_dir, despag_hub_rel_posix, repo_root
 
-ROOT = repo_root()
-HUB = despag_hub_dir(ROOT)
-HUB_REL = despag_hub_rel_posix(ROOT)
+try:
+    ROOT = repo_root()
+except RuntimeError:
+    ROOT = Path.cwd()
+try:
+    HUB = despag_hub_dir(ROOT)
+except RuntimeError:
+    HUB = Path(__file__).resolve().parents[1]
+try:
+    HUB_REL = despag_hub_rel_posix(ROOT)
+except RuntimeError:
+    HUB_REL = HUB.name
 STATE_DIR = HUB / "state" / "artifacts" / "autonomous_loop"
 STATE_FILE = STATE_DIR / "autonomous_state.json"
 INPUT_LIST = HUB / "despaghettification_implementation_input.md"

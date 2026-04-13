@@ -17,6 +17,11 @@ Central place for the **despaghettification** and **structure / spaghetti-check 
 
 **Tools:** hub runners under **`'fy'-suites/despaghettify/tools/`** — `spaghetti_ast_scan.py` (resolves **repo root** from `__file__`; CWD optional), `ds005_runtime_import_check.py`, plus the hub CLI as **`python -m despaghettify.tools`** (`check` with optional **`--with-metrics`**, `open-ds`, `solve-preflight` with **`wave_sizing`**, `wave-plan-validate` with optional strict flags, **`autonomous-*`**, **`metrics-emit`**, **`trigger-eval`**, **`setup-audit`**, **`setup-sync`**). Same entry point as `python "./'fy'-suites/despaghettify/tools/hub_cli.py"`. Optional **`pip install -e .`** at repo root ([`pyproject.toml`](../pyproject.toml)) installs **`despag-check`** and **`wos-despag`**. Also: `sync_despag_skills.py`, `validate_despag_skill_paths.py`, **`wave_plan_emit.py`** (JSON ↔ Markdown wave plan) — see [`superpowers/references/CLI.md`](superpowers/references/CLI.md). **Deprecated shims** (emit `DeprecationWarning`): [`../tools/spaghetti_ast_scan.py`](../tools/spaghetti_ast_scan.py), [`../tools/ds005_runtime_import_check.py`](../tools/ds005_runtime_import_check.py).
 
+Portability notes (Wave 1):
+
+- Optional override: set `DESPAG_REPO_ROOT` for explicit repository resolution.
+- `check` skips DS-005 runtime import gate when no configured runtime directory exists (non-WoS/synthetic fixtures).
+
 **Governance / pre–post:** [`state/README.md`](state/README.md), [`state/EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md).
 
 **Language:** [Repository language](../docs/dev/contributing.md#repository-language) (canonical). **Hub scope only:** all Markdown under `despaghettify/`, Despaghettify-maintained sections of [`despaghettification_implementation_input.md`](despaghettification_implementation_input.md), and human-readable hub artefacts (e.g. pre/post `.md` / `.txt` under `state/artifacts/`) — English for scan tables, DS rows, Open hotspots, coordination notes, and session narratives.

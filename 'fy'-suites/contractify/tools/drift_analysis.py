@@ -9,6 +9,7 @@ import json
 import re
 from pathlib import Path
 
+from fy_platform.core.manifest import load_manifest, suite_config
 from contractify.tools.discovery import (
     OPENAPI_DEFAULT,
     POSTMAN_MANIFEST,
@@ -17,6 +18,13 @@ from contractify.tools.discovery import (
 from contractify.tools.models import ContractRecord, DriftFinding, DriftSeverity
 
 DOCIFY_AUDIT_ROOTS_MARKER = "'fy'-suites/contractify"
+
+
+def _openapi_default(repo: Path) -> str:
+    manifest, _warnings = load_manifest(repo)
+    cfg = suite_config(manifest, "contractify")
+    rel = str(cfg.get("openapi", "")).strip() if cfg else ""
+    return rel or OPENAPI_DEFAULT
 
 
 def _sha256_file(path: Path) -> str | None:
@@ -60,14 +68,15 @@ def drift_postman_openapi_manifest(repo: Path) -> list[DriftFinding]:
 
     declared = str(data.get("openapi_sha256", "")).lower().strip()
     rel = str(data.get("openapi_path", "")).replace("\\", "/")
-    openapi_path = _norm_manifest_path(repo, rel) if rel else repo / OPENAPI_DEFAULT
+    openapi_default = _openapi_default(repo)
+    openapi_path = _norm_manifest_path(repo, rel) if rel else repo / openapi_default
     if not openapi_path.is_file():
         out.append(
             DriftFinding(
                 id="DRF-OPENAPI-MISSING-001",
                 drift_class="api_runtime",
-                summary=f"Manifest references OpenAPI path that is missing on disk: {rel or OPENAPI_DEFAULT}",
-                evidence_sources=[POSTMAN_MANIFEST, rel or OPENAPI_DEFAULT],
+                summary=f"Manifest references OpenAPI path that is missing on disk: {rel or openapi_default}",
+                evidence_sources=[POSTMAN_MANIFEST, rel or openapi_default],
                 confidence=1.0,
                 severity="critical",
                 deterministic=True,

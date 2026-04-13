@@ -33,7 +33,10 @@ if _ins not in sys.path:
 
 from despaghettify.tools.repo_paths import repo_root
 
-ROOT = repo_root()
+try:
+    ROOT = repo_root()
+except RuntimeError:
+    ROOT = Path.cwd()
 
 JSON_FENCE = re.compile(r"```(?:json)?\s*([\s\S]*?)```", re.I)
 

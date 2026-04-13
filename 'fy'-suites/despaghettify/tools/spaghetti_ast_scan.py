@@ -10,6 +10,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from fy_platform.core.manifest import load_manifest, roots_for_suite
+
 _tools = Path(__file__).resolve().parent
 _hub = _tools.parent
 _grand = _hub.parent
@@ -19,7 +21,25 @@ if _ins not in sys.path:
 
 from despaghettify.tools.repo_paths import repo_root
 
-_REPO_ROOT = repo_root()
+try:
+    _REPO_ROOT = repo_root()
+except RuntimeError:
+    _REPO_ROOT = Path.cwd()
+
+
+def _resolve_roots() -> list[Path]:
+    manifest, _warnings = load_manifest(_REPO_ROOT)
+    configured = roots_for_suite(manifest=manifest, suite_name="despaghettify", key="scan_roots")
+    if configured:
+        return [(_REPO_ROOT / rel).resolve() for rel in configured]
+    return [
+        _REPO_ROOT / "backend" / "app",
+        _REPO_ROOT / "world-engine" / "app",
+        _REPO_ROOT / "ai_stack",
+        _REPO_ROOT / "story_runtime_core",
+        _REPO_ROOT / "tools" / "mcp_server",
+        _REPO_ROOT / "administration-tool",
+    ]
 
 _MAGIC_INT_SKIP = frozenset({0, 1, 2, -1})
 
@@ -32,14 +52,7 @@ def _repo_rel(p: Path) -> str:
 
 
 IGNORE = (".state_tmp", "/site/", "node_modules", ".venv", "venv", "__pycache__")
-ROOTS = [
-    _REPO_ROOT / "backend" / "app",
-    _REPO_ROOT / "world-engine" / "app",
-    _REPO_ROOT / "ai_stack",
-    _REPO_ROOT / "story_runtime_core",
-    _REPO_ROOT / "tools" / "mcp_server",
-    _REPO_ROOT / "administration-tool",
-]
+ROOTS = _resolve_roots()
 
 
 def walk(root: Path):

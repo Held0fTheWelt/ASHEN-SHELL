@@ -18,8 +18,10 @@ import shutil
 import sys
 from pathlib import Path
 
+from fy_platform.core.project_resolver import resolve_project_root
+
 CONTRACTIFY_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = resolve_project_root(start=Path(__file__), marker_text=None)
 SRC_ROOT = CONTRACTIFY_ROOT / "superpowers"
 DST_ROOT = REPO_ROOT / ".cursor" / "skills"
 

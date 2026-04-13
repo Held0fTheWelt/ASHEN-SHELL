@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 from urllib.parse import unquote
 
+from fy_platform.core.manifest import load_manifest, suite_config
 from contractify.tools.discovery import NORMATIVE_INDEX, OPENAPI_DEFAULT, POSTMAN_MANIFEST
 from contractify.tools.models import ConflictFinding, ContractRecord, ProjectionRecord
 from contractify.tools.versioning import adr_declared_status, openapi_sha256_prefix
@@ -24,6 +25,13 @@ _ADR_OVERLAP_TERMS = (
     ("session surface", ("session surface", "session_surface", "session")),
     ("runtime authority", ("runtime authority", "runtime_authority", "authority")),
 )
+
+
+def _openapi_default(repo: Path) -> str:
+    manifest, _warnings = load_manifest(repo)
+    cfg = suite_config(manifest, "contractify")
+    rel = str(cfg.get("openapi", "")).strip() if cfg else ""
+    return rel or OPENAPI_DEFAULT
 
 
 def _norm_index_link(repo: Path, index_dir: Path, raw_target: str) -> str:
@@ -119,7 +127,8 @@ def detect_projection_fingerprint_mismatch(
 ) -> list[ConflictFinding]:
     """Projection ``contract_version_ref`` is a 16-hex OpenAPI prefix that disagrees with disk (deterministic)."""
     repo = repo.resolve()
-    openapi = repo / OPENAPI_DEFAULT
+    openapi_default = _openapi_default(repo)
+    openapi = repo / openapi_default
     if not openapi.is_file():
         return []
     full_sha = hashlib.sha256(openapi.read_bytes()).hexdigest()
@@ -137,16 +146,16 @@ def detect_projection_fingerprint_mismatch(
                 conflict_type="projection_openapi_fingerprint_mismatch",
                 summary=f"Projection {pr.path} declares openapi fingerprint prefix {ref!r} but "
                 f"current OpenAPI SHA256 prefix is {prefix!r}.",
-                sources=[pr.path, OPENAPI_DEFAULT, POSTMAN_MANIFEST],
+                sources=[pr.path, openapi_default, POSTMAN_MANIFEST],
                 confidence=1.0,
                 requires_human_review=False,
                 notes="Treat as stale projection or wrong manifest until regenerated.",
                 classification="projection_anchor_mismatch",
-                normative_sources=[OPENAPI_DEFAULT],
+                normative_sources=[openapi_default],
                 observed_or_projection_sources=[pr.path],
                 kind="stale_projection_vs_openapi_anchor",
                 severity="high",
-                normative_candidates=[OPENAPI_DEFAULT],
+                normative_candidates=[openapi_default],
                 projection_candidates=[pr.path],
             )
         )

@@ -3,24 +3,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from fy_platform.core.project_resolver import resolve_project_root
+
 FY_SUITES_DIRNAME = "'fy'-suites"
 
 
 def repo_root(*, start: Path | None = None) -> Path:
-    """Return the World of Shadows repository root (directory containing hub ``pyproject.toml``)."""
-    p = (start or Path(__file__)).resolve()
-    for ancestor in p.parents:
-        toml = ancestor / "pyproject.toml"
-        if not toml.is_file():
-            continue
-        try:
-            if "world-of-shadows-hub" not in toml.read_text(encoding="utf-8", errors="replace"):
-                continue
-        except OSError:
-            continue
-        return ancestor
-    msg = f"Could not resolve repository root from {p}"
-    raise RuntimeError(msg)
+    """Return project root via shared resolver with manifest-friendly fallback."""
+    return resolve_project_root(start=start, marker_text=None)
 
 
 def docify_hub_dir(repo: Path | None = None) -> Path:

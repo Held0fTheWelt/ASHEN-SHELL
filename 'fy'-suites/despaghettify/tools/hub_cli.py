@@ -26,12 +26,14 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Sequence
 
+from fy_platform.core.manifest import load_manifest, suite_config
 from despaghettify.tools.repo_paths import despag_hub_dir, despag_hub_rel_posix, repo_root
 
-ROOT = repo_root()
-HUB = despag_hub_dir(ROOT)
-HUB_REL = despag_hub_rel_posix(ROOT)
+ROOT = Path.cwd()
+HUB = Path(__file__).resolve().parents[1]
+HUB_REL = HUB.name
 INPUT_LIST = HUB / "despaghettification_implementation_input.md"
 RUNTIME_DIR = ROOT / "backend" / "app" / "runtime"
 DESPAG_TOOLS_DIR = HUB / "tools"
@@ -55,6 +57,22 @@ _GATE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 
 def _ensure_repo_root() -> None:
+    global ROOT, HUB, HUB_REL, INPUT_LIST, RUNTIME_DIR, DESPAG_TOOLS_DIR
+    try:
+        ROOT = repo_root()
+        HUB = despag_hub_dir(ROOT)
+        HUB_REL = despag_hub_rel_posix(ROOT)
+    except RuntimeError:
+        # Keep import resilient for non-WoS layouts; checks below gate invalid contexts.
+        ROOT = Path.cwd()
+        HUB = Path(__file__).resolve().parents[1]
+        HUB_REL = HUB.name
+    INPUT_LIST = HUB / "despaghettification_implementation_input.md"
+    DESPAG_TOOLS_DIR = HUB / "tools"
+    manifest, _warnings = load_manifest(ROOT)
+    cfg = suite_config(manifest, "despaghettify")
+    runtime_rel = str(cfg.get("runtime_dir", "")).strip() if cfg else ""
+    RUNTIME_DIR = (ROOT / runtime_rel).resolve() if runtime_rel else (ROOT / "backend" / "app" / "runtime")
     if not HUB.is_dir():
         print(
             "Despaghettify hub directory not found (expected under 'fy'-suites/despaghettify/). "
@@ -517,20 +535,28 @@ def cmd_check(args: argparse.Namespace) -> int:
 
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     ast_stats = sas.collect_ast_stats()
-    ds005 = subprocess.run(
-        [sys.executable, str(DESPAG_TOOLS_DIR / "ds005_runtime_import_check.py")],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-    )
-    ds005_lines = [ln for ln in (ds005.stdout or "").splitlines() if ln.strip()]
+    runtime_import_gate_enabled = RUNTIME_DIR.is_dir()
+    ds005_lines: list[str] = []
+    ds005_exit = 0
+    ds005_stderr = ""
+    if runtime_import_gate_enabled:
+        ds005 = subprocess.run(
+            [sys.executable, str(DESPAG_TOOLS_DIR / "ds005_runtime_import_check.py")],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+        ds005_lines = [ln for ln in (ds005.stdout or "").splitlines() if ln.strip()]
+        ds005_exit = ds005.returncode
+        ds005_stderr = ds005.stderr or ""
     report: dict = {
         "kind": "despaghettify_check",
         "generated_at_utc": ts,
         "repo_root": ROOT.as_posix(),
         "ast": ast_stats,
         "ds005": {
-            "exit_code": ds005.returncode,
+            "enabled": runtime_import_gate_enabled,
+            "exit_code": ds005_exit,
             "import_ok_count": len([ln for ln in ds005_lines if ln.startswith("import_ok")]),
             "stdout_tail": ds005_lines[-5:] if ds005_lines else [],
         },
@@ -560,8 +586,8 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(str(out_path.relative_to(ROOT)))
     else:
         print(text)
-    if ds005.returncode != 0:
-        print(ds005.stderr or "", file=sys.stderr)
+    if ds005_exit != 0:
+        print(ds005_stderr, file=sys.stderr)
         return 1
     return 0
 
@@ -801,7 +827,7 @@ def cmd_trigger_eval(args: argparse.Namespace) -> int:
     return 0
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """
     Implement ``main`` for the surrounding module workflow.
 
@@ -967,7 +993,7 @@ def main() -> int:
     )
     p_sy.set_defaults(func=cmd_setup_sync)
 
-    args = parser.parse_args()
+    args = parser.parse_args(list(argv) if argv is not None else None)
     return int(args.func(args))
 
 
