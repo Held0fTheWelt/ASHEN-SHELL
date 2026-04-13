@@ -87,7 +87,9 @@ class TestUserNeedsVerification:
         )
 
         with patch("app.web.auth.current_app") as mock_app:
-            mock_app.config.get.return_value = True
+            mock_config = MagicMock()
+            mock_config.get.return_value = True
+            mock_app.config = mock_config
 
             result = _user_needs_verification(user)
 
@@ -98,7 +100,9 @@ class TestUserNeedsVerification:
         user = MagicMock(email="user@example.com", email_verified_at=None)
 
         with patch("app.web.auth.current_app") as mock_app:
-            mock_app.config.get.return_value = True
+            mock_config = MagicMock()
+            mock_config.get.return_value = True
+            mock_app.config = mock_config
 
             result = _user_needs_verification(user)
 
@@ -109,7 +113,9 @@ class TestUserNeedsVerification:
         user = MagicMock(email=None, email_verified_at=None)
 
         with patch("app.web.auth.current_app") as mock_app:
-            mock_app.config.get.return_value = True
+            mock_config = MagicMock()
+            mock_config.get.return_value = True
+            mock_app.config = mock_config
 
             result = _user_needs_verification(user)
 
@@ -118,7 +124,9 @@ class TestUserNeedsVerification:
     def test_verification_enabled_none_user(self):
         """Test when user is None."""
         with patch("app.web.auth.current_app") as mock_app:
-            mock_app.config.get.return_value = True
+            mock_config = MagicMock()
+            mock_config.get.return_value = True
+            mock_app.config = mock_config
 
             result = _user_needs_verification(None)
 
