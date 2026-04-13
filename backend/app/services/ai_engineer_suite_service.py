@@ -269,6 +269,13 @@ _RUNTIME_PRESETS = [
         },
     },
 ]
+_STATUS_SEMANTICS = {
+    "healthy": "Runtime behavior is within expected governed posture.",
+    "degraded": "Runtime is available but with reduced quality, fallback behavior, or elevated error signals.",
+    "blocked": "Runtime path cannot satisfy its primary purpose until blockers are resolved.",
+    "configured_disabled": "Behavior is intentionally disabled by governed configuration.",
+    "unknown": "Insufficient runtime signal was available for a trustworthy classification.",
+}
 
 
 def _repo_root() -> Path:
@@ -515,6 +522,14 @@ def _guardrail_warnings(effective: dict[str, Any]) -> list[dict[str, str]]:
     return warnings
 
 
+def _support_level_for_key(setting_key: str) -> str:
+    for section in _ADVANCED_SETTINGS_SPEC.values():
+        spec = section.get(setting_key)
+        if isinstance(spec, dict):
+            return str(spec.get("support_level") or "recommended")
+    return "recommended"
+
+
 def _apply_advanced_settings(cleaned: dict[str, Any], actor: str) -> None:
     runtime_patch = {
         key: cleaned[key]
@@ -556,20 +571,65 @@ def _effective_config_payload() -> dict[str, Any]:
     keys = sorted(_ADVANCED_SETTINGS_ALLOWED)
     value_sources: list[dict[str, Any]] = []
     drift: list[str] = []
+    comparison_rows: list[dict[str, Any]] = []
     for key in keys:
         source = "override" if key in overrides else "preset"
+        support_level = _support_level_for_key(key)
+        preset_value = base.get(key)
+        override_value = overrides.get(key) if key in overrides else None
+        derived_value = derived.get(key)
+        active_value = actual.get(key)
         value_sources.append(
             {
                 "key": key,
                 "source": source,
-                "preset_value": base.get(key),
-                "override_value": overrides.get(key) if key in overrides else None,
-                "derived_effective_value": derived.get(key),
-                "active_value": actual.get(key),
+                "support_level": support_level,
+                "preset_value": preset_value,
+                "override_value": override_value,
+                "derived_effective_value": derived_value,
+                "active_value": active_value,
             }
         )
-        if derived.get(key) != actual.get(key):
+        if source == "override" or derived_value != active_value:
+            comparison_rows.append(
+                {
+                    "key": key,
+                    "support_level": support_level,
+                    "source": source,
+                    "preset_value": preset_value,
+                    "override_value": override_value,
+                    "effective_value": derived_value,
+                    "active_value": active_value,
+                    "drift_detected": derived_value != active_value,
+                    "comparison_note": (
+                        "Active runtime differs from derived effective value."
+                        if derived_value != active_value
+                        else "Manual override changes preset intent."
+                    ),
+                }
+            )
+        if derived_value != active_value:
             drift.append(key)
+    boundedness_notes = []
+    for key in keys:
+        support = _support_level_for_key(key)
+        if support in {"debug", "safe"}:
+            boundedness_notes.append(
+                {
+                    "key": key,
+                    "support_level": support,
+                    "note": (
+                        "Use this setting for short-lived troubleshooting only."
+                        if support == "debug"
+                        else "This setting is bounded and should be changed intentionally."
+                    ),
+                }
+            )
+    source_summary = {
+        "preset_count": sum(1 for row in value_sources if row["source"] == "preset"),
+        "override_count": sum(1 for row in value_sources if row["source"] == "override"),
+        "drift_count": len(drift),
+    }
     return {
         "active_preset_id": preset_id,
         "active_preset_display_name": preset.get("display_name"),
@@ -582,9 +642,13 @@ def _effective_config_payload() -> dict[str, Any]:
         "derived_effective_values": derived,
         "active_values": actual,
         "value_sources": value_sources,
+        "source_summary": source_summary,
+        "comparison_rows": comparison_rows,
         "drift_keys": drift,
         "requires_refresh": False,
         "guardrail_warnings": _guardrail_warnings(derived),
+        "boundedness_notes": boundedness_notes,
+        "status_semantics": _STATUS_SEMANTICS,
     }
 
 
@@ -716,8 +780,49 @@ def get_rag_operations_status() -> dict[str, Any]:
     degraded_reasons.extend(list(corpus.rag_dense_load_reason_codes or ()))
     if corpus.rag_dense_rebuild_reason:
         degraded_reasons.append(corpus.rag_dense_rebuild_reason)
+    mode_runtime = runtime_modes.get("retrieval_execution_mode")
+    operational_state = "healthy"
+    if len(corpus.chunks) == 0:
+        operational_state = "blocked"
+    elif mode_runtime == "disabled":
+        operational_state = "configured_disabled"
+    elif degraded_reasons:
+        operational_state = "degraded"
+    guidance: list[dict[str, str]] = []
+    if operational_state == "blocked":
+        guidance.append(
+            {
+                "severity": "blocked",
+                "message": "RAG corpus has no chunks, so retrieval cannot produce useful context.",
+                "consequence": "AI responses lose retrieval-backed grounding.",
+                "next_step": "Run 'Refresh corpus' and re-run a retrieval probe.",
+                "fix_path": "/manage/rag-operations",
+            }
+        )
+    if mode_runtime == "disabled":
+        guidance.append(
+            {
+                "severity": "info",
+                "message": "Retrieval mode is intentionally disabled by configuration.",
+                "consequence": "Runtime relies on non-retrieval behavior.",
+                "next_step": "Enable retrieval mode in Runtime Settings or RAG settings when needed.",
+                "fix_path": "/manage/runtime-settings",
+            }
+        )
+    if not probe.available and mode_runtime != "disabled":
+        guidance.append(
+            {
+                "severity": "degraded",
+                "message": "Embedding backend is unavailable while retrieval mode expects dense support.",
+                "consequence": "Retrieval can fall back to sparse-only posture with lower recall quality.",
+                "next_step": "Inspect embedding diagnostics and rerun probe to validate fallback quality.",
+                "fix_path": "/manage/rag-operations",
+            }
+        )
     return {
         "generated_at": corpus.built_at,
+        "operational_state": operational_state,
+        "status_semantics": _STATUS_SEMANTICS,
         "corpus": {
             "chunk_count": len(corpus.chunks),
             "source_count": corpus.source_count,
@@ -762,6 +867,17 @@ def get_rag_operations_status() -> dict[str, Any]:
             "meta_exists": meta_path.exists(),
         },
         "degraded_reasons": sorted(set(r for r in degraded_reasons if r)),
+        "comparison": {
+            "retrieval_mode_runtime": mode_runtime,
+            "retrieval_mode_setting": retrieval_settings.get("retrieval_execution_mode"),
+            "dense_index_attached": bool(getattr(retriever, "_embedding_index", None) is not None),
+            "expected_healthy": {
+                "embedding_backend_available": True,
+                "dense_index_attached": True,
+                "retrieval_mode_not_disabled": True,
+            },
+        },
+        "guidance": guidance,
         "safe_actions": [
             {"action_id": "refresh_corpus", "label": "Refresh corpus from repository sources"},
             {"action_id": "rebuild_dense_index", "label": "Rebuild dense embedding index"},
@@ -965,9 +1081,58 @@ def get_orchestration_status(*, trace_id: str | None = None) -> dict[str, Any]:
                 diagnostics_errors.append({"session_id": session_id, "message": str(exc), "status_code": exc.status_code})
     except GameServiceError as exc:
         diagnostics_errors.append({"session_id": None, "message": str(exc), "status_code": exc.status_code})
+    langgraph_state = "healthy"
+    if not langgraph_dependency_available:
+        langgraph_state = "blocked"
+    elif graph_error_count > 0 or fallback_marker_count > 0 or diagnostics_errors:
+        langgraph_state = "degraded"
+    langchain_state = "healthy"
+    if not bridge_available:
+        langchain_state = "blocked"
+    elif parser_error_count > 0:
+        langchain_state = "degraded"
+    overall_state = "healthy"
+    if "blocked" in {langgraph_state, langchain_state}:
+        overall_state = "blocked"
+    elif "degraded" in {langgraph_state, langchain_state}:
+        overall_state = "degraded"
+    guidance: list[dict[str, str]] = []
+    if not langgraph_dependency_available:
+        guidance.append(
+            {
+                "severity": "blocked",
+                "message": "LangGraph dependency/runtime export is unavailable.",
+                "consequence": "Primary graph execution cannot run as expected.",
+                "next_step": "Review orchestration diagnostics and fallback posture before enabling strict runtime paths.",
+                "fix_path": "/manage/ai-orchestration",
+            }
+        )
+    if parser_error_count > 0:
+        guidance.append(
+            {
+                "severity": "degraded",
+                "message": "Recent parser/schema failures were observed.",
+                "consequence": "Structured orchestration output reliability is reduced.",
+                "next_step": "Keep corrective feedback enabled and inspect recent diagnostics errors.",
+                "fix_path": "/manage/ai-orchestration",
+            }
+        )
+    if str(world_engine_settings.get("runtime_diagnostics_verbosity", "operator")) == "debug":
+        guidance.append(
+            {
+                "severity": "info",
+                "message": "Diagnostics verbosity is set to debug (bounded debug-only posture).",
+                "consequence": "Operator output can become noisy during normal operation.",
+                "next_step": "Return to operator or detailed verbosity when troubleshooting is complete.",
+                "fix_path": "/manage/runtime-settings",
+            }
+        )
 
     return {
+        "overall_state": overall_state,
+        "status_semantics": _STATUS_SEMANTICS,
         "langgraph": {
+            "state": langgraph_state,
             "dependency_available": langgraph_dependency_available,
             "import_error": langgraph_import_error,
             "runtime_profile": runtime_modes.get("runtime_profile"),
@@ -986,6 +1151,7 @@ def get_orchestration_status(*, trace_id: str | None = None) -> dict[str, Any]:
             },
         },
         "langchain": {
+            "state": langchain_state,
             "bridge_available": bridge_available,
             "bridge_error": bridge_error,
             "runtime_adapter_bridge_available": bridge_available,
@@ -1000,6 +1166,22 @@ def get_orchestration_status(*, trace_id: str | None = None) -> dict[str, Any]:
             "allowed_runtime_diagnostics_verbosity": sorted(_VERBOSITY_ALLOWED),
             "max_retry_attempts_range": {"min": 0, "max": 5},
         },
+        "comparison": {
+            "expected_healthy": {
+                "langgraph_dependency_available": True,
+                "langchain_bridge_available": True,
+                "recent_graph_errors": 0,
+                "recent_parser_failures": 0,
+            },
+            "active": {
+                "runtime_profile": runtime_modes.get("runtime_profile"),
+                "runtime_diagnostics_verbosity": world_engine_settings.get("runtime_diagnostics_verbosity", "operator"),
+                "max_retry_attempts": world_engine_settings.get("max_retry_attempts", 1),
+                "recent_graph_errors": graph_error_count,
+                "recent_parser_failures": parser_error_count,
+            },
+        },
+        "guidance": guidance,
     }
 
 
@@ -1039,6 +1221,61 @@ def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
     if (world_engine.get("status") or {}).get("control_plane_ok") is False:
         blockers.append({"domain": "world_engine", "message": "World-engine control plane has blocking posture issues."})
     effective = _effective_config_payload()
+    governance_state = "healthy" if bool(governance.get("ai_only_valid")) else "blocked"
+    rag_state = str(rag.get("operational_state") or "unknown")
+    orchestration_state = str(orchestration.get("overall_state") or "unknown")
+    world_status = world_engine.get("status") or {}
+    world_state = "healthy"
+    if world_status.get("control_plane_ok") is False:
+        world_state = "blocked"
+    elif int(world_status.get("warning_count") or 0) > 0:
+        world_state = "degraded"
+    domain_status = [
+        {
+            "domain": "governance",
+            "state": governance_state,
+            "consequence": "Provider/model/route readiness determines AI-only runtime validity.",
+            "fix_path": "/manage/ai-runtime-governance",
+        },
+        {
+            "domain": "runtime_settings",
+            "state": "degraded" if int(effective.get("override_count") or 0) > 0 else "healthy",
+            "consequence": "Preset intent can diverge when manual overrides are active.",
+            "fix_path": "/manage/runtime-settings",
+        },
+        {
+            "domain": "rag",
+            "state": rag_state,
+            "consequence": "Retrieval degradation can lower grounding quality.",
+            "fix_path": "/manage/rag-operations",
+        },
+        {
+            "domain": "orchestration",
+            "state": orchestration_state,
+            "consequence": "Orchestration degradation affects runtime traceability and structured output reliability.",
+            "fix_path": "/manage/ai-orchestration",
+        },
+        {
+            "domain": "world_engine",
+            "state": world_state,
+            "consequence": "Control-plane mismatch can block run/session operations.",
+            "fix_path": "/manage/world-engine-control-center",
+        },
+    ]
+    degraded_or_warning: list[dict[str, str]] = []
+    for row in rag.get("guidance") or []:
+        if str(row.get("severity")) in {"degraded", "warn", "info"}:
+            degraded_or_warning.append({"domain": "rag", "message": str(row.get("message") or "")})
+    for row in orchestration.get("guidance") or []:
+        if str(row.get("severity")) in {"degraded", "warn", "info"}:
+            degraded_or_warning.append({"domain": "orchestration", "message": str(row.get("message") or "")})
+    if int(world_status.get("warning_count") or 0) > 0:
+        degraded_or_warning.append(
+            {
+                "domain": "world_engine",
+                "message": "World-engine snapshot includes warnings; inspect control-center warning rows.",
+            }
+        )
     return {
         "summary": {
             "provider_readiness": governance.get("provider_summary", {}),
@@ -1063,7 +1300,10 @@ def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
                 "guardrail_warning_count": len(effective.get("guardrail_warnings") or []),
             },
         },
+        "status_semantics": _STATUS_SEMANTICS,
+        "domain_status": domain_status,
         "blockers": blockers,
+        "degraded_or_warning": degraded_or_warning,
         "next_actions": [
             "Use AI Runtime Governance to clear provider/model/route blockers.",
             "Use RAG Operations query probe to validate retrieval quality and route.",

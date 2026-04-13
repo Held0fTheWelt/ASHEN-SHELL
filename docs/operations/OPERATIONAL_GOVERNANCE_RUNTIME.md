@@ -7,7 +7,7 @@ Phase 2 adds an AI-engineering operations layer that is read-heavy, write-light,
 
 - **AI Runtime Governance** (`/manage/ai-runtime-governance` and `/manage/operational-governance*`) requires the **`manage.ai_runtime_governance`** feature (admin-only by default). This matches the backend admin governance APIs, which are gated with the same feature identifier plus JWT. Enforcement uses the central feature access resolver (`app.auth.feature_access_resolver`); see [`backend/docs/AREA_ACCESS_CONTROL.md`](../../backend/docs/AREA_ACCESS_CONTROL.md) for the decision path.
 - **World-Engine Control Center** reuses the hierarchical **`manage.world_engine_*`** capabilities (observe as minimum) because it shares the same play-service proxy surface as the console.
-- **AI Engineer Suite pages** (`/manage/runtime-dashboard`, `/manage/rag-operations`, `/manage/ai-orchestration`) are gated with **`manage.ai_runtime_governance`** and intentionally route operators back to canonical Phase 1 surfaces for provider/model/route and world-engine control-plane changes.
+- **AI Engineer Suite pages** (`/manage/runtime-dashboard`, `/manage/runtime-settings`, `/manage/rag-operations`, `/manage/ai-orchestration`) are gated with **`manage.ai_runtime_governance`** and intentionally route operators back to canonical Phase 1 surfaces for provider/model/route and world-engine control-plane changes.
 
 ## Canonical behavior
 
@@ -106,6 +106,33 @@ Administration tool surfaces (Phase 2 AI Engineer Suite):
 - Validation rejects unsupported keys and invalid ranges/enums.
 - Guardrail warnings highlight debug verbosity or posture tensions.
 - This remains a controlled operational layer, not an unrestricted AI tuning lab.
+
+## Phase 3 closure and hardening notes
+
+Phase 3 does not add a new subsystem. It hardens coherence across existing canonical pages with:
+
+- structured comparison views (expected vs active, preset vs override vs effective)
+- normalized state semantics (`healthy`, `degraded`, `blocked`, `configured_disabled`, `unknown`)
+- concise consequence-oriented guidance with canonical fix paths
+- clearer cross-page ownership links to avoid dead-end diagnostics
+- explicit boundedness visibility for debug/local/controlled settings
+
+### Ownership model (canonical)
+
+- **Runtime Dashboard**: blocker-first hub, domain-state comparison, cross-surface next actions.
+- **AI Runtime Governance**: providers/models/routes and readiness truth.
+- **Runtime Settings**: presets, bounded overrides, effective-config source visibility.
+- **RAG Operations**: retrieval runtime posture, probe quality, bounded retrieval controls.
+- **AI Orchestration**: LangGraph/LangChain runtime posture and bounded orchestration controls.
+- **World-Engine Control Center**: desired vs observed play-service/world-engine control-plane posture.
+
+### How to read major states
+
+- `healthy`: signal is within expected governed posture.
+- `degraded`: path is available with reduced quality/fallback/error pressure.
+- `blocked`: primary path cannot be trusted until blockers are cleared.
+- `configured_disabled`: capability is intentionally disabled by governed config.
+- `unknown`: signal is insufficient or missing; treat as investigation-required.
 
 ## Phase 2 operator workflow
 

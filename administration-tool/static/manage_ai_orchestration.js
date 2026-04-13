@@ -78,7 +78,11 @@
     state.status = payload || {};
     var lg = state.status.langgraph || {};
     var lc = state.status.langchain || {};
+    var comparison = state.status.comparison || {};
+    var expected = comparison.expected_healthy || {};
+    var active = comparison.active || {};
     fillLines("manage-orch-langgraph-lines", [
+      "State: " + (lg.state || "unknown"),
       "Dependency available: " + (lg.dependency_available ? "yes" : "no"),
       "Runtime profile: " + (lg.runtime_profile || "?") + " | validation mode: " + (lg.validation_execution_mode || "?"),
       "Corrective feedback: " + (lg.enable_corrective_feedback ? "enabled" : "disabled"),
@@ -94,6 +98,7 @@
       "Diagnostics errors: " + ((execSummary.diagnostics_errors || []).length || 0)
     ], "No execution summary.");
     fillLines("manage-orch-langchain-lines", [
+      "State: " + (lc.state || "unknown"),
       "Bridge available: " + (lc.bridge_available ? "yes" : "no"),
       "Runtime adapter bridge: " + (lc.runtime_adapter_bridge_available ? "available" : "unavailable"),
       "Retriever bridge: " + (lc.retriever_bridge_available ? "available" : "unavailable"),
@@ -103,6 +108,22 @@
       "Writers-room parser health: " + ((lc.parser_schema_health || {}).writers_room_structured_output ? "ok" : "fail"),
       "Recent parser failure count: " + (lc.recent_parser_failure_count || 0)
     ], "No LangChain status.");
+    fillLines("manage-orch-comparison-lines", [
+      "Overall state: " + (state.status.overall_state || "unknown"),
+      "LangGraph dependency (expected/active): " + (expected.langgraph_dependency_available ? "available" : "n/a")
+        + " / " + (lg.dependency_available ? "available" : "unavailable"),
+      "LangChain bridge (expected/active): " + (expected.langchain_bridge_available ? "available" : "n/a")
+        + " / " + (lc.bridge_available ? "available" : "unavailable"),
+      "Graph errors recent (expected/active): " + (expected.recent_graph_errors == null ? "0" : expected.recent_graph_errors)
+        + " / " + (active.recent_graph_errors == null ? 0 : active.recent_graph_errors),
+      "Parser failures recent (expected/active): " + (expected.recent_parser_failures == null ? "0" : expected.recent_parser_failures)
+        + " / " + (active.recent_parser_failures == null ? 0 : active.recent_parser_failures)
+    ], "No orchestration comparison data.");
+    fillLines("manage-orch-guidance-lines", (state.status.guidance || []).map(function (row) {
+      return "[" + (row.severity || "info") + "] " + (row.message || "")
+        + " -> " + (row.next_step || "no next step")
+        + (row.fix_path ? " (" + row.fix_path + ")" : "");
+    }), "No guidance rows.");
     setJson("manage-orch-json", { status: state.status, settings: state.settings });
   }
 

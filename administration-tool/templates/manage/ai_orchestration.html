@@ -30,6 +30,13 @@
     </div>
 
     <section class="panel" style="margin-top:1rem;">
+        <header class="panel-header"><h2>Expected vs active orchestration posture</h2></header>
+        <ul id="manage-orch-comparison-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+        <h3 class="manage-eyebrow" style="margin-top:0.75rem;">Operator guidance</h3>
+        <ul id="manage-orch-guidance-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+    </section>
+
+    <section class="panel" style="margin-top:1rem;">
         <header class="panel-header"><h2>Bounded orchestration controls</h2></header>
         <label class="form-label">Runtime profile
             <select id="manage-orch-setting-runtime-profile" class="form-input">
@@ -60,6 +67,16 @@
         <summary class="muted">Technical audit: full orchestration payload</summary>
         <pre id="manage-orch-json" class="manage-psc-json muted"></pre>
     </details>
+
+    <section class="panel" style="margin-top:1rem;">
+        <header class="panel-header"><h2>Canonical related pages</h2></header>
+        <ul class="muted" style="margin:0.35rem 0 0 1.25rem;">
+            <li><a href="{{ url_for('manage_runtime_dashboard') }}">Runtime Dashboard</a> — blocker-first domain summary</li>
+            <li><a href="{{ url_for('manage_runtime_settings') }}">Runtime Settings</a> — preset/override settings affecting orchestration</li>
+            <li><a href="{{ url_for('manage_rag_operations') }}">RAG Operations</a> — retrieval quality and fallback posture</li>
+            <li><a href="{{ url_for('manage_ai_runtime_governance') }}">AI Runtime Governance</a> — route/provider dependencies</li>
+        </ul>
+    </section>
 </section>
 {% endblock %}
 {% block extra_scripts %}

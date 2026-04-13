@@ -151,9 +151,11 @@
 
   function renderEffective() {
     var payload = state.effective || {};
+    var sourceSummary = payload.source_summary || {};
     fillLines("manage-rs-effective-summary", [
       "Active preset: " + (payload.active_preset_id || "safe_local"),
       "Override count: " + (payload.override_count || 0),
+      "Source mix (preset/override): " + (sourceSummary.preset_count || 0) + " / " + (sourceSummary.override_count || 0),
       "Drift keys: " + ((payload.drift_keys || []).length || 0),
       "Requires refresh: " + (payload.requires_refresh ? "yes" : "no")
     ], "No effective config data.");
@@ -163,9 +165,26 @@
     }), "No guardrail warnings.");
 
     var sourceLines = (payload.value_sources || []).slice(0, 14).map(function (row) {
-      return row.key + ": source=" + row.source + " | effective=" + JSON.stringify(row.derived_effective_value);
+      return row.key + ": source=" + row.source
+        + " | support=" + (row.support_level || "recommended")
+        + " | effective=" + JSON.stringify(row.derived_effective_value);
     });
     fillLines("manage-rs-source-lines", sourceLines, "No source metadata.");
+
+    var comparisonLines = (payload.comparison_rows || []).map(function (row) {
+      return row.key + " [" + (row.source || "preset") + "]"
+        + " preset=" + JSON.stringify(row.preset_value)
+        + " override=" + JSON.stringify(row.override_value)
+        + " effective=" + JSON.stringify(row.effective_value)
+        + " active=" + JSON.stringify(row.active_value)
+        + (row.drift_detected ? " | drift=yes" : "");
+    });
+    fillLines("manage-rs-comparison-lines", comparisonLines, "No material differences from preset intent.");
+
+    var boundednessLines = (payload.boundedness_notes || []).map(function (row) {
+      return row.key + " [" + (row.support_level || "recommended") + "] " + (row.note || "");
+    });
+    fillLines("manage-rs-boundedness-lines", boundednessLines, "No additional boundedness notes.");
   }
 
   function renderChanges() {

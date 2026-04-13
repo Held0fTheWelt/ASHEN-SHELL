@@ -76,6 +76,14 @@
     fillList("manage-rd-summary-lines", lines, false);
   }
 
+  function renderDomainStatus(rows) {
+    fillList("manage-rd-domain-status", (rows || []).map(function (row) {
+      return "[" + (row.state || "unknown") + "] " + (row.domain || "domain")
+        + " -> " + (row.consequence || "")
+        + (row.fix_path ? " (fix: " + row.fix_path + ")" : "");
+    }), false);
+  }
+
   function renderLinks(links) {
     var node = document.getElementById("manage-rd-links");
     if (!node) return;
@@ -96,6 +104,8 @@
       renderSummary(payload.summary || {});
       fillList("manage-rd-blockers", payload.blockers || [], false);
       fillList("manage-rd-next-actions", payload.next_actions || [], true);
+      renderDomainStatus(payload.domain_status || []);
+      fillList("manage-rd-degraded", payload.degraded_or_warning || [], false);
       renderLinks(payload.links || []);
       setJson("manage-rd-json", payload);
     });

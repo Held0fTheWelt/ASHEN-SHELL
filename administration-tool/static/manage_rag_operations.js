@@ -80,7 +80,10 @@
     var retrieval = state.status.retrieval || {};
     var emb = state.status.embedding_backend || {};
     var dense = state.status.dense_index || {};
+    var comparison = state.status.comparison || {};
+    var expected = comparison.expected_healthy || {};
     fillLines("manage-rag-status-lines", [
+      "Operational state: " + (state.status.operational_state || "unknown"),
       "Corpus chunks: " + (corpus.chunk_count || 0) + " | sources: " + (corpus.source_count || 0),
       "Retrieval mode (runtime/setting): " + (retrieval.mode_runtime || "?") + " / " + (retrieval.mode_setting || "?"),
       "Retrieval profile: " + (retrieval.retrieval_profile || "runtime_turn_support"),
@@ -88,7 +91,18 @@
       "Dense index: " + (dense.present_on_retriever ? "attached" : "not attached") + " | validity: " + (dense.artifact_validity || "unknown"),
       "Corpus storage path: " + (corpus.storage_path || "n/a")
     ], "No RAG status data.");
+    fillLines("manage-rag-comparison-lines", [
+      "Runtime mode vs expected healthy mode-not-disabled: " + (comparison.retrieval_mode_runtime || "?") + " / " + (expected.retrieval_mode_not_disabled ? "yes" : "n/a"),
+      "Setting mode: " + (comparison.retrieval_mode_setting || "?"),
+      "Dense index attached (active/expected): " + (comparison.dense_index_attached ? "yes" : "no") + " / " + (expected.dense_index_attached ? "yes" : "n/a"),
+      "Embedding backend expected healthy: " + (expected.embedding_backend_available ? "available" : "n/a")
+    ], "No comparison data.");
     fillLines("manage-rag-degraded-lines", state.status.degraded_reasons || [], "No degraded reasons reported.");
+    fillLines("manage-rag-guidance-lines", (state.status.guidance || []).map(function (row) {
+      return "[" + (row.severity || "info") + "] " + (row.message || "")
+        + " -> " + (row.next_step || "no next step")
+        + (row.fix_path ? " (" + row.fix_path + ")" : "");
+    }), "No guidance rows.");
     setJson("manage-rag-json", { status: state.status, settings: state.settings });
   }
 

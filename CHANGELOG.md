@@ -51,6 +51,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Operational governance and admin tests expanded:** [`backend/tests/test_operational_governance_mvp.py`](backend/tests/test_operational_governance_mvp.py) and [`administration-tool/tests/test_manage_operational_governance.py`](administration-tool/tests/test_manage_operational_governance.py) include new Phase 1 surface checks.
 - **Runtime Dashboard now includes settings-layer posture:** the Phase 2 dashboard summary includes active preset, override count, and guardrail warning count so operators can correlate runtime blockers with controlled settings state.
 - **Operational docs now include Phase 2 and 2.5 flows:** [`docs/operations/OPERATIONAL_GOVERNANCE_RUNTIME.md`](docs/operations/OPERATIONAL_GOVERNANCE_RUNTIME.md) now documents the AI Engineer Suite pages and the controlled runtime settings workflow (presets, bounded advanced settings, effective config derivation, and safe reset posture).
+- **Phase 3 closure/hardening across the AI Engineer Suite:** [`backend/app/services/ai_engineer_suite_service.py`](backend/app/services/ai_engineer_suite_service.py) now provides normalized domain status semantics (`healthy`/`degraded`/`blocked`/`configured_disabled`/`unknown`), structured comparison payloads (preset vs override vs effective vs active), and consequence-oriented guidance rows with canonical fix paths for Runtime Dashboard, Runtime Settings, RAG Operations, and AI Orchestration.
+- **Phase 3 operator UX polish without ownership drift:** manage pages and scripts for Runtime Dashboard, Runtime Settings, RAG Operations, and AI Orchestration now expose comparison sections, degraded/warning guidance, boundedness notes, and canonical cross-links so operators can move directly from diagnosis to the correct fix surface without introducing a second control system.
 
 ### Fixed
 
@@ -65,6 +67,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `python -m pytest administration-tool/tests/test_manage_ai_engineer_suite.py -q` (from repo root) — passed.
 - `python -m pytest backend/tests/test_operational_governance_mvp.py backend/tests/test_world_engine_control_center.py -q` (from repo root) — passed.
 - `python -m pytest administration-tool/tests/test_manage_operational_governance.py administration-tool/tests/test_manage_world_engine_control_center.py -q` (from repo root) — passed.
+- `$env:PYTHONPATH="backend"; python -m pytest backend/tests/test_ai_engineer_suite_routes.py backend/tests/test_ai_engineer_suite_service_phase3.py` (from repo root, PowerShell) — passed.
+- `python -m pytest administration-tool/tests/test_manage_ai_engineer_suite.py` (from repo root) — passed.
 
 ---
 

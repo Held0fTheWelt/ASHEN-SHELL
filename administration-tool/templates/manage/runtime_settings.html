@@ -98,12 +98,27 @@
             <ul id="manage-rs-guardrail-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
             <h3 class="manage-eyebrow" style="margin-top:0.75rem;">Overrides and value sources</h3>
             <ul id="manage-rs-source-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+            <h3 class="manage-eyebrow" style="margin-top:0.75rem;">Material differences (preset/override/effective)</h3>
+            <ul id="manage-rs-comparison-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+            <h3 class="manage-eyebrow" style="margin-top:0.75rem;">Boundedness and support notes</h3>
+            <ul id="manage-rs-boundedness-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
         </section>
     </div>
 
     <section class="panel" style="margin-top:1rem;">
         <header class="panel-header"><h2>Recent settings changes</h2></header>
         <ul id="manage-rs-change-lines" class="muted" style="margin:0.35rem 0 0 1.25rem;"></ul>
+    </section>
+
+    <section class="panel" style="margin-top:1rem;">
+        <header class="panel-header"><h2>Canonical related pages</h2></header>
+        <ul class="muted" style="margin:0.35rem 0 0 1.25rem;">
+            <li><a href="{{ url_for('manage_runtime_dashboard') }}">Runtime Dashboard</a> — blocker and domain summary hub</li>
+            <li><a href="{{ url_for('manage_ai_runtime_governance') }}">AI Runtime Governance</a> — providers/models/routes and readiness</li>
+            <li><a href="{{ url_for('manage_rag_operations') }}">RAG Operations</a> — retrieval diagnostics and probe</li>
+            <li><a href="{{ url_for('manage_ai_orchestration') }}">AI Orchestration</a> — LangGraph/LangChain posture</li>
+            <li><a href="{{ url_for('manage_world_engine_control_center') }}">World-Engine Control Center</a> — control-plane posture</li>
+        </ul>
     </section>
 
     <details class="panel" style="margin-top:1rem;">

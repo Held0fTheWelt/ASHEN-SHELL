@@ -53,6 +53,8 @@ def test_manage_runtime_dashboard_mount_points(client):
     assert "manage-rd-summary-lines" in html
     assert "manage-rd-blockers" in html
     assert "manage-rd-next-actions" in html
+    assert "manage-rd-domain-status" in html
+    assert "manage-rd-degraded" in html
     assert "manage-rd-links" in html
     assert "manage_runtime_dashboard.js" in html
 
@@ -61,6 +63,8 @@ def test_manage_rag_operations_mount_points(client):
     response = client.get("/manage/rag-operations")
     html = response.get_data(as_text=True)
     assert "manage-rag-status-lines" in html
+    assert "manage-rag-comparison-lines" in html
+    assert "manage-rag-guidance-lines" in html
     assert "manage-rag-save-settings" in html
     assert "manage-rag-run-probe" in html
     assert "data-rag-action" in html
@@ -72,6 +76,8 @@ def test_manage_ai_orchestration_mount_points(client):
     html = response.get_data(as_text=True)
     assert "manage-orch-langgraph-lines" in html
     assert "manage-orch-langchain-lines" in html
+    assert "manage-orch-comparison-lines" in html
+    assert "manage-orch-guidance-lines" in html
     assert "manage-orch-save-settings" in html
     assert "manage_ai_orchestration.js" in html
 
@@ -82,5 +88,7 @@ def test_manage_runtime_settings_mount_points(client):
     assert "manage-rs-presets" in html
     assert "manage-rs-save-settings" in html
     assert "manage-rs-effective-summary" in html
+    assert "manage-rs-comparison-lines" in html
+    assert "manage-rs-boundedness-lines" in html
     assert "manage-rs-change-lines" in html
     assert "manage_runtime_settings.js" in html
