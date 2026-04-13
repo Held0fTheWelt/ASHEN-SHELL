@@ -2,6 +2,8 @@
 
 **Date:** 2026-04-13 (repository session). **Purpose:** record what was verified before hardening and what changed.
 
+**Follow-up:** bounded finalization outcomes (conflict severity/kind, lifecycle row check, supersedes relations, fy-suite task discovery, extra drift passes) live in [`FINALIZATION_PASS_2026-04-13.md`](FINALIZATION_PASS_2026-04-13.md).
+
 ## Verified strengths (preserved)
 
 - Fy-suite layout: `README.md`, `CONTRACT_GOVERNANCE_SCOPE.md`, check/solve/reset tasks, `contract_governance_input.md`, `superpowers/`, `tools/`, `examples/`, hermetic `conftest.py`.

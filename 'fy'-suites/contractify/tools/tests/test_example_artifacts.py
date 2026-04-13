@@ -40,5 +40,12 @@ def test_sample_contract_audit_json_shape() -> None:
     assert data["stats"]["n_contracts"] >= 0
     assert data["conflicts"]
     c0 = data["conflicts"][0]
-    for key in ("classification", "normative_sources", "observed_or_projection_sources", "requires_human_review"):
+    for key in (
+        "classification",
+        "normative_sources",
+        "observed_or_projection_sources",
+        "requires_human_review",
+        "severity",
+        "kind",
+    ):
         assert key in c0

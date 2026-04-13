@@ -43,7 +43,9 @@ def build_minimal_contractify_test_repo(root: Path) -> Path:
         "# Normative contracts index\n\n**binding scope** test fixture. See also `openapi.yaml`.\n\n"
         "## Duplicate navigation stress (deterministic conflict fixture)\n"
         "| A | [one](../../technical/shared-runtime.md) |\n"
-        "| B | [two](../../technical/shared-runtime.md) |\n",
+        "| B | [two](../../technical/shared-runtime.md) |\n"
+        "## Active row stress (retired ADR linked with Active label)\n"
+        "| Active | [retired ADR](../../governance/adr-0003-retired.md) |\n",
         encoding="utf-8",
     )
     (root / "docs" / "dev" / "README.md").write_text(
@@ -86,6 +88,21 @@ def build_minimal_contractify_test_repo(root: Path) -> Path:
         "DEFAULT_RELATIVE_ROOTS = (\n    \"'fy'-suites/contractify\",\n)\n",
         encoding="utf-8",
     )
+    (fy / "docify" / "documentation-check-task.md").write_text(
+        "# Documentation check task\n\n**Normative** procedure; default roots include **'fy'-suites/contractify**.\n",
+        encoding="utf-8",
+    )
+    (fy / "postmanify").mkdir(parents=True, exist_ok=True)
+    (fy / "postmanify" / "postmanify-sync-task.md").write_text(
+        "# Postmanify sync\n\nRegenerate Postman collections from **docs/api/openapi.yaml** after each OpenAPI edit.\n",
+        encoding="utf-8",
+    )
+    wf = root / ".github" / "workflows"
+    wf.mkdir(parents=True, exist_ok=True)
+    (wf / "ci_openapi_hint.yml").write_text(
+        "name: ci\non: push\njobs:\n  t:\n    runs-on: ubuntu-latest\n    steps:\n      - run: cat docs/api/openapi.yaml\n",
+        encoding="utf-8",
+    )
     gov = root / "docs" / "governance"
     gov.mkdir(parents=True, exist_ok=True)
     (gov / "adr-0001-scene-identity.md").write_text(
@@ -94,6 +111,12 @@ def build_minimal_contractify_test_repo(root: Path) -> Path:
     )
     (gov / "adr-0002-runtime-authority.md").write_text(
         "# ADR 2\n\n**Status**: Accepted\n\n**Runtime authority** overlaps **scene identity** vocabulary.\n",
+        encoding="utf-8",
+    )
+    (gov / "adr-0003-retired.md").write_text(
+        "# ADR 3 retired\n\n**Status**: Superseded\n\n"
+        "Supersedes: [ADR 1](adr-0001-scene-identity.md)\n\n"
+        "Retained for history only.\n",
         encoding="utf-8",
     )
     (root / "docs" / "operations").mkdir(parents=True, exist_ok=True)

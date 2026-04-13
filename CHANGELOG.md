@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Contractify hub (finalization pass):** richer conflict model (`severity`, `kind`, candidate buckets), lifecycle navigation check (Active/Binding index row vs retired ADR), orphan projection detection, ADR **`supersedes`** parsing and relation edges, **`validates`** / **`conflicts_with`** relation kinds, fy-suite **postmanify** / **docify** task discovery, conditional OpenAPI **`implemented_by`** when `backend/` is absent, drift passes for missing **`implemented_by`** paths and postmanify task vs manifest OpenAPI path alignment; **`discover`** runs conflict-aware **`extend_relations`** for relation parity with **`audit`**; **23** contractify tests; state note [`'fy'-suites/contractify/state/FINALIZATION_PASS_2026-04-13.md`]('fy'-suites/contractify/state/FINALIZATION_PASS_2026-04-13.md); README / scope / audit-task / examples alignment.
+
 ---
 
 ## [0.6.4] - 2026-04-13

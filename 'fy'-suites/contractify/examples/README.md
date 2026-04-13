@@ -14,7 +14,7 @@ python -m contractify.tools audit --out "'fy'-suites/contractify/examples/_tmp_a
 
 Then trim large arrays and copy to `*.sample.json`. Ephemeral `_tmp_*.json` under `examples/` should be deleted and is gitignored if you add a local ignore pattern.
 
-Live machine exports during day-to-day work belong under `reports/` (gitignored `*.json` at that path).
+Live machine exports during day-to-day work belong under `reports/` (gitignored `*.json` at that path). **`actionable_units`** entries may prefix conflicts as **`[conflict:<severity>|conflict|…]`** — see a populated row in `contract_audit.sample.json`.
 
 **Packaging hygiene:** do not ship `__pycache__` or `*.pyc` inside suite ZIPs.
 

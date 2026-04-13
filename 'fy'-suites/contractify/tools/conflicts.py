@@ -13,7 +13,7 @@ from urllib.parse import unquote
 
 from contractify.tools.discovery import NORMATIVE_INDEX, OPENAPI_DEFAULT, POSTMAN_MANIFEST
 from contractify.tools.models import ConflictFinding, ProjectionRecord
-from contractify.tools.versioning import openapi_sha256_prefix
+from contractify.tools.versioning import adr_declared_status, openapi_sha256_prefix
 
 # Markdown table / inline link targets from normative index (same cell patterns as human editors use).
 _MD_LINK = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
@@ -69,6 +69,9 @@ def detect_duplicate_normative_index_targets(repo: Path) -> list[ConflictFinding
                 classification="normative_anchor_ambiguity",
                 normative_sources=[NORMATIVE_INDEX],
                 observed_or_projection_sources=[],
+                kind="conflicting_candidate_anchors",
+                severity="high",
+                normative_candidates=[NORMATIVE_INDEX, norm],
             )
         )
     return out
@@ -102,6 +105,9 @@ def detect_adr_vocabulary_overlap(repo: Path) -> list[ConflictFinding]:
                     classification="normative_vocabulary_overlap",
                     normative_sources=hits,
                     observed_or_projection_sources=[],
+                    kind="conflicting_normative_claims",
+                    severity="medium",
+                    normative_candidates=hits,
                 )
             )
     return out
@@ -138,6 +144,10 @@ def detect_projection_fingerprint_mismatch(
                 classification="projection_anchor_mismatch",
                 normative_sources=[OPENAPI_DEFAULT],
                 observed_or_projection_sources=[pr.path],
+                kind="stale_projection_vs_openapi_anchor",
+                severity="high",
+                normative_candidates=[OPENAPI_DEFAULT],
+                projection_candidates=[pr.path],
             )
         )
     return out
@@ -173,18 +183,111 @@ def detect_deprecated_adr_without_supersession_link(repo: Path) -> list[Conflict
                 classification="supersession_gap",
                 normative_sources=[rel],
                 observed_or_projection_sources=[],
+                kind="lifecycle_version_or_supersession_conflict",
+                severity="medium",
+                normative_candidates=[rel],
             )
         )
     return out
 
 
-def detect_all_conflicts(repo: Path, projections: list[ProjectionRecord]) -> list[ConflictFinding]:
+_ACTIVE_BINDING_ROW = re.compile(r"\b(active|binding)\b", re.IGNORECASE)
+
+
+def detect_active_index_row_links_retired_adr(repo: Path) -> list[ConflictFinding]:
+    """Index markdown row reads Active/Binding but links to an ADR whose declared status is retired."""
+    repo = repo.resolve()
+    p = repo / NORMATIVE_INDEX
+    if not p.is_file():
+        return []
+    text = p.read_text(encoding="utf-8", errors="replace")
+    index_dir = p.parent
+    out: list[ConflictFinding] = []
+    for line in text.splitlines():
+        if "|" not in line or not _ACTIVE_BINDING_ROW.search(line):
+            continue
+        for _label, target in _MD_LINK.findall(line):
+            norm = _norm_index_link(repo, index_dir, target)
+            if not norm or "governance" not in norm.replace("\\", "/"):
+                continue
+            adr_path = repo / norm.replace("\\", "/")
+            if not adr_path.is_file():
+                continue
+            head = adr_path.read_text(encoding="utf-8", errors="replace")[:8000]
+            st = adr_declared_status(head)
+            if st not in ("superseded", "deprecated"):
+                continue
+            rel = adr_path.relative_to(repo).as_posix()
+            out.append(
+                ConflictFinding(
+                    id=f"CNF-IDX-RET-{hashlib.sha256(line.encode()).hexdigest()[:10]}",
+                    conflict_type="lifecycle_index_row_vs_retired_adr",
+                    summary=f"Normative index row suggests current/binding navigation but links to retired ADR {rel} "
+                    f"(declared status line resolves to {st}).",
+                    sources=[NORMATIVE_INDEX, rel, line.strip()[:240]],
+                    confidence=0.88,
+                    requires_human_review=True,
+                    notes="Table-row heuristic — legitimate history rows should use Retired/History labelling instead of Active/Binding.",
+                    classification="superseded_still_referenced_as_current",
+                    normative_sources=[NORMATIVE_INDEX, rel],
+                    observed_or_projection_sources=[],
+                    kind="superseded_contract_still_active_navigation",
+                    severity="high",
+                    normative_candidates=[NORMATIVE_INDEX, rel],
+                )
+            )
+    return out
+
+
+def detect_projection_orphan_source_contract(
+    projections: list[ProjectionRecord],
+    contract_ids: frozenset[str],
+) -> list[ConflictFinding]:
+    """Projection references a ``source_contract_id`` that is not in the discovered contract inventory."""
+    if not contract_ids:
+        return []
+    out: list[ConflictFinding] = []
+    for pr in projections:
+        sid = (pr.source_contract_id or "").strip()
+        if not sid or sid in contract_ids:
+            continue
+        out.append(
+            ConflictFinding(
+                id=f"CNF-PRJ-ORPH-{hashlib.sha256(pr.id.encode()).hexdigest()[:10]}",
+                conflict_type="projection_orphan_source_contract",
+                summary=f"Projection {pr.path} references source_contract_id={sid!r} but that id was not discovered "
+                "in this pass (missing anchor, typo, or discovery ceiling).",
+                sources=[pr.path, sid],
+                confidence=0.92,
+                requires_human_review=True,
+                notes="Non-resolution: widen discovery, fix manifest metadata, or correct the projection block.",
+                classification="projection_anchor_mismatch",
+                normative_sources=[],
+                observed_or_projection_sources=[pr.path],
+                kind="projection_to_anchor_mismatch",
+                severity="high",
+                projection_candidates=[pr.path],
+                normative_candidates=[sid],
+            )
+        )
+    return out
+
+
+def detect_all_conflicts(
+    repo: Path,
+    projections: list[ProjectionRecord],
+    *,
+    contract_ids: frozenset[str] | None = None,
+) -> list[ConflictFinding]:
     """Run all conflict passes; de-duplicate by ``id``."""
     all_c: list[ConflictFinding] = []
     all_c.extend(detect_duplicate_normative_index_targets(repo))
     all_c.extend(detect_adr_vocabulary_overlap(repo))
     all_c.extend(detect_projection_fingerprint_mismatch(repo, projections))
     all_c.extend(detect_deprecated_adr_without_supersession_link(repo))
+    all_c.extend(detect_active_index_row_links_retired_adr(repo))
+    if contract_ids:
+        all_c.extend(detect_projection_orphan_source_contract(projections, contract_ids))
     seen: set[str] = set()
     uniq: list[ConflictFinding] = []
     for c in all_c:

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Sequence
 
 from contractify.tools.audit_pipeline import run_audit
+from contractify.tools.conflicts import detect_all_conflicts
 from contractify.tools.discovery import discover_contracts_and_projections
 from contractify.tools.models import automation_tier, serialise
 from contractify.tools.relations import extend_relations
@@ -33,7 +34,9 @@ def cmd_discover(args: argparse.Namespace) -> int:
         root,
         max_contracts=args.max_contracts,
     )
-    relations = extend_relations(root, contracts, projections, relations)
+    cids = frozenset(c.id for c in contracts)
+    conflicts = detect_all_conflicts(root, projections, contract_ids=cids)
+    relations = extend_relations(root, contracts, projections, relations, conflicts=conflicts)
     payload = {
         "contracts": [serialise(c) for c in contracts],
         "projections": [serialise(p) for p in projections],

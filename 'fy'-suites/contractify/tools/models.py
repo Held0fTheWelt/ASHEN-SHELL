@@ -120,6 +120,16 @@ class ConflictFinding:
     classification: str = "other"
     normative_sources: list[str] = field(default_factory=list)
     observed_or_projection_sources: list[str] = field(default_factory=list)
+    # Stable kind string for dashboards (defaults to ``conflict_type`` when empty).
+    kind: str = ""
+    severity: DriftSeverity = "medium"
+    normative_candidates: list[str] = field(default_factory=list)
+    observed_candidates: list[str] = field(default_factory=list)
+    projection_candidates: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.kind:
+            self.kind = self.conflict_type
 
 
 @dataclass

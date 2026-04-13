@@ -45,12 +45,20 @@
       "normative_sources": [
         "docs/dev/contracts/normative-contracts-index.md"
       ],
-      "observed_or_projection_sources": []
+      "observed_or_projection_sources": [],
+      "kind": "conflicting_candidate_anchors",
+      "severity": "high",
+      "normative_candidates": [
+        "docs/dev/contracts/normative-contracts-index.md",
+        "docs/technical/shared-runtime.md"
+      ],
+      "observed_candidates": [],
+      "projection_candidates": []
     }
   ],
   "actionable_units": [
     "[informational] Sample drift row illustrating severity + deterministic flag. → Replace this file with a trimmed export from a real audit when schema changes.",
-    "[conflict-deterministic] Sample: normative index lists the same resolved markdown target twice. (sources: docs/dev/contracts/normative-contracts-index.md, docs/technical/shared-runtime.md)"
+    "[conflict:high|conflict-deterministic] Sample: normative index lists the same resolved markdown target twice. (sources: docs/dev/contracts/normative-contracts-index.md, docs/technical/shared-runtime.md)"
   ],
   "stats": {
     "n_contracts": 0,

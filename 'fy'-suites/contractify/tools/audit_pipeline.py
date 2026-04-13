@@ -22,7 +22,8 @@ def build_actionable_units(drifts: list[Any], conflicts: list[Any]) -> list[str]
         if c.requires_human_review or c.confidence >= 0.9:
             tag = "conflict" if c.requires_human_review else "conflict-deterministic"
             who = ", ".join(c.sources[:5])
-            units.append(f"[{tag}] {c.summary} (sources: {who})")
+            sev = getattr(c, "severity", "medium")
+            units.append(f"[conflict:{sev}|{tag}] {c.summary} (sources: {who})")
     return units
 
 
@@ -37,9 +38,10 @@ def run_audit(
         repo,
         max_contracts=max_contracts,
     )
-    relations = extend_relations(repo, contracts, projections, relations)
-    drifts = run_all_drifts(repo)
-    conflicts = detect_all_conflicts(repo, projections)
+    drifts = run_all_drifts(repo, contracts)
+    cids = frozenset(c.id for c in contracts)
+    conflicts = detect_all_conflicts(repo, projections, contract_ids=cids)
+    relations = extend_relations(repo, contracts, projections, relations, conflicts=conflicts)
 
     # attach drift ids onto contracts (lightweight cross-index)
     drift_by_contract: dict[str, list[str]] = {}

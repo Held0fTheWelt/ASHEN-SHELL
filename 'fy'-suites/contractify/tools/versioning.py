@@ -72,3 +72,31 @@ def read_openapi_version_from_file(path: Path) -> str:
     if not path.is_file():
         return "unversioned"
     return openapi_declared_version(path.read_text(encoding="utf-8", errors="replace"))
+
+
+_SUPERSEDES_LINE = re.compile(r"(?im)^\s*\*{0,2}supersedes\*{0,2}\s*:\s*(.+)$")
+
+
+def adr_supersedes_line(head: str) -> str:
+    """Return raw ``Supersedes:`` line body from an ADR header slice, or empty string."""
+    m = _SUPERSEDES_LINE.search(head[:12_000])
+    return m.group(1).strip() if m else ""
+
+
+def resolve_supersedes_markdown_target(line_body: str, *, adr_file: Path, repo: Path) -> str:
+    """Resolve ``[label](path.md)`` or bare ``adr-*.md`` next to ``adr_file`` to a repo-relative posix path."""
+    line_body = line_body.strip()
+    if not line_body:
+        return ""
+    mlink = re.search(r"\(([^)]+\.md)\)", line_body)
+    raw = mlink.group(1).strip() if mlink else ""
+    if not raw:
+        mfile = re.search(r"(adr-[\w-]+\.md)", line_body, re.IGNORECASE)
+        raw = mfile.group(1) if mfile else ""
+    if not raw:
+        return ""
+    base = adr_file.parent / raw
+    try:
+        return base.resolve().relative_to(repo.resolve()).as_posix()
+    except ValueError:
+        return ""

@@ -38,7 +38,8 @@ OPENAPI_DEFAULT = "docs/api/openapi.yaml"
 POSTMAN_MANIFEST = "postman/postmanify-manifest.json"
 DESPAG_SETUP = "'fy'-suites/despaghettify/spaghetti-setup.md"
 DOCIFY_README = "'fy'-suites/docify/README.md"
-POSTMANIFY_REF = "'fy'-suites/postmanify/postmanify-sync-task.md"
+POSTMANIFY_SYNC_TASK = "'fy'-suites/postmanify/postmanify-sync-task.md"
+DOCIFY_DOCUMENTATION_CHECK_TASK = "'fy'-suites/docify/documentation-check-task.md"
 
 EASY_DOC_GLOB = "docs/easy"
 START_HERE_GLOB = "docs/start-here"
@@ -183,6 +184,13 @@ def discover_contracts_and_projections(
         head = _read_head(p_openapi, max_bytes=8000)
         conf = 0.94 if "openapi" in head.lower() else 0.75
         api_ver = read_openapi_version_from_file(p_openapi)
+        impl: list[str] = []
+        if (repo / "backend").is_dir():
+            impl.append("backend/")
+        proj_as: list[str] = []
+        master_col = repo / "postman" / "WorldOfShadows_Complete_OpenAPI.postman_collection.json"
+        if master_col.is_file():
+            proj_as.append("postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json")
         add(
             _contract(
                 cid="CTR-API-OPENAPI-001",
@@ -199,8 +207,8 @@ def discover_contracts_and_projections(
                 confidence=conf,
                 discovery_reason="A: canonical OpenAPI document under docs/api/",
                 tags=["http", "openapi", "backend"],
-                implemented_by=["backend/"],
-                projected_as=["postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json"],
+                implemented_by=impl,
+                projected_as=proj_as,
             )
         )
 
@@ -291,6 +299,57 @@ def discover_contracts_and_projections(
                 )
             )
             schema_added += 1
+
+    # A4a — Postmanify sync procedure (projection / regeneration contract)
+    p_postmanify_task = repo / POSTMANIFY_SYNC_TASK
+    if p_postmanify_task.is_file() and len(contracts) < max_contracts:
+        head = _read_head(p_postmanify_task)
+        conf = 0.86 + _marker_boost(head)
+        add(
+            _contract(
+                cid="CTR-POSTMANIFY-TASK-001",
+                title="Postmanify sync task (OpenAPI → Postman)",
+                summary="Procedure for regenerating Postman collections and manifest from the canonical OpenAPI anchor.",
+                contract_type="suite_handoff",
+                layer="workflow",
+                status="active",
+                version="unversioned",
+                authority_level="normative",
+                anchor_kind="document",
+                anchor_location=POSTMANIFY_SYNC_TASK,
+                source_of_truth=True,
+                confidence=min(0.94, conf),
+                discovery_reason="A: postmanify task markdown under fy-suite (explicit OpenAPI linkage expected in prose)",
+                tags=["postmanify", "openapi", "projection"],
+                owner_or_area="platform",
+                derived_from=[OPENAPI_DEFAULT],
+            )
+        )
+
+    # A4b — Docify documentation check task (AST audit contract)
+    p_docify_task = repo / DOCIFY_DOCUMENTATION_CHECK_TASK
+    if p_docify_task.is_file() and len(contracts) < max_contracts:
+        head = _read_head(p_docify_task)
+        conf = 0.84 + _marker_boost(head)
+        add(
+            _contract(
+                cid="CTR-DOCIFY-TASK-001",
+                title="Docify documentation check task",
+                summary="Procedure and inputs for repository documentation quality audits (Python/docstring drift).",
+                contract_type="suite_handoff",
+                layer="documentation",
+                status="active",
+                version="unversioned",
+                authority_level="normative",
+                anchor_kind="document",
+                anchor_location=DOCIFY_DOCUMENTATION_CHECK_TASK,
+                source_of_truth=True,
+                confidence=min(0.93, conf),
+                discovery_reason="A: docify governance task markdown under fy-suite",
+                tags=["docify", "documentation"],
+                owner_or_area="platform",
+            )
+        )
 
     # A4 — Despaghettify setup (explicit machine + prose contract)
     p_setup = repo / DESPAG_SETUP

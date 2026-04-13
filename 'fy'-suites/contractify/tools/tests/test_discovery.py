@@ -31,3 +31,11 @@ def test_discovery_includes_ops_and_schema_when_present() -> None:
     types = {c.contract_type for c in contracts}
     assert "operational_runbook" in types
     assert "json_schema" in types
+
+
+def test_discovery_includes_fy_suite_handoff_tasks() -> None:
+    root = repo_paths.repo_root()
+    contracts, _p, _r = discover_contracts_and_projections(root, max_contracts=50)
+    ids = {c.id for c in contracts}
+    assert "CTR-POSTMANIFY-TASK-001" in ids
+    assert "CTR-DOCIFY-TASK-001" in ids

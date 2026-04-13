@@ -28,9 +28,10 @@ This is the **analysis** counterpart to [`contract-solve-task.md`](contract-solv
    - `deterministic: true` → fix or acknowledge promptly when severity ≥ medium.
    - `deterministic: false` → human triage; do not auto-rewrite normative docs from heuristics.
 5. **Interpret conflicts** — read `conflicts[]` alongside drift (implemented in [`contractify.tools.conflicts`](tools/conflicts.py); versioning helpers in [`contractify.tools.versioning`](tools/versioning.py); bounded graph edges in [`contractify.tools.relations`](tools/relations.py)):
-   - Use **`classification`** (see [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md) **Conflict classifications**) to pick the remediation pattern.
+   - Use **`classification`** and **`severity`** (see [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md) **Conflict classifications**) to pick the remediation pattern.
+   - Use **`kind`** plus **`normative_candidates` / `observed_candidates` / `projection_candidates`** when present to route ownership without re-parsing evidence strings.
    - Prefer **`normative_sources`** vs **`observed_or_projection_sources`** when filing **CG-*** rows so ownership is obvious.
-   - High-confidence deterministic conflicts may also appear under `actionable_units` with kind **`conflict-deterministic`** — dedupe with `conflicts[]` when scheduling work.
+   - High-confidence deterministic conflicts may also appear under `actionable_units` as **`[conflict:<severity>|conflict-deterministic]`** — dedupe with `conflicts[]` when scheduling work.
 6. **Backlog** — translate `actionable_units` into **one row per coherent slice** in [`contract_governance_input.md`](contract_governance_input.md) (prefer concrete scopes, not counts).
 7. **Cursor skill sync** — if `superpowers/*/SKILL.md` changed:
 

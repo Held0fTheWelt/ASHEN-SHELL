@@ -7,9 +7,9 @@
 - **Discovery** — finds likely contracts using explicit A–E heuristics (see below).
 - **Anchoring model** — distinguishes **normative** anchors vs **observed** surfaces vs **verification** artifacts.
 - **Projections** — audience/mode views (easy, AI-reading, specialist) that **must** trace back to anchors.
-- **Relations** — discovery emits core edges; [`contractify.tools.relations`](tools/relations.py) **`extend_relations()`** adds bounded **`references`**, **`indexes`**, **`implements`**, and **`operationalizes`** links where evidence is explicit.
+- **Relations** — discovery emits core edges; [`contractify.tools.relations`](tools/relations.py) **`extend_relations()`** adds bounded **`references`**, **`indexes`**, **`implements`**, **`operationalizes`**, explicit ADR **`supersedes`**, workflow→OpenAPI **`validates`**, and index-ambiguity **`conflicts_with`** (plus fy-suite handoff cross-links) when evidence exists.
 - **Drift analysis (`driftify`)** — [`contractify.tools.drift_analysis`](tools/drift_analysis.py): deterministic checks first, heuristics labelled honestly.
-- **Conflicts** — [`contractify.tools.conflicts`](tools/conflicts.py) **`detect_all_conflicts()`**: duplicate normative index targets, ADR vocabulary buckets, projection↔OpenAPI fingerprint mismatches, and bounded lifecycle/supersession header gaps — each row carries **`classification`** plus normative vs projection source lists.
+- **Conflicts** — [`contractify.tools.conflicts`](tools/conflicts.py) **`detect_all_conflicts()`**: duplicate normative index targets, ADR vocabulary buckets, projection↔OpenAPI fingerprint mismatches, orphan **`source_contract_id`**, Active/Binding index rows vs retired ADRs, and bounded lifecycle/supersession header gaps — each row carries **`classification`**, **`severity`**, **`kind`**, optional candidate buckets, and normative vs projection source lists.
 - **Versioning (operational)** — [`contractify.tools.versioning`](tools/versioning.py) parses **`info.version`** from OpenAPI and explicit **`Status:`** lines in ADR headers so `ContractRecord.version` / lifecycle **`status`** reflect declared anchors (not inferred code behaviour).
 
 ## What Contractify is not
@@ -37,7 +37,7 @@ Phase-1 tooling is **deliberately shallow** in places: conflicts are real but no
 
 | Tier | Meaning | Examples in this repo |
 |------|---------|------------------------|
-| **A** | Explicit markers or known canonical paths | `docs/dev/contracts/normative-contracts-index.md`, `docs/api/openapi.yaml`, `docs/governance/adr-*.md`, `spaghetti-setup.md` |
+| **A** | Explicit markers or known canonical paths | `docs/dev/contracts/normative-contracts-index.md`, `docs/api/openapi.yaml`, `docs/governance/adr-*.md`, `spaghetti-setup.md`, **`'fy'-suites/postmanify/postmanify-sync-task.md`**, **`'fy'-suites/docify/documentation-check-task.md`** |
 | **B** | Structural workflow / CI / ops / shared schemas | `.github/workflows/*.yml`, `docs/operations/OPERATIONAL_GOVERNANCE_RUNTIME.md` (when present), up to **two** `schemas/*.json` files per pass |
 | **C** | Referencing / audience artefacts | `docs/easy/**`, `docs/start-here/**` modelled as projections |
 | **D** | Out of scope by default | Private helpers — not scanned |
@@ -52,6 +52,8 @@ Every discovered row includes `discovery_reason` so classification is **inspecta
 | **api_runtime** | Compare `postmanify-manifest.json` `openapi_sha256` to SHA-256 of the referenced OpenAPI file | Yes |
 | **anchor_projection** | Audience markdown under `docs/easy` / `docs/start-here` must link to `normative-contracts-index` or contain `contractify-projection:` | Heuristic (text signal) |
 | **suite_handoff** | Docify default AST roots include `'fy'-suites/contractify` | Yes (file content check) |
+| **suite_handoff** | Postmanify sync task prose **`openapi_path`** vs `postmanify-manifest.json` | Yes (when both files exist) |
+| **planning_implementation** | Contract **`implemented_by`** paths missing on disk | Yes (when declared) |
 | **missing_propagation** | `spaghetti-setup.md` present without `spaghetti-setup.json` | Yes (presence) |
 
 Heuristic findings use **low** severity by default; deterministic OpenAPI hash mismatch uses **high**.
@@ -63,15 +65,17 @@ Heuristic findings use **low** severity by default; deterministic OpenAPI hash m
 | Same resolved markdown target linked twice from the normative index | Yes | `normative_anchor_ambiguity` |
 | Two+ ADRs hit the same bounded vocabulary bucket | No (keyword bucket) | `normative_vocabulary_overlap` |
 | Projection `contract_version_ref` (16-hex OpenAPI prefix) ≠ current file SHA prefix | Yes | `projection_anchor_mismatch` |
+| Projection `source_contract_id` not present in the discovery inventory for this pass | Yes (inventory) | `projection_anchor_mismatch` (kind: `projection_to_anchor_mismatch`) |
 | `Status: Deprecated/Superseded` in ADR head without supersession navigation cues | No | `supersession_gap` |
+| Normative index row reads **Active**/**Binding** but links to a **superseded**/**deprecated** ADR | Row heuristic | `superseded_still_referenced_as_current` |
 
 ## Integration with sibling fy suites
 
 | Suite | Handoff |
 |-------|---------|
-| **docify** | Contractify flags documentation/projection drift; docify runs audits/synthesizer on Python trees. Keep **contractify** in docify default `--root` list for self-governance. |
-| **postmanify** | Postman JSON + manifest are **projections** of OpenAPI; regenerate when drift fires. |
-| **despaghettify** | When many anchors conflict structurally, open a DS slice — Contractify does not refactor code. |
+| **docify** | Drift pass **`drift_docify_contractify_scan_root`** if contractify is missing from default AST roots; discovery may emit **`CTR-DOCIFY-TASK-001`** when `documentation-check-task.md` exists. Docify repairs prose/code readability — Contractify does not synthesise docstrings. |
+| **postmanify** | **`drift_postman_openapi_manifest`** (SHA) plus **`drift_postmanify_task_openapi_path_alignment`** (path prose vs manifest); projections remain derived from **`CTR-API-OPENAPI-001`**. |
+| **despaghettify** | **`drift_despag_setup_derived_json`** surfaces missing derived JSON; tangled anchors feed **DS-** backlog — Contractify does not refactor structure. |
 
 ## Hub CLI
 
@@ -103,6 +107,7 @@ python -m contractify.tools discover --max-contracts 25 --out "'fy'-suites/contr
 | [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md) | Ceilings + automation thresholds |
 | [`state/PREWORK_REPOSITORY_CONTRACT_REALITY.md`](state/PREWORK_REPOSITORY_CONTRACT_REALITY.md) | Human snapshot of pre-suite reality |
 | [`state/COMPLETION_PASS_STATE.md`](state/COMPLETION_PASS_STATE.md) | Completion / hardening pass record |
+| [`state/FINALIZATION_PASS_2026-04-13.md`](state/FINALIZATION_PASS_2026-04-13.md) | Final bounded completion: baseline, slices, evidence, honest limits |
 | [`examples/`](examples/) | Committed JSON **shape** samples + [`examples/README.md`](examples/README.md) |
 | [`reports/`](reports/) | JSON exports (local `*.json` gitignored) + [`reports/README.md`](reports/README.md) |
 
@@ -136,4 +141,4 @@ python -m pytest "'fy'-suites/contractify/tools/tests" -q
 
 ## Versioning
 
-OpenAPI contracts use **`info.version`** when present; ADRs use explicit **`Status:`** lines for lifecycle (`active`, `deprecated`, `superseded`, …). Other anchors remain **`unversioned`** until the repository adds machine-readable markers. Breaking vs non-breaking change tracking stays **manual** in **CG-*** backlog rows; projection rows may carry **`contract_version_ref`** (e.g. manifest SHA prefix) for drift and conflict checks.
+OpenAPI contracts use **`info.version`** when present; ADRs use explicit **`Status:`** lines for lifecycle (`active`, `deprecated`, `superseded`, …) and optional **`Supersedes:`** lines (parsed for **`supersedes`** relation edges when both ADRs are discovered). Other anchors remain **`unversioned`** until the repository adds machine-readable markers. Breaking vs non-breaking change tracking stays **manual** in **CG-*** backlog rows; projection rows may carry **`contract_version_ref`** (e.g. manifest SHA prefix) for drift and conflict checks.

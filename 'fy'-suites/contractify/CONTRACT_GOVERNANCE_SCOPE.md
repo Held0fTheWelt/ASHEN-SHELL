@@ -34,14 +34,15 @@ False authority is worse than incomplete discovery.
 
 ## Conflict classifications (machine rows)
 
-Audit JSON **`conflicts[]`** rows use **`classification`** (stable string), **`normative_sources`**, and **`observed_or_projection_sources`** so curators can route work without re-parsing prose.
+Audit JSON **`conflicts[]`** rows use **`classification`**, **`severity`** (same scale as drift: critical → informational), **`kind`** (curator-facing bucket), **`normative_sources`**, **`observed_or_projection_sources`**, and optional **`normative_candidates` / `observed_candidates` / `projection_candidates`** for triage without re-parsing prose.
 
 | `classification` | Meaning | Typical response |
 |------------------|---------|------------------|
 | **`normative_anchor_ambiguity`** | The normative index links the same resolved markdown path more than once (duplicate “truth” anchors). | Deduplicate index rows or split distinct contracts with clearer IDs. |
 | **`normative_vocabulary_overlap`** | Two or more ADRs hit the same bounded keyword bucket (heuristic overlap, not semantic equivalence). | Human triage: merge, narrow scope, or accept with explicit disambiguation in backlog. |
-| **`projection_anchor_mismatch`** | A projection’s **`contract_version_ref`** (16-hex OpenAPI SHA prefix) disagrees with the current on-disk OpenAPI prefix. | Refresh Postmanify output or fix the projection marker — deterministic. |
+| **`projection_anchor_mismatch`** | A projection’s **`contract_version_ref`** (16-hex OpenAPI SHA prefix) disagrees with the current on-disk OpenAPI prefix **or** a projection references a missing **`source_contract_id`**. | Refresh Postmanify output, fix projection metadata, or widen discovery so the anchor id exists. |
 | **`supersession_gap`** | ADR header **`Status:`** is **`Deprecated`** / **`Superseded`** but navigation cues to the successor are missing or thin. | Add explicit supersession links or ADR front-matter. |
+| **`superseded_still_referenced_as_current`** | A normative index table row is labelled **Active** / **Binding** but links to an ADR whose declared status is **superseded** / **deprecated** (row labelling heuristic). | Relabel the row (e.g. Retired/History) or replace the link with the current-truth anchor. |
 
 Treat **`requires_human_review: true`** on any conflict as blocking silent automation, even when **`confidence`** is high.
 
@@ -74,6 +75,6 @@ contractify-projection:
 
 | Suite | Contractify interacts by… |
 |-------|---------------------------|
-| **docify** | Flagging doc/projection drift; docify repairs readable Python/docs — Contractify does not synthesise prose. |
-| **postmanify** | Treating collections + manifest as **projections** of OpenAPI; drift on `openapi_sha256`. |
-| **despaghettify** | Surfacing fragmented truth / tangled anchors; structural repair stays in Despaghettify. |
+| **docify** | Drift when default AST roots omit contractify; discovery surfaces **`documentation-check-task`** as a normative handoff anchor when present. |
+| **postmanify** | Manifest + collections as OpenAPI projections (SHA drift); discovery surfaces **`postmanify-sync-task`**; drift when task prose **`openapi_path`** disagrees with manifest. |
+| **despaghettify** | Drift when derived **`spaghetti-setup.json`** is missing; discovery keeps **`spaghetti-setup.md`** as normative hub input. |

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from contractify.tools.discovery import (
@@ -13,7 +14,7 @@ from contractify.tools.discovery import (
     POSTMAN_MANIFEST,
     projection_backref_ok,
 )
-from contractify.tools.models import DriftFinding, DriftSeverity
+from contractify.tools.models import ContractRecord, DriftFinding, DriftSeverity
 
 DOCIFY_AUDIT_ROOTS_MARKER = "'fy'-suites/contractify"
 
@@ -189,7 +190,79 @@ def drift_despag_setup_derived_json(repo: Path) -> list[DriftFinding]:
     return out
 
 
-def run_all_drifts(repo: Path) -> list[DriftFinding]:
+def drift_implementation_paths_missing(repo: Path, contracts: list[ContractRecord]) -> list[DriftFinding]:
+    """Normative contract lists ``implemented_by`` paths that are absent on disk (bounded structural check)."""
+    out: list[DriftFinding] = []
+    repo = repo.resolve()
+    for c in contracts:
+        if not c.implemented_by:
+            continue
+        for raw in c.implemented_by:
+            p = (repo / raw.rstrip("/")).resolve()
+            try:
+                p.relative_to(repo)
+            except ValueError:
+                continue
+            if p.exists():
+                continue
+            short = hashlib.sha256(f"{c.id}:{raw}".encode()).hexdigest()[:10]
+            out.append(
+                DriftFinding(
+                    id=f"DRF-IMPL-MISS-{short}",
+                    drift_class="planning_implementation",
+                    summary=f"Contract {c.id} declares implemented_by path missing on disk: {raw}",
+                    evidence_sources=[c.anchor_location, raw],
+                    confidence=0.88,
+                    severity="medium",
+                    deterministic=True,
+                    recommended_follow_up="Restore the path, narrow implemented_by to existing trees, or fix discovery metadata.",
+                    involved_contract_ids=[c.id],
+                )
+            )
+    return out
+
+
+def drift_postmanify_task_openapi_path_alignment(repo: Path) -> list[DriftFinding]:
+    """Postmanify task prose vs manifest ``openapi_path`` (deterministic string alignment when both exist)."""
+    task = repo / "'fy'-suites/postmanify/postmanify-sync-task.md"
+    mf = repo / POSTMAN_MANIFEST
+    if not task.is_file() or not mf.is_file():
+        return []
+    try:
+        data = json.loads(mf.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    manifest_path = str(data.get("openapi_path", "")).replace("\\", "/").strip()
+    if not manifest_path:
+        return []
+    body = task.read_text(encoding="utf-8", errors="replace")[:32_000]
+    found = re.findall(r"(docs/[a-zA-Z0-9_./-]+\.ya?ml)", body)
+    if not found:
+        return []
+    doc_claim = found[0].replace("\\", "/")
+    try:
+        norm_man = (repo / manifest_path).resolve().relative_to(repo).as_posix()
+        norm_doc = (repo / doc_claim).resolve().relative_to(repo).as_posix()
+    except ValueError:
+        return []
+    if norm_man == norm_doc:
+        return []
+    return [
+        DriftFinding(
+            id="DRF-POSTMANIFY-TASK-OPENAPI-001",
+            drift_class="suite_handoff",
+            summary="Postmanify sync task prose references a different OpenAPI-relative path than postmanify-manifest.json.",
+            evidence_sources=[str(task.relative_to(repo)), POSTMAN_MANIFEST, doc_claim, manifest_path],
+            confidence=0.95,
+            severity="medium",
+            deterministic=True,
+            recommended_follow_up="Align task documentation with manifest openapi_path or regenerate manifest.",
+            involved_contract_ids=["CTR-POSTMANIFY-TASK-001", "CTR-API-OPENAPI-001"],
+        )
+    ]
+
+
+def run_all_drifts(repo: Path, contracts: list[ContractRecord] | None = None) -> list[DriftFinding]:
     """Ordered drift passes (cheap first)."""
     findings: list[DriftFinding] = []
     for fn in (
@@ -199,6 +272,9 @@ def run_all_drifts(repo: Path) -> list[DriftFinding]:
         drift_despag_setup_derived_json,
     ):
         findings.extend(fn(repo))
+    findings.extend(drift_postmanify_task_openapi_path_alignment(repo))
+    if contracts is not None:
+        findings.extend(drift_implementation_paths_missing(repo, contracts))
     # de-dup by id
     seen: set[str] = set()
     uniq: list[DriftFinding] = []
