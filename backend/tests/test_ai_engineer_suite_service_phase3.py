@@ -115,3 +115,31 @@ def test_runtime_dashboard_exposes_domain_status_and_warning_summary(app, monkey
     assert any(row["domain"] == "orchestration" and row["state"] == "blocked" for row in payload["domain_status"])
     assert payload["degraded_or_warning"]
     assert payload["status_semantics"]["healthy"]
+
+
+def test_repo_root_resolves_to_repository_not_fs_root(app):
+    """Regression: naive parents[3] can be ``/`` on shallow deploys, causing ``/.wos`` permission errors."""
+    with app.app_context():
+        root = suite_service._repo_root()
+    assert root.resolve().parent != root.resolve()
+    assert (root / "backend").is_dir()
+
+
+def test_walk_best_rag_root_prefers_monorepo_over_slim(tmp_path):
+    """When both layouts appear while walking up, full repo wins."""
+    repo = tmp_path / "wos"
+    (repo / "backend" / "app" / "services").mkdir(parents=True)
+    (repo / "backend" / "app" / "__init__.py").write_text("#", encoding="utf-8")
+    (repo / "backend" / "app" / "services" / ".keep").write_text("", encoding="utf-8")
+    hit = suite_service._walk_best_rag_root(repo / "backend" / "app" / "services")
+    assert hit == repo
+
+
+def test_walk_best_rag_root_finds_slim_deploy(tmp_path):
+    """PAAS-style tree: ``<deploy>/app/services`` without top-level ``backend``."""
+    deploy = tmp_path / "srv"
+    (deploy / "app" / "services").mkdir(parents=True)
+    (deploy / "app" / "__init__.py").write_text("#", encoding="utf-8")
+    (deploy / "app" / "services" / ".keep").write_text("", encoding="utf-8")
+    hit = suite_service._walk_best_rag_root(deploy / "app" / "services")
+    assert hit == deploy

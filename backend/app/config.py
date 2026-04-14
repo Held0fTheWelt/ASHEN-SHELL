@@ -76,6 +76,10 @@ class Config:
     # Task 2: register MockStoryAIAdapter + AdapterModelSpec at app startup when true.
     ROUTING_REGISTRY_BOOTSTRAP = env_bool("ROUTING_REGISTRY_BOOTSTRAP", True)
 
+    # World of Shadows checkout root (RAG ``.wos/`` persistence, ingestion). Optional; see ``ai_engineer_suite_service._repo_root``.
+    _wos_repo_root_env = (os.environ.get("WOS_REPO_ROOT") or "").strip()
+    WOS_REPO_ROOT = _wos_repo_root_env if _wos_repo_root_env else None
+
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = env_bool("PREFER_HTTPS", False)

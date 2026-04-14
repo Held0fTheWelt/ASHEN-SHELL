@@ -38,6 +38,11 @@ For normal startup, the default behavior ensures ``.env`` is ready:
 The backend image includes ``content/modules``; compose sets ``WOS_CONTENT_MODULES_ROOT``
 and play-service INTERNAL vs PUBLIC URLs for container vs browser access.
 
+**RAG / AI Engineer Suite:** The backend Dockerfile uses a slim tree under ``/app`` (``app/`` package, no top-level
+``backend/`` directory). Compose sets ``WOS_REPO_ROOT=/app`` so RAG ``.wos/`` persistence and ingestion resolve
+reliably inside the container. For **host-only** runs (no Docker), set ``WOS_REPO_ROOT`` in ``.env`` to your
+World of Shadows **repository root** (the directory that contains ``backend/app/``).
+
 Default (no subcommand): ``docker compose up -d --build`` - images are built and containers
 are recreated/started (typical local rebuild workflow). Build contexts in
 ``docker-compose.yml`` are repo-root (backend and world-engine Dockerfiles expect ``.``).

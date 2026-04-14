@@ -28,6 +28,8 @@ services:
       - FLASK_APP=run:app
       - CORS_ORIGINS=http://localhost:5001,http://127.0.0.1:5001,http://localhost:5002,http://127.0.0.1:5002
       - FRONTEND_URL=http://localhost:5002
+      # RAG / AI Engineer Suite: repo root inside the image (slim layout: /app/app/..., see backend/Dockerfile).
+      - WOS_REPO_ROOT=/app
       - WOS_CONTENT_MODULES_ROOT=/app/content/modules
       # Backend → world-engine (Docker DNS). Browser-facing URLs use PUBLIC (host port).
       - PLAY_SERVICE_INTERNAL_URL=http://play-service:8000
@@ -83,6 +85,8 @@ services:
     env_file: .env
     environment:
       - APP_TITLE=World of Shadows Play Service
+      # Slim image layout: /app/app/... — same as backend WOS_REPO_ROOT for RAG / .wos paths.
+      - WOS_REPO_ROOT=/app
       # Stable secrets from .env (do not edit hardcoded values; manage in .env instead)
       - PLAY_SERVICE_SECRET=${PLAY_SERVICE_SHARED_SECRET}
       - PLAY_SERVICE_INTERNAL_API_KEY=${PLAY_SERVICE_INTERNAL_API_KEY}

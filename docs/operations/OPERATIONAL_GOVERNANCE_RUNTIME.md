@@ -163,6 +163,13 @@ The same status semantics now appear across:
 `/api/v1/bootstrap/public-status` and prints the setup path when initialization is
 still required.
 
+### RAG and AI Engineer Suite — `WOS_REPO_ROOT`
+
+RAG persistence (`.wos/` under the resolved tree) and AI Engineer Suite ingestion need a **stable root path**:
+
+- **Docker Compose (backend container):** `docker-compose.yml` sets `WOS_REPO_ROOT=/app`. The backend image uses a **slim** layout (`/app/app/…`, no top-level `backend/` directory); see `backend/Dockerfile`. You normally do **not** need to duplicate this in `.env` for local compose.
+- **Host-only API (no Docker):** set `WOS_REPO_ROOT` in `.env` to your **World of Shadows checkout root** — the directory that contains `backend/app/` (or, for slim deploys only, the directory that contains `app/` with `app/services/`). See also [`RESEARCH_DOMAIN_GOVERNANCE.md`](RESEARCH_DOMAIN_GOVERNANCE.md) for layered research visibility; RAG resolution is implemented in `app.services.ai_engineer_suite_service._repo_root()`.
+
 ## Operator workflow (Phase 1)
 
 1. Initialize env/secrets: `python docker-up.py init-env`
