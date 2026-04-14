@@ -19,6 +19,11 @@ from story_runtime_core.adapters import BaseModelAdapter
 from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy
 from ai_stack.capabilities import CapabilityRegistry
 from ai_stack.langchain_integration import invoke_runtime_adapter_with_langchain
+from ai_stack.story_runtime_playability import (
+    build_rewrite_instruction,
+    decide_playability_recovery,
+    degrade_validation_outcome,
+)
 from ai_stack.rag import ContextPackAssembler, ContextRetriever
 from ai_stack.rag_retrieval_dtos import RetrievalRequest
 from ai_stack.rag_types import RetrievalDomain
@@ -89,6 +94,8 @@ class RuntimeTurnGraphExecutor:
     capability_registry: CapabilityRegistry | None = None
     graph_name: str = "wos_runtime_turn_graph"
     graph_version: str = RUNTIME_TURN_GRAPH_VERSION
+    max_self_correction_attempts: int = 3
+    allow_degraded_commit_after_retries: bool = True
 
     def __post_init__(self) -> None:
         """``__post_init__`` — see implementation for behaviour and contracts.
@@ -645,6 +652,7 @@ class RuntimeTurnGraphExecutor:
         code = decision.route_reason
         if code not in ROUTING_LABELS:
             code = "role_matrix_primary"
+        governed = bool(getattr(self.routing, "routes", None))
         update["routing"] = {
             "selected_model": decision.selected_model,
             "selected_provider": decision.selected_provider,
@@ -658,6 +666,8 @@ class RuntimeTurnGraphExecutor:
             "timeout_seconds": selected.timeout_seconds if selected else None,
             "structured_output_success": bool(selected.structured_output_capable) if selected else False,
             "registered_adapter_providers": sorted(self.adapters.keys()),
+            "governed_runtime_story_path": governed,
+            "legacy_default_registry_path": not governed,
         }
         update["selected_provider"] = decision.selected_provider or ""
         update["selected_timeout"] = float(selected.timeout_seconds) if selected else 10.0
@@ -677,6 +687,15 @@ class RuntimeTurnGraphExecutor:
         """
         provider = state.get("selected_provider") or ""
         adapter = self.adapters.get(provider)
+        routing = state.get("routing") if isinstance(state.get("routing"), dict) else {}
+        selected_mid = str(routing.get("selected_model") or "").strip()
+        spec = self.registry.get(selected_mid) if selected_mid else None
+        provider_model = (
+            str(getattr(spec, "provider_model_name", "") or "").strip()
+            if spec is not None
+            else ""
+        )
+        api_model = provider_model or (spec.model_name if spec is not None else None)
         generation: dict[str, Any] = {
             "attempted": False,
             "success": None,
@@ -688,13 +707,16 @@ class RuntimeTurnGraphExecutor:
         outcome = "ok"
         if adapter:
             generation["attempted"] = True
-            runtime_result = invoke_runtime_adapter_with_langchain(
-                adapter=adapter,
-                player_input=state["player_input"],
-                interpreted_input=state.get("interpreted_input", {}) if isinstance(state.get("interpreted_input"), dict) else {},
-                retrieval_context=state.get("context_text"),
-                timeout_seconds=float(state.get("selected_timeout", 10.0)),
-            )
+            invoke_kw: dict[str, Any] = {
+                "adapter": adapter,
+                "player_input": state["player_input"],
+                "interpreted_input": state.get("interpreted_input", {}) if isinstance(state.get("interpreted_input"), dict) else {},
+                "retrieval_context": state.get("context_text"),
+                "timeout_seconds": float(state.get("selected_timeout", 10.0)),
+            }
+            if api_model:
+                invoke_kw["model_name"] = api_model
+            runtime_result = invoke_runtime_adapter_with_langchain(**invoke_kw)
             call = runtime_result.call
             generation["success"] = call.success
             generation["error"] = call.metadata.get("error") if not call.success else None
@@ -791,6 +813,74 @@ class RuntimeTurnGraphExecutor:
         update["generation"] = fallback_generation
         return update
 
+    def _self_correct_generation(
+        self,
+        state: RuntimeTurnState,
+        generation: dict[str, Any],
+        feedback_codes: list[str],
+        attempt_index: int,
+    ) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
+        routing = state.get("routing") if isinstance(state.get("routing"), dict) else {}
+        selected_mid = str(routing.get("selected_model") or "").strip()
+        fallback_mid = str(routing.get("fallback_model") or "").strip()
+        candidate_mid = selected_mid
+        current_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+        if current_meta.get("adapter") == "mock" and fallback_mid:
+            candidate_mid = fallback_mid
+        elif attempt_index > 1 and fallback_mid:
+            candidate_mid = fallback_mid
+        spec = self.registry.get(candidate_mid) if candidate_mid else None
+        provider = getattr(spec, "provider", "") or ""
+        adapter = self.adapters.get(provider) if provider else None
+        if adapter is None:
+            return (
+                generation,
+                list(state.get("proposed_state_effects") or []),
+                {"attempt_index": attempt_index, "status": "adapter_missing", "candidate_model": candidate_mid},
+            )
+        provider_model = getattr(spec, "provider_model_name", None) if spec is not None else None
+        runtime_result = invoke_runtime_adapter_with_langchain(
+            adapter=adapter,
+            player_input=state["player_input"],
+            interpreted_input=state.get("interpreted_input", {}) if isinstance(state.get("interpreted_input"), dict) else {},
+            retrieval_context=state.get("context_text"),
+            timeout_seconds=float(getattr(spec, "timeout_seconds", state.get("selected_timeout", 10.0)) or 10.0),
+            prior_output=str(generation.get("content") or generation.get("model_raw_text") or ""),
+            feedback_codes=list(feedback_codes),
+            rewrite_instruction=build_rewrite_instruction(list(feedback_codes)),
+            model_name=str(provider_model).strip() if provider_model else None,
+        )
+        call = runtime_result.call
+        rewritten = dict(generation)
+        rewritten["attempted"] = True
+        rewritten["success"] = call.success
+        rewritten["error"] = call.metadata.get("error") if not call.success else None
+        rewritten["model_raw_text"] = call.content
+        rewritten["content"] = call.content
+        rewritten["fallback_used"] = bool(generation.get("fallback_used")) or attempt_index > 1
+        rewritten["metadata"] = {
+            **call.metadata,
+            "langchain_prompt_used": True,
+            "langchain_parser_error": runtime_result.parser_error,
+            "structured_output": runtime_result.parsed_output.model_dump(mode="json") if runtime_result.parsed_output else None,
+            "adapter_invocation_mode": ADAPTER_INVOCATION_LANGCHAIN_PRIMARY,
+            "self_correction_attempt_index": attempt_index,
+            "self_correction_feedback_codes": list(feedback_codes),
+            "self_correction_candidate_model": candidate_mid,
+        }
+        proposed = structured_output_to_proposed_effects(
+            runtime_result.parsed_output.model_dump(mode="json") if runtime_result.parsed_output else None
+        )
+        attempt = {
+            "attempt_index": attempt_index,
+            "candidate_model": candidate_mid,
+            "provider": provider,
+            "feedback_codes": list(feedback_codes),
+            "success": bool(call.success),
+            "parser_error": runtime_result.parser_error,
+        }
+        return rewritten, proposed, attempt
+
     def _proposal_normalize(self, state: RuntimeTurnState) -> RuntimeTurnState:
         """``_proposal_normalize`` — see implementation for behaviour and contracts.
         
@@ -852,36 +942,82 @@ class RuntimeTurnGraphExecutor:
                 Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
         """
         update = _track(state, node_name="validate_seam")
-        generation = state.get("generation") or {}
+        generation = dict(state.get("generation") or {})
         proposed = list(state.get("proposed_state_effects") or [])
         silence = state.get("silence_brevity_decision") if isinstance(state.get("silence_brevity_decision"), dict) else {}
-        narr = extract_proposed_narrative_text(proposed)
-        eval_ctx = build_evaluation_context_from_runtime_state(
-            module_id=str(state.get("module_id") or ""),
-            proposed_narrative=narr,
-            selected_scene_function=str(state.get("selected_scene_function") or "establish_pressure"),
-            pacing_mode=str(state.get("pacing_mode") or "standard"),
-            silence_brevity_decision=dict(silence),
-            semantic_move_record=state.get("semantic_move_record") if isinstance(state.get("semantic_move_record"), dict) else None,
-            social_state_record=state.get("social_state_record") if isinstance(state.get("social_state_record"), dict) else None,
-            character_mind_records=list(state.get("character_mind_records") or [])
-            if isinstance(state.get("character_mind_records"), list)
-            else [],
-            scene_plan_record=state.get("scene_plan_record") if isinstance(state.get("scene_plan_record"), dict) else None,
-            prior_continuity_impacts=list(state.get("prior_continuity_impacts") or [])
-            if isinstance(state.get("prior_continuity_impacts"), list)
-            else [],
-            selected_responder_set=list(state.get("selected_responder_set") or [])
-            if isinstance(state.get("selected_responder_set"), list)
-            else [],
-        )
-        outcome = run_validation_seam(
-            module_id=state.get("module_id") or "",
-            proposed_state_effects=proposed,
-            generation=generation if isinstance(generation, dict) else {},
-            evaluation_context=eval_ctx,
-        )
+
+        def _run_validation(
+            current_generation: dict[str, Any],
+            current_proposed: list[dict[str, Any]],
+        ) -> dict[str, Any]:
+            narr = extract_proposed_narrative_text(current_proposed)
+            eval_ctx = build_evaluation_context_from_runtime_state(
+                module_id=str(state.get("module_id") or ""),
+                proposed_narrative=narr,
+                selected_scene_function=str(state.get("selected_scene_function") or "establish_pressure"),
+                pacing_mode=str(state.get("pacing_mode") or "standard"),
+                silence_brevity_decision=dict(silence),
+                semantic_move_record=state.get("semantic_move_record") if isinstance(state.get("semantic_move_record"), dict) else None,
+                social_state_record=state.get("social_state_record") if isinstance(state.get("social_state_record"), dict) else None,
+                character_mind_records=list(state.get("character_mind_records") or [])
+                if isinstance(state.get("character_mind_records"), list)
+                else [],
+                scene_plan_record=state.get("scene_plan_record") if isinstance(state.get("scene_plan_record"), dict) else None,
+                prior_continuity_impacts=list(state.get("prior_continuity_impacts") or [])
+                if isinstance(state.get("prior_continuity_impacts"), list)
+                else [],
+                selected_responder_set=list(state.get("selected_responder_set") or [])
+                if isinstance(state.get("selected_responder_set"), list)
+                else [],
+            )
+            return run_validation_seam(
+                module_id=state.get("module_id") or "",
+                proposed_state_effects=current_proposed,
+                generation=current_generation if isinstance(current_generation, dict) else {},
+                evaluation_context=eval_ctx,
+            )
+
+        outcome = _run_validation(generation, proposed)
+        turn_number = int(state.get("turn_number") or 0)
+        max_attempts = max(0, int(self.max_self_correction_attempts))
+        self_correction_attempts: list[dict[str, Any]] = []
+        for attempt_index in range(1, max_attempts + 1):
+            decision = decide_playability_recovery(
+                turn_number=turn_number,
+                attempt_index=attempt_index,
+                max_attempts=max_attempts,
+                outcome=outcome,
+                generation=generation,
+                proposed_state_effects=proposed,
+                allow_degraded_commit_after_retries=bool(self.allow_degraded_commit_after_retries),
+            )
+            if not decision.should_retry:
+                if decision.allow_degraded_commit:
+                    outcome = degrade_validation_outcome(outcome)
+                break
+            generation, proposed, attempt_record = self._self_correct_generation(
+                state,
+                generation,
+                decision.feedback_codes,
+                attempt_index,
+            )
+            self_correction_attempts.append(attempt_record)
+            outcome = _run_validation(generation, proposed)
+
+        reason = str(outcome.get("reason") or "")
+        generation_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+        if turn_number <= 1 and outcome.get("status") == "rejected" and reason == "dramatic_alignment_narrative_too_short":
+            raw = str(generation.get("content") or generation.get("model_raw_text") or "")
+            if len(raw.strip()) >= 48 or generation.get("success") is True:
+                outcome = degrade_validation_outcome(outcome, reason="opening_leniency_approved")
+
+        update["generation"] = generation
+        update["proposed_state_effects"] = proposed
         update["validation_outcome"] = outcome
+        update["self_correction"] = {
+            "attempt_count": len(self_correction_attempts),
+            "attempts": self_correction_attempts,
+        }
         geo = outcome.get("dramatic_effect_gate_outcome")
         if isinstance(geo, dict):
             update["dramatic_effect_outcome"] = geo

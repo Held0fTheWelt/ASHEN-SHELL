@@ -15,9 +15,13 @@ from ai_stack import (
     build_runtime_retriever,
     create_default_capability_registry,
 )
+from ai_stack.story_runtime_playability import is_hard_boundary_failure
 
 from app.config import APP_VERSION
+from app.repo_root import resolve_wos_repo_root
 from app.observability.audit_log import log_story_runtime_failure, log_story_turn_event
+from app.observability.runtime_metrics import StoryRuntimeMetrics
+from app.story_runtime.governed_runtime import build_governed_story_runtime_components
 from app.story_runtime.commit_models import resolve_narrative_commit
 from app.story_runtime.story_session_store import JsonStorySessionStore
 from app.story_runtime.module_turn_hooks import (
@@ -129,15 +133,73 @@ class StoryRuntimeManager:
         retriever: Any | None = None,
         context_assembler: Any | None = None,
         session_store: JsonStorySessionStore | None = None,
+        governed_runtime_config: dict[str, Any] | None = None,
+        metrics: StoryRuntimeMetrics | None = None,
     ) -> None:
         self.sessions: dict[str, StorySession] = {}
         self._session_store = session_store
         self._session_turn_locks: dict[str, threading.Lock] = {}
         self._session_locks_guard = threading.Lock()
-        self.registry = registry or build_default_registry()
-        self.routing = RoutingPolicy(self.registry)
-        self.adapters: dict[str, BaseModelAdapter] = adapters or build_default_model_adapters()
-        self.repo_root = Path(__file__).resolve().parents[3]
+        self.repo_root = resolve_wos_repo_root(start=Path(__file__).resolve().parent)
+        self.metrics = metrics or StoryRuntimeMetrics()
+        self._governed_runtime_config: dict[str, Any] | None = None
+        self._runtime_config_status: dict[str, Any] = {
+            "source": "default_registry",
+            "config_version": None,
+            "last_reload_ok": None,
+            "route_count": 0,
+            "model_count": 0,
+        }
+        self.turn_graph: RuntimeTurnGraphExecutor | None = None
+        # Isolated tests inject custom adapters/registry; skip Turn-0 graph opening there (fixtures are not
+        # full GoC-shaped). Production and API tests construct the manager without injected adapters.
+        self._skip_graph_opening_on_create = registry is not None or adapters is not None
+        if registry is not None and adapters is not None:
+            self.registry = registry
+            self.routing = RoutingPolicy(self.registry)
+            self.adapters = adapters
+            self._runtime_config_status = {
+                "source": "injected_test_components",
+                "config_version": None,
+                "last_reload_ok": True,
+                "route_count": 0,
+                "model_count": len(self.registry.all()),
+            }
+        elif adapters is not None:
+            # Tests often pass custom adapters without a registry; do not let
+            # ``_apply_runtime_components`` overwrite them with defaults.
+            components = build_governed_story_runtime_components(governed_runtime_config)
+            if components is not None:
+                reg, rout, _ = components
+                self.registry = reg
+                self.routing = rout
+                self.adapters = adapters
+                self._governed_runtime_config = dict(governed_runtime_config or {})
+                self._runtime_config_status = {
+                    "source": "governed_runtime_config_with_injected_adapters",
+                    "config_version": (governed_runtime_config or {}).get("config_version"),
+                    "last_reload_ok": True,
+                    "route_count": len((governed_runtime_config or {}).get("routes") or []),
+                    "model_count": len(self.registry.all()),
+                }
+            else:
+                self._governed_runtime_config = (
+                    dict(governed_runtime_config) if isinstance(governed_runtime_config, dict) else None
+                )
+                self.registry = build_default_registry()
+                self.routing = RoutingPolicy(self.registry)
+                self.adapters = adapters
+                self._runtime_config_status = {
+                    "source": "injected_adapters_default_registry",
+                    "config_version": self._governed_runtime_config.get("config_version")
+                    if isinstance(self._governed_runtime_config, dict)
+                    else None,
+                    "last_reload_ok": True,
+                    "route_count": 0,
+                    "model_count": len(self.registry.all()),
+                }
+        else:
+            self._apply_runtime_components(governed_runtime_config)
         if retriever is None or context_assembler is None:
             default_retriever, default_assembler, corpus = build_runtime_retriever(self.repo_root)
             self.retriever = retriever or default_retriever
@@ -152,15 +214,7 @@ class StoryRuntimeManager:
             assembler=self.context_assembler,
             repo_root=self.repo_root,
         )
-        self.turn_graph = RuntimeTurnGraphExecutor(
-            interpreter=interpret_player_input,
-            routing=self.routing,
-            registry=self.registry,
-            adapters=self.adapters,
-            retriever=self.retriever,
-            assembler=self.context_assembler,
-            capability_registry=self.capability_registry,
-        )
+        self._rebuild_turn_graph()
         if self._session_store is not None:
             for _sid, raw in self._session_store.load_all_raw().items():
                 try:
@@ -179,6 +233,308 @@ class StoryRuntimeManager:
         if self._session_store is None:
             return
         self._session_store.save(session.session_id, story_session_to_payload(session))
+
+    def _max_self_correction_attempts(self) -> int:
+        settings = (
+            (self._governed_runtime_config or {}).get("world_engine_settings") or {}
+            if isinstance(self._governed_runtime_config, dict)
+            else {}
+        )
+        try:
+            v = int(settings.get("max_self_correction_attempts", settings.get("max_retry_attempts", 3)))
+            return max(0, v)
+        except Exception:
+            return 3
+
+    def _allow_degraded_commit_after_retries(self) -> bool:
+        settings = (
+            (self._governed_runtime_config or {}).get("world_engine_settings") or {}
+            if isinstance(self._governed_runtime_config, dict)
+            else {}
+        )
+        return bool(settings.get("allow_degraded_commit_after_retries", True))
+
+    def _opening_retry_count(self) -> int:
+        settings = (
+            (self._governed_runtime_config or {}).get("world_engine_settings") or {}
+            if isinstance(self._governed_runtime_config, dict)
+            else {}
+        )
+        try:
+            return max(0, int(settings.get("opening_retry_attempts", 2)))
+        except Exception:
+            return 2
+
+    def _apply_runtime_components(self, governed_runtime_config: dict[str, Any] | None) -> None:
+        components = build_governed_story_runtime_components(governed_runtime_config)
+        if components is not None:
+            reg, rout, adp = components
+            self.registry = reg
+            self.routing = rout
+            self.adapters = adp
+            self._governed_runtime_config = dict(governed_runtime_config or {})
+            self._runtime_config_status = {
+                "source": "governed_runtime_config",
+                "config_version": (governed_runtime_config or {}).get("config_version"),
+                "last_reload_ok": True,
+                "route_count": len((governed_runtime_config or {}).get("routes") or []),
+                "model_count": len((governed_runtime_config or {}).get("models") or []),
+            }
+            self.metrics.incr(
+                "runtime_config_apply_success",
+                source="governed_runtime_config",
+                config_version=(governed_runtime_config or {}).get("config_version"),
+            )
+            return
+        self._governed_runtime_config = dict(governed_runtime_config) if isinstance(governed_runtime_config, dict) else None
+        self.registry = build_default_registry()
+        self.routing = RoutingPolicy(self.registry)
+        self.adapters = build_default_model_adapters()
+        self._runtime_config_status = {
+            "source": "default_registry",
+            "config_version": (governed_runtime_config or {}).get("config_version")
+            if isinstance(governed_runtime_config, dict)
+            else None,
+            "last_reload_ok": False if isinstance(governed_runtime_config, dict) else None,
+            "route_count": 0,
+            "model_count": 0,
+        }
+        self.metrics.incr(
+            "runtime_config_apply_fallback_default",
+            source="default_registry",
+            config_version=self._runtime_config_status.get("config_version"),
+        )
+
+    def _rebuild_turn_graph(self) -> None:
+        self.turn_graph = RuntimeTurnGraphExecutor(
+            interpreter=interpret_player_input,
+            routing=self.routing,
+            registry=self.registry,
+            adapters=self.adapters,
+            retriever=self.retriever,
+            assembler=self.context_assembler,
+            capability_registry=self.capability_registry,
+            max_self_correction_attempts=self._max_self_correction_attempts(),
+            allow_degraded_commit_after_retries=self._allow_degraded_commit_after_retries(),
+        )
+
+    def reload_runtime_config(self, governed_runtime_config: dict[str, Any] | None) -> dict[str, Any]:
+        self._apply_runtime_components(governed_runtime_config)
+        self._rebuild_turn_graph()
+        return self.runtime_config_status()
+
+    def runtime_config_status(self) -> dict[str, Any]:
+        return {
+            **self._runtime_config_status,
+            "max_self_correction_attempts": self._max_self_correction_attempts(),
+            "allow_degraded_commit_after_retries": self._allow_degraded_commit_after_retries(),
+            "metrics": self.metrics.summary(),
+        }
+
+    def _build_opening_prompt(self, session: StorySession) -> str:
+        projection = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
+        scene_id = str(projection.get("start_scene_id") or session.current_scene_id or "opening")
+        scenes = projection.get("scenes") if isinstance(projection.get("scenes"), list) else []
+        scene_row = next(
+            (
+                row
+                for row in scenes
+                if isinstance(row, dict) and str(row.get("scene_id") or row.get("id") or "") == scene_id
+            ),
+            {},
+        )
+        scene_name = str(scene_row.get("name") or scene_id)
+        scene_desc = str(scene_row.get("description") or "")
+        chars = projection.get("character_ids") if isinstance(projection.get("character_ids"), list) else []
+        cast = ", ".join(str(c) for c in chars[:8]) if chars else "unknown"
+        return (
+            f"Opening turn for module {session.module_id}. "
+            f"Establish the starting situation in scene {scene_name} ({scene_id}). "
+            f"Scene description: {scene_desc or 'n/a'}. Cast: {cast}. "
+            "Write vivid but grounded opening narration within canonical module boundaries. "
+            "Set initial dramatic pressure, social posture, and opening narrative threads."
+        )
+
+    def _opening_commit_acceptable(self, graph_state: dict[str, Any]) -> bool:
+        val = graph_state.get("validation_outcome") if isinstance(graph_state.get("validation_outcome"), dict) else {}
+        return val.get("status") == "approved"
+
+    def _visible_narration_present(self, graph_state: dict[str, Any]) -> bool:
+        gen = graph_state.get("generation") if isinstance(graph_state.get("generation"), dict) else {}
+        raw = str(gen.get("content") or gen.get("model_raw_text") or "").strip()
+        if raw:
+            return True
+        bundle = graph_state.get("visible_output_bundle") if isinstance(graph_state.get("visible_output_bundle"), dict) else {}
+        gm = bundle.get("gm_narration")
+        if isinstance(gm, list) and any(str(x).strip() for x in gm):
+            return True
+        return False
+
+    def _finalize_committed_turn(
+        self,
+        *,
+        session: StorySession,
+        graph_state: dict[str, Any],
+        trace_id: str | None,
+        commit_turn_number: int,
+        player_input: str,
+        turn_kind: str | None,
+        prior_scene_id: str,
+        history_tail: list,
+        graph_threads: list[dict[str, Any]] | None,
+        graph_summary: str | None,
+        host_experience_template: dict[str, Any] | None,
+        prior_ci: list[dict[str, Any]] | None,
+    ) -> dict[str, Any]:
+        goc_append_continuity_impacts(session.module_id, session.prior_continuity_impacts, graph_state)
+        graph_diag = graph_state.get("graph_diagnostics", {}) if isinstance(graph_state.get("graph_diagnostics"), dict) else {}
+        errors = graph_diag.get("errors", []) if isinstance(graph_diag.get("errors"), list) else []
+        gen = graph_state.get("generation", {}) if isinstance(graph_state.get("generation"), dict) else {}
+        interpreted_input = graph_state.get("interpreted_input", {})
+        if not isinstance(interpreted_input, dict):
+            interpreted_input = {}
+        narrative_commit = resolve_narrative_commit(
+            turn_number=commit_turn_number,
+            prior_scene_id=prior_scene_id,
+            player_input=player_input,
+            interpreted_input=interpreted_input,
+            generation=gen,
+            runtime_projection=session.runtime_projection,
+        )
+        session.current_scene_id = narrative_commit.committed_scene_id
+        session.narrative_threads, session.last_thread_update_trace = update_narrative_threads(
+            prior=session.narrative_threads,
+            latest_commit=narrative_commit,
+            history_tail=history_tail,
+            committed_scene_id=narrative_commit.committed_scene_id,
+            turn_number=commit_turn_number,
+        )
+        model_ok = gen.get("success") is True
+        outcome = "ok" if model_ok and not errors else "degraded"
+        log_story_turn_event(
+            trace_id=trace_id,
+            story_session_id=session.session_id,
+            module_id=session.module_id,
+            turn_number=commit_turn_number,
+            player_input=player_input,
+            outcome=outcome,
+            graph_error_count=len(errors),
+        )
+        narrative_commit_payload = narrative_commit.model_dump(mode="json")
+        gov = {
+            "source": self._runtime_config_status.get("source"),
+            "config_version": self._runtime_config_status.get("config_version"),
+            "governed_runtime_active": self._runtime_config_status.get("source") == "governed_runtime_config",
+            "legacy_default_registry_path": self._runtime_config_status.get("source") == "default_registry",
+        }
+        routing = graph_state.get("routing") if isinstance(graph_state.get("routing"), dict) else {}
+        gov["route_selected_model"] = routing.get("selected_model")
+        gov["route_selected_provider"] = routing.get("selected_provider")
+        gov["route_reason_code"] = routing.get("route_reason_code")
+        gov["fallback_stage_reached"] = routing.get("fallback_stage_reached") or (
+            "graph_fallback_executed" if "fallback_model" in (graph_state.get("nodes_executed") or []) else "primary_only"
+        )
+        gen_meta = gen.get("metadata") if isinstance(gen.get("metadata"), dict) else {}
+        gov["adapter"] = gen_meta.get("adapter")
+        gov["api_model"] = gen_meta.get("model")
+        self_correction = graph_state.get("self_correction") if isinstance(graph_state.get("self_correction"), dict) else {}
+        gov["self_correction_attempt_count"] = self_correction.get("attempt_count")
+        val = graph_state.get("validation_outcome") if isinstance(graph_state.get("validation_outcome"), dict) else {}
+        gov["validation_reason"] = val.get("reason")
+        gov["mock_output_flag"] = bool(str(gen.get("content") or "").strip().startswith("[mock]"))
+        event: dict[str, Any] = {
+            "turn_number": commit_turn_number,
+            "turn_kind": turn_kind or "player",
+            "trace_id": trace_id or "",
+            "raw_input": player_input,
+            "interpreted_input": interpreted_input,
+            "narrative_commit": narrative_commit_payload,
+            "retrieval": graph_state.get("retrieval", {}),
+            "model_route": {**routing, "generation": gen},
+            "graph": graph_diag,
+            "visible_output_bundle": graph_state.get("visible_output_bundle"),
+            "diagnostics_refs": graph_state.get("diagnostics_refs"),
+            "experiment_preview": graph_state.get("experiment_preview"),
+            "validation_outcome": val,
+            "committed_result": graph_state.get("committed_result"),
+            "selected_scene_function": graph_state.get("selected_scene_function"),
+            "self_correction": self_correction,
+            "runtime_governance_surface": gov,
+        }
+        committed_record = {
+            "turn_number": commit_turn_number,
+            "turn_kind": turn_kind or "player",
+            "trace_id": trace_id or "",
+            "turn_outcome": outcome,
+            "narrative_commit": narrative_commit_payload,
+            "committed_state_after": {
+                "current_scene_id": session.current_scene_id,
+                "turn_counter": session.turn_counter,
+            },
+        }
+        session.history.append(committed_record)
+        session.diagnostics.append(event)
+        self._persist_session(session)
+        return event
+
+    def _execute_opening_locked(self, session_id: str, trace_id: str | None) -> dict[str, Any]:
+        session = self.get_session(session_id)
+        prompt = self._build_opening_prompt(session)
+        prior_scene_id = session.current_scene_id
+        history_tail = session.history[-(NARRATIVE_COMMIT_HISTORY_TAIL - 1) :]
+        graph_threads, graph_summary = build_graph_thread_export(session.narrative_threads)
+        host_experience_template = (
+            goc_host_experience_template(session.runtime_projection)
+            if session.module_id == "god_of_carnage"
+            else None
+        )
+        prior_ci = goc_prior_continuity_for_graph(session.module_id, session.prior_continuity_impacts)
+        try:
+            graph_state = self.turn_graph.run(
+                session_id=session.session_id,
+                module_id=session.module_id,
+                current_scene_id=session.current_scene_id,
+                player_input=prompt,
+                trace_id=trace_id,
+                host_versions={"world_engine_app_version": APP_VERSION},
+                active_narrative_threads=graph_threads or None,
+                thread_pressure_summary=graph_summary,
+                host_experience_template=host_experience_template,
+                prior_continuity_impacts=prior_ci if prior_ci else None,
+                turn_number=0,
+                turn_initiator_type="engine",
+                turn_input_class="opening",
+            )
+        except Exception as exc:
+            log_story_runtime_failure(
+                trace_id=trace_id,
+                story_session_id=session_id,
+                operation="execute_opening",
+                message=str(exc),
+                failure_class="graph_execution_exception",
+            )
+            raise
+        if not self._opening_commit_acceptable(graph_state):
+            if is_hard_boundary_failure(graph_state.get("validation_outcome")):
+                raise RuntimeError("Opening blocked by hard narrative boundary")
+            raise RuntimeError("Opening validation did not approve committed narration")
+        if not self._visible_narration_present(graph_state):
+            raise RuntimeError("Opening produced no visible narration")
+        session.updated_at = datetime.now(timezone.utc)
+        return self._finalize_committed_turn(
+            session=session,
+            graph_state=graph_state,
+            trace_id=trace_id,
+            commit_turn_number=0,
+            player_input=prompt,
+            turn_kind="opening",
+            prior_scene_id=prior_scene_id,
+            history_tail=history_tail,
+            graph_threads=graph_threads,
+            graph_summary=graph_summary,
+            host_experience_template=host_experience_template,
+            prior_ci=prior_ci,
+        )
 
     def create_session(
         self,
@@ -208,7 +564,39 @@ class StoryRuntimeManager:
         with self._session_locks_guard:
             self._session_turn_locks.setdefault(session_id, threading.Lock())
         self._persist_session(session)
-        return session
+        if self._skip_graph_opening_on_create:
+            return session
+        attempts = self._opening_retry_count() + 1
+        last_exc: BaseException | None = None
+        for attempt in range(1, attempts + 1):
+            try:
+                with self._session_turn_lock(session_id):
+                    self._execute_opening_locked(session_id, trace_id=None)
+                self.metrics.incr("story_opening_success", module_id=module_id, session_id=session_id, attempt=attempt)
+                return session
+            except BaseException as exc:
+                last_exc = exc
+                self.metrics.incr(
+                    "story_opening_retry",
+                    module_id=module_id,
+                    session_id=session_id,
+                    attempt=attempt,
+                    error=str(exc)[:300],
+                )
+        self.sessions.pop(session_id, None)
+        if self._session_store is not None:
+            try:
+                self._session_store.delete(session_id)
+            except Exception:
+                pass
+        log_story_runtime_failure(
+            trace_id=None,
+            story_session_id=session_id,
+            operation="create_session_opening",
+            message=str(last_exc)[:500] if last_exc else "opening_failed",
+            failure_class="opening_generation_failed",
+        )
+        raise RuntimeError(f"Opening generation failed for module {module_id}: {last_exc}") from last_exc
 
     def execute_turn(self, *, session_id: str, player_input: str, trace_id: str | None = None) -> dict[str, Any]:
         with self._session_turn_lock(session_id):
@@ -220,6 +608,7 @@ class StoryRuntimeManager:
         session = self.get_session(session_id)
         session.turn_counter += 1
         session.updated_at = datetime.now(timezone.utc)
+        commit_turn_number = session.turn_counter
         prior_scene_id = session.current_scene_id
         history_tail = session.history[-(NARRATIVE_COMMIT_HISTORY_TAIL - 1) :]
         graph_threads, graph_summary = build_graph_thread_export(session.narrative_threads)
@@ -241,8 +630,11 @@ class StoryRuntimeManager:
                 thread_pressure_summary=graph_summary,
                 host_experience_template=host_experience_template,
                 prior_continuity_impacts=prior_ci if prior_ci else None,
+                turn_number=commit_turn_number,
+                turn_initiator_type="player",
             )
         except Exception as exc:
+            session.turn_counter -= 1
             log_story_runtime_failure(
                 trace_id=trace_id,
                 story_session_id=session_id,
@@ -252,78 +644,26 @@ class StoryRuntimeManager:
             )
             raise
 
-        goc_append_continuity_impacts(session.module_id, session.prior_continuity_impacts, graph_state)
-
-        graph_diag = graph_state.get("graph_diagnostics", {}) if isinstance(graph_state.get("graph_diagnostics"), dict) else {}
-        errors = graph_diag.get("errors", []) if isinstance(graph_diag.get("errors"), list) else []
-        gen = graph_state.get("generation", {}) if isinstance(graph_state.get("generation"), dict) else {}
-        interpreted_input = graph_state.get("interpreted_input", {})
-        if not isinstance(interpreted_input, dict):
-            interpreted_input = {}
-
-        narrative_commit = resolve_narrative_commit(
-            turn_number=session.turn_counter,
-            prior_scene_id=prior_scene_id,
-            player_input=player_input,
-            interpreted_input=interpreted_input,
-            generation=gen,
-            runtime_projection=session.runtime_projection,
-        )
-        session.current_scene_id = narrative_commit.committed_scene_id
-        session.narrative_threads, session.last_thread_update_trace = update_narrative_threads(
-            prior=session.narrative_threads,
-            latest_commit=narrative_commit,
-            history_tail=history_tail,
-            committed_scene_id=narrative_commit.committed_scene_id,
-            turn_number=session.turn_counter,
-        )
-
-        model_ok = gen.get("success") is True
-        outcome = "ok" if model_ok and not errors else "degraded"
-        log_story_turn_event(
+        val = graph_state.get("validation_outcome") if isinstance(graph_state.get("validation_outcome"), dict) else {}
+        if val.get("status") != "approved":
+            session.turn_counter -= 1
+            if is_hard_boundary_failure(val):
+                raise RuntimeError(f"Hard narrative boundary: {val.get('reason') or 'rejected'}")
+            raise RuntimeError(f"Turn rejected after bounded recovery: {val.get('reason') or 'rejected'}")
+        return self._finalize_committed_turn(
+            session=session,
+            graph_state=graph_state,
             trace_id=trace_id,
-            story_session_id=session.session_id,
-            module_id=session.module_id,
-            turn_number=session.turn_counter,
+            commit_turn_number=commit_turn_number,
             player_input=player_input,
-            outcome=outcome,
-            graph_error_count=len(errors),
+            turn_kind="player",
+            prior_scene_id=prior_scene_id,
+            history_tail=history_tail,
+            graph_threads=graph_threads,
+            graph_summary=graph_summary,
+            host_experience_template=host_experience_template,
+            prior_ci=prior_ci,
         )
-
-        narrative_commit_payload = narrative_commit.model_dump(mode="json")
-        event = {
-            "turn_number": session.turn_counter,
-            "trace_id": trace_id or "",
-            "raw_input": player_input,
-            "interpreted_input": interpreted_input,
-            "narrative_commit": narrative_commit_payload,
-            "retrieval": graph_state.get("retrieval", {}),
-            "model_route": {
-                **graph_state.get("routing", {}),
-                "generation": graph_state.get("generation", {}),
-            },
-            "graph": graph_state.get("graph_diagnostics", {}),
-            "visible_output_bundle": graph_state.get("visible_output_bundle"),
-            "diagnostics_refs": graph_state.get("diagnostics_refs"),
-            "experiment_preview": graph_state.get("experiment_preview"),
-            "validation_outcome": graph_state.get("validation_outcome"),
-            "committed_result": graph_state.get("committed_result"),
-            "selected_scene_function": graph_state.get("selected_scene_function"),
-        }
-        committed_record = {
-            "turn_number": session.turn_counter,
-            "trace_id": trace_id or "",
-            "turn_outcome": outcome,
-            "narrative_commit": narrative_commit_payload,
-            "committed_state_after": {
-                "current_scene_id": session.current_scene_id,
-                "turn_counter": session.turn_counter,
-            },
-        }
-        session.history.append(committed_record)
-        session.diagnostics.append(event)
-        self._persist_session(session)
-        return event
 
     def get_session(self, session_id: str) -> StorySession:
         session = self.sessions.get(session_id)
@@ -430,6 +770,7 @@ class StoryRuntimeManager:
         return {
             "session_id": session.session_id,
             "turn_counter": session.turn_counter,
+            "runtime_config_status": self.runtime_config_status(),
             "committed_state": committed_state,
             "diagnostics": session.diagnostics[-20:],
             "envelope_kind": "full_turn_orchestration_includes_graph_retrieval_and_interpreted_input",

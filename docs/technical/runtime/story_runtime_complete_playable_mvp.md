@@ -1,0 +1,40 @@
+# Story runtime: complete playable MVP (authoritative path)
+
+This document describes the **authoritative** World of Shadows story runtime behaviour needed for a minimal playable experience: committed Turn 0 opening, governed model routing, bounded self-correction, degraded-but-valid continuation, diagnostics, and operator-visible repro metadata.
+
+## Turn 0 opening (session create)
+
+When `POST /api/internal/story/sessions` creates a session, the World Engine runs a **graph opening** turn (unless test fixtures inject `registry` or `adapters`, which skips opening for isolation). The committed opening is appended to session history and the last diagnostics row is returned as **`opening_turn`** in the create response.
+
+Clients should treat `opening_turn` as **committed narration** (same envelope shape as later diagnostics rows), not as a speculative draft.
+
+## Player turns
+
+`POST …/sessions/{id}/turns` executes the LangGraph runtime turn graph: interpretation, retrieval, routing, model invoke (LangChain-structured primary for capable adapters), optional graph-managed fallback, proposal normalisation, validation seam, commit seam, visible render, package output.
+
+### Self-correction
+
+Validation may reject a seam outcome. The executor retries generation up to **`max_self_correction_attempts`** (from governed runtime settings, default 3) with bounded rewrite instructions. After retries, **`allow_degraded_commit_after_retries`** may downgrade validation to allow a degraded commit on early turns when policy allows.
+
+### Retrieval context
+
+Retrieval hits are assembled into `context_text` and passed into LangChain invocation. Adapter-level `retrieval_context` may reflect the **last** invocation after retries; operator diagnostics remain authoritative for “what was attached when”.
+
+## Backend play bridge
+
+`POST /api/v1/sessions/<backend_session_id>/turns` lazily creates the World Engine story session on the first turn. When that happens, the bridge response may include:
+
+- **`opening_turn`** — Turn 0 envelope from the create call
+- **`world_engine_opening_meta`** — `current_scene_id`, `turn_counter`, `module_id` for UI projection
+
+The frontend play shell persists the opening row **before** the first player turn in the transcript.
+
+## Runtime config reload
+
+The World Engine exposes `POST /api/internal/story/runtime/reload-config` to re-fetch governed runtime configuration from the backend and rebuild registry, routing, and the turn graph executor.
+
+## Related code
+
+- World Engine: `world-engine/app/story_runtime/manager.py`, `world-engine/app/api/http.py`
+- AI stack: `ai_stack/langgraph_runtime_executor.py`, `ai_stack/langchain_integration/bridges.py`, `ai_stack/story_runtime_playability.py`
+- Play UI: `frontend/app/routes_play.py`, `frontend/static/play_shell.js`

@@ -46,6 +46,7 @@ _RUNTIME_PROMPT_TEMPLATE = ChatPromptTemplate.from_messages(
             "Player input:\n{player_input}\n\n"
             "Interpreted input:\n{interpreted_input}\n\n"
             "Runtime retrieval context:\n{retrieval_context}\n\n"
+            "{correction_block}"
             "Format instructions:\n{format_instructions}",
         ),
     ]
@@ -87,6 +88,10 @@ def invoke_runtime_adapter_with_langchain(
     interpreted_input: dict[str, Any],
     retrieval_context: str | None,
     timeout_seconds: float,
+    prior_output: str | None = None,
+    feedback_codes: list[str] | None = None,
+    rewrite_instruction: str | None = None,
+    model_name: str | None = None,
 ) -> RuntimeInvocationResult:
     """Describe what ``invoke_runtime_adapter_with_langchain`` does in one
     line (verb-led summary for this function).
@@ -106,18 +111,30 @@ def invoke_runtime_adapter_with_langchain(
             Returns a value of type ``RuntimeInvocationResult``; see the function body for structure, error paths, and sentinels.
     """
     parser = _RUNTIME_OUTPUT_PARSER
+    correction_block = ""
+    if rewrite_instruction:
+        fb = ", ".join(str(x) for x in (feedback_codes or []) if str(x).strip()) or "(none)"
+        correction_block = (
+            "Self-correction pass:\n"
+            f"Prior draft (reference only):\n{(prior_output or '').strip() or '(none)'}\n\n"
+            f"Instruction:\n{rewrite_instruction}\n\n"
+            f"Feedback codes: {fb}\n\n"
+        )
     rendered_messages = _RUNTIME_PROMPT_TEMPLATE.format_messages(
         player_input=player_input,
         interpreted_input=interpreted_input,
         retrieval_context=retrieval_context or "(none)",
+        correction_block=correction_block,
         format_instructions=parser.get_format_instructions(),
     )
     prompt_text = "\n\n".join(f"{message.type.upper()}: {message.content}" for message in rendered_messages)
-    call = adapter.generate(
-        prompt_text,
-        timeout_seconds=timeout_seconds,
-        retrieval_context=retrieval_context,
-    )
+    gen_kw: dict[str, Any] = {
+        "timeout_seconds": timeout_seconds,
+        "retrieval_context": retrieval_context,
+    }
+    if model_name:
+        gen_kw["model_name"] = model_name
+    call = adapter.generate(prompt_text, **gen_kw)
     if not call.success:
         return RuntimeInvocationResult(call=call, prompt_text=prompt_text, parsed_output=None, parser_error=None)
     try:

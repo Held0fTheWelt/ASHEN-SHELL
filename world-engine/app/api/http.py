@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from app.config import PLAY_SERVICE_INTERNAL_API_KEY
+from app.repo_root import resolve_wos_repo_root
 from app.narrative.corrective_retry import apply_corrective_retry
 from app.narrative.fallback_generator import build_safe_fallback_output
 from app.narrative.output_validator import validate_runtime_output
@@ -56,7 +57,7 @@ def get_story_manager(request: Request) -> StoryRuntimeManager:
 def _get_narrative_loader(request: Request) -> NarrativePackageLoader:
     loader = getattr(request.app.state, "narrative_package_loader", None)
     if loader is None:
-        repo_root = Path(__file__).resolve().parents[3]
+        repo_root = resolve_wos_repo_root(start=Path(__file__).resolve().parent)
         loader = NarrativePackageLoader(repo_root=repo_root)
         request.app.state.narrative_package_loader = loader
     return loader
@@ -344,6 +345,29 @@ def get_transcript(run_id: str, manager: RuntimeManager = Depends(get_manager)) 
     }
 
 
+@router.post("/internal/story/runtime/reload-config", dependencies=[Depends(_require_internal_api_key)])
+def reload_story_runtime_governed_config(
+    request: Request,
+    manager: StoryRuntimeManager = Depends(get_story_manager),
+) -> dict[str, Any]:
+    """Re-fetch governed runtime config from the backend and rebuild story-runtime routing/graph."""
+    from app.config import (
+        BACKEND_RUNTIME_CONFIG_URL,
+        INTERNAL_RUNTIME_CONFIG_TOKEN,
+        RUNTIME_CONFIG_FETCH_TIMEOUT_SECONDS,
+    )
+    from app.runtime.runtime_config_client import fetch_resolved_runtime_config
+
+    cfg = fetch_resolved_runtime_config(
+        base_url=BACKEND_RUNTIME_CONFIG_URL,
+        token=INTERNAL_RUNTIME_CONFIG_TOKEN,
+        timeout_seconds=RUNTIME_CONFIG_FETCH_TIMEOUT_SECONDS,
+    )
+    request.app.state.resolved_runtime_config = cfg
+    status = manager.reload_runtime_config(cfg)
+    return {"ok": True, "runtime_config_status": status}
+
+
 @router.get("/story/sessions", dependencies=[Depends(_require_internal_api_key)])
 def list_story_sessions(manager: StoryRuntimeManager = Depends(get_story_manager)) -> dict[str, Any]:
     items = manager.list_session_summaries()
@@ -357,13 +381,16 @@ def create_story_session(payload: CreateStorySessionRequest, manager: StoryRunti
         runtime_projection=payload.runtime_projection,
         content_provenance=payload.content_provenance,
     )
+    opening_turn = session.diagnostics[-1] if session.diagnostics else None
     return {
         "session_id": session.session_id,
         "module_id": session.module_id,
         "turn_counter": session.turn_counter,
         "current_scene_id": session.current_scene_id,
         "content_provenance": session.content_provenance,
-        "warnings": ["world_engine_authoritative_story_runtime"],
+        "opening_turn": opening_turn,
+        "runtime_config_status": manager.runtime_config_status(),
+        "warnings": ["world_engine_authoritative_story_runtime", "session_includes_committed_turn_0_opening"],
     }
 
 

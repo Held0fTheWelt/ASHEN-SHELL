@@ -13,7 +13,14 @@ class CaptureAdapter(BaseModelAdapter):
         self.last_prompt: str | None = None
         self.last_retrieval_context: str | None = None
 
-    def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
+    def generate(
+        self,
+        prompt: str,
+        *,
+        timeout_seconds: float = 10.0,
+        retrieval_context: str | None = None,
+        model_name: str | None = None,
+    ) -> ModelCallResult:
         self.last_prompt = prompt
         self.last_retrieval_context = retrieval_context
         return ModelCallResult(content="ok", success=True, metadata={"adapter": self.adapter_name})
@@ -22,7 +29,14 @@ class CaptureAdapter(BaseModelAdapter):
 class FailingAdapter(BaseModelAdapter):
     adapter_name = "failing"
 
-    def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
+    def generate(
+        self,
+        prompt: str,
+        *,
+        timeout_seconds: float = 10.0,
+        retrieval_context: str | None = None,
+        model_name: str | None = None,
+    ) -> ModelCallResult:
         return ModelCallResult(content="", success=False, metadata={"error": "forced_failure"})
 
 
@@ -89,8 +103,9 @@ def test_story_runtime_graph_uses_fallback_branch_on_model_failure(tmp_path):
     assert "fallback_model" in turn["graph"]["nodes_executed"]
     assert turn["model_route"]["generation"]["fallback_used"] is True
     repro = turn["graph"].get("repro_metadata") or {}
-    assert repro.get("adapter_invocation_mode") == "raw_adapter_graph_managed_fallback"
     assert repro.get("graph_path_summary") == "used_fallback_model_node_raw_adapter"
+    assert repro.get("model_fallback_used") is True
+    assert repro.get("adapter_invocation_mode") == "langchain_structured_primary"
 
 
 def test_story_runtime_commits_legal_scene_progression(tmp_path):

@@ -540,6 +540,63 @@ def test_play_execute_json_returns_ok_and_bundles(client, monkeypatch):
     assert data["operator_bundle"]["trace_id"] == "tr-json"
 
 
+def test_play_shell_transcript_includes_opening_when_bridge_returns_it(client, monkeypatch):
+    def fake_request(method, path, **kwargs):
+        if path == "/api/v1/game/tickets":
+            return FakeResponse(payload={"ticket": "t"})
+        if path == "/api/v1/sessions":
+            return FakeResponse(payload={"session_id": "backend-session-1"})
+        if path == "/api/v1/sessions/backend-session-1/turns":
+            return FakeResponse(
+                payload={
+                    "trace_id": "tr-open",
+                    "opening_turn": {
+                        "turn_number": 0,
+                        "turn_kind": "opening",
+                        "raw_input": "internal opening prompt — hidden in UI",
+                        "interpreted_input": {"kind": "speech"},
+                        "narrative_commit": {
+                            "committed_scene_id": "scene_1",
+                            "committed_consequences": ["opening:committed"],
+                        },
+                        "visible_output_bundle": {"gm_narration": ["Welcome to the table."]},
+                        "validation_outcome": {"status": "approved"},
+                    },
+                    "world_engine_opening_meta": {
+                        "current_scene_id": "scene_1",
+                        "turn_counter": 1,
+                        "module_id": "god_of_carnage",
+                    },
+                    "turn": {
+                        "turn_number": 1,
+                        "raw_input": kwargs["json_data"]["player_input"],
+                        "interpreted_input": {"kind": "speech"},
+                        "visible_output_bundle": {"gm_narration": ["You speak; tension rises."]},
+                    },
+                    "state": {"current_scene_id": "scene_1", "turn_counter": 1},
+                }
+            )
+        raise AssertionError(f"unexpected backend call: {method} {path}")
+
+    monkeypatch.setattr("app.player_backend.request_backend", fake_request)
+    with client.session_transaction() as sess:
+        sess["access_token"] = "t"
+        sess["current_user"] = {"username": "u1"}
+        sess["play_shell_run_modules"] = {"sid": "god_of_carnage"}
+        sess["play_shell_backend_sessions"] = {"sid": "backend-session-1"}
+    r = client.post(
+        "/play/sid/execute",
+        data=json.dumps({"player_input": "Hello."}),
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+    )
+    assert r.status_code == 200
+    page = client.get("/play/sid")
+    assert page.status_code == 200
+    assert b"Welcome to the table." in page.data
+    assert b"You speak; tension rises." in page.data
+    assert b"internal opening prompt" not in page.data
+
+
 def test_play_shell_transcript_shows_two_turns_after_json_executes(client, monkeypatch):
     turn_state = {"n": 0}
 

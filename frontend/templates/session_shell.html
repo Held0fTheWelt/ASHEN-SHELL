@@ -43,7 +43,7 @@
             </div>
             <div class="play-story-output">
             {% if entry.narration_text %}
-              <div class="play-story-text play-turn-card__narration">{{ entry.narration_text }}</div>
+              <div class="play-story-text play-turn-card__narration play-narration--reveal">{{ entry.narration_text }}</div>
             {% else %}
               <p class="play-story-missing">Für diesen Zug liefert die Engine keinen erzählenden Text (<code>gm_narration</code> leer). Der Lauf kann trotzdem weitergegangen sein — Details siehe Operator-Tab.</p>
             {% endif %}

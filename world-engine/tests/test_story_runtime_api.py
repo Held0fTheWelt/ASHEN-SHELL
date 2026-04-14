@@ -47,7 +47,12 @@ def test_story_session_lifecycle_and_nl_interpretation(client, internal_api_key)
         },
     )
     assert create_response.status_code == 200
-    session_id = create_response.json()["session_id"]
+    created = create_response.json()
+    session_id = created["session_id"]
+    opening = created.get("opening_turn")
+    assert opening is not None
+    assert opening.get("turn_kind") == "opening"
+    assert opening.get("turn_number") == 0
 
     turn_response = client.post(
         f"/api/story/sessions/{session_id}/turns",
@@ -84,6 +89,7 @@ def test_story_session_lifecycle_and_nl_interpretation(client, internal_api_key)
     state_body = state_response.json()
     assert state_body["turn_counter"] == 2
     assert state_body.get("last_committed_turn", {}).get("turn_number") == 2
+    assert state_body.get("history_count") == 3
     assert "graph" not in (state_body.get("last_committed_turn") or {})
 
     diagnostics_response = client.get(

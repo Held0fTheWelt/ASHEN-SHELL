@@ -32,6 +32,37 @@ def play_template_to_content_module_id(template_id: str) -> str:
     return _PLAY_TEMPLATE_TO_CONTENT_MODULE_ID.get(tid, tid)
 
 
+def _build_play_shell_opening_view(
+    opening_turn: dict[str, Any],
+    *,
+    opening_meta: dict[str, Any] | None = None,
+    trace_id: str | None = None,
+) -> dict[str, Any]:
+    """Project Turn 0 opening envelope (world-engine session create) into play-shell rows."""
+    meta = opening_meta if isinstance(opening_meta, dict) else {}
+    nc = opening_turn.get("narrative_commit") if isinstance(opening_turn.get("narrative_commit"), dict) else {}
+    consequences = nc.get("committed_consequences")
+    cons_list: list[str] = []
+    if isinstance(consequences, list):
+        cons_list = [str(x) for x in consequences[:12]]
+    synthetic: dict[str, Any] = {
+        "current_scene_id": meta.get("current_scene_id"),
+        "turn_counter": meta.get("turn_counter"),
+        "committed_state": {
+            "last_narrative_commit": nc,
+            "last_narrative_commit_summary": nc,
+            "last_committed_consequences": cons_list,
+        },
+    }
+    return _build_play_shell_runtime_view(
+        {
+            "trace_id": trace_id or opening_turn.get("trace_id"),
+            "turn": opening_turn,
+            "state": synthetic,
+        }
+    )
+
+
 def _build_play_shell_runtime_view(api_payload: dict[str, Any]) -> dict[str, Any]:
     """Project world-engine bridge JSON into a compact, player-facing last-turn view."""
     turn = api_payload.get("turn") if isinstance(api_payload.get("turn"), dict) else {}
@@ -67,16 +98,22 @@ def _build_play_shell_runtime_view(api_payload: dict[str, Any]) -> dict[str, Any
 
     interp = turn.get("interpreted_input") if isinstance(turn.get("interpreted_input"), dict) else {}
     input_kind = str(interp.get("kind") or "").strip() or "unknown"
+    if str(turn.get("turn_kind") or "").strip() == "opening":
+        input_kind = "opening"
 
     nc = committed.get("last_narrative_commit") if isinstance(committed.get("last_narrative_commit"), dict) else {}
     if not nc:
         nc = turn.get("narrative_commit") if isinstance(turn.get("narrative_commit"), dict) else {}
 
+    player_line = str(turn.get("raw_input") or "").strip()
+    if str(turn.get("turn_kind") or "").strip() == "opening":
+        player_line = ""
+
     return {
         "trace_id": str(api_payload.get("trace_id") or "").strip() or None,
         "world_engine_story_session_id": str(api_payload.get("world_engine_story_session_id") or "").strip() or None,
         "turn_number": turn.get("turn_number"),
-        "player_line": str(turn.get("raw_input") or "").strip(),
+        "player_line": player_line,
         "interpreted_input_kind": input_kind,
         "narration_text": narration_text,
         "spoken_lines": spoken_lines,
@@ -134,6 +171,16 @@ def _append_turn_log(run_id: str, view: dict[str, Any]) -> None:
 
 
 def _persist_turn_success(run_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    opening_turn = payload.get("opening_turn")
+    opening_meta = payload.get("world_engine_opening_meta")
+    trace_id = str(payload.get("trace_id") or "").strip() or None
+    if isinstance(opening_turn, dict):
+        opening_view = _build_play_shell_opening_view(
+            opening_turn,
+            opening_meta=opening_meta if isinstance(opening_meta, dict) else None,
+            trace_id=trace_id,
+        )
+        _append_turn_log(run_id, opening_view)
     view = _build_play_shell_runtime_view(payload)
     views = session.get(PLAY_SHELL_RUNTIME_VIEWS_KEY)
     if not isinstance(views, dict):

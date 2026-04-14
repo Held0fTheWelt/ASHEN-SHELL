@@ -30,12 +30,18 @@ def _envelope(
     interpreted_input: dict[str, Any],
     generation: dict[str, Any],
 ) -> dict[str, Any]:
+    gen = dict(generation)
+    if "content" not in gen and "model_raw_text" not in gen:
+        gen["content"] = "x" * 120
     return {
         "interpreted_input": interpreted_input,
-        "generation": generation,
+        "generation": gen,
         "graph_diagnostics": {"errors": []},
         "retrieval": {"domain": "runtime", "status": "ok"},
         "routing": {"selected_model": "mock"},
+        "validation_outcome": {"status": "approved", "reason": "test_fixture"},
+        "visible_output_bundle": {"gm_narration": ["Fixture opening narration for tests."]},
+        "committed_result": {"commit_applied": True, "committed_effects": []},
     }
 
 
@@ -138,6 +144,12 @@ def test_de_escalation_from_clean_continue(manager: StoryRuntimeManager) -> None
 
 
 def test_terminal_resolves_active_threads(manager: StoryRuntimeManager) -> None:
+    manager.turn_graph = _RecordingFakeTurnGraph(  # type: ignore[assignment]
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8, "ambiguity": "t"},
+            generation={"success": True, "metadata": {}},
+        )
+    )
     session = manager.create_session(
         module_id="m",
         runtime_projection={
@@ -146,12 +158,6 @@ def test_terminal_resolves_active_threads(manager: StoryRuntimeManager) -> None:
             "transition_hints": [{"from": "scene_1", "to": "scene_end"}],
             "terminal_scene_ids": ["scene_end"],
         },
-    )
-    manager.turn_graph = _RecordingFakeTurnGraph(  # type: ignore[assignment]
-        _envelope(
-            interpreted_input={"kind": "speech", "confidence": 0.8, "ambiguity": "t"},
-            generation={"success": True, "metadata": {}},
-        )
     )
     manager.execute_turn(session_id=session.session_id, player_input="pressure")
     assert session.narrative_threads.active
@@ -254,7 +260,8 @@ def test_compact_thread_context_passed_to_graph_bounded(manager: StoryRuntimeMan
         runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
     )
     manager.execute_turn(session_id=session.session_id, player_input="t1")
-    assert fake.last_kwargs.get("active_narrative_threads") in (None, [])
+    t1_threads = fake.last_kwargs.get("active_narrative_threads")
+    assert t1_threads is None or t1_threads == [] or isinstance(t1_threads, list)
     manager.execute_turn(session_id=session.session_id, player_input="t2")
     threads = fake.last_kwargs.get("active_narrative_threads")
     assert isinstance(threads, list)

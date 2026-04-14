@@ -1617,6 +1617,21 @@ body.dashboard { background: var(--void); }
     margin-top: 0.75rem;
 }
 
+@keyframes playNarrationReveal {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.play-narration--reveal {
+    animation: playNarrationReveal 0.65s ease forwards;
+}
+
 .play-composer-panel textarea {
     min-height: 6rem;
 }

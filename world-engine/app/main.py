@@ -4,7 +4,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import sys
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+import app.config  # noqa: F401 — load_dotenv so WOS_REPO_ROOT from .env is visible
+
+from app.repo_root import resolve_wos_repo_root
+
+REPO_ROOT = resolve_wos_repo_root(start=Path(__file__).resolve().parent)
 if str(REPO_ROOT) not in sys.path:
     sys.path.append(str(REPO_ROOT))
 
@@ -44,9 +48,11 @@ async def lifespan(app: FastAPI):
         token=INTERNAL_RUNTIME_CONFIG_TOKEN,
         timeout_seconds=RUNTIME_CONFIG_FETCH_TIMEOUT_SECONDS,
     )
+    app.state.resolved_runtime_config = resolved_runtime_config
     app.state.manager = RuntimeManager(store_root=RUN_STORE_DIR, governed_runtime_config=resolved_runtime_config)
     app.state.story_manager = StoryRuntimeManager(
         session_store=JsonStorySessionStore(STORY_SESSION_STORE_DIR),
+        governed_runtime_config=resolved_runtime_config,
     )
     app.state.ticket_manager = TicketManager()
     app.state.narrative_package_loader = NarrativePackageLoader(repo_root=REPO_ROOT)

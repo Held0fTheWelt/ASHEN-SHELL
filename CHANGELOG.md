@@ -12,6 +12,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.6.6] - 2026-04-14
+
+**Summary:** Completes the **authoritative story-runtime playable path** end to end: committed **Turn 0 opening** on world-engine session create, **governed** registry/routing and runtime config reload, **bounded self-correction** and degraded continuation in the LangGraph executor, diagnostics and repro metadata alignment, and **play-bridge** plus **play shell** behaviour so the first lazy World Engine bind returns **`opening_turn`** for the transcript. Fixes **injected adapters** when only `adapters=` is passed to `StoryRuntimeManager` (tests and RAG harnesses no longer lose custom adapters to defaults). Adds **English** technical and implementation-report notes, **progressive narration** styling on committed GM text, removes the obsolete **`complete_playable_mvp_v2_package`** export tree.
+
+### Added
+
+- **World Engine — opening turn on create:** `POST /api/internal/story/sessions` returns `opening_turn` and `runtime_config_status`; internal reload route for governed config (`world-engine/app/api/http.py`, `world-engine/app/story_runtime/manager.py`, governed runtime and metrics modules as applicable).
+- **AI stack — playability and self-correction:** `ai_stack/story_runtime_playability.py`, LangGraph executor retries and opening leniency, LangChain bridge correction block (`ai_stack/langgraph_runtime_executor.py`, `ai_stack/langchain_integration/bridges.py`).
+- **Story runtime core — adapter and registry:** optional `model_name`, `provider_model_name`, OpenAI `base_url` / `api_key` on chat adapter (`story_runtime_core/adapters.py`, `story_runtime_core/model_registry.py`).
+- **Backend play bridge — opening on first turn:** when `POST /api/v1/sessions/<id>/turns` creates the world-engine story session, response may include `opening_turn` and `world_engine_opening_meta` (`backend/app/api/v1/session_routes.py`).
+- **Frontend play shell — opening row and narration reveal:** transcript persistence for opening, opening-specific UI mapping, CSS animation on narration (`frontend/app/routes_play.py`, `frontend/static/play_shell.js`, `frontend/templates/session_shell.html`, `frontend/static/style.css`).
+- **Documentation:** [`docs/technical/runtime/story_runtime_complete_playable_mvp.md`](docs/technical/runtime/story_runtime_complete_playable_mvp.md) and [`docs/implementation_reports/story_runtime_complete_playable_mvp.md`](docs/implementation_reports/story_runtime_complete_playable_mvp.md).
+- **Tests:** world-engine story-runtime suite stabilisation (narrative commit fixtures, RAG runtime expectations), `frontend/tests/test_routes_extended.py` for opening transcript persistence.
+
+### Changed
+
+- **StoryRuntimeManager construction:** if callers pass `adapters` without `registry`, registry/routing are resolved from governed config or defaults while **keeping** the injected adapter map (`world-engine/app/story_runtime/manager.py`).
+
+### Removed
+
+- **Obsolete export package:** removed `complete_playable_mvp_v2_package/` (patches and diffs superseded by in-tree implementation).
+
+### Tests (integrity verification)
+
+- `python -m pytest world-engine/tests/ -k story_runtime -q` (from repo root, with `PYTHONPATH` including the repo root as required by the project) — story-runtime selection passes.
+- `python -m pytest frontend/tests/test_routes_extended.py::test_play_shell_transcript_includes_opening_when_bridge_returns_it frontend/tests/test_routes_extended.py::test_play_shell_transcript_shows_two_turns_after_json_executes -q` (from `frontend/`) — passed.
+- `python -m pytest backend/tests/test_session_routes.py -k turns -q` (from `backend/`) — passed.
+
+---
+
 ## [0.6.5] - 2026-04-14
 
 **Summary:** Establishes the Phase 1 operator foundation for **AI Runtime Governance** and a canonical **World-Engine Control Center** (provider/model/route CRUD, runtime readiness, play-service aggregation, docker env alignment). Follow-up **Phase 1.5** work on the same release line sharpens **coherence** (readiness legend, inventory summaries, control-center posture/drill-down and operator-control metadata), **access** (central [`feature_access_resolver`](backend/app/auth/feature_access_resolver.py) with minimum privilege tiers; `/auth/me` and `@require_feature` unchanged in behaviour but unified in code path), **navigation** (single canonical AI governance nav label; legacy `/manage/operational-governance*` URLs unchanged), and **operator UX** (severity badges, blocker “next step” layout, technical JSON under explicit audit disclosures, dashboard card copy). The same release line now also includes **Phase 2 AI Engineer Suite** (Runtime Dashboard, RAG Operations, AI Orchestration) and **Phase 2.5 Controlled Presets and Advanced Settings** (preset-first runtime controls, bounded overrides, effective-config visibility, and settings change audit feed). A **final hardening pass** aligns **status semantics** across governance, control center, and AI engineer payloads (`healthy`/`degraded`/`blocked`/`configured_disabled`/`unknown`), removes duplicate semantics definitions, and tightens runtime-dashboard blocker vs degraded signals so docs, tests, and UI match backend truth. **Research domain strategic governance** adds layered admin visibility (source intake, extraction/tuning experiments, non-canonical findings vs promoted narrative packages, MCP/workbench posture) with admin-only feature `manage.research_governance`, truthful backend payloads, and ops doc [`RESEARCH_DOMAIN_GOVERNANCE.md`](docs/operations/RESEARCH_DOMAIN_GOVERNANCE.md) — strategic surfaces only, not a full in-browser research lab.

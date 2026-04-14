@@ -457,6 +457,7 @@ def execute_session_turn(session_id):
     engine_story_session_id = metadata.get("world_engine_story_session_id")
     trace_id = g.get("trace_id") or get_trace_id()
 
+    created: dict | None = None
     try:
         if not engine_story_session_id:
             compiled = compile_module(state.module_id)
@@ -512,21 +513,29 @@ def execute_session_turn(session_id):
         outcome="ok",
     )
 
-    return jsonify(
-        {
-            "session_id": session_id,
-            "trace_id": trace_id,
-            "world_engine_story_session_id": engine_story_session_id,
-            "turn": turn.get("turn"),
-            "state": current_state,
-            "diagnostics": diagnostics,
-            "backend_interpretation_preview": local_interpretation.model_dump(mode="json"),
-            "warnings": [
-                "backend_proxying_to_world_engine_story_runtime",
-                "backend_local_authoritative_turn_execution_deprecated",
-            ],
-        }
-    ), 200
+    response_body: dict = {
+        "session_id": session_id,
+        "trace_id": trace_id,
+        "world_engine_story_session_id": engine_story_session_id,
+        "turn": turn.get("turn"),
+        "state": current_state,
+        "diagnostics": diagnostics,
+        "backend_interpretation_preview": local_interpretation.model_dump(mode="json"),
+        "warnings": [
+            "backend_proxying_to_world_engine_story_runtime",
+            "backend_local_authoritative_turn_execution_deprecated",
+        ],
+    }
+    if isinstance(created, dict):
+        opening = created.get("opening_turn")
+        if isinstance(opening, dict):
+            response_body["opening_turn"] = opening
+            response_body["world_engine_opening_meta"] = {
+                "current_scene_id": created.get("current_scene_id"),
+                "turn_counter": created.get("turn_counter"),
+                "module_id": created.get("module_id"),
+            }
+    return jsonify(response_body), 200
 
 
 @api_v1_bp.route("/sessions/<session_id>/logs", methods=["GET"])

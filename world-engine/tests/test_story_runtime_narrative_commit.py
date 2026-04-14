@@ -24,13 +24,36 @@ def _envelope(
     interpreted_input: dict[str, Any],
     generation: dict[str, Any],
 ) -> dict[str, Any]:
+    gen = dict(generation)
+    if "content" not in gen and "model_raw_text" not in gen:
+        gen["content"] = "x" * 120
     return {
         "interpreted_input": interpreted_input,
-        "generation": generation,
+        "generation": gen,
         "graph_diagnostics": {"errors": []},
         "retrieval": {"domain": "runtime", "status": "ok"},
         "routing": {"selected_model": "mock"},
+        "validation_outcome": {"status": "approved", "reason": "test_fixture"},
+        "visible_output_bundle": {"gm_narration": ["Fixture narration for commit tests."]},
+        "committed_result": {"commit_applied": True, "committed_effects": []},
     }
+
+
+def _opening_envelope(start_scene_id: str) -> dict[str, Any]:
+    """Stable fake graph output for Turn 0 opening (stay on ``start_scene_id``)."""
+    return _envelope(
+        interpreted_input={"kind": "speech", "confidence": 0.9},
+        generation={
+            "success": True,
+            "metadata": {
+                "structured_output": {
+                    "narrative_response": "Opening fixture.",
+                    "proposed_scene_id": start_scene_id,
+                    "intent_summary": "",
+                }
+            },
+        },
+    )
 
 
 @pytest.fixture
@@ -63,7 +86,7 @@ def test_no_proposal_continues_current_scene_with_bounded_consequences(manager: 
 
 def test_runtime_projection_scene_id_only_shape_commits_legal_transition(manager: StoryRuntimeManager) -> None:
     """Backward-compat: compiler-shaped rows used ``scene_id`` without ``id`` (audit F-C1)."""
-    manager.turn_graph = _FakeTurnGraph(
+    command_graph = _FakeTurnGraph(
         _envelope(
             interpreted_input={
                 "kind": "explicit_command",
@@ -74,8 +97,9 @@ def test_runtime_projection_scene_id_only_shape_commits_legal_transition(manager
             generation={"success": True, "metadata": {}},
         )
     )
+    manager.turn_graph = _FakeTurnGraph(_opening_envelope("phase_1"))  # type: ignore[assignment]
     session = manager.create_session(
-        module_id="god_of_carnage",
+        module_id="m",
         runtime_projection={
             "start_scene_id": "phase_1",
             "scenes": [
@@ -85,6 +109,7 @@ def test_runtime_projection_scene_id_only_shape_commits_legal_transition(manager
             "transition_hints": [{"from": "phase_1", "to": "phase_2"}],
         },
     )
+    manager.turn_graph = command_graph  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="/go phase_2")
     nc = turn["narrative_commit"]
     assert nc["allowed"] is True
@@ -93,7 +118,7 @@ def test_runtime_projection_scene_id_only_shape_commits_legal_transition(manager
 
 
 def test_explicit_command_beats_model_and_token_scan(manager: StoryRuntimeManager) -> None:
-    manager.turn_graph = _FakeTurnGraph(
+    turn_graph = _FakeTurnGraph(
         _envelope(
             interpreted_input={
                 "kind": "explicit_command",
@@ -113,6 +138,7 @@ def test_explicit_command_beats_model_and_token_scan(manager: StoryRuntimeManage
             },
         )
     )
+    manager.turn_graph = _FakeTurnGraph(_opening_envelope("scene_1"))  # type: ignore[assignment]
     session = manager.create_session(
         module_id="m",
         runtime_projection={
@@ -124,6 +150,7 @@ def test_explicit_command_beats_model_and_token_scan(manager: StoryRuntimeManage
             ],
         },
     )
+    manager.turn_graph = turn_graph  # type: ignore[assignment]
     turn = manager.execute_turn(
         session_id=session.session_id,
         player_input="/move scene_2 scene_3 noise",
@@ -135,7 +162,7 @@ def test_explicit_command_beats_model_and_token_scan(manager: StoryRuntimeManage
 
 
 def test_legal_model_proposal_commits_transition(manager: StoryRuntimeManager) -> None:
-    manager.turn_graph = _FakeTurnGraph(
+    turn_graph = _FakeTurnGraph(
         _envelope(
             interpreted_input={"kind": "speech", "confidence": 0.8},
             generation={
@@ -150,6 +177,7 @@ def test_legal_model_proposal_commits_transition(manager: StoryRuntimeManager) -
             },
         )
     )
+    manager.turn_graph = _FakeTurnGraph(_opening_envelope("scene_1"))  # type: ignore[assignment]
     session = manager.create_session(
         module_id="m",
         runtime_projection={
@@ -158,6 +186,7 @@ def test_legal_model_proposal_commits_transition(manager: StoryRuntimeManager) -
             "transition_hints": [{"from": "scene_1", "to": "scene_2"}],
         },
     )
+    manager.turn_graph = turn_graph  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="I walk forward.")
     nc = turn["narrative_commit"]
     assert nc["allowed"] is True
@@ -167,7 +196,7 @@ def test_legal_model_proposal_commits_transition(manager: StoryRuntimeManager) -
 
 
 def test_illegal_proposal_is_blocked_committed_truth(manager: StoryRuntimeManager) -> None:
-    manager.turn_graph = _FakeTurnGraph(
+    turn_graph = _FakeTurnGraph(
         _envelope(
             interpreted_input={
                 "kind": "explicit_command",
@@ -178,6 +207,7 @@ def test_illegal_proposal_is_blocked_committed_truth(manager: StoryRuntimeManage
             generation={"success": True, "metadata": {}},
         )
     )
+    manager.turn_graph = _FakeTurnGraph(_opening_envelope("scene_1"))  # type: ignore[assignment]
     session = manager.create_session(
         module_id="m",
         runtime_projection={
@@ -186,6 +216,7 @@ def test_illegal_proposal_is_blocked_committed_truth(manager: StoryRuntimeManage
             "transition_hints": [{"from": "scene_1", "to": "scene_2"}],
         },
     )
+    manager.turn_graph = turn_graph  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="/move scene_3")
     nc = turn["narrative_commit"]
     assert nc["allowed"] is False
@@ -221,7 +252,7 @@ def test_token_scan_proposal_commits_only_when_legal_and_known(manager: StoryRun
 
 
 def test_already_in_scene_yields_continue_semantics(manager: StoryRuntimeManager) -> None:
-    manager.turn_graph = _FakeTurnGraph(
+    turn_graph = _FakeTurnGraph(
         _envelope(
             interpreted_input={
                 "kind": "explicit_command",
@@ -232,6 +263,7 @@ def test_already_in_scene_yields_continue_semantics(manager: StoryRuntimeManager
             generation={"success": True, "metadata": {}},
         )
     )
+    manager.turn_graph = _FakeTurnGraph(_opening_envelope("scene_1"))  # type: ignore[assignment]
     session = manager.create_session(
         module_id="m",
         runtime_projection={
@@ -240,6 +272,7 @@ def test_already_in_scene_yields_continue_semantics(manager: StoryRuntimeManager
             "transition_hints": [],
         },
     )
+    manager.turn_graph = turn_graph  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="/move scene_1")
     nc = turn["narrative_commit"]
     assert nc["commit_reason_code"] == "already_in_scene"
@@ -347,6 +380,7 @@ def test_concurrent_turns_serialize_per_session(manager: StoryRuntimeManager) ->
 
 
 def test_terminal_scene_sets_terminal_status(manager: StoryRuntimeManager) -> None:
+    manager.turn_graph = _FakeTurnGraph(_opening_envelope("scene_1"))  # type: ignore[assignment]
     session = manager.create_session(
         module_id="m",
         runtime_projection={
@@ -370,7 +404,7 @@ def test_terminal_scene_sets_terminal_status(manager: StoryRuntimeManager) -> No
                 },
             },
         )
-    )
+    )  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="The end.")
     nc = turn["narrative_commit"]
     assert nc["allowed"] is True

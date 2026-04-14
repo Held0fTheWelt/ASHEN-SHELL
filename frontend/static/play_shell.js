@@ -82,7 +82,10 @@
     html += "</div>";
     html += '<div class="play-story-output">';
     if (v.narration_text) {
-      html += '<div class="play-story-text play-turn-card__narration">' + escapeHtml(v.narration_text) + "</div>";
+      html +=
+        '<div class="play-story-text play-turn-card__narration play-narration--reveal">' +
+        escapeHtml(v.narration_text) +
+        "</div>";
     } else {
       html +=
         '<p class="play-story-missing">Für diesen Zug liefert die Engine keinen erzählenden Text (<code>gm_narration</code> leer). Der Lauf kann trotzdem weitergegangen sein — Details siehe Operator-Tab.</p>';

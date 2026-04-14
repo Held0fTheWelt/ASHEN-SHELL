@@ -42,6 +42,8 @@ class ModelSpec:
     cost_class: str
     latency_class: str
     use_cases: tuple[str, ...]
+    # Provider API id (e.g. OpenAI ``gpt-4o-mini``); when empty, adapters use ``model_name``.
+    provider_model_name: str = ""
 
 
 @dataclass(slots=True)
