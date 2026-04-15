@@ -185,6 +185,20 @@ Install dependencies per component before `python tests/run_tests.py --suite all
 
 ---
 
+## Environment preflight
+
+Before running pytest, `run_tests.py` calls `check_environment()` and runs **import probes per selected suite** so automated runs fail fast with install hints instead of mid-suite `ModuleNotFoundError`:
+
+- **backend**, **writers_room**, **improvement**, **database** — Flask stack under `backend/` (same imports as `backend/tests/conftest.py`). If `ai_stack.langgraph_runtime` is not importable, an **informational** line suggests `pip install -e "./ai_stack[test]"` for tests that touch the graph.
+- **frontend** — `flask`, `requests` with `cwd=frontend/` (`frontend/requirements-dev.txt`).
+- **administration** — `flask`, `werkzeug` with `cwd=administration-tool/`.
+- **engine** — FastAPI / SQLAlchemy / HTTPX for the engine app, then **LangChain / LangGraph** plus `from ai_stack import RuntimeTurnGraphExecutor` with repo root on `PYTHONPATH` (same bar as `.github/workflows/engine-tests.yml`).
+- **ai_stack** — editable `story_runtime_core` + `ai_stack` resolvable from repo root, then the **same LangGraph lane** probe as engine (`langchain_core`, `langgraph`, export flag).
+
+For AI-stack-only work, use `scripts/install-ai-stack-test-env.sh` (Linux/macOS) or `pip install -r ai_stack/requirements-test.txt` with editable installs per `ai_stack/requirements-test.txt` header comments.
+
+---
+
 ## References
 
 - [pytest](https://docs.pytest.org/)

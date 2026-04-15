@@ -192,6 +192,22 @@ def _import_probe(
     return False, out[:1200]
 
 
+def _probe_ai_stack_langgraph_lane() -> tuple[bool, str]:
+    """Same LangChain / LangGraph / export surface as CI (``ai_stack-tests.yml``, engine job)."""
+    graph_py = (
+        "import langchain_core, langgraph, ai_stack\n"
+        "assert ai_stack.LANGGRAPH_RUNTIME_EXPORT_AVAILABLE, "
+        "'pip install -e ./story_runtime_core -e \"./ai_stack[test]\" from repo root'\n"
+        "from ai_stack import RuntimeTurnGraphExecutor\n"
+        "assert RuntimeTurnGraphExecutor is not None\n"
+    )
+    return _import_probe(
+        cwd=PROJECT_ROOT,
+        py_code=graph_py,
+        env_overrides={"PYTHONPATH": str(PROJECT_ROOT)},
+    )
+
+
 def check_environment(suites: dict[str, tuple[Path, str]]) -> bool:
     """Verify pytest and runtime deps for the **selected** suites.
 
@@ -254,6 +270,64 @@ def check_environment(suites: dict[str, tuple[Path, str]]) -> bool:
             if err:
                 print_info(err)
 
+        opt_passed, opt_err = _import_probe(
+            cwd=PROJECT_ROOT,
+            py_code="import ai_stack.langgraph_runtime",
+            env_overrides={"PYTHONPATH": str(PROJECT_ROOT)},
+        )
+        if not opt_passed:
+            print_info(
+                "Optional: some backend tests import ``ai_stack.langgraph_runtime``. "
+                "If those fail: ``pip install -e ./story_runtime_core -e \\\"./ai_stack[test]\\\"`` "
+                f"from repo root. ({opt_err[:400]})" if opt_err else ""
+            )
+
+    if "frontend" in labels:
+        print_info("Probing frontend Flask stack (cwd=frontend, PYTHONPATH=frontend) …")
+        fe_py = "import flask, requests\n"
+        fe_merged = str(FRONTEND_DIR)
+        fe_env = os.environ.get("PYTHONPATH", "")
+        if fe_env:
+            fe_merged = fe_merged + os.pathsep + fe_env
+        fe_passed, fe_err = _import_probe(
+            cwd=FRONTEND_DIR,
+            py_code=fe_py,
+            env_overrides={"PYTHONPATH": fe_merged},
+        )
+        if fe_passed:
+            print_success("Frontend suite: Flask and Requests importable (see frontend/pyproject.toml).")
+        else:
+            ok = False
+            print_error(
+                "Frontend stack import probe failed. Install frontend deps, for example: "
+                "`pip install -r frontend/requirements-dev.txt` or `pip install -e ./frontend[test]`."
+            )
+            if fe_err:
+                print_info(fe_err)
+
+    if "administration" in labels:
+        print_info("Probing administration-tool Flask stack …")
+        ad_py = "import flask, werkzeug\n"
+        ad_merged = str(ADMIN_TOOL_DIR)
+        ad_env = os.environ.get("PYTHONPATH", "")
+        if ad_env:
+            ad_merged = ad_merged + os.pathsep + ad_env
+        ad_passed, ad_err = _import_probe(
+            cwd=ADMIN_TOOL_DIR,
+            py_code=ad_py,
+            env_overrides={"PYTHONPATH": ad_merged},
+        )
+        if ad_passed:
+            print_success("Administration suite: Flask and Werkzeug importable (see administration-tool/pyproject.toml).")
+        else:
+            ok = False
+            print_error(
+                "Administration-tool stack import probe failed. Install deps, for example: "
+                "`pip install -r administration-tool/requirements-dev.txt`."
+            )
+            if ad_err:
+                print_info(ad_err)
+
     # --- World engine (FastAPI app package ``app`` under world-engine/) ---
     if "engine" in labels:
         print_info("Probing world-engine stack (cwd=world-engine, PYTHONPATH=repo+world-engine) …")
@@ -280,21 +354,9 @@ def check_environment(suites: dict[str, tuple[Path, str]]) -> bool:
                 print_info(err)
 
         print_info("Probing ai_stack LangGraph export (StoryRuntimeManager imports RuntimeTurnGraphExecutor) …")
-        graph_py = (
-            "import ai_stack\n"
-            "assert getattr(ai_stack, 'LANGGRAPH_RUNTIME_EXPORT_AVAILABLE', False), "
-            "'install ai_stack runtime deps: pip install -e \"./ai_stack[test]\" "
-            "from repo root (see .github/workflows/engine-tests.yml).'\n"
-            "from ai_stack import RuntimeTurnGraphExecutor\n"
-            "assert RuntimeTurnGraphExecutor is not None\n"
-        )
-        g_passed, g_err = _import_probe(
-            cwd=PROJECT_ROOT,
-            py_code=graph_py,
-            env_overrides={"PYTHONPATH": str(PROJECT_ROOT)},
-        )
+        g_passed, g_err = _probe_ai_stack_langgraph_lane()
         if g_passed:
-            print_success("World engine suite: ai_stack exports RuntimeTurnGraphExecutor (LangGraph path OK).")
+            print_success("World engine suite: LangChain/LangGraph OK; RuntimeTurnGraphExecutor exported from ai_stack.")
         else:
             ok = False
             print_error(
@@ -333,6 +395,23 @@ def check_environment(suites: dict[str, tuple[Path, str]]) -> bool:
             )
             if err:
                 print_info(err)
+
+        print_info("Probing ai_stack LangChain / LangGraph graph lane (merge bar; same as CI) …")
+        g_passed, g_err = _probe_ai_stack_langgraph_lane()
+        if g_passed:
+            print_success(
+                "ai_stack suite: langchain_core, langgraph importable; LANGGRAPH_RUNTIME_EXPORT_AVAILABLE and "
+                "RuntimeTurnGraphExecutor OK."
+            )
+        else:
+            ok = False
+            print_error(
+                "ai_stack graph lane failed (often ModuleNotFoundError: langchain_core). "
+                "From repo root: ``pip install -e ./story_runtime_core -e \\\"./ai_stack[test]\\\"`` "
+                "or ``pip install -r ai_stack/requirements-test.txt`` plus editable ``ai_stack``."
+            )
+            if g_err:
+                print_info(g_err)
 
     print()
     return ok
