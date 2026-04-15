@@ -24,9 +24,13 @@ def _base_graph_payload(
     interpreted_input: dict[str, Any],
     generation: dict[str, Any],
 ) -> dict[str, Any]:
+    # Opening turn requires approved validation + visible narration (manager.py).
+    gen = dict(generation)
+    gen.setdefault("content", "Canonical test narration for opening visibility.")
     return {
         "interpreted_input": interpreted_input,
-        "generation": generation,
+        "generation": gen,
+        "validation_outcome": {"status": "approved"},
         "graph_diagnostics": {"errors": []},
         "retrieval": {},
         "routing": {},
@@ -35,7 +39,9 @@ def _base_graph_payload(
 
 @pytest.fixture
 def progression_manager() -> StoryRuntimeManager:
-    return StoryRuntimeManager()
+    # Empty ``adapters`` opts into isolated-test mode: skip Turn-0 LangGraph opening so
+    # ``turn_graph`` can be a minimal fake that only models player turns (see manager.__init__).
+    return StoryRuntimeManager(adapters={})
 
 
 def test_model_structured_proposal_commits_when_legal(progression_manager: StoryRuntimeManager) -> None:

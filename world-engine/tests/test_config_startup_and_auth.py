@@ -598,7 +598,7 @@ class TestInternalApiKeyEndpointGuard:
 
     @pytest.mark.unit
     @pytest.mark.security
-    def test_internal_endpoint_requires_api_key_when_configured(self):
+    def test_internal_endpoint_requires_api_key_when_configured(self, monkeypatch):
         """Internal endpoints should require API key when configured."""
         from tests.conftest import build_test_app
         import tempfile
@@ -607,33 +607,27 @@ class TestInternalApiKeyEndpointGuard:
             tmp_path = Path(tmp_dir)
 
             # Manually create app with configured API key
-            from fastapi import FastAPI
             from fastapi.testclient import TestClient
 
-            # We need to patch the config before importing routers
-            with patch("app.config.PLAY_SERVICE_INTERNAL_API_KEY", "test-api-key"):
-                import importlib
-                import app.api.http
-                importlib.reload(app.api.http)
+            monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "test-api-key")
+            app = build_test_app(tmp_path)
+            client = TestClient(app)
 
-                app = build_test_app(tmp_path)
-                client = TestClient(app)
-
-                # Request without API key should fail
-                response = client.post(
-                    "/api/internal/join-context",
-                    json={
-                        "run_id": "test-run",
-                        "account_id": "test-account",
-                        "character_id": "test-character",
-                        "display_name": "Test"
-                    }
-                )
-                assert response.status_code == 401
+            # Request without API key should fail
+            response = client.post(
+                "/api/internal/join-context",
+                json={
+                    "run_id": "test-run",
+                    "account_id": "test-account",
+                    "character_id": "test-character",
+                    "display_name": "Test"
+                }
+            )
+            assert response.status_code == 401
 
     @pytest.mark.unit
     @pytest.mark.security
-    def test_internal_endpoint_allows_request_with_valid_key(self):
+    def test_internal_endpoint_allows_request_with_valid_key(self, monkeypatch):
         """Internal endpoints should allow requests with valid API key."""
         from tests.conftest import build_test_app
         import tempfile
@@ -642,31 +636,26 @@ class TestInternalApiKeyEndpointGuard:
             tmp_path = Path(tmp_dir)
 
             # Manually create app with configured API key
-            from fastapi import FastAPI
             from fastapi.testclient import TestClient
 
-            with patch("app.config.PLAY_SERVICE_INTERNAL_API_KEY", "test-api-key"):
-                import importlib
-                import app.api.http
-                importlib.reload(app.api.http)
+            monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "test-api-key")
+            app = build_test_app(tmp_path)
+            client = TestClient(app)
 
-                app = build_test_app(tmp_path)
-                client = TestClient(app)
-
-                # Request with valid API key should pass key validation
-                # (but may fail with 404 if run doesn't exist)
-                response = client.post(
-                    "/api/internal/join-context",
-                    headers={"x-play-service-key": "test-api-key"},
-                    json={
-                        "run_id": "nonexistent",
-                        "account_id": "test-account",
-                        "character_id": "test-character",
-                        "display_name": "Test"
-                    }
-                )
-                # Should not be 401 (key validation passed)
-                assert response.status_code != 401
+            # Request with valid API key should pass key validation
+            # (but may fail with 404 if run doesn't exist)
+            response = client.post(
+                "/api/internal/join-context",
+                headers={"x-play-service-key": "test-api-key"},
+                json={
+                    "run_id": "nonexistent",
+                    "account_id": "test-account",
+                    "character_id": "test-character",
+                    "display_name": "Test"
+                }
+            )
+            # Should not be 401 (key validation passed)
+            assert response.status_code != 401
 
 
 class TestStartupIdempotency:

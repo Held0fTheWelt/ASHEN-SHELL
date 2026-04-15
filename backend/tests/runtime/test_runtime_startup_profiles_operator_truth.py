@@ -456,18 +456,31 @@ def test_reproducibility_setup_scripts_and_requirements_exist() -> None:
     assert bat.is_file(), "setup-test-environment.bat must exist at repository root"
     req = BACKEND_ROOT / "requirements.txt"
     rtest = BACKEND_ROOT / "requirements-test.txt"
+    rdev = BACKEND_ROOT / "requirements-dev.txt"
     assert req.is_file()
     assert rtest.is_file()
+    assert rdev.is_file()
     hygiene = REPO_ROOT / "tests" / "requirements_hygiene"
     assert hygiene.is_dir(), "tests/requirements_hygiene must exist for portable requirement checks"
     sh_text = sh.read_text(encoding="utf-8", errors="replace")
     bat_text = bat.read_text(encoding="utf-8", errors="replace")
-    assert "requirements.txt" in sh_text and "requirements-test.txt" in sh_text
-    assert "requirements.txt" in bat_text and "requirements-test.txt" in bat_text
-    assert "-m pip install" in sh_text and "requirements-test.txt" in sh_text, (
-        "setup-test-environment.sh should use python -m pip and install requirements-test.txt"
+    # Full-repo setup uses backend/requirements-dev.txt (CI parity with backend-tests.yml);
+    # production + pytest stack still anchor on requirements.txt / requirements-test.txt on disk.
+    assert "requirements-dev.txt" in sh_text and "requirements-dev.txt" in bat_text
+    dev_body = rdev.read_text(encoding="utf-8", errors="replace")
+    assert "-r requirements.txt" in dev_body
+    assert "requirements-test" in dev_body.lower(), (
+        "backend/requirements-dev.txt should document the requirements-test.txt minimal path"
+    )
+    assert "-m pip install" in sh_text and "requirements-dev.txt" in sh_text, (
+        "setup-test-environment.sh should use python -m pip and install backend requirements-dev.txt"
     )
     assert "-m pip install" in bat_text.lower() or "python -m pip install" in bat_text.lower()
+    # Bash fail-fast and no obvious remote-download bootstrap (security / hygiene gate).
+    assert "set -euo pipefail" in sh_text
+    lower_sh = sh_text.lower()
+    for marker in ("curl http", "curl https", "wget http", "wget https"):
+        assert marker not in lower_sh, f"setup-test-environment.sh must not fetch remote installers ({marker})"
 
 
 def test_reproducibility_pytest_requirements_and_hygiene_tests_pass() -> None:

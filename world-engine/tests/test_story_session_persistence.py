@@ -19,9 +19,12 @@ class _FakeTurnGraph:
 
 
 def _envelope(*, interpreted_input: dict[str, Any], generation: dict[str, Any]) -> dict[str, Any]:
+    gen = dict(generation)
+    gen.setdefault("content", "Canonical test narration for opening visibility.")
     return {
         "interpreted_input": interpreted_input,
-        "generation": generation,
+        "generation": gen,
+        "validation_outcome": {"status": "approved"},
         "graph_diagnostics": {"errors": []},
         "retrieval": {"domain": "runtime", "status": "ok"},
         "routing": {"selected_model": "mock"},
@@ -30,7 +33,7 @@ def _envelope(*, interpreted_input: dict[str, Any], generation: dict[str, Any]) 
 
 def test_story_session_restored_after_new_manager_process(tmp_path) -> None:
     store = JsonStorySessionStore(tmp_path / "story_sessions")
-    mgr_a = StoryRuntimeManager(session_store=store)
+    mgr_a = StoryRuntimeManager(session_store=store, adapters={})
     mgr_a.turn_graph = _FakeTurnGraph(
         _envelope(
             interpreted_input={"kind": "speech", "confidence": 0.8},
@@ -46,7 +49,7 @@ def test_story_session_restored_after_new_manager_process(tmp_path) -> None:
     mgr_a.execute_turn(session_id=sid, player_input="hello")
     assert mgr_a.get_session(sid).turn_counter == 1
 
-    mgr_b = StoryRuntimeManager(session_store=store)
+    mgr_b = StoryRuntimeManager(session_store=store, adapters={})
     mgr_b.turn_graph = _FakeTurnGraph(
         _envelope(
             interpreted_input={"kind": "speech", "confidence": 0.8},

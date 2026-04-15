@@ -2,6 +2,7 @@
 # Full Python test environment for ``python tests/run_tests.py`` (all suites).
 # Installs backend, frontend, administration-tool, world-engine deps plus editable
 # story_runtime_core and ai_stack[test] — same closure as setup-test-environment.sh.
+# Security: delegates only to the tracked ``setup-test-environment.sh`` (local -r installs; no remote bootstrap).
 #
 # Usage (from repository root or from scripts/):
 #   ./scripts/install-full-test-env.sh

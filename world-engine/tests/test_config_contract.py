@@ -68,12 +68,16 @@ class TestPlayServiceSecretStartupContract:
     def test_blank_play_service_secret_fails_in_production_mode(self, monkeypatch):
         """Blank PLAY_SERVICE_SECRET should raise error in production mode."""
         monkeypatch.setenv("PLAY_SERVICE_SECRET", "")
+        monkeypatch.delenv("PLAY_SERVICE_SHARED_SECRET", raising=False)
         monkeypatch.setenv("FLASK_ENV", "production")
 
-        with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
-            import importlib
-            import app.config
-            importlib.reload(app.config)
+        from unittest.mock import patch
+
+        with patch("dotenv.load_dotenv"):
+            with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
+                import importlib
+                import app.config
+                importlib.reload(app.config)
 
     @pytest.mark.contract
     def test_blank_play_service_secret_rejected_in_validation(self):

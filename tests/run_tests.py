@@ -32,7 +32,8 @@ repository root run ``./setup-test-environment.sh`` (Linux/macOS/Git Bash) or
 and world-engine dev requirements plus editable ``story_runtime_core`` and ``ai_stack[test]``,
 then verifies the LangGraph export surface required by the **engine** and **ai_stack** suites.
 Without that closure, :func:`check_environment` fails fast with ``pip`` hints instead of
-mid-suite ``ModuleNotFoundError``.
+mid-suite ``ModuleNotFoundError``. Those scripts install **only** from tracked
+``requirements*.txt`` files and use ``python -m pip`` (no remote pipe-to-shell bootstrap).
 """
 
 from __future__ import annotations

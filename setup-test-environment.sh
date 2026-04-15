@@ -4,6 +4,12 @@
 # This script MUST be run before running any tests.
 # It installs both production and test dependencies.
 #
+# Security / hygiene (automated test suites, ed4815d+):
+# - Installs only from requirement files in this repository (relative paths after ``cd``);
+#   no remote pipe-to-shell bootstrap (only ``pip install -r`` from this tree).
+# - Always invokes pip as ``python -m pip`` to reduce PATH hijack / wrong-interpreter risk.
+# - ``set -euo pipefail`` below: fail fast; unset variables and pipe errors are not ignored.
+#
 # Usage:
 #   ./setup-test-environment.sh
 

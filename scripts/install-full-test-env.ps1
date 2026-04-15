@@ -12,5 +12,13 @@ $Batch = Join-Path $Root "setup-test-environment.bat"
 if (-not (Test-Path $Batch)) {
     Write-Error "Expected $Batch"
 }
-& cmd /c "`"$Batch`""
-exit $LASTEXITCODE
+# Invoke the batch file directly (no nested ``cmd /c``); avoids extra shell layers and
+# keeps behaviour aligned with ``setup-test-environment.bat`` for CI/agents.
+Push-Location $Root
+try {
+    & $Batch
+    $code = if ($null -ne $LASTEXITCODE) { [int]$LASTEXITCODE } else { 0 }
+} finally {
+    Pop-Location
+}
+exit $code

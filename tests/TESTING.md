@@ -16,6 +16,14 @@ The root `tests/` folder holds the **orchestrator** (`run_tests.py`), smoke asse
 
 That installs `backend/requirements-dev.txt`, `frontend/requirements-dev.txt`, `administration-tool/requirements-dev.txt`, `world-engine/requirements-dev.txt`, plus editable `story_runtime_core` and `ai_stack[test]`, and verifies the LangGraph export surface (`RuntimeTurnGraphExecutor`) expected by the **engine** and **ai_stack** suites. For **ai_stack tests only**, use `scripts/install-ai-stack-test-env.sh` (or `.ps1` / `.bat`) — smaller install.
 
+### Automated setup — security and hygiene
+
+The official setup entry points (`setup-test-environment.*`, `scripts/install-full-test-env.*`) are intended for **trusted checkout trees** and CI:
+
+- **Local requirement files only** — installs use `pip install -r` against paths under this repository (no remote pipe-to-shell installers).
+- **`python -m pip`** — reduces accidental use of a different `pip` on `PATH` (see scripts’ comments; G-B-03 asserts this for the shell setup).
+- **World Engine pytest** forces a known non-production internal API key in `world-engine/tests/conftest.py` so automated runs do not depend on operator `.env` secrets for internal-route tests (do not reuse that value in production).
+
 From the **repository root** (recommended):
 
 ```bash

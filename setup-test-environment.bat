@@ -3,6 +3,11 @@
 @REM This script MUST be run before running any tests.
 @REM It installs both production and test dependencies.
 @REM
+@REM Security / hygiene (automated test suites, ed4815d+):
+@REM - Installs only from requirement files in this repository (relative paths after cd);
+@REM   no remote pipe-to-shell bootstrap (only pip install -r from this tree).
+@REM - Uses ``python -m pip`` to reduce PATH hijack / wrong-interpreter risk.
+@REM
 @REM Usage:
 @REM   setup-test-environment.bat
 

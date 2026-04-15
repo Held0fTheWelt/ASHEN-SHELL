@@ -23,6 +23,10 @@ if "FLASK_ENV" not in os.environ:
 if "PLAY_SERVICE_SECRET" not in os.environ:
     os.environ["PLAY_SERVICE_SECRET"] = "test-secret-key-for-unit-tests"
 
+# Internal API routes enforce X-Play-Service-Key when this env var is set (see app.api.http).
+# Force the value used across world-engine tests so local .env / shell cannot cause 401s.
+os.environ["PLAY_SERVICE_INTERNAL_API_KEY"] = "internal-api-key-for-ops"
+
 # Disable backend content sync in tests to use only builtin templates
 if "BACKEND_CONTENT_SYNC_ENABLED" not in os.environ:
     os.environ["BACKEND_CONTENT_SYNC_ENABLED"] = "false"
@@ -83,22 +87,14 @@ def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: st
     runtime_manager_module = importlib.import_module("app.runtime.manager")
     story_runtime_module = importlib.import_module("app.story_runtime")
 
-    # Check if app.config has been mocked/patched by a test
-    # If the current PLAY_SERVICE_INTERNAL_API_KEY value doesn't match the environment,
-    # it might be a mock, so we should NOT reload (to preserve the mock)
+    # Always sync ``app.config`` from ``os.environ`` before (re)binding HTTP routers.
+    # Contract tests reload config and can leave in-memory values out of sync with env
+    # after monkeypatch teardown; skipping reload caused stale keys in ``app.api.http``.
     import app.config
-    current_value = app.config.PLAY_SERVICE_INTERNAL_API_KEY
-    env_value = os.getenv("PLAY_SERVICE_INTERNAL_API_KEY", "").strip() or None
 
-    # Only reload if the current value matches the environment value
-    # This handles monkeypatch.setenv (both env and current value are in sync)
-    # and avoids reloading when using unittest.mock.patch (current != env)
-    if current_value == env_value:
-        importlib.reload(app.config)
-        # Also reload modules that depend on config
-        runtime_manager_module = importlib.reload(runtime_manager_module)
+    importlib.reload(app.config)
+    runtime_manager_module = importlib.reload(runtime_manager_module)
 
-    # Reload http and ws modules - they will import the current config values
     http_module = importlib.import_module("app.api.http")
     http_module = importlib.reload(http_module)
 
