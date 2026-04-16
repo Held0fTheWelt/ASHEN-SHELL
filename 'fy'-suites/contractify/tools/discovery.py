@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 from fy_platform.core.manifest import load_manifest, suite_config
+from contractify.tools.adr_governance import iter_adr_markdown_paths
 from contractify.tools.models import (
     AnchorKind,
     AuthorityLevel,
@@ -230,41 +231,38 @@ def discover_contracts_and_projections(
     projections.extend(curated_projections)
     relations.extend(curated_relations)
 
-    # A3 — ADRs
-    adr_dir = repo / "docs" / "governance"
-    if adr_dir.is_dir():
-        for adr in sorted(adr_dir.glob("adr-*.md")):
-            if len(contracts) >= max_contracts:
-                break
-            if "template" in adr.stem.lower():
-                continue
-            rel = _safe_rel(adr, repo)
-            if rel in curated_anchor_locations:
-                continue
-            head = _read_head(adr)
-            st_raw = adr_declared_status(head)
-            adr_status = _adr_contract_status(st_raw)
-            conf = 0.9 + _marker_boost(head)
-            slug = adr.stem.upper().replace("-", "_")
-            add(
-                _contract(
-                    cid=f"CTR-ADR-{slug[:24]}",
-                    title=f"ADR: {adr.stem}",
-                    summary="Architecture decision record with governance force when accepted.",
-                    contract_type="adr",
-                    layer="governance",
-                    status=adr_status,
-                    version="unversioned",
-                    authority_level="normative",
-                    anchor_kind="document",
-                    anchor_location=rel,
-                    source_of_truth=True,
-                    confidence=min(0.98, conf),
-                    discovery_reason="A: ADR filename pattern under docs/governance/",
-                    tags=["adr", "architecture"],
-                    notes=f"adr_status_line={st_raw}" if st_raw != "unknown" else "",
-                )
+    # A3 — ADRs (canonical docs/ADR first, legacy directories still discoverable until migrated)
+    for adr in iter_adr_markdown_paths(repo):
+        if len(contracts) >= max_contracts:
+            break
+        rel = _safe_rel(adr, repo)
+        if rel in curated_anchor_locations:
+            continue
+        head = _read_head(adr)
+        st_raw = adr_declared_status(head)
+        adr_status = _adr_contract_status(st_raw)
+        conf = 0.9 + _marker_boost(head)
+        slug = adr.stem.upper().replace("-", "_").replace(".", "_")
+        location_reason = "docs/ADR" if rel.startswith("docs/ADR/") else "legacy ADR directory"
+        add(
+            _contract(
+                cid=f"CTR-ADR-{slug[:24]}",
+                title=f"ADR: {adr.stem}",
+                summary="Architecture decision record with governance force when accepted.",
+                contract_type="adr",
+                layer="governance",
+                status=adr_status,
+                version="unversioned",
+                authority_level="normative",
+                anchor_kind="document",
+                anchor_location=rel,
+                source_of_truth=True,
+                confidence=min(0.98, conf),
+                discovery_reason=f"A: ADR filename pattern under {location_reason}",
+                tags=["adr", "architecture"],
+                notes=f"adr_status_line={st_raw}" if st_raw != "unknown" else "",
             )
+        )
 
     # B2 — Operations runbook (operator contract surface)
     p_ops = repo / "docs" / "operations" / "OPERATIONAL_GOVERNANCE_RUNTIME.md"

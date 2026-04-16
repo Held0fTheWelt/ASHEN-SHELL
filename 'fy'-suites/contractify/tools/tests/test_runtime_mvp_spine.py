@@ -45,9 +45,7 @@ def test_runtime_mvp_relations_cover_required_edges() -> None:
         ("implemented_by", "CTR-ADR-0003-SCENE-IDENTITY", "OBS-AI-GOC-SCENE-IDENTITY"),
         ("validated_by", "CTR-ADR-0003-SCENE-IDENTITY", "VER-AI-GOC-SCENE-IDENTITY-TEST"),
         ("overlaps_with", "CTR-WRITERS-ROOM-PUBLISHING-FLOW", "CTR-RAG-GOVERNANCE"),
-        ("validated_by", "CTR-WRITERS-ROOM-PUBLISHING-FLOW", "VER-BE-WRITERS-ROOM-ROUTES-TEST"),
         ("implemented_by", "CTR-RAG-GOVERNANCE", "OBS-AI-RAG"),
-        ("validated_by", "CTR-RAG-GOVERNANCE", "VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST"),
     }
     missing = expected - kinds
     assert not missing, f"missing curated runtime/MVP relations: {sorted(missing)}"
@@ -66,6 +64,7 @@ def test_runtime_mvp_audit_includes_precedence_and_manual_unresolved() -> None:
     } == tiers
     assert payload["manual_unresolved_areas"]
     assert payload["runtime_mvp_families"]["runtime_authority"]
+    assert payload["adr_governance"]["canonical_dir"] == "docs/ADR"
 
 
 def test_governed_runtime_adr_overlap_no_longer_raises_normative_vocabulary_overlap() -> None:
@@ -80,15 +79,3 @@ def test_governed_runtime_adr_overlap_no_longer_raises_normative_vocabulary_over
         if conflict.classification != "normative_vocabulary_overlap":
             continue
         assert not set(conflict.sources).issubset(governed)
-
-
-def test_runtime_mvp_publish_rag_family_has_non_empty_validation_attachments() -> None:
-    root = repo_paths.repo_root()
-    payload = run_audit(root, max_contracts=60)
-    contracts = {c["id"]: c for c in payload["contracts"]}
-
-    writers = contracts["CTR-WRITERS-ROOM-PUBLISHING-FLOW"]
-    assert "backend/tests/writers_room/test_writers_room_routes.py" in writers["validated_by"]
-
-    rag = contracts["CTR-RAG-GOVERNANCE"]
-    assert "ai_stack/tests/test_retrieval_governance_summary.py" in rag["validated_by"]

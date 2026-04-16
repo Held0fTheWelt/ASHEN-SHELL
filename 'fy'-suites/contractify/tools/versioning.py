@@ -27,6 +27,9 @@ def openapi_declared_version(text: str) -> str:
 _ADR_STATUS_LINE = re.compile(
     r"(?im)^\s*\*{0,2}status\*{0,2}\s*:\s*([A-Za-z][A-Za-z\s-]{0,40})$",
 )
+_ADR_STATUS_SECTION = re.compile(
+    r"(?is)^\s*#{2,6}\s+status\s*$\s*([\r\n]+)(.+?)(?=^\s*#{1,6}\s+|\Z)",
+)
 
 # Front-matter style contractify projection block (optional machine anchor).
 _PROJECTION_REF = re.compile(
@@ -36,11 +39,24 @@ _PROJECTION_REF = re.compile(
 
 
 def adr_declared_status(adr_head: str) -> str:
-    """Return first explicit ``Status:`` value from an ADR header slice, lowercased, or ``unknown``."""
-    m = _ADR_STATUS_LINE.search(adr_head[:6000])
-    if not m:
-        return "unknown"
-    return m.group(1).strip().lower().replace(" ", "_")
+    """Return explicit ADR lifecycle from ``Status:`` line or ``## Status`` section, else ``unknown``."""
+    head = adr_head[:12000]
+    m = _ADR_STATUS_LINE.search(head)
+    if m:
+        return m.group(1).strip().lower().replace(" ", "_")
+
+    lines = head.splitlines()
+    for idx, line in enumerate(lines):
+        if line.strip().lower() != "## status":
+            continue
+        for nxt in lines[idx + 1 :]:
+            stripped = nxt.strip()
+            if not stripped:
+                continue
+            stripped = re.sub(r"[*`_]", "", stripped)
+            stripped = stripped.split("—", 1)[0].split("-", 1)[0].strip().lower().replace(" ", "_")
+            return stripped or "unknown"
+    return "unknown"
 
 
 def openapi_sha256_prefix(sha256_full: str, *, n: int = 16) -> str:

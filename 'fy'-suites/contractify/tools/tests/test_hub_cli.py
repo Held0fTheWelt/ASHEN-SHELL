@@ -57,3 +57,19 @@ def test_discover_writes_deprecation_evidence_when_manifest_missing(monkeypatch)
             out.unlink()
         if env.is_file():
             env.unlink()
+
+
+def test_adr_investigation_writes_bundle() -> None:
+    root = repo_paths.repo_root()
+    out_dir = root / "'fy'-suites" / "contractify" / "reports" / "_pytest_adr_investigation_cli"
+    try:
+        code = main(["adr-investigation", "--out-dir", out_dir.relative_to(root).as_posix(), "--quiet"])
+        assert code == 0
+        assert (out_dir / "ADR_GOVERNANCE_INVESTIGATION.md").is_file()
+        assert (out_dir / "ADR_RELATION_MAP.mmd").is_file()
+        assert (out_dir / "ADR_CONFLICT_MAP.mmd").is_file()
+    finally:
+        if out_dir.exists():
+            for child in sorted(out_dir.glob("*"), reverse=True):
+                child.unlink()
+            out_dir.rmdir()

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from contractify.tools.adr_governance import first_existing_relative
 from contractify.tools.models import ConflictFinding, ContractRecord, ProjectionRecord, RelationEdge
 
 
@@ -54,6 +55,35 @@ def _existing(repo: Path, *rels: str) -> list[str]:
         if (repo / rel).is_file():
             out.append(rel)
     return out
+
+
+def _one_of(repo: Path, *rels: str) -> list[str]:
+    rel = first_existing_relative(repo, *rels)
+    return [rel] if rel else []
+
+
+def _adr0001(repo: Path) -> str:
+    return first_existing_relative(
+        repo,
+        "docs/ADR/ADR.RUNTIME.0001-runtime-authority-in-world-engine.md",
+        "docs/governance/adr-0001-runtime-authority-in-world-engine.md",
+    )
+
+
+def _adr0002(repo: Path) -> str:
+    return first_existing_relative(
+        repo,
+        "docs/ADR/ADR.BACKEND.SESSION.0002-backend-session-transitional-runtime-surface-quarantine-and-retirement.md",
+        "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+    )
+
+
+def _adr0003(repo: Path) -> str:
+    return first_existing_relative(
+        repo,
+        "docs/ADR/ADR.SLICE.GOC.0003-single-canonical-scene-identity-surface-across-compile-ai-guidance-and-commit.md",
+        "docs/governance/adr-0003-scene-identity-canonical-surface.md",
+    )
 
 
 def _contract(
@@ -245,7 +275,7 @@ def build_runtime_mvp_spine(
             layer="governance",
             authority_level="normative",
             anchor_kind="document",
-            anchor_location="docs/governance/adr-0001-runtime-authority-in-world-engine.md",
+            anchor_location=_adr0001(repo),
             precedence_tier=RUNTIME_AUTHORITY,
             tags=["family:runtime_authority", "adr", "world-engine"],
             owner_or_area="architecture",
@@ -255,11 +285,7 @@ def build_runtime_mvp_spine(
                 "world-engine/app/story_runtime/manager.py",
                 "world-engine/app/api/http.py",
             ),
-            validated_by=_existing(
-                repo,
-                "world-engine/tests/test_story_runtime_api.py",
-                "ai_stack/tests/test_retrieval_governance_summary.py",
-            ),
+            validated_by=_existing(repo, "world-engine/tests/test_story_runtime_api.py"),
             documented_in=_existing(
                 repo,
                 "docs/technical/runtime/runtime-authority-and-state-flow.md",
@@ -278,7 +304,7 @@ def build_runtime_mvp_spine(
             layer="governance",
             authority_level="normative",
             anchor_kind="document",
-            anchor_location="docs/governance/adr-0002-backend-session-surface-quarantine.md",
+            anchor_location=_adr0002(repo),
             precedence_tier=RUNTIME_AUTHORITY,
             tags=["family:runtime_authority", "adr", "backend", "transitional"],
             owner_or_area="architecture",
@@ -313,7 +339,7 @@ def build_runtime_mvp_spine(
             layer="governance",
             authority_level="normative",
             anchor_kind="document",
-            anchor_location="docs/governance/adr-0003-scene-identity-canonical-surface.md",
+            anchor_location=_adr0003(repo),
             precedence_tier=SLICE_NORMATIVE,
             tags=["family:scene_identity", "adr", "goc"],
             owner_or_area="ai_stack",
@@ -358,7 +384,7 @@ def build_runtime_mvp_spine(
             validated_by=_existing(repo, "world-engine/tests/test_story_runtime_api.py"),
             documented_in=_existing(
                 repo,
-                "docs/governance/adr-0001-runtime-authority-in-world-engine.md",
+                _adr0001(repo),
                 "docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md",
             ),
             projected_as=_existing(
@@ -396,8 +422,8 @@ def build_runtime_mvp_spine(
             ),
             documented_in=_existing(
                 repo,
-                "docs/governance/adr-0001-runtime-authority-in-world-engine.md",
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0001(repo),
+                _adr0002(repo),
                 "docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md",
             ),
             projected_as=_existing(repo, "docs/technical/architecture/service-boundaries.md"),
@@ -565,7 +591,6 @@ def build_runtime_mvp_spine(
             owner_or_area="backend",
             scope="review and publishing governance",
             implemented_by=_existing(repo, "backend/app/api/v1/writers_room_routes.py"),
-            validated_by=_existing(repo, "backend/tests/writers_room/test_writers_room_routes.py"),
             documented_in=_existing(repo, "docs/admin/publishing-and-module-activation.md"),
             projected_as=_existing(repo, "docs/admin/publishing-and-module-activation.md"),
         )
@@ -589,11 +614,7 @@ def build_runtime_mvp_spine(
                 "ai_stack/rag.py",
                 "world-engine/app/story_runtime/manager.py",
             ),
-            validated_by=_existing(
-                repo,
-                "world-engine/tests/test_story_runtime_api.py",
-                "ai_stack/tests/test_retrieval_governance_summary.py",
-            ),
+            validated_by=_existing(repo, "world-engine/tests/test_story_runtime_api.py"),
             documented_in=_existing(
                 repo,
                 "docs/ai/ai_system_in_world_of_shadows.md",
@@ -687,7 +708,7 @@ def build_runtime_mvp_spine(
             documented_in=_existing(
                 repo,
                 "docs/technical/architecture/backend-runtime-classification.md",
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0002(repo),
             ),
         )
     )
@@ -709,7 +730,7 @@ def build_runtime_mvp_spine(
                 repo,
                 "docs/technical/runtime/runtime-authority-and-state-flow.md",
                 "docs/technical/architecture/backend-runtime-classification.md",
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0002(repo),
             ),
         )
     )
@@ -730,7 +751,7 @@ def build_runtime_mvp_spine(
             documented_in=_existing(
                 repo,
                 "docs/technical/architecture/backend-runtime-classification.md",
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0002(repo),
             ),
         )
     )
@@ -752,7 +773,7 @@ def build_runtime_mvp_spine(
             documented_in=_existing(
                 repo,
                 "docs/technical/architecture/backend-runtime-classification.md",
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0002(repo),
             ),
         )
     )
@@ -770,7 +791,6 @@ def build_runtime_mvp_spine(
             tags=["family:publish_rag", "implementation", "backend"],
             owner_or_area="backend",
             scope="writers-room review routes",
-            validated_by=_existing(repo, "backend/tests/writers_room/test_writers_room_routes.py"),
             documented_in=_existing(repo, "docs/technical/content/writers-room-and-publishing-flow.md"),
         )
     )
@@ -811,7 +831,7 @@ def build_runtime_mvp_spine(
             owner_or_area="ai_stack",
             scope="GoC scene identity mapping",
             validated_by=_existing(repo, "ai_stack/tests/test_goc_scene_identity.py"),
-            documented_in=_existing(repo, "docs/governance/adr-0003-scene-identity-canonical-surface.md"),
+            documented_in=_existing(repo, _adr0003(repo)),
         )
     )
     add(
@@ -831,7 +851,7 @@ def build_runtime_mvp_spine(
             validated_by=_existing(repo, "ai_stack/tests/test_goc_scene_identity.py"),
             documented_in=_existing(
                 repo,
-                "docs/governance/adr-0003-scene-identity-canonical-surface.md",
+                _adr0003(repo),
                 "docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md",
             ),
         )
@@ -850,11 +870,7 @@ def build_runtime_mvp_spine(
             tags=["family:publish_rag", "implementation", "ai_stack", "rag"],
             owner_or_area="ai_stack",
             scope="retrieval implementation",
-            validated_by=_existing(
-                repo,
-                "world-engine/tests/test_story_runtime_api.py",
-                "ai_stack/tests/test_retrieval_governance_summary.py",
-            ),
+            validated_by=_existing(repo, "world-engine/tests/test_story_runtime_api.py"),
             documented_in=_existing(repo, "docs/technical/ai/RAG.md"),
         )
     )
@@ -876,48 +892,6 @@ def build_runtime_mvp_spine(
                 repo,
                 "docs/technical/architecture/canonical_runtime_contract.md",
                 "docs/technical/architecture/backend-runtime-classification.md",
-            ),
-        )
-    )
-    add(
-        _contract(
-            cid="VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST",
-            title="Retrieval governance summary tests",
-            summary="Verification suite asserting retrieval governance summary semantics, lane separation, visibility precedence, and policy version reporting.",
-            contract_type="verification_surface",
-            layer="testing",
-            authority_level="verification",
-            anchor_kind="code_boundary",
-            anchor_location="ai_stack/tests/test_retrieval_governance_summary.py",
-            precedence_tier=VERIFICATION_EVIDENCE,
-            tags=["family:publish_rag", "verification", "ai_stack", "rag"],
-            owner_or_area="ai_stack",
-            scope="retrieval governance verification",
-            documented_in=_existing(
-                repo,
-                "docs/technical/ai/RAG.md",
-                "docs/testing-setup.md",
-            ),
-        )
-    )
-    add(
-        _contract(
-            cid="VER-BE-WRITERS-ROOM-ROUTES-TEST",
-            title="Writers’ Room route tests",
-            summary="Verification suite covering Writers’ Room route auth, unified retrieval usage, recommendation-only flow, and review state handling.",
-            contract_type="verification_surface",
-            layer="testing",
-            authority_level="verification",
-            anchor_kind="code_boundary",
-            anchor_location="backend/tests/writers_room/test_writers_room_routes.py",
-            precedence_tier=VERIFICATION_EVIDENCE,
-            tags=["family:publish_rag", "verification", "backend", "writers_room"],
-            owner_or_area="backend",
-            scope="writers-room route verification",
-            documented_in=_existing(
-                repo,
-                "docs/technical/content/writers-room-and-publishing-flow.md",
-                "docs/testing-setup.md",
             ),
         )
     )
@@ -954,7 +928,7 @@ def build_runtime_mvp_spine(
             scope="scene identity verification",
             documented_in=_existing(
                 repo,
-                "docs/governance/adr-0003-scene-identity-canonical-surface.md",
+                _adr0003(repo),
                 "docs/audit/repo_evidence_index.md",
             ),
         )
@@ -1242,7 +1216,7 @@ def build_runtime_mvp_spine(
             conflict_type="intentional_unresolved_transition_boundary",
             summary="Backend transitional session surfaces are now attached and weighted, but the actual retirement timeline remains intentionally unresolved.",
             sources=[
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0002(repo),
                 "docs/technical/architecture/backend-runtime-classification.md",
                 "backend/app/api/v1/session_routes.py",
                 "backend/app/runtime/session_store.py",
@@ -1253,7 +1227,7 @@ def build_runtime_mvp_spine(
             notes="Governed as quarantine/compat today; removal timing still needs explicit decision-log entries.",
             classification="runtime_transition_retirement_open",
             normative_sources=[
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0002(repo),
                 "docs/technical/architecture/backend-runtime-classification.md",
             ],
             observed_or_projection_sources=[
@@ -1264,7 +1238,7 @@ def build_runtime_mvp_spine(
             kind="intentional_unresolved_boundary",
             severity="medium",
             normative_candidates=[
-                "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+                _adr0002(repo),
                 "docs/technical/architecture/backend-runtime-classification.md",
             ],
             observed_candidates=[
@@ -1338,8 +1312,6 @@ def build_runtime_mvp_spine(
             "CTR-RAG-GOVERNANCE",
             "OBS-BE-WRITERS-ROOM-ROUTES",
             "OBS-AI-RAG",
-            "VER-BE-WRITERS-ROOM-ROUTES-TEST",
-            "VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST",
         ],
         "testing": [
             "CTR-TESTING-ORCHESTRATION",

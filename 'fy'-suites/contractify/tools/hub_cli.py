@@ -10,6 +10,7 @@ from typing import Sequence
 from fy_platform.core.artifact_envelope import build_envelope, write_envelope
 from fy_platform.core.manifest import load_manifest
 from contractify.tools.audit_pipeline import build_discover_payload, run_audit
+from contractify.tools.investigation_suite import write_adr_investigation_suite
 from contractify.tools.repo_paths import repo_root
 
 SUITE_VERSION = "0.1.0"
@@ -178,6 +179,23 @@ def cmd_self_check(args: argparse.Namespace) -> int:
     return cmd_audit(args)
 
 
+
+def cmd_adr_investigation(args: argparse.Namespace) -> int:
+    root = repo_root()
+    bundle = write_adr_investigation_suite(root, out_dir_rel=args.out_dir)
+    if not args.quiet:
+        print(
+            json.dumps(
+                {
+                    "out_dir": args.out_dir,
+                    "n_adrs": bundle["adr_governance"]["stats"]["n_adrs"],
+                    "n_findings": bundle["adr_governance"]["stats"]["n_findings"],
+                },
+                indent=2,
+            )
+        )
+    return 0
+
 def main(argv: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "help"):
@@ -210,6 +228,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_self.add_argument("--quiet", action="store_true")
     p_self.add_argument("--envelope-out", default="", help="Optional path for shared envelope output JSON")
     p_self.set_defaults(func=cmd_self_check)
+
+    p_adr = sub.add_parser("adr-investigation", help="Write ADR governance inventory and Mermaid maps")
+    p_adr.add_argument("--out-dir", default="'fy'-suites/contractify/investigations/adr")
+    p_adr.add_argument("--quiet", action="store_true")
+    p_adr.set_defaults(func=cmd_adr_investigation)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

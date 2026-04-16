@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from fy_platform.core.manifest import load_manifest, suite_config
+from contractify.tools.adr_governance import discover_adr_governance, iter_adr_markdown_paths
 from contractify.tools.discovery import NORMATIVE_INDEX, OPENAPI_DEFAULT, POSTMAN_MANIFEST
 from contractify.tools.models import ConflictFinding, ContractRecord, ProjectionRecord
 from contractify.tools.runtime_mvp_spine import build_runtime_mvp_spine
@@ -107,15 +108,10 @@ def detect_duplicate_normative_index_targets(repo: Path) -> list[ConflictFinding
 
 def detect_adr_vocabulary_overlap(repo: Path) -> list[ConflictFinding]:
     """Multiple ADRs hit the same bounded vocabulary bucket (heuristic overlap)."""
-    adr_dir = repo / "docs" / "governance"
-    if not adr_dir.is_dir():
-        return []
     out: list[ConflictFinding] = []
     for bucket, keywords in _ADR_OVERLAP_TERMS:
         hits: list[str] = []
-        for adr in sorted(adr_dir.glob("adr-*.md")):
-            if "template" in adr.stem.lower():
-                continue
+        for adr in iter_adr_markdown_paths(repo):
             text = adr.read_text(encoding="utf-8", errors="replace").lower()
             if any(k.lower() in text for k in keywords):
                 hits.append(adr.name)
@@ -186,15 +182,10 @@ def detect_projection_fingerprint_mismatch(
 
 def detect_deprecated_adr_without_supersession_link(repo: Path) -> list[ConflictFinding]:
     """Explicit ``Status: Deprecated`` / ``Superseded`` without supersession navigation (bounded header scan)."""
-    adr_dir = repo / "docs" / "governance"
-    if not adr_dir.is_dir():
-        return []
     out: list[ConflictFinding] = []
     linkish = re.compile(r"supersed|superseded\s+by|replaced\s+by", re.IGNORECASE)
     bad_status = re.compile(r"(?im)^\s*\*{0,2}status\*{0,2}\s*:\s*(deprecated|superseded)\b")
-    for adr in sorted(adr_dir.glob("adr-*.md")):
-        if "template" in adr.stem.lower():
-            continue
+    for adr in iter_adr_markdown_paths(repo):
         head = adr.read_text(encoding="utf-8", errors="replace")[:6000]
         if not bad_status.search(head):
             continue

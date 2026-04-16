@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from contractify.tools.adr_governance import iter_adr_markdown_paths
 from contractify.tools.discovery import NORMATIVE_INDEX, OPENAPI_DEFAULT
 from contractify.tools.models import ConflictFinding, ContractRecord, ProjectionRecord, RelationEdge
 from contractify.tools.versioning import adr_supersedes_line, resolve_supersedes_markdown_target
@@ -114,33 +115,29 @@ def extend_relations(
             )
         )
 
-    adr_dir = repo / "docs" / "governance"
-    if adr_dir.is_dir():
-        for adr in sorted(adr_dir.glob("adr-*.md")):
-            if "template" in adr.stem.lower():
-                continue
-            head = adr.read_text(encoding="utf-8", errors="replace")[:12_000]
-            body = adr_supersedes_line(head)
-            if not body:
-                continue
-            sup = resolve_supersedes_markdown_target(body, adr_file=adr, repo=repo)
-            if not sup:
-                continue
-            tgt_path = repo / sup
-            if not tgt_path.is_file():
-                continue
-            src_id = _adr_contract_id(adr.stem)
-            tgt_id = _adr_contract_id(tgt_path.stem)
-            if src_id in ids and tgt_id in ids:
-                out.append(
-                    RelationEdge(
-                        relation="supersedes",
-                        source_id=src_id,
-                        target_id=tgt_id,
-                        evidence=f"{adr.name} declares explicit Supersedes navigation to {sup}",
-                        confidence=0.9,
-                    )
+    for adr in iter_adr_markdown_paths(repo):
+        head = adr.read_text(encoding="utf-8", errors="replace")[:12_000]
+        body = adr_supersedes_line(head)
+        if not body:
+            continue
+        sup = resolve_supersedes_markdown_target(body, adr_file=adr, repo=repo)
+        if not sup:
+            continue
+        tgt_path = repo / sup
+        if not tgt_path.is_file():
+            continue
+        src_id = _adr_contract_id(adr.stem)
+        tgt_id = _adr_contract_id(tgt_path.stem)
+        if src_id in ids and tgt_id in ids:
+            out.append(
+                RelationEdge(
+                    relation="supersedes",
+                    source_id=src_id,
+                    target_id=tgt_id,
+                    evidence=f"{adr.name} declares explicit Supersedes navigation to {sup}",
+                    confidence=0.9,
                 )
+            )
 
     wf_dir = repo / ".github" / "workflows"
     if "CTR-API-OPENAPI-001" in ids and wf_dir.is_dir():

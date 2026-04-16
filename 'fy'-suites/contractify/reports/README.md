@@ -22,6 +22,13 @@ The current runtime/MVP attachment wave is tracked through both:
 - `runtime_mvp_attachment_report.md` (generated summary)
 - `../state/RUNTIME_MVP_SPINE_ATTACHMENT.md` (tracked state record)
 
+ADR governance visibility is split similarly:
+
+- `../investigations/adr/ADR_GOVERNANCE_INVESTIGATION.md`
+- `../investigations/adr/ADR_RELATION_MAP.mmd`
+- `../investigations/adr/ADR_CONFLICT_MAP.mmd`
+- `../state/ADR_GOVERNANCE_INVESTIGATION.md`
+
 ## Git tracking note
 
 Root `.gitignore` ignores `**/contractify/reports/*.json` **only for files directly under** `reports/` (single path segment). The subdirectory `committed/` holds tracked `*.hermetic-fixture.json` files.
@@ -33,11 +40,13 @@ From the **repository root**:
 ```bash
 python -m contractify.tools discover --json --out "'fy'-suites/contractify/reports/contract_discovery.json"
 python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
+python -m contractify.tools adr-investigation --out-dir "'fy'-suites/contractify/investigations/adr"
 ```
 
-## Review order for the runtime/MVP attachment wave
+## Review order
 
 1. `../state/RUNTIME_MVP_SPINE_ATTACHMENT.md`
 2. `runtime_mvp_attachment_report.md`
 3. `contract_audit.json`
-4. `committed/` fixture reports if report-shape verification is needed
+4. `../investigations/adr/ADR_GOVERNANCE_INVESTIGATION.md`
+5. `committed/` fixture reports if report-shape verification is needed
