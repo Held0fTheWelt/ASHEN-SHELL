@@ -17,3 +17,5 @@
 | `docs/archive/architecture-legacy/area2_*.md` | Various gate tables | — | — | Not migrated to active surface | N/A — intentionally evidence-only per consolidation policy |
 
 **Gate:** No listed source was deleted from git history; moves are `git mv` to `docs/archive/` or superseded by explicit canonical pages with verification rows above.
+
+**Migrated Decision:** See canonical ADR: [ADR-0017: Durable-truth migration verification and archive policy](../../ADR/adr-0017-durable-truth-migration-policy.md)

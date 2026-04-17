@@ -156,3 +156,5 @@ This document is the result of an audit of the current repository and the Master
 | **API** | All `GET/POST ... /api/v1/*` (health, auth, future news). | Consumes API only via JS; no server-side API. |
 
 **Config:** Backend `FRONTEND_URL` (no trailing slash). When set, logout also redirects to `FRONTEND_URL/`. No duplicate public news: backend does not serve a competing news page when frontend is in use.
+
+**Migrated Decision:** See canonical ADR: [ADR-0016: Frontend / Backend Restructure](../../ADR/adr-0016-frontend-backend-restructure.md)

@@ -423,6 +423,8 @@ class TestDiagnosticOnlyConstraint:
         )
 
         # parsed_output (canonical decision) should be identical
+
+    **Migrated Decision:** See canonical ADR: [ADR-0018: Role-aware AIDecisionLog and ParsedRoleAwareDecision](../../ADR/adr-0018-role-aware-aidecisionlog.md)
         assert log_with_roles.parsed_output == log_without_roles.parsed_output
         # Both should have same proposed_scene_id
         parsed_with = log_with_roles.parsed_output  # dict from model_dump()

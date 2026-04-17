@@ -575,6 +575,8 @@ The roadmap is intentionally front-loaded toward **learning before platform expa
 - if the difference is weak, do **not** expand the platform
 - first fix the experiential gap
 
+**Migrated Decision:** See canonical ADR: [ADR-0022: MVP Expansion Decision Rule — when not to expand the platform](../../ADR/adr-0022-mvp-expansion-decision-rule.md)
+
 ---
 
 ### Phase 3 — Targeted correction pass

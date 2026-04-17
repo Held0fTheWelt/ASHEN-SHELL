@@ -7,6 +7,8 @@
 - MCP tools speak to backend **remotely** via HTTPS (PythonAnywhere remains default).
 - MCP is used in Phase A as **operator console** (debug/inspect), not as in-game mechanic.
 
+**Migrated Decision:** See canonical ADR: [ADR-0026: MCP Phase A — Host & Runtime defaults](../ADR/adr-0026-mcp-host-and-runtime-phase-a.md)
+
 ## Rationale
 
 - Fits current remote-first setup (backend on PythonAnywhere).

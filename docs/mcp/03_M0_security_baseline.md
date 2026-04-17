@@ -34,3 +34,5 @@
   - or local content files (repo)
 - No tool may execute “execute” or “apply delta.”
 
+**Migrated Decision:** See canonical ADR: [ADR-0028: MCP Security Baseline — Phase A minimal policy](../ADR/adr-0028-mcp-security-baseline-phase-a.md)
+

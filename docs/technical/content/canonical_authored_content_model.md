@@ -9,6 +9,8 @@ module format under `content/modules/<module_id>/` loaded into `ContentModule`.
 
 This model is authoritative for authored narrative intent.
 
+**Migrated Decision:** See canonical ADR: [ADR-0025: Canonical Authored Content Model](../ADR/adr-0025-canonical-authored-content-model.md)
+
 ## Source contract
 
 - Primary source files:

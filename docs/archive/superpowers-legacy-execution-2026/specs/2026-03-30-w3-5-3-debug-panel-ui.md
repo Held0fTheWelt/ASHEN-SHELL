@@ -212,3 +212,5 @@ All tests follow TDD pattern: failing test → implementation → passing test.
 - Do not invent fake diagnostics
 - Do not add module-specific hacks
 - Stay within W3 scope
+
+**Migrated Decision:** See canonical ADR: [ADR-0020: Debug Panel UI — bounded diagnostics in session UI](../../ADR/adr-0020-debug-panel-ui.md)

@@ -11,3 +11,5 @@
 **Directories removed from active layout:** `docs/superpowers/plans/`, `docs/superpowers/specs/`, and parent `docs/superpowers/` (empty after move).
 
 **Companion README:** [`../superpowers-legacy-execution-2026/README.md`](../superpowers-legacy-execution-2026/README.md)
+
+**Migrated Decision:** See canonical ADR: [ADR-0017: Durable-truth migration verification and archive policy](../../ADR/adr-0017-durable-truth-migration-policy.md)

@@ -41,3 +41,5 @@ A surface is residue/residue-candidate only when at least 2 of 3 are satisfied.
 - P0 surfaces are retained with policy controls.
 - P1 candidates are explicitly marked for downstream demotion/relocation where criteria pass.
 
+**Migrated Decision:** See canonical ADR: [ADR-0029: Residue Removal Policy — operational criteria and handling](../ADR/adr-0029-residue-removal-policy.md)
+

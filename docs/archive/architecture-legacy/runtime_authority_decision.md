@@ -8,6 +8,8 @@ World-Engine is the authoritative runtime host for story sessions.
 Backend is the policy/review/publishing/governance layer.
 Shared runtime business logic is extracted into `story_runtime_core`.
 
+**Migrated Decision:** See canonical ADR: [ADR-0021: Runtime Authority — World-Engine as authoritative runtime host](../../ADR/adr-0021-runtime-authority.md)
+
 ## Ownership boundaries
 
 ### Backend remains responsible for
