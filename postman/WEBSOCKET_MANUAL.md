@@ -1,5 +1,11 @@
 # Manual WebSocket Validation in Postman
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>   projection_weight: low
+
 Postman supports WebSocket connections, but saved WebSocket request formats vary by Postman version.
 This suite therefore ships the HTTP automation in collection form and documents the WebSocket checks here.
 

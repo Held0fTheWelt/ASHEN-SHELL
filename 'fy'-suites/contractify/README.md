@@ -37,7 +37,7 @@ Phase-1 tooling is **deliberately shallow** in places: conflicts are real but no
 
 | Tier | Meaning | Examples in this repo |
 |------|---------|------------------------|
-| **A** | Explicit markers or known canonical paths | `docs/dev/contracts/normative-contracts-index.md`, `docs/api/openapi.yaml`, `docs/governance/adr-*.md`, `spaghetti-setup.md`, **`'fy'-suites/postmanify/postmanify-sync-task.md`**, **`'fy'-suites/docify/documentation-check-task.md`** |
+| **A** | Explicit markers or known canonical paths | `docs/dev/contracts/normative-contracts-index.md`, `docs/api/openapi.yaml`, `docs/ADR/adr-*.md`, `spaghetti-setup.md`, **`'fy'-suites/postmanify/postmanify-sync-task.md`**, **`'fy'-suites/docify/documentation-check-task.md`** |
 | **B** | Structural workflow / CI / ops / shared schemas | `.github/workflows/*.yml`, `docs/operations/OPERATIONAL_GOVERNANCE_RUNTIME.md` (when present), up to **two** `schemas/*.json` files per pass |
 | **C** | Referencing / audience artefacts | `docs/easy/**`, `docs/start-here/**` modelled as projections |
 | **D** | Out of scope by default | Private helpers — not scanned |

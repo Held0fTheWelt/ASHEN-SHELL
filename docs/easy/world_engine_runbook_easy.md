@@ -1,5 +1,13 @@
 # World Engine — Easy Reading Runbook
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-RUNTIME-AUTHORITY-STATE-FLOW
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>     - CTR-RUNTIME-NARRATIVE-COMMIT
+>   projection_weight: low
+
 ## Title and purpose
 
 This runbook explains the **World Engine** in **World of Shadows** in calm, concrete language. It is meant for readers who are not deep in the codebase, while still staying faithful to how the repository actually works.

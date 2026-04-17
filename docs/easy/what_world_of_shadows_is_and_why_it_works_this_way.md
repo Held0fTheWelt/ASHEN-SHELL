@@ -1,5 +1,13 @@
 # What World of Shadows is — and why it works this way
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-NORM-INDEX-001
+>     - CTR-RUNTIME-AUTHORITY-STATE-FLOW
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>   projection_weight: low
+
 ## Title and purpose
 
 This document explains **World of Shadows** as a whole: what it is trying to become, what problem it solves, what value it is meant to create, and **why** the architecture is shaped the way it is.

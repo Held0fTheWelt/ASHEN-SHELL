@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — aligns with `docs/technical/runtime/runtime-authority-and-state-flow.md` and the archived `docs/archive/architecture-legacy/runtime_authority_decision.md` (Milestones 0–5).
+Accepted - aligns with `docs/technical/runtime/runtime-authority-and-state-flow.md` and the archived `docs/archive/architecture-legacy/runtime_authority_decision.md` (Milestones 0-5).
 
 ## Date
 
@@ -15,7 +15,7 @@ World of Shadows split **platform API / governance** from **live narrative execu
 ## Decision
 
 1. **`world-engine` (play service)** is the **authoritative runtime host** for story sessions: lifecycle, turn execution, and runtime-side session persistence model.
-2. **`backend`** remains responsible for content curation, publishing controls, review/moderation workflows, policy validation, and admin/operator diagnostics integration — **not** for hosting canonical player HTML or re-implementing committed turn logic.
+2. **`backend`** remains responsible for content curation, publishing controls, review/moderation workflows, policy validation, and admin/operator diagnostics integration - **not** for hosting canonical player HTML or re-implementing committed turn logic.
 3. **`story_runtime_core`** holds shared interpretation, registry/adapters, and reusable models consumed by the play service.
 4. **AI output** remains **non-authoritative proposal data** until validated and committed by runtime seams (see `docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md` for GoC specifics).
 

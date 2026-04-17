@@ -1,5 +1,13 @@
 # World of Shadows / Better Tomorrow — product identity, core asset, and what we actually sell
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-NORM-INDEX-001
+>     - CTR-GOC-VERTICAL-SLICE
+>     - CTR-WRITERS-ROOM-PUBLISHING-FLOW
+>   projection_weight: low
+
 ## Title and purpose
 
 This document is a **founder- and stakeholder-grade** explanation of **World of Shadows** and **Better Tomorrow** as **one market-facing product identity**, of the **runtime system beneath it** as a **separate technical core asset**, and of how **demonstrations, vertical slices, and commercial paths** relate without blurring into each other.

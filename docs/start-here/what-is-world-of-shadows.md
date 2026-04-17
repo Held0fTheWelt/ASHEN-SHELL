@@ -1,5 +1,13 @@
 # What is World of Shadows?
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-NORM-INDEX-001
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>     - CTR-GOC-VERTICAL-SLICE
+>   projection_weight: low
+
 ## What it is
 
 **World of Shadows** is a narrative game and community platform delivered as **several cooperating services**. Players use a **public web application**; operators use a **separate admin application**. A **backend** service provides APIs, accounts, and persistence. A **play service** (the **world-engine**) runs **live story sessions**—scene flow, turns, and authoritative session state—according to authored content and strict runtime rules.

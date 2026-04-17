@@ -1,5 +1,12 @@
 # API Reference — World of Shadows Backend
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-API-OPENAPI-001
+>   projection_weight: low
+>   note: Human-readable examples remain subordinate to generated OpenAPI and validated route code.
+
 Complete reference for all REST API endpoints in the World of Shadows backend. For authentication details, see `docs/security.md`.
 
 ---

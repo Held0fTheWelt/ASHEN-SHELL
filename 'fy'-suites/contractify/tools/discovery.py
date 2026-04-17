@@ -231,7 +231,7 @@ def discover_contracts_and_projections(
     projections.extend(curated_projections)
     relations.extend(curated_relations)
 
-    # A3 — ADRs (canonical docs/ADR first, legacy directories still discoverable until migrated)
+    # A3 — ADRs (canonical docs/ADR)
     for adr in iter_adr_markdown_paths(repo):
         if len(contracts) >= max_contracts:
             break

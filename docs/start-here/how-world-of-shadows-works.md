@@ -1,5 +1,13 @@
 # How World of Shadows works
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-RUNTIME-AUTHORITY-STATE-FLOW
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>     - CTR-GOC-VERTICAL-SLICE
+>   projection_weight: low
+
 This page is the **plain-language** bridge between “what it is” and “how do I use or run it.” For definitions, see the [glossary](glossary.md). For containers and ports, see [System map: services and data stores](system-map-services-and-data-stores.md).
 
 ## The story in one pass

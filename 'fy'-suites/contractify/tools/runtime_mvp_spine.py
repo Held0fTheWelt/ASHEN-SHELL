@@ -65,7 +65,7 @@ def _one_of(repo: Path, *rels: str) -> list[str]:
 def _adr0001(repo: Path) -> str:
     return first_existing_relative(
         repo,
-        "docs/ADR/ADR.RUNTIME.0001-runtime-authority-in-world-engine.md",
+        "docs/ADR/adr-0001-runtime-authority-in-world-engine.md",
         "docs/governance/adr-0001-runtime-authority-in-world-engine.md",
     )
 
@@ -73,7 +73,7 @@ def _adr0001(repo: Path) -> str:
 def _adr0002(repo: Path) -> str:
     return first_existing_relative(
         repo,
-        "docs/ADR/ADR.BACKEND.SESSION.0002-backend-session-transitional-runtime-surface-quarantine-and-retirement.md",
+        "docs/ADR/adr-0002-backend-session-surface-quarantine.md",
         "docs/governance/adr-0002-backend-session-surface-quarantine.md",
     )
 
@@ -81,7 +81,7 @@ def _adr0002(repo: Path) -> str:
 def _adr0003(repo: Path) -> str:
     return first_existing_relative(
         repo,
-        "docs/ADR/ADR.SLICE.GOC.0003-single-canonical-scene-identity-surface-across-compile-ai-guidance-and-commit.md",
+        "docs/ADR/adr-0003-scene-identity-canonical-surface.md",
         "docs/governance/adr-0003-scene-identity-canonical-surface.md",
     )
 
@@ -353,7 +353,7 @@ def build_runtime_mvp_spine(
             documented_in=_existing(
                 repo,
                 "docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md",
-                "docs/governance/README.md",
+                "docs/ADR/README.md",
             ),
             notes="Slice-specific ADR below runtime authority tier.",
         )
@@ -629,6 +629,133 @@ def build_runtime_mvp_spine(
             projected_as=_existing(repo, "docs/ai/ai_system_in_world_of_shadows.md"),
         )
     )
+
+    add(
+        _contract(
+            cid="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+            title="World-Engine authoritative runtime and system interactions",
+            summary="Canonical runtime interaction spine describing the play-service HTTP and WebSocket surfaces, story runtime, and backend integration boundaries.",
+            contract_type="runtime_system_contract",
+            layer="runtime",
+            authority_level="normative",
+            anchor_kind="document",
+            anchor_location="docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md",
+            precedence_tier=RUNTIME_AUTHORITY,
+            tags=["family:runtime_authority", "family:websocket_runtime", "runtime", "play-service"],
+            owner_or_area="world-engine",
+            scope="play-service runtime surfaces and system interactions",
+            implemented_by=_existing(
+                repo,
+                "world-engine/app/api/http.py",
+                "world-engine/app/api/ws.py",
+                "world-engine/app/story_runtime/manager.py",
+            ),
+            validated_by=_existing(
+                repo,
+                "world-engine/tests/test_story_runtime_api.py",
+                "world-engine/tests/test_websocket.py",
+            ),
+            documented_in=_existing(
+                repo,
+                _adr0001(repo),
+                "docs/technical/runtime/runtime-authority-and-state-flow.md",
+                "docs/dev/architecture/runtime-authority-and-session-lifecycle.md",
+                "docs/api/README.md",
+            ),
+            projected_as=_existing(
+                repo,
+                "docs/start-here/how-world-of-shadows-works.md",
+                "docs/start-here/system-map-services-and-data-stores.md",
+                "docs/start-here/what-is-world-of-shadows.md",
+                "docs/easy/world_engine_runbook_easy.md",
+                "postman/WEBSOCKET_MANUAL.md",
+            ),
+        )
+    )
+    add(
+        _contract(
+            cid="CTR-RUNTIME-NARRATIVE-COMMIT",
+            title="World-Engine authoritative narrative commit semantics",
+            summary="Binding scene progression commit semantics for StoryRuntimeManager, including candidate selection, legality, committed state, and bounded narrative_commit diagnostics.",
+            contract_type="runtime_commit_contract",
+            layer="runtime",
+            authority_level="normative",
+            anchor_kind="document",
+            anchor_location="docs/technical/runtime/world_engine_authoritative_narrative_commit.md",
+            precedence_tier=RUNTIME_AUTHORITY,
+            tags=["family:runtime_commit", "runtime", "story_runtime"],
+            owner_or_area="world-engine",
+            scope="authoritative story narrative commit semantics",
+            implemented_by=_existing(
+                repo,
+                "world-engine/app/story_runtime/manager.py",
+                "world-engine/app/story_runtime/commit_models.py",
+            ),
+            validated_by=_existing(
+                repo,
+                "world-engine/tests/test_story_runtime_narrative_commit.py",
+                "backend/tests/runtime/test_narrative_commit.py",
+            ),
+            documented_in=_existing(
+                repo,
+                "docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md",
+                "docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md",
+            ),
+            projected_as=_existing(repo, "docs/easy/world_engine_runbook_easy.md"),
+        )
+    )
+    add(
+        _contract(
+            cid="CTR-AI-STORY-ROUTING-OBSERVATION",
+            title="AI story routing and operator audit contract",
+            summary="Cross-surface routing-evidence and operator-audit contract for runtime, Writers’ Room, and improvement orchestration surfaces.",
+            contract_type="ai_routing_observation_contract",
+            layer="architecture",
+            authority_level="normative",
+            anchor_kind="document",
+            anchor_location="docs/technical/architecture/ai_story_contract.md",
+            precedence_tier=SLICE_NORMATIVE,
+            tags=["family:routing_observability", "routing", "operator_audit", "ai"],
+            owner_or_area="backend",
+            scope="cross-surface AI routing and operator audit semantics",
+            implemented_by=_existing(
+                repo,
+                "backend/app/runtime/model_routing_contracts.py",
+                "backend/app/runtime/model_routing_evidence.py",
+                "backend/app/runtime/operator_audit.py",
+            ),
+            validated_by=_existing(repo, "backend/tests/runtime/test_cross_surface_operator_audit_contract.py"),
+            documented_in=_existing(
+                repo,
+                "docs/audit/repo_evidence_index.md",
+                "docs/testing-setup.md",
+            ),
+        )
+    )
+    add(
+        _contract(
+            cid="CTR-EVIDENCE-BASELINE-GOVERNANCE",
+            title="Evidence baseline and clone reproducibility governance",
+            summary="Governance support contract for baseline/closure evidence mapping, tracked-vs-machine-local report handling, and gate summary interpretation.",
+            contract_type="evidence_governance_contract",
+            layer="governance",
+            authority_level="normative",
+            anchor_kind="document",
+            anchor_location="docs/audit/gate_summary_matrix.md",
+            precedence_tier=VERIFICATION_EVIDENCE,
+            tags=["family:evidence_baseline", "audit", "reproducibility"],
+            owner_or_area="qa",
+            scope="gate baseline and evidence reproducibility governance",
+            documented_in=_existing(
+                repo,
+                "docs/audit/repo_evidence_index.md",
+                "docs/audit/evidence_artifact_mapping_table.md",
+                "docs/audit/canonical_to_repo_mapping_table.md",
+            ),
+            validated_by=_existing(repo, "tests/smoke/test_smoke_contracts.py"),
+        )
+    )
+
     add(
         _contract(
             cid="CTR-TESTING-ORCHESTRATION",
@@ -900,6 +1027,87 @@ def build_runtime_mvp_spine(
             ),
         )
     )
+
+    add(
+        _contract(
+            cid="OBS-WE-WS-API",
+            title="World-engine WebSocket API surface",
+            summary="Observed WebSocket runtime surface for ticket-authenticated live play commands, state updates, and isolation behavior.",
+            contract_type="implementation_surface",
+            layer="api",
+            authority_level="observed",
+            anchor_kind="code_boundary",
+            anchor_location="world-engine/app/api/ws.py",
+            precedence_tier=IMPLEMENTATION_EVIDENCE,
+            tags=["family:websocket_runtime", "implementation", "world-engine"],
+            owner_or_area="world-engine",
+            scope="play-service websocket runtime",
+            validated_by=_existing(
+                repo,
+                "world-engine/tests/test_websocket.py",
+                "world-engine/tests/test_ws_auth.py",
+            ),
+            documented_in=_existing(
+                repo,
+                "docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md",
+                "docs/api/README.md",
+            ),
+        )
+    )
+    add(
+        _contract(
+            cid="OBS-WE-COMMIT-MODELS",
+            title="Story runtime narrative commit models surface",
+            summary="Observed bounded commit record models used to persist authoritative narrative_commit truth in the story runtime.",
+            contract_type="implementation_surface",
+            layer="runtime",
+            authority_level="observed",
+            anchor_kind="code_boundary",
+            anchor_location="world-engine/app/story_runtime/commit_models.py",
+            precedence_tier=IMPLEMENTATION_EVIDENCE,
+            tags=["family:runtime_commit", "implementation", "world-engine"],
+            owner_or_area="world-engine",
+            scope="story runtime commit record models",
+            validated_by=_existing(repo, "world-engine/tests/test_story_runtime_narrative_commit.py"),
+            documented_in=_existing(repo, "docs/technical/runtime/world_engine_authoritative_narrative_commit.md"),
+        )
+    )
+    add(
+        _contract(
+            cid="OBS-BE-MODEL-ROUTING-CONTRACTS",
+            title="Backend model routing contracts surface",
+            summary="Observed backend routing contract types and reason-code vocabulary used across staged runtime and operator surfaces.",
+            contract_type="implementation_surface",
+            layer="implementation",
+            authority_level="observed",
+            anchor_kind="code_boundary",
+            anchor_location="backend/app/runtime/model_routing_contracts.py",
+            precedence_tier=IMPLEMENTATION_EVIDENCE,
+            tags=["family:routing_observability", "implementation", "backend"],
+            owner_or_area="backend",
+            scope="routing contract types and reason codes",
+            documented_in=_existing(repo, "docs/technical/architecture/ai_story_contract.md"),
+        )
+    )
+    add(
+        _contract(
+            cid="OBS-BE-OPERATOR-AUDIT",
+            title="Backend operator audit surface",
+            summary="Observed deterministic operator-audit assembly surface derived from routing evidence and stage traces.",
+            contract_type="implementation_surface",
+            layer="implementation",
+            authority_level="observed",
+            anchor_kind="code_boundary",
+            anchor_location="backend/app/runtime/operator_audit.py",
+            precedence_tier=IMPLEMENTATION_EVIDENCE,
+            tags=["family:routing_observability", "implementation", "backend", "operator_audit"],
+            owner_or_area="backend",
+            scope="cross-surface operator audit generation",
+            validated_by=_existing(repo, "backend/tests/runtime/test_cross_surface_operator_audit_contract.py"),
+            documented_in=_existing(repo, "docs/technical/architecture/ai_story_contract.md"),
+        )
+    )
+
     add(
         _contract(
             cid="VER-TEST-RUNNER-CLI",
@@ -1063,6 +1271,59 @@ def build_runtime_mvp_spine(
         )
     )
 
+    add(
+        _contract(
+            cid="VER-WE-NARRATIVE-COMMIT-TEST",
+            title="World-engine narrative commit tests",
+            summary="Verification suite for bounded narrative_commit records, legality checks, and committed story-session state exposure.",
+            contract_type="verification_surface",
+            layer="testing",
+            authority_level="verification",
+            anchor_kind="code_boundary",
+            anchor_location="world-engine/tests/test_story_runtime_narrative_commit.py",
+            precedence_tier=VERIFICATION_EVIDENCE,
+            tags=["family:runtime_commit", "verification", "world-engine"],
+            owner_or_area="world-engine",
+            scope="story runtime narrative commit verification",
+            documented_in=_existing(repo, "docs/technical/runtime/world_engine_authoritative_narrative_commit.md", "tests/TESTING.md"),
+        )
+    )
+    add(
+        _contract(
+            cid="VER-WE-WS-TEST",
+            title="World-engine WebSocket contract tests",
+            summary="Verification suite for ticket-gated WebSocket connection, command rejection, and live runtime message behavior.",
+            contract_type="verification_surface",
+            layer="testing",
+            authority_level="verification",
+            anchor_kind="code_boundary",
+            anchor_location="world-engine/tests/test_websocket.py",
+            precedence_tier=VERIFICATION_EVIDENCE,
+            tags=["family:websocket_runtime", "verification", "world-engine"],
+            owner_or_area="world-engine",
+            scope="play-service websocket verification",
+            documented_in=_existing(repo, "docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md", "tests/TESTING.md"),
+        )
+    )
+    add(
+        _contract(
+            cid="VER-BE-CROSS-SURFACE-OPERATOR-AUDIT-TEST",
+            title="Cross-surface operator audit contract tests",
+            summary="Verification suite for additive operator_audit and routing_evidence contracts across runtime and governance surfaces.",
+            contract_type="verification_surface",
+            layer="testing",
+            authority_level="verification",
+            anchor_kind="code_boundary",
+            anchor_location="backend/tests/runtime/test_cross_surface_operator_audit_contract.py",
+            precedence_tier=VERIFICATION_EVIDENCE,
+            tags=["family:routing_observability", "verification", "backend"],
+            owner_or_area="backend",
+            scope="routing evidence and operator audit verification",
+            documented_in=_existing(repo, "docs/technical/architecture/ai_story_contract.md", "docs/audit/repo_evidence_index.md", "tests/TESTING.md"),
+        )
+    )
+
+
     projections = [
         _projection(
             pid="PRJ-RUNTIME-AUTH-ONBOARDING",
@@ -1111,6 +1372,78 @@ def build_runtime_mvp_spine(
             anchor_location="docs/technical/ai/RAG.md",
         )
         if (repo / "docs/ai/ai_system_in_world_of_shadows.md").is_file()
+        else None,
+        _projection(
+            pid="PRJ-RUNTIME-SESSION-LIFECYCLE",
+            title="Developer runtime authority and session lifecycle seam note",
+            path="docs/dev/architecture/runtime-authority-and-session-lifecycle.md",
+            source_contract_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+            audience="developer",
+            mode="specialist",
+            evidence="Developer seam note restates runtime/session boundaries beneath the authoritative interaction spine.",
+            anchor_location="docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md",
+        )
+        if (repo / "docs/dev/architecture/runtime-authority-and-session-lifecycle.md").is_file()
+        else None,
+        _projection(
+            pid="PRJ-API-README",
+            title="API documentation overview",
+            path="docs/api/README.md",
+            source_contract_id="CTR-API-OPENAPI-001",
+            audience="developer",
+            mode="specialist",
+            evidence="API README summarizes machine-readable OpenAPI and linked play-service endpoints for human navigation.",
+            anchor_location="docs/api/openapi.yaml",
+        )
+        if (repo / "docs/api/README.md").is_file()
+        else None,
+        _projection(
+            pid="PRJ-API-REFERENCE",
+            title="API reference examples",
+            path="docs/api/REFERENCE.md",
+            source_contract_id="CTR-API-OPENAPI-001",
+            audience="developer",
+            mode="specialist",
+            evidence="REFERENCE.md provides human-readable request/response examples derived from the API surface.",
+            anchor_location="docs/api/openapi.yaml",
+        )
+        if (repo / "docs/api/REFERENCE.md").is_file()
+        else None,
+        _projection(
+            pid="PRJ-API-POSTMAN-GUIDE",
+            title="Historical Postman alignment guide",
+            path="docs/api/POSTMAN_COLLECTION.md",
+            source_contract_id="CTR-API-OPENAPI-001",
+            audience="developer",
+            mode="specialist",
+            evidence="POSTMAN_COLLECTION.md is an explicitly historical guide subordinate to generated Postman assets.",
+            anchor_location="docs/api/openapi.yaml",
+        )
+        if (repo / "docs/api/POSTMAN_COLLECTION.md").is_file()
+        else None,
+        _projection(
+            pid="PRJ-POSTMAN-README",
+            title="Generated Postman suite overview",
+            path="postman/README.md",
+            source_contract_id="CTR-API-OPENAPI-001",
+            audience="developer",
+            mode="specialist",
+            evidence="postman/README.md explains generated collections as projections of the OpenAPI surface.",
+            anchor_location="docs/api/openapi.yaml",
+        )
+        if (repo / "postman/README.md").is_file()
+        else None,
+        _projection(
+            pid="PRJ-POSTMAN-WS-MANUAL",
+            title="Manual WebSocket validation guide",
+            path="postman/WEBSOCKET_MANUAL.md",
+            source_contract_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+            audience="operator",
+            mode="specialist",
+            evidence="WebSocket manual stays a lower-weight validation aid beneath the authoritative runtime interaction contract.",
+            anchor_location="docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md",
+        )
+        if (repo / "postman/WEBSOCKET_MANUAL.md").is_file()
         else None,
     ]
     projections = [p for p in projections if p is not None]
@@ -1241,11 +1574,123 @@ def build_runtime_mvp_spine(
                 confidence=0.83,
             ),
             RelationEdge(
+                relation="depends_on",
+                source_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+                target_id="CTR-ADR-0001-RUNTIME-AUTHORITY",
+                evidence="The runtime interactions spine assumes ADR-0001 as the single live-runtime host authority decision.",
+                confidence=0.96,
+            ),
+            RelationEdge(
+                relation="depends_on",
+                source_id="CTR-RUNTIME-NARRATIVE-COMMIT",
+                target_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+                evidence="Narrative commit semantics sit inside the broader authoritative runtime interaction surface.",
+                confidence=0.95,
+            ),
+            RelationEdge(
+                relation="depends_on",
+                source_id="CTR-RUNTIME-NARRATIVE-COMMIT",
+                target_id="CTR-GOC-CANONICAL-TURN",
+                evidence="Narrative commit semantics are the bounded authoritative commit realization for the GoC canonical turn path.",
+                confidence=0.9,
+            ),
+            RelationEdge(
+                relation="operationalizes",
+                source_id="OBS-WE-WS-API",
+                target_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+                evidence="The WebSocket router is the code surface named by the interactions spine for live ticket-gated runtime commands.",
+                confidence=0.94,
+            ),
+            RelationEdge(
+                relation="operationalizes",
+                source_id="OBS-WE-COMMIT-MODELS",
+                target_id="CTR-RUNTIME-NARRATIVE-COMMIT",
+                evidence="Commit models define the bounded narrative_commit payload described in the authoritative narrative commit document.",
+                confidence=0.94,
+            ),
+            RelationEdge(
+                relation="operationalizes",
+                source_id="OBS-BE-MODEL-ROUTING-CONTRACTS",
+                target_id="CTR-AI-STORY-ROUTING-OBSERVATION",
+                evidence="Routing contract types provide the bounded reason-code and request vocabulary described by the AI story contract.",
+                confidence=0.93,
+            ),
+            RelationEdge(
+                relation="operationalizes",
+                source_id="OBS-BE-OPERATOR-AUDIT",
+                target_id="CTR-AI-STORY-ROUTING-OBSERVATION",
+                evidence="operator_audit.py materially assembles the cross-surface operator audit shell defined in the AI story contract.",
+                confidence=0.93,
+            ),
+            RelationEdge(
+                relation="validated_by",
+                source_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+                target_id="VER-WE-WS-TEST",
+                evidence="WebSocket tests directly validate the live runtime interaction surface named in the interactions document.",
+                confidence=0.91,
+            ),
+            RelationEdge(
+                relation="validated_by",
+                source_id="CTR-RUNTIME-NARRATIVE-COMMIT",
+                target_id="VER-WE-NARRATIVE-COMMIT-TEST",
+                evidence="Narrative commit tests assert the bounded commit semantics described in the authoritative narrative commit page.",
+                confidence=0.91,
+            ),
+            RelationEdge(
+                relation="validated_by",
+                source_id="CTR-AI-STORY-ROUTING-OBSERVATION",
+                target_id="VER-BE-CROSS-SURFACE-OPERATOR-AUDIT-TEST",
+                evidence="Cross-surface operator audit tests assert the additive routing_evidence/operator_audit contract family described in ai_story_contract.md.",
+                confidence=0.91,
+            ),
+            RelationEdge(
                 relation="derives_from",
                 source_id="PRJ-AI-SYSTEM-RAG-SUMMARY",
                 target_id="CTR-RAG-GOVERNANCE",
                 evidence="AI system overview reuses RAG governance as a summarized system map.",
                 confidence=0.82,
+            ),
+            RelationEdge(
+                relation="derives_from",
+                source_id="PRJ-RUNTIME-SESSION-LIFECYCLE",
+                target_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+                evidence="Developer seam note condenses the authoritative runtime interaction contract for implementers.",
+                confidence=0.82,
+            ),
+            RelationEdge(
+                relation="derives_from",
+                source_id="PRJ-API-README",
+                target_id="CTR-API-OPENAPI-001",
+                evidence="API README is a lower-weight human-readable projection of the machine-readable OpenAPI surface.",
+                confidence=0.82,
+            ),
+            RelationEdge(
+                relation="derives_from",
+                source_id="PRJ-API-REFERENCE",
+                target_id="CTR-API-OPENAPI-001",
+                evidence="REFERENCE.md provides examples and prose beneath the authoritative OpenAPI anchor.",
+                confidence=0.82,
+            ),
+            RelationEdge(
+                relation="derives_from",
+                source_id="PRJ-API-POSTMAN-GUIDE",
+                target_id="CTR-API-OPENAPI-001",
+                evidence="Historical Postman guide now explicitly points back to generated OpenAPI-derived assets.",
+                confidence=0.8,
+            ),
+            RelationEdge(
+                relation="derives_from",
+                source_id="PRJ-POSTMAN-README",
+                target_id="CTR-API-OPENAPI-001",
+                evidence="Postman README documents collections as generated projections of OpenAPI.",
+                confidence=0.83,
+            ),
+            RelationEdge(
+                relation="derives_from",
+                source_id="PRJ-POSTMAN-WS-MANUAL",
+                target_id="CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+                evidence="The manual WebSocket validation guide is a lower-weight operational projection of the authoritative runtime interaction contract.",
+                confidence=0.81,
             ),
         ]
     )
@@ -1285,6 +1730,39 @@ def build_runtime_mvp_spine(
                 "backend/app/api/v1/session_routes.py",
                 "backend/app/runtime/session_store.py",
                 "backend/app/services/session_service.py",
+            ],
+        ),
+        ConflictFinding(
+            id="CNF-EVIDENCE-BASELINE-CLONE-REPRO",
+            conflict_type="intentional_clone_reproducibility_boundary",
+            summary="Audit docs intentionally cite machine-local tests/reports evidence paths while clone reproducibility only guarantees the tracked subset; this boundary must stay explicit in governance review.",
+            sources=[
+                "docs/audit/gate_summary_matrix.md",
+                "docs/audit/repo_evidence_index.md",
+                ".gitignore",
+                "tests/reports",
+            ],
+            confidence=0.83,
+            requires_human_review=True,
+            notes="This is an honest reproducibility boundary, not a reason to treat machine-local evidence trees as clone-guaranteed truth.",
+            classification="clone_reproducibility_boundary",
+            normative_sources=[
+                "docs/audit/gate_summary_matrix.md",
+                "docs/audit/repo_evidence_index.md",
+            ],
+            observed_or_projection_sources=[
+                ".gitignore",
+                "tests/reports",
+            ],
+            kind="reviewable_reproducibility_boundary",
+            severity="medium",
+            normative_candidates=[
+                "docs/audit/gate_summary_matrix.md",
+                "docs/audit/repo_evidence_index.md",
+            ],
+            observed_candidates=[
+                ".gitignore",
+                "tests/reports",
             ],
         ),
         ConflictFinding(
@@ -1329,6 +1807,12 @@ def build_runtime_mvp_spine(
             "CTR-RUNTIME-AUTHORITY-STATE-FLOW",
             "CTR-BACKEND-RUNTIME-CLASSIFICATION",
             "CTR-CANONICAL-RUNTIME-CONTRACT",
+            "CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+            "CTR-RUNTIME-NARRATIVE-COMMIT",
+            "OBS-WE-WS-API",
+            "OBS-WE-COMMIT-MODELS",
+            "VER-WE-WS-TEST",
+            "VER-WE-NARRATIVE-COMMIT-TEST",
         ],
         "input_turn": [
             "CTR-PLAYER-INPUT-INTERPRETATION",
@@ -1354,6 +1838,16 @@ def build_runtime_mvp_spine(
             "OBS-AI-RAG",
             "VER-BE-WRITERS-ROOM-ROUTES-TEST",
             "VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST",
+        ],
+        "routing_observability": [
+            "CTR-AI-STORY-ROUTING-OBSERVATION",
+            "OBS-BE-MODEL-ROUTING-CONTRACTS",
+            "OBS-BE-OPERATOR-AUDIT",
+            "VER-BE-CROSS-SURFACE-OPERATOR-AUDIT-TEST",
+        ],
+        "evidence_baseline": [
+            "CTR-EVIDENCE-BASELINE-GOVERNANCE",
+            "VER-SMOKE-DOCUMENTED-PATHS",
         ],
         "testing": [
             "CTR-TESTING-ORCHESTRATION",

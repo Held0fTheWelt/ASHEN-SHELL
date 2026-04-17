@@ -9,4 +9,4 @@ Three-layer model (restart-safe governance):
 | [audit_resolution_state_world_of_shadows.md](audit_resolution_state_world_of_shadows.md) | Living state: registers, blockers, validation evidence index, closure, decision log. |
 | [CLOSURE_PACKET_world_of_shadows_2026-04-12.md](CLOSURE_PACKET_world_of_shadows_2026-04-12.md) | Closure checklist and gate commands (links into state Part K). |
 
-These are **not** ADRs. ADRs remain in the parent [governance README](../README.md).
+These are **not** ADRs. ADRs live in [`docs/ADR/README.md`](../../ADR/README.md).

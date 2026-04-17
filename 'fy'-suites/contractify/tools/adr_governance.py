@@ -1,7 +1,7 @@
 """ADR governance inventory, migration planning, and canonicalization support.
 
 This module does not rewrite repository ADR files. It provides:
-- deterministic ADR inventory across canonical and legacy locations,
+- deterministic ADR inventory across canonical and bounded legacy locations,
 - proposed canonical IDs / paths under ``docs/ADR``,
 - duplicate / legacy / navigation gap findings,
 - bounded migration planning inputs for Contractify audits and investigation docs.
@@ -19,7 +19,6 @@ from contractify.tools.versioning import adr_declared_status, adr_supersedes_lin
 
 ADR_CANONICAL_DIR = "docs/ADR"
 ADR_LEGACY_DIRS = (
-    "docs/governance",
     "docs/architecture/adr",
     "docs/adr",
 )

@@ -1,5 +1,12 @@
 # Easy-reading documentation (`docs/easy/`)
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-NORM-INDEX-001
+>   projection_weight: low
+>   note: Easy-reading docs summarize normative contracts and do not outrank them.
+
 Plain-language, longer explainers for **product meaning**, **system intuition**, and **onboarding**—without replacing normative contracts under `docs/dev/contracts/` or technical references under `docs/technical/`.
 
 ## Documents

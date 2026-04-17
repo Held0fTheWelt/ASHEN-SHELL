@@ -224,13 +224,14 @@ def detect_active_index_row_links_retired_adr(repo: Path) -> list[ConflictFindin
         return []
     text = p.read_text(encoding="utf-8", errors="replace")
     index_dir = p.parent
+    adr_paths = {adr.relative_to(repo).as_posix() for adr in iter_adr_markdown_paths(repo)}
     out: list[ConflictFinding] = []
     for line in text.splitlines():
         if "|" not in line or not _ACTIVE_BINDING_ROW.search(line):
             continue
         for _label, target in _MD_LINK.findall(line):
             norm = _norm_index_link(repo, index_dir, target)
-            if not norm or "governance" not in norm.replace("\\", "/"):
+            if not norm or norm not in adr_paths:
                 continue
             adr_path = repo / norm.replace("\\", "/")
             if not adr_path.is_file():

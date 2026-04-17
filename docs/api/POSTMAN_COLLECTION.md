@@ -1,5 +1,13 @@
 # Forum module — Postman alignment (historical checklist)
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-API-OPENAPI-001
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>   projection_weight: low
+>   status: historical-guide-with-generated-successor
+
 **Status:** Historical implementation guide. **Postman collections are no longer hand-maintained in-repo** at `WorldOfShadows_API.postman_collection.json` (removed). Forum (and all other) HTTP routes are exported from **`docs/api/openapi.yaml`** via **Postmanify** into:
 
 - **`postman/WorldOfShadows_Complete_OpenAPI.postman_collection.json`**

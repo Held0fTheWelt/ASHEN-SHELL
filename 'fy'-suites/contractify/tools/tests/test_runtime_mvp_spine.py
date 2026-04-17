@@ -21,6 +21,10 @@ def test_runtime_mvp_spine_promotes_mandatory_docs() -> None:
         "CTR-CANONICAL-RUNTIME-CONTRACT",
         "CTR-WRITERS-ROOM-PUBLISHING-FLOW",
         "CTR-RAG-GOVERNANCE",
+        "CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS",
+        "CTR-RUNTIME-NARRATIVE-COMMIT",
+        "CTR-AI-STORY-ROUTING-OBSERVATION",
+        "CTR-EVIDENCE-BASELINE-GOVERNANCE",
     }.issubset(ids)
 
 
@@ -46,6 +50,10 @@ def test_runtime_mvp_relations_cover_required_edges() -> None:
         ("validated_by", "CTR-ADR-0003-SCENE-IDENTITY", "VER-AI-GOC-SCENE-IDENTITY-TEST"),
         ("overlaps_with", "CTR-WRITERS-ROOM-PUBLISHING-FLOW", "CTR-RAG-GOVERNANCE"),
         ("implemented_by", "CTR-RAG-GOVERNANCE", "OBS-AI-RAG"),
+        ("implemented_by", "CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS", "OBS-WE-WS-API"),
+        ("implemented_by", "CTR-RUNTIME-NARRATIVE-COMMIT", "OBS-WE-COMMIT-MODELS"),
+        ("implemented_by", "CTR-AI-STORY-ROUTING-OBSERVATION", "OBS-BE-OPERATOR-AUDIT"),
+        ("validated_by", "CTR-AI-STORY-ROUTING-OBSERVATION", "VER-BE-CROSS-SURFACE-OPERATOR-AUDIT-TEST"),
     }
     missing = expected - kinds
     assert not missing, f"missing curated runtime/MVP relations: {sorted(missing)}"
@@ -64,6 +72,9 @@ def test_runtime_mvp_audit_includes_precedence_and_manual_unresolved() -> None:
     } == tiers
     assert payload["manual_unresolved_areas"]
     assert payload["runtime_mvp_families"]["runtime_authority"]
+    assert payload["runtime_mvp_families"]["routing_observability"]
+    manual_ids = {row["id"] for row in payload["manual_unresolved_areas"]}
+    assert "CNF-EVIDENCE-BASELINE-CLONE-REPRO" in manual_ids
     assert payload["adr_governance"]["canonical_dir"] == "docs/ADR"
 
 

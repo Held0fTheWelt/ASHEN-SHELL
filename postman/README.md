@@ -1,5 +1,11 @@
 # Postman — World of Shadows
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-API-OPENAPI-001
+>   projection_weight: low
+
 Collections here are **generated from** `docs/api/openapi.yaml` via **Postmanify** (`'fy'-suites/postmanify/`). Re-run after OpenAPI changes so Postman stays aligned with the API inventory.
 
 ## Files

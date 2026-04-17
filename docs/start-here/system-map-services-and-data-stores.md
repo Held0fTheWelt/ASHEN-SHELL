@@ -1,5 +1,13 @@
 # System map: services and data stores
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-RUNTIME-AUTHORITY-STATE-FLOW
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>     - CTR-CANONICAL-RUNTIME-CONTRACT
+>   projection_weight: low
+
 This page explains **which programs run**, **how they talk**, and **where data lives**, at a **container** level suitable for newcomers, operators, and stakeholders. For code-level seams, see [Runtime authority and state flow](../technical/runtime/runtime-authority-and-state-flow.md) and the [developer seam note](../dev/architecture/runtime-authority-and-session-lifecycle.md).
 
 ## Context (who touches the system)

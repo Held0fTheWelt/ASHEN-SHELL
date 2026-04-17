@@ -19,46 +19,46 @@ Generated from the curated runtime/MVP spine attachment pass.
 
 ## Explicit documented contracts promoted
 
-- `docs/governance/adr-0001-runtime-authority-in-world-engine.md` → `CTR-ADR-0001-RUNTIME-AUTHORITY` (runtime_authority)
-- `docs/governance/adr-0002-backend-session-surface-quarantine.md` → `CTR-ADR-0002-BACKEND-SESSION-QUARANTINE` (runtime_authority)
-- `docs/governance/adr-0003-scene-identity-canonical-surface.md` → `CTR-ADR-0003-SCENE-IDENTITY` (slice_normative)
-- `docs/technical/runtime/runtime-authority-and-state-flow.md` → `CTR-RUNTIME-AUTHORITY-STATE-FLOW` (runtime_authority)
-- `docs/technical/architecture/backend-runtime-classification.md` → `CTR-BACKEND-RUNTIME-CLASSIFICATION` (runtime_authority)
-- `docs/technical/architecture/canonical_runtime_contract.md` → `CTR-CANONICAL-RUNTIME-CONTRACT` (runtime_authority)
-- `docs/technical/runtime/player_input_interpretation_contract.md` → `CTR-PLAYER-INPUT-INTERPRETATION` (slice_normative)
-- `docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md` → `CTR-GOC-VERTICAL-SLICE` (slice_normative)
-- `docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md` → `CTR-GOC-CANONICAL-TURN` (slice_normative)
-- `docs/MVPs/MVP_VSL_And_GoC_Contracts/GATE_SCORING_POLICY_GOC.md` → `CTR-GOC-GATE-SCORING` (slice_normative)
-- `docs/technical/content/writers-room-and-publishing-flow.md` → `CTR-WRITERS-ROOM-PUBLISHING-FLOW` (slice_normative)
-- `docs/technical/ai/RAG.md` → `CTR-RAG-GOVERNANCE` (slice_normative)
+- `docs/ADR/adr-0001-runtime-authority-in-world-engine.md` -> `CTR-ADR-0001-RUNTIME-AUTHORITY` (runtime_authority)
+- `docs/ADR/adr-0002-backend-session-surface-quarantine.md` -> `CTR-ADR-0002-BACKEND-SESSION-QUARANTINE` (runtime_authority)
+- `docs/ADR/adr-0003-scene-identity-canonical-surface.md` -> `CTR-ADR-0003-SCENE-IDENTITY` (slice_normative)
+- `docs/technical/runtime/runtime-authority-and-state-flow.md` -> `CTR-RUNTIME-AUTHORITY-STATE-FLOW` (runtime_authority)
+- `docs/technical/architecture/backend-runtime-classification.md` -> `CTR-BACKEND-RUNTIME-CLASSIFICATION` (runtime_authority)
+- `docs/technical/architecture/canonical_runtime_contract.md` -> `CTR-CANONICAL-RUNTIME-CONTRACT` (runtime_authority)
+- `docs/technical/runtime/player_input_interpretation_contract.md` -> `CTR-PLAYER-INPUT-INTERPRETATION` (slice_normative)
+- `docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md` -> `CTR-GOC-VERTICAL-SLICE` (slice_normative)
+- `docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md` -> `CTR-GOC-CANONICAL-TURN` (slice_normative)
+- `docs/MVPs/MVP_VSL_And_GoC_Contracts/GATE_SCORING_POLICY_GOC.md` -> `CTR-GOC-GATE-SCORING` (slice_normative)
+- `docs/technical/content/writers-room-and-publishing-flow.md` -> `CTR-WRITERS-ROOM-PUBLISHING-FLOW` (slice_normative)
+- `docs/technical/ai/RAG.md` -> `CTR-RAG-GOVERNANCE` (slice_normative)
 
 ## Code-embodied contract surfaces promoted
 
-- `world-engine/app/story_runtime/manager.py` → `OBS-WE-STORY-RUNTIME-MANAGER`
-- `world-engine/app/api/http.py` → `OBS-WE-HTTP-API`
-- `backend/app/api/v1/session_routes.py` → `OBS-BE-SESSION-ROUTES`
-- `backend/app/runtime/session_store.py` → `OBS-BE-SESSION-STORE`
-- `backend/app/services/session_service.py` → `OBS-BE-SESSION-SERVICE`
-- `backend/app/api/v1/world_engine_console_routes.py` → `OBS-BE-WORLD-ENGINE-CONSOLE-ROUTES`
-- `backend/app/api/v1/writers_room_routes.py` → `OBS-BE-WRITERS-ROOM-ROUTES`
-- `story_runtime_core/input_interpreter.py` → `OBS-CORE-INPUT-INTERPRETER`
-- `ai_stack/goc_scene_identity.py` → `OBS-AI-GOC-SCENE-IDENTITY`
-- `ai_stack/goc_yaml_authority.py` → `OBS-AI-GOC-YAML-AUTHORITY`
-- `ai_stack/rag.py` → `OBS-AI-RAG`
-- `backend/app/services/game_service.py` → `OBS-BE-GAME-SERVICE`
+- `world-engine/app/story_runtime/manager.py` -> `OBS-WE-STORY-RUNTIME-MANAGER`
+- `world-engine/app/api/http.py` -> `OBS-WE-HTTP-API`
+- `backend/app/api/v1/session_routes.py` -> `OBS-BE-SESSION-ROUTES`
+- `backend/app/runtime/session_store.py` -> `OBS-BE-SESSION-STORE`
+- `backend/app/services/session_service.py` -> `OBS-BE-SESSION-SERVICE`
+- `backend/app/api/v1/world_engine_console_routes.py` -> `OBS-BE-WORLD-ENGINE-CONSOLE-ROUTES`
+- `backend/app/api/v1/writers_room_routes.py` -> `OBS-BE-WRITERS-ROOM-ROUTES`
+- `story_runtime_core/input_interpreter.py` -> `OBS-CORE-INPUT-INTERPRETER`
+- `ai_stack/goc_scene_identity.py` -> `OBS-AI-GOC-SCENE-IDENTITY`
+- `ai_stack/goc_yaml_authority.py` -> `OBS-AI-GOC-YAML-AUTHORITY`
+- `ai_stack/rag.py` -> `OBS-AI-RAG`
+- `backend/app/services/game_service.py` -> `OBS-BE-GAME-SERVICE`
 
 ## Test-evidenced / verification anchors promoted
 
-- `tests/TESTING.md` → `CTR-TESTING-ORCHESTRATION`
-- `tests/run_tests.py` → `VER-TEST-RUNNER-CLI`
-- `ai_stack/tests/test_goc_scene_identity.py` → `VER-AI-GOC-SCENE-IDENTITY-TEST`
-- `story_runtime_core/tests/test_input_interpreter.py` → `VER-CORE-INPUT-INTERPRETER-TEST`
-- `tests/experience_scoring_cli/test_experience_score_matrix_cli.py` → `VER-GOC-EXPERIENCE-SCORE-CLI-TEST`
-- `tests/smoke/test_repository_documented_paths_resolve.py` → `VER-SMOKE-DOCUMENTED-PATHS`
-- `backend/tests/test_world_engine_console_routes.py` → `VER-BE-WORLD-ENGINE-CONSOLE-ROUTES-TEST`
-- `world-engine/tests/test_story_runtime_api.py` → `VER-WE-STORY-RUNTIME-API-TEST`
-- `ai_stack/tests/test_retrieval_governance_summary.py` → `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST`
-- `backend/tests/writers_room/test_writers_room_routes.py` → `VER-BE-WRITERS-ROOM-ROUTES-TEST`
+- `tests/TESTING.md` -> `CTR-TESTING-ORCHESTRATION`
+- `tests/run_tests.py` -> `VER-TEST-RUNNER-CLI`
+- `ai_stack/tests/test_goc_scene_identity.py` -> `VER-AI-GOC-SCENE-IDENTITY-TEST`
+- `story_runtime_core/tests/test_input_interpreter.py` -> `VER-CORE-INPUT-INTERPRETER-TEST`
+- `tests/experience_scoring_cli/test_experience_score_matrix_cli.py` -> `VER-GOC-EXPERIENCE-SCORE-CLI-TEST`
+- `tests/smoke/test_repository_documented_paths_resolve.py` -> `VER-SMOKE-DOCUMENTED-PATHS`
+- `backend/tests/test_world_engine_console_routes.py` -> `VER-BE-WORLD-ENGINE-CONSOLE-ROUTES-TEST`
+- `world-engine/tests/test_story_runtime_api.py` -> `VER-WE-STORY-RUNTIME-API-TEST`
+- `ai_stack/tests/test_retrieval_governance_summary.py` -> `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST`
+- `backend/tests/writers_room/test_writers_room_routes.py` -> `VER-BE-WRITERS-ROOM-ROUTES-TEST`
 
 ## Inferred candidate contracts intentionally left out of the curated spine
 
@@ -67,40 +67,40 @@ Generated from the curated runtime/MVP spine attachment pass.
 
 ## Newly added / changed first-class records
 
-- `CTR-ADR-0001-RUNTIME-AUTHORITY` — `docs/governance/adr-0001-runtime-authority-in-world-engine.md`
-- `CTR-ADR-0002-BACKEND-SESSION-QUARANTINE` — `docs/governance/adr-0002-backend-session-surface-quarantine.md`
-- `CTR-ADR-0003-SCENE-IDENTITY` — `docs/governance/adr-0003-scene-identity-canonical-surface.md`
-- `CTR-RUNTIME-AUTHORITY-STATE-FLOW` — `docs/technical/runtime/runtime-authority-and-state-flow.md`
-- `CTR-BACKEND-RUNTIME-CLASSIFICATION` — `docs/technical/architecture/backend-runtime-classification.md`
-- `CTR-CANONICAL-RUNTIME-CONTRACT` — `docs/technical/architecture/canonical_runtime_contract.md`
-- `CTR-PLAYER-INPUT-INTERPRETATION` — `docs/technical/runtime/player_input_interpretation_contract.md`
-- `CTR-GOC-VERTICAL-SLICE` — `docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md`
-- `CTR-GOC-CANONICAL-TURN` — `docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md`
-- `CTR-GOC-GATE-SCORING` — `docs/MVPs/MVP_VSL_And_GoC_Contracts/GATE_SCORING_POLICY_GOC.md`
-- `CTR-WRITERS-ROOM-PUBLISHING-FLOW` — `docs/technical/content/writers-room-and-publishing-flow.md`
-- `CTR-RAG-GOVERNANCE` — `docs/technical/ai/RAG.md`
-- `CTR-TESTING-ORCHESTRATION` — `tests/TESTING.md`
-- `OBS-WE-STORY-RUNTIME-MANAGER` — `world-engine/app/story_runtime/manager.py`
-- `OBS-WE-HTTP-API` — `world-engine/app/api/http.py`
-- `OBS-BE-SESSION-ROUTES` — `backend/app/api/v1/session_routes.py`
-- `OBS-BE-SESSION-STORE` — `backend/app/runtime/session_store.py`
-- `OBS-BE-SESSION-SERVICE` — `backend/app/services/session_service.py`
-- `OBS-BE-WORLD-ENGINE-CONSOLE-ROUTES` — `backend/app/api/v1/world_engine_console_routes.py`
-- `OBS-BE-WRITERS-ROOM-ROUTES` — `backend/app/api/v1/writers_room_routes.py`
-- `OBS-CORE-INPUT-INTERPRETER` — `story_runtime_core/input_interpreter.py`
-- `OBS-AI-GOC-SCENE-IDENTITY` — `ai_stack/goc_scene_identity.py`
-- `OBS-AI-GOC-YAML-AUTHORITY` — `ai_stack/goc_yaml_authority.py`
-- `OBS-AI-RAG` — `ai_stack/rag.py`
-- `OBS-BE-GAME-SERVICE` — `backend/app/services/game_service.py`
-- `VER-TEST-RUNNER-CLI` — `tests/run_tests.py`
-- `VER-AI-GOC-SCENE-IDENTITY-TEST` — `ai_stack/tests/test_goc_scene_identity.py`
-- `VER-CORE-INPUT-INTERPRETER-TEST` — `story_runtime_core/tests/test_input_interpreter.py`
-- `VER-GOC-EXPERIENCE-SCORE-CLI-TEST` — `tests/experience_scoring_cli/test_experience_score_matrix_cli.py`
-- `VER-SMOKE-DOCUMENTED-PATHS` — `tests/smoke/test_repository_documented_paths_resolve.py`
-- `VER-BE-WORLD-ENGINE-CONSOLE-ROUTES-TEST` — `backend/tests/test_world_engine_console_routes.py`
-- `VER-WE-STORY-RUNTIME-API-TEST` — `world-engine/tests/test_story_runtime_api.py`
-- `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST` — `ai_stack/tests/test_retrieval_governance_summary.py`
-- `VER-BE-WRITERS-ROOM-ROUTES-TEST` — `backend/tests/writers_room/test_writers_room_routes.py`
+- `CTR-ADR-0001-RUNTIME-AUTHORITY` - `docs/ADR/adr-0001-runtime-authority-in-world-engine.md`
+- `CTR-ADR-0002-BACKEND-SESSION-QUARANTINE` - `docs/ADR/adr-0002-backend-session-surface-quarantine.md`
+- `CTR-ADR-0003-SCENE-IDENTITY` - `docs/ADR/adr-0003-scene-identity-canonical-surface.md`
+- `CTR-RUNTIME-AUTHORITY-STATE-FLOW` - `docs/technical/runtime/runtime-authority-and-state-flow.md`
+- `CTR-BACKEND-RUNTIME-CLASSIFICATION` - `docs/technical/architecture/backend-runtime-classification.md`
+- `CTR-CANONICAL-RUNTIME-CONTRACT` - `docs/technical/architecture/canonical_runtime_contract.md`
+- `CTR-PLAYER-INPUT-INTERPRETATION` - `docs/technical/runtime/player_input_interpretation_contract.md`
+- `CTR-GOC-VERTICAL-SLICE` - `docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md`
+- `CTR-GOC-CANONICAL-TURN` - `docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md`
+- `CTR-GOC-GATE-SCORING` - `docs/MVPs/MVP_VSL_And_GoC_Contracts/GATE_SCORING_POLICY_GOC.md`
+- `CTR-WRITERS-ROOM-PUBLISHING-FLOW` - `docs/technical/content/writers-room-and-publishing-flow.md`
+- `CTR-RAG-GOVERNANCE` - `docs/technical/ai/RAG.md`
+- `CTR-TESTING-ORCHESTRATION` - `tests/TESTING.md`
+- `OBS-WE-STORY-RUNTIME-MANAGER` - `world-engine/app/story_runtime/manager.py`
+- `OBS-WE-HTTP-API` - `world-engine/app/api/http.py`
+- `OBS-BE-SESSION-ROUTES` - `backend/app/api/v1/session_routes.py`
+- `OBS-BE-SESSION-STORE` - `backend/app/runtime/session_store.py`
+- `OBS-BE-SESSION-SERVICE` - `backend/app/services/session_service.py`
+- `OBS-BE-WORLD-ENGINE-CONSOLE-ROUTES` - `backend/app/api/v1/world_engine_console_routes.py`
+- `OBS-BE-WRITERS-ROOM-ROUTES` - `backend/app/api/v1/writers_room_routes.py`
+- `OBS-CORE-INPUT-INTERPRETER` - `story_runtime_core/input_interpreter.py`
+- `OBS-AI-GOC-SCENE-IDENTITY` - `ai_stack/goc_scene_identity.py`
+- `OBS-AI-GOC-YAML-AUTHORITY` - `ai_stack/goc_yaml_authority.py`
+- `OBS-AI-RAG` - `ai_stack/rag.py`
+- `OBS-BE-GAME-SERVICE` - `backend/app/services/game_service.py`
+- `VER-TEST-RUNNER-CLI` - `tests/run_tests.py`
+- `VER-AI-GOC-SCENE-IDENTITY-TEST` - `ai_stack/tests/test_goc_scene_identity.py`
+- `VER-CORE-INPUT-INTERPRETER-TEST` - `story_runtime_core/tests/test_input_interpreter.py`
+- `VER-GOC-EXPERIENCE-SCORE-CLI-TEST` - `tests/experience_scoring_cli/test_experience_score_matrix_cli.py`
+- `VER-SMOKE-DOCUMENTED-PATHS` - `tests/smoke/test_repository_documented_paths_resolve.py`
+- `VER-BE-WORLD-ENGINE-CONSOLE-ROUTES-TEST` - `backend/tests/test_world_engine_console_routes.py`
+- `VER-WE-STORY-RUNTIME-API-TEST` - `world-engine/tests/test_story_runtime_api.py`
+- `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST` - `ai_stack/tests/test_retrieval_governance_summary.py`
+- `VER-BE-WRITERS-ROOM-ROUTES-TEST` - `backend/tests/writers_room/test_writers_room_routes.py`
 
 ## Newly added / changed core relations
 
@@ -144,9 +144,9 @@ Generated from the curated runtime/MVP spine attachment pass.
 
 ## Unresolved conflicts / disputed areas kept explicit
 
-- `CNF-RUNTIME-SPINE-TRANSITIONAL-RETIREMENT` — Backend transitional session surfaces are now attached and weighted, but the actual retirement timeline remains intentionally unresolved.
-  - sources: docs/governance/adr-0002-backend-session-surface-quarantine.md, docs/technical/architecture/backend-runtime-classification.md, backend/app/api/v1/session_routes.py, backend/app/runtime/session_store.py, backend/app/services/session_service.py
-- `CNF-RUNTIME-SPINE-WRITERS-RAG-OVERLAP` — Writers’ Room workflow and RAG governance intentionally overlap at retrieval/context-pack assembly, but publishing authority and runtime truth remain distinct and should stay explicitly reviewed.
+- `CNF-RUNTIME-SPINE-TRANSITIONAL-RETIREMENT` - Backend transitional session surfaces are now attached and weighted, but the actual retirement timeline remains intentionally unresolved.
+  - sources: docs/ADR/adr-0002-backend-session-surface-quarantine.md, docs/technical/architecture/backend-runtime-classification.md, backend/app/api/v1/session_routes.py, backend/app/runtime/session_store.py, backend/app/services/session_service.py
+- `CNF-RUNTIME-SPINE-WRITERS-RAG-OVERLAP` - Writers' Room workflow and RAG governance intentionally overlap at retrieval/context-pack assembly, but publishing authority and runtime truth remain distinct and should stay explicitly reviewed.
   - sources: docs/technical/content/writers-room-and-publishing-flow.md, docs/technical/ai/RAG.md, backend/app/api/v1/writers_room_routes.py, ai_stack/rag.py
 
 ## Family index
@@ -161,4 +161,4 @@ Generated from the curated runtime/MVP spine attachment pass.
 ## Notes
 
 - `detect_adr_vocabulary_overlap` still leaves real ADR governance review visible through `adr_governance`; the runtime ADR-0001/ADR-0002 layering is governed explicitly through precedence and curated relations.
-- Writers’ Room vs RAG overlap remains visible on purpose and was not flattened into fake certainty.
+- Writers' Room vs RAG overlap remains visible on purpose and was not flattened into fake certainty.

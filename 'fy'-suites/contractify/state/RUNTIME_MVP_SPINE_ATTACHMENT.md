@@ -36,9 +36,9 @@ The gap was insufficient first-class attachment, relation richness, and evidence
 - `docs/technical/architecture/canonical_runtime_contract.md`
 - `docs/technical/content/writers-room-and-publishing-flow.md`
 - `docs/technical/ai/RAG.md`
-- `docs/governance/adr-0001-runtime-authority-in-world-engine.md`
-- `docs/governance/adr-0002-backend-session-surface-quarantine.md`
-- `docs/governance/adr-0003-scene-identity-canonical-surface.md`
+- `docs/ADR/adr-0001-runtime-authority-in-world-engine.md`
+- `docs/ADR/adr-0002-backend-session-surface-quarantine.md`
+- `docs/ADR/adr-0003-scene-identity-canonical-surface.md`
 
 ### Mandatory code/test surfaces inspected for evidence attachment
 
@@ -81,7 +81,7 @@ The gap was insufficient first-class attachment, relation richness, and evidence
 - The canonical audit profile is now manifest-backed through `suites.contractify.max_contracts = 60`, eliminating the hidden expanded-run requirement for the runtime/MVP spine.
 - The machine audit artifact was refreshed at `../reports/contract_audit.json` using the canonical manifest-backed run.
 - The generated markdown report was refreshed so its counts match the canonical fresh run.
-- Writers’ Room governance still carries direct validation evidence from `backend/tests/writers_room/test_writers_room_routes.py`.
+- Writers' Room governance still carries direct validation evidence from `backend/tests/writers_room/test_writers_room_routes.py`.
 - RAG governance still carries direct validation evidence from `ai_stack/tests/test_retrieval_governance_summary.py`.
 
 ## Evidence produced by this pass

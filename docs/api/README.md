@@ -1,5 +1,13 @@
 # API Documentation
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-API-OPENAPI-001
+>     - CTR-CANONICAL-RUNTIME-CONTRACT
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>   projection_weight: low
+
 Complete API reference for all services in WorldOfShadows.
 
 ## Backend API
@@ -52,7 +60,7 @@ See [REST API Reference](./REFERENCE.md#backend-api) for complete details.
 ### World Engine API
 FastAPI-based game runtime with HTTP and WebSocket endpoints.
 
-**Base URL:** `http://localhost:5002` (development) or `https://engine.worldofshadows.com` (production)
+**Base URL:** `http://127.0.0.1:8001` (development) or `https://engine.worldofshadows.com` (production)
 
 **Key Endpoints:**
 ```
@@ -161,7 +169,7 @@ Content-Type: application/json
 ```javascript
 // Connect with ticket
 const ticket = "eyJhbGc...";
-const ws = new WebSocket(`ws://localhost:5002/ws?ticket=${ticket}`);
+const ws = new WebSocket(`ws://127.0.0.1:8001/ws?ticket=${ticket}`);
 
 // Listen for snapshots
 ws.onmessage = (event) => {

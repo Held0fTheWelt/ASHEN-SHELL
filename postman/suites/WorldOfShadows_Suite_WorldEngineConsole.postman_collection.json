@@ -10,6 +10,16 @@
       "description": "Generated requests grouped by OpenAPI tag **WorldEngineConsole**.",
       "item": [
         {
+          "name": "GET /admin/world-engine/control-center",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{backendBaseUrl}}{{backendApiPrefix}}/admin/world-engine/control-center",
+            "description": "GET /admin/world-engine/control-center"
+          },
+          "response": []
+        },
+        {
           "name": "GET /admin/world-engine/health",
           "request": {
             "method": "GET",

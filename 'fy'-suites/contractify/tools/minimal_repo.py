@@ -38,7 +38,7 @@ def build_minimal_contractify_test_repo(root: Path) -> Path:
         "| A | [one](../../technical/shared-runtime.md) |\n"
         "| B | [two](../../technical/shared-runtime.md) |\n"
         "## Active row stress (retired ADR linked with Active label)\n"
-        "| Active | [retired ADR](../../governance/adr-0003-retired.md) |\n",
+        "| Active | [retired ADR](../../ADR/adr-0003-retired.md) |\n",
         encoding="utf-8",
     )
     (root / "docs" / "dev" / "README.md").write_text(
@@ -96,17 +96,17 @@ def build_minimal_contractify_test_repo(root: Path) -> Path:
         "name: ci\non: push\njobs:\n  t:\n    runs-on: ubuntu-latest\n    steps:\n      - run: cat docs/api/openapi.yaml\n",
         encoding="utf-8",
     )
-    gov = root / "docs" / "governance"
-    gov.mkdir(parents=True, exist_ok=True)
-    (gov / "adr-0001-scene-identity.md").write_text(
+    adr = root / "docs" / "ADR"
+    adr.mkdir(parents=True, exist_ok=True)
+    (adr / "adr-0001-scene-identity.md").write_text(
         "# ADR 1\n\n**Status**: Accepted\n\nDecision about **scene identity** surface.\n",
         encoding="utf-8",
     )
-    (gov / "adr-0002-runtime-authority.md").write_text(
+    (adr / "adr-0002-runtime-authority.md").write_text(
         "# ADR 2\n\n**Status**: Accepted\n\n**Runtime authority** overlaps **scene identity** vocabulary.\n",
         encoding="utf-8",
     )
-    (gov / "adr-0003-retired.md").write_text(
+    (adr / "adr-0003-retired.md").write_text(
         "# ADR 3 retired\n\n**Status**: Superseded\n\n"
         "Supersedes: [ADR 1](adr-0001-scene-identity.md)\n\n"
         "Retained for history only.\n",

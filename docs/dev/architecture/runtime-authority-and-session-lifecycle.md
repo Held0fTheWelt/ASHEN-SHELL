@@ -1,5 +1,12 @@
 # Runtime authority and session lifecycle (developer seam)
 
+> **Projection governance**
+> contractify-projection:
+>   source_contracts:
+>     - CTR-RUNTIME-AUTHORITY-STATE-FLOW
+>     - CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS
+>   projection_weight: low
+
 **Canonical technical documentation:** [`docs/technical/runtime/runtime-authority-and-state-flow.md`](../../technical/runtime/runtime-authority-and-state-flow.md)
 
 This page keeps a **short developer anchor** only:
