@@ -21,7 +21,9 @@ from pathlib import Path
 from fy_platform.core.project_resolver import resolve_project_root
 
 DOCKERIFY_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = resolve_project_root(start=Path(__file__), marker_text=None)
+# Resolve repo root: use environment variable for explicit control, or traverse
+# up to find pyproject.toml with [project] name = "world-of-shadows-hub"
+REPO_ROOT = resolve_project_root(start=Path(__file__), marker_text="world-of-shadows-hub")
 SRC_ROOT = DOCKERIFY_ROOT / "superpowers"
 DST_ROOT = REPO_ROOT / ".cursor" / "skills"
 
