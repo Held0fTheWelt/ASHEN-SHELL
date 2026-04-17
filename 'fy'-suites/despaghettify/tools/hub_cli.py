@@ -838,6 +838,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         Value typed as ``int`` for downstream use.
 
     """
+    # Resolve repo + hub before any ``default=f\"{HUB_REL}/…\"`` argparse wiring: at import time
+    # ``HUB_REL`` is only the basename (``despaghettify``); after this call it is the repo-relative
+    # POSIX path (``'fy'-suites/despaghettify``) so defaults point at real files on CI.
+    _ensure_repo_root()
     parser = argparse.ArgumentParser(description="Despaghettify hub automation CLI.")
     sub = parser.add_subparsers(dest="command", required=True)
 
