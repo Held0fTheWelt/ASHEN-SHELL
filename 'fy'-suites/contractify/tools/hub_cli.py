@@ -10,6 +10,7 @@ from typing import Sequence
 from fy_platform.core.artifact_envelope import build_envelope, write_envelope
 from fy_platform.core.manifest import load_manifest, suite_config
 from contractify.tools.audit_pipeline import build_discover_payload, run_audit
+from contractify.tools.investigation_suite import DEFAULT_ADR_INVESTIGATION_DIR, write_adr_investigation_suite
 from contractify.tools.repo_paths import repo_root
 
 SUITE_VERSION = "0.1.0"
@@ -92,10 +93,12 @@ def _print_global_help() -> None:
         "Commands:\n"
         "  discover   Emit discovered contracts/projections/relations (JSON).\n"
         "  audit      Full audit: discovery + drift + conflicts + actionable units (JSON).\n"
-        "  self-check Run audit scoped to fy-suite integration sanity (same as audit for now).\n\n"
+        "  self-check Run audit scoped to fy-suite integration sanity (same as audit for now).\n"
+        "  adr-investigation Refresh ADR investigation markdown and Mermaid maps.\n\n"
         "Examples:\n"
         "  python -m contractify.tools discover --json --out \"'fy'-suites/contractify/reports/contract_discovery.json\"\n"
         "  python -m contractify.tools audit --json --out \"'fy'-suites/contractify/reports/contract_audit.json\"\n"
+        "  python -m contractify.tools adr-investigation --out-dir \"'fy'-suites/contractify/investigations/adr\"\n"
     )
 
 
@@ -192,6 +195,14 @@ def cmd_self_check(args: argparse.Namespace) -> int:
     return cmd_audit(args)
 
 
+
+
+def cmd_adr_investigation(args: argparse.Namespace) -> int:
+    root = repo_root()
+    bundle = write_adr_investigation_suite(root, out_dir_rel=args.out_dir)
+    if not args.quiet:
+        print(json.dumps(bundle, indent=2))
+    return 0
 def main(argv: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "help"):
@@ -224,6 +235,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_self.add_argument("--quiet", action="store_true")
     p_self.add_argument("--envelope-out", default="", help="Optional path for shared envelope output JSON")
     p_self.set_defaults(func=cmd_self_check)
+
+    p_adr = sub.add_parser("adr-investigation", help="Refresh ADR investigation markdown + Mermaid maps")
+    p_adr.add_argument("--out-dir", default=DEFAULT_ADR_INVESTIGATION_DIR, help="Repo-relative output directory for ADR investigation artifacts")
+    p_adr.add_argument("--quiet", action="store_true", help="When set, skip stdout JSON bundle")
+    p_adr.set_defaults(func=cmd_adr_investigation)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

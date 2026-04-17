@@ -591,6 +591,7 @@ def build_runtime_mvp_spine(
             owner_or_area="backend",
             scope="review and publishing governance",
             implemented_by=_existing(repo, "backend/app/api/v1/writers_room_routes.py"),
+            validated_by=_existing(repo, "backend/tests/writers_room/test_writers_room_routes.py"),
             documented_in=_existing(repo, "docs/admin/publishing-and-module-activation.md"),
             projected_as=_existing(repo, "docs/admin/publishing-and-module-activation.md"),
         )
@@ -614,7 +615,11 @@ def build_runtime_mvp_spine(
                 "ai_stack/rag.py",
                 "world-engine/app/story_runtime/manager.py",
             ),
-            validated_by=_existing(repo, "world-engine/tests/test_story_runtime_api.py"),
+            validated_by=_existing(
+                repo,
+                "world-engine/tests/test_story_runtime_api.py",
+                "ai_stack/tests/test_retrieval_governance_summary.py",
+            ),
             documented_in=_existing(
                 repo,
                 "docs/ai/ai_system_in_world_of_shadows.md",
@@ -1023,6 +1028,41 @@ def build_runtime_mvp_spine(
         )
     )
 
+    add(
+        _contract(
+            cid="VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST",
+            title="Retrieval governance summary tests",
+            summary="Verification suite asserting retrieval governance summary fields, lanes, visibility classes, and policy version handling.",
+            contract_type="verification_surface",
+            layer="testing",
+            authority_level="verification",
+            anchor_kind="code_boundary",
+            anchor_location="ai_stack/tests/test_retrieval_governance_summary.py",
+            precedence_tier=VERIFICATION_EVIDENCE,
+            tags=["family:publish_rag", "verification", "ai_stack", "rag"],
+            owner_or_area="ai_stack",
+            scope="retrieval governance verification",
+            documented_in=_existing(repo, "docs/technical/ai/RAG.md", "tests/TESTING.md"),
+        )
+    )
+    add(
+        _contract(
+            cid="VER-BE-WRITERS-ROOM-ROUTES-TEST",
+            title="Writers’ Room route tests",
+            summary="Verification suite for backend Writers’ Room review route behavior, JWT requirements, retrieval flow, and recommendation-only review semantics.",
+            contract_type="verification_surface",
+            layer="testing",
+            authority_level="verification",
+            anchor_kind="code_boundary",
+            anchor_location="backend/tests/writers_room/test_writers_room_routes.py",
+            precedence_tier=VERIFICATION_EVIDENCE,
+            tags=["family:publish_rag", "verification", "backend", "writers_room"],
+            owner_or_area="backend",
+            scope="writers-room workflow verification",
+            documented_in=_existing(repo, "docs/technical/content/writers-room-and-publishing-flow.md", "tests/TESTING.md"),
+        )
+    )
+
     projections = [
         _projection(
             pid="PRJ-RUNTIME-AUTH-ONBOARDING",
@@ -1312,6 +1352,8 @@ def build_runtime_mvp_spine(
             "CTR-RAG-GOVERNANCE",
             "OBS-BE-WRITERS-ROOM-ROUTES",
             "OBS-AI-RAG",
+            "VER-BE-WRITERS-ROOM-ROUTES-TEST",
+            "VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST",
         ],
         "testing": [
             "CTR-TESTING-ORCHESTRATION",

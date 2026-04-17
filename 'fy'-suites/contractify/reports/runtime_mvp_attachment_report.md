@@ -2,24 +2,12 @@
 
 Generated from the curated runtime/MVP spine attachment pass.
 
-Canonical run: `python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"` from repo root with manifest-backed defaults.
-
 ## Outcome
 
 - Audit JSON: `'fy'-suites/contractify/reports/contract_audit.json`
 - Contracts discovered in audit: **43**
-- Projections discovered in audit: **19**
-- Relations discovered in audit: **239**
+- Relations discovered in audit: **233**
 - Manual unresolved areas kept explicit: **2**
-
-## Continuation update (2026-04-17)
-
-- Added a repo-root `fy-manifest.yaml`, so Contractify no longer needs legacy fallback on the canonical repo-root run.
-- The canonical audit profile is now manifest-backed through `suites.contractify.max_contracts = 60`.
-- Refreshed the machine audit artifact at `reports/contract_audit.json` using the canonical manifest-backed run.
-- Preserved direct verification attachment for Writers’ Room route governance via `backend/tests/writers_room/test_writers_room_routes.py`.
-- Preserved direct verification attachment for RAG governance via `ai_stack/tests/test_retrieval_governance_summary.py`.
-- Regenerated this report from the canonical fresh run so the counts now match the tracked audit artifact.
 
 ## Precedence / weight handling
 
@@ -62,8 +50,6 @@ Canonical run: `python -m contractify.tools audit --json --out "'fy'-suites/cont
 ## Test-evidenced / verification anchors promoted
 
 - `tests/TESTING.md` → `CTR-TESTING-ORCHESTRATION`
-- `ai_stack/tests/test_retrieval_governance_summary.py` → `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST`
-- `backend/tests/writers_room/test_writers_room_routes.py` → `VER-BE-WRITERS-ROOM-ROUTES-TEST`
 - `tests/run_tests.py` → `VER-TEST-RUNNER-CLI`
 - `ai_stack/tests/test_goc_scene_identity.py` → `VER-AI-GOC-SCENE-IDENTITY-TEST`
 - `story_runtime_core/tests/test_input_interpreter.py` → `VER-CORE-INPUT-INTERPRETER-TEST`
@@ -71,6 +57,8 @@ Canonical run: `python -m contractify.tools audit --json --out "'fy'-suites/cont
 - `tests/smoke/test_repository_documented_paths_resolve.py` → `VER-SMOKE-DOCUMENTED-PATHS`
 - `backend/tests/test_world_engine_console_routes.py` → `VER-BE-WORLD-ENGINE-CONSOLE-ROUTES-TEST`
 - `world-engine/tests/test_story_runtime_api.py` → `VER-WE-STORY-RUNTIME-API-TEST`
+- `ai_stack/tests/test_retrieval_governance_summary.py` → `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST`
+- `backend/tests/writers_room/test_writers_room_routes.py` → `VER-BE-WRITERS-ROOM-ROUTES-TEST`
 
 ## Inferred candidate contracts intentionally left out of the curated spine
 
@@ -104,8 +92,6 @@ Canonical run: `python -m contractify.tools audit --json --out "'fy'-suites/cont
 - `OBS-AI-GOC-YAML-AUTHORITY` — `ai_stack/goc_yaml_authority.py`
 - `OBS-AI-RAG` — `ai_stack/rag.py`
 - `OBS-BE-GAME-SERVICE` — `backend/app/services/game_service.py`
-- `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST` — `ai_stack/tests/test_retrieval_governance_summary.py`
-- `VER-BE-WRITERS-ROOM-ROUTES-TEST` — `backend/tests/writers_room/test_writers_room_routes.py`
 - `VER-TEST-RUNNER-CLI` — `tests/run_tests.py`
 - `VER-AI-GOC-SCENE-IDENTITY-TEST` — `ai_stack/tests/test_goc_scene_identity.py`
 - `VER-CORE-INPUT-INTERPRETER-TEST` — `story_runtime_core/tests/test_input_interpreter.py`
@@ -113,6 +99,8 @@ Canonical run: `python -m contractify.tools audit --json --out "'fy'-suites/cont
 - `VER-SMOKE-DOCUMENTED-PATHS` — `tests/smoke/test_repository_documented_paths_resolve.py`
 - `VER-BE-WORLD-ENGINE-CONSOLE-ROUTES-TEST` — `backend/tests/test_world_engine_console_routes.py`
 - `VER-WE-STORY-RUNTIME-API-TEST` — `world-engine/tests/test_story_runtime_api.py`
+- `VER-AI-RETRIEVAL-GOVERNANCE-SUMMARY-TEST` — `ai_stack/tests/test_retrieval_governance_summary.py`
+- `VER-BE-WRITERS-ROOM-ROUTES-TEST` — `backend/tests/writers_room/test_writers_room_routes.py`
 
 ## Newly added / changed core relations
 
@@ -172,5 +160,5 @@ Canonical run: `python -m contractify.tools audit --json --out "'fy'-suites/cont
 
 ## Notes
 
-- `detect_adr_vocabulary_overlap` still suppresses the formerly noisy ADR-0001/ADR-0002 runtime/session overlap because that layering is now explicitly governed through curated precedence and relations.
+- `detect_adr_vocabulary_overlap` still leaves real ADR governance review visible through `adr_governance`; the runtime ADR-0001/ADR-0002 layering is governed explicitly through precedence and curated relations.
 - Writers’ Room vs RAG overlap remains visible on purpose and was not flattened into fake certainty.

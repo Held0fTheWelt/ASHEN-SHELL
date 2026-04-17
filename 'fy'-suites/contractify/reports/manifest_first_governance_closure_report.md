@@ -37,7 +37,7 @@ PYTHONPATH="$(pwd)/'fy'-suites" python -m pytest "'fy'-suites/fy_platform/tests"
 ## Results
 
 - Manifest validation: `ok: true`
-- Canonical audit stats: `43 contracts`, `19 projections`, `239 relations`, `8 drifts`, `5 conflicts`, `2 manual unresolved areas`
+- Canonical audit stats: `43 contracts`, `19 projections`, `233 relations`, `8 drifts`, `5 conflicts`, `2 manual unresolved areas`
 - Contractify tests: passing
 - fy-platform tests: passing
 - Legacy fallback deprecation: not emitted on canonical repo-root Contractify audit run

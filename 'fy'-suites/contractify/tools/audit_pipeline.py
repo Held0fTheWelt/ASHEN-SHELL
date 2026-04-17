@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from contractify.tools.adr_governance import discover_adr_governance
 from contractify.tools.conflicts import detect_all_conflicts
 from contractify.tools.discovery import discover_contracts_and_projections
 from contractify.tools.drift_analysis import run_all_drifts
@@ -35,6 +36,7 @@ def build_discover_payload(
     )
     relations = extend_relations(repo, contracts, projections, relations, conflicts=conflicts)
     _spine_contracts, _spine_projections, _spine_relations, spine_conflicts, families = build_runtime_mvp_spine(repo)
+    adr_governance = discover_adr_governance(repo)
     return {
         "generated_at": frozen_generated_at or datetime.now(timezone.utc).isoformat(),
         "repo_root": str(repo),
@@ -48,6 +50,7 @@ def build_discover_payload(
         },
         "execution_profile": {"mode": "discover", "max_contracts": max_contracts},
         "precedence_rules": PRECEDENCE_RULES,
+        "adr_governance": adr_governance,
         "runtime_mvp_families": families,
         "manual_unresolved_areas": [serialise(c) for c in spine_conflicts],
     }
@@ -89,6 +92,7 @@ def run_audit(
     )
     relations = extend_relations(repo, contracts, projections, relations, conflicts=conflicts)
     _spine_contracts, _spine_projections, _spine_relations, spine_conflicts, families = build_runtime_mvp_spine(repo)
+    adr_governance = discover_adr_governance(repo)
 
     # attach drift ids onto contracts (lightweight cross-index)
     drift_by_contract: dict[str, list[str]] = {}
@@ -119,6 +123,7 @@ def run_audit(
         "drift_findings": [serialise(d) for d in drifts],
         "conflicts": [serialise(c) for c in conflicts],
         "precedence_rules": PRECEDENCE_RULES,
+        "adr_governance": adr_governance,
         "runtime_mvp_families": families,
         "manual_unresolved_areas": [serialise(c) for c in spine_conflicts],
         "execution_profile": {"mode": "audit", "max_contracts": max_contracts},
