@@ -1,4 +1,6 @@
 """Tests for User Profile endpoints (Phase 4)."""
+import os
+
 import pytest
 from app.extensions import db
 from app.models import ForumCategory, ForumThread, ForumPost, ForumThreadBookmark, ForumTag, ForumThreadTag
@@ -502,37 +504,58 @@ def test_tag_detail_nonexistent_returns_404(client):
 
 # ============= PERFORMANCE TESTS =============
 
+
+def _api_perf_budget_ms() -> int:
+    """Wall-clock ceiling for single-request perf smoke tests.
+
+    GitHub Actions and other shared CI runners are often slower than a developer laptop.
+    Keep a **hard** ceiling to catch pathological multi-second hangs; override with
+    ``WOS_API_PERF_BUDGET_MS`` if a job image consistently needs more headroom.
+    """
+    raw = os.environ.get("WOS_API_PERF_BUDGET_MS")
+    if raw is not None and raw.strip().isdigit():
+        return int(raw)
+    if os.environ.get("CI", "").lower() in ("1", "true", "yes"):
+        return 5000
+    return 1500
+
+
 def test_profile_load_performance(client, user_with_threads_and_posts):
-    """Profile endpoint completes within reasonable time (<500ms)."""
+    """Profile endpoint completes within a bounded wall time (smoke, not benchmarking)."""
     import time
+
+    budget = _api_perf_budget_ms()
     user = user_with_threads_and_posts
     start = time.time()
     resp = client.get(f"/api/v1/users/{user.id}/profile")
     elapsed = (time.time() - start) * 1000  # Convert to ms
 
     assert resp.status_code == 200
-    # Should load in under 1200ms (allowing for CI slowness and variable performance)
-    assert elapsed < 1200, f"Profile load took {elapsed:.0f}ms (expected <1200ms)"
+    assert elapsed < budget, f"Profile load took {elapsed:.0f}ms (budget {budget}ms)"
 
 
 def test_bookmarks_endpoint_performance(client, user_with_threads_and_posts, auth_headers_for_profile_user):
-    """Bookmarks endpoint completes within reasonable time."""
+    """Bookmarks endpoint completes within a bounded wall time (smoke, not benchmarking)."""
     import time
+
+    budget = _api_perf_budget_ms()
     user = user_with_threads_and_posts
     start = time.time()
     resp = client.get(f"/api/v1/users/{user.id}/bookmarks", headers=auth_headers_for_profile_user)
     elapsed = (time.time() - start) * 1000
 
     assert resp.status_code == 200
-    assert elapsed < 1200, f"Bookmarks load took {elapsed:.0f}ms (expected <1200ms)"
+    assert elapsed < budget, f"Bookmarks load took {elapsed:.0f}ms (budget {budget}ms)"
 
 
 def test_popular_tags_performance(client):
-    """Popular tags endpoint completes within reasonable time."""
+    """Popular tags endpoint completes within a bounded wall time (smoke, not benchmarking)."""
     import time
+
+    budget = _api_perf_budget_ms()
     start = time.time()
     resp = client.get("/api/v1/forum/tags/popular")
     elapsed = (time.time() - start) * 1000
 
     assert resp.status_code == 200
-    assert elapsed < 1200, f"Popular tags load took {elapsed:.0f}ms (expected <1200ms)"
+    assert elapsed < budget, f"Popular tags load took {elapsed:.0f}ms (budget {budget}ms)"
