@@ -1,5 +1,12 @@
 # AI Stack — Full Release Closure (post F gate)
 
+Placeholder for the full release closure document that summarizes gate F outcomes and final verdicts.
+
+Replace with the finalized closure evidence matrix and links to gate reports under `docs/reports/ai_stack_gates/`.
+
+Generated placeholder: 2026-04-17
+# AI Stack — Full Release Closure (post F gate)
+
 Date: 2026-04-04  
 Companion: [docs/reports/ai_stack_gates/F_FULL_RELEASE_GATE_REPORT.md](ai_stack_gates/F_FULL_RELEASE_GATE_REPORT.md)
 

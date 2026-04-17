@@ -1,3 +1,10 @@
+## F — Full Release Gate Report
+
+Placeholder: gate F full release verification report.
+
+Include re-verification steps, environment details, list of changed files, and final verdict.
+
+Generated placeholder: 2026-04-17
 # F — Full System Release Gate Report
 
 Date: 2026-04-04 (full re-verification run)
