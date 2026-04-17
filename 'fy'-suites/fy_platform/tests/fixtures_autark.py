@@ -7,6 +7,7 @@ def create_target_repo(base: Path) -> Path:
     repo = base / 'target_repo'
     (repo / 'src').mkdir(parents=True, exist_ok=True)
     (repo / 'docs' / 'api').mkdir(parents=True, exist_ok=True)
+    (repo / 'docs' / 'ADR').mkdir(parents=True, exist_ok=True)
     (repo / 'tests').mkdir(parents=True, exist_ok=True)
     (repo / '.github' / 'workflows').mkdir(parents=True, exist_ok=True)
     (repo / 'docs').mkdir(exist_ok=True)
@@ -14,8 +15,16 @@ def create_target_repo(base: Path) -> Path:
     (repo / 'pyproject.toml').write_text('[project]\nname = "toy-target"\nversion = "0.1.0"\n', encoding='utf-8')
     (repo / 'src' / 'app.py').write_text('def hello(name: str):\n    return f"Hello, {name}"\n\nclass Service:\n    def run(self):\n        return 1\n', encoding='utf-8')
     (repo / 'tests' / 'run_tests.py').write_text('TEST_TARGETS = {"unit": ["tests"]}\n', encoding='utf-8')
+    (repo / 'tests' / 'test_health_contract.py').write_text(
+        'def test_health_contract_marker():\n    assert True\n',
+        encoding='utf-8',
+    )
     (repo / '.github' / 'workflows' / 'ci.yml').write_text('name: CI\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n', encoding='utf-8')
     (repo / 'docs' / 'README.md').write_text('# Toy Target\n\nA tiny repo for adapter testing.\n', encoding='utf-8')
+    (repo / 'docs' / 'ADR' / 'ADR-0001-consolidated-health-contract.md').write_text(
+        '# ADR-0001: Consolidated Health Contract\n\nStatus: Accepted\nDate: 2026-04-17\nSupersedes: ADR-0000\n\nThis consolidated ADR defines the health API contract and test reflection requirement.\n',
+        encoding='utf-8',
+    )
     (repo / 'docs' / 'api' / 'openapi.yaml').write_text(
         'openapi: 3.0.0\ninfo:\n  title: Toy API\n  version: 1.0.0\npaths:\n  /health:\n    get:\n      tags: [system]\n      summary: Health\n      responses:\n        "200":\n          description: OK\n',
         encoding='utf-8',

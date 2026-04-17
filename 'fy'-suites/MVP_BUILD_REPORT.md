@@ -65,3 +65,11 @@ fy-suite documentify audit --target-repo /path/to/target-repo
 fy-suite despaghettify audit --target-repo /path/to/target-repo
 fy-suite postmanify audit --target-repo /path/to/target-repo
 ```
+
+
+## Next-stage expansion
+
+- Added contractify consolidate mode with safe apply / user-input split.
+- Added testify ADR reflection guard.
+- Added root requirements files (normal/dev/test).
+

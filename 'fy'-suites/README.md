@@ -50,3 +50,11 @@ Use this file as the **catalog**: scan the table, jump to a suite’s `README.md
 ## Naming note
 
 The folder name **`'fy'-suites`** is literal (quotes are part of the directory name on disk). In prose we refer to suites here as **“fy” suites** — **f**ramework for **y**ard-wide (repo-wide) **meta** work — not application features.
+
+
+## Next-stage additions
+
+- `contractify consolidate` generates and can safely apply ADR/test reflection scaffolding when mappings are unambiguous.
+- `testify` now audits whether consolidated ADRs are explicitly mirrored in tests, not merely behaviorally passing.
+- root `requirements.txt`, `requirements-test.txt`, and `requirements-dev.txt` are included.
+

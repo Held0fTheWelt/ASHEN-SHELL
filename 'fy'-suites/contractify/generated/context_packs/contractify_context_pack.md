@@ -7,26 +7,18 @@ Found 8 indexed evidence hits for query "openapi health". Strongest source: gene
 ## generated/context_packs/contractify_context_pack.md#chunk-1
 
 - lexical: 1.0
-- semantic: 0.4773
-- hybrid: 0.7909
+- semantic: 0.4714
+- hybrid: 0.7886
 
 # Context Pack — contractify  Query: `openapi health`  Found 8 indexed evidence hits for query "openapi health". Strongest source: generated/context_packs/contractify_context_pack.md#chunk-1.  ## generated/context_packs/contractify_context_pack.md#chunk-1  - lexical: 1.0 - semant
 
 ## generated/context_packs/contractify_context_pack.json#chunk-1
 
 - lexical: 1.0
-- semantic: 0.4057
-- hybrid: 0.7623
+- semantic: 0.3811
+- hybrid: 0.7524
 
-{   "pack_id": "9cc97dcf71404923ba059043e76d53bf",   "query": "openapi health",   "suite_scope": [     "contractify"   ],   "audience": "developer",   "summary": "Found 8 indexed evidence hits for query \"openapi health\". Strongest source: generated/context_packs/contractify_con
-
-## generated/context_packs/contractify_context_pack.md#chunk-2
-
-- lexical: 1.0
-- semantic: 0.4015
-- hybrid: 0.7606
-
-openapi: 3.0.0 info:   title: Toy API   version: 1.0.0 paths:   /health:     get:       tags: [system]       summary: Health       responses:         "200":           description: OK  ## generated/context_packs/contractify_context_pack.md#chunk-2  - lexical: 1.0 - semantic: 0.308
+{   "pack_id": "623c4bd75c594c26ac82b3d5a5fb01b2",   "query": "openapi health",   "suite_scope": [     "contractify"   ],   "audience": "developer",   "summary": "Found 8 indexed evidence hits for query \"openapi health\". Strongest source: generated/context_packs/contractify_con
 
 ## docs/api/openapi.yaml#chunk-1
 
@@ -35,6 +27,14 @@ openapi: 3.0.0 info:   title: Toy API   version: 1.0.0 paths:   /health:     get
 - hybrid: 0.7372
 
 openapi: 3.0.0 info:   title: Toy API   version: 1.0.0 paths:   /health:     get:       tags: [system]       summary: Health       responses:         "200":           description: OK
+
+## generated/context_packs/contractify_context_pack.md#chunk-2
+
+- lexical: 1.0
+- semantic: 0.2643
+- hybrid: 0.7057
+
+openapi: 3.0.0 info:   title: Toy API   version: 1.0.0 paths:   /health:     get:       tags: [system]       summary: Health       responses:         "200":           description: OK  ## generated/context_packs/contractify_context_pack.md#chunk-2  - lexical: 1.0 - semantic: 0.308
 
 ## state/LATEST_AUDIT_STATE.md#chunk-5
 
@@ -60,10 +60,10 @@ openapi: 3.0.0 info:   title: Toy API   version: 1.0.0 paths:   /health:     get
 
 **Contractify enforcement is working.** Evidence: - New conflicts flagged (+3): Gates caught Postman fingerprint stale issue and ADR vocabulary overlaps - Drift detection active (+1): Gates flagged OpenAPI spec modification - Zero silent regressions: Contract graph unchanged, sam
 
-## adapter/tests/test_contractify_adapter.py#chunk-1
+## state/LATEST_AUDIT_STATE.md#chunk-1
 
 - lexical: 1.0
-- semantic: 0.1104
-- hybrid: 0.6442
+- semantic: 0.0891
+- hybrid: 0.6356
 
-from fy_platform.tests.fixtures_autark import create_target_repo from contractify.adapter.service import ContractifyAdapter   def test_contractify_adapter_full_cycle(tmp_path, monkeypatch):     repo = create_target_repo(tmp_path)     monkeypatch.chdir(tmp_path)     adapter = Cont
+# Latest Contractify Audit State **Audit Timestamp:** 2026-04-17T14:47:48Z   **MVP Version:** v24   **Audit Status:** Complete, All Gates Passed  ---  ## Audit Metrics Summary  | Metric | Count | Status | |--------|-------|--------| | **Total Contracts** | 60 | ✓ At baseline (sta

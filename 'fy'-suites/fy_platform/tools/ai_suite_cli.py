@@ -26,7 +26,7 @@ SUITES = {
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Run autark fy suite adapters against an outward target repository.')
     parser.add_argument('suite', choices=sorted(SUITES))
-    parser.add_argument('command', choices=['init', 'inspect', 'audit', 'explain', 'prepare-context-pack', 'compare-runs', 'clean', 'reset', 'triage', 'prepare-fix'])
+    parser.add_argument('command', choices=['init', 'inspect', 'audit', 'explain', 'prepare-context-pack', 'compare-runs', 'clean', 'reset', 'triage', 'prepare-fix', 'consolidate'])
     parser.add_argument('--target-repo', default='')
     parser.add_argument('--query', default='')
     parser.add_argument('--audience', default='developer')
@@ -34,6 +34,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument('--right-run-id', default='')
     parser.add_argument('--mode', default='standard')
     parser.add_argument('--finding-id', action='append', default=[])
+    parser.add_argument('--apply-safe', action='store_true')
+    parser.add_argument('--instruction', default='')
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     adapter = SUITES[args.suite]()
@@ -57,6 +59,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         out = adapter.triage(args.query or None)
     elif args.command == 'prepare-fix':
         out = adapter.prepare_fix(args.finding_id)
+    elif args.command == 'consolidate':
+        out = adapter.consolidate(args.target_repo, apply_safe=args.apply_safe, instruction=args.instruction or None)
     else:
         parser.error('unsupported command')
         return 2

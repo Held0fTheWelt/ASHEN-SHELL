@@ -143,6 +143,9 @@ class BaseSuiteAdapter(ABC):
         route = self.router.route('prepare_fix')
         return {'ok': True, 'suite': self.suite, 'route': route.__dict__, 'finding_ids': finding_ids, 'advisory_only': True}
 
+    def consolidate(self, target_repo_root: str, *, apply_safe: bool = False, instruction: str | None = None) -> dict[str, Any]:
+        return {'ok': False, 'suite': self.suite, 'reason': 'consolidate_not_supported', 'apply_safe': apply_safe, 'instruction': instruction or ''}
+
     def _start_run(self, mode: str, target_repo_root: Path) -> tuple[str, Path, str]:
         tgt_id = target_repo_id(target_repo_root)
         run = self.registry.start_run(suite=self.suite, mode=mode, target_repo_root=str(target_repo_root), target_repo_id=tgt_id)
