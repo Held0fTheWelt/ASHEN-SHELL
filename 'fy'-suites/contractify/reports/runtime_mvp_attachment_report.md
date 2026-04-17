@@ -9,6 +9,9 @@ Generated from the curated runtime/MVP spine attachment pass.
 - Contracts discovered in audit: **54**
 - Relations discovered in audit: **314**
 - Manual unresolved areas kept explicit: **3**
+ - Contracts discovered in audit: **60**
+ - Relations discovered in audit: **310**
+ - Manual unresolved areas kept explicit: **3**
 
 ## Precedence / weight handling
 

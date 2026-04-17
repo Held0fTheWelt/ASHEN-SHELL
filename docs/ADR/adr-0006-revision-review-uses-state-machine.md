@@ -1,19 +1,30 @@
 # ADR-0006: Revision review uses a state machine, not loose status strings
 
 ## Status
-
 Proposed (migrated excerpt from MVP docs)
 
-## Decision
+## Date
+2026-04-17
 
+## Intellectual property rights
+Repository authorship and licensing: see project LICENSE; contact maintainers for clarification.
+
+## Privacy and confidentiality
+This ADR contains no personal data. Implementers must follow the repository privacy and confidentiality policies, avoid committing secrets, and document any sensitive data handling in implementation steps.
+
+## Context
+
+
+## Decision
 Revision lifecycle must be enforced through a formal workflow state machine with role permissions and side effects.
 
 ## Consequences
-
 - multi-operator work is safer
 - approval paths become auditable
 - system side effects like draft apply and evaluation launch can be attached to transitions
 
-## Source
+## Testing
 
-Migrated from `docs/MVPs/MVP_Narrative_Governance_And_Revision_Foundation/02_architecture_decisions.md`
+
+## References
+docs/MVPs/MVP_Narrative_Governance_And_Revision_Foundation/02_architecture_decisions.md

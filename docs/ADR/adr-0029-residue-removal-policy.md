@@ -1,15 +1,21 @@
 # ADR-0029: Residue Removal Policy — operational criteria and handling
 
-Date: 2026-04-17
+## Status
+Proposed
 
-Status: Accepted
+## Date
+2026-04-17
+
+## Intellectual property rights
+Repository authorship and licensing: see project LICENSE; contact maintainers for clarification.
+
+## Privacy and confidentiality
+This ADR contains no personal data. Implementers must follow the repository privacy and confidentiality policies, avoid committing secrets, and document any sensitive data handling in implementation steps.
 
 ## Context
-
 An audit pass (Task 4 — Residue Removal Report) applied operational criteria to classify documentation and artifacts as keep, demote/archive, or relocate. The audit used a 2-of-3 rule across omission, durable-role displacement, and transitional/history tests.
 
 ## Decision
-
 - Adopt the 2-of-3 residue criteria for operational cleanup:
   - Evaluate `omission` (active-value omission), `displacement` (durable-role displacement), and `transitional/history` status.
   - If at least 2 of 3 criteria are satisfied, mark the surface as a residue-candidate and plan demotion/archival or relocation.
@@ -17,21 +23,13 @@ An audit pass (Task 4 — Residue Removal Report) applied operational criteria t
 - For mixed-case collections (e.g., `docs/reports/*`) apply per-file evaluation and demote on a case-by-case basis.
 - Move executed removals or relocations to tracked fixtures/locations (e.g., `backend/fixtures/…`, `docs/reports/` corrected paths).
 
-## Rationale
-
-- Provides an objective, repeatable mechanism for reducing noise and operational residue in the repository.
-- Allows teams to prioritize high-risk or high-impact cleanup while retaining evidence surfaces.
-
 ## Consequences
-
 - Requires a downstream cleanup plan and owners to execute demotion/archival for `P1` candidates.
 - Instrumentation and gating for relocation must be explicit (do not delete without provenance capture).
 - Some files require extraction of decision-like content into canonical ADRs before demotion.
 
-## Migrated from
+## Testing
 
-`docs/audit/TASK_4_RESIDUE_REMOVAL_REPORT.md` (Decision table)
 
----
-
+## References
 (Automated migration entry created 2026-04-17)
