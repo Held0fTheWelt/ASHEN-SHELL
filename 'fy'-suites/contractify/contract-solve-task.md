@@ -9,7 +9,7 @@ Execute **one bounded contract-governance slice** with before/after evidence (fo
 ## Preconditions
 
 - A **CG-*** backlog row exists in [`contract_governance_input.md`](contract_governance_input.md) with clear acceptance criteria.
-- You have the latest `contract_audit.json` or can re-run audit after edits.
+- You have the latest tracked `reports/CANONICAL_REPO_ROOT_AUDIT.md` snapshot or can re-run a local audit export after edits.
 
 ## Procedure
 
@@ -18,10 +18,10 @@ Execute **one bounded contract-governance slice** with before/after evidence (fo
 3. **Verify** — re-run:
 
    ```bash
-   python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
+   python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json"
    ```
 
-4. **Evidence** — attach JSON paths or diff notes to the CG row; mark status.
+4. **Evidence** — attach tracked markdown references and, when useful, local JSON diff notes to the CG row; mark status.
 5. **Sibling suites** — if the slice is doc-heavy, use **docify** for AST/doc repairs; if API collections, use **postmanify**; if structural tangle, route follow-up to **despaghettify**.
 
 ## Completion

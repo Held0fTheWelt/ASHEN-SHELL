@@ -1,7 +1,7 @@
 README.md
 contract_governance_input.md
 reports/README.md
-reports/contract_audit.json
+reports/CANONICAL_REPO_ROOT_AUDIT.md
 reports/runtime_mvp_attachment_report.md
 reports/adr_governance_report.md
 state/ATTACHMENT_PASS_INDEX.md

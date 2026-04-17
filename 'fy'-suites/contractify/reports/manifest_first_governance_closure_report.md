@@ -10,29 +10,33 @@
 - Extended the curated runtime/MVP spine with runtime commit, authoritative interaction, WebSocket, routing/operator-audit, evidence-baseline, and API projection governance.
 - Closed the deterministic OpenAPI → Postman projection drift by regenerating generated collections and manifest metadata from the canonical OpenAPI anchor.
 - Added explicit `contractify-projection:` markers to audience and API-readable projection docs.
+- Chose one coherent canonical evidence policy: local `reports/*.json` exports remain ephemeral; tracked review evidence lives in markdown.
 - Refreshed tracked artifacts:
-  - `reports/contract_audit.json`
-  - `reports/contract_discovery.json`
+  - `reports/CANONICAL_REPO_ROOT_AUDIT.md`
   - `reports/runtime_mvp_attachment_report.md`
   - `state/RUNTIME_MVP_SPINE_ATTACHMENT.md`
 - Added projection-governance regression tests for repo-root audit cleanliness and projection inventory visibility.
 
+## Canonical evidence policy
+
+- Tracked canonical evidence is markdown: `reports/CANONICAL_REPO_ROOT_AUDIT.md`, `reports/runtime_mvp_attachment_report.md`, and the paired state files under `state/`.
+- Local machine exports stay ephemeral under `reports/_local_contract_audit.json` and `reports/_local_contract_discovery.json`.
+- Because `fy-manifest.yaml` defines `suites.contractify.max_contracts = 60`, the canonical runtime/MVP attachment wave is reproduced without hidden extra CLI flags.
+
 ## Canonical audit execution
 
-Run from repository root:
+Run from repository root when you need a fresh machine export:
 
 ```bash
-python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
+python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json"
 ```
-
-Because `fy-manifest.yaml` defines `suites.contractify.max_contracts = 60`, the canonical runtime/MVP attachment wave is reproduced without hidden extra CLI flags.
 
 ## Commands run
 
 ```bash
 PYTHONPATH="$(pwd)/'fy'-suites" python -m postmanify.tools generate
-PYTHONPATH="$(pwd)/'fy'-suites" python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json" --quiet
-PYTHONPATH="$(pwd)/'fy'-suites" python -m contractify.tools discover --json --out "'fy'-suites/contractify/reports/contract_discovery.json" --quiet
+PYTHONPATH="$(pwd)/'fy'-suites" python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json" --quiet
+PYTHONPATH="$(pwd)/'fy'-suites" python -m contractify.tools discover --json --out "'fy'-suites/contractify/reports/_local_contract_discovery.json" --quiet
 PYTHONPATH="$(pwd)/'fy'-suites" python -m pytest "'fy'-suites/contractify/tools/tests" -q
 PYTHONPATH="$(pwd)/'fy'-suites" python -m pytest "'fy'-suites/fy_platform/tests" -q
 PYTHONPATH="$(pwd)/'fy'-suites" python -m pytest "'fy'-suites/postmanify/tools/tests" -q

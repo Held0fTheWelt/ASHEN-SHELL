@@ -96,8 +96,8 @@ def _print_global_help() -> None:
         "  self-check Run audit scoped to fy-suite integration sanity (same as audit for now).\n"
         "  adr-investigation Refresh ADR investigation markdown and Mermaid maps.\n\n"
         "Examples:\n"
-        "  python -m contractify.tools discover --json --out \"'fy'-suites/contractify/reports/contract_discovery.json\"\n"
-        "  python -m contractify.tools audit --json --out \"'fy'-suites/contractify/reports/contract_audit.json\"\n"
+        "  python -m contractify.tools discover --json --out \"'fy'-suites/contractify/reports/_local_contract_discovery.json\"\n"
+        "  python -m contractify.tools audit --json --out \"'fy'-suites/contractify/reports/_local_contract_audit.json\"\n"
         "  python -m contractify.tools adr-investigation --out-dir \"'fy'-suites/contractify/investigations/adr\"\n"
     )
 

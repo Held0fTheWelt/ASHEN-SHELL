@@ -5,8 +5,9 @@
 - State: active
 - Scope: runtime/MVP contract spine
 - Tracking mode: stable ongoing state file
-- Machine audit: `../reports/contract_audit.json`
-- Canonical audit command: `python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"`
+- Canonical tracked audit snapshot: `../reports/CANONICAL_REPO_ROOT_AUDIT.md`
+- Local machine audit export: `../reports/_local_contract_audit.json`
+- Canonical local audit command: `python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json"`
 - Canonical profile source: repo-root `fy-manifest.yaml` (`suites.contractify.max_contracts = 60`)
 - Attachment report: `../reports/runtime_mvp_attachment_report.md`
 
@@ -69,24 +70,25 @@ The gap was insufficient first-class attachment, relation richness, and evidence
 - `contract_governance_input.md` carries backlog/follow-up items.
 - `reports/runtime_mvp_attachment_report.md` provides a concise generated summary.
 
-### Machine-readable visibility
+### Canonical tracked visibility + local machine exports
 
-- `reports/contract_audit.json` carries the current audit payload.
-- `precedence_rules`, `runtime_mvp_families`, and `manual_unresolved_areas` are emitted into the audit payload.
+- `reports/CANONICAL_REPO_ROOT_AUDIT.md` is the tracked human-readable canonical snapshot for repo review.
+- local `reports/_local_contract_audit.json` carries the machine payload for the current run when needed.
+- `precedence_rules`, `runtime_mvp_families`, and `manual_unresolved_areas` are emitted into the local audit payload and summarized in tracked markdown.
 - Curated runtime/MVP records and relations are injected into Contractify discovery/audit output via `tools/runtime_mvp_spine.py` and discovery/audit integration.
 
 ## Continuation update (2026-04-17)
 
 - The repo now has a root `fy-manifest.yaml`, so Contractify no longer needs legacy fallback when run canonically from repo root.
 - The canonical audit profile is now manifest-backed through `suites.contractify.max_contracts = 60`, eliminating the hidden expanded-run requirement for the runtime/MVP spine.
-- The machine audit artifact was refreshed at `../reports/contract_audit.json` using the canonical manifest-backed run.
-- The generated markdown report was refreshed so its counts match the canonical fresh run.
+- The canonical tracked snapshot was refreshed at `../reports/CANONICAL_REPO_ROOT_AUDIT.md` using the canonical manifest-backed run.
+- The generated runtime/MVP markdown report was refreshed so its counts match the canonical fresh run.
 - Writers' Room governance still carries direct validation evidence from `backend/tests/writers_room/test_writers_room_routes.py`.
 - RAG governance still carries direct validation evidence from `ai_stack/tests/test_retrieval_governance_summary.py`.
 
 ## Evidence produced by this pass
 
-- Updated machine audit JSON: `../reports/contract_audit.json`
+- Updated tracked audit snapshot: `../reports/CANONICAL_REPO_ROOT_AUDIT.md`
 - Concise generated summary: `../reports/runtime_mvp_attachment_report.md`
 - Curated attachment logic: `../tools/runtime_mvp_spine.py`
 - Discovery integration: `../tools/discovery.py`
@@ -124,7 +126,7 @@ When resuming work on this attachment family:
 1. Read this file.
 2. Read `ATTACHMENT_PASS_INDEX.md`.
 3. Read `../reports/runtime_mvp_attachment_report.md`.
-4. Re-run the canonical audit command into `../reports/contract_audit.json` from repo root.
+4. Re-run the canonical audit command into local `../reports/_local_contract_audit.json` from repo root and compare it with `../reports/CANONICAL_REPO_ROOT_AUDIT.md`.
 5. Update `contract_governance_input.md` if new unresolved issues or follow-up tasks appear.
 
 ## Edit history

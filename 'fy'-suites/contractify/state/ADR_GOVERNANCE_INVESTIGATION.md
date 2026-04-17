@@ -21,7 +21,7 @@ Contractify now carries a bounded ADR governance layer in addition to the runtim
 - `../investigations/adr/ADR_GOVERNANCE_INVESTIGATION.md`
 - `../investigations/adr/ADR_RELATION_MAP.mmd`
 - `../investigations/adr/ADR_CONFLICT_MAP.mmd`
-- `../reports/contract_audit.json` → `adr_governance`
+- local `../reports/_local_contract_audit.json` → `adr_governance` (machine export); tracked human review lives in `../reports/CANONICAL_REPO_ROOT_AUDIT.md`
 
 ## Open review points
 

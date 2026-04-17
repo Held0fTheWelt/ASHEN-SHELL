@@ -49,6 +49,8 @@ suites:
   contractify:
     openapi: docs/api/openapi.yaml
     max_contracts: 60
-    canonical_discover_out: "'fy'-suites/contractify/reports/contract_discovery.json"
-    canonical_audit_out: "'fy'-suites/contractify/reports/contract_audit.json"
+    local_discover_out: "'fy'-suites/contractify/reports/_local_contract_discovery.json"
+    local_audit_out: "'fy'-suites/contractify/reports/_local_contract_audit.json"
+    canonical_audit_snapshot_md: "'fy'-suites/contractify/reports/CANONICAL_REPO_ROOT_AUDIT.md"
+    runtime_mvp_report_md: "'fy'-suites/contractify/reports/runtime_mvp_attachment_report.md"
     runtime_mvp_state: "'fy'-suites/contractify/state/RUNTIME_MVP_SPINE_ATTACHMENT.md"

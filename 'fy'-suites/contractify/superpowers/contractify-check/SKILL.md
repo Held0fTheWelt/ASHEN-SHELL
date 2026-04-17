@@ -10,7 +10,8 @@ Follow **[`contract-audit-task.md`](../../contract-audit-task.md)** end-to-end.
 Quick CLI:
 
 ```bash
-python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
+python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json"
+# compare against tracked markdown: 'fy'-suites/contractify/reports/CANONICAL_REPO_ROOT_AUDIT.md
 ```
 
 Pre-work reality snapshot (human context): [`state/PREWORK_REPOSITORY_CONTRACT_REALITY.md`](../../state/PREWORK_REPOSITORY_CONTRACT_REALITY.md)

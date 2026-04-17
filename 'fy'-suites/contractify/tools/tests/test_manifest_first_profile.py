@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 from contextlib import redirect_stderr
 from pathlib import Path
 
@@ -15,6 +16,16 @@ def _tmp_report(root: Path, stem: str) -> Path:
     return root / "'fy'-suites" / "contractify" / "reports" / stem
 
 
+def _tracked_snapshot(root: Path) -> Path:
+    return root / "'fy'-suites" / "contractify" / "reports" / "CANONICAL_REPO_ROOT_AUDIT.md"
+
+
+def _extract_count(body: str, label: str) -> int:
+    match = re.search(rf"{re.escape(label)}: \*\*(\d+)\*\*", body)
+    assert match, f"missing markdown count for {label}"
+    return int(match.group(1))
+
+
 def test_repo_root_manifest_exists_and_validates(capsys) -> None:
     root = repo_paths.repo_root()
     manifest, warnings = load_manifest(root)
@@ -23,6 +34,7 @@ def test_repo_root_manifest_exists_and_validates(capsys) -> None:
     cfg = suite_config(manifest, "contractify")
     assert cfg.get("openapi") == "docs/api/openapi.yaml"
     assert cfg.get("max_contracts") == 60
+    assert cfg.get("canonical_audit_snapshot_md") == "'fy'-suites/contractify/reports/CANONICAL_REPO_ROOT_AUDIT.md"
 
     code = fy_main(["validate-manifest", "--project-root", str(root)])
     assert code == 0
@@ -50,31 +62,51 @@ def test_canonical_audit_cli_uses_manifest_profile_without_fallback() -> None:
             out.unlink()
 
 
-def test_tracked_contract_audit_matches_fresh_canonical_run() -> None:
+def test_canonical_markdown_snapshot_matches_fresh_canonical_run() -> None:
     root = repo_paths.repo_root()
-    tracked = root / "'fy'-suites" / "contractify" / "reports" / "contract_audit.json"
+    tracked = _tracked_snapshot(root)
     assert tracked.is_file()
     fresh = _tmp_report(root, "_pytest_manifest_first_fresh_audit.json")
     fresh_arg = fresh.relative_to(root).as_posix()
     try:
         code = contractify_main(["audit", "--out", fresh_arg, "--quiet"])
         assert code == 0
-        tracked_payload = json.loads(tracked.read_text(encoding="utf-8"))
         fresh_payload = json.loads(fresh.read_text(encoding="utf-8"))
-        assert tracked_payload["stats"] == fresh_payload["stats"]
-        assert tracked_payload["execution_profile"] == fresh_payload["execution_profile"]
-        assert tracked_payload["runtime_mvp_families"] == fresh_payload["runtime_mvp_families"]
+        body = tracked.read_text(encoding="utf-8")
+        assert _extract_count(body, "Contractify max contracts") == fresh_payload["execution_profile"]["max_contracts"]
+        assert _extract_count(body, "Contracts discovered in audit") == fresh_payload["stats"]["n_contracts"]
+        assert _extract_count(body, "Projections discovered in audit") == fresh_payload["stats"]["n_projections"]
+        assert _extract_count(body, "Relations discovered in audit") == fresh_payload["stats"]["n_relations"]
+        assert _extract_count(body, "Drift findings in audit") == fresh_payload["stats"]["n_drifts"]
+        assert _extract_count(body, "Conflicts in audit") == fresh_payload["stats"]["n_conflicts"]
+        assert _extract_count(body, "Manual unresolved areas kept explicit") == fresh_payload["stats"]["n_manual_unresolved_areas"]
+        assert "Tracked canonical review evidence is markdown" in body
+        assert "_local_contract_audit.json" in body
     finally:
         if fresh.is_file():
             fresh.unlink()
 
 
-def test_tracked_runtime_mvp_report_mentions_canonical_stats() -> None:
+def test_runtime_mvp_report_mentions_tracked_markdown_snapshot_and_canonical_stats() -> None:
     root = repo_paths.repo_root()
-    tracked = root / "'fy'-suites" / "contractify" / "reports" / "contract_audit.json"
+    snapshot = _tracked_snapshot(root)
     report = root / "'fy'-suites" / "contractify" / "reports" / "runtime_mvp_attachment_report.md"
-    payload = json.loads(tracked.read_text(encoding="utf-8"))
     body = report.read_text(encoding="utf-8")
-    assert f"Contracts discovered in audit: **{payload['stats']['n_contracts']}**" in body
-    assert f"Relations discovered in audit: **{payload['stats']['n_relations']}**" in body
-    assert f"Manual unresolved areas kept explicit: **{payload['stats']['n_manual_unresolved_areas']}**" in body
+    snapshot_body = snapshot.read_text(encoding="utf-8")
+    contracts = _extract_count(snapshot_body, "Contracts discovered in audit")
+    relations = _extract_count(snapshot_body, "Relations discovered in audit")
+    unresolved = _extract_count(snapshot_body, "Manual unresolved areas kept explicit")
+    assert "Canonical tracked audit snapshot" in body
+    assert "CANONICAL_REPO_ROOT_AUDIT.md" in body
+    assert f"Contracts discovered in audit: **{contracts}**" in body
+    assert f"Relations discovered in audit: **{relations}**" in body
+    assert f"Manual unresolved areas kept explicit: **{unresolved}**" in body
+
+
+def test_reports_policy_is_markdown_tracked_json_ephemeral() -> None:
+    root = repo_paths.repo_root()
+    reports_readme = (root / "'fy'-suites" / "contractify" / "reports" / "README.md").read_text(encoding="utf-8")
+    gitignore = (root / ".gitignore").read_text(encoding="utf-8")
+    assert "tracked human-readable markdown" in reports_readme
+    assert "intentionally ephemeral" in reports_readme
+    assert "**/contractify/reports/*.json" in gitignore

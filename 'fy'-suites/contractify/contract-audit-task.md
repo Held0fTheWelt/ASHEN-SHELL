@@ -18,10 +18,10 @@ This is the **analysis** counterpart to [`contract-solve-task.md`](contract-solv
 
 1. **Read scope ceilings** — [`CONTRACT_GOVERNANCE_SCOPE.md`](CONTRACT_GOVERNANCE_SCOPE.md) (automation thresholds, projection rule).
 2. **Pre-work context (human)** — skim [`state/PREWORK_REPOSITORY_CONTRACT_REALITY.md`](state/PREWORK_REPOSITORY_CONTRACT_REALITY.md) for repository-specific anchors already known.
-3. **Run machine audit** — emit JSON under `reports/`:
+3. **Run machine audit** — emit a local ephemeral JSON under `reports/` and compare its stats against the tracked markdown snapshot when needed:
 
    ```bash
-   python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
+   python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json"
    ```
 
 4. **Interpret drift** — treat `drift_findings` as **evidence**:
@@ -41,7 +41,8 @@ This is the **analysis** counterpart to [`contract-solve-task.md`](contract-solv
 
 ## Outputs (verification artefacts)
 
-- `reports/contract_audit.json` (or slice-local path).
+- local `reports/_local_contract_audit.json` (or slice-local path).
+- tracked `reports/CANONICAL_REPO_ROOT_AUDIT.md` for human review evidence.
 - For **reviewable frozen payloads** matching the hermetic tree, see [`reports/committed/`](reports/committed/) (regenerate with `python -m contractify.tools.freeze_committed_reports`).
 - Updated **CG-*** rows in `contract_governance_input.md` when work is scheduled.
 

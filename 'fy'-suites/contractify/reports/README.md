@@ -1,11 +1,11 @@
 # Contractify `reports/`
 
-This directory holds **machine-generated JSON** from `discover` / `audit` runs plus bounded generated markdown summaries for specific governed passes.
+This directory holds **ephemeral machine-generated JSON** from `discover` / `audit` runs plus **tracked human-readable markdown** for canonical review snapshots and bounded governed passes.
 
 ## Ephemeral vs tracked visibility
 
-- `reports/*.json` — local/current machine exports from ad-hoc runs. Useful for execution and re-audit.
-- `reports/*.md` — optional human-readable generated summaries for a bounded pass when that visibility materially helps governance review.
+- `reports/*_local*.json` and other `reports/*.json` files directly under this directory — local/current machine exports from ad-hoc runs. Useful for execution and re-audit, but **not** canonical tracked evidence.
+- `reports/*.md` — tracked human-readable governance evidence and bounded generated summaries. These are the canonical review surfaces for repo-visible Contractify runs.
 - `reports/committed/*.hermetic-fixture.json` — tracked fixture-level report evidence for stable output shapes.
 
 ## State-tracked companion files
@@ -19,7 +19,8 @@ Tracked state for major Contractify waves should also be reflected in:
 
 The current runtime/MVP attachment wave is tracked through both:
 
-- `runtime_mvp_attachment_report.md` (generated summary)
+- `CANONICAL_REPO_ROOT_AUDIT.md` (tracked repo-root audit/discover snapshot)
+- `runtime_mvp_attachment_report.md` (generated runtime/MVP summary)
 - `../state/RUNTIME_MVP_SPINE_ATTACHMENT.md` (tracked state record)
 
 ADR governance visibility is split similarly:
@@ -31,22 +32,23 @@ ADR governance visibility is split similarly:
 
 ## Git tracking note
 
-Root `.gitignore` ignores `**/contractify/reports/*.json` **only for files directly under** `reports/` (single path segment). The subdirectory `committed/` holds tracked `*.hermetic-fixture.json` files.
+Root `.gitignore` ignores `**/contractify/reports/*.json` **only for files directly under** `reports/` (single path segment). Those JSON files are intentionally ephemeral. The subdirectory `committed/` holds tracked `*.hermetic-fixture.json` files for hermetic fixture validation only.
 
 ## Regenerate locally
 
-From the **repository root**:
+From the **repository root** generate local machine exports when needed:
 
 ```bash
-python -m contractify.tools discover --json --out "'fy'-suites/contractify/reports/contract_discovery.json"
-python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
+python -m contractify.tools discover --json --out "'fy'-suites/contractify/reports/_local_contract_discovery.json"
+python -m contractify.tools audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json"
 python -m contractify.tools adr-investigation --out-dir "'fy'-suites/contractify/investigations/adr"
 ```
 
 ## Review order
 
-1. `../state/RUNTIME_MVP_SPINE_ATTACHMENT.md`
-2. `runtime_mvp_attachment_report.md`
-3. `contract_audit.json`
+1. `CANONICAL_REPO_ROOT_AUDIT.md`
+2. `../state/RUNTIME_MVP_SPINE_ATTACHMENT.md`
+3. `runtime_mvp_attachment_report.md`
 4. `../investigations/adr/ADR_GOVERNANCE_INVESTIGATION.md`
-5. `committed/` fixture reports if report-shape verification is needed
+5. local `_local_contract_audit.json` / `_local_contract_discovery.json` exports when machine detail is needed
+6. `committed/` fixture reports if report-shape verification is needed

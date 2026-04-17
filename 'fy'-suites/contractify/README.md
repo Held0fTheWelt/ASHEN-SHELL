@@ -91,8 +91,8 @@ With **`pip install -e .`** at the repository root ([`pyproject.toml`](../../pyp
 Examples:
 
 ```bash
-contractify audit --json --out "'fy'-suites/contractify/reports/contract_audit.json"
-python -m contractify.tools discover --out "'fy'-suites/contractify/reports/contract_discovery.json" --quiet
+contractify audit --json --out "'fy'-suites/contractify/reports/_local_contract_audit.json"
+python -m contractify.tools discover --out "'fy'-suites/contractify/reports/_local_contract_discovery.json" --quiet
 ```
 
 Canonical repository run profile:
@@ -124,7 +124,7 @@ Optional shared-platform output:
 | [`state/LAST_MILE_CLOSURE_2026-04-13.md`](state/LAST_MILE_CLOSURE_2026-04-13.md) | Last-mile closure: committed report fixtures, projection↔retired signal, evidence alignment |
 | [`state/RUNTIME_MVP_SPINE_ATTACHMENT.md`](state/RUNTIME_MVP_SPINE_ATTACHMENT.md) | Current runtime/MVP spine attachment record: promoted anchors, evidence attachments, precedence, unresolved overlaps |
 | [`examples/`](examples/) | Committed JSON **shape** samples + [`examples/README.md`](examples/README.md) |
-| [`reports/`](reports/) | Ephemeral JSON at `reports/*.json` (gitignored) + [`reports/README.md`](reports/README.md) + tracked [`reports/committed/`](reports/committed/) hermetic **discover/audit** fixtures |
+| [`reports/`](reports/) | Ephemeral local JSON at `reports/*.json` (gitignored) + tracked human-readable markdown snapshots + [`reports/README.md`](reports/README.md) + tracked [`reports/committed/`](reports/committed/) hermetic **discover/audit** fixtures |
 
 ## Cursor skills
 
@@ -160,4 +160,4 @@ OpenAPI contracts use **`info.version`** when present; ADRs use explicit **`Stat
 
 ## Current state-tracked governance wave
 
-For state-tracked visibility of the current runtime/MVP governance wave, start with [`state/RUNTIME_MVP_SPINE_ATTACHMENT.md`](state/RUNTIME_MVP_SPINE_ATTACHMENT.md), then compare it with [`reports/runtime_mvp_attachment_report.md`](reports/runtime_mvp_attachment_report.md), [`contract_governance_input.md`](contract_governance_input.md), and a fresh local `reports/contract_audit.json` export.
+For state-tracked visibility of the current runtime/MVP governance wave, start with [`reports/CANONICAL_REPO_ROOT_AUDIT.md`](reports/CANONICAL_REPO_ROOT_AUDIT.md), then compare it with [`state/RUNTIME_MVP_SPINE_ATTACHMENT.md`](state/RUNTIME_MVP_SPINE_ATTACHMENT.md), [`reports/runtime_mvp_attachment_report.md`](reports/runtime_mvp_attachment_report.md), [`contract_governance_input.md`](contract_governance_input.md), and a fresh local `reports/_local_contract_audit.json` export if machine detail is needed.
