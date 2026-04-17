@@ -36,8 +36,8 @@ graph TD
     CTR_ADR_0003_SCENE_IDENTITY -->|validated_by| ver_ai_stack_tests_test_goc_scene_identity_py
     doc_docs_MVPs_MVP_VSL_And_GoC_Contracts_VERTICAL_SLICE_CONTRACT_GOC_md["docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md"]
     CTR_ADR_0003_SCENE_IDENTITY -.->|documented_in| doc_docs_MVPs_MVP_VSL_And_GoC_Contracts_VERTICAL_SLICE_CONTRACT_GOC_md
-    doc_docs_governance_README_md["docs/governance/README.md"]
-    CTR_ADR_0003_SCENE_IDENTITY -.->|documented_in| doc_docs_governance_README_md
+    doc_docs_ADR_README_md["docs/ADR/README.md"]
+    CTR_ADR_0003_SCENE_IDENTITY -.->|documented_in| doc_docs_ADR_README_md
     OBS_WE_STORY_RUNTIME_MANAGER["OBS-WE-STORY-RUNTIME-MANAGER"]
     CTR_ADR_0001_RUNTIME_AUTHORITY -->|implemented_by| OBS_WE_STORY_RUNTIME_MANAGER
     OBS_WE_STORY_RUNTIME_MANAGER -->|implements| CTR_ADR_0001_RUNTIME_AUTHORITY
@@ -49,8 +49,8 @@ graph TD
     VER_WE_STORY_RUNTIME_API_TEST -->|validates| CTR_ADR_0001_RUNTIME_AUTHORITY
     CTR_RUNTIME_AUTHORITY_STATE_FLOW["CTR-RUNTIME-AUTHORITY-STATE-FLOW"]
     CTR_ADR_0001_RUNTIME_AUTHORITY -->|documented_in| CTR_RUNTIME_AUTHORITY_STATE_FLOW
-    ART_docs_dev_architecture_runtime_authority_and_session_lifecycle_md["ART:docs/dev/architecture/runtime-authority-and-session-lifecycle.md"]
-    CTR_ADR_0001_RUNTIME_AUTHORITY -->|documented_in| ART_docs_dev_architecture_runtime_authority_and_session_lifecycle_md
+    PRJ_RUNTIME_SESSION_LIFECYCLE["PRJ-RUNTIME-SESSION-LIFECYCLE"]
+    CTR_ADR_0001_RUNTIME_AUTHORITY -->|documented_in| PRJ_RUNTIME_SESSION_LIFECYCLE
     PRJPATH_docs_dev_onboarding_md["PRJPATH:docs/dev/onboarding.md"]
     CTR_ADR_0001_RUNTIME_AUTHORITY -->|projected_as| PRJPATH_docs_dev_onboarding_md
     OBS_BE_SESSION_ROUTES["OBS-BE-SESSION-ROUTES"]
@@ -73,8 +73,8 @@ graph TD
     VER_BE_WORLD_ENGINE_CONSOLE_ROUTES_TEST -->|validates| CTR_ADR_0002_BACKEND_SESSION_QUARANTINE
     CTR_BACKEND_RUNTIME_CLASSIFICATION["CTR-BACKEND-RUNTIME-CLASSIFICATION"]
     CTR_ADR_0002_BACKEND_SESSION_QUARANTINE -->|documented_in| CTR_BACKEND_RUNTIME_CLASSIFICATION
-    ART_docs_technical_runtime_world_engine_authoritative_runtime_and_system_interactions_md["ART:docs/technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md"]
-    CTR_ADR_0002_BACKEND_SESSION_QUARANTINE -->|documented_in| ART_docs_technical_runtime_world_engine_authoritative_runtime_and_system_interactions_md
+    CTR_WORLD_ENGINE_SYSTEM_INTERACTIONS["CTR-WORLD-ENGINE-SYSTEM-INTERACTIONS"]
+    CTR_ADR_0002_BACKEND_SESSION_QUARANTINE -->|documented_in| CTR_WORLD_ENGINE_SYSTEM_INTERACTIONS
     CTR_ADR_0002_BACKEND_SESSION_QUARANTINE -->|projected_as| PRJPATH_docs_dev_onboarding_md
     OBS_AI_GOC_SCENE_IDENTITY["OBS-AI-GOC-SCENE-IDENTITY"]
     CTR_ADR_0003_SCENE_IDENTITY -->|implemented_by| OBS_AI_GOC_SCENE_IDENTITY
@@ -87,12 +87,13 @@ graph TD
     VER_AI_GOC_SCENE_IDENTITY_TEST -->|validates| CTR_ADR_0003_SCENE_IDENTITY
     CTR_GOC_VERTICAL_SLICE["CTR-GOC-VERTICAL-SLICE"]
     CTR_ADR_0003_SCENE_IDENTITY -->|documented_in| CTR_GOC_VERTICAL_SLICE
-    ART_docs_governance_README_md["ART:docs/governance/README.md"]
-    CTR_ADR_0003_SCENE_IDENTITY -->|documented_in| ART_docs_governance_README_md
+    ART_docs_ADR_README_md["ART:docs/ADR/README.md"]
+    CTR_ADR_0003_SCENE_IDENTITY -->|documented_in| ART_docs_ADR_README_md
     CTR_RUNTIME_AUTHORITY_STATE_FLOW -->|derives_from| CTR_ADR_0001_RUNTIME_AUTHORITY
     CTR_RUNTIME_AUTHORITY_STATE_FLOW -->|documented_in| CTR_ADR_0001_RUNTIME_AUTHORITY
     CTR_BACKEND_RUNTIME_CLASSIFICATION -->|documented_in| CTR_ADR_0001_RUNTIME_AUTHORITY
     CTR_BACKEND_RUNTIME_CLASSIFICATION -->|documented_in| CTR_ADR_0002_BACKEND_SESSION_QUARANTINE
+    CTR_WORLD_ENGINE_SYSTEM_INTERACTIONS -->|documented_in| CTR_ADR_0001_RUNTIME_AUTHORITY
     OBS_BE_SESSION_ROUTES -->|documented_in| CTR_ADR_0002_BACKEND_SESSION_QUARANTINE
     OBS_BE_SESSION_STORE -->|documented_in| CTR_ADR_0002_BACKEND_SESSION_QUARANTINE
     OBS_BE_SESSION_SERVICE -->|documented_in| CTR_ADR_0002_BACKEND_SESSION_QUARANTINE
@@ -107,3 +108,4 @@ graph TD
     CTR_CANONICAL_RUNTIME_CONTRACT -->|depends_on| CTR_ADR_0001_RUNTIME_AUTHORITY
     CTR_CANONICAL_RUNTIME_CONTRACT -->|depends_on| CTR_ADR_0002_BACKEND_SESSION_QUARANTINE
     OBS_BE_WORLD_ENGINE_CONSOLE_ROUTES -->|operationalizes| CTR_ADR_0002_BACKEND_SESSION_QUARANTINE
+    CTR_WORLD_ENGINE_SYSTEM_INTERACTIONS -->|depends_on| CTR_ADR_0001_RUNTIME_AUTHORITY
