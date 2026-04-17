@@ -22,23 +22,23 @@ This file is the **tracked human-readable canonical evidence snapshot** for repo
 
 - Contracts discovered: **60**
 - Projections discovered: **25**
-- Relations discovered: **311**
+- Relations discovered: **310**
 - Manual unresolved areas kept explicit: **3**
 
 ## Fresh canonical audit snapshot
 
 - Contracts discovered in audit: **60**
 - Projections discovered in audit: **25**
-- Relations discovered in audit: **311**
+- Relations discovered in audit: **310**
 - Drift findings in audit: **0**
 - Conflicts in audit: **5**
 - Manual unresolved areas kept explicit: **3**
 
 ## ADR governance inventory from the canonical audit
 
-- Canonical ADRs discovered: **14**
-- ADR findings emitted: **13**
-- Total ADR-governance records: **14**
+- Canonical ADRs discovered: **29**
+- ADR findings emitted: **0**
+- Total ADR-governance records: **29**
 
 ## Runtime/MVP family visibility from the canonical run
 

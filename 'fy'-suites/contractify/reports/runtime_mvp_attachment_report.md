@@ -7,7 +7,7 @@ Generated from the canonical manifest-backed Contractify audit.
 - Canonical tracked audit snapshot: `'fy'-suites/contractify/reports/CANONICAL_REPO_ROOT_AUDIT.md`
 - Local machine audit export: `'fy'-suites/contractify/reports/_local_contract_audit.json` (ephemeral, not tracked)
 - Contracts discovered in audit: **60**
-- Relations discovered in audit: **311**
+- Relations discovered in audit: **310**
 - Manual unresolved areas kept explicit: **3**
 
 The runtime/MVP spine remains a **bounded family view** inside the larger canonical audit. Broader ADR-governance additions now contribute to the full audit totals above.

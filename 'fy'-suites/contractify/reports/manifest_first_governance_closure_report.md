@@ -50,7 +50,7 @@ PYTHONPATH="$(pwd)/'fy'-suites" python -m pytest "'fy'-suites/postmanify/tools/t
 
 ## Results
 
-- Canonical audit stats: `60 contracts`, `25 projections`, `311 relations`, `0 drifts`, `5 conflicts`, `3 manual unresolved areas`
+- Canonical audit stats: `60 contracts`, `25 projections`, `310 relations`, `0 drifts`, `5 conflicts`, `3 manual unresolved areas`
 - Legacy fallback deprecation: not emitted on canonical repo-root Contractify audit run
 - OpenAPI/Postman SHA drift: closed
 - Audience projection backref drifts: closed
