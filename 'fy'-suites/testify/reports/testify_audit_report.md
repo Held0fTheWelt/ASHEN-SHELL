@@ -4,8 +4,8 @@
 
 - **workflow_count**: `13`
 - **runner_suite_count**: `8`
-- **hub_script_count**: `8`
-- **finding_count**: `1`
+- **hub_script_count**: `9`
+- **finding_count**: `0`
 - **warning_count**: `1`
 
 ## Runner coverage
@@ -32,6 +32,7 @@
 ## Strengths
 
 - Core GitHub Actions workflow set is present for backend, admin, engine, AI stack, quality gate, pre-deployment, and compose smoke.
+- Root pyproject exports all fy-suite console scripts, including dockerify, testify, and documentify.
 - tests/run_tests.py declares canonical --suite all order: backend, frontend, administration, engine, database, ai_stack.
 - tests/run_tests.py declares explicit suite targets for: administration, ai_stack, backend, database, engine, frontend, improvement, writers_room.
 
@@ -41,4 +42,4 @@
 
 ## Findings
 
-- `TESTIFY-MISSING-HUB-SCRIPTS` (high): Missing root pyproject suite scripts: documentify
+- None.
