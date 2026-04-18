@@ -11,6 +11,7 @@ from fy_platform.ai.contracts import (
     PolicyDecision, EvidenceLink, PreCheckResult
 )
 from fy_platform.ai.lanes import PreCheckLane
+from metrify.adapter.service import MetrifyAdapter
 
 
 class TestPolicyLayerIR:
@@ -139,3 +140,25 @@ class TestPreCheckLane:
         with tempfile.TemporaryDirectory() as tmpdir:
             result = lane.validate(Path(tmpdir), mode='cost-check')
             assert result.is_valid is True  # Directory without file size limit
+
+
+class TestMetrifyEnforcement:
+    """Test metrify enforcement gates."""
+
+    def test_metrify_enforce_budget_allow(self):
+        """enforce_budget returns allow decision for valid budget."""
+        adapter = MetrifyAdapter()
+        result = adapter.enforce_budget(
+            suite='contractify',
+            run_budget={'tokens': 50_000, 'cost_usd': 5.0},
+        )
+        assert result['decision'] == 'allow'
+        assert result['suite'] == 'contractify'
+
+    def test_metrify_enforce_budget_default(self):
+        """enforce_budget uses defaults when budget not provided."""
+        adapter = MetrifyAdapter()
+        result = adapter.enforce_budget(suite='docify')
+        assert result['decision'] == 'allow'
+        assert 'run_budget' in result
+        assert 'policy_ids' in result

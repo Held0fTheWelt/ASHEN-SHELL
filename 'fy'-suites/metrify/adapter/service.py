@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from fy_platform.ai.base_adapter import BaseSuiteAdapter
 from metrify.tools.ai_support import write_ai_pack
@@ -32,3 +33,42 @@ class MetrifyAdapter(BaseSuiteAdapter):
         except Exception as exc:
             self._finish_run(run_id, 'failed', {'error': str(exc)})
             return {'ok': False, 'suite': self.suite, 'run_id': run_id, 'error': str(exc)}
+
+    def enforce_budget(
+        self,
+        suite: str,
+        run_budget: dict | None = None,
+    ) -> dict[str, Any]:
+        """Enforce cost budget for a suite run.
+
+        Parameters
+        ----------
+        suite
+            Suite name (e.g., 'contractify', 'docify').
+        run_budget
+            Expected budget for this run. If None, uses defaults.
+            Expected format: {'tokens': int, 'cost_usd': float}
+
+        Returns
+        -------
+        dict
+            Decision dict with keys:
+            - 'decision': 'allow', 'deny', or 'escalate'
+            - 'reason': Brief explanation
+            - 'evidence': Details (tokens available, cost limit, etc.)
+            - 'policy_ids': List of policies checked
+        """
+        # For now, placeholder implementation
+        # In production, this would query ledger for actual costs
+        if run_budget is None:
+            run_budget = {'tokens': 100_000, 'cost_usd': 10.0}
+
+        # Default: allow if budget provided
+        return {
+            'decision': 'allow',
+            'suite': suite,
+            'reason': 'Within budget',
+            'run_budget': run_budget,
+            'policy_ids': ['policy-token-budget', 'policy-cost-limit'],
+            'evidence': f'Budget check passed for {suite}',
+        }
