@@ -27,6 +27,7 @@ from fy_platform.ai.lanes import (
     GenerateLane,
     VerifyLane,
     StructureLane,
+    PreCheckLane,
 )
 from fy_platform.ai.adapter_cli_helper import build_command_envelope
 
@@ -60,11 +61,52 @@ def cmd_govern(args: argparse.Namespace) -> int:
     """Check governance and readiness."""
     mode = args.mode or 'release'
 
-    lane = GovernLane()
-    result = lane.check_readiness(mode=mode)
+    if mode == 'policy-check':
+        # Run full deterministic validation via PreCheckLane
+        target_repo = getattr(args, 'target_repo', None) or '.'
+        lane = PreCheckLane()
+        result = lane.validate(Path(target_repo), mode='policy-check')
+        result_dict = {
+            'target': result.target,
+            'mode': result.mode,
+            'is_valid': result.is_valid,
+            'violations': [
+                {
+                    'policy_id': v.policy_id,
+                    'rule_name': v.rule_name,
+                    'decision': v.decision,
+                    'evidence': v.evidence,
+                }
+                for v in result.violations
+            ],
+            'timestamp': result.timestamp,
+        }
+        _output_result(result_dict, args.format)
+        return 0 if result.is_valid else 1
 
-    _output_result(result, args.format)
-    return 0
+    elif mode == 'cost-check':
+        # Run budget enforcement via metrify
+        from metrify.adapter.service import MetrifyAdapter
+        metrify = MetrifyAdapter()
+        suite = getattr(args, 'suite', None) or 'default'
+        budget = None
+        budget_tokens = getattr(args, 'budget_tokens', None)
+        budget_cost = getattr(args, 'budget_cost', None)
+        if budget_tokens:
+            budget = {
+                'tokens': budget_tokens,
+                'cost_usd': budget_cost or 0.0,
+            }
+        result = metrify.enforce_budget(suite=suite, run_budget=budget)
+        _output_result(result, args.format)
+        return 0 if result['decision'] == 'allow' else 1
+
+    else:
+        # Standard release/production/deploy modes
+        lane = GovernLane()
+        result = lane.check_readiness(mode=mode)
+        _output_result(result, args.format)
+        return 0
 
 
 def cmd_inspect(args: argparse.Namespace) -> int:
@@ -141,8 +183,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # govern command
     govern_parser = subparsers.add_parser('govern', help='Check governance and readiness')
-    govern_parser.add_argument('--mode', choices=['release', 'production', 'deploy'], default='release')
+    govern_parser.add_argument(
+        '--mode',
+        choices=['release', 'production', 'deploy', 'policy-check', 'cost-check'],
+        default='release'
+    )
     govern_parser.add_argument('--format', choices=['json', 'text'], default='json')
+    govern_parser.add_argument('--target-repo', default='.')
+    govern_parser.add_argument('--suite', help='Suite name for cost-check (default: default)')
+    govern_parser.add_argument('--budget-tokens', type=int, help='Token budget for cost-check')
+    govern_parser.add_argument('--budget-cost', type=float, help='Cost budget in USD for cost-check')
 
     # inspect command
     inspect_parser = subparsers.add_parser('inspect', help='Inspect repository')

@@ -12,6 +12,7 @@ from fy_platform.ai.contracts import (
 )
 from fy_platform.ai.lanes import PreCheckLane, GovernLane
 from metrify.adapter.service import MetrifyAdapter
+from fy_platform.tools import platform_cli
 
 
 class TestPolicyLayerIR:
@@ -184,3 +185,26 @@ class TestGovernLanePolicyIntegration:
         lane.record_policy_decision(decision)
         assert len(lane.get_policy_decisions()) == 1
         assert lane.get_policy_decisions()[0].policy_id == 'policy-test'
+
+
+class TestPlatformCLIPolicyModes:
+    """Test platform CLI policy and cost-check modes."""
+
+    def test_cli_govern_policy_check_mode(self):
+        """CLI supports fy govern --mode policy-check."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / 'test.txt'
+            test_file.write_text('test')
+            result = platform_cli.main(['govern', '--mode', 'policy-check', '--target-repo', tmpdir, '--format', 'json'])
+            assert result == 0  # Should pass for valid target
+
+    def test_cli_govern_cost_check_mode(self):
+        """CLI supports fy govern --mode cost-check."""
+        result = platform_cli.main(['govern', '--mode', 'cost-check', '--suite', 'contractify', '--format', 'json'])
+        # Should return 0 (allow) or 1 (deny/escalate)
+        assert result in (0, 1)
+
+    def test_cli_govern_release_mode_still_works(self):
+        """Legacy govern --mode release still works."""
+        result = platform_cli.main(['govern', '--mode', 'release', '--format', 'json'])
+        assert result == 0
