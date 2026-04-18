@@ -7,7 +7,7 @@ This page uses simple language. It should help you understand the latest result 
 - suite: `securify`
 - command: `audit`
 - ok: `true`
-- latest_run_id: `securify-30f5e8f91d24`
+- latest_run_id: `securify-9bd0cac68e55`
 - latest_run_mode: `audit`
 - latest_run_status: `ok`
 
@@ -34,7 +34,7 @@ Securify found security follow-up work: no discoverable security documentation, 
 
 - `usabilify`: Usabilify evaluated UI and UX surfaces, connected available UI contracts, and highlighted the next usability steps in plain language.
   - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.
-- `testify`: Compared testify-c241f7057392 with testify-0d71644d3445. Focus first on changed artifacts, review-state changes, and any target or mode differences.
+- `testify`: Compared testify-e6fc1d6c0370 with testify-17653c3cfc42. Focus first on changed artifacts, review-state changes, and any target or mode differences.
   - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.
 - `documentify`: Documentify generated the current documentation tracks and status pages.
   - next: Read the newly generated documentation and decide which tracks should be exported outward.

@@ -11,7 +11,7 @@ This is the product-facing catalog of all suites currently present in the autark
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `contractify-1ec9655c48ae`
+- latest_run_id: `contractify-eef2f89f00c1`
 
 Discovers, audits, explains, and consolidates contracts and projections.
 
@@ -46,7 +46,7 @@ Discovers, audits, explains, and consolidates contracts and projections.
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `despaghettify-81ce30c83f1d`
+- latest_run_id: `despaghettify-9888a83b7667`
 
 Detects structural complexity and opens work for local spikes and broader cleanup.
 
@@ -79,7 +79,7 @@ Detects structural complexity and opens work for local spikes and broader cleanu
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `docify-fa6f519f5449`
+- latest_run_id: `docify-7f0923e09fe2`
 
 Improves code documentation, docstrings, and dense inline explanations for Python code.
 
@@ -112,7 +112,7 @@ Improves code documentation, docstrings, and dense inline explanations for Pytho
 - category: `optional`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `dockerify-0863bf9c14fd`
+- latest_run_id: `dockerify-1ef67a22d395`
 
 Provides repo-serving Docker and compose governance when the target repository needs it.
 
@@ -145,7 +145,7 @@ Provides repo-serving Docker and compose governance when the target repository n
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `documentify-651377c26852`
+- latest_run_id: `documentify-f90788490b09`
 
 Builds and grows documentation tracks, including status and AI-readable exports.
 
@@ -276,7 +276,7 @@ Tracks internal fy-suite operations, internal docs roots, and non-contaminating 
 - category: `optional`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `postmanify-681bfce1a54e`
+- latest_run_id: `postmanify-acac2d679649`
 
 Refreshes Postman surfaces from API evidence for repositories that use them.
 
@@ -309,7 +309,7 @@ Refreshes Postman surfaces from API evidence for repositories that use them.
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `securify-30f5e8f91d24`
+- latest_run_id: `securify-9bd0cac68e55`
 
 Provides the security lane for scans, secret-risk review, and security-oriented guidance.
 
@@ -340,7 +340,7 @@ Provides the security lane for scans, secret-risk review, and security-oriented 
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `templatify-d2ad9702f123`
+- latest_run_id: `templatify-6efc9e5396ab`
 
 Owns and validates reusable templates for reports, docs, context packs, and suite outputs.
 
@@ -372,7 +372,7 @@ Owns and validates reusable templates for reports, docs, context packs, and suit
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `testify-3ad0a3580500`
+- latest_run_id: `testify-2cb2fb7707fc`
 
 Audits test governance and verifies ADR-to-test reflection, not just passing behavior.
 
@@ -401,7 +401,7 @@ Audits test governance and verifies ADR-to-test reflection, not just passing beh
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `usabilify-88a8e49ace13`
+- latest_run_id: `usabilify-96136fb0b260`
 
 Surfaces human-usable status, UX guidance, and understandable next-step outputs.
 

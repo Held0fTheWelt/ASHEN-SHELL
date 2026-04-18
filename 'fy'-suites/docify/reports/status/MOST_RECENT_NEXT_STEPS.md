@@ -7,13 +7,13 @@ This page uses simple language. It should help you understand the latest result 
 - suite: `docify`
 - command: `prepare-context-pack`
 - ok: `true`
-- latest_run_id: `docify-b61e4e8a2a1e`
+- latest_run_id: `docify-7f0923e09fe2`
 - latest_run_mode: `audit`
 - latest_run_status: `ok`
 
 ## Plain summary
 
-Found 8 indexed evidence hits for query "docstring" across suites ['docify']. Strongest source: generated/context_packs/docify_context_pack.json#chunk-1. Use the top-ranked items first and treat lower-confidence hits as hints.
+Found 8 indexed evidence hits for query "docstring" across suites ['docify']. Strongest source: tools/python_docstring_synthesize.py#chunk-1. Use the top-ranked items first and treat lower-confidence hits as hints.
 
 ## Most-Recent-Next-Steps
 
@@ -43,5 +43,5 @@ Found 8 indexed evidence hits for query "docstring" across suites ['docify']. St
   - next: Open the generated output directory and review the new files in simple language first.
 - `despaghettify`: No summary available.
   - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.
-- `contractify`: No summary available.
-  - next: Review the 4 finding(s) and decide which one should be fixed first.
+- `contractify`: contractify is initialized and bound for outward work. Internal state stays in the fy workspace.
+  - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.

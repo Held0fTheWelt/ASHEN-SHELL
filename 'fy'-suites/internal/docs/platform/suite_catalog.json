@@ -1,6 +1,6 @@
 {
   "schema_version": "fy.suite-catalog.v1",
-  "generated_at": "2026-04-17T23:50:33.917436+00:00",
+  "generated_at": "2026-04-18T01:45:43.512354+00:00",
   "suite_count": 13,
   "core_count": 11,
   "optional_count": 2,
@@ -40,7 +40,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "contractify-1ec9655c48ae"
+      "latest_run_id": "contractify-eef2f89f00c1"
     },
     {
       "suite": "despaghettify",
@@ -75,7 +75,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "despaghettify-81ce30c83f1d"
+      "latest_run_id": "despaghettify-9888a83b7667"
     },
     {
       "suite": "docify",
@@ -110,7 +110,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "docify-fa6f519f5449"
+      "latest_run_id": "docify-7f0923e09fe2"
     },
     {
       "suite": "dockerify",
@@ -145,7 +145,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "dockerify-0863bf9c14fd"
+      "latest_run_id": "dockerify-1ef67a22d395"
     },
     {
       "suite": "documentify",
@@ -180,7 +180,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "documentify-651377c26852"
+      "latest_run_id": "documentify-f90788490b09"
     },
     {
       "suite": "metrify",
@@ -325,7 +325,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "postmanify-681bfce1a54e"
+      "latest_run_id": "postmanify-acac2d679649"
     },
     {
       "suite": "securify",
@@ -360,7 +360,7 @@
       "quality_missing": [],
       "quality_warnings": [],
       "release_ready": true,
-      "latest_run_id": "securify-30f5e8f91d24"
+      "latest_run_id": "securify-9bd0cac68e55"
     },
     {
       "suite": "templatify",
@@ -396,7 +396,7 @@
       "quality_missing": [],
       "quality_warnings": [],
       "release_ready": true,
-      "latest_run_id": "templatify-d2ad9702f123"
+      "latest_run_id": "templatify-6efc9e5396ab"
     },
     {
       "suite": "testify",
@@ -429,7 +429,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "testify-3ad0a3580500"
+      "latest_run_id": "testify-2cb2fb7707fc"
     },
     {
       "suite": "usabilify",
@@ -464,7 +464,7 @@
       "quality_missing": [],
       "quality_warnings": [],
       "release_ready": true,
-      "latest_run_id": "usabilify-88a8e49ace13"
+      "latest_run_id": "usabilify-96136fb0b260"
     }
   ]
 }

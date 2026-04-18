@@ -16,6 +16,7 @@ This page is the top-level health view for the current workspace.
 
 ## Core blocked suites
 
+- `contractify`
 - `metrify`
 - `mvpify`
 - `observifyfy`
