@@ -7,7 +7,7 @@ This page uses simple language. It should help you understand the latest result 
 - suite: `docify`
 - command: `prepare-context-pack`
 - ok: `true`
-- latest_run_id: `docify-7f0923e09fe2`
+- latest_run_id: `docify-d50592f0f69d`
 - latest_run_mode: `audit`
 - latest_run_status: `ok`
 
@@ -43,5 +43,6 @@ Found 8 indexed evidence hits for query "docstring" across suites ['docify']. St
   - next: Open the generated output directory and review the new files in simple language first.
 - `despaghettify`: No summary available.
   - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.
-- `contractify`: contractify is initialized and bound for outward work. Internal state stays in the fy workspace.
+- `contractify`: contractify is ready for inspection. Read the latest summary first and then only open detailed artifacts where you still need proof.
+  - next: Read the summary first, then open the linked artifacts only where you still need detail.
   - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.

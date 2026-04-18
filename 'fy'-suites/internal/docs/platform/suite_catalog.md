@@ -11,7 +11,7 @@ This is the product-facing catalog of all suites currently present in the autark
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `contractify-eef2f89f00c1`
+- latest_run_id: `contractify-9d9a840d4642`
 
 Discovers, audits, explains, and consolidates contracts and projections.
 
@@ -79,7 +79,7 @@ Detects structural complexity and opens work for local spikes and broader cleanu
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `docify-7f0923e09fe2`
+- latest_run_id: `docify-261420d41f86`
 
 Improves code documentation, docstrings, and dense inline explanations for Python code.
 
@@ -145,7 +145,7 @@ Provides repo-serving Docker and compose governance when the target repository n
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `documentify-f90788490b09`
+- latest_run_id: `documentify-cd795753ad7a`
 
 Builds and grows documentation tracks, including status and AI-readable exports.
 
@@ -309,7 +309,7 @@ Refreshes Postman surfaces from API evidence for repositories that use them.
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `securify-9bd0cac68e55`
+- latest_run_id: `securify-e0852d8d89f1`
 
 Provides the security lane for scans, secret-risk review, and security-oriented guidance.
 
@@ -340,7 +340,7 @@ Provides the security lane for scans, secret-risk review, and security-oriented 
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `templatify-6efc9e5396ab`
+- latest_run_id: `templatify-b5b760922027`
 
 Owns and validates reusable templates for reports, docs, context packs, and suite outputs.
 
@@ -372,7 +372,7 @@ Owns and validates reusable templates for reports, docs, context packs, and suit
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `testify-2cb2fb7707fc`
+- latest_run_id: `testify-beb6dccf7040`
 
 Audits test governance and verifies ADR-to-test reflection, not just passing behavior.
 
@@ -401,7 +401,7 @@ Audits test governance and verifies ADR-to-test reflection, not just passing beh
 - category: `core`
 - quality_ok: `true`
 - release_ready: `true`
-- latest_run_id: `usabilify-96136fb0b260`
+- latest_run_id: `usabilify-9787520791b9`
 
 Surfaces human-usable status, UX guidance, and understandable next-step outputs.
 

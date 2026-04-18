@@ -7,7 +7,7 @@ This page uses simple language. It should help you understand the latest result 
 - suite: `usabilify`
 - command: `audit`
 - ok: `true`
-- latest_run_id: `usabilify-96136fb0b260`
+- latest_run_id: `usabilify-9787520791b9`
 - latest_run_mode: `audit`
 - latest_run_status: `ok`
 
@@ -39,6 +39,5 @@ Usabilify evaluated UI and UX surfaces, connected available UI contracts, and hi
 - `documentify`: Documentify generated the current documentation tracks and status pages.
   - next: Read the newly generated documentation and decide which tracks should be exported outward.
   - next: Open the generated output directory and review the new files in simple language first.
-- `contractify`: contractify is ready for inspection. Read the latest summary first and then only open detailed artifacts where you still need proof.
-  - next: Read the summary first, then open the linked artifacts only where you still need detail.
-  - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.
+- `contractify`: No summary available.
+  - next: Check the target repository path and run the command again.

@@ -2,7 +2,7 @@
 
 - ok: `false`
 - schema_version: `fy.production-readiness.v2`
-- generated_at: `2026-04-18T01:46:19.194584+00:00`
+- generated_at: `2026-04-18T03:31:09.463985+00:00`
 
 ## Top Next Steps
 
@@ -21,8 +21,8 @@
 
 ## Observability
 
-- command_event_count: `197`
-- route_event_count: `12`
+- command_event_count: `585`
+- route_event_count: `44`
 
 ## Security
 

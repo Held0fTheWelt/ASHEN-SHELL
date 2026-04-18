@@ -7,7 +7,7 @@ This page uses simple language. It should help you understand the latest result 
 - suite: `templatify`
 - command: `audit`
 - ok: `true`
-- latest_run_id: `templatify-6efc9e5396ab`
+- latest_run_id: `templatify-b5b760922027`
 - latest_run_mode: `audit`
 - latest_run_status: `ok`
 

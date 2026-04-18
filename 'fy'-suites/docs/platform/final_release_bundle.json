@@ -1,10 +1,10 @@
 {
   "schema_version": "fy.final-release-bundle.v1",
-  "generated_at": "2026-04-18T01:45:36.885561+00:00",
+  "generated_at": "2026-04-18T03:32:11.023633+00:00",
   "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
   "catalog": {
     "schema_version": "fy.suite-catalog.v1",
-    "generated_at": "2026-04-18T01:44:11.651884+00:00",
+    "generated_at": "2026-04-18T03:30:24.249439+00:00",
     "suite_count": 13,
     "core_count": 11,
     "optional_count": 2,
@@ -44,7 +44,7 @@
           "missing_optional:docs"
         ],
         "release_ready": true,
-        "latest_run_id": "contractify-9aff39f6bc26"
+        "latest_run_id": "contractify-2d450dbea9e5"
       },
       {
         "suite": "despaghettify",
@@ -114,7 +114,7 @@
           "missing_optional:docs"
         ],
         "release_ready": true,
-        "latest_run_id": "docify-3dca16b7b8a9"
+        "latest_run_id": "docify-34e063c42faf"
       },
       {
         "suite": "dockerify",
@@ -184,7 +184,7 @@
           "missing_optional:docs"
         ],
         "release_ready": true,
-        "latest_run_id": "documentify-47dd9363f13c"
+        "latest_run_id": "documentify-9de8db3497c7"
       },
       {
         "suite": "metrify",
@@ -364,7 +364,7 @@
         "quality_missing": [],
         "quality_warnings": [],
         "release_ready": true,
-        "latest_run_id": "securify-dd752729d8af"
+        "latest_run_id": "securify-119cc20311b5"
       },
       {
         "suite": "templatify",
@@ -400,7 +400,7 @@
         "quality_missing": [],
         "quality_warnings": [],
         "release_ready": true,
-        "latest_run_id": "templatify-f6abadb01c2d"
+        "latest_run_id": "templatify-7d06fb8a9599"
       },
       {
         "suite": "testify",
@@ -433,7 +433,7 @@
           "missing_optional:docs"
         ],
         "release_ready": true,
-        "latest_run_id": "testify-90147cde25eb"
+        "latest_run_id": "testify-0f9995dcb095"
       },
       {
         "suite": "usabilify",
@@ -468,13 +468,13 @@
         "quality_missing": [],
         "quality_warnings": [],
         "release_ready": true,
-        "latest_run_id": "usabilify-b2389907e44f"
+        "latest_run_id": "usabilify-7e1b383bbf5e"
       }
     ]
   },
   "command_reference": {
     "schema_version": "fy.command-reference.v1",
-    "generated_at": "2026-04-18T01:44:13.278040+00:00",
+    "generated_at": "2026-04-18T03:30:26.093684+00:00",
     "command_envelope_current": "fy.command-envelope.v4",
     "command_envelope_compatibility": {
       "current": "fy.command-envelope.v4",
@@ -570,7 +570,7 @@
   },
   "schemas": {
     "schema_version": "fy.schema-export.v1",
-    "generated_at": "2026-04-18T01:44:13.342772+00:00",
+    "generated_at": "2026-04-18T03:30:26.168984+00:00",
     "schema_count": 5,
     "written_paths": [
       "docs/platform/schemas/command_envelope.schema.json",
@@ -582,11 +582,11 @@
   },
   "doctor": {
     "schema_version": "fy.doctor.v1",
-    "generated_at": "2026-04-18T01:44:55.988906+00:00",
+    "generated_at": "2026-04-18T03:31:19.495670+00:00",
     "ok": false,
     "workspace_release": {
       "schema_version": "fy.workspace-release-readiness.v1",
-      "generated_at": "2026-04-18T01:44:14.753048+00:00",
+      "generated_at": "2026-04-18T03:30:26.944089+00:00",
       "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
       "ok": false,
       "workspace_check": {
@@ -620,14 +620,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "contractify-9aff39f6bc26",
+            "run_id": "contractify-0d2a0f3955e8",
             "suite": "contractify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:27.137690+00:00",
-            "ended_at": "2026-04-18T01:43:27.222859+00:00",
+            "started_at": "2026-04-18T03:30:22.825742+00:00",
+            "ended_at": "2026-04-18T03:30:22.911351+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_export_schemas_and_doctor0/target_repo",
-            "target_repo_id": "target-repo-2d01b270",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-47/test_workspace_production_read0/target_repo",
+            "target_repo_id": "target-repo-367c3cd8",
             "status": "ok"
           },
           "status_page_json": "contractify/reports/status/most_recent_next_steps.json",
@@ -686,20 +686,20 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "docify-3dca16b7b8a9",
+            "run_id": "docify-34e063c42faf",
             "suite": "docify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:16.018042+00:00",
-            "ended_at": "2026-04-18T01:43:16.096611+00:00",
+            "started_at": "2026-04-18T03:30:05.896763+00:00",
+            "ended_at": "2026-04-18T03:30:05.984617+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_doci0/target_repo",
-            "target_repo_id": "target-repo-e48bc886",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-47/test_graph_recipes_wrap_adapte0/target_repo",
+            "target_repo_id": "target-repo-cb2b2152",
             "status": "ok"
           },
           "status_page_json": "docify/reports/status/most_recent_next_steps.json",
           "status_page_md": "docify/reports/status/MOST_RECENT_NEXT_STEPS.md",
           "next_steps": [
-            "Review the 5 finding(s) and decide which one should be fixed first."
+            "Use the strongest cross-suite signal as a second opinion before acting in isolation."
           ],
           "warnings": [
             "missing_optional:docs"
@@ -750,14 +750,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "documentify-47dd9363f13c",
+            "run_id": "documentify-9de8db3497c7",
             "suite": "documentify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:19.053279+00:00",
-            "ended_at": "2026-04-18T01:43:19.641125+00:00",
+            "started_at": "2026-04-18T03:29:16.734132+00:00",
+            "ended_at": "2026-04-18T03:29:17.374642+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_ai_suite_cli_markdown_and0/target_repo",
-            "target_repo_id": "target-repo-caea13da",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_ai_suite_cli_markdown_and0/target_repo",
+            "target_repo_id": "target-repo-3b540e5d",
             "status": "ok"
           },
           "status_page_json": "documentify/reports/status/most_recent_next_steps.json",
@@ -873,14 +873,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "securify-dd752729d8af",
+            "run_id": "securify-119cc20311b5",
             "suite": "securify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:18.471268+00:00",
-            "ended_at": "2026-04-18T01:43:18.556965+00:00",
+            "started_at": "2026-04-18T03:29:16.073186+00:00",
+            "ended_at": "2026-04-18T03:29:16.150635+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_secu0/target_repo",
-            "target_repo_id": "target-repo-680fe0ae",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_secu0/target_repo",
+            "target_repo_id": "target-repo-f8d90801",
             "status": "ok"
           },
           "status_page_json": "securify/reports/status/most_recent_next_steps.json",
@@ -902,14 +902,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "templatify-f6abadb01c2d",
+            "run_id": "templatify-7d06fb8a9599",
             "suite": "templatify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:20.619163+00:00",
-            "ended_at": "2026-04-18T01:43:20.967673+00:00",
+            "started_at": "2026-04-18T03:29:18.480158+00:00",
+            "ended_at": "2026-04-18T03:29:18.858697+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_temp0/target_repo",
-            "target_repo_id": "target-repo-478c411a",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_temp0/target_repo",
+            "target_repo_id": "target-repo-5cbd2a13",
             "status": "ok"
           },
           "status_page_json": "templatify/reports/status/most_recent_next_steps.json",
@@ -931,14 +931,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "testify-90147cde25eb",
+            "run_id": "testify-0f9995dcb095",
             "suite": "testify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:23.194119+00:00",
-            "ended_at": "2026-04-18T01:43:23.291952+00:00",
+            "started_at": "2026-04-18T03:29:21.983184+00:00",
+            "ended_at": "2026-04-18T03:29:22.093244+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_cross_suite_signals_conne0/target_repo",
-            "target_repo_id": "target-repo-cf676e60",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_cross_suite_signals_conne0/target_repo",
+            "target_repo_id": "target-repo-f65a6e9a",
             "status": "ok"
           },
           "status_page_json": "testify/reports/status/most_recent_next_steps.json",
@@ -964,14 +964,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "usabilify-b2389907e44f",
+            "run_id": "usabilify-7e1b383bbf5e",
             "suite": "usabilify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:21.232734+00:00",
-            "ended_at": "2026-04-18T01:43:21.331611+00:00",
+            "started_at": "2026-04-18T03:29:19.138351+00:00",
+            "ended_at": "2026-04-18T03:29:19.241032+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_usab0/target_repo",
-            "target_repo_id": "target-repo-8545f562",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_usab0/target_repo",
+            "target_repo_id": "target-repo-ec11b4af",
             "status": "ok"
           },
           "status_page_json": "usabilify/reports/status/most_recent_next_steps.json",
@@ -992,12 +992,12 @@
     },
     "workspace_production": {
       "schema_version": "fy.production-readiness.v2",
-      "generated_at": "2026-04-18T01:44:54.245905+00:00",
+      "generated_at": "2026-04-18T03:31:17.588147+00:00",
       "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
       "ok": false,
       "release_readiness": {
         "schema_version": "fy.workspace-release-readiness.v1",
-        "generated_at": "2026-04-18T01:44:16.186786+00:00",
+        "generated_at": "2026-04-18T03:30:28.551800+00:00",
         "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
         "ok": false,
         "workspace_check": {
@@ -1031,14 +1031,14 @@
             "ready": true,
             "has_run": true,
             "latest_run": {
-              "run_id": "contractify-9aff39f6bc26",
+              "run_id": "contractify-0d2a0f3955e8",
               "suite": "contractify",
               "mode": "audit",
-              "started_at": "2026-04-18T01:43:27.137690+00:00",
-              "ended_at": "2026-04-18T01:43:27.222859+00:00",
+              "started_at": "2026-04-18T03:30:22.825742+00:00",
+              "ended_at": "2026-04-18T03:30:22.911351+00:00",
               "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_export_schemas_and_doctor0/target_repo",
-              "target_repo_id": "target-repo-2d01b270",
+              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-47/test_workspace_production_read0/target_repo",
+              "target_repo_id": "target-repo-367c3cd8",
               "status": "ok"
             },
             "status_page_json": "contractify/reports/status/most_recent_next_steps.json",
@@ -1097,20 +1097,20 @@
             "ready": true,
             "has_run": true,
             "latest_run": {
-              "run_id": "docify-3dca16b7b8a9",
+              "run_id": "docify-34e063c42faf",
               "suite": "docify",
               "mode": "audit",
-              "started_at": "2026-04-18T01:43:16.018042+00:00",
-              "ended_at": "2026-04-18T01:43:16.096611+00:00",
+              "started_at": "2026-04-18T03:30:05.896763+00:00",
+              "ended_at": "2026-04-18T03:30:05.984617+00:00",
               "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_doci0/target_repo",
-              "target_repo_id": "target-repo-e48bc886",
+              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-47/test_graph_recipes_wrap_adapte0/target_repo",
+              "target_repo_id": "target-repo-cb2b2152",
               "status": "ok"
             },
             "status_page_json": "docify/reports/status/most_recent_next_steps.json",
             "status_page_md": "docify/reports/status/MOST_RECENT_NEXT_STEPS.md",
             "next_steps": [
-              "Review the 5 finding(s) and decide which one should be fixed first."
+              "Use the strongest cross-suite signal as a second opinion before acting in isolation."
             ],
             "warnings": [
               "missing_optional:docs"
@@ -1161,14 +1161,14 @@
             "ready": true,
             "has_run": true,
             "latest_run": {
-              "run_id": "documentify-47dd9363f13c",
+              "run_id": "documentify-9de8db3497c7",
               "suite": "documentify",
               "mode": "audit",
-              "started_at": "2026-04-18T01:43:19.053279+00:00",
-              "ended_at": "2026-04-18T01:43:19.641125+00:00",
+              "started_at": "2026-04-18T03:29:16.734132+00:00",
+              "ended_at": "2026-04-18T03:29:17.374642+00:00",
               "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_ai_suite_cli_markdown_and0/target_repo",
-              "target_repo_id": "target-repo-caea13da",
+              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_ai_suite_cli_markdown_and0/target_repo",
+              "target_repo_id": "target-repo-3b540e5d",
               "status": "ok"
             },
             "status_page_json": "documentify/reports/status/most_recent_next_steps.json",
@@ -1284,14 +1284,14 @@
             "ready": true,
             "has_run": true,
             "latest_run": {
-              "run_id": "securify-dd752729d8af",
+              "run_id": "securify-119cc20311b5",
               "suite": "securify",
               "mode": "audit",
-              "started_at": "2026-04-18T01:43:18.471268+00:00",
-              "ended_at": "2026-04-18T01:43:18.556965+00:00",
+              "started_at": "2026-04-18T03:29:16.073186+00:00",
+              "ended_at": "2026-04-18T03:29:16.150635+00:00",
               "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_secu0/target_repo",
-              "target_repo_id": "target-repo-680fe0ae",
+              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_secu0/target_repo",
+              "target_repo_id": "target-repo-f8d90801",
               "status": "ok"
             },
             "status_page_json": "securify/reports/status/most_recent_next_steps.json",
@@ -1313,14 +1313,14 @@
             "ready": true,
             "has_run": true,
             "latest_run": {
-              "run_id": "templatify-f6abadb01c2d",
+              "run_id": "templatify-7d06fb8a9599",
               "suite": "templatify",
               "mode": "audit",
-              "started_at": "2026-04-18T01:43:20.619163+00:00",
-              "ended_at": "2026-04-18T01:43:20.967673+00:00",
+              "started_at": "2026-04-18T03:29:18.480158+00:00",
+              "ended_at": "2026-04-18T03:29:18.858697+00:00",
               "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_temp0/target_repo",
-              "target_repo_id": "target-repo-478c411a",
+              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_temp0/target_repo",
+              "target_repo_id": "target-repo-5cbd2a13",
               "status": "ok"
             },
             "status_page_json": "templatify/reports/status/most_recent_next_steps.json",
@@ -1342,14 +1342,14 @@
             "ready": true,
             "has_run": true,
             "latest_run": {
-              "run_id": "testify-90147cde25eb",
+              "run_id": "testify-0f9995dcb095",
               "suite": "testify",
               "mode": "audit",
-              "started_at": "2026-04-18T01:43:23.194119+00:00",
-              "ended_at": "2026-04-18T01:43:23.291952+00:00",
+              "started_at": "2026-04-18T03:29:21.983184+00:00",
+              "ended_at": "2026-04-18T03:29:22.093244+00:00",
               "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_cross_suite_signals_conne0/target_repo",
-              "target_repo_id": "target-repo-cf676e60",
+              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_cross_suite_signals_conne0/target_repo",
+              "target_repo_id": "target-repo-f65a6e9a",
               "status": "ok"
             },
             "status_page_json": "testify/reports/status/most_recent_next_steps.json",
@@ -1375,14 +1375,14 @@
             "ready": true,
             "has_run": true,
             "latest_run": {
-              "run_id": "usabilify-b2389907e44f",
+              "run_id": "usabilify-7e1b383bbf5e",
               "suite": "usabilify",
               "mode": "audit",
-              "started_at": "2026-04-18T01:43:21.232734+00:00",
-              "ended_at": "2026-04-18T01:43:21.331611+00:00",
+              "started_at": "2026-04-18T03:29:19.138351+00:00",
+              "ended_at": "2026-04-18T03:29:19.241032+00:00",
               "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_usab0/target_repo",
-              "target_repo_id": "target-repo-8545f562",
+              "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_usab0/target_repo",
+              "target_repo_id": "target-repo-ec11b4af",
               "status": "ok"
             },
             "status_page_json": "usabilify/reports/status/most_recent_next_steps.json",
@@ -1479,41 +1479,41 @@
       },
       "observability": {
         "schema_version": "fy.observability.v2",
-        "command_event_count": 183,
-        "route_event_count": 11,
+        "command_event_count": 585,
+        "route_event_count": 44,
         "suite_counts": {
-          "brokenify": 13,
-          "contractify": 105,
-          "docify": 13,
-          "documentify": 13,
-          "securify": 13,
-          "templatify": 13,
-          "usabilify": 13
+          "brokenify": 42,
+          "contractify": 333,
+          "docify": 42,
+          "documentify": 42,
+          "securify": 42,
+          "templatify": 42,
+          "usabilify": 42
         },
         "command_counts": {
-          "brokenify::audit": 13,
-          "contractify::audit": 42,
-          "contractify::consolidate": 13,
-          "contractify::explain": 11,
-          "contractify::init": 13,
-          "contractify::release-readiness": 13,
-          "contractify::self-audit": 13,
-          "docify::audit": 13,
-          "documentify::audit": 13,
-          "securify::audit": 13,
-          "templatify::audit": 13,
-          "usabilify::audit": 13
+          "brokenify::audit": 42,
+          "contractify::audit": 121,
+          "contractify::consolidate": 42,
+          "contractify::explain": 44,
+          "contractify::init": 42,
+          "contractify::release-readiness": 42,
+          "contractify::self-audit": 42,
+          "docify::audit": 42,
+          "documentify::audit": 42,
+          "securify::audit": 42,
+          "templatify::audit": 42,
+          "usabilify::audit": 42
         },
         "exit_code_counts": {
-          "0": 157,
-          "1": 13,
-          "5": 13
+          "0": 501,
+          "1": 42,
+          "5": 42
         },
         "model_counts": {
-          "local-general-llm": 11
+          "local-general-llm": 44
         },
-        "avg_duration_ms": 208.05,
-        "max_duration_ms": 862,
+        "avg_duration_ms": 286.92,
+        "max_duration_ms": 954,
         "has_metrics": true
       },
       "security": {
@@ -1578,14 +1578,14 @@
           "warnings": [],
           "command": "audit",
           "latest_run": {
-            "run_id": "contractify-9aff39f6bc26",
+            "run_id": "contractify-0c53f5abc97c",
             "suite": "contractify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:27.137690+00:00",
-            "ended_at": "2026-04-18T01:43:27.222859+00:00",
+            "started_at": "2026-04-18T03:31:16.880915+00:00",
+            "ended_at": "2026-04-18T03:31:16.974827+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_export_schemas_and_doctor0/target_repo",
-            "target_repo_id": "target-repo-2d01b270",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_supp0/target_repo",
+            "target_repo_id": "target-repo-4336cf40",
             "status": "ok"
           }
         },
@@ -1622,14 +1622,14 @@
           "warnings": [],
           "command": "audit",
           "latest_run": {
-            "run_id": "docify-3dca16b7b8a9",
+            "run_id": "docify-261420d41f86",
             "suite": "docify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:16.018042+00:00",
-            "ended_at": "2026-04-18T01:43:16.096611+00:00",
+            "started_at": "2026-04-18T03:31:15.863929+00:00",
+            "ended_at": "2026-04-18T03:31:15.950054+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_doci0/target_repo",
-            "target_repo_id": "target-repo-e48bc886",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_doci0/target_repo",
+            "target_repo_id": "target-repo-8ebda400",
             "status": "ok"
           }
         },
@@ -1655,14 +1655,14 @@
           "warnings": [],
           "command": "audit",
           "latest_run": {
-            "run_id": "documentify-47dd9363f13c",
+            "run_id": "documentify-10e249907959",
             "suite": "documentify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:19.053279+00:00",
-            "ended_at": "2026-04-18T01:43:19.641125+00:00",
+            "started_at": "2026-04-18T03:31:10.087412+00:00",
+            "ended_at": "2026-04-18T03:31:10.748060+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_ai_suite_cli_markdown_and0/target_repo",
-            "target_repo_id": "target-repo-caea13da",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-47/test_suite_release_readiness_a0/target_repo",
+            "target_repo_id": "target-repo-58fe98f3",
             "status": "ok"
           }
         },
@@ -1713,14 +1713,14 @@
           "warnings": [],
           "command": "audit",
           "latest_run": {
-            "run_id": "securify-dd752729d8af",
+            "run_id": "securify-119cc20311b5",
             "suite": "securify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:18.471268+00:00",
-            "ended_at": "2026-04-18T01:43:18.556965+00:00",
+            "started_at": "2026-04-18T03:29:16.073186+00:00",
+            "ended_at": "2026-04-18T03:29:16.150635+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_secu0/target_repo",
-            "target_repo_id": "target-repo-680fe0ae",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_secu0/target_repo",
+            "target_repo_id": "target-repo-f8d90801",
             "status": "ok"
           }
         },
@@ -1735,14 +1735,14 @@
           "warnings": [],
           "command": "audit",
           "latest_run": {
-            "run_id": "templatify-f6abadb01c2d",
+            "run_id": "templatify-7d06fb8a9599",
             "suite": "templatify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:20.619163+00:00",
-            "ended_at": "2026-04-18T01:43:20.967673+00:00",
+            "started_at": "2026-04-18T03:29:18.480158+00:00",
+            "ended_at": "2026-04-18T03:29:18.858697+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_temp0/target_repo",
-            "target_repo_id": "target-repo-478c411a",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_temp0/target_repo",
+            "target_repo_id": "target-repo-5cbd2a13",
             "status": "ok"
           }
         },
@@ -1779,14 +1779,14 @@
           "warnings": [],
           "command": "audit",
           "latest_run": {
-            "run_id": "usabilify-b2389907e44f",
+            "run_id": "usabilify-7e1b383bbf5e",
             "suite": "usabilify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:21.232734+00:00",
-            "ended_at": "2026-04-18T01:43:21.331611+00:00",
+            "started_at": "2026-04-18T03:29:19.138351+00:00",
+            "ended_at": "2026-04-18T03:29:19.241032+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_usab0/target_repo",
-            "target_repo_id": "target-repo-8545f562",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_usab0/target_repo",
+            "target_repo_id": "target-repo-ec11b4af",
             "status": "ok"
           }
         }
@@ -1794,7 +1794,7 @@
     },
     "catalog": {
       "schema_version": "fy.suite-catalog.v1",
-      "generated_at": "2026-04-18T01:44:55.988873+00:00",
+      "generated_at": "2026-04-18T03:31:19.495644+00:00",
       "suite_count": 13,
       "core_count": 11,
       "optional_count": 2,
@@ -1834,7 +1834,7 @@
             "missing_optional:docs"
           ],
           "release_ready": true,
-          "latest_run_id": "contractify-9aff39f6bc26"
+          "latest_run_id": "contractify-0c53f5abc97c"
         },
         {
           "suite": "despaghettify",
@@ -1904,7 +1904,7 @@
             "missing_optional:docs"
           ],
           "release_ready": true,
-          "latest_run_id": "docify-3dca16b7b8a9"
+          "latest_run_id": "docify-261420d41f86"
         },
         {
           "suite": "dockerify",
@@ -1974,7 +1974,7 @@
             "missing_optional:docs"
           ],
           "release_ready": true,
-          "latest_run_id": "documentify-47dd9363f13c"
+          "latest_run_id": "documentify-10e249907959"
         },
         {
           "suite": "metrify",
@@ -2154,7 +2154,7 @@
           "quality_missing": [],
           "quality_warnings": [],
           "release_ready": true,
-          "latest_run_id": "securify-dd752729d8af"
+          "latest_run_id": "securify-e0852d8d89f1"
         },
         {
           "suite": "templatify",
@@ -2190,7 +2190,7 @@
           "quality_missing": [],
           "quality_warnings": [],
           "release_ready": true,
-          "latest_run_id": "templatify-f6abadb01c2d"
+          "latest_run_id": "templatify-7d06fb8a9599"
         },
         {
           "suite": "testify",
@@ -2223,7 +2223,7 @@
             "missing_optional:docs"
           ],
           "release_ready": true,
-          "latest_run_id": "testify-90147cde25eb"
+          "latest_run_id": "testify-0f9995dcb095"
         },
         {
           "suite": "usabilify",
@@ -2258,7 +2258,7 @@
           "quality_missing": [],
           "quality_warnings": [],
           "release_ready": true,
-          "latest_run_id": "usabilify-b2389907e44f"
+          "latest_run_id": "usabilify-7e1b383bbf5e"
         }
       ]
     },
@@ -2271,7 +2271,7 @@
   },
   "workspace_release": {
     "schema_version": "fy.workspace-release-readiness.v1",
-    "generated_at": "2026-04-18T01:44:56.787866+00:00",
+    "generated_at": "2026-04-18T03:31:20.979961+00:00",
     "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
     "ok": false,
     "workspace_check": {
@@ -2305,20 +2305,20 @@
         "ready": true,
         "has_run": true,
         "latest_run": {
-          "run_id": "contractify-9aff39f6bc26",
+          "run_id": "contractify-0c53f5abc97c",
           "suite": "contractify",
           "mode": "audit",
-          "started_at": "2026-04-18T01:43:27.137690+00:00",
-          "ended_at": "2026-04-18T01:43:27.222859+00:00",
+          "started_at": "2026-04-18T03:31:16.880915+00:00",
+          "ended_at": "2026-04-18T03:31:16.974827+00:00",
           "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_export_schemas_and_doctor0/target_repo",
-          "target_repo_id": "target-repo-2d01b270",
+          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_supp0/target_repo",
+          "target_repo_id": "target-repo-4336cf40",
           "status": "ok"
         },
         "status_page_json": "contractify/reports/status/most_recent_next_steps.json",
         "status_page_md": "contractify/reports/status/MOST_RECENT_NEXT_STEPS.md",
         "next_steps": [
-          "Review the 4 finding(s) and decide which one should be fixed first."
+          "Use the strongest cross-suite signal as a second opinion before acting in isolation."
         ],
         "warnings": [
           "missing_optional:docs"
@@ -2371,14 +2371,14 @@
         "ready": true,
         "has_run": true,
         "latest_run": {
-          "run_id": "docify-3dca16b7b8a9",
+          "run_id": "docify-261420d41f86",
           "suite": "docify",
           "mode": "audit",
-          "started_at": "2026-04-18T01:43:16.018042+00:00",
-          "ended_at": "2026-04-18T01:43:16.096611+00:00",
+          "started_at": "2026-04-18T03:31:15.863929+00:00",
+          "ended_at": "2026-04-18T03:31:15.950054+00:00",
           "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_doci0/target_repo",
-          "target_repo_id": "target-repo-e48bc886",
+          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_doci0/target_repo",
+          "target_repo_id": "target-repo-8ebda400",
           "status": "ok"
         },
         "status_page_json": "docify/reports/status/most_recent_next_steps.json",
@@ -2435,14 +2435,14 @@
         "ready": true,
         "has_run": true,
         "latest_run": {
-          "run_id": "documentify-47dd9363f13c",
+          "run_id": "documentify-cd795753ad7a",
           "suite": "documentify",
           "mode": "audit",
-          "started_at": "2026-04-18T01:43:19.053279+00:00",
-          "ended_at": "2026-04-18T01:43:19.641125+00:00",
+          "started_at": "2026-04-18T03:31:19.220023+00:00",
+          "ended_at": "2026-04-18T03:31:19.839932+00:00",
           "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_ai_suite_cli_markdown_and0/target_repo",
-          "target_repo_id": "target-repo-caea13da",
+          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_ai_suite_cli_markdown_and0/target_repo",
+          "target_repo_id": "target-repo-fc4ff5f9",
           "status": "ok"
         },
         "status_page_json": "documentify/reports/status/most_recent_next_steps.json",
@@ -2558,14 +2558,14 @@
         "ready": true,
         "has_run": true,
         "latest_run": {
-          "run_id": "securify-dd752729d8af",
+          "run_id": "securify-e0852d8d89f1",
           "suite": "securify",
           "mode": "audit",
-          "started_at": "2026-04-18T01:43:18.471268+00:00",
-          "ended_at": "2026-04-18T01:43:18.556965+00:00",
+          "started_at": "2026-04-18T03:31:18.568438+00:00",
+          "ended_at": "2026-04-18T03:31:18.652809+00:00",
           "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_secu0/target_repo",
-          "target_repo_id": "target-repo-680fe0ae",
+          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_secu0/target_repo",
+          "target_repo_id": "target-repo-acad2b2b",
           "status": "ok"
         },
         "status_page_json": "securify/reports/status/most_recent_next_steps.json",
@@ -2587,14 +2587,14 @@
         "ready": true,
         "has_run": true,
         "latest_run": {
-          "run_id": "templatify-f6abadb01c2d",
+          "run_id": "templatify-7d06fb8a9599",
           "suite": "templatify",
           "mode": "audit",
-          "started_at": "2026-04-18T01:43:20.619163+00:00",
-          "ended_at": "2026-04-18T01:43:20.967673+00:00",
+          "started_at": "2026-04-18T03:29:18.480158+00:00",
+          "ended_at": "2026-04-18T03:29:18.858697+00:00",
           "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_temp0/target_repo",
-          "target_repo_id": "target-repo-478c411a",
+          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_temp0/target_repo",
+          "target_repo_id": "target-repo-5cbd2a13",
           "status": "ok"
         },
         "status_page_json": "templatify/reports/status/most_recent_next_steps.json",
@@ -2616,14 +2616,14 @@
         "ready": true,
         "has_run": true,
         "latest_run": {
-          "run_id": "testify-90147cde25eb",
+          "run_id": "testify-0f9995dcb095",
           "suite": "testify",
           "mode": "audit",
-          "started_at": "2026-04-18T01:43:23.194119+00:00",
-          "ended_at": "2026-04-18T01:43:23.291952+00:00",
+          "started_at": "2026-04-18T03:29:21.983184+00:00",
+          "ended_at": "2026-04-18T03:29:22.093244+00:00",
           "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_cross_suite_signals_conne0/target_repo",
-          "target_repo_id": "target-repo-cf676e60",
+          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_cross_suite_signals_conne0/target_repo",
+          "target_repo_id": "target-repo-f65a6e9a",
           "status": "ok"
         },
         "status_page_json": "testify/reports/status/most_recent_next_steps.json",
@@ -2649,14 +2649,14 @@
         "ready": true,
         "has_run": true,
         "latest_run": {
-          "run_id": "usabilify-b2389907e44f",
+          "run_id": "usabilify-7e1b383bbf5e",
           "suite": "usabilify",
           "mode": "audit",
-          "started_at": "2026-04-18T01:43:21.232734+00:00",
-          "ended_at": "2026-04-18T01:43:21.331611+00:00",
+          "started_at": "2026-04-18T03:29:19.138351+00:00",
+          "ended_at": "2026-04-18T03:29:19.241032+00:00",
           "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_usab0/target_repo",
-          "target_repo_id": "target-repo-8545f562",
+          "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_generic_ai_suite_cli_usab0/target_repo",
+          "target_repo_id": "target-repo-ec11b4af",
           "status": "ok"
         },
         "status_page_json": "usabilify/reports/status/most_recent_next_steps.json",
@@ -2677,12 +2677,12 @@
   },
   "workspace_production": {
     "schema_version": "fy.production-readiness.v2",
-    "generated_at": "2026-04-18T01:45:36.885537+00:00",
+    "generated_at": "2026-04-18T03:32:11.023579+00:00",
     "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
     "ok": false,
     "release_readiness": {
       "schema_version": "fy.workspace-release-readiness.v1",
-      "generated_at": "2026-04-18T01:44:58.214031+00:00",
+      "generated_at": "2026-04-18T03:31:22.534572+00:00",
       "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
       "ok": false,
       "workspace_check": {
@@ -2716,20 +2716,20 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "contractify-9aff39f6bc26",
+            "run_id": "contractify-0c53f5abc97c",
             "suite": "contractify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:27.137690+00:00",
-            "ended_at": "2026-04-18T01:43:27.222859+00:00",
+            "started_at": "2026-04-18T03:31:16.880915+00:00",
+            "ended_at": "2026-04-18T03:31:16.974827+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_export_schemas_and_doctor0/target_repo",
-            "target_repo_id": "target-repo-2d01b270",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_supp0/target_repo",
+            "target_repo_id": "target-repo-4336cf40",
             "status": "ok"
           },
           "status_page_json": "contractify/reports/status/most_recent_next_steps.json",
           "status_page_md": "contractify/reports/status/MOST_RECENT_NEXT_STEPS.md",
           "next_steps": [
-            "Review the 4 finding(s) and decide which one should be fixed first."
+            "Check the target repository path and run the command again."
           ],
           "warnings": [
             "missing_optional:docs"
@@ -2782,14 +2782,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "docify-3dca16b7b8a9",
+            "run_id": "docify-261420d41f86",
             "suite": "docify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:16.018042+00:00",
-            "ended_at": "2026-04-18T01:43:16.096611+00:00",
+            "started_at": "2026-04-18T03:31:15.863929+00:00",
+            "ended_at": "2026-04-18T03:31:15.950054+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_doci0/target_repo",
-            "target_repo_id": "target-repo-e48bc886",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_doci0/target_repo",
+            "target_repo_id": "target-repo-8ebda400",
             "status": "ok"
           },
           "status_page_json": "docify/reports/status/most_recent_next_steps.json",
@@ -2846,14 +2846,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "documentify-47dd9363f13c",
+            "run_id": "documentify-cd795753ad7a",
             "suite": "documentify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:19.053279+00:00",
-            "ended_at": "2026-04-18T01:43:19.641125+00:00",
+            "started_at": "2026-04-18T03:31:19.220023+00:00",
+            "ended_at": "2026-04-18T03:31:19.839932+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_ai_suite_cli_markdown_and0/target_repo",
-            "target_repo_id": "target-repo-caea13da",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_ai_suite_cli_markdown_and0/target_repo",
+            "target_repo_id": "target-repo-fc4ff5f9",
             "status": "ok"
           },
           "status_page_json": "documentify/reports/status/most_recent_next_steps.json",
@@ -2969,14 +2969,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "securify-dd752729d8af",
+            "run_id": "securify-e0852d8d89f1",
             "suite": "securify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:18.471268+00:00",
-            "ended_at": "2026-04-18T01:43:18.556965+00:00",
+            "started_at": "2026-04-18T03:31:18.568438+00:00",
+            "ended_at": "2026-04-18T03:31:18.652809+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_secu0/target_repo",
-            "target_repo_id": "target-repo-680fe0ae",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_secu0/target_repo",
+            "target_repo_id": "target-repo-acad2b2b",
             "status": "ok"
           },
           "status_page_json": "securify/reports/status/most_recent_next_steps.json",
@@ -2998,14 +2998,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "templatify-f6abadb01c2d",
+            "run_id": "templatify-b5b760922027",
             "suite": "templatify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:20.619163+00:00",
-            "ended_at": "2026-04-18T01:43:20.967673+00:00",
+            "started_at": "2026-04-18T03:31:20.891473+00:00",
+            "ended_at": "2026-04-18T03:31:21.256885+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_temp0/target_repo",
-            "target_repo_id": "target-repo-478c411a",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_temp0/target_repo",
+            "target_repo_id": "target-repo-08276c3d",
             "status": "ok"
           },
           "status_page_json": "templatify/reports/status/most_recent_next_steps.json",
@@ -3027,14 +3027,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "testify-90147cde25eb",
+            "run_id": "testify-0f9995dcb095",
             "suite": "testify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:23.194119+00:00",
-            "ended_at": "2026-04-18T01:43:23.291952+00:00",
+            "started_at": "2026-04-18T03:29:21.983184+00:00",
+            "ended_at": "2026-04-18T03:29:22.093244+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_cross_suite_signals_conne0/target_repo",
-            "target_repo_id": "target-repo-cf676e60",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-49/test_cross_suite_signals_conne0/target_repo",
+            "target_repo_id": "target-repo-f65a6e9a",
             "status": "ok"
           },
           "status_page_json": "testify/reports/status/most_recent_next_steps.json",
@@ -3060,14 +3060,14 @@
           "ready": true,
           "has_run": true,
           "latest_run": {
-            "run_id": "usabilify-b2389907e44f",
+            "run_id": "usabilify-9787520791b9",
             "suite": "usabilify",
             "mode": "audit",
-            "started_at": "2026-04-18T01:43:21.232734+00:00",
-            "ended_at": "2026-04-18T01:43:21.331611+00:00",
+            "started_at": "2026-04-18T03:31:21.544606+00:00",
+            "ended_at": "2026-04-18T03:31:21.657251+00:00",
             "workspace_root": "/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/'fy'-suites",
-            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-15/test_generic_ai_suite_cli_usab0/target_repo",
-            "target_repo_id": "target-repo-8545f562",
+            "target_repo_root": "/tmp/pytest-of-heldofthewelt/pytest-50/test_generic_ai_suite_cli_usab0/target_repo",
+            "target_repo_id": "target-repo-573bc732",
             "status": "ok"
           },
           "status_page_json": "usabilify/reports/status/most_recent_next_steps.json",
@@ -3164,41 +3164,41 @@
     },
     "observability": {
       "schema_version": "fy.observability.v2",
-      "command_event_count": 183,
-      "route_event_count": 11,
+      "command_event_count": 596,
+      "route_event_count": 44,
       "suite_counts": {
-        "brokenify": 13,
-        "contractify": 105,
-        "docify": 13,
-        "documentify": 13,
-        "securify": 13,
-        "templatify": 13,
-        "usabilify": 13
+        "brokenify": 43,
+        "contractify": 338,
+        "docify": 43,
+        "documentify": 43,
+        "securify": 43,
+        "templatify": 43,
+        "usabilify": 43
       },
       "command_counts": {
-        "brokenify::audit": 13,
-        "contractify::audit": 42,
-        "contractify::consolidate": 13,
-        "contractify::explain": 11,
-        "contractify::init": 13,
-        "contractify::release-readiness": 13,
-        "contractify::self-audit": 13,
-        "docify::audit": 13,
-        "documentify::audit": 13,
-        "securify::audit": 13,
-        "templatify::audit": 13,
-        "usabilify::audit": 13
+        "brokenify::audit": 43,
+        "contractify::audit": 122,
+        "contractify::consolidate": 43,
+        "contractify::explain": 44,
+        "contractify::init": 43,
+        "contractify::release-readiness": 43,
+        "contractify::self-audit": 43,
+        "docify::audit": 43,
+        "documentify::audit": 43,
+        "securify::audit": 43,
+        "templatify::audit": 43,
+        "usabilify::audit": 43
       },
       "exit_code_counts": {
-        "0": 157,
-        "1": 13,
-        "5": 13
+        "0": 510,
+        "1": 43,
+        "5": 43
       },
       "model_counts": {
-        "local-general-llm": 11
+        "local-general-llm": 44
       },
-      "avg_duration_ms": 208.05,
-      "max_duration_ms": 862,
+      "avg_duration_ms": 288.2,
+      "max_duration_ms": 954,
       "has_metrics": true
     },
     "security": {

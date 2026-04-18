@@ -1,6 +1,6 @@
 {
   "schema_version": "fy.suite-catalog.v1",
-  "generated_at": "2026-04-18T01:45:43.512354+00:00",
+  "generated_at": "2026-04-18T03:30:24.249439+00:00",
   "suite_count": 13,
   "core_count": 11,
   "optional_count": 2,
@@ -40,7 +40,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "contractify-eef2f89f00c1"
+      "latest_run_id": "contractify-2d450dbea9e5"
     },
     {
       "suite": "despaghettify",
@@ -110,7 +110,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "docify-7f0923e09fe2"
+      "latest_run_id": "docify-34e063c42faf"
     },
     {
       "suite": "dockerify",
@@ -180,7 +180,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "documentify-f90788490b09"
+      "latest_run_id": "documentify-9de8db3497c7"
     },
     {
       "suite": "metrify",
@@ -360,7 +360,7 @@
       "quality_missing": [],
       "quality_warnings": [],
       "release_ready": true,
-      "latest_run_id": "securify-9bd0cac68e55"
+      "latest_run_id": "securify-119cc20311b5"
     },
     {
       "suite": "templatify",
@@ -396,7 +396,7 @@
       "quality_missing": [],
       "quality_warnings": [],
       "release_ready": true,
-      "latest_run_id": "templatify-6efc9e5396ab"
+      "latest_run_id": "templatify-7d06fb8a9599"
     },
     {
       "suite": "testify",
@@ -429,7 +429,7 @@
         "missing_optional:docs"
       ],
       "release_ready": true,
-      "latest_run_id": "testify-2cb2fb7707fc"
+      "latest_run_id": "testify-0f9995dcb095"
     },
     {
       "suite": "usabilify",
@@ -464,7 +464,7 @@
       "quality_missing": [],
       "quality_warnings": [],
       "release_ready": true,
-      "latest_run_id": "usabilify-96136fb0b260"
+      "latest_run_id": "usabilify-7e1b383bbf5e"
     }
   ]
 }

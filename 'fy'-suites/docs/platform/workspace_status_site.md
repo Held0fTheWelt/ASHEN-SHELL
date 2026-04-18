@@ -10,7 +10,7 @@ This page uses simple language. It tells you where each suite stands right now a
 
 - ok: `true`
 - latest_command: `audit`
-- latest_run_id: `contractify-3420a6e0a701`
+- latest_run_id: `contractify-0d2a0f3955e8`
 
 ### Most-Recent-Next-Steps
 
@@ -20,7 +20,7 @@ This page uses simple language. It tells you where each suite stands right now a
 
 - ok: `true`
 - latest_command: `audit`
-- latest_run_id: `documentify-0ef36d8736c4`
+- latest_run_id: `documentify-10e249907959`
 
 Documentify generated the current documentation tracks and status pages.
 

@@ -7,7 +7,7 @@ This page uses simple language. It should help you understand the latest result 
 - suite: `securify`
 - command: `audit`
 - ok: `true`
-- latest_run_id: `securify-9bd0cac68e55`
+- latest_run_id: `securify-e0852d8d89f1`
 - latest_run_mode: `audit`
 - latest_run_status: `ok`
 

@@ -7,7 +7,7 @@ This page uses simple language. It should help you understand the latest result 
 - suite: `documentify`
 - command: `audit`
 - ok: `true`
-- latest_run_id: `documentify-0ef36d8736c4`
+- latest_run_id: `documentify-cd795753ad7a`
 - latest_run_mode: `audit`
 - latest_run_status: `ok`
 
@@ -40,7 +40,7 @@ Documentify generated the current documentation tracks and status pages.
   - next: Validate the generated template previews before applying them to a target repo.
 - `securify`: Securify found security follow-up work: no discoverable security documentation, secret-related ignore rules are missing. Start with the most direct exposure and the missing guidance surfaces.
   - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.
-- `docify`: Found 8 indexed evidence hits for query "docstring" across suites ['docify']. Strongest source: tools/python_docstring_synthesize.py#chunk-1. Use the top-ranked items first and treat lower-confidence hits as hints.
+- `docify`: No summary available.
+  - next: Review the 5 finding(s) and decide which one should be fixed first.
+- `contractify`: Release readiness tells you if this suite is ready to participate in an MVP release from the current workspace state.
   - next: Use the strongest cross-suite signal as a second opinion before acting in isolation.
-- `contractify`: No summary available.
-  - next: Review the 4 finding(s) and decide which one should be fixed first.
