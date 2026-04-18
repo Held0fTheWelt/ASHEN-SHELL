@@ -8,15 +8,25 @@ from fy_platform.core.project_resolver import resolve_project_root
 FY_SUITES_DIRNAME = "'fy'-suites"
 
 
+
+def _current_or_legacy_suite_dir(repo: Path, suite: str) -> Path:
+    direct = repo / suite
+    if direct.is_dir() or (repo / 'fy_platform').is_dir():
+        return direct
+    nested = repo / FY_SUITES_DIRNAME / suite
+    return nested
+
+
 def repo_root(*, start: Path | None = None) -> Path:
     """Return project root via shared resolver with manifest-friendly fallback."""
     return resolve_project_root(start=start, marker_text=None)
 
 
+
+
 def docify_hub_dir(repo: Path | None = None) -> Path:
-    """Return the Docify hub directory (``'fy'-suites/docify``)."""
     r = repo or repo_root()
-    return r / FY_SUITES_DIRNAME / "docify"
+    return _current_or_legacy_suite_dir(r, 'docify')
 
 
 def docify_hub_rel_posix(repo: Path | None = None) -> str:

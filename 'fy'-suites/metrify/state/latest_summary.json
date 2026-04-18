@@ -1,0 +1,119 @@
+{
+  "ledger_path": "/mnt/data/work_metrify/merged/metrify/state/ledger.jsonl",
+  "event_count": 2,
+  "run_count": 2,
+  "last_run": {
+    "run_id": "demo-run-2",
+    "suite": "documentify",
+    "event_count": 1,
+    "latest_timestamp_utc": "2026-04-18T01:00:00+00:00",
+    "cost_usd": 0.2425,
+    "input_tokens": 25000,
+    "cached_input_tokens": 0,
+    "output_tokens": 12000,
+    "models": [
+      "gpt-5.4"
+    ],
+    "utility_score_avg": 0.7,
+    "resolved_findings": 2,
+    "technique_tags": [
+      "doc-wave",
+      "template-growth"
+    ]
+  },
+  "last_10_runs_cost_usd": 0.271975,
+  "today_cost_usd": 0,
+  "total_cost_usd": 0.271975,
+  "total_input_tokens": 37000,
+  "total_cached_input_tokens": 3000,
+  "total_output_tokens": 16500,
+  "top_models": [
+    {
+      "key": "gpt-5.4",
+      "cost_usd": 0.2425,
+      "event_count": 1,
+      "output_tokens": 12000
+    },
+    {
+      "key": "gpt-5.4-mini",
+      "cost_usd": 0.029475,
+      "event_count": 1,
+      "output_tokens": 4500
+    }
+  ],
+  "top_suites": [
+    {
+      "key": "documentify",
+      "cost_usd": 0.2425,
+      "event_count": 1,
+      "output_tokens": 12000
+    },
+    {
+      "key": "contractify",
+      "cost_usd": 0.029475,
+      "event_count": 1,
+      "output_tokens": 4500
+    }
+  ],
+  "top_techniques": [
+    {
+      "key": "doc-wave",
+      "cost_usd": 0.2425,
+      "event_count": 1,
+      "output_tokens": 12000
+    },
+    {
+      "key": "template-growth",
+      "cost_usd": 0.2425,
+      "event_count": 1,
+      "output_tokens": 12000
+    },
+    {
+      "key": "untagged",
+      "cost_usd": 0.029475,
+      "event_count": 1,
+      "output_tokens": 4500
+    }
+  ],
+  "recent_runs": [
+    {
+      "run_id": "demo-run-2",
+      "suite": "documentify",
+      "event_count": 1,
+      "latest_timestamp_utc": "2026-04-18T01:00:00+00:00",
+      "cost_usd": 0.2425,
+      "input_tokens": 25000,
+      "cached_input_tokens": 0,
+      "output_tokens": 12000,
+      "models": [
+        "gpt-5.4"
+      ],
+      "utility_score_avg": 0.7,
+      "resolved_findings": 2,
+      "technique_tags": [
+        "doc-wave",
+        "template-growth"
+      ]
+    },
+    {
+      "run_id": "demo-run-1",
+      "suite": "contractify",
+      "event_count": 1,
+      "latest_timestamp_utc": "2026-04-18T00:00:00+00:00",
+      "cost_usd": 0.029475,
+      "input_tokens": 12000,
+      "cached_input_tokens": 3000,
+      "output_tokens": 4500,
+      "models": [
+        "gpt-5.4-mini"
+      ],
+      "utility_score_avg": null,
+      "resolved_findings": 0,
+      "technique_tags": []
+    }
+  ],
+  "optimization_suggestions": [
+    "GPT-5.4 is currently the top cost driver. Review whether some runs can move to GPT-5.4-mini or nano."
+  ],
+  "avg_cost_per_run_usd": 0.1359875
+}

@@ -1,0 +1,22 @@
+{
+  "bundle_path": "/mnt/data/world_of_shadows_mvp_v24_backend_transitional_retirement_ultra_narrow_final_blockers.zip",
+  "bundle_layout": "legacy-request-current-shape",
+  "import_id": "world-of-shadows-mvp-v24-backend-transitional-retirement-ultra-narrow-final-blockers-8529b8af",
+  "imported_at": "2026-04-17T23:31:48.667045+00:00",
+  "artifact_count": 12,
+  "report_names": [
+    "contract_audit.json"
+  ],
+  "imported_adr_count": 5,
+  "imported_adrs": [
+    "docs/ADR/README.md",
+    "docs/ADR/adr-0001-runtime-authority-in-world-engine.md",
+    "docs/ADR/adr-0002-backend-session-surface-quarantine.md",
+    "docs/ADR/adr-0003-scene-identity-canonical-surface.md",
+    "docs/ADR/adr-template.md"
+  ],
+  "notes": [
+    "Legacy import translates older or nested bundle layouts into the current internal form.",
+    "Imported data is normalized under contractify/imports/<id>/normalized and does not overwrite current workspace truth."
+  ]
+}

@@ -1,0 +1,782 @@
+{
+  "root": "/tmp/mvpify-import-8jmfn911/base",
+  "artifact_count": 2877,
+  "artifacts": [
+    {
+      "path": "README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docker-compose.yml",
+      "kind": "docker_stack",
+      "note": "key surface"
+    },
+    {
+      "path": "docker-up.py",
+      "kind": "docker_entrypoint",
+      "note": "key surface"
+    },
+    {
+      "path": "fy-manifest.yaml",
+      "kind": "fy_manifest",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "administration-tool/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "ai_stack/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "backend/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "backend/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "frontend/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "frontend/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "governance/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "story_runtime_core/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "tests/run_tests.py",
+      "kind": "test_runner",
+      "note": "key surface"
+    },
+    {
+      "path": "world-engine/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "world-engine/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "mvp/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": ".pytest_cache/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "postman/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "postman/generated/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "postman/suites/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "mvp/reference_scaffold/docker-compose.yml",
+      "kind": "docker_stack",
+      "note": "key surface"
+    },
+    {
+      "path": "mvp/reference_scaffold/docker-up.py",
+      "kind": "docker_entrypoint",
+      "note": "key surface"
+    },
+    {
+      "path": "mvp/reference_scaffold/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "mvp/reference_scaffold/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/admin/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/api/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/database/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/development/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/features/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/goc_evidence_templates/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/governance/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/operations/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/security/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/start-here/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/technical/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/testing/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/user/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/dev/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/archive/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/audit/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/presentations/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/ADR/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/archive/architecture-legacy/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "docs/dev/architecture/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "writers-room/app/models/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "writers-room/app/models/implementations/god_of_carnage/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "tools/mcp_server/pyproject.toml",
+      "kind": "python_project",
+      "note": "key surface"
+    },
+    {
+      "path": "tools/mcp_server/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "backend/tests/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "backend/.pytest_cache/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "backend/fixtures/improvement_experiment_runs/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "ai_stack/.pytest_cache/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/contractify/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/despaghettify/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/docify/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/fy_platform/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/postmanify/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/postmanify/superpowers/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/fy_platform/fixtures/backend_service/fy-manifest.yaml",
+      "kind": "fy_manifest",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/fy_platform/fixtures/cli_api_hybrid/fy-manifest.yaml",
+      "kind": "fy_manifest",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/fy_platform/fixtures/library_only/fy-manifest.yaml",
+      "kind": "fy_manifest",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/docify/state/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/docify/superpowers/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/despaghettify/state/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/despaghettify/superpowers/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/contractify/examples/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/contractify/reports/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/contractify/state/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/contractify/superpowers/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    },
+    {
+      "path": "'fy'-suites/contractify/reports/committed/README.md",
+      "kind": "project_readme",
+      "note": "key surface"
+    }
+  ],
+  "counters": {
+    "project_readme": 56,
+    "markdown_files": 477,
+    "docker_stack": 2,
+    "yaml_files": 34,
+    "docker_entrypoint": 2,
+    "python_files": 1660,
+    "json_files": 114,
+    "fy_manifest": 4,
+    "fy_suite_files": 261,
+    "python_project": 8,
+    "test_files": 465,
+    "test_runner": 1,
+    "docs_files": 286
+  },
+  "suite_signals": [
+    {
+      "name": "contractify",
+      "present": true,
+      "evidence": [
+        "'fy'-suites/contractify",
+        "validation/fy_reports/contractify_audit.json",
+        "validation/fy_inputs/contractify_vocabulary_ownership.json",
+        "'fy'-suites/contractify/.gitignore",
+        "'fy'-suites/contractify/contract-audit-task.md"
+      ],
+      "relevance": "primary"
+    },
+    {
+      "name": "despaghettify",
+      "present": true,
+      "evidence": [
+        "'fy'-suites/despaghettify",
+        "validation/fy_reports/despaghettify_setup_audit.json",
+        "'fy'-suites/despaghettify/despaghettification_implementation_input.md",
+        "'fy'-suites/despaghettify/README.md",
+        "'fy'-suites/despaghettify/reports"
+      ],
+      "relevance": "primary"
+    },
+    {
+      "name": "docify",
+      "present": true,
+      "evidence": [
+        "'fy'-suites/docify",
+        "validation/fy_reports/docify_audit.json",
+        "'fy'-suites/docify/documentation-audit-task.md",
+        "'fy'-suites/docify/documentation-check-task.md",
+        "'fy'-suites/docify/documentation-docstring-synthesize-task.md"
+      ],
+      "relevance": "supporting"
+    },
+    {
+      "name": "documentify",
+      "present": false,
+      "evidence": [],
+      "relevance": "supporting"
+    },
+    {
+      "name": "dockerify",
+      "present": false,
+      "evidence": [],
+      "relevance": "supporting"
+    },
+    {
+      "name": "testify",
+      "present": false,
+      "evidence": [],
+      "relevance": "supporting"
+    },
+    {
+      "name": "templatify",
+      "present": false,
+      "evidence": [],
+      "relevance": "supporting"
+    },
+    {
+      "name": "usabilify",
+      "present": false,
+      "evidence": [],
+      "relevance": "supporting"
+    },
+    {
+      "name": "securify",
+      "present": false,
+      "evidence": [],
+      "relevance": "supporting"
+    },
+    {
+      "name": "observifyfy",
+      "present": false,
+      "evidence": [],
+      "relevance": "supporting"
+    },
+    {
+      "name": "mvpify",
+      "present": false,
+      "evidence": [],
+      "relevance": "primary"
+    }
+  ],
+  "mvp_candidate_roots": [
+    "'fy'-suites",
+    ".wos",
+    "administration-tool",
+    "ai_stack",
+    "backend",
+    "content",
+    "docker",
+    "frontend",
+    "governance",
+    "schemas",
+    "scripts",
+    "story_runtime_core",
+    "tests",
+    "tools",
+    "world-engine",
+    "writers-room",
+    "docs",
+    "mvp",
+    "validation",
+    "runtime_data"
+  ],
+  "doc_files": [
+    "'fy'-suites/fy_platform/fixtures/backend_service/docs/api/openapi.yaml",
+    "'fy'-suites/fy_platform/fixtures/backend_service/docs/dev/contracts/normative-contracts-index.md",
+    "'fy'-suites/fy_platform/fixtures/cli_api_hybrid/docs/api/openapi.yaml",
+    "backend/docs/AREA_ACCESS_CONTROL.md",
+    "backend/docs/DATA_EXPORT_IMPORT.md",
+    "backend/docs/DEMO_FALLBACK_GUIDE.md",
+    "backend/docs/DEMO_SCRIPTS.md",
+    "backend/docs/ENCRYPTION.md",
+    "backend/docs/FORUM_MODULE.md",
+    "backend/docs/MVP_BOUNDARY.md",
+    "backend/docs/NEXT_CONTENT_WAVE.md",
+    "backend/docs/ROLE_HIERARCHY.md",
+    "backend/docs/UI_USABILITY.md",
+    "docs/72_V24_LEAN_SCOPE_AND_KEEP_RULES.md",
+    "docs/73_V24_AUDIT_MASTERPROMPT.md",
+    "docs/74_V24_IMPLEMENTATION_MASTERPROMPT_TEMPLATE.md",
+    "docs/75_V24_REAUDIT_CHECKLIST.md",
+    "docs/ADR/README.md",
+    "docs/ADR/adr-0001-runtime-authority-in-world-engine.md",
+    "docs/ADR/adr-0002-backend-session-surface-quarantine.md",
+    "docs/ADR/adr-0003-scene-identity-canonical-surface.md",
+    "docs/ADR/adr-template.md",
+    "docs/CANONICAL_TURN_CONTRACT_GOC.md",
+    "docs/FREEZE_OPERATIONALIZATION_MVP_VSL.md",
+    "docs/GATE_SCORING_POLICY_GOC.md",
+    "docs/INDEX.md",
+    "docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md",
+    "docs/MVPs/MVP_VSL_And_GoC_Contracts/GATE_SCORING_POLICY_GOC.md",
+    "docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md",
+    "docs/PHASE0_FREEZE_CLOSURE_NOTE_GOC.md",
+    "docs/README.md",
+    "docs/ROADMAP_MVP_ADMINISTRATION_TOOL_DIAGNOSIS.md",
+    "docs/ROADMAP_MVP_ENGINE_AND_UI.md",
+    "docs/ROADMAP_MVP_GoC.md",
+    "docs/ROADMAP_MVP_MCP.md",
+    "docs/ROADMAP_MVP_REPOSITORY_SURFACE_TRUTH_AND_STRUCTURE_CLEANUP.md",
+    "docs/ROADMAP_MVP_RESEARCH_AND_CANON_IMPROVEMENT_SYSTEM.md",
+    "docs/ROADMAP_MVP_SEMANTIC_DRAMATIC_PLANNER.md",
+    "docs/ROADMAP_MVP_VSL.md",
+    "docs/VERTICAL_SLICE_CONTRACT_GOC.md",
+    "docs/admin/README.md",
+    "docs/admin/deployment-guide.md",
+    "docs/admin/diagnostics-and-auditing.md",
+    "docs/admin/monitoring-logging-and-incident-response.md",
+    "docs/admin/operations-runbook.md",
+    "docs/admin/publishing-and-module-activation.md",
+    "docs/admin/release-and-quality-gates-for-operators.md",
+    "docs/admin/security-and-compliance-overview.md",
+    "docs/admin/services-and-health-checks.md",
+    "docs/admin/setup-and-first-run.md",
+    "docs/api/POSTMAN_COLLECTION.md",
+    "docs/api/README.md",
+    "docs/api/REFERENCE.md",
+    "docs/api/openapi-taxonomy.md",
+    "docs/api/openapi.yaml",
+    "docs/architecture/README.md",
+    "docs/archive/README.md",
+    "docs/archive/architecture-legacy/README.md",
+    "docs/archive/documentation-consolidation-2026/DURABLE_TRUTH_MIGRATION_LEDGER.md",
+    "docs/archive/documentation-consolidation-2026/FINAL_DOCUMENTATION_VALIDATION_REPORT.md",
+    "docs/archive/documentation-consolidation-2026/SUPERPOWERS_FINAL_VALIDATION_REPORT.md",
+    "docs/archive/documentation-consolidation-2026/SUPERPOWERS_MIGRATION_INVENTORY.md",
+    "docs/archive/documentation-consolidation-2026/TOPIC_CONSOLIDATION_MAP.md",
+    "docs/audit/README.md",
+    "docs/database/README.md",
+    "docs/dev/README.md",
+    "docs/dev/api/openapi-and-api-explorer-strategy.md",
+    "docs/dev/architecture/README.md",
+    "docs/dev/architecture/ai-stack-rag-langgraph-and-goc-seams.md",
+    "docs/dev/architecture/content-modules-and-compiler-pipeline.md",
+    "docs/dev/architecture/runtime-authority-and-session-lifecycle.md",
+    "docs/dev/contracts/normative-contracts-index.md",
+    "docs/dev/contributing.md",
+    "docs/dev/local-development-and-test-workflow.md",
+    "docs/dev/onboarding.md",
+    "docs/dev/testing/test-pyramid-and-suite-map.md",
+    "docs/dev/tooling/mcp-server-developer-guide.md",
+    "docs/development/LocalDevelopment.md",
+    "docs/development/README.md",
+    "docs/features/README.md",
+    "docs/features/RUNTIME_COMMANDS.md",
+    "docs/features/forum.md",
+    "docs/frontend/ManagementFrontend.md",
+    "docs/goc_evidence_templates/README.md",
+    "docs/goc_evidence_templates/g9_experience_score_matrix.template.json",
+    "docs/goc_evidence_templates/g9b_evaluator_b_declaration.template.json",
+    "docs/goc_evidence_templates/g9b_evaluator_record.template.json",
+    "docs/goc_evidence_templates/g9b_level_b_attempt_record.template.json",
+    "docs/goc_evidence_templates/g9b_raw_score_sheet.template.json",
+    "docs/goc_evidence_templates/g9b_reconciliation_optional.template.json",
+    "docs/goc_evidence_templates/g9b_score_delta_record.template.json",
+    "docs/goc_evidence_templates/schemas/g9_experience_score_matrix.schema.json",
+    "docs/goc_evidence_templates/schemas/g9b_evaluator_artifact_manifest.schema.json",
+    "docs/goc_evidence_templates/schemas/g9b_evaluator_b_declaration.schema.json",
+    "docs/goc_evidence_templates/schemas/g9b_level_b_attempt_record.schema.json",
+    "docs/goc_evidence_templates/schemas/g9b_raw_score_sheet.schema.json",
+    "docs/goc_evidence_templates/schemas/g9b_reconciliation_optional.schema.json",
+    "docs/goc_evidence_templates/schemas/g9b_score_delta_record.schema.json",
+    "docs/governance/README.md",
+    "docs/governance/adr-0001-runtime-authority-in-world-engine.md",
+    "docs/governance/adr-0002-backend-session-surface-quarantine.md",
+    "docs/governance/adr-0003-scene-identity-canonical-surface.md",
+    "docs/governance/adr-template.md",
+    "docs/mcp/00_M0_scope.md",
+    "docs/mcp/01_M0_host_and_runtime.md",
+    "docs/mcp/02_M0_transport_connectivity.md",
+    "docs/mcp/03_M0_security_baseline.md",
+    "docs/mcp/04_M0_contract_v0.md",
+    "docs/mcp/05_M0_tool_inventory_v0.md",
+    "docs/mcp/06_M0_backend_readiness_gaps.md",
+    "docs/mcp/07_M0_observability.md",
+    "docs/mcp/08_M0_gate_checklist.md",
+    "docs/mcp/12_M1_canonical_parity.md",
+    "docs/mcp/GATE_REPORT_PHASE_A.md",
+    "docs/mcp/REPAIR_REPORT_M0_EN.md",
+    "docs/operations/ALERTING-CONFIG.md",
+    "docs/operations/ANALYTICS.md",
+    "docs/operations/OPERATIONAL_GOVERNANCE_RUNTIME.md",
+    "docs/operations/README.md",
+    "docs/operations/RUNBOOK.md",
+    "docs/plans/PLAN_G9B_REAL_INDEPENDENT_EVALUATOR_B.md",
+    "docs/plans/PLAN_G9B_STRICT_BLIND_EXTERNAL_EVALUATOR_B_RUN.md",
+    "docs/plans/PLAN_G9_S4_Misinterpretation_Correction_Closure.md",
+    "docs/presentations/README.md",
+    "docs/presentations/executive-summary-world-of-shadows.md",
+    "docs/reference/baseline-validation-note.md",
+    "docs/reference/documentation-registry.md",
+    "docs/reference/glossary.md",
+    "docs/research_mvp_gate_closure.md",
+    "docs/research_mvp_implementation_summary.md",
+    "docs/security/AUDIT_REPORT.md",
+    "docs/security/README.md",
+    "docs/start-here/README.md",
+    "docs/start-here/glossary.md",
+    "docs/start-here/god-of-carnage-as-an-experience.md",
+    "docs/start-here/how-ai-fits-the-platform.md",
+    "docs/start-here/how-world-of-shadows-works.md",
+    "docs/start-here/system-map-services-and-data-stores.md",
+    "docs/start-here/what-is-world-of-shadows.md",
+    "docs/technical/README.md",
+    "docs/technical/ai/RAG.md",
+    "docs/technical/ai/ai-stack-overview.md",
+    "docs/technical/ai/improvement_loop_in_world_of_shadows.md",
+    "docs/technical/ai/llm-slm-role-stratification.md",
+    "docs/technical/architecture/MultilingualArchitecture.md",
+    "docs/technical/architecture/ai_story_contract.md",
+    "docs/technical/architecture/architecture-overview.md",
+    "docs/technical/architecture/backend-runtime-classification.md",
+    "docs/technical/architecture/canonical_runtime_contract.md",
+    "docs/technical/architecture/god_of_carnage_module_contract.md",
+    "docs/technical/architecture/mvp_definition.md",
+    "docs/technical/architecture/service-boundaries.md",
+    "docs/technical/architecture/session_runtime_contract.md",
+    "docs/technical/content/canonical_authored_content_model.md",
+    "docs/technical/content/god_of_carnage_canonical_path.md",
+    "docs/technical/content/writers-room-and-publishing-flow.md",
+    "docs/technical/integration/LangChain.md",
+    "docs/technical/integration/LangGraph.md",
+    "docs/technical/integration/MCP.md",
+    "docs/technical/integration/langgraph-runtime-install-and-failure-modes.md",
+    "docs/technical/operations/observability-and-governance.md",
+    "docs/technical/reference/model_inventory_seam_map.md",
+    "docs/technical/reference/test-strategy-and-suite-layout.md",
+    "docs/technical/runtime/a1_free_input_primary_runtime_path.md",
+    "docs/technical/runtime/player_input_interpretation_contract.md",
+    "docs/technical/runtime/runtime-authority-and-state-flow.md",
+    "docs/technical/runtime/world_engine_authoritative_narrative_commit.md",
+    "docs/test-environment-hygiene.md",
+    "docs/testing-setup.md",
+    "docs/testing/ADMIN_TOOL_TARGET_TEST_MATRIX.md",
+    "docs/testing/CI_WORKFLOW_GUIDE.md",
+    "docs/testing/INDEX.md",
+    "docs/testing/MATRIX_QUICK_REFERENCE.md",
+    "docs/testing/QUALITY_BASELINE.md",
+    "docs/testing/QUALITY_GATES.md",
+    "docs/testing/README.md",
+    "docs/testing/RELEASE_GATE_POLICY.md",
+    "docs/testing/SECURITY_REGRESSION_PROFILE.md",
+    "docs/testing/TEST_EXECUTION_PROFILES.md",
+    "docs/testing/WORLD_ENGINE_TARGET_TEST_MATRIX.md",
+    "docs/testing/XFAIL_POLICY.md",
+    "docs/user/README.md",
+    "docs/user/faq.md",
+    "docs/user/forum-player-guide.md",
+    "docs/user/getting-started.md",
+    "docs/user/god-of-carnage-player-guide.md",
+    "docs/user/how-input-affects-the-experience.md",
+    "docs/user/how-to-start-a-session.md",
+    "docs/user/runtime-interactions-player-visible.md",
+    "mvp/docs/00_MASTER_MVP.md",
+    "mvp/docs/00_WORLD_OF_SHADOWS_MVP_V21_CANONICAL.md",
+    "mvp/docs/01_RUNTIME_CONSTITUTION.md",
+    "mvp/docs/02_PLAYER_ROUTE_PURITY_AND_PUBLISH_BOUND_BIRTH.md",
+    "mvp/docs/02_VALIDATION_DISPOSITION_AND_RECOVERY_LADDER.md",
+    "mvp/docs/03_DECISION_TAXONOMY_AND_DEGRADED_SAFE.md",
+    "mvp/docs/03_FIVE_LAYER_EXECUTION_ARCHITECTURE.md",
+    "mvp/docs/04_PERSISTENCE_INCIDENTS_AND_NON_GRAPH_TESTABILITY.md",
+    "mvp/docs/04_PLAYER_EXPERIENCE_AND_ACCESSIBILITY_SPEC.md",
+    "mvp/docs/05_CONCRETE_SESSION_WALKTHROUGHS_AND_LAYER_TRACES.md",
+    "mvp/docs/05_MEMORY_LIVE_MINIMUM_AND_ADVANCED_GUARDRAILS.md"
+  ],
+  "implementation_files": [
+    "'fy'-suites/contractify/state/RUNTIME_MVP_SPINE_ATTACHMENT.md",
+    "'fy'-suites/contractify/state/RUNTIME_MVP_SPINE_ATTACHMENT_2026-04-17.md",
+    "'fy'-suites/despaghettify/despaghettification_implementation_input.md",
+    "'fy'-suites/despaghettify/templates/despaghettification_implementation_input.EMPTY.md",
+    "'fy'-suites/despaghettify/tools/fixtures/ci_stub_implementation_input.md",
+    "'fy'-suites/docify/documentation_implementation_input.md",
+    "'fy'-suites/docify/templates/documentation_implementation_input.EMPTY.md",
+    "MVP_V24_PACKAGE_NOTE.md",
+    "MVP_V24_START_HERE.md",
+    "backend/docs/MVP_BOUNDARY.md",
+    "docs/74_V24_IMPLEMENTATION_MASTERPROMPT_TEMPLATE.md",
+    "docs/FREEZE_OPERATIONALIZATION_MVP_VSL.md",
+    "docs/MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md",
+    "docs/MVPs/MVP_VSL_And_GoC_Contracts/GATE_SCORING_POLICY_GOC.md",
+    "docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md",
+    "docs/ROADMAP_MVP_ADMINISTRATION_TOOL_DIAGNOSIS.md",
+    "docs/ROADMAP_MVP_ENGINE_AND_UI.md",
+    "docs/ROADMAP_MVP_GoC.md",
+    "docs/ROADMAP_MVP_MCP.md",
+    "docs/ROADMAP_MVP_REPOSITORY_SURFACE_TRUTH_AND_STRUCTURE_CLEANUP.md",
+    "docs/ROADMAP_MVP_RESEARCH_AND_CANON_IMPROVEMENT_SYSTEM.md",
+    "docs/ROADMAP_MVP_SEMANTIC_DRAMATIC_PLANNER.md",
+    "docs/ROADMAP_MVP_VSL.md",
+    "docs/research_mvp_implementation_summary.md",
+    "mvp/docs/00_MASTER_MVP.md",
+    "mvp/docs/00_WORLD_OF_SHADOWS_MVP_V21_CANONICAL.md",
+    "mvp/docs/07_IMPLEMENTATION_GATES.md",
+    "mvp/docs/39_REFERENCE_IMPLEMENTATION_AND_TEST_PLAN.md",
+    "mvp/docs/42_IMPLEMENTATION_TRUTH_MATRIX.md",
+    "mvp/docs/48_CANONICAL_IMPLEMENTATION_PROTOCOL.md",
+    "mvp/docs/50_IMPLEMENTATION_WORKSTREAMS.md",
+    "mvp/docs/55_NO_STUB_IMPLEMENTATION_RULES.md",
+    "mvp/docs/56_IMPLEMENTATION_DOC_INDEX.md",
+    "mvp/docs/63_IMPLEMENTATION_HANDOFF_TEMPLATE.md",
+    "mvp/docs/65_FY_GOVERNED_IMPLEMENTATION_PROTOCOL.md",
+    "mvp/implementation/audit_cycle_policy.yaml",
+    "mvp/implementation/current_state_manifest.yaml",
+    "mvp/implementation/fy_governed_workflow.yaml",
+    "mvp/implementation/implementation_translation_rules.yaml",
+    "mvp/implementation/repository_target_map.yaml",
+    "mvp/implementation/workstreams.yaml",
+    "validation/V24_API_PROJECTION_IMPLEMENTATION_REPORT.md",
+    "validation/V24_BACKEND_TRANSITIONAL_RETIREMENT_IMPLEMENTATION_REPORT.md",
+    "validation/V24_GOVERNANCE_ATTACHMENT_IMPLEMENTATION_REPORT.md",
+    "validation/V24_VOCABULARY_OVERLAP_IMPLEMENTATION_REPORT.md",
+    "validation/V24_WRITERS_ROOM_RAG_OVERLAP_IMPLEMENTATION_REPORT.md",
+    "world-engine/source/Lib/site-packages/pip/_vendor/dependency_groups/_implementation.py",
+    "world-engine/venv/Lib/site-packages/pip/_vendor/dependency_groups/_implementation.py",
+    "writers-room/app/models/implementations/god_of_carnage/README.md",
+    "writers-room/app/models/implementations/god_of_carnage/canon_adaptation_map.yaml",
+    "writers-room/app/models/implementations/god_of_carnage/characters/npc_alain_reille.md",
+    "writers-room/app/models/implementations/god_of_carnage/characters/npc_annette_reille.md",
+    "writers-room/app/models/implementations/god_of_carnage/characters/player_michael_longstreet.md",
+    "writers-room/app/models/implementations/god_of_carnage/characters/player_penelope_longstreet.md",
+    "writers-room/app/models/implementations/god_of_carnage/characters/subconscious_michael_longstreet.md",
+    "writers-room/app/models/implementations/god_of_carnage/characters/subconscious_penelope_longstreet.md",
+    "writers-room/app/models/implementations/god_of_carnage/location_longstreet_apartment.md",
+    "writers-room/app/models/implementations/god_of_carnage/locations/bathroom.md",
+    "writers-room/app/models/implementations/god_of_carnage/locations/hallway.md",
+    "writers-room/app/models/implementations/god_of_carnage/locations/kitchen.md",
+    "writers-room/app/models/implementations/god_of_carnage/locations/living_room.md",
+    "writers-room/app/models/implementations/god_of_carnage/locations/location_longstreet_apartment.md",
+    "writers-room/app/models/implementations/god_of_carnage/npc_alain_reille.md",
+    "writers-room/app/models/implementations/god_of_carnage/npc_annette_reille.md",
+    "writers-room/app/models/implementations/god_of_carnage/player_role_michael_longstreet.md",
+    "writers-room/app/models/implementations/god_of_carnage/player_role_penelope_longstreet.md",
+    "writers-room/app/models/implementations/god_of_carnage/relationship_map.md",
+    "writers-room/app/models/implementations/god_of_carnage/room_living_room.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenario_core.md",
+    "writers-room/app/models/implementations/god_of_carnage/scene_opening_director.md",
+    "writers-room/app/models/implementations/god_of_carnage/scene_opening_quick.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s01_arrival_and_statement.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s02_first_departure_failure.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s03_phone_intrusions.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s04_private_hypocrisy_reveal.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s05_physical_breakpoint.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s06_rum_and_realignment.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s07_total_breakdown.md",
+    "writers-room/app/models/implementations/god_of_carnage/scenes/s08_unresolved_ring.md",
+    "writers-room/app/models/implementations/god_of_carnage/session_bootstrap.md",
+    "writers-room/app/models/implementations/god_of_carnage/start_stack_director.md",
+    "writers-room/app/models/implementations/god_of_carnage/start_stack_quick.md",
+    "writers-room/app/models/implementations/god_of_carnage/subconscious_michael_longstreet.md",
+    "writers-room/app/models/implementations/god_of_carnage/subconscious_penelope_longstreet.md"
+  ]
+}

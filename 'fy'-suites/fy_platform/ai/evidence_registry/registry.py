@@ -3,10 +3,20 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
+from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fy_platform.ai.schemas.common import ArtifactRecord, EvidenceRecord, SuiteRunRecord, to_jsonable
+from fy_platform.ai.persistence_state import ensure_schema_state
+from fy_platform.ai.policy.review_policy import validate_transition
+from fy_platform.ai.schemas.common import (
+    ArtifactRecord,
+    CompareRunsDelta,
+    EvidenceRecord,
+    SuiteRunRecord,
+    to_jsonable,
+)
 from fy_platform.ai.workspace import ensure_workspace_layout, utc_now, workspace_root
 
 
@@ -16,6 +26,7 @@ class EvidenceRegistry:
         ensure_workspace_layout(self.root)
         self.db_path = self.root / '.fydata' / 'registry' / 'registry.db'
         self._init_db()
+        ensure_schema_state(self.root)
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -144,6 +155,47 @@ class EvidenceRegistry:
             conn.close()
         return rec
 
+    def update_evidence_review_state(self, evidence_id: str, new_state: str) -> dict[str, Any]:
+        conn = self._connect()
+        try:
+            row = conn.execute('SELECT review_state FROM evidence WHERE evidence_id = ?', (evidence_id,)).fetchone()
+            if not row:
+                return {'ok': False, 'reason': 'evidence_not_found', 'evidence_id': evidence_id}
+            current = row['review_state']
+            result = validate_transition(current, new_state)
+            if not result.ok:
+                return {'ok': False, 'reason': result.reason, 'evidence_id': evidence_id, 'current_state': current, 'new_state': new_state}
+            conn.execute('UPDATE evidence SET review_state = ? WHERE evidence_id = ?', (new_state, evidence_id))
+            conn.commit()
+            return {'ok': True, 'evidence_id': evidence_id, 'current_state': current, 'new_state': new_state}
+        finally:
+            conn.close()
+
+    def list_evidence(self, suite: str | None = None, review_state: str | None = None) -> list[dict[str, Any]]:
+        conn = self._connect()
+        try:
+            query = 'SELECT * FROM evidence WHERE 1=1'
+            params: list[Any] = []
+            if suite:
+                query += ' AND suite = ?'
+                params.append(suite)
+            if review_state:
+                query += ' AND review_state = ?'
+                params.append(review_state)
+            query += ' ORDER BY created_at DESC'
+            rows = conn.execute(query, params).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def evidence_for_run(self, run_id: str) -> list[dict[str, Any]]:
+        conn = self._connect()
+        try:
+            rows = conn.execute('SELECT * FROM evidence WHERE run_id = ? ORDER BY created_at ASC', (run_id,)).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
     def link(self, src_id: str, dst_id: str, relation: str) -> None:
         conn = self._connect()
         try:
@@ -193,3 +245,59 @@ class EvidenceRegistry:
             return json.loads(row['payload_json'])
         finally:
             conn.close()
+
+    def compare_runs(self, left_run_id: str, right_run_id: str) -> CompareRunsDelta | None:
+        from fy_platform.ai.run_journal.journal import RunJournal
+
+        left = self.get_run(left_run_id)
+        right = self.get_run(right_run_id)
+        if not left or not right:
+            return None
+        left_art = self.artifacts_for_run(left_run_id)
+        right_art = self.artifacts_for_run(right_run_id)
+        left_ev = self.evidence_for_run(left_run_id)
+        right_ev = self.evidence_for_run(right_run_id)
+        left_roles = {item['role'] for item in left_art}
+        right_roles = {item['role'] for item in right_art}
+        left_formats = {item['format'] for item in left_art}
+        right_formats = {item['format'] for item in right_art}
+        left_review_counts = dict(sorted(Counter(item['review_state'] for item in left_ev).items()))
+        right_review_counts = dict(sorted(Counter(item['review_state'] for item in right_ev).items()))
+        journal = RunJournal(self.root)
+        left_summary = journal.summarize(left['suite'], left_run_id)
+        right_summary = journal.summarize(right['suite'], right_run_id)
+        return CompareRunsDelta(
+            left_run_id=left_run_id,
+            right_run_id=right_run_id,
+            left_status=left['status'],
+            right_status=right['status'],
+            artifact_delta=len(right_art) - len(left_art),
+            added_roles=sorted(right_roles - left_roles),
+            removed_roles=sorted(left_roles - right_roles),
+            left_artifact_count=len(left_art),
+            right_artifact_count=len(right_art),
+            left_evidence_count=len(left_ev),
+            right_evidence_count=len(right_ev),
+            left_review_state_counts=left_review_counts,
+            right_review_state_counts=right_review_counts,
+            left_journal_event_count=left_summary['event_count'],
+            right_journal_event_count=right_summary['event_count'],
+            left_duration_seconds=_duration_seconds(left['started_at'], left['ended_at']),
+            right_duration_seconds=_duration_seconds(right['started_at'], right['ended_at']),
+            mode_changed=left['mode'] != right['mode'],
+            target_repo_changed=left['target_repo_root'] != right['target_repo_root'],
+            target_repo_id_changed=left['target_repo_id'] != right['target_repo_id'],
+            added_formats=sorted(right_formats - left_formats),
+            removed_formats=sorted(left_formats - right_formats),
+        )
+
+
+def _duration_seconds(started_at: str | None, ended_at: str | None) -> float | None:
+    if not started_at or not ended_at:
+        return None
+    try:
+        start = datetime.fromisoformat(started_at)
+        end = datetime.fromisoformat(ended_at)
+    except ValueError:
+        return None
+    return round((end - start).total_seconds(), 6)

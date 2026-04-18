@@ -32,13 +32,16 @@ def despag_hub_dir(repo: Path | None = None) -> Path:
         custom = (r / configured).resolve()
         if custom.is_dir():
             return custom
-    nested = r / FY_SUITES_DIRNAME / "despaghettify"
-    if (nested / "spaghetti-setup.md").is_file():
+    direct = r / 'despaghettify'
+    if (direct / 'spaghetti-setup.md').is_file():
+        return direct
+    nested = r / FY_SUITES_DIRNAME / 'despaghettify'
+    if (nested / 'spaghetti-setup.md').is_file():
         return nested
     local = Path(__file__).resolve().parents[1]
     if (local / "spaghetti-setup.md").is_file():
         return local
-    msg = f"Despaghettify hub not found under {r / FY_SUITES_DIRNAME / 'despaghettify'}"
+    msg = f"Despaghettify hub not found under {r / 'despaghettify'} or {r / FY_SUITES_DIRNAME / 'despaghettify'}"
     raise RuntimeError(msg)
 
 

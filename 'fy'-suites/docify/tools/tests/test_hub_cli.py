@@ -27,6 +27,15 @@ def test_open_doc_cli_with_explicit_input(tmp_path: Path, capsys) -> None:
     assert capsys.readouterr().out.strip() == "DOC-001"
 
 
+def test_inline_explain_command_smoke(tmp_path: Path, capsys) -> None:
+    src = tmp_path / 'sample.py'
+    src.write_text('def helper():\n    value = 1\n    return value\n', encoding='utf-8')
+    code = main(['inline-explain', '--file', str(src), '--function', 'helper'])
+    assert code == 0
+    out = capsys.readouterr().out
+    assert 'Return the final outward-facing result' in out
+
+
 def test_open_doc_monorepo_default_uses_repo_when_available(tmp_path: Path, monkeypatch, capsys) -> None:
     """When --input is omitted, behaviour still depends on repo_root (smoke only in-layout)."""
     from docify.tools import hub_cli as hc

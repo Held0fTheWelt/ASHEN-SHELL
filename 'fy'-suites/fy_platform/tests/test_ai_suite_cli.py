@@ -9,8 +9,10 @@ def test_generic_ai_suite_cli_docify_and_contractify_consolidate(tmp_path, monke
     assert rc == 0
     out = capsys.readouterr().out
     assert '"ok": true' in out.lower()
+    assert '"payload"' in out.lower()
 
     rc2 = main(['contractify', 'consolidate', '--target-repo', str(repo), '--apply-safe'])
     assert rc2 == 0
     out2 = capsys.readouterr().out
     assert 'contractify' in out2.lower()
+    assert '"exit_code": 0' in out2.lower()

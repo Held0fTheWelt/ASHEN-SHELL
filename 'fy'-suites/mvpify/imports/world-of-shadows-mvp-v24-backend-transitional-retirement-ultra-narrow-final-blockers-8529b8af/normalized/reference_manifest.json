@@ -1,0 +1,14 @@
+{
+  "import_id": "world-of-shadows-mvp-v24-backend-transitional-retirement-ultra-narrow-final-blockers-8529b8af",
+  "source": "/mnt/data/world_of_shadows_mvp_v24_backend_transitional_retirement_ultra_narrow_final_blockers.zip",
+  "source_mode": "zip",
+  "mirrored_docs_root": "docs/MVPs/imports/world-of-shadows-mvp-v24-backend-transitional-retirement-ultra-narrow-final-blockers-8529b8af",
+  "normalized_root": "mvpify/imports/world-of-shadows-mvp-v24-backend-transitional-retirement-ultra-narrow-final-blockers-8529b8af/normalized",
+  "mirrored_file_count": 177,
+  "copied_doc_like_count": 176,
+  "created_at": "2026-04-17T23:31:53.632174+00:00",
+  "notes": [
+    "Imported MVP docs are mirrored into docs/MVPs/imports/<id> so temporary implementation folders may later be removed.",
+    "The normalized import lane remains under mvpify/imports/<id>/normalized for traceability and restartability."
+  ]
+}

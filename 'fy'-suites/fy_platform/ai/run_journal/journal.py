@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -27,3 +28,13 @@ class RunJournal:
         if not path.is_file():
             return []
         return [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line.strip()]
+
+    def summarize(self, suite: str, run_id: str) -> dict[str, Any]:
+        events = self.read(suite, run_id)
+        counts = Counter(item['event_type'] for item in events)
+        return {
+            'event_count': len(events),
+            'event_type_counts': dict(sorted(counts.items())),
+            'first_event_at': events[0]['ts'] if events else None,
+            'last_event_at': events[-1]['ts'] if events else None,
+        }

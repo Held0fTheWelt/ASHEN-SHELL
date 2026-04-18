@@ -1,9 +1,11 @@
-"""Docify hub CLI — audit, drift hints, and backlog helpers.
+"""Docify hub CLI — audit, drift hints, inline explain, and backlog helpers.
 
-After ``pip install -e .`` from the repository root, use the ``docify`` console script, or:
+After ``pip install -e .`` from the repository root, use the ``docify`` console
+script, or:
 
   python -m docify.tools audit --json --exit-zero
   python -m docify.tools drift --json
+  python -m docify.tools inline-explain --file path/to/file.py --function some_fn
 
 Script path (repo-relative):
 
@@ -41,10 +43,12 @@ def _print_global_help() -> None:
         "Commands:\n"
         "  audit …          Python AST docstring audit (pass-through; same flags as legacy script).\n"
         "  drift …          Heuristic documentation follow-up hints from git-changed paths.\n"
+        "  inline-explain   Generate dense inline explanations for one Python function.\n"
         "  open-doc         Print open DOC-* backlog IDs from documentation_implementation_input.md.\n\n"
         "Examples:\n"
         "  docify audit --json --exit-zero --out 'fy'-suites/docify/reports/doc_audit.json\n"
         "  docify drift --json --out 'fy'-suites/docify/reports/doc_drift.json\n"
+        "  docify inline-explain --file fy_platform/ai/base_adapter.py --function prepare_context_pack --mode dense\n"
     )
 
 
@@ -84,13 +88,15 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if cmd == "audit":
         from docify.tools.python_documentation_audit import main as audit_main
-
         return int(audit_main(tail))
 
     if cmd == "drift":
         from docify.tools.documentation_drift import drift_cli_main
-
         return int(drift_cli_main(tail))
+
+    if cmd == "inline-explain":
+        from docify.tools.python_inline_explain import main as inline_main
+        return int(inline_main(tail))
 
     if cmd == "open-doc":
         parser = argparse.ArgumentParser(description="List open DOC-* backlog rows.")

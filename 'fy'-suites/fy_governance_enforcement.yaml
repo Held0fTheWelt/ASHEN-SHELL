@@ -12,11 +12,11 @@ enforcement_gates:
     description: "Enforce contract drift detection on PR merge; fail if new contracts lack relations, precedence changes without justification, or confidence drops below thresholds."
 
     baseline:
-      path: "'fy'-suites/contractify/reports/CANONICAL_REPO_ROOT_AUDIT.md"
+      path: "contractify/reports/CANONICAL_REPO_ROOT_AUDIT.md"
       format: "markdown_snapshot"
 
     audit_command: "python -m contractify.tools audit --json"
-    audit_output_path: "'fy'-suites/contractify/reports/_local_contract_audit.json"
+    audit_output_path: "contractify/reports/_local_contract_audit.json"
 
     failure_conditions:
       - condition: "new_contracts_without_relations"
@@ -54,7 +54,7 @@ enforcement_gates:
     description: "Enforce docstring coverage and documentation quality on PR merge; fail if new missing docstrings, parse errors, or coverage degradation."
 
     baseline:
-      path: "'fy'-suites/docify/baseline_docstring_coverage.json"
+      path: "docify/baseline_docstring_coverage.json"
       format: "json_snapshot"
       key_metrics:
         - "summary.findings"  # baseline docstring findings count
@@ -62,7 +62,7 @@ enforcement_gates:
         - "summary.parse_errors"
 
     audit_command: "python -m docify.tools audit --json"
-    audit_output_path: "'fy'-suites/docify/reports/_local_docstring_audit.json"
+    audit_output_path: "docify/reports/_local_docstring_audit.json"
 
     scan_roots:
       - "contractify"
@@ -104,7 +104,7 @@ enforcement_gates:
     description: "Monitor structural metrics and flag functions that exceed baseline thresholds; allows merge with justification."
 
     baseline:
-      path: "'fy'-suites/despaghettify/baseline_metrics.json"
+      path: "despaghettify/baseline_metrics.json"
       format: "json_snapshot"
       key_metrics:
         - "summary.functions_over_200_lines"
@@ -112,7 +112,7 @@ enforcement_gates:
         - "summary.import_cycle_count"
 
     audit_command: "python -m despaghettify.tools check --with-metrics"
-    audit_output_path: "'fy'-suites/despaghettify/reports/_local_metrics_check.json"
+    audit_output_path: "despaghettify/reports/_local_metrics_check.json"
 
     failure_conditions:
       - condition: "functions_over_200_lines"
@@ -157,7 +157,7 @@ enforcement_policy:
   advisory_gate_failure_strategy: "warn_allow_merge"
 
   # Evidence artifacts stored at:
-  evidence_artifact_root: "'fy'-suites/*/reports/ci_gate_evidence/"
+  evidence_artifact_root: "*/reports/ci_gate_evidence/"
 
   # Logging and reporting
   report_format: "github_pr_comment"
@@ -170,22 +170,22 @@ enforcement_policy:
 # Documentation updates required
 documentation_updates:
   contractify:
-    file: "'fy'-suites/contractify/CONTRACT_GOVERNANCE_SCOPE.md"
+    file: "contractify/CONTRACT_GOVERNANCE_SCOPE.md"
     section: "CI enforcement thresholds and gate policies"
     required: true
 
   docify:
-    file: "'fy'-suites/docify/README.md"
+    file: "docify/README.md"
     section: "Merge-time enforcement note"
     required: true
 
   despaghettify:
-    file: "'fy'-suites/despaghettify/spaghetti-setup.md"
+    file: "despaghettify/spaghetti-setup.md"
     section: "Merge-time monitoring note"
     required: true
 
   workstream_state:
-    file: "'fy'-suites/despaghettify/state/WORKSTREAM_DOCUMENTATION_STATE.md"
+    file: "despaghettify/state/WORKSTREAM_DOCUMENTATION_STATE.md"
     section: "FY-governance enforcement gates implementation"
     required: true
 

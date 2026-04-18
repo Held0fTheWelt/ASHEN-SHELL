@@ -8,6 +8,15 @@ from fy_platform.core.project_resolver import resolve_project_root
 FY_SUITES_DIRNAME = "'fy'-suites"
 
 
+
+def _current_or_legacy_suite_dir(repo: Path, suite: str) -> Path:
+    direct = repo / suite
+    if direct.is_dir() or (repo / 'fy_platform').is_dir():
+        return direct
+    nested = repo / FY_SUITES_DIRNAME / suite
+    return nested
+
+
 def repo_root(*, start: Path | None = None) -> Path:
     env = os.environ.get('TESTIFY_REPO_ROOT', '').strip()
     if env:

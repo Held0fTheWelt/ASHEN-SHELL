@@ -8,6 +8,7 @@ from fy_platform.ai.base_adapter import BaseSuiteAdapter
 
 class DocifyAdapter(BaseSuiteAdapter):
     __test__ = False
+
     def __init__(self, root: Path | None = None) -> None:
         super().__init__('docify', root)
 
@@ -35,6 +36,12 @@ class DocifyAdapter(BaseSuiteAdapter):
                         findings.append({'path': rel, 'line': int(getattr(node, 'lineno', 1)), 'kind': type(node).__name__.lower(), 'name': node.name, 'code': 'MISSING_DOCSTRING'})
         return {'scanned_python_files': scanned, 'findings': findings, 'finding_count': len(findings)}
 
+    def inspect(self, query: str | None = None) -> dict:
+        out = super().inspect(query)
+        out['focus'] = ['docstring coverage', 'dense inline explanation', 'public API documentation', 'drift hints']
+        out['suite_role'] = 'Improve Python documentation quality with stronger docstrings and richer inline explanations where code needs context.'
+        return out
+
     def audit(self, target_repo_root: str) -> dict:
         target = Path(target_repo_root).resolve()
         run_id, run_dir, tgt_id = self._start_run('audit', target)
@@ -55,6 +62,8 @@ class DocifyAdapter(BaseSuiteAdapter):
         out['suggested_actions'] = [
             'add module/class/function docstrings for the highest-count files first',
             'prefer public API surfaces before private helpers',
+            'use docify inline-explain for functions where the control flow is correct but too implicit for a reader',
+            'group dense inline comments around responsibility blocks instead of scattering vague one-line remarks',
             'rerun docify audit to verify reduction',
         ]
         return out

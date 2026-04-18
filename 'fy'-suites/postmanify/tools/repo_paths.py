@@ -8,39 +8,20 @@ from fy_platform.core.project_resolver import resolve_project_root
 FY_SUITES_DIRNAME = "'fy'-suites"
 
 
+def _current_or_legacy_suite_dir(repo: Path, suite: str) -> Path:
+    direct = repo / suite
+    if direct.is_dir() or (repo / 'fy_platform').is_dir():
+        return direct
+    nested = repo / FY_SUITES_DIRNAME / suite
+    return nested
+
+
 def repo_root(*, start: Path | None = None) -> Path:
-    """
-    Implement ``repo_root`` for the surrounding module workflow.
-
-    Module context: ``'fy'-suites/postmanify/tools/repo_paths.py`` — keep this routine
-    aligned with sibling helpers in the same package.
-
-    Args:
-        start: Start for this call. Declared type: ``Path | None``. (keyword-only)
-
-    Returns:
-        Value typed as ``Path`` for downstream use.
-
-    Raises:
-        RuntimeError: An invariant was violated or the environment rejected the operation.
-
-    """
+    """Resolve the current workspace root with shared project resolution."""
     return resolve_project_root(start=start, marker_text=None)
 
 
 def postmanify_hub_dir(repo: Path | None = None) -> Path:
-    """
-    Implement ``postmanify_hub_dir`` for the surrounding module workflow.
-
-    Module context: ``'fy'-suites/postmanify/tools/repo_paths.py`` — keep this routine
-    aligned with sibling helpers in the same package.
-
-    Args:
-        repo: Repo for this call. Declared type: ``Path | None``. (positional or keyword)
-
-    Returns:
-        Value typed as ``Path`` for downstream use.
-
-    """
+    """Return the current Postmanify hub, with legacy nested fallback."""
     r = repo or repo_root()
-    return r / FY_SUITES_DIRNAME / "postmanify"
+    return _current_or_legacy_suite_dir(r, 'postmanify')

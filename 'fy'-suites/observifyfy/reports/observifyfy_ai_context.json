@@ -1,0 +1,190 @@
+{
+  "purpose": "AI-readable cross-suite operational context for fy-suite self-management.",
+  "managed_internal_roots": {
+    "fy_internal_root": ".",
+    "contractify_internal_adr_root": "docs/ADR",
+    "documentify_internal_docs_root": "docs",
+    "observifyfy_root": "observifyfy"
+  },
+  "suite_focus": [
+    {
+      "suite": "contractify",
+      "warnings": [
+        "missing_workflow"
+      ],
+      "run_count": 118,
+      "journal_count": 61
+    },
+    {
+      "suite": "documentify",
+      "warnings": [],
+      "run_count": 28,
+      "journal_count": 14
+    },
+    {
+      "suite": "docify",
+      "warnings": [
+        "missing_workflow"
+      ],
+      "run_count": 18,
+      "journal_count": 9
+    },
+    {
+      "suite": "despaghettify",
+      "warnings": [
+        "missing_workflow"
+      ],
+      "run_count": 24,
+      "journal_count": 6
+    },
+    {
+      "suite": "dockerify",
+      "warnings": [],
+      "run_count": 6,
+      "journal_count": 3
+    },
+    {
+      "suite": "testify",
+      "warnings": [],
+      "run_count": 18,
+      "journal_count": 9
+    },
+    {
+      "suite": "templatify",
+      "warnings": [
+        "missing_workflow"
+      ],
+      "run_count": 12,
+      "journal_count": 6
+    },
+    {
+      "suite": "usabilify",
+      "warnings": [
+        "missing_workflow"
+      ],
+      "run_count": 9,
+      "journal_count": 3
+    },
+    {
+      "suite": "securify",
+      "warnings": [
+        "missing_workflow"
+      ],
+      "run_count": 6,
+      "journal_count": 3
+    },
+    {
+      "suite": "observifyfy",
+      "warnings": [],
+      "run_count": 0,
+      "journal_count": 0
+    },
+    {
+      "suite": "mvpify",
+      "warnings": [
+        "missing_workflow"
+      ],
+      "run_count": 0,
+      "journal_count": 0
+    },
+    {
+      "suite": "metrify",
+      "warnings": [],
+      "run_count": 0,
+      "journal_count": 0
+    }
+  ],
+  "next_steps": [
+    {
+      "suite": "contractify",
+      "priority": 90,
+      "reason": "suite has no dedicated CI workflow",
+      "recommended_action": "Add or repair a workflow for contractify."
+    },
+    {
+      "suite": "docify",
+      "priority": 90,
+      "reason": "suite has no dedicated CI workflow",
+      "recommended_action": "Add or repair a workflow for docify."
+    },
+    {
+      "suite": "despaghettify",
+      "priority": 90,
+      "reason": "suite has no dedicated CI workflow",
+      "recommended_action": "Add or repair a workflow for despaghettify."
+    },
+    {
+      "suite": "templatify",
+      "priority": 90,
+      "reason": "suite has no dedicated CI workflow",
+      "recommended_action": "Add or repair a workflow for templatify."
+    },
+    {
+      "suite": "usabilify",
+      "priority": 90,
+      "reason": "suite has no dedicated CI workflow",
+      "recommended_action": "Add or repair a workflow for usabilify."
+    },
+    {
+      "suite": "securify",
+      "priority": 90,
+      "reason": "suite has no dedicated CI workflow",
+      "recommended_action": "Add or repair a workflow for securify."
+    },
+    {
+      "suite": "mvpify",
+      "priority": 90,
+      "reason": "suite has no dedicated CI workflow",
+      "recommended_action": "Add or repair a workflow for mvpify."
+    },
+    {
+      "suite": "mvpify",
+      "priority": 88,
+      "reason": "imported MVP docs should remain mirrored under docs/MVPs/imports and tracked through observifyfy",
+      "recommended_action": "Keep mvpify imports normalized and mirrored so temporary implementation folders can be removed safely."
+    },
+    {
+      "suite": "contractify",
+      "priority": 85,
+      "reason": "internal ADR root should be actively governed under docs/ADR",
+      "recommended_action": "Keep contractify's internal ADR management discoverable through observifyfy and align references to docs/ADR."
+    },
+    {
+      "suite": "documentify",
+      "priority": 85,
+      "reason": "internal docs root should be actively governed under docs",
+      "recommended_action": "Keep documentify's internal docs management discoverable through observifyfy and align references to docs."
+    },
+    {
+      "suite": "metrify",
+      "priority": 84,
+      "reason": "AI usage should remain measured and understandable across suites",
+      "recommended_action": "Keep metrify ledgers and reports fresh so AI spend and value stay visible."
+    },
+    {
+      "suite": "observifyfy",
+      "priority": 70,
+      "reason": "suite has no recorded runs",
+      "recommended_action": "Run observifyfy at least once and capture evidence."
+    }
+  ],
+  "search_hints": [
+    "suite health",
+    "freshness",
+    "cross-suite conflicts",
+    "contractify internal ADR management",
+    "documentify internal docs management",
+    "status pages",
+    "run journals",
+    "mvpify imported MVP mirroring",
+    "metrify cost and usage summaries"
+  ],
+  "memory_contract": {
+    "store": "observifyfy tracks suite operations memory, not project-facing truth",
+    "refresh_rule": "prefer latest run evidence and internal docs over stale summaries",
+    "guardrails": [
+      "do_not_overwrite_project_truth",
+      "do_not_flatten_contractify_or_testify_findings"
+    ]
+  }
+}

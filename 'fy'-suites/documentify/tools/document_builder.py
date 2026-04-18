@@ -57,43 +57,112 @@ def collect_repository_context(root: Path) -> dict[str, Any]:
 
 
 def _simple_overview(context: dict[str, Any]) -> str:
-    services = ', '.join(context['services'])
+    services = ', '.join(context['services']) if context['services'] else 'no primary service roots detected yet'
+    graph_nodes = []
+    for service in context['services']:
+        node = service.replace('-', '_').replace(' ', '_')
+        graph_nodes.append(f'    core --> {node}["{service}"]')
+    if not graph_nodes:
+        graph_nodes.append('    core --> pending["repository surfaces"]')
+
     lines = [
-        '# World of Shadows — simple overview',
+        '# fy-suites — What, Why, and How',
         '',
-        'World of Shadows is a multi-service narrative platform.',
-        f'The repository currently exposes these major service/package areas: **{services}**.',
+        '## What is it?',
         '',
-        '## What starts the local stack',
+        'The **fy-suites** are a family of internal tools that work together inside one shared workspace.',
         '',
-        '- `docker-up.py` is the operator-friendly entry path for Docker Compose.',
-        '- `docker-compose.yml` declares the main local stack services.',
-        '- `tests/run_tests.py` is the canonical multi-suite test runner.',
+        'They are not one single tool. They are a **tool system**.',
         '',
-        '## Where to begin reading',
+        'Each suite has its own responsibility, but all suites share the same platform foundations.',
+        '',
+        f'The repository currently exposes these major service or package areas: **{services}**.',
+        '',
+        '```mermaid',
+        'flowchart TD',
+        '    core["fy-suites"]',
+        *graph_nodes,
+        '```',
+        '',
+        '## Why does it exist?',
+        '',
+        'The fy-suites exist because complex work becomes hard to manage when everything is mixed together.',
+        '',
+        'Without a system like this, useful information spreads across many places, documentation drifts, tests lose context, and support tools start contaminating the real target work.',
+        '',
+        'The fy-suites solve this by creating one internal system with clear lanes, shared rules, and readable outputs.',
+        '',
+        'They exist to make work:',
+        '',
+        '- more organized',
+        '- more explainable',
+        '- more governable',
+        '- more reusable',
+        '- safer to review',
+        '- easier to continue later',
+        '',
+        '## How does it work?',
+        '',
+        'At a simple level, the fy-suites work like this:',
+        '',
+        '1. there is one shared platform',
+        '2. each suite has its own job',
+        '3. the suites share a common lifecycle',
+        '4. work stays internal before it becomes outward',
+        '5. results are tracked, explained, and turned into next steps',
+        '',
+        '### Shared platform',
+        '',
+        'The shared platform provides workspace handling, evidence tracking, run tracking, context building, model routing, status pages, release readiness, and production readiness.',
+        '',
+        '### Common lifecycle',
+        '',
+        'Most suites follow common actions such as initialize, inspect, audit, explain, prepare context, compare runs, prepare fixes, self-audit, and readiness checks.',
+        '',
+        '### Start reading here',
         '',
     ]
     lines.extend(f'- `{item}`' for item in context['key_docs'])
-    return "\n".join(lines) + "\n"
+    lines.extend([
+        '',
+        '## Quick recap',
+        '',
+        '### What?',
+        'A modular family of internal suites for governed support work.',
+        '',
+        '### Why?',
+        'To reduce chaos, improve clarity, keep work explainable, and avoid uncontrolled changes.',
+        '',
+        '### How?',
+        'Through a shared platform, specialized suites, a common lifecycle, internal tracking, and controlled outward action.',
+    ])
+    return '\n'.join(lines) + '\n'
 
 
 def _technical_reference(context: dict[str, Any]) -> str:
+    services = context['services'] or ['(none detected)']
     lines = [
         '# World of Shadows — technical reference',
         '',
         '## Repository service map',
         '',
+        '```mermaid',
+        'flowchart LR',
+        '    repo["repository"]',
     ]
-    lines.extend(f'- `{svc}/`' for svc in context['services'])
+    for svc in services:
+        node = svc.replace('-', '_').replace(' ', '_').replace('(', '').replace(')', '')
+        lines.append(f'    repo --> {node}["{svc}"]')
     lines.extend([
+        '```',
         '',
         '## Documentation domains',
         '',
-        ', '.join(context['docs_dirs']),
+        ', '.join(context['docs_dirs']) if context['docs_dirs'] else '(none detected)',
         '',
         '## Automation and gates',
         '',
-        ', '.join(context['workflows']),
+        ', '.join(context['workflows']) if context['workflows'] else '(no workflows detected)',
         '',
         '## Canonical operational entrypoints',
         '',
@@ -102,21 +171,35 @@ def _technical_reference(context: dict[str, Any]) -> str:
         '- `tests/run_tests.py` — multi-suite test runner',
         '- `.github/workflows/` — GitHub Actions CI gates',
     ])
-    return "\n".join(lines) + "\n"
+    return '\n'.join(lines) + '\n'
 
 
 def _role_doc(role: str, root: Path) -> str:
     info = ROLE_MAP[role]
+    existing_paths = _existing(list(info['paths']), root)
     lines = [
         f'# {role.capitalize()} documentation',
         '',
         info['summary'],
         '',
-        '## Relevant repository paths',
+        '## What this role needs',
+        '',
+        f'This role mainly needs the parts of the repository that best support **{role}** work without forcing a full-system deep dive.',
+        '',
+        '## Recommended reading order',
         '',
     ]
-    lines.extend(f'- `{p}`' for p in _existing(list(info['paths']), root))
-    return "\n".join(lines) + "\n"
+    if existing_paths:
+        lines.extend(f'- `{p}`' for p in existing_paths)
+    else:
+        lines.append('- no matching paths detected in the current repository snapshot')
+    lines.extend([
+        '',
+        '## How to use this role doc',
+        '',
+        'Start with the first relevant path, use the simple overview to orient yourself, then move into technical or suite-specific material only when you need more detail.',
+    ])
+    return '\n'.join(lines) + '\n'
 
 
 def generate_documentation(root: Path, out_dir: Path) -> dict[str, Any]:
@@ -143,6 +226,8 @@ def generate_documentation(root: Path, out_dir: Path) -> dict[str, Any]:
         'docs_dirs': context['docs_dirs'],
         'workflows': context['workflows'],
         'generated_files': generated,
+        'simple_style': 'what-why-how',
+        'uses_mermaid': True,
     }
 
 
@@ -150,11 +235,13 @@ def render_markdown(summary: dict[str, Any], out_dir: Path, root: Path) -> str:
     lines = ['# Documentify generation report', '', '## Summary', '']
     lines.append(f"- **generated_count**: `{summary['generated_count']}`")
     lines.append(f"- **output_root**: `{out_dir.relative_to(root).as_posix()}`")
+    lines.append(f"- **simple_style**: `{summary.get('simple_style', 'default')}`")
+    lines.append(f"- **uses_mermaid**: `{str(summary.get('uses_mermaid', False)).lower()}`")
     lines.extend(['', '## Services', ''])
     lines.extend(f'- `{svc}`' for svc in summary.get('services', []))
     lines.extend(['', '## Generated files', ''])
     lines.extend(f'- `{path}`' for path in summary.get('generated_files', []))
-    return "\n".join(lines) + "\n"
+    return '\n'.join(lines) + '\n'
 
 
 def write_generation_bundle(root: Path, out_dir_rel: str, json_rel: str, md_rel: str) -> dict[str, Any]:

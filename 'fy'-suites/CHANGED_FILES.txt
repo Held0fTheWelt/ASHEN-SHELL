@@ -1,0 +1,11 @@
+'fy'-suites/documentify/tools/document_builder.py
+'fy'-suites/documentify/README.md
+'fy'-suites/documentify/tools/tests/test_document_builder.py
+'fy'-suites/docify/tools/python_inline_explain.py
+'fy'-suites/docify/tools/hub_cli.py
+'fy'-suites/docify/README.md
+'fy'-suites/docify/tools/tests/test_python_inline_explain.py
+'fy'-suites/docify/tools/tests/test_hub_cli.py
+PATCH_NOTES.md
+'fy'-suites/docify/examples/base_adapter_docified_example.py
+'fy'-suites/APPLY_PATCH.md

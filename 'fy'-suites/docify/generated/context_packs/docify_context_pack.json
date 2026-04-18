@@ -1,0 +1,285 @@
+{
+  "pack_id": "aa7e52c3a6bd4a988b1d15e83aef436a",
+  "query": "docstring",
+  "suite_scope": [
+    "docify"
+  ],
+  "audience": "developer",
+  "summary": "Found 8 indexed evidence hits for query \"docstring\" across suites ['docify']. Strongest source: generated/context_packs/docify_context_pack.json#chunk-1. Use the top-ranked items first and treat lower-confidence hits as hints.",
+  "artifact_paths": [
+    "generated/context_packs/docify_context_pack.json#chunk-1",
+    "generated/context_packs/docify_context_pack.md#chunk-1",
+    "generated/context_packs/docify_context_pack.md#chunk-3",
+    "superpowers/docify-orchestrate/SKILL.md#chunk-1",
+    "superpowers/docify-synthesize/SKILL.md#chunk-1",
+    "superpowers/docify-synthesize/SKILL.md#chunk-2",
+    "tools/python_docstring_synthesize.py#chunk-1",
+    "tools/strip_ai_stack_docstring_placeholders.py#chunk-1"
+  ],
+  "related_suites": [],
+  "evidence_confidence": "high",
+  "priorities": [
+    "Start with generated/context_packs/docify_context_pack.json#chunk-1 because it currently has the strongest combined signal.",
+    "Compare it with superpowers/docify-synthesize/SKILL.md#chunk-1 before deciding on outward action."
+  ],
+  "next_steps": [
+    "Open generated/context_packs/docify_context_pack.json#chunk-1 first.",
+    "Use the top two hits to validate the next code or governance action."
+  ],
+  "uncertainty": [
+    "top_hits_close_together"
+  ],
+  "cross_suite": {
+    "suite": "docify",
+    "related_suites": [
+      "documentify",
+      "contractify",
+      "despaghettify",
+      "securify"
+    ],
+    "signal_count": 4,
+    "signals": [
+      {
+        "suite": "securify",
+        "score": 5,
+        "latest_run": {
+          "run_id": "securify-30f5e8f91d24",
+          "suite": "securify",
+          "mode": "audit",
+          "started_at": "2026-04-17T23:50:33.489010+00:00",
+          "ended_at": "2026-04-17T23:50:33.499075+00:00",
+          "workspace_root": "/tmp/stage16_build/'fy'-suites",
+          "target_repo_root": "/tmp/pytest-of-root/pytest-12/test_generic_ai_suite_cli_secu0/target_repo",
+          "target_repo_id": "target-repo-0837a03c",
+          "status": "ok"
+        },
+        "status_summary": "Securify found security follow-up work: no discoverable security documentation, secret-related ignore rules are missing. Start with the most direct exposure and the missing guidance surfaces.",
+        "next_steps": [
+          "Use the strongest cross-suite signal as a second opinion before acting in isolation."
+        ],
+        "status_ok": true,
+        "relation_reason": "docify_related_signal"
+      },
+      {
+        "suite": "documentify",
+        "score": 5,
+        "latest_run": {
+          "run_id": "documentify-651377c26852",
+          "suite": "documentify",
+          "mode": "audit",
+          "started_at": "2026-04-17T23:50:33.523252+00:00",
+          "ended_at": "2026-04-17T23:50:33.544700+00:00",
+          "workspace_root": "/tmp/stage16_build/'fy'-suites",
+          "target_repo_root": "/tmp/pytest-of-root/pytest-12/test_ai_suite_cli_markdown_and0/target_repo",
+          "target_repo_id": "target-repo-48f64b2d",
+          "status": "ok"
+        },
+        "status_summary": "Documentify generated the current documentation tracks and status pages.",
+        "next_steps": [
+          "Read the newly generated documentation and decide which tracks should be exported outward.",
+          "Open the generated output directory and review the new files in simple language first.",
+          "Use the strongest cross-suite signal as a second opinion before acting in isolation."
+        ],
+        "status_ok": true,
+        "relation_reason": "docify_related_signal"
+      },
+      {
+        "suite": "despaghettify",
+        "score": 5,
+        "latest_run": {
+          "run_id": "despaghettify-81ce30c83f1d",
+          "suite": "despaghettify",
+          "mode": "audit",
+          "started_at": "2026-04-17T23:48:58.222644+00:00",
+          "ended_at": "2026-04-17T23:48:58.233236+00:00",
+          "workspace_root": "/tmp/stage16_build/'fy'-suites",
+          "target_repo_root": "/tmp/pytest-of-root/pytest-11/test_despaghettify_generates_w0/target_repo",
+          "target_repo_id": "target-repo-4cdb836a",
+          "status": "ok"
+        },
+        "status_summary": "",
+        "next_steps": [
+          "Use the strongest cross-suite signal as a second opinion before acting in isolation."
+        ],
+        "status_ok": true,
+        "relation_reason": "docify_related_signal"
+      },
+      {
+        "suite": "contractify",
+        "score": 5,
+        "latest_run": {
+          "run_id": "contractify-8d69e90c9333",
+          "suite": "contractify",
+          "mode": "audit",
+          "started_at": "2026-04-17T23:50:34.052829+00:00",
+          "ended_at": "2026-04-17T23:50:34.088532+00:00",
+          "workspace_root": "/tmp/stage16_build/'fy'-suites",
+          "target_repo_root": "/tmp/pytest-of-root/pytest-12/test_export_schemas_and_doctor0/target_repo",
+          "target_repo_id": "target-repo-82c4825e",
+          "status": "ok"
+        },
+        "status_summary": "",
+        "next_steps": [
+          "Review the 4 finding(s) and decide which one should be fixed first."
+        ],
+        "status_ok": true,
+        "relation_reason": "docify_related_signal"
+      }
+    ],
+    "summary": "The strongest cross-suite signal for docify currently comes from securify. Use it to connect the latest result with nearby suite work instead of treating the suite in isolation."
+  },
+  "hits": [
+    {
+      "chunk_id": "69d180a3e0214c8bac7ae0cdd9e519f3",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.3302,
+      "score_hybrid": 0.7462,
+      "source_path": "generated/context_packs/docify_context_pack.json#chunk-1",
+      "excerpt": "{   \"pack_id\": \"9b58770d7c30475ab95bba74e0a1ee49\",   \"query\": \"docstring\",   \"suite_scope\": [     \"docify\"   ],   \"audience\": \"developer\",   \"summary\": \"Found 8 indexed evidence hits for query \\\"docstring\\\" across suites ['docify']. Strongest source: generated/context_packs/docif",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.8914,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.0,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring; recently indexed evidence"
+    },
+    {
+      "chunk_id": "6c64beb35a3848689649914a6e1d1f77",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.2794,
+      "score_hybrid": 0.7458,
+      "source_path": "superpowers/docify-synthesize/SKILL.md#chunk-1",
+      "excerpt": "--- name: docify-synthesize description: Routes agents to docify/python_docstring_synthesize.py — PEP 8 # comments for a range (--apply) or Google-style docstring draft for one --function (--emit-google-docstring, --apply-docstring). Triggers on docify synthesize, explain source ",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.9729,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.0,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring; recently indexed evidence"
+    },
+    {
+      "chunk_id": "ea442b9cf5b6407cb39ed1b346d8c550",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.1952,
+      "score_hybrid": 0.7227,
+      "source_path": "superpowers/docify-orchestrate/SKILL.md#chunk-1",
+      "excerpt": "--- name: docify-orchestrate description: Routes agents to Docify documentation tasks — governance check/solve tracks, Python docstring audit, drift hints, inline source explain (PEP 8 comments), slice-based fixes, JSON reports. Triggers on docify, docify orchestrate, documentati",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.9593,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.0,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring; recently indexed evidence"
+    },
+    {
+      "chunk_id": "8d47ee2156374ffd92290a7918c4d4da",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.1796,
+      "score_hybrid": 0.7215,
+      "source_path": "superpowers/docify-synthesize/SKILL.md#chunk-2",
+      "excerpt": "**Docstring backlog (measurement + manual fixes):** [`documentation-audit-task.md`](../../documentation-audit-task.md) and ``'fy'-suites/docify/tools/python_documentation_audit.py``.  Hub orientation: [`README.md`](../../README.md).",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.9774,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.0,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring; recently indexed evidence"
+    },
+    {
+      "chunk_id": "467e72dfa2664bcfa3e134947f13b618",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.1655,
+      "score_hybrid": 0.7058,
+      "source_path": "generated/context_packs/docify_context_pack.md#chunk-1",
+      "excerpt": "# Context Pack — docify  Query: `docstring` Audience: `developer` Evidence confidence: `high`  Found 8 indexed evidence hits for query \"docstring\" across suites ['docify']. Strongest source: generated/context_packs/docify_context_pack.json#chunk-1. Use the top-ranked items first ",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.8959,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.0,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring; recently indexed evidence"
+    },
+    {
+      "chunk_id": "22768dfd3a034143b4d0afd2d921f261",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.056,
+      "score_hybrid": 0.6797,
+      "source_path": "generated/context_packs/docify_context_pack.md#chunk-3",
+      "excerpt": "- `securify`: Securify found security follow-up work: no discoverable security documentation, secret-related ignore rules are missing. Start with the most direct exposure and the missing guidance surfaces.   - next: Use the strongest cross-suite signal as a second opinion before ",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.905,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.0,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring; recently indexed evidence"
+    },
+    {
+      "chunk_id": "580bb1365fc547e480f1606ba5f84d90",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.2973,
+      "score_hybrid": 0.6605,
+      "source_path": "tools/python_docstring_synthesize.py#chunk-1",
+      "excerpt": "#!/usr/bin/env python3 \"\"\"Docify hub CLI — PEP 8 inline ``#`` comments or a Google-style function docstring.  Two modes:  1. **Block comments** — for a 1-based line range (or ``--function`` body span),    insert indented ``#`` lines above intersecting statements. Prose wraps to  ",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.3077,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.2,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring"
+    },
+    {
+      "chunk_id": "e451d6f0d1f64bf28403e14e453572ed",
+      "suite": "docify",
+      "score_lexical": 1.0,
+      "score_semantic": 0.0714,
+      "score_hybrid": 0.6502,
+      "source_path": "tools/strip_ai_stack_docstring_placeholders.py#chunk-1",
+      "excerpt": "#!/usr/bin/env python3 \"\"\"Remove bulk-docstring placeholder prose from ``ai_stack`` (excluding ``tests/``).  Rewrites only string literals that are the leading docstring of ``Module``, ``ClassDef``, ``FunctionDef``, or ``AsyncFunctionDef`` nodes. Does **not** change ``# TODO`` co",
+      "scope": "suite",
+      "target_repo_id": null,
+      "score_recency": 0.6154,
+      "score_scope": 0.8,
+      "score_suite_affinity": 0.2,
+      "matched_terms": [
+        "docstring"
+      ],
+      "confidence": "high",
+      "rationale": "matched terms: docstring"
+    }
+  ]
+}

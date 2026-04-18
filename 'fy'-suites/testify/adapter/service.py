@@ -5,6 +5,7 @@ from typing import Any
 
 from fy_platform.ai.adr_reflection import compute_reflection_status, discover_consolidated_adrs
 from fy_platform.ai.base_adapter import BaseSuiteAdapter
+from fy_platform.ai.decision_policy import assess_solution_decision
 from testify.tools.test_governance import audit_test_governance, render_markdown
 
 
@@ -70,6 +71,15 @@ class TestifyAdapter(BaseSuiteAdapter):
                 md += f"- unmapped ADR ids: `{reflection['unmapped_adr_ids']}`\n"
             paths = self._write_payload_bundle(run_id=run_id, run_dir=run_dir, payload=payload, summary_md=md, role_prefix='testify_audit')
             failures = len(payload.get('findings', [])) if isinstance(payload, dict) else 0
+            decision = assess_solution_decision(
+                explicit_instruction=False,
+                candidate_count=max(reflection['consolidated_adr_count'] - len(reflection['unmapped_adr_ids']), 0),
+                top_score=0.9 if not reflection['unmapped_adr_ids'] and reflection['alignment_test_present'] else 0.55 if reflection['weakly_mapped_adr_ids'] else 0.0,
+                second_score=0.4 if reflection['weakly_mapped_adr_ids'] else 0.0,
+                high_risk=bool(reflection['consolidated_adr_count']),
+                requires_complete_mapping=True,
+                missing_required_mapping=bool(reflection['unmapped_adr_ids']),
+            )
             self._finish_run(run_id, 'ok', {'finding_count': failures, 'target_repo_id': tgt_id, 'consolidated_adr_count': reflection['consolidated_adr_count']})
             return {
                 'ok': True,
@@ -77,6 +87,13 @@ class TestifyAdapter(BaseSuiteAdapter):
                 'run_id': run_id,
                 'finding_count': failures,
                 'adr_reflection': reflection,
+                'decision': {
+                    'lane': decision.lane,
+                    'recommended_action': decision.recommended_action,
+                    'uncertainty_flags': decision.uncertainty_flags,
+                },
+                'uncertainty': list(decision.uncertainty_flags),
+                'summary': 'Testify now checks not only whether tests run, but also whether consolidated ADRs are reflected in named tests and mappings.',
                 **paths,
             }
         except Exception as exc:

@@ -1,0 +1,26 @@
+{
+  "suite": "brokenify",
+  "command": "audit",
+  "ok": false,
+  "latest_run": null,
+  "summary": "",
+  "decision": {},
+  "decision_summary": "",
+  "next_steps": [
+    "Read the error details and rerun the command after the blocking issue is fixed."
+  ],
+  "warnings": [],
+  "governance": {},
+  "cross_suite": {},
+  "key_signals": {
+    "finding_count": 0,
+    "doc_count": 0,
+    "track_count": 0,
+    "template_count": 0,
+    "drift_count": 0,
+    "local_spike_count": 0,
+    "evidence_confidence": "",
+    "signal_count": 0
+  },
+  "uncertainty": []
+}

@@ -26,3 +26,6 @@ suites:
       - src
   contractify:
     openapi: docs/api/openapi.yaml
+  templatify:
+    template_roots:
+      - templatify/templates

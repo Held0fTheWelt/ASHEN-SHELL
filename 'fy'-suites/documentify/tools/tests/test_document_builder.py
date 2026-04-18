@@ -11,7 +11,12 @@ def test_generate_documentation_materializes_expected_views() -> None:
     out_dir = root / "'fy'-suites" / 'documentify' / 'generated'
     summary = generate_documentation(root, out_dir)
     assert summary['generated_count'] >= 7
-    assert (out_dir / 'simple' / 'PLATFORM_OVERVIEW.md').is_file()
+    assert summary['simple_style'] == 'what-why-how'
+    assert summary['uses_mermaid'] is True
+    text = (out_dir / 'simple' / 'PLATFORM_OVERVIEW.md').read_text(encoding='utf-8')
+    assert '## What is it?' in text
+    assert '## Why does it exist?' in text
+    assert '```mermaid' in text
     assert (out_dir / 'roles' / 'developer' / 'README.md').is_file()
 
 
@@ -25,6 +30,7 @@ def test_cli_writes_reports() -> None:
         assert code == 0
         data = json.loads(out.read_text(encoding='utf-8'))
         assert data['suite'] == 'documentify'
+        assert data['simple_style'] == 'what-why-how'
         assert md.is_file()
     finally:
         if out.is_file():

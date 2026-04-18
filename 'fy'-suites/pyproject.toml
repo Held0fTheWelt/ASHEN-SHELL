@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fy-suites-autark"
-version = "0.3.0"
-description = "Autark AI-augmented fy suite MVP"
+version = "1.3.0"
+description = "Autark AI-augmented fy suite platform with metrify and stronger docify/documentify quality"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["PyYAML>=6.0"]
@@ -27,13 +27,25 @@ dockerify = "dockerify.tools.hub_cli:main"
 dockerify-adapter = "dockerify.adapter.cli:main"
 postmanify = "postmanify.tools.cli:main"
 postmanify-adapter = "postmanify.adapter.cli:main"
+templatify = "templatify.tools.hub_cli:main"
+templatify-adapter = "templatify.adapter.cli:main"
+usabilify = "usabilify.tools.hub_cli:main"
+usabilify-adapter = "usabilify.adapter.cli:main"
+securify = "securify.tools.hub_cli:main"
+securify-adapter = "securify.adapter.cli:main"
+observifyfy = "observifyfy.tools.hub_cli:main"
+observifyfy-adapter = "observifyfy.adapter.cli:main"
+mvpify = "mvpify.tools.hub_cli:main"
+mvpify-adapter = "mvpify.adapter.cli:main"
+metrify = "metrify.tools.hub_cli:main"
+metrify-adapter = "metrify.adapter.cli:main"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["fy_platform*", "contractify*", "testify*", "documentify*", "docify*", "despaghettify*", "dockerify*", "postmanify*"]
+include = ["fy_platform*", "contractify*", "testify*", "documentify*", "docify*", "despaghettify*", "dockerify*", "postmanify*", "templatify*", "usabilify*", "securify*", "observifyfy*", "mvpify*", "metrify*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -42,8 +54,22 @@ testpaths = [
   "contractify/adapter/tests",
   "testify/adapter/tests",
   "documentify/adapter/tests",
+  "documentify/tools/tests",
   "docify/adapter/tests",
+  "docify/tools/tests",
   "despaghettify/adapter/tests",
   "dockerify/adapter/tests",
   "postmanify/adapter/tests",
+  "templatify/adapter/tests",
+  "templatify/tools/tests",
+  "usabilify/adapter/tests",
+  "usabilify/tools/tests",
+  "securify/adapter/tests",
+  "securify/tools/tests",
+  "observifyfy/adapter/tests",
+  "observifyfy/tools/tests",
+  "mvpify/adapter/tests",
+  "mvpify/tools/tests",
+  "metrify/adapter/tests",
+  "metrify/tools/tests",
 ]

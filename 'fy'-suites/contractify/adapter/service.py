@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from contractify.tools.audit_pipeline import build_discover_payload, run_audit
+from contractify.tools.importer import import_contractify_bundle
 from fy_platform.ai.adr_reflection import (
     discover_consolidated_adrs,
     find_candidate_test_matches,
@@ -12,6 +13,7 @@ from fy_platform.ai.adr_reflection import (
     render_contract_matrix_module,
 )
 from fy_platform.ai.base_adapter import BaseSuiteAdapter
+from fy_platform.ai.decision_policy import assess_solution_decision, summarize_assessments
 from fy_platform.ai.workspace import write_text
 
 
@@ -44,6 +46,41 @@ class ContractifyAdapter(BaseSuiteAdapter):
             self._finish_run(run_id, 'failed', {'error': str(exc)})
             return {'ok': False, 'suite': self.suite, 'run_id': run_id, 'error': str(exc)}
 
+    def _smart_required_paths(self, candidates: list[dict[str, Any]]) -> list[str]:
+        if not candidates:
+            return []
+        top = candidates[0]
+        second = candidates[1] if len(candidates) > 1 else None
+        if top['score'] >= 6 and (second is None or top['score'] >= second['score'] + 2):
+            return [top['path']]
+        if top['score'] >= 6 and second and second['score'] >= 4:
+            return [top['path'], second['path']]
+        return []
+
+    def _decision_for_adr(self, *, adr_id: str, candidates: list[dict[str, Any]], required_paths: list[str], explicit_instruction: bool) -> dict[str, Any]:
+        top = candidates[0]['score'] if candidates else 0.0
+        second = candidates[1]['score'] if len(candidates) > 1 else 0.0
+        missing_required = not required_paths
+        assessment = assess_solution_decision(
+            explicit_instruction=explicit_instruction,
+            candidate_count=len(candidates),
+            top_score=top,
+            second_score=second,
+            high_risk=True,
+            requires_complete_mapping=True,
+            missing_required_mapping=missing_required,
+        )
+        return {
+            'adr_id': adr_id,
+            'lane': assessment.lane,
+            'confidence': assessment.confidence,
+            'can_auto_apply': assessment.can_auto_apply,
+            'reason': assessment.reason,
+            'evidence_strength': assessment.evidence_strength,
+            'uncertainty_flags': assessment.uncertainty_flags,
+            'recommended_action': assessment.recommended_action,
+        }
+
     def _build_consolidation_plan(self, target: Path, audit_payload: dict[str, Any], instruction: str | None) -> dict[str, Any]:
         instruction_map = parse_instruction_mapping(instruction)
         consolidated_adrs = discover_consolidated_adrs(target)
@@ -51,12 +88,24 @@ class ContractifyAdapter(BaseSuiteAdapter):
         user_questions: list[str] = []
         auto_actions: list[str] = []
         unresolved: list[str] = []
+        smart_auto_resolved: list[str] = []
+        assessments = []
         for adr in consolidated_adrs:
             candidates = find_candidate_test_matches(target, adr)
-            required_paths = [item['path'] for item in candidates[:2]]
-            if adr['adr_id'] in instruction_map:
+            required_paths = self._smart_required_paths(candidates)
+            explicit_instruction = adr['adr_id'] in instruction_map
+            if explicit_instruction:
                 required_paths = instruction_map[adr['adr_id']]
-            if not required_paths:
+            elif required_paths:
+                smart_auto_resolved.append(adr['adr_id'])
+            decision = self._decision_for_adr(
+                adr_id=adr['adr_id'],
+                candidates=candidates,
+                required_paths=required_paths,
+                explicit_instruction=explicit_instruction,
+            )
+            assessments.append(decision)
+            if decision['lane'] in {'user_input_required', 'ambiguous', 'abstain'}:
                 unresolved.append(adr['adr_id'])
                 user_questions.append(
                     f"Provide explicit test path mappings for {adr['adr_id']} using --instruction 'ADR-xxxx=tests/test_file.py[,tests/test_other.py]'"
@@ -68,12 +117,23 @@ class ContractifyAdapter(BaseSuiteAdapter):
                 'keywords': adr['keywords'],
                 'candidate_test_matches': candidates,
                 'required_test_paths': required_paths,
+                'decision': decision,
             })
         if entries:
             auto_actions.extend([
                 'write tests/adr_contract_matrix.py',
                 'write tests/test_adr_consolidation_alignment.py',
             ])
+        rollup = summarize_assessments([assess_solution_decision(
+            explicit_instruction=item['reason'] == 'explicit_user_instruction',
+            candidate_count=1 if item['can_auto_apply'] else 2,
+            top_score=0.9 if item['lane'] == 'safe_to_apply' else 0.5 if item['lane'] == 'likely_but_review' else 0.0,
+            second_score=0.1,
+            high_risk=item['lane'] != 'safe_to_apply',
+            requires_complete_mapping=True,
+            missing_required_mapping=item['lane'] in {'user_input_required', 'abstain'},
+        ) for item in assessments])
+        weakest_lane = rollup['safest_overall_lane']
         plan = {
             'consolidated_adrs': entries,
             'stats': {
@@ -81,14 +141,22 @@ class ContractifyAdapter(BaseSuiteAdapter):
                 'drift_count': len(audit_payload.get('drift_findings', [])),
                 'conflict_count': len(audit_payload.get('conflicts', [])),
                 'unresolved_adr_count': len(unresolved),
+                'smart_auto_resolved_count': len(smart_auto_resolved),
             },
+            'smart_auto_resolved_adr_ids': smart_auto_resolved,
             'unresolved_adr_ids': unresolved,
             'requires_user_input': bool(unresolved),
             'user_questions': user_questions,
             'auto_actions': auto_actions,
             'instruction_used': instruction or '',
-            'can_apply_safe': bool(entries) and not unresolved,
-            'advisory_note': 'Contractify may safely apply generated ADR/test reflection scaffolding only when every consolidated ADR resolves to at least one explicit test path.',
+            'can_apply_safe': bool(entries) and all(item['decision']['can_auto_apply'] for item in entries),
+            'decision': {
+                'lane': weakest_lane,
+                'recommended_action': 'Apply automatically only when every consolidated ADR is classified as safe_to_apply. Otherwise stop and ask for review or input.',
+                'uncertainty_flags': sorted({flag for item in assessments for flag in item['uncertainty_flags']}),
+                'decision_counts': rollup['decision_counts'],
+            },
+            'advisory_note': 'Contractify may safely apply generated ADR/test reflection scaffolding only when every consolidated ADR resolves to at least one explicit or strongly auto-resolved test path.',
         }
         return plan
 
@@ -120,19 +188,24 @@ class ContractifyAdapter(BaseSuiteAdapter):
             plan['target_repo_root'] = str(target)
             plan['target_repo_id'] = tgt_id
             plan['generated_preview_dir'] = str(generated_dir.relative_to(self.root))
+            plan['uncertainty'] = list(plan['decision'].get('uncertainty_flags', []))
 
             md_lines = [
                 '# Contractify Consolidate',
                 '',
                 f'- target: `{target}`',
                 f"- consolidated ADRs: {plan['stats']['consolidated_adr_count']}",
+                f"- smart auto-resolved ADRs: {plan['stats']['smart_auto_resolved_count']}",
                 f"- unresolved ADRs: {plan['stats']['unresolved_adr_count']}",
                 f"- can_apply_safe: {plan['can_apply_safe']}",
+                f"- decision_lane: `{plan['decision']['lane']}`",
                 f"- applied_actions: {len(applied_actions)}",
                 '',
             ]
             for entry in plan['consolidated_adrs']:
-                md_lines.append(f"- {entry['adr_id']}: {entry['title']} -> {entry['required_test_paths'] or 'USER INPUT REQUIRED'}")
+                md_lines.append(
+                    f"- {entry['adr_id']}: {entry['title']} -> {entry['required_test_paths'] or 'USER INPUT REQUIRED'} | lane={entry['decision']['lane']}"
+                )
             if plan['user_questions']:
                 md_lines.extend(['', '## User input required', ''])
                 md_lines.extend(f'- {q}' for q in plan['user_questions'])
@@ -151,17 +224,22 @@ class ContractifyAdapter(BaseSuiteAdapter):
                     'unresolved_adr_count': plan['stats']['unresolved_adr_count'],
                     'applied_action_count': len(applied_actions),
                     'target_repo_id': tgt_id,
+                    'decision_lane': plan['decision']['lane'],
                 },
             )
             return {
                 'ok': True,
                 'suite': self.suite,
                 'run_id': run_id,
+                'summary': 'Contractify consolidate now classifies each ADR/test reflection decision before any outward action. It applies changes only in narrowly safe cases and otherwise stops with clear next steps.',
                 'consolidated_adr_count': plan['stats']['consolidated_adr_count'],
+                'smart_auto_resolved_count': plan['stats']['smart_auto_resolved_count'],
                 'requires_user_input': plan['requires_user_input'],
                 'can_apply_safe': plan['can_apply_safe'],
                 'applied_actions': applied_actions,
                 'user_questions': plan['user_questions'],
+                'decision': plan['decision'],
+                'uncertainty': plan['uncertainty'],
                 **paths,
             }
         except Exception as exc:
@@ -185,3 +263,64 @@ class ContractifyAdapter(BaseSuiteAdapter):
             'regenerate audit and compare against accepted run',
         ]
         return out
+
+
+    def import_bundle(self, bundle_path: str, *, legacy: bool = False) -> dict[str, Any]:
+        bundle = Path(bundle_path).resolve()
+        if not bundle.exists():
+            return self._attach_status_page(
+                'legacy-import' if legacy else 'import',
+                {
+                    'ok': False,
+                    'suite': self.suite,
+                    'reason': 'bundle_not_found',
+                    'bundle_path': bundle_path,
+                    'legacy': legacy,
+                },
+            )
+        run_id, run_dir, _ = self._start_run('legacy-import' if legacy else 'import', self.root)
+        try:
+            payload = import_contractify_bundle(bundle, self.root, legacy=legacy)
+            payload.update({
+                'suite': self.suite,
+                'run_id': run_id,
+                'legacy': legacy,
+                'summary': 'Contractify imported an external bundle into the current internal import lane without overwriting current workspace truth.',
+            })
+            summary_md = (
+                '# Contractify Import\n\n'
+                f"- bundle: `{bundle}`\n"
+                f"- legacy: `{str(legacy).lower()}`\n"
+                f"- artifact_count: {payload.get('artifact_count', 0)}\n"
+            )
+            paths = self._write_payload_bundle(
+                run_id=run_id,
+                run_dir=run_dir,
+                payload=payload,
+                summary_md=summary_md,
+                role_prefix='contractify_legacy_import' if legacy else 'contractify_import',
+            )
+            self._finish_run(
+                run_id,
+                'ok',
+                {'bundle_path': str(bundle), 'legacy': legacy, 'artifact_count': payload.get('artifact_count', 0)},
+            )
+            return {**payload, **paths}
+        except Exception as exc:
+            self._finish_run(run_id, 'failed', {'error': str(exc), 'bundle_path': str(bundle), 'legacy': legacy})
+            return self._attach_status_page(
+                'legacy-import' if legacy else 'import',
+                {
+                    'ok': False,
+                    'suite': self.suite,
+                    'run_id': run_id,
+                    'reason': 'import_failed',
+                    'bundle_path': str(bundle),
+                    'legacy': legacy,
+                    'error': str(exc),
+                    'recovery_hints': [
+                        'Check that the bundle contains a contractify suite or importable docs/reports surfaces.',
+                        'Use legacy-import for older or nested fy-suite bundles.',
+                    ],
+                },
+            )

@@ -1,0 +1,470 @@
+{
+  "schema_version": "fy.suite-catalog.v1",
+  "generated_at": "2026-04-17T23:50:33.917436+00:00",
+  "suite_count": 13,
+  "core_count": 11,
+  "optional_count": 2,
+  "suites": [
+    {
+      "suite": "contractify",
+      "category": "core",
+      "summary": "Discovers, audits, explains, and consolidates contracts and projections.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "consolidate",
+        "import",
+        "legacy-import"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [
+        "missing_optional:docs"
+      ],
+      "release_ready": true,
+      "latest_run_id": "contractify-1ec9655c48ae"
+    },
+    {
+      "suite": "despaghettify",
+      "category": "core",
+      "summary": "Detects structural complexity and opens work for local spikes and broader cleanup.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "wave-plan"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [
+        "missing_optional:docs"
+      ],
+      "release_ready": true,
+      "latest_run_id": "despaghettify-81ce30c83f1d"
+    },
+    {
+      "suite": "docify",
+      "category": "core",
+      "summary": "Improves code documentation, docstrings, and dense inline explanations for Python code.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "inline-explain"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [
+        "missing_optional:docs"
+      ],
+      "release_ready": true,
+      "latest_run_id": "docify-fa6f519f5449"
+    },
+    {
+      "suite": "dockerify",
+      "category": "optional",
+      "summary": "Provides repo-serving Docker and compose governance when the target repository needs it.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": false,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "stack-audit"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [
+        "missing_optional:docs"
+      ],
+      "release_ready": true,
+      "latest_run_id": "dockerify-0863bf9c14fd"
+    },
+    {
+      "suite": "documentify",
+      "category": "core",
+      "summary": "Builds and grows documentation tracks, including status and AI-readable exports.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "generate-track"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [
+        "missing_optional:docs"
+      ],
+      "release_ready": true,
+      "latest_run_id": "documentify-651377c26852"
+    },
+    {
+      "suite": "metrify",
+      "category": "core",
+      "summary": "Measures AI usage, cost, model routing, and output volume across fy suites and summarizes the spending/utility picture.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": false,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "pricing",
+        "record",
+        "ingest",
+        "report",
+        "ai-pack",
+        "full"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [],
+      "release_ready": false,
+      "latest_run_id": null
+    },
+    {
+      "suite": "mvpify",
+      "category": "core",
+      "summary": "Imports prepared MVP bundles, mirrors their docs into the governed workspace, and orchestrates next-step implementation across suites.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": false,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "inspect",
+        "plan",
+        "ai-pack",
+        "full"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [],
+      "release_ready": false,
+      "latest_run_id": null
+    },
+    {
+      "suite": "observifyfy",
+      "category": "core",
+      "summary": "Tracks internal fy-suite operations, internal docs roots, and non-contaminating cross-suite observability.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": false,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "inspect",
+        "audit",
+        "ai-pack",
+        "full"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [],
+      "release_ready": false,
+      "latest_run_id": null
+    },
+    {
+      "suite": "postmanify",
+      "category": "optional",
+      "summary": "Refreshes Postman surfaces from API evidence for repositories that use them.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": false,
+      "has_status": false,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "sync"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [
+        "missing_optional:docs"
+      ],
+      "release_ready": true,
+      "latest_run_id": "postmanify-681bfce1a54e"
+    },
+    {
+      "suite": "securify",
+      "category": "core",
+      "summary": "Provides the security lane for scans, secret-risk review, and security-oriented guidance.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "scan",
+        "evaluate",
+        "autofix"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [],
+      "release_ready": true,
+      "latest_run_id": "securify-30f5e8f91d24"
+    },
+    {
+      "suite": "templatify",
+      "category": "core",
+      "summary": "Owns and validates reusable templates for reports, docs, context packs, and suite outputs.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "list-templates",
+        "validate",
+        "render",
+        "check-drift"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [],
+      "release_ready": true,
+      "latest_run_id": "templatify-d2ad9702f123"
+    },
+    {
+      "suite": "testify",
+      "category": "core",
+      "summary": "Audits test governance and verifies ADR-to-test reflection, not just passing behavior.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [
+        "missing_optional:docs"
+      ],
+      "release_ready": true,
+      "latest_run_id": "testify-3ad0a3580500"
+    },
+    {
+      "suite": "usabilify",
+      "category": "core",
+      "summary": "Surfaces human-usable status, UX guidance, and understandable next-step outputs.",
+      "has_adapter": true,
+      "has_tools": true,
+      "has_docs": true,
+      "has_templates": true,
+      "has_status": true,
+      "lifecycle_commands": [
+        "init",
+        "inspect",
+        "audit",
+        "explain",
+        "prepare-context-pack",
+        "compare-runs",
+        "clean",
+        "reset",
+        "triage",
+        "prepare-fix",
+        "self-audit",
+        "release-readiness",
+        "production-readiness"
+      ],
+      "native_commands": [
+        "inspect",
+        "evaluate",
+        "full"
+      ],
+      "quality_ok": true,
+      "quality_missing": [],
+      "quality_warnings": [],
+      "release_ready": true,
+      "latest_run_id": "usabilify-88a8e49ace13"
+    }
+  ]
+}

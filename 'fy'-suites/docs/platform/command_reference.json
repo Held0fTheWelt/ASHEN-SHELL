@@ -1,0 +1,96 @@
+{
+  "schema_version": "fy.command-reference.v1",
+  "generated_at": "2026-04-17T23:50:35.175619+00:00",
+  "command_envelope_current": "fy.command-envelope.v4",
+  "command_envelope_compatibility": {
+    "current": "fy.command-envelope.v4",
+    "supported_read_versions": [
+      "fy.command-envelope.v3",
+      "fy.command-envelope.v4"
+    ],
+    "supported_write_versions": [
+      "fy.command-envelope.v4"
+    ]
+  },
+  "manifest_compatibility": {
+    "current_manifest_version": 1,
+    "supported_manifest_versions": [
+      1
+    ],
+    "compat_mode": "autark-outbound"
+  },
+  "generic_lifecycle_commands": [
+    "init",
+    "inspect",
+    "audit",
+    "explain",
+    "prepare-context-pack",
+    "compare-runs",
+    "clean",
+    "reset",
+    "triage",
+    "prepare-fix",
+    "self-audit",
+    "release-readiness",
+    "production-readiness"
+  ],
+  "suite_native_commands": {
+    "contractify": [
+      "consolidate",
+      "import",
+      "legacy-import"
+    ],
+    "despaghettify": [
+      "wave-plan"
+    ],
+    "docify": [
+      "inline-explain"
+    ],
+    "dockerify": [
+      "stack-audit"
+    ],
+    "documentify": [
+      "generate-track"
+    ],
+    "metrify": [
+      "pricing",
+      "record",
+      "ingest",
+      "report",
+      "ai-pack",
+      "full"
+    ],
+    "mvpify": [
+      "inspect",
+      "plan",
+      "ai-pack",
+      "full"
+    ],
+    "observifyfy": [
+      "inspect",
+      "audit",
+      "ai-pack",
+      "full"
+    ],
+    "postmanify": [
+      "sync"
+    ],
+    "securify": [
+      "scan",
+      "evaluate",
+      "autofix"
+    ],
+    "templatify": [
+      "list-templates",
+      "validate",
+      "render",
+      "check-drift"
+    ],
+    "testify": [],
+    "usabilify": [
+      "inspect",
+      "evaluate",
+      "full"
+    ]
+  }
+}
