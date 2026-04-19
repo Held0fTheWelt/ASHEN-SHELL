@@ -1,3 +1,0 @@
-run_id,suite,cost_usd,event_count,latest_timestamp_utc,models
-demo-run-2,documentify,0.2425,1,2026-04-18T01:00:00+00:00,gpt-5.4
-demo-run-1,contractify,0.029475,1,2026-04-18T00:00:00+00:00,gpt-5.4-mini
