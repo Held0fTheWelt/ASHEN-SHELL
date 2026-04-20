@@ -1,5 +1,7 @@
 from __future__ import annotations
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+# UTC compatibility for Python 3.10
+UTC = timezone.utc
 
 from .enums import AssertionMode, AuthorityLevel, DomainType, ReviewStatus
 from .records import MemoryEntry, PartitionKey, TemporalValidityWindow

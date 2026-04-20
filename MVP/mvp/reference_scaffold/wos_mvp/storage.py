@@ -8,7 +8,9 @@ import threading
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+# UTC compatibility for Python 3.10
+UTC = timezone.utc
 from pathlib import Path
 from typing import Any, Iterator
 

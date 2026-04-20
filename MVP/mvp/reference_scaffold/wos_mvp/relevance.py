@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+# UTC compatibility for Python 3.10
+UTC = timezone.utc
 from math import exp
 
 from .enums import ReviewStatus
