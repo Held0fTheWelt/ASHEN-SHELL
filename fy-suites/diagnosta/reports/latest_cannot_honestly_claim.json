@@ -1,7 +1,0 @@
-{
-  "schema_version": "fy.cannot-honestly-claim.v1",
-  "blocked_claims": [
-    "global_closure"
-  ],
-  "summary": "Blocked claims remain."
-}

@@ -1,9 +1,0 @@
-{
-  "schema_version": "fy.sufficiency-verdict.v1",
-  "verdict": "not_sufficient",
-  "reason": "Readiness is blocked by remaining blocker-class findings.",
-  "supporting_artifact_paths": [
-    "contractify/reports/audit_latest.json",
-    "testify/reports/testify_audit.json"
-  ]
-}
