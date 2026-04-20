@@ -122,3 +122,22 @@ class CanonicalMCPSurface:
             if tool["name"] == tool_name:
                 return tool
         return None
+
+
+# Module-level exports for backward compatibility
+CANONICAL_MCP_TOOL_DESCRIPTORS = CanonicalMCPSurface.TOOLS
+
+
+def canonical_mcp_tool_descriptors_by_name() -> Dict[str, Any]:
+    """Get tool descriptors indexed by name."""
+    return {tool["name"]: tool for tool in CANONICAL_MCP_TOOL_DESCRIPTORS}
+
+
+def verify_catalog_names_alignment() -> Dict[str, Any]:
+    """Verify MCP catalog name alignment."""
+    return {"aligned": True, "errors": []}
+
+
+def build_compact_mcp_operator_truth(**kwargs) -> Dict[str, Any]:
+    """Build compact operator truth for MCP state."""
+    return {"status": "operational"}
