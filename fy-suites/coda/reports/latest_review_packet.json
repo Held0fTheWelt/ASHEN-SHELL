@@ -1,0 +1,50 @@
+{
+  "schema_version": "fy.review-packet.v1",
+  "status": "bounded_partial_closure",
+  "sections": [
+    {
+      "title": "Readiness state",
+      "summary": "Readiness is blocked by remaining blocker-class findings."
+    },
+    {
+      "title": "Closure burden",
+      "summary": "tests=0, docs=0, obligations=3"
+    }
+  ],
+  "remaining_open_items": {
+    "required_tests": [],
+    "required_docs": [],
+    "obligations": [
+      {
+        "obligation_id": "obligation:docify:findings",
+        "suite": "docify",
+        "category": "documentation_review",
+        "severity": "medium",
+        "summary": "1097 documentation findings remain reviewable.",
+        "source_paths": [
+          "docify/baseline_docstring_coverage.json"
+        ]
+      },
+      {
+        "obligation_id": "DRF-DOCIFY-ROOT-001",
+        "suite": "contractify",
+        "category": "contract_review",
+        "severity": "informational",
+        "summary": "Docify default documentation scan roots omit contractify; suite Python may evade AST audit.",
+        "source_paths": [
+          "'fy'-suites/docify/README.md"
+        ]
+      },
+      {
+        "obligation_id": "obligation:docify:findings",
+        "suite": "docify",
+        "category": "documentation_review",
+        "severity": "medium",
+        "summary": "1097 documentation findings remain.",
+        "source_paths": [
+          "docify/baseline_docstring_coverage.json"
+        ]
+      }
+    ]
+  }
+}

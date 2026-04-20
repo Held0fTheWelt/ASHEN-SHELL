@@ -1,0 +1,59 @@
+{
+  "readiness_case": {
+    "schema_version": "fy.readiness-case.v1",
+    "target_id": "workspace:fy-suites",
+    "readiness_case_id": "readiness:fy-suites",
+    "target_kind": "repository",
+    "active_profile": "D",
+    "readiness_status": "blocked",
+    "summary": "Readiness is blocked by remaining blocker-class findings.",
+    "blocker_ids": [
+      "DRF-DOCIFY-ROOT-001"
+    ],
+    "obligation_ids": [
+      "obligation:docify:findings"
+    ],
+    "warning_ids": [
+      "warning:dockerify:warnings",
+      "warning:readiness:optional-evidence-missing"
+    ],
+    "residue_ids": [],
+    "evidence_sources": [
+      "'fy'-suites/docify/README.md",
+      "contractify/reports/audit_latest.json",
+      "testify/reports/testify_audit.json"
+    ]
+  },
+  "profile_depth_signal": {
+    "profile_behavior_depth": "standard",
+    "planning_horizon": 1,
+    "handoff_depth": "standard"
+  },
+  "deep_synthesis": {
+    "schema_version": "fy.deep-synthesis.v1",
+    "active_profile": "D",
+    "planning_horizon": 1,
+    "guarantee_gap_clusters": [
+      {
+        "cluster_id": "gap-cluster-1",
+        "summary": "Cluster 1 groups remaining proof and review items."
+      }
+    ],
+    "next_wave_plan": [
+      {
+        "step_id": "next-step-1",
+        "summary": "Review and reduce bounded open burden step 1."
+      }
+    ]
+  },
+  "handoff_packet": {
+    "schema_version": "fy.handoff-packet.v1",
+    "depth": "standard",
+    "profile_execution_lane": "balanced_review_first",
+    "planning_horizon": 1,
+    "open_blocker_count": 1,
+    "open_obligation_count": 1,
+    "warning_count": 2
+  },
+  "warning_count": 2
+}

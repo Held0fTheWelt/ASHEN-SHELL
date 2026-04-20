@@ -1,0 +1,9 @@
+{
+  "schema_version": "fy.handoff-packet.v1",
+  "depth": "standard",
+  "profile_execution_lane": "balanced_review_first",
+  "planning_horizon": 1,
+  "open_blocker_count": 1,
+  "open_obligation_count": 1,
+  "warning_count": 2
+}

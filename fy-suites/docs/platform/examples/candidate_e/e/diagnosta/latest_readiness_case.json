@@ -1,0 +1,25 @@
+{
+  "schema_version": "fy.readiness-case.v1",
+  "target_id": "workspace:fy-suites",
+  "readiness_case_id": "readiness:fy-suites",
+  "target_kind": "repository",
+  "active_profile": "E",
+  "readiness_status": "blocked",
+  "summary": "Readiness is blocked by remaining blocker-class findings.",
+  "blocker_ids": [
+    "DRF-DOCIFY-ROOT-001"
+  ],
+  "obligation_ids": [
+    "obligation:docify:findings"
+  ],
+  "warning_ids": [
+    "warning:dockerify:warnings",
+    "warning:readiness:optional-evidence-missing"
+  ],
+  "residue_ids": [],
+  "evidence_sources": [
+    "'fy'-suites/docify/README.md",
+    "contractify/reports/audit_latest.json",
+    "testify/reports/testify_audit.json"
+  ]
+}

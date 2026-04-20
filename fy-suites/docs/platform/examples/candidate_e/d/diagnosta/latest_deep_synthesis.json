@@ -1,0 +1,17 @@
+{
+  "schema_version": "fy.deep-synthesis.v1",
+  "active_profile": "D",
+  "planning_horizon": 1,
+  "guarantee_gap_clusters": [
+    {
+      "cluster_id": "gap-cluster-1",
+      "summary": "Cluster 1 groups remaining proof and review items."
+    }
+  ],
+  "next_wave_plan": [
+    {
+      "step_id": "next-step-1",
+      "summary": "Review and reduce bounded open burden step 1."
+    }
+  ]
+}

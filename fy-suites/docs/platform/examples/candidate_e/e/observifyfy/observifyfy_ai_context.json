@@ -1,0 +1,9 @@
+{
+  "schema_version": "fy.observifyfy-ai-context.v1",
+  "active_profile": "E",
+  "profile_execution_lane": "candidate_e_narrow_deep",
+  "readiness_status": "blocked",
+  "closure_status": "bounded_partial_closure",
+  "warning_count": 2,
+  "residue_count": 1
+}

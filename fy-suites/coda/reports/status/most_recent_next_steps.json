@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "summary": "Closure pack for the current bounded target.",
+  "next_steps": [
+    "Review the current closure burden."
+  ],
+  "command": "audit",
+  "latest_run": {
+    "run_id": "coda-cab1e9806c72"
+  }
+}

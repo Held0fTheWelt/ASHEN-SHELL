@@ -1,0 +1,13 @@
+{
+  "schema_version": "fy.blocker-priority-report.v1",
+  "blocker_count": 1,
+  "priorities": [
+    {
+      "id": "DRF-DOCIFY-ROOT-001",
+      "suite": "contractify",
+      "severity": "informational",
+      "summary": "Docify default documentation scan roots omit contractify; suite Python may evade AST audit."
+    }
+  ],
+  "summary": "Priority order for remaining blocker-class items."
+}
