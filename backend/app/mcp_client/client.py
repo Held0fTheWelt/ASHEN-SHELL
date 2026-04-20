@@ -18,6 +18,21 @@ from mcp_server.handlers import (
 )
 
 
+class MCPToolError(Exception):
+    """Error when MCP tool call fails."""
+
+    def __init__(self, tool_name: str, reason: str):
+        """Initialize error.
+
+        Args:
+            tool_name: Name of tool that failed
+            reason: Reason for failure
+        """
+        self.tool_name = tool_name
+        self.reason = reason
+        super().__init__(f"MCP tool {tool_name} failed: {reason}")
+
+
 class MCPClient:
     """Backend client for MCP tools."""
 
@@ -74,7 +89,8 @@ class MCPClient:
         self,
         tool_name: str,
         input_data: Dict[str, Any],
-        operating_profile: str = "execute"
+        operating_profile: str = "execute",
+        timeout_seconds: float = 5.0
     ) -> Dict[str, Any]:
         """
         Call an MCP tool.
@@ -83,33 +99,42 @@ class MCPClient:
             tool_name: Name of tool (e.g., "wos.session.get")
             input_data: Input parameters
             operating_profile: Operating profile (read_only, execute, admin)
+            timeout_seconds: Timeout for tool call (currently not enforced)
 
         Returns:
             Result dict with success status
+
+        Raises:
+            MCPToolError: If tool call fails
         """
         # Check authorization
         try:
             profile = OperatingProfile(operating_profile)
         except ValueError:
             # Unknown profile -> fail closed (Law 6)
-            return {
-                "success": False,
-                "error": f"Unknown operating profile: {operating_profile}"
-            }
+            raise MCPToolError(tool_name, f"Unknown operating profile: {operating_profile}")
 
         short_name = tool_name.split(".")[-1]  # Get "get" from "wos.session.get"
 
         if not check_tool_access(profile, short_name):
-            return {
-                "success": False,
-                "error": f"Unauthorized: Tool {tool_name} not available in {operating_profile} profile"
-            }
+            raise MCPToolError(
+                tool_name,
+                f"Unauthorized: Tool {tool_name} not available in {operating_profile} profile"
+            )
 
         # Call tool through registry
         registry_result = self.registry.call_tool(short_name, input_data)
 
-        # Flatten result for client
-        if registry_result["success"]:
-            return {"success": True, **registry_result["result"]}
-        else:
-            return registry_result
+        # Check result
+        if not registry_result.get("success"):
+            raise MCPToolError(tool_name, registry_result.get("error", "Unknown error"))
+
+        # Return result
+        return registry_result["result"]
+
+
+# MCPEnrichmentClient is an alias for MCPClient (used in enrichment.py)
+MCPEnrichmentClient = MCPClient
+
+# OperatorEndpointClient is an alias for MCPClient (used in orchestration)
+OperatorEndpointClient = MCPClient

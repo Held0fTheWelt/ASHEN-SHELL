@@ -1,5 +1,5 @@
 """MCP Client package."""
 
-from .client import MCPClient
+from .client import MCPClient, MCPToolError, MCPEnrichmentClient, OperatorEndpointClient
 
-__all__ = ["MCPClient"]
+__all__ = ["MCPClient", "MCPToolError", "MCPEnrichmentClient", "OperatorEndpointClient"]
