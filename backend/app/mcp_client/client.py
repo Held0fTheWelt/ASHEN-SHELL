@@ -105,6 +105,57 @@ class MCPClient:
             Result dict with success status
 
         Raises:
+            MCPToolError: If tool call fails (only in strict mode, see below)
+        """
+        # Check authorization
+        try:
+            profile = OperatingProfile(operating_profile)
+        except ValueError:
+            # Unknown profile -> fail closed (Law 6)
+            return {
+                "success": False,
+                "error": f"Unknown operating profile: {operating_profile}"
+            }
+
+        short_name = tool_name.split(".")[-1]  # Get "get" from "wos.session.get"
+
+        if not check_tool_access(profile, short_name):
+            return {
+                "success": False,
+                "error": f"Unauthorized: Tool {tool_name} not available in {operating_profile} profile"
+            }
+
+        # Call tool through registry
+        registry_result = self.registry.call_tool(short_name, input_data)
+
+        # Flatten result for client (compatible format)
+        if registry_result["success"]:
+            return {"success": True, **registry_result["result"]}
+        else:
+            return registry_result
+
+    def call_tool_strict(
+        self,
+        tool_name: str,
+        input_data: Dict[str, Any],
+        operating_profile: str = "execute",
+        timeout_seconds: float = 5.0
+    ) -> Dict[str, Any]:
+        """
+        Call an MCP tool in strict mode (raises exceptions on error).
+
+        Used by enrichment.py for MCP preflight calls.
+
+        Args:
+            tool_name: Name of tool (e.g., "wos.session.get")
+            input_data: Input parameters
+            operating_profile: Operating profile (read_only, execute, admin)
+            timeout_seconds: Timeout for tool call (currently not enforced)
+
+        Returns:
+            Result dict (tool result only, no success wrapper)
+
+        Raises:
             MCPToolError: If tool call fails
         """
         # Check authorization
@@ -129,7 +180,7 @@ class MCPClient:
         if not registry_result.get("success"):
             raise MCPToolError(tool_name, registry_result.get("error", "Unknown error"))
 
-        # Return result
+        # Return result (unwrapped)
         return registry_result["result"]
 
 

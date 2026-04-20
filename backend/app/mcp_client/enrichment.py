@@ -59,7 +59,7 @@ def build_mcp_enrichment(
         start_time = time.time()
 
         try:
-            result = client.call_tool(tool_name, {"session_id": session_id}, timeout_seconds=timeout_seconds)
+            result = client.call_tool_strict(tool_name, {"session_id": session_id}, timeout_seconds=timeout_seconds)
             duration_ms = int((time.time() - start_time) * 1000)
 
             # Log success
