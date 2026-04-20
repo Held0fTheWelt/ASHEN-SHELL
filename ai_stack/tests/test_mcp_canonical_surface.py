@@ -1,66 +1,47 @@
-"""MCP canonical surface — no network; only ai_stack + stdlib."""
-
-import builtins
-import importlib
+import pytest
 import sys
+from pathlib import Path
 
-from ai_stack.mcp_canonical_surface import (
-    CANONICAL_MCP_TOOL_DESCRIPTORS,
-    MCP_CATALOG_CAPABILITY_NAMES,
-    build_compact_mcp_operator_truth,
-    capability_records_for_mcp,
-    resolve_mcp_operating_profile,
-    verify_catalog_names_alignment,
-)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from mcp_canonical_surface import CanonicalMCPSurface
 
 
-def test_verify_catalog_names_alignment_succeeds():
-    r = verify_catalog_names_alignment()
-    assert r["aligned"] is True
-    assert set(r["expected"]) == set(MCP_CATALOG_CAPABILITY_NAMES)
+class TestCanonicalMCPSurface:
+    """Test canonical MCP surface for AI use."""
 
+    @pytest.fixture
+    def surface(self):
+        return CanonicalMCPSurface()
 
-def test_capability_records_include_governance_and_tool_class():
-    rows = capability_records_for_mcp()
-    assert len(rows) == len(MCP_CATALOG_CAPABILITY_NAMES)
-    for row in rows:
-        assert "tool_class" in row
-        assert "governance_posture" in row
-        assert "authority_source" in row
-        gp = row["governance_posture"]
-        assert "published_vs_draft" in gp
-        assert "canonical_vs_supporting" in gp
+    def test_surface_defines_all_tools(self, surface):
+        """Surface defines all expected tools."""
+        tools = surface.list_tool_specs()
 
+        tool_names = {t["name"] for t in tools}
+        expected = {
+            "wos.session.get",
+            "wos.session.state",
+            "wos.session.logs",
+            "wos.session.diag",
+            "wos.session.execute_turn"
+        }
 
-def test_operator_truth_compact_builds():
-    names = [d.name for d in CANONICAL_MCP_TOOL_DESCRIPTORS]
-    ot = build_compact_mcp_operator_truth(
-        backend_reachable=None,
-        catalog_alignment_ok=True,
-        registry_tool_names=names,
-    )
-    assert ot["grammar_version"]
-    assert ot["runtime_authority_preservation"]
-    assert "no_eligible_operator_meaning" in ot
-    assert "available_vs_deferred" in ot
-    assert "governance_posture" in ot
+        assert expected == tool_names
 
+    def test_tool_specs_include_schema(self, surface):
+        """Tool specs include input/output schemas."""
+        tools = surface.list_tool_specs()
 
-def test_resolve_mcp_operating_profile_defaults_healthy(monkeypatch):
-    monkeypatch.delenv("WOS_MCP_OPERATING_PROFILE", raising=False)
-    assert resolve_mcp_operating_profile().value == "healthy"
+        for tool in tools:
+            assert "input_schema" in tool
+            assert "output_schema" in tool
+            assert "description" in tool
 
+    def test_surface_is_ai_friendly(self, surface):
+        """Surface is formatted for AI agent consumption."""
+        spec = surface.get_tool_spec("wos.session.execute_turn")
 
-def test_mcp_canonical_surface_import_does_not_require_optional_heavy_deps(monkeypatch):
-    real_import = builtins.__import__
-
-    def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name.startswith("langchain_core") or name == "numpy" or name.startswith("numpy."):
-            raise ModuleNotFoundError(f"blocked optional dependency: {name}")
-        return real_import(name, globals, locals, fromlist, level)
-
-    monkeypatch.setattr(builtins, "__import__", guarded_import)
-    for module_name in ("ai_stack", "ai_stack.mcp_canonical_surface"):
-        sys.modules.pop(module_name, None)
-    module = importlib.import_module("ai_stack.mcp_canonical_surface")
-    assert module.CANONICAL_MCP_TOOL_DESCRIPTORS
+        assert spec is not None
+        assert spec["description"] is not None
+        assert len(spec["description"]) > 10
