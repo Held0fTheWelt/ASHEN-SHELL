@@ -51,18 +51,19 @@ class AgentState:
     errors: List[str] = field(default_factory=list)
     is_degraded: bool = False
 
-    # Internal state
-    _locked: bool = field(default=False, repr=False, init=False)
+    # Internal state - not part of dataclass init
+    locked: bool = field(default=False, repr=False, compare=False)
 
     def lock(self) -> None:
         """Lock state to prevent further modifications."""
-        self._locked = True
+        # Use object.__setattr__ to bypass __setattr__ override
+        object.__setattr__(self, "locked", True)
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Prevent modification after lock."""
-        if name != "_locked":
+        if name != "locked":
             # Check if locked (allow setting during __init__)
-            if hasattr(self, "_locked") and self._locked:
+            if hasattr(self, "locked") and self.locked:
                 raise ValueError(f"Cannot modify locked state field: {name}")
         super().__setattr__(name, value)
 
@@ -70,11 +71,11 @@ class AgentState:
         """Convert state to JSON-serializable dict.
 
         Returns:
-            Dictionary representation of state (excludes _locked)
+            Dictionary representation of state (excludes locked)
         """
         data = asdict(self)
-        # Remove internal _locked field
-        data.pop("_locked", None)
+        # Remove internal locked field
+        data.pop("locked", None)
         return data
 
     @classmethod
@@ -118,7 +119,7 @@ class AgentState:
         Args:
             step: Reasoning text to add
         """
-        if self._locked:
+        if self.locked:
             raise ValueError("Cannot modify locked state")
         self.reasoning_steps.append(step)
 
@@ -128,7 +129,7 @@ class AgentState:
         Args:
             decision: Decision text
         """
-        if self._locked:
+        if self.locked:
             raise ValueError("Cannot modify locked state")
         self.decision = decision
 
@@ -138,7 +139,7 @@ class AgentState:
         Args:
             error: Error description
         """
-        if self._locked:
+        if self.locked:
             raise ValueError("Cannot modify locked state")
         self.errors.append(error)
         self.is_degraded = True
