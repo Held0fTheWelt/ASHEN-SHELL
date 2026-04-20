@@ -1,133 +1,115 @@
-"""MCP enrichment client for calling operator endpoints."""
+"""Backend MCP client."""
 
-from typing import Protocol
-import requests
-from requests.exceptions import RequestException, Timeout
+from typing import Dict, Any
+import sys
+from pathlib import Path
 
+# Import registry from tools
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "tools"))
 
-class MCPToolError(Exception):
-    """Error from MCP tool call."""
-
-    def __init__(self, tool_name: str, reason: str):
-        """Initialize MCPToolError.
-
-        Args:
-            tool_name: Name of the tool that failed
-            reason: Reason for failure (e.g., "timeout", "not_found", "http_error")
-        """
-        self.tool_name = tool_name
-        self.reason = reason
-        super().__init__(f"MCP tool '{tool_name}' failed: {reason}")
+from mcp_server.registry import MCPRegistry, ToolSpec
+from mcp_server.operating_profile import OperatingProfile, check_tool_access
+from mcp_server.handlers import (
+    session_get_handler,
+    session_state_handler,
+    session_logs_handler,
+    session_diag_handler,
+    session_execute_turn_handler,
+)
 
 
-class MCPEnrichmentClient(Protocol):
-    """Protocol for MCP tool calling client."""
+class MCPClient:
+    """Backend client for MCP tools."""
 
-    def call_tool(
-        self, tool_name: str, arguments: dict | None = None, *, timeout_seconds: float = 5.0
-    ) -> dict:
-        """Call a MCP tool and return result.
+    def __init__(self):
+        """Initialize MCP client."""
+        self.registry = MCPRegistry()
+        self._setup_tools()
 
-        Args:
-            tool_name: Name of the tool to call
-            arguments: Optional arguments dict
-            timeout_seconds: Timeout for the call
+    def _setup_tools(self):
+        """Register all tools."""
+        # Register session tools
+        tools = [
+            ToolSpec(
+                name="get",
+                description="Get full session state",
+                input_schema={"type": "object", "properties": {"session_id": {"type": "string"}}},
+                output_schema={"type": "object"},
+                handler=session_get_handler
+            ),
+            ToolSpec(
+                name="state",
+                description="Get current game state snapshot",
+                input_schema={"type": "object", "properties": {"session_id": {"type": "string"}}},
+                output_schema={"type": "object"},
+                handler=session_state_handler
+            ),
+            ToolSpec(
+                name="logs",
+                description="Get turn history",
+                input_schema={"type": "object", "properties": {"session_id": {"type": "string"}, "limit": {"type": "integer"}}},
+                output_schema={"type": "object"},
+                handler=session_logs_handler
+            ),
+            ToolSpec(
+                name="diag",
+                description="Get diagnostic information",
+                input_schema={"type": "object", "properties": {"session_id": {"type": "string"}}},
+                output_schema={"type": "object"},
+                handler=session_diag_handler
+            ),
+            ToolSpec(
+                name="execute_turn",
+                description="Execute a turn",
+                input_schema={"type": "object", "properties": {"session_id": {"type": "string"}, "player_id": {"type": "string"}, "action": {"type": "object"}}},
+                output_schema={"type": "object"},
+                handler=session_execute_turn_handler
+            ),
+        ]
 
-        Returns:
-            Tool result as dict
-
-        Raises:
-            MCPToolError: If tool call fails
-        """
-        ...
-
-
-class OperatorEndpointClient:
-    """HTTP client for operator endpoints (A1.3)."""
-
-    # Tool name to endpoint path mapping
-    _TOOL_MAP = {
-        "wos.session.get": "/api/v1/sessions/{session_id}",
-        "wos.session.state": "/api/v1/sessions/{session_id}/state",
-        "wos.session.logs": "/api/v1/sessions/{session_id}/logs",
-        "wos.session.diag": "/api/v1/sessions/{session_id}/diagnostics",
-    }
-
-    def __init__(self, base_url: str = "http://localhost:5000", token: str | None = None):
-        """Initialize OperatorEndpointClient.
-
-        Args:
-            base_url: Base URL for operator endpoints
-            token: Service token for authentication
-        """
-        self.base_url = base_url.rstrip("/")
-        self.token = token
-
-    def _resolve_url(self, tool_name: str, session_id: str) -> str:
-        """Resolve tool name to endpoint URL.
-
-        Args:
-            tool_name: Tool name (e.g., "wos.session.get")
-            session_id: Session ID
-
-        Returns:
-            Full URL to endpoint
-
-        Raises:
-            MCPToolError: If tool is not recognized
-        """
-        if tool_name not in self._TOOL_MAP:
-            raise MCPToolError(tool_name, "tool_not_found")
-
-        path = self._TOOL_MAP[tool_name]
-        path = path.replace("{session_id}", session_id)
-        return f"{self.base_url}{path}"
+        for tool in tools:
+            self.registry.register_tool(tool)
 
     def call_tool(
-        self, tool_name: str, arguments: dict | None = None, *, timeout_seconds: float = 5.0
-    ) -> dict:
-        """Call operator endpoint and return result.
+        self,
+        tool_name: str,
+        input_data: Dict[str, Any],
+        operating_profile: str = "execute"
+    ) -> Dict[str, Any]:
+        """
+        Call an MCP tool.
 
         Args:
-            tool_name: Tool name (must be in _TOOL_MAP)
-            arguments: Arguments dict with at minimum "session_id"
-            timeout_seconds: Timeout for the call
+            tool_name: Name of tool (e.g., "wos.session.get")
+            input_data: Input parameters
+            operating_profile: Operating profile (read_only, execute, admin)
 
         Returns:
-            Response data as dict
-
-        Raises:
-            MCPToolError: If call fails
+            Result dict with success status
         """
-        arguments = arguments or {}
-        session_id = arguments.get("session_id")
-
-        if not session_id:
-            raise MCPToolError(tool_name, "missing_session_id")
-
+        # Check authorization
         try:
-            url = self._resolve_url(tool_name, session_id)
-        except MCPToolError:
-            raise
+            profile = OperatingProfile(operating_profile)
+        except ValueError:
+            # Unknown profile -> fail closed (Law 6)
+            return {
+                "success": False,
+                "error": f"Unknown operating profile: {operating_profile}"
+            }
 
-        headers = {}
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
+        short_name = tool_name.split(".")[-1]  # Get "get" from "wos.session.get"
 
-        try:
-            response = requests.get(url, headers=headers, timeout=timeout_seconds)
-            response.raise_for_status()
-            return response.json()
-        except Timeout:
-            raise MCPToolError(tool_name, "timeout")
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
-                raise MCPToolError(tool_name, "unauthorized")
-            elif e.response.status_code == 404:
-                raise MCPToolError(tool_name, "not_found")
-            else:
-                raise MCPToolError(tool_name, f"http_{e.response.status_code}")
-        except RequestException as e:
-            raise MCPToolError(tool_name, f"request_error: {str(e)}")
-        except ValueError as e:
-            raise MCPToolError(tool_name, f"invalid_json: {str(e)}")
+        if not check_tool_access(profile, short_name):
+            return {
+                "success": False,
+                "error": f"Unauthorized: Tool {tool_name} not available in {operating_profile} profile"
+            }
+
+        # Call tool through registry
+        registry_result = self.registry.call_tool(short_name, input_data)
+
+        # Flatten result for client
+        if registry_result["success"]:
+            return {"success": True, **registry_result["result"]}
+        else:
+            return registry_result
