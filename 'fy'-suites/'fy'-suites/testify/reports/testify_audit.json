@@ -1,0 +1,203 @@
+{
+  "suite": "testify",
+  "summary": {
+    "workflow_count": 0,
+    "runner_suite_count": 0,
+    "hub_script_count": 33,
+    "finding_count": 3,
+    "warning_count": 1,
+    "analyze_mode_count": 39,
+    "canonical_schema_export_count": 22
+  },
+  "runner": {
+    "suite_targets": [],
+    "all_sequence": [],
+    "display_names": {}
+  },
+  "hub_pyproject": {
+    "scripts": {
+      "fy": "fy_platform.tools.cli:main",
+      "fy-platform": "fy_platform.tools.cli:main",
+      "fy-suite": "fy_platform.tools.ai_suite_cli:main",
+      "contractify": "contractify.tools.hub_cli:main",
+      "contractify-adapter": "contractify.adapter.cli:main",
+      "testify": "testify.tools.hub_cli:main",
+      "testify-adapter": "testify.adapter.cli:main",
+      "documentify": "documentify.tools.hub_cli:main",
+      "documentify-adapter": "documentify.adapter.cli:main",
+      "docify": "docify.tools.hub_cli:main",
+      "docify-adapter": "docify.adapter.cli:main",
+      "despag-check": "despaghettify.tools.hub_cli:main",
+      "despaghettify-adapter": "despaghettify.adapter.cli:main",
+      "dockerify": "dockerify.tools.hub_cli:main",
+      "dockerify-adapter": "dockerify.adapter.cli:main",
+      "postmanify": "postmanify.tools.cli:main",
+      "postmanify-adapter": "postmanify.adapter.cli:main",
+      "templatify": "templatify.tools.hub_cli:main",
+      "templatify-adapter": "templatify.adapter.cli:main",
+      "usabilify": "usabilify.tools.hub_cli:main",
+      "usabilify-adapter": "usabilify.adapter.cli:main",
+      "securify": "securify.tools.hub_cli:main",
+      "securify-adapter": "securify.adapter.cli:main",
+      "observifyfy": "observifyfy.tools.hub_cli:main",
+      "observifyfy-adapter": "observifyfy.adapter.cli:main",
+      "mvpify": "mvpify.tools.hub_cli:main",
+      "mvpify-adapter": "mvpify.adapter.cli:main",
+      "metrify": "metrify.tools.hub_cli:main",
+      "metrify-adapter": "metrify.adapter.cli:main",
+      "diagnosta": "diagnosta.tools.hub_cli:main",
+      "diagnosta-adapter": "diagnosta.adapter.cli:main",
+      "coda": "coda.tools.hub_cli:main",
+      "coda-adapter": "coda.adapter.cli:main"
+    },
+    "packages_where_clause_present": false
+  },
+  "public_modes": {
+    "mode_keys": [
+      "analyze.api",
+      "analyze.closure",
+      "analyze.code_docs",
+      "analyze.contract",
+      "analyze.docker",
+      "analyze.docs",
+      "analyze.observability",
+      "analyze.quality",
+      "analyze.readiness",
+      "analyze.security",
+      "analyze.structure",
+      "analyze.templates",
+      "analyze.usability",
+      "explain.code_docs",
+      "explain.contract",
+      "explain.docs",
+      "generate.closure_pack",
+      "generate.context_pack",
+      "generate.docs",
+      "generate.packaging_prep",
+      "generate.surface_aliases",
+      "govern.production",
+      "govern.release",
+      "import.mvp",
+      "inspect.api",
+      "inspect.closure",
+      "inspect.code_docs",
+      "inspect.contract",
+      "inspect.docker",
+      "inspect.docs",
+      "inspect.observability",
+      "inspect.quality",
+      "inspect.readiness",
+      "inspect.security",
+      "inspect.structure",
+      "inspect.templates",
+      "inspect.usability",
+      "metrics.governor_status",
+      "metrics.report"
+    ],
+    "required_analyze_modes": [
+      "analyze.contract",
+      "analyze.quality",
+      "analyze.code_docs",
+      "analyze.docs"
+    ],
+    "missing_analyze_modes": [],
+    "surface_paths": [
+      "fy_platform/runtime/mode_registry.py",
+      "fy_platform/tools/cli_parser.py",
+      "pyproject.toml"
+    ]
+  },
+  "schema_export": {
+    "source_schema_files": [
+      "artifact.schema.json",
+      "fy_unit.schema.json",
+      "relation.schema.json",
+      "run_manifest.schema.json",
+      "suite_ownership.schema.json"
+    ],
+    "export_schema_files": [
+      "active_strategy_profile.schema.json",
+      "artifact.schema.json",
+      "artifact_record.schema.json",
+      "blocker_graph.schema.json",
+      "blocker_priority_report.schema.json",
+      "cannot_honestly_claim.schema.json",
+      "closure_pack.schema.json",
+      "command_envelope.schema.json",
+      "compare_runs_delta.schema.json",
+      "context_pack.schema.json",
+      "evidence_record.schema.json",
+      "fy_unit.schema.json",
+      "model_route_decision.schema.json",
+      "obligation_matrix.schema.json",
+      "readiness_case.schema.json",
+      "relation.schema.json",
+      "residue_ledger.schema.json",
+      "retrieval_hit.schema.json",
+      "run_manifest.schema.json",
+      "sufficiency_verdict.schema.json",
+      "suite_ownership.schema.json",
+      "suite_run_record.schema.json"
+    ],
+    "canonical_source_complete": true,
+    "canonical_export_complete": true,
+    "source_count": 5,
+    "export_count": 22,
+    "surface_paths": [
+      "fy_platform/ai/final_product_schemas.py",
+      "fy_platform/contracts/evolution_wave1/schemas/fy_unit.schema.json",
+      "docs/platform/schemas/fy_unit.schema.json"
+    ]
+  },
+  "workflows": {},
+  "component_pyprojects": [
+    {
+      "path": "backend/pyproject.toml",
+      "exists": false
+    },
+    {
+      "path": "frontend/pyproject.toml",
+      "exists": false
+    },
+    {
+      "path": "administration-tool/pyproject.toml",
+      "exists": false
+    },
+    {
+      "path": "world-engine/pyproject.toml",
+      "exists": false
+    },
+    {
+      "path": "ai_stack/pyproject.toml",
+      "exists": false
+    },
+    {
+      "path": "story_runtime_core/pyproject.toml",
+      "exists": false
+    }
+  ],
+  "strengths": [
+    "Mode registry exposes the required public analyze modes for contract, quality, code_docs, and docs.",
+    "Canonical schema source files and exported schema bundle are both complete for the current evolution slice."
+  ],
+  "warnings": [
+    "No standalone frontend-tests.yml workflow detected; frontend quality currently relies on broader gates or local runner usage."
+  ],
+  "findings": [
+    {
+      "id": "TESTIFY-MISSING-WORKFLOWS",
+      "severity": "high",
+      "summary": "Missing workflows: backend-tests.yml, admin-tests.yml, engine-tests.yml, ai-stack-tests.yml, quality-gate.yml, pre-deployment.yml, compose-smoke.yml"
+    },
+    {
+      "id": "TESTIFY-MISSING-HUB-SCRIPTS",
+      "severity": "high",
+      "summary": "Missing root pyproject suite scripts: wos-despag"
+    },
+    {
+      "id": "TESTIFY-RUNNER-DRIFT",
+      "severity": "medium",
+      "summary": "tests/run_tests.py no longer exposes the expected multi-suite targets."
+    }
+  ]
+}
