@@ -53,4 +53,20 @@ This chain is mandatory for drift control. Missing stage visibility is treated a
 
 ## Runtime Node Shape (Current Baseline)
 
-The runtime baseline includes a staged graph path across interpretation, retrieval, scene assessment, dramatic parameter selection, model invocation, proposal normalization, validation, commit, visible rendering, and packaging/diagnostics. Future changes must extend this shape without creating parallel truth surfaces.
+The runtime baseline includes a staged graph path:
+
+1. **Interpretation** (`interpret_input.py`) — Deterministic player input parsing
+2. **Retrieval** (`retrieve_context.py`) — Bounded content lookup (published only)
+3. **Scene Assessment** (`scene_assessment.py`) — Deterministic scene state evaluation
+4. **Responder Selection** (`select_responders.py`) — Deterministic character choice
+5. **Scene Function Selection** (`select_scene_function.py`) — Deterministic dramatic function choice
+6. **Pacing & Visibility Shaping** (`shape_pacing_and_visibility.py`) — Deterministic constraint setting
+7. **Proposal Generation** (`invoke_model.py`) — Model generates candidate output (staging only)
+8. **Validation** (`validate_seam.py`) — Rule engine validates proposal against policies
+9. **Commit** (`commit_seam.py`) — Sole authority writes committed effects to world state
+10. **Render** (`render_visible.py`) — Projects committed truth to player-visible output
+11. **Packaging & Diagnostics** (`package_output.py`) — Audits turn execution and produces diagnostics
+
+Each node has one responsibility. The four seams (proposal, validation, commit, render) are explicit checkpoints; no seam may be skipped without governance recording.
+
+Future changes must extend this graph without creating parallel truth surfaces. All authority ownership must remain traceable through this node chain.

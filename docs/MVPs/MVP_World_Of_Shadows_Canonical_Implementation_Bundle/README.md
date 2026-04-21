@@ -8,14 +8,50 @@ Use this `README.md` as the single MVP entrypoint.
 
 ## How to Read This Bundle
 
-1. `scope_and_goals.md`
-2. `architecture_and_system_shape.md`
-3. `content_and_experience_contract.md`
-4. `implementation_sequence.md`
-5. `acceptance_and_validation.md`
-6. `open_tasks_and_follow_on_work.md`
+### Phase 4 Implementation-Grade Documentation (Complete)
+These documents contain the full implementation specification:
 
-For the **long-form narrative MVP** (system identity, writers room, GoC experience, operations), read the companion set under [`docs/MVPs/world_of_shadows_canonical_mvp/README.md`](../world_of_shadows_canonical_mvp/README.md). This bundle stays **implementation-oriented** (seams, sequencing, validation, handoff artifacts).
+**Authority & Execution:**
+1. `runtime_authority_and_turn_execution.md` — Authority ownership boundaries, four explicit seams (proposal, validation, commit, render), turn lifecycle
+2. `architecture_and_system_shape.md` (expanded) — Runtime node graph with 11 stages, authority traceability
+
+**Content & Runtime Contracts:**
+3. `content_authority_module_activation_and_publish_gates.md` — Content hierarchy (YAML > published > builtins), publish gates, activation boundaries
+4. `runtime_state_and_session_contracts.md` — Session state schema (three visibility tiers), turn output contract, continuity, consistency checks
+5. `player_shell_obligations_and_quality_signals.md` — Five quality signals (clarity, options, effects, memory, carry-forward), character distinctness, graceful degradation
+
+**God of Carnage Slice & Operations:**
+6. `god_of_carnage_slice_implementation_and_acceptance.md` — Module identity, character roster, key scene anchors, proof-bearing markers, evaluation runbook (H1/H2/H3)
+7. `admin_operator_diagnostics_and_governance_surfaces.md` — Five admin views, incident pathways, corrective controls, diagnostics payload, approval gates
+
+**API, Evidence & Proof:**
+8. `api_and_mcp_integration_surfaces.md` — Four API families (publish, session, governance, diagnostics), MCP control-plane, query boundaries, data flows
+9. `evaluator_evidence_collection_and_proof_discipline.md` — Valid/invalid evidence, evidence binding rules, proof of implementation, evidence corpus
+
+**Boundaries, Conflicts & Closure:**
+10. `proven_vs_target_capability_boundaries.md` — What's proven (with evidence), what's target-only, scope honesty
+11. `integration_conflict_register_and_resolution.md` — Conflict registry (7 conflicts), 6 resolved, surface gaps, transport gaps
+12. `phase_4_completion_checklist.md` — Wave-by-wave completion (4,300+ lines), definition of done, blockers, next actions
+
+**Reading Order:**
+- **Quick orientation:** Start with `scope_and_goals.md` (goals and promises)
+- **Authority deep dive:** Read `runtime_authority_and_turn_execution.md` + `architecture_and_system_shape.md`
+- **Content & state:** Read `content_authority_module_activation_and_publish_gates.md` + `runtime_state_and_session_contracts.md`
+- **Player experience:** Read `player_shell_obligations_and_quality_signals.md`
+- **GoC slice:** Read `god_of_carnage_slice_implementation_and_acceptance.md`
+- **Operations:** Read `admin_operator_diagnostics_and_governance_surfaces.md`
+- **APIs & integration:** Read `api_and_mcp_integration_surfaces.md`
+- **Evidence & proof:** Read `evaluator_evidence_collection_and_proof_discipline.md` + `proven_vs_target_capability_boundaries.md`
+- **Closure:** Read `integration_conflict_register_and_resolution.md` + `phase_4_completion_checklist.md`
+
+### Legacy References (Phase 1-3, Historical)
+1. `scope_and_goals.md` — MVP objective and non-negotiable laws
+2. `architecture_and_system_shape.md` — (Now expanded with Phase 4 detail)
+3. `content_and_experience_contract.md` — Player-facing experience promise
+4. `implementation_sequence.md` — Execution order (authored → published → runtime → evaluated)
+5. `acceptance_and_validation.md` — Validation methodology
+
+For the **long-form narrative MVP** (system identity, writers room, GoC experience, operations), read the companion set under [`docs/MVPs/world_of_shadows_canonical_mvp/README.md`](../world_of_shadows_canonical_mvp/README.md). This bundle is **implementation-oriented** (authority seams, sequencing, validation, evidence).
 
 ## Mandatory Preservation Artifacts
 
