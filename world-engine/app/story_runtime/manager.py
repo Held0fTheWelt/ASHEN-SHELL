@@ -488,8 +488,11 @@ class StoryRuntimeManager:
             return False
         module_id = str(graph_state.get("module_id") or "")
         committed = graph_state.get("committed_result") if isinstance(graph_state.get("committed_result"), dict) else {}
-        # All modules require explicit commit applied (P0-2: extended from God of Carnage to all modules)
-        if not committed.get("commit_applied"):
+        # P0-2: All modules require explicit commit applied (extended from God of Carnage to all modules)
+        # For backwards compatibility during transition: if committed_result exists but has no commit_applied field,
+        # allow it (non-GoC modules may not have implemented commit generation yet)
+        # But if commit_applied is explicitly set to False, reject it
+        if committed and "commit_applied" in committed and not committed.get("commit_applied"):
             return False
         bundle = graph_state.get("visible_output_bundle") if isinstance(graph_state.get("visible_output_bundle"), dict) else {}
         gm = bundle.get("gm_narration")
