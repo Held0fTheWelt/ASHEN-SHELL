@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from testify.tools.repo_paths import FY_SUITES_DIRNAME
+
 REQUIRED_WORKFLOWS = (
     'backend-tests.yml',
     'admin-tests.yml',
@@ -38,6 +40,16 @@ REQUIRED_CANONICAL_SCHEMA_FILES = (
     'run_manifest.schema.json',
     'suite_ownership.schema.json',
 )
+
+
+def _first_existing_path(root: Path, *rel_parts: str) -> Path | None:
+    """Return the first existing file or directory under ``root`` or ``root / fy-suites``."""
+    rel = Path(*rel_parts)
+    for base in (root, root / FY_SUITES_DIRNAME):
+        candidate = base / rel
+        if candidate.is_file() or candidate.is_dir():
+            return candidate
+    return None
 
 
 def _read(path: Path) -> str:
@@ -242,16 +254,25 @@ def audit_test_governance(root: Path) -> dict[str, Any]:
             'workflow_dispatch': 'workflow_dispatch' in on_payload,
         }
 
-    mode_keys = _dict_keys_from_module(root / 'fy_platform/runtime/mode_registry.py', 'MODE_SPECS')
+    mode_registry_path = _first_existing_path(root, 'fy_platform', 'runtime', 'mode_registry.py')
+    mode_keys = _dict_keys_from_module(mode_registry_path, 'MODE_SPECS') if mode_registry_path else []
     public_modes = {
         'mode_keys': sorted(mode_keys),
         'required_analyze_modes': list(REQUIRED_ANALYZE_MODES),
         'missing_analyze_modes': [name for name in REQUIRED_ANALYZE_MODES if name not in mode_keys],
-        'surface_paths': [p for p in ('fy_platform/runtime/mode_registry.py', 'fy_platform/tools/cli_parser.py', 'pyproject.toml') if (root / p).exists()],
+        'surface_paths': [
+            p
+            for p in ('fy_platform/runtime/mode_registry.py', 'fy_platform/tools/cli_parser.py', 'pyproject.toml')
+            if _first_existing_path(root, *p.split('/')) is not None
+        ],
     }
 
-    source_schema_dir = root / 'fy_platform/contracts/evolution_wave1/schemas'
-    export_schema_dir = root / 'docs/platform/schemas'
+    source_schema_dir = _first_existing_path(root, 'fy_platform', 'contracts', 'evolution_wave1', 'schemas')
+    if source_schema_dir is None:
+        source_schema_dir = root / 'fy_platform' / 'contracts' / 'evolution_wave1' / 'schemas'
+    export_schema_dir = _first_existing_path(root, 'docs', 'platform', 'schemas')
+    if export_schema_dir is None:
+        export_schema_dir = root / 'docs' / 'platform' / 'schemas'
     source_schema_files = sorted(p.name for p in source_schema_dir.glob('*.json')) if source_schema_dir.is_dir() else []
     export_schema_files = sorted(p.name for p in export_schema_dir.glob('*.json')) if export_schema_dir.is_dir() else []
     schema_export = {
@@ -261,7 +282,15 @@ def audit_test_governance(root: Path) -> dict[str, Any]:
         'canonical_export_complete': all(name in export_schema_files for name in REQUIRED_CANONICAL_SCHEMA_FILES),
         'source_count': len(source_schema_files),
         'export_count': len(export_schema_files),
-        'surface_paths': [p for p in ('fy_platform/ai/final_product_schemas.py', 'fy_platform/contracts/evolution_wave1/schemas/fy_unit.schema.json', 'docs/platform/schemas/fy_unit.schema.json') if (root / p).exists()],
+        'surface_paths': [
+            p
+            for p in (
+                'fy_platform/ai/final_product_schemas.py',
+                'fy_platform/contracts/evolution_wave1/schemas/fy_unit.schema.json',
+                'docs/platform/schemas/fy_unit.schema.json',
+            )
+            if _first_existing_path(root, *p.split('/')) is not None
+        ],
     }
 
     findings = []

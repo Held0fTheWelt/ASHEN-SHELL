@@ -1,0 +1,258 @@
+{
+  "suite": "testify",
+  "summary": {
+    "workflow_count": 13,
+    "runner_suite_count": 8,
+    "hub_script_count": 9,
+    "finding_count": 0,
+    "warning_count": 1,
+    "analyze_mode_count": 39,
+    "canonical_schema_export_count": 22
+  },
+  "runner": {
+    "suite_targets": [
+      "administration",
+      "ai_stack",
+      "backend",
+      "database",
+      "engine",
+      "frontend",
+      "improvement",
+      "writers_room"
+    ],
+    "all_sequence": [
+      "backend",
+      "frontend",
+      "administration",
+      "engine",
+      "database",
+      "ai_stack"
+    ],
+    "display_names": {
+      "backend": "Backend (Flask API and services)",
+      "frontend": "Frontend (player/public UI)",
+      "administration": "Administration tool (proxy and UI)",
+      "engine": "World engine (runtime and HTTP/WS)",
+      "database": "Database (migrations and tooling)",
+      "writers_room": "Writers-Room workflow (human-in-the-loop production)",
+      "improvement": "Improvement loop (mutation / evaluation / recommendation)",
+      "ai_stack": "WOS AI stack (LangGraph runtime, RAG, Writers-Room / improvement seed graphs)"
+    }
+  },
+  "hub_pyproject": {
+    "scripts": {
+      "despag-check": "despaghettify.tools.hub_cli:main",
+      "wos-despag": "despaghettify.tools.hub_cli:main",
+      "postmanify": "postmanify.tools.cli:main",
+      "docify": "docify.tools.hub_cli:main",
+      "contractify": "contractify.tools.hub_cli:main",
+      "documentify": "documentify.tools.hub_cli:main",
+      "testify": "testify.tools.hub_cli:main",
+      "dockerify": "dockerify.tools.hub_cli:main",
+      "fy-platform": "fy_platform.tools.cli:main"
+    },
+    "packages_where_clause_present": true
+  },
+  "public_modes": {
+    "mode_keys": [
+      "analyze.api",
+      "analyze.closure",
+      "analyze.code_docs",
+      "analyze.contract",
+      "analyze.docker",
+      "analyze.docs",
+      "analyze.observability",
+      "analyze.quality",
+      "analyze.readiness",
+      "analyze.security",
+      "analyze.structure",
+      "analyze.templates",
+      "analyze.usability",
+      "explain.code_docs",
+      "explain.contract",
+      "explain.docs",
+      "generate.closure_pack",
+      "generate.context_pack",
+      "generate.docs",
+      "generate.packaging_prep",
+      "generate.surface_aliases",
+      "govern.production",
+      "govern.release",
+      "import.mvp",
+      "inspect.api",
+      "inspect.closure",
+      "inspect.code_docs",
+      "inspect.contract",
+      "inspect.docker",
+      "inspect.docs",
+      "inspect.observability",
+      "inspect.quality",
+      "inspect.readiness",
+      "inspect.security",
+      "inspect.structure",
+      "inspect.templates",
+      "inspect.usability",
+      "metrics.governor_status",
+      "metrics.report"
+    ],
+    "required_analyze_modes": [
+      "analyze.contract",
+      "analyze.quality",
+      "analyze.code_docs",
+      "analyze.docs"
+    ],
+    "missing_analyze_modes": [],
+    "surface_paths": [
+      "fy_platform/runtime/mode_registry.py",
+      "fy_platform/tools/cli_parser.py",
+      "pyproject.toml"
+    ]
+  },
+  "schema_export": {
+    "source_schema_files": [
+      "artifact.schema.json",
+      "fy_unit.schema.json",
+      "relation.schema.json",
+      "run_manifest.schema.json",
+      "suite_ownership.schema.json"
+    ],
+    "export_schema_files": [
+      "active_strategy_profile.schema.json",
+      "artifact.schema.json",
+      "artifact_record.schema.json",
+      "blocker_graph.schema.json",
+      "blocker_priority_report.schema.json",
+      "cannot_honestly_claim.schema.json",
+      "closure_pack.schema.json",
+      "command_envelope.schema.json",
+      "compare_runs_delta.schema.json",
+      "context_pack.schema.json",
+      "evidence_record.schema.json",
+      "fy_unit.schema.json",
+      "model_route_decision.schema.json",
+      "obligation_matrix.schema.json",
+      "readiness_case.schema.json",
+      "relation.schema.json",
+      "residue_ledger.schema.json",
+      "retrieval_hit.schema.json",
+      "run_manifest.schema.json",
+      "sufficiency_verdict.schema.json",
+      "suite_ownership.schema.json",
+      "suite_run_record.schema.json"
+    ],
+    "canonical_source_complete": true,
+    "canonical_export_complete": true,
+    "source_count": 5,
+    "export_count": 22,
+    "surface_paths": [
+      "fy_platform/ai/final_product_schemas.py",
+      "fy_platform/contracts/evolution_wave1/schemas/fy_unit.schema.json",
+      "docs/platform/schemas/fy_unit.schema.json"
+    ]
+  },
+  "workflows": {
+    "admin-tests.yml": {
+      "job_count": 2,
+      "has_path_filters": true,
+      "workflow_dispatch": false
+    },
+    "ai-stack-tests.yml": {
+      "job_count": 1,
+      "has_path_filters": true,
+      "workflow_dispatch": false
+    },
+    "backend-tests.yml": {
+      "job_count": 6,
+      "has_path_filters": true,
+      "workflow_dispatch": false
+    },
+    "compose-smoke.yml": {
+      "job_count": 1,
+      "has_path_filters": false,
+      "workflow_dispatch": true
+    },
+    "despaghettify-skills-validate.yml": {
+      "job_count": 1,
+      "has_path_filters": true,
+      "workflow_dispatch": false
+    },
+    "docify-skills-validate.yml": {
+      "job_count": 1,
+      "has_path_filters": true,
+      "workflow_dispatch": false
+    },
+    "docs.yml": {
+      "job_count": 1,
+      "has_path_filters": true,
+      "workflow_dispatch": false
+    },
+    "engine-tests.yml": {
+      "job_count": 2,
+      "has_path_filters": true,
+      "workflow_dispatch": false
+    },
+    "fy-contractify-gate.yml": {
+      "job_count": 1,
+      "has_path_filters": false,
+      "workflow_dispatch": false
+    },
+    "fy-despaghettify-gate.yml": {
+      "job_count": 1,
+      "has_path_filters": false,
+      "workflow_dispatch": false
+    },
+    "fy-docify-gate.yml": {
+      "job_count": 1,
+      "has_path_filters": false,
+      "workflow_dispatch": false
+    },
+    "pre-deployment.yml": {
+      "job_count": 2,
+      "has_path_filters": false,
+      "workflow_dispatch": true
+    },
+    "quality-gate.yml": {
+      "job_count": 5,
+      "has_path_filters": false,
+      "workflow_dispatch": false
+    }
+  },
+  "component_pyprojects": [
+    {
+      "path": "backend/pyproject.toml",
+      "exists": true
+    },
+    {
+      "path": "frontend/pyproject.toml",
+      "exists": true
+    },
+    {
+      "path": "administration-tool/pyproject.toml",
+      "exists": true
+    },
+    {
+      "path": "world-engine/pyproject.toml",
+      "exists": true
+    },
+    {
+      "path": "ai_stack/pyproject.toml",
+      "exists": true
+    },
+    {
+      "path": "story_runtime_core/pyproject.toml",
+      "exists": true
+    }
+  ],
+  "strengths": [
+    "Core GitHub Actions workflow set is present for backend, admin, engine, AI stack, quality gate, pre-deployment, and compose smoke.",
+    "Root pyproject exports all fy-suite console scripts, including dockerify, testify, and documentify.",
+    "tests/run_tests.py declares canonical --suite all order: backend, frontend, administration, engine, database, ai_stack.",
+    "tests/run_tests.py declares explicit suite targets for: administration, ai_stack, backend, database, engine, frontend, improvement, writers_room.",
+    "Mode registry exposes the required public analyze modes for contract, quality, code_docs, and docs.",
+    "Canonical schema source files and exported schema bundle are both complete for the current evolution slice."
+  ],
+  "warnings": [
+    "No standalone frontend-tests.yml workflow detected; frontend quality currently relies on broader gates or local runner usage."
+  ],
+  "findings": []
+}

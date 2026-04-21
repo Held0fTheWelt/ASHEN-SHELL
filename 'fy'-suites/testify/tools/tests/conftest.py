@@ -66,6 +66,16 @@ def build_minimal_testify_repo(tmp_path: Path) -> Path:
     # rule across the full collection.
     for name in required:
         (root / '.github' / 'workflows' / name).write_text('name: x\non:\n  push: {}\njobs:\n  test:\n    runs-on: ubuntu-latest\n', encoding='utf-8')
+    (root / 'fy_platform' / 'runtime').mkdir(parents=True, exist_ok=True)
+    (root / 'fy_platform' / 'runtime' / 'mode_registry.py').write_text(
+        'MODE_SPECS = {\n'
+        '    "analyze.contract": None,\n'
+        '    "analyze.quality": None,\n'
+        '    "analyze.code_docs": None,\n'
+        '    "analyze.docs": None,\n'
+        '}\n',
+        encoding='utf-8',
+    )
     return root
 
 

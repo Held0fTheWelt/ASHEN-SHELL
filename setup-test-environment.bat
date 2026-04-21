@@ -6,7 +6,9 @@
 @REM Security / hygiene (automated test suites, ed4815d+):
 @REM - Installs only from requirement files in this repository (relative paths after cd);
 @REM   no remote pipe-to-shell bootstrap (only pip install -r from this tree).
-@REM - Uses ``python -m pip`` to reduce PATH hijack / wrong-interpreter risk.
+@REM - Resolves ``PYTHON_EXE`` via the Windows ``py`` launcher first (avoids the broken
+@REM   Microsoft Store ``WindowsApps\python.exe`` stub), then falls back to ``python``.
+@REM - Uses ``"%PYTHON_EXE%" -m pip`` for installs.
 @REM
 @REM Usage:
 @REM   setup-test-environment.bat
@@ -25,17 +27,49 @@ REM Get repository root (script directory)
 set "REPO_ROOT=%~dp0"
 cd /d "%REPO_ROOT%"
 
-REM Check if python is available
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo Error: Python not found
-    echo Please install Python 3.10+ and try again.
-    exit /b 1
+REM Resolve a real interpreter: prefer ``py -3.x`` over PATH ``python`` (Store stub).
+set "PYTHON_EXE="
+where py >nul 2>&1
+if %errorlevel% equ 0 (
+  for %%V in (3.13 3.12 3.11 3.10) do (
+    if not defined PYTHON_EXE (
+      py -%%V -c "import sys" >nul 2>&1
+      if not errorlevel 1 (
+        for /f "delims=" %%i in ('py -%%V -c "import sys; print(sys.executable)" 2^>nul') do set "PYTHON_EXE=%%i"
+      )
+    )
+  )
+)
+if not defined PYTHON_EXE (
+  python -c "import sys" >nul 2>&1
+  if not errorlevel 1 (
+    for /f "delims=" %%i in ('python -c "import sys; print(sys.executable)" 2^>nul') do set "PYTHON_EXE=%%i"
+  )
+)
+if not defined PYTHON_EXE (
+  echo Error: No usable Python interpreter found.
+  echo Install Python 3.10+ from https://www.python.org/downloads/windows/ ^(include the py launcher^).
+  echo If ``python`` is the Microsoft Store alias, disable it under:
+  echo   Settings - Apps - Advanced app settings - App execution aliases
+  exit /b 1
 )
 
-for /f "tokens=*" %%i in ('python --version') do set "PYTHON_VERSION=%%i"
+echo %PYTHON_EXE% | findstr /I "WindowsApps" >nul
+if not errorlevel 1 (
+  echo Error: Interpreter points at Microsoft WindowsApps ^(Store stub^), which cannot run here.
+  echo Install CPython from https://www.python.org/downloads/windows/ and use ``py -3.13`` or pick:
+  echo   Typical fix: %LocalAppData%\Programs\Python\Python313\python.exe
+  exit /b 1
+)
+
+REM pip/build backends often spawn ``python`` from PATH; put this interpreter first.
+for %%I in ("%PYTHON_EXE%") do set "PYTHON_DIR=%%~dpI"
+set "PATH=%PYTHON_DIR%;%PYTHON_DIR%Scripts;%PATH%"
+
+for /f "tokens=*" %%i in ('"%PYTHON_EXE%" --version') do set "PYTHON_VERSION=%%i"
 echo Repository: %REPO_ROOT%
 echo Python: %PYTHON_VERSION%
+echo Executable: %PYTHON_EXE%
 echo.
 
 REM Install backend dependencies (same bar as .github/workflows/backend-tests.yml)
@@ -48,13 +82,13 @@ if not exist "requirements-dev.txt" (
 )
 
 echo Installing production and dev/test dependencies via requirements-dev.txt...
-python -m pip install --upgrade pip -q
+"%PYTHON_EXE%" -m pip install --upgrade pip -q
 if errorlevel 1 (
     echo Error upgrading pip
     exit /b 1
 )
 
-python -m pip install -r requirements-dev.txt -q
+"%PYTHON_EXE%" -m pip install -r requirements-dev.txt -q
 if errorlevel 1 (
     echo Error installing dependencies
     exit /b 1
@@ -65,7 +99,7 @@ cd /d "%REPO_ROOT%"
 REM Other components for ``python tests/run_tests.py --suite all``
 if exist "frontend\requirements-dev.txt" (
     echo Installing frontend test dependencies...
-    python -m pip install -r frontend/requirements-dev.txt -q
+    "%PYTHON_EXE%" -m pip install -r frontend/requirements-dev.txt -q
     if errorlevel 1 exit /b 1
 )
 if exist "administration-tool\requirements-dev.txt" (
@@ -75,14 +109,14 @@ if exist "administration-tool\requirements-dev.txt" (
 )
 if exist "world-engine\requirements-dev.txt" (
     echo Installing world-engine test dependencies...
-    python -m pip install -r world-engine/requirements-dev.txt -q
+    "%PYTHON_EXE%" -m pip install -r world-engine/requirements-dev.txt -q
     if errorlevel 1 exit /b 1
 )
 
 REM Editable local packages so ai_stack LangGraph tests and imports match CI / full repo layout.
 if exist "story_runtime_core\pyproject.toml" (
     echo Installing story_runtime_core ^(editable^)...
-    python -m pip install -e "./story_runtime_core" -q
+    "%PYTHON_EXE%" -m pip install -e "./story_runtime_core" -q
     if errorlevel 1 (
         echo Error: editable install of story_runtime_core failed
         echo Fix pyproject.toml / setuptools layout, then retry.
@@ -91,7 +125,7 @@ if exist "story_runtime_core\pyproject.toml" (
 )
 if exist "ai_stack\pyproject.toml" (
     echo Installing ai_stack[test] ^(editable — langchain-core, langgraph, ...^)...
-    python -m pip install -e "./ai_stack[test]" -q
+    "%PYTHON_EXE%" -m pip install -e "./ai_stack[test]" -q
     if errorlevel 1 (
         echo Error: editable install of ai_stack[test] failed
         exit /b 1
@@ -102,11 +136,10 @@ REM Verify critical dependencies
 echo.
 echo Verifying critical dependencies...
 
-setlocal enabledelayedexpansion
 set "MISSING="
 
 for %%p in (flask sqlalchemy flask_sqlalchemy flask_migrate flask_limiter pytest pytest_asyncio langchain_core langgraph fastapi httpx) do (
-    python -c "import %%p" >nul 2>&1
+    "%PYTHON_EXE%" -c "import %%p" >nul 2>&1
     if !errorlevel! equ 0 (
         echo   [OK] %%p
     ) else (
@@ -127,7 +160,7 @@ if not "!MISSING!"=="" (
 
 echo Verifying ai_stack LangGraph export (RuntimeTurnGraphExecutor^)...
 set "PYTHONPATH=%REPO_ROOT%"
-python -c "import langchain_core, langgraph, ai_stack; assert ai_stack.LANGGRAPH_RUNTIME_EXPORT_AVAILABLE; from ai_stack import RuntimeTurnGraphExecutor; assert RuntimeTurnGraphExecutor is not None; print('  [OK] ai_stack graph lane')"
+"%PYTHON_EXE%" -c "import langchain_core, langgraph, ai_stack; assert ai_stack.LANGGRAPH_RUNTIME_EXPORT_AVAILABLE; from ai_stack import RuntimeTurnGraphExecutor; assert RuntimeTurnGraphExecutor is not None; print('  [OK] ai_stack graph lane')"
 if errorlevel 1 (
     echo Error: ai_stack LangGraph export check failed.
     echo Ensure: pip install -e ./story_runtime_core ^&^& pip install -e "./ai_stack[test]"
@@ -139,10 +172,10 @@ echo All dependencies installed successfully!
 echo ========================================
 echo.
 echo Full Python orchestrator from repo root:
-echo   python tests/run_tests.py
+echo   "%PYTHON_EXE%" tests/run_tests.py
 echo Or component-only:
-echo   python -m pytest tests/smoke/ -v
-echo   python -m pytest backend/tests/ -v
-echo   set PYTHONPATH=%%REPO_ROOT%% ^&^& python -m pytest ai_stack/tests -q
+echo   "%PYTHON_EXE%" -m pytest tests/smoke/ -v
+echo   "%PYTHON_EXE%" -m pytest backend/tests/ -v
+echo   set PYTHONPATH=%%REPO_ROOT%% ^&^& "%PYTHON_EXE%" -m pytest ai_stack/tests -q
 echo.
 exit /b 0
