@@ -5,9 +5,12 @@ entrypoints, and invariants for maintainers.
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 try:  # pragma: no cover - mirror facade LangGraph import; avoids import cycle with langgraph_runtime
     from langgraph.graph import END, StateGraph
@@ -763,6 +766,8 @@ class RuntimeTurnGraphExecutor:
         update = _track(state, node_name="invoke_model", outcome=outcome)
         update["generation"] = generation
         update["fallback_needed"] = bool(generation["error"] or generation["success"] is False)
+        if update["fallback_needed"]:
+            _log.warning("Primary model invocation failed: provider=%s error=%s", provider or "unknown", generation.get("error") or "unknown")
         return update
 
     def _next_step_after_invoke(self, state: RuntimeTurnState) -> str:
@@ -807,6 +812,9 @@ class RuntimeTurnGraphExecutor:
             update["generation"] = fb_gen
             update["fallback_needed"] = True
             return update
+
+        primary_error = (state.get("generation") or {}).get("error") or "unknown"
+        _log.warning("Falling back to mock adapter: primary_error=%s", primary_error)
 
         fallback_adapter = self.adapters.get("mock")
         if fallback_adapter:

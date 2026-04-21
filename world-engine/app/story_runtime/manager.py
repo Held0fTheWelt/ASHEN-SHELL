@@ -682,7 +682,10 @@ class StoryRuntimeManager:
                 raise RuntimeError("Opening blocked by hard narrative boundary")
             raise RuntimeError("Opening validation did not approve committed narration")
         if not self._visible_narration_present(graph_state):
-            raise RuntimeError("Opening produced no visible narration")
+            # Include generation error details in the exception message for debugging
+            gen = graph_state.get("generation") if isinstance(graph_state.get("generation"), dict) else {}
+            gen_error = gen.get("error") or (gen.get("metadata") or {}).get("error") or "no error details available"
+            raise RuntimeError(f"Opening produced no visible narration (generation_error={gen_error!r})")
         session.updated_at = datetime.now(timezone.utc)
         return self._finalize_committed_turn(
             session=session,

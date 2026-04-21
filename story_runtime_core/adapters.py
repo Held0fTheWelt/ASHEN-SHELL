@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -110,10 +113,12 @@ class OpenAIChatAdapter(BaseModelAdapter):
                     },
                 )
         except Exception as exc:
+            error_str = str(exc)
+            _log.error("Model adapter call failed: adapter=%s model=%s error=%s", self.adapter_name, chosen_model, error_str)
             return ModelCallResult(
                 content="",
                 success=False,
-                metadata={"adapter": self.adapter_name, "model": chosen_model, "base_url": self.base_url, "error": str(exc)},
+                metadata={"adapter": self.adapter_name, "model": chosen_model, "base_url": self.base_url, "error": error_str},
             )
 
 
