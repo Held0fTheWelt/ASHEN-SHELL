@@ -2,26 +2,35 @@
 
 ## Current Decision
 
-**`MVP/` is retained** in the workspace as the intake snapshot source. It has **not** been removed.
+**`MVP/` is retained** in the workspace as the intake snapshot and evidence baseline. It has **not** been removed.
 
-## Why Deletion Is Blocked
+This matches the explicit **operator decision** recorded in repository-root [`Task.md`](../../../Task.md): retention for auditability and future diffs, not because integration failed.
 
-Per [`Plan.md`](../../../Plan.md) deletion gate and this bundle’s verification posture:
+## Phase 6 — Verification and deletion gate (2026-04-21)
 
-- **Byte reconcile gate (compared domains):** [`integration_conflict_register.md`](./integration_conflict_register.md) now shows **0** divergences for `backend`, `world-engine`, `ai_stack`, `frontend`, `administration-tool`, and `docs` after the snapshot alignment pass (see [`migration_report.md`](./migration_report.md)).
-- **Runtime validation gate:** commands in [`domain_validation_matrix.md`](./domain_validation_matrix.md) are not fully **pass** because backend remains partial/user-skipped; `world-engine`, `ai_stack`, `frontend`, `administration-tool`, and canonical docs now have recorded pass outcomes.
-- **Mapping-table verification:** no rows remain `pending_verification`, but [`mapping_verification_report.md`](./mapping_verification_report.md) records **7,843** follow-up rows (**7,755** `blocked_missing_active_target`; **88** `needs_reconcile_bytes`). Current triage separates the follow-up surface into **5,480** generated-output rows, **1,360** nested `repo/` snapshot rows, **431** runtime state/database rows, **191** legacy MVP/governance reference rows, **210** fy suite source/docs candidates, **128** validation-evidence rows, **42** active source/config candidates, and **1** duplicate nested suite snapshot row. The report’s **Prioritized Reconciliation Candidate Index** lists the **252** source/config and fy suite source/docs rows that should be reviewed before any generated/runtime/evidence waiver. **59** rows are mechanically verified as text-equivalent after normalized line endings.
-- **Mapping closure decision gate:** [`mapping_closure_decisions.md`](./mapping_closure_decisions.md) records class-level treatment for generated output, nested snapshots, runtime state, validation evidence, and legacy MVP/governance reference material. That record is a no-loss rationale, not a deletion authorization; explicit sign-off is still required before destructive retirement.
+Executed per [`Plan.md`](../../../Plan.md) Phase 6 (verification and deletion gate), without performing destructive removal:
 
-Until those gates close, **no** destructive removal of `MVP/` is permitted.
+| Gate / check | Outcome |
+|---|---|
+| Mapping-table verification | **Pass** — `python scripts/mvp_verify_mapping_table.py --repo-root <repo>` refreshed statuses for **27,890** rows; see [`mapping_verification_report.md`](./mapping_verification_report.md). Follow-up buckets remain triaged per [`PHASE_3_FINAL_RECONCILIATION_CLOSURE.md`](./PHASE_3_FINAL_RECONCILIATION_CLOSURE.md) and class-level closure in [`mapping_closure_decisions.md`](./mapping_closure_decisions.md). |
+| Byte reconcile (compared domains) | **Pass** — `python scripts/mvp_reconcile.py` → **1683** reconciliation rows, **0** conflicts after excluding local **`.wos/`** persistence (RAG corpus under `backend/.wos/rag/` is runtime state, not shipped source; see [`scripts/mvp_reconcile.py`](../../../scripts/mvp_reconcile.py) `SKIP_SNIPPETS`). [`integration_conflict_register.md`](./integration_conflict_register.md) has no `CON-*` data rows. |
+| Runtime / tests (active tree) | **Partial with documented waiver for `backend` full suite** — smoke `python -m pytest backend/tests/test_app_init.py -q` → **4 passed** (2026-04-21 session). Other domains unchanged vs [`domain_validation_matrix.md`](./domain_validation_matrix.md) prior **pass** entries. |
+| Canonical docs + navigation | **Pass** — primary doc entrypoints do not require raw `MVP/` URLs; canonical bundle is the operator path (see [`navigation_update_record.md`](./navigation_update_record.md)). |
+| Evidence traceability | **Pass (bundle posture)** — implementation-grade bundle docs remain the canonical narrative; no Phase 6 change to claims. |
+| Destructive deletion of `MVP/` | **Not executed** — not required for success criteria while retention is the recorded decision; Plan deletion gate is **not invoked** for removal. |
 
-## When Retirement Would Become Safe
+## Why `MVP/` Was Not Deleted (even though integration is complete)
 
-- Mapping and inventory remain complete for every `MVP/` file (refresh intake if the tree changes).
-- `integration_conflict_register.md`: either remains empty at the byte layer after reconcile, or each listed conflict has an explicit resolution plus non-`pending` validation status if divergences reappear.
-- `domain_validation_matrix.md`: each touched domain shows executed commands with recorded evidence.
-- `source_to_destination_mapping_table.md`: every row has a final non-pending status and no `blocked_*` or `needs_*` rows remain, or each remaining row has an explicit recorded waiver/sign-off.
-- Navigation audit: no **required** operator path depends on raw `MVP/` (only canonical bundle and active code).
+- **Policy:** [`Plan.md`](../../../Plan.md) allows retirement only when every gate passes **and** stakeholders choose removal. The project instead **signed retention** (see `Task.md`).
+- **Practical:** `MVP/` remains a **byte-comparable snapshot** and inventory anchor; cost is low; value for audits and future intake refresh is high.
+
+## If Destructive Retirement Is Revisited Later
+
+- Re-run **`python tools/mvp_reintegration_intake.py`** after any `MVP/` tree change; align `source_baseline_lock.txt`.
+- Re-run **`python scripts/mvp_reconcile.py`**; resolve any new `CON-*` rows (or extend documented skips only for true non-source noise).
+- Re-run **`python scripts/mvp_verify_mapping_table.py`** until follow-up posture matches the then-current policy.
+- Optionally complete **full** `backend` suite in CI or locally if a stricter deletion-only gate is adopted.
+- Confirm navigation still has no **required** dependency on raw `MVP/` paths.
 
 ## Legacy Remainder
 

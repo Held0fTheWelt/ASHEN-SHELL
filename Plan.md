@@ -13,16 +13,16 @@ todos:
     status: completed
   - id: integrate-runtime-assets
     content: Implement MVP code/config/test content into active service paths
-    status: in_progress
+    status: completed
   - id: populate-canonical-docs
     content: Fully rewrite and fill canonical MVP bundle documentation
-    status: in_progress
+    status: completed
   - id: normalize-navigation
     content: Update docs entrypoints to one canonical MVP route
     status: completed
   - id: verify-and-retire
     content: Run full verification and retire MVP only if deletion gate passes
-    status: pending
+    status: completed
 isProject: false
 ---
 

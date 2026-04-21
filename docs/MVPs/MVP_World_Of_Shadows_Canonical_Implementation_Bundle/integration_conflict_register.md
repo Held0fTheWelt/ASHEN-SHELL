@@ -8,7 +8,7 @@ Validation status `pending` means no owner has signed merge, selective cherry-pi
 
 ## Paths excluded from comparison
 
-The following are **not** compared and do not appear as reconciliation or conflict rows: cache and tool output (`.pytest_cache/`, `__pycache__/`, `.egg-info/`, `.fydata/`, `node_modules/`), local/runtime trees (`var/`, `runtime_data/`, `evidence/`, `instance/`), generated bundles (`generated/`), and coverage marker files named `.coverage`. Treat MVP copies of those paths as non-authoritative snapshot noise.
+The following are **not** compared and do not appear as reconciliation or conflict rows: cache and tool output (`.pytest_cache/`, `__pycache__/`, `.egg-info/`, `.fydata/`, `node_modules/`), local/runtime trees (`var/`, `runtime_data/`, `evidence/`, `instance/`, `.wos/` — RAG/research persistence and similar local state), generated bundles (`generated/`), and coverage marker files named `.coverage`. Treat MVP copies of those paths as non-authoritative snapshot noise.
 
 Total meaningful conflicts: 0
 
