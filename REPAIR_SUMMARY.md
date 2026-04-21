@@ -180,11 +180,45 @@ POST /api/v1/sessions with module_id creates session
 
 ---
 
-## Remaining Work (Phases 4-10)
+## Additional Repairs Completed (Phases 4-5)
+
+### PHASE 4: Operator/Player Surface Isolation ✓
+
+**Problem:** Diagnostic fields (trace_id, validation_status, scene IDs) were exposed to players
+
+**Solution:** Strict separation between player-visible and operator-visible surfaces
+
+**Changes:**
+- Removed all diagnostic/internal fields from player runtime_view
+- Cleaned template to show only: turn_number, player_line, narration, dialogue, consequences
+- Operator tab retains full turn bridge payload with diagnostics
+- No session IDs, validation details, or scene identifiers visible to players
+
+**Impact:** Player surface shows only gameplay-relevant data; operator has full access to diagnostics
+
+### PHASE 5: Reconnect/Re-entry Flow Validation ✓
+
+**Problem:** Need to ensure players can reliably reconnect after page reload/browser close
+
+**Solution:** Validated complete reconnect architecture with multiple scenarios
+
+**Scenarios Validated:**
+- Browser tab refresh (F5) — session preserved via cookie
+- New browser tab — cookie sent automatically by browser
+- Browser close/reopen — persistent 7-day cookie survives
+- Multiple parallel sessions — unique cookies per run_id prevent cross-contamination
+
+**Security:**
+- Cookies have HttpOnly flag (prevent JavaScript theft)
+- Cookies have Secure flag (HTTPS only)
+- Cookies have SameSite=Strict flag (CSRF protection)
+- Backend session_id never exposed in URL
+
+**Impact:** Robust reconnect flow enables reliable gameplay continuity
+
+## Remaining Work (Phases 6-10)
 
 Based on the repair roadmap, remaining phases include:
-- [ ] Phase 4: Operator/player surface isolation audit
-- [ ] Phase 5: Reconnect/re-entry flow validation
 - [ ] Phase 6: WebSocket continuity validation
 - [ ] Phase 7: Consequence filtering verification
 - [ ] Phase 8: Pressure dynamics validation
