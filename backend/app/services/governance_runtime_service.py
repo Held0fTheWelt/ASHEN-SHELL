@@ -1221,13 +1221,15 @@ def evaluate_runtime_readiness() -> dict:
                         }
                     )
                 if bool(st.get("legacy_default_registry_path")):
+                    # P1-4: This blocker can no longer occur (escape hatch removed in P0-1)
+                    # Kept for backwards compatibility with older play-service versions
                     blockers.append(
                         {
                             "code": "play_story_runtime_legacy_default_registry",
                             "entity_type": "play_service",
                             "entity_id": None,
-                            "message": "Play-service story runtime reports legacy default registry posture.",
-                            "suggested_action": "Disable WOS_ALLOW_UNGOVERNED_STORY_RUNTIME in production-like environments and rebuild governed resolved runtime config.",
+                            "message": "Play-service story runtime reports legacy default registry posture (should not occur in current version).",
+                            "suggested_action": "Rebuild governed resolved runtime config and restart play-service.",
                         }
                     )
                 if bool(st.get("live_execution_blocked")):

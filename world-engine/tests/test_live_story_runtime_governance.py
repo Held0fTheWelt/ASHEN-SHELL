@@ -40,8 +40,8 @@ def test_is_governed_resolved_config_operational_requires_config_version() -> No
     assert is_governed_resolved_config_operational(cfg_bad) is False
 
 
-def test_strict_mode_blocks_default_registry_without_allow_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("WOS_ALLOW_UNGOVERNED_STORY_RUNTIME", "0")
+def test_strict_mode_blocks_default_registry_without_allow_flag() -> None:
+    # P0-1: Escape hatch removed; strict mode always enforced
     mgr = StoryRuntimeManager(session_store=None, governed_runtime_config=None)
     assert mgr.runtime_config_status().get("live_execution_blocked") is True
     assert mgr.runtime_config_status().get("governed_runtime_active") is False
@@ -49,8 +49,8 @@ def test_strict_mode_blocks_default_registry_without_allow_flag(monkeypatch: pyt
         mgr._assert_live_player_governance()
 
 
-def test_governed_config_enables_live_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("WOS_ALLOW_UNGOVERNED_STORY_RUNTIME", "0")
+def test_governed_config_enables_live_path() -> None:
+    # P0-1: Escape hatch removed; governed config enables live path (always required)
     cfg = _minimal_governed_config()
     mgr = StoryRuntimeManager(session_store=None, governed_runtime_config=cfg)
     st = mgr.runtime_config_status()
@@ -60,8 +60,7 @@ def test_governed_config_enables_live_path(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 def test_reload_config_returns_ok_false_when_fetch_returns_none(client, internal_api_key, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("WOS_ALLOW_UNGOVERNED_STORY_RUNTIME", "0")
-
+    # P0-1: Escape hatch removed; config fetch failure always blocks execution
     def _boom(**_kwargs):
         return None
 

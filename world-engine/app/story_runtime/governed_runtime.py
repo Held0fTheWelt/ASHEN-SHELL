@@ -46,11 +46,29 @@ class GovernedStoryRoutingPolicy:
     generation_mode: str = "mock_only"
 
     def choose(self, *, task_type: str) -> RoutingDecision:
+        # P1-6: Enforce runtime mode semantics in routing decision
         route = self._route_for_task(task_type)
         preferred = str(route.get("preferred_model_id") or "").strip() or None
         fallback = str(route.get("fallback_model_id") or "").strip() or None
         mock_mid = str(route.get("mock_model_id") or "").strip() or None
-        selected = preferred or fallback or mock_mid
+
+        mode = (str(self.generation_mode or "").strip().lower() or "mock_only")
+        # mode enforcement:
+        # - "ai_only": use preferred/fallback, raise error if not available
+        # - "mock_only": use mock only, skip preferred/fallback
+        # - "hybrid": preferred → fallback → mock (original behavior)
+        if mode == "ai_only":
+            selected = preferred or fallback
+            if not selected:
+                raise ValueError(f"generation_execution_mode=ai_only but no AI model available for task_type={task_type!r}")
+            fallback_chain = fallback or None
+        elif mode == "mock_only":
+            selected = mock_mid
+            fallback_chain = None
+        else:  # hybrid (default)
+            selected = preferred or fallback or mock_mid
+            fallback_chain = fallback or mock_mid
+
         if not selected:
             raise ValueError(f"No governed model configured for task_type={task_type!r}")
         spec = self.registry.get(selected)
@@ -60,7 +78,7 @@ class GovernedStoryRoutingPolicy:
             selected_model=selected,
             selected_provider=spec.provider,
             route_reason="role_matrix_primary",
-            fallback_model=fallback or mock_mid,
+            fallback_model=fallback_chain,
         )
 
     def _route_for_task(self, task_type: str) -> dict[str, Any]:

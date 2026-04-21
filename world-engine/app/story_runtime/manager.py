@@ -17,7 +17,7 @@ from ai_stack import (
 )
 from ai_stack.story_runtime_playability import is_hard_boundary_failure
 
-from app.config import APP_VERSION, allow_ungoverned_story_runtime
+from app.config import APP_VERSION
 from app.repo_root import resolve_wos_repo_root
 from app.observability.audit_log import log_story_runtime_failure, log_story_turn_event
 from app.observability.runtime_metrics import StoryRuntimeMetrics
@@ -268,35 +268,21 @@ class StoryRuntimeManager:
                 self._governed_runtime_config = (
                     dict(governed_runtime_config) if isinstance(governed_runtime_config, dict) else None
                 )
-                if allow_ungoverned_story_runtime():
-                    self.registry = build_default_registry()
-                    self.routing = RoutingPolicy(self.registry)
-                    self.adapters = adapters
-                    self._runtime_config_status = {
-                        "source": "injected_adapters_default_registry",
-                        "config_version": self._governed_runtime_config.get("config_version")
-                        if isinstance(self._governed_runtime_config, dict)
-                        else None,
-                        "last_reload_ok": True,
-                        "route_count": 0,
-                        "model_count": len(self.registry.all()),
-                        "live_execution_blocked": False,
-                    }
-                else:
-                    self.registry = ModelRegistry()
-                    self.routing = BlockedLiveStoryRoutingPolicy()
-                    self.adapters = adapters
-                    self._runtime_config_status = {
-                        "source": "governed_config_invalid_or_missing",
-                        "config_version": self._governed_runtime_config.get("config_version")
-                        if isinstance(self._governed_runtime_config, dict)
-                        else None,
-                        "last_reload_ok": False,
-                        "route_count": 0,
-                        "model_count": 0,
-                        "live_execution_blocked": True,
-                        "live_execution_block_reason": "injected_adapters_without_governed_config",
-                    }
+                # Escape hatch removed: always fail-closed when config is invalid/missing
+                self.registry = ModelRegistry()
+                self.routing = BlockedLiveStoryRoutingPolicy()
+                self.adapters = adapters
+                self._runtime_config_status = {
+                    "source": "governed_config_invalid_or_missing",
+                    "config_version": self._governed_runtime_config.get("config_version")
+                    if isinstance(self._governed_runtime_config, dict)
+                    else None,
+                    "last_reload_ok": False,
+                    "route_count": 0,
+                    "model_count": 0,
+                    "live_execution_blocked": True,
+                    "live_execution_block_reason": "injected_adapters_without_governed_config",
+                }
         else:
             self._apply_runtime_components(governed_runtime_config)
         if retriever is None or context_assembler is None:
@@ -386,29 +372,7 @@ class StoryRuntimeManager:
                 config_version=(governed_runtime_config or {}).get("config_version"),
             )
             return
-        if allow_ungoverned_story_runtime():
-            self._governed_runtime_config = (
-                dict(governed_runtime_config) if isinstance(governed_runtime_config, dict) else None
-            )
-            self.registry = build_default_registry()
-            self.routing = RoutingPolicy(self.registry)
-            self.adapters = build_default_model_adapters()
-            self._runtime_config_status = {
-                "source": "default_registry",
-                "config_version": (governed_runtime_config or {}).get("config_version")
-                if isinstance(governed_runtime_config, dict)
-                else None,
-                "last_reload_ok": False if isinstance(governed_runtime_config, dict) else None,
-                "route_count": 0,
-                "model_count": 0,
-                "live_execution_blocked": False,
-            }
-            self.metrics.incr(
-                "runtime_config_apply_fallback_default",
-                source="default_registry",
-                config_version=self._runtime_config_status.get("config_version"),
-            )
-            return
+        # Escape hatch removed: always fail-closed when config is invalid/missing
         reason = "resolved_config_unusable"
         if not isinstance(governed_runtime_config, dict):
             reason = "resolved_config_missing"
@@ -477,8 +441,7 @@ class StoryRuntimeManager:
         }
 
     def _live_governance_enforced_for_player_paths(self) -> bool:
-        if allow_ungoverned_story_runtime():
-            return False
+        # Escape hatch removed: governance always enforced except for test injection paths
         src = str(self._runtime_config_status.get("source") or "")
         return not src.startswith("injected")
 
@@ -525,8 +488,8 @@ class StoryRuntimeManager:
             return False
         module_id = str(graph_state.get("module_id") or "")
         committed = graph_state.get("committed_result") if isinstance(graph_state.get("committed_result"), dict) else {}
-        # GoC uses an explicit commit seam; non-GoC vertical slices may approve without the same commit envelope.
-        if module_id == "god_of_carnage" and not committed.get("commit_applied"):
+        # All modules require explicit commit applied (P0-2: extended from God of Carnage to all modules)
+        if not committed.get("commit_applied"):
             return False
         bundle = graph_state.get("visible_output_bundle") if isinstance(graph_state.get("visible_output_bundle"), dict) else {}
         gm = bundle.get("gm_narration")

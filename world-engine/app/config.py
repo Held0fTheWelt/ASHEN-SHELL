@@ -241,6 +241,5 @@ def env_truthy(name: str, *, default: bool = False) -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
-def allow_ungoverned_story_runtime() -> bool:
-    """When true, story runtime may use legacy default_registry (tests / explicit dev only)."""
-    return env_truthy("WOS_ALLOW_UNGOVERNED_STORY_RUNTIME", default=False)
+# Ungoverned story runtime no longer allowed - always enforce governed config
+# See GOVERNANCE_REPAIR_PLAN.md for details on removing this escape hatch

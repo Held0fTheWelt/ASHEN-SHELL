@@ -44,6 +44,7 @@ def build_repro_metadata_and_health(
     retrieval = state.get("retrieval") or {}
     generation = state.get("generation") or {}
     host_versions = dict(state.get("host_versions") or {})
+    # P1-5: Separate planned route from actual invocation for clarity
     repro_metadata: dict[str, Any] = {
         "ai_stack_semantic_version": AI_STACK_SEMANTIC_VERSION,
         "runtime_turn_graph_version": graph_version,
@@ -52,15 +53,23 @@ def build_repro_metadata_and_health(
         "story_runtime_core_version": _dist_version("story_runtime_core"),
         "routing_policy": "story_runtime_core.RoutingPolicy",
         "routing_policy_version": "registry_default_v1",
-        "selected_model": routing.get("selected_model"),
-        "selected_provider": routing.get("selected_provider"),
+        # Planned route (what the governance/routing policy selected)
+        "planned_route": {
+            "selected_model": routing.get("selected_model"),
+            "selected_provider": routing.get("selected_provider"),
+            "route_reason": routing.get("route_reason"),
+            "fallback_chain": routing.get("fallback_chain"),
+        },
+        # Actual invocation (what was actually called)
+        "actual_invocation": {
+            "attempted": generation.get("attempted"),
+            "success": generation.get("success"),
+            "fallback_used": generation.get("fallback_used"),
+        },
         "retrieval_domain": retrieval.get("domain"),
         "retrieval_profile": retrieval.get("profile"),
         "retrieval_status": retrieval.get("status"),
         "retrieval_hit_count": retrieval.get("hit_count"),
-        "model_attempted": generation.get("attempted"),
-        "model_success": generation.get("success"),
-        "model_fallback_used": generation.get("fallback_used"),
         "module_id": state.get("module_id"),
         "session_id": state.get("session_id"),
         "host_versions": host_versions,

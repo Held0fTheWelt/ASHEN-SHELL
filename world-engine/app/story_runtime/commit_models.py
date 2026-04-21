@@ -196,7 +196,8 @@ def _resolve_scene_proposal(
 
     from_tokens = _scene_candidate_from_token_scan(player_input, known_scene_ids)
     if from_tokens is not None:
-        candidate_sources.append({"source": "player_input_token_scan", "scene_id": from_tokens})
+        # P0-3: Token scan removed as gameplay governor; kept only for diagnostics
+        candidate_sources.append({"source": "player_input_token_scan", "scene_id": from_tokens, "governance_rejected": True})
 
     from_model = _scene_candidate_from_model(generation, known_scene_ids)
 
@@ -204,8 +205,7 @@ def _resolve_scene_proposal(
         return from_command, "explicit_command", candidate_sources, model_raw
     if from_model is not None:
         return from_model, "model_structured_output", candidate_sources, model_raw
-    if from_tokens is not None:
-        return from_tokens, "player_input_token_scan", candidate_sources, model_raw
+    # Token scan fallback removed: return None if model fails (fail-closed)
     return None, None, candidate_sources, model_raw
 
 

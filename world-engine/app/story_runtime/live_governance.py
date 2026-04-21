@@ -6,7 +6,6 @@ from typing import Any
 
 from story_runtime_core import ModelRegistry
 
-from app.config import allow_ungoverned_story_runtime
 from app.story_runtime.governed_runtime import build_governed_story_runtime_components
 
 
