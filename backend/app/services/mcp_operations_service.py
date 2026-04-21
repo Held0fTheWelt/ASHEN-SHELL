@@ -15,14 +15,12 @@ from sqlalchemy import and_, or_
 from app.extensions import db
 from app.models.mcp_diagnostic_case import McpDiagnosticCase
 from app.models.mcp_ops_telemetry import McpOpsTelemetry
-# TODO: These imports are stale from legacy MCP operations cockpit
-# from ai_stack.mcp_canonical_surface import (
-#     CANONICAL_MCP_TOOL_DESCRIPTORS,
-#     build_compact_mcp_operator_truth,
-#     canonical_mcp_tool_descriptors_by_name,
-#     verify_catalog_names_alignment,
-# )
-# from ai_stack.mcp_static_catalog import mcp_exposure_counts_by_suite, mcp_suite_registry_rows
+from ai_stack.mcp_canonical_surface import (
+    build_compact_mcp_operator_truth,
+    canonical_mcp_tool_descriptors_by_name,
+    verify_catalog_names_alignment,
+)
+from ai_stack.mcp_static_catalog import mcp_exposure_counts_by_suite, mcp_suite_registry_rows
 
 INGEST_MAX_BODY_BYTES = 65536
 ROW_PAYLOAD_MAX_BYTES = 16384
@@ -64,16 +62,15 @@ def _parse_process_hint(raw: str | None) -> str | None:
     return s
 
 
-# TODO: Stale function; requires legacy MCP imports
-# def resolve_suite_for_record(tool_name: str | None, wos_mcp_suite: str | None) -> tuple[str, str | None]:
-#     """Return (suite_name, process_suite_hint) per cockpit plan."""
-#     hint = _parse_process_hint(wos_mcp_suite)
-#     process_display = hint if hint else None
-#     if tool_name:
-#         desc = canonical_mcp_tool_descriptors_by_name().get(tool_name)
-#         if desc:
-#             return desc.mcp_suite.value, process_display
-#     return "unknown", process_display
+def resolve_suite_for_record(tool_name: str | None, wos_mcp_suite: str | None) -> tuple[str, str | None]:
+    """Return ``(suite_name, process_suite_hint)`` for one telemetry record."""
+    hint = _parse_process_hint(wos_mcp_suite)
+    process_display = hint if hint else None
+    if tool_name:
+        desc = canonical_mcp_tool_descriptors_by_name().get(tool_name)
+        if desc:
+            return desc.mcp_suite.value, process_display
+    return "unknown", process_display
 
 
 def _truncate_json_payload(data: dict[str, Any]) -> tuple[dict[str, Any], bool]:
@@ -532,11 +529,18 @@ def probe_backend_reachable(app: Flask) -> bool | None:
 
 
 def action_refresh_catalog(app: Flask) -> dict[str, Any]:
-    """Stub: Legacy MCP operations cockpit placeholder."""
+    """Refresh catalog alignment/operator truth projection for cockpit actions."""
     backend_ok = probe_backend_reachable(app)
+    align = verify_catalog_names_alignment()
+    registry_names = list(canonical_mcp_tool_descriptors_by_name().keys())
+    operator_truth = build_compact_mcp_operator_truth(
+        backend_reachable=backend_ok,
+        catalog_alignment_ok=bool(align.get("aligned")),
+        registry_tool_names=registry_names,
+    )
     return {
-        "catalog_alignment": {"aligned": True},
-        "operator_truth": {"status": "stub"},
+        "catalog_alignment": align,
+        "operator_truth": operator_truth,
         "backend_reachable": backend_ok
     }
 

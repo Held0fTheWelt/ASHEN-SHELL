@@ -26,7 +26,7 @@ flask>=3.0.6,<4
 # Minimal packages to run the backend pytest suite in CI, containers, and fresh clones.
 
 pytest>=7.0,<9
-pytest-asyncio>=0.21,<1
+pytest-asyncio>=1.3,<2
 pytest-cov>=4.0,<6
 pytest-timeout>=2.1
 anyio>=4.0,<5

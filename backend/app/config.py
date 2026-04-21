@@ -184,6 +184,9 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SECRET_KEY = "test-secret-key"
     JWT_SECRET_KEY = "test-jwt-secret-key-at-least-32-bytes-long"
+    # Keep test token lifetimes deterministic and short, independent of local .env overrides.
+    JWT_ACCESS_TOKEN_EXPIRES = 3600
+    JWT_REFRESH_TOKEN_EXPIRES = 604800
     RATELIMIT_ENABLED = True  # Enable rate limiting so tests can verify it works
     RATELIMIT_DEFAULT = "10000 per minute"  # Allow reasonable default, endpoint-specific limits will be enforced
     RATELIMIT_STORAGE_URI = "memory://"  # In-memory storage for testing

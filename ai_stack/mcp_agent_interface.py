@@ -12,7 +12,7 @@ Constitutional Laws:
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 
 logger = logging.getLogger(__name__)
@@ -207,7 +207,7 @@ class MCPAgentInterface:
             error: Error message (if any)
         """
         call_record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "tool_name": tool_name,
             "params": params,
             "result": result,

@@ -21,6 +21,15 @@ from app.services.mail_service import send_verification_email, send_password_res
 from app.utils.error_handler import log_full_error, ERROR_MESSAGES
 
 
+def _apply_constant_time_delay(start_time: float, *, extra_seconds: float = 0.0) -> None:
+    """Apply constant-time floor delay for anti-enumeration responses."""
+    elapsed = time.time() - start_time
+    target = route_auth_config.constant_time_delay_seconds + max(0.0, extra_seconds)
+    delay_needed = target - elapsed
+    if delay_needed > 0:
+        time.sleep(delay_needed)
+
+
 @api_v1_bp.route("/auth/register", methods=["POST"])
 @limiter.limit("10 per minute")
 def register():
@@ -97,28 +106,28 @@ def resend_verification():
     is_valid, email = validate_email_format(email_raw)
     if not is_valid:
         # Apply constant-time delay for invalid emails too (defense in depth)
-        elapsed = time.time() - start_time
-        delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
-        if delay_needed > 0:
-            time.sleep(delay_needed)
+        _apply_constant_time_delay(
+            start_time,
+            extra_seconds=route_auth_config.resend_verification_nonexistent_extra_delay_seconds,
+        )
         return jsonify({"error": "Invalid email format"}), route_status_codes.bad_request
     user = db.session.execute(
         db.select(User).filter(db.func.lower(User.email) == email)
     ).scalar_one_or_none()
     if not user:
         # Apply constant-time delay before responding (prevents timing-based email enumeration)
-        elapsed = time.time() - start_time
-        delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
-        if delay_needed > 0:
-            time.sleep(delay_needed)
+        _apply_constant_time_delay(
+            start_time,
+            extra_seconds=route_auth_config.resend_verification_nonexistent_extra_delay_seconds,
+        )
         # Return success anyway to prevent email enumeration
         return jsonify({"message": "If the email exists, a verification link has been sent"}), route_status_codes.ok
     if user.email_verified_at is not None:
         # Apply constant-time delay before responding
-        elapsed = time.time() - start_time
-        delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
-        if delay_needed > 0:
-            time.sleep(delay_needed)
+        _apply_constant_time_delay(
+            start_time,
+            extra_seconds=route_auth_config.resend_verification_nonexistent_extra_delay_seconds,
+        )
         # User is already verified
         return jsonify({"message": "This email is already verified"}), route_status_codes.ok
     ttl = current_app.config.get("EMAIL_VERIFICATION_TTL_HOURS", 24)
@@ -135,10 +144,7 @@ def resend_verification():
         tags=["api", "email"],
     )
     # Apply constant-time delay before responding
-    elapsed = time.time() - start_time
-    delay_needed = route_auth_config.constant_time_delay_seconds - elapsed
-    if delay_needed > 0:
-        time.sleep(delay_needed)
+    _apply_constant_time_delay(start_time)
     return jsonify({"message": "Verification email sent"}), route_status_codes.ok
 
 

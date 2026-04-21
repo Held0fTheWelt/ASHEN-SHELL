@@ -6367,6 +6367,82 @@ paths:
           description: Rate limited.
         '500':
           description: Server error.
+  /api/v1/player/execute_action:
+    post:
+      tags:
+      - GameBootstrap
+      summary: POST /player/execute_action
+      operationId: post_api_v1_player_execute_action
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/player/history:
+    get:
+      tags:
+      - GameBootstrap
+      summary: GET /player/history
+      operationId: get_api_v1_player_history
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/player/join_game:
+    post:
+      tags:
+      - GameBootstrap
+      summary: POST /player/join_game
+      operationId: post_api_v1_player_join_game
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/player/state:
+    get:
+      tags:
+      - GameBootstrap
+      summary: GET /player/state
+      operationId: get_api_v1_player_state
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
   /api/v1/roles:
     get:
       tags:

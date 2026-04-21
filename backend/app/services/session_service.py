@@ -2,11 +2,18 @@
 Backend session service.
 
 Orchestrates:
-- World-engine for authoritative operations
-- Backend mirrors for read-only queries
+- World-engine for authoritative operations (when configured)
+- Backend in-process runtime bootstrap for tests/tooling compatibility
 """
 
 from typing import Dict, Any, Optional
+
+from app.content.module_loader import load_module
+from app.runtime.session_start import start_session
+from app.runtime.session_store import (
+    create_session as register_runtime_session,
+    get_session as get_runtime_session,
+)
 
 
 class SessionService:
@@ -34,9 +41,11 @@ class SessionService:
     def create_session(
         self,
         world_id: str,
-        session_type: str,
-        initial_state: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+        session_type: str | None = None,
+        initial_state: Dict[str, Any] | None = None,
+        *,
+        metadata_updates: dict[str, Any] | None = None,
+    ) -> Any:
         """
         Create a session via world-engine.
 
@@ -48,24 +57,31 @@ class SessionService:
         Returns:
             Session data or None if creation failed
         """
-        if not self.world_engine_client:
-            return None
+        if self.world_engine_client:
+            # Create in world-engine (authoritative)
+            session = self.world_engine_client.create_session(
+                world_id=world_id,
+                session_type=session_type or "story",
+                initial_state=initial_state or {},
+            )
 
-        # Create in world-engine (authoritative)
-        session = self.world_engine_client.create_session(
-            world_id=world_id,
-            session_type=session_type,
-            initial_state=initial_state
-        )
+            if not session:
+                return None
 
-        if not session:
-            return None
+            # Mirror in backend
+            if self.session_mirror:
+                self.session_mirror.store_session_copy(session.to_dict())
 
-        # Mirror in backend
-        if self.session_mirror:
-            self.session_mirror.store_session_copy(session.to_dict())
+            return session.to_dict() if hasattr(session, "to_dict") else session
 
-        return session.to_dict() if hasattr(session, 'to_dict') else session
+        # Backward-compatible in-process bootstrap used broadly by tests and routes.
+        start = start_session(world_id)
+        session_state = start.session
+        if metadata_updates:
+            session_state.metadata.update(metadata_updates)
+        module = load_module(world_id)
+        register_runtime_session(session_state.session_id, session_state, module)
+        return session_state
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -156,9 +172,25 @@ class SessionService:
 _session_service = SessionService()
 
 
-def create_session(world_id: str, session_type: str, initial_state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Wrapper for SessionService.create_session."""
-    return _session_service.create_session(world_id, session_type, initial_state)
+def create_session(
+    world_id: str,
+    session_type: str | None = None,
+    initial_state: Dict[str, Any] | None = None,
+    *,
+    metadata_updates: dict[str, Any] | None = None,
+) -> Any:
+    """Wrapper for SessionService.create_session.
+
+    Supports both signatures:
+    - ``create_session(module_id)``
+    - ``create_session(world_id, session_type, initial_state)``
+    """
+    return _session_service.create_session(
+        world_id,
+        session_type=session_type,
+        initial_state=initial_state,
+        metadata_updates=metadata_updates,
+    )
 
 
 def get_session(session_id: str) -> Optional[Dict[str, Any]]:

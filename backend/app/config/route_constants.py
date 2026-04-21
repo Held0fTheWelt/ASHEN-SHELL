@@ -13,6 +13,8 @@ class RouteAuthConfig:
     """Authentication endpoint constants."""
     constant_time_delay_seconds: float = 0.5
     """Delay for failed auth attempts to mitigate timing attacks."""
+    resend_verification_nonexistent_extra_delay_seconds: float = 0.3
+    """Compensating delay for non-existing/invalid email paths to match real resend work."""
 
 
 @dataclass(frozen=True)

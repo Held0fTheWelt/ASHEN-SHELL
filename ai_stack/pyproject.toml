@@ -28,7 +28,7 @@ langchain = [
 # RuntimeTurnGraphExecutor from `__all__` by design (MCP / lightweight import path).
 test = [
     "pytest>=7.0,<9",
-    "pytest-asyncio>=0.21,<1",
+    "pytest-asyncio>=1.3,<2",
     "pytest-cov>=4.0,<6",
     "pytest-timeout>=2.1",
     "langchain>=1.2.0,<2",
@@ -46,7 +46,7 @@ all = [
     "langchain-core>=1.2.0,<2",
     "langgraph>=1.0.3,<2",
     "pytest>=7.0,<9",
-    "pytest-asyncio>=0.21,<1",
+    "pytest-asyncio>=1.3,<2",
     "pytest-cov>=4.0,<6",
 ]
 
