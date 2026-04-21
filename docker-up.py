@@ -8,14 +8,16 @@ it always uses the **repository root** as the Compose working directory (same as
 
 **Local environment & secrets:**
 
-The stack requires stable local secrets to be initialized in ``.env`` (repo root).
-Use the ``init-env`` subcommand to set up a new environment with generated secrets:
+The stack requires stable local secrets in ``.env`` (repo root). ``docker-up.py`` writes
+those values **before** Docker Compose runs (including ``docker compose build``): they are
+not generated inside Dockerfiles (images stay secret-free).
 
-  python docker-up.py init-env
+Use ``init-env`` to create or refresh ``.env`` from ``.env.example`` with generated platform
+secrets (SECRET_KEY, JWT_SECRET_KEY, SECRETS_KEK, PLAY_SERVICE_SHARED_SECRET,
+INTERNAL_RUNTIME_CONFIG_TOKEN, etc.). A plain ``python docker-up.py`` / ``up`` / ``build`` /
+``restart`` also ensures missing or placeholder secrets exist **before** compose executes.
 
-This creates ``.env`` from ``.env.example`` with auto-generated platform secrets
-(SECRET_KEY, JWT_SECRET_KEY, SECRETS_KEK, PLAY_SERVICE_SHARED_SECRET, etc.).
-Existing values are preserved; only missing secrets are generated.
+Existing non-placeholder values are preserved; missing or example placeholders are replaced.
 
 After ``init-env``, edit ``.env`` keys as needed:
 
@@ -92,6 +94,8 @@ REQUIRED_SECRETS = {
     "PLAY_SERVICE_SHARED_SECRET": 24,
     "PLAY_SERVICE_INTERNAL_API_KEY": 24,
     "FRONTEND_SECRET_KEY": 24,
+    # Backend GET /api/v1/internal/runtime-config and play-service fetch must share this token (docker-compose).
+    "INTERNAL_RUNTIME_CONFIG_TOKEN": 24,
 }
 
 # Keys that have default/fallback values and don't need generation
@@ -113,6 +117,19 @@ OPTIONAL_SECRET_KEYS = (
 def _generate_secret(num_bytes: int) -> str:
     """Generate a strong random secret (URL-safe base64)."""
     return secrets.token_urlsafe(num_bytes)
+
+
+def _platform_secret_needs_generation(raw: str | None) -> bool:
+    """True if a REQUIRED_SECRETS slot is empty or still carries .env.example placeholders."""
+    v = (raw or "").strip()
+    if not v:
+        return True
+    if v == "__AUTO_GENERATED_DO_NOT_EDIT__":
+        return True
+    lowered = v.lower()
+    if lowered in ("change-me", "changeme", "change_me", "replace-me", "replaceme"):
+        return True
+    return False
 
 
 def _read_env_file(path: Path) -> dict[str, str]:
@@ -191,7 +208,8 @@ def _ensure_env_secrets(force: bool = False) -> bool:
     updated = False
 
     for key, num_bytes in REQUIRED_SECRETS.items():
-        if force or key not in env_to_write or not env_to_write[key].strip():
+        cur = env_to_write.get(key, "")
+        if force or key not in env_to_write or _platform_secret_needs_generation(cur):
             env_to_write[key] = _generate_secret(num_bytes)
             updated = True
 
@@ -257,11 +275,11 @@ def _compose_prefix(args: argparse.Namespace) -> list[str]:
 
 
 def _ensure_dotenv_before_compose(compose_args: list[str]) -> None:
-    """Ensure .env exists with required secrets before running compose commands that need it."""
+    """Ensure .env exists with required secrets before compose (build/up/restart need substitution + env_file)."""
     if not compose_args:
         return
     head = compose_args[0]
-    if head not in ("up", "build"):
+    if head not in ("up", "build", "restart"):
         return
 
     if not ENV_FILE.is_file():
@@ -326,15 +344,17 @@ def _bootstrap_gate_after_up() -> int:
     if data.get("bootstrap_required"):
         print(
             "Bootstrap is required before normal operation is considered complete.\n"
+            "Containers are up; finish bootstrap when you are ready.\n"
             "Next steps:\n"
             "  1) Open web setup: http://localhost:5002/manage/operational-governance/bootstrap\n"
             "  2) Select preset + initialize trust-anchor/first provider\n"
-            "  3) Re-run `python docker-up.py up` after bootstrap completes\n"
+            "  3) After bootstrap, reload resolved runtime config from Administration Center so play-service can bind\n"
             "CLI fallback (if web unavailable):\n"
             "  - POST /api/v1/admin/bootstrap/initialize with admin JWT\n",
             file=sys.stderr,
         )
-        return 2
+        # Do not fail the docker-up.py process: compose already exited 0; exit 2 breaks scripts/CI that treat non-zero as a broken stack.
+        return 0
     print("Bootstrap already initialized. Stack is ready.")
     return 0
 
@@ -403,7 +423,9 @@ def cmd_init_env(args: argparse.Namespace, services: list[str]) -> int:
 
     if ENV_FILE.is_file() and not force:
         existing = _read_env_file(ENV_FILE)
-        missing = [k for k in REQUIRED_SECRETS if k not in existing or not existing[k].strip()]
+        missing = [
+            k for k in REQUIRED_SECRETS if k not in existing or _platform_secret_needs_generation(existing.get(k))
+        ]
         if not missing:
             print(f"✓ {ENV_FILE} already exists with all required secrets.")
             print(f"  To regenerate secrets, use: python docker-up.py init-env --force")

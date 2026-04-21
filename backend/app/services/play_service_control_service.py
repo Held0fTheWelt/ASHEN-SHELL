@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -202,6 +203,18 @@ def _clear_control_flags_default(app: Flask) -> None:
     app.config["PLAY_SERVICE_ALLOW_NEW_SESSIONS"] = True
 
 
+def _overlay_play_service_urls_from_environment(app: Flask) -> None:
+    """Prefer explicit env URLs over persisted play-service control (fixes Docker DNS vs host localhost).
+
+    Operators often ``Apply`` from a browser session with ``internal_url=http://localhost:8001`` (host port).
+    Inside the backend container that address is wrong; compose injects ``PLAY_SERVICE_INTERNAL_URL=http://play-service:8000``.
+    """
+    for key in ("PLAY_SERVICE_PUBLIC_URL", "PLAY_SERVICE_INTERNAL_URL"):
+        raw = (os.environ.get(key) or "").strip()
+        if raw:
+            app.config[key] = raw
+
+
 def _snapshot_play_config(app: Flask) -> dict[str, Any]:
     return {k: app.config.get(k) for k in _PLAY_CFG_KEYS}
 
@@ -224,8 +237,10 @@ def bootstrap_play_service_control(app: Flask) -> None:
                 _sync_flask_config_from_desired(app, applied)
             else:
                 _clear_control_flags_default(app)
+            _overlay_play_service_urls_from_environment(app)
     except Exception:
         _clear_control_flags_default(app)
+        _overlay_play_service_urls_from_environment(app)
 
 
 def validate_play_service_env_pairing(app: Flask) -> None:
@@ -483,6 +498,7 @@ def apply_desired(app: Flask, *, user_id: int | None) -> dict[str, Any]:
         cfg_snap = _snapshot_play_config(app)
         try:
             _sync_flask_config_from_desired(app, normalized)
+            _overlay_play_service_urls_from_environment(app)
             validate_play_service_env_pairing(app)
             doc["applied_desired"] = snap
             doc["apply_ok"] = True
