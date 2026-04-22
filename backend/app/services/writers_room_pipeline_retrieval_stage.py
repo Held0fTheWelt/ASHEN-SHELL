@@ -39,6 +39,9 @@ def run_writers_room_retrieval_stage(
     focus: str,
     actor_id: str,
     manifest_stages: list[dict[str, Any]],
+    use_sparse_only: bool = False,
+    max_chunks: int = 6,
+    retrieval_profile: str = "writers_review",
 ) -> WritersRoomRetrievalStageResult:
     """Run request intake, workflow seed, and context-pack retrieval; build retrieval trace."""
     _append_workflow_stage(manifest_stages, stage_id="request_intake")
@@ -50,10 +53,11 @@ def run_writers_room_retrieval_stage(
         actor=f"writers_room:{actor_id}",
         payload={
             "domain": "writers_room",
-            "profile": "writers_review",
+            "profile": retrieval_profile,
             "query": f"{module_id} {focus} canon consistency dramaturgy structure",
             "module_id": module_id,
-            "max_chunks": 6,
+            "max_chunks": max_chunks,
+            "use_sparse_only": use_sparse_only,
         },
     )
     context_payload: dict[str, Any] = raw_payload if isinstance(raw_payload, dict) else {}

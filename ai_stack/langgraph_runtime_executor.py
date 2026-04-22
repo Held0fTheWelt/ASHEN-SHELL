@@ -27,7 +27,7 @@ from ai_stack.story_runtime_playability import (
     degrade_validation_outcome,
 )
 from ai_stack.rag import ContextPackAssembler, ContextRetriever
-from ai_stack.rag_retrieval_dtos import RetrievalRequest
+from ai_stack.rag_retrieval_dtos import RetrievalRequest, RuntimeRetrievalConfig
 from ai_stack.rag_types import RetrievalDomain
 from ai_stack.retrieval_governance_summary import attach_retrieval_governance_summary
 from ai_stack.operational_profile import build_operational_cost_hints_for_runtime_graph
@@ -111,6 +111,7 @@ class RuntimeTurnGraphExecutor:
     max_self_correction_attempts: int = 3
     allow_degraded_commit_after_retries: bool = True
     generation_execution_mode: str | None = None
+    retrieval_config: RuntimeRetrievalConfig | None = None
 
     def __post_init__(self) -> None:
         """``__post_init__`` — see implementation for behaviour and contracts.
@@ -299,57 +300,87 @@ class RuntimeTurnGraphExecutor:
             RuntimeTurnState:
                 Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
         """
-        payload = {
-            "domain": RetrievalDomain.RUNTIME.value,
-            "profile": "runtime_turn_support",
-            "query": f"{state['player_input']}\nscene:{state['current_scene_id']}\nmodule:{state['module_id']}",
-            "module_id": state["module_id"],
-            "scene_id": state["current_scene_id"],
-            "max_chunks": 4,
-        }
+        rc = self.retrieval_config or RuntimeRetrievalConfig()
+        query_str = f"{state['player_input']}\nscene:{state['current_scene_id']}\nmodule:{state['module_id']}"
         capability_audit: list[dict[str, Any]] = []
-        if self.capability_registry is not None:
-            result = self.capability_registry.invoke(
-                name="wos.context_pack.build",
-                mode="runtime",
-                actor="runtime_turn_graph",
-                payload=payload,
-            )
-            retrieval = result["retrieval"]
-            if isinstance(retrieval, dict):
-                attach_retrieval_governance_summary(retrieval)
-            context_text = result["context_text"]
-            capability_audit = self.capability_registry.recent_audit(limit=3)
-        else:
-            request = RetrievalRequest(
-                domain=RetrievalDomain.RUNTIME,
-                profile="runtime_turn_support",
-                query=payload["query"],
-                module_id=state["module_id"],
-                scene_id=state["current_scene_id"],
-                max_chunks=4,
-            )
-            retrieval_result = self.retriever.retrieve(request)
-            pack = self.assembler.assemble(retrieval_result)
-            top_score = ""
-            if pack.sources:
-                top_score = str(pack.sources[0].get("score", ""))
+
+        if rc.retrieval_disabled:
             retrieval = {
-                "domain": pack.domain,
-                "profile": pack.profile,
-                "status": pack.status,
-                "hit_count": pack.hit_count,
-                "sources": pack.sources,
-                "ranking_notes": pack.ranking_notes,
-                "index_version": pack.index_version,
-                "corpus_fingerprint": pack.corpus_fingerprint,
-                "storage_path": pack.storage_path,
-                "retrieval_route": pack.retrieval_route,
-                "embedding_model_id": pack.embedding_model_id,
-                "top_hit_score": top_score,
+                "domain": RetrievalDomain.RUNTIME.value,
+                "profile": rc.retrieval_profile,
+                "status": "skipped",
+                "retrieval_route": "disabled_by_config",
+                "hit_count": 0,
+                "sources": [],
+                "ranking_notes": ["retrieval_execution_mode=disabled"],
+                "index_version": "",
+                "corpus_fingerprint": "",
+                "storage_path": "",
+                "embedding_model_id": "",
+                "top_hit_score": "",
             }
             attach_retrieval_governance_summary(retrieval)
-            context_text = pack.compact_context
+            context_text = ""
+        else:
+            payload = {
+                "domain": RetrievalDomain.RUNTIME.value,
+                "profile": rc.retrieval_profile,
+                "query": query_str,
+                "module_id": state["module_id"],
+                "scene_id": state["current_scene_id"],
+                "max_chunks": rc.max_chunks,
+                "use_sparse_only": rc.use_sparse_only,
+            }
+            if self.capability_registry is not None:
+                result = self.capability_registry.invoke(
+                    name="wos.context_pack.build",
+                    mode="runtime",
+                    actor="runtime_turn_graph",
+                    payload=payload,
+                )
+                retrieval = result["retrieval"]
+                if isinstance(retrieval, dict):
+                    attach_retrieval_governance_summary(retrieval)
+                context_text = result["context_text"]
+                capability_audit = self.capability_registry.recent_audit(limit=3)
+            else:
+                request = RetrievalRequest(
+                    domain=RetrievalDomain.RUNTIME,
+                    profile=rc.retrieval_profile,
+                    query=query_str,
+                    module_id=state["module_id"],
+                    scene_id=state["current_scene_id"],
+                    max_chunks=rc.max_chunks,
+                    use_sparse_only=rc.use_sparse_only,
+                )
+                retrieval_result = self.retriever.retrieve(request)
+                pack = self.assembler.assemble(retrieval_result)
+                # Apply min_score filter when operator has configured a threshold.
+                if rc.retrieval_min_score is not None and pack.sources:
+                    pack.sources = [
+                        s for s in pack.sources
+                        if float(s.get("score", 0)) >= rc.retrieval_min_score
+                    ]
+                    pack.hit_count = len(pack.sources)
+                top_score = ""
+                if pack.sources:
+                    top_score = str(pack.sources[0].get("score", ""))
+                retrieval = {
+                    "domain": pack.domain,
+                    "profile": pack.profile,
+                    "status": pack.status,
+                    "hit_count": pack.hit_count,
+                    "sources": pack.sources,
+                    "ranking_notes": pack.ranking_notes,
+                    "index_version": pack.index_version,
+                    "corpus_fingerprint": pack.corpus_fingerprint,
+                    "storage_path": pack.storage_path,
+                    "retrieval_route": pack.retrieval_route,
+                    "embedding_model_id": pack.embedding_model_id,
+                    "top_hit_score": top_score,
+                }
+                attach_retrieval_governance_summary(retrieval)
+                context_text = pack.compact_context
         interp = state.get("interpreted_input") if isinstance(state.get("interpreted_input"), dict) else {}
         interpretation_block = (
             "Runtime interpretation (structured):\n"

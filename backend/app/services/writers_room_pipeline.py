@@ -24,6 +24,7 @@ from app.services.writers_room_pipeline_manifest import (
 )
 from app.services.writers_room_pipeline_packaging_stage import run_writers_room_packaging_stage
 from app.services.writers_room_pipeline_retrieval_stage import run_writers_room_retrieval_stage
+from app.services.governance_runtime_service import read_scope_settings
 from app.services.writers_room_pipeline_workflow import (
     _WritersRoomWorkflow,
     _WORKFLOW,
@@ -44,6 +45,11 @@ def _execute_writers_room_workflow_package(
     Returns workflow fields for persistence (no review_id / review_state / revision_cycles).
     """
     manifest_stages: list[dict[str, Any]] = []
+    _rs = read_scope_settings("retrieval")
+    _wr_mode = str(_rs.get("retrieval_execution_mode") or "hybrid_dense_sparse").strip()
+    _wr_sparse = _wr_mode == "sparse_only"
+    _wr_max_k = max(1, min(int(_rs.get("retrieval_top_k") or 6), 12))
+    _wr_profile = str(_rs.get("retrieval_profile") or "writers_review").strip() or "writers_review"
     rv = run_writers_room_retrieval_stage(
         seed_graph=workflow.seed_graph,
         capability_registry=workflow.capability_registry,
@@ -51,6 +57,9 @@ def _execute_writers_room_workflow_package(
         focus=focus,
         actor_id=actor_id,
         manifest_stages=manifest_stages,
+        use_sparse_only=_wr_sparse,
+        max_chunks=_wr_max_k,
+        retrieval_profile=_wr_profile,
     )
     seed = rv.seed
     context_payload = rv.context_payload

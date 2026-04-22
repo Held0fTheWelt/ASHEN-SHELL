@@ -43,6 +43,7 @@ def build_context_pack_handler(
             module_id=payload.get("module_id"),
             scene_id=payload.get("scene_id"),
             max_chunks=int(payload.get("max_chunks", 4)),
+            use_sparse_only=bool(payload.get("use_sparse_only", False)),
         )
         retrieval_result = retriever.retrieve(request)
         context_pack = assembler.assemble(retrieval_result)

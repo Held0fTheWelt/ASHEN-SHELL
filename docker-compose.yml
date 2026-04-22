@@ -36,6 +36,11 @@ services:
       # RAG / AI Engineer Suite: repo root inside the image (slim layout: /app/app/..., see backend/Dockerfile).
       - WOS_REPO_ROOT=/app
       - WOS_CONTENT_MODULES_ROOT=/app/content/modules
+      # Embedding governance (see docs/rag_in_world_of_shadows.md):
+      # Uncomment WOS_RAG_DISABLE_EMBEDDINGS to force sparse-only fallback (e.g. CI without model cache).
+      # - WOS_RAG_DISABLE_EMBEDDINGS=1
+      # Uncomment WOS_RAG_EMBEDDING_CACHE_DIR to pin the fastembed ONNX model download location.
+      # - WOS_RAG_EMBEDDING_CACHE_DIR=/app/.wos/embedding_cache
       # Backend → world-engine (Docker DNS). Browser-facing URLs use PUBLIC (host port).
       - PLAY_SERVICE_INTERNAL_URL=http://play-service:8000
       - PLAY_SERVICE_PUBLIC_URL=http://localhost:8001
@@ -109,6 +114,11 @@ services:
       - APP_TITLE=World of Shadows Play Service
       # Slim image layout: /app/app/... — same as backend WOS_REPO_ROOT for RAG / .wos paths.
       - WOS_REPO_ROOT=/app
+      # Embedding governance (see docs/rag_in_world_of_shadows.md):
+      # Uncomment WOS_RAG_DISABLE_EMBEDDINGS to force sparse-only fallback (e.g. CI without model cache).
+      # - WOS_RAG_DISABLE_EMBEDDINGS=1
+      # Uncomment WOS_RAG_EMBEDDING_CACHE_DIR to pin the fastembed ONNX model download location.
+      # - WOS_RAG_EMBEDDING_CACHE_DIR=/app/.wos/embedding_cache
       # Stable secrets from .env (do not edit hardcoded values; manage in .env instead)
       - PLAY_SERVICE_SECRET=${PLAY_SERVICE_SHARED_SECRET}
       - PLAY_SERVICE_INTERNAL_API_KEY=${PLAY_SERVICE_INTERNAL_API_KEY}

@@ -67,6 +67,10 @@ class ContextRetriever:
         self.corpus = corpus
         self._embedding_index = embedding_index
         self._embedding_model_id = embedding_model_id or (embedding_index.model_id if embedding_index else "")
+        # Last-observed turn stats — written on every retrieve() call, read by diagnostics surfaces.
+        self.last_retrieval_route: str = ""
+        self.last_embedding_model_id: str = ""
+        self.last_retrieval_corpus_fingerprint: str = ""
 
     def _corpus_trace(self) -> tuple[str, str, str]:
         """``_corpus_trace`` — see implementation for behaviour and contracts.
@@ -273,7 +277,7 @@ class ContextRetriever:
         dense_rebuild_reason = c.rag_dense_rebuild_reason
 
         if not self.corpus.chunks:
-            return _retrieval_result_degraded_empty_corpus(
+            result = _retrieval_result_degraded_empty_corpus(
                 request=request,
                 index_version=trace[0],
                 corpus_fingerprint=trace[1],
@@ -285,6 +289,10 @@ class ContextRetriever:
                 embedding_index_version=emb_idx_ver,
                 embedding_cache_dir_identity=emb_cache_id,
             )
+            self.last_retrieval_route = result.retrieval_route
+            self.last_embedding_model_id = result.embedding_model_id
+            self.last_retrieval_corpus_fingerprint = result.corpus_fingerprint
+            return result
 
         phase = _run_retrieval_encode_score_pool_phase(self, request)
         qpc = phase.qpc
@@ -329,7 +337,7 @@ class ContextRetriever:
         emb_codes_ok = query_enc_codes if query_encode_failed else ()
 
         if not hits:
-            return _retrieval_result_fallback_empty_hits(
+            result = _retrieval_result_fallback_empty_hits(
                 request=request,
                 index_version=trace[0],
                 corpus_fingerprint=trace[1],
@@ -347,25 +355,30 @@ class ContextRetriever:
                 embedding_index_version=emb_idx_ver,
                 embedding_cache_dir_identity=emb_cache_id,
             )
-        return _retrieval_result_ok_with_hits(
-            request=request,
-            index_version=trace[0],
-            corpus_fingerprint=trace[1],
-            storage_path=trace[2],
-            hits=hits,
-            prefix_notes=prefix_notes,
-            quality_notes=quality_notes,
-            policy_notes=policy_notes,
-            retrieval_route=retrieval_route,
-            embedding_model_id=embedding_mid,
-            degradation_mode=degradation_mode,
-            dense_index_build_action=dense_action,
-            dense_rebuild_reason=dense_rebuild_reason,
-            dense_artifact_validity=dense_validity,
-            embedding_reason_codes=emb_codes_ok,
-            embedding_index_version=emb_idx_ver,
-            embedding_cache_dir_identity=emb_cache_id,
-        )
+        else:
+            result = _retrieval_result_ok_with_hits(
+                request=request,
+                index_version=trace[0],
+                corpus_fingerprint=trace[1],
+                storage_path=trace[2],
+                hits=hits,
+                prefix_notes=prefix_notes,
+                quality_notes=quality_notes,
+                policy_notes=policy_notes,
+                retrieval_route=retrieval_route,
+                embedding_model_id=embedding_mid,
+                degradation_mode=degradation_mode,
+                dense_index_build_action=dense_action,
+                dense_rebuild_reason=dense_rebuild_reason,
+                dense_artifact_validity=dense_validity,
+                embedding_reason_codes=emb_codes_ok,
+                embedding_index_version=emb_idx_ver,
+                embedding_cache_dir_identity=emb_cache_id,
+            )
+        self.last_retrieval_route = result.retrieval_route
+        self.last_embedding_model_id = result.embedding_model_id
+        self.last_retrieval_corpus_fingerprint = result.corpus_fingerprint
+        return result
 
 
 def _run_retrieval_encode_score_pool_phase(

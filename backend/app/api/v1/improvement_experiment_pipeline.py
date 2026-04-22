@@ -24,6 +24,9 @@ def apply_capability_pipeline_to_improvement_package(
         ...,
         tuple[str, dict[str, Any]],
     ],
+    use_sparse_only: bool = False,
+    max_chunks: int = 5,
+    retrieval_profile: str = "improvement_eval",
 ) -> ImprovementExperimentCapabilityOutcome:
     """Run context pack, transcript tool, review bundle, rationale, evidence store write."""
     context_payload = capability_registry.invoke(
@@ -33,11 +36,12 @@ def apply_capability_pipeline_to_improvement_package(
         trace_id=trace_id,
         payload={
             "domain": "improvement",
-            "profile": "improvement_eval",
+            "profile": retrieval_profile,
             "query": f"{experiment['baseline_id']} {package['candidate']['candidate_summary']} "
             "variant evaluation recommendation",
             "module_id": experiment["baseline_id"],
-            "max_chunks": 5,
+            "max_chunks": max_chunks,
+            "use_sparse_only": use_sparse_only,
         },
     )
     workflow_stages.append(

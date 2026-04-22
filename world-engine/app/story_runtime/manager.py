@@ -16,6 +16,7 @@ from ai_stack import (
     build_runtime_retriever,
     create_default_capability_registry,
 )
+from ai_stack.rag_retrieval_dtos import retrieval_config_from_governed
 from ai_stack.story_runtime_playability import is_hard_boundary_failure
 
 from app.config import APP_VERSION
@@ -421,8 +422,10 @@ class StoryRuntimeManager:
 
     def _rebuild_turn_graph(self) -> None:
         gen_mode = None
+        retrieval_cfg = None
         if isinstance(self._governed_runtime_config, dict):
             gen_mode = str(self._governed_runtime_config.get("generation_execution_mode") or "").strip() or None
+            retrieval_cfg = retrieval_config_from_governed(self._governed_runtime_config)
         self.turn_graph = RuntimeTurnGraphExecutor(
             interpreter=interpret_player_input,
             routing=self.routing,
@@ -434,6 +437,7 @@ class StoryRuntimeManager:
             max_self_correction_attempts=self._max_self_correction_attempts(),
             allow_degraded_commit_after_retries=self._allow_degraded_commit_after_retries(),
             generation_execution_mode=gen_mode,
+            retrieval_config=retrieval_cfg,
         )
 
     def reload_runtime_config(self, governed_runtime_config: dict[str, Any] | None) -> dict[str, Any]:

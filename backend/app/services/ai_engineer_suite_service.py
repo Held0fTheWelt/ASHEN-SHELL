@@ -941,12 +941,19 @@ def get_rag_operations_status() -> dict[str, Any]:
             "built_at": corpus.built_at,
         },
         "retrieval": {
+            # retrieval_mode_bootstrap_setting: the value from the governed DB bootstrap record.
+            # This IS wired to the live turn path via governed_runtime_config → RuntimeRetrievalConfig.
+            "retrieval_mode_bootstrap_setting": runtime_modes.get("retrieval_execution_mode"),
+            # mode_runtime kept as alias for backwards-compat with existing admin UI JS.
             "mode_runtime": runtime_modes.get("retrieval_execution_mode"),
             "mode_setting": retrieval_settings.get("retrieval_execution_mode"),
             "retrieval_profile": retrieval_settings.get("retrieval_profile") or "runtime_turn_support",
             "retrieval_top_k": retrieval_settings.get("retrieval_top_k") or 4,
             "retrieval_min_score": retrieval_settings.get("retrieval_min_score"),
             "embeddings_enabled_setting": retrieval_settings.get("embeddings_enabled"),
+            "governance_wired_to_live_path": True,
+            "last_observed_route": getattr(retriever, "last_retrieval_route", "") or "",
+            "last_observed_embedding_model_id": getattr(retriever, "last_embedding_model_id", "") or "",
         },
         "embedding_backend": {
             "available": probe.available,
@@ -958,6 +965,11 @@ def get_rag_operations_status() -> dict[str, Any]:
             "cache_dir_identity": probe.cache_dir_identity,
             "primary_reason_code": probe.primary_reason_code,
             "messages": list(probe.messages),
+            # Real env var controls — these are the authoritative gates on embedding availability.
+            "env_disable_embeddings_var": "WOS_RAG_DISABLE_EMBEDDINGS",
+            "env_disable_embeddings_set": probe.disabled_by_env,
+            "env_cache_dir_var": "WOS_RAG_EMBEDDING_CACHE_DIR",
+            "env_cache_dir_resolved": probe.cache_dir or "__default__",
         },
         "dense_index": {
             "present_on_retriever": bool(getattr(retriever, "_embedding_index", None) is not None),

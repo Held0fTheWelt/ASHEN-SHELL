@@ -14,6 +14,7 @@ from app.api.v1.improvement_experiment_pipeline import apply_capability_pipeline
 from app.contracts.improvement_operating_loop import ImprovementLoopStage
 from app.observability.audit_log import log_workflow_audit
 from app.observability.trace import get_trace_id
+from app.services.governance_runtime_service import read_scope_settings
 from app.services.improvement_service import (
     ImprovementStore,
     apply_improvement_recommendation_decision,
@@ -209,6 +210,11 @@ def run_improvement_experiment():
 
     repo_root = Path(__file__).resolve().parents[4]
     _retriever, _assembler, capability_registry = _get_improvement_rag_stack(repo_root)
+    _rs = read_scope_settings("retrieval")
+    _mode = str(_rs.get("retrieval_execution_mode") or "hybrid_dense_sparse").strip()
+    _use_sparse = _mode == "sparse_only"
+    _max_k = max(1, min(int(_rs.get("retrieval_top_k") or 5), 12))
+    _profile = str(_rs.get("retrieval_profile") or "improvement_eval").strip() or "improvement_eval"
     try:
         outcome = apply_capability_pipeline_to_improvement_package(
             experiment=experiment,
@@ -220,6 +226,9 @@ def run_improvement_experiment():
             workflow_stages=workflow_stages,
             utc_iso=_utc_iso,
             transcript_tool_evidence=_transcript_tool_evidence_for_improvement,
+            use_sparse_only=_use_sparse,
+            max_chunks=_max_k,
+            retrieval_profile=_profile,
         )
         package_response = outcome.package_response
         context_payload = outcome.context_payload
