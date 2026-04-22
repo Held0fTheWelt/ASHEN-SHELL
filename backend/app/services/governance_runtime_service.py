@@ -1539,12 +1539,29 @@ def _serialize_provider_rows(providers: list[AIProviderConfig]) -> list[dict]:
     out: list[dict] = []
     for provider in providers:
         contract = _provider_contract(provider.provider_type)
+
+        # Resolve secret: fetch active credential and decrypt
+        api_key = None
+        if provider.credential_configured:
+            from app.models.governance_core import AIProviderCredential
+            active_cred = AIProviderCredential.query.filter_by(
+                provider_id=provider.provider_id,
+                is_active=True
+            ).first()
+            if active_cred:
+                try:
+                    decrypted = decrypt_secret(active_cred)
+                    api_key = decrypted.get("api_key") if isinstance(decrypted, dict) else str(decrypted)
+                    print(f"DEBUG: Decrypted credential for {provider.provider_id}: api_key={api_key[:20]}..." if api_key else "None", flush=True)
+                except Exception as e:
+                    print(f"DEBUG: Failed to decrypt credential for {provider.provider_id}: {e}", flush=True)
+
         out.append(
             {
                 "provider_id": provider.provider_id,
                 "provider_type": provider.provider_type,
                 "base_url": _normalize_provider_url(provider.base_url, contract),
-                "resolved_secret_ref": f"credential:{provider.provider_id}" if provider.credential_configured else None,
+                "api_key": api_key,  # Direct API key for world-engine
                 "credential_configured": provider.credential_configured,
                 "is_enabled": True,
                 "health_status": provider.health_status,
