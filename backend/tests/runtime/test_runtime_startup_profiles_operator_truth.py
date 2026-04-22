@@ -490,7 +490,16 @@ def test_reproducibility_pytest_requirements_and_hygiene_tests_pass() -> None:
     assert "pytest" in lower
     assert "pytest-asyncio" in lower or "pytest_asyncio" in lower
     proc = subprocess.run(
-        [sys.executable, "-m", "pytest", str(REPO_ROOT / "tests" / "requirements_hygiene"), "-q"],
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            str(REPO_ROOT / "tests" / "requirements_hygiene"),
+            "-q",
+            "--capture=no",
+            "--confcutdir",
+            str(REPO_ROOT / "tests" / "requirements_hygiene"),
+        ],
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,
