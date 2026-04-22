@@ -1550,7 +1550,13 @@ def _serialize_provider_rows(providers: list[AIProviderConfig]) -> list[dict]:
             ).first()
             if active_cred:
                 try:
-                    decrypted = decrypt_secret(active_cred)
+                    decrypted = decrypt_secret(
+                        encrypted_secret=active_cred.encrypted_secret,
+                        encrypted_dek=active_cred.encrypted_dek,
+                        secret_nonce=active_cred.secret_nonce,
+                        dek_nonce=active_cred.dek_nonce,
+                        dek_algorithm=active_cred.dek_algorithm,
+                    )
                     api_key = decrypted.get("api_key") if isinstance(decrypted, dict) else str(decrypted)
                     print(f"DEBUG: Decrypted credential for {provider.provider_id}: api_key={api_key[:20]}..." if api_key else "None", flush=True)
                 except Exception as e:
