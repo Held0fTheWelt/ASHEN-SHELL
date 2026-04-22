@@ -116,7 +116,9 @@ def build_governed_model_adapters(config: dict[str, Any]) -> dict[str, BaseModel
         provider_id = str(row.get("provider_id") or "").strip()
         provider_type = str(row.get("provider_type") or "").strip().lower()
         base_url = str(row.get("base_url") or "").strip() or None
-        api_key = str(credentials.get(provider_id) or "").strip() or None
+        # Try direct api_key from provider first (new), fallback to provider_credentials dict (legacy)
+        api_key = str(row.get("api_key") or credentials.get(provider_id) or "").strip() or None
+        print(f"DEBUG: Building adapter for {provider_id} ({provider_type}): api_key={api_key[:20] + '...' if api_key else 'None'}", flush=True)
         if provider_type == "openai":
             adapters[provider_id] = OpenAIChatAdapter(base_url=base_url, api_key=api_key)
         elif provider_type == "ollama":
