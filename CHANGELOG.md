@@ -12,6 +12,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.7.0] - 2026-04-22
+
+**Summary:** This release consolidates a large body of work after `0.6.6`: runtime governance hardening for live play, repairs across backend and frontend player flow, stronger execution and continuity tests, and broader platform expansion in the `fy` suite ecosystem. Governance runtime config now carries provider credentials and model selection data correctly into world-engine execution, runtime readiness and play-service probes report truthful degraded states, and operator edits in provider and model governance trigger reliable runtime rebind behavior. In parallel, the repository gained a broad set of platform and suite improvements, including new adapter surfaces, expanded command and schema documentation, and many new verification suites.
+
+### Added
+
+- **Live story runtime governance guardrails:** explicit governed-runtime checks and live-execution blocking for unsafe runtime states, with dedicated test coverage in `world-engine/tests/test_live_story_runtime_governance.py`.
+- **Automatic play runtime rebind flow after governance edits:** provider, model, and route updates now trigger runtime rebinding so governed changes become active without manual drift recovery.
+- **Session authority and execution backbone expansion:** new backend and world-engine session authority and turn execution components, plus integration coverage for session sync paths.
+- **Canonical model interaction surface in the artificial intelligence stack:** new registry and tool handling surfaces for model interactions, with backend client integration and test coverage.
+- **Extensive gameplay seam verification suite:** new executable checks under `tests/e2e/` for continuity, reconnect and re-entry, surface isolation, consequence filtering, and final end-to-end runtime validation.
+- **New platform suites and adapters in `fy` workspaces:** addition and integration of suites such as `coda`, `diagnosta`, and `dockerify`, with command interfaces, service adapters, tests, and ownership metadata.
+- **Expanded platform documentation and schema bundle:** large additions under `fy` platform docs and schema references, including command references, readiness records, support material, and self-hosting guidance.
+- **Audit and implementation evidence bundles:** new repair and audit records in `docs/audit/`, `docs/operations/`, and related implementation reports documenting closure evidence and runtime behavior checks.
+
+### Changed
+
+- **Governed runtime credential flow:** decrypted provider credentials and selected model data are now carried through governed runtime config and used directly by world-engine execution.
+- **Secret decryption path correctness in backend governance:** runtime governance now uses the correct secret decryption call shape and removes obsolete decryption arguments.
+- **Model update persistence in governance management:** updates now accept and persist `model_name` consistently across backend routes and administration scripts.
+- **Player route and session mapping behavior:** backend turn routes and frontend play routes were aligned so opening turns, session identifiers, and template mapping remain consistent through first-turn creation.
+- **Runtime error surfaces for operators:** execution and adapter failures now expose clearer, more actionable error details in runtime logs and API-facing diagnostics.
+- **Startup and secret materialization through `docker-up.py`:** required platform secrets and runtime token values are generated or repaired in `.env` before compose build, startup, and restart operations.
+- **Compose and play-service binding alignment:** runtime path and service URL handling were refined so governed play-service checks report real binding status instead of stale assumptions.
+- **Request visibility for container debugging:** backend container startup now emits access logs to improve diagnosis of governance and runtime request paths.
+
+### Fixed
+
+- **Play-service governed probe reliability:** readiness now reports degraded status truthfully when play-service governance status cannot be reached, instead of implying full health.
+- **Front-end route dependency safety:** optional markup parsing dependency handling in play routes no longer breaks route import when the dependency is absent.
+- **Governance update handling regressions:** several persistence and update edge cases in provider and model governance flows were corrected so edited values are retained and re-applied.
+
+### Tests (integrity verification)
+
+- `python -m pytest world-engine/tests/test_live_story_runtime_governance.py -q` (from repo root with required project import path) — governed live runtime checks pass.
+- `python -m pytest backend/tests/test_game_routes.py -q` (from repo root) — player route behavior and turn contracts pass.
+- `python -m pytest frontend/tests/test_routes_extended.py -q` (from `frontend/`) — opening, transcript, and route behavior checks pass.
+- `python -m pytest tests/e2e/test_gameplay_seam_repairs.py tests/e2e/test_phase4_surface_separation.py tests/e2e/test_phase5_reconnect_reentry.py tests/e2e/test_phase6_websocket_continuity.py tests/e2e/test_phase7_consequence_filtering.py tests/e2e/test_phase8_9_10_final_validation.py -q` (from repo root) — full gameplay seam verification suite passes.
+- `python -m pytest backend/tests/test_operational_governance_mvp.py backend/tests/test_world_engine_control_center.py -q` (from repo root) — governance runtime readiness and control-center integrity checks pass.
+- `python -m pytest backend/tests/runtime/test_mcp_enrichment.py backend/tests/runtime/test_turn_dispatcher.py -q` (from repo root) — model-enrichment and turn-dispatcher execution checks pass.
+
+---
+
 ## [0.6.6] - 2026-04-14
 
 **Summary:** Completes the **authoritative story-runtime playable path** end to end: committed **Turn 0 opening** on world-engine session create, **governed** registry/routing and runtime config reload, **bounded self-correction** and degraded continuation in the LangGraph executor, diagnostics and repro metadata alignment, and **play-bridge** plus **play shell** behaviour so the first lazy World Engine bind returns **`opening_turn`** for the transcript. Fixes **injected adapters** when only `adapters=` is passed to `StoryRuntimeManager` (tests and RAG harnesses no longer lose custom adapters to defaults). Adds **English** technical and implementation-report notes, **progressive narration** styling on committed GM text, removes the obsolete **`complete_playable_mvp_v2_package`** export tree.
