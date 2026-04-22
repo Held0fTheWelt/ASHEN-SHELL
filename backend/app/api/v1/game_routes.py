@@ -212,6 +212,12 @@ def _player_shell_state_view(
     runtime_session_id: str,
 ) -> dict[str, Any]:
     committed = state.get("committed_state") if isinstance(state.get("committed_state"), dict) else {}
+    player_shell_context = committed.get("player_shell_context")
+    if not isinstance(player_shell_context, dict):
+        player_shell_context = state.get("player_shell_context") if isinstance(state.get("player_shell_context"), dict) else {}
+    module_scope_truth = committed.get("module_scope_truth")
+    if not isinstance(module_scope_truth, dict):
+        module_scope_truth = state.get("module_scope_truth") if isinstance(state.get("module_scope_truth"), dict) else {}
     return {
         "run_id": run_id,
         "template_id": template_id,
@@ -223,6 +229,8 @@ def _player_shell_state_view(
         "last_narrative_commit_summary": committed.get("last_narrative_commit_summary"),
         "last_committed_consequences": committed.get("last_committed_consequences") or [],
         "last_open_pressures": committed.get("last_open_pressures") or [],
+        "player_shell_context": player_shell_context,
+        "module_scope_truth": module_scope_truth,
     }
 
 

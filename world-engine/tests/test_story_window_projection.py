@@ -39,6 +39,22 @@ def test_story_window_projection_uses_committed_opening_and_player_turn() -> Non
                 },
             },
             "narrative_commit": {"committed_consequences": ["tension_escalates"]},
+            "dramatic_context_summary": {
+                "contract": "bounded_dramatic_context.v1",
+                "selected_scene_function": "escalate_conflict",
+                "function_type": "pressure_probe",
+                "responder": {"responder_id": "annette_reille"},
+                "pacing": {"pacing_mode": "compressed"},
+                "scene_assessment": {"pressure_state": "high_blame"},
+                "social_state": {"social_risk_band": "high"},
+                "dramatic_outcome": {
+                    "social_outcome": "tension_escalates",
+                    "dramatic_direction": "humiliation_spikes",
+                    "continuity_classes": ["blame_pressure"],
+                },
+                "beat": {"beat_id": "scene_1:escalate_conflict"},
+                "narrative_threads": {"thread_pressure_level": 3},
+            },
             "committed_turn_authority": {
                 "authority_record_version": "committed_turn_authority.v1",
                 "committed_scene_id": "scene_1",
@@ -64,3 +80,6 @@ def test_story_window_projection_uses_committed_opening_and_player_turn() -> Non
     assert entries[2]["authority_summary"]["validation_status"] == "approved"
     assert entries[2]["authority_summary"]["selected_scene_function"] == "escalate_conflict"
     assert entries[2]["authority_summary"]["visibility_class_markers"] == ["truth_aligned"]
+    assert entries[2]["dramatic_context_summary"]["contract"] == "story_window_dramatic_context.v1"
+    assert entries[2]["dramatic_context_summary"]["social_outcome"] == "tension_escalates"
+    assert entries[2]["authority_summary"]["dramatic_context"]["social_risk_band"] == "high"

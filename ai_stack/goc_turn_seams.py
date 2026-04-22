@@ -645,6 +645,9 @@ def build_roadmap_dramatic_turn_record(state: dict[str, Any]) -> dict[str, Any]:
         "derived_artifact_refs": list(gov.get("derived_artifact_refs") or []),
         "retrieval_governance_result": gov,
     }
+    continuity_query_signal = retrieval.get("continuity_query_signal")
+    if isinstance(continuity_query_signal, dict):
+        retrieval_record["continuity_query_signal"] = continuity_query_signal
 
     responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
     primary = responders[0] if responders and isinstance(responders[0], dict) else {}

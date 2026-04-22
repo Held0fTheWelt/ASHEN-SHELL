@@ -84,6 +84,349 @@ from ai_stack.langgraph_runtime_state import (
 from ai_stack.langgraph_runtime_tracking import _dist_version, _track
 
 
+_GOC_FALLBACK_CAST_KEYS: tuple[str, ...] = ("veronique", "michel", "annette", "alain")
+
+
+def _reconcile_model_responders(
+    state: "RuntimeTurnState", generation: dict[str, Any]
+) -> dict[str, Any]:
+    """Check the model's proposed responders against the director's scope.
+
+    The model may propose a ``responder_id`` and/or a list of
+    ``responder_actor_ids`` in its structured output. The director's
+    ``selected_responder_set`` is the authoritative scope for the scene.
+    This helper computes the intersection, records the actors the model
+    introduced that were out of scope, and picks the final effective
+    responder — preferring the model's claim when it was in scope and
+    otherwise falling back to the director's first responder.
+
+    The returned dict lives on the runtime state as
+    ``responder_reconciliation`` and is surfaced on the governance surface
+    so operators can audit when and why a model responder claim was
+    dropped.
+    """
+    selected = state.get("selected_responder_set")
+    selected_list = selected if isinstance(selected, list) else []
+    director_actor_ids: list[str] = []
+    for row in selected_list:
+        if isinstance(row, dict):
+            aid = row.get("actor_id") or row.get("responder_id")
+            if isinstance(aid, str) and aid.strip():
+                director_actor_ids.append(aid.strip())
+    director_scope = set(director_actor_ids)
+
+    meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    structured = meta.get("structured_output") if isinstance(meta.get("structured_output"), dict) else {}
+
+    model_primary_raw = structured.get("responder_id")
+    model_primary = model_primary_raw.strip() if isinstance(model_primary_raw, str) else ""
+
+    model_scope_raw = structured.get("responder_actor_ids")
+    model_scope: list[str] = []
+    if isinstance(model_scope_raw, list):
+        for value in model_scope_raw:
+            if isinstance(value, str) and value.strip():
+                model_scope.append(value.strip())
+    if model_primary and model_primary not in model_scope:
+        model_scope.append(model_primary)
+
+    in_scope: list[str] = []
+    out_of_scope: list[str] = []
+    for actor in model_scope:
+        if not director_scope or actor in director_scope:
+            if actor not in in_scope:
+                in_scope.append(actor)
+        else:
+            if actor not in out_of_scope:
+                out_of_scope.append(actor)
+
+    if model_primary and model_primary in in_scope:
+        effective_primary = model_primary
+        reconciliation_outcome = "model_responder_accepted"
+    elif director_actor_ids:
+        effective_primary = director_actor_ids[0]
+        if model_primary and model_primary not in director_scope:
+            reconciliation_outcome = "model_responder_out_of_scope_dropped"
+        elif model_primary:
+            reconciliation_outcome = "model_responder_missing_from_director_scope"
+        else:
+            reconciliation_outcome = "director_primary_responder_used"
+    else:
+        effective_primary = model_primary or ""
+        reconciliation_outcome = (
+            "no_director_scope_available"
+            if not model_primary
+            else "no_director_scope_accepting_model_responder"
+        )
+
+    return {
+        "outcome": reconciliation_outcome,
+        "director_responder_scope": director_actor_ids,
+        "model_proposed_responder_id": model_primary or None,
+        "model_proposed_responder_scope": model_scope,
+        "effective_responder_id": effective_primary or None,
+        "effective_responder_scope": in_scope,
+        "dropped_out_of_scope_actors": out_of_scope,
+        "dropped_out_of_scope_count": len(out_of_scope),
+    }
+
+
+def _derive_active_character_keys(
+    *,
+    yaml_slice: dict[str, Any] | None,
+    primary_responder: dict[str, Any],
+    module_id: str,
+) -> list[str]:
+    """Compute the active cast for character-mind construction from module data.
+
+    Resolution is data-driven: keys declared in ``yaml_slice.characters`` are
+    preferred. They are reordered so the primary responder's key — matched
+    either by direct key equality or by actor_id substring — comes first, with
+    the remaining keys following YAML declaration order. When a module
+    publishes no YAML characters block this helper falls back to the known
+    God of Carnage cast so the currently-supported module keeps working.
+    """
+    chars_block: dict[str, Any] = {}
+    if isinstance(yaml_slice, dict) and isinstance(yaml_slice.get("characters"), dict):
+        chars_block = yaml_slice["characters"]
+
+    yaml_keys = [
+        str(k).lower().strip()
+        for k in chars_block.keys()
+        if isinstance(k, str) and str(k).strip()
+    ]
+    if not yaml_keys:
+        if (module_id or "").strip().lower() in {"god_of_carnage", "goc"}:
+            yaml_keys = list(_GOC_FALLBACK_CAST_KEYS)
+        else:
+            return []
+
+    primary_actor_id = ""
+    primary_key = ""
+    if isinstance(primary_responder, dict):
+        primary_actor_id = str(primary_responder.get("actor_id") or "").lower()
+        raw_key = primary_responder.get("character_key") or primary_responder.get("key")
+        if isinstance(raw_key, str):
+            primary_key = raw_key.lower().strip()
+
+    first: str | None = None
+    if primary_key and primary_key in yaml_keys:
+        first = primary_key
+    elif primary_actor_id:
+        for k in yaml_keys:
+            if k and k in primary_actor_id:
+                first = k
+                break
+
+    if first is None:
+        return yaml_keys
+
+    ordered = [first] + [k for k in yaml_keys if k != first]
+    return ordered
+
+
+_RETRIEVAL_CONTINUITY_QUERY_CONTRACT = "runtime_retrieval_continuity_query.v1"
+
+
+def _bounded_retrieval_token(value: Any, *, max_chars: int = 80) -> str | None:
+    if isinstance(value, dict):
+        for key in (
+            "actor_id",
+            "responder_id",
+            "character_key",
+            "thread_kind",
+            "status",
+            "resolution_hint",
+            "class",
+            "continuity_class",
+        ):
+            token = _bounded_retrieval_token(value.get(key), max_chars=max_chars)
+            if token:
+                return token
+        return None
+    if value is None:
+        return None
+    text = str(value).replace("\n", " ").strip()
+    text = " ".join(text.split())
+    if not text:
+        return None
+    if len(text) > max_chars:
+        text = text[:max_chars].rstrip()
+    return text
+
+
+def _collect_retrieval_tokens(*values: Any, max_chars: int = 80) -> list[str]:
+    tokens: list[str] = []
+
+    def visit(value: Any) -> None:
+        if isinstance(value, (list, tuple, set)):
+            for item in value:
+                visit(item)
+            return
+        token = _bounded_retrieval_token(value, max_chars=max_chars)
+        if token and token not in tokens:
+            tokens.append(token)
+
+    for value in values:
+        visit(value)
+    return tokens
+
+
+def _retrieval_continuity_query_context(state: RuntimeTurnState) -> tuple[str, dict[str, Any]]:
+    """Project committed continuity signals into bounded retrieval query terms."""
+    lines: list[str] = []
+    sources: set[str] = set()
+    signal: dict[str, Any] = {
+        "contract": _RETRIEVAL_CONTINUITY_QUERY_CONTRACT,
+        "attached": False,
+        "sources": [],
+    }
+
+    def add_line(label: str, source: str, *values: Any) -> None:
+        tokens = _collect_retrieval_tokens(*values)
+        if not tokens:
+            return
+        lines.append(f"{label}: {' '.join(tokens[:8])}")
+        existing = signal.get(label)
+        if not isinstance(existing, list):
+            existing = []
+        for token in tokens[:8]:
+            if token not in existing:
+                existing.append(token)
+        signal[label] = existing
+        sources.add(source)
+
+    prior_planner = state.get("prior_planner_truth")
+    if not isinstance(prior_planner, dict):
+        prior_planner = {}
+    prior_scene_assessment = prior_planner.get("scene_assessment_core")
+    if not isinstance(prior_scene_assessment, dict):
+        prior_scene_assessment = {}
+    prior_social_summary = prior_planner.get("social_state_summary")
+    if not isinstance(prior_social_summary, dict):
+        prior_social_summary = {}
+
+    add_line(
+        "actor_precedents",
+        "prior_planner_truth",
+        prior_planner.get("responder_id"),
+        prior_planner.get("responder_scope"),
+    )
+    add_line(
+        "responder_precedents",
+        "prior_planner_truth",
+        prior_planner.get("responder_id"),
+        prior_planner.get("responder_scope"),
+    )
+    add_line(
+        "function_type_precedents",
+        "prior_planner_truth",
+        prior_planner.get("function_type"),
+        prior_planner.get("selected_scene_function"),
+    )
+    add_line(
+        "social_outcome_precedents",
+        "prior_planner_truth",
+        prior_planner.get("social_outcome"),
+        prior_planner.get("dramatic_direction"),
+    )
+
+    prior_dramatic = state.get("prior_dramatic_signature")
+    if not isinstance(prior_dramatic, dict):
+        prior_dramatic = {}
+    add_line(
+        "beat_precedents",
+        "prior_dramatic_signature",
+        prior_dramatic.get("prior_beat_id"),
+        prior_dramatic.get("prior_beat_advancement_reason"),
+    )
+    add_line(
+        "pacing_precedents",
+        "prior_dramatic_signature",
+        prior_dramatic.get("prior_pacing_mode"),
+        prior_planner.get("pacing_mode"),
+        prior_planner.get("silence_mode"),
+    )
+
+    prior_social = state.get("prior_social_state_record")
+    if not isinstance(prior_social, dict):
+        prior_social = {}
+    add_line(
+        "continuity_pressure_context",
+        "committed_continuity_truth",
+        prior_dramatic.get("prior_pressure_state"),
+        prior_scene_assessment.get("pressure_state"),
+        prior_social.get("scene_pressure_state"),
+        prior_social.get("social_risk_band"),
+        prior_social.get("responder_asymmetry_code"),
+        prior_social.get("prior_continuity_classes"),
+        prior_social_summary.get("social_risk_band"),
+        prior_social_summary.get("responder_asymmetry_code"),
+        prior_planner.get("continuity_impacts"),
+        state.get("prior_continuity_impacts"),
+    )
+
+    prior_thread = state.get("prior_narrative_thread_state")
+    if not isinstance(prior_thread, dict):
+        prior_thread = {}
+    active_threads = prior_thread.get("active_threads")
+    thread_pressure_label: str | None = None
+    try:
+        thread_pressure_level = int(prior_thread.get("thread_pressure_level") or 0)
+        if thread_pressure_level >= 3:
+            thread_pressure_label = "thread_pressure_high"
+        elif thread_pressure_level > 0:
+            thread_pressure_label = "thread_pressure_active"
+    except Exception:
+        thread_pressure_label = None
+    thread_actor_values: list[Any] = []
+    thread_precedent_values: list[Any] = [
+        prior_thread.get("dominant_thread_kind"),
+        thread_pressure_label,
+    ]
+    if isinstance(active_threads, list):
+        for thread in active_threads:
+            if not isinstance(thread, dict):
+                continue
+            thread_actor_values.append(thread.get("related_entities"))
+            thread_precedent_values.extend(
+                [
+                    thread.get("thread_kind"),
+                    thread.get("status"),
+                    thread.get("resolution_hint"),
+                ]
+            )
+    add_line("actor_precedents", "prior_narrative_thread_state", thread_actor_values)
+    add_line("narrative_thread_precedents", "prior_narrative_thread_state", thread_precedent_values)
+    add_line(
+        "continuity_pressure_context",
+        "prior_narrative_thread_state",
+        prior_thread.get("dominant_thread_kind"),
+        thread_pressure_label,
+    )
+
+    if not lines:
+        return "", signal
+    signal["attached"] = True
+    signal["sources"] = sorted(sources)
+    return "continuity_retrieval_context:\n" + "\n".join(lines), signal
+
+
+def _attach_retrieval_continuity_signal(
+    retrieval: dict[str, Any],
+    query_signal: dict[str, Any],
+) -> None:
+    if not query_signal.get("attached"):
+        return
+    retrieval["continuity_query_signal"] = query_signal
+    notes = retrieval.get("ranking_notes")
+    if not isinstance(notes, list):
+        notes = []
+        retrieval["ranking_notes"] = notes
+    if "retrieval_continuity_query=attached" not in notes:
+        notes.append("retrieval_continuity_query=attached")
+
+
 def _invoke_runtime_adapter_with_langchain(**kwargs: Any) -> Any:
     """Load LangChain integration only when a graph node actually invokes an adapter.
 
@@ -180,6 +523,9 @@ class RuntimeTurnGraphExecutor:
         force_experiment_preview: bool | None = None,
         prior_continuity_impacts: list[dict[str, Any]] | None = None,
         prior_dramatic_signature: dict[str, str] | None = None,
+        prior_social_state_record: dict[str, Any] | None = None,
+        prior_narrative_thread_state: dict[str, Any] | None = None,
+        prior_planner_truth: dict[str, Any] | None = None,
         turn_number: int | None = None,
         turn_id: str | None = None,
         turn_timestamp_iso: str | None = None,
@@ -209,6 +555,12 @@ class RuntimeTurnGraphExecutor:
             prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] |
                 None); meaning follows the type and call sites.
             prior_dramatic_signature: ``prior_dramatic_signature`` (dict[str, str] | None); meaning follows the type and call sites.
+            prior_social_state_record: previously committed social-state record
+                rehydrated from planner truth.
+            prior_narrative_thread_state: committed narrative-thread continuity
+                snapshot rehydrated from the story session.
+            prior_planner_truth: bounded committed planner-truth snapshot used
+                to bias retrieval toward continuity-relevant precedents.
             turn_number: ``turn_number`` (int | None); meaning follows the type and call sites.
             turn_id: ``turn_id`` (str | None); meaning follows the type and call sites.
             turn_timestamp_iso: ``turn_timestamp_iso`` (str | None); meaning follows the type and call sites.
@@ -262,6 +614,12 @@ class RuntimeTurnGraphExecutor:
             initial_state["prior_continuity_impacts"] = list(prior_continuity_impacts)
         if prior_dramatic_signature:
             initial_state["prior_dramatic_signature"] = dict(prior_dramatic_signature)
+        if prior_social_state_record:
+            initial_state["prior_social_state_record"] = dict(prior_social_state_record)
+        if prior_narrative_thread_state:
+            initial_state["prior_narrative_thread_state"] = dict(prior_narrative_thread_state)
+        if prior_planner_truth:
+            initial_state["prior_planner_truth"] = dict(prior_planner_truth)
         return self._graph.invoke(initial_state)
 
     def _interpret_input(self, state: RuntimeTurnState) -> RuntimeTurnState:
@@ -304,7 +662,10 @@ class RuntimeTurnGraphExecutor:
                 Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
         """
         rc = self.retrieval_config or RuntimeRetrievalConfig()
+        query_context, query_signal = _retrieval_continuity_query_context(state)
         query_str = f"{state['player_input']}\nscene:{state['current_scene_id']}\nmodule:{state['module_id']}"
+        if query_context:
+            query_str = f"{query_str}\n{query_context}"
         capability_audit: list[dict[str, Any]] = []
 
         if rc.retrieval_disabled:
@@ -384,6 +745,8 @@ class RuntimeTurnGraphExecutor:
                 }
                 attach_retrieval_governance_summary(retrieval)
                 context_text = pack.compact_context
+        if isinstance(retrieval, dict):
+            _attach_retrieval_continuity_signal(retrieval, query_signal)
         interp = state.get("interpreted_input") if isinstance(state.get("interpreted_input"), dict) else {}
         interpretation_block = (
             "Runtime interpretation (structured):\n"
@@ -562,6 +925,9 @@ class RuntimeTurnGraphExecutor:
                 if isinstance(state.get("thread_pressure_summary"), str)
                 else None,
                 scene_assessment=placeholder,
+                prior_social_state_record=state.get("prior_social_state_record")
+                if isinstance(state.get("prior_social_state_record"), dict)
+                else None,
             )
             update["semantic_move_record"] = sem_e.to_runtime_dict()
             update["social_state_record"] = soc_e.to_runtime_dict()
@@ -592,6 +958,9 @@ class RuntimeTurnGraphExecutor:
                 if isinstance(state.get("thread_pressure_summary"), str)
                 else None,
                 scene_assessment=unresolved,
+                prior_social_state_record=state.get("prior_social_state_record")
+                if isinstance(state.get("prior_social_state_record"), dict)
+                else None,
             )
             update["semantic_move_record"] = sem_u.to_runtime_dict()
             update["social_state_record"] = soc_u.to_runtime_dict()
@@ -606,6 +975,9 @@ class RuntimeTurnGraphExecutor:
             canonical_yaml=yaml_blob,
             prior_continuity_impacts=prior,
             yaml_slice=yslice,
+            prior_narrative_thread_state=state.get("prior_narrative_thread_state")
+            if isinstance(state.get("prior_narrative_thread_state"), dict)
+            else None,
         )
         pc = prior_continuity_classes(prior)
         sem_model = interpret_goc_semantic_move(
@@ -625,6 +997,9 @@ class RuntimeTurnGraphExecutor:
             if isinstance(state.get("thread_pressure_summary"), str)
             else None,
             scene_assessment=base_sa,
+            prior_social_state_record=state.get("prior_social_state_record")
+            if isinstance(state.get("prior_social_state_record"), dict)
+            else None,
         )
         soc_dict = soc_model.to_runtime_dict()
         base_sa["semantic_move_fingerprint"] = semantic_move_fingerprint(sem_model)
@@ -655,6 +1030,9 @@ class RuntimeTurnGraphExecutor:
             player_input=player_input,
             interpreted_move=interpreted_move,
             module_id=module_id,
+            prior_narrative_thread_state=state.get("prior_narrative_thread_state")
+            if isinstance(state.get("prior_narrative_thread_state"), dict)
+            else None,
         )
         if module_id != GOC_MODULE_ID:
             update["selected_responder_set"] = []
@@ -685,6 +1063,9 @@ class RuntimeTurnGraphExecutor:
             current_scene_id=state.get("current_scene_id") or "",
             semantic_move_record=sem_rec,
             social_state_record=soc_rec,
+            prior_narrative_thread_state=state.get("prior_narrative_thread_state")
+            if isinstance(state.get("prior_narrative_thread_state"), dict)
+            else None,
         )
         merged_sa = {**base_sa, "multi_pressure_resolution": resolution}
         update["scene_assessment"] = merged_sa
@@ -693,21 +1074,21 @@ class RuntimeTurnGraphExecutor:
         update["pacing_mode"] = pacing
         update["silence_brevity_decision"] = silence
         primary = responders[0] if responders and isinstance(responders[0], dict) else {}
-        active_keys = ["veronique", "michel", "annette", "alain"]
-        if primary.get("actor_id"):
-            aid = str(primary["actor_id"])
-            if "veronique" in aid:
-                active_keys = ["veronique", "michel", "annette", "alain"]
-            elif "michel" in aid:
-                active_keys = ["michel", "veronique", "annette", "alain"]
-            elif "annette" in aid:
-                active_keys = ["annette", "alain", "veronique", "michel"]
-            elif "alain" in aid:
-                active_keys = ["alain", "annette", "veronique", "michel"]
+        # Derive the active cast from the module's YAML characters block and
+        # order it so the primary responder's key comes first. The
+        # God of Carnage fallback kicks in only when no YAML cast is
+        # published, so any module shipping an authored characters block
+        # works without further code changes here.
+        active_keys = _derive_active_character_keys(
+            yaml_slice=yslice,
+            primary_responder=primary,
+            module_id=str(state.get("module_id") or ""),
+        )
         mind_models = build_character_mind_records_for_goc(
             yaml_slice=yslice,
             active_character_keys=active_keys,
             current_scene_id=state.get("current_scene_id") or "",
+            module_id=str(state.get("module_id") or ""),
         )
         mind_dicts = [m.to_runtime_dict() for m in mind_models]
         update["character_mind_records"] = mind_dicts
@@ -757,10 +1138,16 @@ class RuntimeTurnGraphExecutor:
                 "canonical_setting",
                 "narrative_scope",
                 "continuity_carry_forward_note",
+                "thread_pressure_state",
             ):
                 val = scene_assess.get(key)
                 if val is not None and str(val).strip():
                     lines.append(f"- {key}: {str(val).strip()[:220]}")
+            thread_feedback = scene_assess.get("narrative_thread_feedback")
+            if isinstance(thread_feedback, dict):
+                lines.append(
+                    f"- narrative_thread_feedback: {json.dumps(thread_feedback, sort_keys=True)[:260]}"
+                )
 
         semantic = state.get("semantic_move_record") if isinstance(state.get("semantic_move_record"), dict) else {}
         if semantic:
@@ -778,6 +1165,9 @@ class RuntimeTurnGraphExecutor:
                 "guidance_phase_key",
                 "responder_asymmetry_code",
                 "social_risk_band",
+                "social_continuity_status",
+                "prior_social_risk_band",
+                "prior_social_state_fingerprint",
                 "active_thread_count",
                 "thread_pressure_summary_present",
             ):
@@ -887,6 +1277,13 @@ class RuntimeTurnGraphExecutor:
         if code not in ROUTING_LABELS:
             code = "role_matrix_primary"
         governed = bool(getattr(self.routing, "routes", None))
+        # Surface route-family truth onto the per-turn state. The governed
+        # routing policy exposes its most recent choice via
+        # ``_last_choice_meta`` so this node can publish it without changing
+        # the shared ``RoutingDecision`` dataclass in ``story_runtime_core``.
+        last_choice_meta = getattr(self.routing, "_last_choice_meta", None)
+        if not isinstance(last_choice_meta, dict):
+            last_choice_meta = {}
         update["routing"] = {
             "selected_model": decision.selected_model,
             "selected_provider": decision.selected_provider,
@@ -902,6 +1299,15 @@ class RuntimeTurnGraphExecutor:
             "registered_adapter_providers": sorted(self.adapters.keys()),
             "governed_runtime_story_path": governed,
             "legacy_default_registry_path": not governed,
+            "route_id": last_choice_meta.get("route_id"),
+            "route_family": last_choice_meta.get("route_family"),
+            "route_family_expected": last_choice_meta.get("route_family_expected"),
+            "route_substitution_occurred": bool(
+                last_choice_meta.get("route_substitution_occurred")
+            ),
+            "generation_execution_mode": last_choice_meta.get("generation_execution_mode")
+            or (self.generation_execution_mode or None),
+            "mock_fallback_blocked": bool(last_choice_meta.get("mock_fallback_blocked")),
         }
         update["selected_provider"] = decision.selected_provider or ""
         update["selected_timeout"] = float(selected.timeout_seconds) if selected else 10.0
@@ -1287,6 +1693,22 @@ class RuntimeTurnGraphExecutor:
         geo = outcome.get("dramatic_effect_gate_outcome")
         if isinstance(geo, dict):
             update["dramatic_effect_outcome"] = geo
+
+        # Reconcile the model's proposed responder fields against the
+        # director's selected responder set. Out-of-scope actors are dropped
+        # so downstream commit / rendering never carries an actor the scene
+        # never authorized, and the reconciliation outcome is published onto
+        # state for the governance surface.
+        reconciliation = _reconcile_model_responders(state, generation)
+        update["responder_reconciliation"] = reconciliation
+        primary_responder = reconciliation.get("effective_responder_id")
+        if primary_responder:
+            update["responder_id"] = primary_responder
+        elif reconciliation.get("dropped_out_of_scope_count"):
+            # The model's proposal was entirely out of scope. Clear the prior
+            # top-level ``responder_id`` so planner-truth extraction reflects
+            # that the model's responder claim was rejected.
+            update["responder_id"] = ""
         return update
 
     def _commit_seam(self, state: RuntimeTurnState) -> RuntimeTurnState:

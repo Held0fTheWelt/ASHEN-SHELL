@@ -11,6 +11,8 @@ import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
+from ai_stack.social_state_contract import SocialStateRecord
+from ai_stack.social_state_goc import social_state_fingerprint
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,92 @@ CommitReasonCode = Literal[
     "illegal_transition_not_allowed",
     "legal_transition_committed",
 ]
+
+
+class BeatProgression(BaseModel):
+    """Committed dramatic-continuity structure carried across turns.
+
+    The runtime uses a single beat identity per committed turn — composed from
+    the committed scene and the selected scene function — so the director can
+    key pacing and responder decisions off a stable continuity signal instead
+    of inferring it from loose continuity impacts each turn.
+
+    When a commit's beat identity matches the prior turn's, the record sets
+    ``advanced=False`` and ``advancement_reason="continuity_carry_forward"``.
+    Advancing to a new beat sets ``advanced=True`` with a reason describing
+    why (scene transition, scene-function shift, blocked turn, and so on).
+    """
+
+    model_config = {"extra": "forbid"}
+
+    beat_id: str = Field(
+        ...,
+        description="Stable identifier of the current beat / dramatic phase. "
+        "Composed from committed_scene_id + selected_scene_function by default; "
+        "may be overridden by an explicit scene-plan beat id.",
+    )
+    beat_slot: int = Field(
+        default=0,
+        description="Monotonic slot within the current beat identity. 0 for a "
+        "newly advanced beat; increments when continuity carries forward.",
+    )
+    pressure_state: str | None = Field(
+        default=None,
+        description="Dominant continuity pressure label (e.g. tension_escalation, "
+        "alliance_shift, repair_attempt) active on this turn.",
+    )
+    pacing_carry_forward: str | None = None
+    responder_focus_carry_forward: list[str] = Field(default_factory=list)
+    advanced: bool = Field(
+        default=True,
+        description="True when this turn advanced to a new beat_id; False when "
+        "continuity carried forward from the prior turn.",
+    )
+    advancement_reason: str = Field(
+        default="initial_beat",
+        description="Stable code explaining why the beat advanced or carried "
+        "forward (e.g. initial_beat, scene_transition, function_shift, "
+        "continuity_carry_forward, blocked_turn_no_advance).",
+    )
+    continuity_carry_forward_reason: str | None = Field(
+        default=None,
+        description="Populated when the beat carried forward; explains the "
+        "dominant continuity signal (dominant continuity-impact class, "
+        "pacing continuity, or 'no_signal').",
+    )
+    prior_beat_id: str | None = None
+
+
+class PlannerTruth(BaseModel):
+    """Bounded snapshot of director/validator state preserved into the commit record.
+
+    This is the dramatic-planner view the runtime used to validate and shape
+    the turn. Persisting it alongside the scene-progression commit lets later
+    readers explain *why* a turn was accepted, not only that it was accepted.
+    All fields are optional; an absent value means the planner lane did not
+    emit a value for this turn (for example under a degraded generation path).
+    """
+
+    model_config = {"extra": "forbid"}
+
+    selected_scene_function: str | None = None
+    responder_id: str | None = None
+    responder_scope: list[str] = Field(default_factory=list)
+    function_type: str | None = None
+    pacing_mode: str | None = None
+    silence_mode: str | None = None
+    scene_assessment_core: dict[str, Any] = Field(default_factory=dict)
+    scene_plan_ref: str | None = None
+    emotional_shift: dict[str, Any] = Field(default_factory=dict)
+    social_outcome: str | None = None
+    dramatic_direction: str | None = None
+    dramatic_effect_gate: dict[str, Any] = Field(default_factory=dict)
+    social_state_summary: dict[str, Any] = Field(default_factory=dict)
+    character_mind_summary: dict[str, Any] = Field(default_factory=dict)
+    validation_status: str | None = None
+    validation_reason: str | None = None
+    validator_layers_used: list[str] = Field(default_factory=list)
+    continuity_impacts: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class StoryNarrativeCommitRecord(BaseModel):
@@ -65,6 +153,19 @@ class StoryNarrativeCommitRecord(BaseModel):
     open_pressures: list[str] = Field(default_factory=list)
     resolved_pressures: list[str] = Field(default_factory=list)
     is_terminal: bool = False
+    planner_truth: PlannerTruth = Field(
+        default_factory=PlannerTruth,
+        description="Bounded planner-truth snapshot preserved from the live graph state.",
+    )
+    beat_progression: BeatProgression | None = Field(
+        default=None,
+        description="Committed dramatic-continuity structure; None for commits that "
+        "predate this contract version.",
+    )
+    commit_contract_version: str = Field(
+        default="story_narrative_commit_record.v3",
+        description="Stable identifier for the commit contract shape; bump when persisted shape changes.",
+    )
 
 
 def _scene_row_canonical_id(scene: dict[str, Any]) -> str | None:
@@ -214,6 +315,318 @@ def _interpretation_kind_tag(kind: Any) -> str:
     return k.replace(" ", "_")
 
 
+def _as_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _as_str_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(x) for x in value if x is not None]
+    return []
+
+
+def _resolve_validator_layers(
+    validation: dict[str, Any], gate: dict[str, Any]
+) -> list[str]:
+    """Return the list of validator layers that actually ran on this turn.
+
+    Prefers an explicit ``layers_used`` / ``validator_layers_used`` list
+    published by the validator, and otherwise infers layers from observable
+    signals (the ``validator_lane`` id and the presence of a dramatic-effect
+    gate outcome). The result is the set of layers a reader can audit — not a
+    wishlist of layers the live path *should* run.
+    """
+    explicit = _as_str_list(
+        validation.get("validator_layers_used") or validation.get("layers_used")
+    )
+    if explicit:
+        return explicit
+    inferred: list[str] = []
+    lane = validation.get("validator_lane")
+    if isinstance(lane, str) and lane.strip():
+        inferred.append(lane.strip())
+    if isinstance(gate, dict) and gate:
+        inferred.append("dramatic_effect_gate")
+    return inferred
+
+
+def _social_state_summary_from_graph_state(graph_state: dict[str, Any]) -> dict[str, Any]:
+    """Preserve the bounded social-state record in committed planner truth."""
+    explicit = _as_dict(graph_state.get("social_state_summary"))
+    record = _as_dict(graph_state.get("social_state_record"))
+    if not record:
+        return explicit
+
+    summary = dict(explicit)
+    summary.setdefault("summary_source", "social_state_record")
+    summary["record"] = record
+    for key in (
+        "scene_pressure_state",
+        "guidance_phase_key",
+        "responder_asymmetry_code",
+        "social_risk_band",
+        "active_thread_count",
+        "thread_pressure_summary_present",
+        "prior_continuity_classes",
+        "prior_social_state_fingerprint",
+        "prior_social_risk_band",
+        "social_continuity_status",
+    ):
+        if key in record:
+            summary.setdefault(key, record.get(key))
+
+    try:
+        summary.setdefault(
+            "fingerprint",
+            social_state_fingerprint(SocialStateRecord.model_validate(record)),
+        )
+        summary["validated"] = True
+    except Exception:
+        summary["validated"] = False
+    return summary
+
+
+def _planner_truth_from_graph_state(
+    *,
+    graph_state: dict[str, Any] | None,
+    generation: dict[str, Any] | None,
+) -> PlannerTruth:
+    """Extract a bounded planner-truth snapshot from the live runtime state.
+
+    Top-level ``RuntimeTurnState`` keys populated by the graph's
+    ``proposal_normalize`` node are the primary source. When a key is missing
+    from state, the extractor falls back to the model's structured output on
+    ``generation.metadata.structured_output`` so partially-degraded turns still
+    surface what they can. An absent value stays None / empty so readers can
+    distinguish "planner did not emit" from "planner emitted empty".
+    """
+    if not isinstance(graph_state, dict):
+        graph_state = {}
+    gen = generation if isinstance(generation, dict) else {}
+    meta = _as_dict(gen.get("metadata"))
+    structured = _as_dict(meta.get("structured_output"))
+    validation = _as_dict(graph_state.get("validation_outcome"))
+    gate = _as_dict(graph_state.get("dramatic_effect_gate_outcome"))
+    if not gate:
+        gate = _as_dict(graph_state.get("dramatic_effect_gate"))
+    scene_assessment = _as_dict(graph_state.get("scene_assessment"))
+    if not scene_assessment:
+        scene_assessment = _as_dict(graph_state.get("scene_assessment_core"))
+
+    def _opt_str(*candidates: Any) -> str | None:
+        for c in candidates:
+            if isinstance(c, str) and c.strip():
+                return c.strip()
+        return None
+
+    responder_scope = _as_str_list(
+        graph_state.get("responder_scope")
+        or graph_state.get("selected_responder_set")
+        or structured.get("responder_scope")
+    )
+
+    return PlannerTruth(
+        selected_scene_function=_opt_str(
+            graph_state.get("selected_scene_function"),
+            structured.get("selected_scene_function"),
+        ),
+        responder_id=_opt_str(
+            graph_state.get("responder_id"), structured.get("responder_id")
+        ),
+        responder_scope=responder_scope,
+        function_type=_opt_str(
+            graph_state.get("function_type"), structured.get("function_type")
+        ),
+        pacing_mode=_opt_str(
+            graph_state.get("pacing_mode"),
+            structured.get("pacing_mode"),
+            graph_state.get("selected_pacing_mode"),
+        ),
+        silence_mode=_opt_str(
+            graph_state.get("silence_mode"),
+            structured.get("silence_mode"),
+            graph_state.get("selected_silence_mode"),
+        ),
+        scene_assessment_core=scene_assessment,
+        scene_plan_ref=_opt_str(
+            graph_state.get("scene_plan_ref"),
+            graph_state.get("scene_plan_id"),
+            structured.get("scene_plan_ref"),
+        ),
+        emotional_shift=_as_dict(
+            graph_state.get("emotional_shift") or structured.get("emotional_shift")
+        ),
+        social_outcome=_opt_str(
+            graph_state.get("social_outcome"), structured.get("social_outcome")
+        ),
+        dramatic_direction=_opt_str(
+            graph_state.get("dramatic_direction"),
+            structured.get("dramatic_direction"),
+        ),
+        dramatic_effect_gate=gate,
+        social_state_summary=_social_state_summary_from_graph_state(graph_state),
+        character_mind_summary=_as_dict(graph_state.get("character_mind_summary")),
+        validation_status=_opt_str(validation.get("status")),
+        validation_reason=_opt_str(validation.get("reason")),
+        validator_layers_used=_resolve_validator_layers(validation, gate),
+        continuity_impacts=[
+            x for x in (graph_state.get("continuity_impacts") or []) if isinstance(x, dict)
+        ],
+    )
+
+
+_PRESSURE_SIGNAL_ORDER = (
+    "tension_escalation",
+    "dignity_injury",
+    "blame_pressure",
+    "alliance_shift",
+    "repair_attempt",
+)
+
+
+def _dominant_continuity_class(impacts: list[dict[str, Any]]) -> str | None:
+    """Pick the most salient continuity-impact class in precedence order.
+
+    The live continuity-impact list can carry multiple classes per turn; the
+    pressure_state slot on BeatProgression needs a single dominant label so
+    downstream director logic has a stable scalar to key off. Precedence is
+    deliberately drama-weighted (escalation > dignity > blame > alliance >
+    repair) rather than first-emitted.
+    """
+    if not isinstance(impacts, list):
+        return None
+    present = [
+        str(x.get("class") or x.get("continuity_class") or "").strip()
+        for x in impacts
+        if isinstance(x, dict)
+    ]
+    present = [p for p in present if p]
+    if not present:
+        return None
+    for label in _PRESSURE_SIGNAL_ORDER:
+        if label in present:
+            return label
+    return present[0]
+
+
+def _compose_beat_id(
+    *, committed_scene_id: str, selected_scene_function: str | None, explicit: str | None
+) -> str:
+    if isinstance(explicit, str) and explicit.strip():
+        return explicit.strip()
+    func = (selected_scene_function or "").strip() or "unspecified_function"
+    scene = (committed_scene_id or "").strip() or "unknown_scene"
+    return f"{scene}:{func}"
+
+
+def _resolve_beat_progression(
+    *,
+    graph_state: dict[str, Any] | None,
+    planner: PlannerTruth,
+    committed_scene_id: str,
+    prior_scene_id: str | None,
+    situation_status: str,
+    prior_beat: BeatProgression | None,
+) -> BeatProgression:
+    """Derive the committed beat identity and carry-forward decision.
+
+    Scene-level facts (committed scene id, situation status) and planner truth
+    (selected scene function, pacing, responders, dramatic direction) are the
+    authoritative inputs. The prior beat, when present, is consulted only to
+    decide *advanced* vs. *carried forward* — never to mask a genuine scene or
+    scene-function shift.
+    """
+    gs = graph_state if isinstance(graph_state, dict) else {}
+    explicit_beat = None
+    for key in ("beat_id", "committed_beat_id"):
+        raw = gs.get(key)
+        if isinstance(raw, str) and raw.strip():
+            explicit_beat = raw.strip()
+            break
+
+    beat_id = _compose_beat_id(
+        committed_scene_id=committed_scene_id,
+        selected_scene_function=planner.selected_scene_function,
+        explicit=explicit_beat,
+    )
+
+    pressure = _dominant_continuity_class(planner.continuity_impacts)
+
+    responder_focus: list[str] = []
+    if planner.responder_id:
+        responder_focus.append(planner.responder_id)
+    for actor in planner.responder_scope:
+        if actor and actor not in responder_focus:
+            responder_focus.append(actor)
+    responder_focus = responder_focus[:4]
+
+    pacing_carry = planner.pacing_mode
+
+    if situation_status == "blocked":
+        return BeatProgression(
+            beat_id=(prior_beat.beat_id if prior_beat else beat_id),
+            beat_slot=(prior_beat.beat_slot if prior_beat else 0),
+            pressure_state=pressure,
+            pacing_carry_forward=pacing_carry,
+            responder_focus_carry_forward=responder_focus,
+            advanced=False,
+            advancement_reason="blocked_turn_no_advance",
+            continuity_carry_forward_reason="validation_or_rule_block",
+            prior_beat_id=prior_beat.beat_id if prior_beat else None,
+        )
+
+    if prior_beat is None:
+        return BeatProgression(
+            beat_id=beat_id,
+            beat_slot=0,
+            pressure_state=pressure,
+            pacing_carry_forward=pacing_carry,
+            responder_focus_carry_forward=responder_focus,
+            advanced=True,
+            advancement_reason="initial_beat",
+            continuity_carry_forward_reason=None,
+            prior_beat_id=None,
+        )
+
+    if prior_beat.beat_id == beat_id:
+        carry_reason = pressure or (
+            "pacing_continuity" if pacing_carry else "no_signal"
+        )
+        return BeatProgression(
+            beat_id=beat_id,
+            beat_slot=max(0, int(prior_beat.beat_slot) + 1),
+            pressure_state=pressure,
+            pacing_carry_forward=pacing_carry,
+            responder_focus_carry_forward=responder_focus,
+            advanced=False,
+            advancement_reason="continuity_carry_forward",
+            continuity_carry_forward_reason=carry_reason,
+            prior_beat_id=prior_beat.beat_id,
+        )
+
+    # Advanced to a new beat — decide the specific reason.
+    if (committed_scene_id or "") != (prior_scene_id or ""):
+        reason = "scene_transition"
+    elif (
+        planner.selected_scene_function
+        and prior_beat.beat_id.endswith(f":{planner.selected_scene_function}") is False
+    ):
+        reason = "function_shift"
+    else:
+        reason = "beat_advanced"
+    return BeatProgression(
+        beat_id=beat_id,
+        beat_slot=0,
+        pressure_state=pressure,
+        pacing_carry_forward=pacing_carry,
+        responder_focus_carry_forward=responder_focus,
+        advanced=True,
+        advancement_reason=reason,
+        continuity_carry_forward_reason=None,
+        prior_beat_id=prior_beat.beat_id,
+    )
+
+
 def resolve_narrative_commit(
     *,
     turn_number: int,
@@ -222,6 +635,8 @@ def resolve_narrative_commit(
     interpreted_input: dict[str, Any],
     generation: dict[str, Any] | None,
     runtime_projection: dict[str, Any],
+    graph_state: dict[str, Any] | None = None,
+    prior_beat_progression: BeatProgression | None = None,
 ) -> StoryNarrativeCommitRecord:
     """Compute the authoritative narrative commit without mutating session state."""
     ids_from_scene_rows = _scene_ids(runtime_projection)
@@ -282,6 +697,20 @@ def resolve_narrative_commit(
         situation_status=work.situation_status,
     )
 
+    planner_truth = _planner_truth_from_graph_state(
+        graph_state=graph_state,
+        generation=generation,
+    )
+
+    beat_progression = _resolve_beat_progression(
+        graph_state=graph_state,
+        planner=planner_truth,
+        committed_scene_id=work.committed_scene_id,
+        prior_scene_id=prior_scene_id or None,
+        situation_status=work.situation_status,
+        prior_beat=prior_beat_progression,
+    )
+
     return StoryNarrativeCommitRecord(
         turn_number=turn_number,
         prior_scene_id=prior_scene_id or None,
@@ -299,4 +728,6 @@ def resolve_narrative_commit(
         open_pressures=open_pressures,
         resolved_pressures=[],
         is_terminal=at_terminal_scene,
+        planner_truth=planner_truth,
+        beat_progression=beat_progression,
     )

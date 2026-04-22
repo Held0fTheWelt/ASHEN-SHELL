@@ -39,71 +39,162 @@ def normalize_provider_model_name(value: str | None) -> str:
     return normalized
 
 
+ROUTE_FAMILY_LIVE_STORY = "narrative_live_generation"
+ROUTE_FAMILY_PREVIEW = "narrative_preview_generation"
+ROUTE_FAMILY_WRITERS_ROOM = "writers_room_revision_assist"
+ROUTE_FAMILY_RESEARCH = "research"
+ROUTE_FAMILY_VALIDATION = "narrative_validation_semantic"
+ROUTE_FAMILY_RETRIEVAL_QUERY = "retrieval_query_expansion"
+
+# Maps a route id to the family it belongs to for truth-surface reporting.
+_ROUTE_ID_TO_FAMILY: dict[str, str] = {
+    "narrative_live_generation_global": ROUTE_FAMILY_LIVE_STORY,
+    "narrative_preview_generation_global": ROUTE_FAMILY_PREVIEW,
+    "writers_room_revision_assist_global": ROUTE_FAMILY_WRITERS_ROOM,
+    "research_synthesis_global": ROUTE_FAMILY_RESEARCH,
+    "research_revision_drafting_global": ROUTE_FAMILY_RESEARCH,
+    "narrative_validation_semantic_global": ROUTE_FAMILY_VALIDATION,
+    "retrieval_query_expansion_global": ROUTE_FAMILY_RETRIEVAL_QUERY,
+}
+
+
+class LiveStoryRoutingError(RuntimeError):
+    """Raised when the governed routing policy cannot fulfill a live story request truthfully.
+
+    Raised instead of silently substituting a preview/writers-room/research route for a
+    live player story turn. Operator action: publish the missing route in Administration
+    Center and call POST /api/internal/story/runtime/reload-config.
+    """
+
+
 @dataclass(slots=True)
 class GovernedStoryRoutingPolicy:
     registry: ModelRegistry
     routes: dict[str, dict[str, Any]]
     generation_mode: str = "mock_only"
+    # Ephemeral metadata describing the most recent routing choice. Readers
+    # (the graph executor's ``_route_model`` node) use this to publish
+    # truthful route-family information onto the per-turn state without
+    # changing the shared ``RoutingDecision`` dataclass in
+    # ``story_runtime_core``.
+    _last_choice_meta: dict[str, Any] | None = None
 
     def choose(self, *, task_type: str) -> RoutingDecision:
-        # P1-6: Enforce runtime mode semantics in routing decision
-        route = self._route_for_task(task_type)
+        resolved = self._resolve_route_for_task(task_type)
+        route = resolved["route"]
+        route_id = resolved["route_id"]
+        route_family = resolved["route_family"]
+        expected_family = resolved["expected_family"]
+        substitution_occurred = resolved["substitution_occurred"]
+
         preferred = str(route.get("preferred_model_id") or "").strip() or None
         fallback = str(route.get("fallback_model_id") or "").strip() or None
         mock_mid = str(route.get("mock_model_id") or "").strip() or None
 
         mode = (str(self.generation_mode or "").strip().lower() or "mock_only")
-        # mode enforcement:
-        # - "ai_only": use preferred/fallback, raise error if not available
-        # - "mock_only": use mock only, skip preferred/fallback
-        # - "hybrid": preferred → fallback → mock (original behavior)
         if mode == "ai_only":
             selected = preferred or fallback
             if not selected:
-                raise ValueError(f"generation_execution_mode=ai_only but no AI model available for task_type={task_type!r}")
+                raise ValueError(
+                    f"generation_execution_mode=ai_only but no AI model available for task_type={task_type!r}"
+                )
             fallback_chain = fallback or None
+            mock_fallback_blocked = True
         elif mode == "mock_only":
             selected = mock_mid
             fallback_chain = None
+            mock_fallback_blocked = False
         else:  # hybrid (default)
             selected = preferred or fallback or mock_mid
             fallback_chain = fallback or mock_mid
+            mock_fallback_blocked = False
 
         if not selected:
             raise ValueError(f"No governed model configured for task_type={task_type!r}")
         spec = self.registry.get(selected)
         if spec is None:
             raise ValueError(f"Governed route selected missing model spec: {selected!r}")
+
+        # Produce a route_reason that tells operators whether the chosen
+        # route family is the expected one. Earlier behavior labeled every
+        # decision ``role_matrix_primary`` regardless of which family ended
+        # up servicing the turn.
+        if substitution_occurred:
+            route_reason = f"governed_route_substituted:{expected_family}->{route_family}"
+        else:
+            route_reason = f"governed_route_primary:{route_family}"
+
+        self._last_choice_meta = {
+            "route_id": route_id,
+            "route_family": route_family,
+            "route_family_expected": expected_family,
+            "route_substitution_occurred": substitution_occurred,
+            "generation_execution_mode": mode,
+            "mock_fallback_blocked": mock_fallback_blocked,
+        }
         return RoutingDecision(
             selected_model=selected,
             selected_provider=spec.provider,
-            route_reason="role_matrix_primary",
+            route_reason=route_reason,
             fallback_model=fallback_chain,
         )
 
-    def _route_for_task(self, task_type: str) -> dict[str, Any]:
+    def _resolve_route_for_task(self, task_type: str) -> dict[str, Any]:
+        """Pick a route for a task_type with no silent cross-family substitution.
+
+        - narrative_formulation (live story turns): only ``narrative_live_generation_global``.
+          If missing, raise ``LiveStoryRoutingError`` rather than leak into preview /
+          writers-room / research families.
+        - classification (validation / query expansion): accept the validation or
+          retrieval-query-expansion route; fail explicitly if neither is published.
+        - Any other task_type: fail explicitly. No catch-all fallback over
+          ``self.routes.values()``.
+        """
         task = (task_type or "").strip().lower()
         if task == "classification":
-            candidates = [
+            expected_family = ROUTE_FAMILY_VALIDATION
+            # Classification tasks (scope / legality checks, query expansion)
+            # may degrade to the live narrative route if no dedicated
+            # validation route is published. The substitution is labeled
+            # truthfully so operators can see it in
+            # ``runtime_governance_surface.primary_route_selection``.
+            ordered = [
                 "narrative_validation_semantic_global",
                 "retrieval_query_expansion_global",
-            ]
-        else:
-            candidates = [
                 "narrative_live_generation_global",
-                "narrative_preview_generation_global",
-                "writers_room_revision_assist_global",
-                "research_synthesis_global",
-                "research_revision_drafting_global",
             ]
-        for route_id in candidates:
+        elif task in {"narrative_formulation", "narrative_generation", "narrative"}:
+            expected_family = ROUTE_FAMILY_LIVE_STORY
+            # Live narrative turns have no cross-family fallback: if the live
+            # route is missing, the runtime fails explicitly rather than leak
+            # player turns into preview / writers-room / research families.
+            ordered = ["narrative_live_generation_global"]
+        else:
+            raise LiveStoryRoutingError(
+                f"LIVE_STORY_RUNTIME_BLOCKED: no governed route family is registered for "
+                f"task_type={task_type!r}. Route families must be declared explicitly; "
+                f"the governed policy refuses to substitute an unrelated route."
+            )
+
+        for route_id in ordered:
             route = self.routes.get(route_id)
             if isinstance(route, dict):
-                return route
-        for route in self.routes.values():
-            if isinstance(route, dict):
-                return route
-        raise ValueError("No governed routes available for story runtime")
+                family = _ROUTE_ID_TO_FAMILY.get(route_id, expected_family)
+                return {
+                    "route": route,
+                    "route_id": route_id,
+                    "route_family": family,
+                    "expected_family": expected_family,
+                    "substitution_occurred": family != expected_family,
+                }
+
+        available = sorted(self.routes.keys())
+        raise LiveStoryRoutingError(
+            f"LIVE_STORY_RUNTIME_BLOCKED: expected route family {expected_family!r} "
+            f"(route_ids={ordered}) is not published in governed runtime config. "
+            f"Refusing to silently substitute from available route_ids={available}. "
+            f"Publish the missing route in Administration Center and reload."
+        )
 
 
 def build_governed_model_adapters(config: dict[str, Any]) -> dict[str, BaseModelAdapter]:
@@ -144,15 +235,15 @@ def build_governed_model_adapters(config: dict[str, Any]) -> dict[str, BaseModel
                             if isinstance(data, dict) and data.get("ok"):
                                 cred_data = data.get("data", {})
                                 api_key = cred_data.get("api_key")
-                                print(f"DEBUG: Successfully fetched credential for {provider_id}: key={api_key[:20] + '...' if api_key else 'None'}", flush=True)
+                                print(f"DEBUG: Credential fetch ok for {provider_id}: present={bool(api_key)}", flush=True)
                             else:
                                 print(f"DEBUG: Invalid response from credential endpoint for {provider_id}: {response.status_code}", flush=True)
                         else:
                             print(f"DEBUG: Failed to fetch credential for {provider_id}: HTTP {response.status_code}", flush=True)
                 except Exception as e:
-                    print(f"DEBUG: Exception fetching credential for {provider_id}: {e}", flush=True)
+                    print(f"DEBUG: Exception fetching credential for {provider_id}: {type(e).__name__}", flush=True)
 
-        print(f"DEBUG: Building adapter for {provider_id} ({provider_type}): api_key={api_key[:20] + '...' if api_key else 'None'}", flush=True)
+        print(f"DEBUG: Building adapter for {provider_id} ({provider_type}): api_key_present={bool(api_key)}", flush=True)
         if provider_type == "openai":
             adapters[provider_id] = OpenAIChatAdapter(base_url=base_url, api_key=api_key)
         elif provider_type == "ollama":

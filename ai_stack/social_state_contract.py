@@ -25,6 +25,18 @@ class SocialStateRecord(BaseModel):
         description="Bounded code derived from continuity + phase (e.g. blame_on_host_spouse).",
     )
     social_risk_band: str = Field(default="moderate", description="low|moderate|high")
+    prior_social_state_fingerprint: str | None = Field(
+        default=None,
+        description="Fingerprint of the previously committed social-state record, if rehydrated.",
+    )
+    prior_social_risk_band: str | None = Field(
+        default=None,
+        description="Risk band from the previously committed social-state record, if available.",
+    )
+    social_continuity_status: str = Field(
+        default="initial_social_state",
+        description="initial_social_state|stable_prior_social_state|social_state_shifted",
+    )
 
     def to_runtime_dict(self) -> dict:
         """``to_runtime_dict`` — see implementation for behaviour and contracts.

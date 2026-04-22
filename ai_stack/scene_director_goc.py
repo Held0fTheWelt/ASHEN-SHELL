@@ -153,6 +153,7 @@ def build_scene_assessment(
     canonical_yaml: dict[str, Any] | None,
     prior_continuity_impacts: list[dict[str, Any]] | None = None,
     yaml_slice: dict[str, Any] | None = None,
+    prior_narrative_thread_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """``build_scene_assessment`` — see implementation for behaviour and contracts.
     
@@ -166,6 +167,8 @@ def build_scene_assessment(
         prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] | None); meaning follows the type and call sites.
         yaml_slice: ``yaml_slice`` (dict[str, Any] |
             None); meaning follows the type and call sites.
+        prior_narrative_thread_state: bounded committed thread continuity from
+            the story session, if any.
     
     Returns:
         dict[str, Any]:
@@ -188,6 +191,21 @@ def build_scene_assessment(
     elif "repair_attempt" in prior_classes:
         pressure_state = "stabilization_attempt"
 
+    thread_state = (
+        prior_narrative_thread_state
+        if isinstance(prior_narrative_thread_state, dict)
+        else {}
+    )
+    try:
+        thread_pressure_level = int(thread_state.get("thread_pressure_level") or 0)
+    except (TypeError, ValueError):
+        thread_pressure_level = 0
+    dominant_thread_kind = (
+        str(thread_state.get("dominant_thread_kind") or "").strip() or None
+    )
+    if thread_pressure_level >= 3 and not prior_classes:
+        pressure_state = "thread_pressure_high"
+
     assessment: dict[str, Any] = {
         "scene_core": f"goc_scene:{current_scene_id}",
         "pressure_state": pressure_state,
@@ -199,6 +217,24 @@ def build_scene_assessment(
             "prior_turn_committed_classes:" + ",".join(prior_classes) if prior_classes else "no_prior_continuity"
         ),
     }
+    if thread_state:
+        assessment["narrative_thread_feedback"] = {
+            "feedback_contract": thread_state.get("feedback_contract")
+            or "narrative_thread_feedback.v1",
+            "thread_count": thread_state.get("thread_count", 0),
+            "dominant_thread_kind": dominant_thread_kind,
+            "thread_pressure_level": thread_pressure_level,
+            "thread_pressure_summary_present": bool(
+                str(thread_state.get("thread_pressure_summary") or "").strip()
+            ),
+        }
+        assessment["thread_pressure_state"] = (
+            "high_unresolved_thread_pressure"
+            if thread_pressure_level >= 3
+            else "active_thread_pressure"
+            if thread_pressure_level > 0
+            else "no_active_thread_pressure"
+        )
 
     sg: dict[str, Any] = {}
     if yaml_slice and isinstance(yaml_slice.get("scene_guidance"), dict):
@@ -455,6 +491,56 @@ def _merge_continuity_supplements(
         heuristic_trace.append("continuity:watch_under_blame->redirect_blame")
 
 
+def _narrative_thread_feedback_signal(
+    prior_narrative_thread_state: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(prior_narrative_thread_state, dict):
+        return {}
+    try:
+        pressure = int(prior_narrative_thread_state.get("thread_pressure_level") or 0)
+    except (TypeError, ValueError):
+        pressure = 0
+    active = prior_narrative_thread_state.get("active_threads")
+    if not isinstance(active, list):
+        active = []
+    dominant_kind = str(
+        prior_narrative_thread_state.get("dominant_thread_kind") or ""
+    ).strip()
+    related_entities: list[str] = []
+    dominant_status = ""
+    for row in active:
+        if not isinstance(row, dict):
+            continue
+        if not dominant_status and str(row.get("thread_kind") or "") == dominant_kind:
+            dominant_status = str(row.get("status") or "").strip()
+        ents = row.get("related_entities")
+        if isinstance(ents, list):
+            for ent in ents:
+                s = str(ent).strip()
+                if s and s not in related_entities:
+                    related_entities.append(s)
+    return {
+        "dominant_thread_kind": dominant_kind or None,
+        "dominant_thread_status": dominant_status or None,
+        "thread_pressure_level": pressure,
+        "related_entities": related_entities[:4],
+        "thread_count": prior_narrative_thread_state.get("thread_count", len(active)),
+    }
+
+
+def _actor_from_thread_entities(entities: list[str]) -> str | None:
+    joined = " ".join(entities).lower()
+    if "annette" in joined:
+        return "annette_reille"
+    if "alain" in joined:
+        return "alain_reille"
+    if "michel" in joined or "michael" in joined:
+        return "michel_longstreet"
+    if "veronique" in joined or "penelope" in joined:
+        return "veronique_vallon"
+    return None
+
+
 def _goc_primary_responder_from_context(
     *,
     text: str,
@@ -464,6 +550,7 @@ def _goc_primary_responder_from_context(
     current_scene_id: str,
     scene_fn: str,
     implied: dict[str, str],
+    thread_feedback: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """Describe what ``_goc_primary_responder_from_context`` does in one
     line (verb-led summary for this function).
@@ -496,6 +583,17 @@ def _goc_primary_responder_from_context(
         return "michel_longstreet", "named_in_player_move"
     if "veronique" in text or "penelope" in text:
         return "veronique_vallon", "named_in_player_move"
+    tf = thread_feedback if isinstance(thread_feedback, dict) else {}
+    actor_from_thread = _actor_from_thread_entities(
+        tf.get("related_entities") if isinstance(tf.get("related_entities"), list) else []
+    )
+    if actor_from_thread:
+        return actor_from_thread, "narrative_thread_related_entity_focus"
+    if (
+        scene_fn == "scene_pivot"
+        and tf.get("dominant_thread_kind") == "progression_blocked"
+    ):
+        return "alain_reille", "narrative_thread_bias:progression_blocked_mediation"
 
     actor, reason = _yaml_default_responder(
         yaml_slice=yaml_slice,
@@ -520,6 +618,7 @@ def build_responder_and_function(
     current_scene_id: str = "",
     semantic_move_record: dict[str, Any] | None = None,
     social_state_record: dict[str, Any] | None = None,
+    prior_narrative_thread_state: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], str, dict[str, str], dict[str, Any]]:
     """Choose responder set, scene function, implied continuity map, and
     multi-pressure resolution record.
@@ -537,6 +636,8 @@ def build_responder_and_function(
         current_scene_id: ``current_scene_id`` (str); meaning follows the type and call sites.
         semantic_move_record: ``semantic_move_record`` (dict[str, Any] | None); meaning follows the type and call sites.
         social_state_record: ``social_state_record`` (dict[str, Any] | None); meaning follows the type and call sites.
+        prior_narrative_thread_state: bounded committed thread continuity from
+            the story session, if any.
     
     Returns:
         tuple[list[dict[str, Any]], str, dict[str, str], dict[str, A...:
@@ -564,7 +665,23 @@ def build_responder_and_function(
             prior_classes=prior_classes,
         )
 
+    thread_feedback = _narrative_thread_feedback_signal(prior_narrative_thread_state)
+    if (
+        thread_feedback.get("dominant_thread_kind") == "progression_blocked"
+        and thread_feedback.get("thread_pressure_level", 0) >= 2
+    ):
+        if "scene_pivot" not in candidates:
+            candidates.append("scene_pivot")
+        implied["scene_pivot"] = "refused_cooperation"
+        heuristic_trace.append("thread:progression_blocked->scene_pivot")
+
     scene_fn = select_single_scene_function(candidates, implied_continuity_by_function=implied)
+    if (
+        thread_feedback.get("dominant_thread_kind") == "progression_blocked"
+        and thread_feedback.get("thread_pressure_level", 0) >= 2
+    ):
+        scene_fn = "scene_pivot"
+        heuristic_trace.append("thread:progression_blocked_override->scene_pivot")
     assert_subdecision_label_in_matrix("scene_function", scene_fn)
 
     semantic_trace_ref = ""
@@ -587,6 +704,7 @@ def build_responder_and_function(
         "social_state_asymmetry": (social_state_record or {}).get("responder_asymmetry_code")
         if isinstance(social_state_record, dict)
         else None,
+        "narrative_thread_feedback": thread_feedback or None,
     }
 
     hint = None
@@ -601,6 +719,7 @@ def build_responder_and_function(
         current_scene_id=current_scene_id,
         scene_fn=scene_fn,
         implied=implied,
+        thread_feedback=thread_feedback,
     )
 
     responders = [{"actor_id": actor, "reason": reason}]
@@ -613,6 +732,7 @@ def build_pacing_and_silence(
     player_input: str,
     interpreted_move: dict[str, Any],
     module_id: str,
+    prior_narrative_thread_state: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Describe what ``build_pacing_and_silence`` does in one line
     (verb-led summary for this function).
@@ -624,6 +744,8 @@ def build_pacing_and_silence(
         interpreted_move: ``interpreted_move`` (dict[str,
             Any]); meaning follows the type and call sites.
         module_id: ``module_id`` (str); meaning follows the type and call sites.
+        prior_narrative_thread_state: bounded committed thread continuity from
+            the story session, if any.
     
     Returns:
         tuple[str, dict[str, Any]]:
@@ -702,6 +824,22 @@ def build_pacing_and_silence(
         pacing = assert_pacing_mode("multi_pressure")
         silence = {"mode": assert_silence_brevity_mode("normal"), "reason": "repair_and_exposure_compete"}
     else:
-        pacing = assert_pacing_mode("standard")
-        silence = {"mode": assert_silence_brevity_mode("normal"), "reason": "default_verbal_density"}
+        thread_feedback = _narrative_thread_feedback_signal(prior_narrative_thread_state)
+        thread_pressure = int(thread_feedback.get("thread_pressure_level") or 0)
+        dominant_thread_kind = thread_feedback.get("dominant_thread_kind")
+        if thread_pressure >= 3:
+            pacing = assert_pacing_mode("multi_pressure")
+            silence = {
+                "mode": assert_silence_brevity_mode("normal"),
+                "reason": "narrative_thread_pressure_multi_pressure",
+            }
+        elif dominant_thread_kind == "interpretation_pressure":
+            pacing = assert_pacing_mode("compressed")
+            silence = {
+                "mode": assert_silence_brevity_mode("brief"),
+                "reason": "narrative_thread_interpretation_pressure",
+            }
+        else:
+            pacing = assert_pacing_mode("standard")
+            silence = {"mode": assert_silence_brevity_mode("normal"), "reason": "default_verbal_density"}
     return _finalize_pacing_silence(pacing, silence)

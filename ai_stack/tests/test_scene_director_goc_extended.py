@@ -1960,3 +1960,67 @@ class TestPacingSilenceReasonFields:
             module_id=GOC_MODULE_ID,
         )
         assert silence["reason"] == "repair_and_exposure_compete"
+
+
+def _thread_feedback_state() -> dict:
+    return {
+        "feedback_contract": "narrative_thread_feedback.v1",
+        "source": "session.narrative_threads",
+        "thread_count": 2,
+        "dominant_thread_kind": "progression_blocked",
+        "thread_pressure_level": 4,
+        "thread_pressure_summary": "progression_blocked:4|interpretation_pressure:2",
+        "active_threads": [
+            {
+                "thread_id": "thread-1",
+                "thread_kind": "progression_blocked",
+                "status": "holding",
+                "intensity": 4,
+                "related_entities": ["alain_reille"],
+                "resolution_hint": "blocked",
+            }
+        ],
+    }
+
+
+def test_narrative_thread_feedback_shapes_scene_assessment():
+    result = build_scene_assessment(
+        module_id=GOC_MODULE_ID,
+        current_scene_id="living_room",
+        canonical_yaml={"content": {"setting": "Paris", "narrative_scope": "domestic"}},
+        prior_narrative_thread_state=_thread_feedback_state(),
+    )
+
+    assert result["pressure_state"] == "thread_pressure_high"
+    assert result["thread_pressure_state"] == "high_unresolved_thread_pressure"
+    assert result["narrative_thread_feedback"]["dominant_thread_kind"] == "progression_blocked"
+    assert result["narrative_thread_feedback"]["thread_pressure_level"] == 4
+
+
+def test_narrative_thread_feedback_shapes_pacing():
+    pacing, silence = build_pacing_and_silence(
+        player_input="continue this argument carefully",
+        interpreted_move={},
+        module_id=GOC_MODULE_ID,
+        prior_narrative_thread_state=_thread_feedback_state(),
+    )
+
+    assert pacing == "multi_pressure"
+    assert silence["reason"] == "narrative_thread_pressure_multi_pressure"
+
+
+def test_narrative_thread_feedback_shapes_responder_and_function():
+    responders, scene_fn, implied, resolution = build_responder_and_function(
+        player_input="continue this argument carefully",
+        interpreted_move={},
+        pacing_mode="standard",
+        semantic_move_record={"move_type": "establish_situational_pressure"},
+        prior_narrative_thread_state=_thread_feedback_state(),
+    )
+
+    assert scene_fn == "scene_pivot"
+    assert implied["scene_pivot"] == "refused_cooperation"
+    assert responders[0]["actor_id"] == "alain_reille"
+    assert responders[0]["reason"] == "narrative_thread_related_entity_focus"
+    assert "thread:progression_blocked_override->scene_pivot" in resolution["heuristic_trace"]
+    assert resolution["narrative_thread_feedback"]["dominant_thread_kind"] == "progression_blocked"

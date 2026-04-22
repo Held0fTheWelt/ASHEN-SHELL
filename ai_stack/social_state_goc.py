@@ -18,6 +18,7 @@ def build_social_state_record(
     active_narrative_threads: list[dict[str, Any]] | None,
     thread_pressure_summary: str | None,
     scene_assessment: dict[str, Any] | None,
+    prior_social_state_record: dict[str, Any] | None = None,
 ) -> SocialStateRecord:
     """Describe what ``build_social_state_record`` does in one line
     (verb-led summary for this function).
@@ -30,6 +31,8 @@ def build_social_state_record(
         thread_pressure_summary: ``thread_pressure_summary`` (str | None); meaning follows the type and call sites.
         scene_assessment: ``scene_assessment`` (dict[str,
             Any] | None); meaning follows the type and call sites.
+        prior_social_state_record: previously committed social-state record
+            rehydrated from planner truth, if available.
     
     Returns:
         SocialStateRecord:
@@ -53,10 +56,29 @@ def build_social_state_record(
         asym = "alliance_reposition_active"
 
     risk = "moderate"
-    if pressure == "high_blame" or "blame_pressure" in prior_classes:
+    if pressure in {"high_blame", "thread_pressure_high"} or "blame_pressure" in prior_classes:
         risk = "high"
     elif not prior_classes and n == 0:
         risk = "low"
+
+    prior_fp: str | None = None
+    prior_risk: str | None = None
+    continuity_status = "initial_social_state"
+    if isinstance(prior_social_state_record, dict) and prior_social_state_record:
+        try:
+            prior_model = SocialStateRecord.model_validate(prior_social_state_record)
+            prior_fp = social_state_fingerprint(prior_model)
+            prior_risk = prior_model.social_risk_band
+            stable = (
+                prior_model.scene_pressure_state == pressure
+                and prior_model.responder_asymmetry_code == asym
+                and prior_model.social_risk_band == risk
+            )
+            continuity_status = (
+                "stable_prior_social_state" if stable else "social_state_shifted"
+            )
+        except Exception:
+            continuity_status = "social_state_shifted"
 
     return SocialStateRecord(
         prior_continuity_classes=prior_classes,
@@ -66,6 +88,9 @@ def build_social_state_record(
         guidance_phase_key=phase_s,
         responder_asymmetry_code=asym,
         social_risk_band=risk,
+        prior_social_state_fingerprint=prior_fp,
+        prior_social_risk_band=prior_risk,
+        social_continuity_status=continuity_status,
     )
 
 

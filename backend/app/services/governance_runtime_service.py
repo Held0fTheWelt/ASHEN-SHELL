@@ -1986,8 +1986,8 @@ def get_provider_credential_for_runtime(provider_id: str) -> str | None:
             dek_nonce=active_cred.dek_nonce,
         )
         api_key = decrypted.get("api_key") if isinstance(decrypted, dict) else str(decrypted)
-        print(f"DEBUG: Successfully decrypted credential for {provider_id}: key={api_key[:20] if api_key else 'None'}...", flush=True)
+        print(f"DEBUG: Successfully decrypted credential for {provider_id}: present={bool(api_key)}", flush=True)
         return api_key
     except Exception as e:
-        print(f"DEBUG: Failed to decrypt credential for {provider_id}: {e}", flush=True)
+        print(f"DEBUG: Failed to decrypt credential for {provider_id}: {type(e).__name__}", flush=True)
         return None

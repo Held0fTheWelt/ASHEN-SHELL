@@ -232,7 +232,18 @@ def test_game_player_session_create_binds_run_to_story_runtime_server_side(
             "turn_counter": 0,
             "current_scene_id": "scene_1",
             "history_count": 1,
-            "committed_state": {},
+            "committed_state": {
+                "player_shell_context": {
+                    "contract": "player_shell_dramatic_context.v1",
+                    "selected_scene_function": "redirect_blame",
+                    "pressure_state": "thread_pressure_high",
+                },
+                "module_scope_truth": {
+                    "contract": "story_runtime_module_scope.v1",
+                    "runtime_scope": "module_specific",
+                    "requested_module_supported": True,
+                },
+            },
             "story_window": {
                 "contract": "authoritative_story_window_v1",
                 "entries": [
@@ -262,6 +273,10 @@ def test_game_player_session_create_binds_run_to_story_runtime_server_side(
     assert data["runtime_session_id"] == "story-session-1"
     assert data["backend_session_id"] is None
     assert data["story_entries"][0]["text"] == "The room is already tense."
+    assert data["shell_state_view"]["player_shell_context"]["contract"] == "player_shell_dramatic_context.v1"
+    assert data["shell_state_view"]["player_shell_context"]["selected_scene_function"] == "redirect_blame"
+    assert data["shell_state_view"]["module_scope_truth"]["contract"] == "story_runtime_module_scope.v1"
+    assert data["shell_state_view"]["module_scope_truth"]["requested_module_supported"] is True
 
     with app.app_context():
         slots = GameSaveSlot.query.filter_by(user_id=user.id, run_id="run-player-1").all()

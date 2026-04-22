@@ -9,6 +9,7 @@ from ai_stack.goc_turn_seams import build_diagnostics_refs
 from ai_stack.langgraph_runtime_package_output_repro import build_repro_metadata_and_health
 from ai_stack.langgraph_runtime_package_output_sections import (
     append_goc_validation_reject_failure_marker,
+    build_bounded_dramatic_context_summary,
     build_dramatic_review_section,
     build_planner_state_projection,
     compute_experiment_preview_for_package_output,
@@ -78,6 +79,7 @@ def package_runtime_graph_output(
         fallback_path_taken=fallback_taken,
     )
     vo = validation
+    dramatic_context_summary = build_bounded_dramatic_context_summary(state)
     gd = {
         "graph_name": graph_name,
         "graph_version": graph_version,
@@ -91,8 +93,10 @@ def package_runtime_graph_output(
         "operational_cost_hints": cost_hints,
         "dramatic_review": build_dramatic_review_section(state, vo),
         "planner_state_projection": build_planner_state_projection(state),
+        "dramatic_context_summary": dramatic_context_summary,
     }
     update["graph_diagnostics"] = gd
+    update["dramatic_context_summary"] = dramatic_context_summary
     update["experiment_preview"] = experiment_preview
     tp = state.get("transition_pattern") or "diagnostics_only"
     alignment_note = gd["dramatic_review"]["dramatic_alignment_summary"]

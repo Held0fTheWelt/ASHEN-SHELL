@@ -45,6 +45,9 @@ class RuntimeTurnState(TypedDict, total=False):
     goc_yaml_slice: dict[str, Any]
     prior_continuity_impacts: list[dict[str, Any]]
     prior_dramatic_signature: dict[str, str]
+    prior_social_state_record: dict[str, Any]
+    prior_narrative_thread_state: dict[str, Any]
+    prior_planner_truth: dict[str, Any]
     scene_assessment: dict[str, Any]
     selected_responder_set: list[dict[str, Any]]
     selected_scene_function: str
@@ -54,6 +57,7 @@ class RuntimeTurnState(TypedDict, total=False):
     validation_outcome: dict[str, Any]
     committed_result: dict[str, Any]
     visible_output_bundle: dict[str, Any]
+    dramatic_context_summary: dict[str, Any]
     continuity_impacts: list[dict[str, Any]]
     visibility_class_markers: list[str]
     failure_markers: list[dict[str, Any]]
@@ -75,12 +79,18 @@ class RuntimeTurnState(TypedDict, total=False):
     character_mind_records: list[dict[str, Any]]
     scene_plan_record: dict[str, Any]
     dramatic_effect_outcome: dict[str, Any]
-    # Model-generated structured behavior outputs (Wave 3: extracted from generation["metadata"]["structured_output"]).
+    # Model-generated structured behavior outputs; populated by the
+    # ``proposal_normalize`` graph node from
+    # ``generation["metadata"]["structured_output"]``.
     responder_id: str
     function_type: str
     emotional_shift: dict[str, Any]
     social_outcome: str
     dramatic_direction: str
+    # Reconciliation outcome recording whether the model-proposed responders
+    # matched the director's selected_responder_set and how many out-of-scope
+    # actors were dropped. Populated by the validate_seam node.
+    responder_reconciliation: dict[str, Any]
 
 
 STORY_RUNTIME_ROUTING_POLICY_ID = "story_runtime_core.RoutingPolicy"

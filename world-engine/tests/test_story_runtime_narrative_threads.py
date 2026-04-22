@@ -9,6 +9,7 @@ import pytest
 from app.story_runtime import StoryRuntimeManager, commit_models
 from app.story_runtime.narrative_threads import (
     GRAPH_EXPORT_MAX_ACTIVE,
+    StoryNarrativeThread,
     StoryNarrativeThreadSet,
     THREAD_PRESSURE_SUMMARY_MAX,
     update_narrative_threads,
@@ -280,6 +281,229 @@ def test_compact_thread_context_passed_to_graph_bounded(manager: StoryRuntimeMan
     summ = fake.last_kwargs.get("thread_pressure_summary")
     if isinstance(summ, str):
         assert len(summ) <= THREAD_PRESSURE_SUMMARY_MAX
+
+
+def test_prior_social_state_passed_to_graph_from_committed_planner_truth(
+    manager: StoryRuntimeManager,
+) -> None:
+    manager.turn_graph = _RecordingFakeTurnGraph(  # type: ignore[assignment]
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    session = manager.create_session(
+        module_id="m",
+        runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
+    )
+    prior_record = {
+        "prior_continuity_classes": ["blame_pressure"],
+        "scene_pressure_state": "high_blame",
+        "active_thread_count": 1,
+        "thread_pressure_summary_present": True,
+        "guidance_phase_key": "phase_2_moral_negotiation",
+        "responder_asymmetry_code": "blame_on_host_spouse_axis",
+        "social_risk_band": "high",
+        "social_continuity_status": "initial_social_state",
+    }
+    session.history.append(
+        {
+            "turn_number": 99,
+            "narrative_commit": {
+                "planner_truth": {
+                    "social_state_summary": {
+                        "summary_source": "social_state_record",
+                        "record": prior_record,
+                    }
+                }
+            },
+        }
+    )
+
+    fake = _RecordingFakeTurnGraph(
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    manager.turn_graph = fake  # type: ignore[assignment]
+    manager.execute_turn(session_id=session.session_id, player_input="continue")
+
+    assert fake.last_kwargs["prior_social_state_record"] == prior_record
+
+
+def test_prior_planner_truth_passed_to_graph_from_committed_truth(
+    manager: StoryRuntimeManager,
+) -> None:
+    manager.turn_graph = _RecordingFakeTurnGraph(  # type: ignore[assignment]
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    session = manager.create_session(
+        module_id="m",
+        runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
+    )
+    planner_truth = {
+        "selected_scene_function": "redirect_blame",
+        "responder_id": "michel_longstreet",
+        "responder_scope": ["michel_longstreet", "annette_reille"],
+        "function_type": "pressure_probe",
+        "pacing_mode": "compressed",
+        "scene_assessment_core": {"pressure_state": "thread_pressure_high"},
+        "social_outcome": "tension_escalates",
+        "dramatic_direction": "humiliation_spikes",
+        "continuity_impacts": [{"class": "blame_pressure"}],
+        "validator_layers_used": ["dramatic_effect_gate"],
+    }
+    session.history.append(
+        {
+            "turn_number": 99,
+            "narrative_commit": {
+                "planner_truth": planner_truth,
+            },
+        }
+    )
+
+    fake = _RecordingFakeTurnGraph(
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    manager.turn_graph = fake  # type: ignore[assignment]
+    manager.execute_turn(session_id=session.session_id, player_input="continue")
+
+    prior = fake.last_kwargs["prior_planner_truth"]
+    assert prior["selected_scene_function"] == "redirect_blame"
+    assert prior["responder_scope"] == ["michel_longstreet", "annette_reille"]
+    assert prior["function_type"] == "pressure_probe"
+    assert prior["continuity_impacts"] == [{"class": "blame_pressure"}]
+    assert "validator_layers_used" not in prior
+
+
+def test_prior_narrative_thread_state_passed_to_graph_from_session_threads(
+    manager: StoryRuntimeManager,
+) -> None:
+    manager.turn_graph = _RecordingFakeTurnGraph(  # type: ignore[assignment]
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    session = manager.create_session(
+        module_id="m",
+        runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
+    )
+    session.narrative_threads = StoryNarrativeThreadSet(
+        active=[
+            StoryNarrativeThread(
+                thread_id="threadabcdef123456",
+                thread_kind="progression_blocked",
+                status="holding",
+                scene_anchor="scene_1",
+                intensity=4,
+                persistence_turns=2,
+                related_scenes=["scene_1"],
+                related_entities=["alain_reille"],
+                evidence_tokens=["blocked"],
+                last_updated_turn=1,
+                resolution_hint="blocked",
+            )
+        ],
+        resolved_recent=[],
+    )
+
+    fake = _RecordingFakeTurnGraph(
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.8},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+    manager.turn_graph = fake  # type: ignore[assignment]
+    manager.execute_turn(session_id=session.session_id, player_input="continue")
+
+    state = fake.last_kwargs["prior_narrative_thread_state"]
+    assert state["source"] == "session.narrative_threads"
+    assert state["dominant_thread_kind"] == "progression_blocked"
+    assert state["thread_pressure_level"] == 4
+    assert state["active_threads"][0]["related_entities"] == ["alain_reille"]
+
+
+def test_committed_dramatic_context_reaches_history_story_window_and_shell(
+    manager: StoryRuntimeManager,
+) -> None:
+    payload = _envelope(
+        interpreted_input={"kind": "speech", "confidence": 0.8},
+        generation={"success": True, "metadata": {}},
+    )
+    payload.update(
+        {
+            "selected_scene_function": "redirect_blame",
+            "selected_responder_set": [{"actor_id": "michel_longstreet"}],
+            "responder_id": "michel_longstreet",
+            "function_type": "pressure_probe",
+            "pacing_mode": "compressed",
+            "silence_brevity_decision": {"mode": "brief"},
+            "scene_assessment": {
+                "pressure_state": "thread_pressure_high",
+                "thread_pressure_state": "thread_pressure_high",
+                "assessment_summary": "Blame is being redirected through the room.",
+            },
+            "social_outcome": "tension_escalates",
+            "dramatic_direction": "humiliation_spikes",
+            "social_state_record": {
+                "prior_continuity_classes": ["blame_pressure"],
+                "scene_pressure_state": "high_blame",
+                "active_thread_count": 1,
+                "thread_pressure_summary_present": True,
+                "guidance_phase_key": "phase_2_moral_negotiation",
+                "responder_asymmetry_code": "blame_on_host_spouse_axis",
+                "social_risk_band": "high",
+                "social_continuity_status": "initial_social_state",
+            },
+            "continuity_impacts": [{"class": "blame_pressure"}],
+            "retrieval": {
+                "domain": "runtime",
+                "status": "ok",
+                "retrieval_route": "sparse_fallback",
+                "continuity_query_signal": {
+                    "attached": True,
+                    "sources": ["prior_planner_truth"],
+                },
+            },
+        }
+    )
+    fake = _RecordingFakeTurnGraph(payload)
+    manager.turn_graph = fake  # type: ignore[assignment]
+    session = manager.create_session(
+        module_id="m",
+        runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
+    )
+    turn = manager.execute_turn(session_id=session.session_id, player_input="continue")
+
+    context = turn["dramatic_context_summary"]
+    assert context["contract"] == "bounded_dramatic_context.v1"
+    assert context["selected_scene_function"] == "redirect_blame"
+    assert context["responder"]["responder_id"] == "michel_longstreet"
+    assert context["scene_assessment"]["pressure_state"] == "thread_pressure_high"
+    assert context["social_state"]["social_risk_band"] == "high"
+    assert context["retrieval_context"]["continuity_query_attached"] is True
+    assert turn["runtime_governance_surface"]["dramatic_context_summary"] == context
+    assert session.history[-1]["dramatic_context_summary"] == context
+
+    state = manager.get_state(session.session_id)
+    assert state["module_scope_truth"]["requested_module_id"] == "m"
+    assert state["module_scope_truth"]["requested_module_supported"] is False
+    assert state["committed_state"]["module_scope_truth"]["runtime_scope"] == "module_specific"
+    shell_context = state["committed_state"]["player_shell_context"]
+    assert shell_context["contract"] == "player_shell_dramatic_context.v1"
+    assert shell_context["selected_scene_function"] == "redirect_blame"
+    assert shell_context["pressure_state"] == "thread_pressure_high"
+    latest_entry = state["story_window"]["latest_entry"]
+    assert latest_entry["dramatic_context_summary"]["contract"] == "story_window_dramatic_context.v1"
+    assert latest_entry["authority_summary"]["dramatic_context"]["social_risk_band"] == "high"
 
 
 def test_no_trace_history_accumulation_on_session(manager: StoryRuntimeManager) -> None:

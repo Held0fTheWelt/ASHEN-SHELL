@@ -10,12 +10,54 @@ from typing import Any
 from ai_stack.character_mind_contract import CharacterMindRecord, FieldProvenance
 from ai_stack.goc_scene_identity import guidance_phase_key_for_scene_id
 
-_RUNTIME_ACTOR_IDS: dict[str, str] = {
+# Module-specific fallback mapping from short keys to canonical runtime actor
+# ids for God of Carnage. This is the honest escape hatch — newer modules
+# should publish ``actor_id`` on each row of their YAML characters block (see
+# ``resolve_runtime_actor_id``) so the runtime stays data-driven without code
+# changes.
+_GOC_RUNTIME_ACTOR_ID_FALLBACK: dict[str, str] = {
     "veronique": "veronique_vallon",
     "michel": "michel_longstreet",
     "annette": "annette_reille",
     "alain": "alain_reille",
 }
+
+
+def resolve_runtime_actor_id(
+    character_key: str,
+    *,
+    yaml_characters: dict[str, Any] | None,
+    module_id: str | None = None,
+) -> str:
+    """Resolve a character key to its canonical runtime actor id.
+
+    Resolution precedence:
+
+    1. Explicit ``actor_id`` published on the YAML characters row for this
+       key (the preferred, module-agnostic source).
+    2. Module-specific fallback (the God of Carnage short-key → actor-id
+       map) when ``module_id`` selects a known module.
+    3. The character key itself, used as the actor id.
+
+    This lets modules ship their own cast without code changes while
+    preserving the authored mapping for the currently-supported vertical
+    slice.
+    """
+    k = (character_key or "").lower().strip()
+    if not k:
+        return character_key or ""
+    if isinstance(yaml_characters, dict):
+        row = yaml_characters.get(k)
+        if isinstance(row, dict):
+            rid = row.get("actor_id")
+            if isinstance(rid, str) and rid.strip():
+                return rid.strip()
+    mid = (module_id or "").strip().lower()
+    if mid in {"god_of_carnage", "goc"}:
+        mapped = _GOC_RUNTIME_ACTOR_ID_FALLBACK.get(k)
+        if mapped:
+            return mapped
+    return k
 
 _TACTICAL_FROM_FORMAL: dict[str, str] = {
     "host_moral_idealist": "defend_civility_principles",
@@ -79,6 +121,7 @@ def build_character_mind_records_for_goc(
     yaml_slice: dict[str, Any] | None,
     active_character_keys: list[str],
     current_scene_id: str,
+    module_id: str | None = None,
 ) -> list[CharacterMindRecord]:
     """Build mind records for listed character keys (typically primary
     responder + scene anchors).
@@ -114,7 +157,9 @@ def build_character_mind_records_for_goc(
     out: list[CharacterMindRecord] = []
     for key in active_character_keys:
         k = key.lower().strip()
-        rid = _RUNTIME_ACTOR_IDS.get(k, k)
+        rid = resolve_runtime_actor_id(
+            k, yaml_characters=chars_root, module_id=module_id
+        )
         vblock = voice_root.get(k) if isinstance(voice_root.get(k), dict) else {}
         cblock = chars_root.get(k) if isinstance(chars_root.get(k), dict) else {}
 

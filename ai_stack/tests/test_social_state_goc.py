@@ -27,3 +27,34 @@ def test_social_state_fingerprint_stable() -> None:
         scene_assessment=sa,
     )
     assert social_state_fingerprint(s1) == social_state_fingerprint(s2)
+
+
+def test_social_state_rehydrates_prior_committed_record() -> None:
+    prior = build_social_state_record(
+        prior_continuity_impacts=[{"class": "blame_pressure"}],
+        active_narrative_threads=[],
+        thread_pressure_summary=None,
+        scene_assessment={"pressure_state": "high_blame"},
+    )
+    current = build_social_state_record(
+        prior_continuity_impacts=[{"class": "repair_attempt"}],
+        active_narrative_threads=[],
+        thread_pressure_summary=None,
+        scene_assessment={"pressure_state": "moderate_tension"},
+        prior_social_state_record=prior.to_runtime_dict(),
+    )
+
+    assert current.prior_social_state_fingerprint == social_state_fingerprint(prior)
+    assert current.prior_social_risk_band == "high"
+    assert current.social_continuity_status == "social_state_shifted"
+
+
+def test_social_state_treats_thread_pressure_as_high_risk() -> None:
+    record = build_social_state_record(
+        prior_continuity_impacts=[],
+        active_narrative_threads=[],
+        thread_pressure_summary="progression_blocked:4",
+        scene_assessment={"pressure_state": "thread_pressure_high"},
+    )
+
+    assert record.social_risk_band == "high"

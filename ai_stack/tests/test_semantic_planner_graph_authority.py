@@ -85,3 +85,26 @@ def test_graph_diagnostics_planner_projection_present(tmp_path: Path) -> None:
     proj = gd.get("planner_state_projection") or {}
     assert proj.get("semantic_move_record")
     assert proj.get("semantic_move_record") == result.get("semantic_move_record")
+
+
+def test_package_output_preserves_bounded_dramatic_context(tmp_path: Path) -> None:
+    g = _graph(tmp_path)
+    result = g.run(
+        session_id="s-auth4",
+        module_id="god_of_carnage",
+        current_scene_id="living_room",
+        player_input="I press Michel about the lie.",
+        trace_id="t-auth4",
+    )
+    context = result.get("dramatic_context_summary") or {}
+    gd_context = (result.get("graph_diagnostics") or {}).get("dramatic_context_summary") or {}
+
+    assert context["contract"] == "bounded_dramatic_context.v1"
+    assert gd_context == context
+    assert context["selected_scene_function"]
+    assert context["module_scope"]["runtime_scope"] == "module_specific"
+    assert context["module_scope"]["requested_module_supported"] is True
+    assert context["responder"]["responder_id"]
+    assert "scene_assessment" in context
+    assert "social_state" in context
+    assert "dramatic_outcome" in context

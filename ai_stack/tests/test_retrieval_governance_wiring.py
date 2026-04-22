@@ -305,6 +305,74 @@ class TestExecutorRetrievalConfigWiring:
         assert captured
         assert captured[0].profile == "improvement_eval"
 
+    def test_committed_continuity_signals_enrich_retrieval_query(self) -> None:
+        rc = RuntimeRetrievalConfig(retrieval_execution_mode="hybrid_dense_sparse")
+        executor = self._make_minimal_executor(rc)
+        captured: list[Any] = []
+        original_retrieve = executor.retriever.retrieve
+
+        def spy(request):
+            captured.append(request)
+            return original_retrieve(request)
+
+        executor.retriever.retrieve = spy
+        state = self._minimal_state()
+        state.update(
+            {
+                "prior_planner_truth": {
+                    "selected_scene_function": "redirect_blame",
+                    "responder_id": "michel_longstreet",
+                    "responder_scope": ["michel_longstreet", "annette_reille"],
+                    "function_type": "pressure_probe",
+                    "social_outcome": "tension_escalates",
+                    "dramatic_direction": "humiliation_spikes",
+                    "scene_assessment_core": {"pressure_state": "thread_pressure_high"},
+                },
+                "prior_dramatic_signature": {
+                    "prior_beat_id": "scene_1:redirect_blame",
+                    "prior_pressure_state": "blame_pressure",
+                    "prior_pacing_mode": "compressed",
+                },
+                "prior_social_state_record": {
+                    "scene_pressure_state": "high_blame",
+                    "social_risk_band": "high",
+                    "responder_asymmetry_code": "blame_on_host_spouse_axis",
+                    "prior_continuity_classes": ["blame_pressure"],
+                },
+                "prior_narrative_thread_state": {
+                    "dominant_thread_kind": "progression_blocked",
+                    "thread_pressure_level": 4,
+                    "active_threads": [
+                        {
+                            "thread_kind": "progression_blocked",
+                            "status": "holding",
+                            "related_entities": ["alain_reille"],
+                            "resolution_hint": "mediate_blocked_progression",
+                        }
+                    ],
+                },
+                "prior_continuity_impacts": [{"class": "dignity_injury"}],
+            }
+        )
+
+        result = executor._retrieve_context(state)
+
+        assert captured, "retrieve() was not called"
+        query = captured[0].query
+        assert "continuity_retrieval_context:" in query
+        assert "michel_longstreet" in query
+        assert "annette_reille" in query
+        assert "pressure_probe" in query
+        assert "tension_escalates" in query
+        assert "blame_pressure" in query
+        assert "thread_pressure_high" in query
+        assert "progression_blocked" in query
+        assert "alain_reille" in query
+        signal = result["retrieval"]["continuity_query_signal"]
+        assert signal["attached"] is True
+        assert "prior_planner_truth" in signal["sources"]
+        assert "retrieval_continuity_query=attached" in result["retrieval"]["ranking_notes"]
+
     def test_min_score_filters_sources(self, tmp_path: Path) -> None:
         """Sources below min_score threshold are removed."""
         from ai_stack.langgraph_runtime_executor import RuntimeTurnGraphExecutor
