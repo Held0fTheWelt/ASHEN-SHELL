@@ -7,8 +7,17 @@ from pathlib import Path
 import pytest
 
 from app.observability.audit_log import log_world_engine_bridge, log_workflow_audit
+from app.runtime.session_store import clear_registry as clear_runtime_session_registry
 from app.services.ai_stack_closure_cockpit_parsing import G9B_ATTEMPT_RECORD_PATH, read_audit_json as closure_read_audit_json
 from app.services.game_service import GameServiceError
+
+
+@pytest.fixture(autouse=True)
+def _isolate_runtime_session_store():
+    """Prevent cross-test runtime-session bleed in this module."""
+    clear_runtime_session_registry()
+    yield
+    clear_runtime_session_registry()
 
 
 def test_admin_session_evidence_returns_runtime_bundle(client, moderator_headers, monkeypatch):
@@ -155,7 +164,6 @@ def test_improvement_experiment_response_includes_trace(client, auth_headers):
     assert "recommendation_package" in payload
 
 
-@pytest.mark.skip(reason="test isolation issue: monkeypatch conflicts in multi-test runs")
 def test_session_evidence_includes_repaired_layer_signals(client, moderator_headers, monkeypatch):
     create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
     session_id = create_resp.get_json()["session_id"]
@@ -290,7 +298,6 @@ def test_session_evidence_includes_repaired_layer_signals(client, moderator_head
     assert et.get("retrieval_influence", {}).get("retrieval_trace_schema_version") == "retrieval_closure_v1"
 
 
-@pytest.mark.skip(reason="test isolation issue: monkeypatch conflicts in multi-test runs")
 def test_session_evidence_surfaces_degraded_execution_health(client, moderator_headers, monkeypatch):
     """Degraded graph paths must appear in execution_truth and degraded_path_signals."""
     create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})
@@ -337,7 +344,6 @@ def test_session_evidence_surfaces_degraded_execution_health(client, moderator_h
     assert "fallback_path_taken" in (xc.get("active_degradation_markers") or [])
 
 
-@pytest.mark.skip(reason="test isolation issue: monkeypatch conflicts in multi-test runs")
 def test_session_evidence_empty_diagnostics_surfaces_no_turn_cross_layer(client, moderator_headers, monkeypatch):
     """Empty diagnostics must not imply a healthy last-turn graph or retrieval tier."""
     create_resp = client.post("/api/v1/sessions", json={"module_id": "god_of_carnage"})

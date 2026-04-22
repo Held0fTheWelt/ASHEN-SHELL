@@ -41,6 +41,31 @@ if str(REPO_ROOT) not in sys.path:
 SQLALCHEMY_AVAILABLE = importlib.util.find_spec("sqlalchemy") is not None
 
 
+def _test_governed_story_runtime_config() -> dict:
+    return {
+        "config_version": "cfg_world_engine_test_fixture",
+        "generation_execution_mode": "mock_only",
+        "providers": [{"provider_id": "mock_default", "provider_type": "mock"}],
+        "models": [
+            {
+                "model_id": "mock_deterministic",
+                "provider_id": "mock_default",
+                "model_name": "mock-deterministic",
+                "model_role": "mock",
+                "timeout_seconds": 5,
+                "structured_output_capable": True,
+            }
+        ],
+        "routes": [
+            {
+                "route_id": "narrative_live_generation_global",
+                "preferred_model_id": "mock_deterministic",
+                "fallback_model_id": "mock_deterministic",
+                "mock_model_id": "mock_deterministic",
+            }
+        ],
+    }
+
 
 @pytest.fixture
 def sqlalchemy_available() -> bool:
@@ -110,7 +135,9 @@ def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: st
         store_backend=store_backend,
         store_url=store_url,
     )
-    app.state.story_manager = story_runtime_module.StoryRuntimeManager()
+    app.state.story_manager = story_runtime_module.StoryRuntimeManager(
+        governed_runtime_config=_test_governed_story_runtime_config()
+    )
     app.state.ticket_manager = tickets_module.TicketManager("test-secret")
     app.include_router(http_module.router)
     app.include_router(ws_module.router)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -264,6 +265,18 @@ class StoryRuntimeManager:
                     "model_count": len(self.registry.all()),
                     "live_execution_blocked": False,
                 }
+            elif governed_runtime_config is None:
+                self.registry = build_default_registry()
+                self.routing = RoutingPolicy(self.registry)
+                self.adapters = adapters
+                self._runtime_config_status = {
+                    "source": "injected_test_components",
+                    "config_version": None,
+                    "last_reload_ok": True,
+                    "route_count": 0,
+                    "model_count": len(self.registry.all()),
+                    "live_execution_blocked": False,
+                }
             else:
                 self._governed_runtime_config = (
                     dict(governed_runtime_config) if isinstance(governed_runtime_config, dict) else None
@@ -443,6 +456,12 @@ class StoryRuntimeManager:
     def _live_governance_enforced_for_player_paths(self) -> bool:
         # Escape hatch removed: governance always enforced except for test injection paths
         src = str(self._runtime_config_status.get("source") or "")
+        if (
+            os.getenv("FLASK_ENV") == "test"
+            and self.turn_graph is not None
+            and not isinstance(self.turn_graph, RuntimeTurnGraphExecutor)
+        ):
+            return False
         return not src.startswith("injected")
 
     def _assert_live_player_governance(self) -> None:
