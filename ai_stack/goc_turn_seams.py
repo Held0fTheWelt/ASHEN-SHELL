@@ -339,6 +339,19 @@ def run_visible_render(
         "michel_longstreet": "Michel",
         "alain_reille": "Alain",
     }
+    director_surface_hints: list[dict[str, str | bool]] = []
+
+    def add_director_hint(hint_type: str, text: str, source: str) -> None:
+        clean = str(text or "").strip()
+        if clean:
+            director_surface_hints.append(
+                {
+                    "hint_type": hint_type,
+                    "text": clean[:280],
+                    "source": source,
+                    "player_visible": False,
+                }
+            )
 
     if module_id != GOC_MODULE_ID:
         bundle = {
@@ -361,30 +374,36 @@ def run_visible_render(
         if responder_name and content:
             gm_lines.insert(0, f"{responder_name} reacts immediately.")
         narr_len = len(prop_excerpt) if prop_excerpt else len(content)
-        if supplement and (narr_len < 50 or silence_dec.get("mode") == "withheld"):
-            gm_lines.append(f"(Director staging — phase context) {supplement}")
+        used_supplement = bool(
+            supplement and (narr_len < 50 or silence_dec.get("mode") == "withheld")
+        )
         role = str(profile.get("formal_role") or profile.get("role") or "").strip()
         tone = str(profile.get("baseline_tone") or "").strip()
         phase_arc = str(profile.get("phase_arc_hint") or "").strip()
         ai_hint = str(guidance_snips.get("ai_guidance_hint") or "").strip()
+        if used_supplement:
+            add_director_hint("phase_context", supplement, "scene_guidance.narrative_context")
         if role and (silence_dec.get("mode") == "withheld" or pacing_mode in ("compressed", "multi_pressure")):
-            gm_lines.append(f"(Director register — responder role) {role}")
+            add_director_hint("responder_role", role, "character_profile.formal_role")
         if tone and pacing_mode in ("thin_edge", "multi_pressure"):
-            gm_lines.append(f"(Director register — tonal pressure) {tone}")
+            add_director_hint("tonal_pressure", tone, "character_profile.baseline_tone")
         if phase_arc and narr_len < 90:
-            gm_lines.append(f"(Director staging — character pressure arc) {phase_arc}")
+            add_director_hint("character_pressure_arc", phase_arc, "character_profile.phase_arc_hint")
         if ai_hint and (narr_len < 80 or pacing_mode == "multi_pressure"):
-            gm_lines.append(f"(Director staging — phase pressure cue) {ai_hint}")
+            add_director_hint("phase_pressure_cue", ai_hint, "scene_guidance.ai_guidance")
         if not gm_lines:
-            gm_lines = ["(scene continues — committed effects applied.)"]
+            gm_lines = ["The exchange shifts, and the room adjusts around it."]
         bundle = {
             "gm_narration": gm_lines,
             "spoken_lines": [],
         }
+        if director_surface_hints:
+            bundle["render_support"] = {
+                "projection_version": "director_surface_hints.v1",
+                "player_visible": False,
+                "director_surface_hints": director_surface_hints,
+            }
         markers.append("truth_aligned")
-        used_supplement = bool(
-            supplement and (narr_len < 50 or silence_dec.get("mode") == "withheld")
-        )
         if used_supplement:
             markers.append("bounded_ambiguity")
         return bundle, markers

@@ -169,6 +169,19 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
         consequence_lines = [str(item) for item in consequences] if isinstance(consequences, list) else []
         bundle = event.get("visible_output_bundle") if isinstance(event.get("visible_output_bundle"), dict) else {}
         spoken_lines = _coerce_visible_text_lines(bundle.get("spoken_lines"))
+        render_support = bundle.get("render_support") if isinstance(bundle.get("render_support"), dict) else None
+        authority = event.get("committed_turn_authority") if isinstance(event.get("committed_turn_authority"), dict) else {}
+        validation = event.get("validation_outcome") if isinstance(event.get("validation_outcome"), dict) else {}
+        authority_summary = {
+            "authority_record_version": authority.get("authority_record_version"),
+            "committed_scene_id": authority.get("committed_scene_id") or commit.get("committed_scene_id"),
+            "validation_status": authority.get("validation_status") or validation.get("status"),
+            "commit_applied": authority.get("commit_applied"),
+            "selected_scene_function": event.get("selected_scene_function"),
+            "experiment_preview": event.get("experiment_preview"),
+            "visibility_class_markers": event.get("visibility_class_markers") or [],
+            "failure_markers": event.get("failure_markers") or [],
+        }
 
         if turn_kind != "opening":
             raw_input = str(event.get("raw_input") or "").strip()
@@ -188,20 +201,22 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
         visible_lines = _visible_lines_from_turn_event(event)
         if not visible_lines and not spoken_lines and not consequence_lines:
             continue
-        entries.append(
-            {
-                "entry_id": f"{session.session_id}:{turn_number}:{turn_kind}",
-                "kind": "opening" if turn_kind == "opening" else "runtime_response",
-                "role": "runtime",
-                "speaker": "World of Shadows",
-                "turn_number": turn_number,
-                "text": "\n\n".join(visible_lines),
-                "spoken_lines": spoken_lines,
-                "committed_consequences": consequence_lines,
-                "source": "authoritative_story_runtime",
-                "runtime_governance_surface": event.get("runtime_governance_surface"),
-            }
-        )
+        runtime_entry = {
+            "entry_id": f"{session.session_id}:{turn_number}:{turn_kind}",
+            "kind": "opening" if turn_kind == "opening" else "runtime_response",
+            "role": "runtime",
+            "speaker": "World of Shadows",
+            "turn_number": turn_number,
+            "text": "\n\n".join(visible_lines),
+            "spoken_lines": spoken_lines,
+            "committed_consequences": consequence_lines,
+            "source": "authoritative_story_runtime",
+            "runtime_governance_surface": event.get("runtime_governance_surface"),
+            "authority_summary": authority_summary,
+        }
+        if render_support:
+            runtime_entry["render_support"] = render_support
+        entries.append(runtime_entry)
     return entries
 
 
@@ -679,6 +694,8 @@ class StoryRuntimeManager:
             "committed_result": graph_state.get("committed_result"),
             "committed_turn_authority": committed_turn_authority,
             "selected_scene_function": graph_state.get("selected_scene_function"),
+            "visibility_class_markers": graph_state.get("visibility_class_markers"),
+            "failure_markers": graph_state.get("failure_markers"),
             "self_correction": self_correction,
             "runtime_governance_surface": gov,
         }

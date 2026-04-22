@@ -116,7 +116,11 @@ def test_scenario_thin_edge_silence_non_preview(tmp_path: Path) -> None:
     vis = result.get("visible_output_bundle") or {}
     lines = vis.get("gm_narration") or []
     assert len(lines) >= 1
-    assert any("Director staging" in str(x) for x in lines) or len(" ".join(str(x) for x in lines)) > 40
+    assert "Director " not in "\n".join(str(x) for x in lines)
+    support = vis.get("render_support") or {}
+    hints = support.get("director_surface_hints") or []
+    assert support.get("player_visible") is False
+    assert any((hint or {}).get("hint_type") == "phase_context" for hint in hints)
     assert "bounded_ambiguity" in (result.get("visibility_class_markers") or [])
 
 
