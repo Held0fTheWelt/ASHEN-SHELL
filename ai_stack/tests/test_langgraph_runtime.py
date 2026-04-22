@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,32 @@ class SuccessAdapter(BaseModelAdapter):
         model_name: str | None = None,
     ) -> ModelCallResult:
         return ModelCallResult(content="ok", success=True, metadata={"adapter": self.adapter_name})
+
+
+class PromptCaptureAdapter(BaseModelAdapter):
+    adapter_name = "mock"
+
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    def generate(
+        self,
+        prompt: str,
+        *,
+        timeout_seconds: float = 10.0,
+        retrieval_context: str | None = None,
+        model_name: str | None = None,
+    ) -> ModelCallResult:
+        self.prompts.append(prompt)
+        payload = {
+            "narrative_response": (
+                "Annette lets the accusation hang at the table, then answers with enough force "
+                "to make the social pressure visible."
+            ),
+            "proposed_scene_id": None,
+            "intent_summary": "director_context_probe",
+        }
+        return ModelCallResult(content=json.dumps(payload), success=True, metadata={"adapter": self.adapter_name})
 
 
 class FailingPrimaryAdapter(BaseModelAdapter):
@@ -138,6 +165,41 @@ def test_runtime_turn_graph_appends_interpretation_summary_to_model_prompt(tmp_p
     interp = result.get("interpreted_input") or {}
     assert interp.get("kind") == "mixed"
     assert interp.get("ambiguity") == "conflicting_action_reaction"
+
+
+def test_runtime_turn_graph_delivers_director_context_to_model_prompt(tmp_path: Path) -> None:
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("God of Carnage director context sample.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    registry = build_default_registry()
+    routing = RoutingPolicy(registry)
+    adapter = PromptCaptureAdapter()
+    graph = RuntimeTurnGraphExecutor(
+        interpreter=interpret_player_input,
+        routing=routing,
+        registry=registry,
+        adapters={"mock": adapter, "openai": adapter, "ollama": adapter},
+        retriever=ContextRetriever(corpus),
+        assembler=ContextPackAssembler(),
+    )
+    result = graph.run(
+        session_id="session_1",
+        module_id="god_of_carnage",
+        current_scene_id="living_room",
+        player_input="I press Annette to reveal the truth.",
+    )
+    prompt = result.get("model_prompt") or ""
+    assert "assemble_model_context" in result["graph_diagnostics"]["nodes_executed"]
+    assert "Director runtime state (authoritative, model-visible):" in prompt
+    assert "Scene Assessment:" in prompt
+    assert "Selected Scene Function:" in prompt
+    assert "selected_scene_function:" in prompt
+    assert "Pacing Directive:" in prompt
+    assert "Eligible Responders:" in prompt
+    assert "Canonical GoC Phase Law:" in prompt
+    assert adapter.prompts
+    assert "Director runtime state (authoritative, model-visible):" in adapter.prompts[-1]
 
 
 def test_runtime_turn_graph_executes_nodes_and_emits_trace(tmp_path: Path) -> None:

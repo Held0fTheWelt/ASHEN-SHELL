@@ -117,6 +117,8 @@ class ScenePhase(BaseModel):
     engine_tasks: list[str] = Field(default_factory=list, description="Engine tasks to execute")
     active_triggers: list[str] = Field(default_factory=list, description="Active trigger IDs")
     enforced_constraints: list[str] | None = Field(default=None, description="Phase constraints")
+    turn_estimate: str | None = Field(default=None, description="Expected turn range for this phase")
+    exit_condition: str | None = Field(default=None, description="Authored condition for exiting the phase")
 
     @field_validator("sequence")
     @classmethod

@@ -27,6 +27,7 @@ from ai_stack.goc_yaml_authority import (
     cached_goc_yaml_title,
     clear_goc_yaml_slice_cache,
     load_goc_canonical_module_yaml,
+    load_goc_yaml_slice_bundle,
 )
 from ai_stack.version import RUNTIME_TURN_GRAPH_VERSION
 
@@ -216,3 +217,16 @@ def test_empty_trace_yields_incomplete_repro_metadata(tmp_path: Path) -> None:
 
 def test_yaml_title_is_stable_non_empty() -> None:
     assert cached_goc_yaml_title() == "God of Carnage"
+
+
+def test_goc_yaml_slice_bundle_carries_runtime_law_surfaces() -> None:
+    bundle = load_goc_yaml_slice_bundle()
+    assert bundle.get("scene_phases")
+    assert bundle.get("relationship_axes")
+    assert bundle.get("relationships")
+    assert bundle.get("trigger_types")
+    assert bundle.get("phase_transitions")
+    assert bundle.get("transition_safeguards")
+    assert bundle.get("ending_types")
+    assert bundle.get("escalation_axes")
+    assert bundle.get("system_prompt_excerpt")

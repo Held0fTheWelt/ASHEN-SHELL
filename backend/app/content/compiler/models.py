@@ -14,7 +14,11 @@ class RuntimeProjection(BaseModel):
     scenes: list[dict[str, Any]] = Field(default_factory=list)
     triggers: list[dict[str, Any]] = Field(default_factory=list)
     endings: list[dict[str, Any]] = Field(default_factory=list)
+    relationship_axes: list[dict[str, Any]] = Field(default_factory=list)
+    relationships: list[dict[str, Any]] = Field(default_factory=list)
+    escalation_axes: dict[str, Any] = Field(default_factory=dict)
     character_ids: list[str] = Field(default_factory=list)
+    characters: list[dict[str, Any]] = Field(default_factory=list)
     transition_hints: list[dict[str, Any]] = Field(default_factory=list)
 
 

@@ -205,6 +205,35 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
     return entries
 
 
+def _build_committed_turn_authority(
+    *,
+    narrative_commit_payload: dict[str, Any],
+    graph_state: dict[str, Any],
+    committed_scene_id: str,
+    turn_number: int,
+) -> dict[str, Any]:
+    """Build the bounded single authority record for one committed story turn."""
+    graph_commit = graph_state.get("committed_result") if isinstance(graph_state.get("committed_result"), dict) else {}
+    validation = graph_state.get("validation_outcome") if isinstance(graph_state.get("validation_outcome"), dict) else {}
+    continuity = graph_state.get("continuity_impacts") if isinstance(graph_state.get("continuity_impacts"), list) else []
+    return {
+        "authority_record_version": "committed_turn_authority.v1",
+        "authority": "world_engine_story_runtime",
+        "turn_number": turn_number,
+        "committed_scene_id": committed_scene_id,
+        "validation_status": validation.get("status"),
+        "commit_applied": bool(graph_commit.get("commit_applied")),
+        "graph_commit": graph_commit,
+        "narrative_commit": narrative_commit_payload,
+        "continuity_impacts": continuity,
+        "truth_sources": {
+            "scene_progression": "narrative_commit",
+            "dramatic_effects": "graph_commit",
+            "player_visibility": "visible_output_bundle",
+        },
+    }
+
+
 class StoryRuntimeManager:
     def __init__(
         self,
@@ -590,6 +619,12 @@ class StoryRuntimeManager:
             graph_error_count=len(errors),
         )
         narrative_commit_payload = narrative_commit.model_dump(mode="json")
+        committed_turn_authority = _build_committed_turn_authority(
+            narrative_commit_payload=narrative_commit_payload,
+            graph_state=graph_state,
+            committed_scene_id=session.current_scene_id,
+            turn_number=commit_turn_number,
+        )
         r_src = str(self._runtime_config_status.get("source") or "")
         governed_active = r_src in {"governed_runtime_config", "governed_runtime_config_with_injected_adapters"} and not bool(
             self._runtime_config_status.get("live_execution_blocked")
@@ -642,6 +677,7 @@ class StoryRuntimeManager:
             "experiment_preview": graph_state.get("experiment_preview"),
             "validation_outcome": val,
             "committed_result": graph_state.get("committed_result"),
+            "committed_turn_authority": committed_turn_authority,
             "selected_scene_function": graph_state.get("selected_scene_function"),
             "self_correction": self_correction,
             "runtime_governance_surface": gov,
@@ -652,6 +688,7 @@ class StoryRuntimeManager:
             "trace_id": trace_id or "",
             "turn_outcome": outcome,
             "narrative_commit": narrative_commit_payload,
+            "committed_turn_authority": committed_turn_authority,
             "committed_state_after": {
                 "current_scene_id": session.current_scene_id,
                 "turn_counter": session.turn_counter,
@@ -884,11 +921,15 @@ class StoryRuntimeManager:
     def get_state(self, session_id: str) -> dict[str, Any]:
         session = self.get_session(session_id)
         last_narrative_commit: dict[str, Any] | None = None
+        last_committed_turn_authority: dict[str, Any] | None = None
         last_committed_turn = session.history[-1] if session.history else None
         if isinstance(last_committed_turn, dict):
             nc = last_committed_turn.get("narrative_commit")
             if isinstance(nc, dict):
                 last_narrative_commit = nc
+            authority = last_committed_turn.get("committed_turn_authority")
+            if isinstance(authority, dict):
+                last_committed_turn_authority = authority
 
         summary: dict[str, Any] | None = None
         if isinstance(last_narrative_commit, dict):
@@ -931,6 +972,7 @@ class StoryRuntimeManager:
                 "current_scene_id": session.current_scene_id,
                 "turn_counter": session.turn_counter,
                 "last_narrative_commit": last_narrative_commit,
+                "last_committed_turn_authority": last_committed_turn_authority,
                 "last_narrative_commit_summary": summary,
                 "last_committed_consequences": last_consequences,
                 "last_open_pressures": last_open_pressures,

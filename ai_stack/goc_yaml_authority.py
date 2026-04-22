@@ -157,6 +157,86 @@ def load_goc_scene_guidance_yaml() -> dict[str, Any]:
     return _safe_load_yaml_mapping(path)
 
 
+def load_goc_scene_phases_yaml() -> dict[str, Any]:
+    """Load scenes.yaml phase definitions as canonical runtime law."""
+    path = goc_module_yaml_dir() / "scenes.yaml"
+    data = _safe_load_yaml_mapping(path)
+    phases = data.get("scene_phases")
+    return phases if isinstance(phases, dict) else {}
+
+
+def load_goc_relationships_yaml() -> dict[str, Any]:
+    """Load relationships.yaml without dropping pairwise relationship data."""
+    path = goc_module_yaml_dir() / "relationships.yaml"
+    data = _safe_load_yaml_mapping(path)
+    return {
+        "relationship_axes": data.get("relationship_axes") if isinstance(data.get("relationship_axes"), dict) else {},
+        "relationships": data.get("relationships") if isinstance(data.get("relationships"), dict) else {},
+        "stability_constraints": data.get("stability_constraints")
+        if isinstance(data.get("stability_constraints"), dict)
+        else {},
+    }
+
+
+def load_goc_triggers_yaml() -> dict[str, Any]:
+    """Load trigger definitions and recognition strategy."""
+    path = goc_module_yaml_dir() / "triggers.yaml"
+    data = _safe_load_yaml_mapping(path)
+    return {
+        "trigger_types": data.get("trigger_types") if isinstance(data.get("trigger_types"), dict) else {},
+        "trigger_recognition": data.get("trigger_recognition")
+        if isinstance(data.get("trigger_recognition"), dict)
+        else {},
+        "trigger_state": data.get("trigger_state") if isinstance(data.get("trigger_state"), dict) else {},
+    }
+
+
+def load_goc_transitions_yaml() -> dict[str, Any]:
+    """Load phase transition rules and safeguards."""
+    path = goc_module_yaml_dir() / "transitions.yaml"
+    data = _safe_load_yaml_mapping(path)
+    return {
+        "phase_transitions": data.get("phase_transitions")
+        if isinstance(data.get("phase_transitions"), dict)
+        else {},
+        "transition_mechanics": data.get("transition_mechanics")
+        if isinstance(data.get("transition_mechanics"), dict)
+        else {},
+        "state_on_transition": data.get("state_on_transition")
+        if isinstance(data.get("state_on_transition"), dict)
+        else {},
+        "transition_safeguards": data.get("transition_safeguards")
+        if isinstance(data.get("transition_safeguards"), dict)
+        else {},
+    }
+
+
+def load_goc_endings_yaml() -> dict[str, Any]:
+    """Load ending definitions."""
+    path = goc_module_yaml_dir() / "endings.yaml"
+    data = _safe_load_yaml_mapping(path)
+    endings = data.get("ending_types")
+    return endings if isinstance(endings, dict) else {}
+
+
+def load_goc_escalation_axes_yaml() -> dict[str, Any]:
+    """Load escalation axes and interaction model."""
+    path = goc_module_yaml_dir() / "escalation_axes.yaml"
+    data = _safe_load_yaml_mapping(path)
+    return {
+        "escalation_axes": data.get("escalation_axes") if isinstance(data.get("escalation_axes"), dict) else {},
+        "interaction_model": data.get("interaction_model") if isinstance(data.get("interaction_model"), dict) else {},
+    }
+
+
+def load_goc_system_prompt_text() -> str:
+    """Load the authored GoC system prompt text for bounded excerpts."""
+    path = goc_module_yaml_dir() / "direction" / "system_prompt.md"
+    if not path.is_file():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
 @lru_cache(maxsize=1)
 def load_goc_yaml_slice_bundle() -> dict[str, Any]:
     """Bundle of YAML-backed slice surfaces used by the director
@@ -168,10 +248,29 @@ def load_goc_yaml_slice_bundle() -> dict[str, Any]:
         dict[str, Any]:
             Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
     """
+    relationships = load_goc_relationships_yaml()
+    triggers = load_goc_triggers_yaml()
+    transitions = load_goc_transitions_yaml()
+    escalation = load_goc_escalation_axes_yaml()
     return {
         "characters": load_goc_characters_yaml(),
         "character_voice": load_goc_character_voice_yaml(),
         "scene_guidance": load_goc_scene_guidance_yaml(),
+        "scene_phases": load_goc_scene_phases_yaml(),
+        "relationship_axes": relationships["relationship_axes"],
+        "relationships": relationships["relationships"],
+        "stability_constraints": relationships["stability_constraints"],
+        "trigger_types": triggers["trigger_types"],
+        "trigger_recognition": triggers["trigger_recognition"],
+        "trigger_state": triggers["trigger_state"],
+        "phase_transitions": transitions["phase_transitions"],
+        "transition_mechanics": transitions["transition_mechanics"],
+        "state_on_transition": transitions["state_on_transition"],
+        "transition_safeguards": transitions["transition_safeguards"],
+        "ending_types": load_goc_endings_yaml(),
+        "escalation_axes": escalation["escalation_axes"],
+        "escalation_interaction_model": escalation["interaction_model"],
+        "system_prompt_excerpt": load_goc_system_prompt_text()[:2400],
     }
 
 

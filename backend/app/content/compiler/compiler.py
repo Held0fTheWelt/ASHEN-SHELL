@@ -24,6 +24,12 @@ def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
                 "name": phase.name,
                 "sequence": phase.sequence,
                 "description": phase.description,
+                "content_focus": list(phase.content_focus),
+                "engine_tasks": list(phase.engine_tasks),
+                "active_triggers": list(phase.active_triggers),
+                "enforced_constraints": list(phase.enforced_constraints or []),
+                "turn_estimate": phase.turn_estimate,
+                "exit_condition": phase.exit_condition,
             }
         )
 
@@ -36,6 +42,7 @@ def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
                 "active_in_phases": list(trigger.active_in_phases),
                 "recognition_markers": list(trigger.recognition_markers),
                 "character_vulnerability": dict(trigger.character_vulnerability),
+                "escalation_impact": dict(trigger.escalation_impact),
             }
         )
 
@@ -47,6 +54,42 @@ def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
                 "title": ending.name,
                 "description": ending.description,
                 "conditions": ending.trigger_conditions,
+                "outcome": dict(ending.outcome),
+                "closure_action": list(ending.closure_action or []),
+            }
+        )
+
+    relationship_axes: list[dict] = []
+    for axis_id, axis in sorted(module.relationship_axes.items()):
+        relationship_axes.append(
+            {
+                "axis_id": axis_id,
+                "id": axis.id,
+                "name": axis.name,
+                "description": axis.description,
+                "relationships": list(axis.relationships),
+                "baseline": dict(axis.baseline),
+                "escalation": dict(axis.escalation),
+            }
+        )
+
+    relationships: list[dict] = []
+    for rel_id, rel in sorted(module.relationship_definitions.items()):
+        if isinstance(rel, dict):
+            relationships.append({"relationship_id": rel_id, **rel})
+        else:
+            relationships.append({"relationship_id": rel_id, "value": rel})
+
+    characters: list[dict] = []
+    for character_id, character in sorted(module.characters.items()):
+        characters.append(
+            {
+                "character_id": character_id,
+                "id": character.id,
+                "name": character.name,
+                "role": character.role,
+                "baseline_attitude": character.baseline_attitude,
+                "extras": dict(character.extras),
             }
         )
 
@@ -57,9 +100,19 @@ def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
         scenes=scenes,
         triggers=triggers,
         endings=endings,
+        relationship_axes=relationship_axes,
+        relationships=relationships,
+        escalation_axes=dict(module.escalation_axes),
         character_ids=sorted(module.characters.keys()),
+        characters=characters,
         transition_hints=[
-            {"from": transition.from_phase, "to": transition.to_phase}
+            {
+                "from": transition.from_phase,
+                "to": transition.to_phase,
+                "trigger_conditions": list(transition.trigger_conditions),
+                "engine_checks": list(transition.engine_checks),
+                "transition_action": transition.transition_action,
+            }
             for _, transition in sorted(module.phase_transitions.items())
         ],
     )

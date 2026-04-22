@@ -296,12 +296,18 @@ def test_history_holds_authoritative_commit_diagnostics_hold_envelope(manager: S
     hist = manager.get_session(session.session_id).history[-1]
     diag = manager.get_session(session.session_id).diagnostics[-1]
     assert "narrative_commit" in hist
+    assert "committed_turn_authority" in hist
     assert "graph" not in hist
     assert "interpreted_input" not in hist
     assert "narrative_commit" in diag
+    assert "committed_turn_authority" in diag
     assert "graph" in diag
     assert "retrieval" in diag
     assert "interpreted_input" in diag
+    authority = hist["committed_turn_authority"]
+    assert authority["authority_record_version"] == "committed_turn_authority.v1"
+    assert authority["narrative_commit"] == hist["narrative_commit"]
+    assert authority["graph_commit"] == diag["committed_result"]
 
 
 def test_get_state_and_get_diagnostics_reflect_separation(manager: StoryRuntimeManager) -> None:
@@ -319,6 +325,7 @@ def test_get_state_and_get_diagnostics_reflect_separation(manager: StoryRuntimeM
     state = manager.get_state(session.session_id)
     diag = manager.get_diagnostics(session.session_id)
     assert state["committed_state"]["last_narrative_commit"] is not None
+    assert state["committed_state"]["last_committed_turn_authority"] is not None
     assert state["committed_state"]["last_narrative_commit_summary"]["situation_status"] == "continue"
     assert "committed_truth_vs_diagnostics" in diag
     assert diag["authoritative_history_tail"][-1]["narrative_commit"]["open_pressures"] == [

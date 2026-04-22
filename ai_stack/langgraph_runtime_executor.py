@@ -51,6 +51,7 @@ from ai_stack.goc_yaml_authority import (
     load_goc_yaml_slice_bundle,
     scene_guidance_snippets,
 )
+from ai_stack.goc_scene_identity import GUIDANCE_PHASE_TO_ESCALATION_ARC_KEY
 from ai_stack.character_mind_goc import build_character_mind_records_for_goc
 from ai_stack.scene_director_goc import (
     build_pacing_and_silence,
@@ -134,6 +135,7 @@ class RuntimeTurnGraphExecutor:
         graph.add_node("goc_resolve_canonical_content", self._goc_resolve_canonical_content)
         graph.add_node("director_assess_scene", self._director_assess_scene)
         graph.add_node("director_select_dramatic_parameters", self._director_select_dramatic_parameters)
+        graph.add_node("assemble_model_context", self._assemble_model_context)
         graph.add_node("route_model", self._route_model)
         graph.add_node("invoke_model", self._invoke_model)
         graph.add_node("fallback_model", self._fallback_model)
@@ -147,7 +149,8 @@ class RuntimeTurnGraphExecutor:
         graph.add_edge("retrieve_context", "goc_resolve_canonical_content")
         graph.add_edge("goc_resolve_canonical_content", "director_assess_scene")
         graph.add_edge("director_assess_scene", "director_select_dramatic_parameters")
-        graph.add_edge("director_select_dramatic_parameters", "route_model")
+        graph.add_edge("director_select_dramatic_parameters", "assemble_model_context")
+        graph.add_edge("assemble_model_context", "route_model")
         graph.add_edge("route_model", "invoke_model")
         graph.add_conditional_edges(
             "invoke_model",
@@ -737,6 +740,131 @@ class RuntimeTurnGraphExecutor:
         update["scene_plan_record"] = scene_plan.to_runtime_dict()
         return update
 
+    def _assemble_model_context(self, state: RuntimeTurnState) -> RuntimeTurnState:
+        """Attach post-director runtime state to the model-visible prompt."""
+        prompt = str(state.get("model_prompt") or state.get("player_input") or "")
+        lines: list[str] = ["Director runtime state (authoritative, model-visible):"]
+
+        scene_assess = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
+        if scene_assess:
+            lines.append("Scene Assessment:")
+            for key in (
+                "scene_core",
+                "pressure_state",
+                "guidance_phase_key",
+                "guidance_phase_title",
+                "guidance_civility_required",
+                "canonical_setting",
+                "narrative_scope",
+                "continuity_carry_forward_note",
+            ):
+                val = scene_assess.get(key)
+                if val is not None and str(val).strip():
+                    lines.append(f"- {key}: {str(val).strip()[:220]}")
+
+        semantic = state.get("semantic_move_record") if isinstance(state.get("semantic_move_record"), dict) else {}
+        if semantic:
+            lines.append("Semantic Move:")
+            for key in ("move_type", "social_move_family", "target_actor_hint", "directness", "pressure_tactic", "scene_risk_band"):
+                val = semantic.get(key)
+                if val is not None and str(val).strip():
+                    lines.append(f"- {key}: {str(val).strip()[:160]}")
+
+        social = state.get("social_state_record") if isinstance(state.get("social_state_record"), dict) else {}
+        if social:
+            lines.append("Social State:")
+            for key in (
+                "scene_pressure_state",
+                "guidance_phase_key",
+                "responder_asymmetry_code",
+                "social_risk_band",
+                "active_thread_count",
+                "thread_pressure_summary_present",
+            ):
+                val = social.get(key)
+                if val is not None and str(val).strip():
+                    lines.append(f"- {key}: {str(val).strip()[:160]}")
+            prior_classes = social.get("prior_continuity_classes")
+            if isinstance(prior_classes, list) and prior_classes:
+                lines.append(f"- prior_continuity_classes: {prior_classes[:8]}")
+
+        scene_fn = str(state.get("selected_scene_function") or "").strip()
+        if scene_fn:
+            lines.append(f"Selected Scene Function: {scene_fn}")
+            lines.append(f"selected_scene_function: {scene_fn}")
+        pacing = str(state.get("pacing_mode") or "").strip()
+        if pacing:
+            lines.append(f"Pacing Directive: {pacing}")
+        silence = state.get("silence_brevity_decision") if isinstance(state.get("silence_brevity_decision"), dict) else {}
+        if silence:
+            lines.append(f"Silence/Brevity Decision: {json.dumps(silence, sort_keys=True)[:260]}")
+
+        responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
+        if responders:
+            lines.append("Eligible Responders:")
+            for responder in responders[:4]:
+                if not isinstance(responder, dict):
+                    continue
+                actor = str(responder.get("actor_id") or responder.get("responder_id") or "?")
+                reason = str(responder.get("reason") or responder.get("responder_type") or "")
+                lines.append(f"- {actor}: {reason[:180]}")
+
+        minds = state.get("character_mind_records") if isinstance(state.get("character_mind_records"), list) else []
+        if minds:
+            lines.append("Character Mind Records:")
+            for mind in minds[:4]:
+                if not isinstance(mind, dict):
+                    continue
+                lines.append(
+                    "- "
+                    f"{mind.get('runtime_actor_id') or mind.get('character_key')}: "
+                    f"role={str(mind.get('formal_role_label') or '')[:80]}, "
+                    f"posture={str(mind.get('tactical_posture') or '')[:80]}, "
+                    f"bias={str(mind.get('pressure_response_bias') or '')[:80]}"
+                )
+
+        prior = state.get("prior_continuity_impacts") if isinstance(state.get("prior_continuity_impacts"), list) else []
+        if prior:
+            lines.append("Continuity Constraints:")
+            for impact in prior[:4]:
+                if isinstance(impact, dict):
+                    cls = str(impact.get("class") or impact.get("continuity_class") or "")
+                    desc = str(impact.get("description") or impact.get("summary") or impact.get("note") or "")
+                    lines.append(f"- {cls}: {desc[:180]}")
+
+        yslice = state.get("goc_yaml_slice") if isinstance(state.get("goc_yaml_slice"), dict) else {}
+        if state.get("module_id") == GOC_MODULE_ID and yslice:
+            phase_key = str(scene_assess.get("guidance_phase_key") or "")
+            phase_arc_key = GUIDANCE_PHASE_TO_ESCALATION_ARC_KEY.get(phase_key, "")
+            phases = yslice.get("scene_phases") if isinstance(yslice.get("scene_phases"), dict) else {}
+            phase = phases.get(phase_arc_key) if isinstance(phases.get(phase_arc_key), dict) else {}
+            if phase:
+                lines.append("Canonical GoC Phase Law:")
+                for key in ("name", "description", "active_triggers", "enforced_constraints", "engine_tasks", "exit_condition"):
+                    val = phase.get(key)
+                    if val:
+                        lines.append(f"- {key}: {str(val)[:300]}")
+            rel_axes = yslice.get("relationship_axes") if isinstance(yslice.get("relationship_axes"), dict) else {}
+            if rel_axes:
+                axis_names = []
+                for axis_id, axis in list(rel_axes.items())[:4]:
+                    if isinstance(axis, dict):
+                        axis_names.append(f"{axis_id}:{axis.get('name') or ''}")
+                if axis_names:
+                    lines.append(f"Canonical Relationship Axes: {', '.join(axis_names)}")
+            escalation_axes = yslice.get("escalation_axes") if isinstance(yslice.get("escalation_axes"), dict) else {}
+            if escalation_axes:
+                names = []
+                for axis_id, axis in list(escalation_axes.items())[:4]:
+                    if isinstance(axis, dict):
+                        names.append(f"{axis_id}:{axis.get('name') or ''}")
+                if names:
+                    lines.append(f"Canonical Escalation Axes: {', '.join(names)}")
+
+        update = _track(state, node_name="assemble_model_context")
+        update["model_prompt"] = f"{prompt}\n\n" + "\n".join(lines)
+        return update
+
     def _route_model(self, state: RuntimeTurnState) -> RuntimeTurnState:
         """``_route_model`` — see implementation for behaviour and contracts.
         
@@ -1287,4 +1415,3 @@ class RuntimeTurnGraphExecutor:
         return package_runtime_graph_output(
             state, graph_name=self.graph_name, graph_version=self.graph_version
         )
-

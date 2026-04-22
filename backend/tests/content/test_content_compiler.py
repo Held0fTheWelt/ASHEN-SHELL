@@ -13,5 +13,12 @@ def test_compile_god_of_carnage_produces_deterministic_projection():
         assert row.get("id")
     assert output.runtime_projection.triggers
     assert output.runtime_projection.endings
+    assert output.runtime_projection.relationship_axes
+    assert output.runtime_projection.relationships
+    assert output.runtime_projection.escalation_axes
+    assert output.runtime_projection.characters
+    assert any(row.get("engine_tasks") for row in output.runtime_projection.scenes)
+    assert any(row.get("active_triggers") for row in output.runtime_projection.scenes)
+    assert any(row.get("trigger_conditions") for row in output.runtime_projection.transition_hints)
     assert output.retrieval_corpus_seed.chunks
     assert output.review_export_seed.summary["scene_count"] == len(output.runtime_projection.scenes)
