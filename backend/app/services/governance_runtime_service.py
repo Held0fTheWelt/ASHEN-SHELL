@@ -979,9 +979,16 @@ def create_model(payload: dict, actor: str) -> AIModelConfig:
 
 
 def update_model(model_id: str, payload: dict, actor: str) -> AIModelConfig:
+    import logging
+    _log = logging.getLogger(__name__)
+    _log.info("update_model called: model_id=%s payload=%s", model_id, payload)
+
     model = AIModelConfig.query.get(model_id)
     if model is None:
         raise governance_error("model_not_found", f"Model '{model_id}' not found.", 404, {"model_id": model_id})
+
+    _log.info("Before update: model_name=%s display_name=%s", model.model_name, model.display_name)
+
     for key in (
         "model_name",
         "display_name",
@@ -993,14 +1000,22 @@ def update_model(model_id: str, payload: dict, actor: str) -> AIModelConfig:
         "cost_method",
     ):
         if key in payload:
-            setattr(model, key, payload[key])
+            old_val = getattr(model, key)
+            new_val = payload[key]
+            setattr(model, key, new_val)
+            _log.info("Changed %s: %s -> %s", key, old_val, new_val)
+
     for key in ("input_price_per_1k", "output_price_per_1k", "flat_request_price"):
         if key in payload:
             value = payload[key]
             setattr(model, key, Decimal(str(value)) if value is not None else None)
+
     model.updated_at = datetime.now(timezone.utc)
     _audit("model_updated", "ai_runtime", model_id, actor, "Model updated.", {})
+
+    _log.info("Before commit: model_name=%s", model.model_name)
     db.session.commit()
+    _log.info("After commit: model_name=%s", model.model_name)
 
     # After model update, trigger world-engine rebind to pick up the change
     try:
