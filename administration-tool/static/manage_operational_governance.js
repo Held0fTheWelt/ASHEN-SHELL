@@ -587,6 +587,7 @@
           return;
         }
         var body = {
+          model_name: value("manage-og-model-name", ""),
           display_name: value("manage-og-model-display", ""),
           model_role: value("manage-og-model-role", "llm"),
           structured_output_capable: checked("manage-og-model-structured"),
