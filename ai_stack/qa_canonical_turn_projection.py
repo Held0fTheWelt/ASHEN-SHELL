@@ -139,6 +139,8 @@ def build_qa_canonical_turn_projection(canonical_record: dict[str, Any]) -> dict
     Returns:
         QA projection dict with structured tiers and raw JSON link
     """
+    if not isinstance(canonical_record, dict):
+        canonical_record = {}
 
     turn_meta = canonical_record.get("turn_metadata", {})
     if not isinstance(turn_meta, dict):
@@ -156,7 +158,7 @@ def build_qa_canonical_turn_projection(canonical_record: dict[str, Any]) -> dict
         "selected_scene_function": canonical_record.get("selected_scene_function"),
         "pacing_mode": canonical_record.get("pacing_mode"),
         "silence_mode": (
-            canonical_record.get("silence_brevity_decision", {}).get("mode")
+            (canonical_record.get("silence_brevity_decision") or {}).get("mode")
             if isinstance(canonical_record.get("silence_brevity_decision"), dict)
             else None
         ),
@@ -164,8 +166,8 @@ def build_qa_canonical_turn_projection(canonical_record: dict[str, Any]) -> dict
             canonical_record.get("selected_responder_set")
         ),
         "validation_outcome": {
-            "status": canonical_record.get("validation_outcome", {}).get("status"),
-            "reason": canonical_record.get("validation_outcome", {}).get("reason"),
+            "status": (canonical_record.get("validation_outcome") or {}).get("status"),
+            "reason": (canonical_record.get("validation_outcome") or {}).get("reason"),
         },
         "quality_class": canonical_record.get("quality_class"),
         "degradation_signals": canonical_record.get("degradation_signals", []),
@@ -189,12 +191,12 @@ def build_qa_canonical_turn_projection(canonical_record: dict[str, Any]) -> dict
         ),
         "committed_result_summary": {
             "committed_effects": (
-                canonical_record.get("committed_result", {}).get("committed_effects")
+                (canonical_record.get("committed_result") or {}).get("committed_effects")
                 if isinstance(canonical_record.get("committed_result"), dict)
                 else None
             ),
             "commit_applied": (
-                canonical_record.get("committed_result", {}).get("commit_applied")
+                (canonical_record.get("committed_result") or {}).get("commit_applied")
                 if isinstance(canonical_record.get("committed_result"), dict)
                 else None
             ),

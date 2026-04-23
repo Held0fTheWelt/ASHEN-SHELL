@@ -14,10 +14,10 @@ class TestPlayQaDiagnosticsRoutes:
     def test_endpoint_requires_feature(self, client, admin_headers, monkeypatch):
         """Endpoint returns 403 when user lacks FEATURE_VIEW_QA_CANONICAL_TURN."""
         # Mock a user without the feature
-        def mock_check_feature(feature_id):
+        def mock_user_can_access(user, feature_id):
             return False
 
-        monkeypatch.setattr("app.auth.permissions.check_feature", mock_check_feature)
+        monkeypatch.setattr("app.auth.feature_registry.user_can_access_feature", mock_user_can_access)
 
         response = client.get(
             "/api/v1/play/test-session-123/qa-diagnostics-canonical-turn",
@@ -28,14 +28,14 @@ class TestPlayQaDiagnosticsRoutes:
     def test_endpoint_returns_404_for_invalid_session(self, client, admin_headers, monkeypatch):
         """Endpoint returns 404 when session not found."""
 
-        def mock_get_session(session_id):
+        def mock_get_session(self, session_id):
             return None
 
-        def mock_check_feature(feature_id):
+        def mock_user_can_access(user, feature_id):
             return True
 
-        monkeypatch.setattr("app.auth.permissions.check_feature", mock_check_feature)
-        monkeypatch.setattr("app.services.session_service.get_session_by_id", mock_get_session)
+        monkeypatch.setattr("app.auth.feature_registry.user_can_access_feature", mock_user_can_access)
+        monkeypatch.setattr("app.services.session_service.SessionService.get_session", mock_get_session)
 
         response = client.get(
             "/api/v1/play/invalid-session/qa-diagnostics-canonical-turn",
@@ -68,19 +68,22 @@ class TestPlayQaDiagnosticsRoutes:
             }
         }
 
-        def mock_get_session(session_id):
+        def mock_get_session(self, session_id):
             return mock_session
 
-        def mock_check_feature(feature_id):
+        def mock_user_can_access(user, feature_id):
             return True
 
-        monkeypatch.setattr("app.auth.permissions.check_feature", mock_check_feature)
-        monkeypatch.setattr("app.services.session_service.get_session_by_id", mock_get_session)
+        monkeypatch.setattr("app.auth.feature_registry.user_can_access_feature", mock_user_can_access)
+        monkeypatch.setattr("app.services.session_service.SessionService.get_session", mock_get_session)
 
         response = client.get(
             "/api/v1/play/test-session-123/qa-diagnostics-canonical-turn",
             headers=admin_headers,
         )
+        if response.status_code != 200:
+            print("\nResponse status:", response.status_code)
+            print("Response data:", response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data["ok"] is True
@@ -102,14 +105,14 @@ class TestPlayQaDiagnosticsRoutes:
             }
         }
 
-        def mock_get_session(session_id):
+        def mock_get_session(self, session_id):
             return mock_session
 
-        def mock_check_feature(feature_id):
+        def mock_user_can_access(user, feature_id):
             return True
 
-        monkeypatch.setattr("app.auth.permissions.check_feature", mock_check_feature)
-        monkeypatch.setattr("app.services.session_service.get_session_by_id", mock_get_session)
+        monkeypatch.setattr("app.auth.feature_registry.user_can_access_feature", mock_user_can_access)
+        monkeypatch.setattr("app.services.session_service.SessionService.get_session", mock_get_session)
 
         # Without include_raw
         response = client.get(
@@ -130,14 +133,14 @@ class TestPlayQaDiagnosticsRoutes:
     def test_endpoint_rate_limited(self, client, admin_headers, monkeypatch):
         """Endpoint enforces rate limiting (30 per minute)."""
 
-        def mock_get_session(session_id):
+        def mock_get_session(self, session_id):
             return None
 
-        def mock_check_feature(feature_id):
+        def mock_user_can_access(user, feature_id):
             return True
 
-        monkeypatch.setattr("app.auth.permissions.check_feature", mock_check_feature)
-        monkeypatch.setattr("app.services.session_service.get_session_by_id", mock_get_session)
+        monkeypatch.setattr("app.auth.feature_registry.user_can_access_feature", mock_user_can_access)
+        monkeypatch.setattr("app.services.session_service.SessionService.get_session", mock_get_session)
 
         # This test verifies the endpoint has rate limiting configured
         # The actual rate limiting is enforced by Flask-Limiter in the route definition
@@ -165,14 +168,14 @@ class TestQaProjectionIntegrity:
             }
         }
 
-        def mock_get_session(session_id):
+        def mock_get_session(self, session_id):
             return mock_session
 
-        def mock_check_feature(feature_id):
+        def mock_user_can_access(user, feature_id):
             return True
 
-        monkeypatch.setattr("app.auth.permissions.check_feature", mock_check_feature)
-        monkeypatch.setattr("app.services.session_service.get_session_by_id", mock_get_session)
+        monkeypatch.setattr("app.auth.feature_registry.user_can_access_feature", mock_user_can_access)
+        monkeypatch.setattr("app.services.session_service.SessionService.get_session", mock_get_session)
 
         response = client.get(
             "/api/v1/play/test-session/qa-diagnostics-canonical-turn",

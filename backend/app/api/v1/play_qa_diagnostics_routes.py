@@ -8,7 +8,7 @@ Gated by JWT + feature flag FEATURE_VIEW_QA_CANONICAL_TURN.
 
 from __future__ import annotations
 
-from flask import request
+from flask import request, current_app
 from flask_jwt_extended import jwt_required
 
 from app.api.v1 import api_v1_bp
@@ -16,6 +16,14 @@ from app.auth.feature_registry import FEATURE_VIEW_QA_CANONICAL_TURN
 from app.auth.permissions import require_feature
 from app.extensions import limiter
 from app.governance.envelopes import fail, ok
+from app.services.session_service import SessionService
+
+
+def _get_session_service() -> SessionService:
+    """Get or create session service instance."""
+    if not hasattr(current_app, '_session_service'):
+        current_app._session_service = SessionService()
+    return current_app._session_service
 
 
 @api_v1_bp.route("/play/<session_id>/qa-diagnostics-canonical-turn", methods=["GET"])
@@ -36,13 +44,10 @@ def get_qa_canonical_turn_diagnostics(session_id: str):
     try:
         from ai_stack.goc_turn_seams import build_operator_canonical_turn_record
         from ai_stack.qa_canonical_turn_projection import build_qa_canonical_turn_projection
-        from app.services import session_service as _session_service
 
         # Fetch session
-        getter = getattr(_session_service, "get_session_by_id", None)
-        if not callable(getter):
-            getter = getattr(_session_service, "get_session", None)
-        session = getter(session_id) if callable(getter) else None
+        service = _get_session_service()
+        session = service.get_session(session_id)
 
         if session is None:
             return fail("session_not_found", f"Session {session_id} not found.", 404, {})
