@@ -72,20 +72,20 @@ class RuntimeTurnStructuredOutput(BaseModel):
         value: str | None = None
 
     schema_version: str = Field(default="runtime_actor_turn_v1")
-    narrative_response: str = Field(default="")
-    narration_summary: str = Field(default="")
+    narration_summary: str = Field(default="", description="Primary narrative prose for this turn.")
     proposed_scene_id: str | None = None
     intent_summary: str | None = None
 
-    primary_responder_id: str | None = None
-    secondary_responder_ids: list[str] = Field(default_factory=list)
-    spoken_lines: list[RuntimeSpokenLine | str] = Field(default_factory=list)
-    action_lines: list[RuntimeActionLine | str] = Field(default_factory=list)
-    initiative_events: list[RuntimeInitiativeEvent] = Field(default_factory=list)
-    state_effects: list[RuntimeStateEffect] = Field(default_factory=list)
+    primary_responder_id: str | None = Field(default=None, description="Required. The actor who responds in this turn.")
+    secondary_responder_ids: list[str] = Field(default_factory=list, description="Actors who react or interrupt, if any.")
+    spoken_lines: list[RuntimeSpokenLine | str] = Field(default_factory=list, description="Required when actors speak. Each entry must have speaker_id.")
+    action_lines: list[RuntimeActionLine | str] = Field(default_factory=list, description="Physical actions by actors. Each entry must have actor_id.")
+    initiative_events: list[RuntimeInitiativeEvent] = Field(default_factory=list, description="Semantics of who seized or lost the turn.")
+    state_effects: list[RuntimeStateEffect] = Field(default_factory=list, description="World-state changes this turn produces.")
     responder_actor_ids: list[str] = Field(default_factory=list)
 
     responder_id: str | None = None
+    narrative_response: str = Field(default="", description="Deprecated. Copy of narration_summary for legacy callers only.")
     function_type: str | None = None
     emotional_shift: dict | None = None
     social_outcome: str | None = None
@@ -157,9 +157,14 @@ def _build_runtime_prompt_template() -> ChatPromptTemplate:
                     "system",
                     "You are the World of Shadows runtime turn model. "
                     "Return strictly valid JSON matching the requested schema.\n\n"
-                    "Actor-first response contract: provide narration_summary, spoken_lines, and action_lines when appropriate. "
-                    "Use narrative_response only as a legacy compatibility mirror when needed.\n\n"
-                    "NARRATIVE FORMATTING: narration_summary (or legacy narrative_response) should be readable prose "
+                    "Actor-first response contract:\n"
+                    "- Populate primary_responder_id with the actor who responds in this turn.\n"
+                    "- Populate spoken_lines with dialogue, each entry including speaker_id.\n"
+                    "- Populate action_lines with physical actions, each entry including actor_id.\n"
+                    "- Populate initiative_events to capture who seized/lost the turn.\n"
+                    "- Populate state_effects to record world-state changes.\n"
+                    "- narrative_response MUST NOT contain original prose. It must be a copy of narration_summary.\n\n"
+                    "NARRATIVE FORMATTING: narration_summary should be readable prose "
                     "with multiple paragraphs separated by \\n\\n (double newlines). "
                     "Break naturally: setup, exchange, consequence. "
                     "Each paragraph should be 2-4 sentences.",
@@ -168,11 +173,14 @@ def _build_runtime_prompt_template() -> ChatPromptTemplate:
                     "human",
                     "{full_context}"
                     "{correction_block}"
-                    "IMPORTANT - Return actor-level JSON for this turn: "
-                    "narration_summary, primary_responder_id, spoken_lines, action_lines, initiative_events, and state_effects when applicable. "
-                    "Mirror key narration into narrative_response for legacy compatibility.\n\n"
-                    "Narrative structure: use 3-4 short paragraphs separated by \\n\\n (double newlines). "
-                    "Structure: (1) scene/setting, (2) action/dialogue, (3) consequence/emotion.\n\n"
+                    "IMPORTANT - Return actor-level JSON for this turn:\n"
+                    "1. Populate primary_responder_id with the actor who responds.\n"
+                    "2. If actors speak, populate spoken_lines with speaker_id for each entry.\n"
+                    "3. If actors act, populate action_lines with actor_id for each entry.\n"
+                    "4. Include initiative_events and state_effects when applicable.\n"
+                    "5. Populate narration_summary with prose narrative (3-4 short paragraphs separated by \\n\\n).\n"
+                    "6. Copy narration_summary content into narrative_response (do NOT create new prose for narrative_response).\n\n"
+                    "Narrative structure: (1) scene/setting, (2) action/dialogue, (3) consequence/emotion.\n\n"
                     "Format instructions:\n{format_instructions}",
                 ),
             ]

@@ -87,6 +87,52 @@ from ai_stack.langgraph_runtime_tracking import _dist_version, _track
 _GOC_FALLBACK_CAST_KEYS: tuple[str, ...] = ("veronique", "michel", "annette", "alain")
 
 
+def _prune_out_of_scope_actor_lanes(
+    generation: dict[str, Any], out_of_scope_actors: list[str]
+) -> dict[str, str]:
+    """Prune out-of-scope actors from spoken_lines and action_lines in structured output.
+
+    Returns a dict with pruning stats for telemetry.
+    """
+    if not out_of_scope_actors:
+        return {"spoken_lines_pruned": 0, "action_lines_pruned": 0}
+
+    meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    structured = meta.get("structured_output") if isinstance(meta.get("structured_output"), dict) else {}
+    if not structured:
+        return {"spoken_lines_pruned": 0, "action_lines_pruned": 0}
+
+    out_of_scope_set = set(out_of_scope_actors)
+    spoken_lines_pruned = 0
+    action_lines_pruned = 0
+
+    spoken_lines = structured.get("spoken_lines")
+    if isinstance(spoken_lines, list):
+        filtered = []
+        for row in spoken_lines:
+            if isinstance(row, dict):
+                speaker_id = row.get("speaker_id")
+                if isinstance(speaker_id, str) and speaker_id.strip() in out_of_scope_set:
+                    spoken_lines_pruned += 1
+                    continue
+            filtered.append(row)
+        structured["spoken_lines"] = filtered
+
+    action_lines = structured.get("action_lines")
+    if isinstance(action_lines, list):
+        filtered = []
+        for row in action_lines:
+            if isinstance(row, dict):
+                actor_id = row.get("actor_id")
+                if isinstance(actor_id, str) and actor_id.strip() in out_of_scope_set:
+                    action_lines_pruned += 1
+                    continue
+            filtered.append(row)
+        structured["action_lines"] = filtered
+
+    return {"spoken_lines_pruned": spoken_lines_pruned, "action_lines_pruned": action_lines_pruned}
+
+
 def _reconcile_model_responders(
     state: "RuntimeTurnState", generation: dict[str, Any]
 ) -> dict[str, Any]:
@@ -2059,6 +2105,7 @@ class RuntimeTurnGraphExecutor:
         max_attempts = max(0, int(self.max_self_correction_attempts))
         self_correction_attempts: list[dict[str, Any]] = []
         for attempt_index in range(1, max_attempts + 1):
+            actor_lane_validation = _actor_lane_validation(state, generation)
             decision = decide_playability_recovery(
                 turn_number=turn_number,
                 attempt_index=attempt_index,
@@ -2123,6 +2170,13 @@ class RuntimeTurnGraphExecutor:
         # never authorized, and the reconciliation outcome is published onto
         # state for the governance surface.
         reconciliation = _reconcile_model_responders(state, generation)
+
+        # Prune out-of-scope actors from structured output lanes (spoken_lines, action_lines)
+        # to prevent out-of-scope actors from flowing through to commit and rendering
+        out_of_scope = reconciliation.get("dropped_out_of_scope_actors") or []
+        pruning_stats = _prune_out_of_scope_actor_lanes(generation, out_of_scope)
+        reconciliation.update(pruning_stats)
+
         update["responder_reconciliation"] = reconciliation
         primary_responder = reconciliation.get("effective_responder_id")
         if primary_responder:

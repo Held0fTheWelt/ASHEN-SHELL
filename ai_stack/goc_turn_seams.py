@@ -350,8 +350,19 @@ def run_visible_render(
         content = _gm_display_text_from_generation_content(content)
     generation_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
     structured = generation_meta.get("structured_output") if isinstance(generation_meta.get("structured_output"), dict) else {}
-    structured_spoken_lines = _coerce_actor_lines(structured.get("spoken_lines"), actor_key="speaker_id")
-    structured_action_lines = _coerce_actor_lines(structured.get("action_lines"), actor_key="actor_id")
+
+    # Gate actor lanes on actor_lane_validation status
+    actor_lane_validation = validation_outcome.get("actor_lane_validation") if isinstance(validation_outcome, dict) else None
+    actor_lanes_rejected = False
+    if isinstance(actor_lane_validation, dict) and actor_lane_validation.get("status") == "rejected":
+        actor_lanes_rejected = True
+
+    if actor_lanes_rejected:
+        structured_spoken_lines: list[str] = []
+        structured_action_lines: list[str] = []
+    else:
+        structured_spoken_lines = _coerce_actor_lines(structured.get("spoken_lines"), actor_key="speaker_id")
+        structured_action_lines = _coerce_actor_lines(structured.get("action_lines"), actor_key="actor_id")
 
     markers: list[str] = []
     approved = validation_outcome.get("status") == "approved"

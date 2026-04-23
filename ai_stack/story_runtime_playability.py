@@ -19,6 +19,9 @@ REWRITEABLE_VALIDATION_REASONS = frozenset(
         "insufficient_character_reaction",
         "parser_error",
         "model_generation_failed",
+        "actor_lane_illegal_actor",
+        "actor_lane_invalid_initiative_type",
+        "actor_lane_scene_function_mismatch",
     }
 )
 
@@ -134,14 +137,27 @@ def decide_playability_recovery(
     )
 
 
-def build_rewrite_instruction(feedback_codes: list[str]) -> str:
+def build_rewrite_instruction(feedback_codes: list[str], allowed_actor_ids: list[str] | None = None) -> str:
     issues = ", ".join(str(x) for x in feedback_codes[:8]) or "quality_improvement_needed"
-    return (
+    base_instruction = (
         "Rewrite the previous runtime turn so it is commit-worthy. "
         "Stay strictly inside canonical module boundaries, remain in-scene, avoid meta commentary, "
         "produce concrete narrative progression with visible character reaction, and fix these issues: "
         f"{issues}."
     )
+
+    actor_lane_issues = [code for code in feedback_codes if code.startswith("actor_lane_")]
+    if actor_lane_issues:
+        allowed_str = ", ".join(sorted(allowed_actor_ids or [])) or "the approved responder set"
+        actor_feedback = (
+            " When populating actor lanes: "
+            f"use only these approved actor IDs: {allowed_str}. "
+            "Populate spoken_lines with speaker_id, action_lines with actor_id, and initiative_events with valid types. "
+            "Do not invent new actor IDs."
+        )
+        return base_instruction + actor_feedback
+
+    return base_instruction
 
 
 def degrade_validation_outcome(

@@ -110,19 +110,27 @@ Tone: helpful, not punitive.""",
                 "template": """You are the World of Shadows runtime turn model. Return strictly valid JSON matching the requested schema.
 
 Actor-first contract:
-- Use narration_summary as the primary narration field.
-- Use spoken_lines and action_lines to represent visible actor behavior.
-- Keep narrative_response as a legacy compatibility mirror of narration_summary.
+- Populate primary_responder_id with the actor who responds in this turn.
+- Populate spoken_lines with dialogue when actors speak; each entry must have speaker_id.
+- Populate action_lines with physical actions when actors act; each entry must have actor_id.
+- Populate initiative_events to capture who seized or lost the turn's direction.
+- Populate state_effects to record world-state changes this turn produces.
+- Populate narration_summary with the turn's narrative prose.
+- narrative_response MUST be a copy of narration_summary, never original content.
 
-NARRATIVE FORMATTING: narration_summary (and legacy narrative_response) should be well-structured prose with multiple paragraphs separated by \\n\\n (double newlines). Break at natural points: scene setup, action/dialogue, and consequence. Each paragraph should be 2-4 sentences.""",
+NARRATIVE FORMATTING: narration_summary should be well-structured prose with multiple paragraphs separated by \\n\\n (double newlines). Break at natural points: scene setup, action/dialogue, and consequence. Each paragraph should be 2-4 sentences.""",
                 "description": "System prompt for World of Shadows runtime turn generation.",
                 "variables": []
             },
             "runtime_turn_human": {
                 "id": "runtime_turn_human",
                 "template": """{full_context}{correction_block}IMPORTANT - Return actor-level JSON for this turn.
-Required when applicable: narration_summary, primary_responder_id, spoken_lines, action_lines, initiative_events, state_effects.
-For compatibility, mirror key narration into narrative_response.
+1. Populate primary_responder_id: the actor who responds.
+2. If actors speak, populate spoken_lines with speaker_id for each entry.
+3. If actors act, populate action_lines with actor_id for each entry.
+4. Include initiative_events and state_effects when applicable.
+5. Populate narration_summary with prose narrative.
+6. Copy narration_summary content to narrative_response (do NOT create new prose for narrative_response).
 
 Narrative structure: write narration_summary as 3-4 short paragraphs separated by \\n\\n (double newlines). Each paragraph should be 2-4 sentences. Structure: (1) scene/setting, (2) action/dialogue, (3) consequence/emotion.
 

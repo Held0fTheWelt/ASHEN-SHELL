@@ -43,8 +43,10 @@ def build_actor_survival_telemetry(
 
     # Generation-level: what was produced
     generation = state.get("generation") or {}
-    gen_spoken_lines = generation.get("spoken_lines") or []
-    gen_action_lines = generation.get("action_lines") or []
+    gen_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    gen_structured = gen_meta.get("structured_output") if isinstance(gen_meta.get("structured_output"), dict) else {}
+    gen_spoken_lines = gen_structured.get("spoken_lines") or []
+    gen_action_lines = gen_structured.get("action_lines") or []
 
     # Validation-level: what passed
     validation = state.get("validation_outcome") or {}
@@ -219,7 +221,7 @@ def build_operator_turn_history_row(
         "fallback_used": actor_survival.get("degradation_markers", {}).get("fallback_used", False),
         "agency_level": hints.get("actor_agency_level", "unknown"),
         "diagnostic_hints": hints.get("hints", []),
-        "visible_output_type": "actor_agency" if visible_output.get("responder_trace") else "narration_only",
+        "visible_output_type": "actor_agency" if (visible_output.get("spoken_lines") or visible_output.get("action_lines")) else "narration_only",
     }
 
 
