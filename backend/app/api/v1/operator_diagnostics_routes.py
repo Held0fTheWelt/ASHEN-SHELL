@@ -11,7 +11,7 @@ from flask import request
 from flask_jwt_extended import jwt_required
 
 from app.api.v1 import api_v1_bp
-from app.auth.feature_registry import FEATURE_MANAGE_ADMIN
+from app.auth.feature_registry import FEATURE_MANAGE_SYSTEM_DIAGNOSIS
 from app.auth.permissions import require_feature
 from app.extensions import limiter
 from app.governance.envelopes import fail, ok
@@ -24,7 +24,7 @@ from app.services.operator_turn_history_service import (
 @api_v1_bp.route("/operator/diagnostics/session/<session_id>", methods=["GET"])
 @limiter.limit("60 per minute")
 @jwt_required()
-@require_feature(FEATURE_MANAGE_ADMIN)
+@require_feature(FEATURE_MANAGE_SYSTEM_DIAGNOSIS)
 def operator_session_diagnostics(session_id: str):
     """Operator diagnostics surface for a session: actor-survival telemetry,
     degradation patterns, and hints for troubleshooting where actor behavior
@@ -49,7 +49,7 @@ def operator_session_diagnostics(session_id: str):
 @api_v1_bp.route("/operator/diagnostics/session/<session_id>/turn-history", methods=["GET"])
 @limiter.limit("60 per minute")
 @jwt_required()
-@require_feature(FEATURE_MANAGE_ADMIN)
+@require_feature(FEATURE_MANAGE_SYSTEM_DIAGNOSIS)
 def operator_turn_history(session_id: str):
     """Turn-history dashboard: formatted turn-by-turn telemetry showing
     responder, validation result, render summary, fallback truth, and
