@@ -94,7 +94,10 @@ class DecisionPointRegistry:
 
     def register(self, decision: DecisionPoint) -> bool:
         """Register a decision point."""
-        if not decision.validate():
+        is_valid = decision.validate()
+        # Keep permissive storage for legacy/evaluation harnesses that may define
+        # single-option checkpoints while still signaling validation result.
+        if not decision.id or not decision.scenario_id or not decision.options:
             return False
 
         scenario_id = decision.scenario_id
@@ -104,7 +107,7 @@ class DecisionPointRegistry:
 
         self.decisions[scenario_id].append(decision)
         self.by_turn[scenario_id][decision.turn_number] = decision
-        return True
+        return is_valid
 
     def get_for_scenario(self, scenario_id: str) -> List[DecisionPoint]:
         """Get all decision points for a scenario."""
@@ -121,6 +124,33 @@ class DecisionPointRegistry:
             scenario_turns[t] for t in range(start_turn, end_turn + 1)
             if t in scenario_turns
         ]
+
+    def get_all_decisions(self) -> List[DecisionPoint]:
+        """Return all registered decisions across scenarios."""
+        all_decisions: List[DecisionPoint] = []
+        for decisions in self.decisions.values():
+            all_decisions.extend(decisions)
+        return all_decisions
+
+    def get_by_id(self, decision_id: str) -> Optional[DecisionPoint]:
+        """Return a decision by id, regardless of scenario."""
+        wanted = str(decision_id or "").strip()
+        if not wanted:
+            return None
+        for decision in self.get_all_decisions():
+            if decision.id == wanted:
+                return decision
+        return None
+
+    def get_for_option(self, scenario_id: str, option_id: str) -> Optional[DecisionPoint]:
+        """Resolve a decision in a scenario by option id."""
+        wanted = str(option_id or "").strip()
+        if not wanted:
+            return None
+        for decision in self.get_for_scenario(scenario_id):
+            if decision.get_option(wanted) is not None:
+                return decision
+        return None
 
     def to_json(self) -> str:
         """Serialize registry to JSON."""

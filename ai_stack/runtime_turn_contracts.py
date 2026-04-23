@@ -125,6 +125,19 @@ VITALITY_TELEMETRY_REQUIRED_FIELDS: tuple[str, ...] = (
     "sparse_input_recovery_applied",
 )
 
+# Canonical per-turn passivity diagnosis schema (operator explainability surface).
+PassivityDiagnosisSchemaVersion = Literal["passivity_diagnosis_v1"]
+
+PASSIVITY_DIAGNOSIS_SCHEMA_VERSION: PassivityDiagnosisSchemaVersion = "passivity_diagnosis_v1"
+
+PASSIVITY_DIAGNOSIS_REQUIRED_FIELDS: tuple[str, ...] = (
+    "schema_version",
+    "why_turn_felt_passive",
+    "primary_passivity_factors",
+    "actor_agency_level",
+    "hints",
+)
+
 RAW_FALLBACK_BYPASS_NOTE = (
     "Graph-managed fallback uses raw adapter.generate (no LangChain structured parse) because the "
     "default mock adapter returns non-JSON text; primary invoke_model still uses LangChain."

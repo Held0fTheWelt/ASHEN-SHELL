@@ -138,6 +138,15 @@ def _derive_row_passivity_factors(entry: dict[str, Any], vitality: dict[str, Any
     return deduped
 
 
+def _extract_passivity_diagnosis(entry: dict[str, Any]) -> dict[str, Any]:
+    telemetry = entry.get("actor_survival_telemetry") if isinstance(entry.get("actor_survival_telemetry"), dict) else {}
+    diagnosis = telemetry.get("passivity_diagnosis_v1")
+    if isinstance(diagnosis, dict):
+        return diagnosis
+    fallback = telemetry.get("operator_diagnostic_hints")
+    return fallback if isinstance(fallback, dict) else {}
+
+
 def _compute_rising_degraded_posture(story_entries: list[dict[str, Any]]) -> bool:
     runtime_entries = [
         row
@@ -202,7 +211,14 @@ def _normalize_story_entries_for_shell(
         ).strip() or None
         degraded, degraded_reasons, quality_class = _is_runtime_entry_degraded(entry) if role == "runtime" else (False, [], "healthy")
         vitality = _extract_entry_vitality(entry) if role == "runtime" else {}
-        passivity_factors = _derive_row_passivity_factors(entry, vitality) if role == "runtime" else []
+        diagnosis = _extract_passivity_diagnosis(entry) if role == "runtime" else {}
+        passivity_factors = (
+            [str(f).strip() for f in (diagnosis.get("why_turn_felt_passive") or []) if str(f).strip()]
+            if role == "runtime"
+            else []
+        )
+        if role == "runtime" and not passivity_factors:
+            passivity_factors = _derive_row_passivity_factors(entry, vitality)
         vitality_summary = {
             "response_present": bool(vitality.get("response_present")),
             "initiative_present": bool(vitality.get("initiative_present")),
@@ -237,6 +253,7 @@ def _normalize_story_entries_for_shell(
                 "degraded": degraded,
                 "degraded_reasons": degraded_reasons,
                 "vitality_schema_version": vitality.get("schema_version"),
+                "passivity_schema_version": diagnosis.get("schema_version"),
                 "vitality_summary": vitality_summary,
                 "why_turn_felt_passive": passivity_factors,
                 "primary_passivity_factors": passivity_factors[:3],

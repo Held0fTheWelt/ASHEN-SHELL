@@ -8,7 +8,10 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from ai_stack.runtime_turn_contracts import VITALITY_TELEMETRY_REQUIRED_FIELDS
+from ai_stack.runtime_turn_contracts import (
+    PASSIVITY_DIAGNOSIS_REQUIRED_FIELDS,
+    VITALITY_TELEMETRY_REQUIRED_FIELDS,
+)
 
 
 class _JSONFormatter(logging.Formatter):
@@ -45,6 +48,21 @@ def _sanitize_vitality_telemetry(vitality_telemetry: dict[str, Any]) -> dict[str
     return out
 
 
+def _sanitize_passivity_diagnosis(passivity_diagnosis: dict[str, Any]) -> dict[str, Any]:
+    """Project bounded passivity diagnosis fields into audit logs."""
+    out: dict[str, Any] = {}
+    for key in PASSIVITY_DIAGNOSIS_REQUIRED_FIELDS:
+        value = passivity_diagnosis.get(key)
+        if key in {"why_turn_felt_passive", "primary_passivity_factors", "hints"}:
+            if isinstance(value, list):
+                out[key] = [str(item) for item in value[:8] if str(item)]
+            else:
+                out[key] = []
+        else:
+            out[key] = value
+    return out
+
+
 def log_story_turn_event(
     *,
     trace_id: str | None,
@@ -58,6 +76,7 @@ def log_story_turn_event(
     quality_class: str | None = None,
     degradation_signals: list[str] | None = None,
     vitality_telemetry: dict[str, Any] | None = None,
+    passivity_diagnosis: dict[str, Any] | None = None,
 ) -> None:
     entry: dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -80,6 +99,8 @@ def log_story_turn_event(
         entry["error_code"] = error_code
     if isinstance(vitality_telemetry, dict) and vitality_telemetry:
         entry["vitality_telemetry_v1"] = _sanitize_vitality_telemetry(vitality_telemetry)
+    if isinstance(passivity_diagnosis, dict) and passivity_diagnosis:
+        entry["passivity_diagnosis_v1"] = _sanitize_passivity_diagnosis(passivity_diagnosis)
     _logger().info(entry)
 
 

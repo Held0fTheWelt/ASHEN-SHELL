@@ -467,6 +467,11 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
             if isinstance(actor_survival_telemetry.get("operator_diagnostic_hints"), dict)
             else {}
         )
+        passivity_diagnosis = (
+            actor_survival_telemetry.get("passivity_diagnosis_v1")
+            if isinstance(actor_survival_telemetry.get("passivity_diagnosis_v1"), dict)
+            else operator_hints
+        )
         vitality_summary = {
             "response_present": bool(vitality.get("response_present")),
             "initiative_present": bool(vitality.get("initiative_present")),
@@ -498,8 +503,8 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
             "actor_turn_summary": actor_turn_summary,
             "actor_survival_telemetry": actor_survival_telemetry,
             "vitality_summary": vitality_summary,
-            "why_turn_felt_passive": list(operator_hints.get("why_turn_felt_passive") or []),
-            "primary_passivity_factors": list(operator_hints.get("primary_passivity_factors") or []),
+            "why_turn_felt_passive": list(passivity_diagnosis.get("why_turn_felt_passive") or []),
+            "primary_passivity_factors": list(passivity_diagnosis.get("primary_passivity_factors") or []),
             "source": "authoritative_story_runtime",
             "runtime_governance_surface": runtime_governance_surface,
             "authority_summary": authority_summary,
@@ -1445,6 +1450,11 @@ class StoryRuntimeManager:
             if isinstance(actor_survival_telemetry.get("vitality_telemetry_v1"), dict)
             else None
         )
+        passivity_diagnosis_v1 = (
+            actor_survival_telemetry.get("passivity_diagnosis_v1")
+            if isinstance(actor_survival_telemetry.get("passivity_diagnosis_v1"), dict)
+            else None
+        )
         log_story_turn_event(
             trace_id=trace_id,
             story_session_id=session.session_id,
@@ -1456,6 +1466,7 @@ class StoryRuntimeManager:
             quality_class=str(graph_state.get("quality_class") or "") or None,
             degradation_signals=list(graph_state.get("degradation_signals") or []),
             vitality_telemetry=vitality_telemetry_v1,
+            passivity_diagnosis=passivity_diagnosis_v1,
         )
         narrative_commit_payload = narrative_commit.model_dump(mode="json")
         turn_thread_metrics = thread_continuity_metrics(session.narrative_threads)
@@ -1601,13 +1612,21 @@ class StoryRuntimeManager:
             gov["vitality_telemetry_v1"] = vitality_telemetry_v1
             gov["realized_actor_ids"] = list(vitality_telemetry_v1.get("realized_actor_ids") or [])
             gov["rendered_actor_ids"] = list(vitality_telemetry_v1.get("rendered_actor_ids") or [])
+            passivity_diagnosis = (
+                actor_survival_telemetry.get("passivity_diagnosis_v1")
+                if isinstance(actor_survival_telemetry.get("passivity_diagnosis_v1"), dict)
+                else {}
+            )
             operator_hints = (
                 actor_survival_telemetry.get("operator_diagnostic_hints")
                 if isinstance(actor_survival_telemetry.get("operator_diagnostic_hints"), dict)
                 else {}
             )
-            gov["why_turn_felt_passive"] = list(operator_hints.get("why_turn_felt_passive") or [])
-            gov["primary_passivity_factors"] = list(operator_hints.get("primary_passivity_factors") or [])
+            canonical_diagnosis = passivity_diagnosis if passivity_diagnosis else operator_hints
+            if passivity_diagnosis:
+                gov["passivity_diagnosis_v1"] = passivity_diagnosis
+            gov["why_turn_felt_passive"] = list(canonical_diagnosis.get("why_turn_felt_passive") or [])
+            gov["primary_passivity_factors"] = list(canonical_diagnosis.get("primary_passivity_factors") or [])
         quality_class, degradation_signals, degradation_summary = _canonical_quality_fields_from_surfaces(
             runtime_governance_surface=gov,
             authority_summary={

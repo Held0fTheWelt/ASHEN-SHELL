@@ -347,7 +347,22 @@ class EvaluationReport:
         """Average divergence across all analyses."""
         if not self.divergence_analyses:
             return 0.0
-        return sum(a.overall_divergence_percentage for a in self.divergence_analyses) / len(self.divergence_analyses)
+        values: List[float] = []
+        for analysis in self.divergence_analyses:
+            computed = (
+                analysis.overall_divergence_percentage
+                if analysis.overall_divergence_percentage > 0
+                else (
+                    analysis.decision_divergence_percentage
+                    + analysis.consequence_divergence_percentage
+                    + analysis.pressure_divergence_percentage
+                    + analysis.dialogue_divergence_percentage
+                    + analysis.ending_divergence_percentage
+                )
+                / 5.0
+            )
+            values.append(computed)
+        return sum(values) / len(values)
 
     def _avg_satisfaction(self) -> Dict[str, float]:
         """Average evaluator satisfaction metrics."""

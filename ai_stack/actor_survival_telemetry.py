@@ -12,6 +12,8 @@ from ai_stack.runtime_turn_contracts import (
     DEGRADATION_SIGNAL_DEGRADED_COMMIT,
     DEGRADATION_SIGNAL_FALLBACK_USED,
     DEGRADATION_SIGNAL_RETRY_EXHAUSTED,
+    PASSIVITY_DIAGNOSIS_REQUIRED_FIELDS,
+    PASSIVITY_DIAGNOSIS_SCHEMA_VERSION,
     VITALITY_TELEMETRY_REQUIRED_FIELDS,
     VITALITY_TELEMETRY_SCHEMA_VERSION,
 )
@@ -456,6 +458,16 @@ def _build_operator_hints(vitality: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _build_passivity_diagnosis_v1(vitality: dict[str, Any]) -> dict[str, Any]:
+    diagnosis = {
+        "schema_version": PASSIVITY_DIAGNOSIS_SCHEMA_VERSION,
+        **_build_operator_hints(vitality),
+    }
+    for field in PASSIVITY_DIAGNOSIS_REQUIRED_FIELDS:
+        diagnosis.setdefault(field, None)
+    return diagnosis
+
+
 def build_actor_survival_telemetry(
     state: dict[str, Any],
     *,
@@ -476,14 +488,20 @@ def build_actor_survival_telemetry(
         commit_applied=commit_applied,
         fallback_taken=fallback_taken,
     )
-    hints = _build_operator_hints(vitality)
+    diagnosis = _build_passivity_diagnosis_v1(vitality)
 
     return {
         "turn_telemetry_version": "2.0",
         "vitality_telemetry_v1": vitality,
+        "passivity_diagnosis_v1": diagnosis,
         # Compatibility surface for existing consumers/tests.
         "actor_survival": _legacy_actor_survival_view(vitality),
-        "operator_diagnostic_hints": hints,
+        "operator_diagnostic_hints": {
+            "hints": list(diagnosis.get("hints") or []),
+            "actor_agency_level": diagnosis.get("actor_agency_level"),
+            "why_turn_felt_passive": list(diagnosis.get("why_turn_felt_passive") or []),
+            "primary_passivity_factors": list(diagnosis.get("primary_passivity_factors") or []),
+        },
     }
 
 
@@ -497,7 +515,9 @@ def build_operator_turn_history_row(
 ) -> dict[str, Any]:
     """Format one turn row for operator turn-history surfaces."""
     vitality = telemetry.get("vitality_telemetry_v1") if isinstance(telemetry.get("vitality_telemetry_v1"), dict) else {}
+    diagnosis = telemetry.get("passivity_diagnosis_v1") if isinstance(telemetry.get("passivity_diagnosis_v1"), dict) else {}
     hints = telemetry.get("operator_diagnostic_hints") if isinstance(telemetry.get("operator_diagnostic_hints"), dict) else {}
+    canonical = diagnosis if diagnosis else hints
 
     response_present = bool(vitality.get("response_present"))
     return {
@@ -511,10 +531,10 @@ def build_operator_turn_history_row(
         "action_lines_count": int(vitality.get("rendered_action_line_count") or 0),
         "fallback_used": bool(vitality.get("fallback_used")),
         "quality_class": vitality.get("quality_class") or "healthy",
-        "agency_level": hints.get("actor_agency_level", "unknown"),
-        "diagnostic_hints": list(hints.get("hints") or []),
-        "why_turn_felt_passive": list(hints.get("why_turn_felt_passive") or []),
-        "primary_passivity_factors": list(hints.get("primary_passivity_factors") or []),
+        "agency_level": canonical.get("actor_agency_level", "unknown"),
+        "diagnostic_hints": list(canonical.get("hints") or []),
+        "why_turn_felt_passive": list(canonical.get("why_turn_felt_passive") or []),
+        "primary_passivity_factors": list(canonical.get("primary_passivity_factors") or []),
         "vitality_breakdown": {
             "response_present": response_present,
             "initiative_present": bool(vitality.get("initiative_present")),

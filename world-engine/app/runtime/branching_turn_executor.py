@@ -105,11 +105,15 @@ class BranchingTurnExecutor:
         decision_option_id = None
         chosen_option = None
 
+        decision_option_id = action.get("decision_option_id")
+        if decision_point is None and decision_option_id:
+            # Compatibility with evaluation harnesses that submit explicit option ids
+            # before reaching scripted turn numbers.
+            decision_point = self.decision_registry.get_for_option(session.scenario_id, str(decision_option_id))
+
         if decision_point:
             # This turn has a decision point
             # Check if action specifies a choice
-            decision_option_id = action.get("decision_option_id")
-
             if not decision_option_id:
                 return BranchingTurnResult(
                     success=False,

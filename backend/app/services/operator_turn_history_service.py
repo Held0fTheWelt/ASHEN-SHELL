@@ -22,6 +22,9 @@ def _extract_vitality(event: dict[str, Any]) -> dict[str, Any]:
 
 def _extract_operator_hints(event: dict[str, Any]) -> dict[str, Any]:
     telemetry = event.get("actor_survival_telemetry") if isinstance(event.get("actor_survival_telemetry"), dict) else {}
+    diagnosis = telemetry.get("passivity_diagnosis_v1")
+    if isinstance(diagnosis, dict):
+        return diagnosis
     return telemetry.get("operator_diagnostic_hints") if isinstance(telemetry.get("operator_diagnostic_hints"), dict) else {}
 
 
