@@ -638,7 +638,10 @@ def _planner_truth_from_graph_state(
                     else:
                         social_pressure_shift = "shifted"
     if not social_pressure_shift and social_outcome:
-        prior_social = _opt_str(graph_state.get("prior_social_outcome"))
+        prior_social = _opt_str(
+            graph_state.get("prior_social_outcome"),
+            graph_state.get("prior_planner_truth", {}).get("social_outcome") if isinstance(graph_state.get("prior_planner_truth"), dict) else None,
+        )
         if prior_social and prior_social != social_outcome:
             social_pressure_shift = "shifted"
         elif prior_social == social_outcome:

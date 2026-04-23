@@ -557,6 +557,11 @@ def _retrieval_continuity_query_context(state: RuntimeTurnState) -> tuple[str, d
         for summary in spoken_summaries:
             if isinstance(summary, dict):
                 actor_prec_tokens.append(f"spoke:{summary.get('actor_id')}")
+    action_summaries = prior_planner.get("action_actor_summaries")
+    if isinstance(action_summaries, list):
+        for summary in action_summaries:
+            if isinstance(summary, dict):
+                actor_prec_tokens.append(f"acted:{summary.get('actor_id')}")
     add_line(
         "actor_precedents",
         "prior_planner_truth",

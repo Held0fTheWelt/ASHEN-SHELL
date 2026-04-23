@@ -38,13 +38,11 @@ def evaluate_dramatic_effect_gate(ctx: DramaticEffectEvaluationContext) -> Drama
     """
     if (early := outcome_not_goc(ctx)) is not None:
         return early
-    if (legacy := try_legacy_alignment(ctx)) is not None:
-        return legacy
 
     text = ctx.proposed_narrative.strip()
 
-    # Actor-lane fluency override: if lanes are approved and non-empty,
-    # don't reject on prose emptiness or ultra-short prose alone.
+    # Actor-lane fluency override BEFORE legacy alignment check.
+    # If lanes are approved and non-empty, don't reject on prose emptiness or ultra-short prose.
     _actor = ctx.actor_lane_summary or {}
     if (
         _actor.get("actor_lane_status") == "approved"
@@ -54,6 +52,10 @@ def evaluate_dramatic_effect_gate(ctx: DramaticEffectEvaluationContext) -> Drama
             text = "(actor-driven turn)"
         elif len(text) < 40:
             text = text + " (actor realization present)"
+        ctx = ctx.model_copy(update={"proposed_narrative": text})
+
+    if (legacy := try_legacy_alignment(ctx)) is not None:
+        return legacy
 
     low = text.lower()
     trace: list[DramaticEffectTraceItem] = []

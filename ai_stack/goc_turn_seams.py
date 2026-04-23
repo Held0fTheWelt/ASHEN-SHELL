@@ -152,6 +152,10 @@ def structured_output_to_proposed_effects(structured: dict[str, Any] | None) -> 
                 semantic_meta[key] = structured[key]
         if structured.get("emotional_shift") and isinstance(structured["emotional_shift"], dict):
             semantic_meta["emotional_shift"] = structured["emotional_shift"]
+        spoken_count = len([x for x in structured.get("spoken_lines") or [] if isinstance(x, dict)])
+        action_count = len([x for x in structured.get("action_lines") or [] if isinstance(x, dict)])
+        if spoken_count or action_count:
+            semantic_meta["actor_lane_count"] = spoken_count + action_count
         if semantic_meta:
             effects[-1].update(semantic_meta)
 
