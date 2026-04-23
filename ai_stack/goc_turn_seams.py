@@ -452,11 +452,51 @@ def run_visible_render(
             add_director_hint("phase_pressure_cue", ai_hint, "scene_guidance.ai_guidance")
         if not gm_lines:
             gm_lines = ["The exchange shifts, and the room adjusts around it."]
+
+        # Wave 3: Count distinct actor IDs across lanes (only non-empty, non-None, stripped strings)
+        actor_ids_in_render: set[str] = set()
+        spoken_items = structured.get("spoken_lines")
+        if isinstance(spoken_items, list):
+            for item in spoken_items:
+                if isinstance(item, dict):
+                    sid = str(item.get("speaker_id") or "").strip()
+                    if sid:
+                        actor_ids_in_render.add(sid)
+        action_items = structured.get("action_lines")
+        if isinstance(action_items, list):
+            for item in action_items:
+                if isinstance(item, dict):
+                    aid = str(item.get("actor_id") or "").strip()
+                    if aid:
+                        actor_ids_in_render.add(aid)
+
         bundle = {
             "gm_narration": gm_lines,
             "spoken_lines": structured_spoken_lines,
             "action_lines": structured_action_lines,
         }
+
+        # Add multi_actor_realized marker when >= 2 distinct actors in lanes
+        if len(actor_ids_in_render) >= 2:
+            markers.append("multi_actor_realized")
+            bundle["multi_actor_render"] = {
+                "realized_actor_ids": sorted(actor_ids_in_render),
+                "actor_count": len(actor_ids_in_render),
+            }
+
+        # Wave 3: Check sparse vitality floor for thin_edge pacing
+        carry_forward_tension_notes = rc.get("carry_forward_tension_notes")
+        if pacing_mode == "thin_edge" and not (structured_spoken_lines or structured_action_lines):
+            if isinstance(carry_forward_tension_notes, str) and carry_forward_tension_notes.strip():
+                if "render_support" not in bundle:
+                    bundle["render_support"] = {
+                        "projection_version": "director_surface_hints.v1",
+                        "player_visible": False,
+                        "director_surface_hints": [],
+                    }
+                if not isinstance(bundle["render_support"], dict):
+                    bundle["render_support"] = {}
+                bundle["render_support"]["vitality_floor_warning"] = "thin_edge_output_empty_with_prior_tension"
         if director_surface_hints:
             bundle["render_support"] = {
                 "projection_version": "director_surface_hints.v1",

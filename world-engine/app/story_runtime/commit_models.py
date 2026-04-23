@@ -161,6 +161,23 @@ class PlannerTruth(BaseModel):
         default=None,
         description="Unresolved tension from pressure_shift, accusation, repair failure, or interruption residue."
     )
+    initiative_seizer_id: str | None = Field(
+        default=None,
+        description="Actor who seized the floor this turn (first seize/counter/escalate event actor_id). Best-effort, not guaranteed conversational truth.",
+    )
+    initiative_loser_id: str | None = Field(
+        default=None,
+        description=(
+            "Actor who lost the floor this turn. Derivation priority: "
+            "(1) explicit counter/interrupt target if derivable from event; "
+            "(2) primary_responder_id as fallback when countered or interrupted. "
+            "None when floor was not contested."
+        ),
+    )
+    initiative_pressure_label: str | None = Field(
+        default=None,
+        description="floor_claimed | contested | deflected | stable | None",
+    )
 
 
 class StoryNarrativeCommitRecord(BaseModel):
@@ -670,6 +687,51 @@ def _planner_truth_from_graph_state(
         tension_str = ", ".join(tension_parts)[:280]
         carry_forward_tension_notes = tension_str if tension_str else None
 
+    # Extract initiative_seizer_id: first actor_id from seize/counter/escalate event
+    initiative_seizer_id: str | None = None
+    if isinstance(initiative_events, list):
+        for event in initiative_events:
+            if isinstance(event, dict) and str(event.get("type") or "").lower() in ("seize", "counter", "escalate"):
+                actor_id = event.get("actor_id")
+                if isinstance(actor_id, str) and actor_id.strip():
+                    initiative_seizer_id = actor_id.strip()
+                    break
+
+    # Extract initiative_loser_id with derivation priority
+    initiative_loser_id: str | None = None
+    if isinstance(initiative_events, list):
+        for event in initiative_events:
+            if isinstance(event, dict) and str(event.get("type") or "").lower() in ("interrupt", "counter"):
+                # Priority 1: use explicit target_id if present
+                target_id = event.get("target_id")
+                if isinstance(target_id, str) and target_id.strip():
+                    initiative_loser_id = target_id.strip()
+                    break
+        # Priority 2 fallback: primary_responder_id when no explicit target
+        if not initiative_loser_id and isinstance(initiative_events, list):
+            for event in initiative_events:
+                if isinstance(event, dict) and str(event.get("type") or "").lower() in ("interrupt", "counter"):
+                    if primary_responder_id:
+                        initiative_loser_id = primary_responder_id
+                    break
+
+    # Derive initiative_pressure_label from event types
+    initiative_pressure_label: str | None = None
+    if isinstance(initiative_events, list) and initiative_events:
+        event_types_lower = {
+            str(e.get("type") or "").lower()
+            for e in initiative_events
+            if isinstance(e, dict)
+        }
+        if "interrupt" in event_types_lower or "counter" in event_types_lower:
+            initiative_pressure_label = "contested"
+        elif "seize" in event_types_lower or "escalate" in event_types_lower:
+            initiative_pressure_label = "floor_claimed"
+        elif "deflect" in event_types_lower:
+            initiative_pressure_label = "deflected"
+        else:
+            initiative_pressure_label = "stable"
+
     return PlannerTruth(
         selected_scene_function=_opt_str(
             graph_state.get("selected_scene_function"),
@@ -731,6 +793,9 @@ def _planner_truth_from_graph_state(
         action_actor_summaries=action_actor_summaries,
         social_pressure_shift=social_pressure_shift,
         carry_forward_tension_notes=carry_forward_tension_notes,
+        initiative_seizer_id=initiative_seizer_id,
+        initiative_loser_id=initiative_loser_id,
+        initiative_pressure_label=initiative_pressure_label,
     )
 
 

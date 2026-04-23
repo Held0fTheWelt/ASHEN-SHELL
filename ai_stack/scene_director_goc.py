@@ -321,6 +321,7 @@ def semantic_move_to_scene_candidates(
     prior_classes: list[str],
     player_input: str,
     interpreted_move: dict[str, Any],
+    prior_planner_truth: dict[str, Any] | None = None,
 ) -> tuple[list[str], dict[str, str], list[str]]:
     """Map semantic move_type to scene-function candidates —
     planner-primary (not keyword surface).
@@ -374,9 +375,15 @@ def semantic_move_to_scene_candidates(
 
     if pacing_mode == "thin_edge":
         if move_type == "silence_withdrawal":
-            candidates.append("withhold_or_evade")
-            implied["withhold_or_evade"] = "silent_carry"
-            heuristic_trace.append("semantic:thin_edge+silence_withdrawal->withhold_or_evade")
+            # Wave 3: when prior tension exists, upgrade silence_withdrawal to probe_motive
+            if _has_unresolved_carry_forward_tension(prior_planner_truth):
+                candidates.append("probe_motive")
+                implied["probe_motive"] = "tension_carry_forward_probe"
+                heuristic_trace.append("semantic:thin_edge+silence_withdrawal+prior_tension->probe_motive_upgrade")
+            else:
+                candidates.append("withhold_or_evade")
+                implied["withhold_or_evade"] = "silent_carry"
+                heuristic_trace.append("semantic:thin_edge+silence_withdrawal->withhold_or_evade")
         elif "silent" in text or "say nothing" in text:
             candidates.append("withhold_or_evade")
             implied["withhold_or_evade"] = "silent_carry"
@@ -624,11 +631,12 @@ _GOC_INTERRUPTER_BY_PRIMARY: dict[str, str] = {
 
 
 def _append_responder(
-    responders: list[dict[str, str]],
+    responders: list[dict[str, Any]],
     *,
     actor_id: str,
     reason: str,
     role: str,
+    sequence: int = 0,
 ) -> None:
     actor = str(actor_id or "").strip()
     if not actor:
@@ -636,7 +644,12 @@ def _append_responder(
     for row in responders:
         if str(row.get("actor_id") or "").strip() == actor:
             return
-    responders.append({"actor_id": actor, "reason": reason, "role": role})
+    responders.append({
+        "actor_id": actor,
+        "reason": reason,
+        "role": role,
+        "preferred_reaction_order": sequence,
+    })
 
 
 def _build_responder_set(
@@ -650,14 +663,15 @@ def _build_responder_set(
     text: str,
     social_state_record: dict[str, Any] | None,
     thread_feedback: dict[str, Any] | None,
-) -> tuple[list[dict[str, str]], dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Build primary + optional secondary + optional interrupter responder set."""
-    responders: list[dict[str, str]] = []
+    responders: list[dict[str, Any]] = []
     _append_responder(
         responders,
         actor_id=primary_actor,
         reason=primary_reason,
         role="primary_responder",
+        sequence=0,
     )
 
     tf = thread_feedback if isinstance(thread_feedback, dict) else {}
@@ -684,6 +698,7 @@ def _build_responder_set(
         "primary_responder_selected_from_context",
         "secondary_reactor_enabled_on_high_pressure",
         "interruption_candidate_enabled_on_thread_or_escalation_pressure",
+        "secondary_must_react_when_nominated_and_high_pressure",
     ]
 
     if is_high_pressure:
@@ -692,8 +707,9 @@ def _build_responder_set(
             _append_responder(
                 responders,
                 actor_id=secondary,
-                reason="secondary_reactor:cross_couple_pressure",
+                reason="secondary_reactor:high_pressure_cross_couple",
                 role="secondary_reactor",
+                sequence=1,
             )
 
     interruption_trigger = (
@@ -713,6 +729,7 @@ def _build_responder_set(
                 actor_id=interrupter,
                 reason="interruption_candidate:pressure_interrupt_window",
                 role="interruption_candidate",
+                sequence=2,
             )
 
     return responders, {
@@ -733,6 +750,7 @@ def build_responder_and_function(
     semantic_move_record: dict[str, Any] | None = None,
     social_state_record: dict[str, Any] | None = None,
     prior_narrative_thread_state: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], str, dict[str, str], dict[str, Any]]:
     """Choose responder set, scene function, implied continuity map, and
     multi-pressure resolution record.
@@ -769,6 +787,7 @@ def build_responder_and_function(
             prior_classes=prior_classes,
             player_input=player_input,
             interpreted_move=interpreted_move,
+            prior_planner_truth=prior_planner_truth,
         )
     else:
         selection_source = "legacy_fallback"
@@ -875,6 +894,22 @@ def build_responder_and_function(
     return responders, scene_fn, implied, resolution
 
 
+def _has_unresolved_carry_forward_tension(
+    prior_planner_truth: dict[str, Any] | None,
+) -> bool:
+    """Return True when prior committed planner truth records unresolved tension."""
+    if not isinstance(prior_planner_truth, dict):
+        return False
+    notes = prior_planner_truth.get("carry_forward_tension_notes")
+    if isinstance(notes, str) and notes.strip():  # whitespace-only does not count
+        return True
+    if prior_planner_truth.get("social_pressure_shift") == "escalated":
+        return True
+    if prior_planner_truth.get("initiative_pressure_label") in ("contested", "floor_claimed"):
+        return True
+    return False
+
+
 def build_pacing_and_silence(
     *,
     player_input: str,
@@ -882,6 +917,7 @@ def build_pacing_and_silence(
     module_id: str,
     prior_narrative_thread_state: dict[str, Any] | None = None,
     semantic_move_record: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Describe what ``build_pacing_and_silence`` does in one line
     (verb-led summary for this function).
@@ -943,6 +979,15 @@ def build_pacing_and_silence(
     )
     if "thin edge" in text or "one beat" in text or awkward_pause:
         if "silent" in text or "say nothing" in text or awkward_pause:
+            # Wave 3: if prior tension exists, do not drop to withheld — use compressed instead
+            if _has_unresolved_carry_forward_tension(prior_planner_truth):
+                return _finalize_pacing_silence(
+                    assert_pacing_mode("compressed"),
+                    {
+                        "mode": assert_silence_brevity_mode("brief"),
+                        "reason": "thin_edge_withheld_upgraded_by_prior_tension",
+                    },
+                )
             return _finalize_pacing_silence(
                 assert_pacing_mode("thin_edge"),
                 {

@@ -586,6 +586,17 @@ def _retrieval_continuity_query_context(state: RuntimeTurnState) -> tuple[str, d
         prior_planner.get("dramatic_direction"),
         prior_planner.get("initiative_summary"),
         prior_planner.get("social_pressure_shift"),
+        prior_planner.get("initiative_seizer_id"),
+        prior_planner.get("initiative_loser_id"),
+        prior_planner.get("initiative_pressure_label"),
+    )
+    add_line(
+        "initiative_precedents",
+        "prior_planner_truth",
+        prior_planner.get("initiative_seizer_id"),
+        prior_planner.get("initiative_loser_id"),
+        prior_planner.get("initiative_pressure_label"),
+        prior_planner.get("carry_forward_tension_notes"),
     )
 
     prior_dramatic = state.get("prior_dramatic_signature")
@@ -757,6 +768,11 @@ def _build_dramatic_generation_packet(state: RuntimeTurnState) -> dict[str, Any]
         "selected_responder_set": responders,
         "primary_responder_id": responder_ids[0] if responder_ids else None,
         "secondary_responder_ids": responder_ids[1:] if len(responder_ids) > 1 else [],
+        "secondary_responder_directive": (
+            "When secondary responders are nominated in a high-pressure scene, at least one nominated secondary_responder_id SHOULD appear in spoken_lines or action_lines unless an interruption or validation constraint makes that impossible."
+            if len(responder_ids) > 1
+            else None
+        ),
         "pacing_mode": state.get("pacing_mode"),
         "silence_brevity_decision": state.get("silence_brevity_decision")
         if isinstance(state.get("silence_brevity_decision"), dict)
@@ -783,6 +799,17 @@ def _build_dramatic_generation_packet(state: RuntimeTurnState) -> dict[str, Any]
             "narrative_scope": scene_assessment.get("narrative_scope"),
         },
     }
+    # Add prior_initiative_truth if any initiative fields are present
+    prior_planner = state.get("prior_planner_truth") if isinstance(state.get("prior_planner_truth"), dict) else {}
+    _pit = {
+        "initiative_seizer_id": prior_planner.get("initiative_seizer_id"),
+        "initiative_loser_id": prior_planner.get("initiative_loser_id"),
+        "initiative_pressure_label": prior_planner.get("initiative_pressure_label"),
+        "carry_forward_tension_notes": prior_planner.get("carry_forward_tension_notes"),
+    }
+    # Collapse to None when all values are empty/None (avoid prompt noise)
+    if any(v for v in _pit.values() if v):
+        packet["prior_initiative_truth"] = _pit
     return packet
 
 
@@ -1430,6 +1457,9 @@ class RuntimeTurnGraphExecutor:
             else None,
             semantic_move_record=state.get("semantic_move_record")
             if isinstance(state.get("semantic_move_record"), dict)
+            else None,
+            prior_planner_truth=state.get("prior_planner_truth")
+            if isinstance(state.get("prior_planner_truth"), dict)
             else None,
         )
         if module_id != GOC_MODULE_ID:
@@ -2319,6 +2349,7 @@ class RuntimeTurnGraphExecutor:
                 "responder_reason": actor_reason,
                 "character_profile_snippet": char_snippet,
                 "scene_guidance_snippets": guidance_snip,
+                "carry_forward_tension_notes": (state.get("prior_planner_truth") or {}).get("carry_forward_tension_notes"),
             },
         )
         update["generation"] = generation

@@ -114,6 +114,22 @@ def build_actor_survival_telemetry(
                 "responder_trace_present": "responder_trace" in visible_bundle,
             },
 
+            # Wave 3: Nominated vs realized tracking
+            "nominated_vs_realized": {
+                "nominated_secondary_count": len([
+                    r for r in responders
+                    if isinstance(r, dict) and r.get("role") == "secondary_reactor"
+                ]),
+                "rendered_actor_count": len(set(
+                    str(line.get("speaker_id") or line.get("actor_id") or "").strip()
+                    for line in (
+                        list(gen_structured.get("spoken_lines") or []) +
+                        list(gen_structured.get("action_lines") or [])
+                    )
+                    if isinstance(line, dict) and str(line.get("speaker_id") or line.get("actor_id") or "").strip()
+                ) - {""}),
+            },
+
             # Degradation tracking
             "degradation_markers": {
                 "fallback_used": fallback_taken,
