@@ -105,10 +105,16 @@ class PlannerTruth(BaseModel):
 
     selected_scene_function: str | None = None
     responder_id: str | None = None
+    primary_responder_id: str | None = None
+    secondary_responder_ids: list[str] = Field(default_factory=list)
     responder_scope: list[str] = Field(default_factory=list)
     function_type: str | None = None
     pacing_mode: str | None = None
     silence_mode: str | None = None
+    spoken_line_count: int = 0
+    action_line_count: int = 0
+    initiative_summary: dict[str, Any] = Field(default_factory=dict)
+    last_actor_outcome_summary: str | None = None
     scene_assessment_core: dict[str, Any] = Field(default_factory=dict)
     scene_plan_ref: str | None = None
     emotional_shift: dict[str, Any] = Field(default_factory=dict)
@@ -321,7 +327,19 @@ def _as_dict(value: Any) -> dict[str, Any]:
 
 def _as_str_list(value: Any) -> list[str]:
     if isinstance(value, list):
-        return [str(x) for x in value if x is not None]
+        out: list[str] = []
+        for item in value:
+            if item is None:
+                continue
+            if isinstance(item, dict):
+                actor_id = item.get("actor_id") or item.get("responder_id")
+                if isinstance(actor_id, str) and actor_id.strip():
+                    out.append(actor_id.strip())
+                continue
+            text = str(item).strip()
+            if text:
+                out.append(text)
+        return out
     return []
 
 
@@ -425,14 +443,91 @@ def _planner_truth_from_graph_state(
         or structured.get("responder_scope")
     )
 
+    primary_responder_id = _opt_str(
+        graph_state.get("responder_id"),
+        graph_state.get("primary_responder_id"),
+        structured.get("primary_responder_id"),
+        structured.get("responder_id"),
+    )
+    secondary_responder_ids = _as_str_list(
+        graph_state.get("secondary_responder_ids")
+        or structured.get("secondary_responder_ids")
+        or structured.get("responder_actor_ids")
+    )
+    if primary_responder_id and primary_responder_id in secondary_responder_ids:
+        secondary_responder_ids = [x for x in secondary_responder_ids if x != primary_responder_id]
+
+    bundle = _as_dict(graph_state.get("visible_output_bundle"))
+
+    def _lane_count(value: Any) -> int:
+        if not isinstance(value, list):
+            return 0
+        count = 0
+        for item in value:
+            if isinstance(item, dict):
+                text = str(item.get("text") or "").strip()
+                if text:
+                    count += 1
+                continue
+            if str(item).strip():
+                count += 1
+        return count
+
+    spoken_line_count = _lane_count(bundle.get("spoken_lines"))
+    action_line_count = _lane_count(bundle.get("action_lines"))
+
+    initiative_events = structured.get("initiative_events")
+    initiative_summary: dict[str, Any] = {}
+    if isinstance(initiative_events, list):
+        types: list[str] = []
+        actors: list[str] = []
+        for row in initiative_events:
+            if not isinstance(row, dict):
+                continue
+            raw_type = row.get("type")
+            raw_actor = row.get("actor_id")
+            event_type = str(raw_type).strip() if isinstance(raw_type, str) else ""
+            actor_id = str(raw_actor).strip() if isinstance(raw_actor, str) else ""
+            if event_type and event_type not in types:
+                types.append(event_type)
+            if actor_id and actor_id not in actors:
+                actors.append(actor_id)
+        initiative_summary = {
+            "event_count": len([x for x in initiative_events if isinstance(x, dict)]),
+            "event_types": types,
+            "actors": actors,
+        }
+
+    social_outcome = _opt_str(graph_state.get("social_outcome"), structured.get("social_outcome"))
+    dramatic_direction = _opt_str(
+        graph_state.get("dramatic_direction"),
+        structured.get("dramatic_direction"),
+    )
+    parts: list[str] = []
+    if primary_responder_id:
+        parts.append(f"primary_responder={primary_responder_id}")
+    parts.append(f"spoken_lines={spoken_line_count}")
+    parts.append(f"action_lines={action_line_count}")
+    if initiative_summary.get("event_count"):
+        parts.append(f"initiative_events={initiative_summary.get('event_count')}")
+    if social_outcome:
+        parts.append(f"social_outcome={social_outcome}")
+    if dramatic_direction:
+        parts.append(f"dramatic_direction={dramatic_direction}")
+    last_actor_outcome_summary = ", ".join(parts) if parts else None
+
     return PlannerTruth(
         selected_scene_function=_opt_str(
             graph_state.get("selected_scene_function"),
             structured.get("selected_scene_function"),
         ),
         responder_id=_opt_str(
-            graph_state.get("responder_id"), structured.get("responder_id")
+            graph_state.get("responder_id"),
+            structured.get("responder_id"),
+            primary_responder_id,
         ),
+        primary_responder_id=primary_responder_id,
+        secondary_responder_ids=secondary_responder_ids,
         responder_scope=responder_scope,
         function_type=_opt_str(
             graph_state.get("function_type"), structured.get("function_type")
@@ -447,6 +542,10 @@ def _planner_truth_from_graph_state(
             structured.get("silence_mode"),
             graph_state.get("selected_silence_mode"),
         ),
+        spoken_line_count=spoken_line_count,
+        action_line_count=action_line_count,
+        initiative_summary=initiative_summary,
+        last_actor_outcome_summary=last_actor_outcome_summary,
         scene_assessment_core=scene_assessment,
         scene_plan_ref=_opt_str(
             graph_state.get("scene_plan_ref"),

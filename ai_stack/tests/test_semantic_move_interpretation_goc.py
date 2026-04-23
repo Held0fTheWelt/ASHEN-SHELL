@@ -71,3 +71,19 @@ def test_alliance_reposition_synset() -> None:
         prior_continuity_classes=[],
     )
     assert s.move_type == "alliance_reposition"
+
+
+def test_ranked_semantic_candidates_preserve_primary_and_secondary() -> None:
+    r = interpret_goc_semantic_move(
+        module_id=GOC_MODULE_ID,
+        player_input="I'm sorry but reveal the truth now.",
+        interpreted_input=_base_interp(),
+        interpreted_move={"player_intent": "mixed", "move_class": "dialogue"},
+        prior_continuity_classes=["blame_pressure"],
+    )
+    assert r.move_type == "competing_repair_and_reveal"
+    assert r.ranked_move_candidates
+    assert r.ranked_move_candidates[0].move_type == r.move_type
+    assert r.secondary_move_type in {None, r.ranked_move_candidates[1].move_type if len(r.ranked_move_candidates) > 1 else None}
+    assert isinstance(r.secondary_dramatic_features, list)
+    assert any("secondary_move:" in tag for tag in r.secondary_dramatic_features)

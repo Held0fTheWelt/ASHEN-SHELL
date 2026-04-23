@@ -152,6 +152,17 @@ class TestPromptVariableBinding:
         assert "{reason}" in template
         assert "{game_state}" in template
 
+    def test_runtime_turn_prompts_emphasize_actor_level_contract(self):
+        """Runtime prompts should guide actor-level exchange plus compatibility fields."""
+        catalog = CanonicalPromptCatalog()
+        sys_template = catalog.get_prompt("runtime_turn_system")["template"]
+        human_template = catalog.get_prompt("runtime_turn_human")["template"]
+        assert "narration_summary" in sys_template
+        assert "spoken_lines" in sys_template
+        assert "narrative_response" in sys_template
+        assert "primary_responder_id" in human_template
+        assert "initiative_events" in human_template
+
 
 class TestOperationalProfileIntegration:
     """Test prompt catalog integration with operational profile."""

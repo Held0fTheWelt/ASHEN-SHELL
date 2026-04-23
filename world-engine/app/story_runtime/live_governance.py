@@ -33,7 +33,8 @@ class BlockedLiveStoryRoutingPolicy:
     def __init__(self) -> None:
         self.registry = ModelRegistry()
 
-    def choose(self, *, task_type: str):
+    def choose(self, *, task_type: str, dramatic_requirements: dict[str, Any] | None = None):
+        _ = dramatic_requirements
         raise LiveStoryGovernanceError(
             "LIVE_STORY_RUNTIME_BLOCKED: governed runtime configuration is missing, invalid, or could not be "
             "applied. Ensure Administration Center has rebuilt resolved runtime config, set "

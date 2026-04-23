@@ -15,7 +15,7 @@ LangGraph pipeline.
 
 from __future__ import annotations
 
-from ai_stack.langgraph_runtime_executor import _reconcile_model_responders
+from ai_stack.langgraph_runtime_executor import _actor_lane_validation, _reconcile_model_responders
 
 
 def _state(selected: list[dict]) -> dict:
@@ -48,6 +48,26 @@ def test_model_responder_in_scope_is_accepted() -> None:
     assert out["effective_responder_scope"] == ["alain_reille"]
     assert out["dropped_out_of_scope_actors"] == []
     assert out["dropped_out_of_scope_count"] == 0
+
+
+def test_primary_responder_and_secondary_scope_fields_are_supported() -> None:
+    state = _state(
+        [
+            {"actor_id": "annette_reille"},
+            {"actor_id": "alain_reille"},
+            {"actor_id": "veronique_vallon"},
+        ]
+    )
+    generation = _generation_with_structured(
+        {
+            "primary_responder_id": "annette_reille",
+            "secondary_responder_ids": ["alain_reille", "ghost_actor"],
+        }
+    )
+    out = _reconcile_model_responders(state, generation)
+    assert out["effective_responder_id"] == "annette_reille"
+    assert out["effective_responder_scope"] == ["alain_reille", "annette_reille"]
+    assert out["dropped_out_of_scope_actors"] == ["ghost_actor"]
 
 
 def test_model_responder_out_of_scope_is_dropped_and_director_used() -> None:
@@ -111,3 +131,44 @@ def test_empty_director_scope_and_empty_model_is_empty_reconciliation() -> None:
     assert out["outcome"] == "no_director_scope_available"
     assert out["effective_responder_id"] is None
     assert out["effective_responder_scope"] == []
+
+
+def test_actor_lane_validation_rejects_out_of_scope_speaker_and_action_actor() -> None:
+    state = {
+        "selected_responder_set": [{"actor_id": "annette_reille"}],
+        "character_mind_records": [{"runtime_actor_id": "annette_reille"}],
+        "selected_scene_function": "probe_motive",
+        "prior_continuity_impacts": [],
+    }
+    generation = _generation_with_structured(
+        {
+            "primary_responder_id": "annette_reille",
+            "spoken_lines": [{"speaker_id": "ghost_actor", "text": "No."}],
+            "action_lines": [{"actor_id": "ghost_actor", "text": "He interrupts."}],
+        }
+    )
+    out = _actor_lane_validation(state, generation)
+    assert out["status"] == "rejected"
+    assert out["reason"] == "actor_lane_illegal_actor"
+    assert "ghost_actor" in out["illegal_actor_ids"]
+
+
+def test_actor_lane_validation_rejects_incompatible_initiative_for_withhold_scene() -> None:
+    state = {
+        "selected_responder_set": [{"actor_id": "annette_reille"}],
+        "character_mind_records": [{"runtime_actor_id": "annette_reille"}],
+        "selected_scene_function": "withhold_or_evade",
+        "prior_continuity_impacts": [{"class": "repair_attempt"}],
+    }
+    generation = _generation_with_structured(
+        {
+            "primary_responder_id": "annette_reille",
+            "initiative_events": [
+                {"actor_id": "annette_reille", "type": "interrupt", "reason": "pressure"},
+            ],
+        }
+    )
+    out = _actor_lane_validation(state, generation)
+    assert out["status"] == "rejected"
+    assert out["reason"] == "actor_lane_scene_function_mismatch"
+    assert out["scene_function_compatibility"] == "mismatch"

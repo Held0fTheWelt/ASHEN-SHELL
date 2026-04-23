@@ -72,7 +72,13 @@ class RoutingPolicy:
     def __init__(self, registry: ModelRegistry) -> None:
         self.registry = registry
 
-    def choose(self, *, task_type: str) -> RoutingDecision:
+    def choose(
+        self,
+        *,
+        task_type: str,
+        dramatic_requirements: dict[str, object] | None = None,
+    ) -> RoutingDecision:
+        _ = dramatic_requirements  # Maintained for forwards-compatible routing contracts.
         task = _normalize_task_type(task_type)
         if task in _SLM_FIRST_TASKS:
             for spec in self.registry.all().values():

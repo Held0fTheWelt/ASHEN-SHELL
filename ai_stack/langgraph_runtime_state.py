@@ -32,6 +32,7 @@ class RuntimeTurnState(TypedDict, total=False):
     retrieval: dict[str, Any]
     context_text: str
     model_prompt: str
+    dramatic_generation_packet: dict[str, Any]
     generation: dict[str, Any]
     fallback_needed: bool
     graph_diagnostics: dict[str, Any]
@@ -83,6 +84,12 @@ class RuntimeTurnState(TypedDict, total=False):
     # ``proposal_normalize`` graph node from
     # ``generation["metadata"]["structured_output"]``.
     responder_id: str
+    primary_responder_id: str
+    secondary_responder_ids: list[str]
+    spoken_lines: list[dict[str, Any] | str]
+    action_lines: list[dict[str, Any] | str]
+    initiative_events: list[dict[str, Any]]
+    state_effects: list[dict[str, Any]]
     function_type: str
     emotional_shift: dict[str, Any]
     social_outcome: str
@@ -91,6 +98,7 @@ class RuntimeTurnState(TypedDict, total=False):
     # matched the director's selected_responder_set and how many out-of-scope
     # actors were dropped. Populated by the validate_seam node.
     responder_reconciliation: dict[str, Any]
+    actor_lane_validation: dict[str, Any]
 
 
 STORY_RUNTIME_ROUTING_POLICY_ID = "story_runtime_core.RoutingPolicy"

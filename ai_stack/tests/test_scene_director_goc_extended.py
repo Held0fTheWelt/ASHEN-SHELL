@@ -957,6 +957,40 @@ class TestBuildResponderAndFunction:
         assert "rationale" in resolution
         assert "heuristic_trace" in resolution
         assert "selection_source" in resolution
+        assert "semantic_secondary_move_type" in resolution
+        assert "semantic_secondary_features" in resolution
+
+    def test_responder_set_includes_secondary_and_interrupter_under_thread_pressure(self):
+        """High thread pressure enables secondary + interruption roles."""
+        responders, scene_fn, implied, resolution = build_responder_and_function(
+            player_input="I cut in and accuse you again.",
+            interpreted_move={"move_type": "direct_accusation"},
+            pacing_mode="standard",
+            semantic_move_record={"move_type": "direct_accusation"},
+            prior_narrative_thread_state=_thread_feedback_state(),
+        )
+
+        roles = {row.get("role") for row in responders}
+        assert "primary_responder" in roles
+        assert "secondary_reactor" in roles
+        assert "interruption_candidate" in roles
+        assert resolution["responder_set_resolution"]["secondary_reactor_enabled"] is True
+        assert resolution["responder_set_resolution"]["interruption_candidate_enabled"] is True
+        assert len(resolution["selected_responder_roles"]) == len(responders)
+
+    def test_responder_set_stays_single_actor_without_pressure_triggers(self):
+        """Low-pressure turns keep a single primary responder."""
+        responders, scene_fn, implied, resolution = build_responder_and_function(
+            player_input="okay",
+            interpreted_move={"move_type": "cooperate"},
+            pacing_mode="standard",
+            semantic_move_record={"move_type": "cooperate"},
+        )
+
+        assert len(responders) == 1
+        assert responders[0]["role"] == "primary_responder"
+        assert resolution["responder_set_resolution"]["secondary_reactor_enabled"] is False
+        assert resolution["responder_set_resolution"]["interruption_candidate_enabled"] is False
 
 
 class TestYamlDefaultResponder:
@@ -1175,6 +1209,28 @@ class TestBuildPacingAndSilence:
         )
         assert pacing == "thin_edge"
         assert silence["mode"] == "brief"
+
+    def test_sparse_refusal_fragment_stays_alive_with_pressure(self):
+        """Sparse refusal should drive pressure, not withheld dead-air."""
+        pacing, silence = build_pacing_and_silence(
+            player_input="no",
+            interpreted_move={},
+            module_id=GOC_MODULE_ID,
+        )
+        assert pacing == "multi_pressure"
+        assert silence["mode"] == "normal"
+        assert silence["reason"] == "sparse_fragment_refusal_or_provocation_pressure"
+
+    def test_sparse_defensive_fragment_uses_compressed_brief(self):
+        """Sparse discomfort/defensive pause should stay active with brief response."""
+        pacing, silence = build_pacing_and_silence(
+            player_input="hmm",
+            interpreted_move={},
+            module_id=GOC_MODULE_ID,
+        )
+        assert pacing == "compressed"
+        assert silence["mode"] == "brief"
+        assert silence["reason"] == "sparse_fragment_defensive_pause_pressure"
 
     def test_awkward_pause_returns_withheld(self):
         """Awkward pause returns withheld (lines 611-625)."""

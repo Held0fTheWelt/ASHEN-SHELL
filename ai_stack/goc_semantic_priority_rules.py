@@ -462,6 +462,63 @@ _DEFAULT_RULE = SemanticPriorityRule(
 )
 
 
+def _rule_directness(rule: SemanticPriorityRule, *, features: dict[str, Any]) -> str:
+    """Resolve per-rule directness adjustments used by both ranked and primary paths."""
+    direct = rule.direct
+    if rule.rule_id == "alliance_reposition":
+        direct = "direct" if features.get("question_end") else "indirect"
+    elif rule.rule_id == "humiliating_exposure":
+        direct = "direct" if features.get("syn_accusation") else "indirect"
+    return direct
+
+
+def rank_goc_move_candidates(
+    *,
+    features: dict[str, Any],
+    combined: str,
+    intent_s: str,
+    interpreted_move: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Return deterministic, primary-first ranked semantic move candidates."""
+    ranked: list[dict[str, Any]] = []
+    rules = _GOC_PRIORITY_RULES
+    max_rank = max(len(rules), 1)
+    for idx, rule in enumerate(rules):
+        if not rule.predicate(features, combined, intent_s, interpreted_move):
+            continue
+        confidence = max(0.05, round((max_rank - idx) / max_rank, 4))
+        ranked.append(
+            {
+                "move_type": rule.move_type,
+                "social_move_family": rule.family,
+                "directness": _rule_directness(rule, features=features),
+                "pressure_tactic": rule.tactic,
+                "scene_risk_band": rule.risk,
+                "rank": idx + 1,
+                "confidence": confidence,
+                "trace_detail": rule.trace_detail,
+            }
+        )
+
+    if not ranked:
+        ranked.append(
+            {
+                "move_type": _DEFAULT_RULE.move_type,
+                "social_move_family": _DEFAULT_RULE.family,
+                "directness": _DEFAULT_RULE.direct,
+                "pressure_tactic": _DEFAULT_RULE.tactic,
+                "scene_risk_band": _DEFAULT_RULE.risk,
+                "rank": max_rank + 1,
+                "confidence": 0.05,
+                "trace_detail": _DEFAULT_RULE.trace_detail,
+            }
+        )
+
+    for order, row in enumerate(ranked, start=1):
+        row["rank"] = order
+    return ranked
+
+
 def resolve_goc_move_from_rules(
     *,
     features: dict[str, Any],
@@ -490,11 +547,7 @@ def resolve_goc_move_from_rules(
     for rule in rules:
         if not rule.predicate(features, combined, intent_s, interpreted_move):
             continue
-        direct = rule.direct
-        if rule.rule_id == "alliance_reposition":
-            direct = "direct" if features["question_end"] else "indirect"
-        elif rule.rule_id == "humiliating_exposure":
-            direct = "direct" if features["syn_accusation"] else "indirect"
+        direct = _rule_directness(rule, features=features)
         trace.append(
             InterpretationTraceItem(
                 step_id="apply_priority_rules",

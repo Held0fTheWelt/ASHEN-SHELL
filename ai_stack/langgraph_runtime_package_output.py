@@ -5,6 +5,7 @@ langgraph_runtime_executor).
 
 from __future__ import annotations
 
+from ai_stack.actor_survival_telemetry import build_actor_survival_telemetry
 from ai_stack.goc_turn_seams import build_diagnostics_refs
 from ai_stack.langgraph_runtime_package_output_repro import build_repro_metadata_and_health
 from ai_stack.langgraph_runtime_package_output_sections import (
@@ -121,4 +122,18 @@ def package_runtime_graph_output(
     routing_final = dict(state.get("routing") or {})
     routing_final["fallback_stage_reached"] = "graph_fallback_executed" if fallback_taken else "primary_only"
     update["routing"] = routing_final
+
+    # WS-5: Actor-survival telemetry — track where agent behavior survived/degraded
+    gen_ok = generation.get("success") is True
+    val_ok = validation.get("status") == "approved"
+    commit_ok = committed.get("commit_applied") is True
+    actor_telemetry = build_actor_survival_telemetry(
+        state,
+        generation_ok=gen_ok,
+        validation_ok=val_ok,
+        commit_applied=commit_ok,
+        fallback_taken=fallback_taken,
+    )
+    update["actor_survival_telemetry"] = actor_telemetry
+
     return update

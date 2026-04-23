@@ -118,10 +118,12 @@ def _reconcile_model_responders(
     meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
     structured = meta.get("structured_output") if isinstance(meta.get("structured_output"), dict) else {}
 
-    model_primary_raw = structured.get("responder_id")
+    model_primary_raw = structured.get("primary_responder_id") or structured.get("responder_id")
     model_primary = model_primary_raw.strip() if isinstance(model_primary_raw, str) else ""
 
-    model_scope_raw = structured.get("responder_actor_ids")
+    model_scope_raw = structured.get("secondary_responder_ids")
+    if not isinstance(model_scope_raw, list):
+        model_scope_raw = structured.get("responder_actor_ids")
     model_scope: list[str] = []
     if isinstance(model_scope_raw, list):
         for value in model_scope_raw:
@@ -168,6 +170,195 @@ def _reconcile_model_responders(
         "effective_responder_scope": in_scope,
         "dropped_out_of_scope_actors": out_of_scope,
         "dropped_out_of_scope_count": len(out_of_scope),
+    }
+
+
+_ALLOWED_INITIATIVE_EVENT_TYPES = {"interrupt", "escalate", "withdraw", "deflect", "counter"}
+
+
+def _actor_lane_validation(
+    state: "RuntimeTurnState",
+    generation: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate actor-lane legality without flattening actor-level structure."""
+    selected = state.get("selected_responder_set")
+    selected_list = selected if isinstance(selected, list) else []
+    director_actor_ids: list[str] = []
+    for row in selected_list:
+        if isinstance(row, dict):
+            aid = row.get("actor_id") or row.get("responder_id")
+            if isinstance(aid, str) and aid.strip():
+                director_actor_ids.append(aid.strip())
+
+    mind_records = state.get("character_mind_records")
+    if isinstance(mind_records, list):
+        for row in mind_records:
+            if isinstance(row, dict):
+                aid = row.get("runtime_actor_id") or row.get("character_key")
+                if isinstance(aid, str) and aid.strip():
+                    director_actor_ids.append(aid.strip())
+
+    allowed_actor_ids = sorted({aid for aid in director_actor_ids if aid})
+    allowed_scope = set(allowed_actor_ids)
+
+    meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    structured = meta.get("structured_output") if isinstance(meta.get("structured_output"), dict) else {}
+    if not structured:
+        return {
+            "status": "approved",
+            "reason": "no_structured_actor_output",
+            "allowed_actor_ids": allowed_actor_ids,
+            "illegal_actor_ids": [],
+            "invalid_initiative_types": [],
+            "scene_function_compatibility": "not_evaluated",
+            "checked_fields": [],
+        }
+
+    checked_fields: list[str] = []
+    illegal_actor_ids: list[str] = []
+    invalid_initiative_types: list[str] = []
+    scene_mismatch_reasons: list[str] = []
+
+    def _record_illegal_actor(actor_id: str) -> None:
+        aid = str(actor_id or "").strip()
+        if not aid:
+            return
+        if aid not in illegal_actor_ids:
+            illegal_actor_ids.append(aid)
+
+    def _actor_is_legal(actor_id: str) -> bool:
+        aid = str(actor_id or "").strip()
+        if not aid:
+            return True
+        if not allowed_scope:
+            return True
+        return aid in allowed_scope
+
+    primary_responder = structured.get("primary_responder_id") or structured.get("responder_id")
+    if isinstance(primary_responder, str) and primary_responder.strip():
+        checked_fields.append("primary_responder_id")
+        if not _actor_is_legal(primary_responder):
+            _record_illegal_actor(primary_responder)
+
+    secondary_ids = structured.get("secondary_responder_ids")
+    if isinstance(secondary_ids, list):
+        checked_fields.append("secondary_responder_ids")
+        for value in secondary_ids:
+            if isinstance(value, str) and value.strip() and not _actor_is_legal(value):
+                _record_illegal_actor(value)
+
+    spoken_lines = structured.get("spoken_lines")
+    if isinstance(spoken_lines, list):
+        checked_fields.append("spoken_lines")
+        for row in spoken_lines:
+            if not isinstance(row, dict):
+                continue
+            speaker_id = row.get("speaker_id")
+            if isinstance(speaker_id, str) and speaker_id.strip() and not _actor_is_legal(speaker_id):
+                _record_illegal_actor(speaker_id)
+
+    action_lines = structured.get("action_lines")
+    if isinstance(action_lines, list):
+        checked_fields.append("action_lines")
+        for row in action_lines:
+            if not isinstance(row, dict):
+                continue
+            actor_id = row.get("actor_id")
+            if isinstance(actor_id, str) and actor_id.strip() and not _actor_is_legal(actor_id):
+                _record_illegal_actor(actor_id)
+
+    initiative_events = structured.get("initiative_events")
+    if isinstance(initiative_events, list):
+        checked_fields.append("initiative_events")
+        for row in initiative_events:
+            if not isinstance(row, dict):
+                continue
+            actor_id = row.get("actor_id")
+            event_type_raw = row.get("type")
+            event_type = str(event_type_raw).strip().lower() if isinstance(event_type_raw, str) else ""
+            if isinstance(actor_id, str) and actor_id.strip() and not _actor_is_legal(actor_id):
+                _record_illegal_actor(actor_id)
+            if event_type and event_type not in _ALLOWED_INITIATIVE_EVENT_TYPES:
+                if event_type not in invalid_initiative_types:
+                    invalid_initiative_types.append(event_type)
+
+            scene_fn = str(state.get("selected_scene_function") or "").strip()
+            if scene_fn == "withhold_or_evade" and event_type in {"interrupt", "escalate", "counter"}:
+                scene_mismatch_reasons.append(
+                    f"scene_function={scene_fn} incompatible_with_initiative_type={event_type}"
+                )
+
+    prior_impacts = state.get("prior_continuity_impacts")
+    continuity_flags: list[str] = []
+    if isinstance(prior_impacts, list):
+        for item in prior_impacts:
+            if not isinstance(item, dict):
+                continue
+            cls = str(item.get("class") or item.get("continuity_class") or "").strip()
+            if cls and cls not in continuity_flags:
+                continuity_flags.append(cls)
+
+    scene_compatibility = "compatible"
+    if scene_mismatch_reasons:
+        scene_compatibility = "mismatch"
+
+    continuity_compatibility = "compatible"
+    if "repair_attempt" in continuity_flags and any(
+        isinstance(row, dict) and str(row.get("type") or "").strip().lower() in {"interrupt", "counter"}
+        for row in (initiative_events if isinstance(initiative_events, list) else [])
+    ):
+        continuity_compatibility = "warning_repair_tension_interrupt_mix"
+
+    if illegal_actor_ids:
+        return {
+            "status": "rejected",
+            "reason": "actor_lane_illegal_actor",
+            "allowed_actor_ids": allowed_actor_ids,
+            "illegal_actor_ids": illegal_actor_ids,
+            "invalid_initiative_types": invalid_initiative_types,
+            "scene_function_compatibility": scene_compatibility,
+            "scene_function_mismatch_reasons": scene_mismatch_reasons,
+            "continuity_classes": continuity_flags,
+            "continuity_compatibility": continuity_compatibility,
+            "checked_fields": checked_fields,
+        }
+    if invalid_initiative_types:
+        return {
+            "status": "rejected",
+            "reason": "actor_lane_invalid_initiative_type",
+            "allowed_actor_ids": allowed_actor_ids,
+            "illegal_actor_ids": illegal_actor_ids,
+            "invalid_initiative_types": invalid_initiative_types,
+            "scene_function_compatibility": scene_compatibility,
+            "scene_function_mismatch_reasons": scene_mismatch_reasons,
+            "continuity_classes": continuity_flags,
+            "continuity_compatibility": continuity_compatibility,
+            "checked_fields": checked_fields,
+        }
+    if scene_mismatch_reasons:
+        return {
+            "status": "rejected",
+            "reason": "actor_lane_scene_function_mismatch",
+            "allowed_actor_ids": allowed_actor_ids,
+            "illegal_actor_ids": illegal_actor_ids,
+            "invalid_initiative_types": invalid_initiative_types,
+            "scene_function_compatibility": scene_compatibility,
+            "scene_function_mismatch_reasons": scene_mismatch_reasons,
+            "continuity_classes": continuity_flags,
+            "continuity_compatibility": continuity_compatibility,
+            "checked_fields": checked_fields,
+        }
+    return {
+        "status": "approved",
+        "reason": "actor_lane_legal",
+        "allowed_actor_ids": allowed_actor_ids,
+        "illegal_actor_ids": illegal_actor_ids,
+        "invalid_initiative_types": invalid_initiative_types,
+        "scene_function_compatibility": scene_compatibility,
+        "scene_function_mismatch_reasons": scene_mismatch_reasons,
+        "continuity_classes": continuity_flags,
+        "continuity_compatibility": continuity_compatibility,
+        "checked_fields": checked_fields,
     }
 
 
@@ -309,8 +500,11 @@ def _retrieval_continuity_query_context(state: RuntimeTurnState) -> tuple[str, d
     add_line(
         "actor_precedents",
         "prior_planner_truth",
+        prior_planner.get("primary_responder_id"),
         prior_planner.get("responder_id"),
+        prior_planner.get("secondary_responder_ids"),
         prior_planner.get("responder_scope"),
+        prior_planner.get("last_actor_outcome_summary"),
     )
     add_line(
         "responder_precedents",
@@ -329,6 +523,7 @@ def _retrieval_continuity_query_context(state: RuntimeTurnState) -> tuple[str, d
         "prior_planner_truth",
         prior_planner.get("social_outcome"),
         prior_planner.get("dramatic_direction"),
+        prior_planner.get("initiative_summary"),
     )
 
     prior_dramatic = state.get("prior_dramatic_signature")
@@ -437,6 +632,143 @@ def _invoke_runtime_adapter_with_langchain(**kwargs: Any) -> Any:
     from ai_stack.langchain_integration import invoke_runtime_adapter_with_langchain
 
     return invoke_runtime_adapter_with_langchain(**kwargs)
+
+
+def _build_dramatic_generation_packet(state: RuntimeTurnState) -> dict[str, Any]:
+    """Build the authoritative dramatic packet consumed by generation."""
+    responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
+    responder_ids: list[str] = []
+    for row in responders:
+        if not isinstance(row, dict):
+            continue
+        actor_id = str(row.get("actor_id") or row.get("responder_id") or "").strip()
+        if actor_id and actor_id not in responder_ids:
+            responder_ids.append(actor_id)
+
+    minds = state.get("character_mind_records") if isinstance(state.get("character_mind_records"), list) else []
+    compact_minds: list[dict[str, Any]] = []
+    for row in minds[:4]:
+        if not isinstance(row, dict):
+            continue
+        compact_minds.append(
+            {
+                "actor_id": row.get("runtime_actor_id") or row.get("character_key"),
+                "formal_role_label": row.get("formal_role_label"),
+                "tactical_posture": row.get("tactical_posture"),
+                "pressure_response_bias": row.get("pressure_response_bias"),
+            }
+        )
+
+    prior = state.get("prior_continuity_impacts") if isinstance(state.get("prior_continuity_impacts"), list) else []
+    continuity_constraints: list[dict[str, str]] = []
+    for item in prior[:6]:
+        if not isinstance(item, dict):
+            continue
+        continuity_constraints.append(
+            {
+                "class": str(item.get("class") or item.get("continuity_class") or "").strip(),
+                "description": str(item.get("description") or item.get("summary") or item.get("note") or "").strip(),
+            }
+        )
+
+    scene_assessment = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
+    semantic = state.get("semantic_move_record") if isinstance(state.get("semantic_move_record"), dict) else {}
+    ranked_semantic = semantic.get("ranked_move_candidates") if isinstance(semantic.get("ranked_move_candidates"), list) else []
+    ranked_semantic_compact: list[dict[str, Any]] = []
+    for row in ranked_semantic[:3]:
+        if not isinstance(row, dict):
+            continue
+        ranked_semantic_compact.append(
+            {
+                "move_type": row.get("move_type"),
+                "confidence": row.get("confidence"),
+                "rank": row.get("rank"),
+            }
+        )
+    packet = {
+        "contract": "dramatic_generation_packet.v1",
+        "session_id": state.get("session_id"),
+        "module_id": state.get("module_id"),
+        "current_scene_id": state.get("current_scene_id"),
+        "selected_scene_function": state.get("selected_scene_function"),
+        "selected_responder_set": responders,
+        "primary_responder_id": responder_ids[0] if responder_ids else None,
+        "secondary_responder_ids": responder_ids[1:] if len(responder_ids) > 1 else [],
+        "pacing_mode": state.get("pacing_mode"),
+        "silence_brevity_decision": state.get("silence_brevity_decision")
+        if isinstance(state.get("silence_brevity_decision"), dict)
+        else {},
+        "semantic_interpretation": {
+            "primary_move_type": semantic.get("move_type"),
+            "secondary_move_type": semantic.get("secondary_move_type"),
+            "secondary_dramatic_features": semantic.get("secondary_dramatic_features")
+            if isinstance(semantic.get("secondary_dramatic_features"), list)
+            else [],
+            "ranked_move_candidates": ranked_semantic_compact,
+        },
+        "character_mind_records": compact_minds,
+        "continuity_constraints": continuity_constraints,
+        "escalation_pressure": {
+            "pressure_state": scene_assessment.get("pressure_state"),
+            "thread_pressure_state": scene_assessment.get("thread_pressure_state"),
+        },
+        "active_scene_packet": {
+            "scene_core": scene_assessment.get("scene_core"),
+            "guidance_phase_key": scene_assessment.get("guidance_phase_key"),
+            "guidance_phase_title": scene_assessment.get("guidance_phase_title"),
+            "canonical_setting": scene_assessment.get("canonical_setting"),
+            "narrative_scope": scene_assessment.get("narrative_scope"),
+        },
+    }
+    return packet
+
+
+def _drama_aware_routing_requirements(state: RuntimeTurnState) -> dict[str, Any]:
+    """Derive bounded dramatic requirements used by routing policy selection."""
+    scene_assessment = (
+        state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
+    )
+    semantic = state.get("semantic_move_record") if isinstance(state.get("semantic_move_record"), dict) else {}
+    responders = (
+        state.get("selected_responder_set")
+        if isinstance(state.get("selected_responder_set"), list)
+        else []
+    )
+    actor_count = len([x for x in responders if isinstance(x, dict)])
+    scene_fn = str(state.get("selected_scene_function") or "").strip()
+    pressure_state = str(scene_assessment.get("pressure_state") or "").strip()
+    semantic_family = str(semantic.get("social_move_family") or "").strip()
+    semantic_risk = str(semantic.get("scene_risk_band") or "").strip()
+    move_type = str(semantic.get("move_type") or "").strip()
+    escalation_density = "low"
+    if scene_fn in {"escalate_conflict", "redirect_blame", "scene_pivot"}:
+        escalation_density = "high"
+    elif scene_fn in {"probe_motive", "withhold_or_evade"}:
+        escalation_density = "moderate"
+    if move_type in {"escalation_threat", "direct_accusation", "humiliating_exposure"}:
+        escalation_density = "high"
+    if semantic_family in {"escalate", "attack"} and escalation_density != "high":
+        escalation_density = "moderate"
+    if semantic_risk == "high":
+        escalation_density = "high"
+
+    dialogue_complexity = "low"
+    player_text = str(state.get("player_input") or "")
+    word_count = len([w for w in player_text.replace("\n", " ").split(" ") if w.strip()])
+    if actor_count >= 2 or word_count >= 18 or semantic_risk == "high":
+        dialogue_complexity = "high"
+    elif word_count >= 8 or escalation_density == "moderate":
+        dialogue_complexity = "moderate"
+
+    return {
+        "contract": "dramatic_routing_requirements.v1",
+        "scene_pressure": pressure_state or "unknown",
+        "actor_count": actor_count,
+        "escalation_density": escalation_density,
+        "dialogue_complexity": dialogue_complexity,
+        "selected_scene_function": scene_fn or None,
+        "semantic_move_type": move_type or None,
+    }
 
 
 @dataclass
@@ -1033,6 +1365,9 @@ class RuntimeTurnGraphExecutor:
             prior_narrative_thread_state=state.get("prior_narrative_thread_state")
             if isinstance(state.get("prior_narrative_thread_state"), dict)
             else None,
+            semantic_move_record=state.get("semantic_move_record")
+            if isinstance(state.get("semantic_move_record"), dict)
+            else None,
         )
         if module_id != GOC_MODULE_ID:
             update["selected_responder_set"] = []
@@ -1124,6 +1459,7 @@ class RuntimeTurnGraphExecutor:
     def _assemble_model_context(self, state: RuntimeTurnState) -> RuntimeTurnState:
         """Attach post-director runtime state to the model-visible prompt."""
         prompt = str(state.get("model_prompt") or state.get("player_input") or "")
+        dramatic_packet = _build_dramatic_generation_packet(state)
         lines: list[str] = ["Director runtime state (authoritative, model-visible):"]
 
         scene_assess = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
@@ -1251,8 +1587,16 @@ class RuntimeTurnGraphExecutor:
                 if names:
                     lines.append(f"Canonical Escalation Axes: {', '.join(names)}")
 
+        lines.append("Dramatic Generation Packet (authoritative JSON):")
+        lines.append(json.dumps(dramatic_packet, sort_keys=True))
+        lines.append(
+            "Generation directive: produce actor-level exchange (spoken_lines/action_lines/initiative_events) "
+            "aligned with selected_scene_function, responder scope, pacing, and continuity constraints."
+        )
+
         update = _track(state, node_name="assemble_model_context")
         update["model_prompt"] = f"{prompt}\n\n" + "\n".join(lines)
+        update["dramatic_generation_packet"] = dramatic_packet
         return update
 
     def _route_model(self, state: RuntimeTurnState) -> RuntimeTurnState:
@@ -1267,7 +1611,14 @@ class RuntimeTurnGraphExecutor:
             RuntimeTurnState:
                 Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
         """
-        decision = self.routing.choose(task_type=state["task_type"])
+        dramatic_requirements = _drama_aware_routing_requirements(state)
+        try:
+            decision = self.routing.choose(
+                task_type=state["task_type"],
+                dramatic_requirements=dramatic_requirements,
+            )
+        except TypeError:
+            decision = self.routing.choose(task_type=state["task_type"])
         selected = self.registry.get(decision.selected_model)
         update = _track(state, node_name="route_model")
         fallback_chain: list[str] = [decision.selected_model]
@@ -1308,6 +1659,8 @@ class RuntimeTurnGraphExecutor:
             "generation_execution_mode": last_choice_meta.get("generation_execution_mode")
             or (self.generation_execution_mode or None),
             "mock_fallback_blocked": bool(last_choice_meta.get("mock_fallback_blocked")),
+            "drama_aware_requirements": dramatic_requirements,
+            "drama_aware_profile": last_choice_meta.get("drama_aware_profile"),
         }
         update["selected_provider"] = decision.selected_provider or ""
         update["selected_timeout"] = float(selected.timeout_seconds) if selected else 10.0
@@ -1354,6 +1707,9 @@ class RuntimeTurnGraphExecutor:
                 "retrieval_context": state.get("context_text"),
                 "timeout_seconds": float(state.get("selected_timeout", 10.0)),
                 "model_prompt": state.get("model_prompt", ""),
+                "dramatic_generation_packet": state.get("dramatic_generation_packet")
+                if isinstance(state.get("dramatic_generation_packet"), dict)
+                else None,
             }
             if api_model:
                 invoke_kw["model_name"] = api_model
@@ -1371,6 +1727,19 @@ class RuntimeTurnGraphExecutor:
                 "langchain_parser_error": runtime_result.parser_error,
                 "structured_output": structured,
                 "adapter_invocation_mode": ADAPTER_INVOCATION_LANGCHAIN_PRIMARY,
+                "dramatic_generation_packet_included": isinstance(
+                    state.get("dramatic_generation_packet"), dict
+                ),
+                "dramatic_generation_packet_scene_function": (
+                    state.get("dramatic_generation_packet", {}).get("selected_scene_function")
+                    if isinstance(state.get("dramatic_generation_packet"), dict)
+                    else None
+                ),
+                "dramatic_generation_packet_primary_responder": (
+                    state.get("dramatic_generation_packet", {}).get("primary_responder_id")
+                    if isinstance(state.get("dramatic_generation_packet"), dict)
+                    else None
+                ),
             }
             if not call.success:
                 outcome = "error"
@@ -1510,6 +1879,9 @@ class RuntimeTurnGraphExecutor:
             feedback_codes=list(feedback_codes),
             rewrite_instruction=build_rewrite_instruction(list(feedback_codes)),
             model_name=str(provider_model).strip() if provider_model else None,
+            dramatic_generation_packet=state.get("dramatic_generation_packet")
+            if isinstance(state.get("dramatic_generation_packet"), dict)
+            else None,
         )
         call = runtime_result.call
         rewritten = dict(generation)
@@ -1528,6 +1900,9 @@ class RuntimeTurnGraphExecutor:
             "self_correction_attempt_index": attempt_index,
             "self_correction_feedback_codes": list(feedback_codes),
             "self_correction_candidate_model": candidate_mid,
+            "dramatic_generation_packet_included": isinstance(
+                state.get("dramatic_generation_packet"), dict
+            ),
         }
         proposed = structured_output_to_proposed_effects(
             runtime_result.parsed_output.model_dump(mode="json") if runtime_result.parsed_output else None
@@ -1565,10 +1940,17 @@ class RuntimeTurnGraphExecutor:
             if raw.strip().startswith("{"):
                 try:
                     parsed = json.loads(raw)
+                    parsed_narrative = ""
+                    if isinstance(parsed, dict):
+                        narr_summary = parsed.get("narration_summary")
+                        legacy_narrative = parsed.get("narrative_response")
+                        if isinstance(narr_summary, str) and narr_summary.strip():
+                            parsed_narrative = narr_summary.strip()
+                        elif isinstance(legacy_narrative, str) and legacy_narrative.strip():
+                            parsed_narrative = legacy_narrative.strip()
                     if (
                         isinstance(parsed, dict)
-                        and isinstance(parsed.get("narrative_response"), str)
-                        and parsed["narrative_response"].strip()
+                        and parsed_narrative
                     ):
                         meta = dict(meta)
                         meta["structured_output"] = parsed
@@ -1584,8 +1966,31 @@ class RuntimeTurnGraphExecutor:
             generation["metadata"] = meta
         proposed = structured_output_to_proposed_effects(cleaned)
         if isinstance(cleaned, dict):
+            if cleaned.get("primary_responder_id"):
+                update["primary_responder_id"] = str(cleaned["primary_responder_id"])
             if cleaned.get("responder_id"):
                 update["responder_id"] = str(cleaned["responder_id"])
+            if cleaned.get("primary_responder_id") and not update.get("responder_id"):
+                update["responder_id"] = str(cleaned["primary_responder_id"])
+            secondary = cleaned.get("secondary_responder_ids")
+            if (not isinstance(secondary, list) or not secondary) and isinstance(
+                cleaned.get("responder_actor_ids"), list
+            ):
+                secondary = cleaned.get("responder_actor_ids")
+            if isinstance(secondary, list):
+                update["secondary_responder_ids"] = [str(x).strip() for x in secondary if str(x).strip()]
+            spoken = cleaned.get("spoken_lines")
+            if isinstance(spoken, list):
+                update["spoken_lines"] = list(spoken)
+            action = cleaned.get("action_lines")
+            if isinstance(action, list):
+                update["action_lines"] = list(action)
+            initiative = cleaned.get("initiative_events")
+            if isinstance(initiative, list):
+                update["initiative_events"] = [x for x in initiative if isinstance(x, dict)]
+            state_effects = cleaned.get("state_effects")
+            if isinstance(state_effects, list):
+                update["state_effects"] = [x for x in state_effects if isinstance(x, dict)]
             if cleaned.get("function_type"):
                 update["function_type"] = str(cleaned["function_type"])
             if isinstance(cleaned.get("emotional_shift"), dict):
@@ -1683,9 +2088,27 @@ class RuntimeTurnGraphExecutor:
             if len(raw.strip()) >= 48 or generation.get("success") is True:
                 outcome = degrade_validation_outcome(outcome, reason="opening_leniency_approved")
 
+        actor_lane_validation = _actor_lane_validation(state, generation)
+        if (
+            actor_lane_validation.get("status") == "rejected"
+            and outcome.get("status") == "approved"
+        ):
+            outcome = {
+                **outcome,
+                "status": "rejected",
+                "reason": actor_lane_validation.get("reason") or "actor_lane_validation_rejected",
+                "actor_lane_validation": actor_lane_validation,
+            }
+        else:
+            outcome = {
+                **outcome,
+                "actor_lane_validation": actor_lane_validation,
+            }
+
         update["generation"] = generation
         update["proposed_state_effects"] = proposed
         update["validation_outcome"] = outcome
+        update["actor_lane_validation"] = actor_lane_validation
         update["self_correction"] = {
             "attempt_count": len(self_correction_attempts),
             "attempts": self_correction_attempts,

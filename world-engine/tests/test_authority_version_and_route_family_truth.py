@@ -160,6 +160,61 @@ def _policy_with_live_route() -> GovernedStoryRoutingPolicy:
     )
 
 
+def _policy_with_live_route_and_ai_fallback() -> GovernedStoryRoutingPolicy:
+    reg = ModelRegistry()
+    reg.register(
+        ModelSpec(
+            model_name="mock_mock",
+            provider="mock_provider",
+            llm_or_slm="mock",
+            timeout_seconds=10.0,
+            structured_output_capable=False,
+            cost_class="governed",
+            latency_class="governed",
+            use_cases=("mock",),
+            provider_model_name="mock-mock",
+        )
+    )
+    reg.register(
+        ModelSpec(
+            model_name="fast_llm",
+            provider="mock_provider",
+            llm_or_slm="llm",
+            timeout_seconds=10.0,
+            structured_output_capable=True,
+            cost_class="governed",
+            latency_class="governed",
+            use_cases=("narrative",),
+            provider_model_name="fast-llm",
+        )
+    )
+    reg.register(
+        ModelSpec(
+            model_name="rich_llm",
+            provider="mock_provider",
+            llm_or_slm="llm",
+            timeout_seconds=20.0,
+            structured_output_capable=True,
+            cost_class="governed",
+            latency_class="governed",
+            use_cases=("narrative",),
+            provider_model_name="rich-llm",
+        )
+    )
+    return GovernedStoryRoutingPolicy(
+        registry=reg,
+        routes={
+            "narrative_live_generation_global": {
+                "route_id": "narrative_live_generation_global",
+                "preferred_model_id": "rich_llm",
+                "fallback_model_id": "fast_llm",
+                "mock_model_id": "mock_mock",
+            }
+        },
+        generation_mode="hybrid",
+    )
+
+
 def test_narrative_task_reports_route_family_truth() -> None:
     policy = _policy_with_live_route()
     decision = policy.choose(task_type="narrative_formulation")
@@ -228,3 +283,35 @@ def test_build_governed_components_uses_new_policy() -> None:
     routing.choose(task_type="narrative_formulation")
     meta = routing._last_choice_meta or {}
     assert meta["route_family"] == "narrative_live_generation"
+
+
+def test_governed_routing_prefers_rich_model_for_high_complexity_turns() -> None:
+    policy = _policy_with_live_route_and_ai_fallback()
+    decision = policy.choose(
+        task_type="narrative_formulation",
+        dramatic_requirements={
+            "dialogue_complexity": "high",
+            "scene_pressure": "high_blame",
+            "actor_count": 3,
+            "escalation_density": "high",
+        },
+    )
+    assert decision.selected_model == "rich_llm"
+    meta = policy._last_choice_meta or {}
+    assert meta.get("drama_aware_profile") == "high_complexity"
+
+
+def test_governed_routing_can_pick_fast_model_for_standard_complexity_turns() -> None:
+    policy = _policy_with_live_route_and_ai_fallback()
+    decision = policy.choose(
+        task_type="narrative_formulation",
+        dramatic_requirements={
+            "dialogue_complexity": "low",
+            "scene_pressure": "moderate_tension",
+            "actor_count": 1,
+            "escalation_density": "low",
+        },
+    )
+    assert decision.selected_model == "fast_llm"
+    meta = policy._last_choice_meta or {}
+    assert meta.get("drama_aware_profile") == "standard_complexity"

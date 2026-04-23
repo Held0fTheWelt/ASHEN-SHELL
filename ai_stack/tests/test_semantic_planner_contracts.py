@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from ai_stack.character_mind_contract import CharacterMindRecord, FieldProvenance
 from ai_stack.scene_plan_contract import ScenePlanRecord
-from ai_stack.semantic_move_contract import InterpretationTraceItem, SemanticMoveRecord
+from ai_stack.semantic_move_contract import (
+    InterpretationTraceItem,
+    RankedMoveCandidate,
+    SemanticMoveRecord,
+)
 from ai_stack.social_state_contract import SocialStateRecord
 
 
@@ -21,10 +25,25 @@ def test_semantic_move_record_roundtrip_json() -> None:
         ],
         interpreter_kind="narrative",
         feature_snapshot={"syn_accusation": True},
+        ranked_move_candidates=[
+            RankedMoveCandidate(
+                move_type="direct_accusation",
+                social_move_family="attack",
+                directness="direct",
+                pressure_tactic="blame_assignment",
+                scene_risk_band="high",
+                rank=1,
+                confidence=0.91,
+                trace_detail="rule:accusation_synset",
+            )
+        ],
+        secondary_move_type=None,
+        secondary_dramatic_features=["carry_forward_blame_pressure"],
     )
     d = r.to_runtime_dict()
     r2 = SemanticMoveRecord.model_validate(d)
     assert r2.move_type == "direct_accusation"
+    assert r2.ranked_move_candidates
 
 
 def test_social_state_record_roundtrip() -> None:

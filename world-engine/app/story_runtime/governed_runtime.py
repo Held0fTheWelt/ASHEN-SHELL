@@ -79,7 +79,12 @@ class GovernedStoryRoutingPolicy:
     # ``story_runtime_core``.
     _last_choice_meta: dict[str, Any] | None = None
 
-    def choose(self, *, task_type: str) -> RoutingDecision:
+    def choose(
+        self,
+        *,
+        task_type: str,
+        dramatic_requirements: dict[str, Any] | None = None,
+    ) -> RoutingDecision:
         resolved = self._resolve_route_for_task(task_type)
         route = resolved["route"]
         route_id = resolved["route_id"]
@@ -91,22 +96,56 @@ class GovernedStoryRoutingPolicy:
         fallback = str(route.get("fallback_model_id") or "").strip() or None
         mock_mid = str(route.get("mock_model_id") or "").strip() or None
 
+        def _is_non_mock_model(model_id: str | None) -> bool:
+            if not model_id:
+                return False
+            spec = self.registry.get(model_id)
+            return spec is not None and str(spec.provider or "").strip().lower() != "mock"
+
+        preferred_ai = preferred if _is_non_mock_model(preferred) else None
+        fallback_ai = fallback if _is_non_mock_model(fallback) else None
+
+        req = dramatic_requirements if isinstance(dramatic_requirements, dict) else {}
+        complexity = str(req.get("dialogue_complexity") or "").strip().lower()
+        scene_pressure = str(req.get("scene_pressure") or "").strip().lower()
+        escalation_density = str(req.get("escalation_density") or "").strip().lower()
+        actor_count_raw = req.get("actor_count")
+        try:
+            actor_count = int(actor_count_raw) if actor_count_raw is not None else 1
+        except (TypeError, ValueError):
+            actor_count = 1
+        high_complexity = (
+            complexity == "high"
+            or scene_pressure in {"high_blame", "thread_pressure_high"}
+            or escalation_density == "high"
+            or actor_count >= 2
+        )
+        drama_profile = "high_complexity" if high_complexity else "standard_complexity"
+
         mode = (str(self.generation_mode or "").strip().lower() or "mock_only")
         if mode == "ai_only":
-            selected = preferred or fallback
+            if high_complexity:
+                selected = preferred_ai or fallback_ai
+                fallback_chain = fallback_ai or None
+            else:
+                selected = fallback_ai or preferred_ai
+                fallback_chain = preferred_ai or None
             if not selected:
                 raise ValueError(
                     f"generation_execution_mode=ai_only but no AI model available for task_type={task_type!r}"
                 )
-            fallback_chain = fallback or None
             mock_fallback_blocked = True
         elif mode == "mock_only":
             selected = mock_mid
             fallback_chain = None
             mock_fallback_blocked = False
         else:  # hybrid (default)
-            selected = preferred or fallback or mock_mid
-            fallback_chain = fallback or mock_mid
+            if high_complexity:
+                selected = preferred_ai or fallback_ai or mock_mid
+                fallback_chain = fallback_ai or mock_mid
+            else:
+                selected = fallback_ai or preferred_ai or mock_mid
+                fallback_chain = preferred_ai or mock_mid
             mock_fallback_blocked = False
 
         if not selected:
@@ -131,6 +170,8 @@ class GovernedStoryRoutingPolicy:
             "route_substitution_occurred": substitution_occurred,
             "generation_execution_mode": mode,
             "mock_fallback_blocked": mock_fallback_blocked,
+            "drama_aware_profile": drama_profile,
+            "drama_aware_requirements": req or None,
         }
         return RoutingDecision(
             selected_model=selected,

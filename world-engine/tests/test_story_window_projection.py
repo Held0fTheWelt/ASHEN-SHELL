@@ -32,6 +32,7 @@ def test_story_window_projection_uses_committed_opening_and_player_turn() -> Non
             "visible_output_bundle": {
                 "gm_narration": ["The answer lands hard."],
                 "spoken_lines": ["Annette: Enough?"],
+                "action_lines": ["Annette folds her arms and leans over the table."],
                 "render_support": {
                     "projection_version": "director_surface_hints.v1",
                     "player_visible": False,
@@ -61,6 +62,7 @@ def test_story_window_projection_uses_committed_opening_and_player_turn() -> Non
                 "validation_status": "approved",
                 "commit_applied": True,
             },
+            "runtime_governance_surface": {"governed_runtime_active": True, "fallback_stage_reached": "primary_only"},
             "selected_scene_function": "escalate_conflict",
             "visibility_class_markers": ["truth_aligned"],
         },
@@ -75,7 +77,11 @@ def test_story_window_projection_uses_committed_opening_and_player_turn() -> Non
     assert entries[1]["text"] == "I say that is enough."
     assert entries[2]["text"] == "The answer lands hard."
     assert entries[2]["spoken_lines"] == ["Annette: Enough?"]
+    assert entries[2]["action_lines"] == ["Annette folds her arms and leans over the table."]
     assert entries[2]["committed_consequences"] == ["tension_escalates"]
+    assert entries[2]["responder_id"] == "annette_reille"
+    assert entries[2]["degraded"] is False
+    assert entries[2]["degraded_reasons"] == []
     assert entries[2]["render_support"]["player_visible"] is False
     assert entries[2]["authority_summary"]["validation_status"] == "approved"
     assert entries[2]["authority_summary"]["selected_scene_function"] == "escalate_conflict"

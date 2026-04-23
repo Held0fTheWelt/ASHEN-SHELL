@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from story_runtime_core import RoutingPolicy, interpret_player_input
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
-from story_runtime_core.model_registry import build_default_registry
+from story_runtime_core.model_registry import RoutingDecision, build_default_registry
 
 langgraph_runtime = pytest.importorskip(
     "ai_stack.langgraph_runtime",
@@ -81,6 +81,23 @@ class FailingPrimaryAdapter(BaseModelAdapter):
         model_name: str | None = None,
     ) -> ModelCallResult:
         return ModelCallResult(content="", success=False, metadata={"error": "forced_primary_failure"})
+
+
+class DramaAwareRoutingCapture:
+    """Routing test-double that records dramatic requirements passed by the graph."""
+
+    def __init__(self, registry) -> None:
+        self.registry = registry
+        self.last_requirements = None
+
+    def choose(self, *, task_type: str, dramatic_requirements=None):
+        self.last_requirements = dramatic_requirements
+        return RoutingDecision(
+            selected_model="openai:gpt-4o-mini",
+            selected_provider="openai",
+            route_reason="role_matrix_primary",
+            fallback_model="ollama:llama3.2",
+        )
 
 
 def _build_graph(tmp_path: Path) -> RuntimeTurnGraphExecutor:
@@ -198,8 +215,19 @@ def test_runtime_turn_graph_delivers_director_context_to_model_prompt(tmp_path: 
     assert "Pacing Directive:" in prompt
     assert "Eligible Responders:" in prompt
     assert "Canonical GoC Phase Law:" in prompt
+    assert "Dramatic Generation Packet (authoritative JSON):" in prompt
+    assert '"selected_scene_function"' in prompt
+    assert '"selected_responder_set"' in prompt
     assert adapter.prompts
     assert "Director runtime state (authoritative, model-visible):" in adapter.prompts[-1]
+    assert "Dramatic Generation Packet (authoritative JSON):" in adapter.prompts[-1]
+    gen_meta = (result.get("generation") or {}).get("metadata") or {}
+    assert gen_meta.get("dramatic_generation_packet_included") is True
+    assert gen_meta.get("dramatic_generation_packet_scene_function")
+    packet = result.get("dramatic_generation_packet") or {}
+    semantic_packet = packet.get("semantic_interpretation") or {}
+    assert semantic_packet.get("primary_move_type")
+    assert "ranked_move_candidates" in semantic_packet
 
 
 def test_runtime_turn_graph_executes_nodes_and_emits_trace(tmp_path: Path) -> None:
@@ -234,6 +262,35 @@ def test_runtime_turn_graph_executes_nodes_and_emits_trace(tmp_path: Path) -> No
     assert hints.get("prompt_length_bucket") in {"small", "medium", "large"}
     assert hints.get("adapter_invocation_mode") == ADAPTER_INVOCATION_LANGCHAIN_PRIMARY
     assert hints.get("model_fallback_used") is False
+
+
+def test_runtime_turn_graph_passes_drama_aware_routing_requirements(tmp_path: Path) -> None:
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("Drama-aware routing capture sample.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    registry = build_default_registry()
+    routing = DramaAwareRoutingCapture(registry)
+    graph = RuntimeTurnGraphExecutor(
+        interpreter=interpret_player_input,
+        routing=routing,
+        registry=registry,
+        adapters={"mock": SuccessAdapter(), "openai": SuccessAdapter(), "ollama": SuccessAdapter()},
+        retriever=ContextRetriever(corpus),
+        assembler=ContextPackAssembler(),
+    )
+    result = graph.run(
+        session_id="session_1",
+        module_id="god_of_carnage",
+        current_scene_id="living_room",
+        player_input="No, and don't dodge this.",
+    )
+    assert isinstance(routing.last_requirements, dict)
+    assert routing.last_requirements.get("dialogue_complexity")
+    route = result.get("routing") or {}
+    req = route.get("drama_aware_requirements") or {}
+    assert req.get("contract") == "dramatic_routing_requirements.v1"
+    assert req.get("actor_count") >= 1
 
 
 def test_runtime_turn_graph_fallback_uses_raw_adapter_and_marks_invocation_mode(tmp_path: Path) -> None:

@@ -44,9 +44,15 @@ def test_planner_truth_populated_from_graph_state() -> None:
             "metadata": {
                 "structured_output": {
                     "responder_id": "annette",
+                    "primary_responder_id": "annette",
+                    "secondary_responder_ids": ["alain"],
                     "function_type": "pressure_probe",
                     "social_outcome": "tension_escalates",
                     "dramatic_direction": "escalate",
+                    "initiative_events": [
+                        {"actor_id": "annette", "type": "interrupt"},
+                        {"actor_id": "alain", "type": "counter"},
+                    ],
                     "emotional_shift": {"annette": "agitated"},
                 },
             },
@@ -61,11 +67,16 @@ def test_planner_truth_populated_from_graph_state() -> None:
                 "layers_used": ["scene_packet", "responder_scope"],
             },
             "responder_id": "annette",
+            "selected_responder_set": [{"actor_id": "annette"}, {"actor_id": "alain"}],
             "responder_scope": ["annette", "alain"],
             "pacing_mode": "measured",
             "silence_mode": "break",
             "social_outcome": "tension_escalates",
             "dramatic_direction": "escalate",
+            "visible_output_bundle": {
+                "spoken_lines": [{"speaker_id": "annette", "text": "Enough."}],
+                "action_lines": [{"actor_id": "alain", "text": "leans in"}],
+            },
             "emotional_shift": {"annette": "agitated"},
             "dramatic_effect_gate": {"passed": True, "tags": ["escalation"]},
             "social_state_record": {
@@ -89,10 +100,20 @@ def test_planner_truth_populated_from_graph_state() -> None:
     assert isinstance(pt, PlannerTruth)
     assert pt.selected_scene_function == "pressure_probe"
     assert pt.responder_id == "annette"
+    assert pt.primary_responder_id == "annette"
+    assert pt.secondary_responder_ids == ["alain"]
     assert pt.responder_scope == ["annette", "alain"]
     assert pt.function_type == "pressure_probe"
     assert pt.pacing_mode == "measured"
     assert pt.silence_mode == "break"
+    assert pt.spoken_line_count == 1
+    assert pt.action_line_count == 1
+    assert pt.initiative_summary["event_count"] == 2
+    assert pt.initiative_summary["event_types"] == ["interrupt", "counter"]
+    assert pt.initiative_summary["actors"] == ["annette", "alain"]
+    assert "primary_responder=annette" in (pt.last_actor_outcome_summary or "")
+    assert "spoken_lines=1" in (pt.last_actor_outcome_summary or "")
+    assert "action_lines=1" in (pt.last_actor_outcome_summary or "")
     assert pt.social_outcome == "tension_escalates"
     assert pt.dramatic_direction == "escalate"
     assert pt.emotional_shift == {"annette": "agitated"}

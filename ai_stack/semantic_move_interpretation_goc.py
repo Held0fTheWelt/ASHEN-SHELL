@@ -14,10 +14,14 @@ import unicodedata
 from typing import Any
 
 from ai_stack.goc_frozen_vocab import GOC_MODULE_ID
-from ai_stack.goc_semantic_priority_rules import resolve_goc_move_from_rules
+from ai_stack.goc_semantic_priority_rules import (
+    rank_goc_move_candidates,
+    resolve_goc_move_from_rules,
+)
 from ai_stack.semantic_move_contract import (
     SEMANTIC_MOVE_TYPES,
     InterpretationTraceItem,
+    RankedMoveCandidate,
     SemanticMoveRecord,
 )
 
@@ -177,6 +181,41 @@ def _named_target_hint(text: str) -> str | None:
     return None
 
 
+def _secondary_dramatic_features(
+    *,
+    features: dict[str, bool | int | str],
+    ranked_rows: list[dict[str, Any]],
+) -> list[str]:
+    """Derive bounded secondary dramatic feature labels for downstream packet use."""
+    tags: list[str] = []
+
+    def _push(tag: str) -> None:
+        if tag and tag not in tags:
+            tags.append(tag)
+
+    if features.get("syn_pause") or features.get("syn_silence"):
+        _push("defensive_pause_signal")
+    if features.get("syn_deflect"):
+        _push("evasive_deflection_signal")
+    if features.get("syn_escalate"):
+        _push("escalation_signal")
+    if features.get("syn_accusation") and features.get("syn_reveal"):
+        _push("accusation_plus_reveal_mix")
+    if features.get("question_end") and features.get("syn_probe"):
+        _push("probe_question_shape")
+    if features.get("prior_blame_pressure"):
+        _push("carry_forward_blame_pressure")
+    if features.get("prior_alliance_shift"):
+        _push("carry_forward_alliance_shift")
+
+    if len(ranked_rows) > 1:
+        secondary = str(ranked_rows[1].get("move_type") or "").strip()
+        if secondary:
+            _push(f"secondary_move:{secondary}")
+
+    return tags[:6]
+
+
 def interpret_goc_semantic_move(
     *,
     module_id: str,
@@ -216,6 +255,20 @@ def interpret_goc_semantic_move(
             + [InterpretationTraceItem(step_id="apply_priority_rules", detail_code="rule:non_goc_default")],
             interpreter_kind=None,
             feature_snapshot={"non_goc": True},
+            ranked_move_candidates=[
+                RankedMoveCandidate(
+                    move_type="establish_situational_pressure",
+                    social_move_family="neutral",
+                    directness="ambiguous",
+                    pressure_tactic=None,
+                    scene_risk_band="low",
+                    rank=1,
+                    confidence=0.5,
+                    trace_detail="rule:non_goc_default",
+                )
+            ],
+            secondary_move_type=None,
+            secondary_dramatic_features=[],
         )
         return rec
 
@@ -258,11 +311,55 @@ def interpret_goc_semantic_move(
         interpreted_move=mv,
         trace=trace,
     )
+    ranked_rows = rank_goc_move_candidates(
+        features=features,
+        combined=combined,
+        intent_s=intent_s,
+        interpreted_move=mv,
+    )
 
     assert move_type in SEMANTIC_MOVE_TYPES, move_type
 
     target = _named_target_hint(combined)
     trace.append(InterpretationTraceItem(step_id="emit_record", detail_code=f"move_type={move_type}"))
+    ranked_candidates: list[RankedMoveCandidate] = []
+    for row in ranked_rows[:4]:
+        try:
+            ranked_candidates.append(RankedMoveCandidate.model_validate(row))
+        except Exception:
+            continue
+    if not ranked_candidates:
+        ranked_candidates.append(
+            RankedMoveCandidate(
+                move_type=move_type,
+                social_move_family=family,  # type: ignore[arg-type]
+                directness=direct,  # type: ignore[arg-type]
+                pressure_tactic=tactic,
+                scene_risk_band=risk,  # type: ignore[arg-type]
+                rank=1,
+                confidence=1.0,
+                trace_detail="rule:primary_from_resolver",
+            )
+        )
+    if ranked_candidates[0].move_type != move_type:
+        ranked_candidates.insert(
+            0,
+            RankedMoveCandidate(
+                move_type=move_type,
+                social_move_family=family,  # type: ignore[arg-type]
+                directness=direct,  # type: ignore[arg-type]
+                pressure_tactic=tactic,
+                scene_risk_band=risk,  # type: ignore[arg-type]
+                rank=1,
+                confidence=1.0,
+                trace_detail="rule:primary_from_resolver",
+            ),
+        )
+        ranked_candidates = ranked_candidates[:4]
+    for idx, candidate in enumerate(ranked_candidates, start=1):
+        candidate.rank = idx
+    secondary_move_type = ranked_candidates[1].move_type if len(ranked_candidates) > 1 else None
+    secondary_features = _secondary_dramatic_features(features=features, ranked_rows=ranked_rows)
 
     return SemanticMoveRecord(
         move_type=move_type,
@@ -274,6 +371,9 @@ def interpret_goc_semantic_move(
         interpretation_trace=trace,
         interpreter_kind=kind or None,
         feature_snapshot=features,
+        ranked_move_candidates=ranked_candidates,
+        secondary_move_type=secondary_move_type,
+        secondary_dramatic_features=secondary_features,
     )
 
 

@@ -49,6 +49,45 @@ class NonJsonSuccessAdapter(BaseModelAdapter):
         )
 
 
+class ActorSchemaJsonAdapter(BaseModelAdapter):
+    adapter_name = "mock"
+
+    def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
+        return ModelCallResult(
+            content=(
+                '{"narration_summary":"The room tightens around Annette\'s reply.",'
+                '"narrative_response":"The room tightens around Annette\'s reply.",'
+                '"primary_responder_id":"annette_reille",'
+                '"secondary_responder_ids":["alain_reille"],'
+                '"spoken_lines":[{"speaker_id":"annette_reille","text":"Enough.","tone":"cutting"}],'
+                '"action_lines":[{"actor_id":"annette_reille","text":"She leans toward the table."}],'
+                '"initiative_events":[{"actor_id":"annette_reille","type":"interrupt","reason":"pressure spike"}],'
+                '"state_effects":[{"effect_type":"pressure_shift","target":"scene","value":"escalated"}],'
+                '"proposed_scene_id":"scene_2",'
+                '"intent_summary":"Annette seizes initiative"}'
+            ),
+            success=True,
+            metadata={"adapter": self.adapter_name, "prompt_length": len(prompt)},
+        )
+
+
+class LegacyResponderScopeAdapter(BaseModelAdapter):
+    adapter_name = "mock"
+
+    def generate(self, prompt: str, *, timeout_seconds: float = 10.0, retrieval_context: str | None = None) -> ModelCallResult:
+        return ModelCallResult(
+            content=(
+                '{"narration_summary":"Annette answers with clipped precision.",'
+                '"responder_id":"annette_reille",'
+                '"responder_actor_ids":["annette_reille","alain_reille"],'
+                '"spoken_lines":[{"speaker_id":"annette_reille","text":"No."}],'
+                '"proposed_scene_id":"scene_2"}'
+            ),
+            success=True,
+            metadata={"adapter": self.adapter_name, "prompt_length": len(prompt)},
+        )
+
+
 class RecordingCapabilityRegistry:
     def __init__(self) -> None:
         self.calls: list[dict] = []
@@ -94,6 +133,56 @@ def test_langchain_runtime_invocation_parses_structured_output() -> None:
     assert result.parsed_output is not None
     assert result.parsed_output.proposed_scene_id == "scene_2"
     assert result.parser_error is None
+
+
+def test_langchain_runtime_invocation_parses_actor_level_schema_fields() -> None:
+    adapter = ActorSchemaJsonAdapter()
+    result = invoke_runtime_adapter_with_langchain(
+        adapter=adapter,
+        player_input="I keep my answer short.",
+        interpreted_input={"kind": "speech"},
+        retrieval_context="high-pressure dinner argument",
+        timeout_seconds=5.0,
+    )
+    assert result.call.success is True
+    assert result.parsed_output is not None
+    assert result.parsed_output.narration_summary == "The room tightens around Annette's reply."
+    assert result.parsed_output.effective_narration_summary() == "The room tightens around Annette's reply."
+    assert result.parsed_output.primary_responder_id == "annette_reille"
+    assert result.parsed_output.secondary_responder_ids == ["alain_reille"]
+    assert result.parsed_output.spoken_lines
+    first_spoken = result.parsed_output.spoken_lines[0]
+    if isinstance(first_spoken, str):
+        assert "Enough." in first_spoken
+    else:
+        assert first_spoken.text == "Enough."
+    assert result.parsed_output.action_lines
+    first_action = result.parsed_output.action_lines[0]
+    if isinstance(first_action, str):
+        assert "leans toward the table" in first_action
+    else:
+        assert first_action.text == "She leans toward the table."
+    assert result.parsed_output.initiative_events[0].type == "interrupt"
+    assert result.parsed_output.state_effects[0].effect_type == "pressure_shift"
+    assert result.parser_error is None
+
+
+def test_langchain_runtime_invocation_normalizes_legacy_and_new_responder_fields() -> None:
+    adapter = LegacyResponderScopeAdapter()
+    result = invoke_runtime_adapter_with_langchain(
+        adapter=adapter,
+        player_input="I keep still.",
+        interpreted_input={"kind": "silence"},
+        retrieval_context="continuity context",
+        timeout_seconds=5.0,
+    )
+    assert result.call.success is True
+    assert result.parsed_output is not None
+    assert result.parsed_output.narration_summary == "Annette answers with clipped precision."
+    assert result.parsed_output.narrative_response == "Annette answers with clipped precision."
+    assert result.parsed_output.primary_responder_id == "annette_reille"
+    assert result.parsed_output.responder_id == "annette_reille"
+    assert result.parsed_output.secondary_responder_ids == ["alain_reille"]
 
 
 def test_langchain_writers_room_invocation_parses_structured_output() -> None:

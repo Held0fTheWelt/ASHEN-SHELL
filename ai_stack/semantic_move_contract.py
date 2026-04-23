@@ -63,6 +63,24 @@ class InterpretationTraceItem(BaseModel):
     )
 
 
+class RankedMoveCandidate(BaseModel):
+    """Bounded ranked candidate emitted by semantic interpretation."""
+
+    move_type: str
+    social_move_family: SocialMoveFamily
+    directness: Directness
+    pressure_tactic: str | None = None
+    scene_risk_band: SceneRiskBand
+    rank: int
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Deterministic confidence-like ordering score for audit and packet handoff.",
+    )
+    trace_detail: str
+
+
 class SemanticMoveRecord(BaseModel):
     """Planner-facing semantic move — deterministic for fixed inputs on the GoC
     path.
@@ -87,6 +105,18 @@ class SemanticMoveRecord(BaseModel):
     feature_snapshot: dict[str, bool | int | str] = Field(
         default_factory=dict,
         description="Deterministic feature flags used by priority rules (bounded keys).",
+    )
+    ranked_move_candidates: list[RankedMoveCandidate] = Field(
+        default_factory=list,
+        description="Primary-first ranked interpretation candidates from the semantic rule stack.",
+    )
+    secondary_move_type: str | None = Field(
+        default=None,
+        description="Optional secondary move candidate preserved for downstream dramatic generation.",
+    )
+    secondary_dramatic_features: list[str] = Field(
+        default_factory=list,
+        description="Bounded secondary dramatic feature labels derived from sparse/evasive/provocation signals.",
     )
 
     def to_runtime_dict(self) -> dict:

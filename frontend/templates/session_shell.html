@@ -18,6 +18,22 @@
       <div class="play-story-window__chrome">
         <h2 id="play-story-heading" class="play-story-window__header">Story</h2>
         <p class="play-story-window__hint runtime-meta">The opening and every turn below come from the authoritative World-Engine story runtime.</p>
+        <div id="play-runtime-status" class="play-runtime-status">
+          <p id="runtime-selected-responder" class="runtime-meta">
+            Responder:
+            <code>{{ runtime_status_view.selected_responder_id or "n/a" }}</code>
+          </p>
+          <p id="runtime-validation-status" class="runtime-meta">
+            Validation:
+            <code>{{ runtime_status_view.validation_status or "unknown" }}</code>
+          </p>
+          <p id="runtime-degraded-banner" class="play-runtime-banner play-runtime-banner--warn" {% if not runtime_status_view.degraded %}hidden{% endif %}>
+            Degraded runtime path
+            {% if runtime_status_view.degraded_reasons %}
+              · {{ runtime_status_view.degraded_reasons | join(", ") }}
+            {% endif %}
+          </p>
+        </div>
       </div>
       <div id="turn-transcript" class="play-story-window__body play-transcript" aria-live="polite" aria-relevant="additions">
       {% if story_entries %}
@@ -41,6 +57,14 @@
               {% endfor %}
             </ul>
           {% endif %}
+          {% if entry.action_lines %}
+            <h3 class="play-dialogue-label">Action</h3>
+            <ul class="runtime-actions play-dialogue-list">
+              {% for line in entry.action_lines %}
+              <li>{{ line }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
           {% if entry.committed_consequences %}
             <h3 class="play-dialogue-label">Consequences</h3>
             <ul class="runtime-consequences">
@@ -48,6 +72,14 @@
               <li>{{ consequence }}</li>
               {% endfor %}
             </ul>
+          {% endif %}
+          {% if entry.role == "runtime" and entry.responder_id %}
+            <p class="runtime-meta">Responder <code>{{ entry.responder_id }}</code></p>
+          {% endif %}
+          {% if entry.role == "runtime" and entry.degraded %}
+            <p class="play-turn-warning">
+              Degraded runtime path{% if entry.degraded_reasons %}: {{ entry.degraded_reasons | join(", ") }}{% endif %}
+            </p>
           {% endif %}
         </article>
         {% endfor %}

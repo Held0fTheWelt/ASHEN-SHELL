@@ -5,8 +5,9 @@ entrypoints, and invariants for maintainers.
 from __future__ import annotations
 
 import inspect
+import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import PydanticOutputParser
@@ -44,17 +45,86 @@ def _adapter_generate_kwargs(adapter: BaseModelAdapter, kwargs: dict[str, Any]) 
 
 
 class RuntimeTurnStructuredOutput(BaseModel):
-    """Normalized runtime output parsed through LangChain parser primitives."""
+    """Normalized runtime output parsed through LangChain parser primitives.
 
+    The model is intentionally backward-compatible:
+    - Legacy callers can keep using ``narrative_response``.
+    - Actor-level callers can use ``narration_summary`` plus structured lanes.
+    """
+
+    class RuntimeSpokenLine(BaseModel):
+        speaker_id: str | None = None
+        text: str = Field(default="")
+        tone: str | None = None
+
+    class RuntimeActionLine(BaseModel):
+        actor_id: str | None = None
+        text: str = Field(default="")
+
+    class RuntimeInitiativeEvent(BaseModel):
+        actor_id: str | None = None
+        type: Literal["interrupt", "escalate", "withdraw", "deflect", "counter"] | str | None = None
+        reason: str | None = None
+
+    class RuntimeStateEffect(BaseModel):
+        effect_type: Literal["pressure_shift", "relationship_shift", "scene_shift"] | str | None = None
+        target: str | None = None
+        value: str | None = None
+
+    schema_version: str = Field(default="runtime_actor_turn_v1")
     narrative_response: str = Field(default="")
+    narration_summary: str = Field(default="")
     proposed_scene_id: str | None = None
     intent_summary: str | None = None
+
+    primary_responder_id: str | None = None
+    secondary_responder_ids: list[str] = Field(default_factory=list)
+    spoken_lines: list[RuntimeSpokenLine | str] = Field(default_factory=list)
+    action_lines: list[RuntimeActionLine | str] = Field(default_factory=list)
+    initiative_events: list[RuntimeInitiativeEvent] = Field(default_factory=list)
+    state_effects: list[RuntimeStateEffect] = Field(default_factory=list)
+    responder_actor_ids: list[str] = Field(default_factory=list)
 
     responder_id: str | None = None
     function_type: str | None = None
     emotional_shift: dict | None = None
     social_outcome: str | None = None
     dramatic_direction: str | None = None
+
+    def effective_narration_summary(self) -> str:
+        summary = (self.narration_summary or "").strip()
+        if summary:
+            return summary
+        return (self.narrative_response or "").strip()
+
+
+def _normalize_runtime_structured_output(parsed: RuntimeTurnStructuredOutput) -> RuntimeTurnStructuredOutput:
+    """Normalize new and legacy fields into one compatible runtime shape."""
+    updates: dict[str, Any] = {}
+    narration_summary = (parsed.narration_summary or "").strip()
+    narrative_response = (parsed.narrative_response or "").strip()
+    if not narration_summary and narrative_response:
+        updates["narration_summary"] = narrative_response
+    if not narrative_response and narration_summary:
+        updates["narrative_response"] = narration_summary
+
+    primary_responder = (parsed.primary_responder_id or "").strip()
+    legacy_responder = (parsed.responder_id or "").strip()
+    if not primary_responder and legacy_responder:
+        updates["primary_responder_id"] = legacy_responder
+        primary_responder = legacy_responder
+    if not legacy_responder and primary_responder:
+        updates["responder_id"] = primary_responder
+
+    secondary_ids = [str(x).strip() for x in parsed.secondary_responder_ids if str(x).strip()]
+    legacy_scope = [str(x).strip() for x in parsed.responder_actor_ids if str(x).strip()]
+    if not secondary_ids and legacy_scope:
+        secondary_ids = [x for x in legacy_scope if x != primary_responder]
+        updates["secondary_responder_ids"] = secondary_ids
+
+    if updates:
+        return parsed.model_copy(update=updates)
+    return parsed
 
 
 class WritersRoomStructuredOutput(BaseModel):
@@ -87,18 +157,22 @@ def _build_runtime_prompt_template() -> ChatPromptTemplate:
                     "system",
                     "You are the World of Shadows runtime turn model. "
                     "Return strictly valid JSON matching the requested schema.\n\n"
-                    "NARRATIVE FORMATTING: The narrative_response field should be well-structured prose "
+                    "Actor-first response contract: provide narration_summary, spoken_lines, and action_lines when appropriate. "
+                    "Use narrative_response only as a legacy compatibility mirror when needed.\n\n"
+                    "NARRATIVE FORMATTING: narration_summary (or legacy narrative_response) should be readable prose "
                     "with multiple paragraphs separated by \\n\\n (double newlines). "
-                    "Break the narrative at natural points: scene setup, action/dialogue, consequences/reflection. "
-                    "Each paragraph should be 2-4 sentences. This creates readable, human-friendly output when displayed.",
+                    "Break naturally: setup, exchange, consequence. "
+                    "Each paragraph should be 2-4 sentences.",
                 ),
                 (
                     "human",
                     "{full_context}"
                     "{correction_block}"
-                    "IMPORTANT - Narrative Structure: Write the narrative_response as 3-4 short paragraphs separated by \\n\\n (double newlines). "
-                    "Each paragraph should be 2-4 sentences. Structure: (1) scene/setting, (2) action/dialogue, (3) consequence/emotion. "
-                    "This makes the narrative human-readable when displayed.\n\n"
+                    "IMPORTANT - Return actor-level JSON for this turn: "
+                    "narration_summary, primary_responder_id, spoken_lines, action_lines, initiative_events, and state_effects when applicable. "
+                    "Mirror key narration into narrative_response for legacy compatibility.\n\n"
+                    "Narrative structure: use 3-4 short paragraphs separated by \\n\\n (double newlines). "
+                    "Structure: (1) scene/setting, (2) action/dialogue, (3) consequence/emotion.\n\n"
                     "Format instructions:\n{format_instructions}",
                 ),
             ]
@@ -148,6 +222,7 @@ def invoke_runtime_adapter_with_langchain(
     feedback_codes: list[str] | None = None,
     rewrite_instruction: str | None = None,
     model_name: str | None = None,
+    dramatic_generation_packet: dict[str, Any] | None = None,
 ) -> RuntimeInvocationResult:
     """Describe what ``invoke_runtime_adapter_with_langchain`` does in one
     line (verb-led summary for this function).
@@ -178,6 +253,12 @@ def invoke_runtime_adapter_with_langchain(
         )
     if model_prompt:
         full_context = model_prompt
+        if isinstance(dramatic_generation_packet, dict) and dramatic_generation_packet:
+            full_context = (
+                f"{full_context}\n\n"
+                "Dramatic generation packet (authoritative JSON):\n"
+                f"{json.dumps(dramatic_generation_packet, sort_keys=True)}"
+            )
     else:
         interp_str = "\n".join(f"- {k}: {v}" for k, v in interpreted_input.items()) if interpreted_input else "(none)"
         full_context = (
@@ -185,6 +266,12 @@ def invoke_runtime_adapter_with_langchain(
             f"Interpreted input:\n{interp_str}\n\n"
             f"Runtime retrieval context:\n{retrieval_context or '(none)'}"
         )
+        if isinstance(dramatic_generation_packet, dict) and dramatic_generation_packet:
+            full_context = (
+                f"{full_context}\n\n"
+                "Dramatic generation packet (authoritative JSON):\n"
+                f"{json.dumps(dramatic_generation_packet, sort_keys=True)}"
+            )
     rendered_messages = _RUNTIME_PROMPT_TEMPLATE.format_messages(
         full_context=full_context,
         correction_block=correction_block,
@@ -202,6 +289,7 @@ def invoke_runtime_adapter_with_langchain(
         return RuntimeInvocationResult(call=call, prompt_text=prompt_text, parsed_output=None, parser_error=None)
     try:
         parsed = parser.parse(call.content)
+        parsed = _normalize_runtime_structured_output(parsed)
         return RuntimeInvocationResult(call=call, prompt_text=prompt_text, parsed_output=parsed, parser_error=None)
     except Exception as exc:  # pragma: no cover - parser error path exercised in tests via behavior assertions
         return RuntimeInvocationResult(call=call, prompt_text=prompt_text, parsed_output=None, parser_error=str(exc))

@@ -400,6 +400,9 @@ def test_play_shell_renders_canonical_story_entries_without_ticket_or_backend_se
     assert b'id="play-story-window"' in r.data
     assert b'id="play-input-dock"' in r.data
     assert b'name="player_input"' in r.data
+    assert b'id="play-runtime-status"' in r.data
+    assert b'id="runtime-selected-responder"' in r.data
+    assert b'id="runtime-validation-status"' in r.data
     assert b"Story" in r.data
     assert b"Your Turn" in r.data
     assert b"The room is already tense." in r.data
@@ -483,6 +486,55 @@ def test_play_execute_json_returns_story_entries(client, monkeypatch):
         "wave",
         "The room responds.",
     ]
+    assert data["runtime_status_view"]["contract"] == "play_shell_runtime_status.v1"
+
+
+def test_play_shell_renders_action_lines_and_degraded_runtime_banner(client, monkeypatch):
+    def fake_request(method, path, **kwargs):
+        if path == "/api/v1/game/player-sessions/s1":
+            return FakeResponse(
+                payload={
+                    "contract": "game_player_session_v1",
+                    "runtime_session_id": "story-1",
+                    "runtime_session_ready": True,
+                    "can_execute": True,
+                    "story_entries": [
+                        {
+                            "entry_id": "opening",
+                            "role": "runtime",
+                            "speaker": "World of Shadows",
+                            "turn_number": 0,
+                            "text": "The room is already tense.",
+                            "spoken_lines": [{"speaker_id": "annette_reille", "text": "Enough."}],
+                            "action_lines": [{"actor_id": "annette_reille", "text": "She leans forward."}],
+                            "dramatic_context_summary": {"responder_id": "annette_reille"},
+                            "authority_summary": {"validation_status": "approved"},
+                            "runtime_governance_surface": {
+                                "fallback_stage_reached": "graph_fallback_executed",
+                                "mock_output_flag": True,
+                            },
+                        }
+                    ],
+                    "shell_state_view": {
+                        "module_id": "god_of_carnage",
+                        "current_scene_id": "scene_1",
+                        "turn_counter": 0,
+                        "player_shell_context": {"responder_id": "annette_reille"},
+                    },
+                }
+            )
+        raise AssertionError(f"unexpected backend call: {method} {path}")
+
+    monkeypatch.setattr("app.player_backend.request_backend", fake_request)
+    with client.session_transaction() as sess:
+        sess["access_token"] = "t"
+        sess["current_user"] = {"username": "u1"}
+    response = client.get("/play/s1")
+    assert response.status_code == 200
+    assert b"Action" in response.data
+    assert b"She leans forward." in response.data
+    assert b"Degraded runtime path" in response.data
+    assert b"annette_reille" in response.data
 
 
 def test_play_shell_transcript_includes_opening_and_returned_turns(client, monkeypatch):
@@ -546,6 +598,41 @@ def test_routes_play_template_mapping_helpers(monkeypatch):
     monkeypatch.setattr(routes_play, "_PLAY_TEMPLATE_TO_CONTENT_MODULE_ID", {"tpl": "module"})
     assert routes_play.play_template_to_content_module_id(" tpl ") == "module"
     assert routes_play.play_template_to_content_module_id("unknown") == "unknown"
+
+
+def test_routes_play_normalizes_story_entries_and_runtime_status_view():
+    normalized = routes_play._normalize_story_entries_for_shell(
+        [
+            {
+                "entry_id": "r1",
+                "role": "runtime",
+                "turn_number": 3,
+                "text": "A hard answer lands.",
+                "spoken_lines": [{"speaker_id": "annette_reille", "text": "Enough.", "tone": "cutting"}],
+                "action_lines": [{"actor_id": "annette_reille", "text": "She leans in."}],
+                "authority_summary": {"validation_status": "approved"},
+                "runtime_governance_surface": {"fallback_stage_reached": "graph_fallback_executed"},
+            }
+        ],
+        shell_state_view={"player_shell_context": {"responder_id": "annette_reille"}},
+    )
+    assert normalized[0]["spoken_lines"] == ["annette_reille: Enough. (cutting)"]
+    assert normalized[0]["action_lines"] == ["annette_reille: She leans in."]
+    assert normalized[0]["degraded"] is True
+    assert "fallback_graph_fallback_executed" in normalized[0]["degraded_reasons"]
+
+    status = routes_play._runtime_status_view_from_story_entries(
+        normalized,
+        shell_state_view={"player_shell_context": {"responder_id": "annette_reille"}},
+    )
+    assert status == {
+        "contract": "play_shell_runtime_status.v1",
+        "selected_responder_id": "annette_reille",
+        "validation_status": "approved",
+        "degraded": True,
+        "degraded_reasons": ["fallback_graph_fallback_executed"],
+        "latest_turn_number": 3,
+    }
 
 
 def test_routes_play_runtime_view_and_opening_projection(capsys):
@@ -711,4 +798,3 @@ def test_play_shell_backend_error_flashes_and_renders_empty_shell(client, monkey
     assert response.status_code == 200
     assert b"resume failed" in response.data
     assert b"No authored opening was returned" in response.data
-

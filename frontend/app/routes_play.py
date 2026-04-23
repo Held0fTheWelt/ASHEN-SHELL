@@ -28,6 +28,158 @@ DIAGNOSTICS_MAX_ROWS = 40
 OPERATOR_SESSION_JSON_MAX = 120_000
 
 
+def _coerce_shell_lines(value: Any) -> list[str]:
+    if isinstance(value, str):
+        line = value.strip()
+        return [line] if line else []
+    if not isinstance(value, list):
+        return []
+    lines: list[str] = []
+    for item in value:
+        if isinstance(item, dict):
+            text = str(item.get("text") or "").strip()
+            if not text:
+                continue
+            speaker = str(item.get("speaker_id") or item.get("actor_id") or "").strip()
+            tone = str(item.get("tone") or "").strip()
+            prefix = f"{speaker}: " if speaker else ""
+            suffix = f" ({tone})" if tone else ""
+            lines.append(f"{prefix}{text}{suffix}".strip())
+            continue
+        line = str(item).strip()
+        if line:
+            lines.append(line)
+    return lines
+
+
+def _is_runtime_entry_degraded(entry: dict[str, Any]) -> tuple[bool, list[str]]:
+    authority = entry.get("authority_summary") if isinstance(entry.get("authority_summary"), dict) else {}
+    governance = (
+        entry.get("runtime_governance_surface")
+        if isinstance(entry.get("runtime_governance_surface"), dict)
+        else {}
+    )
+    reasons: list[str] = []
+
+    validation_status = str(authority.get("validation_status") or "").strip().lower()
+    if validation_status and validation_status != "approved":
+        reasons.append(f"validation_{validation_status}")
+
+    fallback_stage = str(governance.get("fallback_stage_reached") or "").strip().lower()
+    if fallback_stage and fallback_stage != "primary_only":
+        reasons.append(f"fallback_{fallback_stage}")
+
+    if bool(governance.get("mock_output_flag")):
+        reasons.append("mock_output")
+
+    failure_markers = entry.get("failure_markers")
+    if isinstance(failure_markers, list) and failure_markers:
+        reasons.append("failure_markers_present")
+
+    return bool(reasons), reasons
+
+
+def _normalize_story_entries_for_shell(
+    story_entries: list[dict[str, Any]],
+    *,
+    shell_state_view: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    if not isinstance(story_entries, list):
+        return []
+    shell = shell_state_view if isinstance(shell_state_view, dict) else {}
+    player_shell_context = (
+        shell.get("player_shell_context")
+        if isinstance(shell.get("player_shell_context"), dict)
+        else {}
+    )
+    default_responder_id = str(player_shell_context.get("responder_id") or "").strip() or None
+    normalized: list[dict[str, Any]] = []
+    for idx, item in enumerate(story_entries):
+        if not isinstance(item, dict):
+            continue
+        entry = dict(item)
+        role = str(entry.get("role") or "runtime").strip() or "runtime"
+        spoken_lines = _coerce_shell_lines(entry.get("spoken_lines"))
+        action_lines = _coerce_shell_lines(entry.get("action_lines"))
+        committed_consequences = _coerce_shell_lines(entry.get("committed_consequences"))
+        dramatic_context = (
+            entry.get("dramatic_context_summary")
+            if isinstance(entry.get("dramatic_context_summary"), dict)
+            else {}
+        )
+        responder_id = str(
+            entry.get("responder_id")
+            or dramatic_context.get("responder_id")
+            or default_responder_id
+            or ""
+        ).strip() or None
+        validation_status = str(
+            entry.get("validation_status")
+            or (
+                entry.get("authority_summary", {}).get("validation_status")
+                if isinstance(entry.get("authority_summary"), dict)
+                else ""
+            )
+            or ""
+        ).strip() or None
+        degraded, degraded_reasons = _is_runtime_entry_degraded(entry) if role == "runtime" else (False, [])
+        normalized.append(
+            {
+                **entry,
+                "entry_id": entry.get("entry_id") or f"entry-{idx}",
+                "role": role,
+                "speaker": entry.get("speaker") or ("You" if role == "player" else "World of Shadows"),
+                "text": str(entry.get("text") or "").strip(),
+                "spoken_lines": spoken_lines,
+                "action_lines": action_lines,
+                "committed_consequences": committed_consequences,
+                "responder_id": responder_id,
+                "validation_status": validation_status,
+                "degraded": degraded,
+                "degraded_reasons": degraded_reasons,
+            }
+        )
+    return normalized
+
+
+def _runtime_status_view_from_story_entries(
+    story_entries: list[dict[str, Any]],
+    *,
+    shell_state_view: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    shell = shell_state_view if isinstance(shell_state_view, dict) else {}
+    player_shell_context = (
+        shell.get("player_shell_context")
+        if isinstance(shell.get("player_shell_context"), dict)
+        else {}
+    )
+    latest_runtime = next(
+        (
+            entry
+            for entry in reversed(story_entries)
+            if isinstance(entry, dict) and str(entry.get("role") or "").strip() == "runtime"
+        ),
+        None,
+    )
+    if not isinstance(latest_runtime, dict):
+        return {
+            "contract": "play_shell_runtime_status.v1",
+            "selected_responder_id": player_shell_context.get("responder_id"),
+            "validation_status": None,
+            "degraded": False,
+            "degraded_reasons": [],
+            "latest_turn_number": None,
+        }
+    return {
+        "contract": "play_shell_runtime_status.v1",
+        "selected_responder_id": latest_runtime.get("responder_id") or player_shell_context.get("responder_id"),
+        "validation_status": latest_runtime.get("validation_status"),
+        "degraded": bool(latest_runtime.get("degraded")),
+        "degraded_reasons": list(latest_runtime.get("degraded_reasons") or []),
+        "latest_turn_number": latest_runtime.get("turn_number"),
+    }
+
+
 def _load_template_mapping() -> dict[str, str]:
     """Load template ID to content module ID mapping from config file.
 
@@ -327,8 +479,13 @@ def play_shell(session_id: str):
         error_payload = response.json() if response.content else {}
         flash(error_payload.get("error", "Could not resume player session."), "error")
 
-    story_entries = payload.get("story_entries") if isinstance(payload.get("story_entries"), list) else []
+    raw_story_entries = payload.get("story_entries") if isinstance(payload.get("story_entries"), list) else []
     shell_state_view = payload.get("shell_state_view") if isinstance(payload.get("shell_state_view"), dict) else {}
+    story_entries = _normalize_story_entries_for_shell(raw_story_entries, shell_state_view=shell_state_view)
+    runtime_status_view = _runtime_status_view_from_story_entries(
+        story_entries,
+        shell_state_view=shell_state_view,
+    )
     play_bootstrap_json = json.dumps(
         {
             "contract": payload.get("contract"),
@@ -336,6 +493,7 @@ def play_shell(session_id: str):
             "runtime_session_id": payload.get("runtime_session_id"),
             "story_entries": story_entries,
             "shell_state_view": shell_state_view,
+            "runtime_status_view": runtime_status_view,
         }
     )
     return render_template(
@@ -346,6 +504,7 @@ def play_shell(session_id: str):
         can_execute=bool(payload.get("can_execute")),
         story_entries=story_entries,
         shell_state_view=shell_state_view,
+        runtime_status_view=runtime_status_view,
         governance=payload.get("governance") if isinstance(payload.get("governance"), dict) else {},
         play_bootstrap_json=play_bootstrap_json,
     )
@@ -364,18 +523,43 @@ def play_execute(session_id: str):
         return redirect(url_for("frontend.play_shell", session_id=session_id))
     assert payload is not None
     interpreted = (((payload.get("turn") or {}).get("interpreted_input") or {}).get("kind") or "unknown").strip()
+    shell_state_view = payload.get("shell_state_view") if isinstance(payload.get("shell_state_view"), dict) else {}
+    raw_story_entries = payload.get("story_entries") if isinstance(payload.get("story_entries"), list) else []
+    story_entries = _normalize_story_entries_for_shell(raw_story_entries, shell_state_view=shell_state_view)
+    runtime_status_view = _runtime_status_view_from_story_entries(
+        story_entries,
+        shell_state_view=shell_state_view,
+    )
     if wants_json:
         return jsonify(
             {
                 "ok": True,
                 "interpreted_input_kind": interpreted,
-                "story_entries": payload.get("story_entries") if isinstance(payload.get("story_entries"), list) else [],
+                "story_entries": story_entries,
                 "story_window": payload.get("story_window") if isinstance(payload.get("story_window"), dict) else {},
-                "shell_state_view": payload.get("shell_state_view") if isinstance(payload.get("shell_state_view"), dict) else {},
+                "shell_state_view": shell_state_view,
+                "runtime_status_view": runtime_status_view,
             }
         ), 200
-    flash(
-        f"Turn executed (interpreted as {interpreted}). Scene and narration below update from the world-engine response.",
-        "success",
+    play_bootstrap_json = json.dumps(
+        {
+            "contract": payload.get("contract"),
+            "run_id": session_id,
+            "runtime_session_id": payload.get("runtime_session_id"),
+            "story_entries": story_entries,
+            "shell_state_view": shell_state_view,
+            "runtime_status_view": runtime_status_view,
+        }
     )
-    return redirect(url_for("frontend.play_shell", session_id=session_id))
+    return render_template(
+        "session_shell.html",
+        session_id=session_id,
+        runtime_session_id=payload.get("runtime_session_id"),
+        runtime_session_ready=bool(payload.get("runtime_session_ready", True)),
+        can_execute=bool(payload.get("can_execute", True)),
+        story_entries=story_entries,
+        shell_state_view=shell_state_view,
+        runtime_status_view=runtime_status_view,
+        governance=payload.get("governance") if isinstance(payload.get("governance"), dict) else {},
+        play_bootstrap_json=play_bootstrap_json,
+    )

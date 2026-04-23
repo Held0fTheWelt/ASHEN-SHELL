@@ -46,3 +46,17 @@ def test_routing_policy_fallback_only_when_no_llm_in_registry():
     )
     decision = RoutingPolicy(registry).choose(task_type="narrative_formulation")
     assert decision.route_reason == ROUTE_REASON_FALLBACK_ONLY
+
+
+def test_routing_policy_accepts_drama_aware_requirements_contract() -> None:
+    registry = build_default_registry()
+    decision = RoutingPolicy(registry).choose(
+        task_type="narrative_formulation",
+        dramatic_requirements={
+            "dialogue_complexity": "high",
+            "scene_pressure": "high_blame",
+            "actor_count": 3,
+            "escalation_density": "high",
+        },
+    )
+    assert decision.selected_provider == "openai"

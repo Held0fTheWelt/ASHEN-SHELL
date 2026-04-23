@@ -33,16 +33,42 @@ def _gm_display_text_from_generation_content(raw: str) -> str:
             Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
     """
     s = raw.strip()
-    if s.startswith("{") and '"narrative_response"' in s:
+    if s.startswith("{") and ('"narrative_response"' in s or '"narration_summary"' in s):
         try:
             parsed = json.loads(s)
             if isinstance(parsed, dict):
-                narr = parsed.get("narrative_response")
+                narr = parsed.get("narration_summary")
+                if not isinstance(narr, str) or not narr.strip():
+                    narr = parsed.get("narrative_response")
                 if isinstance(narr, str) and narr.strip():
                     return narr.strip()
         except json.JSONDecodeError:
             pass
     return raw
+
+
+def _coerce_actor_lines(value: Any, *, actor_key: str) -> list[str]:
+    if isinstance(value, str):
+        line = value.strip()
+        return [line] if line else []
+    if not isinstance(value, list):
+        return []
+    lines: list[str] = []
+    for item in value:
+        if isinstance(item, dict):
+            text = str(item.get("text") or "").strip()
+            if not text:
+                continue
+            actor = str(item.get(actor_key) or "").strip()
+            tone = str(item.get("tone") or "").strip()
+            prefix = f"{actor}: " if actor else ""
+            suffix = f" ({tone})" if tone else ""
+            lines.append(f"{prefix}{text}{suffix}".strip())
+            continue
+        line = str(item).strip()
+        if line:
+            lines.append(line)
+    return lines
 
 
 def strip_director_overwrites_from_structured_output(
@@ -96,7 +122,9 @@ def structured_output_to_proposed_effects(structured: dict[str, Any] | None) -> 
         return []
     effects = []
     raw = structured.get("proposed_state_effects")
-    if isinstance(raw, list):
+    if not isinstance(raw, list) or not raw:
+        raw = structured.get("state_effects")
+    if isinstance(raw, list) and raw:
         effects = [x for x in raw if isinstance(x, dict)]
     elif structured.get("effect_type") or structured.get("description"):
         effects = [
@@ -106,7 +134,9 @@ def structured_output_to_proposed_effects(structured: dict[str, Any] | None) -> 
             }
         ]
     else:
-        narr = structured.get("narrative_response")
+        narr = structured.get("narration_summary")
+        if not isinstance(narr, str) or not narr.strip():
+            narr = structured.get("narrative_response")
         if isinstance(narr, str) and narr.strip():
             effects = [
                 {
@@ -318,6 +348,10 @@ def run_visible_render(
 
     if content:
         content = _gm_display_text_from_generation_content(content)
+    generation_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    structured = generation_meta.get("structured_output") if isinstance(generation_meta.get("structured_output"), dict) else {}
+    structured_spoken_lines = _coerce_actor_lines(structured.get("spoken_lines"), actor_key="speaker_id")
+    structured_action_lines = _coerce_actor_lines(structured.get("action_lines"), actor_key="actor_id")
 
     markers: list[str] = []
     approved = validation_outcome.get("status") == "approved"
@@ -356,7 +390,8 @@ def run_visible_render(
     if module_id != GOC_MODULE_ID:
         bundle = {
             "gm_narration": [content] if content else [],
-            "spoken_lines": [],
+            "spoken_lines": structured_spoken_lines,
+            "action_lines": structured_action_lines,
         }
         markers.append("non_factual_staging")
         return bundle, markers
@@ -395,7 +430,8 @@ def run_visible_render(
             gm_lines = ["The exchange shifts, and the room adjusts around it."]
         bundle = {
             "gm_narration": gm_lines,
-            "spoken_lines": [],
+            "spoken_lines": structured_spoken_lines,
+            "action_lines": structured_action_lines,
         }
         if director_surface_hints:
             bundle["render_support"] = {
@@ -411,14 +447,19 @@ def run_visible_render(
     # No commit: truth-safe staging (GATE_SCORING_POLICY_GOC.md §6.3).
     if live_player_truth_surface:
         gm_lines = [content] if content else []
-        bundle = {"gm_narration": gm_lines, "spoken_lines": []}
+        bundle = {
+            "gm_narration": gm_lines,
+            "spoken_lines": structured_spoken_lines,
+            "action_lines": structured_action_lines,
+        }
         markers.append("live_truth_surface_no_preview_placeholder")
         return bundle, markers
 
     safe = content if content else "(Preview staging — no committed world-state change.)"
     bundle = {
         "gm_narration": [safe],
-        "spoken_lines": [],
+        "spoken_lines": structured_spoken_lines,
+        "action_lines": structured_action_lines,
     }
     markers.append("non_factual_staging")
     return bundle, markers
@@ -732,6 +773,8 @@ def build_operator_canonical_turn_record(state: dict[str, Any]) -> dict[str, Any
         "transition_pattern": state.get("transition_pattern"),
         "routing": state.get("routing"),
         "dramatic_turn_record": build_roadmap_dramatic_turn_record(state),
+        # WS-5: Actor-survival telemetry for operator diagnostics
+        "actor_survival_telemetry": state.get("actor_survival_telemetry"),
         "graph_diagnostics_summary": {
             "graph_name": gd.get("graph_name"),
             "graph_version": gd.get("graph_version"),

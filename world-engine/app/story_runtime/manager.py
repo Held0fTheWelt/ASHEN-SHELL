@@ -176,6 +176,103 @@ def _coerce_visible_text_lines(value: Any) -> list[str]:
     return []
 
 
+def _actor_line_count(value: Any) -> int:
+    if not isinstance(value, list):
+        return 0
+    count = 0
+    for item in value:
+        if isinstance(item, dict):
+            text = str(item.get("text") or "").strip()
+            if text:
+                count += 1
+            continue
+        if str(item).strip():
+            count += 1
+    return count
+
+
+def _build_actor_turn_summary(
+    *,
+    graph_state: dict[str, Any],
+    visible_output_bundle: dict[str, Any] | None,
+    dramatic_context_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    bundle = visible_output_bundle if isinstance(visible_output_bundle, dict) else {}
+    context = dramatic_context_summary if isinstance(dramatic_context_summary, dict) else {}
+    responder = context.get("responder") if isinstance(context.get("responder"), dict) else {}
+    responder_scope = responder.get("responder_scope") if isinstance(responder.get("responder_scope"), list) else []
+    primary_responder_id = (
+        str(graph_state.get("responder_id") or "").strip()
+        or str(responder.get("responder_id") or "").strip()
+        or None
+    )
+    secondary_responder_ids = [
+        str(x).strip()
+        for x in responder_scope
+        if str(x).strip() and str(x).strip() != (primary_responder_id or "")
+    ]
+    spoken_line_count = _actor_line_count(bundle.get("spoken_lines"))
+    action_line_count = _actor_line_count(bundle.get("action_lines"))
+
+    generation = graph_state.get("generation") if isinstance(graph_state.get("generation"), dict) else {}
+    metadata = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    structured = metadata.get("structured_output") if isinstance(metadata.get("structured_output"), dict) else {}
+    initiative_events = structured.get("initiative_events") if isinstance(structured.get("initiative_events"), list) else []
+    initiative_types: list[str] = []
+    initiative_actors: list[str] = []
+    for event in initiative_events:
+        if not isinstance(event, dict):
+            continue
+        raw_type = event.get("type")
+        raw_actor = event.get("actor_id")
+        event_type = str(raw_type).strip() if isinstance(raw_type, str) else ""
+        actor_id = str(raw_actor).strip() if isinstance(raw_actor, str) else ""
+        if event_type and event_type not in initiative_types:
+            initiative_types.append(event_type)
+        if actor_id and actor_id not in initiative_actors:
+            initiative_actors.append(actor_id)
+    initiative_summary = {
+        "event_count": len([x for x in initiative_events if isinstance(x, dict)]),
+        "event_types": initiative_types,
+        "actors": initiative_actors,
+    }
+
+    validation = (
+        graph_state.get("validation_outcome")
+        if isinstance(graph_state.get("validation_outcome"), dict)
+        else {}
+    )
+    actor_lane_validation = (
+        validation.get("actor_lane_validation")
+        if isinstance(validation.get("actor_lane_validation"), dict)
+        else {}
+    )
+    social_outcome = str(graph_state.get("social_outcome") or "").strip()
+    dramatic_direction = str(graph_state.get("dramatic_direction") or "").strip()
+    summary_parts: list[str] = []
+    if primary_responder_id:
+        summary_parts.append(f"primary_responder={primary_responder_id}")
+    summary_parts.append(f"spoken_lines={spoken_line_count}")
+    summary_parts.append(f"action_lines={action_line_count}")
+    if initiative_summary["event_count"]:
+        summary_parts.append(f"initiative_events={initiative_summary['event_count']}")
+    if social_outcome:
+        summary_parts.append(f"social_outcome={social_outcome}")
+    if dramatic_direction:
+        summary_parts.append(f"dramatic_direction={dramatic_direction}")
+
+    return {
+        "contract": "actor_turn_summary.v1",
+        "primary_responder_id": primary_responder_id,
+        "secondary_responder_ids": secondary_responder_ids,
+        "spoken_line_count": spoken_line_count,
+        "action_line_count": action_line_count,
+        "initiative_summary": initiative_summary,
+        "actor_lane_validation_status": actor_lane_validation.get("status"),
+        "last_actor_outcome_summary": ", ".join(summary_parts) if summary_parts else None,
+    }
+
+
 def _visible_lines_from_turn_event(event: dict[str, Any]) -> list[str]:
     bundle = event.get("visible_output_bundle") if isinstance(event.get("visible_output_bundle"), dict) else {}
     lines = _coerce_visible_text_lines(bundle.get("gm_narration"))
@@ -204,9 +301,15 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
         consequence_lines = [str(item) for item in consequences] if isinstance(consequences, list) else []
         bundle = event.get("visible_output_bundle") if isinstance(event.get("visible_output_bundle"), dict) else {}
         spoken_lines = _coerce_visible_text_lines(bundle.get("spoken_lines"))
+        action_lines = _coerce_visible_text_lines(bundle.get("action_lines"))
         render_support = bundle.get("render_support") if isinstance(bundle.get("render_support"), dict) else None
         authority = event.get("committed_turn_authority") if isinstance(event.get("committed_turn_authority"), dict) else {}
         validation = event.get("validation_outcome") if isinstance(event.get("validation_outcome"), dict) else {}
+        runtime_governance_surface = (
+            event.get("runtime_governance_surface")
+            if isinstance(event.get("runtime_governance_surface"), dict)
+            else {}
+        )
         planner = commit.get("planner_truth") if isinstance(commit.get("planner_truth"), dict) else {}
         social_summary = (
             planner.get("social_state_summary")
@@ -219,6 +322,21 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
             else {}
         )
         story_dramatic_context = _story_window_dramatic_context(dramatic_context)
+        actor_turn_summary = (
+            event.get("actor_turn_summary")
+            if isinstance(event.get("actor_turn_summary"), dict)
+            else {}
+        )
+        if not actor_turn_summary and story_dramatic_context:
+            actor_turn_summary = {
+                "contract": "actor_turn_summary.v1",
+                "primary_responder_id": story_dramatic_context.get("responder_id"),
+                "secondary_responder_ids": story_dramatic_context.get("secondary_responder_ids") or [],
+                "spoken_line_count": story_dramatic_context.get("spoken_line_count") or len(spoken_lines),
+                "action_line_count": story_dramatic_context.get("action_line_count") or len(action_lines),
+                "initiative_summary": story_dramatic_context.get("initiative_summary") or {},
+                "last_actor_outcome_summary": story_dramatic_context.get("last_actor_outcome_summary"),
+            }
         authority_summary = {
             "authority_record_version": authority.get("authority_record_version"),
             "committed_scene_id": authority.get("committed_scene_id") or commit.get("committed_scene_id"),
@@ -250,7 +368,17 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
                 )
 
         visible_lines = _visible_lines_from_turn_event(event)
-        if not visible_lines and not spoken_lines and not consequence_lines:
+        degraded_reasons: list[str] = []
+        validation_status = str(authority_summary.get("validation_status") or "").strip().lower()
+        if validation_status and validation_status != "approved":
+            degraded_reasons.append(f"validation_{validation_status}")
+        fallback_stage = str(runtime_governance_surface.get("fallback_stage_reached") or "").strip().lower()
+        if fallback_stage and fallback_stage != "primary_only":
+            degraded_reasons.append(f"fallback_{fallback_stage}")
+        if bool(runtime_governance_surface.get("mock_output_flag")):
+            degraded_reasons.append("mock_output")
+
+        if not visible_lines and not spoken_lines and not action_lines and not consequence_lines:
             continue
         runtime_entry = {
             "entry_id": f"{session.session_id}:{turn_number}:{turn_kind}",
@@ -260,9 +388,15 @@ def _story_window_entries_for_session(session: StorySession) -> list[dict[str, A
             "turn_number": turn_number,
             "text": "\n\n".join(visible_lines),
             "spoken_lines": spoken_lines,
+            "action_lines": action_lines,
             "committed_consequences": consequence_lines,
+            "responder_id": story_dramatic_context.get("responder_id"),
+            "validation_status": authority_summary.get("validation_status"),
+            "degraded": bool(degraded_reasons),
+            "degraded_reasons": degraded_reasons,
+            "actor_turn_summary": actor_turn_summary,
             "source": "authoritative_story_runtime",
-            "runtime_governance_surface": event.get("runtime_governance_surface"),
+            "runtime_governance_surface": runtime_governance_surface,
             "authority_summary": authority_summary,
         }
         if render_support:
@@ -346,10 +480,16 @@ def _prior_planner_truth_from_session(session: "StorySession") -> dict[str, Any]
     allowed_keys = {
         "selected_scene_function",
         "responder_id",
+        "primary_responder_id",
+        "secondary_responder_ids",
         "responder_scope",
         "function_type",
         "pacing_mode",
         "silence_mode",
+        "spoken_line_count",
+        "action_line_count",
+        "initiative_summary",
+        "last_actor_outcome_summary",
         "scene_assessment_core",
         "social_outcome",
         "dramatic_direction",
@@ -475,9 +615,13 @@ def _build_committed_dramatic_context_summary(
             "function_type": planner.get("function_type") or base.get("function_type"),
             "responder": {
                 "responder_id": planner.get("responder_id")
+                or planner.get("primary_responder_id")
                 or base_responder.get("responder_id"),
                 "responder_scope": _compact_context_list(
                     planner.get("responder_scope") or base_responder.get("responder_scope")
+                ),
+                "secondary_responder_ids": _compact_context_list(
+                    planner.get("secondary_responder_ids")
                 ),
             },
             "pacing": {
@@ -510,6 +654,12 @@ def _build_committed_dramatic_context_summary(
                         if isinstance(item, dict)
                     ]
                 ),
+                "spoken_line_count": planner.get("spoken_line_count"),
+                "action_line_count": planner.get("action_line_count"),
+                "initiative_summary": planner.get("initiative_summary")
+                if isinstance(planner.get("initiative_summary"), dict)
+                else {},
+                "last_actor_outcome_summary": planner.get("last_actor_outcome_summary"),
             },
             "beat": {
                 "beat_id": beat.get("beat_id"),
@@ -550,12 +700,21 @@ def _story_window_dramatic_context(dramatic_context: dict[str, Any] | None) -> d
         "selected_scene_function": dramatic_context.get("selected_scene_function"),
         "function_type": dramatic_context.get("function_type"),
         "responder_id": responder.get("responder_id"),
+        "secondary_responder_ids": _compact_context_list(
+            responder.get("secondary_responder_ids"), limit=4
+        ),
         "pacing_mode": pacing.get("pacing_mode"),
         "pressure_state": scene.get("pressure_state"),
         "thread_pressure_state": scene.get("thread_pressure_state"),
         "social_risk_band": social.get("social_risk_band"),
         "social_outcome": outcome.get("social_outcome"),
         "dramatic_direction": outcome.get("dramatic_direction"),
+        "spoken_line_count": outcome.get("spoken_line_count"),
+        "action_line_count": outcome.get("action_line_count"),
+        "initiative_summary": outcome.get("initiative_summary")
+        if isinstance(outcome.get("initiative_summary"), dict)
+        else {},
+        "last_actor_outcome_summary": outcome.get("last_actor_outcome_summary"),
         "continuity_classes": _compact_context_list(outcome.get("continuity_classes"), limit=4),
         "beat_id": beat.get("beat_id"),
         "thread_pressure_level": threads.get("thread_pressure_level"),
@@ -574,11 +733,16 @@ def _player_shell_context_from_dramatic_context(dramatic_context: dict[str, Any]
         "contract": "player_shell_dramatic_context.v1",
         "selected_scene_function": story_context.get("selected_scene_function"),
         "responder_id": story_context.get("responder_id"),
+        "secondary_responder_ids": story_context.get("secondary_responder_ids") or [],
         "pacing_mode": story_context.get("pacing_mode"),
         "pressure_state": story_context.get("pressure_state"),
         "thread_pressure_state": story_context.get("thread_pressure_state"),
         "social_risk_band": story_context.get("social_risk_band"),
         "social_outcome": story_context.get("social_outcome"),
+        "spoken_line_count": story_context.get("spoken_line_count"),
+        "action_line_count": story_context.get("action_line_count"),
+        "initiative_summary": story_context.get("initiative_summary") or {},
+        "last_actor_outcome_summary": story_context.get("last_actor_outcome_summary"),
         "continuity_classes": story_context.get("continuity_classes") or [],
         "thread_pressure_level": story_context.get("thread_pressure_level"),
         "surface_note": "bounded_player_shell_context_not_operator_diagnostics",
@@ -1268,6 +1432,27 @@ class StoryRuntimeManager:
         raw_bundle = graph_state.get("visible_output_bundle")
         experience_policy = self._story_runtime_experience_policy()
         packaged_bundle = self._apply_experience_packaging(raw_bundle, experience_policy)
+        visible_bundle_for_summary = (
+            packaged_bundle if isinstance(packaged_bundle, dict) else raw_bundle if isinstance(raw_bundle, dict) else {}
+        )
+        actor_turn_summary = _build_actor_turn_summary(
+            graph_state=graph_state,
+            visible_output_bundle=visible_bundle_for_summary,
+            dramatic_context_summary=dramatic_context_summary,
+        )
+        selected_responder_set = (
+            graph_state.get("selected_responder_set")
+            if isinstance(graph_state.get("selected_responder_set"), list)
+            else []
+        )
+        if selected_responder_set:
+            gov["selected_responder_set"] = selected_responder_set
+            gov["selected_responder_ids"] = [
+                str(row.get("actor_id") or row.get("responder_id") or "").strip()
+                for row in selected_responder_set
+                if isinstance(row, dict)
+                and str(row.get("actor_id") or row.get("responder_id") or "").strip()
+            ]
         event: dict[str, Any] = {
             "turn_number": commit_turn_number,
             "turn_kind": turn_kind or "player",
@@ -1287,9 +1472,11 @@ class StoryRuntimeManager:
             "committed_result": graph_state.get("committed_result"),
             "committed_turn_authority": committed_turn_authority,
             "selected_scene_function": graph_state.get("selected_scene_function"),
+            "selected_responder_set": selected_responder_set,
             "visibility_class_markers": graph_state.get("visibility_class_markers"),
             "failure_markers": graph_state.get("failure_markers"),
             "self_correction": self_correction,
+            "actor_turn_summary": actor_turn_summary,
             "runtime_governance_surface": gov,
         }
         committed_record = {
@@ -1300,6 +1487,7 @@ class StoryRuntimeManager:
             "narrative_commit": narrative_commit_payload,
             "committed_turn_authority": committed_turn_authority,
             "dramatic_context_summary": dramatic_context_summary,
+            "actor_turn_summary": actor_turn_summary,
             "committed_state_after": {
                 "current_scene_id": session.current_scene_id,
                 "turn_counter": session.turn_counter,
@@ -1550,6 +1738,7 @@ class StoryRuntimeManager:
         last_narrative_commit: dict[str, Any] | None = None
         last_committed_turn_authority: dict[str, Any] | None = None
         last_dramatic_context_summary: dict[str, Any] | None = None
+        last_actor_turn_summary: dict[str, Any] | None = None
         last_committed_turn = session.history[-1] if session.history else None
         if isinstance(last_committed_turn, dict):
             nc = last_committed_turn.get("narrative_commit")
@@ -1561,9 +1750,28 @@ class StoryRuntimeManager:
             dramatic_context = last_committed_turn.get("dramatic_context_summary")
             if isinstance(dramatic_context, dict):
                 last_dramatic_context_summary = dramatic_context
+            actor_summary = last_committed_turn.get("actor_turn_summary")
+            if isinstance(actor_summary, dict):
+                last_actor_turn_summary = actor_summary
 
         summary: dict[str, Any] | None = None
         if isinstance(last_narrative_commit, dict):
+            planner_truth = (
+                last_narrative_commit.get("planner_truth")
+                if isinstance(last_narrative_commit.get("planner_truth"), dict)
+                else {}
+            )
+            if not last_actor_turn_summary and planner_truth:
+                last_actor_turn_summary = {
+                    "contract": "actor_turn_summary.v1",
+                    "primary_responder_id": planner_truth.get("primary_responder_id")
+                    or planner_truth.get("responder_id"),
+                    "secondary_responder_ids": planner_truth.get("secondary_responder_ids") or [],
+                    "spoken_line_count": planner_truth.get("spoken_line_count") or 0,
+                    "action_line_count": planner_truth.get("action_line_count") or 0,
+                    "initiative_summary": planner_truth.get("initiative_summary") or {},
+                    "last_actor_outcome_summary": planner_truth.get("last_actor_outcome_summary"),
+                }
             summary = {
                 "situation_status": last_narrative_commit.get("situation_status"),
                 "allowed": last_narrative_commit.get("allowed"),
@@ -1572,6 +1780,31 @@ class StoryRuntimeManager:
                 "proposed_scene_id": last_narrative_commit.get("proposed_scene_id"),
                 "selected_candidate_source": last_narrative_commit.get("selected_candidate_source"),
                 "is_terminal": last_narrative_commit.get("is_terminal"),
+                "primary_responder_id": (
+                    (last_actor_turn_summary or {}).get("primary_responder_id")
+                    if isinstance(last_actor_turn_summary, dict)
+                    else None
+                ),
+                "spoken_line_count": (
+                    (last_actor_turn_summary or {}).get("spoken_line_count")
+                    if isinstance(last_actor_turn_summary, dict)
+                    else 0
+                ),
+                "action_line_count": (
+                    (last_actor_turn_summary or {}).get("action_line_count")
+                    if isinstance(last_actor_turn_summary, dict)
+                    else 0
+                ),
+                "initiative_summary": (
+                    (last_actor_turn_summary or {}).get("initiative_summary")
+                    if isinstance(last_actor_turn_summary, dict)
+                    else {}
+                ),
+                "last_actor_outcome_summary": (
+                    (last_actor_turn_summary or {}).get("last_actor_outcome_summary")
+                    if isinstance(last_actor_turn_summary, dict)
+                    else None
+                ),
             }
 
         last_consequences: list[str] = []
@@ -1609,6 +1842,12 @@ class StoryRuntimeManager:
                 "last_narrative_commit": last_narrative_commit,
                 "last_committed_turn_authority": last_committed_turn_authority,
                 "last_dramatic_context_summary": last_dramatic_context_summary,
+                "last_actor_turn_summary": last_actor_turn_summary,
+                "last_actor_outcome_summary": (
+                    last_actor_turn_summary.get("last_actor_outcome_summary")
+                    if isinstance(last_actor_turn_summary, dict)
+                    else None
+                ),
                 "player_shell_context": player_shell_context,
                 "module_scope_truth": module_scope_truth,
                 "last_narrative_commit_summary": summary,

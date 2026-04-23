@@ -334,6 +334,80 @@ def test_get_state_and_get_diagnostics_reflect_separation(manager: StoryRuntimeM
     assert "graph" in (diag["diagnostics"][-1])
 
 
+def test_get_state_exposes_actor_turn_summary_fields(
+    manager: StoryRuntimeManager, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        manager,
+        "_apply_experience_packaging",
+        lambda raw_bundle, _policy: raw_bundle,
+    )
+    payload = _envelope(
+        interpreted_input={"kind": "speech", "confidence": 0.92},
+        generation={
+            "success": True,
+            "metadata": {
+                "structured_output": {
+                    "primary_responder_id": "annette_reille",
+                    "secondary_responder_ids": ["alain_reille"],
+                    "initiative_events": [
+                        {"actor_id": "annette_reille", "type": "interrupt"},
+                        {"actor_id": "alain_reille", "type": "counter"},
+                    ],
+                    "social_outcome": "tension_escalates",
+                    "dramatic_direction": "escalate",
+                }
+            },
+        },
+    )
+    payload["responder_id"] = "annette_reille"
+    payload["selected_responder_set"] = [
+        {"actor_id": "annette_reille"},
+        {"actor_id": "alain_reille"},
+    ]
+    payload["selected_scene_function"] = "escalate_conflict"
+    payload["social_outcome"] = "tension_escalates"
+    payload["dramatic_direction"] = "escalate"
+    payload["validation_outcome"] = {
+        "status": "approved",
+        "reason": "fixture_actor_lane",
+        "actor_lane_validation": {"status": "approved"},
+    }
+    payload["visible_output_bundle"] = {
+        "gm_narration": ["Pressure rises in the room."],
+        "spoken_lines": [
+            {"speaker_id": "annette_reille", "text": "No, that is not what happened."},
+            {"speaker_id": "alain_reille", "text": "Let her finish."},
+        ],
+        "action_lines": [{"actor_id": "annette_reille", "text": "steps forward"}],
+    }
+    manager.turn_graph = _FakeTurnGraph(payload)
+    session = manager.create_session(
+        module_id="m",
+        runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
+    )
+
+    manager.execute_turn(session_id=session.session_id, player_input="I push the argument.")
+    state = manager.get_state(session.session_id)
+
+    actor_summary = state["committed_state"]["last_actor_turn_summary"]
+    assert actor_summary["contract"] == "actor_turn_summary.v1"
+    assert actor_summary["primary_responder_id"] == "annette_reille"
+    assert actor_summary["secondary_responder_ids"] == ["alain_reille"]
+    assert actor_summary["spoken_line_count"] == 2
+    assert actor_summary["action_line_count"] == 1
+    assert actor_summary["initiative_summary"]["event_count"] == 2
+    assert actor_summary["actor_lane_validation_status"] == "approved"
+    assert "initiative_events=2" in (actor_summary["last_actor_outcome_summary"] or "")
+
+    summary = state["committed_state"]["last_narrative_commit_summary"]
+    assert summary["primary_responder_id"] == "annette_reille"
+    assert summary["spoken_line_count"] == 2
+    assert summary["action_line_count"] == 1
+    assert summary["initiative_summary"]["event_count"] == 2
+    assert state["committed_state"]["last_actor_outcome_summary"] == actor_summary["last_actor_outcome_summary"]
+
+
 def test_unknown_target_scene_blocked(monkeypatch: pytest.MonkeyPatch) -> None:
     def _fake_resolve(**kwargs: Any) -> tuple[str | None, str | None, list[dict[str, Any]], str | None]:
         return (

@@ -109,13 +109,22 @@ Tone: helpful, not punitive.""",
                 "id": "runtime_turn_system",
                 "template": """You are the World of Shadows runtime turn model. Return strictly valid JSON matching the requested schema.
 
-NARRATIVE FORMATTING: The narrative_response field should be well-structured prose with multiple paragraphs separated by \\n\\n (double newlines). Break the narrative at natural points: scene setup, action/dialogue, consequences/reflection. Each paragraph should be 2-4 sentences. This creates readable, human-friendly output when displayed.""",
+Actor-first contract:
+- Use narration_summary as the primary narration field.
+- Use spoken_lines and action_lines to represent visible actor behavior.
+- Keep narrative_response as a legacy compatibility mirror of narration_summary.
+
+NARRATIVE FORMATTING: narration_summary (and legacy narrative_response) should be well-structured prose with multiple paragraphs separated by \\n\\n (double newlines). Break at natural points: scene setup, action/dialogue, and consequence. Each paragraph should be 2-4 sentences.""",
                 "description": "System prompt for World of Shadows runtime turn generation.",
                 "variables": []
             },
             "runtime_turn_human": {
                 "id": "runtime_turn_human",
-                "template": """{full_context}{correction_block}IMPORTANT - Narrative Structure: Write the narrative_response as 3-4 short paragraphs separated by \\n\\n (double newlines). Each paragraph should be 2-4 sentences. Structure: (1) scene/setting, (2) action/dialogue, (3) consequence/emotion. This makes the narrative human-readable when displayed.
+                "template": """{full_context}{correction_block}IMPORTANT - Return actor-level JSON for this turn.
+Required when applicable: narration_summary, primary_responder_id, spoken_lines, action_lines, initiative_events, state_effects.
+For compatibility, mirror key narration into narrative_response.
+
+Narrative structure: write narration_summary as 3-4 short paragraphs separated by \\n\\n (double newlines). Each paragraph should be 2-4 sentences. Structure: (1) scene/setting, (2) action/dialogue, (3) consequence/emotion.
 
 Format instructions:
 {format_instructions}""",

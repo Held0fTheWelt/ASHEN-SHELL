@@ -608,6 +608,120 @@ def _goc_primary_responder_from_context(
     return actor, reason
 
 
+_GOC_DEFAULT_REACTOR_BY_PRIMARY: dict[str, str] = {
+    "annette_reille": "veronique_vallon",
+    "alain_reille": "michel_longstreet",
+    "michel_longstreet": "annette_reille",
+    "veronique_vallon": "alain_reille",
+}
+
+_GOC_INTERRUPTER_BY_PRIMARY: dict[str, str] = {
+    "annette_reille": "michel_longstreet",
+    "alain_reille": "veronique_vallon",
+    "michel_longstreet": "veronique_vallon",
+    "veronique_vallon": "annette_reille",
+}
+
+
+def _append_responder(
+    responders: list[dict[str, str]],
+    *,
+    actor_id: str,
+    reason: str,
+    role: str,
+) -> None:
+    actor = str(actor_id or "").strip()
+    if not actor:
+        return
+    for row in responders:
+        if str(row.get("actor_id") or "").strip() == actor:
+            return
+    responders.append({"actor_id": actor, "reason": reason, "role": role})
+
+
+def _build_responder_set(
+    *,
+    primary_actor: str,
+    primary_reason: str,
+    scene_fn: str,
+    pacing_mode: str,
+    prior_classes: list[str],
+    interpreted_move: dict[str, Any],
+    text: str,
+    social_state_record: dict[str, Any] | None,
+    thread_feedback: dict[str, Any] | None,
+) -> tuple[list[dict[str, str]], dict[str, Any]]:
+    """Build primary + optional secondary + optional interrupter responder set."""
+    responders: list[dict[str, str]] = []
+    _append_responder(
+        responders,
+        actor_id=primary_actor,
+        reason=primary_reason,
+        role="primary_responder",
+    )
+
+    tf = thread_feedback if isinstance(thread_feedback, dict) else {}
+    thread_pressure = 0
+    try:
+        thread_pressure = int(tf.get("thread_pressure_level") or 0)
+    except (TypeError, ValueError):
+        thread_pressure = 0
+    social = social_state_record if isinstance(social_state_record, dict) else {}
+    social_risk_band = str(social.get("social_risk_band") or "").strip().lower()
+    move_type = str(interpreted_move.get("move_type") or "").strip().lower()
+    move_class = str(interpreted_move.get("move_class") or "").strip().lower()
+    is_high_pressure = (
+        scene_fn in {"escalate_conflict", "redirect_blame", "scene_pivot"}
+        or pacing_mode in {"multi_pressure", "compressed"}
+        or thread_pressure >= 3
+        or "blame_pressure" in prior_classes
+        or "dignity_injury" in prior_classes
+        or social_risk_band == "high"
+        or move_type in {"direct_accusation", "escalation_threat"}
+    )
+
+    ordering_rules: list[str] = [
+        "primary_responder_selected_from_context",
+        "secondary_reactor_enabled_on_high_pressure",
+        "interruption_candidate_enabled_on_thread_or_escalation_pressure",
+    ]
+
+    if is_high_pressure:
+        secondary = _GOC_DEFAULT_REACTOR_BY_PRIMARY.get(primary_actor)
+        if secondary:
+            _append_responder(
+                responders,
+                actor_id=secondary,
+                reason="secondary_reactor:cross_couple_pressure",
+                role="secondary_reactor",
+            )
+
+    interruption_trigger = (
+        thread_pressure >= 3
+        or scene_fn in {"escalate_conflict", "scene_pivot"}
+        or "interrupt" in text
+        or "cut in" in text
+        or "talk over" in text
+        or move_type in {"direct_accusation", "escalation_threat"}
+        or "accus" in move_class
+    )
+    if interruption_trigger:
+        interrupter = _GOC_INTERRUPTER_BY_PRIMARY.get(primary_actor)
+        if interrupter:
+            _append_responder(
+                responders,
+                actor_id=interrupter,
+                reason="interruption_candidate:pressure_interrupt_window",
+                role="interruption_candidate",
+            )
+
+    return responders, {
+        "responder_ordering_rules": ordering_rules,
+        "secondary_reactor_enabled": is_high_pressure,
+        "interruption_candidate_enabled": interruption_trigger,
+    }
+
+
 def build_responder_and_function(
     *,
     player_input: str,
@@ -701,6 +815,20 @@ def build_responder_and_function(
         "heuristic_trace": heuristic_trace[:16],
         "selection_source": selection_source,
         "semantic_move_trace_ref": semantic_trace_ref,
+        "semantic_secondary_move_type": (
+            str(semantic_move_record.get("secondary_move_type") or "").strip()
+            if isinstance(semantic_move_record, dict)
+            else None
+        ),
+        "semantic_secondary_features": (
+            [
+                str(x).strip()
+                for x in (semantic_move_record.get("secondary_dramatic_features") or [])
+                if str(x).strip()
+            ][:6]
+            if isinstance(semantic_move_record, dict)
+            else []
+        ),
         "social_state_asymmetry": (social_state_record or {}).get("responder_asymmetry_code")
         if isinstance(social_state_record, dict)
         else None,
@@ -722,7 +850,27 @@ def build_responder_and_function(
         thread_feedback=thread_feedback,
     )
 
-    responders = [{"actor_id": actor, "reason": reason}]
+    responders, responder_set_resolution = _build_responder_set(
+        primary_actor=actor,
+        primary_reason=reason,
+        scene_fn=scene_fn,
+        pacing_mode=pacing_mode,
+        prior_classes=prior_classes,
+        interpreted_move=interpreted_move,
+        text=text,
+        social_state_record=social_state_record if isinstance(social_state_record, dict) else None,
+        thread_feedback=thread_feedback,
+    )
+    resolution["responder_set_resolution"] = responder_set_resolution
+    resolution["selected_responder_roles"] = [
+        {
+            "actor_id": str(row.get("actor_id") or "").strip(),
+            "role": str(row.get("role") or "").strip() or "responder",
+            "reason": str(row.get("reason") or "").strip(),
+        }
+        for row in responders
+        if isinstance(row, dict)
+    ]
 
     return responders, scene_fn, implied, resolution
 
@@ -733,6 +881,7 @@ def build_pacing_and_silence(
     interpreted_move: dict[str, Any],
     module_id: str,
     prior_narrative_thread_state: dict[str, Any] | None = None,
+    semantic_move_record: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Describe what ``build_pacing_and_silence`` does in one line
     (verb-led summary for this function).
@@ -792,7 +941,7 @@ def build_pacing_and_silence(
         or "won't answer" in text
         or "do not answer" in text
     )
-    if "thin edge" in text or "one beat" in text or thin_fragment or awkward_pause:
+    if "thin edge" in text or "one beat" in text or awkward_pause:
         if "silent" in text or "say nothing" in text or awkward_pause:
             return _finalize_pacing_silence(
                 assert_pacing_mode("thin_edge"),
@@ -801,6 +950,65 @@ def build_pacing_and_silence(
                     "reason": "thin_edge_plus_withheld",
                 },
             )
+        return _finalize_pacing_silence(
+            assert_pacing_mode("thin_edge"),
+            {
+                "mode": assert_silence_brevity_mode("brief"),
+                "reason": "thin_edge_brevity_pressure",
+            },
+        )
+    if thin_fragment and ("silent" in text or "say nothing" in text):
+        return _finalize_pacing_silence(
+            assert_pacing_mode("thin_edge"),
+            {
+                "mode": assert_silence_brevity_mode("withheld"),
+                "reason": "thin_edge_plus_withheld",
+            },
+        )
+    sparse_tone: str | None = None
+    if thin_fragment:
+        sparse_norm = " ".join(words).lower()
+        sparse_tokens = {w.strip(".,!?;:") for w in words if w.strip(".,!?;:")}
+        refusal_markers = {"no", "nope", "nah", "never", "stop", "leave"}
+        provocation_markers = {"whatever", "fine", "sure", "k", "ok", "okay"}
+        defensive_markers = {"...", "..", ".", "hmm", "hm", "uh", "um"}
+        discomfort_markers = {"maybe", "idk", "unsure"}
+
+        if sparse_tokens & refusal_markers or "won't" in sparse_norm or "dont" in sparse_norm or "don't" in sparse_norm:
+            sparse_tone = "refusal_pressure"
+        elif (
+            "whatever" in sparse_norm
+            or "yeah right" in sparse_norm
+            or sparse_tokens & provocation_markers == {"whatever"}
+            or sparse_tokens == {"fine"}
+        ):
+            sparse_tone = "provocation_pressure"
+        elif sparse_norm in defensive_markers or sparse_tokens & defensive_markers:
+            sparse_tone = "defensive_pause"
+        elif sparse_tokens & discomfort_markers or "not sure" in sparse_norm or "dont know" in sparse_norm or "don't know" in sparse_norm:
+            sparse_tone = "discomfort_pause"
+
+    sem = semantic_move_record if isinstance(semantic_move_record, dict) else {}
+    sem_move_type = str(sem.get("move_type") or "").strip()
+    if sparse_tone in {"refusal_pressure", "provocation_pressure"} or (
+        sem_move_type in {"direct_accusation", "indirect_provocation", "escalation_threat"} and thin_fragment
+    ):
+        return _finalize_pacing_silence(
+            assert_pacing_mode("multi_pressure"),
+            {
+                "mode": assert_silence_brevity_mode("normal"),
+                "reason": "sparse_fragment_refusal_or_provocation_pressure",
+            },
+        )
+    if sparse_tone in {"defensive_pause", "discomfort_pause"}:
+        return _finalize_pacing_silence(
+            assert_pacing_mode("compressed"),
+            {
+                "mode": assert_silence_brevity_mode("brief"),
+                "reason": "sparse_fragment_defensive_pause_pressure",
+            },
+        )
+    if thin_fragment:
         return _finalize_pacing_silence(
             assert_pacing_mode("thin_edge"),
             {
