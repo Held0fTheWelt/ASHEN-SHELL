@@ -85,7 +85,7 @@ def build_actor_survival_telemetry(
                 "spoken_lines_generated": len(gen_spoken_lines),
                 "action_lines_generated": len(gen_action_lines),
                 "responder_attribution_present": any(
-                    line.get("responder_id") for line in gen_spoken_lines
+                    line.get("speaker_id") for line in gen_spoken_lines
                     if isinstance(line, dict)
                 ),
             },

@@ -365,6 +365,8 @@ def run_visible_render(
         structured_action_lines = _coerce_actor_lines(structured.get("action_lines"), actor_key="actor_id")
 
     markers: list[str] = []
+    if actor_lanes_rejected:
+        markers.append("actor_lanes_validation_gated")
     approved = validation_outcome.get("status") == "approved"
     committed = committed_result.get("committed_effects") or []
     has_commit = bool(committed) and committed_result.get("commit_applied")
@@ -404,6 +406,11 @@ def run_visible_render(
             "spoken_lines": structured_spoken_lines,
             "action_lines": structured_action_lines,
         }
+        if actor_lanes_rejected:
+            bundle["render_downgrade"] = {
+                "actor_lanes": "validation_rejected",
+                "reason": actor_lane_validation.get("reason") if isinstance(actor_lane_validation, dict) else None,
+            }
         markers.append("non_factual_staging")
         return bundle, markers
 
@@ -450,6 +457,11 @@ def run_visible_render(
                 "player_visible": False,
                 "director_surface_hints": director_surface_hints,
             }
+        if actor_lanes_rejected:
+            bundle["render_downgrade"] = {
+                "actor_lanes": "validation_rejected",
+                "reason": actor_lane_validation.get("reason") if isinstance(actor_lane_validation, dict) else None,
+            }
         markers.append("truth_aligned")
         if used_supplement:
             markers.append("bounded_ambiguity")
@@ -463,6 +475,11 @@ def run_visible_render(
             "spoken_lines": structured_spoken_lines,
             "action_lines": structured_action_lines,
         }
+        if actor_lanes_rejected:
+            bundle["render_downgrade"] = {
+                "actor_lanes": "validation_rejected",
+                "reason": actor_lane_validation.get("reason") if isinstance(actor_lane_validation, dict) else None,
+            }
         markers.append("live_truth_surface_no_preview_placeholder")
         return bundle, markers
 
@@ -472,6 +489,11 @@ def run_visible_render(
         "spoken_lines": structured_spoken_lines,
         "action_lines": structured_action_lines,
     }
+    if actor_lanes_rejected:
+        bundle["render_downgrade"] = {
+            "actor_lanes": "validation_rejected",
+            "reason": actor_lane_validation.get("reason") if isinstance(actor_lane_validation, dict) else None,
+        }
     markers.append("non_factual_staging")
     return bundle, markers
 
