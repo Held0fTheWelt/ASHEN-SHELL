@@ -76,7 +76,7 @@ class RuntimeTurnStructuredOutput(BaseModel):
     proposed_scene_id: str | None = None
     intent_summary: str | None = None
 
-    primary_responder_id: str | None = Field(default=None, description="Required. The actor who responds in this turn.")
+    primary_responder_id: str | None = Field(default=None, description="Required for actor-bearing turns. The actor who responds in this turn. Falls back to director scope if absent.")
     secondary_responder_ids: list[str] = Field(default_factory=list, description="Actors who react or interrupt, if any.")
     spoken_lines: list[RuntimeSpokenLine | str] = Field(default_factory=list, description="Required when actors speak. Each entry must have speaker_id.")
     action_lines: list[RuntimeActionLine | str] = Field(default_factory=list, description="Physical actions by actors. Each entry must have actor_id.")
