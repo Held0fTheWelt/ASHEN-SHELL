@@ -43,6 +43,7 @@ from app.auth.feature_registry import (
     FEATURE_MANAGE_RESEARCH_GOVERNANCE,
     FEATURE_MANAGE_NEWS,
     FEATURE_MANAGE_PLAY_SERVICE_CONTROL,
+    FEATURE_VIEW_QA_CANONICAL_TURN,
     FEATURE_MANAGE_ROLES,
     FEATURE_MANAGE_SYSTEM_DIAGNOSIS,
     FEATURE_MANAGE_SLOGANS,
@@ -151,6 +152,7 @@ FEATURE_ACCESS_RULES: dict[str, dict[str, Any]] = {
     FEATURE_DASHBOARD_LOGS: {"min_tier": _a, "description": "Dashboard logs"},
     FEATURE_DASHBOARD_SETTINGS: {"min_tier": _a, "description": "Dashboard settings"},
     FEATURE_DASHBOARD_USER_SETTINGS: {"min_tier": _u, "description": "Per-user dashboard settings"},
+    FEATURE_VIEW_QA_CANONICAL_TURN: {"min_tier": _a, "description": "QA canonical turn diagnostics (API)"},
 }
 
 
