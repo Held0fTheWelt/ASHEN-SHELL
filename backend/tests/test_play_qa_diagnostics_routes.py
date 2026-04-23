@@ -81,9 +81,6 @@ class TestPlayQaDiagnosticsRoutes:
             "/api/v1/play/test-session-123/qa-diagnostics-canonical-turn",
             headers=admin_headers,
         )
-        if response.status_code != 200:
-            print("\nResponse status:", response.status_code)
-            print("Response data:", response.get_json())
         assert response.status_code == 200
         data = response.get_json()
         assert data["ok"] is True
