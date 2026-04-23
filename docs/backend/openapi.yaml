@@ -2676,6 +2676,43 @@ paths:
           description: Rate limited.
         '500':
           description: Server error.
+  /api/v1/admin/story-runtime-experience:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/story-runtime-experience
+      operationId: get_api_v1_admin_story_runtime_experience
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+    put:
+      tags:
+      - Admin
+      summary: PUT /admin/story-runtime-experience
+      operationId: put_api_v1_admin_story_runtime_experience
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
   /api/v1/admin/system-diagnosis:
     get:
       tags:
@@ -6442,6 +6479,56 @@ paths:
           description: Server error.
       parameters:
       - *id021
+  /api/v1/operator/diagnostics/session/{session_id}:
+    get:
+      tags:
+      - OperationalGovernance
+      summary: GET /operator/diagnostics/session/{session_id}
+      operationId: get_api_v1_operator_diagnostics_session_session_id
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/operator/diagnostics/session/{session_id}/turn-history:
+    get:
+      tags:
+      - OperationalGovernance
+      summary: GET /operator/diagnostics/session/{session_id}/turn-history
+      operationId: get_api_v1_operator_diagnostics_session_session_id_turn_history
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
   /api/v1/operator/mcp-telemetry/ingest:
     post:
       tags:
