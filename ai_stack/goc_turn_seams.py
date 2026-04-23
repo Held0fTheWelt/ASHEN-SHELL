@@ -454,6 +454,8 @@ def run_visible_render(
             gm_lines = ["The exchange shifts, and the room adjusts around it."]
 
         # Wave 3: Count distinct actor IDs across lanes (only non-empty, non-None, stripped strings)
+        # NOTE: multi_actor_realized is only emitted in the primary render path (has_commit and approved).
+        # Fallback/live_truth_surface branches do not track multi_actor markers.
         actor_ids_in_render: set[str] = set()
         spoken_items = structured.get("spoken_lines")
         if isinstance(spoken_items, list):
@@ -476,7 +478,7 @@ def run_visible_render(
             "action_lines": structured_action_lines,
         }
 
-        # Add multi_actor_realized marker when >= 2 distinct actors in lanes
+        # Add multi_actor_realized marker when >= 2 distinct actors in lanes (primary render path only)
         if len(actor_ids_in_render) >= 2:
             markers.append("multi_actor_realized")
             bundle["multi_actor_render"] = {

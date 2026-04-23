@@ -120,7 +120,7 @@ def build_actor_survival_telemetry(
                     r for r in responders
                     if isinstance(r, dict) and r.get("role") == "secondary_reactor"
                 ]),
-                "rendered_actor_count": len(set(
+                "generated_actor_count": len(set(
                     str(line.get("speaker_id") or line.get("actor_id") or "").strip()
                     for line in (
                         list(gen_structured.get("spoken_lines") or []) +

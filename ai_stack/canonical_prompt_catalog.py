@@ -128,7 +128,7 @@ MECHANICS:
 - narration_summary describes what happened (derived from actor output above)
 - narrative_response MUST be a copy of narration_summary only
 - When prior_initiative_truth shows unresolved tension (initiative_pressure_label contested/floor_claimed), the next turn MUST show an actor response that addresses or escalates that pressure.
-- When secondary_responder_ids are nominated with REQUIRED directive, both actors MUST appear in spoken_lines or action_lines.
+- When secondary_responder_ids are nominated, at least one SHOULD appear in spoken_lines or action_lines unless an interruption or validation constraint makes that impossible.
 - When pacing_mode=thin_edge with silence, actors may react briefly but MUST NOT be completely absent if prior carry_forward_tension_notes are present.
 
 Return valid JSON. Prioritize actor lanes over prose beauty.""",
