@@ -57,6 +57,7 @@ _TAG_PREFIXES: list[tuple[str, str]] = [
     ("/api/v1/operator/diagnostics", "OperationalGovernance"),
     ("/api/v1/operator/mcp-telemetry", "MCP"),
     ("/api/v1/player", "GameBootstrap"),
+    ("/api/v1/play", "GameBootstrap"),
     ("/api/v1/roles", "Roles"),
     ("/api/v1/sessions", "SessionsBridge"),
     ("/api/v1/site", "SiteContent"),
