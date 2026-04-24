@@ -337,7 +337,9 @@ def test_observability_connection(actor: str = "system") -> dict:
         trace = adapter.start_trace(
             name="admin_health_check", metadata={"test": True}
         )
-        adapter.end_trace(trace["trace_id"])
+        if not trace:
+            raise Exception("Failed to start trace - adapter not properly initialized")
+        adapter.end_trace(trace)
         adapter.flush()
 
     except Exception as e:
