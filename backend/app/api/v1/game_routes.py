@@ -349,6 +349,7 @@ def _ensure_player_session(
     run_id: str | None = None,
     template_id: str | None = None,
     run_payload: dict[str, Any] | None = None,
+    trace_id: str | None = None,
 ) -> dict[str, Any]:
     clean_run_id = (run_id or "").strip()
     created: dict[str, Any] | None = None
@@ -390,7 +391,7 @@ def _ensure_player_session(
     created = create_story_session(
         module_id=module_id,
         runtime_projection=runtime_projection,
-        trace_id=g.get("trace_id"),
+        trace_id=trace_id or g.get("trace_id"),
         content_provenance=provenance,
     )
     runtime_session_id = str(created.get("session_id") or "").strip()
@@ -553,6 +554,7 @@ def game_player_session_create():
             return jsonify({"error": "JSON body must be an object."}), route_status_codes.bad_request
         run_id = (data.get("run_id") or "").strip()
         template_id = (data.get("template_id") or "").strip()
+        trace_id = (data.get("trace_id") or "").strip() or g.get("trace_id")
         run_payload: dict[str, Any] | None = None
         if not run_id:
             if not template_id:
@@ -572,6 +574,7 @@ def game_player_session_create():
             run_id=run_id,
             template_id=template_id or None,
             run_payload=run_payload,
+            trace_id=trace_id,
         )
         return jsonify(bundle), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper

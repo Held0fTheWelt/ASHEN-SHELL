@@ -816,19 +816,34 @@ def play_start():
 @frontend_bp.route("/play/start", methods=["POST"])
 @require_login
 def play_create():
+    from uuid import uuid4
+
     template_id = (request.form.get("template_id") or "").strip()
     if not template_id:
         flash("Please select a template.", "error")
         return redirect(url_for("frontend.play_start"))
+
+    # Capture or generate trace_id for audit trail
+    trace_id = getattr(request.state, "trace_id", None) or uuid4().hex
+
     response = player_backend.request_backend(
         "POST",
         "/api/v1/game/player-sessions",
-        json_data={"template_id": template_id},
+        json_data={"template_id": template_id, "trace_id": trace_id},
     )
     try:
         payload = player_backend.require_success(response, "Could not create play run.")
     except BackendApiError as exc:
-        flash(str(exc), "error")
+        # Check if this is a JSON request
+        if _wants_json_response():
+            return jsonify({
+                "error": "Could not start game session",
+                "error_code": exc.error_code if hasattr(exc, "error_code") else "UNKNOWN",
+                "debug_id": trace_id,
+            }), 400
+        # For HTML requests, show error code and debug ID in flash message
+        error_msg = f"Could not start game session.\nError code: {exc.error_code if hasattr(exc, 'error_code') else 'UNKNOWN'}\nDebug ID: {trace_id}"
+        flash(error_msg, "error")
         return redirect(url_for("frontend.play_start"))
     run_id = payload.get("run_id") or payload.get("run", {}).get("id")
     if not run_id:

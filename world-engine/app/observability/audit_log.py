@@ -77,6 +77,10 @@ def log_story_turn_event(
     degradation_signals: list[str] | None = None,
     vitality_telemetry: dict[str, Any] | None = None,
     passivity_diagnosis: dict[str, Any] | None = None,
+    llm_invocation_details: dict[str, Any] | None = None,
+    validation_details: dict[str, Any] | None = None,
+    commit_details: dict[str, Any] | None = None,
+    retrieval_details: dict[str, Any] | None = None,
 ) -> None:
     entry: dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -101,6 +105,14 @@ def log_story_turn_event(
         entry["vitality_telemetry_v1"] = _sanitize_vitality_telemetry(vitality_telemetry)
     if isinstance(passivity_diagnosis, dict) and passivity_diagnosis:
         entry["passivity_diagnosis_v1"] = _sanitize_passivity_diagnosis(passivity_diagnosis)
+    if isinstance(llm_invocation_details, dict) and llm_invocation_details:
+        entry["llm_invocation_details"] = {k: v for k, v in llm_invocation_details.items() if v is not None}
+    if isinstance(validation_details, dict) and validation_details:
+        entry["validation_details"] = {k: v for k, v in validation_details.items() if v is not None}
+    if isinstance(commit_details, dict) and commit_details:
+        entry["commit_details"] = {k: v for k, v in commit_details.items() if v is not None}
+    if isinstance(retrieval_details, dict) and retrieval_details:
+        entry["retrieval_details"] = {k: v for k, v in retrieval_details.items() if v is not None}
     _logger().info(entry)
 
 

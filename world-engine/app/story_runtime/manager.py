@@ -1458,6 +1458,51 @@ class StoryRuntimeManager:
             if isinstance(actor_survival_telemetry.get("passivity_diagnosis_v1"), dict)
             else None
         )
+
+        # Build LLM invocation details from graph_state
+        routing = graph_state.get("routing") if isinstance(graph_state.get("routing"), dict) else {}
+        gen_meta = gen.get("metadata") if isinstance(gen.get("metadata"), dict) else {}
+        self_correction = graph_state.get("self_correction") if isinstance(graph_state.get("self_correction"), dict) else {}
+        llm_invocation_details = {
+            "selected_provider": routing.get("selected_provider"),
+            "selected_model": routing.get("selected_model"),
+            "adapter_used": gen_meta.get("adapter"),
+            "adapter_invocation_mode": gen_meta.get("adapter_invocation_mode"),
+            "fallback_stage_reached": routing.get("fallback_stage_reached") or ("graph_fallback_executed" if "fallback_model" in (graph_state.get("nodes_executed") or []) else "primary_only"),
+            "fallback_reason": routing.get("fallback_reason"),
+            "retry_attempt_count": self_correction.get("attempt_count"),
+            "parser_error": gen.get("parser_error"),
+            "structured_output_present": gen.get("structured_output") is not None,
+            "model_success": model_ok,
+        }
+
+        # Build validation details
+        validation_outcome = graph_state.get("validation_outcome") if isinstance(graph_state.get("validation_outcome"), dict) else {}
+        validation_details = {
+            "status": validation_outcome.get("status"),
+            "reason": validation_outcome.get("reason"),
+            "dramatic_quality_gate": validation_outcome.get("dramatic_quality_gate"),
+        }
+        actor_lane_validation = validation_outcome.get("actor_lane_validation") if isinstance(validation_outcome.get("actor_lane_validation"), dict) else {}
+        if actor_lane_validation:
+            validation_details["actor_lane_validation_status"] = actor_lane_validation.get("status")
+            validation_details["actor_lane_validation_reason"] = actor_lane_validation.get("reason")
+
+        # Build commit details
+        commit_details = {
+            "committed": narrative_commit is not None,
+            "degraded": narrative_commit.is_degraded if narrative_commit else False,
+            "degradation_reason": narrative_commit.degradation_reason if narrative_commit else None,
+        }
+
+        # Build retrieval details if available
+        retrieval_status = graph_state.get("retrieval_status") if isinstance(graph_state.get("retrieval_status"), dict) else {}
+        retrieval_details = {
+            "status": retrieval_status.get("status"),
+            "hit_count": retrieval_status.get("hit_count"),
+            "documents_used": retrieval_status.get("documents_used"),
+        } if retrieval_status else None
+
         log_story_turn_event(
             trace_id=trace_id,
             story_session_id=session.session_id,
@@ -1470,6 +1515,10 @@ class StoryRuntimeManager:
             degradation_signals=list(graph_state.get("degradation_signals") or []),
             vitality_telemetry=vitality_telemetry_v1,
             passivity_diagnosis=passivity_diagnosis_v1,
+            llm_invocation_details=llm_invocation_details,
+            validation_details=validation_details,
+            commit_details=commit_details,
+            retrieval_details=retrieval_details,
         )
         narrative_commit_payload = narrative_commit.model_dump(mode="json")
         turn_thread_metrics = thread_continuity_metrics(session.narrative_threads)
@@ -1755,8 +1804,12 @@ class StoryRuntimeManager:
         module_id: str,
         runtime_projection: dict[str, Any],
         content_provenance: dict[str, Any] | None = None,
+        trace_id: str | None = None,
     ) -> StorySession:
         session_id = uuid4().hex
+        # Generate trace_id if not provided for audit trail correlation
+        if not trace_id:
+            trace_id = uuid4().hex
         current_scene_id = str(runtime_projection.get("start_scene_id") or "")
         prov = dict(content_provenance) if isinstance(content_provenance, dict) else {}
         if not prov:
@@ -1785,7 +1838,7 @@ class StoryRuntimeManager:
         for attempt in range(1, attempts + 1):
             try:
                 with self._session_turn_lock(session_id):
-                    self._execute_opening_locked(session_id, trace_id=None)
+                    self._execute_opening_locked(session_id, trace_id=trace_id)
                 self.metrics.incr("story_opening_success", module_id=module_id, session_id=session_id, attempt=attempt)
                 return session
             except BaseException as exc:
