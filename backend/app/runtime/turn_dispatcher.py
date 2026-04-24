@@ -117,6 +117,35 @@ async def dispatch_turn(
 
         result = await execute_turn(session, current_turn, decision, module)
 
+    # Extract diagnostic details from canonical state for observability
+    canonical_state = result.updated_canonical_state or {}
+    generation = canonical_state.get("generation") or {}
+    validation = canonical_state.get("validation_outcome") or {}
+    committed = canonical_state.get("committed_result") or {}
+
+    llm_invocation_details = {
+        "fallback_used": bool(generation.get("fallback_used")),
+        "parser_error": generation.get("metadata", {}).get("langchain_parser_error"),
+        "structured_output_present": bool(
+            generation.get("metadata", {}).get("structured_output")
+        ),
+        "retry_exhausted": "retry_exhausted" in canonical_state.get("degradation_signals", []),
+    }
+
+    validation_details = {
+        "status": validation.get("status"),
+        "reason": validation.get("reason"),
+        "rejected_reasons": validation.get("rejection_reasons", []),
+    }
+
+    commit_details = {
+        "committed": committed.get("commit_applied", False),
+        "degraded": "degraded_commit" in canonical_state.get("degradation_signals", []),
+        "degradation_reason": None,
+    }
+    if "degraded_commit" in canonical_state.get("degradation_signals", []):
+        commit_details["degradation_reason"] = validation.get("reason")
+
     # Log turn execution event for observability (A2 runtime boundary)
     log_turn_execution(
         trace_id=trace_id,
@@ -125,6 +154,9 @@ async def dispatch_turn(
         turn_before=current_turn,
         turn_after=result.turn_number,
         outcome=result.execution_status,
+        llm_invocation_details=llm_invocation_details,
+        validation_details=validation_details,
+        commit_details=commit_details,
     )
 
     return result

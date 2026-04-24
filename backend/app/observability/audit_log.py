@@ -112,8 +112,11 @@ def log_turn_execution(
     turn_after: int,
     outcome: str,
     error_code: str | None = None,
+    llm_invocation_details: dict | None = None,
+    validation_details: dict | None = None,
+    commit_details: dict | None = None,
 ) -> None:
-    """Log turn execution (runtime boundary event)."""
+    """Log turn execution (runtime boundary event) with diagnostic details."""
     logger = get_audit_logger()
 
     entry = {
@@ -128,6 +131,12 @@ def log_turn_execution(
     }
     if error_code:
         entry["error_code"] = error_code
+    if llm_invocation_details:
+        entry["llm_invocation_details"] = llm_invocation_details
+    if validation_details:
+        entry["validation_details"] = validation_details
+    if commit_details:
+        entry["commit_details"] = commit_details
 
     logger.info(entry)
 
