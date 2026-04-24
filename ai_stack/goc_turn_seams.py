@@ -506,7 +506,7 @@ def run_visible_render(
                 render_support.setdefault("player_visible", False)
                 render_support["vitality_floor_warning"] = "thin_edge_output_empty_with_prior_tension"
 
-        # C3.1: Add reaction order divergence marker to render_support
+        # C3.1: Add reaction order divergence marker to render_support (canonical structure)
         divergence_reason = rc.get("reaction_order_divergence")
         if divergence_reason:
             render_support = bundle.setdefault("render_support", {})
@@ -516,12 +516,14 @@ def run_visible_render(
             render_support.setdefault("projection_version", "render_support.v1")
             render_support.setdefault("player_visible", False)
             bundle["render_support"]["reaction_order_divergence"] = {
-                "divergence": True,
+                "divergence": rc.get("divergence", True),
                 "reason": divergence_reason,
                 "preferred": rc.get("preferred_reaction_order_ids") or [],
                 "realized": rc.get("realized_actor_order") or [],
-                "non_fatal": True,
-                "justified": False,
+                "not_realized": rc.get("not_realized_actor_ids") or [],
+                "non_fatal": rc.get("non_fatal", True),
+                "justified": rc.get("justified", False),
+                "justification": rc.get("justification"),
             }
             markers.append("reaction_order_divergence")
 

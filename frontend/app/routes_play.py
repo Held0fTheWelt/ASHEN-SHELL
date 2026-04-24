@@ -162,13 +162,20 @@ def _build_display_actor_turn_line(entry: dict[str, Any]) -> str:
 
 
 def _format_reaction_order_divergence(div: Any) -> str:
-    """Format reaction_order_divergence dict as readable message."""
+    """Format reaction_order_divergence dict as bounded, readable message (never raw dict)."""
     if not isinstance(div, dict):
         return str(div).strip() if div else ""
+
+    justification = div.get("justification")
+    if justification and isinstance(justification, str) and justification.strip():
+        return f"Divergence: {justification}"
+
     reason = div.get("reason", "")
     if reason:
-        return f"Reaction order divergence: {reason}"
-    return "Reaction order divergence detected"
+        reason_display = reason.replace("_", " ").capitalize()
+        return f"Order divergence: {reason_display}"
+
+    return "Order divergence detected"
 
 
 def _build_display_render_support_warning(entry: dict[str, Any], vitality: dict[str, Any]) -> str:

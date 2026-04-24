@@ -730,9 +730,19 @@ def _extract_realized_actor_order_from_output(state: dict[str, Any]) -> list[str
 
 
 def _compute_reaction_order_divergence_for_render(state: dict[str, Any]) -> dict[str, Any]:
-    """Compute reaction order divergence structure from committed responders vs realized output.
+    """Compute canonical reaction order divergence structure from committed responders vs realized output.
 
-    Returns dict matching render_context field names with divergence metadata.
+    Returns dict with complete divergence metadata, structured for render_context and diagnostics.
+
+    Returns:
+        divergence: bool — True if preferred and realized orders differ
+        reason: str | None — canonical reason code if divergence exists
+        preferred_reaction_order_ids: list[str] — planned responder order
+        realized_actor_order: list[str] — actual order in output
+        not_realized_actor_ids: list[str] — nominated but not realized actors
+        non_fatal: bool — divergence does not block output (always True)
+        justified: bool — divergence has explicit reason (True if valid reason)
+        justification: str | None — human-readable explanation
     """
     preferred = _preferred_reaction_order_ids_from_responders(
         state.get("selected_responder_set") or []
@@ -746,17 +756,29 @@ def _compute_reaction_order_divergence_for_render(state: dict[str, Any]) -> dict
     not_realized = [a for a in secondary if a not in realized]
 
     reason: str | None = None
+    justification: str | None = None
     if not_realized and realized:
         reason = "secondary_responder_nominated_not_realized_in_output"
+        justification = f"Secondary responders {not_realized} nominated but not realized in output"
     elif len(preferred) > 1 and len(realized) == 1:
         reason = "single_actor_only"
+        justification = "Multiple responders nominated; only one actor realized in output"
     elif realized and realized != preferred:
         reason = "realized_order_differs"
+        justification = f"Realization order {realized} differs from preferred {preferred}"
+
+    divergence = reason is not None
+    justified = bool(reason)
 
     return {
         "reaction_order_divergence": reason,
+        "divergence": divergence,
         "preferred_reaction_order_ids": preferred,
         "realized_actor_order": realized,
+        "not_realized_actor_ids": not_realized,
+        "non_fatal": True,
+        "justified": justified,
+        "justification": justification,
     }
 
 

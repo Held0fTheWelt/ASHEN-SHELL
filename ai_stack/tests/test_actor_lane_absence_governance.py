@@ -107,11 +107,11 @@ def test_render_support_merge_preserves_earlier_writes():
 
 
 def test_reaction_order_divergence_in_render_support():
-    """Secondary responder nominated but not realized should show divergence."""
+    """Secondary responder nominated but not realized should show divergence with full structure."""
     state = {
         "selected_responder_set": [
-            {"actor_id": "alice", "role": "primary_responder"},
-            {"actor_id": "bob", "role": "secondary_reactor"},
+            {"actor_id": "alice", "role": "primary_responder", "preferred_reaction_order": 0},
+            {"actor_id": "bob", "role": "secondary_reactor", "preferred_reaction_order": 1},
         ],
         "spoken_lines": [{"speaker_id": "alice", "text": "line"}],
         "action_lines": [],
@@ -119,16 +119,21 @@ def test_reaction_order_divergence_in_render_support():
 
     result = _compute_reaction_order_divergence_for_render(state)
     assert result["reaction_order_divergence"] == "secondary_responder_nominated_not_realized_in_output"
+    assert result["divergence"] is True
     assert result["preferred_reaction_order_ids"] == ["alice", "bob"]
     assert result["realized_actor_order"] == ["alice"]
+    assert result["not_realized_actor_ids"] == ["bob"]
+    assert result["non_fatal"] is True
+    assert result["justified"] is True
+    assert result["justification"] is not None
 
 
 def test_reaction_order_divergence_not_when_aligned():
-    """Aligned order should not produce divergence."""
+    """Aligned order should not produce divergence; divergence=False."""
     state = {
         "selected_responder_set": [
-            {"actor_id": "alice", "role": "primary_responder"},
-            {"actor_id": "bob", "role": "secondary_reactor"},
+            {"actor_id": "alice", "role": "primary_responder", "preferred_reaction_order": 0},
+            {"actor_id": "bob", "role": "secondary_reactor", "preferred_reaction_order": 1},
         ],
         "spoken_lines": [
             {"speaker_id": "alice", "text": "line1"},
@@ -139,8 +144,13 @@ def test_reaction_order_divergence_not_when_aligned():
 
     result = _compute_reaction_order_divergence_for_render(state)
     assert result["reaction_order_divergence"] is None
+    assert result["divergence"] is False
     assert result["preferred_reaction_order_ids"] == ["alice", "bob"]
     assert result["realized_actor_order"] == ["alice", "bob"]
+    assert result["not_realized_actor_ids"] == []
+    assert result["non_fatal"] is True
+    assert result["justified"] is False
+    assert result["justification"] is None
 
 
 def test_run_visible_render_survives_vitality_warning_and_reaction_order_divergence():
@@ -187,6 +197,45 @@ def test_run_visible_render_survives_vitality_warning_and_reaction_order_diverge
     assert render_support["reaction_order_divergence"].get("non_fatal") is True
     assert isinstance(render_support["reaction_order_divergence"].get("preferred"), list)
     assert isinstance(render_support["reaction_order_divergence"].get("realized"), list)
+
+
+def test_opening_leniency_produces_degradation_signal():
+    """Verify opening-turn leniency approval produces DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED."""
+    from ai_stack.runtime_quality_semantics import canonical_degradation_signals
+    from ai_stack.runtime_turn_contracts import DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED
+
+    state = {
+        "validation_outcome": {
+            "status": "approved",
+            "reason": "opening_leniency_approved",
+        },
+    }
+
+    signals = canonical_degradation_signals(state=state, fallback_taken=False)
+    assert DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED in signals, \
+        f"Expected {DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED} in signals, got {signals}"
+
+
+def test_opening_leniency_produces_weak_quality_class():
+    """Verify opening-leniency approval results in weak_but_legal quality class."""
+    from ai_stack.runtime_quality_semantics import canonical_quality_class, canonical_degradation_signals
+    from ai_stack.runtime_turn_contracts import QUALITY_CLASS_WEAK_BUT_LEGAL
+
+    state = {
+        "validation_outcome": {
+            "status": "approved",
+            "reason": "opening_leniency_approved",
+        },
+    }
+
+    signals = canonical_degradation_signals(state=state, fallback_taken=False)
+    quality = canonical_quality_class(
+        validation_outcome=state["validation_outcome"],
+        commit_applied=True,
+        degradation_signals=signals,
+    )
+    assert quality == QUALITY_CLASS_WEAK_BUT_LEGAL, \
+        f"Expected {QUALITY_CLASS_WEAK_BUT_LEGAL}, got {quality}"
 
 
 def test_story_rendering_uses_canonical_normalized_entries():
