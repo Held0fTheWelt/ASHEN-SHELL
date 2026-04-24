@@ -219,7 +219,7 @@ def _reconcile_model_responders(
     }
 
 
-_ALLOWED_INITIATIVE_EVENT_TYPES = {"interrupt", "escalate", "withdraw", "deflect", "counter"}
+_ALLOWED_INITIATIVE_EVENT_TYPES = {"interrupt", "escalate", "withdraw", "deflect", "counter", "seize"}
 
 
 def _actor_lane_validation(
