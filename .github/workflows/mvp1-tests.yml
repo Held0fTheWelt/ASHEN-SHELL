@@ -1,0 +1,166 @@
+name: MVP1 Experience Identity Tests
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - 'world-engine/app/runtime/profiles.py'
+      - 'world-engine/tests/test_mvp1_experience_identity.py'
+      - 'backend/tests/runtime/test_mvp1_session_identity.py'
+      - 'frontend/tests/test_mvp1_play_launcher.py'
+      - 'frontend/templates/session_start.html'
+      - 'frontend/app/routes_play.py'
+      - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
+      - 'story_runtime_core/goc_solo_builtin_template.py'
+      - 'content/modules/god_of_carnage/**'
+      - 'backend/app/api/v1/game_routes.py'
+      - 'backend/app/services/game_service.py'
+      - 'world-engine/app/api/http.py'
+      - 'world-engine/app/runtime/manager.py'
+      - 'run-test.py'
+      - 'docker-up.py'
+      - '.github/workflows/mvp1-tests.yml'
+  pull_request:
+    branches: [ master, main, develop ]
+    paths:
+      - 'world-engine/app/runtime/profiles.py'
+      - 'world-engine/tests/test_mvp1_experience_identity.py'
+      - 'backend/tests/runtime/test_mvp1_session_identity.py'
+      - 'frontend/tests/test_mvp1_play_launcher.py'
+      - 'frontend/templates/session_start.html'
+      - 'frontend/app/routes_play.py'
+      - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
+      - 'story_runtime_core/goc_solo_builtin_template.py'
+      - 'content/modules/god_of_carnage/**'
+      - 'backend/app/api/v1/game_routes.py'
+      - 'backend/app/services/game_service.py'
+      - 'world-engine/app/api/http.py'
+      - 'world-engine/app/runtime/manager.py'
+      - 'run-test.py'
+      - 'docker-up.py'
+      - '.github/workflows/mvp1-tests.yml'
+
+jobs:
+  mvp1-world-engine:
+    name: MVP1 World Engine Tests (Experience Identity)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: |
+            world-engine/requirements.txt
+            world-engine/requirements-dev.txt
+            ai_stack/pyproject.toml
+
+      - name: Install world-engine dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./story_runtime_core"
+          pip install -e "./ai_stack[test]"
+          pip install -r world-engine/requirements-dev.txt
+          pip install pyyaml
+
+      - name: Run MVP1 world-engine identity tests
+        working-directory: ./world-engine
+        run: |
+          python -m pytest tests/test_mvp1_experience_identity.py -v --tb=short --no-cov
+        # All MVP1 tests in this file must run. No silent skipping.
+
+  mvp1-backend:
+    name: MVP1 Backend Tests (Session Identity)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.txt
+          pip install -e "./story_runtime_core"
+
+      - name: Run MVP1 backend identity tests
+        working-directory: ./backend
+        run: |
+          python -m pytest tests/runtime/test_mvp1_session_identity.py -v --tb=short --no-cov
+        # All MVP1 tests in this file must run. No silent skipping.
+
+  mvp1-frontend:
+    name: MVP1 Frontend Tests (Play Launcher)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: frontend/requirements-dev.txt
+
+      - name: Install frontend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r frontend/requirements-dev.txt
+
+      - name: Run MVP1 frontend launcher tests
+        working-directory: ./frontend
+        run: |
+          python -m pytest tests/test_mvp1_play_launcher.py -v --tb=short --no-cov
+        # All MVP1 tests in this file must run. No silent skipping.
+
+  mvp1-tooling-gate:
+    name: MVP1 Tooling Gate (run-test.py and docker-up.py)
+    runs-on: ubuntu-latest
+    needs: [ mvp1-world-engine, mvp1-backend, mvp1-frontend ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Verify run-test.py entry point exists
+        run: |
+          test -f run-test.py || (echo "FAIL: run-test.py missing" && exit 1)
+          python run-test.py --help
+
+      - name: Verify docker-up.py gate subcommand
+        run: |
+          python docker-up.py gate --backend-url http://127.0.0.1:19999 || true
+          python docker-up.py gate --help
+
+      - name: Verify MVP1 report artifacts exist
+        run: |
+          test -f tests/reports/MVP_Live_Runtime_Completion/MVP1_SOURCE_LOCATOR.md || (echo "FAIL: source locator missing" && exit 1)
+          test -f tests/reports/MVP_Live_Runtime_Completion/MVP1_OPERATIONAL_EVIDENCE.md || (echo "FAIL: operational evidence missing" && exit 1)
+          test -f tests/reports/MVP_Live_Runtime_Completion/MVP1_HANDOFF_RUNTIME_PROFILE.md || (echo "FAIL: handoff artifact missing" && exit 1)
+          echo "All MVP1 report artifacts present."
+
+      - name: Verify ADRs present
+        run: |
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-001-experience-identity.md || (echo "FAIL: ADR-001 missing" && exit 1)
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-002-runtime-profile-resolver.md || (echo "FAIL: ADR-002 missing" && exit 1)
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-003-role-selection-actor-ownership.md || (echo "FAIL: ADR-003 missing" && exit 1)
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-005-canonical-content-authority.md || (echo "FAIL: ADR-005 missing" && exit 1)
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-006-evidence-gated-capabilities.md || (echo "FAIL: ADR-006 missing" && exit 1)
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-016-operational-gates.md || (echo "FAIL: ADR-016 missing" && exit 1)
+          echo "All required MVP1 ADRs present."

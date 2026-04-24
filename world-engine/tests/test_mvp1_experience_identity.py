@@ -529,7 +529,7 @@ class TestRunTestEntrypoint:
             f"run-test.py is required at {run_test} as the MVP operational gate entry point."
         )
 
-    def test_run_test_includes_mvp1_world_engine_and_backend_suites(self):
+    def test_run_test_includes_mvp1_world_engine_and_backend_suites_fix009(self):
         """run-test.py must include engine and backend suites (FIX-009)."""
         run_test = REPO_ROOT / "run-test.py"
         assert run_test.is_file(), "run-test.py missing"
@@ -539,3 +539,82 @@ class TestRunTestEntrypoint:
         assert "tests/run_tests.py" in content or "run_tests" in content, (
             "run-test.py must delegate to tests/run_tests.py"
         )
+
+
+# ---------------------------------------------------------------------------
+# FIX-010: GitHub workflow coverage
+# ---------------------------------------------------------------------------
+
+class TestGitHubWorkflowCoverage:
+    """GitHub workflow must include MVP1 suite and not silently skip tests (FIX-010)."""
+
+    def test_github_workflow_includes_mvp1_suite(self):
+        """mvp1-tests.yml must exist in .github/workflows/ (FIX-010)."""
+        workflow = REPO_ROOT / ".github" / "workflows" / "mvp1-tests.yml"
+        assert workflow.is_file(), (
+            f"mvp1-tests.yml GitHub workflow is required at {workflow}. "
+            "MVP1 tests must not rely solely on generic engine/backend workflows."
+        )
+        content = workflow.read_text(encoding="utf-8")
+        assert "test_mvp1_experience_identity" in content, (
+            "mvp1-tests.yml must reference the MVP1 world-engine test file"
+        )
+        assert "test_mvp1_session_identity" in content, (
+            "mvp1-tests.yml must reference the MVP1 backend test file"
+        )
+        assert "test_mvp1_play_launcher" in content, (
+            "mvp1-tests.yml must reference the MVP1 frontend test file"
+        )
+
+    def test_github_workflow_does_not_skip_mvp1_required_tests(self):
+        """mvp1-tests.yml must not use --ignore or -k to skip MVP1 tests (FIX-010)."""
+        workflow = REPO_ROOT / ".github" / "workflows" / "mvp1-tests.yml"
+        if not workflow.is_file():
+            pytest.skip("mvp1-tests.yml not yet created")
+        content = workflow.read_text(encoding="utf-8")
+        assert "--ignore" not in content, (
+            "mvp1-tests.yml must not --ignore any test files — MVP1 tests may not be silently skipped."
+        )
+
+
+# ---------------------------------------------------------------------------
+# FIX-012: Required MVP1 ADRs present
+# ---------------------------------------------------------------------------
+
+class TestRequiredMvp1ADRs:
+    """All required MVP1 ADRs must exist (FIX-012)."""
+
+    REQUIRED_ADR_FILES = [
+        "adr-mvp1-001-experience-identity.md",
+        "adr-mvp1-002-runtime-profile-resolver.md",
+        "adr-mvp1-003-role-selection-actor-ownership.md",
+        "adr-mvp1-005-canonical-content-authority.md",
+        "adr-mvp1-006-evidence-gated-capabilities.md",
+        "adr-mvp1-016-operational-gates.md",
+    ]
+
+    def test_required_mvp1_adrs_present(self):
+        """All required MVP1 ADRs must exist in docs/ADR/MVP_Live_Runtime_Completion/ (FIX-012)."""
+        adr_dir = REPO_ROOT / "docs" / "ADR" / "MVP_Live_Runtime_Completion"
+        assert adr_dir.is_dir(), f"ADR directory missing at {adr_dir}"
+        for adr_file in self.REQUIRED_ADR_FILES:
+            path = adr_dir / adr_file
+            assert path.is_file(), (
+                f"Required ADR missing: {path}. "
+                f"All of {self.REQUIRED_ADR_FILES} must exist."
+            )
+
+    def test_mvp1_adrs_include_validation_and_operational_evidence(self):
+        """Each required ADR must contain validation evidence and operational gate impact (FIX-012)."""
+        adr_dir = REPO_ROOT / "docs" / "ADR" / "MVP_Live_Runtime_Completion"
+        for adr_file in self.REQUIRED_ADR_FILES:
+            path = adr_dir / adr_file
+            if not path.is_file():
+                continue
+            content = path.read_text(encoding="utf-8")
+            assert "Validation Evidence" in content, (
+                f"{adr_file} must include a 'Validation Evidence' section"
+            )
+            assert "Operational Gate Impact" in content, (
+                f"{adr_file} must include an 'Operational Gate Impact' section"
+            )
