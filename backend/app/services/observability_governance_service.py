@@ -315,7 +315,7 @@ def test_observability_connection(actor: str = "system") -> dict:
     message = "Successfully connected to Langfuse"
 
     try:
-        from app.observability.langfuse_adapter import LangfuseAdapter
+        from app.observability.langfuse_adapter import LangfuseAdapter, LangfuseConfig
 
         public_key = get_observability_credential_for_runtime("public_key")
         secret_key = get_observability_credential_for_runtime("secret_key")
@@ -323,13 +323,15 @@ def test_observability_connection(actor: str = "system") -> dict:
         if not secret_key:
             raise Exception("Secret key not configured")
 
-        adapter = LangfuseAdapter(
-            enabled=True,
-            public_key=public_key,
-            secret_key=secret_key,
-            host=config["base_url"],
-            environment=config["environment"],
-        )
+        # Create config object with credentials from database
+        adapter_config = LangfuseConfig()
+        adapter_config.public_key = public_key
+        adapter_config.secret_key = secret_key
+        adapter_config.host = config["base_url"]
+        adapter_config.environment = config["environment"]
+        adapter_config.enabled = True
+
+        adapter = LangfuseAdapter(config=adapter_config)
 
         # Simple health check: create and immediately end a test span
         trace = adapter.start_trace(
