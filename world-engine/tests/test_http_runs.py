@@ -1,4 +1,4 @@
-"""HTTP Contract Tests for Runs Endpoints.
+﻿"""HTTP Contract Tests for Runs Endpoints.
 
 WAVE 6: API contract and response schema tests for run management endpoints.
 Tests focus on creating, listing, and retrieving runs with proper validation.
@@ -17,7 +17,7 @@ def test_create_run_returns_201_or_200(client):
     """Verify that POST /api/runs returns 200 status code."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "display_name": "Test User"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Test User"},
     )
     assert response.status_code == 200
 
@@ -28,7 +28,7 @@ def test_create_run_with_minimal_payload(client):
     """Verify that POST /api/runs accepts minimal required payload."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     body = response.json()
@@ -42,7 +42,7 @@ def test_create_run_returns_run_with_required_fields(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "account_id": "test-account",
             "display_name": "Test User",
         },
@@ -68,7 +68,7 @@ def test_create_run_includes_template_id_in_response(client):
     """Verify that POST /api/runs response includes template_id."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     run = response.json()["run"]
@@ -81,7 +81,7 @@ def test_create_run_includes_status_field(client):
     """Verify that POST /api/runs response includes status."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Test"},
     )
     assert response.status_code == 200
     run = response.json()["run"]
@@ -95,7 +95,7 @@ def test_create_run_includes_created_at_field(client):
     """Verify that POST /api/runs response includes created_at timestamp."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     run = response.json()["run"]
@@ -110,7 +110,7 @@ def test_create_run_with_optional_account_id(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "account_id": "my-account-123",
         },
     )
@@ -124,7 +124,7 @@ def test_create_run_with_optional_character_id(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "character_id": "char-456",
         },
     )
@@ -138,7 +138,7 @@ def test_create_run_with_optional_player_name(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "player_name": "John Doe",
         },
     )
@@ -187,7 +187,7 @@ def test_create_run_response_hint_is_string(client):
     """Verify that POST /api/runs response hint is informative."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     body = response.json()
@@ -231,7 +231,7 @@ def test_list_runs_contains_valid_run_structures(client):
     # First create a run
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Test"},
     )
     assert create_response.status_code == 200
     created_run_id = create_response.json()["run"]["id"]
@@ -259,7 +259,7 @@ def test_get_run_details_returns_200(client):
     # Create a run
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Test"},
     )
     assert create_response.status_code == 200
     run_id = create_response.json()["run"]["id"]
@@ -275,7 +275,7 @@ def test_get_run_details_response_structure(client):
     """Verify that GET /api/runs/{run_id} returns proper structure."""
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Test"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -294,7 +294,7 @@ def test_get_run_details_includes_template_field(client):
     """Verify that GET /api/runs/{run_id} response includes template."""
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -314,7 +314,7 @@ def test_get_run_details_includes_lobby_field(client):
     """Verify that GET /api/runs/{run_id} response includes lobby."""
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -363,7 +363,7 @@ def test_create_run_content_type_is_json(client):
     """Verify that POST /api/runs returns JSON content type."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     assert "application/json" in response.headers.get("content-type", "")
@@ -375,7 +375,7 @@ def test_get_run_content_type_is_json(client):
     """Verify that GET /api/runs/{run_id} returns JSON content type."""
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -386,13 +386,25 @@ def test_get_run_content_type_is_json(client):
 
 @pytest.mark.unit
 @pytest.mark.contract
-@pytest.mark.parametrize("template_id", ["god_of_carnage_solo", "apartment_confrontation_group"])
-def test_create_run_with_different_templates(client, template_id):
-    """Verify that POST /api/runs works with different valid templates."""
+def test_create_run_with_goc_solo_via_profile(client):
+    """POST /api/runs with god_of_carnage_solo via runtime_profile_id+role returns 200."""
     response = client.post(
         "/api/runs",
-        json={"template_id": template_id},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     run = response.json()["run"]
-    assert run["template_id"] == template_id
+    assert run["template_id"] == "god_of_carnage_solo"
+
+
+@pytest.mark.unit
+@pytest.mark.contract
+def test_create_run_with_group_template(client):
+    """POST /api/runs with apartment_confrontation_group via template_id returns 200."""
+    response = client.post(
+        "/api/runs",
+        json={"template_id": "apartment_confrontation_group"},
+    )
+    assert response.status_code == 200
+    run = response.json()["run"]
+    assert run["template_id"] == "apartment_confrontation_group"

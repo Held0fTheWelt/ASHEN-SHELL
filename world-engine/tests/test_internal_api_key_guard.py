@@ -1,4 +1,4 @@
-"""Internal API key validation tests for World Engine.
+﻿"""Internal API key validation tests for World Engine.
 
 WAVE 5: Internal API key guard and validation.
 Tests ensure internal endpoints properly validate API keys and reject unauthorized access.
@@ -109,7 +109,7 @@ class TestInternalJoinContextEndpoint:
                 # Create a run first
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 assert run_response.status_code == 200
                 run_id = run_response.json()["run"]["id"]
@@ -140,7 +140,7 @@ class TestInternalJoinContextEndpoint:
                 # Create a run first
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 assert run_response.status_code == 200
                 run_id = run_response.json()["run"]["id"]
@@ -176,7 +176,7 @@ class TestInternalJoinContextEndpoint:
                 # Create a run first
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 assert run_response.status_code == 200
                 run_id = run_response.json()["run"]["id"]
@@ -208,7 +208,7 @@ class TestInternalJoinContextEndpoint:
                 # Create a run first
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 assert run_response.status_code == 200
                 run_id = run_response.json()["run"]["id"]
@@ -293,7 +293,7 @@ class TestPublicEndpointsNotAffected:
         """POST /api/runs should work without API key."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "display_name": "TestPlayer"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "TestPlayer"},
         )
         assert response.status_code == 200
 
@@ -303,7 +303,7 @@ class TestPublicEndpointsNotAffected:
         # First create a run
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "display_name": "Player1", "account_id": "test-acct"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1", "account_id": "test-acct"},
         )
         assert run_response.status_code == 200
         run_id = run_response.json()["run"]["id"]
@@ -341,7 +341,7 @@ class TestMultipleRequestsWithDifferentKeys:
                 # Create a run
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 run_id = run_response.json()["run"]["id"]
 
@@ -426,7 +426,7 @@ class TestApiKeyBehaviorWhenNotConfigured:
                 # Create a run
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 run_id = run_response.json()["run"]["id"]
 
@@ -455,7 +455,7 @@ class TestApiKeyBehaviorWhenNotConfigured:
                 # Create a run
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 run_id = run_response.json()["run"]["id"]
 

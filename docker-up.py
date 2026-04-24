@@ -508,6 +508,58 @@ def cmd_ensure_env(args: argparse.Namespace, services: list[str]) -> int:
     return cmd_init_env(args, services)
 
 
+def cmd_gate(args: argparse.Namespace, services: list[str]) -> int:
+    """MVP operational gate: fail if backend is unreachable or bootstrap is required.
+
+    Exit 0  — backend healthy, bootstrap complete, stack ready.
+    Exit 1  — bootstrap required (stack up but not initialized).
+    Exit 2  — backend unreachable (not started or crashed).
+    Exit 3  — unexpected error parsing backend response.
+
+    Use before running MVP tests to confirm the stack is operational:
+      python docker-up.py gate
+    """
+    backend_url = getattr(args, "backend_url", None) or "http://localhost:8000"
+    status_url = f"{backend_url.rstrip('/')}/api/v1/bootstrap/public-status"
+
+    print(f"Docker-up gate: checking {status_url}", file=sys.stderr)
+
+    req = Request(status_url, headers={"Accept": "application/json"})
+    try:
+        with urlopen(req, timeout=5) as response:
+            raw = response.read().decode("utf-8")
+    except URLError as exc:
+        print(f"GATE FAIL: Backend unreachable at {status_url}: {exc}", file=sys.stderr)
+        print("docker_up_gate_result: FAIL — backend_unreachable", flush=True)
+        return 2
+    except Exception as exc:
+        print(f"GATE ERROR: {exc}", file=sys.stderr)
+        return 3
+
+    try:
+        payload = json.loads(raw)
+    except Exception as exc:
+        print(f"GATE ERROR: Cannot parse backend response: {exc}", file=sys.stderr)
+        return 3
+
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict):
+        print("GATE FAIL: Backend response missing 'data' field.", file=sys.stderr)
+        return 3
+
+    if data.get("bootstrap_required"):
+        print(
+            "GATE FAIL: Bootstrap is required. Run web setup or CLI bootstrap before the MVP gate.",
+            file=sys.stderr,
+        )
+        print("docker_up_gate_result: FAIL — bootstrap_required", flush=True)
+        return 1
+
+    print("GATE PASS: Backend healthy, bootstrap complete.", file=sys.stderr)
+    print("docker_up_gate_result: PASS", flush=True)
+    return 0
+
+
 def cmd_reset(args: argparse.Namespace, services: list[str]) -> int:
     """Reset local Docker state: remove containers, images, and volumes. Preserve .env."""
     if not getattr(args, "force", False):
@@ -657,6 +709,18 @@ def main() -> None:
         help="Also remove named volumes.",
     )
     p_reset.set_defaults(_handler=cmd_reset)
+
+    p_gate = sub.add_parser(
+        "gate",
+        help="MVP operational gate: fail if backend unreachable or bootstrap required.",
+        parents=[common],
+    )
+    p_gate.add_argument(
+        "--backend-url",
+        default="http://localhost:8000",
+        help="Backend base URL to check (default: http://localhost:8000).",
+    )
+    p_gate.set_defaults(_handler=cmd_gate)
 
     args = parser.parse_args()
     handler = getattr(args, "_handler", None)

@@ -1,4 +1,4 @@
-"""HTTP Contract Tests for Internal Join Context Endpoint.
+﻿"""HTTP Contract Tests for Internal Join Context Endpoint.
 
 WAVE 6: API contract tests for internal join context endpoint with authentication.
 Tests focus on proper authentication, error handling, and response structure.
@@ -29,7 +29,7 @@ def test_join_context_requires_internal_api_key(client, app, api_key_header):
     # This test verifies the endpoint exists and accepts requests
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -52,7 +52,7 @@ def test_join_context_wrong_api_key_returns_401(client, app):
     # This test verifies the endpoint structure and error handling
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -75,7 +75,7 @@ def test_join_context_with_correct_api_key_returns_200(client, app, api_key_head
     # Use the actual key from config (loaded from .env)
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -94,7 +94,7 @@ def test_join_context_returns_proper_structure(client, app, api_key_header):
     """Verify that join-context returns expected response structure."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -128,7 +128,7 @@ def test_join_context_returns_run_id(client, app):
     """Verify that join-context response includes run_id."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -148,7 +148,7 @@ def test_join_context_returns_participant_id(client, app):
     """Verify that join-context response includes participant_id."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -169,7 +169,7 @@ def test_join_context_returns_role_id(client, app):
     """Verify that join-context response includes role_id."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -190,7 +190,7 @@ def test_join_context_returns_display_name(client, app):
     """Verify that join-context response includes display_name."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -211,7 +211,7 @@ def test_join_context_with_account_id(client, app):
     """Verify that join-context accepts optional account_id."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -231,7 +231,7 @@ def test_join_context_with_character_id(client, app):
     """Verify that join-context accepts optional character_id."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -327,7 +327,7 @@ def test_join_context_content_type_is_json(client, app):
     """Verify that join-context returns JSON content type."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -347,7 +347,7 @@ def test_join_context_field_types(client, app):
     run_response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "account_id": "owner-account",
         },
     )

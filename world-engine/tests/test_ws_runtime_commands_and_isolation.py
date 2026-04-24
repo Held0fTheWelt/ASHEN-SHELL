@@ -1,4 +1,4 @@
-"""
+﻿"""
 WAVE 7: WebSocket Runtime Commands and State Isolation Tests
 
 Tests for runtime command execution via WebSocket and state isolation:
@@ -58,7 +58,7 @@ class TestRuntimeCommandsOverWebSocket:
         # Create run
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -86,7 +86,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -110,7 +110,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -145,7 +145,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -173,7 +173,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -199,7 +199,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -224,7 +224,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -250,7 +250,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -334,7 +334,7 @@ class TestRuntimeCommandsOverWebSocket:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -399,12 +399,12 @@ class TestStateAndBroadcastIsolation:
         # Create two separate runs
         run_a = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         ).json()["run"]["id"]
 
         run_b = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "2", "display_name": "Bob"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "2", "display_name": "Bob"},
         ).json()["run"]["id"]
 
         # Get tickets for each run
@@ -509,7 +509,7 @@ class TestStateAndBroadcastIsolation:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -538,7 +538,7 @@ class TestStateAndBroadcastIsolation:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -568,7 +568,7 @@ class TestStateAndBroadcastIsolation:
 
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Alice"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Alice"},
         )
         run_id = run_response.json()["run"]["id"]
 

@@ -531,6 +531,13 @@ def game_create_run():
         selected_player_role = (data.get("selected_player_role") or "").strip() or None
         if not template_id and not runtime_profile_id:
             return jsonify({"error": "template_id or runtime_profile_id is required."}), route_status_codes.bad_request
+        _PROFILE_ONLY_TEMPLATES = {"god_of_carnage_solo"}
+        if template_id in _PROFILE_ONLY_TEMPLATES and not runtime_profile_id:
+            return jsonify({
+                "error": f"{template_id!r} must be started via runtime_profile_id with selected_player_role.",
+                "code": "runtime_profile_required",
+                "hint": f"Set runtime_profile_id={template_id!r} and selected_player_role=annette|alain.",
+            }), route_status_codes.bad_request
         identity = _resolve_identity_context(user, data)
         result = create_play_run(
             template_id=template_id,

@@ -1,4 +1,4 @@
-"""Performance Contract Tests for World Engine.
+﻿"""Performance Contract Tests for World Engine.
 
 WAVE 8 Hardening Initiative: API performance and scalability contracts.
 Tests focus on ensuring API responses meet performance expectations including
@@ -74,7 +74,7 @@ def test_bulk_operation_scales_linearly(client):
         for i in range(batch_size):
             client.post(
                 "/api/runs",
-                json={"template_id": "god_of_carnage_solo", "account_id": f"scale-{i}", "display_name": f"Run {i}"},
+                json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": f"scale-{i}", "display_name": f"Run {i}"},
             )
         elapsed = (time.perf_counter() - start) * 1000
         times.append(elapsed)
@@ -97,7 +97,7 @@ def test_pagination_handles_large_result_sets(client):
     for i in range(num_runs):
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": f"paginate-{i}", "display_name": f"Page {i}"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": f"paginate-{i}", "display_name": f"Page {i}"},
         )
         assert response.status_code == 200
 
@@ -160,7 +160,7 @@ def test_memory_usage_reasonable_under_load(client):
     for i in range(10):
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": f"memory-{i}", "display_name": f"Test {i}"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": f"memory-{i}", "display_name": f"Test {i}"},
         )
         assert response.status_code == 200
 

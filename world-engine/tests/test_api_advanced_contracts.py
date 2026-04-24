@@ -1,4 +1,4 @@
-"""Advanced API Contract Tests for World Engine.
+﻿"""Advanced API Contract Tests for World Engine.
 
 WAVE 8 Hardening Initiative: Advanced API behavior contracts and system integration.
 Tests focus on complex API behaviors, pagination, filtering, search, rate limiting,
@@ -26,7 +26,7 @@ def test_api_response_pagination_cursor_support(client):
     for i in range(5):
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": f"user-{i}", "display_name": f"User {i}"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": f"user-{i}", "display_name": f"User {i}"},
         )
         assert response.status_code == 200
         run_ids.append(response.json()["run"]["id"])
@@ -82,7 +82,7 @@ def test_api_partial_updates_merge_correctly(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "account_id": "account-123",
             "display_name": "Initial Name",
             "character_id": "char-001",
@@ -110,7 +110,7 @@ def test_api_nested_resource_access_permissions(client):
     # Create a run as one user
     owner_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner-1", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner-1", "display_name": "Owner"},
     )
     run_id = owner_response.json()["run"]["id"]
 
@@ -129,7 +129,7 @@ def test_api_filtering_parameters_work_correctly(client):
     # Create runs with different templates
     response1 = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "user-1", "display_name": "Solo Run"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "user-1", "display_name": "Solo Run"},
     )
     response2 = client.post(
         "/api/runs",
@@ -157,7 +157,7 @@ def test_api_sorting_parameters_work_correctly(client):
     for i in range(3):
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": f"user-{i}", "display_name": f"User {i}"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": f"user-{i}", "display_name": f"User {i}"},
         )
         assert response.status_code == 200
         run_ids.append(response.json()["run"]["id"])
@@ -178,11 +178,11 @@ def test_api_search_functionality_accuracy(client):
     # Create runs with identifiable names
     response1 = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "search-test", "display_name": "SearchableRun123"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "search-test", "display_name": "SearchableRun123"},
     )
     response2 = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "other-test", "display_name": "OtherRun"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "other-test", "display_name": "OtherRun"},
     )
 
     run_id_1 = response1.json()["run"]["id"]
@@ -222,7 +222,7 @@ def test_api_idempotency_key_handling(client):
     # Create a run
     response1 = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "idem-test", "display_name": "Idem"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "idem-test", "display_name": "Idem"},
         headers={"Idempotency-Key": "idem-key-001"},
     )
     assert response1.status_code == 200
@@ -231,7 +231,7 @@ def test_api_idempotency_key_handling(client):
     # Create the same run with the same idempotency key
     response2 = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "idem-test", "display_name": "Idem"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "idem-test", "display_name": "Idem"},
         headers={"Idempotency-Key": "idem-key-001"},
     )
 

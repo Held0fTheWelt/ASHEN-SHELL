@@ -1,4 +1,4 @@
-"""API Contract Tests for World Engine.
+﻿"""API Contract Tests for World Engine.
 
 WAVE 6 Hardening Initiative: API contract and response schema tests.
 Tests focus on ensuring consistent and valid API responses.
@@ -19,7 +19,7 @@ def test_create_run_returns_valid_run_structure(client):
     """Verify that POST /api/runs returns a run with required fields."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test User"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test User"},
     )
     assert response.status_code == 200
     body = response.json()
@@ -50,7 +50,7 @@ def test_create_run_accepts_required_parameters(client):
     # Minimal required parameters
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
 
@@ -101,7 +101,7 @@ def test_list_runs_returns_valid_list(client):
     for i in range(3):
         client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": f"user-{i}", "display_name": f"User {i}"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": f"user-{i}", "display_name": f"User {i}"},
         )
 
     response = client.get("/api/runs")
@@ -178,7 +178,7 @@ def test_api_errors_have_standard_format(client):
     # 403 error
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -205,7 +205,7 @@ def test_api_timestamps_are_iso8601(client):
     """Verify that all timestamps in API responses are ISO8601 format."""
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test"},
     )
     run = response.json()["run"]
 
@@ -231,7 +231,7 @@ def test_api_pagination_works_correctly(client):
     for i in range(5):
         client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": f"user-{i}", "display_name": f"User {i}"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": f"user-{i}", "display_name": f"User {i}"},
         )
 
     # List all runs
@@ -246,7 +246,7 @@ def test_ticket_response_contains_required_fields(client):
     """Verify that POST /api/tickets returns required fields."""
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 

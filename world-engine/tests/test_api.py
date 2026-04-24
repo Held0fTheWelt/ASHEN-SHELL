@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -24,7 +24,7 @@ def test_create_run_and_ticket_include_backend_identity(tmp_path: Path):
 
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "42", "display_name": "Hollywood"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "42", "display_name": "Hollywood"},
     )
     assert response.status_code == 200
     run_id = response.json()["run"]["id"]
@@ -74,7 +74,7 @@ def test_websocket_move_flow(tmp_path: Path):
 
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "7", "display_name": "Hollywood"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "7", "display_name": "Hollywood"},
     )
     run_id = run_response.json()["run"]["id"]
     ticket_response = client.post(
@@ -101,7 +101,7 @@ def test_internal_run_detail_and_terminate(tmp_path: Path):
 
     api_key = {"X-Play-Service-Key": "internal-api-key-for-ops"}
 
-    run_response = client.post("/api/runs", json={"template_id": "god_of_carnage_solo", "account_id": "7", "display_name": "Hollywood"})
+    run_response = client.post("/api/runs", json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "7", "display_name": "Hollywood"})
     run_id = run_response.json()["run"]["id"]
 
     detail_response = client.get(f"/api/internal/runs/{run_id}", headers=api_key)

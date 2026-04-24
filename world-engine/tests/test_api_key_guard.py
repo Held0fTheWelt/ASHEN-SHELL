@@ -1,4 +1,4 @@
-"""API key guard and internal authentication tests for World Engine.
+﻿"""API key guard and internal authentication tests for World Engine.
 
 WAVE 6: Comprehensive internal API key validation and authentication.
 Tests ensure internal endpoints properly validate API keys and reject unauthorized access.
@@ -133,7 +133,7 @@ class TestInternalJoinContextEndpoint:
                 # Create a run first
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo", "display_name": "Player1"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Player1"},
                 )
                 assert run_response.status_code == 200
                 run_id = run_response.json()["run"]["id"]
@@ -193,7 +193,7 @@ class TestInternalJoinContextEndpoint:
                 # Create a run
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
                 )
                 run_id = run_response.json()["run"]["id"]
 
@@ -221,7 +221,7 @@ class TestInternalJoinContextEndpoint:
                 # Create a run
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
                 )
                 run_id = run_response.json()["run"]["id"]
 
@@ -342,7 +342,7 @@ class TestApiKeyHeaderNaming:
                 # Create run
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
                 )
                 run_id = run_response.json()["run"]["id"]
 
@@ -370,7 +370,7 @@ class TestApiKeyHeaderNaming:
 
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
                 )
                 run_id = run_response.json()["run"]["id"]
 
@@ -409,7 +409,7 @@ class TestApiKeySecurityProperties:
 
                 run_response = client.post(
                     "/api/runs",
-                    json={"template_id": "god_of_carnage_solo"},
+                    json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
                 )
                 run_id = run_response.json()["run"]["id"]
 

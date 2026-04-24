@@ -1,4 +1,4 @@
-"""
+﻿"""
 WAVE 7: WebSocket Rejoin Tests
 
 Tests for WebSocket reconnection/rejoin capability:
@@ -478,7 +478,7 @@ class TestWebSocketRejoin:
 
         run2_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "2", "display_name": "Host2"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "2", "display_name": "Host2"},
         )
         run2_id = run2_response.json()["run"]["id"]
 

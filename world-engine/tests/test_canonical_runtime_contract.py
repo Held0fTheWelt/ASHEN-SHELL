@@ -1,4 +1,4 @@
-"""Producer-side checks for nested run V1 and terminate envelope (Gate Block 1)."""
+﻿"""Producer-side checks for nested run V1 and terminate envelope (Gate Block 1)."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def _api_key() -> dict[str, str]:
 
 
 def test_post_runs_returns_nested_run_v1_without_flat_run_id(client):
-    r = client.post("/api/runs", json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "P"})
+    r = client.post("/api/runs", json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "P"})
     assert r.status_code == 200
     body = r.json()
     assert "run" in body and isinstance(body["run"], dict)
@@ -34,7 +34,7 @@ def test_post_runs_returns_nested_run_v1_without_flat_run_id(client):
 def test_get_run_details_nested_run_id_matches_path(client):
     run_id = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "P"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "P"},
     ).json()["run"]["id"]
     d = client.get(f"/api/runs/{run_id}").json()
     assert d["run"]["id"] == run_id
@@ -46,7 +46,7 @@ def test_get_run_details_nested_run_id_matches_path(client):
 def test_internal_terminate_envelope_v1(client):
     run_id = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "P"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "P"},
     ).json()["run"]["id"]
     tr = client.post(
         f"/api/internal/runs/{run_id}/terminate",
@@ -65,7 +65,7 @@ def test_internal_terminate_envelope_v1(client):
 def test_delete_run_legacy_alias_returns_same_envelope_shape(client):
     run_id = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "P"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "P"},
     ).json()["run"]["id"]
     dr = client.delete(f"/api/runs/{run_id}", headers=_api_key())
     assert dr.status_code == 200

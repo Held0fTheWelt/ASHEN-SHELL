@@ -3,15 +3,43 @@
 {% block content %}
 <section class="panel">
   <h1>Start a play run</h1>
-  <form method="post" action="{{ url_for('frontend.play_create') }}">
+  <form method="post" action="{{ url_for('frontend.play_create') }}" id="play-launcher-form">
     <label>Template
-      <select name="template_id" required>
+      <select name="template_id" id="template-select" required>
         {% for t in bootstrap.get("templates", []) %}
           <option value="{{ t.get('id') }}">{{ t.get('title') }} ({{ t.get('kind_label') or t.get('kind') }})</option>
         {% endfor %}
       </select>
     </label>
+
+    <div id="goc-role-selector" style="display:none;">
+      <label>Play as
+        <select name="selected_player_role" id="role-select">
+          <option value="">— choose your character —</option>
+          <option value="annette">Annette</option>
+          <option value="alain">Alain</option>
+        </select>
+      </label>
+    </div>
+
     <button type="submit">Create run</button>
   </form>
 </section>
+
+<script>
+  (function () {
+    var templateSelect = document.getElementById('template-select');
+    var roleDiv = document.getElementById('goc-role-selector');
+    var roleSelect = document.getElementById('role-select');
+
+    function updateRoleVisibility() {
+      var isGoc = templateSelect.value === 'god_of_carnage_solo';
+      roleDiv.style.display = isGoc ? '' : 'none';
+      roleSelect.required = isGoc;
+    }
+
+    templateSelect.addEventListener('change', updateRoleVisibility);
+    updateRoleVisibility();
+  })();
+</script>
 {% endblock %}

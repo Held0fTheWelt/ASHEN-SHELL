@@ -1,4 +1,4 @@
-"""API Security Tests for World Engine.
+﻿"""API Security Tests for World Engine.
 
 WAVE 6 Hardening Initiative: Security-focused API contract tests.
 Tests focus on security guarantees and threat prevention.
@@ -50,7 +50,7 @@ def test_api_rejects_invalid_tickets(tmp_path):
     # Create a valid run first
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test-acct", "display_name": "Tester"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test-acct", "display_name": "Tester"},
     )
     assert run_response.status_code == 200
     run_id = run_response.json()["run"]["id"]
@@ -83,7 +83,7 @@ def test_api_rejects_tampered_tickets(client, tmp_path):
     # Create a valid run and ticket
     run_response = test_client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "legit", "display_name": "Legit User"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "legit", "display_name": "Legit User"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -125,7 +125,7 @@ def test_api_rejects_expired_tickets(client, tmp_path):
     # Create a valid run
     run_response = test_client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Tester"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Tester"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -171,7 +171,7 @@ def test_api_returns_403_for_unauthorized_access(client):
     # Create a solo run (owner-only)
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -231,7 +231,7 @@ def test_api_error_responses_include_error_details(client):
     # 403 error should include detail
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
     response = client.post(

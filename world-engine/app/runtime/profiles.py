@@ -7,20 +7,52 @@ the handoff fields consumed by MVP 2 (human_actor_id, npc_actor_ids, actor_lanes
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
-# Canonical God of Carnage actors as defined in content/modules/god_of_carnage/characters.yaml
-_GOC_CANONICAL_ACTORS: list[str] = ["annette", "alain", "veronique", "michel"]
+# Guest role slugs: the two Reilles who enter the apartment.
+# Determined by narrative design (guests = selectable human roles).
+# Actor IDs are verified against characters.yaml at runtime via _resolve_goc_content().
+_GOC_GUEST_ROLE_SLUGS: frozenset[str] = frozenset({"annette", "alain"})
 
-# Selectable player roles for the god_of_carnage_solo runtime profile
-_GOC_SELECTABLE_ROLES: list[dict[str, str]] = [
-    {"role_slug": "annette", "canonical_actor_id": "annette", "display_name": "Annette"},
-    {"role_slug": "alain", "canonical_actor_id": "alain", "display_name": "Alain"},
-]
+# Fallback values used when content file is unreachable (test isolation, container startup).
+_GOC_CANONICAL_ACTORS_FALLBACK: list[str] = ["annette", "alain", "veronique", "michel"]
+_GOC_CONTENT_HASH_FALLBACK: str = "sha256:fallback"
 
-_SELECTABLE_ROLE_SLUGS: frozenset[str] = frozenset(r["role_slug"] for r in _GOC_SELECTABLE_ROLES)
+
+def _resolve_goc_content() -> tuple[list[str], str]:
+    """Read canonical actor IDs and content hash from characters.yaml.
+
+    Returns (actor_ids, content_hash). Falls back to hardcoded list if file is unreachable.
+    """
+    try:
+        from app.repo_root import resolve_wos_repo_root
+        import yaml  # pyyaml is in root pyproject.toml dependencies
+        repo_root = resolve_wos_repo_root(start=Path(__file__).resolve().parent)
+        chars_path = repo_root / "content" / "modules" / "god_of_carnage" / "characters.yaml"
+        raw = chars_path.read_bytes()
+        content_hash = f"sha256:{hashlib.sha256(raw).hexdigest()[:16]}"
+        data = yaml.safe_load(raw) or {}
+        actor_ids = list((data.get("characters") or {}).keys())
+        if not actor_ids:
+            return _GOC_CANONICAL_ACTORS_FALLBACK, content_hash
+        return actor_ids, content_hash
+    except Exception:
+        return _GOC_CANONICAL_ACTORS_FALLBACK, _GOC_CONTENT_HASH_FALLBACK
+
+
+def _build_selectable_roles(actor_ids: list[str]) -> list[dict[str, str]]:
+    """Build selectable player roles from content-resolved actor IDs."""
+    return [
+        {"role_slug": a, "canonical_actor_id": a, "display_name": a.capitalize()}
+        for a in actor_ids if a in _GOC_GUEST_ROLE_SLUGS
+    ]
+
+
+_SELECTABLE_ROLE_SLUGS: frozenset[str] = _GOC_GUEST_ROLE_SLUGS
 
 
 class RuntimeProfileError(ValueError):
@@ -92,6 +124,10 @@ class RuntimeProfile:
 def resolve_runtime_profile(runtime_profile_id: str | None) -> RuntimeProfile:
     """Resolve a runtime profile id to its RuntimeProfile.
 
+    Selectable roles and canonical actor list are resolved from
+    content/modules/god_of_carnage/characters.yaml (FIX-007).
+    Falls back to hardcoded list if file is unreachable.
+
     Raises RuntimeProfileError for missing or unknown profile ids.
     """
     if not runtime_profile_id or not runtime_profile_id.strip():
@@ -106,13 +142,15 @@ def resolve_runtime_profile(runtime_profile_id: str | None) -> RuntimeProfile:
             message=f"Unknown runtime profile: {rid!r}. Registered profiles: ['god_of_carnage_solo'].",
             received=rid,
         )
+    actor_ids, content_hash = _resolve_goc_content()
+    selectable = _build_selectable_roles(actor_ids)
     return RuntimeProfile(
         runtime_profile_id="god_of_carnage_solo",
         content_module_id="god_of_carnage",
         runtime_module_id="solo_story_runtime",
         runtime_mode="solo_story",
         requires_selected_player_role=True,
-        selectable_player_roles=[SelectablePlayerRole(**r) for r in _GOC_SELECTABLE_ROLES],
+        selectable_player_roles=[SelectablePlayerRole(**r) for r in selectable],
         profile_version="goc-solo.v1",
     )
 
@@ -174,7 +212,7 @@ def validate_selected_player_role(selected_player_role: str | None, profile: Run
 def build_actor_ownership(selected_player_role: str, profile: RuntimeProfile) -> dict[str, Any]:
     """Build human_actor_id, npc_actor_ids, and actor_lanes from selected role.
 
-    Raises RuntimeProfileError if visitor appears anywhere.
+    Uses content-resolved canonical actors. Raises RuntimeProfileError if visitor appears.
     """
     if selected_player_role == "visitor":
         raise RuntimeProfileError(
@@ -190,7 +228,9 @@ def build_actor_ownership(selected_player_role: str, profile: RuntimeProfile) ->
             message=f"Role slug {selected_player_role!r} has no canonical actor mapping.",
         )
 
-    npc_actor_ids = [a for a in _GOC_CANONICAL_ACTORS if a != human_actor_id]
+    # Resolve all canonical actors from content (FIX-007)
+    canonical_actors, content_hash = _resolve_goc_content()
+    npc_actor_ids = [a for a in canonical_actors if a != human_actor_id]
 
     for npc_id in npc_actor_ids:
         if npc_id == "visitor":
@@ -209,6 +249,7 @@ def build_actor_ownership(selected_player_role: str, profile: RuntimeProfile) ->
         "npc_actor_ids": npc_actor_ids,
         "actor_lanes": actor_lanes,
         "visitor_present": False,
+        "content_hash": content_hash,
     }
 
 

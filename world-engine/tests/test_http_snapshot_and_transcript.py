@@ -1,4 +1,4 @@
-"""HTTP Contract Tests for Snapshot and Transcript Endpoints.
+﻿"""HTTP Contract Tests for Snapshot and Transcript Endpoints.
 
 WAVE 6: API contract tests for snapshot and transcript endpoints.
 Tests focus on response structure, error handling, and data validation.
@@ -18,7 +18,7 @@ def test_get_snapshot_returns_200_for_valid_run_and_participant(client):
     # Create a run
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "display_name": "Owner"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -83,7 +83,7 @@ def test_get_snapshot_with_invalid_participant_returns_404(client):
     # Create a run
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -107,7 +107,7 @@ def test_get_snapshot_content_type_is_json(client):
     """Verify that snapshot endpoint returns JSON content type."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -129,7 +129,7 @@ def test_get_transcript_returns_200_for_valid_run(client):
     # Create a run
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -144,7 +144,7 @@ def test_get_transcript_returns_valid_structure(client):
     # Create a run
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -165,7 +165,7 @@ def test_get_transcript_entries_is_list(client):
     """Verify that transcript entries is always a list."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -182,7 +182,7 @@ def test_get_transcript_entries_have_required_fields(client):
     """Verify that transcript entries have required fields."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -207,7 +207,7 @@ def test_get_transcript_entry_field_types(client):
     """Verify that transcript entry fields have correct types."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -248,7 +248,7 @@ def test_get_transcript_content_type_is_json(client):
     """Verify that transcript endpoint returns JSON content type."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -263,7 +263,7 @@ def test_get_transcript_run_id_matches_request(client):
     """Verify that transcript response run_id matches request."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -279,7 +279,7 @@ def test_snapshot_and_transcript_different_endpoints(client):
     """Verify that snapshot and transcript are different endpoints."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -311,7 +311,7 @@ def test_get_transcript_empty_for_new_run(client):
     """Verify that new run may have empty transcript."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -329,7 +329,7 @@ def test_transcript_entry_optional_fields(client):
     """Verify that transcript entries may have optional fields."""
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     run_id = run_response.json()["run"]["id"]
 

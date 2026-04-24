@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import pytest
 from starlette.websockets import WebSocketDisconnect
@@ -43,7 +43,7 @@ def test_websocket_rejects_ticket_identity_mismatch(tmp_path):
     with TestClient(app) as client:
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct:owner", "display_name": "Owner"},
         )
         run_id = create_response.json()["run"]["id"]
         ticket_response = client.post(
@@ -78,7 +78,7 @@ def test_websocket_rejects_role_mismatch(tmp_path):
     with TestClient(app) as client:
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct:owner", "display_name": "Owner"},
         )
         run = create_response.json()["run"]
         participant = next(iter(app.state.manager.get_instance(run["id"]).participants.values()))
@@ -108,7 +108,7 @@ def test_invalid_command_produces_command_rejected_message(tmp_path):
     with TestClient(app) as client:
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct:owner", "display_name": "Owner"},
         )
         run_id = create_response.json()["run"]["id"]
         ticket_response = client.post(
@@ -136,7 +136,7 @@ def test_natural_input_message_executes_runtime_turn(tmp_path):
     with TestClient(app) as client:
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct:owner", "display_name": "Owner"},
         )
         run_id = create_response.json()["run"]["id"]
         ticket_response = client.post(
@@ -165,7 +165,7 @@ def test_ambiguous_natural_input_continues_with_runtime_event(tmp_path):
     with TestClient(app) as client:
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct:owner", "display_name": "Owner"},
         )
         run_id = create_response.json()["run"]["id"]
         ticket_response = client.post(
@@ -194,7 +194,7 @@ def test_explicit_command_text_still_works_as_special_case(tmp_path):
     with TestClient(app) as client:
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct:owner", "display_name": "Owner"},
         )
         run_id = create_response.json()["run"]["id"]
         ticket_response = client.post(
@@ -224,7 +224,7 @@ def test_websocket_disconnect_marks_participant_as_offline(tmp_path):
     with TestClient(app) as client:
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "acct:owner", "display_name": "Owner"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct:owner", "display_name": "Owner"},
         )
         run_id = create_response.json()["run"]["id"]
         ticket_response = client.post(

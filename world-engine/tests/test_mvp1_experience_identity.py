@@ -359,3 +359,183 @@ class TestOperationalEvidenceArtifact:
         assert "test_mvp1_session_identity" in content, (
             "Operational evidence must name the MVP1-specific backend test file"
         )
+
+
+# ---------------------------------------------------------------------------
+# FIX-004: reject template_id bypass path
+# ---------------------------------------------------------------------------
+
+class TestTemplateIdBypassRejection:
+
+    def test_world_engine_rejects_goc_solo_template_start_without_role(self, client):
+        """POST /api/runs with template_id=god_of_carnage_solo must be rejected (FIX-004)."""
+        response = client.post(
+            "/api/runs",
+            json={"template_id": "god_of_carnage_solo", "display_name": "Test"},
+        )
+        assert response.status_code == 400
+        body = response.json()
+        detail = body.get("detail") or body
+        code = detail.get("code") if isinstance(detail, dict) else None
+        assert code == "runtime_profile_required", (
+            f"Expected code=runtime_profile_required, got {code!r}. Full body: {body}"
+        )
+
+    def test_world_engine_accepts_runtime_profile_id_for_goc_solo(self, client):
+        """POST /api/runs with runtime_profile_id=god_of_carnage_solo must succeed (FIX-004)."""
+        response = client.post(
+            "/api/runs",
+            json={
+                "runtime_profile_id": "god_of_carnage_solo",
+                "selected_player_role": "annette",
+                "display_name": "Test",
+            },
+        )
+        assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# FIX-006: story truth boundary
+# ---------------------------------------------------------------------------
+
+class TestStoryTruthBoundary:
+
+    def test_goc_solo_runtime_projection_is_derived_from_canonical_content(self):
+        """Role IDs in god_of_carnage_solo template must all exist in characters.yaml (FIX-006)."""
+        import yaml
+        from app.content.builtins import load_builtin_templates
+        chars_path = REPO_ROOT / "content" / "modules" / "god_of_carnage" / "characters.yaml"
+        assert chars_path.is_file(), f"characters.yaml not found at {chars_path}"
+        raw = chars_path.read_text(encoding="utf-8")
+        data = yaml.safe_load(raw) or {}
+        canonical_ids = set((data.get("characters") or {}).keys())
+        templates = load_builtin_templates()
+        goc_solo = templates["god_of_carnage_solo"]
+        for role in goc_solo.roles:
+            assert role.id in canonical_ids, (
+                f"Role id {role.id!r} in god_of_carnage_solo template is not in canonical characters.yaml. "
+                f"Canonical ids: {sorted(canonical_ids)}"
+            )
+
+
+# ---------------------------------------------------------------------------
+# FIX-007: content-resolved role mapping
+# ---------------------------------------------------------------------------
+
+class TestContentResolvedRoleMapping:
+
+    def test_role_slug_map_uses_content_resolved_actor_ids(self):
+        """Canonical actors must be resolved from characters.yaml, not hardcoded (FIX-007)."""
+        from app.runtime.profiles import _resolve_goc_content, resolve_runtime_profile
+        actor_ids, content_hash = _resolve_goc_content()
+        assert "annette" in actor_ids
+        assert "alain" in actor_ids
+        assert "veronique" in actor_ids
+        assert "michel" in actor_ids
+        assert content_hash.startswith("sha256:")
+        profile = resolve_runtime_profile("god_of_carnage_solo")
+        slugs = {r.role_slug for r in profile.selectable_player_roles}
+        assert slugs == {"annette", "alain"}
+
+    def test_selected_player_role_not_canonical_character(self):
+        """A role slug not in characters.yaml must be rejected (FIX-007)."""
+        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
+        profile = resolve_runtime_profile("god_of_carnage_solo")
+        with pytest.raises(RuntimeProfileError) as exc_info:
+            validate_selected_player_role("ferdinand", profile)
+        assert exc_info.value.code == "invalid_selected_player_role"
+
+    def test_build_actor_ownership_includes_content_hash(self):
+        """build_actor_ownership must include content_hash from resolved content (FIX-007)."""
+        from app.runtime.profiles import build_actor_ownership, resolve_runtime_profile, validate_selected_player_role
+        profile = resolve_runtime_profile("god_of_carnage_solo")
+        role = validate_selected_player_role("annette", profile)
+        ownership = build_actor_ownership(role, profile)
+        assert "content_hash" in ownership, "build_actor_ownership must include content_hash"
+        assert ownership["content_hash"].startswith("sha256:")
+
+
+# ---------------------------------------------------------------------------
+# FIX-008: live HTTP integration tests
+# ---------------------------------------------------------------------------
+
+class TestLiveStartBehavior:
+    """Behavior-proving live HTTP start tests (FIX-008)."""
+
+    def test_world_engine_create_run_annette_live_path(self, client):
+        """POST /api/runs with runtime_profile_id + annette returns correct contract (FIX-008)."""
+        response = client.post(
+            "/api/runs",
+            json={
+                "runtime_profile_id": "god_of_carnage_solo",
+                "selected_player_role": "annette",
+                "account_id": "mvp1-test-acct",
+                "display_name": "Live Test Player",
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body.get("contract") == "create_run_response.v1"
+        assert body.get("content_module_id") == "god_of_carnage"
+        assert body.get("runtime_profile_id") == "god_of_carnage_solo"
+        assert body.get("runtime_module_id") == "solo_story_runtime"
+        assert body.get("selected_player_role") == "annette"
+        assert body.get("human_actor_id") == "annette"
+        npc_ids = body.get("npc_actor_ids", [])
+        assert "alain" in npc_ids
+        assert "veronique" in npc_ids
+        assert "michel" in npc_ids
+        assert "visitor" not in npc_ids
+        assert body.get("visitor_present") is False
+        actor_lanes = body.get("actor_lanes", {})
+        assert actor_lanes.get("annette") == "human"
+        assert actor_lanes.get("alain") == "npc"
+        run = body.get("run", {})
+        assert run.get("template_id") == "god_of_carnage_solo"
+
+    def test_world_engine_create_run_alain_live_path(self, client):
+        """POST /api/runs with runtime_profile_id + alain returns correct contract (FIX-008)."""
+        response = client.post(
+            "/api/runs",
+            json={
+                "runtime_profile_id": "god_of_carnage_solo",
+                "selected_player_role": "alain",
+                "account_id": "mvp1-test-acct-2",
+                "display_name": "Live Test Player 2",
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body.get("human_actor_id") == "alain"
+        npc_ids = body.get("npc_actor_ids", [])
+        assert "annette" in npc_ids
+        assert "visitor" not in npc_ids
+        assert body.get("visitor_present") is False
+        actor_lanes = body.get("actor_lanes", {})
+        assert actor_lanes.get("alain") == "human"
+        assert actor_lanes.get("annette") == "npc"
+
+
+# ---------------------------------------------------------------------------
+# FIX-009: run-test.py entry point
+# ---------------------------------------------------------------------------
+
+class TestRunTestEntrypoint:
+
+    def test_run_test_entrypoint_exists(self):
+        """run-test.py must exist at repo root as MVP operational gate entry point (FIX-009)."""
+        run_test = REPO_ROOT / "run-test.py"
+        assert run_test.is_file(), (
+            f"run-test.py is required at {run_test} as the MVP operational gate entry point."
+        )
+
+    def test_run_test_includes_mvp1_world_engine_and_backend_suites(self):
+        """run-test.py must include engine and backend suites (FIX-009)."""
+        run_test = REPO_ROOT / "run-test.py"
+        assert run_test.is_file(), "run-test.py missing"
+        content = run_test.read_text(encoding="utf-8")
+        assert "engine" in content, "run-test.py must reference engine suite"
+        assert "backend" in content, "run-test.py must reference backend suite"
+        assert "tests/run_tests.py" in content or "run_tests" in content, (
+            "run-test.py must delegate to tests/run_tests.py"
+        )

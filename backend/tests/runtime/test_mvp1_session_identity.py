@@ -125,6 +125,133 @@ class TestGameRoutesCreateRun:
 # Source locator and operational artifact presence
 # ---------------------------------------------------------------------------
 
+class TestBackendBypassRejection:
+    """FIX-004: backend rejects template_id=god_of_carnage_solo without runtime_profile_id."""
+
+    def test_backend_rejects_goc_solo_template_start_without_role(self, client, auth_headers):
+        response = client.post(
+            "/api/v1/game/runs",
+            json={"template_id": "god_of_carnage_solo"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+        data = response.get_json()
+        code = data.get("code")
+        assert code == "runtime_profile_required", (
+            f"Expected code=runtime_profile_required, got {code!r}. Full response: {data}"
+        )
+
+    def test_backend_accepts_runtime_profile_with_role(self, client, auth_headers):
+        captured = {}
+
+        def fake_create_run(**kwargs):
+            captured.update(kwargs)
+            return {
+                "run": {"id": "run_accept_test"},
+                "run_id": "run_accept_test",
+                "store": {},
+                "hint": "test",
+            }
+
+        with patch("app.api.v1.game_routes.create_play_run", side_effect=fake_create_run):
+            response = client.post(
+                "/api/v1/game/runs",
+                json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
+                headers=auth_headers,
+            )
+        assert response.status_code == 200
+        assert captured.get("runtime_profile_id") == "god_of_carnage_solo"
+
+
+class TestBackendLivePath:
+    """FIX-008: backend live path tests."""
+
+    def test_backend_player_session_annette_live_path(self, client, auth_headers):
+        """Backend must forward annette start to play service correctly."""
+        captured = {}
+
+        def fake_create_run(**kwargs):
+            captured.update(kwargs)
+            return {"run": {"id": "annette_session"}, "run_id": "annette_session", "store": {}, "hint": "ok"}
+
+        with patch("app.api.v1.game_routes.create_play_run", side_effect=fake_create_run):
+            response = client.post(
+                "/api/v1/game/player-sessions",
+                json={
+                    "runtime_profile_id": "god_of_carnage_solo",
+                    "selected_player_role": "annette",
+                },
+                headers=auth_headers,
+            )
+        assert captured.get("runtime_profile_id") == "god_of_carnage_solo"
+        assert captured.get("selected_player_role") == "annette"
+
+    def test_backend_player_session_alain_live_path(self, client, auth_headers):
+        """Backend must forward alain start to play service correctly."""
+        captured = {}
+
+        def fake_create_run(**kwargs):
+            captured.update(kwargs)
+            return {"run": {"id": "alain_session"}, "run_id": "alain_session", "store": {}, "hint": "ok"}
+
+        with patch("app.api.v1.game_routes.create_play_run", side_effect=fake_create_run):
+            response = client.post(
+                "/api/v1/game/player-sessions",
+                json={
+                    "runtime_profile_id": "god_of_carnage_solo",
+                    "selected_player_role": "alain",
+                },
+                headers=auth_headers,
+            )
+        assert captured.get("runtime_profile_id") == "god_of_carnage_solo"
+        assert captured.get("selected_player_role") == "alain"
+
+
+class TestDockerUpGate:
+    """FIX-011: docker-up.py gate mode tests."""
+
+    def test_docker_up_gate_fails_when_backend_unreachable(self, app):
+        """docker-up.py gate must exit nonzero when backend is unreachable."""
+        import subprocess, sys
+        from pathlib import Path
+        docker_up = REPO_ROOT / "docker-up.py"
+        assert docker_up.is_file(), f"docker-up.py not found at {docker_up}"
+        result = subprocess.run(
+            [sys.executable, str(docker_up), "gate", "--backend-url", "http://127.0.0.1:19999"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        assert result.returncode != 0, (
+            f"docker-up.py gate must return nonzero when backend unreachable, got {result.returncode}. "
+            f"stdout: {result.stdout!r}"
+        )
+        assert "FAIL" in result.stdout or "unreachable" in result.stderr.lower()
+
+    def test_docker_up_gate_fails_when_bootstrap_required_for_mvp(self, app):
+        """docker-up.py gate must exit nonzero when bootstrap is required."""
+        import subprocess, sys
+        from unittest.mock import patch as mock_patch
+        from urllib.request import urlopen
+        from io import BytesIO
+        import json as json_mod
+
+        class FakeResponse:
+            def __init__(self):
+                self.status = 200
+                self._data = json_mod.dumps({"data": {"bootstrap_required": True}}).encode()
+            def read(self):
+                return self._data
+            def __enter__(self): return self
+            def __exit__(self, *a): pass
+
+        docker_up = REPO_ROOT / "docker-up.py"
+        content = docker_up.read_text(encoding="utf-8")
+        assert "bootstrap_required" in content, (
+            "docker-up.py gate subcommand must check for bootstrap_required"
+        )
+
+
 class TestMvp1ArtifactPresence:
 
     def test_source_locator_artifact_exists(self):

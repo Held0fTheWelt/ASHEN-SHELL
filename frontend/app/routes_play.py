@@ -813,6 +813,10 @@ def play_start():
     return render_template("session_start.html", bootstrap=bootstrap)
 
 
+_PROFILE_ONLY_TEMPLATES = {"god_of_carnage_solo"}
+_GOC_VALID_ROLES = {"annette", "alain"}
+
+
 @frontend_bp.route("/play/start", methods=["POST"])
 @require_login
 def play_create():
@@ -823,13 +827,29 @@ def play_create():
         flash("Please select a template.", "error")
         return redirect(url_for("frontend.play_start"))
 
-    # Capture or generate trace_id for audit trail
     trace_id = g.get("trace_id") or uuid4().hex
+
+    # FIX-005: god_of_carnage_solo requires runtime_profile_id + selected_player_role.
+    if template_id in _PROFILE_ONLY_TEMPLATES:
+        selected_player_role = (request.form.get("selected_player_role") or "").strip()
+        if not selected_player_role:
+            flash("Please choose a character (Annette or Alain) to start God of Carnage.", "error")
+            return redirect(url_for("frontend.play_start"))
+        if selected_player_role not in _GOC_VALID_ROLES:
+            flash(f"Invalid character selection: {selected_player_role!r}. Choose Annette or Alain.", "error")
+            return redirect(url_for("frontend.play_start"))
+        json_data = {
+            "runtime_profile_id": template_id,
+            "selected_player_role": selected_player_role,
+            "trace_id": trace_id,
+        }
+    else:
+        json_data = {"template_id": template_id, "trace_id": trace_id}
 
     response = player_backend.request_backend(
         "POST",
         "/api/v1/game/player-sessions",
-        json_data={"template_id": template_id, "trace_id": trace_id},
+        json_data=json_data,
     )
     try:
         payload = player_backend.require_success(response, "Could not create play run.")

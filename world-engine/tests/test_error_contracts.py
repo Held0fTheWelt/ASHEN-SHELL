@@ -1,4 +1,4 @@
-"""Error Standardization Contract Tests for World Engine.
+﻿"""Error Standardization Contract Tests for World Engine.
 
 WAVE 8 Hardening Initiative: Error response standardization and consistency.
 Tests focus on ensuring all API errors follow a consistent format with proper
@@ -36,7 +36,7 @@ def test_error_response_format_consistency_across_endpoints(client):
     # 403 - Permission denied
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -72,7 +72,7 @@ def test_error_codes_standardized_across_api(client):
     # 403 Forbidden - permission denied
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -100,7 +100,7 @@ def test_validation_errors_include_field_names(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "display_name": long_name,
         },
     )
@@ -119,7 +119,7 @@ def test_business_logic_errors_have_descriptive_messages(client):
     # Create a run
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -183,7 +183,7 @@ def test_error_responses_indicate_retry_ability(client):
     # Create a run to test permission error
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 

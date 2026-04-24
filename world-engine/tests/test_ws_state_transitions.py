@@ -1,4 +1,4 @@
-"""
+﻿"""
 WAVE 7: WebSocket State Machine and Sequencing Tests
 
 Tests for WebSocket state machine and sequencing rules:
@@ -484,7 +484,7 @@ class TestWebSocketStateTransitions:
         # Solo story doesn't use lobby/start_run
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo", "account_id": "1", "display_name": "Player"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "1", "display_name": "Player"},
         )
         run_id = run_response.json()["run"]["id"]
 

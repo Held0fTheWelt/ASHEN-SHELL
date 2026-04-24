@@ -1,4 +1,4 @@
-"""Backward Compatibility Contract Tests for World Engine.
+﻿"""Backward Compatibility Contract Tests for World Engine.
 
 WAVE 8 Hardening Initiative: API backward compatibility and versioning.
 Tests focus on ensuring API changes don't break existing clients, deprecated
@@ -18,7 +18,7 @@ def test_old_api_versions_still_work(client):
     # Old client using minimal parameters should still work
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     assert "run" in response.json()
@@ -46,7 +46,7 @@ def test_deprecated_fields_still_returned_in_responses(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             "account_id": "compat-test",
             "display_name": "Test Display",
             "character_id": "char-123",
@@ -80,7 +80,7 @@ def test_new_fields_are_backward_compatible(client):
     # Create a run
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "new-fields-test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "new-fields-test", "display_name": "Test"},
     )
     assert response.status_code == 200
     run = response.json()["run"]
@@ -170,7 +170,7 @@ def test_migration_path_documented_in_responses(client):
     # Create run response includes migration hints
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "migration-test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "migration-test", "display_name": "Test"},
     )
     assert response.status_code == 200
     body = response.json()
@@ -190,7 +190,7 @@ def test_optional_parameters_have_defaults(client):
     # Create run with only required parameters
     response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
     )
     assert response.status_code == 200
     run = response.json()["run"]
@@ -241,7 +241,7 @@ def test_null_values_handled_safely(client):
     response = client.post(
         "/api/runs",
         json={
-            "template_id": "god_of_carnage_solo",
+            "runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette",
             # Don't include optional fields - they'll be None
         },
     )

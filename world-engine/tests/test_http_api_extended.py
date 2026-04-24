@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from app.api import http as http_module
 
@@ -32,7 +32,7 @@ def test_create_ticket_rejects_unknown_run(client):
 def test_owner_only_story_rejects_foreign_join(client):
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -56,7 +56,7 @@ def test_get_run_details_returns_404_for_missing_run(client):
 def test_get_snapshot_returns_404_for_missing_participant(client):
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "acct-1", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct-1", "display_name": "Owner"},
     )
     run_id = create_response.json()["run"]["id"]
 
@@ -79,7 +79,7 @@ def test_ready_endpoint_run_count_increases_after_run_creation(client):
 
     create_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "acct-1", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "acct-1", "display_name": "Owner"},
     )
     assert create_response.status_code == 200
 

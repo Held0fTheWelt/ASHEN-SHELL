@@ -76,7 +76,7 @@ def test_delete_run_endpoint_terminates_runtime_instance(tmp_path, monkeypatch):
     monkeypatch.setattr(config_module, 'PLAY_SERVICE_INTERNAL_API_KEY', 'ops-key', raising=False)
     app = build_test_app(tmp_path)
     client = TestClient(app)
-    create = client.post('/api/runs', json={'template_id': 'god_of_carnage_solo', 'display_name': 'Bruno'})
+    create = client.post('/api/runs', json={'runtime_profile_id': 'god_of_carnage_solo', 'selected_player_role': 'annette', 'display_name': 'Bruno'})
     assert create.status_code == 200
     run_id = create.json()['run']['id']
 

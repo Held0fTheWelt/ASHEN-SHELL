@@ -180,6 +180,20 @@ def create_run(payload: CreateRunRequest, manager: RuntimeManager = Depends(get_
     else:
         if not payload.template_id:
             raise HTTPException(status_code=400, detail="template_id or runtime_profile_id is required.")
+        # FIX-004: god_of_carnage_solo must use runtime_profile_id + selected_player_role — template_id bypass rejected.
+        _PROFILE_ONLY_TEMPLATES = {"god_of_carnage_solo"}
+        if payload.template_id in _PROFILE_ONLY_TEMPLATES:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "runtime_profile_required",
+                    "message": (
+                        f"{payload.template_id!r} must be started via runtime_profile_id "
+                        "with a selected_player_role, not via template_id directly."
+                    ),
+                    "hint": f"Set runtime_profile_id={payload.template_id!r} and selected_player_role=annette|alain.",
+                },
+            )
         template_id = payload.template_id
 
     try:

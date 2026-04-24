@@ -1,4 +1,4 @@
-"""HTTP API contract tests for World Engine.
+﻿"""HTTP API contract tests for World Engine.
 
 WAVE 6: Comprehensive HTTP endpoint testing with positive and negative paths.
 Tests all HTTP methods, status codes, and response contracts.
@@ -118,7 +118,7 @@ class TestRunEndpoints:
         """POST /api/runs should return 200 OK."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         assert response.status_code == 200
 
@@ -127,7 +127,7 @@ class TestRunEndpoints:
         """POST /api/runs should return run object."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         body = response.json()
         assert "run" in body
@@ -137,7 +137,7 @@ class TestRunEndpoints:
         """POST /api/runs response should include required run fields."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         body = response.json()
         run = body["run"]
@@ -151,7 +151,7 @@ class TestRunEndpoints:
         """GET /api/runs/{run_id} should return 200 OK for valid run."""
         create_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run_id = create_response.json()["run"]["id"]
 
@@ -265,7 +265,7 @@ class TestTranscriptEndpoints:
         """GET /api/runs/{run_id}/transcript should return 200."""
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -277,7 +277,7 @@ class TestTranscriptEndpoints:
         """GET /api/runs/{run_id}/transcript should return JSON."""
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -290,7 +290,7 @@ class TestTranscriptEndpoints:
         """GET /api/runs/{run_id}/transcript response should include run_id."""
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -303,7 +303,7 @@ class TestTranscriptEndpoints:
         """GET /api/runs/{run_id}/transcript response should include entries array."""
         run_response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run_id = run_response.json()["run"]["id"]
 
@@ -386,7 +386,7 @@ class TestResponseFieldTypes:
         """Run ID should be string."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run = response.json()["run"]
         assert isinstance(run["id"], str)
@@ -396,7 +396,7 @@ class TestResponseFieldTypes:
         """Template ID should be string."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run = response.json()["run"]
         assert isinstance(run["template_id"], str)
@@ -406,7 +406,7 @@ class TestResponseFieldTypes:
         """Run status should be string."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run = response.json()["run"]
         assert isinstance(run["status"], str)
@@ -416,7 +416,7 @@ class TestResponseFieldTypes:
         """Created_at timestamp should be string."""
         response = client.post(
             "/api/runs",
-            json={"template_id": "god_of_carnage_solo"},
+            json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         )
         run = response.json()["run"]
         assert isinstance(run["created_at"], str)

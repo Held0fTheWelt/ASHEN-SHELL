@@ -1,4 +1,4 @@
-"""WebSocket Security Tests for World Engine.
+﻿"""WebSocket Security Tests for World Engine.
 
 WAVE 6 Hardening Initiative: WebSocket-specific security contract tests.
 Tests focus on WebSocket threat prevention and secure message handling.
@@ -64,7 +64,7 @@ def test_websocket_validates_ticket_signature(tmp_path):
     # Create a valid ticket
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -105,7 +105,7 @@ def test_websocket_disconnects_on_invalid_identity(tmp_path):
     # Create a run as one user
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "owner", "display_name": "Owner"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "owner", "display_name": "Owner"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -147,7 +147,7 @@ def test_websocket_rate_limits_commands(tmp_path):
     # Create run and connect
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -183,7 +183,7 @@ def test_websocket_handles_malformed_messages(tmp_path):
 
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -259,7 +259,7 @@ def test_websocket_prevents_message_injection(tmp_path):
 
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -303,7 +303,7 @@ def test_websocket_graceful_disconnect_on_error(tmp_path):
 
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test"},
     )
     run_id = run_response.json()["run"]["id"]
 
@@ -340,7 +340,7 @@ def test_websocket_timeout_inactive_connections(tmp_path):
 
     run_response = client.post(
         "/api/runs",
-        json={"template_id": "god_of_carnage_solo", "account_id": "test", "display_name": "Test"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette", "account_id": "test", "display_name": "Test"},
     )
     run_id = run_response.json()["run"]["id"]
 
