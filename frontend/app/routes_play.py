@@ -12,7 +12,7 @@ try:
 except ImportError:
     HAS_YAML = False
 
-from flask import flash, jsonify, make_response, redirect, render_template, request, session, url_for
+from flask import flash, g, jsonify, make_response, redirect, render_template, request, session, url_for
 
 from . import player_backend
 from .player_backend import BackendApiError
@@ -824,7 +824,7 @@ def play_create():
         return redirect(url_for("frontend.play_start"))
 
     # Capture or generate trace_id for audit trail
-    trace_id = getattr(request.state, "trace_id", None) or uuid4().hex
+    trace_id = g.get("trace_id") or uuid4().hex
 
     response = player_backend.request_backend(
         "POST",
