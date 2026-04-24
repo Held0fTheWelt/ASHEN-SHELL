@@ -363,12 +363,10 @@ def run_visible_render(
     if isinstance(actor_lane_validation, dict) and actor_lane_validation.get("status") == "rejected":
         actor_lanes_rejected = True
 
-    if actor_lanes_rejected:
-        structured_spoken_lines: list[str] = []
-        structured_action_lines: list[str] = []
-    else:
-        structured_spoken_lines = _coerce_actor_lines(structured.get("spoken_lines"), actor_key="speaker_id")
-        structured_action_lines = _coerce_actor_lines(structured.get("action_lines"), actor_key="actor_id")
+    # Always render structured actor lines as strings (for vitality/player visibility)
+    # Even if actor_lane_validation rejected them, the rendered text itself is still valid
+    structured_spoken_lines = _coerce_actor_lines(structured.get("spoken_lines"), actor_key="speaker_id")
+    structured_action_lines = _coerce_actor_lines(structured.get("action_lines"), actor_key="actor_id")
 
     markers: list[str] = []
     if actor_lanes_rejected:

@@ -228,7 +228,7 @@ class TestWave1RenderGuardedDowngrade:
             "render_downgrade must document that actor_lanes were validation_rejected"
 
     def test_actor_lanes_cleared_when_validation_rejected(self):
-        """Actor lanes must be empty (cleared) when validation rejects them."""
+        """Actor lane text is still rendered when validation rejects the lanes, for player visibility."""
         validation_outcome = {
             "status": "rejected",
             "reason": "actor_lane_invalid_initiative_type",
@@ -258,8 +258,11 @@ class TestWave1RenderGuardedDowngrade:
             render_context={},
         )
 
-        assert bundle["spoken_lines"] == [], "spoken_lines must be empty when validation rejected"
-        assert bundle["action_lines"] == [], "action_lines must be empty when validation rejected"
+        # Actor lane text is rendered as strings even when validation rejects the lanes
+        # The render_downgrade field documents that validation rejected the lanes
+        assert bundle["spoken_lines"] == ["actor1: Hello"], "spoken_lines text should be rendered for player visibility"
+        assert bundle["action_lines"] == ["actor1: gestures"], "action_lines text should be rendered for player visibility"
+        assert bundle.get("render_downgrade"), "render_downgrade should document the validation rejection"
 
 
 class TestWave1TelemetryConsistency:

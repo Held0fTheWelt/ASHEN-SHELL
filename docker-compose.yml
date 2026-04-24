@@ -114,6 +114,8 @@ services:
       - APP_TITLE=World of Shadows Play Service
       # Slim image layout: /app/app/... — same as backend WOS_REPO_ROOT for RAG / .wos paths.
       - WOS_REPO_ROOT=/app
+      # Content modules (god_of_carnage, etc.) path - required for Scene Director and canonical rules
+      - WOS_CONTENT_MODULES_ROOT=/app/content/modules
       # Embedding governance (see docs/rag_in_world_of_shadows.md):
       # Uncomment WOS_RAG_DISABLE_EMBEDDINGS to force sparse-only fallback (e.g. CI without model cache).
       # - WOS_RAG_DISABLE_EMBEDDINGS=1
