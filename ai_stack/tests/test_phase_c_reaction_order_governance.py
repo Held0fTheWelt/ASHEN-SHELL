@@ -446,7 +446,7 @@ class TestC31RenderSupportMarker:
             "spoken_lines": [],
             "action_lines": [],
             "render_support": {
-                "projection_version": "director_surface_hints.v1",
+                "projection_version": "render_support.v1",
                 "reaction_order_divergence": {
                     "preferred": ["alice", "bob"],
                     "realized": ["alice"],

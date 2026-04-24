@@ -8,6 +8,7 @@ from ai_stack.runtime_turn_contracts import (
     DEGRADATION_SIGNAL_ACTOR_LANES_VALIDATION_GATED,
     DEGRADATION_SIGNAL_DEGRADED_COMMIT,
     DEGRADATION_SIGNAL_FALLBACK_USED,
+    DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT,
     DEGRADATION_SIGNAL_NON_FACTUAL_STAGING,
     DEGRADATION_SIGNAL_PROSE_ONLY_RECOVERY,
     DEGRADATION_SIGNAL_RETRY_EXHAUSTED,
@@ -36,6 +37,7 @@ _WEAK_SIGNALS = frozenset(
         DEGRADATION_SIGNAL_WEAK_SIGNAL_ACCEPTED,
         DEGRADATION_SIGNAL_PROSE_ONLY_RECOVERY,
         DEGRADATION_SIGNAL_THIN_PROSE_OVERRIDE,
+        DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT,
     }
 )
 
@@ -83,6 +85,8 @@ def canonical_degradation_signals(
         _append_signal(signals, DEGRADATION_SIGNAL_NON_FACTUAL_STAGING)
     if "actor_lanes_validation_gated" in visibility_markers:
         _append_signal(signals, DEGRADATION_SIGNAL_ACTOR_LANES_VALIDATION_GATED)
+    if "no_actor_lane_output_with_selected_responders" in visibility_markers:
+        _append_signal(signals, DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT)
 
     reason = str(validation.get("reason") or "").strip().lower()
     if reason == "degraded_commit_after_retries":
@@ -90,6 +94,8 @@ def canonical_degradation_signals(
         _append_signal(signals, DEGRADATION_SIGNAL_RETRY_EXHAUSTED)
     elif reason == "opening_leniency_approved":
         _append_signal(signals, DEGRADATION_SIGNAL_PROSE_ONLY_RECOVERY)
+    elif reason == "no_structured_actor_output_with_selected_responders":
+        _append_signal(signals, DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT)
 
     attempts = self_correction.get("attempts") if isinstance(self_correction.get("attempts"), list) else []
     if any(isinstance(attempt, dict) and attempt.get("preserve_actor_lanes") for attempt in attempts):

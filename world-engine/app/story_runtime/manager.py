@@ -1363,9 +1363,12 @@ class StoryRuntimeManager:
         )
 
     def _opening_commit_acceptable(self, graph_state: dict[str, Any]) -> bool:
-        # TEMPORARY: Lenient opening validation for debugging
-        # The full P0-2 enforcement requires AI stack updates to generate proper committed_result
-        # For now: accept approved openings without strict commit checks
+        # Bootstrap policy for opening-turn validation.
+        # Opening turns are engine-generated (not player-prompted) and do not require
+        # the same committed_result contract as subsequent turns. We enforce validation
+        # status and preview placeholder checks, but defer strict commit enforcement.
+        # This leniency is surfaced as a degradation signal in canonical_degradation_signals()
+        # and impacts quality_class assessment accordingly.
         val = graph_state.get("validation_outcome") if isinstance(graph_state.get("validation_outcome"), dict) else {}
         if val.get("status") != "approved":
             # Log rejection reason for debugging

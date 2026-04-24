@@ -373,6 +373,11 @@ def run_visible_render(
     markers: list[str] = []
     if actor_lanes_rejected:
         markers.append("actor_lanes_validation_gated")
+
+    # R1: Add no_actor_lane_output marker when responders selected but no structured output
+    actor_lane_reason = (actor_lane_validation or {}).get("reason", "")
+    if actor_lane_reason == "no_structured_actor_output_with_selected_responders":
+        markers.append("no_actor_lane_output_with_selected_responders")
     approved = validation_outcome.get("status") == "approved"
     committed = committed_result.get("committed_effects") or []
     has_commit = bool(committed) and committed_result.get("commit_applied")
@@ -493,40 +498,41 @@ def run_visible_render(
         carry_forward_tension_notes = rc.get("carry_forward_tension_notes")
         if pacing_mode == "thin_edge" and not (structured_spoken_lines or structured_action_lines):
             if isinstance(carry_forward_tension_notes, str) and carry_forward_tension_notes.strip():
-                if "render_support" not in bundle:
-                    bundle["render_support"] = {
-                        "projection_version": "director_surface_hints.v1",
-                        "player_visible": False,
-                        "director_surface_hints": [],
-                    }
-                if not isinstance(bundle["render_support"], dict):
-                    bundle["render_support"] = {}
-                bundle["render_support"]["vitality_floor_warning"] = "thin_edge_output_empty_with_prior_tension"
+                render_support = bundle.setdefault("render_support", {})
+                if not isinstance(render_support, dict):
+                    render_support = {}
+                    bundle["render_support"] = render_support
+                render_support.setdefault("projection_version", "render_support.v1")
+                render_support.setdefault("player_visible", False)
+                render_support["vitality_floor_warning"] = "thin_edge_output_empty_with_prior_tension"
 
         # C3.1: Add reaction order divergence marker to render_support
-        reaction_order_divergence = rc.get("reaction_order_divergence")
-        reaction_order_divergence_reason = rc.get("reaction_order_divergence_reason")
-        if reaction_order_divergence and reaction_order_divergence_reason:
-            if "render_support" not in bundle:
-                bundle["render_support"] = {
-                    "projection_version": "director_surface_hints.v1",
-                    "player_visible": False,
-                    "director_surface_hints": [],
-                }
-            if not isinstance(bundle["render_support"], dict):
-                bundle["render_support"] = {}
+        divergence_reason = rc.get("reaction_order_divergence")
+        if divergence_reason:
+            render_support = bundle.setdefault("render_support", {})
+            if not isinstance(render_support, dict):
+                render_support = {}
+                bundle["render_support"] = render_support
+            render_support.setdefault("projection_version", "render_support.v1")
+            render_support.setdefault("player_visible", False)
             bundle["render_support"]["reaction_order_divergence"] = {
-                "preferred": rc.get("preferred_reaction_order") or [],
+                "divergence": True,
+                "reason": divergence_reason,
+                "preferred": rc.get("preferred_reaction_order_ids") or [],
                 "realized": rc.get("realized_actor_order") or [],
-                "reason": reaction_order_divergence_reason,
+                "non_fatal": True,
+                "justified": False,
             }
+            markers.append("reaction_order_divergence")
 
         if director_surface_hints:
-            bundle["render_support"] = {
-                "projection_version": "director_surface_hints.v1",
-                "player_visible": False,
-                "director_surface_hints": director_surface_hints,
-            }
+            render_support = bundle.setdefault("render_support", {})
+            if not isinstance(render_support, dict):
+                render_support = {}
+                bundle["render_support"] = render_support
+            render_support.setdefault("projection_version", "render_support.v1")
+            render_support.setdefault("player_visible", False)
+            render_support["director_surface_hints"] = director_surface_hints
         if actor_lanes_rejected:
             bundle["render_downgrade"] = {
                 "actor_lanes": "validation_rejected",

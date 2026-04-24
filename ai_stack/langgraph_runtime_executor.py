@@ -250,9 +250,15 @@ def _actor_lane_validation(
     meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
     structured = meta.get("structured_output") if isinstance(meta.get("structured_output"), dict) else {}
     if not structured:
+        has_selected_responders = bool(allowed_actor_ids)
+        reason = (
+            "no_structured_actor_output_with_selected_responders"
+            if has_selected_responders
+            else "no_structured_actor_output"
+        )
         return {
             "status": "approved",
-            "reason": "no_structured_actor_output",
+            "reason": reason,
             "allowed_actor_ids": allowed_actor_ids,
             "illegal_actor_ids": [],
             "invalid_initiative_types": [],
@@ -706,6 +712,52 @@ def _invoke_runtime_adapter_with_langchain(**kwargs: Any) -> Any:
     from ai_stack.langchain_integration import invoke_runtime_adapter_with_langchain
 
     return invoke_runtime_adapter_with_langchain(**kwargs)
+
+
+def _extract_realized_actor_order_from_output(state: dict[str, Any]) -> list[str]:
+    """Extract unique actor order from realized output (spoken + action lines)."""
+    spoken = [
+        str(line.get("speaker_id") or "").strip()
+        for line in (state.get("spoken_lines") or [])
+        if isinstance(line, dict) and line.get("speaker_id")
+    ]
+    action = [
+        str(line.get("actor_id") or "").strip()
+        for line in (state.get("action_lines") or [])
+        if isinstance(line, dict) and line.get("actor_id")
+    ]
+    return list(dict.fromkeys(filter(None, spoken + action)))
+
+
+def _compute_reaction_order_divergence_for_render(state: dict[str, Any]) -> dict[str, Any]:
+    """Compute reaction order divergence structure from committed responders vs realized output.
+
+    Returns dict matching render_context field names with divergence metadata.
+    """
+    preferred = _preferred_reaction_order_ids_from_responders(
+        state.get("selected_responder_set") or []
+    )
+    secondary = [
+        r.get("actor_id")
+        for r in (state.get("selected_responder_set") or [])
+        if isinstance(r, dict) and r.get("actor_id") and r.get("role") in ("secondary_reactor",)
+    ]
+    realized = _extract_realized_actor_order_from_output(state)
+    not_realized = [a for a in secondary if a not in realized]
+
+    reason: str | None = None
+    if not_realized and realized:
+        reason = "secondary_responder_nominated_not_realized_in_output"
+    elif len(preferred) > 1 and len(realized) == 1:
+        reason = "single_actor_only"
+    elif realized and realized != preferred:
+        reason = "realized_order_differs"
+
+    return {
+        "reaction_order_divergence": reason,
+        "preferred_reaction_order_ids": preferred,
+        "realized_actor_order": realized,
+    }
 
 
 def _preferred_reaction_order_ids_from_responders(responders: list[Any]) -> list[str]:
@@ -2417,11 +2469,8 @@ class RuntimeTurnGraphExecutor:
                 "character_profile_snippet": char_snippet,
                 "scene_guidance_snippets": guidance_snip,
                 "carry_forward_tension_notes": (state.get("prior_planner_truth") or {}).get("carry_forward_tension_notes"),
-                # C3: Reaction order divergence for render support surfacing
-                "reaction_order_divergence": state.get("reaction_order_divergence"),
-                "reaction_order_divergence_reason": state.get("reaction_order_divergence_reason"),
-                "preferred_reaction_order": state.get("preferred_reaction_order"),
-                "realized_actor_order": state.get("realized_actor_order"),
+                # C3: Reaction order divergence for render support surfacing (computed from realized output)
+                **_compute_reaction_order_divergence_for_render(state),
             },
         )
         update["generation"] = generation

@@ -408,6 +408,8 @@ def _normalize_story_entries_for_shell(
             "realized_actor_ids": list(vitality.get("realized_actor_ids") or []),
             "realized_secondary_responder_ids": list(vitality.get("realized_secondary_responder_ids") or []),
             "rendered_actor_ids": list(vitality.get("rendered_actor_ids") or []),
+            "preferred_reaction_order_ids": list(vitality.get("preferred_reaction_order_ids") or []),
+            "reaction_order_divergence": vitality.get("reaction_order_divergence"),
             "generated_spoken_line_count": int(vitality.get("generated_spoken_line_count") or 0),
             "validated_spoken_line_count": int(vitality.get("validated_spoken_line_count") or 0),
             "rendered_spoken_line_count": int(vitality.get("rendered_spoken_line_count") or 0),
@@ -580,6 +582,10 @@ def _build_play_shell_opening_view(
 
 def _build_play_shell_runtime_view(api_payload: dict[str, Any]) -> dict[str, Any]:
     """Project world-engine bridge JSON into a compact, player-facing last-turn view.
+
+    WARNING: Session audit log function only. Not the canonical player render path.
+    Called only by _build_play_shell_opening_view (opening turn) and _persist_turn_success
+    (orphaned audit logger). Do not use for live route responses.
 
     PHASE 2: Validates that world-engine turn response contains canonical contract fields
     before projecting to player view.
