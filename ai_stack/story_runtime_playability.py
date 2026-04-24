@@ -201,9 +201,10 @@ def decide_playability_recovery(
             generation=generation,
         )
     )
-    actor_lane_approved = (
+    actor_lane_healthy = (
         isinstance(actor_lane_validation, dict)
         and actor_lane_validation.get("status") == "approved"
+        and actor_lane_validation.get("reason") == "actor_lane_legal"
     )
     prose_only_reject = reason in {
         "dramatic_alignment_narrative_too_short",
@@ -213,7 +214,7 @@ def decide_playability_recovery(
         "dramatic_effect_reject_empty_fluency",
         "empty_visible_output",
     }
-    preserve_actor_lanes = actor_lane_approved and prose_only_reject
+    preserve_actor_lanes = actor_lane_healthy and prose_only_reject
     return PlayabilityDecision(
         should_retry=should_retry,
         allow_degraded_commit=allow_degraded,

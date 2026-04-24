@@ -33,7 +33,7 @@ class TestPlayabilityRecoveryPreserveActorLanes:
 		}
 		actor_lane_validation = {
 			"status": "approved",
-			"reason": "",
+			"reason": "actor_lane_legal",
 		}
 		decision = decide_playability_recovery(
 			turn_number=1,
@@ -54,7 +54,7 @@ class TestPlayabilityRecoveryPreserveActorLanes:
 		}
 		actor_lane_validation = {
 			"status": "approved",
-			"reason": "",
+			"reason": "actor_lane_legal",
 		}
 		decision = decide_playability_recovery(
 			turn_number=1,
@@ -75,7 +75,7 @@ class TestPlayabilityRecoveryPreserveActorLanes:
 		}
 		actor_lane_validation = {
 			"status": "approved",
-			"reason": "",
+			"reason": "actor_lane_legal",
 		}
 		decision = decide_playability_recovery(
 			turn_number=1,
@@ -134,7 +134,7 @@ class TestPlayabilityRecoveryPreserveActorLanes:
 		}
 		actor_lane_validation = {
 			"status": "approved",
-			"reason": "",
+			"reason": "actor_lane_legal",
 		}
 		decision = decide_playability_recovery(
 			turn_number=1,
@@ -155,7 +155,7 @@ class TestPlayabilityRecoveryPreserveActorLanes:
 		}
 		actor_lane_validation = {
 			"status": "approved",
-			"reason": "",
+			"reason": "actor_lane_legal",
 		}
 		decision = decide_playability_recovery(
 			turn_number=1,

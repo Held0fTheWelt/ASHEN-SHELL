@@ -161,6 +161,16 @@ def _build_display_actor_turn_line(entry: dict[str, Any]) -> str:
     return ("Turn outcome: " + text) if text else ""
 
 
+def _format_reaction_order_divergence(div: Any) -> str:
+    """Format reaction_order_divergence dict as readable message."""
+    if not isinstance(div, dict):
+        return str(div).strip() if div else ""
+    reason = div.get("reason", "")
+    if reason:
+        return f"Reaction order divergence: {reason}"
+    return "Reaction order divergence detected"
+
+
 def _build_display_render_support_warning(entry: dict[str, Any], vitality: dict[str, Any]) -> str:
     """Player shell: only explicit warn strings (no generic render_support dump)."""
     messages: list[str] = []
@@ -171,10 +181,12 @@ def _build_display_render_support_warning(entry: dict[str, Any], vitality: dict[
             messages.append(str(floor).strip())
         div = rs.get("reaction_order_divergence")
         if div:
-            messages.append(str(div).strip())
+            messages.append(_format_reaction_order_divergence(div))
     div_v = vitality.get("reaction_order_divergence") if isinstance(vitality, dict) else None
-    if div_v and str(div_v).strip() and str(div_v).strip() not in messages:
-        messages.append(str(div_v).strip())
+    if div_v:
+        formatted = _format_reaction_order_divergence(div_v)
+        if formatted and formatted not in messages:
+            messages.append(formatted)
     return " · ".join(messages) if messages else ""
 
 

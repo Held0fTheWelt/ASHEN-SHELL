@@ -59,6 +59,7 @@ DegradationSignal = Literal[
     "thin_prose_override",
     "retry_exhausted",
     "no_actor_lane_output_with_selected_responders",
+    "opening_leniency_approved",
 ]
 
 DEGRADATION_SIGNAL_FALLBACK_USED: DegradationSignal = "fallback_used"
@@ -70,6 +71,7 @@ DEGRADATION_SIGNAL_PROSE_ONLY_RECOVERY: DegradationSignal = "prose_only_recovery
 DEGRADATION_SIGNAL_THIN_PROSE_OVERRIDE: DegradationSignal = "thin_prose_override"
 DEGRADATION_SIGNAL_RETRY_EXHAUSTED: DegradationSignal = "retry_exhausted"
 DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT: DegradationSignal = "no_actor_lane_output_with_selected_responders"
+DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED: DegradationSignal = "opening_leniency_approved"
 
 DEGRADATION_SIGNAL_VALUES: tuple[DegradationSignal, ...] = (
     DEGRADATION_SIGNAL_FALLBACK_USED,
@@ -81,6 +83,7 @@ DEGRADATION_SIGNAL_VALUES: tuple[DegradationSignal, ...] = (
     DEGRADATION_SIGNAL_THIN_PROSE_OVERRIDE,
     DEGRADATION_SIGNAL_RETRY_EXHAUSTED,
     DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT,
+    DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED,
 )
 
 # Phase 5 canonical vitality telemetry schema.

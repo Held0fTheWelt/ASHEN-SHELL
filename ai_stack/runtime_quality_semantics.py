@@ -10,6 +10,7 @@ from ai_stack.runtime_turn_contracts import (
     DEGRADATION_SIGNAL_FALLBACK_USED,
     DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT,
     DEGRADATION_SIGNAL_NON_FACTUAL_STAGING,
+    DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED,
     DEGRADATION_SIGNAL_PROSE_ONLY_RECOVERY,
     DEGRADATION_SIGNAL_RETRY_EXHAUSTED,
     DEGRADATION_SIGNAL_THIN_PROSE_OVERRIDE,
@@ -38,6 +39,7 @@ _WEAK_SIGNALS = frozenset(
         DEGRADATION_SIGNAL_PROSE_ONLY_RECOVERY,
         DEGRADATION_SIGNAL_THIN_PROSE_OVERRIDE,
         DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT,
+        DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED,
     }
 )
 
@@ -93,7 +95,7 @@ def canonical_degradation_signals(
         _append_signal(signals, DEGRADATION_SIGNAL_DEGRADED_COMMIT)
         _append_signal(signals, DEGRADATION_SIGNAL_RETRY_EXHAUSTED)
     elif reason == "opening_leniency_approved":
-        _append_signal(signals, DEGRADATION_SIGNAL_PROSE_ONLY_RECOVERY)
+        _append_signal(signals, DEGRADATION_SIGNAL_OPENING_LENIENCY_APPROVED)
     elif reason == "no_structured_actor_output_with_selected_responders":
         _append_signal(signals, DEGRADATION_SIGNAL_NO_ACTOR_LANE_OUTPUT)
 
