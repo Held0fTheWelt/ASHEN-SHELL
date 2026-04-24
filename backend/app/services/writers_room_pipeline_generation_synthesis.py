@@ -60,8 +60,13 @@ def fill_generation_from_primary_adapter(
     focus: str,
     retrieval_text: str,
     selected_provider: str,
+    lf_trace: Any = None,
 ) -> None:
     """Mutate generation when a real adapter is available (LangChain structured path)."""
+    from app.observability.langfuse_adapter import get_langfuse_adapter
+
+    lf_adapter = get_langfuse_adapter()
+
     if not adapter:
         generation["error"] = f"adapter_not_registered:{selected_provider}"
         generation["raw_fallback_reason"] = "primary_adapter_missing"
@@ -99,6 +104,21 @@ def fill_generation_from_primary_adapter(
             "structured_output": None,
         }
 
+    # Record generation if Langfuse tracing is enabled
+    if lf_trace:
+        try:
+            lf_adapter.record_generation(
+                name="writers_room_synthesis",
+                model=selected_provider,
+                provider=selected_provider,
+                prompt=wr_result.prompt_text[:2000] if wr_result.prompt_text else "",
+                completion=generation["content"][:2000] if generation["content"] else "",
+                metadata={"module_id": module_id, "focus": focus, "success": generation["success"]},
+                trace=lf_trace,
+            )
+        except Exception:
+            pass  # Langfuse errors never break the main flow
+
 
 def apply_generation_mock_fallback(
     *,
@@ -107,8 +127,13 @@ def apply_generation_mock_fallback(
     module_id: str,
     focus: str,
     retrieval_text: str,
+    lf_trace: Any = None,
 ) -> None:
     """If primary path failed, try mock/raw adapter fallback (mutates generation)."""
+    from app.observability.langfuse_adapter import get_langfuse_adapter
+
+    lf_adapter = get_langfuse_adapter()
+
     if generation["success"]:
         return
     fallback = adapters.get("mock")
@@ -137,6 +162,21 @@ def apply_generation_mock_fallback(
                 "graph-runtime primary path uses the same pattern."
             ),
         }
+
+        # Record fallback generation if Langfuse tracing is enabled
+        if lf_trace:
+            try:
+                lf_adapter.record_generation(
+                    name="writers_room_synthesis_fallback",
+                    model="mock",
+                    provider="mock",
+                    prompt=fallback_prompt[:2000],
+                    completion=generation["content"][:2000] if generation["content"] else "",
+                    metadata={"module_id": module_id, "focus": focus, "fallback_reason": generation["raw_fallback_reason"]},
+                    trace=lf_trace,
+                )
+            except Exception:
+                pass  # Langfuse errors never break the main flow
 
 
 def attach_synthesis_routing_evidence(

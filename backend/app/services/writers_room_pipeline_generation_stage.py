@@ -31,6 +31,7 @@ def run_writers_room_generation_stage(
     focus: str,
     retrieval_text: str,
     evidence_tag: str,
+    lf_trace: Any = None,
 ) -> WritersRoomGenerationStageResult:
     """Route preflight and synthesis, invoke LangChain path or mock fallback; attach synthesis routing evidence."""
     specs = model_route_specs
@@ -40,6 +41,7 @@ def run_writers_room_generation_stage(
         module_id=module_id,
         retrieval_text=retrieval_text,
         evidence_tag=evidence_tag,
+        lf_trace=lf_trace,
     )
     syn_decision, synthesis_req, _, generation = route_synthesis_and_build_generation_shell(
         specs=specs,
@@ -54,6 +56,7 @@ def run_writers_room_generation_stage(
         focus=focus,
         retrieval_text=retrieval_text,
         selected_provider=selected_provider,
+        lf_trace=lf_trace,
     )
     apply_generation_mock_fallback(
         generation=generation,
@@ -61,6 +64,7 @@ def run_writers_room_generation_stage(
         module_id=module_id,
         focus=focus,
         retrieval_text=retrieval_text,
+        lf_trace=lf_trace,
     )
     attach_synthesis_routing_evidence(
         generation=generation,

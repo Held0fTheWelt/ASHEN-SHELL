@@ -44,81 +44,105 @@ def _execute_writers_room_workflow_package(
 
     Returns workflow fields for persistence (no review_id / review_state / revision_cycles).
     """
-    manifest_stages: list[dict[str, Any]] = []
-    _rs = read_scope_settings("retrieval")
-    _wr_mode = str(_rs.get("retrieval_execution_mode") or "hybrid_dense_sparse").strip()
-    _wr_sparse = _wr_mode == "sparse_only"
-    _wr_max_k = max(1, min(int(_rs.get("retrieval_top_k") or 6), 12))
-    _wr_profile = str(_rs.get("retrieval_profile") or "writers_review").strip() or "writers_review"
-    rv = run_writers_room_retrieval_stage(
-        seed_graph=workflow.seed_graph,
-        capability_registry=workflow.capability_registry,
-        module_id=module_id,
-        focus=focus,
-        actor_id=actor_id,
-        manifest_stages=manifest_stages,
-        use_sparse_only=_wr_sparse,
-        max_chunks=_wr_max_k,
-        retrieval_profile=_wr_profile,
-    )
-    seed = rv.seed
-    context_payload = rv.context_payload
-    retrieval_inner = rv.retrieval_inner
-    source_rows = rv.source_rows
-    early_evidence_paths = rv.early_evidence_paths
-    retrieval_trace = rv.retrieval_trace
-    evidence_tag = rv.evidence_tag
-    retrieval_text = rv.retrieval_text
-    ctx_fingerprint = rv.ctx_fingerprint
+    from app.observability.langfuse_adapter import get_langfuse_adapter
 
-    generation = run_writers_room_generation_stage(
-        adapters=workflow.adapters,
-        model_route_specs=workflow.model_route_specs,
-        module_id=module_id,
-        focus=focus,
-        retrieval_text=retrieval_text,
-        evidence_tag=evidence_tag,
-    ).generation
+    lf_adapter = get_langfuse_adapter()
+    lf_trace = None
+
+    try:
+        # Start Langfuse trace for this writers room pipeline
+        try:
+            lf_trace = lf_adapter.start_trace(
+                name="writers_room_pipeline",
+                module_id=module_id,
+                metadata={"trace_id": trace_id, "focus": focus, "actor_id": actor_id},
+            )
+        except Exception:
+            pass  # Langfuse errors never break the main flow
+
+        manifest_stages: list[dict[str, Any]] = []
+        _rs = read_scope_settings("retrieval")
+        _wr_mode = str(_rs.get("retrieval_execution_mode") or "hybrid_dense_sparse").strip()
+        _wr_sparse = _wr_mode == "sparse_only"
+        _wr_max_k = max(1, min(int(_rs.get("retrieval_top_k") or 6), 12))
+        _wr_profile = str(_rs.get("retrieval_profile") or "writers_review").strip() or "writers_review"
+        rv = run_writers_room_retrieval_stage(
+            seed_graph=workflow.seed_graph,
+            capability_registry=workflow.capability_registry,
+            module_id=module_id,
+            focus=focus,
+            actor_id=actor_id,
+            manifest_stages=manifest_stages,
+            use_sparse_only=_wr_sparse,
+            max_chunks=_wr_max_k,
+            retrieval_profile=_wr_profile,
+        )
+        seed = rv.seed
+        context_payload = rv.context_payload
+        retrieval_inner = rv.retrieval_inner
+        source_rows = rv.source_rows
+        early_evidence_paths = rv.early_evidence_paths
+        retrieval_trace = rv.retrieval_trace
+        evidence_tag = rv.evidence_tag
+        retrieval_text = rv.retrieval_text
+        ctx_fingerprint = rv.ctx_fingerprint
+
+        generation = run_writers_room_generation_stage(
+            adapters=workflow.adapters,
+            model_route_specs=workflow.model_route_specs,
+            module_id=module_id,
+            focus=focus,
+            retrieval_text=retrieval_text,
+            evidence_tag=evidence_tag,
+            lf_trace=lf_trace,
+        ).generation
     _t2a_routing = generation.get("task_2a_routing") if isinstance(generation.get("task_2a_routing"), dict) else {}
     preflight_trace: dict[str, Any] = (
         _t2a_routing["preflight"] if isinstance(_t2a_routing.get("preflight"), dict) else {}
     )
 
-    packaging = run_writers_room_packaging_stage(
-        review_bundle_tool=workflow.review_bundle_tool,
-        manifest_stages=manifest_stages,
-        generation=generation,
-        module_id=module_id,
-        focus=focus,
-        evidence_tag=evidence_tag,
-        source_rows=source_rows,
-        retrieval_inner=retrieval_inner,
-        retrieval_trace=retrieval_trace,
-        ctx_fingerprint=ctx_fingerprint,
-        preflight_trace=preflight_trace,
-        early_evidence_paths=early_evidence_paths,
-    )
-    return run_writers_room_finalize_stage(
-        capability_registry=workflow.capability_registry,
-        model_route_specs=workflow.model_route_specs,
-        manifest_stages=manifest_stages,
-        generation=generation,
-        evidence_tag=evidence_tag,
-        evidence_paths=packaging.evidence_paths,
-        langchain_documents=packaging.langchain_documents,
-        langchain_preview_paths=packaging.langchain_preview_paths,
-        issues=packaging.issues,
-        recommendation_artifacts=packaging.recommendation_artifacts,
-        review_bundle=packaging.review_bundle,
-        proposal_package=packaging.proposal_package,
-        comment_bundle=packaging.comment_bundle,
-        patch_candidates=packaging.patch_candidates,
-        variant_candidates=packaging.variant_candidates,
-        review_summary=packaging.review_summary,
-        module_id=module_id,
-        focus=focus,
-        trace_id=trace_id,
-        seed=seed,
-        context_payload=context_payload,
-        retrieval_trace=retrieval_trace,
-    )
+        packaging = run_writers_room_packaging_stage(
+            review_bundle_tool=workflow.review_bundle_tool,
+            manifest_stages=manifest_stages,
+            generation=generation,
+            module_id=module_id,
+            focus=focus,
+            evidence_tag=evidence_tag,
+            source_rows=source_rows,
+            retrieval_inner=retrieval_inner,
+            retrieval_trace=retrieval_trace,
+            ctx_fingerprint=ctx_fingerprint,
+            preflight_trace=preflight_trace,
+            early_evidence_paths=early_evidence_paths,
+        )
+        return run_writers_room_finalize_stage(
+            capability_registry=workflow.capability_registry,
+            model_route_specs=workflow.model_route_specs,
+            manifest_stages=manifest_stages,
+            generation=generation,
+            evidence_tag=evidence_tag,
+            evidence_paths=packaging.evidence_paths,
+            langchain_documents=packaging.langchain_documents,
+            langchain_preview_paths=packaging.langchain_preview_paths,
+            issues=packaging.issues,
+            recommendation_artifacts=packaging.recommendation_artifacts,
+            review_bundle=packaging.review_bundle,
+            proposal_package=packaging.proposal_package,
+            comment_bundle=packaging.comment_bundle,
+            patch_candidates=packaging.patch_candidates,
+            variant_candidates=packaging.variant_candidates,
+            review_summary=packaging.review_summary,
+            module_id=module_id,
+            focus=focus,
+            trace_id=trace_id,
+            seed=seed,
+            context_payload=context_payload,
+            retrieval_trace=retrieval_trace,
+        )
+    finally:
+        # End trace
+        if lf_trace:
+            try:
+                lf_adapter.end_trace(lf_trace)
+            except Exception:
+                pass

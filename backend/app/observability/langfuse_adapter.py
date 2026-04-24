@@ -167,7 +167,7 @@ class LangfuseAdapter:
             metadata: Additional metadata to attach
 
         Returns:
-            Trace object if enabled, None otherwise.
+            Trace span object if enabled, None otherwise.
         """
         if not self.is_enabled():
             return None
@@ -182,7 +182,9 @@ class LangfuseAdapter:
             })
             trace_metadata = self._sanitize_metadata({k: v for k, v in trace_metadata.items() if v is not None})
 
-            self._active_trace = self._client.trace(
+            # v4 API: start_observation returns a span object (not context manager here)
+            self._active_trace = self._client.start_observation(
+                as_type="span",
                 name=name,
                 metadata=trace_metadata,
             )
@@ -199,7 +201,8 @@ class LangfuseAdapter:
         target = trace or self._active_trace
         if target:
             try:
-                # Langfuse traces don't need explicit end; they flush when done
+                # v4 API: call end() on the span
+                target.end()
                 if self._active_trace == target:
                     self._active_trace = None
             except Exception as e:
@@ -241,14 +244,16 @@ class LangfuseAdapter:
             span_output = self._sanitize_metadata(output_data) if output_data and self.config.capture_outputs else None
             span_metadata = self._sanitize_metadata(metadata) if metadata else None
 
-            span = target_trace.span(
+            # v4 API: create nested span
+            span = target_trace.start_observation(
+                as_type="span",
                 name=name,
                 input=span_input,
-                output=span_output,
                 metadata=span_metadata,
-                start_time=start_time,
-                end_time=end_time,
             )
+            if span:
+                span.update(output=span_output)
+                span.end()
             return span
         except Exception as e:
             logger.warning(f"Failed to add span: {e}")
@@ -298,17 +303,26 @@ class LangfuseAdapter:
             prompt_text = (self._sanitize_metadata({"p": prompt}).get("p") if prompt and self.config.capture_prompts else None)
             completion_text = (self._sanitize_metadata({"c": completion}).get("c") if completion and self.config.capture_outputs else None)
 
-            target_trace.generation(
+            # v4 API: create generation as a nested observation
+            generation = target_trace.start_observation(
+                as_type="generation",
                 name=name,
                 model=model,
                 input={"prompt": prompt_text} if prompt_text else None,
-                output={"completion": completion_text} if completion_text else None,
                 metadata=self._sanitize_metadata(gen_metadata),
-                usage={
-                    "prompt_tokens": tokens_prompt or 0,
-                    "completion_tokens": tokens_completion or 0,
-                } if tokens_prompt or tokens_completion else None,
             )
+
+            # Record output and token usage
+            if generation:
+                generation.update(
+                    output={"completion": completion_text} if completion_text else None,
+                    usage_details={
+                        "input": tokens_prompt or 0,
+                        "output": tokens_completion or 0,
+                        "total": (tokens_prompt or 0) + (tokens_completion or 0),
+                    } if (tokens_prompt or tokens_completion) else None,
+                )
+                generation.end()
         except Exception as e:
             logger.warning(f"Failed to record generation: {e}")
 
@@ -347,12 +361,16 @@ class LangfuseAdapter:
                 if retrieved_documents:
                     output_data = {"documents": retrieved_documents[:5]}  # Limit to first 5
 
-            target_trace.span(
+            # v4 API: use retriever observation type
+            retrieval = target_trace.start_observation(
+                as_type="retriever",
                 name="retrieval",
                 input=input_data,
-                output=output_data,
                 metadata=self._sanitize_metadata(ret_metadata),
             )
+            if retrieval:
+                retrieval.update(output=output_data)
+                retrieval.end()
         except Exception as e:
             logger.warning(f"Failed to record retrieval: {e}")
 
@@ -386,12 +404,16 @@ class LangfuseAdapter:
             val_metadata = metadata or {}
             val_metadata["status"] = status
 
-            target_trace.span(
+            # v4 API: use guardrail observation type
+            validation = target_trace.start_observation(
+                as_type="guardrail",
                 name=f"validation_{name}",
                 input=self._sanitize_metadata(input_data) if input_data else None,
-                output=self._sanitize_metadata(output_data) if output_data else None,
                 metadata=self._sanitize_metadata(val_metadata),
             )
+            if validation:
+                validation.update(output=self._sanitize_metadata(output_data) if output_data else None)
+                validation.end()
         except Exception as e:
             logger.warning(f"Failed to record validation: {e}")
 
@@ -420,6 +442,7 @@ class LangfuseAdapter:
             return
 
         try:
+            # v4 API: use score method on the span
             target_trace.score(
                 name=name,
                 value=value,

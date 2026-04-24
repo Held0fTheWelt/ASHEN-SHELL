@@ -22,8 +22,13 @@ def run_writers_room_generation_preflight(
     module_id: str,
     retrieval_text: str,
     evidence_tag: str,
+    lf_trace: Any = None,
 ) -> dict[str, Any]:
     """Route cheap preflight; optionally call selected adapter; attach routing evidence."""
+    from app.observability.langfuse_adapter import get_langfuse_adapter
+
+    lf_adapter = get_langfuse_adapter()
+
     preflight_req = RoutingRequest(
         workflow_phase=WorkflowPhase.preflight,
         task_kind=TaskKind.cheap_preflight,
@@ -57,6 +62,21 @@ def run_writers_room_generation_preflight(
             preflight_trace["adapter_key"] = pre_decision.selected_adapter_name
             preflight_trace["call_success"] = pre_call.success
             preflight_trace["content_excerpt"] = (pre_call.content or "").strip()[:500]
+
+            # Record generation if Langfuse tracing is enabled
+            if lf_trace:
+                try:
+                    lf_adapter.record_generation(
+                        name="writers_room_preflight",
+                        model=pre_decision.selected_adapter_name,
+                        provider=pre_decision.selected_adapter_name,
+                        prompt=pre_prompt[:2000],
+                        completion=(pre_call.content or "")[:2000],
+                        metadata={"evidence_tag": evidence_tag, "module_id": module_id},
+                        trace=lf_trace,
+                    )
+                except Exception:
+                    pass  # Langfuse errors never break the main flow
         except Exception as exc:  # noqa: BLE001 — bounded diagnostic; workflow continues
             preflight_trace["bounded_model_call"] = True
             preflight_trace["adapter_key"] = pre_decision.selected_adapter_name

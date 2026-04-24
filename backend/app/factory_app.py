@@ -58,7 +58,7 @@ def create_app(config_object=None, *, testing: bool | None = None):
         except Exception as e:
             print(f"[WARN] Could not initialize observability: {e}; using no-op adapter")
             from app.observability.langfuse_adapter import LangfuseAdapter
-            app.langfuse_adapter = LangfuseAdapter()
+            app.langfuse_adapter = LangfuseAdapter.get_instance()
 
     csrf = CSRFProtect(app)
     from app.api.v1 import api_v1_bp
@@ -90,7 +90,7 @@ def _initialize_observability(app: Flask) -> None:
 
         if not db_config.get("is_enabled"):
             # Disabled: use no-op adapter (defaults from env)
-            app.langfuse_adapter = LangfuseAdapter()
+            app.langfuse_adapter = LangfuseAdapter.get_instance()
             print("[INFO] Langfuse observability is disabled (no-op mode)")
             return
 
@@ -98,7 +98,7 @@ def _initialize_observability(app: Flask) -> None:
         secret_key = get_observability_credential_for_runtime("secret_key")
         if not secret_key:
             print("[WARN] Langfuse enabled but secret_key not configured; using no-op adapter")
-            app.langfuse_adapter = LangfuseAdapter()
+            app.langfuse_adapter = LangfuseAdapter.get_instance()
             return
 
         public_key = get_observability_credential_for_runtime("public_key")
@@ -117,11 +117,11 @@ def _initialize_observability(app: Flask) -> None:
         config.capture_retrieval = db_config.get("capture_retrieval", False)
         config.redaction_mode = db_config.get("redaction_mode", "strict")
 
-        app.langfuse_adapter = LangfuseAdapter(config)
+        app.langfuse_adapter = LangfuseAdapter.get_instance(config)
         print("[INFO] Langfuse observability initialized and ready")
 
     except Exception as e:
         print(f"[WARN] Failed to initialize Langfuse: {e}; using no-op adapter")
         from app.observability.langfuse_adapter import LangfuseAdapter
 
-        app.langfuse_adapter = LangfuseAdapter()
+        app.langfuse_adapter = LangfuseAdapter.get_instance()
