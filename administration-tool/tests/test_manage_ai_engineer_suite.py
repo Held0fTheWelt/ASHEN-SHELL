@@ -40,10 +40,12 @@ def test_manage_base_includes_phase2_nav_entries(client):
     assert "manage-nav-runtime-settings" in html
     assert "manage-nav-rag-operations" in html
     assert "manage-nav-ai-orchestration" in html
+    assert "manage-nav-observability-settings" in html
     assert "/manage/runtime-dashboard" in html
     assert "/manage/runtime-settings" in html
     assert "/manage/rag-operations" in html
     assert "/manage/ai-orchestration" in html
+    assert "/manage/observability-settings" in html
     assert 'data-feature="manage.ai_runtime_governance"' in html
 
 
