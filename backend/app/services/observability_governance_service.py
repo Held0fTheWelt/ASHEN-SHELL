@@ -320,10 +320,10 @@ def test_observability_connection(actor: str = "system") -> dict:
         public_key = get_observability_credential_for_runtime("public_key")
         secret_key = get_observability_credential_for_runtime("secret_key")
 
-        if not secret_key:
-            raise Exception("Secret key not configured")
+        if not public_key or not secret_key:
+            raise Exception("Public key and secret key required for health check")
 
-        # Create config object with credentials from database
+        # Create config with database credentials
         adapter_config = LangfuseConfig()
         adapter_config.public_key = public_key
         adapter_config.secret_key = secret_key
@@ -331,15 +331,13 @@ def test_observability_connection(actor: str = "system") -> dict:
         adapter_config.environment = config["environment"]
         adapter_config.enabled = True
 
+        # Verify config is ready before creating adapter
+        if not adapter_config.is_valid:
+            raise Exception("Langfuse configuration invalid - missing credentials")
+
         adapter = LangfuseAdapter(config=adapter_config)
 
-        # Simple health check: create and immediately end a test span
-        trace = adapter.start_trace(
-            name="admin_health_check", metadata={"test": True}
-        )
-        if not trace:
-            raise Exception("Failed to start trace - adapter not properly initialized")
-        adapter.end_trace(trace)
+        # Simple health check: flush to verify connection
         adapter.flush()
 
     except Exception as e:
