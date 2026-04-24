@@ -55,6 +55,7 @@ def request_backend(
     json_data: dict[str, Any] | None = None,
     params: dict[str, Any] | None = None,
     allow_refresh: bool = True,
+    timeout: int = 60,  # Increased from 20s for Opening generation which can be slow
 ) -> requests.Response:
     url = _api_url(path)
     try:
@@ -64,7 +65,7 @@ def request_backend(
             headers={**_auth_headers(), "Content-Type": "application/json"},
             json=json_data,
             params=params,
-            timeout=20,
+            timeout=timeout,
         )
     except (requests.ConnectionError, requests.Timeout) as exc:
         # Backend is unreachable - include the URL in the error for diagnostics
@@ -88,7 +89,7 @@ def request_backend(
                 headers={**_auth_headers(), "Content-Type": "application/json"},
                 json=json_data,
                 params=params,
-                timeout=20,
+                timeout=timeout,
             )
         except (requests.ConnectionError, requests.Timeout) as exc:
             raise BackendApiError(
