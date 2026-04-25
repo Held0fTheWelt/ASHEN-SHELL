@@ -64,7 +64,7 @@ def goc_solo_room_templates() -> list[RoomTemplate]:
                 " that was already tense before anyone spoke."
             ),
             exits=[ExitTemplate(direction="inside", target_room_id="living_room", label="Enter the living room")],
-            action_ids=["steady_breath", "ring_again", "review_notes"],
+            action_ids=[],
             artwork_prompt=(
                 "1980s point-and-click hallway, polished wood floor, apartment coats, anxious warm light,"
                 " cultured domestic tension, pixel art"
@@ -81,17 +81,8 @@ def goc_solo_room_templates() -> list[RoomTemplate]:
                 ExitTemplate(direction="back", target_room_id="hallway", label="Step back into the hallway"),
                 ExitTemplate(direction="bathroom", target_room_id="bathroom", label="Withdraw toward the bathroom"),
             ],
-            prop_ids=["tulips", "coffee_table", "phone", "art_books", "rum_bottle"],
-            action_ids=[
-                "offer_apology",
-                "deflect_blame",
-                "address_group",
-                "sit_down",
-                "ask_to_silence_phone",
-                "pour_rum",
-                "challenge_alain",
-                "comfort_annette",
-            ],
+            prop_ids=[],
+            action_ids=[],
             artwork_prompt=(
                 "retro pixel-art paris living room, books, flowers, tasteful furniture, glassware, social"
                 " pressure, 1980s adventure composition"
@@ -105,8 +96,8 @@ def goc_solo_room_templates() -> list[RoomTemplate]:
                 " apartment that promises retreat, and even that promise feels fragile."
             ),
             exits=[ExitTemplate(direction="living_room", target_room_id="living_room", label="Return to the living room")],
-            prop_ids=["washbasin"],
-            action_ids=["wash_face", "return_composure"],
+            prop_ids=[],
+            action_ids=[],
             artwork_prompt=(
                 "1980s adventure bathroom, ceramic sink, mirror, pale tile, private but tense, pixel art"
             ),
