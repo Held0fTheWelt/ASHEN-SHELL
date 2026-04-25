@@ -1062,6 +1062,7 @@ class RuntimeTurnGraphExecutor:
         turn_input_class: str | None = None,
         turn_execution_mode: str | None = None,
         live_player_truth_surface: bool | None = None,
+        actor_lane_context: dict[str, Any] | None = None,
     ) -> RuntimeTurnState:
         """Describe what ``run`` does in one line (verb-led summary for
         this method).
@@ -1134,6 +1135,9 @@ class RuntimeTurnGraphExecutor:
         if lt is None:
             lt = not bool(force_experiment_preview)
         initial_state["live_player_truth_surface"] = bool(lt)
+        # MVP2: actor-lane enforcement context — passed through state to validate_seam.
+        if actor_lane_context and isinstance(actor_lane_context, dict):
+            initial_state["actor_lane_context"] = actor_lane_context
         if active_narrative_threads:
             initial_state["active_narrative_threads"] = active_narrative_threads
         if thread_pressure_summary:
@@ -2290,12 +2294,18 @@ class RuntimeTurnGraphExecutor:
                 else [],
                 actor_lane_summary=actor_lane_sum,
             )
+            # MVP2: Pass actor_lane_context from state so human-actor enforcement fires
+            # before commit. When absent (no solo runtime profile), enforcement is skipped.
+            _actor_lane_ctx = state.get("actor_lane_context")
+            if not isinstance(_actor_lane_ctx, dict):
+                _actor_lane_ctx = None
             return run_validation_seam(
                 module_id=state.get("module_id") or "",
                 proposed_state_effects=current_proposed,
                 generation=current_generation if isinstance(current_generation, dict) else {},
                 evaluation_context=eval_ctx,
                 actor_lane_summary=actor_lane_sum,
+                actor_lane_context=_actor_lane_ctx,
             )
 
         outcome = _run_validation(generation, proposed)

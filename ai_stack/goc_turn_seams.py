@@ -162,6 +162,95 @@ def structured_output_to_proposed_effects(structured: dict[str, Any] | None) -> 
     return effects
 
 
+def _check_human_actor_violations(
+    structured: dict[str, Any],
+    ai_forbidden_actor_ids: set[str],
+    human_actor_id: str,
+) -> dict[str, Any] | None:
+    """Scan structured AI output for human-actor boundary violations.
+
+    Returns a rejection dict if the human actor appears in spoken_lines,
+    action_lines, emotional_shift, or responder nominations. Returns None
+    if no violation is found.
+
+    Error codes produced: ai_controlled_human_actor, human_actor_selected_as_responder,
+    invalid_visitor_runtime_reference.
+    """
+    if not ai_forbidden_actor_ids:
+        return None
+
+    def _forbidden(actor_id: str) -> bool:
+        if not actor_id:
+            return False
+        if actor_id == "visitor":
+            return True
+        return actor_id in ai_forbidden_actor_ids
+
+    def _error_code(actor_id: str, block_kind: str) -> str:
+        if actor_id == "visitor":
+            return "invalid_visitor_runtime_reference"
+        if block_kind == "responder_nomination":
+            return "human_actor_selected_as_responder"
+        return "ai_controlled_human_actor"
+
+    def _rejection(actor_id: str, block_kind: str) -> dict[str, Any]:
+        code = _error_code(actor_id, block_kind)
+        return {
+            "status": "rejected",
+            "reason": code,
+            "error_code": code,
+            "actor_lane_validation": {
+                "status": "rejected",
+                "error_code": code,
+                "actor_id": actor_id,
+                "block_kind": block_kind,
+                "human_actor_id": human_actor_id,
+            },
+            "validator_lane": "goc_actor_lane_enforcement_v1",
+        }
+
+    # spoken_lines
+    for item in (structured.get("spoken_lines") or []):
+        if not isinstance(item, dict):
+            continue
+        sid = str(item.get("speaker_id") or "").strip()
+        if _forbidden(sid):
+            return _rejection(sid, "actor_line")
+
+    # action_lines
+    for item in (structured.get("action_lines") or []):
+        if not isinstance(item, dict):
+            continue
+        aid = str(item.get("actor_id") or "").strip()
+        if _forbidden(aid):
+            return _rejection(aid, "actor_action")
+
+    # emotional_shift targeting human actor
+    emotional_shift = structured.get("emotional_shift")
+    if isinstance(emotional_shift, dict):
+        for key in ("actor_id", "target_actor_id"):
+            eid = str(emotional_shift.get(key) or "").strip()
+            if eid and _forbidden(eid):
+                return _rejection(eid, "emotional_state")
+
+    # primary responder
+    primary = str(
+        structured.get("primary_responder_id") or structured.get("responder_id") or ""
+    ).strip()
+    if primary and _forbidden(primary):
+        return _rejection(primary, "responder_nomination")
+
+    # secondary responders
+    for sid in (structured.get("secondary_responder_ids") or []):
+        if not isinstance(sid, str):
+            continue
+        sid = sid.strip()
+        if sid and _forbidden(sid):
+            return _rejection(sid, "responder_nomination")
+
+    return None
+
+
 def run_validation_seam(
     *,
     module_id: str,
@@ -169,22 +258,30 @@ def run_validation_seam(
     generation: dict[str, Any],
     evaluation_context: DramaticEffectEvaluationContext | None = None,
     actor_lane_summary: dict[str, Any] | None = None,
+    actor_lane_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Emit validation_outcome — no player text
     (CANONICAL_TURN_CONTRACT_GOC.md §2.1).
-    
-    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
-    
-    Args:
-        module_id: ``module_id`` (str); meaning follows the type and call sites.
-        proposed_state_effects: ``proposed_state_effects`` (list[dict[str, Any]]); meaning follows the type and call sites.
-        generation: ``generation`` (dict[str, Any]); meaning follows the type and call sites.
-        evaluation_context: ``evaluation_context`` (DramaticEffectEvaluationContext | None); meaning follows the type and call sites.
-    
-    Returns:
-        dict[str, Any]:
-            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+
+    actor_lane_context (MVP2): optional dict with human_actor_id and
+    ai_forbidden_actor_ids. When provided, actor-lane enforcement runs
+    BEFORE the dramatic-effect gate. Rejects AI output that speaks, acts,
+    emotes, or nominates the selected human actor.
+
+    Error codes: ai_controlled_human_actor, human_actor_selected_as_responder,
+    invalid_visitor_runtime_reference.
     """
+    # MVP2: Actor-lane enforcement runs before dramatic-effect gate and before commit.
+    if actor_lane_context and isinstance(actor_lane_context, dict):
+        ai_forbidden: set[str] = set(actor_lane_context.get("ai_forbidden_actor_ids") or [])
+        human_actor_id: str = str(actor_lane_context.get("human_actor_id") or "")
+        if ai_forbidden or human_actor_id:
+            gen_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+            structured_check = gen_meta.get("structured_output") if isinstance(gen_meta.get("structured_output"), dict) else {}
+            violation = _check_human_actor_violations(structured_check, ai_forbidden, human_actor_id)
+            if violation is not None:
+                return violation
+
     if module_id != GOC_MODULE_ID:
         return {
             "status": "waived",
@@ -282,20 +379,43 @@ def run_commit_seam(
     module_id: str,
     validation_outcome: dict[str, Any],
     proposed_state_effects: list[dict[str, Any]],
+    candidate_deltas: list[dict[str, Any]] | None = None,
+    state_delta_boundary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """``run_commit_seam`` — see implementation for behaviour and contracts.
-    
-    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
-    
-    Args:
-        module_id: ``module_id`` (str); meaning follows the type and call sites.
-        validation_outcome: ``validation_outcome`` (dict[str, Any]); meaning follows the type and call sites.
-        proposed_state_effects: ``proposed_state_effects`` (list[dict[str, Any]]); meaning follows the type and call sites.
-    
-    Returns:
-        dict[str, Any]:
-            Returns a value of type ``dict[str, Any]``; see the function body for structure, error paths, and sentinels.
+    """Commit approved effects after all validation passes.
+
+    MVP2: When candidate_deltas and state_delta_boundary are provided,
+    protected-path enforcement runs here before any commit is applied.
+    This is the commit-seam gate for StateDeltaBoundary.
+
+    Error codes: protected_state_mutation_rejected, state_delta_boundary_violation.
     """
+    # MVP2: Protected state mutation check runs at commit seam (before any write).
+    if candidate_deltas and isinstance(candidate_deltas, list):
+        protected = set(
+            (state_delta_boundary or {}).get("protected_paths") or [
+                "canonical_scene_order", "canonical_characters", "canonical_relationships",
+                "canonical_content_truth", "canonical_props", "canonical_endings",
+                "content_module_id", "selected_player_role", "human_actor_id", "actor_lanes",
+            ]
+        )
+        for delta in candidate_deltas:
+            if not isinstance(delta, dict):
+                continue
+            path = str(delta.get("path") or "").strip()
+            for root in protected:
+                if path == root or path.startswith(root + ".") or path.startswith(root + "["):
+                    return {
+                        "committed_effects": [],
+                        "commit_applied": False,
+                        "commit_lane": "goc_commit_seam_v1",
+                        "state_delta_rejection": {
+                            "error_code": "protected_state_mutation_rejected",
+                            "path": path,
+                            "protected_root": root,
+                        },
+                    }
+
     if validation_outcome.get("status") != "approved":
         return {
             "committed_effects": [],

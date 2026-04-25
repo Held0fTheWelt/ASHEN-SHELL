@@ -11,10 +11,12 @@ Usage (from repository root):
   python run-test.py --e2e         → python tests/run_tests.py --suite root_e2e_python
   python run-test.py --all         → python tests/run_tests.py --suite all
   python run-test.py --mvp1        → python tests/run_tests.py --suite engine backend (MVP1 suites)
+  python run-test.py --mvp2        → python tests/run_tests.py --suite engine (MVP2 suites — world-engine)
 
 Run-test.py is the canonical operational gate entry point documented in:
   tests/reports/MVP_Live_Runtime_Completion/MVP1_SOURCE_LOCATOR.md
   tests/reports/MVP_Live_Runtime_Completion/MVP1_OPERATIONAL_EVIDENCE.md
+  tests/reports/MVP_Live_Runtime_Completion/MVP2_OPERATIONAL_EVIDENCE.md
 """
 
 from __future__ import annotations
@@ -39,6 +41,7 @@ def main() -> int:
     parser.add_argument("--e2e", action="store_true", help="Run Python e2e tests.")
     parser.add_argument("--all", action="store_true", help="Run all suites.")
     parser.add_argument("--mvp1", action="store_true", help="Run MVP1 suites (engine + backend).")
+    parser.add_argument("--mvp2", action="store_true", help="Run MVP2 suites (engine — runtime state, actor lanes, object admission, state delta).")
     parser.add_argument("--quick", action="store_true", help="Pass --quick to runner (stop on first failure).")
     args = parser.parse_args()
 
@@ -56,6 +59,11 @@ def main() -> int:
         cmd = base_cmd + ["--suite", "backend", "engine", "--scope", "integration"]
     elif args.e2e:
         cmd = base_cmd + ["--suite", "root_e2e_python"]
+    elif args.mvp2:
+        # MVP2: Runtime State, Actor Lanes, Object Admission, State Delta — all in world-engine
+        # Test files: test_mvp2_runtime_state_actor_lanes.py, test_mvp2_npc_coercion_state_delta.py,
+        #             test_mvp2_object_admission.py, test_mvp2_operational_gate.py
+        cmd = base_cmd + ["--suite", "engine"]
     elif args.mvp1:
         # FIX-009: Include all three MVP1 suites (world-engine, backend, frontend)
         cmd = base_cmd + ["--suite", "engine", "backend"]

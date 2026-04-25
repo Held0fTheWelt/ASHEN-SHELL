@@ -1338,6 +1338,32 @@ class StoryRuntimeManager:
         if not str(st.get("config_version") or "").strip():
             raise LiveStoryGovernanceError("LIVE_STORY_RUNTIME_BLOCKED: config_version is missing on governed runtime surface.")
 
+    @staticmethod
+    def _extract_actor_lane_context(session: StorySession) -> dict[str, Any] | None:
+        """Extract MVP2 actor-lane enforcement context from session runtime_projection.
+
+        Returns a dict with human_actor_id and ai_forbidden_actor_ids when the
+        session's runtime_projection includes actor ownership (set by the backend
+        when creating a solo story session with a selected_player_role).
+        Returns None when actor ownership is absent (non-solo or legacy sessions).
+        """
+        proj = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
+        human_actor_id = str(proj.get("human_actor_id") or "").strip()
+        if not human_actor_id:
+            return None
+        npc_actor_ids = proj.get("npc_actor_ids")
+        ai_forbidden = [human_actor_id]
+        ai_allowed = sorted(
+            str(a) for a in (npc_actor_ids or []) if isinstance(a, str) and a.strip()
+        )
+        return {
+            "human_actor_id": human_actor_id,
+            "ai_forbidden_actor_ids": ai_forbidden,
+            "ai_allowed_actor_ids": ai_allowed,
+            "selected_player_role": str(proj.get("selected_player_role") or "").strip(),
+            "actor_lanes": proj.get("actor_lanes") or {},
+        }
+
     def _build_opening_prompt(self, session: StorySession) -> str:
         projection = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
         scene_id = str(projection.get("start_scene_id") or session.current_scene_id or "opening")
@@ -1747,6 +1773,7 @@ class StoryRuntimeManager:
             else None
         )
         prior_ci = goc_prior_continuity_for_graph(session.module_id, session.prior_continuity_impacts)
+        actor_lane_ctx = self._extract_actor_lane_context(session)
         try:
             graph_state = self.turn_graph.run(
                 session_id=session.session_id,
@@ -1763,6 +1790,7 @@ class StoryRuntimeManager:
                 turn_initiator_type="engine",
                 turn_input_class="opening",
                 live_player_truth_surface=True,
+                actor_lane_context=actor_lane_ctx,
             )
         except Exception as exc:
             log_story_runtime_failure(
@@ -1917,6 +1945,7 @@ class StoryRuntimeManager:
                 turn_number=commit_turn_number,
                 turn_initiator_type="player",
                 live_player_truth_surface=True,
+                actor_lane_context=self._extract_actor_lane_context(session),
             )
         except Exception as exc:
             session.turn_counter -= 1

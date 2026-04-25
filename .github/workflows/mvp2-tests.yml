@@ -1,0 +1,136 @@
+name: MVP2 Runtime State, Actor Lanes, Content Boundary Tests
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - 'world-engine/app/runtime/models.py'
+      - 'world-engine/app/runtime/actor_lane.py'
+      - 'world-engine/app/runtime/state_delta.py'
+      - 'world-engine/app/runtime/object_admission.py'
+      - 'world-engine/app/runtime/profiles.py'
+      - 'world-engine/app/runtime/manager.py'
+      - 'ai_stack/goc_turn_seams.py'
+      - 'world-engine/tests/test_mvp2_runtime_state_actor_lanes.py'
+      - 'world-engine/tests/test_mvp2_npc_coercion_state_delta.py'
+      - 'world-engine/tests/test_mvp2_object_admission.py'
+      - 'world-engine/tests/test_mvp2_operational_gate.py'
+      - 'story_runtime_core/goc_solo_builtin_template.py'
+      - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
+      - 'content/modules/god_of_carnage/**'
+      - 'run-test.py'
+      - 'docker-up.py'
+      - '.github/workflows/mvp2-tests.yml'
+  pull_request:
+    branches: [ master, main, develop ]
+    paths:
+      - 'world-engine/app/runtime/models.py'
+      - 'world-engine/app/runtime/actor_lane.py'
+      - 'world-engine/app/runtime/state_delta.py'
+      - 'world-engine/app/runtime/object_admission.py'
+      - 'world-engine/app/runtime/profiles.py'
+      - 'world-engine/app/runtime/manager.py'
+      - 'ai_stack/goc_turn_seams.py'
+      - 'world-engine/tests/test_mvp2_runtime_state_actor_lanes.py'
+      - 'world-engine/tests/test_mvp2_npc_coercion_state_delta.py'
+      - 'world-engine/tests/test_mvp2_object_admission.py'
+      - 'world-engine/tests/test_mvp2_operational_gate.py'
+      - 'story_runtime_core/goc_solo_builtin_template.py'
+      - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
+      - 'content/modules/god_of_carnage/**'
+      - 'run-test.py'
+      - 'docker-up.py'
+      - '.github/workflows/mvp2-tests.yml'
+
+jobs:
+  mvp2-world-engine:
+    name: MVP2 World Engine Tests (Runtime State, Actor Lanes, Object Admission, State Delta)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: |
+            world-engine/requirements.txt
+            world-engine/requirements-dev.txt
+            ai_stack/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./story_runtime_core"
+          pip install -e "./ai_stack[test]"
+          pip install -r world-engine/requirements-dev.txt
+          pip install pyyaml
+
+      - name: Run MVP2 runtime state and actor lane tests
+        working-directory: ./world-engine
+        run: |
+          python -m pytest tests/test_mvp2_runtime_state_actor_lanes.py -v --tb=short --no-cov
+        # All MVP2 Wave 2.1–2.2 tests must pass. No silent skipping.
+
+      - name: Run MVP2 NPC coercion and state delta tests
+        working-directory: ./world-engine
+        run: |
+          python -m pytest tests/test_mvp2_npc_coercion_state_delta.py -v --tb=short --no-cov
+        # All MVP2 Wave 2.3 tests must pass. No silent skipping.
+
+      - name: Run MVP2 object admission and content boundary tests
+        working-directory: ./world-engine
+        run: |
+          python -m pytest tests/test_mvp2_object_admission.py -v --tb=short --no-cov
+        # All MVP2 Wave 2.4 tests must pass. No silent skipping.
+
+      - name: Run MVP2 operational gate tests
+        working-directory: ./world-engine
+        run: |
+          python -m pytest tests/test_mvp2_operational_gate.py -v --tb=short --no-cov
+        # Operational gate tests verify artifact existence. No silent skipping.
+
+      - name: MVP2 regression — MVP1 identity tests must still pass
+        working-directory: ./world-engine
+        run: |
+          python -m pytest tests/test_mvp1_experience_identity.py -v --tb=short --no-cov
+        # MVP1 regression must not be broken by MVP2 changes.
+
+  mvp2-tooling-gate:
+    name: MVP2 Tooling Gate (run-test.py --mvp2 and artifact existence)
+    runs-on: ubuntu-latest
+    needs: [ mvp2-world-engine ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Verify run-test.py --mvp2 flag exists
+        run: |
+          python run-test.py --help | grep mvp2 || (echo "FAIL: --mvp2 flag missing from run-test.py" && exit 1)
+          echo "PASS: --mvp2 flag present in run-test.py"
+
+      - name: Verify MVP2 report artifacts exist
+        run: |
+          test -f tests/reports/MVP_Live_Runtime_Completion/MVP2_SOURCE_LOCATOR.md || (echo "FAIL: MVP2 source locator missing" && exit 1)
+          test -f tests/reports/MVP_Live_Runtime_Completion/MVP2_OPERATIONAL_EVIDENCE.md || (echo "FAIL: MVP2 operational evidence missing" && exit 1)
+          test -f tests/reports/MVP_Live_Runtime_Completion/GOC_MVP2_HANDOFF_TO_MVP3.md || (echo "FAIL: MVP2 handoff artifact missing" && exit 1)
+          echo "All MVP2 report artifacts present."
+
+      - name: Verify MVP2 ADRs present
+        run: |
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-004-actor-lane-enforcement.md || (echo "FAIL: ADR-004 missing" && exit 1)
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-015-environment-affordances.md || (echo "FAIL: ADR-015 missing" && exit 1)
+          test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-016-operational-gates.md || (echo "FAIL: ADR-016 missing" && exit 1)
+          echo "All required MVP2 ADRs present."
+
+      - name: Verify docker-up.py gate subcommand
+        run: |
+          python docker-up.py gate --backend-url http://127.0.0.1:19999 && echo "PASS" || echo "EXPECTED: docker gate failed (backend unreachable in CI)"
+          python docker-up.py gate --help

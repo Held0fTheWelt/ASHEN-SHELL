@@ -74,6 +74,9 @@ class RuntimeTurnState(TypedDict, total=False):
     turn_input_class: str
     turn_execution_mode: str
     live_player_truth_surface: bool
+    # MVP2 actor-lane enforcement context: human_actor_id + ai_forbidden_actor_ids.
+    # Populated by the host at turn start; consumed by validate_seam before commit.
+    actor_lane_context: dict[str, Any]
     # Bounded semantic planner state (phases 0–4); advisory until validation/commit.
     semantic_move_record: dict[str, Any]
     social_state_record: dict[str, Any]
