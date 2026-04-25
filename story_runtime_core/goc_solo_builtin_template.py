@@ -11,16 +11,12 @@ from .experience_template_models import (
     ExperienceTemplate,
     JoinPolicy,
 )
-from .goc_solo_builtin_catalog import (
-    goc_solo_action_templates,
-    goc_solo_beat_templates,
-    goc_solo_prop_templates,
-)
 from .goc_solo_builtin_roles_rooms import goc_solo_role_templates, goc_solo_room_templates
 
 
 def build_god_of_carnage_solo() -> ExperienceTemplate:
-    # Secondary surface only: canonical dramatic source is content/modules/god_of_carnage/
+    # FIX-002: Runtime profile only — story truth (beats, props, actions) derived from canonical content.
+    # Canonical dramatic source: content/modules/god_of_carnage/
     # (VERTICAL_SLICE_CONTRACT_GOC.md §6.1). Title must match YAML module title or runtime
     # emits scope_breach when host_experience_template is wired.
     return ExperienceTemplate(
@@ -38,7 +34,7 @@ def build_god_of_carnage_solo() -> ExperienceTemplate:
         tags=["authored", "single-adventure", "social-drama", "better-tomorrow"],
         roles=goc_solo_role_templates(),
         rooms=goc_solo_room_templates(),
-        props=goc_solo_prop_templates(),
-        actions=goc_solo_action_templates(),
-        beats=goc_solo_beat_templates(),
+        props=[],
+        actions=[],
+        beats=[],
     )

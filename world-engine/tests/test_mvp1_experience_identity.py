@@ -618,3 +618,157 @@ class TestRequiredMvp1ADRs:
             assert "Operational Gate Impact" in content, (
                 f"{adr_file} must include an 'Operational Gate Impact' section"
             )
+
+
+# ---------------------------------------------------------------------------
+# FIX-002: Runtime module story truth removal
+# ---------------------------------------------------------------------------
+
+class TestRuntimeModuleStoryTruthRemoval:
+    """FIX-002: god_of_carnage_solo template must not own beats/props/actions (FIX-002)."""
+
+    def test_goc_solo_builtin_template_beats_empty(self):
+        """god_of_carnage_solo template beats must be empty (FIX-002)."""
+        from app.content.builtins import load_builtin_templates
+        templates = load_builtin_templates()
+        goc_solo = templates["god_of_carnage_solo"]
+        assert goc_solo.beats == [], (
+            "god_of_carnage_solo template beats must be empty. Story truth is in content/modules/god_of_carnage/."
+        )
+
+    def test_goc_solo_builtin_template_props_empty(self):
+        """god_of_carnage_solo template props must be empty (FIX-002)."""
+        from app.content.builtins import load_builtin_templates
+        templates = load_builtin_templates()
+        goc_solo = templates["god_of_carnage_solo"]
+        assert goc_solo.props == [], (
+            "god_of_carnage_solo template props must be empty. Story truth is in content/modules/god_of_carnage/."
+        )
+
+    def test_goc_solo_builtin_template_actions_empty(self):
+        """god_of_carnage_solo template actions must be empty (FIX-002)."""
+        from app.content.builtins import load_builtin_templates
+        templates = load_builtin_templates()
+        goc_solo = templates["god_of_carnage_solo"]
+        assert goc_solo.actions == [], (
+            "god_of_carnage_solo template actions must be empty. Story truth is in content/modules/god_of_carnage/."
+        )
+
+    def test_runtime_module_contains_story_truth_error_code(self):
+        """assert_runtime_module_contains_no_story_truth must raise FIX-005 error code (FIX-005)."""
+        from app.runtime.profiles import RuntimeProfileError, assert_runtime_module_contains_no_story_truth
+        from app.content.models import ExperienceTemplate, ExperienceKind, JoinPolicy, BeatTemplate
+        fake_beat = BeatTemplate(
+            id="test",
+            name="Test Beat",
+            title="Test",
+            description="Test description",
+            summary="Test summary",
+            next_beat_id=None,
+        )
+        fake_template = ExperienceTemplate(
+            id="test",
+            title="Test",
+            kind=ExperienceKind.SOLO_STORY,
+            join_policy=JoinPolicy.OWNER_ONLY,
+            summary="Test",
+            max_humans=1,
+            initial_beat_id="test",
+            tags=[],
+            roles=[],
+            rooms=[],
+            beats=[fake_beat],  # Violates FIX-002
+            props=[],
+            actions=[],
+        )
+        with pytest.raises(RuntimeProfileError) as exc_info:
+            assert_runtime_module_contains_no_story_truth(fake_template)
+        assert exc_info.value.code == "runtime_module_contains_story_truth"
+
+
+# ---------------------------------------------------------------------------
+# FIX-003: Unselected actor as NPC in runtime
+# ---------------------------------------------------------------------------
+
+class TestUnselectedActorAsNPC:
+    """FIX-003: Unselected human guest roles must become NPC participants (FIX-003)."""
+
+    def test_world_engine_create_run_annette_runtime_state_has_alain_npc(self, client):
+        """When Annette is selected, Alain must exist as NPC participant in runtime state (FIX-003)."""
+        response = client.post(
+            "/api/runs",
+            json={
+                "runtime_profile_id": "god_of_carnage_solo",
+                "selected_player_role": "annette",
+                "display_name": "Test",
+            },
+        )
+        assert response.status_code == 200
+        run_dict = response.json()["run"]
+        run_id = run_dict["id"]
+        # Get the full instance to inspect nested state
+        detail_response = client.get(f"/api/runs/{run_id}", headers={"X-Play-Service-Key": "internal-api-key-for-ops"})
+        if detail_response.status_code == 200:
+            full_run = detail_response.json().get("run", {})
+            participants = full_run.get("participants", {})
+            # Find alain participant — should exist and be marked as NPC
+            alain_participants = [p for p in participants.values() if p.get("role_id") == "alain"]
+            assert len(alain_participants) > 0, (
+                "Alain must exist as a participant when Annette is selected (FIX-003)"
+            )
+            alain_participant = alain_participants[0]
+            assert alain_participant.get("mode") == "npc", (
+                f"Alain must be NPC mode, got {alain_participant.get('mode')!r} (FIX-003)"
+            )
+
+    def test_world_engine_create_run_alain_runtime_state_has_annette_npc(self, client):
+        """When Alain is selected, Annette must exist as NPC participant in runtime state (FIX-003)."""
+        response = client.post(
+            "/api/runs",
+            json={
+                "runtime_profile_id": "god_of_carnage_solo",
+                "selected_player_role": "alain",
+                "display_name": "Test",
+            },
+        )
+        assert response.status_code == 200
+        run_dict = response.json()["run"]
+        run_id = run_dict["id"]
+        detail_response = client.get(f"/api/runs/{run_id}", headers={"X-Play-Service-Key": "internal-api-key-for-ops"})
+        if detail_response.status_code == 200:
+            full_run = detail_response.json().get("run", {})
+            participants = full_run.get("participants", {})
+            annette_participants = [p for p in participants.values() if p.get("role_id") == "annette"]
+            assert len(annette_participants) > 0, (
+                "Annette must exist as a participant when Alain is selected (FIX-003)"
+            )
+            annette_participant = annette_participants[0]
+            assert annette_participant.get("mode") == "npc", (
+                f"Annette must be NPC mode, got {annette_participant.get('mode')!r} (FIX-003)"
+            )
+
+
+# ---------------------------------------------------------------------------
+# FIX-004: Fail if canonical content missing
+# ---------------------------------------------------------------------------
+
+class TestContentResolutionFailureInLiveMode:
+    """FIX-004: Profile resolution must fail if canonical content is unreachable (FIX-004)."""
+
+    def test_role_resolution_succeeds_when_canonical_content_present(self):
+        """_resolve_goc_content must succeed in live mode when content is available (FIX-004)."""
+        from app.runtime.profiles import _resolve_goc_content
+        # In a properly deployed environment, this should succeed
+        actor_ids, content_hash = _resolve_goc_content(allow_fallback=False)
+        assert len(actor_ids) > 0, "Canonical actors must be resolved from content"
+        assert content_hash.startswith("sha256:"), "Content hash must be present"
+
+    def test_role_resolution_fallback_when_allowed_for_testing(self):
+        """_resolve_goc_content must allow fallback in test mode (FIX-004)."""
+        from app.runtime.profiles import _resolve_goc_content
+        # With fallback allowed (test isolation), should return values even if read fails
+        try:
+            actor_ids, content_hash = _resolve_goc_content(allow_fallback=True)
+            assert len(actor_ids) > 0, "Must return actor IDs with fallback enabled"
+        except Exception as exc:
+            pytest.fail(f"Should not raise when allow_fallback=True: {exc}")

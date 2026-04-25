@@ -228,6 +228,18 @@ class RuntimeManager:
                 set_owner=True,
             )
             if template.kind == ExperienceKind.SOLO_STORY:
+                # FIX-003: Unselected human guest roles become NPC participants in solo story.
+                for guest_role in template.roles:
+                    if (guest_role.mode == ParticipantMode.HUMAN and guest_role.can_join and
+                        guest_role.id != role.id):
+                        npc = ParticipantState(
+                            display_name=guest_role.display_name,
+                            role_id=guest_role.id,
+                            mode=ParticipantMode.NPC,  # Convert unselected human guest to NPC
+                            current_room_id=guest_role.initial_room_id,
+                            connected=True,
+                        )
+                        instance.participants[npc.id] = npc
                 instance.status = RunStatus.RUNNING
                 instance.lobby_seats[participant.role_id].ready = True
             instance.updated_at = datetime.now(timezone.utc)

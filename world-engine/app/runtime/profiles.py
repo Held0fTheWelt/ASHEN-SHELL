@@ -23,10 +23,16 @@ _GOC_CANONICAL_ACTORS_FALLBACK: list[str] = ["annette", "alain", "veronique", "m
 _GOC_CONTENT_HASH_FALLBACK: str = "sha256:fallback"
 
 
-def _resolve_goc_content() -> tuple[list[str], str]:
+def _resolve_goc_content(*, allow_fallback: bool = False) -> tuple[list[str], str]:
     """Read canonical actor IDs and content hash from characters.yaml.
 
-    Returns (actor_ids, content_hash). Falls back to hardcoded list if file is unreachable.
+    Args:
+        allow_fallback: If True, fall back to hardcoded values if file is unreachable (test isolation).
+                       If False (default, live mode), raise error if content cannot be read.
+
+    Returns (actor_ids, content_hash).
+
+    Raises RuntimeProfileError if content cannot be read in live mode (FIX-004).
     """
     try:
         from app.repo_root import resolve_wos_repo_root
@@ -40,7 +46,15 @@ def _resolve_goc_content() -> tuple[list[str], str]:
         if not actor_ids:
             return _GOC_CANONICAL_ACTORS_FALLBACK, content_hash
         return actor_ids, content_hash
-    except Exception:
+    except Exception as exc:
+        # FIX-004: Fail live profile resolution if canonical content is missing.
+        if not allow_fallback:
+            raise RuntimeProfileError(
+                code="runtime_profile_not_content_module",
+                message="Canonical content god_of_carnage/characters.yaml is missing or unreadable. "
+                        "Runtime profile resolution requires canonical content authority.",
+                cause=str(exc),
+            )
         return _GOC_CANONICAL_ACTORS_FALLBACK, _GOC_CONTENT_HASH_FALLBACK
 
 
@@ -271,4 +285,29 @@ def assert_profile_contains_no_story_truth(profile_dict: dict[str, Any]) -> None
                 "Story truth must reside in the canonical content module only."
             ),
             forbidden_fields_found=found,
+        )
+
+
+def assert_runtime_module_contains_no_story_truth(template: Any) -> None:
+    """FIX-005: Validate that a runtime template (ExperienceTemplate) has no story truth.
+
+    Checks that beats, actions, props lists are empty (derived from content, not authored here).
+    Raises RuntimeProfileError with code ``runtime_module_contains_story_truth`` if violated.
+    """
+    violations = {}
+    if hasattr(template, 'beats') and template.beats:
+        violations['beats'] = len(template.beats)
+    if hasattr(template, 'actions') and template.actions:
+        violations['actions'] = len(template.actions)
+    if hasattr(template, 'props') and template.props:
+        violations['props'] = len(template.props)
+
+    if violations:
+        raise RuntimeProfileError(
+            code="runtime_module_contains_story_truth",
+            message=(
+                f"Runtime template {getattr(template, 'id', '?')!r} owns story truth: {violations}. "
+                "Beats, actions, and props must be derived from canonical content only."
+            ),
+            violations=violations,
         )
