@@ -501,6 +501,24 @@ def get_story_diagnostics(session_id: str, manager: StoryRuntimeManager = Depend
         raise HTTPException(status_code=404, detail="Story session not found") from exc
 
 
+@router.get("/story/sessions/{session_id}/diagnostics-envelope", dependencies=[Depends(_require_internal_api_key)])
+def get_story_diagnostics_envelope(session_id: str, manager: StoryRuntimeManager = Depends(get_story_manager)) -> dict[str, Any]:
+    """Return the last DiagnosticsEnvelope (MVP4) for a story session."""
+    try:
+        envelope = manager.get_last_diagnostics_envelope(session_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Story session not found") from exc
+    if envelope is None:
+        return {"session_id": session_id, "diagnostics_envelope": None, "warning": "no_turns_yet"}
+    return {"session_id": session_id, "diagnostics_envelope": envelope}
+
+
+@router.get("/story/runtime/narrative-gov-summary", dependencies=[Depends(_require_internal_api_key)])
+def get_narrative_gov_summary(manager: StoryRuntimeManager = Depends(get_story_manager)) -> dict[str, Any]:
+    """Return NarrativeGovSummary (MVP4) — operator health evidence for Narrative Gov."""
+    return manager.get_narrative_gov_summary()
+
+
 @router.post("/internal/narrative/packages/reload-active", dependencies=[Depends(_require_internal_api_key)])
 def narrative_reload_active(payload: NarrativeReloadRequest, request: Request) -> dict[str, Any]:
     loader = _get_narrative_loader(request)

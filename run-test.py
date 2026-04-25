@@ -12,11 +12,13 @@ Usage (from repository root):
   python run-test.py --all         → python tests/run_tests.py --suite all
   python run-test.py --mvp1        → python tests/run_tests.py --suite engine backend (MVP1 suites)
   python run-test.py --mvp2        → python tests/run_tests.py --suite engine (MVP2 suites — world-engine)
+  python run-test.py --mvp3        → runs MVP3 gate tests (engine + mvp3 gate file)
 
 Run-test.py is the canonical operational gate entry point documented in:
   tests/reports/MVP_Live_Runtime_Completion/MVP1_SOURCE_LOCATOR.md
   tests/reports/MVP_Live_Runtime_Completion/MVP1_OPERATIONAL_EVIDENCE.md
   tests/reports/MVP_Live_Runtime_Completion/MVP2_OPERATIONAL_EVIDENCE.md
+  tests/reports/MVP_Live_Runtime_Completion/MVP3_OPERATIONAL_EVIDENCE.md
 """
 
 from __future__ import annotations
@@ -42,6 +44,8 @@ def main() -> int:
     parser.add_argument("--all", action="store_true", help="Run all suites.")
     parser.add_argument("--mvp1", action="store_true", help="Run MVP1 suites (engine + backend).")
     parser.add_argument("--mvp2", action="store_true", help="Run MVP2 suites (engine — runtime state, actor lanes, object admission, state delta).")
+    parser.add_argument("--mvp3", action="store_true", help="Run MVP3 suites (engine LDSS integration + gate tests).")
+    parser.add_argument("--mvp4", action="store_true", help="Run MVP4 suites (engine diagnostics integration + gate tests).")
     parser.add_argument("--quick", action="store_true", help="Pass --quick to runner (stop on first failure).")
     args = parser.parse_args()
 
@@ -55,6 +59,39 @@ def main() -> int:
 
     if args.all:
         cmd = base_cmd + ["--suite", "all"]
+    elif args.mvp4:
+        # MVP4: Observability, Diagnostics, Langfuse, Narrative Gov
+        # - world-engine integration tests: test_mvp4_diagnostics_integration.py (engine suite)
+        # - root gate tests: tests/gates/test_goc_mvp04_observability_diagnostics_gate.py
+        import subprocess as _sp
+        engine_cmd = base_cmd + ["--suite", "engine"]
+        gate_cmd = [
+            sys.executable, "-m", "pytest",
+            str(REPO_ROOT / "tests" / "gates" / "test_goc_mvp04_observability_diagnostics_gate.py"),
+            "-q", "--no-cov",
+        ]
+        print("$", " ".join(str(c) for c in engine_cmd), flush=True)
+        r1 = _sp.call(engine_cmd, cwd=str(REPO_ROOT))
+        print("$", " ".join(str(c) for c in gate_cmd), flush=True)
+        r2 = _sp.call(gate_cmd, cwd=str(REPO_ROOT))
+        return max(r1, r2)
+    elif args.mvp3:
+        # MVP3: Live Dramatic Scene Simulator
+        # - world-engine integration tests: test_mvp3_ldss_integration.py (engine suite)
+        # - root gate tests: tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py
+        # Run engine suite first, then gate tests directly
+        import subprocess as _sp
+        engine_cmd = base_cmd + ["--suite", "engine"]
+        gate_cmd = [
+            sys.executable, "-m", "pytest",
+            str(REPO_ROOT / "tests" / "gates" / "test_goc_mvp03_live_dramatic_scene_simulator_gate.py"),
+            "-q", "--no-cov",
+        ]
+        print("$", " ".join(str(c) for c in engine_cmd), flush=True)
+        r1 = _sp.call(engine_cmd, cwd=str(REPO_ROOT))
+        print("$", " ".join(str(c) for c in gate_cmd), flush=True)
+        r2 = _sp.call(gate_cmd, cwd=str(REPO_ROOT))
+        return max(r1, r2)
     elif args.integration:
         cmd = base_cmd + ["--suite", "backend", "engine", "--scope", "integration"]
     elif args.e2e:

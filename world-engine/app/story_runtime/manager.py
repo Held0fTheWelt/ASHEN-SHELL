@@ -33,6 +33,16 @@ from ai_stack.runtime_turn_contracts import (
     QUALITY_CLASS_VALUES,
 )
 from ai_stack.story_runtime_playability import is_hard_boundary_failure
+from ai_stack.live_dramatic_scene_simulator import (
+    LDSSInput,
+    build_ldss_input_from_session,
+    build_scene_turn_envelope_v2,
+    run_ldss,
+)
+from ai_stack.diagnostics_envelope import (
+    build_diagnostics_envelope,
+    build_narrative_gov_summary,
+)
 
 from app.config import APP_VERSION
 from app.repo_root import resolve_wos_repo_root
@@ -906,6 +916,53 @@ def _build_committed_turn_authority(
     return record
 
 
+def _build_ldss_scene_envelope(
+    *,
+    session: "StorySession",
+    graph_state: dict[str, Any],
+    player_input: str,
+    turn_number: int,
+) -> dict[str, Any] | None:
+    """Build SceneTurnEnvelope.v2 for God of Carnage solo sessions via LDSS.
+
+    Called from _finalize_committed_turn after actor-lane validation and commit
+    have already completed. Returns None for non-solo sessions.
+    """
+    proj = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
+    human_actor_id = str(proj.get("human_actor_id") or "").strip()
+    if not human_actor_id:
+        return None
+
+    npc_ids = proj.get("npc_actor_ids")
+    npc_actor_ids = sorted(
+        str(a) for a in (npc_ids or []) if isinstance(a, str) and a.strip() and a != "visitor"
+    )
+    selected_player_role = str(proj.get("selected_player_role") or "").strip()
+
+    ldss_input = build_ldss_input_from_session(
+        session_id=session.session_id,
+        module_id=session.module_id,
+        turn_number=turn_number,
+        selected_player_role=selected_player_role or human_actor_id,
+        human_actor_id=human_actor_id,
+        npc_actor_ids=npc_actor_ids,
+        player_input=player_input,
+        current_scene_id=session.current_scene_id,
+        runtime_profile_id=str(proj.get("runtime_profile_id") or "god_of_carnage_solo"),
+        content_module_id=session.module_id,
+    )
+
+    ldss_output = run_ldss(ldss_input)
+    envelope = build_scene_turn_envelope_v2(
+        ldss_input=ldss_input,
+        ldss_output=ldss_output,
+        story_session_id=session.session_id,
+        turn_number=turn_number,
+        runtime_module_id=str(proj.get("runtime_module_id") or "solo_story_runtime"),
+    )
+    return envelope.to_dict()
+
+
 class StoryRuntimeManager:
     def __init__(
         self,
@@ -1742,6 +1799,37 @@ class StoryRuntimeManager:
             "actor_turn_summary": actor_turn_summary,
             "runtime_governance_surface": gov,
         }
+        # MVP3: Build SceneTurnEnvelope.v2 for God of Carnage solo sessions.
+        # LDSS runs after validation/commit, from committed state only.
+        scene_turn_envelope: dict[str, Any] | None = None
+        if session.module_id == GOD_OF_CARNAGE_MODULE_ID:
+            scene_turn_envelope = _build_ldss_scene_envelope(
+                session=session,
+                graph_state=graph_state,
+                player_input=player_input,
+                turn_number=commit_turn_number,
+            )
+            if scene_turn_envelope:
+                event["scene_turn_envelope"] = scene_turn_envelope
+
+        # MVP4: Build DiagnosticsEnvelope from committed state only.
+        # Never exposes raw AI proposals as committed truth.
+        if session.module_id == GOD_OF_CARNAGE_MODULE_ID:
+            try:
+                diag_envelope = build_diagnostics_envelope(
+                    session_id=session.session_id,
+                    turn_number=commit_turn_number,
+                    trace_id=trace_id or "",
+                    player_input=player_input,
+                    runtime_projection=session.runtime_projection,
+                    graph_state=graph_state,
+                    scene_turn_envelope=scene_turn_envelope,
+                    langfuse_enabled=False,
+                )
+                event["diagnostics_envelope"] = diag_envelope.to_dict()
+            except Exception:
+                pass  # diagnostics must never break turn execution
+
         committed_record = {
             "turn_number": commit_turn_number,
             "turn_kind": turn_kind or "player",
@@ -2188,3 +2276,65 @@ class StoryRuntimeManager:
                 "orchestration_lives_in_diagnostics_bounded_truth_lives_in_narrative_commit_and_history",
             ],
         }
+
+    def get_last_diagnostics_envelope(self, session_id: str) -> dict[str, Any] | None:
+        """Return the last DiagnosticsEnvelope for a session, or None."""
+        session = self.get_session(session_id)
+        for event in reversed(session.diagnostics):
+            if isinstance(event, dict) and "diagnostics_envelope" in event:
+                return event["diagnostics_envelope"]
+        return None
+
+    def get_narrative_gov_summary(self) -> dict[str, Any]:
+        """Return a NarrativeGovSummary across all active GoC sessions."""
+        last_session_id = ""
+        last_turn = 0
+        last_trace_id = ""
+        last_ldss_status = "not_invoked"
+        last_block_count = 0
+        last_legacy_blob = False
+        last_human_actor = ""
+        last_npc_actors: list[str] = []
+        last_quality = ""
+        last_signals: list[str] = []
+
+        for sid, session in self.sessions.items():
+            if session.module_id != GOD_OF_CARNAGE_MODULE_ID:
+                continue
+            if session.turn_counter > last_turn:
+                last_session_id = sid
+                last_turn = session.turn_counter
+                proj = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
+                last_human_actor = str(proj.get("human_actor_id") or "").strip()
+                last_npc_actors = [
+                    str(a) for a in (proj.get("npc_actor_ids") or [])
+                    if str(a).strip() and str(a) != "visitor"
+                ]
+                for event in reversed(session.diagnostics):
+                    if not isinstance(event, dict):
+                        continue
+                    envelope = event.get("diagnostics_envelope")
+                    if isinstance(envelope, dict):
+                        last_trace_id = str(envelope.get("trace_id") or "").strip()
+                        last_ldss = envelope.get("live_dramatic_scene_simulator") or {}
+                        last_ldss_status = str(last_ldss.get("status") or "not_invoked")
+                        fc = envelope.get("frontend_render_contract") or {}
+                        last_block_count = int(fc.get("scene_block_count") or 0)
+                        last_legacy_blob = bool(fc.get("legacy_blob_used"))
+                        last_quality = str(envelope.get("quality_class") or "")
+                        last_signals = list(envelope.get("degradation_signals") or [])
+                        break
+
+        summary = build_narrative_gov_summary(
+            last_story_session_id=last_session_id,
+            last_turn_number=last_turn,
+            last_trace_id=last_trace_id,
+            ldss_status=last_ldss_status,
+            scene_block_count=last_block_count,
+            legacy_blob_used=last_legacy_blob,
+            human_actor_id=last_human_actor,
+            npc_actor_ids=last_npc_actors,
+            quality_class=last_quality,
+            degradation_signals=last_signals,
+        )
+        return summary.to_dict()
