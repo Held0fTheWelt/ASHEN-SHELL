@@ -2,6 +2,107 @@ import pytest
 
 from app.runtime.engine import RuntimeEngine
 from app.runtime.manager import RuntimeManager
+from story_runtime_core.experience_template_models import (
+    ActionTemplate,
+    BeatTemplate,
+    Condition,
+    ConditionType,
+    Effect,
+    EffectType,
+    ExperienceKind,
+    ExperienceTemplate,
+    ExitTemplate,
+    JoinPolicy,
+    ParticipantMode,
+    RoleTemplate,
+    RoomTemplate,
+)
+
+
+def _build_test_solo_template():
+    """Synthetic template for testing solo mechanics."""
+    return ExperienceTemplate(
+        id="test_solo_mechanics",
+        title="Test Solo Mechanics",
+        kind=ExperienceKind.SOLO_STORY,
+        join_policy=JoinPolicy.OWNER_ONLY,
+        summary="Synthetic fixture for testing solo mechanics",
+        max_humans=1,
+        initial_beat_id="opening",
+        tags=["test-fixture"],
+        roles=[
+            RoleTemplate(
+                id="player",
+                display_name="Player",
+                description="Player role",
+                mode=ParticipantMode.HUMAN,
+                initial_room_id="hallway",
+                can_join=True,
+            ),
+            RoleTemplate(
+                id="npc",
+                display_name="NPC",
+                description="NPC role",
+                mode=ParticipantMode.NPC,
+                initial_room_id="living_room",
+            ),
+        ],
+        rooms=[
+            RoomTemplate(
+                id="hallway",
+                name="Hallway",
+                description="Test hallway",
+                exits=[ExitTemplate(direction="inside", target_room_id="living_room", label="Enter living room")],
+                action_ids=["steady_breath"],
+            ),
+            RoomTemplate(
+                id="living_room",
+                name="Living Room",
+                description="Test living room",
+                exits=[ExitTemplate(direction="out", target_room_id="hallway", label="Exit to hallway")],
+                action_ids=["offer_apology", "pour_rum"],
+            ),
+        ],
+        props=[],
+        actions=[
+            ActionTemplate(
+                id="steady_breath",
+                label="Take a steady breath",
+                description="Compose yourself",
+                scope="room",
+                single_use=True,
+                effects=[
+                    Effect(type=EffectType.SET_FLAG, key="composed"),
+                    Effect(type=EffectType.TRANSCRIPT, text="You take a deep breath."),
+                ],
+            ),
+            ActionTemplate(
+                id="offer_apology",
+                label="Offer an apology",
+                description="Say sorry",
+                scope="room",
+                effects=[
+                    Effect(type=EffectType.SET_FLAG, key="apology_offered"),
+                    Effect(type=EffectType.ADVANCE_BEAT, value="first_fracture"),
+                    Effect(type=EffectType.TRANSCRIPT, text="You apologize."),
+                ],
+            ),
+            ActionTemplate(
+                id="pour_rum",
+                label="Pour rum",
+                description="Pour a drink",
+                scope="room",
+                available_if=[Condition(type=ConditionType.BEAT_EQUALS, value="first_fracture")],
+                effects=[
+                    Effect(type=EffectType.TRANSCRIPT, text="You pour rum."),
+                ],
+            ),
+        ],
+        beats=[
+            BeatTemplate(id="opening", name="Opening", description="Start of story", summary="Opening beat"),
+            BeatTemplate(id="first_fracture", name="First Fracture", description="Tension rises", summary="Fracture beat"),
+        ],
+    )
 
 
 def test_public_open_world_bootstraps(tmp_path):
@@ -11,12 +112,36 @@ def test_public_open_world_bootstraps(tmp_path):
 
 
 def test_create_solo_run_and_snapshot(tmp_path):
-    manager = RuntimeManager(store_root=tmp_path)
-    run = manager.create_run("god_of_carnage_solo", account_id="acct:hollywood", display_name="Hollywood")
-    human = next(participant for participant in run.participants.values() if participant.seat_owner_account_id == "acct:hollywood")
+    # Use synthetic template with required test actions
+    template = _build_test_solo_template()
 
-    snapshot = manager.build_snapshot(run.id, human.id)
-    assert snapshot.template_id == "god_of_carnage_solo"
+    from app.runtime.models import ParticipantState, RuntimeInstance, RunStatus
+    from app.runtime.engine import RuntimeEngine
+    from app.content.models import ParticipantMode
+
+    # Create run directly with synthetic template
+    run = RuntimeInstance(
+        template_id=template.id,
+        template_title=template.title,
+        kind=template.kind,
+        join_policy=template.join_policy,
+        beat_id=template.initial_beat_id,
+        status=RunStatus.RUNNING,
+    )
+
+    human = ParticipantState(
+        role_id=template.roles[0].id,
+        display_name="Hollywood",
+        mode=ParticipantMode.HUMAN,
+        current_room_id="hallway",
+        account_id="acct:hollywood",
+    )
+    run.participants[human.id] = human
+
+    engine = RuntimeEngine(template)
+    snapshot = engine.build_snapshot(run, human.id)
+
+    assert snapshot.template_id == "test_solo_mechanics"
     assert snapshot.viewer_display_name == "Hollywood"
     assert snapshot.viewer_room_id == "hallway"
     assert snapshot.viewer_account_id == "acct:hollywood"
@@ -69,9 +194,13 @@ def test_identity_rejoin_uses_account_id_not_display_name(tmp_path):
 
 def test_inspect_rejects_remote_room_targets(tmp_path):
     manager = RuntimeManager(store_root=tmp_path)
-    run = manager.create_run("god_of_carnage_solo", account_id="acct:hollywood", display_name="Hollywood")
+    # Use apartment_confrontation_group since god_of_carnage_solo is runtime-profile-only (no roles/rooms)
+    run = manager.create_run("apartment_confrontation_group", account_id="acct:hollywood", display_name="Hollywood")
     human = next(participant for participant in run.participants.values() if participant.account_id == "acct:hollywood")
-    result = manager.engines[run.id].apply_command(run, human.id, {"action": "inspect", "target_id": "living_room"})
+
+    # Try to inspect a room the participant can't see (not their current room)
+    # apartment_confrontation_group has foyer, parlor, kitchen, etc. Try to inspect a different one
+    result = manager.engines[run.id].apply_command(run, human.id, {"action": "inspect", "target_id": "parlor"})
     assert not result.accepted
     assert result.reason == "That target is not visible from your current room."
 

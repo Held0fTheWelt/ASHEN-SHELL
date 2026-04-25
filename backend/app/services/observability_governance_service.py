@@ -243,6 +243,14 @@ def write_observability_credential(
             ).first()
         ):
             config.credential_configured = True
+
+        # Update config's credential fingerprint to track the active secret_key
+        active_secret = ObservabilityCredential.query.filter_by(
+            service_id="langfuse", secret_name="secret_key", is_active=True
+        ).first()
+        if active_secret:
+            config.credential_fingerprint = active_secret.secret_fingerprint
+
         config.updated_at = utc_now()
 
     db.session.commit()

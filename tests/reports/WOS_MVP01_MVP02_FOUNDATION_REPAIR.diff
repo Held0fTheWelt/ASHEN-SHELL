@@ -1,0 +1,421 @@
+warning: in the working copy of 'backend/app/governance/errors.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/models/__init__.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_observability/test_admin_config.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'story_runtime_core/branching/path_state.py', LF will be replaced by CRLF the next time Git touches it
+diff --git a/backend/app/factory_app.py b/backend/app/factory_app.py
+index d041a1f6..a9323330 100644
+--- a/backend/app/factory_app.py
++++ b/backend/app/factory_app.py
+@@ -24,6 +24,12 @@ def create_app(config_object=None, *, testing: bool | None = None):
+     configure_app_secrets_jwt_and_logging(app)
+ 
+     init_extensions(app)
++
++    # Import all models to register them with SQLAlchemy metadata
++    from app.models import (
++        ObservabilityConfig, ObservabilityCredential
++    )
++
+     limiter.default_limits = [app.config.get("RATELIMIT_DEFAULT", "100 per minute")]
+ 
+     from app.services.play_service_control_service import (
+diff --git a/backend/app/governance/errors.py b/backend/app/governance/errors.py
+index 9d2b1bf1..30603e51 100644
+--- a/backend/app/governance/errors.py
++++ b/backend/app/governance/errors.py
+@@ -6,7 +6,7 @@ from dataclasses import dataclass
+ from typing import Any
+ 
+ 
+-@dataclass(frozen=True)
++@dataclass
+ class GovernanceError(Exception):
+     """Typed domain error with explicit code/status/details."""
+ 
+diff --git a/backend/app/models/__init__.py b/backend/app/models/__init__.py
+index 8e689f39..cc8d3eb6 100644
+--- a/backend/app/models/__init__.py
++++ b/backend/app/models/__init__.py
+@@ -44,6 +44,8 @@ from app.models.governance_core import (
+     CostBudgetPolicy,
+     CostRollup,
+     SettingAuditEvent,
++    ObservabilityConfig,
++    ObservabilityCredential,
+ )
+ from app.models.forum import (
+     ForumCategory,
+@@ -108,6 +110,8 @@ __all__ = [
+     "CostBudgetPolicy",
+     "CostRollup",
+     "SettingAuditEvent",
++    "ObservabilityConfig",
++    "ObservabilityCredential",
+     "ForumCategory",
+     "ForumThread",
+     "ForumPost",
+diff --git a/backend/scripts/generate_openapi_spec.py b/backend/scripts/generate_openapi_spec.py
+index 3fed33a4..c39399a5 100644
+--- a/backend/scripts/generate_openapi_spec.py
++++ b/backend/scripts/generate_openapi_spec.py
+@@ -71,6 +71,7 @@ _TAG_PREFIXES: list[tuple[str, str]] = [
+     ("/api/v1/bootstrap/public-status", "OperationalGovernance"),
+     ("/api/v1/internal/runtime-config", "OperationalGovernance"),
+     ("/api/v1/internal/provider-credential", "OperationalGovernance"),
++    ("/api/v1/internal/observability", "OperationalGovernance"),
+ ]
+ 
+ _TAG_DESCRIPTIONS: dict[str, str] = {
+diff --git a/backend/tests/conftest.py b/backend/tests/conftest.py
+index 2e4a41e5..1f68ca10 100644
+--- a/backend/tests/conftest.py
++++ b/backend/tests/conftest.py
+@@ -10,6 +10,7 @@ from app.config import TestingConfig
+ from app.extensions import db, limiter
+ from app.services.play_service_control_service import bootstrap_play_service_control
+ from app.models import Role, User
++from app.models.governance_core import ObservabilityConfig, ObservabilityCredential
+ from app.models.role import ensure_roles_seeded
+ from app.models.area import ensure_areas_seeded
+ from werkzeug.security import generate_password_hash
+@@ -273,6 +274,12 @@ def admin_headers(admin_user, client):
+     return {"Authorization": "Bearer " + data["access_token"]}
+ 
+ 
++@pytest.fixture
++def admin_jwt(admin_headers):
++    """Extract JWT token string from admin_headers."""
++    return admin_headers["Authorization"].replace("Bearer ", "")
++
++
+ @pytest.fixture
+ def super_admin_user(app):
+     """Admin with role_level 100 (SuperAdmin threshold). Used for hierarchy tests."""
+diff --git a/backend/tests/test_observability/test_admin_config.py b/backend/tests/test_observability/test_admin_config.py
+index 04a831c9..86a3b393 100644
+--- a/backend/tests/test_observability/test_admin_config.py
++++ b/backend/tests/test_observability/test_admin_config.py
+@@ -3,12 +3,13 @@
+ from __future__ import annotations
+ 
+ import pytest
++from app.extensions import db
+ from app.models.governance_core import ObservabilityConfig, ObservabilityCredential
+ from app.services.observability_governance_service import (
+     disable_observability,
+     get_observability_config,
+     get_observability_credential_for_runtime,
+-    test_observability_connection,
++    test_observability_connection as check_observability_connection,
+     update_observability_config,
+     write_observability_credential,
+ )
+@@ -24,13 +25,15 @@ class TestObservabilityConfigStatus:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 200
+-        data = resp.get_json()
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is True
++        data = resp_data["data"]
+         assert data["is_enabled"] is False
+         assert data["credential_configured"] is False
+         assert data["health_status"] == "unknown"
+         assert data["service_id"] == "langfuse"
+ 
+-    def test_status_has_no_plaintext_secrets(self, client, admin_jwt, db):
++    def test_status_has_no_plaintext_secrets(self, client, admin_jwt, db_session):
+         """Status response never includes plaintext credentials."""
+         # Write credential
+         config_obj = ObservabilityConfig(
+@@ -53,7 +56,9 @@ class TestObservabilityConfigStatus:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 200
+-        data = resp.get_json()
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is True
++        data = resp_data["data"]
+ 
+         # Verify no plaintext secrets
+         response_str = str(data)
+@@ -78,14 +83,16 @@ class TestObservabilityConfigUpdate:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 200
+-        assert resp.get_json()["updated"] is True
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is True
++        assert resp_data["data"]["updated"] is True
+ 
+         # Verify saved
+         resp2 = client.get(
+             "/api/v1/admin/observability/status",
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        assert resp2.get_json()["base_url"] == "https://langfuse.example.com"
++        assert resp2.get_json()["data"]["base_url"] == "https://langfuse.example.com"
+ 
+     def test_update_environment(self, client, admin_jwt):
+         """Can update environment."""
+@@ -101,7 +108,7 @@ class TestObservabilityConfigUpdate:
+             "/api/v1/admin/observability/status",
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        assert resp2.get_json()["environment"] == "staging"
++        assert resp2.get_json()["data"]["environment"] == "staging"
+ 
+     def test_update_sample_rate(self, client, admin_jwt):
+         """Can update sample rate."""
+@@ -117,7 +124,7 @@ class TestObservabilityConfigUpdate:
+             "/api/v1/admin/observability/status",
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        assert resp2.get_json()["sample_rate"] == 0.5
++        assert resp2.get_json()["data"]["sample_rate"] == 0.5
+ 
+     def test_update_capture_toggles(self, client, admin_jwt):
+         """Can update capture toggles."""
+@@ -137,7 +144,7 @@ class TestObservabilityConfigUpdate:
+             "/api/v1/admin/observability/status",
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        data = resp2.get_json()
++        data = resp2.get_json()["data"]
+         assert data["capture_prompts"] is False
+         assert data["capture_outputs"] is False
+         assert data["capture_retrieval"] is True
+@@ -151,7 +158,9 @@ class TestObservabilityConfigUpdate:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 400
+-        assert "invalid_url" in resp.get_json().get("error_code", "")
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is False
++        assert resp_data["error"]["code"] == "invalid_url"
+ 
+     def test_validate_sample_rate(self, client, admin_jwt):
+         """Sample rate validation rejects out-of-range values."""
+@@ -162,7 +171,9 @@ class TestObservabilityConfigUpdate:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 400
+-        assert "invalid_sample_rate" in resp.get_json().get("error_code", "")
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is False
++        assert resp_data["error"]["code"] == "invalid_sample_rate"
+ 
+     def test_validate_environment(self, client, admin_jwt):
+         """Environment validation rejects invalid values."""
+@@ -173,7 +184,9 @@ class TestObservabilityConfigUpdate:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 400
+-        assert "invalid_environment" in resp.get_json().get("error_code", "")
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is False
++        assert resp_data["error"]["code"] == "invalid_environment"
+ 
+     def test_validate_redaction_mode(self, client, admin_jwt):
+         """Redaction mode validation rejects invalid values."""
+@@ -184,13 +197,15 @@ class TestObservabilityConfigUpdate:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 400
+-        assert "invalid_redaction_mode" in resp.get_json().get("error_code", "")
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is False
++        assert resp_data["error"]["code"] == "invalid_redaction_mode"
+ 
+ 
+ class TestObservabilityCredentialManagement:
+     """Tests for POST /api/v1/admin/observability/credential."""
+ 
+-    def test_write_credential_returns_fingerprint_only(self, client, admin_jwt, db):
++    def test_write_credential_returns_fingerprint_only(self, client, admin_jwt, db_session):
+         """Credential endpoint returns fingerprint, never plaintext key."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+@@ -210,22 +225,24 @@ class TestObservabilityCredentialManagement:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 200
+-        data = resp.get_json()
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is True
++        data = resp_data["data"]
+ 
+         # Response must have fingerprints, not plaintext
+         assert "public_key_fingerprint" in data
+         assert "secret_key_fingerprint" in data
+         assert "public_key" not in data
+         assert "secret_key" not in data
+-        assert data["public_key_fingerprint"].startswith("pk_")
+-        assert data["secret_key_fingerprint"].startswith("sk_")
++        assert data["public_key_fingerprint"].startswith("sha256:")
++        assert data["secret_key_fingerprint"].startswith("sha256:")
+ 
+         # Verify no plaintext in response
+         response_str = str(data)
+         assert "pk_test_abc123xyz" not in response_str
+         assert "sk_test_xyz789abc" not in response_str
+ 
+-    def test_credential_never_in_status_response(self, client, admin_jwt, db):
++    def test_credential_never_in_status_response(self, client, admin_jwt, db_session):
+         """Status response never includes plaintext credentials."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+@@ -247,13 +264,15 @@ class TestObservabilityCredentialManagement:
+             "/api/v1/admin/observability/status",
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        data = resp.get_json()
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is True
++        data = resp_data["data"]
+ 
+         # Plaintext secret should NOT be in response
+         response_str = str(data)
+         assert "sk_secret123" not in response_str
+ 
+-    def test_credential_rotation_deactivates_old(self, client, admin_jwt, db):
++    def test_credential_rotation_deactivates_old(self, client, admin_jwt, db_session):
+         """Writing new credential deactivates and versions the old one."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+@@ -269,7 +288,7 @@ class TestObservabilityCredentialManagement:
+             json={"secret_key": "sk_first"},
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        fp1 = resp1.get_json()["secret_key_fingerprint"]
++        fp1 = resp1.get_json()["data"]["secret_key_fingerprint"]
+ 
+         # Write second credential
+         resp2 = client.post(
+@@ -277,7 +296,7 @@ class TestObservabilityCredentialManagement:
+             json={"secret_key": "sk_second"},
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        fp2 = resp2.get_json()["secret_key_fingerprint"]
++        fp2 = resp2.get_json()["data"]["secret_key_fingerprint"]
+ 
+         # Fingerprints should differ (rotation occurred)
+         assert fp1 != fp2
+@@ -287,9 +306,9 @@ class TestObservabilityCredentialManagement:
+             "/api/v1/admin/observability/status",
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        assert resp3.get_json()["credential_fingerprint"] == fp2
++        assert resp3.get_json()["data"]["credential_fingerprint"] == fp2
+ 
+-    def test_require_at_least_one_credential(self, client, admin_jwt, db):
++    def test_require_at_least_one_credential(self, client, admin_jwt, db_session):
+         """At least one credential (pk or sk) must be provided."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+@@ -306,9 +325,11 @@ class TestObservabilityCredentialManagement:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 400
+-        assert "credential_invalid" in resp.get_json().get("error_code", "")
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is False
++        assert resp_data["error"]["code"] == "credential_invalid"
+ 
+-    def test_credential_stored_encrypted_in_database(self, db):
++    def test_credential_stored_encrypted_in_database(self, db_session):
+         """Credentials are stored encrypted in database, not plaintext."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+@@ -334,13 +355,13 @@ class TestObservabilityCredentialManagement:
+         # encrypted_secret should be binary, not readable plaintext
+         assert isinstance(cred.encrypted_secret, (bytes, bytearray))
+         assert b"sk_this_is_secret" not in cred.encrypted_secret
+-        assert cred.secret_fingerprint.startswith("sk_")
++        assert cred.secret_fingerprint.startswith("sha256:")
+ 
+ 
+ class TestObservabilityDisable:
+     """Tests for DELETE /api/v1/admin/observability/disable."""
+ 
+-    def test_disable_clears_configuration(self, client, admin_jwt, db):
++    def test_disable_clears_configuration(self, client, admin_jwt, db_session):
+         """Disable endpoint clears all configuration."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+@@ -358,14 +379,18 @@ class TestObservabilityDisable:
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+         assert resp.status_code == 200
+-        assert resp.get_json()["disabled"] is True
++        resp_data = resp.get_json()
++        assert resp_data["ok"] is True
++        assert resp_data["data"]["disabled"] is True
+ 
+         # Verify disabled
+         resp2 = client.get(
+             "/api/v1/admin/observability/status",
+             headers={"Authorization": f"Bearer {admin_jwt}"},
+         )
+-        data = resp2.get_json()
++        resp2_data = resp2.get_json()
++        assert resp2_data["ok"] is True
++        data = resp2_data["data"]
+         assert data["is_enabled"] is False
+         assert data["credential_configured"] is False
+         assert data["credential_fingerprint"] is None
+@@ -374,7 +399,7 @@ class TestObservabilityDisable:
+ class TestServiceLayerFunctions:
+     """Direct tests of service layer functions."""
+ 
+-    def test_get_observability_config_returns_dict(self, db):
++    def test_get_observability_config_returns_dict(self, db_session):
+         """get_observability_config returns dict with all fields."""
+         config = get_observability_config()
+         assert isinstance(config, dict)
+@@ -383,7 +408,7 @@ class TestServiceLayerFunctions:
+         assert "base_url" in config
+         assert "credential_configured" in config
+ 
+-    def test_get_credential_for_runtime_decrypts(self, db):
++    def test_get_credential_for_runtime_decrypts(self, db_session):
+         """get_observability_credential_for_runtime decrypts on-demand."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+@@ -402,12 +427,12 @@ class TestServiceLayerFunctions:
+         retrieved = get_observability_credential_for_runtime("secret_key")
+         assert retrieved == "sk_my_secret_key"
+ 
+-    def test_get_credential_returns_none_if_not_configured(self, db):
++    def test_get_credential_returns_none_if_not_configured(self, db_session):
+         """get_observability_credential_for_runtime returns None if not configured."""
+         retrieved = get_observability_credential_for_runtime("secret_key")
+         assert retrieved is None
+ 
+-    def test_disable_observability_deactivates_all_credentials(self, db):
++    def test_disable_observability_deactivates_all_credentials(self, db_session):
+         """disable_observability deactivates all active credentials."""
+         config_obj = ObservabilityConfig(
+             service_id="langfuse",
+diff --git a/story_runtime_core/branching/path_state.py b/story_runtime_core/branching/path_state.py
+index ab342070..650ebba4 100644
+--- a/story_runtime_core/branching/path_state.py
++++ b/story_runtime_core/branching/path_state.py
+@@ -5,7 +5,7 @@ Path state tracking - maintains which branch a player is on throughout a session
+ from dataclasses import dataclass, field, asdict
+ from typing import Dict, List, Optional, Set
+ import json
+-from datetime import datetime
++from datetime import datetime, timezone
+ 
+ 
+ @dataclass
+@@ -15,7 +15,7 @@ class PathNode:
+     decision_point_id: str
+     chosen_option_id: str
+     consequence_tags: List[str] = field(default_factory=list)
+-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
++    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+ 
+     def to_dict(self) -> Dict:
+         return asdict(self)

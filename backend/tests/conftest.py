@@ -10,6 +10,7 @@ from app.config import TestingConfig
 from app.extensions import db, limiter
 from app.services.play_service_control_service import bootstrap_play_service_control
 from app.models import Role, User
+from app.models.governance_core import ObservabilityConfig, ObservabilityCredential
 from app.models.role import ensure_roles_seeded
 from app.models.area import ensure_areas_seeded
 from werkzeug.security import generate_password_hash
@@ -271,6 +272,12 @@ def admin_headers(admin_user, client):
     assert response.status_code == 200
     data = response.get_json()
     return {"Authorization": "Bearer " + data["access_token"]}
+
+
+@pytest.fixture
+def admin_jwt(admin_headers):
+    """Extract JWT token string from admin_headers."""
+    return admin_headers["Authorization"].replace("Bearer ", "")
 
 
 @pytest.fixture

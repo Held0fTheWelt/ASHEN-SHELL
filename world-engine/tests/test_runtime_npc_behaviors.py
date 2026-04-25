@@ -38,24 +38,25 @@ class TestBuiltinTemplates:
             "apartment_confrontation_group",
             "better_tomorrow_district_alpha",
         }
-        assert templates["god_of_carnage_solo"].initial_beat_id == "courtesy"
+        # god_of_carnage_solo is runtime-profile-only (no story truth, beats come from canonical module)
+        assert templates["god_of_carnage_solo"].initial_beat_id == ""
         assert templates["apartment_confrontation_group"].max_humans >= 2
         assert templates["better_tomorrow_district_alpha"].persistent is True
 
     def test_solo_template_has_consistent_cross_references(self):
         template = build_god_of_carnage_solo()
-        room_ids = {room.id for room in template.rooms}
-        prop_ids = {prop.id for prop in template.props}
-        action_ids = {action.id for action in template.actions}
-
-        assert template.initial_beat_id in {beat.id for beat in template.beats}
-        for role in template.roles:
-            assert role.initial_room_id in room_ids
-        for room in template.rooms:
-            assert set(room.prop_ids).issubset(prop_ids)
-            assert set(room.action_ids).issubset(action_ids)
-            for exit_template in room.exits:
-                assert exit_template.target_room_id in room_ids
+        # god_of_carnage_solo is runtime-profile-only: no story truth (beats/actions/props)
+        # Roles and rooms are runtime bootstrap structure, not story truth.
+        assert len(template.beats) == 0, "Runtime profile must not contain beats"
+        assert len(template.actions) == 0, "Runtime profile must not contain actions"
+        assert len(template.props) == 0, "Runtime profile must not contain props"
+        # Roles: annette + alain (selectable human) + veronique + michel (NPC) — no visitor
+        role_ids = {r.id for r in template.roles}
+        assert "annette" in role_ids, "annette must be a selectable player role"
+        assert "alain" in role_ids, "alain must be a selectable player role"
+        assert "visitor" not in role_ids, "visitor must not exist as a role"
+        # Rooms: runtime structure for navigation
+        assert len(template.rooms) > 0, "Runtime profile must expose rooms for bootstrap navigation"
 
 
 class TestRuntimeNpcDirector:

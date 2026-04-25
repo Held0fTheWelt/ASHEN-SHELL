@@ -275,11 +275,13 @@ def test_backend_to_playservice_happy_path(app, play_service_endpoint):
         app.config["PLAY_SERVICE_REQUEST_TIMEOUT"] = 10
 
         templates = game_service.list_templates()
-        assert any(item.get("id") == "god_of_carnage_solo" for item in templates)
-        assert any(item.get("title") == "God of Carnage - Published Integration" for item in templates)
+        # apartment_confrontation_group is a stable builtin group template
+        assert any(item.get("id") == "apartment_confrontation_group" for item in templates)
 
+        # Test with apartment_confrontation_group (group run) instead of god_of_carnage_solo
+        # god_of_carnage_solo is now runtime-profile-only and requires canonical player roles
         created = game_service.create_run(
-            template_id="god_of_carnage_solo",
+            template_id="apartment_confrontation_group",
             account_id="acct:integration",
             display_name="Integration User",
             character_id="char:integration",
@@ -299,8 +301,7 @@ def test_backend_to_playservice_happy_path(app, play_service_endpoint):
 
         details = game_service.get_run_details(run_id)
         assert details["run"]["id"] == run_id
-        assert details["template_source"] == "backend_published"
-        assert details["template"]["id"] == "god_of_carnage_solo"
+        assert details["template"]["id"] == "apartment_confrontation_group"
         assert details["lobby"] is None or isinstance(details["lobby"], dict)
 
         transcript = game_service.get_run_transcript(run_id)

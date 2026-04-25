@@ -6,6 +6,14 @@ from ai_stack import ContextPackAssembler, ContextRetriever, RagIngestionPipelin
 from app.story_runtime import StoryRuntimeManager
 
 
+_CAPTURE_MOCK_JSON = (
+    '{"narrative_response": "The room shifts as voices interlock and the unspoken weight'
+    ' of the situation presses down on everyone present. A beat of silence follows.'
+    ' Someone reconsiders.",'
+    ' "proposed_state_effects": [], "intent_summary": "capture_mock"}'
+)
+
+
 class CaptureAdapter(BaseModelAdapter):
     adapter_name = "mock"
 
@@ -23,7 +31,8 @@ class CaptureAdapter(BaseModelAdapter):
     ) -> ModelCallResult:
         self.last_prompt = prompt
         self.last_retrieval_context = retrieval_context
-        return ModelCallResult(content="ok", success=True, metadata={"adapter": self.adapter_name})
+        # Return structured JSON so dramatic alignment validator has enough narrative mass.
+        return ModelCallResult(content=_CAPTURE_MOCK_JSON, success=True, metadata={"adapter": self.adapter_name})
 
 
 class FailingAdapter(BaseModelAdapter):
@@ -105,7 +114,7 @@ def test_story_runtime_graph_uses_fallback_branch_on_model_failure(tmp_path):
     repro = turn["graph"].get("repro_metadata") or {}
     assert repro.get("graph_path_summary") == "used_fallback_model_node_raw_adapter"
     assert repro.get("model_fallback_used") is True
-    assert repro.get("adapter_invocation_mode") == "langchain_structured_primary"
+    assert repro.get("adapter_invocation_mode") == "raw_adapter_graph_managed_fallback"
 
 
 def test_story_runtime_commits_legal_scene_progression(tmp_path):

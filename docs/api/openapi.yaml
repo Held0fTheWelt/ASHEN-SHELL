@@ -227,6 +227,133 @@ paths:
           description: Rate limited.
         '500':
           description: Server error.
+  /api/v1/admin/ai-stack/release-readiness/gates:
+    get:
+      tags:
+      - AIStackGovernance
+      summary: GET /admin/ai-stack/release-readiness/gates
+      operationId: get_api_v1_admin_ai_stack_release_readiness_gates
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+    post:
+      tags:
+      - AIStackGovernance
+      summary: POST /admin/ai-stack/release-readiness/gates
+      operationId: post_api_v1_admin_ai_stack_release_readiness_gates
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/ai-stack/release-readiness/gates/{gate_id}:
+    delete:
+      tags:
+      - AIStackGovernance
+      summary: DELETE /admin/ai-stack/release-readiness/gates/{gate_id}
+      operationId: delete_api_v1_admin_ai_stack_release_readiness_gates_gate_id
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - &id001
+        name: gate_id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+      - AIStackGovernance
+      summary: GET /admin/ai-stack/release-readiness/gates/{gate_id}
+      operationId: get_api_v1_admin_ai_stack_release_readiness_gates_gate_id
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - *id001
+  /api/v1/admin/ai-stack/release-readiness/gates/{gate_id}/status:
+    patch:
+      tags:
+      - AIStackGovernance
+      summary: PATCH /admin/ai-stack/release-readiness/gates/{gate_id}/status
+      operationId: patch_api_v1_admin_ai_stack_release_readiness_gates_gate_id_status
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: gate_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/ai-stack/release-readiness/summary:
+    get:
+      tags:
+      - AIStackGovernance
+      summary: GET /admin/ai-stack/release-readiness/summary
+      operationId: get_api_v1_admin_ai_stack_release_readiness_summary
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
   /api/v1/admin/ai-stack/session-evidence/{session_id}:
     get:
       tags:
@@ -1608,7 +1735,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id001
+      - &id002
         name: run_id
         in: path
         required: true
@@ -1633,7 +1760,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id001
+      - *id002
   /api/v1/admin/narrative/notifications/feed:
     get:
       tags:
@@ -2297,6 +2424,101 @@ paths:
           description: Rate limited.
         '500':
           description: Server error.
+  /api/v1/admin/observability/credential:
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/observability/credential
+      operationId: post_api_v1_admin_observability_credential
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/observability/disable:
+    delete:
+      tags:
+      - Admin
+      summary: DELETE /admin/observability/disable
+      operationId: delete_api_v1_admin_observability_disable
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/observability/status:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/observability/status
+      operationId: get_api_v1_admin_observability_status
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/observability/test-connection:
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/observability/test-connection
+      operationId: post_api_v1_admin_observability_test_connection
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/observability/update:
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/observability/update
+      operationId: post_api_v1_admin_observability_update
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
   /api/v1/admin/play-service-control:
     get:
       tags:
@@ -2403,6 +2625,25 @@ paths:
       - Admin
       summary: GET /admin/research-domain/overview
       operationId: get_api_v1_admin_research_domain_overview
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/runtime/config-truth:
+    get:
+      tags:
+      - OperationalGovernance
+      summary: GET /admin/runtime/config-truth
+      operationId: get_api_v1_admin_runtime_config_truth
       responses:
         '200':
           description: Success (see docs/api/REFERENCE.md for response shapes).
@@ -2732,6 +2973,50 @@ paths:
           description: Rate limited.
         '500':
           description: Server error.
+  /api/v1/admin/system-diagnosis/gates:
+    get:
+      tags:
+      - System
+      summary: GET /admin/system-diagnosis/gates
+      operationId: get_api_v1_admin_system_diagnosis_gates
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/system-diagnosis/gates/{gate_id}:
+    get:
+      tags:
+      - System
+      summary: GET /admin/system-diagnosis/gates/{gate_id}
+      operationId: get_api_v1_admin_system_diagnosis_gates_gate_id
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: gate_id
+        in: path
+        required: true
+        schema:
+          type: string
   /api/v1/admin/world-engine/control-center:
     get:
       tags:
@@ -3052,7 +3337,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id002
+      - &id003
         name: area_id
         in: path
         required: true
@@ -3077,7 +3362,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id002
+      - *id003
     put:
       tags:
       - Areas
@@ -3097,7 +3382,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id002
+      - *id003
   /api/v1/auth/forgot-password:
     post:
       tags:
@@ -3388,7 +3673,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id003
+      - &id004
         name: feature_id
         in: path
         required: true
@@ -3413,7 +3698,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id003
+      - *id004
   /api/v1/forum/admin/categories:
     post:
       tags:
@@ -3453,7 +3738,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id004
+      - &id005
         name: category_id
         in: path
         required: true
@@ -3478,7 +3763,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id004
+      - *id005
   /api/v1/forum/bookmarks:
     get:
       tags:
@@ -3562,7 +3847,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id005
+      - &id006
         name: slug
         in: path
         required: true
@@ -3587,7 +3872,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id005
+      - *id006
   /api/v1/forum/moderation/bulk-posts/hide:
     post:
       tags:
@@ -3880,7 +4165,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id006
+      - &id007
         name: post_id
         in: path
         required: true
@@ -3905,7 +4190,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id006
+      - *id007
   /api/v1/forum/posts/{post_id}/hide:
     post:
       tags:
@@ -3951,7 +4236,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id007
+      - &id008
         name: post_id
         in: path
         required: true
@@ -3976,7 +4261,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id007
+      - *id008
   /api/v1/forum/posts/{post_id}/unhide:
     post:
       tags:
@@ -4078,7 +4363,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id008
+      - &id009
         name: report_id
         in: path
         required: true
@@ -4103,7 +4388,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id008
+      - *id009
   /api/v1/forum/search:
     get:
       tags:
@@ -4281,7 +4566,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id009
+      - &id010
         name: thread_id
         in: path
         required: true
@@ -4306,7 +4591,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id009
+      - *id010
   /api/v1/forum/threads/{thread_id}/archive:
     post:
       tags:
@@ -4352,7 +4637,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id010
+      - &id011
         name: thread_id
         in: path
         required: true
@@ -4377,7 +4662,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id010
+      - *id011
   /api/v1/forum/threads/{thread_id}/feature:
     post:
       tags:
@@ -4498,7 +4783,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id011
+      - &id012
         name: thread_id
         in: path
         required: true
@@ -4523,7 +4808,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id011
+      - *id012
   /api/v1/forum/threads/{thread_id}/split:
     post:
       tags:
@@ -4569,7 +4854,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id012
+      - &id013
         name: thread_id
         in: path
         required: true
@@ -4594,7 +4879,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id012
+      - *id013
   /api/v1/forum/threads/{thread_id}/subscribers:
     get:
       tags:
@@ -4802,7 +5087,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id013
+      - &id014
         name: experience_id
         in: path
         required: true
@@ -4827,7 +5112,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id013
+      - *id014
   /api/v1/game-admin/experiences/{experience_id}/governance/decision:
     post:
       tags:
@@ -5142,7 +5427,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id014
+      - &id015
         name: character_id
         in: path
         required: true
@@ -5167,7 +5452,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id014
+      - *id015
   /api/v1/game/content/experiences:
     get:
       tags:
@@ -5225,7 +5510,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id015
+      - &id016
         name: experience_id
         in: path
         required: true
@@ -5250,7 +5535,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id015
+      - *id016
   /api/v1/game/content/experiences/{experience_id}/governance/decision:
     post:
       tags:
@@ -5797,6 +6082,25 @@ paths:
           description: Rate limited.
         '500':
           description: Server error.
+  /api/v1/internal/observability/initialize:
+    post:
+      tags:
+      - OperationalGovernance
+      summary: POST /internal/observability/initialize
+      operationId: post_api_v1_internal_observability_initialize
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
   /api/v1/internal/provider-credential/{provider_id}:
     get:
       tags:
@@ -5936,7 +6240,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id016
+      - &id017
         name: article_id
         in: path
         required: true
@@ -5961,7 +6265,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id016
+      - *id017
   /api/v1/news/{article_id}/discussion-thread:
     delete:
       tags:
@@ -5982,7 +6286,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id017
+      - &id018
         name: article_id
         in: path
         required: true
@@ -6007,7 +6311,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id017
+      - *id018
   /api/v1/news/{article_id}/publish:
     post:
       tags:
@@ -6053,7 +6357,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id018
+      - &id019
         name: article_id
         in: path
         required: true
@@ -6078,7 +6382,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id018
+      - *id019
   /api/v1/news/{article_id}/related-threads/{thread_id}:
     delete:
       tags:
@@ -6204,13 +6508,13 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id019
+      - &id020
         name: article_id
         in: path
         required: true
         schema:
           type: integer
-      - &id020
+      - &id021
         name: lang
         in: path
         required: true
@@ -6235,8 +6539,8 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id019
       - *id020
+      - *id021
   /api/v1/news/{article_id}/translations/{lang}/approve:
     post:
       tags:
@@ -6453,7 +6757,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id021
+      - &id022
         name: notification_id
         in: path
         required: true
@@ -6478,7 +6782,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id021
+      - *id022
   /api/v1/operator/diagnostics/session/{session_id}:
     get:
       tags:
@@ -6706,7 +7010,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id022
+      - &id023
         name: role_id
         in: path
         required: true
@@ -6731,7 +7035,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id022
+      - *id023
     put:
       tags:
       - Roles
@@ -6751,7 +7055,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id022
+      - *id023
   /api/v1/sessions:
     post:
       tags:
@@ -7103,7 +7407,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id023
+      - &id024
         name: slogan_id
         in: path
         required: true
@@ -7128,7 +7432,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id023
+      - *id024
     put:
       tags:
       - SiteContent
@@ -7148,7 +7452,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id023
+      - *id024
   /api/v1/slogans/{slogan_id}/activate:
     post:
       tags:
@@ -7257,7 +7561,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id024
+      - &id025
         name: user_id
         in: path
         required: true
@@ -7282,7 +7586,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id024
+      - *id025
     put:
       tags:
       - Users
@@ -7302,7 +7606,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id024
+      - *id025
   /api/v1/users/{user_id}/areas:
     get:
       tags:
@@ -7323,7 +7627,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id025
+      - &id026
         name: user_id
         in: path
         required: true
@@ -7348,7 +7652,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id025
+      - *id026
   /api/v1/users/{user_id}/ban:
     post:
       tags:
@@ -7693,13 +7997,13 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id026
+      - &id027
         name: page_id
         in: path
         required: true
         schema:
           type: integer
-      - &id027
+      - &id028
         name: lang
         in: path
         required: true
@@ -7724,8 +8028,8 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id026
       - *id027
+      - *id028
   /api/v1/wiki-admin/pages/{page_id}/translations/{lang}/approve:
     post:
       tags:
@@ -7836,7 +8140,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id028
+      - &id029
         name: page_id
         in: path
         required: true
@@ -7861,7 +8165,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id028
+      - *id029
   /api/v1/wiki/{page_id}/related-threads:
     get:
       tags:
@@ -7882,7 +8186,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - &id029
+      - &id030
         name: page_id
         in: path
         required: true
@@ -7907,7 +8211,7 @@ paths:
         '500':
           description: Server error.
       parameters:
-      - *id029
+      - *id030
   /api/v1/wiki/{page_id}/related-threads/{thread_id}:
     delete:
       tags:

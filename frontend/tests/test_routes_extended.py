@@ -697,6 +697,7 @@ def test_routes_play_runtime_view_and_opening_projection(capsys):
         "narration_text": "The room tightens.",
         "spoken_lines": ["Annette: Enough."],
         "committed_consequences": ["tension_escalates"],
+        "interpreted_input_kind": "action",
     }
 
     opening = routes_play._build_play_shell_opening_view(

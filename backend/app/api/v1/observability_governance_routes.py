@@ -80,22 +80,21 @@ def admin_observability_credential():
     public_key = body.get("public_key")
     secret_key = body.get("secret_key")
 
-    if not public_key and not secret_key:
-        raise governance_error(
-            "credential_invalid",
-            "At least one of public_key or secret_key is required.",
-            400,
-            {},
-        )
-
-    return _handle(
-        "observability_credential",
-        lambda: write_observability_credential(
+    def write_cred():
+        if not public_key and not secret_key:
+            raise governance_error(
+                "credential_invalid",
+                "At least one of public_key or secret_key is required.",
+                400,
+                {},
+            )
+        return write_observability_credential(
             public_key=public_key,
             secret_key=secret_key,
             actor=_actor_identifier(),
-        ),
-    )
+        )
+
+    return _handle("observability_credential", write_cred)
 
 
 @api_v1_bp.route("/admin/observability/test-connection", methods=["POST"])

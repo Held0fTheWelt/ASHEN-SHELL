@@ -43,4 +43,4 @@ class TestingConfig(Config):
     SECRET_KEY = "frontend-test-secret"
     BACKEND_API_URL = "http://backend.example.test"
     PLAY_SERVICE_PUBLIC_URL = "http://play.example.test"
-    BYPASS_LOGIN_FOR_TESTS = True
+    BYPASS_LOGIN_FOR_TESTS = False
