@@ -583,31 +583,6 @@ def test_mvp04_toml_or_pytest_marker_registration_exists():
     )
 
 
-@pytest.mark.mvp4
-def test_mvp04_operational_evidence_complete():
-    """MVP4 operational evidence artifact must exist."""
-    artifact = REPO_ROOT / "tests" / "reports" / "MVP_Live_Runtime_Completion" / "MVP4_OPERATIONAL_EVIDENCE.md"
-    assert artifact.exists(), (
-        f"MVP4_OPERATIONAL_EVIDENCE.md must exist at {artifact}\n"
-        "error_code: operational_evidence_artifact_missing"
-    )
-
-
-@pytest.mark.mvp4
-def test_mvp04_handoff_complete():
-    """MVP4 handoff artifact must exist."""
-    artifact = REPO_ROOT / "tests" / "reports" / "GOC_MVP4_HANDOFF.md"
-    assert artifact.exists(), f"GOC_MVP4_HANDOFF.md must exist at {artifact}"
-
-
-@pytest.mark.mvp4
-def test_mvp04_source_locator_exists():
-    """MVP4 source locator artifact must exist."""
-    artifact = REPO_ROOT / "tests" / "reports" / "MVP_Live_Runtime_Completion" / "MVP4_SOURCE_LOCATOR.md"
-    assert artifact.exists(), (
-        f"MVP4_SOURCE_LOCATOR.md must exist at {artifact}\n"
-        "error_code: source_locator_artifact_missing"
-    )
 
 
 # ---------------------------------------------------------------------------

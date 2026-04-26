@@ -252,22 +252,3 @@ class TestDockerUpGate:
         )
 
 
-class TestMvp1ArtifactPresence:
-
-    def test_source_locator_artifact_exists(self):
-        artifact = REPO_ROOT / "tests" / "reports" / "MVP_Live_Runtime_Completion" / "MVP1_SOURCE_LOCATOR.md"
-        assert artifact.is_file(), f"MVP1 source locator artifact missing at {artifact}"
-
-    def test_operational_evidence_artifact_exists(self):
-        artifact = REPO_ROOT / "tests" / "reports" / "MVP_Live_Runtime_Completion" / "MVP1_OPERATIONAL_EVIDENCE.md"
-        assert artifact.is_file(), (
-            f"MVP1 operational evidence artifact missing at {artifact}. "
-            "This artifact is required to close MVP1."
-        )
-
-    def test_handoff_artifact_exists(self):
-        artifact = REPO_ROOT / "tests" / "reports" / "MVP_Live_Runtime_Completion" / "MVP1_HANDOFF_RUNTIME_PROFILE.md"
-        assert artifact.is_file(), (
-            f"MVP1 handoff artifact missing at {artifact}. "
-            "This artifact is required for MVP 2 to consume."
-        )

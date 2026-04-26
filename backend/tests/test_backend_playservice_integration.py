@@ -50,9 +50,9 @@ def backend_content_feed_endpoint() -> str:
                 "initial_beat_id": "courtesy",
                 "roles": [
                     {
-                        "id": "visitor",
-                        "display_name": "Visitor",
-                        "description": "Player role",
+                        "id": "annette",
+                        "display_name": "Annette",
+                        "description": "Human-playable role",
                         "mode": "human",
                         "initial_room_id": "hallway",
                         "can_join": True,

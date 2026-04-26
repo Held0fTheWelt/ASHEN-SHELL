@@ -8,6 +8,8 @@ on:
       - 'backend/app/content/builtins.py'
       - 'backend/app/content/models.py'
       - 'story_runtime_core/**'
+      - 'tests/gates/**'
+      - 'content/modules/god_of_carnage/**'
       - '.github/workflows/engine-tests.yml'
       - '.devcontainer/**'
       - 'tests/run_tests.py'
@@ -20,6 +22,8 @@ on:
       - 'backend/app/content/builtins.py'
       - 'backend/app/content/models.py'
       - 'story_runtime_core/**'
+      - 'tests/gates/**'
+      - 'content/modules/god_of_carnage/**'
       - '.github/workflows/engine-tests.yml'
       - '.devcontainer/**'
       - 'tests/run_tests.py'
@@ -107,5 +111,91 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: engine-full-test-results
+          path: test_reports/
+          retention-days: 30
+
+  story-runtime-core-tests:
+    name: Story Runtime Core Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.10']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            story_runtime_core/pyproject.toml
+            ai_stack/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./story_runtime_core"
+          python -m pip install -e "./ai_stack[test]"
+          python -m pip install pyyaml pytest pytest-cov
+
+      - name: Run story_runtime_core tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m pytest story_runtime_core/tests/ -v --tb=short --no-cov
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-runtime-core-test-results
+          path: test_reports/
+          retention-days: 30
+
+  architecture-gates:
+    name: Architecture Enforcement Gates (visitor, GoC content, runtime profile separation)
+    runs-on: ubuntu-latest
+    needs: [ engine-fast-tests ]
+
+    strategy:
+      matrix:
+        python-version: ['3.10']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            world-engine/requirements.txt
+            world-engine/requirements-dev.txt
+            ai_stack/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./story_runtime_core"
+          python -m pip install -e "./ai_stack[test]"
+          pip install -r world-engine/requirements-dev.txt
+          python -m pip install pyyaml
+
+      - name: Run MVP foundation gates (visitor absence, content/profile separation)
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/world-engine
+        run: |
+          python -m pytest tests/gates/ -v --tb=short --no-cov
+        # No continue-on-error — gate failures are real architecture violations.
+
+      - name: Upload gate results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-gate-results
           path: test_reports/
           retention-days: 30

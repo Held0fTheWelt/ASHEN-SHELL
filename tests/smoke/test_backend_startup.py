@@ -89,17 +89,18 @@ class TestBackendHealthChecks:
     """Tests health check endpoints."""
 
     def test_health_endpoint_exists(self, client):
-        """Health check endpoint is available."""
-        # Many services expose /health or /api/health
+        """At least one health check endpoint must exist and return 200."""
         endpoints = ['/health', '/api/health', '/status', '/api/status']
 
         for endpoint in endpoints:
             response = client.get(endpoint)
-            if response.status_code in [200, 404]:
-                # Either endpoint exists (200) or doesn't (404)
-                # 404 is acceptable if endpoint doesn't exist
-                assert True
-                break
+            if response.status_code == 200:
+                return  # Found a working health endpoint
+
+        pytest.fail(
+            f"None of the expected health endpoints returned 200. "
+            f"Checked: {endpoints}. Backend must expose at least one health check."
+        )
 
     def test_root_endpoint_available(self, client):
         """Root endpoint responds."""
@@ -289,10 +290,17 @@ class TestBackendEnvironmentSetup:
     """Tests environment configuration."""
 
     def test_required_env_vars_documented(self):
-        """Required environment variables are documented."""
-        # Should have some way to document required env vars
-        # This is a documentation check
-        assert True
+        """Required environment variables are documented in .env.example."""
+        import os
+        env_example = os.path.join(
+            os.path.dirname(__file__), '../../../.env.example'
+        )
+        assert os.path.exists(env_example), (
+            ".env.example must exist to document required environment variables"
+        )
+        with open(env_example) as f:
+            content = f.read()
+        assert len(content) > 10, ".env.example must document at least some environment variables"
 
     def test_default_config_works(self):
         """Default configuration works without env vars."""

@@ -51,9 +51,9 @@ def authored_payload() -> dict:
         "tags": ["patch", "round2"],
         "roles": [
             {
-                "id": "visitor",
-                "display_name": "Visitor",
-                "description": "Human role",
+                "id": "annette",
+                "display_name": "Annette",
+                "description": "Human-playable role",
                 "mode": "human",
                 "initial_room_id": "hall",
                 "can_join": True,

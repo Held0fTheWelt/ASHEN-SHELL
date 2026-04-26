@@ -11,9 +11,13 @@ This gate verifies that the repository maintains the foundation contracts:
 
 from __future__ import annotations
 
+import yaml
 import pytest
+from pathlib import Path
 
 from app.governance.errors import GovernanceError
+
+_GOC_MODULE_ROOT = Path(__file__).resolve().parent.parent.parent / "content" / "modules" / "god_of_carnage"
 
 
 class TestMVP01RulesEnforced:
@@ -37,16 +41,13 @@ class TestMVP01RulesEnforced:
 
         template = build_god_of_carnage_solo()
 
-        # Runtime profile rules
         assert template.id == "god_of_carnage_solo"
         assert template.title == "God of Carnage"
         assert template.max_humans == 1
 
-        # NO story truth in runtime profile
         assert len(template.beats) == 0, "god_of_carnage_solo must not contain beats"
         assert len(template.actions) == 0, "god_of_carnage_solo must not contain actions"
         assert len(template.props) == 0, "god_of_carnage_solo must not contain props"
-        # initial_beat_id is empty string placeholder (runtime profile sources beats from canonical module)
 
     def test_visitor_does_not_exist_as_actor(self):
         """visitor must never exist as a runtime actor, responder, or candidate."""
@@ -58,21 +59,15 @@ class TestMVP01RulesEnforced:
         assert "visitor" not in role_ids, "visitor must not exist as a role"
 
     def test_solo_profile_has_no_story_structure(self):
-        """Solo profile has runtime structure (roles/rooms) but no story truth (beats/actions/props).
-
-        Roles and rooms are required runtime contract for bootstrap and navigation.
-        Beats, actions, and props are story truth that must reside in canonical god_of_carnage module only.
-        """
+        """Solo profile has runtime structure (roles/rooms) but no story truth (beats/actions/props)."""
         from app.content.builtins import build_god_of_carnage_solo
 
         template = build_god_of_carnage_solo()
 
-        # Story truth must not be present (these belong in canonical god_of_carnage content module)
         assert len(template.beats) == 0, "god_of_carnage_solo must not contain beats (story truth)"
         assert len(template.actions) == 0, "god_of_carnage_solo must not contain actions (story truth)"
         assert len(template.props) == 0, "god_of_carnage_solo must not contain props (story truth)"
 
-        # Runtime structure must be present (needed to bootstrap a run)
         role_ids = {r.id for r in template.roles}
         assert "annette" in role_ids, "annette must be a selectable player role in runtime profile"
         assert "alain" in role_ids, "alain must be a selectable player role in runtime profile"
@@ -106,27 +101,85 @@ class TestMVP01RulesEnforced:
 
 
 class TestMVP02RulesEnforced:
-    """Verify MVP 02 architectural enforcement."""
+    """Verify MVP 02 architectural enforcement: canonical content module contains story truth."""
 
-    def test_canonical_god_of_carnage_contains_story_truth(self):
-        """Canonical god_of_carnage module must contain story truth (separate from solo profile)."""
-        # This test documents that canonical content exists separately from the runtime profile
-        # The actual content validation happens in content module tests
-        assert True, "Canonical content module is authority for story truth"
+    def test_canonical_god_of_carnage_module_exists(self):
+        """Canonical god_of_carnage content module must exist on disk."""
+        assert _GOC_MODULE_ROOT.exists(), f"Canonical module root not found: {_GOC_MODULE_ROOT}"
+        assert _GOC_MODULE_ROOT.is_dir()
 
-    def test_runtime_profile_required_for_solo_starts(self):
-        """Solo runs must use runtime_profile_id, not template_id."""
-        # This rule is enforced in play-service contract validation
-        # Tests in backend/tests/test_backend_playservice_integration.py verify this
-        assert True, "Backend↔Playservice integration enforces runtime profile contract"
+    def test_canonical_module_yaml_is_valid(self):
+        """module.yaml must be valid YAML with required canonical fields."""
+        module_file = _GOC_MODULE_ROOT / "module.yaml"
+        assert module_file.exists(), "module.yaml not found in canonical module"
+        with open(module_file) as f:
+            doc = yaml.safe_load(f)
+        assert doc.get("module_id") == "god_of_carnage", "Canonical module_id must be 'god_of_carnage'"
+        assert "version" in doc
+        assert "content" in doc
+
+    def test_canonical_module_has_characters(self):
+        """Canonical module must define characters: annette, alain, veronique, michel."""
+        char_file = _GOC_MODULE_ROOT / "characters.yaml"
+        assert char_file.exists(), "characters.yaml not found in canonical module"
+        with open(char_file) as f:
+            doc = yaml.safe_load(f)
+        characters = doc.get("characters", {})
+        required = {"annette", "alain", "veronique", "michel"}
+        present = set(characters.keys())
+        assert required.issubset(present), f"Missing characters: {required - present}"
+
+    def test_canonical_module_annette_and_alain_are_playable(self):
+        """Annette and Alain must be defined as playable human characters."""
+        char_file = _GOC_MODULE_ROOT / "characters.yaml"
+        with open(char_file) as f:
+            doc = yaml.safe_load(f)
+        characters = doc.get("characters", {})
+        assert "annette" in characters, "annette must be a canonical character"
+        assert "alain" in characters, "alain must be a canonical character"
+
+    def test_canonical_module_visitor_is_absent(self):
+        """visitor must not be defined as a character in the canonical module."""
+        char_file = _GOC_MODULE_ROOT / "characters.yaml"
+        with open(char_file) as f:
+            doc = yaml.safe_load(f)
+        characters = doc.get("characters", {})
+        assert "visitor" not in characters, "visitor must not exist as a canonical character"
+
+    def test_canonical_module_has_scenes(self):
+        """Canonical module must define scene phases (story truth)."""
+        scene_file = _GOC_MODULE_ROOT / "scenes.yaml"
+        assert scene_file.exists(), "scenes.yaml not found in canonical module"
+        with open(scene_file) as f:
+            doc = yaml.safe_load(f)
+        phases = doc.get("scene_phases", {})
+        assert len(phases) >= 1, "Canonical module must define at least one scene phase"
 
 
 @pytest.mark.foundation_gate
 class TestFoundationGateOverall:
-    """Overall foundation gate status."""
+    """Overall foundation gate: god_of_carnage_solo is runtime profile, canonical module is story truth."""
 
-    def test_foundation_gate_passes(self):
-        """Foundation gate summary: all MVP 01 / MVP 02 rules are enforced."""
-        # This test aggregates the checks from above
-        # If any check fails, this gate fails
-        assert True, "MVP 01 / MVP 02 foundation gate: PASS"
+    def test_solo_profile_is_distinct_from_canonical_module(self):
+        """god_of_carnage_solo (runtime profile) must not be used as canonical content module_id."""
+        module_file = _GOC_MODULE_ROOT / "module.yaml"
+        with open(module_file) as f:
+            doc = yaml.safe_load(f)
+        assert doc.get("module_id") != "god_of_carnage_solo", (
+            "god_of_carnage_solo is a runtime profile only; canonical module_id must be 'god_of_carnage'"
+        )
+        assert doc.get("module_id") == "god_of_carnage"
+
+    def test_visitor_absent_from_runtime_profile_and_canonical_module(self):
+        """visitor must be absent from both the runtime profile and the canonical content module."""
+        from app.content.builtins import build_god_of_carnage_solo
+
+        template = build_god_of_carnage_solo()
+        profile_role_ids = {role.id for role in template.roles}
+        assert "visitor" not in profile_role_ids, "visitor must not be a role in runtime profile"
+
+        char_file = _GOC_MODULE_ROOT / "characters.yaml"
+        with open(char_file) as f:
+            doc = yaml.safe_load(f)
+        canonical_char_ids = set(doc.get("characters", {}).keys())
+        assert "visitor" not in canonical_char_ids, "visitor must not be a canonical character"

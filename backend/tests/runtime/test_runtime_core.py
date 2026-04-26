@@ -191,7 +191,7 @@ def test_sqlalchemy_run_store_roundtrip_and_factory(tmp_path):
 def test_runtime_model_defaults_and_npc_director_cycles():
     participant = ParticipantState(
         display_name="Alice",
-        role_id="visitor",
+        role_id="annette",
         mode=ParticipantMode.HUMAN,
         current_room_id="hallway",
         account_id="acct-1",
@@ -238,7 +238,7 @@ def test_runtime_model_defaults_and_npc_director_cycles():
         tension=1,
         viewer_participant_id="p1",
         viewer_room_id="hallway",
-        viewer_role_id="visitor",
+        viewer_role_id="annette",
         viewer_display_name="Alice",
         available_actions=[],
         transcript_tail=[TranscriptEntry(kind="note", text="hello")],

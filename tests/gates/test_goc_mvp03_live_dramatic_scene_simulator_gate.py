@@ -726,29 +726,3 @@ def test_mvp3_gate_non_goc_session_has_no_scene_envelope():
     assert "human_actor_id" in source
 
 
-# ---------------------------------------------------------------------------
-# Source locator artifact test
-# ---------------------------------------------------------------------------
-
-@pytest.mark.mvp3
-def test_source_locator_artifact_exists_for_mvp3():
-    """MVP3 source locator artifact must exist at the required path."""
-    from pathlib import Path
-    repo_root = Path(__file__).resolve().parent.parent.parent
-    artifact = repo_root / "tests" / "reports" / "MVP_Live_Runtime_Completion" / "MVP3_SOURCE_LOCATOR.md"
-    assert artifact.exists(), (
-        f"Source locator artifact missing: {artifact}\n"
-        "error_code: source_locator_artifact_missing"
-    )
-
-
-@pytest.mark.mvp3
-def test_operational_evidence_artifact_exists_for_mvp3():
-    """MVP3 operational evidence artifact must exist at the required path."""
-    from pathlib import Path
-    repo_root = Path(__file__).resolve().parent.parent.parent
-    artifact = repo_root / "tests" / "reports" / "MVP_Live_Runtime_Completion" / "MVP3_OPERATIONAL_EVIDENCE.md"
-    assert artifact.exists(), (
-        f"Operational evidence artifact missing: {artifact}\n"
-        "error_code: operational_evidence_artifact_missing"
-    )

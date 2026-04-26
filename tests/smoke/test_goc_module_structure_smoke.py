@@ -108,6 +108,32 @@ class TestGocModuleStructureSmoke:
             for prop in required_props:
                 assert prop in char_data, f"Character {char_id} missing {prop}"
 
+    def test_visitor_is_absent_from_canonical_module(self):
+        """visitor must NOT exist as a character in the canonical module."""
+        with open(self.MODULE_ROOT / "characters.yaml") as f:
+            doc = yaml.safe_load(f)
+        characters = doc.get("characters", {})
+        assert "visitor" not in characters, (
+            "visitor must not be defined as a canonical character — it is globally prohibited"
+        )
+
+    def test_annette_and_alain_are_playable_human_roles(self):
+        """annette and alain must be defined and present as human-playable characters."""
+        with open(self.MODULE_ROOT / "characters.yaml") as f:
+            doc = yaml.safe_load(f)
+        characters = doc.get("characters", {})
+        assert "annette" in characters, "annette must be a canonical character (human-playable)"
+        assert "alain" in characters, "alain must be a canonical character (human-playable)"
+
+    def test_module_id_is_not_god_of_carnage_solo(self):
+        """Canonical module_id must be 'god_of_carnage', not 'god_of_carnage_solo'."""
+        with open(self.MODULE_ROOT / "module.yaml") as f:
+            module = yaml.safe_load(f)
+        assert module.get("module_id") == "god_of_carnage", (
+            f"module_id must be 'god_of_carnage', got '{module.get('module_id')}'. "
+            "god_of_carnage_solo is a runtime profile, not a canonical content module."
+        )
+
     def test_relationships_yaml_structure(self):
         """relationships.yaml defines required axes and relationships."""
         with open(self.MODULE_ROOT / "relationships.yaml") as f:

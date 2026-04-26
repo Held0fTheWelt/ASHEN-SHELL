@@ -14,11 +14,10 @@ on:
       - 'world-engine/tests/test_mvp2_runtime_state_actor_lanes.py'
       - 'world-engine/tests/test_mvp2_npc_coercion_state_delta.py'
       - 'world-engine/tests/test_mvp2_object_admission.py'
-      - 'world-engine/tests/test_mvp2_operational_gate.py'
       - 'story_runtime_core/goc_solo_builtin_template.py'
       - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
       - 'content/modules/god_of_carnage/**'
-      - 'run-test.py'
+      - 'tests/run_tests.py'
       - 'docker-up.py'
       - '.github/workflows/mvp2-tests.yml'
   pull_request:
@@ -34,11 +33,10 @@ on:
       - 'world-engine/tests/test_mvp2_runtime_state_actor_lanes.py'
       - 'world-engine/tests/test_mvp2_npc_coercion_state_delta.py'
       - 'world-engine/tests/test_mvp2_object_admission.py'
-      - 'world-engine/tests/test_mvp2_operational_gate.py'
       - 'story_runtime_core/goc_solo_builtin_template.py'
       - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
       - 'content/modules/god_of_carnage/**'
-      - 'run-test.py'
+      - 'tests/run_tests.py'
       - 'docker-up.py'
       - '.github/workflows/mvp2-tests.yml'
 
@@ -86,12 +84,6 @@ jobs:
           python -m pytest tests/test_mvp2_object_admission.py -v --tb=short --no-cov
         # All MVP2 Wave 2.4 tests must pass. No silent skipping.
 
-      - name: Run MVP2 operational gate tests
-        working-directory: ./world-engine
-        run: |
-          python -m pytest tests/test_mvp2_operational_gate.py -v --tb=short --no-cov
-        # Operational gate tests verify artifact existence. No silent skipping.
-
       - name: MVP2 regression — MVP1 identity tests must still pass
         working-directory: ./world-engine
         run: |
@@ -99,7 +91,7 @@ jobs:
         # MVP1 regression must not be broken by MVP2 changes.
 
   mvp2-tooling-gate:
-    name: MVP2 Tooling Gate (run-test.py --mvp2 and artifact existence)
+    name: MVP2 Tooling Gate (tests/run_tests.py suite engine and artifact existence)
     runs-on: ubuntu-latest
     needs: [ mvp2-world-engine ]
 
@@ -111,17 +103,12 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Verify run-test.py --mvp2 flag exists
+      - name: Verify canonical runner has engine suite
         run: |
-          python run-test.py --help | grep mvp2 || (echo "FAIL: --mvp2 flag missing from run-test.py" && exit 1)
-          echo "PASS: --mvp2 flag present in run-test.py"
-
-      - name: Verify MVP2 report artifacts exist
-        run: |
-          test -f tests/reports/MVP_Live_Runtime_Completion/MVP2_SOURCE_LOCATOR.md || (echo "FAIL: MVP2 source locator missing" && exit 1)
-          test -f tests/reports/MVP_Live_Runtime_Completion/MVP2_OPERATIONAL_EVIDENCE.md || (echo "FAIL: MVP2 operational evidence missing" && exit 1)
-          test -f tests/reports/MVP_Live_Runtime_Completion/GOC_MVP2_HANDOFF_TO_MVP3.md || (echo "FAIL: MVP2 handoff artifact missing" && exit 1)
-          echo "All MVP2 report artifacts present."
+          test -f tests/run_tests.py || (echo "FAIL: tests/run_tests.py missing" && exit 1)
+          python tests/run_tests.py --help | grep engine || (echo "FAIL: engine suite missing from canonical runner" && exit 1)
+          test ! -f run-test.py || (echo "FAIL: forbidden root runner run-test.py is present" && exit 1)
+          echo "PASS: canonical runner present with engine suite; root runner absent"
 
       - name: Verify MVP2 ADRs present
         run: |

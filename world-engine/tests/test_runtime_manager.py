@@ -226,7 +226,7 @@ def test_remote_templates_override_and_load(tmp_path, monkeypatch):
         summary="Remote template wins over builtin when ids match.",
         max_humans=1,
         initial_beat_id="intro",
-        roles=[RoleTemplate(id="visitor", display_name="Visitor", description="desc", mode=ParticipantMode.HUMAN, initial_room_id="hallway", can_join=True)],
+        roles=[RoleTemplate(id="annette", display_name="Annette", description="Human-playable role", mode=ParticipantMode.HUMAN, initial_room_id="hallway", can_join=True)],
         rooms=[RoomTemplate(id="hallway", name="Hallway", description="desc")],
         props=[],
         actions=[],

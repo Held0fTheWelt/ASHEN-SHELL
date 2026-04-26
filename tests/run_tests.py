@@ -87,6 +87,8 @@ SUITE_DISPLAY_NAMES: dict[str, str] = {
     "writers_room": "Writers-Room workflow (human-in-the-loop production)",
     "improvement": "Improvement loop (mutation / evaluation / recommendation)",
     "ai_stack": "WOS AI stack (LangGraph runtime, RAG, Writers-Room / improvement seed graphs)",
+    "story_runtime_core": "Story-runtime core (adapters, builtin templates, delivery)",
+    "gates": "MVP foundation gates (architecture enforcement)",
     "root_core": "Repository root core tests",
     "root_integration": "Repository integration tests",
     "root_branching": "Repository branching tests",
@@ -155,6 +157,8 @@ class SuiteConfig:
     supports_coverage: bool = True
 
 
+STORY_RUNTIME_CORE_DIR = PROJECT_ROOT / "story_runtime_core"
+
 SUITE_CONFIGS: dict[str, SuiteConfig] = {
     # Component suites
     "backend": SuiteConfig(kind="pytest", cwd=BACKEND_DIR, target="tests", supports_scope=True),
@@ -166,6 +170,12 @@ SUITE_CONFIGS: dict[str, SuiteConfig] = {
     "improvement": SuiteConfig(kind="pytest", cwd=BACKEND_DIR, target="tests/improvement", supports_scope=True),
     # Writers-Room / improvement seed graphs and runtime turn graph; imports require repo root on PYTHONPATH.
     "ai_stack": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="ai_stack/tests"),
+    # Story-runtime core: builtin templates, adapters, delivery.
+    "story_runtime_core": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="story_runtime_core/tests"),
+    # Architecture enforcement gates: visitor absence, runtime-profile/content-module separation.
+    # Gates tests import from world-engine app (app.governance.*) and story_runtime_core; the
+    # gates/conftest.py adds world-engine to sys.path automatically.
+    "gates": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="tests/gates", supports_coverage=False),
     # Root-level Python suites
     "root_core": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="tests/test_agency_capability_matrix_truth.py", supports_coverage=False),
     "root_integration": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="tests/integration", supports_coverage=False),
@@ -195,6 +205,8 @@ ALL_SUITE_SEQUENCE: tuple[str, ...] = (
     "engine",
     "database",
     "ai_stack",
+    "story_runtime_core",
+    "gates",
     "root_core",
     "root_integration",
     "root_branching",
@@ -327,6 +339,7 @@ def check_environment(suites: dict[str, SuiteConfig]) -> bool:
             "root_requirements_hygiene",
             "root_e2e_python",
             "root_experience_scoring",
+            "gates",
         }
     )
     if needs_backend_stack:
@@ -506,16 +519,20 @@ def check_environment(suites: dict[str, SuiteConfig]) -> bool:
 
 
 def _subprocess_env_for_suite(suite_name: str) -> dict[str, str] | None:
-    """Put repo root on PYTHONPATH for suites that import ``ai_stack`` / ``story_runtime_core`` as siblings."""
-    if suite_name not in ("ai_stack", "engine"):
+    """Put repo root and/or world-engine on PYTHONPATH for suites that require them."""
+    if suite_name not in ("ai_stack", "engine", "gates", "story_runtime_core"):
         return None
     env = dict(os.environ)
-    root = str(PROJECT_ROOT)
     sep = os.pathsep
     existing = env.get("PYTHONPATH", "")
     parts = [p for p in existing.split(sep) if p]
+    root = str(PROJECT_ROOT)
     if root not in parts:
         parts.insert(0, root)
+    if suite_name in ("engine", "gates"):
+        we = str(WORLD_ENGINE_DIR)
+        if we not in parts:
+            parts.insert(0, we)
     env["PYTHONPATH"] = sep.join(parts)
     return env
 
@@ -957,6 +974,8 @@ Optional non-Python lanes are opt-in:
             "writers_room",
             "improvement",
             "ai_stack",
+            "story_runtime_core",
+            "gates",
             "root_core",
             "root_integration",
             "root_branching",
