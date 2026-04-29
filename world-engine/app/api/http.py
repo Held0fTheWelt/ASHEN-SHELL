@@ -9,7 +9,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ai_stack.diagnostics_envelope import envelope_dict_to_response
-from backend.app.observability.langfuse_adapter import LangfuseAdapter
 from app.config import PLAY_SERVICE_INTERNAL_API_KEY
 from app.repo_root import resolve_wos_repo_root
 from app.narrative.corrective_retry import apply_corrective_retry
@@ -477,11 +476,16 @@ def execute_story_turn(
 ) -> dict[str, Any]:
     trace_id = getattr(request.state, "trace_id", None)
 
-    # Initialize Langfuse adapter and create root span
-    adapter = LangfuseAdapter.get_instance()
+    # Initialize Langfuse adapter and create root span (lazy import)
+    try:
+        from backend.app.observability.langfuse_adapter import LangfuseAdapter
+        adapter = LangfuseAdapter.get_instance()
+    except ImportError:
+        adapter = None
+
     root_span = None
 
-    if adapter.is_enabled():
+    if adapter and adapter.is_enabled():
         root_span = adapter.start_trace(
             name="story.turn.execute",
             session_id=session_id,

@@ -44,7 +44,6 @@ from ai_stack.diagnostics_envelope import (
     build_diagnostics_envelope,
     build_narrative_gov_summary,
 )
-from backend.app.observability.langfuse_adapter import LangfuseAdapter
 from ai_stack.narrative import NarrativeRuntimeAgent, NarrativeRuntimeAgentInput, NarrativeEventKind
 
 from app.config import APP_VERSION

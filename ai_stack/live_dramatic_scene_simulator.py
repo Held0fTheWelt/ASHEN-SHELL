@@ -21,7 +21,6 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 from typing import Any
-from backend.app.observability.langfuse_adapter import LangfuseAdapter
 
 
 # ---------------------------------------------------------------------------
@@ -643,25 +642,30 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
 
     Returns output with embedded cost/token info for Phase B aggregation.
     """
-    # Phase B: Create Langfuse span for LDSS simulation
-    adapter = LangfuseAdapter.get_instance()
-    parent_span = adapter.get_active_span()
-    ldss_span = None
+    # Phase B: Create Langfuse span for LDSS simulation (lazy import)
+    try:
+        from backend.app.observability.langfuse_adapter import LangfuseAdapter
+        adapter = LangfuseAdapter.get_instance()
+    except ImportError:
+        adapter = None
 
-    if parent_span:
-        ldss_span = adapter.create_child_span(
-            name="live_dramatic_scene_simulator",
-            input_data={
-                "scene_id": ldss_input.current_scene_id,
-                "turn_number": ldss_input.turn_number,
-                "actor_ids": ldss_input.npc_actor_ids,
-            },
-            metadata={
-                "scene_id": ldss_input.current_scene_id,
-                "turn_number": ldss_input.turn_number,
-            },
-            parent_span=parent_span
-        )
+    ldss_span = None
+    if adapter:
+        parent_span = adapter.get_active_span()
+        if parent_span:
+            ldss_span = adapter.create_child_span(
+                name="live_dramatic_scene_simulator",
+                input={
+                    "scene_id": ldss_input.current_scene_id,
+                    "turn_number": ldss_input.turn_number,
+                    "actor_ids": ldss_input.npc_actor_ids,
+                },
+                metadata={
+                    "scene_id": ldss_input.current_scene_id,
+                    "turn_number": ldss_input.turn_number,
+                },
+                parent_span=parent_span
+            )
 
     try:
         ldss_output = build_deterministic_ldss_output(ldss_input)
