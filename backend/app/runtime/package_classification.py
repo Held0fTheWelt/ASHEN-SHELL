@@ -68,7 +68,6 @@ _ALL_RUNTIME_ROOT_MODULES: frozenset[str] = frozenset(
         "area2_operator_truth",
         "area2_routing_authority",
         "area2_startup_profiles",
-        "area2_validation_commands",
         "context_types",
         "debug_presenter",
         "debug_presenter_sections",
