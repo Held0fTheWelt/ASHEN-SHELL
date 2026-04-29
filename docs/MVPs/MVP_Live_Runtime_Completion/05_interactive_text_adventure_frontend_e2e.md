@@ -11,7 +11,10 @@ The frontend must consume `visible_scene_output.blocks.v1`, render one DOM block
 In scope:
 
 - FrontendRenderContract and FrontendBlockRenderState.
-- TypewriterDeliveryConfig with deterministic test mode.
+- TypewriterDeliveryConfig with deterministic test mode for continuous narrator streaming (not turn-sequential).
+- Narrator streaming reception: frontend receives narrator blocks in real-time and renders with typewriter effect.
+- Input-UI blocking: while NarrativeRuntimeAgent streams (narrator.streaming=true), input field disabled; enabled when ruhepunkt_signal received.
+- Input queue display: optional UI showing queued player inputs while narrator is streaming.
 - Skip current animation and reveal all controls.
 - Accessibility/reduced-motion behavior.
 - LegacyFallbackPolicy that marks adapted legacy output as degraded and fails final E2E acceptance.
@@ -52,9 +55,11 @@ MVP 5 proves the final target end-to-end. The final pass requires structured sce
 
 | Input | Source MVP | Required Fields | Evidence Path |
 |---|---|---|---|
-| DiagnosticsEnvelope | MVP 4 | frontend render contract, quality, trace ID, LDSS status | `tests/reports/MVP4_HANDOFF_DIAGNOSTICS_AND_TRACE.md` |
-| Trace/export evidence | MVP 4 | real generated trace/export paths and matching IDs | `tests/reports/langfuse/*.json` |
-| NarrativeGovSummary | MVP 4 | operator surface statuses | admin route test artifact |
+| DiagnosticsEnvelope | MVP 4 | frontend render contract, quality, trace ID, LDSS status, narrator agent status | `tests/reports/MVP4_HANDOFF_DIAGNOSTICS_AND_TRACE.md` |
+| Narrative Runtime Agent streaming | MVP 3 via MVP 4 | narrator blocks (real-time), ruhepunkt signals, streaming metadata | live turn WebSocket/HTTP stream |
+| Input-blocking signal | MVP 3 via MVP 4 | narrator.streaming (true/false), can_accept_input (true/false) | story runtime manager event stream |
+| Trace/export evidence | MVP 4 | real generated trace/export paths and matching IDs, narrator agent spans | `tests/reports/langfuse/*.json` |
+| NarrativeGovSummary | MVP 4 | operator surface statuses, narrator agent health | admin route test artifact |
 | SceneTurnEnvelope.v2 | MVP 3 via MVP 4 | non-empty visible scene blocks | live turn artifact |
 
 ## This MVP Produces

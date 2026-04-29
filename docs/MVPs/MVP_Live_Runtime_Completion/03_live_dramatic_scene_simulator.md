@@ -2,34 +2,48 @@
 
 ## Mission
 
-Implement the live dramatic scene simulator (LDSS) as a non-optional live-path component that emits structured staged scene blocks for God of Carnage solo play.
+Implement the live dramatic scene simulator (LDSS) and the narrative runtime agent as non-optional live-path components that together produce a continuous, interactive dramatic experience for God of Carnage solo play.
 
-LDSS must produce visible NPC dramatic behavior, NPC-to-NPC communication, valid environment interaction, and narrator inner-perception blocks while respecting MVP 2 actor lanes, object admission, and state-delta boundaries.
+LDSS generates NPC behavior, agency plans, and scene blocks. NarrativeRuntimeAgent streams continuous narrator prose, fills silence based on motivation pressure, and validates that narrative output does not block player agency. Together they respect MVP 2 actor lanes, object admission, and state-delta boundaries while creating a runtime environment where narrator, NPCs, and player act together (not sequentially).
 
 ## Scope
 
 In scope:
 
-- `SceneTurnEnvelope.v2` as final live turn output shape.
+- **LDSS Module**: `LDSSInput` and `LDSSOutput` contracts; `NPCAgencyPlan` with non-passive NPC decisions.
+- **Narrative Runtime Agent**: `NarrativeRuntimeAgent` that streams continuous narrator blocks based on `RuntimeState` and `NPCAgencyPlan`; motivation-aware silence-filling; input-blocking while streaming.
+- **Event-based Runtime Environment**: Story runtime loop where narrator, NPCs, and player act asynchronously (not turn-sequential); player input can arrive at any time; narrator fills gaps based on NPC motivation pressure.
+- `SceneTurnEnvelope.v2` as final live turn output shape (now includes narrative streaming metadata).
 - `SceneBlock` for narrator, actor line, actor action, environment interaction, and system degraded notice.
-- `LDSSInput` and `LDSSOutput` contracts.
-- `NPCAgencyPlan` with non-passive NPC decisions.
 - EnvironmentInteraction with canonical, typical, and `similar_allowed` affordance validation.
-- NarratorVoiceValidation and PassivityValidation.
-- Live-path proof from HTTP turn route through runtime manager, LangGraph/AI seam, LDSS, validation, commit, and response packaging.
+- NarratorVoiceValidation and PassivityValidation (narrator cannot block player agency).
+- Live-path proof from HTTP turn route through Story Runtime Manager, LDSS, NarrativeRuntimeAgent, validation, commit, and response packaging.
+- Optional Langfuse instrumentation (infrastructure; UI deferred to MVP 4).
 
 Out of scope:
 
 - Langfuse/Narrative Gov final UI; MVP 3 emits trace scaffold consumed by MVP 4.
-- Final frontend typewriter UX; MVP 3 emits renderable blocks consumed by MVP 5.
+- Final frontend typewriter UX; MVP 3 emits renderable blocks and streaming metadata consumed by MVP 5.
+- Admin UI for Langfuse Tracing Toggle (deferred to MVP 4).
 
 ## Base Contract
 
-A real `live_dramatic_scene_simulator` runs in the live play path and renders a staged interactive text-adventure / dramatic chat experience.
+A real `live_dramatic_scene_simulator` runs in the live play path and renders a continuous, interactive dramatic experience where narrator, NPCs, and player act together.
 
-The player chooses Annette or Alain. The selected character is human-controlled. The other canonical God of Carnage characters are free NPC dramatic actors. NPCs speak, act, pursue their own line, interact with other NPCs, and interact with the environment through canonical, typical, or `similar_allowed` affordances. NPCs may use admitted objects with or against other actors when valid and non-coercive. The Narrator is the player's inner perception/orientation voice, not a dialogue summarizer.
+**Runtime Model (Event-based, not turn-sequential):**
+- Story Runtime Manager orchestrates LDSS (generates NPC behavior) and NarrativeRuntimeAgent (streams narrator prose).
+- Narrator streams continuously, filling silence with perception/orientation based on NPC motivation pressure (dramatic signature, narrative threads, pressure summary from `RuntimeState`).
+- NPCs act autonomously (per `NPCAgencyPlan`). NPC-to-NPC interaction does not require human actor mediation.
+- Player input can arrive at any time. When narrator is streaming, input is queued. When narrator reaches motivation-based ruhepunkt (no further NPC initiatives planned), input is processed → next turn.
+- Narrator must not block player agency: cannot force player state, predict player choice, or reveal hidden NPC intent.
 
-Diagnostics, Narrative Gov, and Langfuse or deterministic trace export prove the live runtime path. `docker-up.py`, `tests/run_tests.py`, GitHub workflows, and TOML/tooling configs remain fully functional. Partial foundation is not acceptable.
+**Dramatic Elements:**
+- The player chooses Annette or Alain (human-controlled). The other canonical God of Carnage characters (Alain, Véronique, Michel) are free NPC dramatic actors.
+- NPCs speak, act, pursue their own line, interact with each other, and interact with the environment through canonical, typical, or `similar_allowed` affordances. NPCs may use admitted objects with or against other actors when valid and non-coercive.
+- The Narrator is the player's inner perception/orientation voice, filling gaps between actor agency. Not a dialogue summarizer.
+
+**Proof of Live Path:**
+Diagnostics, Narrative Gov, optional Langfuse tracing (enabled/disabled via MVP 4 admin toggle), and deterministic trace export prove the live runtime path. `docker-up.py`, `tests/run_tests.py`, GitHub workflows, and TOML/tooling configs remain fully functional. Partial foundation is not acceptable.
 
 ### Global Prohibitions
 
@@ -66,26 +80,35 @@ MVP 3 is the final behavior core. LDSS is non-optional and final. A narrator-onl
 | Trace scaffold | MVP 4 | span names, decision IDs, validation outcomes | trace scaffold artifact |
 | Frontend render contract scaffold | MVP 5 | block IDs, block types, delivery hints | response fixture |
 
-## Deferred from MVP 2: Object Admission and State Delta Boundary Admin Overrides
+## Deferred Admin Surfaces
 
-The following infrastructure decisions were **locked in MVP 2** (Option B: Admin Pattern with Audit Trail), but the **operator UI is deferred to MVP 4**:
+The following infrastructure decisions are **locked**, but **operator UI is deferred to MVP 4**:
 
-### Object Admission Override Admin Surface
+### Object Admission Override Admin Surface (from MVP 2)
 - **Decision Source**: ADR-MVP2-015 (Canonical, Typical, and Similar Environment Affordances)
 - **Infrastructure Present**: `admit_object()` validator and `ObjectAdmissionRecord` tier enforcement (all tests PASS)
 - **Admin UI Deferred**: Operator interface to override admission tier (e.g., canonical→temporary) not implemented in MVP 3
 - **Will be implemented in MVP 4** alongside Narrative Gov operator surfaces
 
-### State Delta Boundary Override Admin Surface  
+### State Delta Boundary Override Admin Surface (from MVP 2)
 - **Decision Source**: ADR-MVP2-003 (NPC Coercion), ADR-MVP2-016 (Operational Gates)
 - **Infrastructure Present**: `validate_state_delta()` enforces protected paths with audit intent (all tests PASS)
 - **Admin UI Deferred**: Operator interface for breakglass unlocking of protected paths not implemented in MVP 3
 - **Will be implemented in MVP 4** alongside Narrative Gov operator surfaces
 
+### Langfuse Tracing Toggle Admin Surface (new in MVP 3)
+- **Decision Source**: Event-based Runtime Architecture — Tracing must be optional (default JSON scaffold, optional live Langfuse)
+- **Infrastructure Present**: NarrativeRuntimeAgent accepts `enable_langfuse_tracing` config parameter; can emit traces or JSON scaffold
+- **Default**: JSON scaffold (Trace metadata without live Langfuse SDK calls)
+- **Enabled**: Live Langfuse spans during LDSS + NarrativeRuntimeAgent execution
+- **Configuration**: Environment variable (`ENABLE_LANGFUSE_TRACING`) or runtime config
+- **Admin UI Deferred**: Administration-tool switch to enable/disable live Langfuse tracing per session (MVP 4)
+- **Will be implemented in MVP 4** alongside Narrative Gov admin surfaces
+
 **Why deferred?**
-- MVP 3 focuses on live LDSS behavior proof; admin overrides are operational fine-tuning
-- MVP 4 consolidates all operator surfaces (Narrative Gov health + Object Admission + State Delta overrides) in administration-tool
-- Both validator functions exist and are tested; only UI implementation is deferred
+- MVP 3 focuses on live LDSS + NarrativeRuntimeAgent behavior proof; Langfuse integration is observability fine-tuning
+- MVP 4 consolidates all operator surfaces (Narrative Gov health + Object Admission + State Delta overrides + Langfuse toggle) in administration-tool
+- All validator functions and infrastructure exist; only UI implementation is deferred
 
 **Handoff reference**: `tests/reports/MVP_Live_Runtime_Completion/GOC_MVP2_HANDOFF_TO_MVP3.md` documents deferred admin UIs with implementation checklist for MVP 4.
 
@@ -97,10 +120,10 @@ MVP 4 consumes LDSS live path, scene blocks, simulator diagnostics scaffold, tra
 
 | Service | Purpose |
 |---|---|
-| world-engine / play-service | real turn route and commit path integration |
-| ai_stack | LDSS generation/seam, NPC agency plan, validation packaging |
+| world-engine / play-service | Story Runtime Manager orchestrates LDSS + NarrativeRuntimeAgent; HTTP turn route integration; input-blocking/queuing logic; commit path |
+| ai_stack | LDSS module (NPC behavior, NPCAgencyPlan); NarrativeRuntimeAgent module (narrator streaming, motivation-aware ruhepunkt, narrative validation) |
 | backend | pass-through of final SceneTurnEnvelope response if backend proxies play-service |
-| tests/tooling | unit, integration, and live-route tests |
+| tests/tooling | unit, integration, and live-route tests for LDSS and NarrativeRuntimeAgent |
 
 ## Files to Inspect First
 
@@ -221,12 +244,14 @@ test_source_locator_artifact_exists_for_mvp
 | Patch ID | Area | Files / Symbols | Required Change | Tests |
 |---|---|---|---|---|
 | MVP3-P01 | LDSS module | `ai_stack/live_dramatic_scene_simulator.py` or equivalent | Implement LDSS input -> output with non-empty blocks and decision records. | `test_ldss_generates_scene_turn_envelope_v2` |
-| MVP3-P02 | Live-path integration | HTTP turn -> runtime manager -> ai_stack seam -> LDSS -> validators -> commit -> response | Prove actual turn route invokes LDSS; no fake route. | `test_live_turn_route_invokes_ldss` |
+| MVP3-P02 | Live-path integration | HTTP turn -> Story Runtime Manager -> LDSS -> NarrativeRuntimeAgent -> validators -> commit -> response | Prove actual turn route invokes LDSS and NarrativeRuntimeAgent; no fake route. | `test_live_turn_route_invokes_ldss_and_narrative_agent` |
 | MVP3-P03 | NPC agency | `NPCAgencyPlan`, responder plan seam | Require visible NPC actor response and allow NPC-to-NPC dialogue. | `test_npc_to_npc_dialogue_present`, `test_no_visible_actor_response_triggers_retry_or_degradation` |
 | MVP3-P04 | Environment affordances | affordance validator, object admission consumer | Validate canonical/typical/similar and reject hallucinated objects. | `test_similar_allowed_requires_similarity_reason`, `test_rejects_unadmitted_plausible_object` |
 | MVP3-P05 | Narrator contract | narrator validator | Narrator is inner perception/orientation only; reject recap/forced state/hidden intent. | narrator tests |
 | MVP3-P06 | Final response guard | response packager | Reject no blocks, legacy-only output, narrator-only passive output. | `test_scene_blocks_required_for_final_response`, `test_legacy_only_output_fails_final_response` |
-| MVP3-P07 | Operational wiring | `tests/run_tests.py`, workflows, TOMLs | Include unit/integration/live-route LDSS suites. | operational checks |
+| MVP3-P07 | Narrative Runtime Agent | `ai_stack/narrative_runtime_agent.py` | Implement event-based streaming narrator that fills silence based on NPC motivation pressure (dramatic signature, narrative threads, pressure); input-blocking while streaming; motivation-aware ruhepunkt detection. | `test_narrative_agent_streams_continuously`, `test_narrative_agent_respects_motivation_pressure`, `test_narrative_agent_blocks_input_while_streaming`, `test_narrative_agent_signals_ruhepunkt_when_no_npc_initiatives` |
+| MVP3-P08 | Story Runtime Manager orchestration | `world-engine/app/story_runtime/manager.py` | Orchestrate: LDSS → NarrativeRuntimeAgent; manage input-queue; signal ruhepunkt detection → process queued input. | `test_story_runtime_manager_orchestrates_ldss_and_narrative_agent`, `test_input_blocking_while_narrative_agent_streams` |
+| MVP3-P09 | Operational wiring | `tests/run_tests.py`, workflows, TOMLs | Include unit/integration/live-route LDSS and NarrativeRuntimeAgent suites. | operational checks |
 
 ## Data Contracts
 
@@ -371,6 +396,65 @@ Valid block types: `narrator`, `actor_line`, `actor_action`, `environment_intera
 }
 ```
 
+### NarrativeRuntimeAgentInput
+
+```json
+{
+  "contract": "narrative_runtime_agent_input.v1",
+  "runtime_state": {"story_session_id": "story_123", "turn_number": 4, "current_scene_id": "phase_1", "dramatic_signature": {...}, "narrative_threads": [...], "thread_pressure_summary": "escalating"},
+  "npc_agency_plan": {"primary_responder_id": "veronique_houllie", "secondary_responder_ids": ["alain_reille"], "npc_initiatives": [...]},
+  "ldss_output": {"visible_scene_output": {...}, "decision_count": 3, "scene_block_count": 4},
+  "enable_langfuse_tracing": false,
+  "player_input_queued": false,
+  "narrative_context": {"prior_silence_duration_ms": 1200, "last_npc_action": "veronique_speaks", "player_emotional_cue": "questioning"}
+}
+```
+
+### NarrativeRuntimeAgentOutput (Streaming)
+
+Each stream event is one of:
+
+```json
+{
+  "contract": "narrative_runtime_agent_event.v1",
+  "event_type": "narrator_block",
+  "narrator_block": {
+    "id": "turn-4-block-1",
+    "block_type": "narrator",
+    "text": "You notice the pause before Alain answers; it feels less like uncertainty than calculation.",
+    "delivery": {"mode": "typewriter", "characters_per_second": 44, "pause_before_ms": 150, "pause_after_ms": 650, "skippable": true}
+  },
+  "decision_id": "d-narrator-perception-1"
+}
+```
+
+or
+
+```json
+{
+  "contract": "narrative_runtime_agent_event.v1",
+  "event_type": "ruhepunkt_signal",
+  "ruhepunkt_reached": true,
+  "remaining_npc_initiatives": 0,
+  "can_accept_input": true,
+  "narrative_context": {"blocks_streamed": 3, "total_duration_ms": 4200, "silence_filled": true, "motivation_pressure_addressed": "escalating"}
+}
+```
+
+### NarrativeRuntimeAgentConfig
+
+```json
+{
+  "contract": "narrative_runtime_agent_config.v1",
+  "enable_langfuse_tracing": false,
+  "narrator_style": "inner_perception_orientation",
+  "silence_filling_enabled": true,
+  "motivation_awareness_enabled": true,
+  "max_silence_duration_ms": 8000,
+  "ruhepunkt_strategy": "motivation_based"
+}
+```
+
 ## Validation Rules
 
 | Rule | Where Enforced | Error Code | Test Name | Diagnostic Field |
@@ -385,6 +469,10 @@ Valid block types: `narrator`, `actor_line`, `actor_action`, `environment_intera
 | narrator cannot summarize dialogue | narrator validator | `narrator_dialogue_summary_rejected` | `test_narrator_rejects_dialogue_recap` | `narrator_validation.error_code` |
 | narrator cannot force player state | narrator validator | `narrator_forces_player_state` | `test_narrator_modal_language_does_not_force_player_state` | `narrator_validation.error_code` |
 | narrator cannot reveal hidden intent | narrator validator | `narrator_reveals_hidden_intent` | `test_narrator_cannot_reveal_hidden_npc_intent` | `narrator_validation.error_code` |
+| narrative agent must stream while NPC initiatives pending | narrative runtime agent | `narrative_agent_must_stream_npc_initiatives` | `test_narrative_agent_continues_while_npc_initiatives_pending` | `narrative_agent.streaming_active` |
+| narrative agent must signal ruhepunkt when no NPC initiatives | narrative runtime agent | `ruhepunkt_signal_required` | `test_narrative_agent_signals_ruhepunkt_when_initiatives_exhausted` | `narrative_agent_event.ruhepunkt_reached` |
+| input must be blocked while narrative agent streams | story runtime manager | `input_blocked_during_narrative_streaming` | `test_input_blocked_while_narrative_agent_streams` | `story_runtime.input_queue_status` |
+| narrative agent must not force player state or emotion | narrative runtime agent | `narrator_forces_player_state` | `test_narrative_agent_does_not_force_player_state` | `narrative_agent.validation_outcome` |
 
 ### Wave-Hardening Validation Rules
 
@@ -537,6 +625,7 @@ Valid block types: `narrator`, `actor_line`, `actor_action`, `environment_intera
 
 ## Required Tests
 
+**LDSS Tests:**
 - `test_ldss_generates_scene_turn_envelope_v2`
 - `test_live_turn_route_invokes_ldss`
 - `test_live_dramatic_scene_simulator_not_partial`
@@ -547,10 +636,32 @@ Valid block types: `narrator`, `actor_line`, `actor_action`, `environment_intera
 - `test_similar_allowed_requires_similarity_reason`
 - `test_rejects_unadmitted_plausible_object`
 - `test_environment_delta_cannot_mutate_protected_truth`
+
+**Narrator Validation Tests:**
 - `test_narrator_rejects_dialogue_recap`
 - `test_narrator_modal_language_does_not_force_player_state`
 - `test_narrator_cannot_reveal_hidden_npc_intent`
-- all mandatory operational checks from this guide
+
+**Narrative Runtime Agent Tests:**
+- `test_narrative_agent_streams_continuously`
+- `test_narrative_agent_respects_motivation_pressure`
+- `test_narrative_agent_fills_silence_based_on_npc_pressure`
+- `test_narrative_agent_blocks_input_while_streaming`
+- `test_narrative_agent_signals_ruhepunkt_when_no_npc_initiatives`
+- `test_narrative_agent_continues_while_npc_initiatives_pending`
+- `test_narrative_agent_does_not_force_player_state`
+
+**Story Runtime Manager Orchestration Tests:**
+- `test_story_runtime_manager_orchestrates_ldss_and_narrative_agent`
+- `test_input_blocked_while_narrative_agent_streams`
+- `test_input_queue_processed_after_ruhepunkt_signal`
+
+**Langfuse Optional Instrumentation Tests:**
+- `test_narrative_agent_accepts_enable_langfuse_tracing_config`
+- `test_narrative_agent_emits_trace_scaffold_by_default`
+- `test_narrative_agent_emits_langfuse_spans_when_enabled`
+
+**All mandatory operational checks from this guide**
 
 ## Required ADRs
 
