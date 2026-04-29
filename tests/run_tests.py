@@ -549,7 +549,7 @@ def show_test_stats(suites: dict[str, SuiteConfig], *, scope: str = "all") -> bo
         if not (test_root.is_dir() or test_root.is_file()):
             print_info(f"{suite_name}: no tests directory or file ({test_root})")
             continue
-        collect_argv = ["--collect-only", "-q"]
+        collect_argv = ["--collect-only", "-q", "--no-cov"]
         m = marker_filter_for_suite(suite_name, scope)
         if m:
             collect_argv.extend(["-m", m])
