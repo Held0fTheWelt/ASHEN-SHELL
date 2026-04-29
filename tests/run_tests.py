@@ -142,6 +142,9 @@ DEFAULT_COV_FAIL_UNDER = "80"
 # Instead, we check that the measured coverage (whatever modules ran) meets a minimal gate
 WRITERS_ROOM_COV_FAIL_UNDER = "50"  # Realistic: only 3 modules tested out of ~30+ in app
 IMPROVEMENT_COV_FAIL_UNDER = "50"   # Realistic: only 3 modules tested out of ~30+ in app
+# story_runtime_core has adapters and utilities tested locally; builtin templates and branching modules
+# are tested indirectly through world-engine and backend. Local-only gate is modest.
+STORY_RUNTIME_CORE_COV_FAIL_UNDER = "50"  # Realistic: core adapters/utilities tested; builtins integration-tested elsewhere
 
 # administration-tool: use ``--cov=.`` + ``administration-tool/.coveragerc`` (single source
 # trace) — do not list multiple ``--cov=module`` names; Coverage 7.x warns on import order.
@@ -625,6 +628,8 @@ def _cov_fail_under_for_suite(suite_name: str) -> str | None:
         return WRITERS_ROOM_COV_FAIL_UNDER
     if suite_name == "improvement":
         return IMPROVEMENT_COV_FAIL_UNDER
+    if suite_name == "story_runtime_core":
+        return STORY_RUNTIME_CORE_COV_FAIL_UNDER
     if suite_name == "database":
         # ``database/tests`` touch a thin slice of ``backend/app``; gating the whole tree is misleading.
         return None
@@ -653,17 +658,23 @@ def _cov_sources_for_suite(suite_name: str) -> list[str]:
         return []
     if suite_name == "ai_stack":
         return [AI_STACK_ROOT]
+    if suite_name == "story_runtime_core":
+        return ["story_runtime_core"]
     return ["."]
 
 
 def _append_cov_flags(argv: list[str], suite_name: str) -> None:
-    """Append ``--cov=…`` (and administration ``--cov-config``) for the suite."""
+    """Append ``--cov=…`` (and administration/story_runtime_core ``--cov-config``) for the suite."""
     cfg = SUITE_CONFIGS.get(suite_name)
     if cfg and not cfg.supports_coverage:
         return
     if suite_name == "administration":
         argv.append("--cov=.")
         argv.append(f"--cov-config={ADMIN_TOOL_DIR / '.coveragerc'}")
+        return
+    if suite_name == "story_runtime_core":
+        argv.append("--cov=story_runtime_core")
+        argv.append(f"--cov-config={PROJECT_ROOT / 'story_runtime_core' / '.coveragerc'}")
         return
     for src in _cov_sources_for_suite(suite_name):
         argv.append(f"--cov={src}")
