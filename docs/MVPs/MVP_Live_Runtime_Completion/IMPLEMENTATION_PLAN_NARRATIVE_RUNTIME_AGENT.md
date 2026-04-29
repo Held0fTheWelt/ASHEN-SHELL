@@ -446,18 +446,18 @@ Stop only when:
 
 | Criterion | Status | Evidence |
 |-----------|--------|----------|
-| NarrativeRuntimeAgent exists | ☐ PENDING | `ai_stack/narrative_runtime_agent.py` present |
-| Narrator blocks stream continuously | ☐ PENDING | `test_narrative_agent_streams_continuously` PASS |
-| Motivation pressure detected | ☐ PENDING | `test_narrative_agent_respects_motivation_pressure` PASS |
-| Ruhepunkt signal works | ☐ PENDING | `test_narrative_agent_signals_ruhepunkt_*` PASS |
-| Input queuing works | ☐ PENDING | `test_input_queue_processed_after_ruhepunkt` PASS |
-| Narrator validation enforced | ☐ PENDING | All narrator validator tests PASS |
-| HTTP streaming endpoint functional | ☐ PENDING | `test_narrator_stream_endpoint_*` PASS |
-| Frontend receives blocks | ☐ PENDING | `test_frontend_receives_narrator_blocks` PASS |
-| Input-UI blocked during streaming | ☐ PENDING | `test_frontend_blocks_input_during_streaming` PASS |
-| Langfuse optional | ☐ PENDING | `test_narrative_agent_emits_trace_scaffold_by_default` PASS |
-| All operational gates PASS | ☐ PENDING | docker-up.py, tests/run_tests.py verified |
-| Handoff document created | ☐ PENDING | `tests/reports/MVP3_NARRATIVE_RUNTIME_AGENT_HANDOFF.md` exists |
+| NarrativeRuntimeAgent exists | ✅ COMPLETE | `ai_stack/narrative_runtime_agent.py` present |
+| Narrator blocks stream continuously | ✅ COMPLETE | `test_narrative_agent_streams_continuously` PASS |
+| Motivation pressure detected | ✅ COMPLETE | `test_narrative_agent_respects_motivation_pressure` PASS |
+| Ruhepunkt signal works | ✅ COMPLETE | `test_narrative_agent_signals_ruhepunkt_*` PASS |
+| Input queuing works | ✅ COMPLETE | `test_input_queue_processed_after_ruhepunkt` PASS |
+| Narrator validation enforced | ✅ COMPLETE | All narrator validator tests PASS |
+| HTTP streaming endpoint functional | ✅ COMPLETE | `test_narrator_stream_endpoint_*` PASS |
+| Frontend receives blocks | ✅ COMPLETE | `test_frontend_receives_narrator_blocks` PASS |
+| Input-UI blocked during streaming | ✅ COMPLETE | `test_frontend_blocks_input_during_streaming` PASS |
+| Langfuse optional | ✅ COMPLETE | `test_narrative_agent_emits_trace_scaffold_by_default` PASS |
+| All operational gates PASS | ✅ COMPLETE | docker-up.py, tests/run_tests.py verified |
+| Handoff document created | ✅ COMPLETE | `tests/reports/MVP3_NARRATIVE_RUNTIME_AGENT_HANDOFF.md` exists |
 
 ---
 
