@@ -113,6 +113,7 @@ The following **infrastructure was locked in MVP 2** (Option B: Admin Pattern wi
 - `NarrativeRuntimeAgent` accepts `enable_langfuse_tracing` config parameter
 - Can emit traces (JSON scaffold) or live Langfuse spans
 - Configuration via environment variable or runtime config
+- Langfuse service: ✅ **Already running, healthy, API key connected** (2026-04-29)
 
 **Admin UI to implement in MVP 4**:
 - `GET /api/v1/admin/tracing/status` — read current tracing mode (global and per-session)
@@ -131,6 +132,1218 @@ The following **infrastructure was locked in MVP 2** (Option B: Admin Pattern wi
 **References**:
 - MVP 3 plan section "Deferred Admin Surfaces" documents infrastructure
 - ADR for Event-based Runtime Architecture documents tracing strategy
+
+---
+
+## Architectural Decisions (2026-04-29 Grill-Me Session)
+
+### 1. Langfuse Strategy (DECIDED)
+
+**Decision**: Default JSON scaffold, real Langfuse SDK when enabled
+
+- **Default**: `LANGFUSE_ENABLED=false` — emit JSON trace scaffold (no SDK calls, no credentials required)
+- **Enabled**: `LANGFUSE_ENABLED=true` OR admin UI per-session toggle — real Langfuse SDK spans to running service
+- **Current State**: Langfuse service running, healthy, API key connected, ready for instrumentation
+- **Implementation**: Code emits real SDK calls when `enable_langfuse_tracing=True`, JSON scaffolds when `False`
+
+### 2. Trace Hierarchy (DECIDED: Option C)
+
+**Decision**: HTTP handler creates root span, story manager chains child spans
+
+- **HTTP Handler** (`world-engine/app/api/http.py`):
+  - `POST /api/v1/story/{session}/turn/execute` receives request
+  - Calls `langfuse_adapter.start_trace(name="story.turn.execute", ...)`
+  - Sets `trace_id` in context via `set_trace_id(trace.id)`
+  - Passes context through to story manager
+
+- **Story Manager** (`world-engine/app/story_runtime/manager.py`):
+  - Reads trace context via `get_trace_id()`
+  - Chains child spans for each phase:
+    - `runtime_profile_resolution`
+    - `actor_lane_context`
+    - `live_dramatic_scene_simulator` (LDSS)
+    - `narrator_voice_validation`
+    - `affordance_validation`
+    - `state_delta_validation`
+    - `commit_seam`
+    - `package_output`
+  - Each span captures input/output and validation outcomes
+
+- **Result**: Full latency breakdown visible in Langfuse (HTTP → profile → lanes → LDSS → validation → commit)
+
+### 3. Diagnostics Assembly (DECIDED: Option C)
+
+**Decision**: Manager collects, HTTP handler packages into final response
+
+- **Manager** (`world-engine/app/story_runtime/manager.py`):
+  - Creates `DiagnosticsCollector` at turn start
+  - LDSS writes to collector: `decision_count`, `scene_block_count`, `input_hash`, `output_hash`
+  - Validators write to collector: `narrator_validation_outcome`, `affordance_validation_outcome`, `state_delta_validation_outcome`
+  - Commit seam writes to collector: `quality_class` (normal/degraded/failed)
+  - Returns collector with turn result
+
+- **HTTP Handler** (`world-engine/app/api/http.py`):
+  - Receives turn result with diagnostics collector
+  - Calls `build_diagnostics_envelope(collector, trace_id, story_session_id, run_id, turn_number)`
+  - Includes envelope in `ExecuteTurnResponse.diagnostics`
+
+- **Result**: DiagnosticsEnvelope is non-placeholder, tied to real evidence (hashes, counts, validation status, trace correlation)
+
+### 4. Narrative Gov Health Query (DECIDED: Option C + Caching)
+
+**Decision**: Dedicated diagnostics API endpoint with in-memory caching
+
+- **Endpoint**: `GET /api/v1/admin/game/session/{session_id}/recent-diagnostics?limit=10`
+  - Location: `world-engine/app/api/admin_routes.py` (or backend if proxied)
+  - Returns: Array of recent `DiagnosticsEnvelope` objects (last N turns)
+  - Caching: In-memory cache of recent diagnostics, expires with session
+
+- **Narrative Gov Panels** (`administration-tool/templates/manage/narrative-gov/*.html`):
+  - Call endpoint on page load and on refresh interval
+  - Display:
+    - LDSS health (status, decision_count, block_count, live_path proof)
+    - NPC agency (primary responder, secondary responders, initiatives)
+    - Narrator validation (outcome, strictness)
+    - Affordance validation (object admission tiers, similar_allowed flags)
+    - State delta validation (protected path rejections, breakglass status)
+    - Quality (normal/degraded/failed with reason)
+    - Trace correlation (trace_id links to Langfuse)
+
+### 5. Langfuse Toggle (DECIDED: Option C)
+
+**Decision**: Environment variable default + admin UI per-session override
+
+- **Default**: `LANGFUSE_ENABLED` environment variable (default: `false`)
+  - Global setting, affects all sessions unless overridden
+  - Requires restart to change globally
+
+- **Admin UI Override**:
+  - `POST /api/v1/admin/tracing/toggle-session/{session_id}` — enable/disable for specific session
+  - Override stored in session-scoped config cache (not persistent, expires with session)
+  - Allows operators to enable full Langfuse tracing for debugging without restarting
+
+- **Result**: Safe by default (no SDK calls, no credentials required), full observability on-demand for live debugging
+
+### 6. Implementation Phases (REORDERED: Phase A → B → C)
+
+**ORIGINAL ORDER (B→C→A) SUPERSEDED BY DECISIONS 7-12**
+
+New dependencies found:
+- Decision 7 (Redaction) affects Phase 1 design
+- Decision 8 (Degradation) requires span instrumentation
+- Decision 11 (Cost Tracking) requires both envelope + spans
+- Decision 12 (Token Budgeting) requires cost data from spans
+
+**NEW PHASE ORDER: A → B → C**
+
+**Phase A (Week 1): Foundation & Data Collection**
+- Build `DiagnosticsCollector` with all fields (Decisions 1-8)
+- Implement non-placeholder evidence (hashes, counts, validation status, degradation timeline)
+- Secret redaction: strict-redacted version + debug_payload structure (Decision 7)
+- Degradation timeline collection during turn execution (Decision 8)
+- HTTP handler packages `DiagnosticsEnvelope` with redaction applied
+- Implement redaction_mode config (strict/relaxed/none)
+- Tests verify envelope structure, redaction, degradation collection
+- **Proof**: Turn responses include real DiagnosticsEnvelopes with secret redaction and degradation timeline
+- **Duration**: 1 week (foundation only, no external dependencies)
+- **Stop Gate**: All envelope fields populated, redaction working, degradation timeline accurate
+
+**Phase B (Week 2): Instrumentation & Cost Tracking**
+- Instrument HTTP handler: create root span `story.turn.execute` with environment tags (Decision 11)
+- Instrument story manager: chain child spans (Decision 2)
+- Instrument LDSS, NarrativeRuntimeAgent: emit real Langfuse spans (Decision 1)
+- Add token/cost tracking to all spans (Decisions 11)
+- Implement session-level cost aggregation
+- Real Langfuse SDK calls when `enable_langfuse_tracing=True` (Decision 1)
+- TraceableDecisions recorded for each runtime/AI decision
+- Cost data flows into DiagnosticsEnvelope.cost_summary
+- Tests verify spans reach Langfuse, correct IDs, token/cost calculation
+- **Proof**: Langfuse dashboard shows real traces with cost breakdown; DiagnosticsEnvelope includes cost_summary
+- **Duration**: 1 week (depends on Phase A foundation)
+- **Stop Gate**: All spans emitted, token counts accurate, cost calculations verified, Langfuse service receives data
+
+**Phase C (Week 3): Governance, Evaluation & Operator Surfaces**
+- Token budget enforcement: budget config, ceiling checking, cost-aware degradation (Decision 12)
+- Audit trail for overrides: layered structure with configurable granularity (Decision 9)
+- Evaluation pipeline: rubric definition, offline baseline, annotation UI, feedback loop (Decision 10)
+- Langfuse toggle admin UI: per-session enable/disable (Decision 5)
+- Object Admission Override UI with audit trail (Decision 9)
+- State Delta Boundary Override UI with audit trail (Decision 9)
+- Narrative Gov health panels (6 panels) displaying real diagnostics + cost + degradation + evaluation
+- Cost dashboard with real-time + daily + weekly reporting
+- Diagnostics API endpoint with caching (Decision 4)
+- Tests verify admin UIs functional, audit trails logged, budget enforcement works, evaluation scoring
+- **Proof**: Operators can control all surfaces; cost/token/quality metrics visible; all admin actions audited
+- **Duration**: 2 weeks (complex admin UIs, integration heavy)
+- **Stop Gate**: All admin surfaces operational, audit logging functional, Narrative Gov panels populated with real data
+
+---
+
+## Why Phase Reordering: A → B → C (Not B→C→A)
+
+| Original (B→C→A) Problem | New (A→B→C) Solution |
+|---|---|
+| Phase B starts with incomplete DiagnosticsEnvelope | Phase A builds complete envelope first |
+| Phase C depends on cost data (Decision 11) | Phase B delivers cost data early |
+| Cost-aware degradation (Decision 12) needs phase 2 | Phase B enables cost-aware decisions in next phase |
+| Admin UIs can't display costs until phase 2 done | Phase C builds admin UI on top of working cost system |
+| Token budgeting (Decision 12) unclear when to implement | Phase C has clear cost foundation from phase B |
+
+**New flow is logical**:
+1. **Phase A**: "What should we collect?" (envelope design)
+2. **Phase B**: "How do we collect it?" (instrumentation + costs)
+3. **Phase C**: "How do we control/evaluate it?" (budgets + quality + operator control)
+
+---
+
+## Additional Decisions 13-19 (Trace Quality, Filtering, SDK, Sessions, Environments, Tags)
+
+Based on Langfuse FAQ/Docs review, seven additional decisions required for production quality.
+
+### 13. Trace Quality Standards (DECIDED: Option D)
+
+**Decision**: Mandatory Input/Output + Meaningful Observation Names + Type Clarity
+
+Every observation MUST have input and output data (no empty traces):
+
+**A. Mandatory Input/Output**:
+- LLM calls: input = prompt/messages, output = completion text
+- Tool calls: input = parameters, output = result
+- Custom spans: input = operation parameters, output = operation result
+- Fallback: If no output yet available, document why (e.g., "span still executing")
+
+Why: Empty input/output breaks evaluations (LLM-as-judge), search, browsing, diagnostics
+
+**B. Meaningful Observation Names**:
+```python
+# WRONG (technology-based):
+"claude-3-sonnet-call"
+"llm-invocation"
+"anthropic-api"
+
+# RIGHT (function-based):
+"classify-player-intent"
+"generate-scene-narration"
+"validate-affordance-interaction"
+"resolve-npc-responder"
+```
+
+**C. Observation Type Clarity**:
+- `generation`: LLM calls (captures tokens, cost, model)
+- `tool`: Tool/function calls (API calls to runtime functions)
+- `span`: Custom logic (validators, managers, decision logic)
+- Type affects cost tracking and evaluation eligibility
+
+**Implementation**:
+- LangfuseAdapter: Always populate input/output in spans
+- Story Manager: Name spans after function, not technology
+- Tests: Validate no empty input/output in any observation
+
+### 14. Span Filtering & Noise Reduction (DECIDED: Option D — UPDATED)
+
+**Decision**: Collect ALL Spans by Default + Admin Multi-Select to Filter
+
+Langfuse uses OpenTelemetry which captures ALL instrumented libraries (HTTP clients, DB drivers, frameworks). Default = all visible for debugging.
+
+**A. Default Strategy**:
+- **Collect everything**: HTTP, DB, Framework, LLM, custom spans all emitted
+- **No automatic filtering**: All spans visible by default (debugging-friendly)
+- **Operator control**: Admin can filter per-investigation if needed
+
+**B. Admin Multi-Select Filtering** (in Narrative Gov):
+```
+Span Type Visibility (per session/investigation):
+☑ LLM Spans (claude API calls)
+☑ Custom Spans (god_of_carnage logic)
+☑ HTTP Spans (requests to Langfuse, external APIs)
+☑ Database Spans (SQLAlchemy, queries)
+☑ Framework Spans (FastAPI, middleware)
+
+[Apply Filter] [Reset to All]
+```
+
+**C. Use Cases**:
+- **Investigation mode**: All spans visible → find root cause
+- **Production monitoring**: Filter to LLM + Custom only (noise reduction)
+- **Performance analysis**: Include HTTP + DB to identify network bottlenecks
+
+**D. Implementation**:
+- `world-engine/app/api/http.py`: Emit all spans, include metadata.scope.name
+- `administration-tool/templates/narrative-gov/span-filter.html`: Multi-Select UI
+- `administration-tool/static/manage_span_filter.js`: Apply filters dynamically
+- `.env.example`: Note that filtering is optional, default is all
+- Tests: Verify all span types appear in Langfuse by default
+
+### 15. SDK Initialization & Lifecycle Management (DECIDED: Option D)
+
+**Decision**: Initialize Langfuse BEFORE Story Manager + Flush on Turn End
+
+**A. Initialization Order**:
+```python
+# Order matters! Langfuse BEFORE logic
+1. Load environment variables
+2. Initialize Langfuse adapter (calls langfuse_adapter.py:get_instance())
+3. Verify credentials loaded (public_key, secret_key present)
+4. Start story manager (which depends on Langfuse context)
+5. HTTP handler ready to receive requests
+```
+
+Why: "Start SDK before initializing logic that needs to be traced to avoid losing data"
+
+**B. Flush Strategy**:
+```python
+# At turn end / session close
+try:
+    # Execute turn...
+    result = await story_manager.execute_turn(...)
+finally:
+    # Flush pending traces before response
+    langfuse_adapter.flush(timeout_seconds=5)
+    return result
+```
+
+Why: Ensures all spans transmitted before response sent (important for short-lived turns)
+
+**C. Lifecycle Hooks**:
+- `docker-up.py`: Initialize Langfuse after backend startup
+- `HTTP.POST /api/v1/story/{session}/turn/execute`: Flush after turn completes
+- `HTTP.POST /api/v1/admin/tracing/disable`: Flush and reset Langfuse context
+
+**Implementation**:
+- `world-engine/app/api/http.py`: Add flush() in finally block
+- `docker-up.py`: Verify Langfuse initialized before play-service ready
+- Tests: Verify traces present in Langfuse within 2s of turn end
+
+### 16. Session-Level Quality & Bookmarking (DECIDED: Option D)
+
+**Decision**: Aggregate Turn Scores to Session Score + Admin Bookmarking
+
+**A. Session-Level Score**:
+```json
+{
+  "session_id": "sess_xyz",
+  "session_quality": {
+    "overall_score": 4.1,
+    "score_source": "aggregated_from_turns",
+    "dimensions": {
+      "player_engagement": 4.3,
+      "narrative_coherence": 4.0,
+      "technical_stability": 4.1
+    },
+    "turn_count": 15,
+    "avg_turn_score": 4.1
+  }
+}
+```
+
+Computed: Average of all turn scores in session (each turn has individual score from Decision 10 rubric)
+
+**B. Session Bookmarking**:
+- Admin UI: Star/flag important sessions
+- Reason tags: "showcase", "rca_example", "player_engagement_high", "degradation_recovery_excellent"
+- Filter in Narrative Gov: Show only bookmarked sessions
+- Export: Shareable link for cross-team analysis
+
+**C. Session Metrics**:
+- Total duration
+- Cost aggregation (from Decision 11)
+- Quality trend (turn 1 score → turn 15 score)
+- Degradation events count
+- Recovery success rate
+
+**Implementation**:
+- `diagnostics_envelope.py`: Add session_quality field (aggregated from turn scores)
+- `administration-tool/templates/narrative-gov/session-browser.html`: Bookmarking UI
+- `world-engine/app/api/admin_routes.py`: POST /api/v1/admin/sessions/{session_id}/bookmark
+
+### 17. Session Replay & Debugging (DECIDED: Option D)
+
+**Decision**: Timeline-Based Session Replay for Multi-Turn Debugging
+
+**A. Session Replay UI** (new Narrative Gov section):
+```
+Timeline View:
+Turn 1 (245ms, quality=4.3) ┐
+├─ LDSS responder: annette │
+├─ Narrator: valid         │ Session Quality: 4.1/5
+├─ Cost: $0.28             │
+Turn 2 (312ms, quality=3.9) ┤
+├─ LDSS: FALLBACK_ACTIVE   │
+├─ Narrator: valid         │
+├─ Degradation recovery    │
+...
+Turn 15 (198ms, quality=4.2)┘
+```
+
+**B. Drill-Down Features**:
+- Click turn → view all spans, diagnostics, degradation events
+- Trace tree view (Langfuse native)
+- Narrative output view (how player saw it)
+- Side-by-side comparison (what was player input vs what system output)
+
+**C. Session Comparison** (for RCA):
+- Load two sessions (good vs failed)
+- Highlight divergence point (turn X where they split)
+- Difference view: "Why did session Y fail here when session X succeeded?"
+
+**Implementation**:
+- `administration-tool/templates/narrative-gov/session-replay.html`: Timeline + drill-down UI
+- `administration-tool/static/manage_session_replay.js`: Load session data, render timeline
+- `world-engine/app/api/admin_routes.py`: GET /api/v1/admin/sessions/{session_id}/replay
+- Langfuse native replay: Click turn → "Open in Langfuse" link
+
+### 18. Environment Configuration & Naming (DECIDED: Option D)
+
+**Decision**: LANGFUSE_TRACING_ENVIRONMENT with Naming Convention + Immutability Note
+
+Extend Decision 11 with Langfuse-specific environment configuration.
+
+**A. Configuration**:
+```bash
+# .env
+LANGFUSE_TRACING_ENVIRONMENT=production  # or staging, development
+
+# Naming pattern (Langfuse requirement):
+# ^(?!langfuse)[a-z0-9-_]+$ (max 40 chars)
+# Cannot start with "langfuse"
+```
+
+Valid examples: `production`, `staging`, `development`, `testing`, `canary-release`, `user-research`
+
+**B. Environment Strategy**:
+- `production`: Live player sessions
+- `staging`: Pre-release testing (mirrors production)
+- `development`: Local dev (one per developer or shared)
+- `testing`: Automated test runs (ephemeral)
+- `research`: User research / special investigations
+
+**C. Flexibility for Debugging** (UPDATED):
+- Environments are configured via `LANGFUSE_TRACING_ENVIRONMENT` at startup
+- For debugging: Operators can temporarily tag a turn/session with different environment via API override
+- Example: "Run Turn 42 as if it were dev-investigation-2026-04-29" (temporary tag, doesn't change global config)
+- Use case: Replay production scenario with debug-level tracing, then drop debug tag
+
+**D. Filtering & Analysis**:
+- Langfuse UI: Filter by environment in navigation bar
+- API: Query specific environment traces
+- Metrics: Compare performance/cost across environments
+
+**Implementation**:
+- `.env.example`: Document LANGFUSE_TRACING_ENVIRONMENT and naming convention
+- `docker-up.py`: Verify LANGFUSE_TRACING_ENVIRONMENT set before startup
+- Documentation: Note immutability (important operator knowledge)
+
+### 19. Tag Strategy & Propagation (DECIDED: Option D)
+
+**Decision**: Structured Tagging with propagate_attributes() for Automatic Propagation
+
+### 20. User Tracking & Metrics (DECIDED: Option D)
+
+**Decision**: Player ID → Langfuse userId Mapping with Per-User Metrics
+
+**A. User ID Configuration**:
+```python
+# Map World of Shadows player to Langfuse user
+propagate_attributes(
+    user_id=player_id,  # e.g., "annette_reille" or "alain_reille"
+    # OR for anonymized tracking:
+    user_id=f"player_{hash(player_id)}"
+)
+```
+
+**B. Per-User Metrics** (in Narrative Gov):
+- Cost aggregation by player
+- Session count per player
+- Quality scores per player (avg turn score)
+- Engagement metrics (turns per session, duration)
+- Degradation frequency per player
+
+**C. User-Level Analysis**:
+- Langfuse UI: Users tab shows all tracked players
+- API: Query per-user token consumption, cost trends
+- Dashboard: Compare Annette vs Alain role performance
+
+**Why**: Understand player-specific patterns (which role uses more tokens? which has better quality?)
+
+**Implementation**:
+- `world-engine/app/api/http.py`: Set user_id from player selection
+- `administration-tool/templates/narrative-gov/user-metrics.html`: Per-user cost/quality dashboard
+- Langfuse native filtering: "Show traces for user_id=annette_reille"
+
+### 22. LangGraph Agent Graph Instrumentation (DECIDED: Option D)
+
+**Decision**: Native Langfuse Instrumentation of LangGraph Nodes
+
+**A. Why Critical**:
+- NarrativeRuntimeAgent: LangGraph-based agent
+- LDSS: LangGraph node graph
+- Without agent graph visualization: Black box execution
+- With agent graphs: See which nodes fired, in what order
+
+**B. Implementation Pattern**:
+```python
+# Each LangGraph node becomes an observation
+from langfuse import observe
+
+@observe(name="classify_scene_intent")
+def classify_scene_intent(state):
+    """LangGraph node for classifying scene intent"""
+    # Langfuse automatically captures:
+    # - input (state before)
+    # - output (state after)
+    # - execution time
+    # - nested LLM calls within node
+    ...
+
+# Result in Langfuse: Visual graph showing node flow
+# classify_scene → resolve_responder → generate_narrative → validate → commit
+```
+
+**C. Graph Visualization**:
+- Langfuse dashboard: "Agent graphs" tab for each session
+- Shows: Which nodes executed, in what order, with timing
+- Drill-down: Click node → see all spans within node
+- Compare: Why did agent choose path X vs Y?
+
+**D. For LDSS & NarrativeRuntimeAgent**:
+- LDSS: Each decision node instrumented
+- NarrativeRuntimeAgent: Each narrator generation step instrumented
+- Tests verify: Graphs appear in Langfuse for every turn
+
+**Why**: LangGraph agents are essential to World of Shadows logic; visualization enables debugging
+
+**Implementation**:
+- `ai_stack/narrative_runtime_agent.py`: Add `@observe()` to LangGraph nodes
+- `ai_stack/live_dramatic_scene_simulator.py`: Same for LDSS nodes
+- Langfuse SDK handles graph inference automatically (from observation nesting)
+- Tests: Verify agent graphs render in Langfuse dashboard
+
+### 7-UPDATE: Custom Masking Function (Enhancement to Secret Redaction)
+
+**Enhancement to Decision 7**:
+
+Beyond strict/relaxed/none modes, implement custom Langfuse Masking Function:
+
+**A. Custom Mask Function** (using patterns):
+```python
+def custom_mask_function(obj, **kwargs):
+    """Langfuse masking function for PII/secrets"""
+    import re
+    from llm_guard import scan
+    
+    if isinstance(obj, str):
+        # Pattern-based redaction
+        obj = re.sub(r'\b\d{4}[-]?\d{4}[-]?\d{4}[-]?\d{4}\b', '[CREDIT_CARD]', obj)  # Credit cards
+        obj = re.sub(r'\S+@\S+\.\S+', '[EMAIL]', obj)  # Emails
+        obj = re.sub(r'\b\d{3}[-]?\d{3}[-]?\d{4}\b', '[PHONE]', obj)  # Phone numbers
+        
+        # LLM-Guard for PII detection
+        pii_scan_result, pii_risk = scan(obj)
+        if pii_risk > 0.5:  # High PII risk
+            obj = '[PII_DETECTED]'
+    
+    elif isinstance(obj, dict):
+        return {k: custom_mask_function(v, **kwargs) for k, v in obj.items()}
+    
+    elif isinstance(obj, list):
+        return [custom_mask_function(item, **kwargs) for item in obj]
+    
+    return obj
+
+# Initialize Langfuse with mask function
+langfuse = Langfuse(mask=custom_mask_function)
+```
+
+**B. Integration**:
+- `langfuse_adapter.py`: Pass custom_mask_function on initialization
+- `requirements.txt`: Add `llm-guard` for PII detection
+- Config: Custom patterns per environment (stricter in production)
+
+**Why**: Pattern-based + ML-based (llm-guard) is more comprehensive than simple keyword matching
+
+### 17-UPDATE: Shareable Trace URLs (Enhancement to Session Replay)
+
+**Enhancement to Decision 17**:
+
+Add shareable trace URLs for cross-team collaboration:
+
+**A. Trace URL Retrieval**:
+```python
+# During turn execution
+trace_url = langfuse_adapter.get_trace_url(trace_id)
+# Store in diagnostics
+diagnostics_envelope.trace_url = trace_url
+```
+
+**B. Sharing Strategy**:
+- Private by default (project members only)
+- Admin UI: Checkbox to make session public
+- Result: Shareable URL (no login needed)
+- Use case: Share exceptional sessions with stakeholders/players
+
+**C. URL Embedding**:
+- Narrative Gov session replay: "Copy shareable link" button
+- Admin notes/comments: Embed trace URLs for RCA references
+- Player feedback: "Show me what happened" → shareable trace
+
+**Why**: Enables async collaboration without access management overhead
+
+**A. Tagging Strategy** (hierarchical):
+```python
+# Context tags (set once at turn start, propagate to all children)
+propagate_attributes(
+    tags=[
+        "live-session",           # use case
+        "annette-role",           # player context
+        f"turn-{turn_number}",    # function
+        "production",             # environment
+        "ldss-active",            # feature flag state
+    ]
+)
+
+# Span-specific tags (added per observation)
+# In addition to propagated tags
+```
+
+**B. Tag Naming Convention**:
+- Max 200 characters per tag
+- Kebab-case: `player-engagement-high`, `degradation-recovery`, `fallback-active`
+- Namespace: `feature:ldss`, `module:narrator`, `decision:responder-selection`
+- Do NOT tag: technical details (HTTP methods, DB tables) — filter those out (Decision 14)
+
+**C. Tag Categories**:
+- **Use Cases**: `live-session`, `qa-testing`, `user-research`, `showcase`
+- **Player Context**: `annette-role`, `alain-role`, `scenario-hallway-confrontation`
+- **Functions**: `validate-affordance`, `resolve-responder`, `narrator-voice-check`
+- **Features**: `ldss-active`, `fallback-active`, `degradation-recovery`, `cost-ceiling-hit`
+- **Quality Signals**: `player-engagement-high`, `coherence-good`, `immersion-low`
+
+**D. Propagation Implementation**:
+```python
+# HTTP handler (turn start)
+with langfuse_context.set_attributes(
+    tags=["live-session", f"turn-{turn_number}", "production"],
+    environment=LANGFUSE_ENVIRONMENT,
+    session_id=story_session_id,
+    user_id=player_id
+):
+    # All child spans inherit tags automatically
+    result = await story_manager.execute_turn(...)
+    # No need to manually tag each child span
+```
+
+**Implementation**:
+- `world-engine/app/api/http.py`: Set propagate_attributes() at turn entry
+- `world-engine/app/story_runtime/manager.py`: Add span-specific tags during execution
+- Tests: Verify all spans have correct tags (no missing/orphaned tags)
+- Documentation: Tag naming convention + approved tag values
+
+---
+
+## Revised Implementation Phases (A → B → C) with Decisions 13-19
+
+**Phase A (Weeks 1-2): Foundation & Data Collection**
+- Build DiagnosticsEnvelope (Decisions 1-8)
+- Secret redaction (Decision 7)
+- Degradation timeline (Decision 8)
+- **NEW**: Trace quality standards (Decision 13) — input/output mandatory, meaningful names
+- **NEW**: SDK initialization & lifecycle (Decision 15) — flush strategy
+- **NEW**: Tag strategy setup (Decision 19) — tag naming convention documented
+- **NEW**: Environment configuration (Decision 18) — LANGFUSE_TRACING_ENVIRONMENT set
+- **Deliverable**: Complete envelope with mandatory input/output, correct naming, environment tags
+- **Stop Gate**: All envelope fields populated, redaction verified, tags correct, environment set
+
+**Phase B (Week 3): Instrumentation & Cost Tracking**
+- HTTP handler root span + environment tags (Decisions 2, 11, 18)
+- Story manager child spans (Decision 2)
+- LDSS, NarrativeRuntimeAgent real Langfuse spans (Decision 1)
+- Token/cost tracking (Decision 11)
+- Session-level cost aggregation (Decision 11)
+- **NEW**: Span filtering (Decision 14) — HTTP/DB noise removed
+- **NEW**: Tag propagation (Decision 19) — propagate_attributes() working
+- **NEW**: Session-level quality aggregation (Decision 16) — turn scores → session score
+- **Deliverable**: Langfuse dashboard shows clean traces; cost/quality aggregated to session level
+- **Stop Gate**: Spans emitted, token counts accurate, noise filtered, tags propagated, session scores computed
+
+**Phase C (Weeks 4-5): Governance, Evaluation & Operator Surfaces**
+- Token budget enforcement (Decision 12)
+- Audit trail for overrides (Decision 9)
+- Evaluation pipeline (Decision 10)
+- Langfuse toggle admin UI (Decision 5)
+- Override UIs with audit (Decision 9)
+- Narrative Gov health panels (6 panels + cost dashboard)
+- **NEW**: Session bookmarking (Decision 16) — flag important sessions
+- **NEW**: Session replay & debugging (Decision 17) — timeline-based multi-turn debug UI
+- **Deliverable**: All operator surfaces; cost/quality/replay visible; all actions audited
+- **Stop Gate**: Admin surfaces operational; session replay working; audit logging verified
+
+---
+
+## Summary: All 22 Decisions Complete ✅
+
+**MVP4 Architecture is COMPLETE with 22 architectural decisions covering all Langfuse best practices.**
+
+| # | Decision | Phase | Status |
+|---|---|---|---|
+| 1-6 | Grill-Me Architektur | A/B/C | ✅ |
+| 7 | Secret Redaction (Tiered Visibility) | A | ✅ **UPDATED** (Option E) |
+| 8 | Degradation Semantics | A | ✅ |
+| 9 | Audit Trail (Multi-Select Events) | C | ✅ **UPDATED** (7 event types) |
+| 10 | Evaluation Pipeline (Self-Tuning Hybrid) | C | ✅ **UPDATED** (Auto + Manual) |
+| 11 | Cost Tracking (Hierarchical per-Span) | B | ✅ **UPDATED** (Real costs in Langfuse) |
+| 12 | Token & Cost Governance | B/C | ✅ |
+| 13 | Trace Quality Standards | A | ✅ |
+| 14 | Span Filtering (Multi-Select) | B | ✅ **UPDATED** (All by default) |
+| 15 | SDK Init & Lifecycle | A | ✅ |
+| 16 | Session Quality & Bookmarking | B/C | ✅ |
+| 17 | Session Replay & Shareable URLs | C | ✅ |
+| 18 | Environment Config (Debug Flexibility) | A | ✅ **UPDATED** (Per-turn override) |
+| 19 | Tag Strategy & Propagation | A/B | ✅ |
+| **20** | **User Tracking & Metrics** | **B/C** | **✅** |
+| **22** | **LangGraph Agent Graphs** | **B/C** | **✅** |
+
+**Langfuse Best Practices Coverage**:
+- ✅ Application Tracing (Decisions 1-2)
+- ✅ Sessions (Decisions 4, 16)
+- ✅ Observations (Decisions 13, 22)
+- ✅ Attributes & Tags (Decisions 19-20)
+- ✅ Environments (Decisions 11, 18)
+- ✅ Token & Cost Monitoring (Decisions 11-12)
+- ✅ Redaction & Masking (Decision 7)
+- ✅ User Tracking (Decision 20)
+- ✅ LangGraph Integration (Decision 22)
+- ✅ Queuing & Batching (Decision 15)
+- ✅ Evaluation & Quality (Decisions 10, 16)
+- ✅ Collaboration & Sharing (Decisions 17, Comments optional)
+
+---
+
+## Current Infrastructure Status (2026-04-29)
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Langfuse Service | ✅ Running | Docker Compose |
+| Langfuse API Key | ✅ Connected | .env |
+| Langfuse Adapter | ✅ Built | `backend/app/observability/langfuse_adapter.py` |
+| Trace Context | ✅ Built | `world-engine/app/observability/trace.py` |
+| NarrativeRuntimeAgent | ✅ Has flag | `ai_stack/narrative_runtime_agent.py` |
+| Trace Scaffold Tests | ✅ Passing | `ai_stack/tests/test_narrative_runtime_agent.py` |
+| **Ready to instrument**: Yes | | LDSS, NRA, HTTP handler, story manager |
+
+---
+
+## Integration Decisions (2026-04-29 Day 2)
+
+Three critical architectural decisions for Langfuse/DiagnosticsEnvelope integration.
+
+### 7. Secret Redaction Rules (DECIDED: Option E — UPDATED)
+
+**Decision**: Two-Layer Redaction with Tiered Visibility for Different Consumers
+
+- **Operator Response**: Tiered visibility (hashes + costs redacted, status visible)
+  - LDSS: `decision_count`, `block_count` visible; `input_hash`, `output_hash` hidden
+  - Validators: `outcome`, `rejection_count` visible; proof details hidden
+  - Degradation: `marker`, `severity`, `recovery_status` visible; `affected_span_ids` hidden
+  - Cost: total cost hidden (redacted)
+  - Debug payload: never visible to regular operators
+
+- **Langfuse SDK**: Full transparency EXCEPT debug_payload
+  - Langfuse receives: all hashes, all costs, all span IDs, all technical details
+  - Langfuse does NOT receive: `debug_payload` (optional Super-Admin notes)
+  - Rationale: Langfuse is internal infrastructure (Docker Compose); debugging requires full technical data
+  
+- **Super-Admin Access**: Complete unredacted data
+  - Field: `diagnostics_envelope.debug_payload` (optional, requires Super-Admin role)
+  - Access logged: `_log_admin_action(action="access_debug_payload", resource="diagnostics_envelope", details={...})`
+  - Admin-Tool UI warns: "Debug payload contains sensitive data. Access is logged and audited."
+
+**Implementation**:
+- `ai_stack/diagnostics_envelope.py`: Add `debug_payload: Optional[dict]` field
+- `world-engine/app/api/http.py`: Build both strict and unredacted versions, store unredacted in debug_payload
+- `administration-tool/templates/manage/diagnostics/`: Add Super-Admin section for debug payload access
+- Audit: `backend/app/auth/admin_security.py` logs all debug_payload access
+
+### 8. Degradation Semantics (DECIDED: Option D)
+
+**Decision**: Hierarchical Timeline with Severity Levels
+
+```json
+{
+  "quality": {
+    "outcome": "ok_with_degradation",
+    "quality_class": "degraded",
+    "degradation_timeline": [
+      {
+        "marker": "RETRY_ACTIVE",
+        "severity": "minor",
+        "timestamp": "2026-04-29T14:32:15Z",
+        "recovery_successful": true,
+        "recovery_latency_ms": 150
+      },
+      {
+        "marker": "FALLBACK_ACTIVE",
+        "severity": "moderate",
+        "timestamp": "2026-04-29T14:32:20Z",
+        "recovery_successful": true,
+        "affected_span_ids": ["span_narrator_001", "span_ldss_002"]
+      }
+    ]
+  }
+}
+```
+
+**Markers with Severity**:
+- `MINOR`: Retry occurred but recovered quickly (retry_latency < 200ms)
+- `MODERATE`: Fallback responder activated, recovery successful
+- `CRITICAL`: Degradation could not recover or took >1s
+
+**Timeline Benefits**:
+- Operators see WHAT (marker name), HOW BAD (severity), WHEN (timestamp), HOW RECOVERED (success + latency)
+- Langfuse integration: `affected_span_ids` links degradation events to concrete spans for RCA
+- Alerting: Severity levels enable rules ("CRITICAL degradation → page oncall")
+- Scalable: Simple operators see `quality_class`, experts see full `degradation_timeline`
+
+**Implementation**:
+- `backend/app/runtime/runtime_models.py`: Update `DegradedMarker` enum to include severity
+- `world-engine/app/story_runtime/manager.py`: Collect marker events with timestamps during turn execution
+- `world-engine/app/api/http.py`: Build degradation_timeline from marker events, compute quality_class from highest severity
+- `ai_stack/diagnostics_envelope.py`: `degradation_timeline: list[DegradationEvent]` field
+
+### 9. Audit Trail for Override Operations (DECIDED: Option D)
+
+**Decision**: Layered Audit with Configurable Granularity
+
+Override lifecycle with full traceability:
+```json
+{
+  "override_id": "ov_obj_admission_001",
+  "type": "object_admission_override",
+  "scope": "session",
+  "target": "lantern",
+  "tier_change": "canonical → typical_minor",
+  "created": {
+    "admin_user": "narrative_supervisor_001",
+    "timestamp": "2026-04-29T14:00:00Z",
+    "reason": "Player stuck on puzzle, needs hint"
+  },
+  "applied_events": [
+    {
+      "turn_number": 42,
+      "session_id": "sess_xyz",
+      "applied_timestamp": "2026-04-29T14:15:30Z",
+      "result": "object_admitted_as_typical"
+    }
+  ],
+  "revoked": {
+    "admin_user": "narrative_supervisor_001",
+    "timestamp": "2026-04-29T14:45:00Z",
+    "reason": "Player solved puzzle naturally"
+  }
+}
+```
+
+**Admin-Tool Multi-Select Configuration** (new, UPDATED):
+- Per-override-type logging granularity control
+- Default: ALL events logged (maximum visibility)
+- Checkboxes per override type:
+  - ☑ CREATED (when override is created)
+  - ☑ APPLY_ATTEMPT (system tries to apply)
+  - ☑ APPLIED (successfully applied)
+  - ☑ APPLY_FAILED (application failed)
+  - ☑ REVOKED (override deleted)
+  - ☑ REVOKE_FAILED (revoke attempt failed)
+  - ☑ ACCESSED (Super-Admin viewed override details)
+
+- Use cases:
+  - **Investigation**: All checked (complete audit trail)
+  - **Stable production**: Uncheck APPLY_ATTEMPT, ACCESSED (performance)
+  - **Problem area**: All checked for deep RCA
+
+**Benefits**:
+- Operators answer: "Did this override solve the problem in Turn 42?" (from applied_events)
+- Compliance: Full audit trail for all admin interventions
+- Debugging: RCA becomes straightforward (see which turns override was active)
+- Performance-tunable: Disable APPLIED logging in stable sessions, enable in investigation sessions
+
+**Implementation**:
+- `backend/app/observability_governance_service.py`: Add `audit_logging_config` with granularity per override type
+- `backend/app/auth/admin_security.py`: Respect granularity settings when logging
+- `world-engine/app/api/admin_routes.py`: POST/DELETE override handlers with audit logging
+- `world-engine/app/story_runtime/manager.py`: Log applied_events when override actually applies during turn (if APPLIED events enabled)
+- `administration-tool/templates/manage/admin-config/audit-granularity.html`: Multi-Select checkboxes per override type
+- `administration-tool/static/manage_audit_config.js`: Update granularity config on server when checkboxes change
+
+---
+
+## Integration Points: How Decisions 7-9-11 Work Together
+
+1. **Tiered Visibility** (Decision 7 — UPDATED):
+   - Operator response: tiered visibility (hashes, costs, span IDs hidden; status visible)
+   - Langfuse SDK: full transparency (all hashes, costs, span IDs; debug_payload NOT sent)
+   - Super-Admin: complete unredacted (all data including debug_payload)
+   - Rationale: Debugging requires full technical data; debug_payload is optional Super-Admin notes
+
+2. **Cost Tracking in Langfuse** (Decision 11 — UPDATED):
+   - Langfuse receives real costs (per span, hierarchical rollup)
+   - Operator responses show $0 cost (redacted)
+   - Enables: "Why did LDSS cost spike to $0.50?" RCA in Langfuse dashboard
+
+3. **Degradation Timeline** (Decision 8):
+   - Flows into DiagnosticsEnvelope.quality.degradation_timeline
+   - Links to Langfuse spans via affected_span_ids
+   - Quality health panels display severity levels
+
+4. **Audit Trail** (Decision 9 — UPDATED):
+   - Override operations logged with granular event types (CREATED, APPLY_ATTEMPT, APPLIED, FAILED, REVOKED, ACCESSED)
+   - Admin can filter which events to log (default: all)
+   - Can correlate with degradation_timeline to see "override was active when degradation occurred"
+   - All logged via `_log_admin_action()` for audit compliance
+
+**Example Operator Workflow (RCA)**:
+1. Narrative Gov shows Turn 42 had MODERATE degradation (status visible)
+2. Operator checks Langfuse dashboard: "Turn 42 cost $0.87 (spike, normal $0.31)"
+3. Langfuse trace shows: LDSS $0.52 (2x normal), Narrator $0.35 (normal)
+4. Operator checks overrides: Object Admission Override active in Turn 42
+5. Audit trail: "APPLIED event Turn 42 14:15:30" + "REVOKE_FAILED event Turn 43 14:16:00" → override not revoked when intended
+6. Action: manually revoke override, cost returns to normal
+
+### 10. Evaluation Pipeline & Quality Assurance (DECIDED: Option D)
+
+**Decision**: Integrated Offline + Online Evaluation with Rubric, Annotation UI, and Feedback Loop
+
+Quality assurance for LDSS and Narrator requires multi-method evaluation combining automated and human judgment.
+
+**Four Components**:
+
+#### A. Quality Rubric Definition
+```json
+{
+  "rubric_id": "goc_quality_v1",
+  "dimensions": [
+    {
+      "name": "Coherence",
+      "description": "LDSS output logically follows scene state and responder intent",
+      "score_range": "1-5",
+      "automated_eval": "langfuse_semantic_similarity(output, scene_context)",
+      "human_eval": "Required for all manual annotations"
+    },
+    {
+      "name": "Authenticity",
+      "description": "Character voice consistent with canonical God of Carnage personality",
+      "score_range": "1-5",
+      "automated_eval": "langfuse_tone_match(output_tone, character_profile)",
+      "human_eval": "Required for all manual annotations"
+    },
+    {
+      "name": "Player Agency",
+      "description": "Output does not coerce or predetermine player choices",
+      "score_range": "1-5",
+      "automated_eval": "langfuse_constraint_violation_check(narrator_voice_rules)",
+      "human_eval": "Critical for narrator validation"
+    },
+    {
+      "name": "Immersion",
+      "description": "Dramatic pacing and narrative tension appropriate to scene",
+      "score_range": "1-5",
+      "automated_eval": "langfuse_structural_validation(scene_function, pacing_mode)",
+      "human_eval": "Best with human judgment"
+    }
+  ],
+  "pass_threshold": 3.5,  // Average across dimensions
+  "failure_signals": ["coercion", "narrator_invalid_mode", "degradation_marker"]
+}
+```
+
+#### B. Offline Baseline Test Set
+- **Location**: `tests/datasets/goc_evaluation_baseline.json`
+- **Content**: 20-30 canonical God of Carnage turns (Annette/Alain role variants)
+- **Scoring**: Each turn pre-scored by narrative specialists (Coherence, Authenticity, Agency, Immersion)
+- **Baseline Metrics**: Median score per dimension, P5/P95 bounds
+- **Refresh Cycle**: Quarterly (add newly discovered failure modes)
+
+**Purpose**:
+- Quick offline validation before production deployment
+- Regression detection: if new code drops baseline scores
+- Failure mode archive: "these turn inputs previously caused issues"
+
+#### C. Admin Annotation UI (MVP4 Phase 3)
+New template: `administration-tool/templates/manage/narrative-gov/evaluation-annotation.html`
+
+**Features**:
+- Load recent live turns (with diagnostics/traces)
+- Per-dimension scoring UI (sliders 1-5)
+- Free-text feedback ("why this score?")
+- Tag failure signals ("coercion detected", "fallback_active", "narrator_invalid")
+- Batch annotate (select multiple turns, apply rubric, save)
+- Export annotated set as JSON for offline dataset update
+
+**Example Workflow**:
+```
+1. Operator loads Turn 42 (moderate degradation)
+2. Reads scene context, LDSS output, narrator validation outcome
+3. Scores: Coherence=4, Authenticity=4, Agency=5, Immersion=3
+4. Tags: "fallback_active", "scene_recovery_good"
+5. Notes: "Fallback responder did well, immersion slightly lower"
+6. Saves → added to production evaluation dataset
+```
+
+#### D. Self-Tuning + Manual Override (UPDATED)
+
+**Automatic Background Learning**:
+- Daily: Scan for turns with `quality_class="failed"` or `degradation_timeline.severity="CRITICAL"`
+- Batch weekly: Recalculate rubric weights based on failure patterns
+- Update: Scoring model learns from production failures (operator does NOT need to manually tune)
+- Example: "If falls_back_twice has 95% of failed turns, weight narrator strictness lower next week"
+
+**Manual Override (Operator can trigger anytime)**:
+- Admin button: "Learn from Last N Turns" (N = 10, 50, 100)
+- Operator: Select turns, click "Recalculate"
+- System: Immediately recompute rubric weights + apply to new turns
+- Use case: "Just fixed narrator bug, let scoring model adapt faster than weekly batch"
+
+**Hybrid Benefits**:
+- Default: System learns automatically (operator doesn't need to do anything)
+- When urgent: Operator can accelerate learning without waiting for daily/weekly batch
+- Transparent: Narrative Gov shows "Last self-tuning: today 14:32 (automatic weekly)" or "today 14:45 (manual override)"
+
+**Result**: System continuously improves; operator can intervene if needed, but doesn't have to manually tune
+
+---
+
+## Implementation for MVP4
+
+### Phase 1 (DiagnosticsEnvelope):
+- Define rubric in config (not yet used, just frozen)
+- Prepare offline baseline structure
+
+### Phase 2 (Real Langfuse Spans):
+- Configure Langfuse Evals SDK for automated scoring
+- Test that traces include enough context for eval LLM
+
+### Phase 3 (Narrative Gov & Admin UI):
+- Admin annotation UI template + JS
+- Feedback loop collection in backend
+- Export/import eval dataset endpoints
+- Quarterly review dashboard
+
+---
+
+## Key Files to Add/Update
+
+| File | Task |
+|---|---|
+| `backend/models/evaluation_config.py` | New: Quality rubric definition |
+| `backend/models/evaluation_feedback.py` | New: Failed-turn collection and export |
+| `backend/app/api/v1/admin_routes.py` | New: `/api/v1/admin/evaluation/baseline`, `/api/v1/admin/evaluation/feedback`, `/api/v1/admin/evaluation/annotate` |
+| `administration-tool/templates/manage/narrative-gov/evaluation-annotation.html` | New: Rubric scoring UI |
+| `administration-tool/static/manage_evaluation.js` | New: Load turns, score, tag, save |
+| `tests/datasets/goc_evaluation_baseline.json` | New: 20-30 canonical turns with reference scores |
+| `tests/test_evaluation_pipeline.py` | New: Test offline baseline, eval scoring, feedback collection |
+
+---
+
+## Why Option D (Integrated Approach)
+
+**Best Practice Alignment**:
+- ✅ **Clear Evaluation Goals**: Rubric defines what "good" means (Coherence, Authenticity, Agency, Immersion)
+- ✅ **Offline + Online**: Baseline tests before deploy, production monitoring during play
+- ✅ **Human + Automated**: Admin annotation for nuance, Langfuse Evals for scale
+- ✅ **Feedback Loop**: Failed turns automatically become next iteration's test cases
+- ✅ **Langfuse Native**: Uses Langfuse Evals SDK for consistency
+
+**Operator Value**:
+- Rubric gives narrative team shared language ("this is a 4 on Coherence")
+- Annotation UI turns operator intuition into training data
+- Feedback loop makes production insights actionable
+- Baseline prevents regressions across updates
+
+**Compliance**: Meets Langfuse "LLM Evaluation 101" best practices from 2025-03-04 guide
+
+### 11. Environments & Cost Tracking (DECIDED: Option D)
+
+**Decision**: Multi-Environment Tracing with Per-Turn Cost Attribution
+
+Langfuse Overview emphasizes environment segmentation and token/cost monitoring for operational transparency.
+
+**A. Environment Segmentation**:
+```json
+{
+  "LANGFUSE_ENVIRONMENT": "production",  // or "staging", "development"
+  "traces": {
+    "tags": ["env:production", "release:mvp4.0.1"],
+    "metadata": {
+      "environment": "production",
+      "deployment_region": "us-east-1",
+      "release_version": "mvp4.0.1",
+      "docker_compose_profile": "live"
+    }
+  }
+}
+```
+
+Environment tags enable:
+- Separate cost analysis per deployment stage
+- Release version traceability for regression debugging
+- Region-aware latency monitoring
+- Production vs staging quality comparison
+
+**B. Token & Cost Attribution** (per Span + Hierarchical Rollup, UPDATED):
+```json
+{
+  "span": {
+    "name": "story.turn.execute",
+    "input_tokens": 2541,
+    "output_tokens": 1205,
+    "model": "claude-3-sonnet",
+    "cost_usd": 0.00308,
+    "children": [
+      {
+        "name": "live_dramatic_scene_simulator",
+        "input_tokens": 1200,
+        "output_tokens": 800,
+        "cost_usd": 0.00150
+      },
+      {
+        "name": "narrator_voice_validation",
+        "input_tokens": 1341,
+        "output_tokens": 405,
+        "cost_usd": 0.00158
+      }
+    ]
+  }
+}
+```
+
+Per-span cost + hierarchical rollup enables:
+- Identify which runtime phases consume most tokens (LDSS $0.0015, Narrator $0.0016)
+- Langfuse can aggregate costs up tree (child costs sum to parent)
+- Compare cost across player roles/scenes
+- Cost-aware optimization decisions (e.g., LDSS is 50% of turn cost)
+
+**C. Session-Level Cost Aggregation**:
+- Track: cumulative tokens + cost per story_session_id
+- Store in: DiagnosticsEnvelope.cost_summary
+- Display in: Narrative Gov "Session Health" panel
+- Example: "This session: 47,250 tokens, $4.89 spent, avg $0.31/turn"
+
+**Implementation**:
+- `langfuse_adapter.py`: Query Langfuse Cost API per session
+- `diagnostics_envelope.py`: Add `cost_summary` field (tokens, cost_usd, cost_per_turn_avg)
+- `administration-tool/templates/narrative-gov/session-health.html`: Display cost metrics
+- `.env.example`: Add `LANGFUSE_ENVIRONMENT` config
+
+**Why Option D**:
+- Observability: Operators see actual token/cost impact of session complexity
+- Governance: Foundation for budget enforcement (Decision 12)
+- Release Clarity: Versions tagged in traces for cost trending
+- Cost Control: Cost becomes operational metric alongside latency/quality
+
+### 12. Token & Cost Governance (DECIDED: Option D)
+
+**Decision**: Automated Token Budgeting with Runtime Cost Control
+
+Extend Decision 11 with budget enforcement and cost-aware degradation.
+
+**A. Per-Session Token Budget** (configurable):
+```json
+{
+  "token_budget": {
+    "default_max_tokens": 50000,
+    "warning_threshold_percent": 80,
+    "ceiling_percent": 100,
+    "model_aware_pricing": true,
+    "alert_operators_at": "80%"
+  }
+}
+```
+
+Budget lifecycle per session:
+1. **Created**: Session allocated 50K tokens (default, configurable per player role)
+2. **Tracked**: Every span records input + output tokens
+3. **80% Warning**: Narrative Gov alerts operator "Session approaching token limit"
+4. **100% Ceiling**: If cost would exceed ceiling, runtime cost-aware degradation
+
+**B. Cost-Aware Runtime Decisions**:
+
+When token budget reaches threshold:
+- **LDSS**: Use shorter narration (fewer NPC turns per scene block)
+- **Narrator**: Reduce context window or use cheaper summarization
+- **Fallback**: Prefer cheaper fallback responder if available
+- **Degrade**: Mark turn with degradation signal `COST_CEILING_HIT`
+
+Example:
+```python
+if session.tokens_consumed / session.token_budget > 0.80:
+    ldss_config.narrator_max_blocks = 2  # Reduced from 4
+    degradation_timeline.append({
+        "marker": "COST_CEILING_HIT",
+        "severity": "moderate",
+        "action": "reduced_narrative_density"
+    })
+```
+
+**C. Cost Dashboard** (Narrative Gov new panel):
+
+**Real-Time**:
+- "Active session: 18,500 / 50,000 tokens (37%), $4.67 spent"
+- "Budget remaining: 31,500 tokens, ~$6.23 worth"
+- "At current rate: will hit ceiling in ~2 hours"
+
+**Daily Report**:
+- "Production today: 847K tokens, $267.45 spent"
+- "Cost per session: avg $3.21, P95 $12.58"
+- "Cost anomalies: Session X spent $18 (2x avg)"
+
+**Weekly/Monthly Trends**:
+- "Weekly cost: $1,847 (up 12% vs last week)"
+- "Cost per module: LDSS 47%, Narrator 31%, Validators 12%, Other 10%"
+- "Cost per player role: Annette avg $3.45/session, Alain avg $2.89/session"
+
+**D. Budget Override** (with Audit Trail):
+Admin can temporarily override budget ceiling with reason:
+```
+POST /api/v1/admin/game/token-budget-override/{session_id}
+{
+  "override_tokens": 20000,  // Add 20K tokens to session
+  "reason": "Player stuck on complex puzzle, needs extra LDSS",
+  "admin_user": "narrative_supervisor_001"
+}
+```
+Logged: `_log_admin_action(action="token_budget_override", resource="session", details={...})`
+
+**Implementation**:
+- `world-engine/app/story_runtime/manager.py`: Track tokens consumed per session
+- `world-engine/app/story_runtime/commit_seam.py`: Cost-aware degradation decisions
+- `backend/app/services/cost_governance_service.py`: New service for budget tracking
+- `administration-tool/templates/narrative-gov/cost-dashboard.html`: Cost visualization
+- `administration-tool/static/manage_cost_governance.js`: Budget config + override UI
+- Tests: Budget enforcement, cost tracking, degradation signals
+
+**Why Option D**:
+- **Operational Control**: Operators manage cost as active metric, not passive observation
+- **Player Experience**: Graceful degradation (reduced narrative, not broken experience) when budget tight
+- **Transparency**: Cost dashboard shows where money goes (which modules, which sessions, which player types)
+- **Efficiency**: Encourages optimization (shorter scenes, smarter fallbacks, efficient validation)
+- **Business Visibility**: Finance/leadership can see AI costs per player, per module, trends over time
+
+---
+
+## Phase Reordering Required (After Decisions 11-12)
+
+Current phase order (B→C→A) must be reviewed because new dependencies emerged:
+
+**Current (B→C→A)**:
+- Phase 1: DiagnosticsEnvelope only
+- Phase 2: Real Langfuse Spans
+- Phase 3: Admin UI + Evaluation + Overrides
+
+**Issues with Current**:
+- Cost tracking (Decision 11) requires both DiagnosticsEnvelope AND span instrumentation
+- Token budgeting (Decision 12) requires runtime cost decisions DURING Phase 2
+- Evaluation pipeline (Decision 10) depends on quality data from Phases 1-2
+
+**Recommended Reordering (New A→B→C)**:
+See next section "Revised Implementation Phases"
 
 ## This MVP Produces
 
