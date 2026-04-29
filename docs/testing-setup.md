@@ -425,25 +425,6 @@ This runs ~140 tests covering:
 
 ---
 
-## Area 2 dual-workstream validation (canonical)
-
-Focused regression for **Workstream A** (practical convergence) and **Workstream B** (reproducibility). Gate tables: [`docs/archive/architecture-legacy/area2_workstream_a_gates.md`](archive/architecture-legacy/area2_workstream_a_gates.md), [`docs/archive/architecture-legacy/area2_workstream_b_gates.md`](archive/architecture-legacy/area2_workstream_b_gates.md). Combined report: [`docs/archive/architecture-legacy/area2_dual_workstream_closure_report.md`](archive/architecture-legacy/area2_dual_workstream_closure_report.md).
-
-**Command surface (code):** [`backend/app/runtime/area2_validation_commands.py`](../backend/app/runtime/area2_validation_commands.py) — `AREA2_DUAL_CLOSURE_PYTEST_MODULES`, `area2_dual_closure_pytest_invocation()`.
-
-**Prerequisites:** Install dependencies (`./setup-test-environment.sh`, `setup-test-environment.bat`, or `python -m pip install -r backend/requirements-test.txt`).
-
-**Run from `backend/`** (required so `backend/pytest.ini` sets `pythonpath` and `testpaths`). Pass **`--no-cov`** because `pytest.ini` defaults include coverage `addopts`:
-
-```bash
-cd backend
-python -m pytest tests/runtime/test_runtime_routing_registry_composed_proofs.py tests/runtime/test_runtime_operational_bootstrap_and_routing_registry.py tests/runtime/test_runtime_startup_profiles_operator_truth.py tests/runtime/test_cross_surface_operator_audit_contract.py tests/test_bootstrap_staged_runtime_integration.py tests/runtime/test_model_inventory_bootstrap.py -q --tb=short --no-cov
-```
-
-**G-A-01 … G-A-07** (Workstream A) are enforced in `backend/tests/runtime/test_runtime_operational_bootstrap_and_routing_registry.py`. **G-B-01** startup profile determinism, **G-B-02** bootstrap reproducibility, **G-B-03** clean-environment validation, **G-B-04** dependency/setup explicitness, **G-B-05** test-profile stability, **G-B-06** validation-command reality, and **G-B-07** documentation truth are enforced in `backend/tests/runtime/test_runtime_startup_profiles_operator_truth.py`.
-
----
-
 ## Running Broader Test Subsets
 
 ### All Backend Tests (with coverage)
