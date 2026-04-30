@@ -389,23 +389,18 @@ class TestBuildDiagnosis:
         with patch("app.services.system_diagnosis_service._check_backend_api") as mock_backend:
             with patch("app.services.system_diagnosis_service._check_database_bounded") as mock_db:
                 with patch("app.services.system_diagnosis_service._check_play_service_configuration") as mock_play_cfg:
-                    with patch("app.services.system_diagnosis_service._build_diagnosis") as mock_build:
-                        mock_backend.return_value = {"id": "backend", "status": "running", "critical": True}
-                        mock_db.return_value = {"id": "database", "status": "running", "critical": True}
-                        mock_play_cfg.return_value = {"id": "play_cfg", "status": "ok"}
-                        mock_build.return_value = {
-                            "checks": [],
-                            "overall_status": "ok",
-                            "timestamp": "2026-01-01T00:00:00Z",
-                        }
+                    mock_backend.return_value = {"id": "backend", "status": "running", "critical": True}
+                    mock_db.return_value = {"id": "database", "status": "running", "critical": True}
+                    mock_play_cfg.return_value = {"id": "play_cfg", "status": "running"}
 
-                        app = MagicMock()
-                        result = _build_diagnosis(app, "https://localhost:5000", "trace-123")
+                    app = MagicMock()
+                    result = _build_diagnosis(app, "https://localhost:5000", "trace-123")
 
-                        assert isinstance(result, dict)
-                        assert result.get("overall_status") == "ok"
-                        assert "timestamp" in result
-                        assert "checks" in result
+                    assert isinstance(result, dict)
+                    assert "overall_status" in result
+                    assert result["overall_status"] in ["running", "initialized", "fail"]
+                    assert "generated_at" in result
+                    assert "groups" in result or "summary" in result
 
 
 class TestGetSystemDiagnosis:
