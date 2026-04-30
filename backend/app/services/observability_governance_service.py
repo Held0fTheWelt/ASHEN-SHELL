@@ -341,6 +341,13 @@ def write_observability_credential(
     fingerprints = {}
 
     if public_key:
+        # Deactivate old public_key credentials
+        ObservabilityCredential.query.filter_by(
+            service_id="langfuse",
+            secret_name="public_key",
+            is_active=True,
+        ).update({"is_active": False})
+
         pk_fingerprint = hashlib.sha256(public_key.encode()).hexdigest()[:16]
         cred = ObservabilityCredential(
             credential_id=str(uuid.uuid4()),
@@ -357,6 +364,13 @@ def write_observability_credential(
         fingerprints["public_key"] = pk_fingerprint
 
     if secret_key:
+        # Deactivate old secret_key credentials
+        ObservabilityCredential.query.filter_by(
+            service_id="langfuse",
+            secret_name="secret_key",
+            is_active=True,
+        ).update({"is_active": False})
+
         sk_fingerprint = hashlib.sha256(secret_key.encode()).hexdigest()[:16]
         cred = ObservabilityCredential(
             credential_id=str(uuid.uuid4()),
