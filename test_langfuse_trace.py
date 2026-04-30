@@ -32,11 +32,11 @@ try:
     client = Langfuse(
         public_key=PUBLIC_KEY,
         secret_key=SECRET_KEY,
-        baseUrl=BASE_URL,
+        base_url="BASE_URL",
         environment="development",
         release="test",
         sample_rate=1.0,
-        flushInterval=1.0,
+        flush_interval=1.0,
     )
     print("[OK] Langfuse client initialized")
 except Exception as e:
