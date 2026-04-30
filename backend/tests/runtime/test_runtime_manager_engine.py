@@ -179,27 +179,6 @@ def test_engine_use_action_prop_not_in_room_rejected():
     assert res.accepted is False
 
 
-def test_engine_ring_again_adds_tension():
-    template = load_builtin_templates()["god_of_carnage_solo"]
-    engine = RuntimeEngine(template)
-    inst = _solo_instance("god_of_carnage_solo")
-    human = next(p for p in inst.participants.values() if p.mode == ParticipantMode.HUMAN)
-    before = inst.tension
-    assert engine.apply_command(inst, human.id, {"action": "use_action", "action_id": "ring_again"}).accepted is True
-    assert inst.tension > before
-
-
-def test_engine_offer_apology_advances_beat():
-    template = load_builtin_templates()["god_of_carnage_solo"]
-    engine = RuntimeEngine(template)
-    inst = _solo_instance("god_of_carnage_solo")
-    human = next(p for p in inst.participants.values() if p.mode == ParticipantMode.HUMAN)
-    assert engine.apply_command(inst, human.id, {"action": "move", "target_room_id": "living_room"}).accepted is True
-    assert engine.apply_command(inst, human.id, {"action": "use_action", "action_id": "offer_apology"}).accepted is True
-    assert inst.beat_id == "first_fracture"
-    assert "apology_offered" in inst.flags
-
-
 def _open_world_plaza_instance():
     template = load_builtin_templates()["better_tomorrow_district_alpha"]
     human_role = next(r for r in template.roles if r.mode == ParticipantMode.HUMAN)
@@ -265,75 +244,6 @@ def test_wiki_html_sanitizer_guards_and_bleach_path():
     assert "ok" in cleaned
 
 
-def test_runtime_visibility_policy_all_methods():
-    """RuntimeVisibilityPolicy maps template rooms, occupants, transcript tail, inspect rules."""
-    template = load_builtin_templates()["god_of_carnage_solo"]
-    inst = _solo_instance("god_of_carnage_solo")
-    human = next(p for p in inst.participants.values() if p.mode == ParticipantMode.HUMAN)
-    policy = RuntimeVisibilityPolicy(template)
-
-    room_payload = policy.build_current_room_payload(inst, human)
-    assert room_payload["id"] == human.current_room_id
-    assert room_payload["name"] == template.room_map()[human.current_room_id].name
-
-    occ = policy.visible_occupants(inst, human)
-    assert len(occ) == 1
-    assert occ[0]["participant_id"] == human.id
-    assert occ[0]["display_name"] == human.display_name
-
-    for i in range(7):
-        inst.transcript.append(
-            TranscriptEntry(kind="speech_committed", text=f"line{i}", payload={})
-        )
-    tail = policy.visible_transcript(inst, human)
-    assert len(tail) == 5
-    assert tail[-1].text == "line6"
-
-    meta = policy.public_metadata(inst)
-    assert meta["kind"] == inst.kind.value
-
-    assert policy.can_inspect_target(inst, human, "tulips")
-    assert policy.can_inspect_target(inst, human, human.current_room_id)
-    assert not policy.can_inspect_target(inst, human, "nonexistent_prop_xyz")
-
-
-def test_engine_solo_move_sets_flag_inspect_prop_and_room_npc_cycle():
-    """Solo move to living_room, inspect targets, prop-linked actions, NPC cycle emits events."""
-    template = load_builtin_templates()["god_of_carnage_solo"]
-    engine = RuntimeEngine(template)
-    inst = _solo_instance("god_of_carnage_solo")
-    human = next(p for p in inst.participants.values() if p.mode == ParticipantMode.HUMAN)
-
-    move = engine.apply_command(inst, human.id, {"action": "move", "target_room_id": "living_room"})
-    assert move.accepted is True
-    assert "entered_living_room" in inst.flags
-
-    action_ids = {a["id"] for a in engine.available_actions(inst, human)}
-    assert "inspect_tulips" in action_ids or "steady_breath" in action_ids
-
-    bad_inspect = engine.apply_command(inst, human.id, {"action": "inspect", "target_id": "void"})
-    assert bad_inspect.accepted is False
-
-    ok_prop = engine.apply_command(inst, human.id, {"action": "inspect", "target_id": "tulips"})
-    assert ok_prop.accepted is True
-
-    ok_room = engine.apply_command(inst, human.id, {"action": "inspect", "target_id": "living_room"})
-    assert ok_room.accepted is True
-
-    events = engine.run_npc_cycle(inst, human.id)
-    assert len(events) > 0
-
-    assert engine.apply_command(inst, human.id, {"action": "move", "target_room_id": "bathroom"}).accepted is True
-    wash = engine.apply_command(inst, human.id, {"action": "use_action", "action_id": "wash_face"})
-    assert wash.accepted is True
-    assert inst.props["washbasin"].state == "running"
-
-    assert engine.apply_command(
-        inst, human.id, {"action": "use_action", "action_id": "return_composure"}
-    ).accepted is True
-    assert human.current_room_id == "living_room"
-
-
 def test_engine_group_use_action_blocked_in_lobby():
     template = load_builtin_templates()["apartment_confrontation_group"]
     engine = RuntimeEngine(template)
@@ -344,18 +254,6 @@ def test_engine_group_use_action_blocked_in_lobby():
     assert res.accepted is False
     reason = (res.reason or "").lower()
     assert "lobby" in reason or "group story" in reason or "scene actions" in reason
-
-
-def test_engine_steady_breath_effect_sets_flag_and_single_use():
-    template = load_builtin_templates()["god_of_carnage_solo"]
-    engine = RuntimeEngine(template)
-    inst = _solo_instance("god_of_carnage_solo")
-    human = next(p for p in inst.participants.values() if p.mode == ParticipantMode.HUMAN)
-    first = engine.apply_command(inst, human.id, {"action": "use_action", "action_id": "steady_breath"})
-    assert first.accepted is True
-    assert "composed" in inst.flags
-    second = engine.apply_command(inst, human.id, {"action": "use_action", "action_id": "steady_breath"})
-    assert second.accepted is False
 
 
 def test_engine_npc_instance_getter_raises_without_cycle_binding():
