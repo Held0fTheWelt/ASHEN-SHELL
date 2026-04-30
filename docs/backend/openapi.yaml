@@ -1293,6 +1293,43 @@ paths:
           description: Rate limited.
         '500':
           description: Server error.
+  /api/v1/admin/frontend-config/typewriter:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/frontend-config/typewriter
+      operationId: get_api_v1_admin_frontend_config_typewriter
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+    patch:
+      tags:
+      - Admin
+      summary: PATCH /admin/frontend-config/typewriter
+      operationId: patch_api_v1_admin_frontend_config_typewriter
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
   /api/v1/admin/logs:
     get:
       tags:
@@ -1627,6 +1664,337 @@ paths:
         required: true
         schema:
           type: integer
+  /api/v1/admin/mvp4/evaluation/baseline:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/mvp4/evaluation/baseline
+      operationId: get_api_v1_admin_mvp4_evaluation_baseline
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/mvp4/evaluation/rubric:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/mvp4/evaluation/rubric
+      operationId: get_api_v1_admin_mvp4_evaluation_rubric
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/mvp4/evaluation/weights/{session_id}:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/mvp4/evaluation/weights/{session_id}
+      operationId: get_api_v1_admin_mvp4_evaluation_weights_session_id
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/mvp4/evaluation/weights/{session_id}/manual-tune:
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/mvp4/evaluation/weights/{session_id}/manual-tune
+      operationId: post_api_v1_admin_mvp4_evaluation_weights_session_id_manual_tune
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/mvp4/game/session/{session_id}/langfuse-toggle:
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/mvp4/game/session/{session_id}/langfuse-toggle
+      operationId: post_api_v1_admin_mvp4_game_session_session_id_langfuse_toggle
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/mvp4/game/session/{session_id}/token-budget:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/mvp4/game/session/{session_id}/token-budget
+      operationId: get_api_v1_admin_mvp4_game_session_session_id_token_budget
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/mvp4/game/session/{session_id}/token-budget/override:
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/mvp4/game/session/{session_id}/token-budget/override
+      operationId: post_api_v1_admin_mvp4_game_session_session_id_token_budget_override
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/mvp4/overrides/audit-config:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/mvp4/overrides/audit-config
+      operationId: get_api_v1_admin_mvp4_overrides_audit_config
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/mvp4/overrides/audit-config/{override_type}:
+    patch:
+      tags:
+      - Admin
+      summary: PATCH /admin/mvp4/overrides/audit-config/{override_type}
+      operationId: patch_api_v1_admin_mvp4_overrides_audit_config_override_type
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: override_type
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/mvp4/overrides/object-admission:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/mvp4/overrides/object-admission
+      operationId: get_api_v1_admin_mvp4_overrides_object_admission
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/mvp4/overrides/object-admission
+      operationId: post_api_v1_admin_mvp4_overrides_object_admission
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/mvp4/overrides/object-admission/{override_id}:
+    delete:
+      tags:
+      - Admin
+      summary: DELETE /admin/mvp4/overrides/object-admission/{override_id}
+      operationId: delete_api_v1_admin_mvp4_overrides_object_admission_override_id
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: override_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/admin/mvp4/overrides/state-delta-boundary:
+    get:
+      tags:
+      - Admin
+      summary: GET /admin/mvp4/overrides/state-delta-boundary
+      operationId: get_api_v1_admin_mvp4_overrides_state_delta_boundary
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+    post:
+      tags:
+      - Admin
+      summary: POST /admin/mvp4/overrides/state-delta-boundary
+      operationId: post_api_v1_admin_mvp4_overrides_state_delta_boundary
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+  /api/v1/admin/mvp4/overrides/state-delta-boundary/{override_id}:
+    delete:
+      tags:
+      - Admin
+      summary: DELETE /admin/mvp4/overrides/state-delta-boundary/{override_id}
+      operationId: delete_api_v1_admin_mvp4_overrides_state_delta_boundary_override_id
+      responses:
+        '200':
+          description: Success (see docs/api/REFERENCE.md for response shapes).
+        '401':
+          description: Unauthorized — missing or invalid JWT where required.
+        '403':
+          description: Forbidden — policy or role.
+        '404':
+          description: Not found.
+        '429':
+          description: Rate limited.
+        '500':
+          description: Server error.
+      parameters:
+      - name: override_id
+        in: path
+        required: true
+        schema:
+          type: string
   /api/v1/admin/narrative/evaluations:
     get:
       tags:
