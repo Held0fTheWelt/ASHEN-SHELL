@@ -474,9 +474,8 @@ def execute_story_turn(
     request: Request,
     manager: StoryRuntimeManager = Depends(get_story_manager),
 ) -> dict[str, Any]:
-    trace_id = getattr(request.state, "trace_id", None)
-
     # Initialize Langfuse adapter and create root span
+    trace_id = getattr(request.state, "trace_id", None)
     try:
         from app.observability.langfuse_adapter import LangfuseAdapter
         adapter = LangfuseAdapter.get_instance()
@@ -500,6 +499,9 @@ def execute_story_turn(
         )
         if root_span:
             adapter.set_active_span(root_span)
+            # Use Langfuse trace_id as the authoritative trace_id
+            if hasattr(root_span, "trace_id"):
+                trace_id = root_span.trace_id
 
     try:
         turn = manager.execute_turn(

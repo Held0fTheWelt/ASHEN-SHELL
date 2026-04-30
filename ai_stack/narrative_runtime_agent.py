@@ -153,8 +153,8 @@ class NarrativeRuntimeAgent:
             # Stream narrator blocks while initiatives pending
             # Lazy import to avoid circular dependency with backend modules
             try:
-                from backend.app.observability.langfuse_adapter import LangfuseAdapter
-                adapter = LangfuseAdapter()
+                from app.observability.langfuse_adapter import LangfuseAdapter
+                adapter = LangfuseAdapter.get_instance()
             except ImportError:
                 adapter = None
 

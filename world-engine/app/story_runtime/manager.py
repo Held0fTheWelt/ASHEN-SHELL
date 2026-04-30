@@ -1191,10 +1191,11 @@ class StoryRuntimeManager:
 
     # MVP3: Narrative agent configuration and input queue management
     def _get_tracing_config(self, session_id: str) -> bool:
-        """Get Langfuse tracing config for session (deferred to MVP4 admin UI)."""
-        # MVP3: Always return False (use JSON scaffold by default)
+        """Get Langfuse tracing config for session."""
+        import os
+        # MVP3: Read from LANGFUSE_ENABLED environment variable
         # MVP4: Will read from admin UI toggle per session
-        return False
+        return os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
 
     def queue_player_input(self, session_id: str, player_input: str) -> None:
         """Queue player input while narrator is streaming."""
@@ -2013,7 +2014,7 @@ class StoryRuntimeManager:
                     runtime_projection=session.runtime_projection,
                     graph_state=graph_state,
                     scene_turn_envelope=scene_turn_envelope,
-                    langfuse_enabled=False,
+                    langfuse_enabled=self._get_tracing_config(session.session_id),
                     degradation_events=degradation_events,
                 )
                 # Update cost_summary in the envelope

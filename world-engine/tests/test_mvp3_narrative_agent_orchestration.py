@@ -164,17 +164,22 @@ class TestInputQueueing:
 
 
 class TestTracingConfig:
-    """Test Langfuse tracing configuration (MVP3 vs MVP4)."""
+    """Test Langfuse tracing configuration."""
 
-    def test_get_tracing_config_returns_false_mvp3(self, story_manager):
-        """_get_tracing_config returns False in MVP3 (deferred to MVP4)."""
+    def test_get_tracing_config_reads_from_env_var(self, story_manager):
+        """_get_tracing_config reads from LANGFUSE_ENABLED env var."""
+        import os
         config = story_manager._get_tracing_config("test_session")
-        assert config is False
+        # Should match LANGFUSE_ENABLED env var
+        expected = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
+        assert config == expected
 
     def test_tracing_config_consistent_across_sessions(self, story_manager):
-        """Tracing config is consistently False for all sessions in MVP3."""
+        """Tracing config is consistent across sessions (all read from same env var)."""
+        import os
+        expected = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
         for session_id in ["session1", "session2", "session3"]:
-            assert story_manager._get_tracing_config(session_id) is False
+            assert story_manager._get_tracing_config(session_id) == expected
 
 
 @pytest.mark.mvp3
@@ -220,6 +225,7 @@ class TestMVP3OrchestrationGate:
 
     def test_mvp3_orchestration_integrates_with_manager(self, story_manager):
         """Gate: Orchestration methods work with StoryRuntimeManager instance."""
+        import os
         # Queue some inputs
         story_manager.queue_player_input("session1", "input1")
         story_manager.queue_player_input("session1", "input2")
@@ -227,9 +233,10 @@ class TestMVP3OrchestrationGate:
         # Check streaming state
         assert story_manager.is_narrative_streaming("session1") is False
 
-        # Get config
+        # Get config (should match LANGFUSE_ENABLED env var)
         config = story_manager._get_tracing_config("session1")
-        assert config is False
+        expected = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
+        assert config == expected
 
         # Retrieve queued inputs
         inputs = story_manager.get_queued_inputs("session1")

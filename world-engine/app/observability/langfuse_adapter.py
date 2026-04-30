@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import logging
 import os
+from contextvars import ContextVar
+from types import SimpleNamespace
 from typing import Any, Optional
 
 print(">>> LOADING LANGFUSE ADAPTER MODULE", flush=True)
 logger = logging.getLogger(__name__)
 logger.info(">>> LANGFUSE ADAPTER MODULE LOADED")
+
+_active_span_context: ContextVar[Optional[Any]] = ContextVar("active_span", default=None)
 
 
 class LangfuseAdapter:
@@ -20,7 +24,11 @@ class LangfuseAdapter:
     def __init__(self):
         self.is_ready = False
         self.client = None
-        self.active_span = None
+        self._config = SimpleNamespace(
+            environment=os.getenv("LANGFUSE_ENVIRONMENT", "development"),
+            release=os.getenv("LANGFUSE_RELEASE", "unknown"),
+            sample_rate=float(os.getenv("LANGFUSE_SAMPLE_RATE", "1.0")),
+        )
 
         # Check if Langfuse is enabled
         enabled = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
@@ -118,26 +126,67 @@ class LangfuseAdapter:
         session_id: str,
         metadata: Optional[dict[str, Any]] = None,
     ) -> Optional[Any]:
-        """Start a new trace span."""
+        """Start a new trace root span (Langfuse SDK v4.x API)."""
         if not self.is_enabled():
             return None
 
         try:
             trace_metadata = metadata or {}
             trace_metadata.setdefault("session_id", session_id)
-            span = self.client.start_observation(
-                as_type="span",
+
+            # Create trace and root span using Langfuse SDK v4.x API
+            trace = self.client.trace(
+                name=name,
+                session_id=session_id,
+                metadata=trace_metadata,
+            )
+            span = trace.span(
                 name=name,
                 metadata=trace_metadata,
             )
             return span
         except Exception as e:
-            logger.error(f"Failed to start trace: {str(e)}")
+            logger.error(f"Failed to start trace: {str(e)}", exc_info=True)
             return None
 
-    def set_active_span(self, span: Any) -> None:
-        """Set the currently active span for child operations."""
-        self.active_span = span
+    @property
+    def config(self) -> SimpleNamespace:
+        """Configuration object with environment, release, sample_rate."""
+        return self._config
+
+    def get_active_span(self) -> Optional[Any]:
+        """Get the currently active span for child operations."""
+        return _active_span_context.get()
+
+    def set_active_span(self, span: Optional[Any]) -> None:
+        """Set the currently active span for child operations (thread-safe via ContextVar)."""
+        _active_span_context.set(span)
+
+    def create_child_span(
+        self,
+        name: str,
+        input: Optional[dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> Optional[Any]:
+        """Create a child span under the currently active parent span."""
+        if not self.is_enabled():
+            return None
+
+        parent_span = _active_span_context.get()
+        if not parent_span:
+            logger.debug(f"No active parent span to create child '{name}'")
+            return None
+
+        try:
+            child_span = parent_span.span(
+                name=name,
+                input=input or {},
+                metadata=metadata or {},
+            )
+            return child_span
+        except Exception as e:
+            logger.error(f"Failed to create child span '{name}': {str(e)}", exc_info=True)
+            return None
 
     def flush(self) -> None:
         """Flush pending traces to Langfuse."""
@@ -145,4 +194,4 @@ class LangfuseAdapter:
             try:
                 self.client.flush()
             except Exception as e:
-                logger.error(f"Failed to flush Langfuse traces: {str(e)}")
+                logger.error(f"Failed to flush Langfuse traces: {str(e)}", exc_info=True)
