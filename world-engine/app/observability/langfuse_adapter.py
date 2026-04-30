@@ -57,7 +57,6 @@ class LangfuseAdapter:
                 environment=os.getenv("LANGFUSE_ENVIRONMENT", "development"),
                 release=os.getenv("LANGFUSE_RELEASE", "unknown"),
                 sample_rate=float(os.getenv("LANGFUSE_SAMPLE_RATE", "1.0")),
-                enabled=True,
             )
             self.is_ready = True
             logger.info("✓ Langfuse adapter initialized successfully for world-engine")
