@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from flask import current_app, request
 from flask_jwt_extended import jwt_required
 
@@ -771,3 +773,544 @@ def admin_runtime_config_truth():
         return ok(truth)
     except Exception as exc:
         return fail("config_truth_error", "Failed to retrieve runtime config truth.", 500, {"error": str(exc)})
+
+
+# ============================================================================
+# MVP4 Phase C: Governance, Evaluation & Operator Surfaces
+# ============================================================================
+
+# Token Budget Management
+
+
+@api_v1_bp.route("/admin/mvp4/game/session/<session_id>/token-budget", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_get_token_budget(session_id: str):
+    """Get current token budget and usage for session."""
+    def _do():
+        from app.services.observability_governance_service import TokenBudgetService, DegradationLevel
+        from app.extensions import redis_client
+
+        service = TokenBudgetService(redis_client)
+        budget = service.get_budget(session_id)
+        usage_percent = (budget.used_tokens / budget.total_budget * 100) if budget.total_budget > 0 else 0
+
+        return {
+            "session_id": session_id,
+            "total_budget": budget.total_budget,
+            "used_tokens": budget.used_tokens,
+            "remaining_tokens": max(0, budget.total_budget - budget.used_tokens),
+            "usage_percent": usage_percent,
+            "warning_threshold": int(budget.warning_threshold * 100),
+            "ceiling_threshold": int(budget.ceiling_threshold * 100),
+            "degradation_strategy": budget.degradation_strategy,
+            "degradation_level": "warning" if usage_percent >= budget.warning_threshold * 100 else (
+                "critical" if usage_percent >= budget.ceiling_threshold * 100 else "none"
+            ),
+        }
+
+    return _handle("token_budget_get", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/game/session/<session_id>/token-budget/override", methods=["POST"])
+@limiter.limit("20 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_override_token_budget(session_id: str):
+    """Admin override: add tokens to session budget."""
+    def _do():
+        from app.services.observability_governance_service import TokenBudgetService
+        from app.extensions import redis_client
+
+        body = _body()
+        tokens_to_add = int(body.get("tokens_to_add", 0))
+        reason = body.get("reason", "")
+
+        service = TokenBudgetService(redis_client)
+        service.override_budget(
+            session_id=session_id,
+            tokens_to_add=tokens_to_add,
+            admin_user=_actor_identifier(),
+            reason=reason,
+        )
+
+        budget = service.get_budget(session_id)
+        return {
+            "session_id": session_id,
+            "new_total": budget.total_budget,
+            "new_used": budget.used_tokens,
+            "override_applied": True,
+        }
+
+    return _handle("token_budget_override", _do)
+
+
+# Override Audit Configuration
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/audit-config", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_get_audit_config():
+    """Get audit granularity configuration for all override types."""
+    def _do():
+        from app.auth.admin_security import OverrideAuditConfigManager
+        from app.extensions import redis_client
+
+        manager = OverrideAuditConfigManager(redis_client)
+        configs = manager.get_all_configs()
+        return {
+            "override_types": {
+                ot: config.to_dict() for ot, config in configs.items()
+            },
+            "description": "Control which override events are logged per override type",
+        }
+
+    return _handle("override_audit_config_get", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/audit-config/<override_type>", methods=["PATCH"])
+@limiter.limit("30 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_update_audit_config(override_type: str):
+    """Update audit granularity configuration for override type."""
+    def _do():
+        from app.auth.admin_security import OverrideAuditConfig, OverrideAuditConfigManager
+        from app.extensions import redis_client
+
+        body = _body()
+        config = OverrideAuditConfig(
+            override_type=override_type,
+            log_created=body.get("log_created", True),
+            log_apply_attempt=body.get("log_apply_attempt", True),
+            log_applied=body.get("log_applied", True),
+            log_apply_failed=body.get("log_apply_failed", True),
+            log_revoked=body.get("log_revoked", True),
+            log_revoke_failed=body.get("log_revoke_failed", True),
+            log_accessed=body.get("log_accessed", True),
+        )
+
+        manager = OverrideAuditConfigManager(redis_client)
+        manager.set_config(config)
+
+        return {
+            "override_type": override_type,
+            "config": config.to_dict(),
+            "updated": True,
+        }
+
+    return _handle("override_audit_config_update", _do)
+
+
+# Evaluation Configuration
+
+
+@api_v1_bp.route("/admin/mvp4/evaluation/rubric", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_get_evaluation_rubric():
+    """Get quality evaluation rubric."""
+    def _do():
+        from ai_stack.evaluation_pipeline import EvaluationPipeline
+        from app.extensions import redis_client
+
+        pipeline = EvaluationPipeline(redis_client)
+        rubric = pipeline.get_rubric("goc_quality_v1")
+        return rubric.to_dict()
+
+    return _handle("evaluation_rubric_get", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/evaluation/baseline", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_get_evaluation_baseline():
+    """Get offline baseline test set."""
+    def _do():
+        from ai_stack.evaluation_pipeline import EvaluationPipeline
+        from app.extensions import redis_client
+
+        pipeline = EvaluationPipeline(redis_client)
+        baseline = pipeline.get_baseline("goc_evaluation_baseline")
+        return {
+            "baseline_id": baseline.baseline_id,
+            "version": baseline.version,
+            "canonical_turn_count": len(baseline.canonical_turns),
+            "metrics": {
+                dim: metric.to_dict() for dim, metric in baseline.metrics_per_dimension.items()
+            },
+            "created_at": baseline.created_at,
+        }
+
+    return _handle("evaluation_baseline_get", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/evaluation/weights/<session_id>", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_get_rubric_weights(session_id: str):
+    """Get current rubric weights (auto-tuning state) for session."""
+    def _do():
+        from ai_stack.evaluation_pipeline import EvaluationPipeline
+        from app.extensions import redis_client
+
+        pipeline = EvaluationPipeline(redis_client)
+        weights = pipeline.get_rubric_weights(session_id)
+        return {
+            "session_id": session_id,
+            "weights": weights.to_dict(),
+        }
+
+    return _handle("evaluation_weights_get", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/evaluation/weights/<session_id>/manual-tune", methods=["POST"])
+@limiter.limit("20 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_manual_tune_weights(session_id: str):
+    """Manually trigger rubric weight tuning from recent turns."""
+    def _do():
+        from ai_stack.evaluation_pipeline import EvaluationPipeline
+        from app.extensions import redis_client
+
+        body = _body()
+        turn_count = int(body.get("turn_count", 10))
+
+        pipeline = EvaluationPipeline(redis_client)
+        weights = pipeline.manual_tune_weights(
+            session_id=session_id,
+            turn_count=turn_count,
+            admin_user=_actor_identifier(),
+        )
+
+        return {
+            "session_id": session_id,
+            "weights": weights.to_dict(),
+            "tuned_at": weights.last_updated,
+        }
+
+    return _handle("evaluation_manual_tune", _do)
+
+
+# Langfuse Configuration
+
+
+@api_v1_bp.route("/admin/mvp4/game/session/<session_id>/langfuse-toggle", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_toggle_langfuse(session_id: str):
+    """Enable/disable Langfuse tracing for session."""
+    def _do():
+        from app.services import log_activity
+
+        body = _body()
+        enabled = body.get("enabled", False)
+        reason = body.get("reason", "")
+
+        # In Phase B, would update session_config in database
+        # Phase A: Just log and return success
+
+        log_activity(
+            actor=_actor_identifier(),
+            category="mvp4_governance",
+            action="langfuse_toggle",
+            status="success",
+            message=f"Langfuse {'enabled' if enabled else 'disabled'} for session {session_id}",
+            metadata={"session_id": session_id, "enabled": enabled, "reason": reason},
+            tags=["mvp4", "langfuse"],
+        )
+
+        return {
+            "session_id": session_id,
+            "langfuse_enabled": enabled,
+            "toggled_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    return _handle("langfuse_toggle", _do)
+
+
+# Object Admission Overrides
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/object-admission", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_get_object_admission_overrides():
+    """Get active object admission overrides."""
+    def _do():
+        from app.extensions import redis_client
+
+        # Fetch all object admission overrides from session storage
+        storage_key = "object_admission_overrides:all"
+        overrides = redis_client.get(storage_key) or []
+
+        return {
+            "overrides": overrides if isinstance(overrides, list) else [],
+            "total_count": len(overrides) if isinstance(overrides, list) else 0,
+        }
+
+    return _handle("object_admission_overrides_get", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/object-admission", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_create_object_admission_override():
+    """Create object admission tier override."""
+    def _do():
+        from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
+        from app.extensions import redis_client
+        import uuid
+
+        body = _body()
+        object_id = body.get("object_id", "")
+        session_id = body.get("session_id", "")
+        tier_change = body.get("tier_change", "")
+        reason = body.get("reason", "")
+
+        if not object_id or not session_id:
+            raise governance_error("invalid_override", "object_id and session_id required", 400, {})
+
+        override_id = f"ov_obj_admission_{uuid.uuid4().hex[:8]}"
+
+        # Create audit event and log it
+        event = OverrideAuditEvent(
+            event_type=OverrideEventType.CREATED,
+            override_id=override_id,
+            admin_user=_actor_identifier(),
+            session_id=session_id,
+            reason=reason,
+            metadata={
+                "object_id": object_id,
+                "tier_change": tier_change,
+                "override_type": "object_admission",
+            },
+        )
+
+        config_manager = OverrideAuditConfigManager(redis_client)
+        config = config_manager.get_config("object_admission")
+        _log_override_event(event, config, _actor_identifier())
+
+        # Store override
+        storage_key = f"object_admission_override:{override_id}"
+        override_data = {
+            "override_id": override_id,
+            "type": "object_admission_override",
+            "scope": "session",
+            "target": object_id,
+            "tier_change": tier_change,
+            "created": {
+                "admin_user": _actor_identifier(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "reason": reason,
+            },
+            "applied_events": [],
+            "active": True,
+        }
+        redis_client.set(storage_key, override_data)
+
+        return {
+            "override_id": override_id,
+            "type": "object_admission_override",
+            "object_id": object_id,
+            "tier_change": tier_change,
+            "created": True,
+        }
+
+    return _handle("object_admission_override_create", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/object-admission/<override_id>", methods=["DELETE"])
+@limiter.limit("30 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_revoke_object_admission_override(override_id: str):
+    """Revoke object admission override."""
+    def _do():
+        from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
+        from app.extensions import redis_client
+
+        body = _body() if request.get_json(silent=True) else {}
+        reason = body.get("reason", "Override revoked")
+
+        storage_key = f"object_admission_override:{override_id}"
+        override = redis_client.get(storage_key)
+
+        if not override:
+            raise governance_error("not_found", f"Override {override_id} not found", 404, {})
+
+        # Log revocation event
+        event = OverrideAuditEvent(
+            event_type=OverrideEventType.REVOKED,
+            override_id=override_id,
+            admin_user=_actor_identifier(),
+            reason=reason,
+            metadata={"override_type": "object_admission"},
+        )
+
+        config_manager = OverrideAuditConfigManager(redis_client)
+        config = config_manager.get_config("object_admission")
+        _log_override_event(event, config, _actor_identifier())
+
+        # Update override as revoked
+        if isinstance(override, dict):
+            override["active"] = False
+            override["revoked"] = {
+                "admin_user": _actor_identifier(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "reason": reason,
+            }
+            redis_client.set(storage_key, override)
+
+        return {"override_id": override_id, "revoked": True}
+
+    return _handle("object_admission_override_revoke", _do)
+
+
+# State Delta Boundary Overrides
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/state-delta-boundary", methods=["GET"])
+@limiter.limit("60 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_get_state_delta_overrides():
+    """Get active state delta boundary overrides."""
+    def _do():
+        from app.extensions import redis_client
+
+        storage_key = "state_delta_overrides:all"
+        overrides = redis_client.get(storage_key) or []
+
+        return {
+            "overrides": overrides if isinstance(overrides, list) else [],
+            "total_count": len(overrides) if isinstance(overrides, list) else 0,
+        }
+
+    return _handle("state_delta_overrides_get", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/state-delta-boundary", methods=["POST"])
+@limiter.limit("30 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_create_state_delta_override():
+    """Create state delta boundary protection override (breakglass)."""
+    def _do():
+        from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
+        from app.extensions import redis_client
+        import uuid
+
+        body = _body()
+        session_id = body.get("session_id", "")
+        protected_path = body.get("protected_path", "")
+        reason = body.get("reason", "")
+
+        if not session_id or not protected_path:
+            raise governance_error("invalid_override", "session_id and protected_path required", 400, {})
+
+        override_id = f"ov_state_delta_{uuid.uuid4().hex[:8]}"
+
+        # Create audit event and log it
+        event = OverrideAuditEvent(
+            event_type=OverrideEventType.CREATED,
+            override_id=override_id,
+            admin_user=_actor_identifier(),
+            session_id=session_id,
+            reason=reason,
+            metadata={
+                "protected_path": protected_path,
+                "override_type": "state_delta_boundary",
+            },
+        )
+
+        config_manager = OverrideAuditConfigManager(redis_client)
+        config = config_manager.get_config("state_delta_boundary")
+        _log_override_event(event, config, _actor_identifier())
+
+        # Store override
+        storage_key = f"state_delta_override:{override_id}"
+        override_data = {
+            "override_id": override_id,
+            "type": "state_delta_boundary_override",
+            "scope": "session",
+            "target": protected_path,
+            "protected_path": protected_path,
+            "created": {
+                "admin_user": _actor_identifier(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "reason": reason,
+            },
+            "applied_events": [],
+            "active": True,
+            "breakglass_activated": True,
+        }
+        redis_client.set(storage_key, override_data)
+
+        return {
+            "override_id": override_id,
+            "type": "state_delta_boundary_override",
+            "protected_path": protected_path,
+            "created": True,
+            "breakglass": True,
+        }
+
+    return _handle("state_delta_override_create", _do)
+
+
+@api_v1_bp.route("/admin/mvp4/overrides/state-delta-boundary/<override_id>", methods=["DELETE"])
+@limiter.limit("30 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def mvp4_revoke_state_delta_override(override_id: str):
+    """Revoke state delta boundary override."""
+    def _do():
+        from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
+        from app.extensions import redis_client
+
+        body = _body() if request.get_json(silent=True) else {}
+        reason = body.get("reason", "Override revoked")
+
+        storage_key = f"state_delta_override:{override_id}"
+        override = redis_client.get(storage_key)
+
+        if not override:
+            raise governance_error("not_found", f"Override {override_id} not found", 404, {})
+
+        # Log revocation event
+        event = OverrideAuditEvent(
+            event_type=OverrideEventType.REVOKED,
+            override_id=override_id,
+            admin_user=_actor_identifier(),
+            reason=reason,
+            metadata={"override_type": "state_delta_boundary"},
+        )
+
+        config_manager = OverrideAuditConfigManager(redis_client)
+        config = config_manager.get_config("state_delta_boundary")
+        _log_override_event(event, config, _actor_identifier())
+
+        # Update override as revoked
+        if isinstance(override, dict):
+            override["active"] = False
+            override["breakglass_activated"] = False
+            override["revoked"] = {
+                "admin_user": _actor_identifier(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "reason": reason,
+            }
+            redis_client.set(storage_key, override)
+
+        return {"override_id": override_id, "revoked": True}
+
+    return _handle("state_delta_override_revoke", _do)

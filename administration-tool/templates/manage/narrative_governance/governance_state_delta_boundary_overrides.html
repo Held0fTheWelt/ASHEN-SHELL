@@ -1,0 +1,419 @@
+{% extends "manage/base.html" %}
+{% block title %}State Delta Boundary Overrides (Breakglass){% endblock %}
+{% block content %}
+<section class="manage-card governance-overrides-page governance-state-delta" data-override-type="state_delta_boundary">
+    <h1>State Delta Boundary Overrides</h1>
+    <p class="manage-muted">Breakglass protection overrides for protected state paths. Use only in emergency situations.</p>
+
+    <div class="warning-banner">
+        <strong>⚠️ Warning:</strong> These overrides allow mutations to normally-protected state paths.
+        They should only be used in emergency situations and are fully audited.
+    </div>
+
+    <!-- Create Override Panel -->
+    <div class="override-creation-panel breakglass-panel">
+        <h2>Activate Breakglass Override</h2>
+        <div class="form-group">
+            <label for="session_id_input">Session ID:</label>
+            <input type="text" id="session_id_input" placeholder="e.g., sess_abc123" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="protected_path_input">Protected Path:</label>
+            <select id="protected_path_input" class="form-control">
+                <option value="">Select protected path...</option>
+                <option value="canonical_scene_order">canonical_scene_order</option>
+                <option value="canonical_characters">canonical_characters</option>
+                <option value="canonical_relationships">canonical_relationships</option>
+                <option value="canonical_content_truth">canonical_content_truth</option>
+                <option value="canonical_props">canonical_props</option>
+                <option value="canonical_endings">canonical_endings</option>
+                <option value="content_module_id">content_module_id</option>
+                <option value="selected_player_role">selected_player_role</option>
+                <option value="human_actor_id">human_actor_id</option>
+                <option value="actor_lanes">actor_lanes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="reason_input">Emergency Reason:</label>
+            <textarea id="reason_input" placeholder="Explain the emergency situation and why this override is necessary..." class="form-control" rows="4"></textarea>
+        </div>
+        <div class="form-actions">
+            <button id="create_override_btn" class="btn btn-danger" onclick="confirmBreakglassActivation()">Activate Breakglass</button>
+            <span id="creation_status" class="status-message"></span>
+        </div>
+    </div>
+
+    <!-- Active Overrides Panel -->
+    <div class="overrides-list-panel">
+        <h2>Active Overrides</h2>
+        <div id="overrides_list" class="overrides-table">
+            <p class="loading">Loading overrides...</p>
+        </div>
+    </div>
+
+    <!-- Override Details Modal -->
+    <div id="override_details_modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Breakglass Override Details</h3>
+                <button class="modal-close" onclick="closeOverrideModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="override_details_content"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="revoke_override_btn" class="btn btn-danger">Revoke Override</button>
+                <button class="btn btn-secondary" onclick="closeOverrideModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm_modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Breakglass Activation</h3>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>⚠️ This action cannot be undone immediately.</strong></p>
+                <p>You are about to activate a breakglass override for protected state path mutations. This action is:</p>
+                <ul>
+                    <li>Fully audited with your user ID, timestamp, and reason</li>
+                    <li>Reversible only by revocation (which is also audited)</li>
+                    <li>Visible to super-admins and narrative supervisors</li>
+                    <li>Restricted to emergency use cases</li>
+                </ul>
+                <p><strong>Are you certain you want to proceed?</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm_btn" class="btn btn-danger">Yes, Activate Breakglass</button>
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.mvp4-overrides-page {
+    padding: 20px;
+}
+
+.state-delta-overrides {
+}
+
+.warning-banner {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.override-creation-panel {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.breakglass-panel {
+    background: #ffebee;
+    border: 1px solid #ef5350;
+}
+
+.override-creation-panel h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #666;
+    font-size: 13px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: monospace;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #f44336;
+    box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.btn-primary {
+    background: #1976d2;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1565c0;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.btn-secondary {
+    background: #666;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #555;
+}
+
+.status-message {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+.status-message.success {
+    background: #c8e6c9;
+    color: #2e7d32;
+}
+
+.status-message.error {
+    background: #ffcdd2;
+    color: #c62828;
+}
+
+.status-message.info {
+    background: #bbdefb;
+    color: #1565c0;
+}
+
+.overrides-list-panel {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 20px;
+}
+
+.overrides-list-panel h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.overrides-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.overrides-table.empty {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+.override-row {
+    display: grid;
+    grid-template-columns: 120px 180px 200px 150px 150px 80px;
+    gap: 15px;
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+}
+
+.override-row:first-child {
+    font-weight: 600;
+    background: #f5f5f5;
+}
+
+.override-row-data {
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.override-row-user {
+    color: #666;
+    font-size: 12px;
+}
+
+.override-row-time {
+    color: #999;
+    font-size: 11px;
+}
+
+.override-row-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.override-row-status.active {
+    background: #ffcdd2;
+    color: #c62828;
+}
+
+.override-row-status.revoked {
+    background: #f5f5f5;
+    color: #999;
+}
+
+.override-row-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.override-row-actions button {
+    padding: 5px 10px;
+    font-size: 11px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.override-row-actions button:hover {
+    background: #f9f9f9;
+}
+
+.override-row-actions button.danger {
+    color: #f44336;
+    border-color: #f44336;
+}
+
+.override-row-actions button.danger:hover {
+    background: #ffebee;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 6px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.modal-body li {
+    margin: 5px 0;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.detail-field {
+    margin-bottom: 15px;
+}
+
+.detail-field-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.detail-field-value {
+    font-family: monospace;
+    font-size: 12px;
+    color: #666;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 3px;
+    word-break: break-all;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='governance_state_delta_boundary_overrides.js') }}"></script>
+{% endblock %}

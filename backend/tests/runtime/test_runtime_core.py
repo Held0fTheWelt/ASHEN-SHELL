@@ -294,9 +294,9 @@ def test_runtime_model_defaults_and_npc_director_cycles():
 
 def test_runtime_engine_commands_and_snapshot(monkeypatch):
     engine_module = _import_engine_module(monkeypatch)
-    template = load_builtin_templates()["god_of_carnage_solo"]
+    template = load_builtin_templates()["apartment_confrontation_group"]
     engine = engine_module.RuntimeEngine(template)
-    instance = _runtime_instance_for("god_of_carnage_solo")
+    instance = _runtime_instance_for("apartment_confrontation_group")
     actor = next(iter(instance.participants.values()))
 
     available = engine.available_actions(instance, actor)

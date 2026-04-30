@@ -147,6 +147,21 @@ def register_manage_narrative_governance_pages(app: Flask) -> None:
         """Narrative governance notifications page."""
         return render_template("manage/narrative_governance/notifications.html")
 
+    @app.route("/manage/narrative/governance-health-panels")
+    def manage_governance_health_panels():
+        """Narrative Governance Health Panels dashboard."""
+        return render_template("manage/narrative_governance/governance_health_panels.html")
+
+    @app.route("/manage/narrative/governance-object-admission-overrides")
+    def manage_governance_object_admission_overrides():
+        """Narrative Governance Object Admission Override management."""
+        return render_template("manage/narrative_governance/governance_object_admission_overrides.html")
+
+    @app.route("/manage/narrative/governance-state-delta-boundary-overrides")
+    def manage_governance_state_delta_boundary_overrides():
+        """Narrative Governance State Delta Boundary (Breakglass) Override management."""
+        return render_template("manage/narrative_governance/governance_state_delta_boundary_overrides.html")
+
 
 def register_manage_data_ops_and_platform_pages(app: Flask) -> None:
     @app.route("/manage/data")
