@@ -476,11 +476,14 @@ def execute_story_turn(
 ) -> dict[str, Any]:
     trace_id = getattr(request.state, "trace_id", None)
 
-    # Initialize Langfuse adapter and create root span (lazy import)
+    # Initialize Langfuse adapter and create root span
     try:
-        from backend.app.observability.langfuse_adapter import LangfuseAdapter
+        from app.observability.langfuse_adapter import LangfuseAdapter
         adapter = LangfuseAdapter.get_instance()
-    except ImportError:
+    except Exception as e:
+        print(f"ERROR: Failed to load Langfuse adapter: {type(e).__name__}: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         adapter = None
 
     root_span = None

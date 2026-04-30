@@ -183,3 +183,48 @@ def internal_observability_initialize():
             500,
             {},
         )
+
+
+@api_v1_bp.route("/internal/observability/langfuse-credentials", methods=["GET"])
+@limiter.limit("300 per minute")
+def internal_langfuse_credentials():
+    """
+    Internal endpoint for world-engine to fetch Langfuse credentials.
+    Used by world-engine service to initialize its own Langfuse tracing.
+    Requires internal config token for authentication.
+    """
+    token = (request.headers.get("X-Internal-Config-Token") or "").strip()
+    expected = (current_app.config.get("INTERNAL_RUNTIME_CONFIG_TOKEN") or "").strip()
+    if not expected or token != expected:
+        return fail("credentials_forbidden", "Internal runtime config token is invalid.", 403, {})
+
+    try:
+        from app.models.governance_core import ObservabilityConfig
+
+        config = ObservabilityConfig.query.filter_by(service_id="langfuse").first()
+        if not config or not config.is_enabled:
+            return ok({
+                "enabled": False,
+                "public_key": None,
+                "secret_key": None,
+                "base_url": "https://cloud.langfuse.com",
+            })
+
+        # Get credentials
+        public_key = get_observability_credential_for_runtime("public_key")
+        secret_key = get_observability_credential_for_runtime("secret_key")
+
+        return ok({
+            "enabled": config.is_enabled and bool(secret_key),
+            "public_key": public_key,
+            "secret_key": secret_key,
+            "base_url": config.base_url,
+        })
+
+    except Exception as e:
+        return fail(
+            "credentials_error",
+            f"Failed to retrieve Langfuse credentials: {str(e)}",
+            500,
+            {},
+        )
