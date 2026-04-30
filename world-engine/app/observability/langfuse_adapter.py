@@ -134,13 +134,9 @@ class LangfuseAdapter:
             trace_metadata = metadata or {}
             trace_metadata.setdefault("session_id", session_id)
 
-            # Create trace and root span using Langfuse SDK v4.x API
-            trace = self.client.trace(
-                name=name,
-                session_id=session_id,
-                metadata=trace_metadata,
-            )
-            span = trace.span(
+            # Use Langfuse SDK v4.x API: start_observation with as_type="span"
+            span = self.client.start_observation(
+                as_type="span",
                 name=name,
                 metadata=trace_metadata,
             )
