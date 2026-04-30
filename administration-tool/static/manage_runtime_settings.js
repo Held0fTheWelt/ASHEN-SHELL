@@ -300,6 +300,35 @@
     });
   }
 
+  // MVP5: Typewriter Configuration Functions
+  function loadTypewriterConfig() {
+    return window.ManageAuth.apiFetchWithAuth("/api/v1/admin/frontend-config/typewriter").then(function (res) {
+      var config = res || {};
+      setValue("tw-chars-per-sec", config.characters_per_second || 44);
+      setValue("tw-pause-before", config.pause_before_ms || 150);
+      setValue("tw-pause-after", config.pause_after_ms || 650);
+      setChecked("tw-skippable", config.skippable !== false);
+    });
+  }
+
+  function saveTypewriterConfig() {
+    var payload = {
+      characters_per_second: parseInt(value("tw-chars-per-sec", "44"), 10) || 44,
+      pause_before_ms: parseInt(value("tw-pause-before", "150"), 10) || 150,
+      pause_after_ms: parseInt(value("tw-pause-after", "650"), 10) || 650,
+      skippable: checked("tw-skippable")
+    };
+    return window.ManageAuth.apiFetchWithAuth("/api/v1/admin/frontend-config/typewriter", {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }).then(function () {
+      show("ok", "Typewriter configuration saved.");
+      return loadTypewriterConfig();
+    }).catch(function (err) {
+      show("err", parseError(err));
+    });
+  }
+
   function bindActions() {
     var refresh = document.getElementById("manage-rs-refresh");
     if (refresh) {
@@ -326,6 +355,22 @@
     if (safe) {
       safe.addEventListener("click", function () {
         applyPreset("safe_local", false);
+      });
+    }
+
+    // MVP5: Typewriter config buttons
+    var twLoad = document.getElementById("tw-load-config");
+    if (twLoad) {
+      twLoad.addEventListener("click", function () {
+        loadTypewriterConfig().catch(function (err) {
+          show("err", parseError(err));
+        });
+      });
+    }
+    var twSave = document.getElementById("tw-save-config");
+    if (twSave) {
+      twSave.addEventListener("click", function () {
+        saveTypewriterConfig();
       });
     }
   }

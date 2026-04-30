@@ -147,6 +147,34 @@
   function handleNarratorBlock(event) {
     streamState.blocks.push(event);
 
+    // MVP5: Emit narrator-block-received event for BlocksOrchestrator
+    if (event.data && event.data.narrator_block) {
+      const narratorData = event.data.narrator_block;
+      const blockId = event.event_id || "narrator-" + Math.random().toString(36).substr(2, 9);
+      const text = narratorData.narrator_text || narratorData.text || "";
+
+      if (text) {
+        // Construct block compatible with BlocksOrchestrator
+        const block = {
+          id: blockId,
+          block_type: "narrator",
+          text: text,
+          speaker_label: "Narrator",
+          delivery: {
+            mode: "typewriter",
+            characters_per_second: 44,
+          },
+        };
+
+        // Emit custom event for BlocksOrchestrator to consume
+        const customEvent = new CustomEvent("narrator-block-received", {
+          detail: { block: block },
+        });
+        window.dispatchEvent(customEvent);
+      }
+    }
+
+    // Legacy: Also render directly (for compatibility with existing players without BlocksOrchestrator)
     const narratorHtml = getNarratorBlockHtml(event);
     if (!narratorHtml) return;
 

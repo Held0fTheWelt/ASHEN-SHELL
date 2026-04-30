@@ -99,6 +99,7 @@ SUITE_DISPLAY_NAMES: dict[str, str] = {
     "root_experience_scoring": "Repository experience scoring tests",
     "playwright_e2e": "Playwright browser end-to-end tests",
     "compose_smoke": "Compose smoke lane",
+    "mvp5": "MVP5 frontend (block renderer + typewriter + orchestration)",
 }
 
 # CLI --scope value -> pytest ``-m`` marker name (must exist in that component's pytest.ini)
@@ -192,6 +193,8 @@ SUITE_CONFIGS: dict[str, SuiteConfig] = {
     "root_experience_scoring": SuiteConfig(
         kind="pytest", cwd=PROJECT_ROOT, target="tests/experience_scoring_cli", supports_coverage=False
     ),
+    # MVP5: Frontend block rendering, typewriter, orchestration
+    "mvp5": SuiteConfig(kind="pytest", cwd=FRONTEND_DIR, target="tests", supports_coverage=False),
     # Optional external lanes
     "playwright_e2e": SuiteConfig(kind="external", cwd=PROJECT_ROOT / "tests" / "e2e", target="npx playwright test"),
     "compose_smoke": SuiteConfig(
@@ -995,6 +998,7 @@ Optional non-Python lanes are opt-in:
             "root_requirements_hygiene",
             "root_e2e_python",
             "root_experience_scoring",
+            "mvp5",
             "all",
         ],
         help=(
@@ -1064,12 +1068,19 @@ Optional non-Python lanes are opt-in:
         action="store_true",
         help="MVP4 suite preset: backend, engine, ai_stack, story_runtime_core, gates.",
     )
+    parser.add_argument(
+        "--mvp5",
+        action="store_true",
+        help="MVP5 suite preset: frontend (block renderer, typewriter, orchestration).",
+    )
 
     args = parser.parse_args()
 
     # Resolve MVP-scoped suite presets (only when --suite is at default "all")
     if args.suite == ["all"]:
-        if args.mvp4:
+        if args.mvp5:
+            args.suite = ["frontend", "mvp5"]
+        elif args.mvp4:
             args.suite = ["backend", "engine", "ai_stack", "story_runtime_core", "gates"]
         elif args.mvp3:
             args.suite = ["backend", "engine", "ai_stack", "story_runtime_core"]
