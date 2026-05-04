@@ -334,7 +334,7 @@ def _seed_default_presets() -> None:
 
 
 def _slug(value: str) -> str:
-    return value.strip().lower().replace(" ", "_")
+    return value.strip().lower().replace(" ", "_").replace("-", "_").replace(".", "_")
 
 
 def get_bootstrap_status() -> dict:

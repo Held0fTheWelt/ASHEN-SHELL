@@ -311,6 +311,46 @@ def seed_base_governance():
         print(message)
 
 
+@app.cli.command("normalize-model-ids")
+def normalize_model_ids():
+    """Normalize model_id: replace hyphens/dots with underscores.
+
+    Handles model IDs like 'openai_gpt-5.4-mini' → 'openai_gpt_5_4_mini'.
+    Updates all route references to maintain referential integrity.
+    """
+    from app.models import AIModelConfig, AITaskRoute
+
+    with app.app_context():
+        db.create_all()
+        models = AIModelConfig.query.all()
+        normalized_count = 0
+
+        for model in models:
+            new_id = model.model_id.replace("-", "_").replace(".", "_")
+            if new_id != model.model_id:
+                old_id = model.model_id
+                # Update routes that reference this model
+                routes = AITaskRoute.query.filter(
+                    (AITaskRoute.preferred_model_id == old_id)
+                    | (AITaskRoute.fallback_model_id == old_id)
+                    | (AITaskRoute.mock_model_id == old_id)
+                ).all()
+                for route in routes:
+                    if route.preferred_model_id == old_id:
+                        route.preferred_model_id = new_id
+                    if route.fallback_model_id == old_id:
+                        route.fallback_model_id = new_id
+                    if route.mock_model_id == old_id:
+                        route.mock_model_id = new_id
+                # Update the model itself
+                model.model_id = new_id
+                normalized_count += 1
+                print(f"Normalized: {old_id} → {new_id} ({len(routes)} routes updated)")
+
+        db.session.commit()
+        print(f"Total models normalized: {normalized_count}")
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     debug = env_bool("FLASK_DEBUG", False)
