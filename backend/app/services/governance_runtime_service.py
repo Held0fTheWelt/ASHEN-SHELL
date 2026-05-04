@@ -963,7 +963,10 @@ def create_model(payload: dict, actor: str) -> AIModelConfig:
     model_name = (payload.get("model_name") or "").strip()
     if not model_name:
         raise governance_error("setting_value_invalid", "model_name is required.", 400, {})
-    model_id = _slug(payload.get("model_id") or f"{provider_id}_{model_name}")
+    # model_id: operator-provided internal identifier. model_name: exact provider model name (e.g., gpt-4o-mini, not modified)
+    model_id = (payload.get("model_id") or "").strip()
+    if not model_id:
+        raise governance_error("setting_value_invalid", "model_id is required (internal identifier, e.g. openai_gpt4o).", 400, {})
     model = db.session.get(AIModelConfig, model_id)
     if model:
         return model
