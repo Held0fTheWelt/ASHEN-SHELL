@@ -11,6 +11,7 @@ Correlated: all traces linked to session/run/turn/module/scene.
 from __future__ import annotations
 
 import os
+import hashlib
 from typing import Any, Optional
 from functools import wraps
 import logging
@@ -41,56 +42,50 @@ class LangfuseConfig:
     """Langfuse configuration from environment or database."""
 
     def __init__(self):
-        env_enabled = os.getenv("LANGFUSE_ENABLED", "").lower() in ("true", "1", "yes")
-        db_enabled = self._get_enabled_from_db()
-        # Environment variable takes precedence; if not set, use database config
-        self.enabled = env_enabled or (db_enabled if os.getenv("LANGFUSE_ENABLED") == "" else env_enabled)
-        if not os.getenv("LANGFUSE_ENABLED"):
-            self.enabled = db_enabled
+        db_config = self._get_config_from_db()
+        self.enabled = bool(db_config.get("is_enabled"))
+        self.public_key = self._get_credential_from_db("public_key") or ""
+        self.secret_key = self._get_credential_from_db("secret_key") or ""
 
-        # Try environment variables first, then fall back to database
-        self.public_key = os.getenv("LANGFUSE_PUBLIC_KEY", "") or self._get_credential_from_db("public_key") or ""
-        self.secret_key = os.getenv("LANGFUSE_SECRET_KEY", "") or self._get_credential_from_db("secret_key") or ""
-
-        self.base_url = os.getenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
-        self.environment = os.getenv("LANGFUSE_ENVIRONMENT", "development")
-        self.release = os.getenv("LANGFUSE_RELEASE", "unknown")
-        self.sample_rate = float(os.getenv("LANGFUSE_SAMPLE_RATE", "1.0"))
-        self.capture_prompts = os.getenv("LANGFUSE_CAPTURE_PROMPTS", "true").lower() in ("true", "1")
-        self.capture_outputs = os.getenv("LANGFUSE_CAPTURE_OUTPUTS", "true").lower() in ("true", "1")
-        self.capture_retrieval = os.getenv("LANGFUSE_CAPTURE_RETRIEVAL", "false").lower() in ("true", "1")
-        self.redaction_mode = os.getenv("LANGFUSE_REDACTION_MODE", "strict")
+        self.base_url = str(db_config.get("base_url") or "https://cloud.langfuse.com")
+        self.environment = str(db_config.get("environment") or "development")
+        self.release = str(db_config.get("release") or "unknown")
+        self.sample_rate = float(db_config.get("sample_rate") or 1.0)
+        self.capture_prompts = bool(db_config.get("capture_prompts", True))
+        self.capture_outputs = bool(db_config.get("capture_outputs", True))
+        self.capture_retrieval = bool(db_config.get("capture_retrieval", False))
+        self.redaction_mode = str(db_config.get("redaction_mode") or "strict")
 
     @staticmethod
-    def _get_enabled_from_db() -> bool:
-        """Get enabled flag from database (set via admin tool)."""
+    def _get_config_from_db() -> dict[str, Any]:
+        """Get Langfuse configuration from the governed runtime database."""
         try:
             from app.models.governance_core import ObservabilityConfig
             config = ObservabilityConfig.query.filter_by(service_id="langfuse").first()
             if config:
-                return bool(config.is_enabled)
+                return {
+                    "is_enabled": bool(config.is_enabled),
+                    "base_url": config.base_url,
+                    "environment": config.environment,
+                    "release": config.release,
+                    "sample_rate": config.sample_rate,
+                    "capture_prompts": config.capture_prompts,
+                    "capture_outputs": config.capture_outputs,
+                    "capture_retrieval": config.capture_retrieval,
+                    "redaction_mode": config.redaction_mode,
+                }
         except Exception:
             pass
-        return False
+        return {"is_enabled": False}
 
     @staticmethod
     def _get_credential_from_db(secret_name: str) -> Optional[str]:
         """Get credential from database (stored via admin tool)."""
         try:
-            from app.models.governance_core import ObservabilityCredential
-            cred = ObservabilityCredential.query.filter_by(
-                service_id="langfuse",
-                secret_name=secret_name,
-                is_active=True,
-            ).first()
-            if cred:
-                try:
-                    return cred.encrypted_secret.decode()
-                except Exception:
-                    return None
+            from app.services.observability_governance_service import get_observability_credential_for_runtime
+            return get_observability_credential_for_runtime(secret_name)
         except Exception:
             return None
-        return None
 
     @property
     def is_valid(self) -> bool:
@@ -118,6 +113,7 @@ class LangfuseAdapter:
         self.config = config or LangfuseConfig()
         self._client: Optional[Langfuse] = None
         self._active_trace: Optional[Any] = None
+        self.is_ready: bool = False
 
         if self.config.is_ready:
             try:
@@ -129,10 +125,12 @@ class LangfuseAdapter:
                     release=self.config.release,
                     sample_rate=self.config.sample_rate,
                 )
+                self.is_ready = True
                 logger.info(f"Langfuse initialized: {self.config.environment}@{self.config.base_url}")
             except Exception as e:
-                logger.warning(f"Failed to initialize Langfuse: {e}. Tracing disabled.")
+                logger.exception(f"Failed to initialize Langfuse: {e}. Tracing disabled.")
                 self._client = None
+                self.is_ready = False
 
     @classmethod
     def get_instance(cls, config: Optional[LangfuseConfig] = None) -> "LangfuseAdapter":
@@ -152,8 +150,13 @@ class LangfuseAdapter:
         cls._instance = None
 
     def is_enabled(self) -> bool:
-        """Check if tracing is enabled and ready."""
-        return self._client is not None
+        """Check if tracing is enabled and client is ready."""
+        return self.is_ready and self._client is not None
+
+    @property
+    def client(self) -> Optional[Langfuse]:
+        """Public accessor for the Langfuse client instance."""
+        return self._client
 
     def _redact_value(self, value: Any, key: str = "") -> Any:
         """Redact sensitive values based on key patterns."""
@@ -202,6 +205,7 @@ class LangfuseAdapter:
         turn_id: Optional[str] = None,
         module_id: Optional[str] = None,
         metadata: Optional[dict[str, Any]] = None,
+        trace_id: Optional[str] = None,
     ) -> Optional[Any]:
         """Start a new trace.
 
@@ -212,6 +216,7 @@ class LangfuseAdapter:
             turn_id: Turn ID or number for correlation
             module_id: Module ID (e.g., "god_of_carnage") for correlation
             metadata: Additional metadata to attach
+            trace_id: Optional Langfuse v4 trace ID for distributed tracing
 
         Returns:
             Trace span object if enabled, None otherwise.
@@ -230,15 +235,27 @@ class LangfuseAdapter:
             trace_metadata = self._sanitize_metadata({k: v for k, v in trace_metadata.items() if v is not None})
 
             # v4 API: start_observation returns a span object (not context manager here)
+            trace_context = {"trace_id": trace_id} if trace_id else None
             self._active_trace = self._client.start_observation(
                 as_type="span",
                 name=name,
+                trace_context=trace_context,
                 metadata=trace_metadata,
             )
             return self._active_trace
         except Exception as e:
             logger.warning(f"Failed to start trace: {e}")
             return None
+
+    def create_trace_id(self, seed: Optional[str] = None) -> str:
+        """Create a Langfuse-compatible 32-char hex trace ID."""
+        if self._client:
+            return self._client.create_trace_id(seed=seed)
+        if LANGFUSE_AVAILABLE and Langfuse:
+            return Langfuse.create_trace_id(seed=seed)
+        if seed:
+            return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:32]
+        return os.urandom(16).hex()
 
     def end_trace(self, trace: Optional[Any] = None) -> None:
         """End the current or specified trace."""

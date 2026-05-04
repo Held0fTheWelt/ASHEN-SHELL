@@ -195,8 +195,10 @@ class TestGameServiceClient:
                 module_id="god_of_carnage",
                 runtime_projection={"start_scene_id": "s1"},
                 trace_id="trace-from-backend",
+                langfuse_trace_id="0123456789abcdef0123456789abcdef",
             )
         assert capture["headers"].get("X-WoS-Trace-Id") == "trace-from-backend"
+        assert capture["headers"].get("X-Langfuse-Trace-Id") == "0123456789abcdef0123456789abcdef"
         assert capture["headers"].get("X-Play-Service-Key") == "k"
 
     def test_request_wraps_transport_failures(self, app, monkeypatch):

@@ -30,14 +30,7 @@ class LangfuseAdapter:
             sample_rate=float(os.getenv("LANGFUSE_SAMPLE_RATE", "1.0")),
         )
 
-        # Check if Langfuse is enabled
-        enabled = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
-        logger.info(f"[LANGFUSE] __init__ called: ENABLED={enabled}")
-        if not enabled:
-            logger.info("[LANGFUSE] Not enabled - skipping initialization")
-            return
-
-        # Fetch credentials from backend database
+        # Fetch runtime observability settings from the backend database.
         try:
             logger.info("Fetching Langfuse credentials from backend...")
             credentials = self._fetch_credentials_from_backend()
@@ -45,10 +38,19 @@ class LangfuseAdapter:
             if not credentials:
                 logger.info("Langfuse credentials not configured in backend")
                 return
+            if not credentials.get("enabled"):
+                logger.info("Langfuse disabled in backend settings")
+                return
 
             public_key = credentials.get("public_key", "").strip()
             secret_key = credentials.get("secret_key", "").strip()
             base_url = credentials.get("base_url", "https://cloud.langfuse.com").strip()
+            environment = credentials.get("environment") or os.getenv("LANGFUSE_ENVIRONMENT", "development")
+            release = credentials.get("release") or os.getenv("LANGFUSE_RELEASE", "unknown")
+            sample_rate = float(credentials.get("sample_rate") or os.getenv("LANGFUSE_SAMPLE_RATE", "1.0"))
+            self._config.environment = environment
+            self._config.release = release
+            self._config.sample_rate = sample_rate
 
             logger.info(f"Langfuse config: base_url={base_url}, has_public_key={bool(public_key)}, has_secret_key={bool(secret_key)}")
             if not public_key or not secret_key:
@@ -62,9 +64,9 @@ class LangfuseAdapter:
                 public_key=public_key,
                 secret_key=secret_key,
                 base_url=base_url,
-                environment=os.getenv("LANGFUSE_ENVIRONMENT", "development"),
-                release=os.getenv("LANGFUSE_RELEASE", "unknown"),
-                sample_rate=float(os.getenv("LANGFUSE_SAMPLE_RATE", "1.0")),
+                environment=environment,
+                release=release,
+                sample_rate=sample_rate,
             )
             self.is_ready = True
             logger.info(f"[LANGFUSE] ✓ Adapter initialized successfully: is_ready=True, client={type(self.client).__name__}")
@@ -100,9 +102,13 @@ class LangfuseAdapter:
                     data = response.json().get("data", {})
                     logger.info(f"Got credentials from backend: enabled={data.get('enabled')}, has_keys={bool(data.get('secret_key'))}")
                     return {
+                        "enabled": bool(data.get("enabled")),
                         "public_key": data.get("public_key", ""),
                         "secret_key": data.get("secret_key", ""),
                         "base_url": data.get("base_url", "https://cloud.langfuse.com"),
+                        "environment": data.get("environment", "development"),
+                        "release": data.get("release", "unknown"),
+                        "sample_rate": data.get("sample_rate", 1.0),
                     }
                 else:
                     logger.warning(f"Unexpected response status: {response.status_code}, body: {response.text}")
@@ -125,6 +131,7 @@ class LangfuseAdapter:
         name: str,
         session_id: str,
         metadata: Optional[dict[str, Any]] = None,
+        trace_id: Optional[str] = None,
     ) -> Optional[Any]:
         """Start a new trace root span (Langfuse SDK v4.x API)."""
         if not self.is_enabled():
@@ -139,12 +146,39 @@ class LangfuseAdapter:
             span = self.client.start_observation(
                 as_type="span",
                 name=name,
+                trace_context={"trace_id": trace_id} if trace_id else None,
                 metadata=trace_metadata,
             )
             logger.info(f"[LANGFUSE] root span created: name={name}, session_id={session_id}, span_id={getattr(span, 'span_id', 'unknown')}, trace_id={getattr(span, 'trace_id', 'unknown')}")
             return span
         except Exception as e:
             logger.error(f"[LANGFUSE] Failed to start trace: {str(e)}", exc_info=True)
+            return None
+
+    def start_span_in_trace(
+        self,
+        *,
+        trace_id: str,
+        name: str,
+        input: Optional[dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
+    ) -> Optional[Any]:
+        """Create a v4 span inside an existing Langfuse trace."""
+        if not self.is_enabled():
+            logger.info("[LANGFUSE] start_span_in_trace skipped: adapter not enabled")
+            return None
+        try:
+            span = self.client.start_observation(
+                as_type="span",
+                name=name,
+                trace_context={"trace_id": trace_id},
+                input=input or {},
+                metadata=metadata or {},
+            )
+            logger.info(f"[LANGFUSE] span created in trace: name={name}, trace_id={trace_id}")
+            return span
+        except Exception as e:
+            logger.error(f"[LANGFUSE] Failed to create span in trace {trace_id}: {str(e)}", exc_info=True)
             return None
 
     @property

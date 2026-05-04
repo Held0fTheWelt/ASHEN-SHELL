@@ -52,7 +52,9 @@ from ai_stack.narrative import NarrativeRuntimeAgent, NarrativeRuntimeAgentInput
 from app.config import APP_VERSION
 from app.repo_root import resolve_wos_repo_root
 from app.observability.audit_log import log_story_runtime_failure, log_story_turn_event
+from app.observability.langfuse_adapter import LangfuseAdapter
 from app.observability.runtime_metrics import StoryRuntimeMetrics
+from app.observability.trace import get_langfuse_trace_id
 from app.story_runtime.governed_runtime import build_governed_story_runtime_components
 from app.story_runtime.live_governance import (
     BlockedLiveStoryRoutingPolicy,
@@ -1194,11 +1196,12 @@ class StoryRuntimeManager:
 
     # MVP3: Narrative agent configuration and input queue management
     def _get_tracing_config(self, session_id: str) -> bool:
-        """Get Langfuse tracing config for session."""
-        import os
-        # MVP3: Read from LANGFUSE_ENABLED environment variable
-        # MVP4: Will read from admin UI toggle per session
-        return os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
+        """Get Langfuse tracing readiness from the runtime adapter."""
+        try:
+            return LangfuseAdapter.get_instance().is_enabled()
+        except Exception:
+            logger.debug("Langfuse tracing config unavailable for session %s", session_id, exc_info=True)
+            return False
 
     def queue_player_input(self, session_id: str, player_input: str) -> None:
         """Queue player input while narrator is streaming."""
@@ -2101,6 +2104,7 @@ class StoryRuntimeManager:
                     runtime_projection=session.runtime_projection,
                     graph_state=graph_state,
                     scene_turn_envelope=scene_turn_envelope,
+                    langfuse_trace_id=get_langfuse_trace_id() or "",
                     langfuse_enabled=self._get_tracing_config(session.session_id),
                     degradation_events=degradation_events,
                 )

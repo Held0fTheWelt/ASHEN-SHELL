@@ -4,7 +4,14 @@ import time
 import sys
 
 from app.services.user_service import update_user_last_seen
-from app.observability.trace import ensure_trace_id, get_trace_id, reset_trace_id
+from app.observability.trace import (
+    LANGFUSE_TRACE_ID,
+    TRACE_ID,
+    ensure_langfuse_trace_id,
+    ensure_trace_id,
+    get_langfuse_trace_id,
+    get_trace_id,
+)
 from app.observability.audit_log import log_api_endpoint
 
 api_v1_bp = Blueprint("api_v1", __name__)
@@ -44,10 +51,17 @@ def _sync_module_aliases() -> None:
 @api_v1_bp.before_request
 def _setup_trace():
     """Set up trace ID from header or generate new one."""
+    g.trace_token = TRACE_ID.set(None)
+    g.langfuse_trace_token = LANGFUSE_TRACE_ID.set(None)
     incoming_trace = request.headers.get("X-WoS-Trace-Id")
     trace_id = ensure_trace_id(incoming_trace)
+    incoming_langfuse_trace = request.headers.get("X-Langfuse-Trace-Id")
+    langfuse_trace_id = ensure_langfuse_trace_id(
+        incoming_langfuse_trace,
+        seed=trace_id,
+    )
     g.trace_id = trace_id
-    g.trace_token = None  # Will store token for reset in after_request
+    g.langfuse_trace_id = langfuse_trace_id
     g.request_start_time = time.time()
 
 
@@ -65,6 +79,9 @@ def _track_api_activity(response):
     trace_id = g.get("trace_id")
     if trace_id:
         response.headers["X-WoS-Trace-Id"] = trace_id
+    langfuse_trace_id = g.get("langfuse_trace_id") or get_langfuse_trace_id()
+    if langfuse_trace_id:
+        response.headers["X-Langfuse-Trace-Id"] = langfuse_trace_id
 
     # Write audit log for session endpoints
     if "/sessions" in request.path:
@@ -86,6 +103,13 @@ def _track_api_activity(response):
             duration_ms=duration_ms,
             outcome="ok" if 200 <= response.status_code < 400 else "error",
         )
+
+    trace_token = g.get("trace_token")
+    if trace_token is not None:
+        TRACE_ID.reset(trace_token)
+    langfuse_trace_token = g.get("langfuse_trace_token")
+    if langfuse_trace_token is not None:
+        LANGFUSE_TRACE_ID.reset(langfuse_trace_token)
 
     return response
 

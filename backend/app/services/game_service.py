@@ -163,6 +163,7 @@ def _request(
     json_payload: dict | None = None,
     internal: bool = False,
     trace_id: str | None = None,
+    langfuse_trace_id: str | None = None,
 ) -> dict | list:
     if current_app.config.get("PLAY_SERVICE_CONTROL_DISABLED"):
         raise GameServiceError(
@@ -176,6 +177,8 @@ def _request(
         headers = dict(_internal_headers())
         if trace_id:
             headers["X-WoS-Trace-Id"] = trace_id
+        if langfuse_trace_id:
+            headers["X-Langfuse-Trace-Id"] = langfuse_trace_id
     try:
         with httpx.Client(base_url=base_url, timeout=float(timeout)) as client:
             response = client.request(method, path, json=json_payload, headers=headers)
@@ -339,6 +342,7 @@ def create_story_session(
     module_id: str,
     runtime_projection: dict,
     trace_id: str | None = None,
+    langfuse_trace_id: str | None = None,
     content_provenance: dict | None = None,
 ) -> dict:
     if not current_app.config.get("PLAY_SERVICE_ALLOW_NEW_SESSIONS", True):
@@ -356,19 +360,27 @@ def create_story_session(
         },
         internal=True,
         trace_id=trace_id,
+        langfuse_trace_id=langfuse_trace_id,
     )
     if not isinstance(payload, dict) or "session_id" not in payload:
         raise GameServiceError("Play service returned an unexpected story-session payload.")
     return payload
 
 
-def execute_story_turn(*, session_id: str, player_input: str, trace_id: str | None = None) -> dict:
+def execute_story_turn(
+    *,
+    session_id: str,
+    player_input: str,
+    trace_id: str | None = None,
+    langfuse_trace_id: str | None = None,
+) -> dict:
     payload = _request(
         "POST",
         f"/api/story/sessions/{session_id}/turns",
         json_payload={"player_input": player_input},
         internal=True,
         trace_id=trace_id,
+        langfuse_trace_id=langfuse_trace_id,
     )
     if not isinstance(payload, dict) or "turn" not in payload:
         raise GameServiceError("Play service returned an unexpected story-turn payload.")

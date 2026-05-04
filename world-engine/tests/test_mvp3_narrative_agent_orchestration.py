@@ -166,20 +166,20 @@ class TestInputQueueing:
 class TestTracingConfig:
     """Test Langfuse tracing configuration."""
 
-    def test_get_tracing_config_reads_from_env_var(self, story_manager):
-        """_get_tracing_config reads from LANGFUSE_ENABLED env var."""
-        import os
-        config = story_manager._get_tracing_config("test_session")
-        # Should match LANGFUSE_ENABLED env var
-        expected = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
-        assert config == expected
+    def test_get_tracing_config_reads_from_runtime_adapter(self, story_manager):
+        """_get_tracing_config reads from the runtime Langfuse adapter."""
+        with patch("app.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
+            get_instance.return_value.is_enabled.return_value = True
+            config = story_manager._get_tracing_config("test_session")
+
+        assert config is True
 
     def test_tracing_config_consistent_across_sessions(self, story_manager):
-        """Tracing config is consistent across sessions (all read from same env var)."""
-        import os
-        expected = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
-        for session_id in ["session1", "session2", "session3"]:
-            assert story_manager._get_tracing_config(session_id) == expected
+        """Tracing config is consistent across sessions from the runtime adapter."""
+        with patch("app.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
+            get_instance.return_value.is_enabled.return_value = False
+            for session_id in ["session1", "session2", "session3"]:
+                assert story_manager._get_tracing_config(session_id) is False
 
 
 @pytest.mark.mvp3
@@ -225,7 +225,6 @@ class TestMVP3OrchestrationGate:
 
     def test_mvp3_orchestration_integrates_with_manager(self, story_manager):
         """Gate: Orchestration methods work with StoryRuntimeManager instance."""
-        import os
         # Queue some inputs
         story_manager.queue_player_input("session1", "input1")
         story_manager.queue_player_input("session1", "input2")
@@ -233,10 +232,11 @@ class TestMVP3OrchestrationGate:
         # Check streaming state
         assert story_manager.is_narrative_streaming("session1") is False
 
-        # Get config (should match LANGFUSE_ENABLED env var)
-        config = story_manager._get_tracing_config("session1")
-        expected = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
-        assert config == expected
+        # Get config from runtime adapter.
+        with patch("app.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
+            get_instance.return_value.is_enabled.return_value = True
+            config = story_manager._get_tracing_config("session1")
+        assert config is True
 
         # Retrieve queued inputs
         inputs = story_manager.get_queued_inputs("session1")

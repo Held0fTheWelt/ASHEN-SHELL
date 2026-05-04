@@ -35,6 +35,24 @@ def clear_rate_limiter():
         pass
 
 
+@pytest.fixture(autouse=True)
+def reset_langfuse_adapter_singleton():
+    """Reset Langfuse adapter singleton before each test.
+
+    The adapter uses a singleton pattern. After app initialization,
+    the adapter's client is shut down by Flask's teardown handler.
+    This fixture resets the singleton so each test gets a fresh instance
+    initialized with the app context.
+    """
+    from app.observability.langfuse_adapter import LangfuseAdapter
+
+    # Reset before test
+    LangfuseAdapter.reset_instance()
+    yield
+    # Reset after test for next test isolation
+    LangfuseAdapter.reset_instance()
+
+
 @pytest.fixture
 def app():
     """Application with testing config and in-memory DB."""

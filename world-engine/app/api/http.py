@@ -480,9 +480,9 @@ def execute_story_turn(
     print(f">>> execute_story_turn CALLED for session {session_id}", flush=True)
     # Extract trace_id from Backend (via X-WoS-Trace-Id header)
     trace_id = getattr(request.state, "trace_id", None)
+    langfuse_trace_id = getattr(request.state, "langfuse_trace_id", None)
     adapter = None
     root_span = None
-    use_existing_trace = False
 
     try:
         from app.observability.langfuse_adapter import LangfuseAdapter
@@ -493,26 +493,23 @@ def execute_story_turn(
         adapter = None
 
     if adapter and adapter.is_ready and adapter.is_enabled():
-        if trace_id:
-            # Backend passed trace_id: link to existing trace
-            logger.info(f"[HTTP] Received trace_id from Backend: {trace_id}")
-            use_existing_trace = True
-            # Create a root span under the existing trace by using client.trace()
+        if langfuse_trace_id:
+            logger.info(f"[HTTP] Received Langfuse trace_id from Backend: {langfuse_trace_id}")
             try:
-                langfuse_trace = adapter.client.trace(id=trace_id)
-                root_span = langfuse_trace.span(
+                root_span = adapter.start_span_in_trace(
+                    trace_id=langfuse_trace_id,
                     name="world-engine.turn.execute",
                     input={"session_id": session_id, "player_input_length": len(payload.player_input) if payload.player_input else 0},
                     metadata={"stage": "world_engine_turn_execution"},
                 )
-                logger.info(f"[HTTP] Created child span under existing trace {trace_id}")
+                logger.info(f"[HTTP] Created world-engine span in Langfuse trace {langfuse_trace_id}")
                 adapter.set_active_span(root_span)
             except Exception as e:
-                logger.error(f"[HTTP] Failed to create child span under existing trace: {e}", exc_info=True)
+                logger.error(f"[HTTP] Failed to create span under existing Langfuse trace: {e}", exc_info=True)
                 root_span = None
         else:
             # No trace_id from Backend: create new root span (direct world-engine call)
-            logger.info(f"[HTTP] No trace_id from Backend - creating new root span")
+            logger.info(f"[HTTP] No Langfuse trace_id from Backend - creating new root span")
             root_span = adapter.start_trace(
                 name="world-engine.turn.execute",
                 session_id=session_id,

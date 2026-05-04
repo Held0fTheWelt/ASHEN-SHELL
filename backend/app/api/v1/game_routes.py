@@ -61,6 +61,7 @@ from app.services.game_service import (
     resolve_join_context,
 )
 from app.observability.langfuse_adapter import LangfuseAdapter
+from app.observability.trace import get_langfuse_trace_id
 from app.config.route_constants import route_status_codes, route_pagination_config
 
 
@@ -627,6 +628,7 @@ def game_player_session_turn(run_id: str):
             raise GameServiceError("Canonical player session is not ready.", status_code=502)
 
         trace_id = g.get("trace_id")
+        langfuse_trace_id = g.get("langfuse_trace_id") or get_langfuse_trace_id()
         adapter = LangfuseAdapter.get_instance()
         root_span = None
 
@@ -637,16 +639,20 @@ def game_player_session_turn(run_id: str):
                 session_id=run_id,
                 module_id=str(bundle.get("module_id") or ""),
                 metadata={
+                    "wos_trace_id": trace_id,
+                    "langfuse_trace_id": langfuse_trace_id,
                     "player_input_length": len(player_input),
                     "stage": "turn_execution",
                     "route": "/game/player-sessions/<run_id>/turns",
-                }
+                },
+                trace_id=langfuse_trace_id,
             )
 
             turn_payload = execute_story_turn_in_engine(
                 session_id=runtime_session_id,
                 player_input=player_input,
                 trace_id=trace_id,
+                langfuse_trace_id=langfuse_trace_id,
             )
             turn = turn_payload.get("turn") if isinstance(turn_payload.get("turn"), dict) else {}
             state = get_story_state(runtime_session_id, trace_id=trace_id)

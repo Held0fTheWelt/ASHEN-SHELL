@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import json
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from story_runtime_core.model_registry import ModelRegistry
+from app.observability.trace import LANGFUSE_TRACE_ID, set_langfuse_trace_id
 from app.story_runtime.manager import StoryRuntimeManager
 
 
@@ -114,20 +115,32 @@ def test_diagnostics_envelope_actor_ownership():
 
 @pytest.mark.mvp4
 def test_diagnostics_envelope_langfuse_status():
-    """langfuse_status reflects LANGFUSE_ENABLED env var (enabled/disabled)."""
-    import os
+    """langfuse_status reflects runtime adapter state."""
     mgr, session = _make_manager("annette")
-    result = mgr.execute_turn(session_id=session.session_id, player_input="test")
+    with patch("app.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
+        get_instance.return_value.is_enabled.return_value = False
+        result = mgr.execute_turn(session_id=session.session_id, player_input="test")
+
     env = result["diagnostics_envelope"]
-    # Status should reflect LANGFUSE_ENABLED env var
-    # (enabled_no_trace if enabled but no credentials, disabled if not enabled)
-    is_enabled = os.getenv("LANGFUSE_ENABLED", "").lower() == "true"
-    if is_enabled:
-        # When enabled, status is "enabled_no_trace" (no credentials provided in test)
-        assert env["langfuse_status"] in ("enabled_no_trace", "enabled")
-    else:
-        assert env["langfuse_status"] == "disabled"
+    assert env["langfuse_status"] == "disabled"
     assert env["langfuse_trace_id"] == ""
+
+
+@pytest.mark.mvp4
+def test_diagnostics_envelope_uses_request_langfuse_trace_id():
+    """Diagnostics include the propagated Langfuse trace id when tracing is runtime-enabled."""
+    mgr, session = _make_manager("annette")
+    token = set_langfuse_trace_id("0123456789abcdef0123456789abcdef")
+    try:
+        with patch("app.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
+            get_instance.return_value.is_enabled.return_value = True
+            result = mgr.execute_turn(session_id=session.session_id, player_input="test")
+    finally:
+        LANGFUSE_TRACE_ID.reset(token)
+
+    env = result["diagnostics_envelope"]
+    assert env["langfuse_status"] == "traced"
+    assert env["langfuse_trace_id"] == "0123456789abcdef0123456789abcdef"
 
 
 @pytest.mark.mvp4

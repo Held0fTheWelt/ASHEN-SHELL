@@ -237,9 +237,9 @@ class TestObservabilityCredentialManagement:
         # Response returns fingerprints as "public_key" and "secret_key" keys
         assert "public_key" in data
         assert "secret_key" in data
-        # Fingerprints are sha256 hashes (truncated to 16 chars)
-        assert len(data["public_key"]) == 16
-        assert len(data["secret_key"]) == 16
+        # Fingerprints are full sha256 fingerprints, not plaintext keys.
+        assert data["public_key"].startswith("sha256:")
+        assert data["secret_key"].startswith("sha256:")
 
         # Verify no plaintext in response
         response_str = str(data)
@@ -356,10 +356,13 @@ class TestObservabilityCredentialManagement:
         ).first()
 
         assert cred is not None
-        # encrypted_secret is stored as bytes (currently not encrypted, just encoded)
+        # encrypted_secret is stored as bytes and must not equal plaintext bytes.
         assert isinstance(cred.encrypted_secret, (bytes, bytearray))
-        # The secret is stored as plaintext bytes (awaiting encryption implementation)
-        assert cred.secret_fingerprint and len(cred.secret_fingerprint) == 16
+        assert cred.encrypted_secret != b"sk_this_is_secret"
+        assert cred.encrypted_dek != b"dek_stub"
+        assert cred.secret_nonce != b"nonce"
+        assert cred.dek_nonce != b"dek_nonce"
+        assert cred.secret_fingerprint and cred.secret_fingerprint.startswith("sha256:")
 
 
 class TestObservabilityDisable:

@@ -219,6 +219,13 @@ def internal_langfuse_credentials():
             "public_key": public_key,
             "secret_key": secret_key,
             "base_url": config.base_url,
+            "environment": config.environment,
+            "release": config.release,
+            "sample_rate": config.sample_rate,
+            "capture_prompts": config.capture_prompts,
+            "capture_outputs": config.capture_outputs,
+            "capture_retrieval": config.capture_retrieval,
+            "redaction_mode": config.redaction_mode,
         })
 
     except Exception as e:

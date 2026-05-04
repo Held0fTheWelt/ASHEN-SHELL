@@ -34,7 +34,7 @@ from app.services.game_service import (
     get_story_diagnostics,
     get_story_state,
 )
-from app.observability.trace import get_trace_id
+from app.observability.trace import get_langfuse_trace_id, get_trace_id
 from app.observability.audit_log import log_world_engine_bridge
 from app.observability.langfuse_adapter import LangfuseAdapter
 from app.runtime.input_interpreter import interpret_player_input
@@ -504,6 +504,7 @@ def execute_session_turn(session_id):
     metadata = state.metadata if isinstance(state.metadata, dict) else {}
     engine_story_session_id = metadata.get("world_engine_story_session_id")
     trace_id = g.get("trace_id") or get_trace_id()
+    langfuse_trace_id = g.get("langfuse_trace_id") or get_langfuse_trace_id()
 
     created: dict | None = None
     adapter = LangfuseAdapter.get_instance()
@@ -517,9 +518,12 @@ def execute_session_turn(session_id):
             turn_id=str(runtime_session.turn_counter) if hasattr(runtime_session, 'turn_counter') else None,
             module_id=state.module_id if state else None,
             metadata={
+                "wos_trace_id": trace_id,
+                "langfuse_trace_id": langfuse_trace_id,
                 "player_input_length": len(player_input),
                 "stage": "turn_execution",
-            }
+            },
+            trace_id=langfuse_trace_id,
         )
 
         if not engine_story_session_id:
@@ -528,6 +532,7 @@ def execute_session_turn(session_id):
                 module_id=state.module_id,
                 runtime_projection=compiled.runtime_projection.model_dump(mode="json"),
                 trace_id=trace_id,
+                langfuse_trace_id=langfuse_trace_id,
             )
             engine_story_session_id = created["session_id"]
             metadata["world_engine_story_session_id"] = engine_story_session_id
@@ -544,6 +549,7 @@ def execute_session_turn(session_id):
             session_id=engine_story_session_id,
             player_input=player_input,
             trace_id=trace_id,
+            langfuse_trace_id=langfuse_trace_id,
         )
         diagnostics = get_story_diagnostics(engine_story_session_id, trace_id=trace_id)
         current_state = get_story_state(engine_story_session_id, trace_id=trace_id)
@@ -577,6 +583,7 @@ def execute_session_turn(session_id):
             {
                 "session_id": session_id,
                 "trace_id": trace_id,
+                "langfuse_trace_id": langfuse_trace_id,
                 "failure_class": "world_engine_unreachable",
                 "message": str(exc),
                 "status_hint": exc.status_code,
@@ -605,6 +612,7 @@ def execute_session_turn(session_id):
     response_body: dict = {
         "session_id": session_id,
         "trace_id": trace_id,
+        "langfuse_trace_id": langfuse_trace_id,
         "world_engine_story_session_id": engine_story_session_id,
         "turn": turn.get("turn"),
         "state": current_state,

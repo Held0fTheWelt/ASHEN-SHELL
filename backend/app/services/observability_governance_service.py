@@ -324,10 +324,10 @@ def write_observability_credential(
     actor: str = "system",
 ) -> dict[str, str]:
     """Write encrypted observability credentials."""
-    import hashlib
     import uuid
     from app.models.governance_core import ObservabilityConfig, ObservabilityCredential
     from app.extensions import db
+    from app.services.governance_secret_crypto_service import encrypt_secret
 
     config = ObservabilityConfig.query.filter_by(service_id="langfuse").first()
     if not config:
@@ -348,20 +348,21 @@ def write_observability_credential(
             is_active=True,
         ).update({"is_active": False})
 
-        pk_fingerprint = hashlib.sha256(public_key.encode()).hexdigest()[:16]
+        record = encrypt_secret(public_key)
         cred = ObservabilityCredential(
             credential_id=str(uuid.uuid4()),
             service_id="langfuse",
             secret_name="public_key",
-            encrypted_secret=public_key.encode(),
-            encrypted_dek=b"dek_stub",
-            secret_nonce=b"nonce",
-            dek_nonce=b"dek_nonce",
-            secret_fingerprint=pk_fingerprint,
+            encrypted_secret=record.encrypted_secret,
+            encrypted_dek=record.encrypted_dek,
+            secret_nonce=record.secret_nonce,
+            dek_nonce=record.dek_nonce,
+            dek_algorithm=record.dek_algorithm,
+            secret_fingerprint=record.secret_fingerprint,
             is_active=True,
         )
         db.session.add(cred)
-        fingerprints["public_key"] = pk_fingerprint
+        fingerprints["public_key"] = record.secret_fingerprint
 
     if secret_key:
         # Deactivate old secret_key credentials
@@ -371,22 +372,23 @@ def write_observability_credential(
             is_active=True,
         ).update({"is_active": False})
 
-        sk_fingerprint = hashlib.sha256(secret_key.encode()).hexdigest()[:16]
+        record = encrypt_secret(secret_key)
         cred = ObservabilityCredential(
             credential_id=str(uuid.uuid4()),
             service_id="langfuse",
             secret_name="secret_key",
-            encrypted_secret=secret_key.encode(),
-            encrypted_dek=b"dek_stub",
-            secret_nonce=b"nonce",
-            dek_nonce=b"dek_nonce",
-            secret_fingerprint=sk_fingerprint,
+            encrypted_secret=record.encrypted_secret,
+            encrypted_dek=record.encrypted_dek,
+            secret_nonce=record.secret_nonce,
+            dek_nonce=record.dek_nonce,
+            dek_algorithm=record.dek_algorithm,
+            secret_fingerprint=record.secret_fingerprint,
             is_active=True,
         )
         db.session.add(cred)
-        fingerprints["secret_key"] = sk_fingerprint
+        fingerprints["secret_key"] = record.secret_fingerprint
         config.credential_configured = True
-        config.credential_fingerprint = sk_fingerprint
+        config.credential_fingerprint = record.secret_fingerprint
         config.is_enabled = True
 
     db.session.commit()
@@ -397,6 +399,7 @@ def write_observability_credential(
 def get_observability_credential_for_runtime(secret_name: str) -> Optional[str]:
     """Retrieve and decrypt an observability credential."""
     from app.models.governance_core import ObservabilityCredential
+    from app.services.governance_secret_crypto_service import decrypt_secret
 
     cred = ObservabilityCredential.query.filter_by(
         service_id="langfuse",
@@ -408,7 +411,14 @@ def get_observability_credential_for_runtime(secret_name: str) -> Optional[str]:
         return None
 
     try:
-        return cred.encrypted_secret.decode()
+        if cred.encrypted_dek == b"dek_stub":
+            return cred.encrypted_secret.decode()
+        return decrypt_secret(
+            encrypted_secret=cred.encrypted_secret,
+            encrypted_dek=cred.encrypted_dek,
+            secret_nonce=cred.secret_nonce,
+            dek_nonce=cred.dek_nonce,
+        )
     except Exception as e:
         logger.error(f"Failed to decrypt credential {secret_name}: {str(e)}")
         return None
