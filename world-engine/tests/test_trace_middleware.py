@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import uuid
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 
 def test_story_turn_echoes_trace_header(client, internal_api_key):
@@ -49,3 +51,42 @@ def test_trace_middleware_generates_id_when_missing(client):
     assert response.status_code == 200
     tid = response.headers.get("X-WoS-Trace-Id")
     assert tid and len(tid) >= 8
+
+
+def test_story_session_create_sets_langfuse_parent_for_opening_turn(client, internal_api_key, monkeypatch):
+    adapter = MagicMock()
+    adapter.is_ready = True
+    adapter.is_enabled.return_value = True
+    adapter.config = SimpleNamespace(environment="test")
+    adapter.get_active_span.return_value = None
+
+    root_span = MagicMock()
+    ldss_span = MagicMock()
+    narrator_span = MagicMock()
+    adapter.start_span_in_trace.return_value = root_span
+    adapter.create_child_span.side_effect = [ldss_span, narrator_span]
+
+    monkeypatch.setattr(
+        "app.observability.langfuse_adapter.LangfuseAdapter.get_instance",
+        lambda: adapter,
+    )
+
+    langfuse_trace_id = "0123456789abcdef0123456789abcdef"
+    response = client.post(
+        "/api/story/sessions",
+        headers={
+            "X-Play-Service-Key": internal_api_key,
+            "X-Langfuse-Trace-Id": langfuse_trace_id,
+        },
+        json={"module_id": "god_of_carnage", "runtime_projection": {"start_scene_id": "s1"}},
+    )
+
+    assert response.status_code == 200
+    adapter.start_span_in_trace.assert_called_once()
+    assert adapter.start_span_in_trace.call_args.kwargs["trace_id"] == langfuse_trace_id
+    adapter.set_active_span.assert_any_call(root_span)
+    created_child_names = [call.kwargs["name"] for call in adapter.create_child_span.call_args_list]
+    assert "story.phase.ldss" in created_child_names
+    assert "story.phase.narrator" in created_child_names
+    root_span.end.assert_called_once()
+    adapter.flush.assert_called_once()

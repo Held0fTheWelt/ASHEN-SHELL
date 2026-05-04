@@ -448,26 +448,93 @@ def list_story_sessions(manager: StoryRuntimeManager = Depends(get_story_manager
 
 
 @router.post("/story/sessions", dependencies=[Depends(_require_internal_api_key)])
-def create_story_session(payload: CreateStorySessionRequest, manager: StoryRuntimeManager = Depends(get_story_manager)) -> dict[str, Any]:
+def create_story_session(
+    payload: CreateStorySessionRequest,
+    request: Request,
+    manager: StoryRuntimeManager = Depends(get_story_manager),
+) -> dict[str, Any]:
+    trace_id = getattr(request.state, "trace_id", None)
+    langfuse_trace_id = getattr(request.state, "langfuse_trace_id", None)
+    adapter = None
+    root_span = None
+    previous_active_span = None
+
     try:
+        try:
+            from app.observability.langfuse_adapter import LangfuseAdapter
+            adapter = LangfuseAdapter.get_instance()
+            previous_active_span = adapter.get_active_span()
+            adapter.set_active_span(None)
+            logger.info(f"[HTTP] Adapter loaded for session create: is_ready={adapter.is_ready}, is_enabled={adapter.is_enabled()}")
+        except Exception as exc:
+            logger.error(f"[HTTP] ERROR: Failed to load Langfuse adapter for session create: {type(exc).__name__}: {exc}", exc_info=True)
+            adapter = None
+
+        if adapter and adapter.is_ready and adapter.is_enabled():
+            if langfuse_trace_id:
+                root_span = adapter.start_span_in_trace(
+                    trace_id=langfuse_trace_id,
+                    name="world-engine.session.create",
+                    input={"module_id": payload.module_id},
+                    metadata={"stage": "world_engine_session_create", "turn_kind": "opening"},
+                )
+            else:
+                root_span = adapter.start_trace(
+                    name="world-engine.session.create",
+                    session_id="pending",
+                    metadata={
+                        "module_id": payload.module_id,
+                        "turn_kind": "opening",
+                        "environment": adapter.config.environment,
+                    },
+                )
+            if root_span:
+                adapter.set_active_span(root_span)
+
         session = manager.create_session(
             module_id=payload.module_id,
             runtime_projection=payload.runtime_projection,
             content_provenance=payload.content_provenance,
+            trace_id=trace_id if isinstance(trace_id, str) else None,
         )
+        opening_turn = session.diagnostics[-1] if session.diagnostics else None
+        if root_span:
+            root_span.update(
+                output={
+                    "session_id": session.session_id,
+                    "turn_counter": session.turn_counter,
+                    "success": True,
+                },
+                metadata={
+                    "session_id": session.session_id,
+                    "turn_counter": session.turn_counter,
+                    "environment": adapter.config.environment if adapter else "unknown",
+                },
+            )
+        return {
+            "session_id": session.session_id,
+            "module_id": session.module_id,
+            "turn_counter": session.turn_counter,
+            "current_scene_id": session.current_scene_id,
+            "content_provenance": session.content_provenance,
+            "opening_turn": opening_turn,
+            "runtime_config_status": manager.runtime_config_status(),
+            "warnings": ["world_engine_authoritative_story_runtime", "session_includes_committed_turn_0_opening"],
+        }
     except LiveStoryGovernanceError as exc:
+        if root_span:
+            root_span.update(output={"error": str(exc)}, metadata={"error": "governance_error"})
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
-    opening_turn = session.diagnostics[-1] if session.diagnostics else None
-    return {
-        "session_id": session.session_id,
-        "module_id": session.module_id,
-        "turn_counter": session.turn_counter,
-        "current_scene_id": session.current_scene_id,
-        "content_provenance": session.content_provenance,
-        "opening_turn": opening_turn,
-        "runtime_config_status": manager.runtime_config_status(),
-        "warnings": ["world_engine_authoritative_story_runtime", "session_includes_committed_turn_0_opening"],
-    }
+    except Exception as exc:
+        if root_span:
+            root_span.update(output={"error": str(exc)}, metadata={"error": "unknown_error"})
+        raise
+    finally:
+        if root_span:
+            root_span.end()
+        if adapter and adapter.is_enabled():
+            adapter.flush()
+            adapter.set_active_span(previous_active_span)
 
 
 @router.post("/story/sessions/{session_id}/turns", dependencies=[Depends(_require_internal_api_key)])
@@ -483,10 +550,13 @@ def execute_story_turn(
     langfuse_trace_id = getattr(request.state, "langfuse_trace_id", None)
     adapter = None
     root_span = None
+    previous_active_span = None
 
     try:
         from app.observability.langfuse_adapter import LangfuseAdapter
         adapter = LangfuseAdapter.get_instance()
+        previous_active_span = adapter.get_active_span()
+        adapter.set_active_span(None)
         logger.info(f"[HTTP] Adapter loaded: is_ready={adapter.is_ready}, is_enabled={adapter.is_enabled()}")
     except Exception as e:
         logger.error(f"[HTTP] ERROR: Failed to load Langfuse adapter: {type(e).__name__}: {e}", exc_info=True)
@@ -579,6 +649,7 @@ def execute_story_turn(
         if adapter and adapter.is_enabled():
             logger.info(f"[HTTP] Flushing Langfuse adapter")
             adapter.flush()
+            adapter.set_active_span(previous_active_span)
             logger.info(f"[HTTP] Langfuse flush complete")
         else:
             logger.info(f"[HTTP] Adapter not enabled or not initialized, skipping flush")
