@@ -4,6 +4,34 @@ Project-specific instructions for Claude Code working in this repository. Overri
 
 ---
 
+## Code Discovery First — Before writing technical plans, verify current implementation
+
+**Rule:** Before writing ANY technical implementation plan that involves:
+- API calls or SDK usage (Langfuse, HTTP, databases, external services)
+- Dataclass schemas or data structure changes  
+- Library versions, dependency patterns, or configuration mechanisms
+- Algorithm or business logic that depends on current implementation
+
+You MUST complete a **Technical Verification Phase**:
+
+1. Use `mcp__claude-context__search_code` to find current implementation patterns (NOT Glob/Grep/Read for exploration)
+2. Read the actual code files that implement the pattern (specific line numbers)
+3. Document what you found: file paths, API names, current state, version info
+4. Embed specific `file.py:line_number` references in the plan itself
+5. If implementation details are uncertain, ASK the user before writing the plan—don't guess
+
+**Enforcement:**
+- Before starting plan work: Write a "Technical Verification" section in conversation showing what you searched for and found
+- Plan is invalid until verification is complete
+- If you catch yourself using Glob/Grep/Read for code discovery: STOP, use semantic search instead
+- User will stop implementation work and enforce this if you skip verification
+
+**Why:** Technical plans become implementation instructions. Out-of-date technical details → broken implementation → destroyed working systems.
+
+**Scope:** Every technical plan, every time. No exceptions.
+
+---
+
 ## Test Runner — "tests/run_tests.py" is canonical, do not create alternates
 
 **Rule:** `tests/run_tests.py` is the single canonical test runner for this project. Do not create wrapper scripts, aliases, or alternate test entry points.

@@ -3,6 +3,7 @@
 **Status**: Accepted
 **MVP**: 4 — Observability, Diagnostics, Langfuse, and Narrative Gov
 **Date**: 2026-04-26
+**Related to**: adr-0032 (5 Core Runtime Contracts) — Enforces operator visibility and audit enforcement of all 5 contracts
 
 ## Context
 

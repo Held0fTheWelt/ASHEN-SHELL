@@ -327,13 +327,33 @@ def _persist_player_session_binding(
     )
 
 
-def _compile_player_module(template_id: str) -> tuple[str, dict[str, Any], dict[str, Any]]:
+def _compile_player_module(template_id: str, selected_player_role: str | None = None) -> tuple[str, dict[str, Any], dict[str, Any]]:
     module_id = resolve_canonical_module_id_for_template(template_id)
     try:
         compiled = compile_module(module_id)
     except ModuleLoadError as exc:
         raise GameContentValidationError(f"canonical module not found for template_id {template_id!r}") from exc
     runtime_projection = compiled.runtime_projection.model_dump(mode="json")
+
+    # Contract 1 (MVP4): Add actor ownership to runtime_projection
+    # Backend must send human_actor_id, npc_actor_ids, actor_lanes to World-Engine
+    human_actor_id = selected_player_role or ""
+    if human_actor_id and "character_ids" in runtime_projection:
+        npc_actor_ids = [
+            char_id for char_id in runtime_projection.get("character_ids", [])
+            if char_id != human_actor_id
+        ]
+        actor_lanes = {human_actor_id: "human"}
+        actor_lanes.update({npc_id: "npc" for npc_id in npc_actor_ids})
+
+        runtime_projection["selected_player_role"] = human_actor_id
+        runtime_projection["human_actor_id"] = human_actor_id
+        runtime_projection["npc_actor_ids"] = npc_actor_ids
+        runtime_projection["actor_lanes"] = actor_lanes
+        runtime_projection["runtime_profile_id"] = runtime_projection.get("module_id", "")
+        runtime_projection["runtime_module_id"] = runtime_projection.get("module_id", "")
+        runtime_projection["content_module_id"] = runtime_projection.get("module_id", "")
+
     provenance = {
         "template_id": template_id,
         "module_id": module_id,
@@ -352,6 +372,7 @@ def _ensure_player_session(
     template_id: str | None = None,
     run_payload: dict[str, Any] | None = None,
     trace_id: str | None = None,
+    selected_player_role: str | None = None,
 ) -> dict[str, Any]:
     clean_run_id = (run_id or "").strip()
     created: dict[str, Any] | None = None
@@ -388,7 +409,9 @@ def _ensure_player_session(
     resolved_template_id = (template_id or _run_template_id(run_payload)).strip()
     template = run_payload.get("template") if isinstance(run_payload.get("template"), dict) else {}
     template_title = str(template.get("title") or resolved_template_id)
-    module_id, runtime_projection, provenance = _compile_player_module(resolved_template_id)
+    # Contract 1 (MVP4): Extract selected_player_role from run_payload if not provided
+    resolved_selected_player_role = selected_player_role or (run_payload.get("selected_player_role") or "").strip() or None
+    module_id, runtime_projection, provenance = _compile_player_module(resolved_template_id, selected_player_role=resolved_selected_player_role)
     provenance["run_id"] = clean_run_id
     created = create_story_session(
         module_id=module_id,
@@ -592,6 +615,7 @@ def game_player_session_create():
             template_id=template_id or None,
             run_payload=run_payload,
             trace_id=trace_id,
+            selected_player_role=selected_player_role,
         )
         return jsonify(bundle), route_status_codes.ok
     except Exception as exc:  # pragma: no cover - centralized mapper

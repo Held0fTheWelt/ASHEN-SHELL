@@ -1,39 +1,117 @@
 # MVP4 Phase C Implementation Plan
 
-## Context
-
-MVP4 Phase C ("Governance, Evaluation & Operator Surfaces") implementiert Operator-facing UIs, Token/Cost Governance, Evaluation Pipeline, und vollständige Audit Trails. Phase A und B müssen erfüllt sein.
-
-**Hauptziele:**
-1. Token Budget Enforcement mit Cost-Aware Degradation
-2. Audit Trail für Overrides (7 Event Types + Multi-Select)
-3. Evaluation Pipeline (Rubric + Offline Baseline + Annotation UI + Feedback Loop)
-4. Langfuse Toggle Admin UI
-5. Narrative Gov Health Panels (6 Panels)
-6. Cost Dashboard (real-time + daily + weekly + monthly)
-7. Object/State Delta Override UIs
-8. Session Replay & Debugging Interface
-
-**Was bereits existiert (nicht neu bauen):**
-- Phase A: DiagnosticsEnvelope mit Degradation Timeline, Cost Summary, Tiered Visibility
-- Phase B: Real Langfuse Spans, Token Tracking, Cost Calculations
-- `backend/app/auth/admin_security.py` — existing _log_admin_action() infrastructure
-- `administration-tool/` — existing admin template structure
+**Status**: Target State (blocked by 5 Critical Runtime Defects)  
+**Related**: adr-0032 (5 Core Runtime Contracts), MVP4_PHASE_A_IMPLEMENTATION_PLAN.md, MVP4_PHASE_B_IMPLEMENTATION_PLAN.md, MVP4_TEST_GATE_PLAN.md  
+**Waves Covered**: Wave 5 (Governance), Wave 6 (Evaluation), Wave 7b (Operator Surfaces)
 
 ---
 
-## Kritische Dateien
+## 🚫 CRITICAL BLOCKERS — Phase C cannot succeed until these are fixed
 
-| Datei | Aktion | Zweck |
+**These are NOT Phase C work — they are PREREQUISITES blocking all MVP4 Contracts:**
+
+| Priority | Blocker | Defect | Impact | Location | Fix |
+|----------|---------|--------|--------|----------|-----|
+| **P1** | **D-007: Actor Ownership Lost** | BLOCKER | Backend sends no `human_actor_id`, `npc_actor_ids`, `actor_lanes` in `/api/story/sessions` payload | `backend/app/services/game_service.py:353-360` | Merge actor metadata from runtime_projection into story session create payload; validate hard |
+| **P2** | **D-006: Empty Shell Playable** | HIGH | `can_execute=True` even when `story_entries` is empty | `backend/app/api/v1/game_routes.py:267` | Validate `story_window.entry_count > 0` before `can_execute=True`; expose empty reason |
+| **P3** | **D-001: Turn 0 Not Live** | CRITICAL | Turn 0 is deterministic LDSS, marked as healthy not provider-backed | `world-engine/app/story_runtime/manager.py:2150` | Require real provider execution for Turn 0; mark deterministic explicitly |
+| **P4** | **D-013: Error Swallowing** | CRITICAL | DiagnosticsEnvelope construction errors caught and suppressed | `world-engine/app/story_runtime/manager.py:2114` | Fail fast: log error to Langfuse, return 500, do NOT swallow exceptions |
+| **P5** | **D-008: SSE Not Routed** | MEDIUM | Frontend EventSource points to `/api/story/...` (not proxied); backend doesn't include `narrator_streaming` flag in response | `frontend/static/play_narrative_stream.js:17`; `frontend/app/routes_play.py` (line unknown) | Add `narrator_streaming` to turn response; use `/api/v1/` proxy or configure public WE URL |
+
+**These 5 MUST be fixed before Phase C can be implemented.** They are Contract Violations, not governance details.
+
+---
+
+## Contract Requirements (adr-0032)
+
+**Phase C enforces Contracts 1-5** ONLY IF the 5 Blockers above are fixed first. Phase C then:
+
+1. **Contract 1 (Backend → World-Engine Handoff)** — Preserved through governance
+   - **ONLY** if Blocker P1 is fixed (actor ownership flows through)
+   - Phase C adds: Admin override UI, audit logging
+
+2. **Contract 2 (Opening Truthfulness)** — Verified through evaluation
+   - **ONLY** if Blocker P3 is fixed (Turn 0 is real, not deterministic)
+   - Phase C adds: Evaluation baseline, regression detection
+
+3. **Contract 3 (Frontend Playability)** — Monitored through health panel
+   - **ONLY** if Blocker P2 is fixed (can_execute consistent with story_entries)
+   - Phase C adds: Health panel alerts, divergence detection
+
+4. **Contract 4 (Diagnostics Truthfulness)** — Governed with cost-aware decisions
+   - **ONLY** if Blocker P4 is fixed (errors not swallowed, always visible)
+   - Phase C adds: Cost-aware degradation, cost dashboard
+
+5. **Contract 5 (Narrative Streaming)** — Full SSE with trace correlation
+   - **ONLY** if Blocker P5 is fixed (streaming endpoint routed correctly)
+   - Phase C adds: Trace ID correlation, operator replay UI
+
+---
+
+## Context
+
+MVP4 Phase C ("Governance, Evaluation & Operator Surfaces") is **deferred until all 5 Blockers are fixed**. Phase C targets:
+
+1. Token Budget Enforcement mit Cost-Aware Degradation
+2. Audit Trail für Overrides (7 Event Types)
+3. Evaluation Pipeline (Rubric + Baseline + Feedback)
+4. Langfuse Toggle Admin UI
+5. Narrative Gov Health Panels (6 Panels)
+6. Cost Dashboard (real-time + aggregates)
+
+**Prerequisites (already exist):**
+- ✅ Phase A: DiagnosticsEnvelope + Degradation Timeline + Tiered Visibility
+- ✅ Phase B: Real Langfuse Spans + Token Tracking + Cost Calculations
+- ✅ `backend/app/services/observability_governance_service.py` — cost tracking, session budgets
+- ✅ `backend/app/auth/admin_security.py` — audit logging infrastructure
+- ✅ `administration-tool/` — admin templates
+
+---
+
+## Critical Files — What Phase C will use (AFTER Blockers fixed)
+
+| Datei | Status | Purpose |
 |---|---|---|
-| `backend/app/observability_governance_service.py` | ERSTELLEN | Token Budget Config, Cost Dashboard Data |
-| `backend/app/auth/admin_security.py` | ERWEITERN | Audit logging für Overrides (7 event types) |
-| `world-engine/app/api/http.py` | ERWEITERN | Budget enforcement, cost-aware degradation |
-| `administration-tool/app/admin_routes.py` | ERWEITERN | Langfuse toggle, budget config, override UIs |
-| `administration-tool/templates/manage/narrative-gov/...` | ERSTELLEN | 6 Health Panels + Cost Dashboard |
-| `administration-tool/static/manage_*.js` | ERSTELLEN | Admin UI interactions |
-| `ai_stack/evaluation_pipeline.py` | ERSTELLEN | Rubric, Baseline, Self-Tuning |
-| `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py` | ERWEITERN | Tests für alle Phase C features |
+| `backend/app/services/observability_governance_service.py` | ✅ Exists | Token budgets, cost tracking, aggregation |
+| `backend/app/auth/admin_security.py` | ✅ Exists | Audit logging infrastructure |
+| `world-engine/app/api/http.py` | ✅ Exists | SSE endpoint `stream_narrator_blocks()` (after P5 fixed) |
+| `administration-tool/app/admin_routes.py` | ❌ Needs update | Add routes for governance, cost dashboard, overrides |
+| `administration-tool/templates/manage/narrative-gov/` | ❌ Needs create | 6 Health Panels + Cost Dashboard UIs |
+| `ai_stack/evaluation_pipeline.py` | ❌ Needs create | Baseline rubric, regression detection, auto-tuning |
+| `backend/app/services/observability_governance_service.py` | ✅ Correct path | (NOT `backend/app/observability_governance_service.py`) |
+
+**WAIT:** Fix the 5 Blockers FIRST. Phase C implementation depends on them.
+
+---
+
+## Why Phase C Implementation is Deferred
+
+Phase C is architecturally sound but cannot be implemented while MVP4 Core Contracts are violated by the 5 Blockers above.
+
+**What Phase C will do (after Blockers fixed):**
+
+1. **Governance Service** — Cost-aware LDSS shortening
+   - Uses `degradation_timeline` from Blocker P4 fix to decide when to truncate LDSS context
+   - Requires real cost tracking from Phase B
+
+2. **Health Panels** — Operator diagnostics
+   - Contract 1 panel: Shows actor lanes (requires Blocker P1 fix)
+   - Contract 2 panel: Opening quality baseline (requires Blocker P3 fix)
+   - Contract 3 panel: Playability consistency (requires Blocker P2 fix)
+   - Contract 4 panel: Cost per turn (requires Phase B real costs)
+   - Contract 5 panel: Streaming status (requires Blocker P5 fix)
+
+3. **Evaluation Pipeline** — Quality rubric + baselines
+   - Records canonical turns for opening truth (Blocker P3 prereq)
+   - Trains rubric on degradation_timeline (Blocker P4 prereq)
+   - Detects regressions in quality_class
+
+4. **SSE Operator Replay** — Debug narrative streaming
+   - Reconstructs narrative blocks from Langfuse trace
+   - Shows timing, latency, token counts per block
+   - Requires narrator_streaming flag in response (Blocker P5 prereq)
+
+**Bottom line:** Phase C will be straightforward once the 5 Blockers are resolved. The architecture is already in place.
 
 ---
 

@@ -6,6 +6,23 @@ Implement behavior-proof diagnostics, traceable decisions, Langfuse real trace e
 
 This MVP consumes MVP 3 LDSS live-path evidence and makes the operator surfaces prove what actually happened instead of displaying placeholder success.
 
+## Complete Implementation Package
+
+**All MVP4 phases, gaps, blockers, and dependencies are documented in a single integrated specification:**
+
+📋 **[MVP4_INTEGRATED_IMPLEMENTATION_SPECIFICATION.md](MVP4_INTEGRATED_IMPLEMENTATION_SPECIFICATION.md)**
+
+This document contains:
+- Phase A recap (foundation, complete)
+- Phase B: 3 concrete implementation gaps with code locations and token extraction patterns
+- Phase B completion gate (5 tests that must pass)
+- Phase C: 5 critical blocker defects (prerequisites)
+- Complete wave-by-wave implementation sequence
+- Infrastructure dependencies (what exists, what to create)
+- Success criteria and deployment checklist
+
+**Use this as your single source of truth before implementing.**
+
 ## Scope
 
 In scope:
@@ -24,6 +41,34 @@ Out of scope:
 
 - Frontend staged block renderer implementation; MVP 4 only exposes the render contract diagnostics consumed by MVP 5.
 - Rewriting LDSS behavior already implemented in MVP 3, except to add trace/diagnostic instrumentation.
+
+## Core Runtime Contracts (adr-0032)
+
+MVP4 implementation is **organized by 5 Core Runtime Contracts** defined in **adr-0032-mvp4-live-runtime-setup-requirements.md**:
+
+1. **Contract 1 (Backend → World-Engine Handoff)** — Backend preserves actor ownership metadata through handoff
+   - `human_actor_id`, `npc_actor_ids`, `actor_lanes`, `selected_player_role`, `runtime_profile_id`, `runtime_module_id`, `content_module_id`
+   - Test: `backend/tests/test_mvp4_contract_backend_handoff.py`
+
+2. **Contract 2 (Opening Truthfulness)** — Opening turn is non-empty, marked if deterministic/degraded
+   - Test: `world-engine/tests/test_mvp4_contract_opening_truthfulness.py`
+
+3. **Contract 3 (Frontend Playability)** — `can_execute` field matches actual `story_entries` state
+   - Test: `backend/tests/test_mvp4_contract_playability.py`
+
+4. **Contract 4 (Diagnostics Truthfulness)** — All diagnostics fields present, no swallowed errors, audit-logged
+   - DiagnosticsEnvelope with degradation_timeline, cost_summary, tiered visibility
+   - Test: `world-engine/tests/test_mvp4_contract_diagnostics.py`
+
+5. **Contract 5 (Narrative Streaming)** — Backend forwards `narrator_streaming` flag, SSE routed with trace correlation
+   - Test: `backend/tests/test_mvp4_contract_streaming.py`
+
+**All 12 defects from the live-runtime-empty-session-audit** map to violations of one or more contracts. Phase A, B, C implementation fulfills these contracts progressively:
+- **Phase A**: Contracts 1, 2, 3, 4 (foundations)
+- **Phase B**: Contract 4 (real costs), Contract 5 (preview)
+- **Phase C**: All 5 (governance enforcement)
+
+---
 
 ## Base Contract
 

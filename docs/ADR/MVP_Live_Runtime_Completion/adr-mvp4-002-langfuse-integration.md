@@ -3,7 +3,8 @@
 **Status**: ACCEPTED  
 **MVP**: 4 — Observability, Diagnostics, Langfuse, Narrative Gov  
 **Date**: 2026-04-30  
-**Authors**: MVP4 Team
+**Authors**: MVP4 Team  
+**Related to**: adr-0032 (5 Core Runtime Contracts) — Implements Contract 4 (Diagnostics Truthfulness) with real costs, Contract 5 (Narrative Streaming)
 
 ---
 

@@ -1,5 +1,39 @@
 # MVP4 Phase A Implementation Plan
 
+**Status**: Implementation Phase  
+**Related**: adr-0032 (5 Core Runtime Contracts), MVP4_TEST_GATE_PLAN.md  
+**Waves Covered**: Waves 0, 7a (Test Audit), Wave 1 (Backend Handoff Contract)
+
+---
+
+## Contract Requirements (adr-0032)
+
+**DO NOT** implement Phase A independently. Phase A must satisfy **5 Core Runtime Contracts** from adr-0032:
+
+1. **Contract 1 (Backend → World-Engine Handoff)** — Backend must send actor ownership to world-engine
+   - Phase A implementation: Preserve `human_actor_id`, `npc_actor_ids`, `actor_lanes` in `/api/story/sessions` payload
+   - Test gate: `backend/tests/test_mvp4_contract_backend_handoff.py`
+
+2. **Contract 2 (Opening Truthfulness)** — Opening turn must be non-empty, live or deterministic+marked
+   - Phase A implementation: Track opening execution, mark if deterministic LDSS
+   - Test gate: `world-engine/tests/test_mvp4_contract_opening_truthfulness.py`
+
+3. **Contract 3 (Frontend Playability)** — `can_execute` must match `story_entries` state
+   - Phase A implementation: Backend computes `can_execute` from `story_window.entry_count`
+   - Test gate: `backend/tests/test_mvp4_contract_playability.py`
+
+4. **Contract 4 (Diagnostics Truthfulness)** — All diagnostics fields must be present, no swallowed errors
+   - Phase A implementation: DiagnosticsEnvelope with degradation_timeline, audit logging
+   - Test gate: `world-engine/tests/test_mvp4_contract_diagnostics.py`
+
+5. **Contract 5 (Narrative Streaming)** — Backend forwards `narrator_streaming` flag, SSE routed
+   - Phase A implementation: Placeholder (full in Phase B)
+   - Test gate: `backend/tests/test_mvp4_contract_streaming.py`
+
+**Before implementing Phase A, run Wave 7a (Test Audit)** to understand which tests are false-green.
+
+---
+
 ## Context
 
 MVP4 Phase A ("Foundation & Data Collection") erweitert die bereits existierende `DiagnosticsEnvelope` Infrastruktur um drei neue Fähigkeiten aus dem grill-me Architectural Audit:

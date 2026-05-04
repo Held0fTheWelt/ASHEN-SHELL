@@ -3,7 +3,8 @@
 **Status**: ACCEPTED  
 **MVP**: 4 — Observability, Diagnostics, Langfuse, Narrative Gov  
 **Date**: 2026-04-30  
-**Authors**: MVP4 Team
+**Authors**: MVP4 Team  
+**Related to**: adr-0032 (5 Core Runtime Contracts) — Implements Contract 4 (Diagnostics Truthfulness)
 
 ---
 
@@ -156,6 +157,7 @@ All Phase A tests verify that diagnostics are non-placeholder and tied to real s
 
 ## Related ADRs
 
+- **ADR-0032**: 5 Core Runtime Contracts (parent architecture; this ADR implements Contract 4: Diagnostics Truthfulness)
 - **ADR-MVP1-016**: Operational Test and Startup Gates (MVP4 inherits this discipline)
 - **ADR-MVP3-011**: Live Dramatic Scene Simulator (MVP4 observes LDSS)
 - **ADR-MVP4-002**: Langfuse Integration (Phase B fills cost_summary)
