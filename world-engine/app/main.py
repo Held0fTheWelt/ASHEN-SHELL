@@ -43,6 +43,17 @@ WEB_ROOT = Path(__file__).resolve().parent / "web"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize Langfuse tracing adapter at startup
+    try:
+        from app.observability.langfuse_adapter import LangfuseAdapter
+        adapter = LangfuseAdapter.get_instance()
+        if adapter.is_ready:
+            print(f"[INFO] Langfuse observability initialized: ready={adapter.is_ready}")
+        else:
+            print(f"[INFO] Langfuse observability adapter loaded (ready={adapter.is_ready})")
+    except Exception as e:
+        print(f"[WARN] Failed to initialize Langfuse adapter: {e}")
+
     resolved_runtime_config = fetch_resolved_runtime_config(
         base_url=BACKEND_RUNTIME_CONFIG_URL,
         token=INTERNAL_RUNTIME_CONFIG_TOKEN,
