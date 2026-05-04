@@ -1508,11 +1508,19 @@ def _resolve_provider_selection(providers: list[AIProviderConfig], provider_sele
 
 
 def _validate_and_resolve_routes(*, routes: list[AITaskRoute], models_by_id: dict[str, AIModelConfig], selected_provider_ids: set[str], generation_execution_mode: str) -> list[dict]:
-    """Validate route model references and return resolved route payload."""
+    """Validate route model references and return resolved route payload.
+
+    Routes are allowed to reference models from non-selectable providers (e.g., unconfigured)
+    as long as at least one model in the route is selectable. This allows partial provider
+    configuration (e.g., OpenAI ready, Anthropic/OpenRouter/Ollama still being configured).
+    """
     missing_required_tasks = {task for task in _REQUIRED_TASK_KINDS}
     resolved_routes: list[dict] = []
     for route in routes:
         missing_required_tasks.discard(route.task_kind)
+
+        # Validate all model references exist, and check if route has at least one selectable model
+        has_selectable_model = False
         for ref_name in ("preferred_model_id", "fallback_model_id", "mock_model_id"):
             ref_id = getattr(route, ref_name)
             if ref_id is None:
@@ -1520,13 +1528,19 @@ def _validate_and_resolve_routes(*, routes: list[AITaskRoute], models_by_id: dic
             model = models_by_id.get(ref_id)
             if model is None:
                 raise governance_error("resolved_config_generation_failed", "Route references missing model.", 500, {"route_id": route.route_id, "model_id": ref_id})
-            if model.provider_id not in selected_provider_ids and model.model_role != "mock":
-                raise governance_error(
-                    "resolved_config_generation_failed",
-                    "Route references model whose provider is not currently selectable.",
-                    500,
-                    {"route_id": route.route_id, "model_id": ref_id, "provider_id": model.provider_id},
-                )
+            if model.provider_id in selected_provider_ids or model.model_role == "mock":
+                has_selectable_model = True
+
+        # Only fail if route has NO selectable models in non-mock_only modes
+        if not has_selectable_model and generation_execution_mode != "mock_only":
+            model_refs = [getattr(route, n) for n in ("preferred_model_id", "fallback_model_id", "mock_model_id") if getattr(route, n)]
+            raise governance_error(
+                "resolved_config_generation_failed",
+                "Route has no selectable models. Add credentials to at least one provider or enable a mock fallback.",
+                500,
+                {"route_id": route.route_id, "model_ids": model_refs},
+            )
+
         resolved_routes.append(
             {
                 "route_id": route.route_id,
