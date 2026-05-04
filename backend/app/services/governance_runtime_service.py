@@ -1688,6 +1688,34 @@ def get_active_runtime_snapshot() -> dict | None:
     return row.resolved_config_json or None
 
 
+def _seed_default_providers(actor: str) -> None:
+    """Seed provider templates from all presets with their default base URLs."""
+    all_providers: dict[str, dict] = {}
+    for preset in _DEFAULT_PRESETS:
+        for template in preset.get("default_provider_templates_json") or []:
+            provider_type = template.get("provider_type", "").strip()
+            if not provider_type or provider_type == "mock":
+                continue
+            key = provider_type
+            if key not in all_providers:
+                contract = _provider_contract(provider_type)
+                all_providers[key] = {
+                    "provider_id": provider_type,
+                    "provider_type": provider_type,
+                    "display_name": template.get("display_name", provider_type),
+                    "base_url": template.get("base_url") or contract.get("default_base_url"),
+                    "is_enabled": template.get("enabled_by_default", False),
+                    "is_local": contract.get("is_local_default", False),
+                    "supports_structured_output": contract.get("capabilities", {}).get("structured_json_output", False),
+                    "credential_configured": False,
+                    "health_status": "unknown",
+                }
+    for provider_config in all_providers.values():
+        if db.session.get(AIProviderConfig, provider_config["provider_id"]) is None:
+            db.session.add(AIProviderConfig(**provider_config))
+    _audit("default_providers_seeded", "ai_runtime", "system", actor, "Default provider templates seeded.", {})
+
+
 def _ensure_default_mock_path(actor: str) -> None:
     provider = db.session.get(AIProviderConfig, "mock_default")
     if provider is None:

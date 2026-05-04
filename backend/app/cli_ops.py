@@ -10,7 +10,7 @@ from app.models.role import ensure_roles_seeded
 
 def seed_base_governance_setup() -> str:
     """
-    Seed foundational governance data: presets, mock provider, mock models, default routes.
+    Seed foundational governance data: presets, all provider templates, mock models, default routes.
 
     Called automatically by docker-entrypoint.sh after migrations.
     Returns summary message. Safe to call multiple times (idempotent).
@@ -21,14 +21,16 @@ def seed_base_governance_setup() -> str:
     # Import here to avoid circular imports
     from app.services.governance_runtime_service import (
         _seed_default_presets,
+        _seed_default_providers,
         _ensure_default_mock_path,
     )
 
     _seed_default_presets()
+    _seed_default_providers("system")
     _ensure_default_mock_path("system")
     db.session.commit()
 
-    return "Base governance setup seeded: presets, mock provider, mock models, default routes."
+    return "Base governance setup seeded: presets, providers (with base URLs), mock models, default routes."
 
 
 def ensure_superadmin_for_username(username: str) -> str:

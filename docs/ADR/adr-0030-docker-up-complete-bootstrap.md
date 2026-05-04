@@ -45,10 +45,15 @@ This created friction and hidden failure modes. **The decision:** docker-up.py b
 
 2. **Automatic base governance seeding (backend entrypoint):**
    - After migrations (`flask db upgrade`), backend automatically seeds foundational governance data
-   - Seeding includes: bootstrap presets, mock provider, mock models, default AI task routes
+   - Seeding includes:
+     - Bootstrap presets (safe_local, balanced, quality_first, cost_aware)
+     - All provider templates with preset-defined base URLs (OpenAI, Anthropic, OpenRouter, Ollama, Mock)
+     - Mock provider + mock models
+     - Default AI task routes (narrative generation, research, validation, retrieval)
    - Implementation: `backend/docker-entrypoint.sh` calls `flask seed-base-governance-setup`
-   - `flask seed-base-governance-setup` (in `cli_ops.py`) invokes idempotent service functions
+   - `flask seed-base-governance-setup` (in `cli_ops.py`) invokes idempotent service functions: `_seed_default_presets()`, `_seed_default_providers()`, `_ensure_default_mock_path()`
    - This ensures operators never have an empty AI runtime config after docker-compose up
+   - Operators can immediately add credentials to seeded providers without re-entering base URLs
 
 3. **Error handling:** Each step has a distinct exit code (0=success, 1=docker, 2=migrations, 3=admin-user, 4=langfuse, 5=backend, 6=env). No silent failures on configured features.
 
