@@ -255,6 +255,9 @@ def _player_session_bundle(
         if isinstance(latest_turn, dict) and isinstance(latest_turn.get("runtime_governance_surface"), dict)
         else None
     )
+    # Contract 3: can_execute must match story_window.entry_count
+    # Opening turn exists when entry_count > 0
+    can_execute = story_window.get("entry_count", 0) > 0
     return {
         "contract": "game_player_session_v1",
         "run_id": run_id,
@@ -265,7 +268,7 @@ def _player_session_bundle(
         "runtime_session_id": runtime_session_id,
         "world_engine_story_session_id": runtime_session_id,
         "runtime_session_ready": True,
-        "can_execute": True,
+        "can_execute": can_execute,
         "story_window": story_window,
         "story_entries": story_window["entries"],
         "shell_state_view": _player_shell_state_view(
@@ -327,32 +330,101 @@ def _persist_player_session_binding(
     )
 
 
-def _compile_player_module(template_id: str, selected_player_role: str | None = None) -> tuple[str, dict[str, Any], dict[str, Any]]:
+_RUNTIME_HANDOFF_FIELDS = (
+    "content_module_id",
+    "runtime_profile_id",
+    "runtime_module_id",
+    "runtime_mode",
+    "selected_player_role",
+    "human_actor_id",
+    "npc_actor_ids",
+    "actor_lanes",
+    "visitor_present",
+    "content_hash",
+)
+
+
+def _runtime_profile_handoff_from_run_payload(run_payload: dict[str, Any]) -> dict[str, Any]:
+    handoff = {key: run_payload.get(key) for key in _RUNTIME_HANDOFF_FIELDS if key in run_payload}
+    if not handoff:
+        return {}
+
+    required = (
+        "content_module_id",
+        "runtime_profile_id",
+        "runtime_module_id",
+        "selected_player_role",
+        "human_actor_id",
+        "npc_actor_ids",
+        "actor_lanes",
+    )
+    missing = [key for key in required if handoff.get(key) in (None, "", [], {})]
+    if missing:
+        raise GameServiceError(
+            f"Play run is missing runtime profile handoff fields: {', '.join(missing)}",
+            status_code=502,
+        )
+
+    npc_actor_ids = handoff.get("npc_actor_ids")
+    actor_lanes = handoff.get("actor_lanes")
+    if not isinstance(npc_actor_ids, list) or not all(isinstance(actor_id, str) and actor_id.strip() for actor_id in npc_actor_ids):
+        raise GameServiceError("Play run runtime profile handoff has invalid npc_actor_ids.", status_code=502)
+    if not isinstance(actor_lanes, dict):
+        raise GameServiceError("Play run runtime profile handoff has invalid actor_lanes.", status_code=502)
+
+    human_actor_id = str(handoff["human_actor_id"]).strip()
+    if actor_lanes.get(human_actor_id) != "human":
+        raise GameServiceError("Play run runtime profile handoff does not mark human_actor_id as human.", status_code=502)
+    invalid_npcs = [actor_id for actor_id in npc_actor_ids if actor_lanes.get(actor_id) != "npc"]
+    if invalid_npcs:
+        raise GameServiceError(
+            f"Play run runtime profile handoff does not mark NPC actors correctly: {', '.join(invalid_npcs)}",
+            status_code=502,
+        )
+    if "visitor" in actor_lanes or "visitor" in npc_actor_ids or human_actor_id == "visitor":
+        raise GameServiceError("Play run runtime profile handoff must not include visitor as a story actor.", status_code=502)
+    return handoff
+
+
+def _merge_runtime_profile_handoff(
+    runtime_projection: dict[str, Any],
+    *,
+    module_id: str,
+    handoff: dict[str, Any],
+) -> dict[str, Any]:
+    if not handoff:
+        return runtime_projection
+
+    content_module_id = str(handoff.get("content_module_id") or "").strip()
+    if content_module_id != module_id:
+        raise GameServiceError(
+            f"Runtime profile content_module_id {content_module_id!r} does not match compiled module {module_id!r}.",
+            status_code=502,
+        )
+
+    enriched = dict(runtime_projection)
+    for key in _RUNTIME_HANDOFF_FIELDS:
+        if key in handoff:
+            enriched[key] = handoff[key]
+    return enriched
+
+
+def _compile_player_module(
+    template_id: str,
+    *,
+    runtime_profile_handoff: dict[str, Any] | None = None,
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
     module_id = resolve_canonical_module_id_for_template(template_id)
     try:
         compiled = compile_module(module_id)
     except ModuleLoadError as exc:
         raise GameContentValidationError(f"canonical module not found for template_id {template_id!r}") from exc
     runtime_projection = compiled.runtime_projection.model_dump(mode="json")
-
-    # Contract 1 (MVP4): Add actor ownership to runtime_projection
-    # Backend must send human_actor_id, npc_actor_ids, actor_lanes to World-Engine
-    human_actor_id = selected_player_role or ""
-    if human_actor_id and "character_ids" in runtime_projection:
-        npc_actor_ids = [
-            char_id for char_id in runtime_projection.get("character_ids", [])
-            if char_id != human_actor_id
-        ]
-        actor_lanes = {human_actor_id: "human"}
-        actor_lanes.update({npc_id: "npc" for npc_id in npc_actor_ids})
-
-        runtime_projection["selected_player_role"] = human_actor_id
-        runtime_projection["human_actor_id"] = human_actor_id
-        runtime_projection["npc_actor_ids"] = npc_actor_ids
-        runtime_projection["actor_lanes"] = actor_lanes
-        runtime_projection["runtime_profile_id"] = runtime_projection.get("module_id", "")
-        runtime_projection["runtime_module_id"] = runtime_projection.get("module_id", "")
-        runtime_projection["content_module_id"] = runtime_projection.get("module_id", "")
+    runtime_projection = _merge_runtime_profile_handoff(
+        runtime_projection,
+        module_id=module_id,
+        handoff=runtime_profile_handoff or {},
+    )
 
     provenance = {
         "template_id": template_id,
@@ -362,6 +434,12 @@ def _compile_player_module(template_id: str, selected_player_role: str | None = 
         "runtime_projection_module_version": runtime_projection.get("module_version"),
         "publication_gate": "game_content_published",
     }
+    if runtime_profile_handoff:
+        provenance["runtime_profile_handoff"] = {
+            key: runtime_profile_handoff[key]
+            for key in _RUNTIME_HANDOFF_FIELDS
+            if key in runtime_profile_handoff
+        }
     return module_id, runtime_projection, provenance
 
 
@@ -409,9 +487,23 @@ def _ensure_player_session(
     resolved_template_id = (template_id or _run_template_id(run_payload)).strip()
     template = run_payload.get("template") if isinstance(run_payload.get("template"), dict) else {}
     template_title = str(template.get("title") or resolved_template_id)
-    # Contract 1 (MVP4): Extract selected_player_role from run_payload if not provided
-    resolved_selected_player_role = selected_player_role or (run_payload.get("selected_player_role") or "").strip() or None
-    module_id, runtime_projection, provenance = _compile_player_module(resolved_template_id, selected_player_role=resolved_selected_player_role)
+    runtime_profile_handoff = _runtime_profile_handoff_from_run_payload(run_payload)
+    if resolved_template_id == "god_of_carnage_solo" and not runtime_profile_handoff:
+        raise GameServiceError(
+            "Play run did not include runtime profile actor ownership required for god_of_carnage_solo.",
+            status_code=502,
+        )
+    if selected_player_role and runtime_profile_handoff:
+        handoff_role = str(runtime_profile_handoff.get("selected_player_role") or "").strip()
+        if handoff_role and handoff_role != selected_player_role:
+            raise GameServiceError(
+                "Selected player role does not match the play run runtime profile handoff.",
+                status_code=409,
+            )
+    module_id, runtime_projection, provenance = _compile_player_module(
+        resolved_template_id,
+        runtime_profile_handoff=runtime_profile_handoff,
+    )
     provenance["run_id"] = clean_run_id
     created = create_story_session(
         module_id=module_id,

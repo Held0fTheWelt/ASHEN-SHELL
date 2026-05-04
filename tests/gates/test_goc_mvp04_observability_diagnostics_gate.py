@@ -700,14 +700,16 @@ def test_mvp04_degradation_timeline_populated_with_signals():
 
 
 @pytest.mark.mvp4
-def test_mvp04_cost_summary_present_with_zeros_in_phase_a():
-    """cost_summary field exists (zeros in Phase A, real values in Phase B)."""
+def test_mvp04_cost_summary_present_with_phase_b_shape():
+    """cost_summary field exists with Phase B cost-truth shape."""
     env = _build_test_envelope("annette")
     d = env.to_dict()
     assert "cost_summary" in d
     assert d["cost_summary"]["input_tokens"] == 0
     assert d["cost_summary"]["output_tokens"] == 0
     assert d["cost_summary"]["cost_usd"] == 0.0
+    assert "cost_breakdown" in d["cost_summary"]
+    assert "phase_costs" in d["cost_summary"]
 
 
 @pytest.mark.mvp4
@@ -818,22 +820,23 @@ def test_mvp04_phase_b_langfuse_adapter_span_context():
 
 @pytest.mark.mvp4
 def test_mvp04_phase_b_calculate_token_cost():
-    """Token cost calculation handles multiple models correctly."""
-    from backend.app.observability.langfuse_adapter import LangfuseAdapter
-
-    adapter = LangfuseAdapter()
+    """Shared token cost calculation handles multiple models correctly."""
+    from ai_stack.runtime_cost_attribution import calculate_token_cost
 
     # Claude 3 Sonnet pricing
-    cost = adapter.calculate_token_cost("claude-3-sonnet", 1000, 500)
+    cost, pricing_source = calculate_token_cost("claude-3-sonnet", 1000, 500)
     assert cost == pytest.approx(0.0105, rel=0.01)  # (1000 * 0.003 + 500 * 0.015) / 1000
+    assert pricing_source == "static_pricing_table_v1"
 
     # GPT-4 pricing
-    cost = adapter.calculate_token_cost("gpt-4", 1000, 1000)
+    cost, pricing_source = calculate_token_cost("gpt-4", 1000, 1000)
     assert cost == pytest.approx(0.09, rel=0.01)  # (1000 * 0.03 + 1000 * 0.06) / 1000
+    assert pricing_source == "static_pricing_table_v1"
 
-    # Unknown model defaults to zero
-    cost = adapter.calculate_token_cost("unknown-model-xyz", 1000, 1000)
+    # Unknown billable model reports unavailable pricing, not fake cost.
+    cost, pricing_source = calculate_token_cost("unknown-model-xyz", 1000, 1000, provider="openai")
     assert cost == 0.0
+    assert pricing_source == "pricing_unavailable"
 
 
 @pytest.mark.mvp4
@@ -868,43 +871,43 @@ def test_mvp04_phase_b_narrator_block_span_instrumentation():
     # Find first narrator block event (may be preceded by trace scaffold)
     event_kinds = [e.event_kind.value for e in events]
     assert any(kind in ("narrator_block", "trace_scaffold_emitted", "ruhepunkt_reached") for kind in event_kinds)
+    assert agent.phase_costs
+    narrator_cost = agent.phase_costs[0]
+    assert narrator_cost["billing_mode"] == "deterministic"
+    assert narrator_cost["token_source"] == "deterministic_no_model_call"
+    assert narrator_cost["billable"] is False
+    assert narrator_cost["model"] == "narrative_runtime_agent_deterministic"
 
 
 @pytest.mark.mvp4
 def test_mvp04_phase_b_ldss_span_instrumentation():
-    """LDSS run includes span instrumentation with zero-cost mock tokens."""
-    # This test verifies the span infrastructure is in place for LDSS
-    # Real token tracking happens in Phase C
+    """LDSS run reports truthful deterministic zero-cost attribution."""
+    from ai_stack.live_dramatic_scene_simulator import build_ldss_input_from_session, run_ldss
 
-    from ai_stack.live_dramatic_scene_simulator import run_ldss
+    ldss_input = build_ldss_input_from_session(
+        session_id="test_session",
+        module_id="god_of_carnage",
+        turn_number=0,
+        selected_player_role="annette",
+        human_actor_id="annette",
+        npc_actor_ids=["alain", "veronique", "michel"],
+        player_input="I listen.",
+    )
 
-    # Build LDSS input
-    ldss_input = {
-        "session_id": "test_session",
-        "turn_number": 0,
-        "committed_scene": {
-            "scene_id": "phase_1",
-            "actor_lanes": {"annette": "human", "alain": "npc", "veronique": "npc", "michel": "npc"},
-            "actors_present": ["annette", "alain", "veronique", "michel"],
-        },
-        "player_input": "I listen.",
-        "runtime_state": {},
-    }
-
-    # Run LDSS (span instrumentation happens internally)
-    try:
-        result = run_ldss(ldss_input)
-        # Verify result structure
-        assert isinstance(result, dict)
-        assert "block" in result or "error" in result
-    except Exception:
-        # LDSS might fail on incomplete input, but instrumentation should not break
-        pass
+    result = run_ldss(ldss_input)
+    cost = result.phase_cost
+    assert cost["billing_mode"] == "deterministic"
+    assert cost["token_source"] == "deterministic_no_model_call"
+    assert cost["billable"] is False
+    assert cost["input_tokens"] == 0
+    assert cost["output_tokens"] == 0
+    assert cost["cost_usd"] == 0.0
+    assert cost["model"] == "ldss_deterministic"
 
 
 @pytest.mark.mvp4
 def test_mvp04_phase_b_cost_summary_supports_cost_breakdown():
-    """cost_summary includes per-phase cost breakdown."""
+    """cost_summary includes per-phase cost breakdown and detailed phase costs."""
     env = _build_test_envelope("annette")
 
     # Manually set cost breakdown
@@ -913,10 +916,12 @@ def test_mvp04_phase_b_cost_summary_supports_cost_breakdown():
         "output_tokens": 1000,
         "cost_usd": 0.045,
         "cost_breakdown": {
-            "profile": 0.010,
-            "lanes": 0.005,
             "ldss": 0.020,
-            "narrator": 0.010,
+            "narrator": 0.025,
+        },
+        "phase_costs": {
+            "ldss": {"phase": "ldss", "billing_mode": "provider_usage", "token_source": "provider_usage", "billable": True, "input_tokens": 1000, "output_tokens": 500, "cost_usd": 0.020, "provider": "openai", "model": "gpt-4"},
+            "narrator": {"phase": "narrator", "billing_mode": "provider_usage", "token_source": "provider_usage", "billable": True, "input_tokens": 1000, "output_tokens": 500, "cost_usd": 0.025, "provider": "openai", "model": "gpt-4"},
         },
     }
 
@@ -928,6 +933,8 @@ def test_mvp04_phase_b_cost_summary_supports_cost_breakdown():
     assert cost["cost_usd"] == pytest.approx(0.045)
     assert "cost_breakdown" in cost
     assert cost["cost_breakdown"]["ldss"] == 0.020
+    assert "phase_costs" in cost
+    assert cost["phase_costs"]["ldss"]["billing_mode"] == "provider_usage"
 
 
 @pytest.mark.mvp4

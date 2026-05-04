@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from ai_stack.runtime_cost_attribution import aggregate_phase_costs
+
 
 # ---------------------------------------------------------------------------
 # Secret redaction
@@ -172,7 +174,11 @@ class DiagnosticsEnvelope:
     quality: dict[str, Any] = field(default_factory=dict)
     degradation_timeline: list[DegradationEvent] = field(default_factory=list)
     cost_summary: dict[str, Any] = field(default_factory=lambda: {
-        "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cost_usd": 0.0,
+        "cost_breakdown": {},
+        "phase_costs": {},
     })
     debug_payload: dict[str, Any] | None = None
 
@@ -581,6 +587,10 @@ def build_diagnostics_envelope(
     else:
         lf_status = "disabled"
 
+    cost_summary = aggregate_phase_costs(
+        graph_state.get("phase_costs") if isinstance(graph_state.get("phase_costs"), dict) else {}
+    )
+
     return DiagnosticsEnvelope(
         trace_id=trace_id or "",
         story_session_id=session_id,
@@ -620,6 +630,7 @@ def build_diagnostics_envelope(
         frontend_render_contract=frontend_contract,
         quality=quality_diag,
         degradation_timeline=degradation_events or [],
+        cost_summary=cost_summary,
     )
 
 

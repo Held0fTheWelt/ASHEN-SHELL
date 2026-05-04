@@ -441,7 +441,7 @@ class RuntimeManager:
     def get_run_details(self, run_id: str) -> dict[str, Any]:
         instance = self.instances[run_id]
         template = self.templates[instance.template_id]
-        return {
+        details = {
             "run": instance.model_dump(mode="json"),
             "template_source": self.template_sources.get(instance.template_id, "builtin"),
             "template": {
@@ -454,6 +454,10 @@ class RuntimeManager:
             "store": self.store.describe(),
             "lobby": self.engines[run_id].build_lobby_payload(instance),
         }
+        runtime_profile_handoff = instance.metadata.get("runtime_profile_handoff")
+        if isinstance(runtime_profile_handoff, dict):
+            details.update(runtime_profile_handoff)
+        return details
 
     def terminate_run(
         self,

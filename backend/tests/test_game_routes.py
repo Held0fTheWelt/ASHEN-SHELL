@@ -5,6 +5,31 @@ from app.models import GameCharacter, GameExperienceTemplate, GameSaveSlot
 from app.services.game_service import PlayJoinContext
 
 
+def _goc_solo_run_payload(run_id: str, *, selected_player_role: str = "annette") -> dict:
+    if selected_player_role == "annette":
+        npc_actor_ids = ["alain", "veronique", "michel"]
+    else:
+        npc_actor_ids = ["annette", "veronique", "michel"]
+    actor_lanes = {selected_player_role: "human", **{actor_id: "npc" for actor_id in npc_actor_ids}}
+    return {
+        "run": {"id": run_id, "template_id": "god_of_carnage_solo"},
+        "template": {"id": "god_of_carnage_solo", "title": "God of Carnage", "kind": "solo_story"},
+        "store": {},
+        "hint": "created",
+        "contract": "create_run_response.v1",
+        "content_module_id": "god_of_carnage",
+        "runtime_profile_id": "god_of_carnage_solo",
+        "runtime_module_id": "solo_story_runtime",
+        "runtime_mode": "solo_story",
+        "selected_player_role": selected_player_role,
+        "human_actor_id": selected_player_role,
+        "npc_actor_ids": npc_actor_ids,
+        "actor_lanes": actor_lanes,
+        "visitor_present": False,
+        "content_hash": "sha256:test",
+    }
+
+
 def test_game_menu_compat_returns_410_without_frontend_url(client, app):
     app.config["FRONTEND_URL"] = None
     response = client.get("/game-menu")
@@ -204,12 +229,10 @@ def test_game_player_session_create_binds_run_to_story_runtime_server_side(
 
     monkeypatch.setattr(
         "app.api.v1.game_routes.create_play_run",
-        lambda **kwargs: {
-            "run": {"id": "run-player-1", "template_id": kwargs["template_id"]},
-            "template": {"id": kwargs["template_id"], "title": "God of Carnage", "kind": "solo_story"},
-            "store": {},
-            "hint": "created",
-        },
+        lambda **kwargs: _goc_solo_run_payload(
+            "run-player-1",
+            selected_player_role=kwargs["selected_player_role"],
+        ),
     )
     monkeypatch.setattr(
         "app.api.v1.game_routes.resolve_canonical_module_id_for_template",
@@ -261,7 +284,7 @@ def test_game_player_session_create_binds_run_to_story_runtime_server_side(
 
     response = client.post(
         "/api/v1/game/player-sessions",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         headers=auth_headers,
     )
     assert response.status_code == 200
@@ -299,12 +322,10 @@ def test_game_player_session_turn_continues_same_story_window(
 
     monkeypatch.setattr(
         "app.api.v1.game_routes.create_play_run",
-        lambda **kwargs: {
-            "run": {"id": "run-player-2", "template_id": kwargs["template_id"]},
-            "template": {"id": kwargs["template_id"], "title": "God of Carnage", "kind": "solo_story"},
-            "store": {},
-            "hint": "created",
-        },
+        lambda **kwargs: _goc_solo_run_payload(
+            "run-player-2",
+            selected_player_role=kwargs["selected_player_role"],
+        ),
     )
     monkeypatch.setattr(
         "app.api.v1.game_routes.resolve_canonical_module_id_for_template",
@@ -367,7 +388,7 @@ def test_game_player_session_turn_continues_same_story_window(
 
     created = client.post(
         "/api/v1/game/player-sessions",
-        json={"template_id": "god_of_carnage_solo"},
+        json={"runtime_profile_id": "god_of_carnage_solo", "selected_player_role": "annette"},
         headers=auth_headers,
     )
     assert created.status_code == 200

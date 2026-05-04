@@ -22,6 +22,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from ai_stack.runtime_cost_attribution import build_deterministic_phase_cost
+
 
 # ---------------------------------------------------------------------------
 # Block types
@@ -209,6 +211,10 @@ class LDSSInput:
     def selected_player_role(self) -> str:
         return str(self.story_session_state.get("selected_player_role") or "").strip()
 
+    @property
+    def current_scene_id(self) -> str:
+        return str(self.story_session_state.get("current_scene_id") or "phase_1").strip()
+
 
 @dataclass
 class LDSSOutput:
@@ -222,6 +228,7 @@ class LDSSOutput:
     entrypoint: str = "story.turn.execute"
     input_hash: str = ""
     output_hash: str = ""
+    phase_cost: dict[str, Any] = field(default_factory=dict)
     legacy_blob_used: bool = False
     contract: str = "ldss_output.v1"
 
@@ -236,6 +243,7 @@ class LDSSOutput:
             "entrypoint": self.entrypoint,
             "input_hash": self.input_hash,
             "output_hash": self.output_hash,
+            "phase_cost": dict(self.phase_cost),
             "legacy_blob_used": self.legacy_blob_used,
             "visible_scene_output": self.visible_scene_output.to_dict(),
             "npc_agency_plan": self.npc_agency_plan.to_dict() if self.npc_agency_plan else None,
@@ -252,6 +260,7 @@ class SceneTurnEnvelopeV2:
     npc_actor_ids: list[str]
     visible_scene_output: VisibleSceneOutput
     diagnostics: dict[str, Any]
+    npc_agency_plan: dict[str, Any] | None = None
     contract: str = "scene_turn_envelope.v2"
 
     def to_dict(self) -> dict[str, Any]:
@@ -263,6 +272,7 @@ class SceneTurnEnvelopeV2:
             "selected_player_role": self.selected_player_role,
             "human_actor_id": self.human_actor_id,
             "npc_actor_ids": list(self.npc_actor_ids),
+            "npc_agency_plan": dict(self.npc_agency_plan) if isinstance(self.npc_agency_plan, dict) else None,
             "visible_scene_output": self.visible_scene_output.to_dict(),
             "diagnostics": dict(self.diagnostics),
         }
@@ -619,6 +629,14 @@ def build_deterministic_ldss_output(ldss_input: LDSSInput) -> LDSSOutput:
         entrypoint="story.turn.execute",
         input_hash=input_hash,
         output_hash=output_hash,
+        phase_cost=build_deterministic_phase_cost(
+            phase="ldss",
+            provider="world_engine",
+            model="ldss_deterministic",
+            decision_count=len(initiatives) + 1,
+            scene_block_count=len(blocks),
+            visible_actor_response_present=visible_actor_present,
+        ),
         legacy_blob_used=False,
     )
 
@@ -631,10 +649,10 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
     """Run the Live Dramatic Scene Simulator with Langfuse span tracking.
 
     Produces validated structured output from a God of Carnage solo turn.
-    Uses deterministic mock output (no external AI call required for tests).
+    Uses deterministic output (no external AI call required for tests).
 
     Validation order:
-    1. Build proposal (deterministic mock)
+    1. Build proposal (deterministic)
     2. Validate actor lanes (before commit)
     3. Validate dramatic mass (before commit)
     4. Validate passivity (before commit)
@@ -642,9 +660,9 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
 
     Returns output with embedded cost/token info for Phase B aggregation.
     """
-    # Phase B: Create Langfuse span for LDSS simulation (lazy import)
+    # Phase B: Create Langfuse span for LDSS simulation (lazy import).
     try:
-        from backend.app.observability.langfuse_adapter import LangfuseAdapter
+        from app.observability.langfuse_adapter import LangfuseAdapter
         adapter = LangfuseAdapter.get_instance()
     except ImportError:
         adapter = None
@@ -658,7 +676,7 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
                 input={
                     "scene_id": ldss_input.current_scene_id,
                     "turn_number": ldss_input.turn_number,
-                    "actor_ids": ldss_input.npc_actor_ids,
+                    "actor_ids": ldss_input.ai_allowed_actor_ids,
                 },
                 metadata={
                     "scene_id": ldss_input.current_scene_id,
@@ -681,7 +699,11 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
             if ldss_span:
                 ldss_span.update(
                     output={"status": "rejected", "error": lane_result.error_code},
-                    metadata={"validation_failed": True, "error_code": lane_result.error_code}
+                    metadata={
+                        "validation_failed": True,
+                        "error_code": lane_result.error_code,
+                        "phase_cost": dict(ldss_output.phase_cost),
+                    },
                 )
             return _build_rejected_ldss_output(
                 ldss_input=ldss_input,
@@ -695,7 +717,11 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
             if ldss_span:
                 ldss_span.update(
                     output={"status": "rejected", "error": mass_result.error_code},
-                    metadata={"validation_failed": True, "error_code": mass_result.error_code}
+                    metadata={
+                        "validation_failed": True,
+                        "error_code": mass_result.error_code,
+                        "phase_cost": dict(ldss_output.phase_cost),
+                    },
                 )
             return _build_rejected_ldss_output(
                 ldss_input=ldss_input,
@@ -709,7 +735,11 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
             if ldss_span:
                 ldss_span.update(
                     output={"status": "rejected", "error": passivity_result.error_code},
-                    metadata={"validation_failed": True, "error_code": passivity_result.error_code}
+                    metadata={
+                        "validation_failed": True,
+                        "error_code": passivity_result.error_code,
+                        "phase_cost": dict(ldss_output.phase_cost),
+                    },
                 )
             return _build_rejected_ldss_output(
                 ldss_input=ldss_input,
@@ -728,11 +758,9 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
                 metadata={
                     "block_count": len(ldss_output.visible_scene_output.blocks),
                     "decision_count": ldss_output.decision_count,
-                    "input_tokens": 0,  # Mock output: 0 tokens
-                    "output_tokens": 0,  # Mock output: 0 tokens
-                    "cost_usd": 0.0,  # Mock output: no cost
-                    "model": "mock",
-                }
+                    **ldss_output.phase_cost,
+                    "phase_cost": dict(ldss_output.phase_cost),
+                },
             )
 
         return ldss_output
@@ -769,6 +797,13 @@ def _build_rejected_ldss_output(
         visible_actor_response_present=False,
         scene_block_count=1,
         ldss_invoked=True,
+        phase_cost=build_deterministic_phase_cost(
+            phase="ldss",
+            provider="world_engine",
+            model="ldss_deterministic",
+            status="rejected",
+            error_code=error_code,
+        ),
         legacy_blob_used=False,
     )
 
@@ -816,6 +851,7 @@ def build_scene_turn_envelope_v2(
             "ai_forbidden_actor_ids": ldss_input.ai_forbidden_actor_ids,
             "validation_ran_before_commit": True,
         },
+        "phase_cost": dict(ldss_output.phase_cost),
     }
 
     return SceneTurnEnvelopeV2(
@@ -825,6 +861,7 @@ def build_scene_turn_envelope_v2(
         selected_player_role=ldss_input.selected_player_role,
         human_actor_id=ldss_input.human_actor_id,
         npc_actor_ids=list(ldss_input.ai_allowed_actor_ids),
+        npc_agency_plan=agency_plan.to_dict() if agency_plan else None,
         visible_scene_output=ldss_output.visible_scene_output,
         diagnostics=diagnostics,
     )

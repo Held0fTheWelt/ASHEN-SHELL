@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Any, Generator
 from pathlib import Path
 
@@ -222,7 +223,7 @@ def create_run(payload: CreateRunRequest, manager: RuntimeManager = Depends(get_
     }
 
     if runtime_profile and selected_role:
-        response.update({
+        runtime_profile_handoff = {
             "contract": "create_run_response.v1",
             "content_module_id": runtime_profile.content_module_id,
             "runtime_profile_id": runtime_profile.runtime_profile_id,
@@ -230,7 +231,11 @@ def create_run(payload: CreateRunRequest, manager: RuntimeManager = Depends(get_
             "runtime_mode": runtime_profile.runtime_mode,
             "selected_player_role": selected_role,
             **actor_ownership,
-        })
+        }
+        instance.metadata["runtime_profile_handoff"] = runtime_profile_handoff
+        instance.updated_at = datetime.now(timezone.utc)
+        manager.store.save(instance)
+        response.update(runtime_profile_handoff)
 
     return response
 
@@ -499,6 +504,11 @@ def create_story_session(
         )
         opening_turn = session.diagnostics[-1] if session.diagnostics else None
         if root_span:
+            cost_summary = (
+                opening_turn.get("diagnostics_envelope", {}).get("cost_summary")
+                if isinstance(opening_turn, dict) and isinstance(opening_turn.get("diagnostics_envelope"), dict)
+                else None
+            )
             root_span.update(
                 output={
                     "session_id": session.session_id,
@@ -509,6 +519,7 @@ def create_story_session(
                     "session_id": session.session_id,
                     "turn_counter": session.turn_counter,
                     "environment": adapter.config.environment if adapter else "unknown",
+                    "cost_summary": cost_summary,
                 },
             )
         return {
@@ -609,6 +620,11 @@ def execute_story_turn(
         # Update root span with turn results
         if root_span and turn:
             turn_number = turn.get("turn_number", 0)
+            cost_summary = (
+                turn.get("diagnostics_envelope", {}).get("cost_summary")
+                if isinstance(turn.get("diagnostics_envelope"), dict)
+                else None
+            )
             logger.info(f"[HTTP] Updating root span with turn_number={turn_number}")
             root_span.update(
                 output={
@@ -619,6 +635,7 @@ def execute_story_turn(
                 metadata={
                     "turn_number": turn_number,
                     "environment": adapter.config.environment if adapter else "unknown",
+                    "cost_summary": cost_summary,
                 }
             )
             logger.info(f"[HTTP] Root span updated")

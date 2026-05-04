@@ -47,6 +47,7 @@ from ai_stack.diagnostics_envelope import (
     build_diagnostics_envelope,
     build_narrative_gov_summary,
 )
+from ai_stack.runtime_cost_attribution import aggregate_phase_costs, build_deterministic_phase_cost
 from ai_stack.narrative import NarrativeRuntimeAgent, NarrativeRuntimeAgentInput, NarrativeEventKind
 
 from app.config import APP_VERSION
@@ -967,6 +968,7 @@ def _build_ldss_scene_envelope(
         turn_number=turn_number,
         runtime_module_id=str(proj.get("runtime_module_id") or "solo_story_runtime"),
     )
+    graph_state.setdefault("phase_costs", {})["ldss"] = dict(ldss_output.phase_cost)
     return envelope.to_dict()
 
 
@@ -1958,11 +1960,24 @@ class StoryRuntimeManager:
                     turn_number=commit_turn_number,
                 )
                 if scene_turn_envelope and ldss_span:
+                    ldss_phase_cost = {}
+                    if isinstance(scene_turn_envelope, dict):
+                        diagnostics = scene_turn_envelope.get("diagnostics")
+                        if isinstance(diagnostics, dict) and isinstance(diagnostics.get("phase_cost"), dict):
+                            ldss_phase_cost = diagnostics["phase_cost"]
+                    if not ldss_phase_cost:
+                        raw_costs = graph_state.get("phase_costs")
+                        if isinstance(raw_costs, dict) and isinstance(raw_costs.get("ldss"), dict):
+                            ldss_phase_cost = raw_costs["ldss"]
                     ldss_span.update(
                         output={
-                            "block_count": scene_turn_envelope.get("visible_scene_output", {}).get("blocks", []) if isinstance(scene_turn_envelope.get("visible_scene_output"), dict) else 0,
+                            "block_count": len(scene_turn_envelope.get("visible_scene_output", {}).get("blocks", [])) if isinstance(scene_turn_envelope.get("visible_scene_output"), dict) else 0,
                             "decision_count": scene_turn_envelope.get("decision_count", 0) if isinstance(scene_turn_envelope, dict) else 0,
                             "status": "approved"
+                        },
+                        metadata={
+                            **ldss_phase_cost,
+                            "phase_cost": dict(ldss_phase_cost),
                         }
                     )
             finally:
@@ -1992,6 +2007,8 @@ class StoryRuntimeManager:
 
             # MVP4: Create child span for Narrator phase
             narrator_span = None
+            previous_active_span = None
+            adapter = None
             try:
                 from app.observability.langfuse_adapter import LangfuseAdapter
                 adapter = LangfuseAdapter.get_instance()
@@ -2013,6 +2030,7 @@ class StoryRuntimeManager:
                     # Set as active span so NarrativeRuntimeAgent can create child spans
                     if narrator_span:
                         logger.info(f"[MANAGER] Narrator phase span created, setting as active context")
+                        previous_active_span = adapter.get_active_span()
                         adapter.set_active_span(narrator_span)
                     else:
                         logger.warning(f"[MANAGER] Narrator phase span creation returned None")
@@ -2031,17 +2049,32 @@ class StoryRuntimeManager:
                     trace_id=trace_id,
                 )
 
+                if streaming_started:
+                    narrator_phase_cost = build_deterministic_phase_cost(
+                        phase="narrator",
+                        provider="world_engine",
+                        model="narrative_runtime_agent_scheduled",
+                        streaming_started=True,
+                    )
+                    graph_state.setdefault("phase_costs", {})["narrator"] = narrator_phase_cost
+
                 if streaming_started and narrator_span:
                     narrator_span.update(
                         output={
                             "status": "streaming_started"
-                        }
+                        },
+                        metadata={
+                            **narrator_phase_cost,
+                            "phase_cost": dict(narrator_phase_cost),
+                        },
                     )
             finally:
                 if narrator_span:
                     logger.info(f"[MANAGER] Ending Narrator phase span")
                     narrator_span.end()
                     logger.info(f"[MANAGER] Narrator phase span ended")
+                if adapter is not None and narrator_span is not None:
+                    adapter.set_active_span(previous_active_span)
 
             if streaming_started:
                 event["narrative_agent_started"] = True
@@ -2069,32 +2102,7 @@ class StoryRuntimeManager:
                         context_snapshot={"turn_number": commit_turn_number},
                     ))
 
-                # Phase B: Aggregate costs from graph state phases
-                # (Will be populated by LDSS, Narrator, and other phases in Steps 3-4)
-                graph_costs = graph_state.get("phase_costs", {})
-                total_input_tokens = 0
-                total_output_tokens = 0
-                total_cost_usd = 0.0
-                cost_breakdown = {}
-
-                # Aggregate phase costs
-                for phase_name, phase_cost_data in graph_costs.items():
-                    if isinstance(phase_cost_data, dict):
-                        input_tokens = phase_cost_data.get("input_tokens", 0)
-                        output_tokens = phase_cost_data.get("output_tokens", 0)
-                        cost_usd = phase_cost_data.get("cost_usd", 0.0)
-
-                        total_input_tokens += input_tokens
-                        total_output_tokens += output_tokens
-                        total_cost_usd += cost_usd
-                        cost_breakdown[phase_name] = cost_usd
-
-                cost_summary = {
-                    "input_tokens": total_input_tokens,
-                    "output_tokens": total_output_tokens,
-                    "cost_usd": round(total_cost_usd, 6),
-                    "cost_breakdown": cost_breakdown,
-                }
+                cost_summary = aggregate_phase_costs(graph_state.get("phase_costs", {}))
 
                 diag_envelope = build_diagnostics_envelope(
                     session_id=session.session_id,
@@ -2111,8 +2119,15 @@ class StoryRuntimeManager:
                 # Update cost_summary in the envelope
                 diag_envelope.cost_summary = cost_summary
                 event["diagnostics_envelope"] = diag_envelope.to_dict()
-            except Exception:
-                pass  # diagnostics must never break turn execution
+            except Exception as exc:
+                log_story_runtime_failure(
+                    trace_id=trace_id or "",
+                    story_session_id=session.session_id,
+                    operation="diagnostics_envelope",
+                    message=str(exc),
+                    failure_class="diagnostics_construction_error",
+                )
+                raise
 
         committed_record = {
             "turn_number": commit_turn_number,
@@ -2187,6 +2202,7 @@ class StoryRuntimeManager:
                 "quality_class": "healthy",
                 "degradation_signals": [],
                 "ldss_output": ldss_output.to_dict(),
+                "phase_costs": {"ldss": dict(ldss_output.phase_cost)},
             }
         else:
             # Non-GoC modules use LangGraph (fallback path)

@@ -114,6 +114,39 @@ def test_diagnostics_envelope_actor_ownership():
 
 
 @pytest.mark.mvp4
+def test_diagnostics_envelope_includes_phase_b_cost_truth():
+    """GoC diagnostics include detailed deterministic phase cost records."""
+    mgr, session = _make_manager("annette")
+    result = mgr.execute_turn(session_id=session.session_id, player_input="test")
+    cost_summary = result["diagnostics_envelope"]["cost_summary"]
+
+    assert cost_summary["input_tokens"] == 0
+    assert cost_summary["output_tokens"] == 0
+    assert cost_summary["cost_usd"] == 0.0
+    assert "phase_costs" in cost_summary
+    assert "ldss" in cost_summary["phase_costs"]
+    assert "narrator" in cost_summary["phase_costs"]
+    ldss_cost = cost_summary["phase_costs"]["ldss"]
+    assert ldss_cost["billing_mode"] == "deterministic"
+    assert ldss_cost["token_source"] == "deterministic_no_model_call"
+    assert ldss_cost["billable"] is False
+    assert ldss_cost["model"] == "ldss_deterministic"
+
+
+@pytest.mark.mvp4
+def test_diagnostics_cost_summary_matches_phase_cost_sum():
+    """Aggregated cost summary equals the sum of detailed phase records."""
+    mgr, session = _make_manager("annette")
+    result = mgr.execute_turn(session_id=session.session_id, player_input="test")
+    cost_summary = result["diagnostics_envelope"]["cost_summary"]
+    phases = cost_summary["phase_costs"].values()
+
+    assert cost_summary["input_tokens"] == sum(p["input_tokens"] for p in phases)
+    assert cost_summary["output_tokens"] == sum(p["output_tokens"] for p in phases)
+    assert cost_summary["cost_usd"] == pytest.approx(sum(p["cost_usd"] for p in phases))
+
+
+@pytest.mark.mvp4
 def test_diagnostics_envelope_langfuse_status():
     """langfuse_status reflects runtime adapter state."""
     mgr, session = _make_manager("annette")

@@ -23,6 +23,8 @@ from enum import Enum
 from typing import Any, Generator, Optional
 from uuid import uuid4
 
+from ai_stack.runtime_cost_attribution import build_deterministic_phase_cost
+
 logger = logging.getLogger(__name__)
 
 # Narrator validation patterns (Phase 2: aligned with LDSS narrator voice contract)
@@ -120,6 +122,7 @@ class NarrativeRuntimeAgent:
         self.config = config or NarrativeRuntimeAgentConfig()
         self._event_sequence = 0
         self._trace_scaffold = {}  # Collect trace metadata when tracing disabled
+        self.phase_costs: list[dict[str, Any]] = []
 
     def stream_narrator_blocks(
         self,
@@ -194,6 +197,15 @@ class NarrativeRuntimeAgent:
                         motivation_analysis=motivation_analysis,
                         block_sequence=block_count,
                     )
+                    narrator_phase_cost = build_deterministic_phase_cost(
+                        phase="narrator",
+                        provider="world_engine",
+                        model="narrative_runtime_agent_deterministic",
+                        block_sequence=block_count,
+                        narration_length=len(narrator_block.get("narrator_text", "")),
+                        atmospheric_tone=narrator_block.get("atmospheric_tone"),
+                    )
+                    self.phase_costs.append(narrator_phase_cost)
 
                     # Validate narrator voice (no force, prediction, hidden intent)
                     validation_error = self._validate_narrative_output(narrator_block, agent_input)
@@ -201,7 +213,11 @@ class NarrativeRuntimeAgent:
                         if narrator_span:
                             narrator_span.update(
                                 output={"status": "rejected", "error": validation_error},
-                                metadata={"validation_failed": True}
+                                metadata={
+                                    "validation_failed": True,
+                                    "phase_cost": dict(narrator_phase_cost),
+                                    **narrator_phase_cost,
+                                },
                             )
                             narrator_span.end()
                         yield self._emit_error_event(
@@ -221,10 +237,8 @@ class NarrativeRuntimeAgent:
                                 "text_length": len(narrator_block.get("narrator_text", "")),
                             },
                             metadata={
-                                "input_tokens": 0,
-                                "output_tokens": 0,
-                                "model": "mock",
-                                "cost_usd": 0.0,
+                                **narrator_phase_cost,
+                                "phase_cost": dict(narrator_phase_cost),
                                 "atmospheric_tone": narrator_block.get("atmospheric_tone"),
                                 "narrative_threads_referenced": len(narrator_block.get("narrative_threads_referenced", [])),
                             },
