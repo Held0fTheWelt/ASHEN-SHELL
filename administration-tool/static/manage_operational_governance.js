@@ -380,6 +380,7 @@
         var row = state.models.find(function (m) { return m.model_id === modelSelect.value; });
         if (!row) return;
         setValue("manage-og-model-provider", row.provider_id);
+        setValue("manage-og-model-id", row.model_id);
         setValue("manage-og-model-name", row.model_name);
         setValue("manage-og-model-display", row.display_name);
         setValue("manage-og-model-role", row.model_role);
@@ -558,6 +559,7 @@
       modelCreateBtn.addEventListener("click", function () {
         var body = {
           provider_id: value("manage-og-model-provider", ""),
+          model_id: value("manage-og-model-id", ""),
           model_name: value("manage-og-model-name", ""),
           display_name: value("manage-og-model-display", ""),
           model_role: value("manage-og-model-role", "llm"),
@@ -600,6 +602,54 @@
         }).then(function () {
           return refreshAll({ preserveBanner: true }).then(function () {
             show("ok", "Model updated.");
+          });
+        }).catch(function (err) {
+          show("err", parseError(err));
+        });
+      });
+    }
+
+    var modelTestBtn = document.getElementById("manage-og-model-test");
+    if (modelTestBtn) {
+      modelTestBtn.addEventListener("click", function () {
+        var modelId = selectedModelId();
+        if (!modelId) {
+          show("err", "Select a model to test.");
+          return;
+        }
+        window.ManageAuth.apiFetchWithAuth("/api/v1/admin/ai/models/" + modelId + "/test", {
+          method: "POST",
+          body: "{}",
+        }).then(function (res) {
+          var data = res.data || {};
+          return refreshAll({ preserveBanner: true }).then(function () {
+            var msg = "Model test finished — " + (data.success ? "success" : "failure");
+            if (data.latency_ms != null) msg += ", latency: " + data.latency_ms + " ms";
+            if (data.operator_message) msg += ". " + data.operator_message;
+            show(data.success ? "ok" : "err", msg + ".");
+          });
+        }).catch(function (err) {
+          show("err", parseError(err));
+        });
+      });
+    }
+
+    var modelDeleteBtn = document.getElementById("manage-og-model-delete");
+    if (modelDeleteBtn) {
+      modelDeleteBtn.addEventListener("click", function () {
+        var modelId = selectedModelId();
+        if (!modelId) {
+          show("err", "Select a model to delete.");
+          return;
+        }
+        window.ManageAuth.apiFetchWithAuth("/api/v1/admin/ai/models/" + modelId, {
+          method: "DELETE",
+          body: "{}",
+        }).then(function (res) {
+          var data = res.data || {};
+          return refreshAll({ preserveBanner: true }).then(function () {
+            var count = data.affected_route_count || 0;
+            show("ok", "Model deleted. " + count + " route(s) were adjusted.");
           });
         }).catch(function (err) {
           show("err", parseError(err));

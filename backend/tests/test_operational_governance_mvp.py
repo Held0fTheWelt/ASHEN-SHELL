@@ -11,6 +11,37 @@ def _with_kek(monkeypatch):
     monkeypatch.setenv("SECRETS_KEK", base64.b64encode(b"a" * 32).decode("utf-8"))
 
 
+def _ensure_mock_provider_and_model(client, admin_headers, *, provider_id: str, model_id: str) -> tuple[str, str]:
+    provider_response = client.post(
+        "/api/v1/admin/ai/providers",
+        headers=admin_headers,
+        json={
+            "provider_id": provider_id,
+            "provider_type": "mock",
+            "display_name": provider_id.replace("_", " ").title(),
+            "is_enabled": True,
+        },
+    )
+    assert provider_response.status_code == 200
+    created_provider_id = provider_response.get_json()["data"]["provider_id"]
+
+    model_response = client.post(
+        "/api/v1/admin/ai/models",
+        headers=admin_headers,
+        json={
+            "provider_id": created_provider_id,
+            "model_id": model_id,
+            "model_name": model_id.replace("_", "-"),
+            "display_name": model_id.replace("_", " ").title(),
+            "model_role": "mock",
+            "is_enabled": True,
+            "timeout_seconds": 5,
+        },
+    )
+    assert model_response.status_code == 200
+    return created_provider_id, model_response.get_json()["data"]["model_id"]
+
+
 def test_bootstrap_public_status_available(client):
     response = client.get("/api/v1/bootstrap/public-status")
     assert response.status_code == 200
@@ -220,6 +251,7 @@ def test_model_route_crud_and_runtime_readiness(client, admin_headers, monkeypat
     )
     assert model_response.status_code == 200
     model_id = model_response.get_json()["data"]["model_id"]
+    assert model_id == f"{provider_id}_gpt_4o_mini"
 
     route_response = client.post(
         "/api/v1/admin/ai/routes",
@@ -243,6 +275,138 @@ def test_model_route_crud_and_runtime_readiness(client, admin_headers, monkeypat
     assert readiness["enabled_non_mock_provider_present"] is True
     assert readiness["enabled_non_mock_model_present"] is True
     assert readiness["enabled_ai_route_present"] is True
+
+
+def test_route_rejects_mock_model_as_preferred_ai_model(client, admin_headers):
+    _, model_id = _ensure_mock_provider_and_model(
+        client,
+        admin_headers,
+        provider_id="mock_route_provider",
+        model_id="mock_route_candidate",
+    )
+
+    route_response = client.post(
+        "/api/v1/admin/ai/routes",
+        headers=admin_headers,
+        json={
+            "task_kind": "research_synthesis",
+            "workflow_scope": "global",
+            "preferred_model_id": model_id,
+            "is_enabled": True,
+        },
+    )
+    assert route_response.status_code == 409
+    payload = route_response.get_json()
+    assert payload["error"]["code"] == "route_invalid_model_role"
+
+
+def test_model_test_endpoint_runs_concrete_probe(client, admin_headers):
+    _, model_id = _ensure_mock_provider_and_model(
+        client,
+        admin_headers,
+        provider_id="mock_probe_provider",
+        model_id="mock_probe_model",
+    )
+
+    test_response = client.post(f"/api/v1/admin/ai/models/{model_id}/test", headers=admin_headers, json={})
+    assert test_response.status_code == 200
+    payload = test_response.get_json()["data"]
+    assert payload["success"] is True
+    assert payload["available"] is True
+
+
+def test_model_delete_repairs_routes_to_mock_fallback(client, admin_headers, monkeypatch):
+    _with_kek(monkeypatch)
+    provider_response = client.post(
+        "/api/v1/admin/ai/providers",
+        headers=admin_headers,
+        json={
+            "provider_type": "openai",
+            "display_name": "Delete Flow OpenAI",
+            "base_url": "https://api.openai.com/v1",
+            "is_enabled": True,
+        },
+    )
+    assert provider_response.status_code == 200
+    provider_id = provider_response.get_json()["data"]["provider_id"]
+
+    client.post(
+        f"/api/v1/admin/ai/providers/{provider_id}/credential",
+        headers=admin_headers,
+        json={"api_key": "sk-delete-flow"},
+    )
+
+    class _StubResp:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr(governance_runtime_service, "urlopen", lambda req, timeout=0: _StubResp())
+    health_response = client.post(
+        f"/api/v1/admin/ai/providers/{provider_id}/test-connection",
+        headers=admin_headers,
+        json={},
+    )
+    assert health_response.status_code == 200
+
+    _, mock_model_id = _ensure_mock_provider_and_model(
+        client,
+        admin_headers,
+        provider_id="mock_delete_provider",
+        model_id="mock_delete_fallback",
+    )
+
+    model_response = client.post(
+        "/api/v1/admin/ai/models",
+        headers=admin_headers,
+        json={
+            "provider_id": provider_id,
+            "model_id": "delete_target_model",
+            "model_name": "gpt-4o-mini",
+            "display_name": "Delete Target Model",
+            "model_role": "llm",
+            "supports_structured_output": True,
+            "is_enabled": True,
+            "timeout_seconds": 30,
+        },
+    )
+    assert model_response.status_code == 200
+    model_id = model_response.get_json()["data"]["model_id"]
+
+    route_response = client.post(
+        "/api/v1/admin/ai/routes",
+        headers=admin_headers,
+        json={
+            "route_id": "delete_target_route",
+            "task_kind": "research_revision_drafting",
+            "workflow_scope": "global",
+            "preferred_model_id": model_id,
+            "fallback_model_id": model_id,
+            "mock_model_id": mock_model_id,
+            "is_enabled": True,
+            "use_mock_when_provider_unavailable": True,
+        },
+    )
+    assert route_response.status_code == 200
+
+    delete_response = client.delete(f"/api/v1/admin/ai/models/{model_id}", headers=admin_headers, json={})
+    assert delete_response.status_code == 200
+    payload = delete_response.get_json()["data"]
+    assert payload["deleted"] is True
+    assert payload["affected_route_count"] == 1
+    assert payload["affected_routes"][0]["after"]["preferred_model_id"] is None
+    assert payload["affected_routes"][0]["after"]["fallback_model_id"] is None
+    assert payload["affected_routes"][0]["after"]["mock_model_id"] == mock_model_id
+
+    routes_response = client.get("/api/v1/admin/ai/routes", headers=admin_headers)
+    assert routes_response.status_code == 200
+    route = next(r for r in routes_response.get_json()["data"]["routes"] if r["route_id"] == "delete_target_route")
+    assert route["mock_path_ready"] is True
+    assert route["runtime_eligible"] is True
 
 
 def test_cost_budget_and_usage_endpoints(client, admin_headers):

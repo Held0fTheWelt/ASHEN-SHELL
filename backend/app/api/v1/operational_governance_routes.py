@@ -18,6 +18,7 @@ from app.services.governance_runtime_service import (
     create_model,
     create_provider,
     create_route,
+    delete_model,
     evaluate_runtime_readiness,
     enforce_budget_guard,
     get_bootstrap_status,
@@ -37,6 +38,7 @@ from app.services.governance_runtime_service import (
     rebuild_rollups,
     reopen_bootstrap,
     test_provider_connection,
+    test_model_connection,
     update_model,
     update_provider,
     update_route,
@@ -259,6 +261,22 @@ def admin_ai_model_create():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def admin_ai_model_update(model_id: str):
     return _handle("model_update", lambda: {"model_id": update_model(model_id, _body(), _actor_identifier()).model_id, "updated": True})
+
+
+@api_v1_bp.route("/admin/ai/models/<model_id>", methods=["DELETE"])
+@limiter.limit("20 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def admin_ai_model_delete(model_id: str):
+    return _handle("model_delete", lambda: delete_model(model_id, _actor_identifier()))
+
+
+@api_v1_bp.route("/admin/ai/models/<model_id>/test", methods=["POST"])
+@limiter.limit("20 per minute")
+@jwt_required()
+@require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
+def admin_ai_model_test(model_id: str):
+    return _handle("model_test", lambda: test_model_connection(model_id, _actor_identifier()))
 
 
 @api_v1_bp.route("/admin/ai/routes", methods=["GET"])

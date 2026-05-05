@@ -45,3 +45,6 @@ def test_manage_ai_runtime_governance_renders_readiness_overview(client):
     assert "manage-og-hint-providers" in html
     assert "Technical audit: full readiness JSON" in html
     assert "Runtime readiness" in html
+    assert "manage-og-model-id" in html
+    assert "manage-og-model-test" in html
+    assert "manage-og-model-delete" in html

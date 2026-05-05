@@ -1058,6 +1058,203 @@ def update_model(model_id: str, payload: dict, actor: str) -> AIModelConfig:
     return model
 
 
+def _candidate_mock_model_id(*, excluding_model_id: str) -> str | None:
+    preferred = db.session.get(AIModelConfig, "mock_deterministic")
+    if preferred and preferred.model_id != excluding_model_id and preferred.is_enabled and preferred.model_role == "mock":
+        return preferred.model_id
+    row = (
+        AIModelConfig.query.filter(
+            AIModelConfig.model_id != excluding_model_id,
+            AIModelConfig.is_enabled.is_(True),
+            AIModelConfig.model_role == "mock",
+        )
+        .order_by(AIModelConfig.model_id.asc())
+        .first()
+    )
+    return row.model_id if row is not None else None
+
+
+def delete_model(model_id: str, actor: str) -> dict:
+    model = db.session.get(AIModelConfig, model_id)
+    if model is None:
+        raise governance_error("model_not_found", f"Model '{model_id}' not found.", 404, {"model_id": model_id})
+
+    replacement_mock_id = _candidate_mock_model_id(excluding_model_id=model_id)
+    impacted_routes = AITaskRoute.query.filter(
+        (AITaskRoute.preferred_model_id == model_id)
+        | (AITaskRoute.fallback_model_id == model_id)
+        | (AITaskRoute.mock_model_id == model_id)
+    ).order_by(AITaskRoute.route_id.asc()).all()
+
+    route_changes: list[dict] = []
+    for route in impacted_routes:
+        before = {
+            "preferred_model_id": route.preferred_model_id,
+            "fallback_model_id": route.fallback_model_id,
+            "mock_model_id": route.mock_model_id,
+            "use_mock_when_provider_unavailable": route.use_mock_when_provider_unavailable,
+        }
+        preferred_id = route.preferred_model_id
+        fallback_id = route.fallback_model_id
+        mock_id = route.mock_model_id
+        use_mock = bool(route.use_mock_when_provider_unavailable)
+
+        if preferred_id == model_id:
+            preferred_id = fallback_id if fallback_id != model_id else None
+        if fallback_id == model_id:
+            fallback_id = preferred_id if preferred_id != model_id else None
+        if mock_id == model_id:
+            mock_id = replacement_mock_id
+
+        if not preferred_id and not fallback_id:
+            if mock_id:
+                use_mock = True
+            else:
+                raise governance_error(
+                    "model_delete_would_break_route",
+                    "Deleting this model would leave a route without any AI or mock recovery path.",
+                    409,
+                    {"model_id": model_id, "route_id": route.route_id},
+                )
+        elif use_mock and not mock_id:
+            use_mock = False
+        if use_mock and not mock_id:
+            raise governance_error(
+                "model_delete_requires_mock_replacement",
+                "Deleting this model requires a replacement mock model for at least one route.",
+                409,
+                {"model_id": model_id, "route_id": route.route_id},
+            )
+
+        route.preferred_model_id = preferred_id
+        route.fallback_model_id = fallback_id
+        route.mock_model_id = mock_id
+        route.use_mock_when_provider_unavailable = use_mock
+        route.updated_at = datetime.now(timezone.utc)
+        route_changes.append(
+            {
+                "route_id": route.route_id,
+                "before": before,
+                "after": {
+                    "preferred_model_id": preferred_id,
+                    "fallback_model_id": fallback_id,
+                    "mock_model_id": mock_id,
+                    "use_mock_when_provider_unavailable": use_mock,
+                },
+            }
+        )
+
+    db.session.delete(model)
+    _audit(
+        "model_deleted",
+        "ai_runtime",
+        model_id,
+        actor,
+        "Model deleted and route references repaired.",
+        {"route_count": len(route_changes)},
+    )
+    db.session.commit()
+    rebind = _attempt_runtime_rebind()
+    return {
+        "model_id": model_id,
+        "deleted": True,
+        "affected_route_count": len(route_changes),
+        "affected_routes": route_changes,
+        "world_engine_story_runtime_rebind": rebind,
+    }
+
+
+def test_model_connection(model_id: str, actor: str) -> dict:
+    model = db.session.get(AIModelConfig, model_id)
+    if model is None:
+        raise governance_error("model_not_found", f"Model '{model_id}' not found.", 404, {"model_id": model_id})
+    if not model.is_enabled:
+        raise governance_error("model_disabled", "Model is disabled.", 409, {"model_id": model_id})
+
+    provider = db.session.get(AIProviderConfig, model.provider_id)
+    if provider is None:
+        raise governance_error("provider_not_found", f"Provider '{model.provider_id}' not found.", 404, {"provider_id": model.provider_id})
+    if not provider.is_enabled:
+        raise governance_error("provider_disabled", "Provider is disabled.", 409, {"provider_id": provider.provider_id})
+
+    contract = _provider_contract(provider.provider_type)
+    if not contract.get("capabilities", {}).get("text_generation", False):
+        raise governance_error(
+            "model_test_unsupported",
+            "Provider does not expose a supported text-generation test path.",
+            409,
+            {"provider_id": provider.provider_id, "provider_type": provider.provider_type},
+        )
+
+    secret = _active_provider_secret(provider.provider_id) if provider.credential_configured else None
+    if bool(contract.get("requires_credential")) and not secret:
+        raise governance_error(
+            "provider_credential_required",
+            "Provider requires credential before model test.",
+            400,
+            {"provider_id": provider.provider_id},
+        )
+
+    base_url = _normalize_provider_url(provider.base_url, contract)
+    if provider.provider_type == "mock":
+        adapter = MockModelAdapter()
+    elif provider.provider_type == "ollama":
+        adapter = OllamaAdapter(base_url=base_url)
+    elif provider.provider_type in {"openai", "openrouter"} or bool(contract.get("openai_compatible")):
+        adapter = OpenAIChatAdapter(base_url=base_url, api_key=secret)
+    else:
+        raise governance_error(
+            "model_test_unsupported",
+            "Provider type is not yet supported for concrete model tests.",
+            409,
+            {"provider_id": provider.provider_id, "provider_type": provider.provider_type},
+        )
+
+    started = perf_counter()
+    try:
+        result = adapter.generate(
+            "Reply with OK.",
+            timeout_seconds=float(model.timeout_seconds or 10),
+            model_name=model.model_name,
+        )
+        latency_ms = int((perf_counter() - started) * 1000)
+        success = bool(getattr(result, "success", False))
+        content = str(getattr(result, "content", "") or "").strip()
+        metadata = getattr(result, "metadata", {}) or {}
+        error_code = None if success else "model_test_unsuccessful"
+        operator_message = "Model responded successfully." if success else "Model call completed but did not report success."
+    except Exception as exc:  # noqa: BLE001 — operator-facing probe
+        latency_ms = int((perf_counter() - started) * 1000)
+        success = False
+        content = ""
+        metadata = {}
+        error_code = type(exc).__name__
+        operator_message = str(exc)
+
+    _audit(
+        "model_tested",
+        "ai_runtime",
+        model_id,
+        actor,
+        "Model test executed.",
+        {"success": success, "provider_id": provider.provider_id, "error_code": error_code},
+    )
+    db.session.commit()
+    return {
+        "model_id": model_id,
+        "provider_id": provider.provider_id,
+        "provider_type": provider.provider_type,
+        "model_name": model.model_name,
+        "success": success,
+        "available": success,
+        "latency_ms": latency_ms,
+        "error_code": error_code,
+        "operator_message": operator_message,
+        "response_excerpt": content[:200] if content else "",
+        "metadata": metadata if isinstance(metadata, dict) else {},
+    }
+
+
 def list_routes() -> list[dict]:
     rows = AITaskRoute.query.order_by(AITaskRoute.route_id.asc()).all()
     model_rows = {m.model_id: m for m in AIModelConfig.query.all()}
