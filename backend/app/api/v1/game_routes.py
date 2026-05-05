@@ -264,6 +264,18 @@ def _player_session_bundle(
     # Contract 3: can_execute must match story_window.entry_count
     # Opening turn exists when entry_count > 0
     can_execute = story_window.get("entry_count", 0) > 0
+
+    # Extract visible_scene_output.blocks (MVP5) from latest turn or opening
+    visible_scene_output = None
+    if isinstance(latest_turn, dict) and isinstance(latest_turn.get("visible_output_bundle"), dict):
+        scene_blocks = latest_turn.get("visible_output_bundle", {}).get("scene_blocks")
+        if isinstance(scene_blocks, list) and scene_blocks:
+            visible_scene_output = {"blocks": scene_blocks}
+    if not visible_scene_output and isinstance(opening_turn, dict) and isinstance(opening_turn.get("visible_output_bundle"), dict):
+        scene_blocks = opening_turn.get("visible_output_bundle", {}).get("scene_blocks")
+        if isinstance(scene_blocks, list) and scene_blocks:
+            visible_scene_output = {"blocks": scene_blocks}
+
     return {
         "contract": "game_player_session_v1",
         "run_id": run_id,
@@ -277,6 +289,7 @@ def _player_session_bundle(
         "can_execute": can_execute,
         "story_window": story_window,
         "story_entries": story_window["entries"],
+        "visible_scene_output": visible_scene_output,
         "narrator_streaming": narrator_streaming,
         "shell_state_view": _player_shell_state_view(
             state=state,
