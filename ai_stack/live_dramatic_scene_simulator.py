@@ -681,8 +681,7 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
                 metadata={
                     "scene_id": ldss_input.current_scene_id,
                     "turn_number": ldss_input.turn_number,
-                },
-                parent_span=parent_span
+                }
             )
 
     try:
