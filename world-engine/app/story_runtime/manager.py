@@ -2692,9 +2692,10 @@ class StoryRuntimeManager:
         runtime_projection: dict[str, Any],
         content_provenance: dict[str, Any] | None = None,
         trace_id: str | None = None,
+        session_id: str | None = None,
     ) -> StorySession:
         _validate_runtime_projection_contract(module_id, runtime_projection)
-        session_id = uuid4().hex
+        session_id = str(session_id or uuid4().hex).strip() or uuid4().hex
         # Generate trace_id if not provided for audit trail correlation
         if not trace_id:
             trace_id = uuid4().hex

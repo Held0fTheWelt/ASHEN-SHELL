@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
+from contextlib import contextmanager, nullcontext
 from contextvars import ContextVar
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
 print(">>> LOADING LANGFUSE ADAPTER MODULE", flush=True)
 logger = logging.getLogger(__name__)
@@ -130,6 +131,7 @@ class LangfuseAdapter:
         self,
         name: str,
         session_id: str,
+        input: Optional[dict[str, Any]] = None,
         metadata: Optional[dict[str, Any]] = None,
         trace_id: Optional[str] = None,
     ) -> Optional[Any]:
@@ -147,6 +149,7 @@ class LangfuseAdapter:
                 as_type="span",
                 name=name,
                 trace_context={"trace_id": trace_id} if trace_id else None,
+                input=input or {"session_id": session_id},
                 metadata=trace_metadata,
             )
             logger.info(f"[LANGFUSE] root span created: name={name}, session_id={session_id}, span_id={getattr(span, 'span_id', 'unknown')}, trace_id={getattr(span, 'trace_id', 'unknown')}")
@@ -180,6 +183,58 @@ class LangfuseAdapter:
         except Exception as e:
             logger.error(f"[LANGFUSE] Failed to create span in trace {trace_id}: {str(e)}", exc_info=True)
             return None
+
+    @staticmethod
+    def _safe_session_id(value: str | None) -> str | None:
+        session_id = str(value or "").strip()
+        if not session_id:
+            return None
+        try:
+            session_id.encode("ascii")
+        except UnicodeEncodeError:
+            logger.warning("[LANGFUSE] Dropping non-ASCII session_id for Langfuse session tracking")
+            return None
+        if len(session_id) > 200:
+            logger.warning("[LANGFUSE] Dropping overlong session_id for Langfuse session tracking")
+            return None
+        return session_id
+
+    @contextmanager
+    def session_scope(
+        self,
+        *,
+        root_span: Optional[Any],
+        session_id: str | None,
+        metadata: Optional[dict[str, str]] = None,
+        trace_name: str | None = None,
+    ) -> Iterator[None]:
+        """Propagate Langfuse session_id to the root observation and child observations."""
+        safe_session_id = self._safe_session_id(session_id)
+        if not self.is_enabled() or not safe_session_id:
+            with nullcontext():
+                yield
+            return
+
+        try:
+            from langfuse import propagate_attributes
+            from opentelemetry import trace as otel_trace_api
+
+            otel_span = getattr(root_span, "_otel_span", None)
+            propagate = propagate_attributes(
+                session_id=safe_session_id,
+                metadata=metadata or {},
+                trace_name=trace_name,
+            )
+            if otel_span is not None:
+                with otel_trace_api.use_span(otel_span, end_on_exit=False):
+                    with propagate:
+                        yield
+            else:
+                with propagate:
+                    yield
+        except Exception:
+            logger.debug("[LANGFUSE] Failed to activate session propagation", exc_info=True)
+            yield
 
     @property
     def config(self) -> SimpleNamespace:

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from typing import Any, Generator
 from pathlib import Path
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -480,6 +482,7 @@ def create_story_session(
     adapter = None
     root_span = None
     previous_active_span = None
+    story_session_id = uuid4().hex
 
     try:
         try:
@@ -497,62 +500,80 @@ def create_story_session(
                 root_span = adapter.start_span_in_trace(
                     trace_id=langfuse_trace_id,
                     name="world-engine.session.create",
-                    input={"module_id": payload.module_id},
-                    metadata={"stage": "world_engine_session_create", "turn_kind": "opening"},
+                    input={"module_id": payload.module_id, "session_id": story_session_id},
+                    metadata={
+                        "stage": "world_engine_session_create",
+                        "turn_kind": "opening",
+                        "session_id": story_session_id,
+                    },
                 )
             else:
                 root_span = adapter.start_trace(
                     name="world-engine.session.create",
-                    session_id="pending",
+                    session_id=story_session_id,
+                    input={"module_id": payload.module_id, "session_id": story_session_id},
                     metadata={
                         "module_id": payload.module_id,
                         "turn_kind": "opening",
+                        "session_id": story_session_id,
                         "environment": adapter.config.environment,
                     },
                 )
             if root_span:
                 adapter.set_active_span(root_span)
 
-        session = manager.create_session(
-            module_id=payload.module_id,
-            runtime_projection=payload.runtime_projection,
-            content_provenance=payload.content_provenance,
-            trace_id=trace_id if isinstance(trace_id, str) else None,
+        session_scope = (
+            adapter.session_scope(
+                root_span=root_span,
+                session_id=story_session_id,
+                metadata={"module_id": payload.module_id, "turn_kind": "opening"},
+                trace_name="world-engine.session.create",
+            )
+            if root_span and adapter and hasattr(adapter, "session_scope")
+            else nullcontext()
         )
-        opening_turn = session.diagnostics[-1] if session.diagnostics else None
-        if root_span:
-            cost_summary = (
-                opening_turn.get("diagnostics_envelope", {}).get("cost_summary")
-                if isinstance(opening_turn, dict) and isinstance(opening_turn.get("diagnostics_envelope"), dict)
-                else None
+        with session_scope:
+            session = manager.create_session(
+                module_id=payload.module_id,
+                runtime_projection=payload.runtime_projection,
+                content_provenance=payload.content_provenance,
+                trace_id=trace_id if isinstance(trace_id, str) else None,
+                session_id=story_session_id,
             )
-            path_summary = (
-                opening_turn.get("observability_path_summary")
-                if isinstance(opening_turn, dict) and isinstance(opening_turn.get("observability_path_summary"), dict)
-                else None
-            )
-            level, status_message = _langfuse_root_status(path_summary)
-            root_span.update(
-                output={
-                    "session_id": session.session_id,
-                    "turn_counter": session.turn_counter,
-                    "success": True,
-                    "path_summary": path_summary,
-                },
-                metadata={
-                    "session_id": session.session_id,
-                    "turn_counter": session.turn_counter,
-                    "environment": adapter.config.environment if adapter else "unknown",
-                    "cost_summary": cost_summary,
-                    "path_quality": path_summary.get("quality_class") if path_summary else None,
-                    "path_degradation": path_summary.get("degradation_summary") if path_summary else None,
-                    "path_selected_model": path_summary.get("selected_model") if path_summary else None,
-                    "path_adapter": path_summary.get("adapter") if path_summary else None,
-                    "path_fallback_used": path_summary.get("generation_fallback_used") if path_summary else None,
-                },
-                level=level,
-                status_message=status_message,
-            )
+            opening_turn = session.diagnostics[-1] if session.diagnostics else None
+            if root_span:
+                cost_summary = (
+                    opening_turn.get("diagnostics_envelope", {}).get("cost_summary")
+                    if isinstance(opening_turn, dict) and isinstance(opening_turn.get("diagnostics_envelope"), dict)
+                    else None
+                )
+                path_summary = (
+                    opening_turn.get("observability_path_summary")
+                    if isinstance(opening_turn, dict) and isinstance(opening_turn.get("observability_path_summary"), dict)
+                    else None
+                )
+                level, status_message = _langfuse_root_status(path_summary)
+                root_span.update(
+                    output={
+                        "session_id": session.session_id,
+                        "turn_counter": session.turn_counter,
+                        "success": True,
+                        "path_summary": path_summary,
+                    },
+                    metadata={
+                        "session_id": session.session_id,
+                        "turn_counter": session.turn_counter,
+                        "environment": adapter.config.environment if adapter else "unknown",
+                        "cost_summary": cost_summary,
+                        "path_quality": path_summary.get("quality_class") if path_summary else None,
+                        "path_degradation": path_summary.get("degradation_summary") if path_summary else None,
+                        "path_selected_model": path_summary.get("selected_model") if path_summary else None,
+                        "path_adapter": path_summary.get("adapter") if path_summary else None,
+                        "path_fallback_used": path_summary.get("generation_fallback_used") if path_summary else None,
+                    },
+                    level=level,
+                    status_message=status_message,
+                )
         return {
             "session_id": session.session_id,
             "module_id": session.module_id,
@@ -616,7 +637,7 @@ def execute_story_turn(
                     trace_id=langfuse_trace_id,
                     name="world-engine.turn.execute",
                     input={"session_id": session_id, "player_input_length": len(payload.player_input) if payload.player_input else 0},
-                    metadata={"stage": "world_engine_turn_execution"},
+                    metadata={"stage": "world_engine_turn_execution", "session_id": session_id},
                 )
                 logger.info(f"[HTTP] Created world-engine span in Langfuse trace {langfuse_trace_id}")
                 adapter.set_active_span(root_span)
@@ -629,9 +650,14 @@ def execute_story_turn(
             root_span = adapter.start_trace(
                 name="world-engine.turn.execute",
                 session_id=session_id,
+                input={
+                    "session_id": session_id,
+                    "player_input_length": len(payload.player_input) if payload.player_input else 0,
+                },
                 metadata={
                     "turn_number": 0,  # Will be updated after execution
                     "player_input_length": len(payload.player_input) if payload.player_input else 0,
+                    "session_id": session_id,
                     "environment": adapter.config.environment,
                 }
             )
@@ -646,48 +672,59 @@ def execute_story_turn(
                 logger.warning(f"[HTTP] Failed to create root span for session {session_id}")
 
     try:
-        turn = manager.execute_turn(
-            session_id=session_id,
-            player_input=payload.player_input,
-            trace_id=trace_id if isinstance(trace_id, str) else None,
+        session_scope = (
+            adapter.session_scope(
+                root_span=root_span,
+                session_id=session_id,
+                metadata={"stage": "world_engine_turn_execution"},
+                trace_name="world-engine.turn.execute",
+            )
+            if root_span and adapter and hasattr(adapter, "session_scope")
+            else nullcontext()
         )
+        with session_scope:
+            turn = manager.execute_turn(
+                session_id=session_id,
+                player_input=payload.player_input,
+                trace_id=trace_id if isinstance(trace_id, str) else None,
+            )
 
-        # Update root span with turn results
-        if root_span and turn:
-            turn_number = turn.get("turn_number", 0)
-            cost_summary = (
-                turn.get("diagnostics_envelope", {}).get("cost_summary")
-                if isinstance(turn.get("diagnostics_envelope"), dict)
-                else None
-            )
-            path_summary = (
-                turn.get("observability_path_summary")
-                if isinstance(turn.get("observability_path_summary"), dict)
-                else None
-            )
-            level, status_message = _langfuse_root_status(path_summary)
-            logger.info(f"[HTTP] Updating root span with turn_number={turn_number}")
-            root_span.update(
-                output={
-                    "turn_number": turn_number,
-                    "session_id": session_id,
-                    "success": True,
-                    "path_summary": path_summary,
-                },
-                metadata={
-                    "turn_number": turn_number,
-                    "environment": adapter.config.environment if adapter else "unknown",
-                    "cost_summary": cost_summary,
-                    "path_quality": path_summary.get("quality_class") if path_summary else None,
-                    "path_degradation": path_summary.get("degradation_summary") if path_summary else None,
-                    "path_selected_model": path_summary.get("selected_model") if path_summary else None,
-                    "path_adapter": path_summary.get("adapter") if path_summary else None,
-                    "path_fallback_used": path_summary.get("generation_fallback_used") if path_summary else None,
-                },
-                level=level,
-                status_message=status_message,
-            )
-            logger.info(f"[HTTP] Root span updated")
+            # Update root span with turn results
+            if root_span and turn:
+                turn_number = turn.get("turn_number", 0)
+                cost_summary = (
+                    turn.get("diagnostics_envelope", {}).get("cost_summary")
+                    if isinstance(turn.get("diagnostics_envelope"), dict)
+                    else None
+                )
+                path_summary = (
+                    turn.get("observability_path_summary")
+                    if isinstance(turn.get("observability_path_summary"), dict)
+                    else None
+                )
+                level, status_message = _langfuse_root_status(path_summary)
+                logger.info(f"[HTTP] Updating root span with turn_number={turn_number}")
+                root_span.update(
+                    output={
+                        "turn_number": turn_number,
+                        "session_id": session_id,
+                        "success": True,
+                        "path_summary": path_summary,
+                    },
+                    metadata={
+                        "turn_number": turn_number,
+                        "environment": adapter.config.environment if adapter else "unknown",
+                        "cost_summary": cost_summary,
+                        "path_quality": path_summary.get("quality_class") if path_summary else None,
+                        "path_degradation": path_summary.get("degradation_summary") if path_summary else None,
+                        "path_selected_model": path_summary.get("selected_model") if path_summary else None,
+                        "path_adapter": path_summary.get("adapter") if path_summary else None,
+                        "path_fallback_used": path_summary.get("generation_fallback_used") if path_summary else None,
+                    },
+                    level=level,
+                    status_message=status_message,
+                )
+                logger.info(f"[HTTP] Root span updated")
 
         return {"session_id": session_id, "turn": turn}
 
