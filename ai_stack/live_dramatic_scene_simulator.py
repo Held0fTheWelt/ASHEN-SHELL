@@ -608,6 +608,11 @@ def build_deterministic_ldss_output(ldss_input: LDSSInput) -> LDSSOutput:
     )
 
     visible_output = VisibleSceneOutput(blocks=blocks)
+    # DEBUG: Log block count
+    import sys
+    print(f"[LDSS] build_deterministic_ldss_output created {len(blocks)} blocks", file=sys.stderr)
+    for i, b in enumerate(blocks):
+        print(f"[LDSS] Block {i}: type={b.block_type}, text={b.text[:50]}...", file=sys.stderr)
     visible_actor_present = any(
         b.block_type in VISIBLE_NPC_BLOCK_TYPES and b.actor_id
         for b in blocks

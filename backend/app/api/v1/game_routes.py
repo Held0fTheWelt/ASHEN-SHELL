@@ -267,6 +267,16 @@ def _player_session_bundle(
 
     # Extract visible_scene_output.blocks (MVP5) from latest turn or opening
     visible_scene_output = None
+    import sys
+    print(f"[BACKEND] opening_turn type: {type(opening_turn)}", file=sys.stderr)
+    if isinstance(opening_turn, dict):
+        print(f"[BACKEND] opening_turn keys: {list(opening_turn.keys())}", file=sys.stderr)
+        vob = opening_turn.get("visible_output_bundle")
+        print(f"[BACKEND] visible_output_bundle: {vob}", file=sys.stderr)
+        if isinstance(vob, dict):
+            sb = vob.get("scene_blocks")
+            print(f"[BACKEND] scene_blocks: {sb}", file=sys.stderr)
+            print(f"[BACKEND] scene_blocks type: {type(sb)}, len: {len(sb) if isinstance(sb, list) else 'N/A'}", file=sys.stderr)
     if isinstance(latest_turn, dict) and isinstance(latest_turn.get("visible_output_bundle"), dict):
         scene_blocks = latest_turn.get("visible_output_bundle", {}).get("scene_blocks")
         if isinstance(scene_blocks, list) and scene_blocks:
@@ -275,6 +285,9 @@ def _player_session_bundle(
         scene_blocks = opening_turn.get("visible_output_bundle", {}).get("scene_blocks")
         if isinstance(scene_blocks, list) and scene_blocks:
             visible_scene_output = {"blocks": scene_blocks}
+            print(f"[BACKEND] SET visible_scene_output with {len(scene_blocks)} blocks", file=sys.stderr)
+        else:
+            print(f"[BACKEND] scene_blocks check failed: is_list={isinstance(scene_blocks, list)}, is_truthy={bool(scene_blocks)}", file=sys.stderr)
 
     return {
         "contract": "game_player_session_v1",
