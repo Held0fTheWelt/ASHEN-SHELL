@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from ai_stack.contracts.serialization import json_safe as _json_safe
+
 
 AUTHORITY_CONTRACT_SCHEMA_VERSION = "authority_contract.v1"
 
@@ -18,15 +20,6 @@ NPC_POLICY_OPTIONAL_SOCIAL_REACTION = "optional_social_reaction"
 NPC_POLICY_DIRECT_RESPONSE = "direct_response"
 NPC_POLICY_OFFSCREEN_BACKGROUND = "offscreen_background"
 
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 @dataclass(frozen=True)

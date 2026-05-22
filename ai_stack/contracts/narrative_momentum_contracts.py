@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from ai_stack.contracts.serialization import as_list as _as_list, json_safe as _json_safe
+
 
 NARRATIVE_MOMENTUM_SCHEMA_VERSION = "narrative_momentum.v1"
 NARRATIVE_MOMENTUM_POLICY_VERSION = "narrative_momentum_policy.v1"
@@ -87,28 +89,10 @@ NARRATIVE_MOMENTUM_ALLOWED_SOURCE_REFS: frozenset[str] = frozenset(
 )
 
 
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
-
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
 
-
-def _as_list(value: Any) -> list[Any]:
-    if isinstance(value, list):
-        return value
-    if isinstance(value, tuple):
-        return list(value)
-    if value is None:
-        return []
-    return [value]
 
 
 def _clean_str_list(value: Any, *, allowed: frozenset[str] | None = None) -> list[str]:

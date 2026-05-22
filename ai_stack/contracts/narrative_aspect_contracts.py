@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from ai_stack.contracts.serialization import as_list as _as_list, json_safe as _json_safe
+
 from ai_stack.story_runtime.narrative.narrative_aspect_semantic_classifier import (
     classify_narrative_aspect_semantics,
 )
@@ -30,24 +32,6 @@ EVIDENCE_KINDS: frozenset[str] = frozenset(
 )
 
 
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
-
-
-def _as_list(value: Any) -> list[Any]:
-    if isinstance(value, list):
-        return value
-    if isinstance(value, tuple):
-        return list(value)
-    if value is None:
-        return []
-    return [value]
 
 
 def _text(value: Any) -> str:

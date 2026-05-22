@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+from ai_stack.contracts.serialization import json_safe as _json_safe
+
 from pydantic import BaseModel, Field
 
 
@@ -131,16 +133,6 @@ class TonalConsistencyValidation(BaseModel):
 
     def to_runtime_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
-
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(key): _json_safe(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_json_safe(item) for item in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 def _clean_text(value: Any) -> str:

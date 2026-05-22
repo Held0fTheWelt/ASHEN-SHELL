@@ -10,6 +10,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from ai_stack.contracts.serialization import (
+    json_safe as _json_safe,
+    strict_list as _strict_list,
+)
+
 from ai_stack.module_runtime_policy import load_module_runtime_policy
 
 
@@ -19,15 +24,6 @@ ENVIRONMENT_EVENT_SCHEMA_VERSION = "environment_event.v1"
 ENVIRONMENT_RENDER_CONTEXT_SCHEMA_VERSION = "environment_render_context.v1"
 
 
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
-
 
 def _clean_id(value: Any) -> str:
     return str(value or "").strip()
@@ -36,9 +32,6 @@ def _clean_id(value: Any) -> str:
 def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
-
-def _as_list(value: Any) -> list[Any]:
-    return value if isinstance(value, list) else []
 
 
 def _actor_ids_from_projection(
@@ -56,7 +49,7 @@ def _actor_ids_from_projection(
     for src in (_as_dict(runtime_projection), _as_dict(actor_lane_context)):
         add(src.get("human_actor_id"))
         add(src.get("selected_player_role"))
-        for actor_id in _as_list(src.get("npc_actor_ids")):
+        for actor_id in _strict_list(src.get("npc_actor_ids")):
             add(actor_id)
         lanes = src.get("actor_lanes")
         if isinstance(lanes, dict):
@@ -122,9 +115,9 @@ def build_environment_model(
         "anchor_room_id": anchor_room,
         "locations": _json_safe(locations),
         "objects": objects,
-        "transitions": _json_safe(_as_list(location_model.get("transitions"))),
+        "transitions": _json_safe(_strict_list(location_model.get("transitions"))),
         "global_rules": _json_safe(_as_dict(location_model.get("global_rules"))),
-        "content_sources": _json_safe(_as_list(policy.get("content_sources"))),
+        "content_sources": _json_safe(_strict_list(policy.get("content_sources"))),
         "source_policy_schema_version": policy.get("schema_version"),
     }
 
@@ -146,7 +139,7 @@ def normalize_environment_model(model: dict[str, Any] | None) -> dict[str, Any]:
         "anchor_room_id": anchor,
         "locations": _json_safe(locations),
         "objects": _json_safe(objects),
-        "transitions": _json_safe(_as_list(src.get("transitions"))),
+        "transitions": _json_safe(_strict_list(src.get("transitions"))),
         "global_rules": _json_safe(_as_dict(src.get("global_rules"))),
     }
     return out
@@ -161,7 +154,7 @@ def _visible_room_ids(*, environment_model: dict[str, Any], current_room_id: str
         visible.append(current)
     room = _as_dict(locations.get(current))
     visibility = _as_dict(room.get("visibility_from_room"))
-    for room_id in _as_list(visibility.get("can_directly_perceive_room_ids")):
+    for room_id in _strict_list(visibility.get("can_directly_perceive_room_ids")):
         rid = _clean_id(room_id)
         if rid and rid not in visible:
             visible.append(rid)
@@ -315,7 +308,7 @@ def normalize_environment_state(
         for oid, prop in prop_states.items()
         if isinstance(prop, dict) and _clean_id(prop.get("held_by_actor_id"))
     ]
-    current_salient = [_clean_id(x) for x in _as_list(out.get("salient_object_ids")) if _clean_id(x)]
+    current_salient = [_clean_id(x) for x in _strict_list(out.get("salient_object_ids")) if _clean_id(x)]
     visible_objects = _visible_object_ids(
         environment_model=model,
         visible_room_ids=visible_rooms,
@@ -330,7 +323,7 @@ def normalize_environment_state(
     out["salient_object_ids"] = deduped_salient[:8]
     out["last_environment_events"] = [
         event
-        for event in _as_list(out.get("last_environment_events"))[-8:]
+        for event in _strict_list(out.get("last_environment_events"))[-8:]
         if isinstance(event, dict)
     ]
     out["turn_number"] = int(turn_number if turn_number is not None else out.get("turn_number") or 0)
@@ -456,7 +449,7 @@ def apply_action_to_environment_state(
                 prop["room_id"] = current
         prop_states[target_id] = prop
         state["prop_states"] = prop_states
-        salient = [_clean_id(x) for x in _as_list(state.get("salient_object_ids")) if _clean_id(x)]
+        salient = [_clean_id(x) for x in _strict_list(state.get("salient_object_ids")) if _clean_id(x)]
         state["salient_object_ids"] = [target_id] + [oid for oid in salient if oid != target_id]
         event_type = "perception" if verb in {"look_at", "listen_to"} or action_kind == "perception" else "object_interaction"
 
@@ -471,7 +464,7 @@ def apply_action_to_environment_state(
         visible_room_ids=visible_rooms,
         held_object_ids=held_ids,
     )
-    salient = [_clean_id(x) for x in _as_list(state.get("salient_object_ids")) if _clean_id(x)]
+    salient = [_clean_id(x) for x in _strict_list(state.get("salient_object_ids")) if _clean_id(x)]
     state["visible_room_ids"] = visible_rooms
     deduped_salient: list[str] = []
     for oid in salient + visible_objects:
@@ -492,7 +485,7 @@ def apply_action_to_environment_state(
         "consequence_type": consequence.get("consequence_type"),
         "turn_number": int(turn_number or state.get("turn_number") or 0),
     }
-    state["last_environment_events"] = (_as_list(state.get("last_environment_events")) + [event])[-8:]
+    state["last_environment_events"] = (_strict_list(state.get("last_environment_events")) + [event])[-8:]
     state["turn_number"] = int(turn_number or state.get("turn_number") or 0)
     state["source"] = "committed_action_resolution"
     return normalize_environment_state(
@@ -518,7 +511,7 @@ def build_environment_generation_context(
     current = _clean_id(state.get("current_room_id"))
     current_room = _as_dict(_as_dict(model.get("locations")).get(current))
     prop_states = _as_dict(state.get("prop_states"))
-    salient = [_clean_id(x) for x in _as_list(state.get("salient_object_ids")) if _clean_id(x)]
+    salient = [_clean_id(x) for x in _strict_list(state.get("salient_object_ids")) if _clean_id(x)]
     prop_summary: list[dict[str, Any]] = []
     for object_id in salient[:8]:
         prop = _as_dict(prop_states.get(object_id))

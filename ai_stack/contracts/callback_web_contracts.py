@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_stack.contracts.serialization import json_safe as _json_safe
+
 
 CALLBACK_WEB_POLICY_SCHEMA_VERSION = "callback_web_policy.v1"
 CALLBACK_WEB_VALIDATION_SCHEMA_VERSION = "callback_web_validation.v1"
@@ -18,15 +20,6 @@ CALLBACK_WEB_FAILURE_CODES: frozenset[str] = frozenset(
     }
 )
 
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 def _coerce_int(value: Any, *, default: int, minimum: int, maximum: int) -> int:

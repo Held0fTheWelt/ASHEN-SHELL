@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+from ai_stack.contracts.serialization import as_list as _as_list
+
 from pydantic import BaseModel, Field
 
 
@@ -155,16 +157,6 @@ class TemporalControlValidation(BaseModel):
 
 def _clean_text(value: Any) -> str:
     return str(value or "").strip()
-
-
-def _as_list(value: Any) -> list[Any]:
-    if isinstance(value, list):
-        return value
-    if isinstance(value, tuple):
-        return list(value)
-    if value is None:
-        return []
-    return [value]
 
 
 def _clean_str_list(value: Any, *, allowed: frozenset[str] | None = None) -> list[str]:

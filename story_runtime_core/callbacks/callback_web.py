@@ -13,6 +13,8 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from story_runtime_core.serialization import json_safe as _json_safe
+
 from story_runtime_core.committed_truth import committed_story_truth_rows
 
 
@@ -44,17 +46,6 @@ CALLBACK_WEB_MIN_MAX_OBSERVATIONS = 4
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, set):
-        return sorted(_json_safe(v) for v in value)
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 def _short(value: Any, limit: int = 96) -> str:

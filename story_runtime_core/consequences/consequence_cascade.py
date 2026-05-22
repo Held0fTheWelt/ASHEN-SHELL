@@ -13,6 +13,8 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from story_runtime_core.serialization import json_safe as _json_safe
+
 from story_runtime_core.branching import (
     BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_COMMITTED,
     BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_CONFLICT,
@@ -58,17 +60,6 @@ CONSEQUENCE_CASCADE_MIN_MAX_EDGES = 8
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, set):
-        return sorted(_json_safe(v) for v in value)
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 def _stable_hash(payload: Any, length: int = 16) -> str:

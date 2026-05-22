@@ -9,18 +9,11 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from ai_stack.contracts.serialization import json_safe as _json_safe
+
 
 BEAT_LIFECYCLE_SCHEMA_VERSION = "beat_lifecycle.v1"
 
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 @dataclass(frozen=True)

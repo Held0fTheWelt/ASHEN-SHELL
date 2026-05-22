@@ -45,8 +45,8 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../
 | **DS-007** | `backend_runtime_services` | — | **CLOSED** 2026-05-20 |
 | **DS-008** | `ai_stack` | — | **CLOSED** 2026-05-20 |
 | **DS-009** | `world_engine` | — | **CLOSED** 2026-05-20 |
-| **DS-010** | `ai_stack` | `backend_runtime_services` | **OPEN** — 2026-05-20 scan |
-| **DS-011** | `ai_stack` | `story_runtime_core`, `backend_runtime_services` | **OPEN** — 2026-05-20 scan |
+| **DS-010** | `ai_stack` | `backend_runtime_services` | **CLOSED** 2026-05-22 |
+| **DS-011** | `ai_stack` | `story_runtime_core`, `backend_runtime_services` | **CLOSED** 2026-05-22 |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](../state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
 
@@ -88,35 +88,35 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 | Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
 |-------|-------------------------------------|-------------------------------------|
-| **As of (date & time)** | — | **2026-05-20 22:02:19 (UTC)** |
-| Spaghetti scan command | — | `python "./'fy'-suites/despaghettify/tools/spaghetti_ast_scan.py"` (ROOTS = *measurement scope*) |
+| **As of (date & time)** | — | **2026-05-22 11:05:09 (UTC)** |
+| Spaghetti scan command | — | `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/state/artifacts/workstreams/ai_stack/post/session_20260522_DS-010-011_check_with_metrics.json"` |
 | Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` from `fy-manifest.yaml` |
-| **M7** — gewichtete 7-Kategorien-Summe | **55.21** | **4.65** |
-| C1: Circular dependencies | **12.52** | **1.46** |
-| C2: Nesting depth | **61.71** | **2.00** |
-| C3: Long functions + complexity | **99.94** | **2.19** |
-| C4: Multi-responsibility modules | **76.24** | **7.98** |
-| C5: Magic numbers + global state | **41.93** | **1.06** |
-| C6: Missing abstractions / duplication | **58.30** | **15.11** |
-| C7: Confusing control flow | **64.96** | **7.97** |
-| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **10747** / **858** / **235** / **24** |
+| **M7** — gewichtete 7-Kategorien-Summe | **52.97** | **4.24** |
+| C1: Circular dependencies | **11.18** | **0.78** |
+| C2: Nesting depth | **55.07** | **1.71** |
+| C3: Long functions + complexity | **99.76** | **1.81** |
+| C4: Multi-responsibility modules | **73.85** | **7.45** |
+| C5: Magic numbers + global state | **40.58** | **0.97** |
+| C6: Missing abstractions / duplication | **51.59** | **15.15** |
+| C7: Confusing control flow | **64.84** | **7.26** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **10641** / **793** / **193** / **20** |
 | Extra check builtins | — | **0** matches for `def build_god_of_carnage_solo` in `**/builtins.py`; `story_runtime_core/goc_solo_builtin_template.py` still owns the definition |
-| Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **0**; grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
-| **Open hotspots** | — | **Trigger policy still fires by composite:** `M7_anteil` **4.65** ≥ `M7_ref` **4.24**. **DS-009** removed the world-engine leaders: `_planner_truth_from_graph_state` and `story_session_stream` no longer appear in top longest/nesting rankings. Remaining firing conditions are **C4/C7** (`ai_stack/langgraph/langgraph_runtime_executor.py` still has context/action leaders `_build_dramatic_generation_packet` **562L/depth 2**, `_assemble_model_context` **562L/depth 4**, `_interpret_input` **387L/depth 6**, `_resolve_player_action` **385L/depth 5**; `tools/mcp_server/tools_registry_handlers_langfuse_verify.py` has **1013L** / **754L** leaders), **C5** (`ai_stack/langgraph/langgraph_runtime_executor.py:_assemble_model_context` remains the literal-heavy LangGraph context target), and **C6** (broad duplicate names include `to_dict`, `to_runtime_dict`, `generate`, `_as_list`, `_json_safe`). Residual C1 cycles are advisory only: narrative thread helpers and game/governance service coupling. |
+| Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **1** (`ModuleNotFoundError: app.runtime.turn_executor` — likely post-refactor import surface; re-verify from backend venv). Grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
+| **Open hotspots** | — | **Trigger policy still fires:** `M7_anteil` **4.2443** ≥ `M7_ref` **4.24**; **Anteil** exceeds bars on **C4** (**7.45** > **5**), **C5** (**0.97** > **0**), **C6** (**15.15** > **0**), **C7** (**7.26** > **3**). **DS-010 closed:** runtime-executor boundaries are now in `semantic_boundaries.py`, with import-surface tests. **DS-011 closed:** scoped duplicate helper families `_json_safe` / `_as_list` are centralized for `ai_stack/contracts` and `story_runtime_core`; protocol names `to_dict`, `to_runtime_dict`, and `generate` remain intentional. **Remaining broad hotspots:** `backend/app/api/v1/forum_routes.py` **2240** lines; runtime-aspect and MCP/handler package density; deepest nest remains `branch_timeline.build_branch_timeline_snapshot` depth **8**. Next check should create **DS-012+** only for newly scoped follow-up topics. |
 
 ### Score *M7* — inputs, weights, and calculation
 
 | Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
 |--------|---------|------------------------|--------------|
-| **M7** | Gewichtete Summe | **55.21** | **4.65** |
-| **C1** | Circular dependencies | **12.52** | **1.46** |
-| **C2** | Nesting depth | **61.71** | **2.00** |
-| **C3** | Long functions + complexity | **99.94** | **2.19** |
-| **C4** | Multi-responsibility modules | **76.24** | **7.98** |
-| **C5** | Magic numbers + global state | **41.93** | **1.06** |
-| **C6** | Missing abstractions / duplication | **58.30** | **15.11** |
-| **C7** | Confusing control flow | **64.96** | **7.97** |
-| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **10747** / **858** / **235** / **24** |
+| **M7** | Gewichtete Summe | **52.97** | **4.24** |
+| **C1** | Circular dependencies | **11.18** | **0.78** |
+| **C2** | Nesting depth | **55.07** | **1.71** |
+| **C3** | Long functions + complexity | **99.76** | **1.81** |
+| **C4** | Multi-responsibility modules | **73.85** | **7.45** |
+| **C5** | Magic numbers + global state | **40.58** | **0.97** |
+| **C6** | Missing abstractions / duplication | **51.59** | **15.15** |
+| **C7** | Confusing control flow | **64.84** | **7.26** |
+| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **10641** / **793** / **193** / **20** |
 
 **Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
 
@@ -143,16 +143,15 @@ Each **open** row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-set
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
-| **DS-010** | **C4 · C5 ·** Literal-heavy LangGraph/product context functions / migration policy | `ai_stack/langgraph/langgraph_runtime_executor.py`, `ai_stack/langgraph/runtime_executor/`, `backend/app/services/governance_runtime_service.py:test_provider_connection`, backend migrations | W01 reduced the 9381-line executor file into a compatibility facade plus named staging files under 200 lines; no numbered suffix names remain. This is not closed yet: `SOURCE_LINES` chunks still need promotion into ordinary semantic modules. | Promote the named groups (`semantic_input`, actor lanes, retrieval, dramatic packet, director context, model pipeline, commit/render) into real Python modules with stable imports; extract meaningful literals/config where it clarifies boundaries; document or exclude one-way migration data where constants would reduce clarity. | Follows DS-008 validation seam extraction and DS-009 world-engine split; W01 evidence is in `ai_stack` state. Keep `langgraph_runtime_executor.py` as compatibility facade until call sites move. |
-| **DS-011** | **C6 ·** Duplicate-name proxy triage | `ai_stack/contracts`, `story_runtime_core`, backend/runtime adapter surfaces | Broad duplicate-name proxy is **15.1112%**; common names include `to_dict`, `generate`, `to_runtime_dict`, `_as_list`, `_json_safe`. | Keep intentional protocol/dunder names, but consolidate or rename local helper families where duplicate names hide different semantics. | Low-value churn risk; run after DS-006 so generated/vendored noise is removed and after DS-008/010 settle helper boundaries. |
+| — | — | — | — | — | — |
 
-*Open **DS-*** rows above come from the refreshed 2026-05-20 `check --with-metrics` run after DS-009 closure; do not hand-copy closed rows back here.*
+*No open **DS-*** rows. Next backlog comes from **`spaghetti-check`** when [trigger policy](#trigger-policy-for-check-task-updates) fires — do not hand-copy closed rows back here.*
 
 ### Closed (archived)
 
-Closed **DS-*** detail lives in [despaghettification_completed_log.md](despaghettification_completed_log.md).
+*None.* Closed **DS-*** detail lives in [despaghettification_completed_log.md](despaghettification_completed_log.md).
 
-**New rows:** next **DS-012**+ when check finds new topics; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
+**New rows:** next **DS-006**+ when check fills the open table; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
 ## Recommended implementation order
 
 Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in the information input list and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). **Mandatory** Mermaid `flowchart` **below** the table once open phase rows exist ([spaghetti-check-task.md](../spaghetti-check-task.md) §3).
@@ -161,21 +160,15 @@ Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in 
 
 | Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
 |------------------|----------|-------------|----------------------|----------------------------|
-| 1 | **DS-010** | Finish the LangGraph runtime-executor split by promoting named staging groups into real semantic modules. | `ai_stack` | W01 physical split is in flight; include executor import-surface tests and targeted AI-stack tests for model context, dramatic packet, and action resolution changes. |
-| 2 | **DS-011** | Triage duplicate-name proxy after helper boundaries are clear. | `ai_stack` | Avoid renaming protocol/dunder methods by default; gate contract serialization tests across `ai_stack` and `story_runtime_core`. |
+| — | — | — | — | — |
 
-```mermaid
-flowchart TB
-  P1["1 · DS-010 · constants"]
-  P2["2 · DS-011 · duplicate names"]
-  P1 --> P2
-```
+*Filled on next **`spaghetti-check`** when trigger policy adds **DS-006**+ to § *Open*.*
 
 ### Closed phases (archived)
 
-See [despaghettification_completed_log.md](despaghettification_completed_log.md).
+*None.* See [despaghettification_completed_log.md](despaghettification_completed_log.md).
 
-**Current order:** phase table above covers every open **DS-*** after DS-009 closure. DS-010 is next; DS-011 follows after helper boundaries settle.
+**Fill in:** one phase row per **open** **DS-*** when check repopulates the backlog. **Mermaid:** omit while the open table is only `—`.
 
 **Implementation:** invoke [spaghetti-solve-task.md](../spaghetti-solve-task.md) with **one** **DS-ID** per run.
 ## Active progress (in-flight only)
@@ -190,7 +183,7 @@ Use this section only for:
 
 | date | ID(s) | short description | pre artefacts (rel. to `despaghettify/state/`) | post artefacts (rel. to `despaghettify/state/`) | state doc(s) updated | PR / commit |
 |------|-------|-------------------|----------------------------------------|----------------------------------------|----------------------|-------------|
-| 2026-05-21 | **DS-010** | W01 physical runtime-executor split: compatibility facade + named staging package under 200 lines per file; semantic promotion remains open. | `artifacts/workstreams/ai_stack/pre/session_20260521_DS-010_runtime_executor_split_snapshot.*` | `artifacts/workstreams/ai_stack/post/session_20260521_DS-010_w01_runtime_executor_split_comparison.*` | `WORKSTREAM_AI_STACK_STATE.md` | working tree |
+| — | — | No active DS wave. | — | — | — | — |
 
 **Rules:** [`despaghettification_completed_log.md`](despaghettification_completed_log.md) § *When to append here*; formal evidence still under `despaghettify/state/artifacts/…` per [`EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md).
 

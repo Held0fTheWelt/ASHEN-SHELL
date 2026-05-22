@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+from story_runtime_core.serialization import json_safe as _json_safe
+
 
 BRANCHING_SIMULATION_TREE_SCHEMA_VERSION = "branching_simulation_tree.v1"
 BRANCHING_SIMULATION_TREE_SOURCE = "world_engine_isolated_session_clone"
@@ -34,17 +36,6 @@ def _as_dict(value: Any) -> dict[str, Any]:
         return dumped if isinstance(dumped, dict) else {}
     return {}
 
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, set):
-        return sorted(_json_safe(v) for v in value)
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 def clamp_simulation_limits(

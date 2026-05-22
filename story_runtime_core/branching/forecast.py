@@ -9,6 +9,8 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+from story_runtime_core.serialization import sequence_list as _as_list
+
 
 BRANCHING_FORECAST_SCHEMA_VERSION = "branching_forecast.v1"
 BRANCHING_FORECAST_SOURCE = "world_engine_committed_turn"
@@ -32,14 +34,6 @@ def _as_dict(value: Any) -> dict[str, Any]:
         dumped = value.model_dump(mode="json")
         return dumped if isinstance(dumped, dict) else {}
     return {}
-
-
-def _as_list(value: Any) -> list[Any]:
-    if isinstance(value, list):
-        return value
-    if isinstance(value, tuple):
-        return list(value)
-    return []
 
 
 def _str_list(value: Any, *, limit: int = 8) -> list[str]:

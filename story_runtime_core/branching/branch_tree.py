@@ -11,6 +11,8 @@ import hashlib
 from datetime import datetime, timezone
 from typing import Any
 
+from story_runtime_core.serialization import json_safe as _json_safe
+
 
 BRANCHING_TREE_RECORD_SCHEMA_VERSION = "branching_tree_record.v1"
 BRANCHING_TREE_RECORD_SOURCE = "world_engine_branching_tree_store"
@@ -26,17 +28,6 @@ BRANCHING_TREE_SCOPE_PREVIEW = "preview"
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {str(k): _json_safe(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_safe(v) for v in value]
-    if isinstance(value, set):
-        return sorted(_json_safe(v) for v in value)
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    return str(value)
 
 
 def stable_branch_tree_id(
