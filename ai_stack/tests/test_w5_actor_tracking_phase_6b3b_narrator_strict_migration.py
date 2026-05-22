@@ -46,26 +46,26 @@ def _isolate_w5_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 # ---------------------------------------------------------------------------
-# W5_AST_NARRATOR_STRICT_ENABLED resolver — default-off opt-in
+# W5_AST_NARRATOR_STRICT_ENABLED resolver — default-on opt-out (Phase 6B-5C)
 # ---------------------------------------------------------------------------
 
 
 class TestNarratorStrictFlagResolver:
-    def test_resolver_default_off_when_env_unset(
+    def test_resolver_default_on_when_env_unset(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
 
         monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-        assert w5_ast_narrator_strict_enabled() is False
+        assert w5_ast_narrator_strict_enabled() is True
 
-    def test_resolver_default_off_when_env_empty(
+    def test_resolver_default_on_when_env_empty(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "")
-        assert w5_ast_narrator_strict_enabled() is False
+        assert w5_ast_narrator_strict_enabled() is True
 
     @pytest.mark.parametrize("value", ["0", "false", "no", "off", "FALSE", "Off"])
     def test_resolver_explicit_off_keeps_legacy_compatible_behavior(
@@ -95,7 +95,7 @@ class TestNarratorStrictFlagResolver:
         for projection_value in ("0", "1", "false", "true", "off", "on"):
             monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", projection_value)
             monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-            assert w5_ast_narrator_strict_enabled() is False
+            assert w5_ast_narrator_strict_enabled() is True
 
     def test_strict_flag_exposed_via_projection_flag_states(
         self, monkeypatch: pytest.MonkeyPatch
@@ -103,9 +103,9 @@ class TestNarratorStrictFlagResolver:
         from ai_stack.actor_tracking import w5_projection_flag_states
 
         monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-        assert w5_projection_flag_states()["narrator_strict"] is False
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         assert w5_projection_flag_states()["narrator_strict"] is True
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
+        assert w5_projection_flag_states()["narrator_strict"] is False
 
 
 # ---------------------------------------------------------------------------
@@ -117,12 +117,12 @@ class TestF8NarratorPathSourceFactsContract:
     """Pins the ``source_facts.transition_from_previous`` migration in
     ``ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py``."""
 
-    def test_strict_off_default_keeps_transition_from_previous_first_class(
+    def test_strict_off_explicit_off_keeps_transition_from_previous_first_class(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
@@ -130,8 +130,8 @@ class TestF8NarratorPathSourceFactsContract:
         assert blocks, "expected narrator opening blocks"
         first = blocks[0]
         assert "transition_from_previous" in first["source_facts"], (
-            "Phase 6B-3B strict-OFF default must preserve legacy first-class "
-            "transition_from_previous in source_facts."
+            "Phase 6B-3B strict-OFF (explicit opt-out) must preserve legacy "
+            "first-class transition_from_previous in source_facts."
         )
         assert first["source_facts"]["transition_from_previous"]["kind"] == "opening_start"
         # Legacy compatibility breadcrumb is absent in unstrict mode.
@@ -190,7 +190,7 @@ class TestF8NarratorPathSourceFactsContract:
         """
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         unstrict = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )

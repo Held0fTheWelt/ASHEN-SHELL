@@ -782,9 +782,12 @@ def test_legacy_location_changed_parity_with_transition_from_previous() -> None:
     assert proj.where_summary["location_changed"] == legacy_transition_location_changed
 
 
-def test_location_changed_parity_with_goc_narrator_path_fixture() -> None:
+def test_location_changed_parity_with_goc_narrator_path_fixture(monkeypatch) -> None:
     from ai_stack.story_runtime.narrator.god_of_carnage_narrator_path import build_goc_narrator_path_opening
 
+    # Explicit opt-out to read the legacy transition_from_previous surface as
+    # the parity reference for the W5 where_summary location_changed signal.
+    monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
     narrator_path = build_goc_narrator_path_opening(session_output_language="de")
     blocks = [
         block

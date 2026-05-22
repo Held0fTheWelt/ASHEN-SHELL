@@ -541,6 +541,29 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 **Next step:** Phase 6B-5C flips `W5_AST_NARRATOR_STRICT_ENABLED` to default-on. Explicit disable remains supported through the rollback window. The strict-off prompt fallback paragraph is removed only in Phase 6B-5D, and `_legacy_compat["transition_from_previous"]` is demoted or removed only in Phase 6B-5E, each gated by a fresh parity-test run.
 
+### Phase 6B-5C — Narrator strict default-on flip (complete)
+
+**Goal:** Flip `W5_AST_NARRATOR_STRICT_ENABLED` to default-on (opt-out semantics) while preserving explicit opt-out (`W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off`), all legacy diagnostic/fallback surfaces (`_legacy_compat`, malformed-W5 safety fallbacks, public compatibility aliases), and existing strict-off/strict-on runtime paths.
+
+- [x] Flipped `w5_ast_narrator_strict_enabled()` resolver in `ai_stack/actor_tracking/diagnostics.py` from opt-in to opt-out: now delegates to `_flag_enabled("W5_AST_NARRATOR_STRICT_ENABLED")` which returns `True` for unset/empty/unrecognized env and `False` only for explicit `0/false/no/off`.
+- [x] Updated `ai_stack/tests/test_w5_actor_tracking_phase_6b1_default_on_flags.py` and `ai_stack/tests/test_w5_actor_tracking_phase_6b2_fallback_inventory.py`: `"narrator_strict": False` → `"narrator_strict": True` in default flag-state assertions.
+- [x] Updated `ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py`: resolver default-off tests → default-on; explicit-off tests now use `setenv("false")` instead of `delenv()`.
+- [x] Updated `ai_stack/tests/test_w5_actor_tracking_phase_6b4_post_migration_inventory.py`: class renamed to `TestF8F18F19F20NarratorStrictDefaultOnDemotesLegacy`; default-off → default-on; `test_strict_off_keeps_transition_from_previous_first_class` explicitly sets `W5_AST_NARRATOR_STRICT_ENABLED=false`.
+- [x] Updated `ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`: default-unset → strict-on; invalid-env → strict-on; `delenv()` → `setenv("false")` wherever strict-off posture is required.
+- [x] Updated `ai_stack/tests/test_god_of_carnage_narrator_path.py`: `test_god_of_carnage_narrator_path_opening_is_speech_free_and_canonical` explicitly opts out (tests the legacy `transition_from_previous` surface contract).
+- [x] Updated `ai_stack/tests/test_w5_actor_tracking_projection.py`: `test_location_changed_parity_with_goc_narrator_path_fixture` explicitly opts out (same reason).
+- [x] Updated `world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py` and `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py`: `delenv()` → `setenv("false")` for all strict-off posture tests.
+- [x] Updated `world-engine/tests/test_goc_narrator_path_opening.py`: `test_goc_opening_de_uses_output_module_for_visible_text` explicitly opts out (`setenv("false")`); `pytest` import added. The `_OutputModuleAdapter.generate()` assertions on `transition_from_previous` remain intact as they validate the explicit opt-out contract.
+- [x] No `transition_from_previous` surface removed. No `_legacy_compat` surface removed. No opt-out fallback removed. No committed event mutated. No public alias changed.
+
+**Gate verification:**
+
+- `pytest -q ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py ai_stack/tests/test_w5_actor_tracking_phase_6b4_post_migration_inventory.py ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py ai_stack/tests/test_god_of_carnage_narrator_path.py ai_stack/tests/test_w5_actor_tracking_projection.py`: 111 passed, 0 failed.
+- `PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py`: 45 passed, 0 failed.
+- `PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_goc_narrator_path_opening.py`: 5 passed, 0 failed.
+
+**Next step:** Phase 6B-5D removes the strict-off prompt fallback paragraph (the narrative guidance block that is only emitted when `W5_AST_NARRATOR_STRICT_ENABLED=false`). Phase 6B-5E decides whether `_legacy_compat["transition_from_previous"]` is removed or further demoted. Both are gated by a fresh parity-test run after a rollout window.
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.

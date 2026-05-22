@@ -43,7 +43,7 @@ def _flag_enabled(name: str) -> bool:
 
 
 def w5_ast_narrator_strict_enabled() -> bool:
-    """Phase 6B-3B opt-in strict-narrator gate (default-off).
+    """Phase 6B-5C default-on narrator-strict gate.
 
     Distinct from ``W5_AST_NARRATOR_PROJECTION_ENABLED`` (Phase 6B-1
     default-on, controls whether the typed ``w5_projection`` is added to
@@ -51,26 +51,23 @@ def w5_ast_narrator_strict_enabled() -> bool:
     ``transition_from_previous`` block is still treated as a first-class
     narrator situation input.
 
-    Semantics (opt-in):
+    Semantics (opt-out, Phase 6B-5C):
 
-    - unset / empty → ``False`` (legacy ``transition_from_previous`` remains
-      first-class in narrator ``source_facts`` and prompt fallback paragraph
-      stays in place — current Phase 6B-3A behavior is preserved).
-    - explicit ``1/true/yes/on`` (case-insensitive) → ``True`` (W5 narrator
-      projection is the actor-situation authority; legacy
-      ``transition_from_previous`` is demoted to a non-authoritative
-      compatibility/debug field and the prompt fallback paragraph is removed).
-    - explicit ``0/false/no/off`` → ``False``.
+    - unset / empty / unrecognized → ``True`` (W5 narrator projection is the
+      actor-situation authority; legacy ``transition_from_previous`` is
+      demoted to a non-authoritative ``_legacy_compat`` breadcrumb).
+    - explicit ``0/false/no/off`` (case-insensitive) → ``False`` (explicit
+      opt-out; legacy ``transition_from_previous`` remains first-class in
+      narrator ``source_facts`` and the prompt fallback paragraph stays in
+      place — Phase 6B-3A rollback posture).
+    - explicit ``1/true/yes/on`` → ``True``.
 
     The Phase 2 W5 projection wiring and the malformed-W5 / explicit-opt-out
     safety fallbacks of ``W5_AST_NARRATOR_PROJECTION_ENABLED`` are
     unaffected. How remains first-class. Inferred Why remains soft truth.
     """
 
-    raw = (os.environ.get("W5_AST_NARRATOR_STRICT_ENABLED") or "").strip().lower()
-    if raw in {"1", "true", "yes", "on"}:
-        return True
-    return False
+    return _flag_enabled("W5_AST_NARRATOR_STRICT_ENABLED")
 
 
 def w5_projection_flag_states() -> dict[str, bool]:

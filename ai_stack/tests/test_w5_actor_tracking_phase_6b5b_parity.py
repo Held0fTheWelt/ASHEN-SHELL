@@ -103,23 +103,23 @@ class TestPhase6B5BStrictResolverPosture:
             with pytest.raises(ModuleNotFoundError):
                 importlib.import_module(retired)
 
-    def test_default_unset_is_strict_off(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_default_unset_is_strict_on(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
 
         monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-        assert w5_ast_narrator_strict_enabled() is False
+        assert w5_ast_narrator_strict_enabled() is True
 
     @pytest.mark.parametrize("value", ["", "  ", "garbage", "maybe"])
-    def test_invalid_env_values_default_to_strict_off(
+    def test_invalid_env_values_default_to_strict_on(
         self, monkeypatch: pytest.MonkeyPatch, value: str
     ) -> None:
-        """An ambiguous env value must not silently flip to strict-on. Phase
-        6B-5C will be the *only* commit that flips the default."""
+        """An ambiguous or empty env value defaults to strict-on (Phase 6B-5C
+        default-on semantics). Only explicit 0/false/no/off opts out."""
 
         from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", value)
-        assert w5_ast_narrator_strict_enabled() is False
+        assert w5_ast_narrator_strict_enabled() is True
 
     @pytest.mark.parametrize(
         "value", ["0", "false", "no", "off", "FALSE", "Off", "  false  "]
@@ -155,13 +155,13 @@ class TestPhase6B5BStrictResolverPosture:
         assert (
             w5_projection_flag_states()["narrator_strict"]
             is w5_ast_narrator_strict_enabled()
-            is False
+            is True
         )
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         assert (
             w5_projection_flag_states()["narrator_strict"]
             is w5_ast_narrator_strict_enabled()
-            is True
+            is False
         )
 
 
@@ -215,7 +215,7 @@ class TestPhase6B5BGoCNarratorPathSourceFactsShape:
     ) -> None:
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
@@ -332,11 +332,11 @@ class TestPhase6B5BGoCNarratorPathSourceFactsShape:
     ) -> None:
         """Strict mode is a source-of-truth migration, not a content rewrite.
         Canonical step ids, block ids, mandatory beat ids, coverage_cues,
-        source_refs, and module_context must all match the unstrict run."""
+        source_refs, and module_context must all match the explicit-off run."""
 
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         unstrict = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
@@ -376,12 +376,12 @@ class TestPhase6B5BGoCNarratorPathSourceFactsShape:
     ) -> None:
         """Per-block: the legacy payload in strict-on
         ``_legacy_compat.transition_from_previous`` is exactly the same
-        payload that strict-off keeps at top-level. Phase 6B-5B operator
-        parity gate."""
+        payload that strict-off (explicit opt-out) keeps at top-level.
+        Phase 6B-5B/5C operator parity gate."""
 
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         unstrict = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
@@ -680,12 +680,12 @@ class TestPhase6B5BNonRegression:
             w5_projection_flag_states,
         )
 
-        # Projection flag toggled; strict flag remains default-off.
+        # Projection flag toggled; strict flag remains default-on.
         for projection_value in ("0", "1", "false", "true", "off", "on"):
             monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", projection_value)
             monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-            assert w5_ast_narrator_strict_enabled() is False
-            assert w5_projection_flag_states()["narrator_strict"] is False
+            assert w5_ast_narrator_strict_enabled() is True
+            assert w5_projection_flag_states()["narrator_strict"] is True
 
     def test_strict_on_does_not_disable_other_w5_projections(
         self, monkeypatch: pytest.MonkeyPatch

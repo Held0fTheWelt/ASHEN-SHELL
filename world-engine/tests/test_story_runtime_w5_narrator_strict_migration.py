@@ -90,7 +90,7 @@ class TestF18NarratorPromptStrictMigration:
     def test_strict_off_preserves_legacy_fallback_paragraph(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
         # Legacy fallback guidance is still present.
         assert "transition_from_previous" in prompt
@@ -288,7 +288,7 @@ class TestF20AdminParityBridge:
     def test_strict_off_reads_w5_history_first_for_location_changed(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_admin_session()
         harness = _AdminParityManagerHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)

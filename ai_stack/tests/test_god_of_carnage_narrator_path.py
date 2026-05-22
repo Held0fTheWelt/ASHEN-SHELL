@@ -2,7 +2,10 @@ from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 from ai_stack.story_runtime.narrator.god_of_carnage_narrator_path import NARRATOR_PATH_ADAPTER, NARRATOR_PATH_INVOCATION_MODE
 
 
-def test_god_of_carnage_narrator_path_opening_is_speech_free_and_canonical() -> None:
+def test_god_of_carnage_narrator_path_opening_is_speech_free_and_canonical(monkeypatch) -> None:
+    # Explicit opt-out so this test covers the legacy transition_from_previous
+    # surface contract. Strict-on behavior is covered by the 6B-5B parity tests.
+    monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
     out = god_of_carnage_narrator_path.build_goc_narrator_path_opening(session_output_language="de")
 
     assert out["path_mode"] == "narrator_path"

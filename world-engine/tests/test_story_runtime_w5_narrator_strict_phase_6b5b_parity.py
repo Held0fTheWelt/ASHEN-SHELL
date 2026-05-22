@@ -546,7 +546,7 @@ class TestPhase6B5BSourceFactsAuthorityShape:
     def test_strict_off_keeps_transition_from_previous_as_first_class(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_session()
         enriched = _enrich(session, [_legacy_narrator_block()])
         facts = enriched[0]["source_facts"]
@@ -628,7 +628,7 @@ class TestPhase6B5BPromptContract:
     def test_strict_off_prompt_keeps_legacy_fallback_guidance(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
         # Legacy fallback guidance is still present and explicitly conditional
         # on w5_projection being absent.
@@ -761,7 +761,7 @@ class TestPhase6B5BAdminDiagnosticsParity:
     def test_strict_off_reports_w5_first_and_keeps_legacy_compat_visible(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_session()
         harness = _AdminParityHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)

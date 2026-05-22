@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import pytest
+
 from app.story_runtime import StoryRuntimeManager
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
 from story_runtime_core.model_registry import ModelRegistry, ModelSpec, RoutingPolicy
@@ -268,7 +270,9 @@ def test_goc_opening_defaults_to_module_language_without_output_pipeline() -> No
     assert realization["status"] == "fallback_no_output_model"
 
 
-def test_goc_opening_de_uses_output_module_for_visible_text() -> None:
+def test_goc_opening_de_uses_output_module_for_visible_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Explicit opt-out: _OutputModuleAdapter validates legacy transition_from_previous surface.
+    monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
     manager = StoryRuntimeManager(governed_runtime_config=_governed_config())
     _install_output_module(manager)
     manager.turn_graph = _ExplodingTurnGraph()  # type: ignore[assignment]

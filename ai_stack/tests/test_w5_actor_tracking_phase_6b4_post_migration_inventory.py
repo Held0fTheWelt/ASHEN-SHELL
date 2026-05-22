@@ -345,36 +345,36 @@ class TestF21F22DefaultOnRemainsW5First:
 # ===========================================================================
 
 
-class TestF8F18F19F20NarratorStrictDefaultOffKeepsLegacyFirstClass:
+class TestF8F18F19F20NarratorStrictDefaultOnDemotesLegacy:
     """Phase 6B-4 classification: ``w5_first_migrated_keep_temporarily``
     + ``needs_dedicated_adr_before_removal``.
 
-    The default configuration (``W5_AST_NARRATOR_STRICT_ENABLED`` unset /
-    explicit-off) preserves the Phase 6B-3A behavior: the legacy
-    ``transition_from_previous`` block is written as first-class narrator
-    situation input, and the prompt still names it as a fallback. Removal
-    requires a separate ADR that flips strict-on permanently AND rewrites
-    parity tests in lockstep.
+    Phase 6B-5C: ``W5_AST_NARRATOR_STRICT_ENABLED`` is now default-on. The
+    default configuration demotes ``transition_from_previous`` to
+    ``_legacy_compat`` so W5 narrator projection is the actor-situation
+    authority. Explicit ``0/false/no/off`` opt-out restores the Phase 6B-3A
+    legacy-first behavior during rollout. Removal of the opt-out path and the
+    legacy surfaces requires Phase 6B-5D/5E ADRs.
     """
 
-    def test_strict_resolver_default_off(self) -> None:
+    def test_strict_resolver_default_on(self) -> None:
         from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
 
-        assert w5_ast_narrator_strict_enabled() is False
+        assert w5_ast_narrator_strict_enabled() is True
 
-    def test_projection_flag_states_includes_narrator_strict_false_default(
+    def test_projection_flag_states_includes_narrator_strict_true_default(
         self,
     ) -> None:
         states = w5_projection_flag_states()
-        assert states["narrator_strict"] is False
+        assert states["narrator_strict"] is True
 
     def test_strict_on_demotes_transition_from_previous_to_legacy_compat(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """When the strict flag is opt-in enabled the legacy block must be
-        demoted into ``source_facts._legacy_compat`` so admin parity can still
-        inspect it. Phase 6B-4 does NOT delete this branch — it is kept as the
-        debug breadcrumb until the strict flag is permanently flipped on."""
+        """The default-on strict flag demotes the legacy block into
+        ``source_facts._legacy_compat`` so admin parity can still inspect it.
+        Phase 6B-4 does NOT delete this branch — it is kept as the debug
+        breadcrumb through Phase 6B-5E."""
 
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
@@ -406,9 +406,12 @@ class TestF8F18F19F20NarratorStrictDefaultOffKeepsLegacyFirstClass:
         assert "transition_from_previous" in legacy_compat
         assert legacy_compat.get("authority") == "w5_projection"
 
-    def test_strict_off_keeps_transition_from_previous_first_class(self) -> None:
+    def test_strict_off_keeps_transition_from_previous_first_class(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         step = {
             "id": "step_x",
             "sequence": 0,

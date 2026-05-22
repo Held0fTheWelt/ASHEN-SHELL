@@ -378,9 +378,10 @@ def test_w5_projection_flag_states_reports_default_on_under_phase_6b2(
 
     monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
     states = w5_projection_flag_states()
+    # Phase 6B-5C: narrator_strict is now default-on alongside the other flags.
     assert states == {
         "narrator": True,
-        "narrator_strict": False,
+        "narrator_strict": True,
         "director": True,
         "npc": True,
         "player_shell": True,
