@@ -1,19 +1,25 @@
 {
   "kind": "despaghettify_check",
-  "generated_at_utc": "2026-05-22T07:50:21Z",
-  "repo_root": "D:/WorldOfShadows",
+  "generated_at_utc": "2026-05-22T17:00:29Z",
+  "repo_root": "/mnt/d/WorldOfShadows",
+  "archive_sync": {
+    "changed": true,
+    "archived_ds": [],
+    "archived_active_rows": 0,
+    "message": "archived 0 DS row(s); normalized input layout"
+  },
   "ast": {
-    "total_functions": 10661,
-    "total_python_files": 1510,
-    "count_over_50_lines": 793,
+    "total_functions": 10641,
+    "total_python_files": 1515,
+    "count_over_50_lines": 794,
     "count_over_100_lines": 193,
-    "count_nesting_ge_3": 583,
-    "count_nesting_ge_4": 181,
+    "count_nesting_ge_3": 584,
+    "count_nesting_ge_4": 182,
     "count_nesting_ge_5": 71,
     "count_nesting_ge_6": 20,
     "count_functions_magic_int_literals_ge_5": 103,
-    "count_functions_duplicate_name_across_files": 1640,
-    "count_functions_control_flow_heavy": 771,
+    "count_functions_duplicate_name_across_files": 1612,
+    "count_functions_control_flow_heavy": 772,
     "c1_files_in_import_cycles_pct": 0.7767,
     "c1_import_graph_files": 515,
     "c1_files_in_cycles": 4,
@@ -133,9 +139,25 @@
   },
   "ds005": {
     "enabled": true,
-    "exit_code": 1,
-    "import_ok_count": 0,
-    "stdout_tail": []
+    "exit_code": 0,
+    "import_ok_count": 12,
+    "stdout_tail": [
+      "import_ok\tapp.runtime.ai.ai_failure_recovery",
+      "import_ok\tapp.runtime.ai_turn.ai_turn_executor",
+      "import_ok\tapp.runtime.turn.turn_dispatcher",
+      "import_ok\tapp.runtime.supervisor.supervisor_orchestrate_execute",
+      "import_ok\tapp.runtime.supervisor.supervisor_orchestrator"
+    ]
+  },
+  "extra_builtins_goc": {
+    "def_in_builtins_py_paths": [],
+    "count_in_builtins_py": 0,
+    "goc_solo_builtin_template_has_def": true
+  },
+  "extra_runtime_grep": {
+    "runtime_dir_exists": true,
+    "hit_count": 0,
+    "hits": []
   },
   "metrics_bundle": {
     "kind": "metrics_bundle",
@@ -145,9 +167,9 @@
       "C1": 11.176,
       "C2": 55.067103588277845,
       "C3": 99.75975110103444,
-      "C4": 73.7865825522673,
-      "C5": 40.58262040374702,
-      "C6": 51.525616195652354,
+      "C4": 73.8966584432416,
+      "C5": 40.64316214378289,
+      "C6": 51.591546289924864,
       "C7": 64.84383821567239
     },
     "score": {
@@ -159,75 +181,75 @@
         },
         "C2": {
           "trigger_v2": 55.0671,
-          "anteil_pct": 1.6978
+          "anteil_pct": 1.7104
         },
         "C3": {
           "trigger_v2": 99.7598,
-          "anteil_pct": 1.8103
+          "anteil_pct": 1.8137
         },
         "C4": {
-          "trigger_v2": 73.7866,
-          "anteil_pct": 7.4383
+          "trigger_v2": 73.8967,
+          "anteil_pct": 7.4617
         },
         "C5": {
-          "trigger_v2": 40.5826,
-          "anteil_pct": 0.9661
+          "trigger_v2": 40.6432,
+          "anteil_pct": 0.968
         },
         "C6": {
-          "trigger_v2": 51.5256,
-          "anteil_pct": 15.3832
+          "trigger_v2": 51.5915,
+          "anteil_pct": 15.149
         },
         "C7": {
           "trigger_v2": 64.8438,
-          "anteil_pct": 7.232
+          "anteil_pct": 7.255
         }
       },
-      "m7_trigger_v2": 52.9442,
-      "m7_anteil_pct_gewichtet": 4.2667
+      "m7_trigger_v2": 52.9766,
+      "m7_anteil_pct_gewichtet": 4.2456
     },
     "literal_rates": {
-      "total_functions_measured": 10661,
-      "total_python_files_measured": 1510,
-      "functions_over_100_lines_pct": 1.8103,
-      "functions_over_50_lines_pct": 7.4383,
-      "functions_nesting_ge_6_pct": 0.1876,
-      "over_100_lines_among_over_50_lines_pct": 24.338,
+      "total_functions_measured": 10641,
+      "total_python_files_measured": 1515,
+      "functions_over_100_lines_pct": 1.8137,
+      "functions_over_50_lines_pct": 7.4617,
+      "functions_nesting_ge_6_pct": 0.188,
+      "over_100_lines_among_over_50_lines_pct": 24.3073,
       "condition_shares_pct": {
         "C1": 0.7767,
-        "C2": 1.6978,
-        "C3": 1.8103,
-        "C4": 7.4383,
-        "C5": 0.9661,
-        "C6": 15.3832,
-        "C7": 7.232
+        "C2": 1.7104,
+        "C3": 1.8137,
+        "C4": 7.4617,
+        "C5": 0.968,
+        "C6": 15.149,
+        "C7": 7.255
       },
       "c1_import_graph_files": 515,
       "c1_files_in_cycles": 4
     },
     "plain_language_de": {
       "C1": "Anteil der 515 analysierten Python-Dateien unter ``backend/app``, die in einem Importzyklus liegen (nur explizite ``app.*``-Kanten, v1): 0.78 % (4 Dateien).",
-      "C2": "Anteil der 10661 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.70 %.",
-      "C3": "Anteil der 10661 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.81 %.",
-      "C4": "Anteil der 10661 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.44 %.",
-      "C5": "Anteil der 10661 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.97 %.",
-      "C6": "Anteil der 10661 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 15.38 %.",
-      "C7": "Anteil der 10661 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 7.23 %."
+      "C2": "Anteil der 10641 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.71 %.",
+      "C3": "Anteil der 10641 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.81 %.",
+      "C4": "Anteil der 10641 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.46 %.",
+      "C5": "Anteil der 10641 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.97 %.",
+      "C6": "Anteil der 10641 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 15.15 %.",
+      "C7": "Anteil der 10641 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 7.25 %."
     },
     "metric_a": {
       "id": "share_weighted_m7",
       "description_de": "Gewichtetes Mittel der ``condition_shares_pct``; **Trigger-Policy**-Komposit (Vergleich mit ``M7_ref`` / Balken f\u00fcr **Anteil %**, nicht f\u00fcr ``m7`` Trigger).",
       "category_scores": {
         "C1": 0.7767,
-        "C2": 1.6978,
-        "C3": 1.8103,
-        "C4": 7.4383,
-        "C5": 0.9661,
-        "C6": 15.3832,
-        "C7": 7.232
+        "C2": 1.7104,
+        "C3": 1.8137,
+        "C4": 7.4617,
+        "C5": 0.968,
+        "C6": 15.149,
+        "C7": 7.255
       },
-      "m7": 4.2667
+      "m7": 4.2456
     },
-    "m7": 52.9442,
+    "m7": 52.9766,
     "m7_ref": 4.24,
     "trigger_policy_basis": "anteil_pct",
     "trigger_bars": {

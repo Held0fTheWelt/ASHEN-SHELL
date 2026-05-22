@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.story_runtime.narrative.normalization import as_list as _as_list, bounded_int as _bounded_int, clean_str_list as _clean_str_list, clean_text as _clean_text
 from typing import Any
 
 from ai_stack.contracts.sensory_context_contracts import (
@@ -44,20 +45,9 @@ _DEFAULT_INTENSITY_BY_PRESSURE_BAND: dict[str, str] = {
     "high": "high",
 }
 
-def _clean_text(value: Any) -> str:
-    return str(value or "").strip()
-
 
 def _evidence(source: str, field: str, value: Any) -> SensoryContextEvidenceRef:
     return SensoryContextEvidenceRef(source=source, field=field, value=value)
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
 
 
 def _runtime_policy_sensory_context(module_runtime_policy: dict[str, Any] | None) -> dict[str, Any]:

@@ -564,6 +564,37 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 **Next step:** Phase 6B-5D removes the strict-off prompt fallback paragraph (the narrative guidance block that is only emitted when `W5_AST_NARRATOR_STRICT_ENABLED=false`). Phase 6B-5E decides whether `_legacy_compat["transition_from_previous"]` is removed or further demoted. Both are gated by a fresh parity-test run after a rollout window.
 
+### Phase 6B-5D — Strict-off narrator prompt fallback paragraph removal (complete)
+
+**Goal:** Remove the legacy `transition_from_previous` fallback paragraph from the narrator prompt's strict-off branch. W5 projection (`source_facts.w5_projection`) is now the actor-situation authority in **all** prompt postures. `transition_from_previous` may still exist as runtime data for explicit opt-out compatibility/diagnostics, but prompt guidance no longer promotes it as narrator authority.
+
+- [x] Rewrote the `else` branch (strict=false) in `world-engine/app/story_runtime/manager/narrator_output_prompts.py`:
+  - Removed: `"Use transition_from_previous only as a fallback when w5_projection is absent"` instruction.
+  - Removed: `source_facts.transition_from_previous.location_changed / scene_changed` narrator orientation instruction.
+  - Removed: `source_facts.transition_from_previous.directed_transition.kind is hard_cut` narrator instruction.
+  - Added: `"Treat source_facts.w5_projection as the actor-situation authority"` naming Who/Where/What/How/Why explicitly.
+  - Added: notice that `transition_from_previous` / `_legacy_compat` data, if present, is "legacy compatibility information only and is not authoritative narrator guidance."
+  - How remains first-class (`tone / manner / intensity / pace / physicality / method / style — first-class, never folded into what`). Inferred Why remains soft truth (`never spoken as observed fact`).
+- [x] Updated `world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py`:
+  - Rewrote `test_strict_off_preserves_legacy_fallback_paragraph` → `test_strict_off_does_not_promote_transition_from_previous_as_authority` (Phase 6B-5D semantic assertion).
+  - Rewrote `test_strict_off_explicit_false_preserves_legacy_fallback_paragraph` → `test_strict_off_explicit_false_does_not_reintroduce_legacy_fallback`.
+  - Updated module docstring.
+- [x] Updated `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py`:
+  - Rewrote `TestPhase6B5BPromptContract.test_strict_off_prompt_keeps_legacy_fallback_guidance` → `test_strict_off_prompt_does_not_promote_legacy_fallback_guidance`.
+  - Updated class docstring.
+- [x] No `transition_from_previous` data surface removed. No `_legacy_compat` surface removed. No explicit opt-out behavior removed. No committed event mutated. No public alias changed.
+
+**Strict flag behavior after Phase 6B-5D:**
+- Default (unset/empty/ambiguous) → `w5_ast_narrator_strict_enabled() is True` → "sole actor-situation authority" + explicit `Do not consult source_facts.transition_from_previous`.
+- Explicit opt-out (`false/0/no/off`) → prompt still names `source_facts.w5_projection` as authority; `transition_from_previous` data may still exist but prompt labels it as "legacy compatibility information only and is not authoritative narrator guidance."
+
+**Gate verification:**
+
+- `PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py`: *(see test run below)*
+- `pytest -q ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`: *(see test run below)*
+
+**Next step:** Phase 6B-5E decides whether `_legacy_compat["transition_from_previous"]` is removed from the data surface entirely or further demoted. This is a separate ADR decision gated on a rollout window.
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.story_runtime.narrative.normalization import clean_text as _clean_text
 from typing import Any
 
 from ai_stack.contracts.social_pressure_contracts import (
@@ -60,10 +61,6 @@ _DEFAULT_SOURCE_SCORES: dict[str, dict[str, float]] = {
         "escalated": 0.78,
     },
 }
-
-
-def _clean_text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def _clean_key(value: Any) -> str:

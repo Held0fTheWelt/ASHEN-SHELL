@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.story_runtime.narrative.normalization import clean_text as _text
 import hashlib
 import re
 from dataclasses import asdict, dataclass, field
@@ -79,10 +80,6 @@ def _json_safe(value: Any) -> Any:
     if isinstance(value, (str, int, float, bool)) or value is None:
         return value
     return str(value)
-
-
-def _text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def _tokens(text: str) -> set[str]:

@@ -7,11 +7,15 @@ Generated prose and judge labels are not pass/fail oracles.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import bounded_int as _bounded_int, clean_str_list as _contract_clean_str_list, clean_text as _clean_text
+from functools import partial
 from typing import Any, Literal
 
 from ai_stack.contracts.serialization import json_safe as _json_safe
 
 from pydantic import BaseModel, Field
+
+_clean_str_list = partial(_contract_clean_str_list, allow_scalar=False, include_sets=True)
 
 
 TONAL_CONSISTENCY_SCHEMA_VERSION = "tonal_consistency.v1"
@@ -133,28 +137,6 @@ class TonalConsistencyValidation(BaseModel):
 
     def to_runtime_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
-
-
-def _clean_text(value: Any) -> str:
-    return str(value or "").strip()
-
-
-def _clean_str_list(value: Any) -> list[str]:
-    items = value if isinstance(value, (list, tuple, set)) else []
-    out: list[str] = []
-    for item in items:
-        text = _clean_text(item)
-        if text and text not in out:
-            out.append(text)
-    return out
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
 
 
 def _clean_marker_map(value: Any) -> dict[str, list[str]]:

@@ -7,6 +7,7 @@ oracle; historical Pi labels and generated prose are not.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import bounded_int as _bounded_int, clean_str_list as _clean_str_list, clean_text as _text
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -89,36 +90,9 @@ NARRATIVE_MOMENTUM_ALLOWED_SOURCE_REFS: frozenset[str] = frozenset(
 )
 
 
-
-def _text(value: Any) -> str:
-    return str(value or "").strip()
-
-
-
-def _clean_str_list(value: Any, *, allowed: frozenset[str] | None = None) -> list[str]:
-    out: list[str] = []
-    for item in _as_list(value):
-        text = _text(item)
-        if not text:
-            continue
-        if allowed is not None and text not in allowed:
-            continue
-        if text not in out:
-            out.append(text)
-    return out
-
-
 def _bounded_float(value: Any, default: float, *, minimum: float, maximum: float) -> float:
     try:
         parsed = float(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
     except (TypeError, ValueError):
         parsed = default
     return max(minimum, min(maximum, parsed))

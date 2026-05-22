@@ -6,6 +6,7 @@ the oracle. Generated prose is never used as an assertion target.
 
 from __future__ import annotations
 
+from ai_stack.story_runtime.narrative.normalization import clean_text as _clean_text
 from typing import Any
 
 from ai_stack.contracts.scene_energy_contracts import (
@@ -125,10 +126,6 @@ _DEFAULT_PACING_PROFILES: dict[str, dict[str, Any]] = {
         "minimum_actor_response_count": 2,
     },
 }
-
-
-def _clean_text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def _evidence(source: str, field: str, value: Any) -> SceneEnergyEvidenceRef:

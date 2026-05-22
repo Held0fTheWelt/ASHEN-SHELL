@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.story_runtime.narrative.normalization import clean_text as _clean_text
 import re
 from typing import Any
 
@@ -49,10 +50,6 @@ _DIRECT_REVEAL_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.IGNORECASE,
     ),
 )
-
-
-def _clean_text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def _clean_list(value: Any) -> list[str]:

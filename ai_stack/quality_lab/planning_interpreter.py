@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.quality_lab.coercion import as_list as _as_list
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
 from typing import Any
@@ -24,18 +25,6 @@ QUALITY_LAB_PLANNING_TOOL_NAMES: tuple[str, ...] = (
 
 def _coerce_str(value: Any) -> str:
     return str(value).strip() if value is not None else ""
-
-
-def _as_list(value: Any) -> list[Any]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return value
-    if isinstance(value, tuple):
-        return list(value)
-    if isinstance(value, set):
-        return sorted(value)
-    return [value]
 
 
 def _priority_rank(candidate: Mapping[str, Any]) -> int:

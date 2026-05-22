@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.story_runtime.narrative.normalization import as_list as _as_list, bounded_int as _bounded_int, clean_str_list as _clean_str_list, clean_text as _text
 from typing import Any
 
 from ai_stack.contracts.genre_awareness_contracts import (
@@ -19,29 +20,6 @@ from ai_stack.contracts.genre_awareness_contracts import (
     GenreAwarenessValidation,
     normalize_genre_awareness_policy,
 )
-
-
-def _text(value: Any) -> str:
-    return str(value or "").strip()
-
-
-def _as_list(value: Any) -> list[Any]:
-    if isinstance(value, list):
-        return value
-    if isinstance(value, tuple):
-        return list(value)
-    if value is None:
-        return []
-    return [value]
-
-
-def _clean_str_list(value: Any) -> list[str]:
-    out: list[str] = []
-    for item in _as_list(value):
-        text = _text(item)
-        if text and text not in out:
-            out.append(text)
-    return out
 
 
 def _runtime_policy_genre_awareness(

@@ -1,19 +1,20 @@
-"""Phase 6B-3B — narrator strict migration semantic tests (world-engine side).
+"""Phase 6B-3B / Phase 6B-5D — narrator strict migration semantic tests (world-engine side).
 
 Pins the F18 prompt-text migration and the F20 admin parity bridge labeling
-for the new opt-in ``W5_AST_NARRATOR_STRICT_ENABLED`` flag.
+for the ``W5_AST_NARRATOR_STRICT_ENABLED`` flag (default-on since Phase 6B-5C).
 
 These tests focus on three contracts:
 
-1. **F18 narrator prompt.** Under strict-OFF the prompt continues to instruct
-   the narrator that ``source_facts.transition_from_previous`` is the
-   fallback when ``source_facts.w5_projection`` is absent. Under strict-ON
-   the fallback paragraph is removed and the prompt treats
-   ``source_facts.w5_projection`` as the sole actor-situation authority.
-   In both postures the prompt must explicitly preserve Who / Where / What /
-   How / Why guidance. How is first-class and not folded into What. Inferred
-   Why is marked as inferred / soft truth and must not be described as
-   observed fact.
+1. **F18 narrator prompt.** Phase 6B-5D removed the legacy
+   ``transition_from_previous`` fallback paragraph from both strict postures.
+   Under strict-OFF the prompt now names ``source_facts.w5_projection`` as the
+   actor-situation authority without promoting ``transition_from_previous`` as a
+   fallback. Under strict-ON the prompt explicitly names
+   ``source_facts.w5_projection`` as the *sole* actor-situation authority and
+   explicitly forbids consulting ``transition_from_previous``. In both postures
+   the prompt preserves Who / Where / What / How / Why guidance. How is
+   first-class and not folded into What. Inferred Why is marked as inferred /
+   soft truth and must not be described as observed fact.
 
 2. **F20 admin parity bridge.** ``StoryRuntimeManager.get_w5_langfuse_metadata``
    computes ``w5.location_changed_this_turn`` from the typed W5 history
@@ -87,27 +88,40 @@ def _build_narrator_prompt(target_language: str = "de") -> str:
 
 
 class TestF18NarratorPromptStrictMigration:
-    def test_strict_off_preserves_legacy_fallback_paragraph(
+    def test_strict_off_does_not_promote_transition_from_previous_as_authority(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Phase 6B-5D: explicit opt-out must not reintroduce the legacy
+        fallback paragraph that instructed the narrator to use
+        transition_from_previous as primary actor-situation guidance."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
-        # Legacy fallback guidance is still present.
-        assert "transition_from_previous" in prompt
-        assert (
-            "Use transition_from_previous only as a fallback" in prompt
-            or "as a fallback when w5_projection is absent" in prompt
-        )
-        # hard_cut directed-transition instruction remains for the unstrict path.
-        assert "hard_cut" in prompt
+        # The legacy fallback instruction is absent from both postures.
+        assert "Use transition_from_previous only as a fallback" not in prompt
+        assert "as a fallback when w5_projection is absent" not in prompt
+        # The hard_cut directed-transition narrator instruction is absent.
+        assert "hard_cut" not in prompt
+        # W5 projection is still named as the actor-situation authority.
+        assert "source_facts.w5_projection" in prompt
+        # transition_from_previous may appear as non-authoritative data notice.
+        if "transition_from_previous" in prompt:
+            assert (
+                "legacy compatibility" in prompt
+                or "not authoritative" in prompt
+                or "non-authoritative" in prompt
+            )
 
-    def test_strict_off_explicit_false_preserves_legacy_fallback_paragraph(
+    def test_strict_off_explicit_false_does_not_reintroduce_legacy_fallback(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Phase 6B-5D: explicit W5_AST_NARRATOR_STRICT_ENABLED=false must
+        not reintroduce transition_from_previous as narrator authority or
+        the hard_cut directed-transition prompt instruction."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
-        assert "transition_from_previous" in prompt
-        assert "hard_cut" in prompt
+        assert "Use transition_from_previous only as a fallback" not in prompt
+        assert "hard_cut" not in prompt
+        assert "source_facts.w5_projection" in prompt
 
     def test_strict_on_drops_legacy_fallback_paragraph(
         self, monkeypatch: pytest.MonkeyPatch

@@ -1,5 +1,19 @@
 # Workstream: ai_stack
 
+## In flight — DS-015 duplicate-name proxy triage (session 20260522)
+
+| Sub-wave | Status | Outcome / next step | Evidence |
+|----------|--------|---------------------|----------|
+| w01 | completed | Added executable duplicate-name proxy classification so intentional public protocol names are not renamed blindly; helper candidates remain queued for centralization. | Pre: `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_w01_duplicate_proxy_classification_snapshot.*`; post: `artifacts/workstreams/ai_stack/post/session_20260522_DS-015_w01_duplicate_proxy_classification_comparison.*` |
+| w02 | next | Centralize equivalent AI-stack contract/narrative helper families (`_text`, `_clean_str_list`, `_bounded_int`, `_as_list`) without changing public contract methods. | Plan: `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_wave_plan.*` |
+| w03 | pending | Triage operational-governance `_do` wrapper duplication and close DS-015 after final gates. | Plan: `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_wave_plan.*` |
+
+**w01 gates:**
+
+- `PYTHONPATH="'fy'-suites" python -m despaghettify.tools wave-plan-validate --file "'fy'-suites/despaghettify/state/artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_wave_plan.json" --check-primary-paths --gate-prefix-allowlist python,pytest,PYTHONPATH` — pass
+- `python -m py_compile "'fy'-suites/despaghettify/tools/duplicate_name_proxy_classification.py" "'fy'-suites/despaghettify/tools/tests/test_duplicate_name_proxy_classification.py"` — pass
+- `PYTHONPATH="'fy'-suites" pytest -q "'fy'-suites/despaghettify/tools/tests/test_duplicate_name_proxy_classification.py" --tb=short` — 3 passed
+
 ## Closed — DS-010 / DS-011 semantic boundary and helper triage (session 20260522)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

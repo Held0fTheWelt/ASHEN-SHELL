@@ -7,6 +7,7 @@ prose is not.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import bounded_int as _bounded_int, clean_str_list as _clean_str_list
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -158,26 +159,6 @@ class SymbolicObjectResonanceValidation(BaseModel):
 
     def to_runtime_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
-
-
-def _clean_str_list(value: Any) -> list[str]:
-    if isinstance(value, tuple):
-        value = list(value)
-    rows = value if isinstance(value, list) else ([] if value is None else [value])
-    out: list[str] = []
-    for item in rows:
-        text = str(item or "").strip()
-        if text and text not in out:
-            out.append(text)
-    return out
 
 
 def normalize_symbolic_object_resonance_policy(

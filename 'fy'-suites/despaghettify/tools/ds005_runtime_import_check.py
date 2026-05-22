@@ -33,21 +33,24 @@ BACKEND_ROOT = _REPO_ROOT / "backend"
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-# Frozen order for cycle regression; extend only with evidence (see DS-015 post artefacts).
+from app.runtime.package_classification import runtime_module_import_path
+
+# Frozen order for cycle regression; names resolve through package_classification
+# so the gate follows the current runtime package layout.
 FROZEN_RUNTIME_MODULES = [
-    "app.runtime.turn_executor",
-    "app.runtime.turn_executor_validated_pipeline_apply",
-    "app.runtime.turn_executor_validated_pipeline_narrative_log",
-    "app.runtime.turn_executor_validated_pipeline",
-    "app.runtime.validators",
-    "app.runtime.role_structured_decision",
-    "app.runtime.ai_decision",
-    "app.runtime.ai_failure_recovery",
-    "app.runtime.ai_turn_executor",
-    "app.runtime.turn_dispatcher",
+    "turn_executor",
+    "turn_executor_validated_pipeline_apply",
+    "turn_executor_validated_pipeline_narrative_log",
+    "turn_executor_validated_pipeline",
+    "validators",
+    "role_structured_decision",
+    "ai_decision",
+    "ai_failure_recovery",
+    "ai_turn_executor",
+    "turn_dispatcher",
     # DS-015: supervisor entry seam (after dispatcher; must import clean in this order)
-    "app.runtime.supervisor_orchestrate_execute",
-    "app.runtime.supervisor_orchestrator",
+    "supervisor_orchestrate_execute",
+    "supervisor_orchestrator",
 ]
 
 
@@ -65,8 +68,9 @@ def main() -> int:
     # Process name one item at a time so main applies the same rule across the full
     # collection.
     for name in FROZEN_RUNTIME_MODULES:
-        importlib.import_module(name)
-        print(f"import_ok\t{name}")
+        import_path = runtime_module_import_path(name)
+        importlib.import_module(import_path)
+        print(f"import_ok\t{import_path}")
     return 0
 
 

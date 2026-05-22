@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.story_runtime.narrative.normalization import as_list as _as_list, bounded_int as _bounded_int, clean_str_list as _clean_str_list, clean_text as _text
 import re
 from typing import Any
 
@@ -17,37 +18,6 @@ from ai_stack.contracts.tonal_consistency_contracts import (
     normalize_tonal_consistency_policy,
 )
 from ai_stack.story_runtime.narrative.tonal_consistency_classifier import classify_tonal_consistency_from_policy
-
-
-def _text(value: Any) -> str:
-    return str(value or "").strip()
-
-
-def _as_list(value: Any) -> list[Any]:
-    if isinstance(value, list):
-        return value
-    if isinstance(value, tuple):
-        return list(value)
-    if value is None:
-        return []
-    return [value]
-
-
-def _clean_str_list(value: Any) -> list[str]:
-    out: list[str] = []
-    for item in _as_list(value):
-        text = _text(item)
-        if text and text not in out:
-            out.append(text)
-    return out
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
 
 
 def _evidence(source: str, field: str, value: Any) -> TonalConsistencyEvidenceRef:

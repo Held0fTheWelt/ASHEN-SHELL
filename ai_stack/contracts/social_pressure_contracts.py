@@ -6,6 +6,7 @@ are the oracle. Generated narration is not.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import bounded_int as _bounded_int
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -107,14 +108,6 @@ class SocialPressureValidation(BaseModel):
 def _bounded_float(value: Any, default: float, *, minimum: float, maximum: float) -> float:
     try:
         parsed = float(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
     except (TypeError, ValueError):
         parsed = default
     return max(minimum, min(maximum, parsed))

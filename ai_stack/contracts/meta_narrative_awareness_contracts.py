@@ -7,6 +7,7 @@ Experience settings opt in and nominate eligible actors.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import bounded_int as _bounded_int, clean_str_list as _clean_str_list, clean_text as _text
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -98,40 +99,6 @@ META_NARRATIVE_FAILURE_CODES: frozenset[str] = frozenset(
         META_NARRATIVE_FAILURE_FALSE_SELF_MEMORY,
     }
 )
-
-
-
-def _text(value: Any) -> str:
-    return str(value or "").strip()
-
-
-
-def _clean_str_list(
-    value: Any,
-    *,
-    allowed: frozenset[str] | None = None,
-    lower: bool = False,
-) -> list[str]:
-    out: list[str] = []
-    for item in _as_list(value):
-        text = _text(item)
-        if lower:
-            text = text.lower()
-        if not text:
-            continue
-        if allowed is not None and text not in allowed:
-            continue
-        if text not in out:
-            out.append(text)
-    return out
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
 
 
 @dataclass(frozen=True)

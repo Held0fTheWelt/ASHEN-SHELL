@@ -622,32 +622,44 @@ class TestPhase6B5BSourceFactsAuthorityShape:
 
 
 class TestPhase6B5BPromptContract:
-    """Phase 6B-5B parity gate — the narrator output prompt must encode the
-    W5-vs-legacy authority split semantically, not by field-presence-only."""
+    """Phase 6B-5B / Phase 6B-5D parity gate — the narrator output prompt must
+    name source_facts.w5_projection as the actor-situation authority in all
+    postures. Phase 6B-5D removed the legacy fallback paragraph from the
+    strict-off posture; transition_from_previous must no longer be promoted as
+    narrator authority under either posture."""
 
-    def test_strict_off_prompt_keeps_legacy_fallback_guidance(
+    def test_strict_off_prompt_does_not_promote_legacy_fallback_guidance(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Phase 6B-5D: strict-off prompt must not instruct the narrator to use
+        transition_from_previous as a fallback. W5 projection is the authority
+        in all postures.
+
+        Note: ``_legacy_narrator_block()`` embeds ``hard_cut`` in the serialised
+        source_facts JSON payload; we check only the instruction portion (before
+        the data payload) for the narrator-guidance phrases we removed."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
-        # Legacy fallback guidance is still present and explicitly conditional
-        # on w5_projection being absent.
-        assert "transition_from_previous" in prompt
-        assert (
-            "Use transition_from_previous only as a fallback" in prompt
-            or "as a fallback when w5_projection is absent" in prompt
-        )
-        # hard_cut authored guidance remains for the unstrict path.
-        assert "hard_cut" in prompt
-        # W5 summaries are still named in the unstrict path so the projection
-        # has consumer-side parity from day one.
+        # Split instruction from the JSON data payload so assertions are
+        # specific to narrator guidance text, not block payload values.
+        instruction = prompt.split("Narrator synthesis input:")[0]
+        # Legacy fallback instruction is absent from the strict-off prompt.
+        assert "Use transition_from_previous only as a fallback" not in instruction
+        assert "as a fallback when w5_projection is absent" not in instruction
+        # The hard_cut directed-transition narrator instruction is absent
+        # from the guidance portion (it may still appear in the data payload).
+        assert "hard authored scene break" not in instruction
+        assert "directed_transition.kind" not in instruction
+        # W5 projection is the actor-situation authority.
+        assert "source_facts.w5_projection" in instruction
+        # W5 summaries are still named in the strict-off path.
         for summary in (
             "where_summary",
             "what_summary",
             "how_summary",
             "why_summary",
         ):
-            assert summary in prompt
+            assert summary in instruction
 
     def test_strict_on_prompt_names_w5_projection_as_sole_authority(
         self, monkeypatch: pytest.MonkeyPatch

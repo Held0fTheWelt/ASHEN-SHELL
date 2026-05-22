@@ -7,6 +7,7 @@ not.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import bounded_int as _bounded_int
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -127,14 +128,6 @@ class SensoryContextValidation(BaseModel):
 
     def to_runtime_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
-
-
-def _bounded_int(value: Any, default: int, *, minimum: int, maximum: int) -> int:
-    try:
-        parsed = int(value)
-    except (TypeError, ValueError):
-        parsed = default
-    return max(minimum, min(maximum, parsed))
 
 
 def normalize_sensory_context_policy(policy: dict[str, Any] | None) -> dict[str, Any]:
