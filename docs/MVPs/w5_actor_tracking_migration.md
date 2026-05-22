@@ -528,7 +528,7 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 - [x] Required gates re-verified:
   - `python -m py_compile` on the two new test files: clean.
   - `python scripts/inventory_w5_legacy_consumers.py`: residual mentions are confined to docs/scripts/tests (informational, allowed).
-  - `pytest -q tests/test_inventory_w5_legacy_consumers.py`: 23 passed, 0 failed.
+  - `pytest -q tests/test_inventory_w5_legacy_consumers.py`: 12 passed, 0 failed.
   - `pytest -q ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py`: 23 passed, 0 failed.
   - `pytest -q ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`: 36 passed, 0 failed.
   - `pytest -q ai_stack/tests/test_god_of_carnage_narrator_path.py`: 3 passed, 0 failed.
