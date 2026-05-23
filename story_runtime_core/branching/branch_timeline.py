@@ -287,8 +287,18 @@ def archive_branch_timeline(timeline: dict[str, Any], *, reason: str = "operator
     return append_branch_timeline_event(out, event)
 
 
-def build_branch_timeline_snapshot(timeline: dict[str, Any]) -> dict[str, Any]:
-    events = timeline.get("events") if isinstance(timeline.get("events"), list) else []
+def _tree_created_status(details: dict[str, Any]) -> str:
+    raw_status = str(details.get("tree_status") or BRANCHING_TIMELINE_TREE_STATUS_ACTIVE)
+    if raw_status in {
+        BRANCHING_TIMELINE_TREE_STATUS_STALE,
+        BRANCHING_TIMELINE_TREE_STATUS_EXPIRED,
+        BRANCHING_TIMELINE_TREE_STATUS_COMMITTED,
+    }:
+        return raw_status
+    return BRANCHING_TIMELINE_TREE_STATUS_ACTIVE
+
+
+def _snapshot_event_state(events: list[Any]) -> dict[str, Any]:
     tree_states: dict[str, str] = {}
     selection_count = 0
     replay_commit_count = 0
@@ -306,17 +316,7 @@ def build_branch_timeline_snapshot(timeline: dict[str, Any]) -> dict[str, Any]:
             last_event_type = event_type
             last_event_at = event.get("occurred_at")
         if event_type == BRANCHING_TIMELINE_EVENT_TREE_CREATED and tree_id:
-            raw_status = str(details.get("tree_status") or BRANCHING_TIMELINE_TREE_STATUS_ACTIVE)
-            tree_states[tree_id] = (
-                raw_status
-                if raw_status
-                in {
-                    BRANCHING_TIMELINE_TREE_STATUS_STALE,
-                    BRANCHING_TIMELINE_TREE_STATUS_EXPIRED,
-                    BRANCHING_TIMELINE_TREE_STATUS_COMMITTED,
-                }
-                else BRANCHING_TIMELINE_TREE_STATUS_ACTIVE
-            )
+            tree_states[tree_id] = _tree_created_status(details)
         elif event_type == BRANCHING_TIMELINE_EVENT_TREE_BECAME_STALE and tree_id:
             tree_states[tree_id] = BRANCHING_TIMELINE_TREE_STATUS_STALE
         elif event_type == BRANCHING_TIMELINE_EVENT_TREE_EXPIRED and tree_id:
@@ -331,19 +331,28 @@ def build_branch_timeline_snapshot(timeline: dict[str, Any]) -> dict[str, Any]:
             replay_conflict_count += 1
             if tree_id:
                 tree_states[tree_id] = BRANCHING_TIMELINE_TREE_STATUS_COMMITTED
+    return {
+        "tree_states": tree_states,
+        "selection_count": selection_count,
+        "replay_commit_count": replay_commit_count,
+        "replay_conflict_count": replay_conflict_count,
+        "last_event_type": last_event_type,
+        "last_event_at": last_event_at,
+    }
 
-    active_tree_ids = sorted(
-        tree_id for tree_id, status in tree_states.items() if status == BRANCHING_TIMELINE_TREE_STATUS_ACTIVE
-    )
-    stale_tree_ids = sorted(
-        tree_id for tree_id, status in tree_states.items() if status == BRANCHING_TIMELINE_TREE_STATUS_STALE
-    )
-    expired_tree_ids = sorted(
-        tree_id for tree_id, status in tree_states.items() if status == BRANCHING_TIMELINE_TREE_STATUS_EXPIRED
-    )
-    committed_tree_ids = sorted(
-        tree_id for tree_id, status in tree_states.items() if status == BRANCHING_TIMELINE_TREE_STATUS_COMMITTED
-    )
+
+def _tree_ids_with_status(tree_states: dict[str, str], status: str) -> list[str]:
+    return sorted(tree_id for tree_id, tree_status in tree_states.items() if tree_status == status)
+
+
+def build_branch_timeline_snapshot(timeline: dict[str, Any]) -> dict[str, Any]:
+    events = timeline.get("events") if isinstance(timeline.get("events"), list) else []
+    event_state = _snapshot_event_state(events)
+    tree_states = event_state["tree_states"]
+    active_tree_ids = _tree_ids_with_status(tree_states, BRANCHING_TIMELINE_TREE_STATUS_ACTIVE)
+    stale_tree_ids = _tree_ids_with_status(tree_states, BRANCHING_TIMELINE_TREE_STATUS_STALE)
+    expired_tree_ids = _tree_ids_with_status(tree_states, BRANCHING_TIMELINE_TREE_STATUS_EXPIRED)
+    committed_tree_ids = _tree_ids_with_status(tree_states, BRANCHING_TIMELINE_TREE_STATUS_COMMITTED)
     bounds = normalize_branch_timeline_bounds(timeline.get("bounds") if isinstance(timeline.get("bounds"), dict) else None)
     compaction = timeline.get("compaction") if isinstance(timeline.get("compaction"), dict) else {}
     return {
@@ -365,11 +374,11 @@ def build_branch_timeline_snapshot(timeline: dict[str, Any]) -> dict[str, Any]:
         "stale_tree_count": len(stale_tree_ids),
         "expired_tree_count": len(expired_tree_ids),
         "committed_tree_count": len(committed_tree_ids),
-        "selection_count": selection_count,
-        "replay_commit_count": replay_commit_count,
-        "replay_conflict_count": replay_conflict_count,
-        "last_event_type": last_event_type,
-        "last_event_at": last_event_at,
+        "selection_count": event_state["selection_count"],
+        "replay_commit_count": event_state["replay_commit_count"],
+        "replay_conflict_count": event_state["replay_conflict_count"],
+        "last_event_type": event_state["last_event_type"],
+        "last_event_at": event_state["last_event_at"],
         "bounds": bounds,
         "bounds_exceeded": {
             "events": len(events) > bounds["max_events"],

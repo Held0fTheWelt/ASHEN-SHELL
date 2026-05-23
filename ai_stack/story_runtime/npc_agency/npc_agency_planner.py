@@ -363,21 +363,15 @@ def _candidate_priority_score(
     return score, reasons
 
 
-def build_npc_agency_simulation(
+def _simulation_actor_context(
     *,
     selected_responder_set: list[Any],
-    turn_number: Any = None,
-    character_mind_records: list[Any] | None = None,
-    social_state_record: dict[str, Any] | None = None,
-    semantic_move_record: dict[str, Any] | None = None,
-    selected_scene_function: str | None = None,
-    prior_planner_truth: dict[str, Any] | None = None,
-    actor_lane_context: dict[str, Any] | None = None,
-    preferred_reaction_order_ids: list[str] | None = None,
-    npc_actor_ids: list[Any] | None = None,
-    npc_response_expected: bool | None = None,
-    npc_context_bundle: dict[str, Any] | None = None,
-    npc_w5_situations: dict[str, Any] | None = None,
+    preferred_reaction_order_ids: list[str] | None,
+    actor_lane_context: dict[str, Any] | None,
+    prior_planner_truth: dict[str, Any] | None,
+    npc_response_expected: bool | None,
+    npc_actor_ids: list[Any] | None,
+    character_mind_records: list[Any] | None,
 ) -> dict[str, Any] | None:
     responders = _ordered_responder_rows(
         selected_responder_set,
@@ -406,10 +400,23 @@ def build_npc_agency_simulation(
     )
     if not candidate_actor_ids:
         return None
+    return {
+        "responders": responders,
+        "responder_ids": responder_ids,
+        "unresolved_actor_ids": unresolved_actor_ids,
+        "candidate_actor_ids": candidate_actor_ids,
+    }
 
-    responder_rank = {actor_id: index for index, actor_id in enumerate(responder_ids)}
-    minds = _mind_by_actor(character_mind_records or [])
-    w5_situations = _w5_situation_by_actor(npc_w5_situations)
+
+def _simulation_evidence(
+    *,
+    selected_scene_function: str | None,
+    semantic_move_record: dict[str, Any] | None,
+    social_state_record: dict[str, Any] | None,
+    prior_planner_truth: dict[str, Any] | None,
+    npc_context_bundle: dict[str, Any] | None,
+    w5_situations: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
     evidence = _source_evidence(
         selected_scene_function=selected_scene_function,
         semantic_move_record=semantic_move_record,
@@ -417,13 +424,14 @@ def build_npc_agency_simulation(
         prior_planner_truth=prior_planner_truth,
     )
     if isinstance(npc_context_bundle, dict):
-        lane_notes = {
-            "source": "npc_context_bundle",
-            "field": "retrieval_lanes",
-            "allowed_memory_lanes": list(npc_context_bundle.get("retrieval_plan", {}).get("allowed_memory_lanes") or []),
-            "blocked_memory_lanes": list(npc_context_bundle.get("retrieval_plan", {}).get("blocked_memory_lanes") or []),
-        }
-        evidence.append(lane_notes)
+        evidence.append(
+            {
+                "source": "npc_context_bundle",
+                "field": "retrieval_lanes",
+                "allowed_memory_lanes": list(npc_context_bundle.get("retrieval_plan", {}).get("allowed_memory_lanes") or []),
+                "blocked_memory_lanes": list(npc_context_bundle.get("retrieval_plan", {}).get("blocked_memory_lanes") or []),
+            }
+        )
     if w5_situations:
         evidence.append(
             {
@@ -432,7 +440,19 @@ def build_npc_agency_simulation(
                 "actor_ids": sorted(w5_situations.keys()),
             }
         )
+    return evidence
 
+
+def _scored_simulation_actor_order(
+    *,
+    candidate_actor_ids: list[str],
+    responder_rank: dict[str, int],
+    unresolved_actor_ids: list[str],
+    selected_scene_function: str | None,
+    semantic_move_record: dict[str, Any] | None,
+    social_state_record: dict[str, Any] | None,
+    minds: dict[str, dict[str, Any]],
+) -> tuple[list[tuple[int, int, int, str, list[str]]], list[str]]:
     scored: list[tuple[int, int, int, str, list[str]]] = []
     for index, actor_id in enumerate(candidate_actor_ids):
         score, reasons = _candidate_priority_score(
@@ -446,6 +466,14 @@ def build_npc_agency_simulation(
         )
         scored.append((-score, responder_rank.get(actor_id, 999), index, actor_id, reasons))
     ordered_actor_ids = [item[3] for item in sorted(scored, key=lambda item: (item[0], item[1], item[2], item[3]))]
+    return scored, ordered_actor_ids
+
+
+def _simulation_required_actor_ids(
+    *,
+    ordered_actor_ids: list[str],
+    unresolved_actor_ids: list[str],
+) -> tuple[str, list[str], str | None, list[str]]:
     primary_id = ordered_actor_ids[0]
     secondary_ids = [actor_id for actor_id in ordered_actor_ids if actor_id != primary_id]
     first_secondary_id = secondary_ids[0] if secondary_ids else None
@@ -456,42 +484,54 @@ def build_npc_agency_simulation(
             *[actor_id for actor_id in unresolved_actor_ids if actor_id in ordered_actor_ids],
         ]
     )
+    return primary_id, secondary_ids, first_secondary_id, required_actor_ids
 
+
+def _simulation_proposal_role(
+    *,
+    actor_id: str,
+    primary_id: str,
+    first_secondary_id: str | None,
+    unresolved_actor_ids: list[str],
+    responder_rank: dict[str, int],
+) -> tuple[str, str, str, bool, str | None]:
+    if actor_id in unresolved_actor_ids:
+        return "carry_forward_initiator", "carry_forward_unresolved_initiative", "carry_forward_required", True, (
+            primary_id if actor_id != primary_id else first_secondary_id
+        )
+    if actor_id == primary_id:
+        return "primary_initiator", "claim_scene_pressure", "primary_required", True, first_secondary_id
+    if actor_id == first_secondary_id:
+        return "secondary_reactor", "counter_or_react_to_scene_pressure", "one_secondary_minimum", True, primary_id
+    if actor_id in responder_rank:
+        return "selected_responder", "react_to_primary_or_scene_pressure", "optional_selected_responder", False, primary_id
+    return "independent_observer", "observe_or_pressure_scene", "optional_roster_actor", False, primary_id
+
+
+def _simulation_proposals(
+    *,
+    ordered_actor_ids: list[str],
+    primary_id: str,
+    first_secondary_id: str | None,
+    unresolved_actor_ids: list[str],
+    required_actor_ids: list[str],
+    responder_rank: dict[str, int],
+    minds: dict[str, dict[str, Any]],
+    score_by_actor: dict[str, int],
+    reason_by_actor: dict[str, list[str]],
+    evidence: list[dict[str, Any]],
+    w5_situations: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
     proposals: list[dict[str, Any]] = []
-    score_by_actor = {item[3]: -item[0] for item in scored}
-    reason_by_actor = {item[3]: item[4] for item in scored}
     for rank, actor_id in enumerate(ordered_actor_ids, start=1):
+        role, intent, requirement_scope, required, target_actor_id = _simulation_proposal_role(
+            actor_id=actor_id,
+            primary_id=primary_id,
+            first_secondary_id=first_secondary_id,
+            unresolved_actor_ids=unresolved_actor_ids,
+            responder_rank=responder_rank,
+        )
         mind = minds.get(actor_id, {})
-        if actor_id in unresolved_actor_ids:
-            role = "carry_forward_initiator"
-            intent = "carry_forward_unresolved_initiative"
-            requirement_scope = "carry_forward_required"
-            required = True
-            target_actor_id = primary_id if actor_id != primary_id else first_secondary_id
-        elif actor_id == primary_id:
-            role = "primary_initiator"
-            intent = "claim_scene_pressure"
-            requirement_scope = "primary_required"
-            required = True
-            target_actor_id = first_secondary_id
-        elif actor_id == first_secondary_id:
-            role = "secondary_reactor"
-            intent = "counter_or_react_to_scene_pressure"
-            requirement_scope = "one_secondary_minimum"
-            required = True
-            target_actor_id = primary_id
-        elif actor_id in responder_rank:
-            role = "selected_responder"
-            intent = "react_to_primary_or_scene_pressure"
-            requirement_scope = "optional_selected_responder"
-            required = False
-            target_actor_id = primary_id
-        else:
-            role = "independent_observer"
-            intent = "observe_or_pressure_scene"
-            requirement_scope = "optional_roster_actor"
-            required = False
-            target_actor_id = primary_id
         proposals.append(
             {
                 "actor_id": actor_id,
@@ -512,15 +552,30 @@ def build_npc_agency_simulation(
                 "tactical_posture": mind.get("tactical_posture"),
                 "pressure_response_bias": mind.get("pressure_response_bias"),
                 "source_evidence": list(evidence),
-                **(
-                    {"actor_w5_situation": w5_situations[actor_id]}
-                    if actor_id in w5_situations
-                    else {}
-                ),
+                **({"actor_w5_situation": w5_situations[actor_id]} if actor_id in w5_situations else {}),
             }
         )
+    return proposals
 
-    plan = normalize_npc_agency_plan(
+
+def _normalized_simulation_plan(
+    *,
+    turn_number: Any,
+    primary_id: str,
+    secondary_ids: list[str],
+    required_actor_ids: list[str],
+    candidate_actor_count: int,
+    responder_ids: list[str],
+    selected_scene_function: str | None,
+    semantic_move_record: dict[str, Any] | None,
+    social_state_record: dict[str, Any] | None,
+    unresolved_actor_ids: list[str],
+    evidence: list[dict[str, Any]],
+    proposals: list[dict[str, Any]],
+    ordered_actor_ids: list[str],
+    actor_lane_context: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    return normalize_npc_agency_plan(
         {
             "contract": "npc_agency_plan.v1",
             "schema_version": "npc_agency_plan.v1",
@@ -538,7 +593,7 @@ def build_npc_agency_simulation(
                 "minimum_secondary_initiatives_required": 1 if secondary_ids else 0,
             },
             "planner_rationale_codes": _simulation_rationale_codes(
-                candidate_actor_count=len(candidate_actor_ids),
+                candidate_actor_count=candidate_actor_count,
                 responder_count=len(responder_ids),
                 selected_scene_function=selected_scene_function,
                 semantic_move_record=semantic_move_record,
@@ -555,10 +610,23 @@ def build_npc_agency_simulation(
         actor_lane_context=actor_lane_context,
         turn_number=turn_number,
     )
-    if not plan:
-        return None
 
-    simulation = {
+
+def _simulation_payload(
+    *,
+    turn_number: Any,
+    candidate_actor_ids: list[str],
+    responder_ids: list[str],
+    ordered_actor_ids: list[str],
+    required_actor_ids: list[str],
+    unresolved_actor_ids: list[str],
+    primary_id: str,
+    secondary_ids: list[str],
+    evidence: list[dict[str, Any]],
+    proposals: list[dict[str, Any]],
+    plan: dict[str, Any],
+) -> dict[str, Any]:
+    return {
         "contract": NPC_AGENCY_SIMULATION_SCHEMA_VERSION,
         "schema_version": NPC_AGENCY_SIMULATION_SCHEMA_VERSION,
         "contract_status": NPC_AGENCY_SIMULATION_IMPLEMENTED_STATUS,
@@ -576,9 +644,7 @@ def build_npc_agency_simulation(
         "ordered_actor_ids": ordered_actor_ids,
         "required_actor_ids": required_actor_ids,
         "carry_forward_actor_ids": [actor_id for actor_id in unresolved_actor_ids if actor_id in ordered_actor_ids],
-        "dropped_carry_forward_actor_ids": [
-            actor_id for actor_id in unresolved_actor_ids if actor_id not in ordered_actor_ids
-        ],
+        "dropped_carry_forward_actor_ids": [actor_id for actor_id in unresolved_actor_ids if actor_id not in ordered_actor_ids],
         "planner_rationale_codes": plan.get("planner_rationale_codes") or [],
         "source_evidence": evidence,
         "npc_intent_proposals": proposals,
@@ -602,16 +668,24 @@ def build_npc_agency_simulation(
         },
         "npc_agency_plan": plan,
     }
+
+
+def _finalize_simulation_payload(
+    *,
+    simulation: dict[str, Any],
+    prior_planner_truth: dict[str, Any] | None,
+    actor_lane_context: dict[str, Any] | None,
+    required_actor_ids: list[str],
+    primary_id: str,
+    turn_number: Any,
+) -> dict[str, Any] | None:
     long_horizon_state = build_npc_long_horizon_state(
         simulation,
         prior_planner_truth=prior_planner_truth,
         actor_lane_context=actor_lane_context,
         turn_number=turn_number,
     )
-    private_plans = build_npc_private_plans(
-        simulation,
-        long_horizon_state=long_horizon_state,
-    )
+    private_plans = build_npc_private_plans(simulation, long_horizon_state=long_horizon_state)
     simulation["npc_long_horizon_state"] = long_horizon_state
     simulation["npc_private_plans"] = private_plans
     simulation["npc_plan_conflict_resolution"] = resolve_npc_private_plans(
@@ -621,6 +695,321 @@ def build_npc_agency_simulation(
     )
     return normalize_npc_agency_simulation(
         simulation,
+        actor_lane_context=actor_lane_context,
+        turn_number=turn_number,
+    )
+
+
+def _simulation_plan_state(
+    *,
+    context: dict[str, Any],
+    turn_number: Any,
+    character_mind_records: list[Any] | None,
+    social_state_record: dict[str, Any] | None,
+    semantic_move_record: dict[str, Any] | None,
+    selected_scene_function: str | None,
+    prior_planner_truth: dict[str, Any] | None,
+    actor_lane_context: dict[str, Any] | None,
+    npc_context_bundle: dict[str, Any] | None,
+    npc_w5_situations: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    responder_ids = context["responder_ids"]
+    unresolved_actor_ids = context["unresolved_actor_ids"]
+    candidate_actor_ids = context["candidate_actor_ids"]
+    responder_rank = {actor_id: index for index, actor_id in enumerate(responder_ids)}
+    minds = _mind_by_actor(character_mind_records or [])
+    w5_situations = _w5_situation_by_actor(npc_w5_situations)
+    evidence = _simulation_evidence(
+        selected_scene_function=selected_scene_function,
+        semantic_move_record=semantic_move_record,
+        social_state_record=social_state_record,
+        prior_planner_truth=prior_planner_truth,
+        npc_context_bundle=npc_context_bundle,
+        w5_situations=w5_situations,
+    )
+    scored, ordered_actor_ids = _scored_simulation_actor_order(
+        candidate_actor_ids=candidate_actor_ids,
+        responder_rank=responder_rank,
+        unresolved_actor_ids=unresolved_actor_ids,
+        selected_scene_function=selected_scene_function,
+        semantic_move_record=semantic_move_record,
+        social_state_record=social_state_record,
+        minds=minds,
+    )
+    primary_id, secondary_ids, first_secondary_id, required_actor_ids = _simulation_required_actor_ids(
+        ordered_actor_ids=ordered_actor_ids,
+        unresolved_actor_ids=unresolved_actor_ids,
+    )
+    proposals = _simulation_proposals(
+        ordered_actor_ids=ordered_actor_ids,
+        primary_id=primary_id,
+        first_secondary_id=first_secondary_id,
+        unresolved_actor_ids=unresolved_actor_ids,
+        required_actor_ids=required_actor_ids,
+        responder_rank=responder_rank,
+        minds=minds,
+        score_by_actor={item[3]: -item[0] for item in scored},
+        reason_by_actor={item[3]: item[4] for item in scored},
+        evidence=evidence,
+        w5_situations=w5_situations,
+    )
+    plan = _normalized_simulation_plan(
+        turn_number=turn_number,
+        primary_id=primary_id,
+        secondary_ids=secondary_ids,
+        required_actor_ids=required_actor_ids,
+        candidate_actor_count=len(candidate_actor_ids),
+        responder_ids=responder_ids,
+        selected_scene_function=selected_scene_function,
+        semantic_move_record=semantic_move_record,
+        social_state_record=social_state_record,
+        unresolved_actor_ids=unresolved_actor_ids,
+        evidence=evidence,
+        proposals=proposals,
+        ordered_actor_ids=ordered_actor_ids,
+        actor_lane_context=actor_lane_context,
+    )
+    if not plan:
+        return None
+    return {
+        "responder_ids": responder_ids,
+        "unresolved_actor_ids": unresolved_actor_ids,
+        "candidate_actor_ids": candidate_actor_ids,
+        "ordered_actor_ids": ordered_actor_ids,
+        "primary_id": primary_id,
+        "secondary_ids": secondary_ids,
+        "required_actor_ids": required_actor_ids,
+        "evidence": evidence,
+        "proposals": proposals,
+        "plan": plan,
+    }
+
+
+def build_npc_agency_simulation(
+    *,
+    selected_responder_set: list[Any],
+    turn_number: Any = None,
+    character_mind_records: list[Any] | None = None,
+    social_state_record: dict[str, Any] | None = None,
+    semantic_move_record: dict[str, Any] | None = None,
+    selected_scene_function: str | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
+    actor_lane_context: dict[str, Any] | None = None,
+    preferred_reaction_order_ids: list[str] | None = None,
+    npc_actor_ids: list[Any] | None = None,
+    npc_response_expected: bool | None = None,
+    npc_context_bundle: dict[str, Any] | None = None,
+    npc_w5_situations: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    context = _simulation_actor_context(
+        selected_responder_set=selected_responder_set,
+        preferred_reaction_order_ids=preferred_reaction_order_ids,
+        actor_lane_context=actor_lane_context,
+        prior_planner_truth=prior_planner_truth,
+        npc_response_expected=npc_response_expected,
+        npc_actor_ids=npc_actor_ids,
+        character_mind_records=character_mind_records,
+    )
+    if context is None:
+        return None
+
+    state = _simulation_plan_state(
+        context=context,
+        turn_number=turn_number,
+        character_mind_records=character_mind_records,
+        social_state_record=social_state_record,
+        semantic_move_record=semantic_move_record,
+        selected_scene_function=selected_scene_function,
+        prior_planner_truth=prior_planner_truth,
+        actor_lane_context=actor_lane_context,
+        npc_context_bundle=npc_context_bundle,
+        npc_w5_situations=npc_w5_situations,
+    )
+    if state is None:
+        return None
+
+    simulation = _simulation_payload(
+        turn_number=turn_number,
+        candidate_actor_ids=state["candidate_actor_ids"],
+        responder_ids=state["responder_ids"],
+        ordered_actor_ids=state["ordered_actor_ids"],
+        required_actor_ids=state["required_actor_ids"],
+        unresolved_actor_ids=state["unresolved_actor_ids"],
+        primary_id=state["primary_id"],
+        secondary_ids=state["secondary_ids"],
+        evidence=state["evidence"],
+        proposals=state["proposals"],
+        plan=state["plan"],
+    )
+    return _finalize_simulation_payload(
+        simulation=simulation,
+        prior_planner_truth=prior_planner_truth,
+        actor_lane_context=actor_lane_context,
+        required_actor_ids=state["required_actor_ids"],
+        primary_id=state["primary_id"],
+        turn_number=turn_number,
+    )
+
+
+def _selected_plan_actor_context(
+    *,
+    selected_responder_set: list[Any],
+    preferred_reaction_order_ids: list[str] | None,
+    actor_lane_context: dict[str, Any] | None,
+    prior_planner_truth: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    responders = _ordered_responder_rows(
+        selected_responder_set,
+        preferred_reaction_order_ids=preferred_reaction_order_ids,
+        actor_lane_context=actor_lane_context,
+    )
+    responder_ids = dedupe_strings([_actor_id_from_responder(row) for row in responders])
+    if not responder_ids:
+        return None
+    primary_id = responder_ids[0]
+    secondary_ids = responder_ids[1:]
+    first_secondary_id = secondary_ids[0] if secondary_ids else None
+    unresolved_actor_ids = [
+        actor_id
+        for actor_id in _unresolved_actor_ids_from_prior(prior_planner_truth)
+        if actor_id in responder_ids
+        and not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
+    ]
+    required_actor_ids = dedupe_strings(
+        [primary_id, *([first_secondary_id] if first_secondary_id else []), *unresolved_actor_ids]
+    )
+    return {
+        "responders": responders,
+        "responder_ids": responder_ids,
+        "primary_id": primary_id,
+        "secondary_ids": secondary_ids,
+        "first_secondary_id": first_secondary_id,
+        "unresolved_actor_ids": unresolved_actor_ids,
+        "required_actor_ids": required_actor_ids,
+    }
+
+
+def _selected_plan_initiatives(
+    *,
+    context: dict[str, Any],
+    selected_scene_function: str | None,
+    minds: dict[str, dict[str, Any]],
+    evidence: list[dict[str, Any]],
+    w5_situations: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    initiatives: list[dict[str, Any]] = []
+    responders = context["responders"]
+    for actor_id in context["responder_ids"]:
+        responder_row = next((row for row in responders if _actor_id_from_responder(row) == actor_id), {})
+        role = clean_text(responder_row.get("role")) or (
+            "primary_responder" if actor_id == context["primary_id"] else "secondary_reactor"
+        )
+        intent, requirement_scope, required, target_actor_id = _intent_for_actor(
+            actor_id=actor_id,
+            primary_id=context["primary_id"],
+            first_secondary_id=context["first_secondary_id"],
+            role=role,
+            selected_scene_function=selected_scene_function,
+            unresolved_actor_ids=context["unresolved_actor_ids"],
+        )
+        mind = minds.get(actor_id, {})
+        initiatives.append(
+            _selected_plan_initiative_payload(
+                actor_id=actor_id,
+                role=role,
+                intent=intent,
+                requirement_scope=requirement_scope,
+                required=required,
+                target_actor_id=target_actor_id,
+                required_actor_ids=context["required_actor_ids"],
+                mind=mind,
+                evidence=evidence,
+                w5_situations=w5_situations,
+            )
+        )
+    return initiatives
+
+
+def _selected_plan_initiative_payload(
+    *,
+    actor_id: str,
+    role: str,
+    intent: str,
+    requirement_scope: str,
+    required: bool,
+    target_actor_id: str | None,
+    required_actor_ids: list[str],
+    mind: dict[str, Any],
+    evidence: list[dict[str, Any]],
+    w5_situations: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "actor_id": actor_id,
+        "role": role,
+        "intent": intent,
+        "allowed_block_types": list(DEFAULT_ALLOWED_BLOCK_TYPES),
+        "allowed_output_lanes": list(DEFAULT_ALLOWED_OUTPUT_LANES),
+        "target_actor_id": target_actor_id if target_actor_id != actor_id else None,
+        "required": bool(required or actor_id in required_actor_ids),
+        "requirement_scope": requirement_scope,
+        "resolution_policy": "visible_spoken_or_action_lane_required"
+        if actor_id in required_actor_ids
+        else "optional_visible_or_initiative_event",
+        "resolved": False,
+        "tactical_posture": mind.get("tactical_posture"),
+        "pressure_response_bias": mind.get("pressure_response_bias"),
+        "source_evidence": list(evidence),
+        **({"actor_w5_situation": w5_situations[actor_id]} if actor_id in w5_situations else {}),
+    }
+
+
+def _selected_plan_payload(
+    *,
+    context: dict[str, Any],
+    turn_number: Any,
+    selected_scene_function: str | None,
+    semantic_move_record: dict[str, Any] | None,
+    social_state_record: dict[str, Any] | None,
+    evidence: list[dict[str, Any]],
+    initiatives: list[dict[str, Any]],
+    actor_lane_context: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    secondary_ids = context["secondary_ids"]
+    plan = {
+        "contract": "npc_agency_plan.v1",
+        "schema_version": "npc_agency_plan.v1",
+        "contract_status": NPC_AGENCY_PLAN_PARTIAL_STATUS,
+        "implementation_status": NPC_AGENCY_PLAN_PARTIAL_STATUS,
+        "not_full_multi_agent_simulation": True,
+        "planner_contract": NPC_AGENCY_PLANNER_CONTRACT,
+        "planner_status": NPC_AGENCY_PLAN_PARTIAL_STATUS,
+        "planner_scope": "bounded_selected_responder_agency",
+        "turn_number": turn_number,
+        "primary_responder_id": context["primary_id"],
+        "secondary_responder_ids": secondary_ids,
+        "required_actor_ids": context["required_actor_ids"],
+        "minimum_secondary_initiatives_required": 1 if secondary_ids else 0,
+        "resolution_policy": {
+            "required_lanes": ["spoken_lines", "action_lines"],
+            "initiative_event_only_counts_as_realized": False,
+            "minimum_secondary_initiatives_required": 1 if secondary_ids else 0,
+        },
+        "planner_rationale_codes": _rationale_codes(
+            responder_count=len(context["responder_ids"]),
+            selected_scene_function=selected_scene_function,
+            semantic_move_record=semantic_move_record,
+            social_state_record=social_state_record,
+            unresolved_actor_ids=context["unresolved_actor_ids"],
+        ),
+        "source_evidence": evidence,
+        "unresolved_actor_ids_from_prior": context["unresolved_actor_ids"],
+        "npc_initiatives": initiatives,
+    }
+    return normalize_npc_agency_plan(
+        plan,
+        selected_primary_responder_id=context["primary_id"],
+        selected_secondary_responder_ids=secondary_ids,
+        preferred_reaction_order_ids=context["responder_ids"],
         actor_lane_context=actor_lane_context,
         turn_number=turn_number,
     )
@@ -640,133 +1029,39 @@ def build_npc_agency_plan(
     npc_context_bundle: dict[str, Any] | None = None,
     npc_w5_situations: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
-    responders = _ordered_responder_rows(
-        selected_responder_set,
+    context = _selected_plan_actor_context(
+        selected_responder_set=selected_responder_set,
         preferred_reaction_order_ids=preferred_reaction_order_ids,
         actor_lane_context=actor_lane_context,
+        prior_planner_truth=prior_planner_truth,
     )
-    responder_ids = [_actor_id_from_responder(row) for row in responders]
-    responder_ids = dedupe_strings(responder_ids)
-    if not responder_ids:
+    if context is None:
         return None
 
-    primary_id = responder_ids[0]
-    secondary_ids = responder_ids[1:]
-    first_secondary_id = secondary_ids[0] if secondary_ids else None
-    unresolved_actor_ids = [
-        actor_id
-        for actor_id in _unresolved_actor_ids_from_prior(prior_planner_truth)
-        if actor_id in responder_ids
-        and not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
-    ]
-    required_actor_ids = dedupe_strings(
-        [primary_id, *([first_secondary_id] if first_secondary_id else []), *unresolved_actor_ids]
-    )
     minds = _mind_by_actor(character_mind_records or [])
     w5_situations = _w5_situation_by_actor(npc_w5_situations)
-    evidence = _source_evidence(
+    evidence = _simulation_evidence(
         selected_scene_function=selected_scene_function,
         semantic_move_record=semantic_move_record,
         social_state_record=social_state_record,
         prior_planner_truth=prior_planner_truth,
+        npc_context_bundle=npc_context_bundle,
+        w5_situations=w5_situations,
     )
-    if isinstance(npc_context_bundle, dict):
-        evidence.append(
-            {
-                "source": "npc_context_bundle",
-                "field": "retrieval_lanes",
-                "allowed_memory_lanes": list(
-                    npc_context_bundle.get("retrieval_plan", {}).get("allowed_memory_lanes") or []
-                ),
-                "blocked_memory_lanes": list(
-                    npc_context_bundle.get("retrieval_plan", {}).get("blocked_memory_lanes") or []
-                ),
-            }
-        )
-    if w5_situations:
-        evidence.append(
-            {
-                "source": "w5_npc_projection",
-                "field": "actor_w5_situation",
-                "actor_ids": sorted(w5_situations.keys()),
-            }
-        )
-
-    initiatives: list[dict[str, Any]] = []
-    for actor_id in responder_ids:
-        responder_row = next((row for row in responders if _actor_id_from_responder(row) == actor_id), {})
-        role = clean_text(responder_row.get("role")) or (
-            "primary_responder" if actor_id == primary_id else "secondary_reactor"
-        )
-        intent, requirement_scope, required, target_actor_id = _intent_for_actor(
-            actor_id=actor_id,
-            primary_id=primary_id,
-            first_secondary_id=first_secondary_id,
-            role=role,
-            selected_scene_function=selected_scene_function,
-            unresolved_actor_ids=unresolved_actor_ids,
-        )
-        mind = minds.get(actor_id, {})
-        initiatives.append(
-            {
-                "actor_id": actor_id,
-                "role": role,
-                "intent": intent,
-                "allowed_block_types": list(DEFAULT_ALLOWED_BLOCK_TYPES),
-                "allowed_output_lanes": list(DEFAULT_ALLOWED_OUTPUT_LANES),
-                "target_actor_id": target_actor_id if target_actor_id != actor_id else None,
-                "required": bool(required or actor_id in required_actor_ids),
-                "requirement_scope": requirement_scope,
-                "resolution_policy": "visible_spoken_or_action_lane_required"
-                if actor_id in required_actor_ids
-                else "optional_visible_or_initiative_event",
-                "resolved": False,
-                "tactical_posture": mind.get("tactical_posture"),
-                "pressure_response_bias": mind.get("pressure_response_bias"),
-                "source_evidence": list(evidence),
-                **(
-                    {"actor_w5_situation": w5_situations[actor_id]}
-                    if actor_id in w5_situations
-                    else {}
-                ),
-            }
-        )
-
-    plan = {
-        "contract": "npc_agency_plan.v1",
-        "schema_version": "npc_agency_plan.v1",
-        "contract_status": NPC_AGENCY_PLAN_PARTIAL_STATUS,
-        "implementation_status": NPC_AGENCY_PLAN_PARTIAL_STATUS,
-        "not_full_multi_agent_simulation": True,
-        "planner_contract": NPC_AGENCY_PLANNER_CONTRACT,
-        "planner_status": NPC_AGENCY_PLAN_PARTIAL_STATUS,
-        "planner_scope": "bounded_selected_responder_agency",
-        "turn_number": turn_number,
-        "primary_responder_id": primary_id,
-        "secondary_responder_ids": secondary_ids,
-        "required_actor_ids": required_actor_ids,
-        "minimum_secondary_initiatives_required": 1 if secondary_ids else 0,
-        "resolution_policy": {
-            "required_lanes": ["spoken_lines", "action_lines"],
-            "initiative_event_only_counts_as_realized": False,
-            "minimum_secondary_initiatives_required": 1 if secondary_ids else 0,
-        },
-        "planner_rationale_codes": _rationale_codes(
-            responder_count=len(responder_ids),
-            selected_scene_function=selected_scene_function,
-            semantic_move_record=semantic_move_record,
-            social_state_record=social_state_record,
-            unresolved_actor_ids=unresolved_actor_ids,
-        ),
-        "source_evidence": evidence,
-        "unresolved_actor_ids_from_prior": unresolved_actor_ids,
-        "npc_initiatives": initiatives,
-    }
-    return normalize_npc_agency_plan(
-        plan,
-        selected_primary_responder_id=primary_id,
-        selected_secondary_responder_ids=secondary_ids,
-        preferred_reaction_order_ids=responder_ids,
-        actor_lane_context=actor_lane_context,
+    initiatives = _selected_plan_initiatives(
+        context=context,
+        selected_scene_function=selected_scene_function,
+        minds=minds,
+        evidence=evidence,
+        w5_situations=w5_situations,
+    )
+    return _selected_plan_payload(
+        context=context,
         turn_number=turn_number,
+        selected_scene_function=selected_scene_function,
+        semantic_move_record=semantic_move_record,
+        social_state_record=social_state_record,
+        evidence=evidence,
+        initiatives=initiatives,
+        actor_lane_context=actor_lane_context,
     )

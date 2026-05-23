@@ -1,6 +1,6 @@
 {
   "kind": "despaghettify_check",
-  "generated_at_utc": "2026-05-22T19:50:52Z",
+  "generated_at_utc": "2026-05-23T09:10:16Z",
   "repo_root": "/mnt/d/WorldOfShadows",
   "archive_sync": {
     "changed": false,
@@ -9,27 +9,21 @@
     "message": "already normalized"
   },
   "ast": {
-    "total_functions": 10638,
-    "total_python_files": 1550,
-    "count_over_50_lines": 794,
-    "count_over_100_lines": 187,
-    "count_nesting_ge_3": 589,
+    "total_functions": 10653,
+    "total_python_files": 1552,
+    "count_over_50_lines": 793,
+    "count_over_100_lines": 186,
+    "count_nesting_ge_3": 588,
     "count_nesting_ge_4": 178,
     "count_nesting_ge_5": 67,
     "count_nesting_ge_6": 16,
-    "count_functions_magic_int_literals_ge_5": 103,
+    "count_functions_magic_int_literals_ge_5": 101,
     "count_functions_duplicate_name_across_files": 1516,
-    "count_functions_control_flow_heavy": 778,
+    "count_functions_control_flow_heavy": 776,
     "c1_files_in_import_cycles_pct": 0.7421,
     "c1_import_graph_files": 539,
     "c1_files_in_cycles": 4,
     "top12_longest": [
-      {
-        "name": "test_summarize_runtime_aspect_matrix_reads_ledger_from_path_summary",
-        "lines": 558,
-        "nest_depth": 1,
-        "path": "tools/mcp_server/tests/test_langfuse_verify_tools.py"
-      },
       {
         "name": "run_visible_render",
         "lines": 340,
@@ -95,6 +89,12 @@
         "lines": 221,
         "nest_depth": 6,
         "path": "ai_stack/story_runtime/player_narrative_cards.py"
+      },
+      {
+        "name": "_execute_turn_locked",
+        "lines": 214,
+        "nest_depth": 2,
+        "path": "world-engine/app/story_runtime/manager/turn_execution.py"
       }
     ],
     "top6_nesting": [
@@ -164,92 +164,92 @@
     "schema_version": 1,
     "source": "ast_heuristic_v2",
     "category_scores": {
-      "C1": 10.984,
+      "C1": 10.952,
       "C2": 47.270757595695144,
-      "C3": 99.71020451067766,
-      "C4": 73.90654364854693,
-      "C5": 40.64859900670081,
-      "C6": 50.497137406372886,
-      "C7": 64.81163293194048
+      "C3": 99.7010054143687,
+      "C4": 73.81292591049619,
+      "C5": 40.59710925077291,
+      "C6": 50.26169465014591,
+      "C7": 64.80565351933966
     },
     "score": {
       "legend_de": "``trigger_v2`` = Heuristik v2 (0\u2026100, saturierend); **kein** Balkenvergleich, nur beratend. ``anteil_pct`` = operationaler Mess-Anteil in % (``literal_rates.condition_shares_pct``); **Balken** / ``M7_ref`` aus ``spaghetti-setup`` gelten **nur** hier. **C1** = Prozent der Dateien unter ``backend/app`` im Importgraph; **C2\u2013C7** = Prozent der gemessenen Funktionen. ``m7_trigger_v2`` / ``m7_anteil_pct_gewichtet``: gleiche ``weights``.",
       "categories": {
         "C1": {
-          "trigger_v2": 10.984,
+          "trigger_v2": 10.952,
           "anteil_pct": 0.7421
         },
         "C2": {
           "trigger_v2": 47.2708,
-          "anteil_pct": 1.6732
+          "anteil_pct": 1.6709
         },
         "C3": {
-          "trigger_v2": 99.7102,
-          "anteil_pct": 1.7578
+          "trigger_v2": 99.701,
+          "anteil_pct": 1.746
         },
         "C4": {
-          "trigger_v2": 73.9065,
-          "anteil_pct": 7.4638
+          "trigger_v2": 73.8129,
+          "anteil_pct": 7.4439
         },
         "C5": {
-          "trigger_v2": 40.6486,
-          "anteil_pct": 0.9682
+          "trigger_v2": 40.5971,
+          "anteil_pct": 0.9481
         },
         "C6": {
-          "trigger_v2": 50.4971,
-          "anteil_pct": 14.2508
+          "trigger_v2": 50.2617,
+          "anteil_pct": 14.2307
         },
         "C7": {
-          "trigger_v2": 64.8116,
-          "anteil_pct": 7.3134
+          "trigger_v2": 64.8057,
+          "anteil_pct": 7.2843
         }
       },
-      "m7_trigger_v2": 52.1643,
-      "m7_anteil_pct_gewichtet": 4.1211
+      "m7_trigger_v2": 52.1051,
+      "m7_anteil_pct_gewichtet": 4.1083
     },
     "literal_rates": {
-      "total_functions_measured": 10638,
-      "total_python_files_measured": 1550,
-      "functions_over_100_lines_pct": 1.7578,
-      "functions_over_50_lines_pct": 7.4638,
-      "functions_nesting_ge_6_pct": 0.1504,
-      "over_100_lines_among_over_50_lines_pct": 23.5516,
+      "total_functions_measured": 10653,
+      "total_python_files_measured": 1552,
+      "functions_over_100_lines_pct": 1.746,
+      "functions_over_50_lines_pct": 7.4439,
+      "functions_nesting_ge_6_pct": 0.1502,
+      "over_100_lines_among_over_50_lines_pct": 23.4552,
       "condition_shares_pct": {
         "C1": 0.7421,
-        "C2": 1.6732,
-        "C3": 1.7578,
-        "C4": 7.4638,
-        "C5": 0.9682,
-        "C6": 14.2508,
-        "C7": 7.3134
+        "C2": 1.6709,
+        "C3": 1.746,
+        "C4": 7.4439,
+        "C5": 0.9481,
+        "C6": 14.2307,
+        "C7": 7.2843
       },
       "c1_import_graph_files": 539,
       "c1_files_in_cycles": 4
     },
     "plain_language_de": {
       "C1": "Anteil der 539 analysierten Python-Dateien unter ``backend/app``, die in einem Importzyklus liegen (nur explizite ``app.*``-Kanten, v1): 0.74 % (4 Dateien).",
-      "C2": "Anteil der 10638 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.67 %.",
-      "C3": "Anteil der 10638 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.76 %.",
-      "C4": "Anteil der 10638 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.46 %.",
-      "C5": "Anteil der 10638 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.97 %.",
-      "C6": "Anteil der 10638 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 14.25 %.",
-      "C7": "Anteil der 10638 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 7.31 %."
+      "C2": "Anteil der 10653 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.67 %.",
+      "C3": "Anteil der 10653 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.75 %.",
+      "C4": "Anteil der 10653 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.44 %.",
+      "C5": "Anteil der 10653 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.95 %.",
+      "C6": "Anteil der 10653 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 14.23 %.",
+      "C7": "Anteil der 10653 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 7.28 %."
     },
     "metric_a": {
       "id": "share_weighted_m7",
       "description_de": "Gewichtetes Mittel der ``condition_shares_pct``; **Trigger-Policy**-Komposit (Vergleich mit ``M7_ref`` / Balken f\u00fcr **Anteil %**, nicht f\u00fcr ``m7`` Trigger).",
       "category_scores": {
         "C1": 0.7421,
-        "C2": 1.6732,
-        "C3": 1.7578,
-        "C4": 7.4638,
-        "C5": 0.9682,
-        "C6": 14.2508,
-        "C7": 7.3134
+        "C2": 1.6709,
+        "C3": 1.746,
+        "C4": 7.4439,
+        "C5": 0.9481,
+        "C6": 14.2307,
+        "C7": 7.2843
       },
-      "m7": 4.1211
+      "m7": 4.1083
     },
-    "m7": 52.1643,
+    "m7": 52.1051,
     "m7_ref": 4.24,
     "trigger_policy_basis": "anteil_pct",
     "trigger_bars": {

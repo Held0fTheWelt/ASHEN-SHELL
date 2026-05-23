@@ -676,6 +676,464 @@ def _finalize_resolution_envelope(
     }
 
 
+def _player_action_input_context(
+    interpreted_input: dict[str, Any],
+    runtime_projection: dict[str, Any],
+) -> tuple[str, str, str | None]:
+    pik = str(interpreted_input.get("player_input_kind") or "ambiguous").strip().lower() or "ambiguous"
+    actor_id = str(interpreted_input.get("actor_id") or interpreted_input.get("player_input_actor_id") or "").strip()
+    selected_actor_id = str(
+        runtime_projection.get("human_actor_id")
+        or runtime_projection.get("selected_player_role")
+        or actor_id
+        or ""
+    ).strip() or None
+    return pik, actor_id, selected_actor_id
+
+
+def _projection_rule_id(interpreted_input: dict[str, Any]) -> str | None:
+    return str(interpreted_input.get("deterministic_intent_rule") or "").strip() or None
+
+
+def _control_resolution_envelope(
+    *,
+    raw_text: str,
+    pik: str,
+    interpreted_input: dict[str, Any],
+    actor_id: str,
+    selected_actor_id: str | None,
+) -> dict[str, Any]:
+    aff = AffordanceResolutionContract(
+        status="skipped",
+        action_commit_policy="no_commit",
+        reason="meta_input_control_path",
+        resolved_target=None,
+        target_resolution_source="meta_control_path",
+        access_status=None,
+    )
+    frame = _make_frame(
+        raw_text=raw_text,
+        pik=pik,
+        action_kind="control",
+        verb="meta",
+        speech_text=None,
+        target_query=None,
+        rt=None,
+        aff=aff,
+        narrator_expected=False,
+        npc_expected=False,
+        actor_id=actor_id,
+        selected_actor_id=selected_actor_id,
+        validation_surface="meta_control_path",
+        projection_rule_id=_projection_rule_id(interpreted_input),
+    )
+    return _finalize_resolution_envelope(
+        frame=frame,
+        aff=aff,
+        scene_affordance_model={},
+        semantic_payload=None,
+    )
+
+
+def _semantic_required_resolution_envelope(
+    *,
+    raw_text: str,
+    pik: str,
+    interpreted_input: dict[str, Any],
+    actor_id: str,
+    selected_actor_id: str | None,
+    affordance_model: dict[str, Any],
+    session_input_language: str | None,
+    session_output_language: str | None,
+) -> dict[str, Any]:
+    aff = AffordanceResolutionContract(
+        status="ambiguous",
+        action_commit_policy="needs_clarification",
+        reason="semantic_ai_resolution_required",
+        resolved_target=None,
+        target_resolution_source="semantic_ai_resolution_required",
+        access_status=None,
+    )
+    frame = _make_frame(
+        raw_text=raw_text,
+        pik=pik,
+        action_kind="semantic_resolution_required",
+        verb="semantic_resolution_required",
+        speech_text=None,
+        target_query=None,
+        rt=None,
+        aff=aff,
+        narrator_expected=True,
+        npc_expected=False,
+        actor_id=actor_id,
+        selected_actor_id=selected_actor_id,
+        validation_surface="semantic_ai_resolution_required",
+        projection_rule_id=_projection_rule_id(interpreted_input),
+        session_input_language=session_input_language,
+        session_output_language=session_output_language,
+    )
+    return _finalize_resolution_envelope(
+        frame=frame,
+        aff=aff,
+        scene_affordance_model=affordance_model,
+        semantic_payload=None,
+    )
+
+
+def _speech_resolution_envelope(
+    *,
+    raw_text: str,
+    pik: str,
+    actor_id: str,
+    selected_actor_id: str | None,
+    affordance_model: dict[str, Any],
+    session_input_language: str | None,
+    session_output_language: str | None,
+) -> dict[str, Any]:
+    aff = AffordanceResolutionContract(
+        status="allowed",
+        action_commit_policy="commit_speech",
+        reason=None,
+        resolved_target=None,
+        target_resolution_source="speech_turn",
+        access_status=None,
+    )
+    frame = _make_frame(
+        raw_text=raw_text,
+        pik=pik,
+        action_kind="speech",
+        verb="utterance",
+        speech_text=str(raw_text or "").strip(),
+        target_query=None,
+        rt=None,
+        aff=aff,
+        narrator_expected=False,
+        npc_expected=True,
+        actor_id=actor_id,
+        selected_actor_id=selected_actor_id,
+        validation_surface="speech_without_action_resolution",
+        session_input_language=session_input_language,
+        session_output_language=session_output_language,
+    )
+    return _finalize_resolution_envelope(
+        frame=frame,
+        aff=aff,
+        scene_affordance_model=affordance_model,
+        semantic_payload=None,
+    )
+
+
+def _semantic_action_fields(
+    *,
+    semantic: dict[str, Any],
+    pik: str,
+    interpreted_input: dict[str, Any],
+) -> dict[str, Any]:
+    resolved_pik = str(semantic.get("player_input_kind") or pik).strip().lower() or pik
+    speech_text = str(semantic.get("speech_text") or "").strip() or None
+    if is_mixed_player_input_kind(resolved_pik) and not speech_text:
+        captures = interpreted_input.get("projection_captures")
+        if isinstance(captures, dict):
+            speech_text = str(captures.get("speech") or "").strip() or None
+    return {
+        "pik": resolved_pik,
+        "normalized_english_text": str(
+            semantic.get("normalized_english_text")
+            or semantic.get("english_text")
+            or semantic.get("internal_english_text")
+            or ""
+        ).strip() or None,
+        "action_kind": str(
+            semantic.get("normalized_english_action_kind")
+            or semantic.get("action_kind")
+            or "semantic_action"
+        ).strip() or "semantic_action",
+        "verb": str(semantic.get("normalized_english_verb") or semantic.get("verb") or "semantic_action").strip()
+        or "semantic_action",
+        "speech_text": speech_text,
+        "target_query": str(
+            semantic.get("target_query_english")
+            or semantic.get("english_target_query")
+            or semantic.get("target_query")
+            or ""
+        ).strip() or None,
+        "target_id": str(semantic.get("resolved_target_id") or semantic.get("target_id") or "").strip() or None,
+        "target_type": str(semantic.get("resolved_target_type") or semantic.get("target_type") or "").strip() or None,
+    }
+
+
+def _semantic_target_resolution(
+    *,
+    semantic: dict[str, Any],
+    affordance_model: dict[str, Any],
+    fields: dict[str, Any],
+) -> dict[str, Any]:
+    row, row_type = _row_by_id(affordance_model, fields["target_id"], fields["target_type"])
+    semantic_inference: dict[str, Any] | None = None
+    if row:
+        access = _access(row)
+        status, policy = _status_policy_for_access(access)
+        tid = str(row.get("id") or fields["target_id"] or "").strip() or None
+        ttyp = row_type or fields["target_type"]
+        source = "ai_semantic_resolution.content_id"
+    else:
+        status, policy, tid, ttyp, source, access = _resolve_query(fields["target_query"], affordance_model)
+        if status == "unknown_target":
+            inferred = _inferred_target_from_semantics(
+                semantic,
+                affordance_model=affordance_model,
+                action_kind=fields["action_kind"],
+                target_query=fields["target_query"],
+                target_type=fields["target_type"],
+            )
+            if inferred:
+                tid, ttyp, status, policy, semantic_inference = inferred
+                source = "ai_semantic_resolution.plausible_inference"
+                access = "inferred_plausible"
+    ai_policy = str(semantic.get("commit_policy") or "").strip()
+    if status in {"unknown_target", "ambiguous"}:
+        policy = "needs_clarification"
+    elif ai_policy in {"commit_action", "commit_speech", "no_commit", "needs_clarification", "recover_or_reject"}:
+        policy = ai_policy
+    return {
+        "row": row,
+        "status": status,
+        "policy": policy,
+        "target_id": tid,
+        "target_type": ttyp,
+        "source": source,
+        "access": access,
+        "semantic_inference": semantic_inference,
+    }
+
+
+def _semantic_source_resolution(
+    *,
+    semantic: dict[str, Any],
+    affordance_model: dict[str, Any],
+    confidence: str,
+) -> tuple[str | None, ResolvedTarget | None, str | None]:
+    source_query = str(
+        semantic.get("source_query_english")
+        or semantic.get("english_source_query")
+        or semantic.get("source_query")
+        or ""
+    ).strip() or None
+    source_id = str(semantic.get("resolved_source_id") or "").strip() or None
+    if not source_id:
+        return source_query, None, None
+    source_row, source_type = _row_by_id(affordance_model, source_id, None)
+    if not source_row:
+        return source_query, None, None
+    return (
+        source_query,
+        _resolved_target(
+            target_id=str(source_row.get("id") or source_id),
+            target_type=source_type,
+            matched_alias=source_query,
+            confidence=confidence,
+            access=_access(source_row),
+        ),
+        "ai_semantic_resolution.content_id",
+    )
+
+
+def _target_location_hint(semantic: dict[str, Any]) -> str | None:
+    return (
+        _semantic_text(
+            semantic,
+            "target_location",
+            "containing_location_id",
+            "containing_location",
+            "actor_location_id",
+        )
+        or None
+    )
+
+
+def _evidence_target_location(
+    *,
+    target_id: str | None,
+    target_type: str | None,
+    target_location_hint: str | None,
+    row: dict[str, Any] | None,
+    affordance_model: dict[str, Any],
+) -> str | None:
+    if str(target_type or "").strip().lower() == "location":
+        return target_id
+    if target_location_hint:
+        return target_location_hint
+    if _target_location_hint_from_row(row):
+        return _target_location_hint_from_row(row)
+    if str(target_type or "").strip().lower() in {"object", "actor"}:
+        return _current_area_from_affordance_model(affordance_model)
+    return None
+
+
+def _semantic_for_resolution_contract(
+    *,
+    semantic: dict[str, Any],
+    affordance_model: dict[str, Any],
+    target_type: str | None,
+    target_location: str | None,
+    action_commit_policy: str,
+    affordance_status: str,
+) -> dict[str, Any]:
+    semantic_for_contract = dict(semantic)
+    semantic_for_contract["presence_breaks_gathering_evidence"] = (
+        _derive_presence_breaks_gathering_evidence(
+            semantic=semantic_for_contract,
+            affordance_model=affordance_model,
+            target_type=target_type,
+            target_location=target_location,
+            action_commit_policy=action_commit_policy,
+            affordance_status=affordance_status,
+        )
+    )
+    return semantic_for_contract
+
+
+def _semantic_action_resolution_envelope(
+    *,
+    raw_text: str,
+    pik: str,
+    interpreted_input: dict[str, Any],
+    actor_id: str,
+    selected_actor_id: str | None,
+    affordance_model: dict[str, Any],
+    semantic: dict[str, Any],
+    session_input_language: str | None,
+    session_output_language: str | None,
+) -> dict[str, Any]:
+    fields = _semantic_action_fields(semantic=semantic, pik=pik, interpreted_input=interpreted_input)
+    target = _semantic_target_resolution(semantic=semantic, affordance_model=affordance_model, fields=fields)
+    confidence = str(semantic.get("confidence") or ("high" if target["target_id"] else "low")).strip() or "low"
+    canonical_path_effect = _canonical_path_effect_from_policy(
+        semantic,
+        affordance_model,
+        action_commit_policy=target["policy"],
+    )
+    action_kind, verb = _normalize_grounded_target_role(
+        player_input_kind=fields["pik"],
+        action_kind=fields["action_kind"],
+        verb=fields["verb"],
+        resolved_target_type=target["target_type"],
+        action_commit_policy=target["policy"],
+    )
+    rt = _resolved_target(
+        target_id=target["target_id"],
+        target_type=target["target_type"],
+        matched_alias=fields["target_query"],
+        confidence=confidence,
+        access=target["access"],
+    )
+    aff = AffordanceResolutionContract(
+        status=target["status"],
+        action_commit_policy=target["policy"],
+        reason=str(semantic.get("reason") or semantic.get("reasoning_summary") or "").strip() or None,
+        resolved_target=rt,
+        target_resolution_source=target["source"],
+        access_status=target["access"],
+    )
+    return _finalize_semantic_action_resolution(
+        raw_text=raw_text,
+        interpreted_input=interpreted_input,
+        actor_id=actor_id,
+        selected_actor_id=selected_actor_id,
+        affordance_model=affordance_model,
+        semantic=semantic,
+        fields=fields,
+        target=target,
+        confidence=confidence,
+        action_kind=action_kind,
+        verb=verb,
+        rt=rt,
+        aff=aff,
+        canonical_path_effect=canonical_path_effect,
+        session_input_language=session_input_language,
+        session_output_language=session_output_language,
+    )
+
+
+def _finalize_semantic_action_resolution(
+    *,
+    raw_text: str,
+    interpreted_input: dict[str, Any],
+    actor_id: str,
+    selected_actor_id: str | None,
+    affordance_model: dict[str, Any],
+    semantic: dict[str, Any],
+    fields: dict[str, Any],
+    target: dict[str, Any],
+    confidence: str,
+    action_kind: str,
+    verb: str,
+    rt: ResolvedTarget | None,
+    aff: AffordanceResolutionContract,
+    canonical_path_effect: str | None,
+    session_input_language: str | None,
+    session_output_language: str | None,
+) -> dict[str, Any]:
+    source_query, resolved_source, source_resolution_source = _semantic_source_resolution(
+        semantic=semantic,
+        affordance_model=affordance_model,
+        confidence=confidence,
+    )
+    narrator_expected = bool(semantic.get("narrator_response_expected", interpreted_input.get("narrator_response_expected", True)))
+    npc_expected = bool(semantic.get("npc_response_expected", interpreted_input.get("npc_response_expected", False)))
+    target_location_hint = _target_location_hint(semantic)
+    evidence_target_location = _evidence_target_location(
+        target_id=target["target_id"],
+        target_type=target["target_type"],
+        target_location_hint=target_location_hint,
+        row=target["row"],
+        affordance_model=affordance_model,
+    )
+    semantic_for_contract = _semantic_for_resolution_contract(
+        semantic=semantic,
+        affordance_model=affordance_model,
+        target_type=target["target_type"],
+        target_location=evidence_target_location,
+        action_commit_policy=target["policy"],
+        affordance_status=target["status"],
+    )
+    frame = _make_frame(
+        raw_text=raw_text,
+        pik=fields["pik"],
+        action_kind=action_kind,
+        verb=verb,
+        speech_text=fields["speech_text"],
+        target_query=fields["target_query"],
+        rt=rt,
+        aff=aff,
+        narrator_expected=narrator_expected,
+        npc_expected=npc_expected,
+        actor_id=actor_id,
+        selected_actor_id=selected_actor_id,
+        source_query=source_query,
+        resolved_source=resolved_source,
+        source_resolution_source=source_resolution_source,
+        validation_surface="ai_semantic_resolution",
+        projection_rule_id=_projection_rule_id(interpreted_input),
+        normalized_english_text=fields["normalized_english_text"],
+        session_input_language=session_input_language,
+        session_output_language=session_output_language,
+        semantic_inference=target["semantic_inference"],
+        canonical_path_effect=canonical_path_effect,
+    )
+    kanon_break = _semantic_bool(semantic, "kanon_break", "is_kanon_break", "canon_break")
+    kanon_break_reason = _semantic_text(semantic, "kanon_break_reason", "canon_break_reason") or None
+    return _finalize_resolution_envelope(
+        frame=frame,
+        aff=aff,
+        scene_affordance_model=affordance_model,
+        semantic_payload=semantic_for_contract,
+        kanon_break=kanon_break,
+        kanon_break_reason=kanon_break_reason if kanon_break else None,
+        target_location_hint=target_location_hint,
+    )
+
+
 def resolve_player_action(
     *,
     raw_text: str,
@@ -688,45 +1146,18 @@ def resolve_player_action(
     environment_model: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     del player_local_context
-    pik = str(interpreted_input.get("player_input_kind") or "ambiguous").strip().lower() or "ambiguous"
-    actor_id = str(interpreted_input.get("actor_id") or interpreted_input.get("player_input_actor_id") or "").strip()
-    selected_actor_id = str(
-        runtime_projection.get("human_actor_id")
-        or runtime_projection.get("selected_player_role")
-        or actor_id
-        or ""
-    ).strip() or None
+    pik, actor_id, selected_actor_id = _player_action_input_context(
+        interpreted_input,
+        runtime_projection,
+    )
 
     if is_non_story_control_player_input_kind(pik):
-        aff = AffordanceResolutionContract(
-            status="skipped",
-            action_commit_policy="no_commit",
-            reason="meta_input_control_path",
-            resolved_target=None,
-            target_resolution_source="meta_control_path",
-            access_status=None,
-        )
-        frame = _make_frame(
+        return _control_resolution_envelope(
             raw_text=raw_text,
             pik=pik,
-            action_kind="control",
-            verb="meta",
-            speech_text=None,
-            target_query=None,
-            rt=None,
-            aff=aff,
-            narrator_expected=False,
-            npc_expected=False,
+            interpreted_input=interpreted_input,
             actor_id=actor_id,
             selected_actor_id=selected_actor_id,
-            validation_surface="meta_control_path",
-            projection_rule_id=str(interpreted_input.get("deterministic_intent_rule") or "").strip() or None,
-        )
-        return _finalize_resolution_envelope(
-            frame=frame,
-            aff=aff,
-            scene_affordance_model={},
-            semantic_payload=None,
         )
 
     affordance_model = build_scene_affordance_model(
@@ -743,250 +1174,36 @@ def resolve_player_action(
     session_input_language, session_output_language = _contract_input_languages(interpreted_input)
 
     if not semantic and not is_speech_like_player_input_kind(pik):
-        aff = AffordanceResolutionContract(
-            status="ambiguous",
-            action_commit_policy="needs_clarification",
-            reason="semantic_ai_resolution_required",
-            resolved_target=None,
-            target_resolution_source="semantic_ai_resolution_required",
-            access_status=None,
-        )
-        frame = _make_frame(
+        return _semantic_required_resolution_envelope(
             raw_text=raw_text,
             pik=pik,
-            action_kind="semantic_resolution_required",
-            verb="semantic_resolution_required",
-            speech_text=None,
-            target_query=None,
-            rt=None,
-            aff=aff,
-            narrator_expected=True,
-            npc_expected=False,
+            interpreted_input=interpreted_input,
             actor_id=actor_id,
             selected_actor_id=selected_actor_id,
-            validation_surface="semantic_ai_resolution_required",
-            projection_rule_id=str(interpreted_input.get("deterministic_intent_rule") or "").strip() or None,
+            affordance_model=affordance_model,
             session_input_language=session_input_language,
             session_output_language=session_output_language,
-        )
-        return _finalize_resolution_envelope(
-            frame=frame,
-            aff=aff,
-            scene_affordance_model=affordance_model,
-            semantic_payload=None,
         )
 
     if is_speech_like_player_input_kind(pik) and not semantic:
-        aff = AffordanceResolutionContract(
-            status="allowed",
-            action_commit_policy="commit_speech",
-            reason=None,
-            resolved_target=None,
-            target_resolution_source="speech_turn",
-            access_status=None,
-        )
-        frame = _make_frame(
+        return _speech_resolution_envelope(
             raw_text=raw_text,
             pik=pik,
-            action_kind="speech",
-            verb="utterance",
-            speech_text=str(raw_text or "").strip(),
-            target_query=None,
-            rt=None,
-            aff=aff,
-            narrator_expected=False,
-            npc_expected=True,
             actor_id=actor_id,
             selected_actor_id=selected_actor_id,
-            validation_surface="speech_without_action_resolution",
+            affordance_model=affordance_model,
             session_input_language=session_input_language,
             session_output_language=session_output_language,
         )
-        return _finalize_resolution_envelope(
-            frame=frame,
-            aff=aff,
-            scene_affordance_model=affordance_model,
-            semantic_payload=None,
-        )
 
-    pik = str(semantic.get("player_input_kind") or pik).strip().lower() or pik
-    normalized_english_text = (
-        str(
-            semantic.get("normalized_english_text")
-            or semantic.get("english_text")
-            or semantic.get("internal_english_text")
-            or ""
-        ).strip()
-        or None
-    )
-    action_kind = str(
-        semantic.get("normalized_english_action_kind") or semantic.get("action_kind") or "semantic_action"
-    ).strip() or "semantic_action"
-    verb = str(semantic.get("normalized_english_verb") or semantic.get("verb") or "semantic_action").strip() or "semantic_action"
-    speech_text = str(semantic.get("speech_text") or "").strip() or None
-    if is_mixed_player_input_kind(pik) and not speech_text:
-        caps = interpreted_input.get("projection_captures")
-        if isinstance(caps, dict):
-            speech_text = str(caps.get("speech") or "").strip() or None
-
-    target_query = str(
-        semantic.get("target_query_english")
-        or semantic.get("english_target_query")
-        or semantic.get("target_query")
-        or ""
-    ).strip() or None
-    target_id = str(semantic.get("resolved_target_id") or semantic.get("target_id") or "").strip() or None
-    target_type = str(semantic.get("resolved_target_type") or semantic.get("target_type") or "").strip() or None
-
-    row, row_type = _row_by_id(affordance_model, target_id, target_type)
-    semantic_inference: dict[str, Any] | None = None
-    if row:
-        access = _access(row)
-        status, policy = _status_policy_for_access(access)
-        tid = str(row.get("id") or target_id or "").strip() or None
-        ttyp = row_type or target_type
-        source = "ai_semantic_resolution.content_id"
-    else:
-        status, policy, tid, ttyp, source, access = _resolve_query(target_query, affordance_model)
-        if status == "unknown_target":
-            inferred = _inferred_target_from_semantics(
-                semantic,
-                affordance_model=affordance_model,
-                action_kind=action_kind,
-                target_query=target_query,
-                target_type=target_type,
-            )
-            if inferred:
-                tid, ttyp, status, policy, semantic_inference = inferred
-                source = "ai_semantic_resolution.plausible_inference"
-                access = "inferred_plausible"
-
-    ai_policy = str(semantic.get("commit_policy") or "").strip()
-    if status in {"unknown_target", "ambiguous"}:
-        policy = "needs_clarification"
-    elif ai_policy in {"commit_action", "commit_speech", "no_commit", "needs_clarification", "recover_or_reject"}:
-        policy = ai_policy
-    confidence = str(semantic.get("confidence") or ("high" if tid else "low")).strip() or "low"
-    canonical_path_effect = _canonical_path_effect_from_policy(
-        semantic,
-        affordance_model,
-        action_commit_policy=policy,
-    )
-    action_kind, verb = _normalize_grounded_target_role(
-        player_input_kind=pik,
-        action_kind=action_kind,
-        verb=verb,
-        resolved_target_type=ttyp,
-        action_commit_policy=policy,
-    )
-    rt = _resolved_target(
-        target_id=tid,
-        target_type=ttyp,
-        matched_alias=target_query,
-        confidence=confidence,
-        access=access,
-    )
-    aff = AffordanceResolutionContract(
-        status=status,
-        action_commit_policy=policy,
-        reason=str(semantic.get("reason") or semantic.get("reasoning_summary") or "").strip() or None,
-        resolved_target=rt,
-        target_resolution_source=source,
-        access_status=access,
-    )
-
-    source_query = str(
-        semantic.get("source_query_english")
-        or semantic.get("english_source_query")
-        or semantic.get("source_query")
-        or ""
-    ).strip() or None
-    resolved_source = None
-    source_resolution_source = None
-    source_id = str(semantic.get("resolved_source_id") or "").strip() or None
-    if source_id:
-        source_row, source_type = _row_by_id(affordance_model, source_id, None)
-        if source_row:
-            resolved_source = _resolved_target(
-                target_id=str(source_row.get("id") or source_id),
-                target_type=source_type,
-                matched_alias=source_query,
-                confidence=confidence,
-                access=_access(source_row),
-            )
-            source_resolution_source = "ai_semantic_resolution.content_id"
-
-    narrator_expected = bool(semantic.get("narrator_response_expected", interpreted_input.get("narrator_response_expected", True)))
-    npc_expected = bool(semantic.get("npc_response_expected", interpreted_input.get("npc_response_expected", False)))
-    target_location_hint = (
-        _semantic_text(
-            semantic,
-            "target_location",
-            "containing_location_id",
-            "containing_location",
-            "actor_location_id",
-        )
-        or None
-    )
-    evidence_target_location = (
-        tid
-        if str(ttyp or "").strip().lower() == "location"
-        else target_location_hint
-        or _target_location_hint_from_row(row)
-        or (
-            _current_area_from_affordance_model(affordance_model)
-            if str(ttyp or "").strip().lower() in {"object", "actor"}
-            else None
-        )
-    )
-    semantic_for_contract = dict(semantic)
-    semantic_for_contract["presence_breaks_gathering_evidence"] = (
-        _derive_presence_breaks_gathering_evidence(
-            semantic=semantic_for_contract,
-            affordance_model=affordance_model,
-            target_type=ttyp,
-            target_location=evidence_target_location,
-            action_commit_policy=policy,
-            affordance_status=status,
-        )
-    )
-
-    frame = _make_frame(
+    return _semantic_action_resolution_envelope(
         raw_text=raw_text,
         pik=pik,
-        action_kind=action_kind,
-        verb=verb,
-        speech_text=speech_text,
-        target_query=target_query,
-        rt=rt,
-        aff=aff,
-        narrator_expected=narrator_expected,
-        npc_expected=npc_expected,
+        interpreted_input=interpreted_input,
         actor_id=actor_id,
         selected_actor_id=selected_actor_id,
-        source_query=source_query,
-        resolved_source=resolved_source,
-        source_resolution_source=source_resolution_source,
-        validation_surface="ai_semantic_resolution",
-        projection_rule_id=str(interpreted_input.get("deterministic_intent_rule") or "").strip() or None,
-        normalized_english_text=normalized_english_text,
+        affordance_model=affordance_model,
+        semantic=semantic,
         session_input_language=session_input_language,
         session_output_language=session_output_language,
-        semantic_inference=semantic_inference,
-        canonical_path_effect=canonical_path_effect,
-    )
-    kanon_break = _semantic_bool(semantic, "kanon_break", "is_kanon_break", "canon_break")
-    kanon_break_reason = (
-        _semantic_text(semantic, "kanon_break_reason", "canon_break_reason") or None
-    )
-    if not kanon_break:
-        kanon_break_reason = None
-    return _finalize_resolution_envelope(
-        frame=frame,
-        aff=aff,
-        scene_affordance_model=affordance_model,
-        semantic_payload=semantic_for_contract,
-        kanon_break=kanon_break,
-        kanon_break_reason=kanon_break_reason,
-        target_location_hint=target_location_hint,
     )
