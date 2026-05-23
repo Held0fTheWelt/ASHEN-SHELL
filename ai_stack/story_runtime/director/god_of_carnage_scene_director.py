@@ -1111,52 +1111,20 @@ def _semantic_silence_signal(
     return None
 
 
-def build_pacing_and_silence(
-    *,
-    player_input: str,
-    interpreted_move: dict[str, Any],
-    module_id: str,
-    prior_narrative_thread_state: dict[str, Any] | None = None,
-    semantic_move_record: dict[str, Any] | None = None,
-    prior_planner_truth: dict[str, Any] | None = None,
-) -> tuple[str, dict[str, Any]]:
-    """Describe what ``build_pacing_and_silence`` does in one line
-    (verb-led summary for this function).
-    
-    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
-    
-    Args:
-        player_input: ``player_input`` (str); meaning follows the type and call sites.
-        interpreted_move: ``interpreted_move`` (dict[str,
-            Any]); meaning follows the type and call sites.
-        module_id: ``module_id`` (str); meaning follows the type and call sites.
-        prior_narrative_thread_state: bounded committed thread continuity from
-            the story session, if any.
-    
-    Returns:
-        tuple[str, dict[str, Any]]:
-            Returns a value of type ``tuple[str, dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
-    """
-    if module_id != GOC_MODULE_ID:
-        return _finalize_pacing_silence(
-            assert_pacing_mode("standard"),
-            {
-                "mode": assert_silence_brevity_mode("normal"),
-                "reason": "non_goc_slice_default",
-                "source": "non_goc_slice",
-                "silence_kind": "none",
-                "dramatic_function": "not_applicable",
-            },
-        )
+def _non_goc_pacing_silence() -> tuple[str, dict[str, Any]]:
+    return _finalize_pacing_silence(
+        assert_pacing_mode("standard"),
+        {
+            "mode": assert_silence_brevity_mode("normal"),
+            "reason": "non_goc_slice_default",
+            "source": "non_goc_slice",
+            "silence_kind": "none",
+            "dramatic_function": "not_applicable",
+        },
+    )
 
-    sem = semantic_move_record if isinstance(semantic_move_record, dict) else {}
-    sem_move_type = str(sem.get("move_type") or "").strip()
-    subtext = sem.get("subtext") if isinstance(sem.get("subtext"), dict) else {}
-    subtext_function = str(subtext.get("subtext_function") or "").strip()
-    trimmed = player_input.strip()
-    words = [w for w in trimmed.replace(".", " ").split() if w]
-    thin_fragment = len(trimmed) <= 10 and len(words) <= 2 and "?" not in trimmed
 
+def _semantic_boundary_or_threat_pacing(sem_move_type: str) -> tuple[str, dict[str, Any]] | None:
     if sem_move_type == "off_scope_containment":
         return _finalize_pacing_silence(
             assert_pacing_mode("containment"),
@@ -1168,7 +1136,6 @@ def build_pacing_and_silence(
                 "dramatic_function": "contain_boundary",
             },
         )
-
     if sem_move_type == "escalation_threat":
         return _finalize_pacing_silence(
             assert_pacing_mode("standard"),
@@ -1177,104 +1144,159 @@ def build_pacing_and_silence(
                 "reason": "semantic_escalation_threat",
             },
         )
+    return None
+
+
+def _semantic_silence_pacing(
+    *,
+    semantic_silence: dict[str, Any] | None,
+    prior_planner_truth: dict[str, Any] | None,
+) -> tuple[str, dict[str, Any]] | None:
+    if not semantic_silence:
+        return None
+    prior_tension = _has_unresolved_carry_forward_tension(prior_planner_truth)
+    if prior_tension:
+        return _finalize_pacing_silence(
+            assert_pacing_mode("compressed"),
+            build_silence_negative_space_decision(
+                mode=assert_silence_brevity_mode("brief"),
+                reason="silence_withdrawal_upgraded_by_prior_tension",
+                source=str(semantic_silence["source"]),
+                silence_kind="charged_after_tension",
+                dramatic_function="carry_tension",
+                pressure_basis="prior_planner_truth",
+                semantic_move_type=str(semantic_silence.get("semantic_move_type") or "silence_withdrawal"),
+                interpreter_signal=str(semantic_silence.get("interpreter_signal") or ""),
+            ),
+        )
+    return _finalize_pacing_silence(
+        assert_pacing_mode("thin_edge"),
+        build_silence_negative_space_decision(
+            mode=assert_silence_brevity_mode("withheld"),
+            reason="silence_withdrawal",
+            source=str(semantic_silence["source"]),
+            silence_kind=str(semantic_silence["silence_kind"]),
+            dramatic_function="withhold_response",
+            pressure_basis="semantic_move",
+            semantic_move_type=str(semantic_silence.get("semantic_move_type") or "silence_withdrawal"),
+            interpreter_signal=str(semantic_silence.get("interpreter_signal") or ""),
+        ),
+    )
+
+
+def _thin_fragment_pacing(
+    *,
+    sem_move_type: str,
+    subtext_function: str,
+    thin_fragment: bool,
+) -> tuple[str, dict[str, Any]] | None:
+    pressure_moves = {"competing_repair_and_reveal", "direct_accusation", "indirect_provocation"}
+    if sem_move_type in pressure_moves and thin_fragment:
+        return _finalize_pacing_silence(
+            assert_pacing_mode("multi_pressure"),
+            {"mode": assert_silence_brevity_mode("normal"), "reason": "semantic_sparse_pressure_move"},
+        )
+    if subtext_function in {"force_accountability", "raise_pressure", "reveal_under_repair"}:
+        return _finalize_pacing_silence(
+            assert_pacing_mode("multi_pressure"),
+            {"mode": assert_silence_brevity_mode("normal"), "reason": "subtext_pressure_function"},
+        )
+    if subtext_function in {"probe_motive", "test_boundary"} and thin_fragment:
+        return _finalize_pacing_silence(
+            assert_pacing_mode("thin_edge"),
+            {"mode": assert_silence_brevity_mode("brief"), "reason": "subtext_thin_edge_probe_or_boundary"},
+        )
+    if thin_fragment:
+        return _finalize_pacing_silence(
+            assert_pacing_mode("thin_edge"),
+            {"mode": assert_silence_brevity_mode("brief"), "reason": "thin_edge_brevity_pressure"},
+        )
+    return None
+
+
+def _thread_default_pacing(
+    *,
+    sem_move_type: str,
+    prior_narrative_thread_state: dict[str, Any] | None,
+    prior_planner_truth: dict[str, Any] | None,
+) -> tuple[str, dict[str, Any]]:
+    if sem_move_type == "competing_repair_and_reveal":
+        return assert_pacing_mode("multi_pressure"), {
+            "mode": assert_silence_brevity_mode("normal"),
+            "reason": "semantic_repair_and_reveal_compete",
+        }
+    if sem_move_type == "probe_inquiry" and "repair_attempt" in (prior_planner_truth or {}).get("carry_forward_classes", []):
+        return assert_pacing_mode("compressed"), {
+            "mode": assert_silence_brevity_mode("brief"),
+            "reason": "semantic_probe_after_repair",
+        }
+    thread_feedback = _narrative_thread_feedback_signal(prior_narrative_thread_state)
+    thread_pressure = int(thread_feedback.get("thread_pressure_level") or 0)
+    dominant_thread_kind = thread_feedback.get("dominant_thread_kind")
+    if thread_pressure >= 3:
+        return assert_pacing_mode("multi_pressure"), {
+            "mode": assert_silence_brevity_mode("normal"),
+            "reason": "narrative_thread_pressure_multi_pressure",
+        }
+    if dominant_thread_kind == "interpretation_pressure":
+        return assert_pacing_mode("compressed"), {
+            "mode": assert_silence_brevity_mode("brief"),
+            "reason": "narrative_thread_interpretation_pressure",
+        }
+    return assert_pacing_mode("standard"), {
+        "mode": assert_silence_brevity_mode("normal"),
+        "reason": "default_verbal_density",
+    }
+
+
+def build_pacing_and_silence(
+    *,
+    player_input: str,
+    interpreted_move: dict[str, Any],
+    module_id: str,
+    prior_narrative_thread_state: dict[str, Any] | None = None,
+    semantic_move_record: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
+) -> tuple[str, dict[str, Any]]:
+    """Build pacing and silence policy for the GoC turn."""
+    if module_id != GOC_MODULE_ID:
+        return _non_goc_pacing_silence()
+
+    sem = semantic_move_record if isinstance(semantic_move_record, dict) else {}
+    sem_move_type = str(sem.get("move_type") or "").strip()
+    subtext = sem.get("subtext") if isinstance(sem.get("subtext"), dict) else {}
+    subtext_function = str(subtext.get("subtext_function") or "").strip()
+    trimmed = player_input.strip()
+    words = [w for w in trimmed.replace(".", " ").split() if w]
+    thin_fragment = len(trimmed) <= 10 and len(words) <= 2 and "?" not in trimmed
+
+    semantic_pacing = _semantic_boundary_or_threat_pacing(sem_move_type)
+    if semantic_pacing is not None:
+        return semantic_pacing
 
     semantic_silence = _semantic_silence_signal(
         player_input=player_input,
         interpreted_move=interpreted_move,
         semantic_move_record=semantic_move_record,
     )
-    if semantic_silence:
-        prior_tension = _has_unresolved_carry_forward_tension(prior_planner_truth)
-        if prior_tension:
-            return _finalize_pacing_silence(
-                assert_pacing_mode("compressed"),
-                build_silence_negative_space_decision(
-                    mode=assert_silence_brevity_mode("brief"),
-                    reason="silence_withdrawal_upgraded_by_prior_tension",
-                    source=str(semantic_silence["source"]),
-                    silence_kind="charged_after_tension",
-                    dramatic_function="carry_tension",
-                    pressure_basis="prior_planner_truth",
-                    semantic_move_type=str(semantic_silence.get("semantic_move_type") or "silence_withdrawal"),
-                    interpreter_signal=str(semantic_silence.get("interpreter_signal") or ""),
-                ),
-            )
-        return _finalize_pacing_silence(
-            assert_pacing_mode("thin_edge"),
-            build_silence_negative_space_decision(
-                mode=assert_silence_brevity_mode("withheld"),
-                reason="silence_withdrawal",
-                source=str(semantic_silence["source"]),
-                silence_kind=str(semantic_silence["silence_kind"]),
-                dramatic_function="withhold_response",
-                pressure_basis="semantic_move",
-                semantic_move_type=str(semantic_silence.get("semantic_move_type") or "silence_withdrawal"),
-                interpreter_signal=str(semantic_silence.get("interpreter_signal") or ""),
-            ),
-        )
+    silence_pacing = _semantic_silence_pacing(
+        semantic_silence=semantic_silence,
+        prior_planner_truth=prior_planner_truth,
+    )
+    if silence_pacing is not None:
+        return silence_pacing
 
-    if sem_move_type in {
-        "competing_repair_and_reveal",
-        "direct_accusation",
-        "indirect_provocation",
-    } and thin_fragment:
-        return _finalize_pacing_silence(
-            assert_pacing_mode("multi_pressure"),
-            {
-                "mode": assert_silence_brevity_mode("normal"),
-                "reason": "semantic_sparse_pressure_move",
-            },
-        )
-    if subtext_function in {"force_accountability", "raise_pressure", "reveal_under_repair"}:
-        return _finalize_pacing_silence(
-            assert_pacing_mode("multi_pressure"),
-            {
-                "mode": assert_silence_brevity_mode("normal"),
-                "reason": "subtext_pressure_function",
-            },
-        )
-    if subtext_function in {"probe_motive", "test_boundary"} and thin_fragment:
-        return _finalize_pacing_silence(
-            assert_pacing_mode("thin_edge"),
-            {
-                "mode": assert_silence_brevity_mode("brief"),
-                "reason": "subtext_thin_edge_probe_or_boundary",
-            },
-        )
-    if thin_fragment:
-        return _finalize_pacing_silence(
-            assert_pacing_mode("thin_edge"),
-            {
-                "mode": assert_silence_brevity_mode("brief"),
-                "reason": "thin_edge_brevity_pressure",
-            },
-        )
+    thin_pacing = _thin_fragment_pacing(
+        sem_move_type=sem_move_type,
+        subtext_function=subtext_function,
+        thin_fragment=thin_fragment,
+    )
+    if thin_pacing is not None:
+        return thin_pacing
 
-    if sem_move_type == "competing_repair_and_reveal":
-        pacing = assert_pacing_mode("multi_pressure")
-        silence = {"mode": assert_silence_brevity_mode("normal"), "reason": "semantic_repair_and_reveal_compete"}
-    elif sem_move_type == "probe_inquiry" and "repair_attempt" in (prior_planner_truth or {}).get(
-        "carry_forward_classes", []
-    ):
-        pacing = assert_pacing_mode("compressed")
-        silence = {"mode": assert_silence_brevity_mode("brief"), "reason": "semantic_probe_after_repair"}
-    else:
-        thread_feedback = _narrative_thread_feedback_signal(prior_narrative_thread_state)
-        thread_pressure = int(thread_feedback.get("thread_pressure_level") or 0)
-        dominant_thread_kind = thread_feedback.get("dominant_thread_kind")
-        if thread_pressure >= 3:
-            pacing = assert_pacing_mode("multi_pressure")
-            silence = {
-                "mode": assert_silence_brevity_mode("normal"),
-                "reason": "narrative_thread_pressure_multi_pressure",
-            }
-        elif dominant_thread_kind == "interpretation_pressure":
-            pacing = assert_pacing_mode("compressed")
-            silence = {
-                "mode": assert_silence_brevity_mode("brief"),
-                "reason": "narrative_thread_interpretation_pressure",
-            }
-        else:
-            pacing = assert_pacing_mode("standard")
-            silence = {"mode": assert_silence_brevity_mode("normal"), "reason": "default_verbal_density"}
+    pacing, silence = _thread_default_pacing(
+        sem_move_type=sem_move_type,
+        prior_narrative_thread_state=prior_narrative_thread_state,
+        prior_planner_truth=prior_planner_truth,
+    )
     return _finalize_pacing_silence(pacing, silence)

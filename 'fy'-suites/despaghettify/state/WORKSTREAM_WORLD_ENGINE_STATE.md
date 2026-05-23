@@ -1,5 +1,41 @@
 # Workstream: world_engine
 
+## Closed — DS-025 world-engine manager/session split (session 20260523)
+
+| Sub-wave | Outcome | Primary files / symbols | Evidence |
+|----------|---------|--------------------------|----------|
+| w01 | Souffleuse output realization now delegates source projection, fallback result, attempt execution, module-block realization, and module result assembly. | `souffleuse_output_realization.py`; `_realize_souffleuse_output` | Post: `artifacts/workstreams/world_engine/post/session_20260523_DS-025_world_engine_manager_session_comparison.*` |
+| w02 | Opening execution now delegates graph run, state assembly, continuation, canonical-step advancement, and summary construction. | `opening_execution.py`; `_execute_opening_locked` | Same post comparison as w01. |
+| w03 | Session manager initialization/persistence now delegates storage, authority state, runtime state, registry/adapters, retrieval, capability runtime, and persisted-session loading. | `session/manager_init_and_persistence.py`; `__init__` | Same post comparison as w01. |
+| w04 | Shell social-pressure summary now delegates active-pressure label extraction and summary formatting. | `shell_readout/social_pressure_readout.py`; `_active_pressure_summary` | Same post comparison as w01. |
+
+**Gates (final):**
+
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_goc_narrator_path_opening.py world-engine/tests/test_story_runtime_manager_session_layout.py world-engine/tests/test_story_session_persistence.py --tb=short` — 16 passed, 1 warning.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_story_runtime_shell_readout.py world-engine/tests/test_story_runtime_shell_readout_structure.py world-engine/tests/test_story_runtime_environment_state.py --tb=short` — 22 passed.
+- `python -m py_compile` on all changed DS-025 Python files — passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-23T14:33:12Z`.
+
+**Structural delta:** DS-025 target symbols no longer appear in the formal top-12 longest ranking. Current full scan: 11076 functions; L50 803; L100 139; D6 0.
+
+## Closed — DS-022 world-engine branch/session split (session 20260523)
+
+| Sub-wave | Outcome | Primary files / symbols | Evidence |
+|----------|---------|--------------------------|----------|
+| w01 | Branch tree node selection now delegates freshness/context lookup, start/replay/final timeline events, payload assembly, and commit-record persistence. | `branch_selection.py`; `select_branching_tree_node` | Pre: `artifacts/workstreams/world_engine/pre/session_20260523_DS-022_wave_plan.*`; post: `artifacts/workstreams/world_engine/post/session_20260523_DS-022_world_engine_branch_session_comparison.*` |
+| w02 | Story session creation route now delegates Langfuse adapter setup, environment/span setup, session scope, runtime creation, response assembly, and finalization. | `story_session_lifecycle_routes.py`; `create_story_session` | Same post comparison as w01. |
+| w03 | Opening fallback observability now delegates primary-attempt metadata, fallback generation, validation, committed result, ledger, and degradation assembly. | `opening_fallback_observability.py`; `_ldss_opening_fallback_state` | Same post comparison as w01. |
+
+**Gates (final):**
+
+- `python -m py_compile` on changed DS-022 Python files — passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_story_runtime_branching_simulation_tree.py world-engine/tests/test_story_runtime_branching_tree_api.py --tb=short` — 7 passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_ldss_opening_fallback_actor_lane.py --tb=short` — 3 passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_mvp1_experience_identity.py -k 'create_story_session' --tb=short` — 3 passed, 53 deselected.
+- Final `check --with-metrics` — pass, report generated `2026-05-23T13:13:11Z`.
+
+**Structural delta:** `select_branching_tree_node` 198 → 93 AST lines; `create_story_session` 185 → 80; `_ldss_opening_fallback_state` 180 → 27. Current full scan: 10996 functions; L50 804; L100 149; D6 3.
+
 ## Closed — DS-018 world-engine turn API / WebSocket split (session 20260523)
 
 | Sub-wave | Outcome | Primary files / symbols | Evidence |

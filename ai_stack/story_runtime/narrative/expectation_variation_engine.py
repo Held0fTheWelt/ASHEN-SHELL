@@ -121,6 +121,152 @@ def _selected_ids_from(value: Any) -> list[str]:
     return _clean_str_list(value)
 
 
+def _append_disclosure_candidates(candidates: list[dict[str, Any]], disclosure: dict[str, Any]) -> None:
+    for unit_id in _selected_ids_from(disclosure.get("selected_unit_ids"))[:3]:
+        row = _candidate(
+            variation_type=EXPECTATION_VARIATION_BOUNDED_REVEAL,
+            source="information_disclosure_target",
+            field="selected_unit_ids",
+            value=unit_id,
+            priority=90,
+        )
+        if row:
+            candidates.append(row)
+
+
+def _append_irony_candidates(candidates: list[dict[str, Any]], irony: dict[str, Any]) -> None:
+    for opportunity_id in _selected_ids_from(irony.get("selected_opportunity_ids"))[:3]:
+        row = _candidate(
+            variation_type=EXPECTATION_VARIATION_IRONIC_MISREAD,
+            source="dramatic_irony_record",
+            field="selected_opportunity_ids",
+            value=opportunity_id,
+            priority=85,
+        )
+        if row:
+            candidates.append(row)
+
+
+def _selected_consequence_ids(cascade: dict[str, Any]) -> list[str]:
+    selected_consequence_ids = _selected_ids_from(cascade.get("selected_consequence_ids"))
+    if selected_consequence_ids:
+        return selected_consequence_ids
+    items = cascade.get("items") if isinstance(cascade.get("items"), list) else []
+    return [
+        _text(item.get("consequence_id"))
+        for item in items
+        if isinstance(item, dict) and _text(item.get("consequence_id"))
+    ]
+
+
+def _append_consequence_candidates(candidates: list[dict[str, Any]], cascade: dict[str, Any]) -> None:
+    for consequence_id in _selected_consequence_ids(cascade)[:3]:
+        row = _candidate(
+            variation_type=EXPECTATION_VARIATION_CONSEQUENCE_RETURN,
+            source="consequence_cascade_state",
+            field="selected_consequence_ids",
+            value=consequence_id,
+            priority=75,
+        )
+        if row:
+            candidates.append(row)
+
+
+def _append_pacing_candidates(
+    *,
+    candidates: list[dict[str, Any]],
+    plan: dict[str, Any],
+    energy: dict[str, Any],
+    rhythm: dict[str, Any],
+) -> None:
+    transition = _text(energy.get("target_transition")).lower()
+    cadence = _text(rhythm.get("cadence")).lower()
+    scene_function = _text(plan.get("selected_scene_function") or plan.get("scene_function"))
+    if transition not in {"pivot", "interrupt"} and cadence not in {"pivot", "interrupt"}:
+        return
+    row = _candidate(
+        variation_type=EXPECTATION_VARIATION_RESPONDER_HANDOFF
+        if cadence == "interrupt"
+        else EXPECTATION_VARIATION_PRESSURE_REVERSAL,
+        source="pacing_rhythm_target" if cadence else "scene_energy_target",
+        field="cadence" if cadence else "target_transition",
+        value=cadence or transition,
+        priority=70,
+        extra_refs=[
+            ref
+            for ref in (_source_ref("scene_plan_record", "selected_scene_function", scene_function),)
+            if ref
+        ],
+    )
+    if row:
+        candidates.append(row)
+
+
+def _append_social_pressure_candidates(candidates: list[dict[str, Any]], pressure: dict[str, Any]) -> None:
+    pressure_band = _text(pressure.get("target_band") or pressure.get("current_band")).lower()
+    pressure_trend = _text(pressure.get("trend")).lower()
+    if pressure_band != "high" or pressure_trend not in {"rising", "held", "escalating"}:
+        return
+    row = _candidate(
+        variation_type=EXPECTATION_VARIATION_SOCIAL_ALIGNMENT_SHIFT,
+        source="social_pressure_target",
+        field="target_band",
+        value=f"{pressure_band}:{pressure_trend or 'steady'}",
+        priority=65,
+    )
+    if row:
+        candidates.append(row)
+
+
+def _append_sensory_candidates(candidates: list[dict[str, Any]], sensory: dict[str, Any]) -> None:
+    sensory_intensity = _text(sensory.get("intensity")).lower()
+    layer_ids = _selected_ids_from(
+        sensory.get("selected_layer_ids")
+        or sensory.get("required_layer_ids")
+        or [
+            item.get("layer_id")
+            for item in sensory.get("selected_layers", [])
+            if isinstance(item, dict)
+        ]
+    )
+    if sensory_intensity != "high" or not layer_ids:
+        return
+    row = _candidate(
+        variation_type=EXPECTATION_VARIATION_SENSORY_REFRAME,
+        source="sensory_context_target",
+        field="selected_layer_ids",
+        value=layer_ids[0],
+        priority=55,
+    )
+    if row:
+        candidates.append(row)
+
+
+def _append_improv_candidates(candidates: list[dict[str, Any]], improv: dict[str, Any]) -> None:
+    acceptance_mode = _text(improv.get("acceptance_mode"))
+    visible_actor_ids = _selected_ids_from(improv.get("visible_actor_ids"))
+    if acceptance_mode and acceptance_mode != "accept":
+        row = _candidate(
+            variation_type=EXPECTATION_VARIATION_SILENCE_PIVOT,
+            source="improvisational_coherence_target",
+            field="acceptance_mode",
+            value=acceptance_mode,
+            priority=50,
+        )
+    elif len(visible_actor_ids) > 1:
+        row = _candidate(
+            variation_type=EXPECTATION_VARIATION_RESPONDER_HANDOFF,
+            source="improvisational_coherence_target",
+            field="visible_actor_ids",
+            value=visible_actor_ids[1],
+            priority=45,
+        )
+    else:
+        row = None
+    if row:
+        candidates.append(row)
+
+
 def _candidate_rows(
     *,
     scene_plan_record: dict[str, Any] | None,
@@ -156,129 +302,13 @@ def _candidate_rows(
     )
 
     candidates: list[dict[str, Any]] = []
-
-    for unit_id in _selected_ids_from(disclosure.get("selected_unit_ids"))[:3]:
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_BOUNDED_REVEAL,
-            source="information_disclosure_target",
-            field="selected_unit_ids",
-            value=unit_id,
-            priority=90,
-        )
-        if row:
-            candidates.append(row)
-
-    for opportunity_id in _selected_ids_from(irony.get("selected_opportunity_ids"))[:3]:
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_IRONIC_MISREAD,
-            source="dramatic_irony_record",
-            field="selected_opportunity_ids",
-            value=opportunity_id,
-            priority=85,
-        )
-        if row:
-            candidates.append(row)
-
-    selected_consequence_ids = _selected_ids_from(cascade.get("selected_consequence_ids"))
-    if not selected_consequence_ids:
-        items = cascade.get("items") if isinstance(cascade.get("items"), list) else []
-        selected_consequence_ids = [
-            _text(item.get("consequence_id"))
-            for item in items
-            if isinstance(item, dict) and _text(item.get("consequence_id"))
-        ]
-    for consequence_id in selected_consequence_ids[:3]:
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_CONSEQUENCE_RETURN,
-            source="consequence_cascade_state",
-            field="selected_consequence_ids",
-            value=consequence_id,
-            priority=75,
-        )
-        if row:
-            candidates.append(row)
-
-    transition = _text(energy.get("target_transition")).lower()
-    cadence = _text(rhythm.get("cadence")).lower()
-    scene_function = _text(
-        plan.get("selected_scene_function") or plan.get("scene_function")
-    )
-    if transition in {"pivot", "interrupt"} or cadence in {"pivot", "interrupt"}:
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_RESPONDER_HANDOFF
-            if cadence == "interrupt"
-            else EXPECTATION_VARIATION_PRESSURE_REVERSAL,
-            source="pacing_rhythm_target" if cadence else "scene_energy_target",
-            field="cadence" if cadence else "target_transition",
-            value=cadence or transition,
-            priority=70,
-            extra_refs=[
-                ref
-                for ref in (
-                    _source_ref("scene_plan_record", "selected_scene_function", scene_function),
-                )
-                if ref
-            ],
-        )
-        if row:
-            candidates.append(row)
-
-    pressure_band = _text(pressure.get("target_band") or pressure.get("current_band")).lower()
-    pressure_trend = _text(pressure.get("trend")).lower()
-    if pressure_band == "high" and pressure_trend in {"rising", "held", "escalating"}:
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_SOCIAL_ALIGNMENT_SHIFT,
-            source="social_pressure_target",
-            field="target_band",
-            value=f"{pressure_band}:{pressure_trend or 'steady'}",
-            priority=65,
-        )
-        if row:
-            candidates.append(row)
-
-    sensory_intensity = _text(sensory.get("intensity")).lower()
-    layer_ids = _selected_ids_from(
-        sensory.get("selected_layer_ids")
-        or sensory.get("required_layer_ids")
-        or [
-            item.get("layer_id")
-            for item in sensory.get("selected_layers", [])
-            if isinstance(item, dict)
-        ]
-    )
-    if sensory_intensity == "high" and layer_ids:
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_SENSORY_REFRAME,
-            source="sensory_context_target",
-            field="selected_layer_ids",
-            value=layer_ids[0],
-            priority=55,
-        )
-        if row:
-            candidates.append(row)
-
-    acceptance_mode = _text(improv.get("acceptance_mode"))
-    visible_actor_ids = _selected_ids_from(improv.get("visible_actor_ids"))
-    if acceptance_mode and acceptance_mode != "accept":
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_SILENCE_PIVOT,
-            source="improvisational_coherence_target",
-            field="acceptance_mode",
-            value=acceptance_mode,
-            priority=50,
-        )
-        if row:
-            candidates.append(row)
-    elif len(visible_actor_ids) > 1:
-        row = _candidate(
-            variation_type=EXPECTATION_VARIATION_RESPONDER_HANDOFF,
-            source="improvisational_coherence_target",
-            field="visible_actor_ids",
-            value=visible_actor_ids[1],
-            priority=45,
-        )
-        if row:
-            candidates.append(row)
+    _append_disclosure_candidates(candidates, disclosure)
+    _append_irony_candidates(candidates, irony)
+    _append_consequence_candidates(candidates, cascade)
+    _append_pacing_candidates(candidates=candidates, plan=plan, energy=energy, rhythm=rhythm)
+    _append_social_pressure_candidates(candidates, pressure)
+    _append_sensory_candidates(candidates, sensory)
+    _append_improv_candidates(candidates, improv)
 
     deduped: dict[str, dict[str, Any]] = {}
     for row in candidates:

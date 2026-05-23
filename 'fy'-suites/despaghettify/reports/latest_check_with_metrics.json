@@ -1,6 +1,6 @@
 {
   "kind": "despaghettify_check",
-  "generated_at_utc": "2026-05-23T13:13:11Z",
+  "generated_at_utc": "2026-05-23T14:33:12Z",
   "repo_root": "/mnt/d/WorldOfShadows",
   "archive_sync": {
     "changed": false,
@@ -9,114 +9,95 @@
     "message": "already normalized"
   },
   "ast": {
-    "total_functions": 10996,
+    "total_functions": 11076,
     "total_python_files": 1554,
-    "count_over_50_lines": 804,
-    "count_over_100_lines": 149,
-    "count_nesting_ge_3": 580,
-    "count_nesting_ge_4": 161,
-    "count_nesting_ge_5": 50,
-    "count_nesting_ge_6": 3,
-    "count_functions_magic_int_literals_ge_5": 94,
-    "count_functions_duplicate_name_across_files": 1514,
-    "count_functions_control_flow_heavy": 766,
+    "count_over_50_lines": 803,
+    "count_over_100_lines": 139,
+    "count_nesting_ge_3": 573,
+    "count_nesting_ge_4": 154,
+    "count_nesting_ge_5": 47,
+    "count_nesting_ge_6": 0,
+    "count_functions_magic_int_literals_ge_5": 93,
+    "count_functions_duplicate_name_across_files": 1523,
+    "count_functions_control_flow_heavy": 759,
     "c1_files_in_import_cycles_pct": 0.7421,
     "c1_import_graph_files": 539,
     "c1_files_in_cycles": 4,
     "top12_longest": [
       {
-        "name": "_realize_souffleuse_output",
-        "lines": 178,
-        "nest_depth": 3,
-        "path": "world-engine/app/story_runtime/manager/souffleuse_output_realization.py"
-      },
-      {
-        "name": "validate_meta_narrative_awareness_realization",
-        "lines": 178,
-        "nest_depth": 4,
-        "path": "ai_stack/story_runtime/narrative/meta_narrative_awareness_engine.py"
-      },
-      {
-        "name": "_build_adr0041_plan_enforced_runtime_projection_dispatch",
-        "lines": 177,
-        "nest_depth": 4,
-        "path": "ai_stack/story_runtime/runtime_aspect_ledger/authority_preview.py"
-      },
-      {
-        "name": "package_runtime_graph_output",
-        "lines": 176,
-        "nest_depth": 3,
-        "path": "ai_stack/langgraph/langgraph_runtime_package_output.py"
-      },
-      {
-        "name": "_build_vitality_telemetry_v1",
-        "lines": 176,
-        "nest_depth": 1,
-        "path": "ai_stack/telemetry/actor_survival_telemetry.py"
-      },
-      {
-        "name": "build_quality_lab_mcp_handlers",
-        "lines": 175,
-        "nest_depth": 0,
-        "path": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py"
-      },
-      {
-        "name": "_execute_opening_locked",
-        "lines": 170,
-        "nest_depth": 2,
-        "path": "world-engine/app/story_runtime/manager/opening_execution.py"
-      },
-      {
-        "name": "augment_envelope_with_block_stream",
-        "lines": 169,
-        "nest_depth": 1,
-        "path": "ai_stack/story_runtime/block_stream_dual_mode.py"
-      },
-      {
-        "name": "run_validation_seam",
-        "lines": 169,
-        "nest_depth": 3,
-        "path": "ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py"
-      },
-      {
-        "name": "__init__",
-        "lines": 168,
-        "nest_depth": 4,
-        "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py"
-      },
-      {
-        "name": "build_pacing_and_silence",
-        "lines": 167,
-        "nest_depth": 4,
-        "path": "ai_stack/story_runtime/director/god_of_carnage_scene_director.py"
-      },
-      {
-        "name": "_candidate_rows",
+        "name": "build_npc_agency_closure",
         "lines": 166,
+        "nest_depth": 4,
+        "path": "ai_stack/story_runtime/npc_agency/npc_agency_realization.py"
+      },
+      {
+        "name": "build_world_engine_control_center_snapshot",
+        "lines": 164,
+        "nest_depth": 2,
+        "path": "backend/app/services/story_runtime/world_engine_control_center_service.py"
+      },
+      {
+        "name": "get_runtime_dashboard",
+        "lines": 163,
+        "nest_depth": 2,
+        "path": "backend/app/services/ai_stack/ai_engineer_suite/runtime_dashboard.py"
+      },
+      {
+        "name": "extract_w5_snapshot_from_committed_event",
+        "lines": 163,
         "nest_depth": 3,
-        "path": "ai_stack/story_runtime/narrative/expectation_variation_engine.py"
-      }
-    ],
-    "top6_nesting": [
-      {
-        "name": "_extract_relationship_axis_pressure",
-        "lines": 34,
-        "nest_depth": 6,
-        "path": "ai_stack/story_runtime/npc_agency/npc_motivation_score_engine.py"
+        "path": "ai_stack/actor_tracking/extractor.py"
       },
       {
-        "name": "_active_pressure_summary",
-        "lines": 23,
-        "nest_depth": 6,
-        "path": "world-engine/app/shell_readout/social_pressure_readout.py"
+        "name": "classify_voice_semantic_lines",
+        "lines": 159,
+        "nest_depth": 4,
+        "path": "ai_stack/story_runtime/npc_agency/character/character_voice_semantic_classifier.py"
       },
       {
-        "name": "_safe_dict",
-        "lines": 21,
-        "nest_depth": 6,
-        "path": "ai_stack/contracts/hierarchical_memory_contracts.py"
+        "name": "derive_narrative_momentum",
+        "lines": 158,
+        "nest_depth": 3,
+        "path": "ai_stack/story_runtime/narrative/narrative_momentum_engine.py"
+      },
+      {
+        "name": "build_post_cut_in_follow_up_event",
+        "lines": 158,
+        "nest_depth": 5,
+        "path": "ai_stack/story_runtime/session_loop/follow_up_event.py"
+      },
+      {
+        "name": "_build_live_scene_turn_envelope",
+        "lines": 157,
+        "nest_depth": 3,
+        "path": "world-engine/app/story_runtime/manager/live_scene_turn_envelope.py"
+      },
+      {
+        "name": "assess_npc_agency_claim_readiness",
+        "lines": 154,
+        "nest_depth": 2,
+        "path": "ai_stack/story_runtime/npc_agency/npc_agency_claim_readiness.py"
+      },
+      {
+        "name": "hydrate_actor_lanes",
+        "lines": 153,
+        "nest_depth": 5,
+        "path": "ai_stack/story_runtime/actor_lane_hydration.py"
+      },
+      {
+        "name": "_realize_narrator_path_output",
+        "lines": 151,
+        "nest_depth": 3,
+        "path": "world-engine/app/story_runtime/manager/narrator_output_realization.py"
+      },
+      {
+        "name": "_build_opening_prompt",
+        "lines": 151,
+        "nest_depth": 4,
+        "path": "world-engine/app/story_runtime/manager/opening_prompt_and_narrator_candidates.py"
       }
     ],
+    "top6_nesting": [],
     "ai_turn_executor": null
   },
   "ds005": {
@@ -146,92 +127,92 @@
     "schema_version": 1,
     "source": "ast_heuristic_v2",
     "category_scores": {
-      "C1": 9.768,
-      "C2": 11.307956328284252,
-      "C3": 99.04979717199402,
-      "C4": 73.18248456364383,
-      "C5": 40.250366510004106,
-      "C6": 41.84249649467189,
-      "C7": 64.38236816179611
+      "C1": 9.448,
+      "C2": 0.0,
+      "C3": 98.70122672287077,
+      "C4": 72.88230579976528,
+      "C5": 40.0852681898709,
+      "C6": 39.46728822852895,
+      "C7": 64.15579736986601
     },
     "score": {
       "legend_de": "``trigger_v2`` = Heuristik v2 (0\u2026100, saturierend); **kein** Balkenvergleich, nur beratend. ``anteil_pct`` = operationaler Mess-Anteil in % (``literal_rates.condition_shares_pct``); **Balken** / ``M7_ref`` aus ``spaghetti-setup`` gelten **nur** hier. **C1** = Prozent der Dateien unter ``backend/app`` im Importgraph; **C2\u2013C7** = Prozent der gemessenen Funktionen. ``m7_trigger_v2`` / ``m7_anteil_pct_gewichtet``: gleiche ``weights``.",
       "categories": {
         "C1": {
-          "trigger_v2": 9.768,
+          "trigger_v2": 9.448,
           "anteil_pct": 0.7421
         },
         "C2": {
-          "trigger_v2": 11.308,
-          "anteil_pct": 1.4642
+          "trigger_v2": 0.0,
+          "anteil_pct": 1.3904
         },
         "C3": {
-          "trigger_v2": 99.0498,
-          "anteil_pct": 1.355
+          "trigger_v2": 98.7012,
+          "anteil_pct": 1.255
         },
         "C4": {
-          "trigger_v2": 73.1825,
-          "anteil_pct": 7.3117
+          "trigger_v2": 72.8823,
+          "anteil_pct": 7.2499
         },
         "C5": {
-          "trigger_v2": 40.2504,
-          "anteil_pct": 0.8549
+          "trigger_v2": 40.0853,
+          "anteil_pct": 0.8397
         },
         "C6": {
-          "trigger_v2": 41.8425,
-          "anteil_pct": 13.7686
+          "trigger_v2": 39.4673,
+          "anteil_pct": 13.7505
         },
         "C7": {
-          "trigger_v2": 64.3824,
-          "anteil_pct": 6.9662
+          "trigger_v2": 64.1558,
+          "anteil_pct": 6.8527
         }
       },
-      "m7_trigger_v2": 47.6304,
-      "m7_anteil_pct_gewichtet": 3.908
+      "m7_trigger_v2": 46.2131,
+      "m7_anteil_pct_gewichtet": 3.8619
     },
     "literal_rates": {
-      "total_functions_measured": 10996,
+      "total_functions_measured": 11076,
       "total_python_files_measured": 1554,
-      "functions_over_100_lines_pct": 1.355,
-      "functions_over_50_lines_pct": 7.3117,
-      "functions_nesting_ge_6_pct": 0.0273,
-      "over_100_lines_among_over_50_lines_pct": 18.5323,
+      "functions_over_100_lines_pct": 1.255,
+      "functions_over_50_lines_pct": 7.2499,
+      "functions_nesting_ge_6_pct": 0.0,
+      "over_100_lines_among_over_50_lines_pct": 17.3101,
       "condition_shares_pct": {
         "C1": 0.7421,
-        "C2": 1.4642,
-        "C3": 1.355,
-        "C4": 7.3117,
-        "C5": 0.8549,
-        "C6": 13.7686,
-        "C7": 6.9662
+        "C2": 1.3904,
+        "C3": 1.255,
+        "C4": 7.2499,
+        "C5": 0.8397,
+        "C6": 13.7505,
+        "C7": 6.8527
       },
       "c1_import_graph_files": 539,
       "c1_files_in_cycles": 4
     },
     "plain_language_de": {
       "C1": "Anteil der 539 analysierten Python-Dateien unter ``backend/app``, die in einem Importzyklus liegen (nur explizite ``app.*``-Kanten, v1): 0.74 % (4 Dateien).",
-      "C2": "Anteil der 10996 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.46 %.",
-      "C3": "Anteil der 10996 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.35 %.",
-      "C4": "Anteil der 10996 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.31 %.",
-      "C5": "Anteil der 10996 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.85 %.",
-      "C6": "Anteil der 10996 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 13.77 %.",
-      "C7": "Anteil der 10996 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 6.97 %."
+      "C2": "Anteil der 11076 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.39 %.",
+      "C3": "Anteil der 11076 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.25 %.",
+      "C4": "Anteil der 11076 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.25 %.",
+      "C5": "Anteil der 11076 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.84 %.",
+      "C6": "Anteil der 11076 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 13.75 %.",
+      "C7": "Anteil der 11076 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 6.85 %."
     },
     "metric_a": {
       "id": "share_weighted_m7",
       "description_de": "Gewichtetes Mittel der ``condition_shares_pct``; **Trigger-Policy**-Komposit (Vergleich mit ``M7_ref`` / Balken f\u00fcr **Anteil %**, nicht f\u00fcr ``m7`` Trigger).",
       "category_scores": {
         "C1": 0.7421,
-        "C2": 1.4642,
-        "C3": 1.355,
-        "C4": 7.3117,
-        "C5": 0.8549,
-        "C6": 13.7686,
-        "C7": 6.9662
+        "C2": 1.3904,
+        "C3": 1.255,
+        "C4": 7.2499,
+        "C5": 0.8397,
+        "C6": 13.7505,
+        "C7": 6.8527
       },
-      "m7": 3.908
+      "m7": 3.8619
     },
-    "m7": 47.6304,
+    "m7": 46.2131,
     "m7_ref": 4.24,
     "trigger_policy_basis": "anteil_pct",
     "trigger_bars": {

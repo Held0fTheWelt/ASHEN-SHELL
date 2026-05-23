@@ -624,6 +624,124 @@ def _event_rows(structured_output: dict[str, Any] | None) -> list[dict[str, Any]
     return [row for row in events if isinstance(row, dict)] if isinstance(events, list) else []
 
 
+def _inactive_meta_awareness_validation(
+    *,
+    target: dict[str, Any],
+    events: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if target and bool(target.get("active")):
+        return None
+    if events:
+        return MetaNarrativeAwarenessValidation(
+            schema_version=META_NARRATIVE_AWARENESS_SCHEMA_VERSION,
+            status="rejected",
+            contract_pass=False,
+            failure_codes=[META_NARRATIVE_FAILURE_NOT_OPTED_IN],
+            feedback_code=META_NARRATIVE_FAILURE_NOT_OPTED_IN,
+            target=target,
+            actual={
+                "structured_events_present": True,
+                "event_count": len(events),
+                "contract_pass": False,
+                "failure_codes": [META_NARRATIVE_FAILURE_NOT_OPTED_IN],
+            },
+        ).to_dict()
+    return MetaNarrativeAwarenessValidation(
+        schema_version=META_NARRATIVE_AWARENESS_SCHEMA_VERSION,
+        status="not_applicable",
+        contract_pass=True,
+        target=target,
+        actual={"structured_events_present": False, "event_count": 0},
+    ).to_dict()
+
+
+def _meta_awareness_validation_rules(target: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "selected_actor_ids": set(_clean_str_list(target.get("selected_actor_ids"))),
+        "allowed_modes": set(_clean_str_list(target.get("allowed_awareness_modes"), lower=True)),
+        "forbidden_modes": set(_clean_str_list(target.get("forbidden_awareness_modes"), lower=True)),
+        "allowed_fourth_wall_levels": (
+            set(_clean_str_list(target.get("allowed_fourth_wall_levels"), lower=True))
+            or {"none", "subtle"}
+        ),
+        "selected_memory_ref_ids": set(_clean_str_list(target.get("selected_memory_ref_ids"))),
+        "max_events": max(0, int(target.get("max_events_per_turn") or 0)),
+        "max_direct_addresses": max(0, int(target.get("max_direct_addresses_per_turn") or 0)),
+        "intensity": _text(target.get("intensity")).lower(),
+        "direct_allowed": bool(target.get("direct_player_address_allowed")),
+        "narrator_negotiation_allowed": bool(target.get("narrator_negotiation_allowed")),
+        "cross_session_memory_allowed": bool(target.get("cross_session_memory_allowed")),
+    }
+
+
+def _meta_event_memory_refs(row: dict[str, Any]) -> list[str]:
+    memory_refs = _clean_str_list(
+        row.get("memory_ref_ids")
+        or row.get("memory_refs")
+        or row.get("cross_session_memory_ref_ids")
+    )
+    single_memory_ref = _text(row.get("memory_ref_id"))
+    if single_memory_ref and single_memory_ref not in memory_refs:
+        memory_refs.append(single_memory_ref)
+    return memory_refs
+
+
+def _append_meta_awareness_event_validation(
+    *,
+    row: dict[str, Any],
+    rules: dict[str, Any],
+    actual: dict[str, Any],
+    failure_codes: list[str],
+) -> None:
+    actor_id = _text(row.get("actor_id") or row.get("speaker_id"))
+    if actor_id and actor_id not in actual["realized_actor_ids"]:
+        actual["realized_actor_ids"].append(actor_id)
+    if actor_id not in rules["selected_actor_ids"]:
+        failure_codes.append(META_NARRATIVE_FAILURE_UNAUTHORIZED_ACTOR)
+
+    mode = _text(row.get("awareness_mode") or row.get("mode")).lower()
+    if mode and mode not in actual["awareness_modes"]:
+        actual["awareness_modes"].append(mode)
+    if not mode or mode not in rules["allowed_modes"] or mode in rules["forbidden_modes"]:
+        failure_codes.append(META_NARRATIVE_FAILURE_FORBIDDEN_MODE)
+    if mode in {"narrator_negotiation", "story_form_negotiation"} and not rules["narrator_negotiation_allowed"]:
+        failure_codes.append(META_NARRATIVE_FAILURE_CONSENT_SCOPE_EXCEEDED)
+
+    if bool(row.get("discloses_system_prompt") or row.get("discloses_tool_or_model") or row.get("references_model_or_tools") or row.get("names_runtime_system") or row.get("system_disclosure_absent") is False):
+        failure_codes.append(META_NARRATIVE_FAILURE_SYSTEM_DISCLOSURE)
+    if bool(row.get("forces_player_revision") or row.get("rewrites_player_intent") or row.get("unbounded_rewrite") or row.get("claims_player_control") or row.get("player_agency_preserved") is False):
+        failure_codes.append(META_NARRATIVE_FAILURE_UNBOUNDED_REWRITE)
+
+    fourth_wall_level = _text(row.get("fourth_wall_level")).lower()
+    if fourth_wall_level and fourth_wall_level not in actual["fourth_wall_levels"]:
+        actual["fourth_wall_levels"].append(fourth_wall_level)
+    direct_address = bool(row.get("direct_player_address")) or mode in {"direct_player_address", "fourth_wall_address"} or fourth_wall_level in {"direct", "full", "full_fourth_wall"}
+    if direct_address:
+        actual["direct_address_count"] += 1
+        if not rules["direct_allowed"]:
+            failure_codes.append(META_NARRATIVE_FAILURE_DIRECT_ADDRESS)
+    if fourth_wall_level and fourth_wall_level not in rules["allowed_fourth_wall_levels"]:
+        failure_codes.append(META_NARRATIVE_FAILURE_FOURTH_WALL_SCOPE)
+    if rules["intensity"] == "subtle" and (bool(row.get("direct_player_address")) or fourth_wall_level in {"direct", "full", "full_fourth_wall"}):
+        failure_codes.append(META_NARRATIVE_FAILURE_DIRECT_ADDRESS)
+
+    memory_refs = _meta_event_memory_refs(row)
+    if memory_refs:
+        if not rules["cross_session_memory_allowed"]:
+            failure_codes.append(META_NARRATIVE_FAILURE_CONSENT_SCOPE_EXCEEDED)
+        for ref_id in memory_refs:
+            if ref_id not in actual["realized_memory_ref_ids"]:
+                actual["realized_memory_ref_ids"].append(ref_id)
+            if ref_id not in rules["selected_memory_ref_ids"]:
+                failure_codes.append(META_NARRATIVE_FAILURE_CROSS_SESSION_MEMORY_UNVERIFIED)
+    if mode == "cross_session_memory_reference" and not memory_refs:
+        failure_codes.append(META_NARRATIVE_FAILURE_CROSS_SESSION_MEMORY_UNVERIFIED)
+    if bool(row.get("quotes_raw_player_input") or row.get("raw_player_text_present") or row.get("private_player_data_disclosed") or row.get("reveals_private_player_data")):
+        failure_codes.append(META_NARRATIVE_FAILURE_PRIVACY_BOUNDARY)
+    if bool(row.get("invented_memory") or row.get("unverified_memory_claim") or row.get("false_self_memory")):
+        failure_codes.append(META_NARRATIVE_FAILURE_FALSE_SELF_MEMORY)
+
+
 def validate_meta_narrative_awareness_realization(
     *,
     meta_narrative_awareness_target: dict[str, Any] | None,
@@ -636,151 +754,44 @@ def validate_meta_narrative_awareness_realization(
         else {}
     )
     events = _event_rows(structured_output)
-    if not target or not bool(target.get("active")):
-        if events:
-            return MetaNarrativeAwarenessValidation(
-                schema_version=META_NARRATIVE_AWARENESS_SCHEMA_VERSION,
-                status="rejected",
-                contract_pass=False,
-                failure_codes=[META_NARRATIVE_FAILURE_NOT_OPTED_IN],
-                feedback_code=META_NARRATIVE_FAILURE_NOT_OPTED_IN,
-                target=target,
-                actual={
-                    "structured_events_present": True,
-                    "event_count": len(events),
-                    "contract_pass": False,
-                    "failure_codes": [META_NARRATIVE_FAILURE_NOT_OPTED_IN],
-                },
-            ).to_dict()
-        return MetaNarrativeAwarenessValidation(
-            schema_version=META_NARRATIVE_AWARENESS_SCHEMA_VERSION,
-            status="not_applicable",
-            contract_pass=True,
-            target=target,
-            actual={"structured_events_present": False, "event_count": 0},
-        ).to_dict()
+    inactive_validation = _inactive_meta_awareness_validation(target=target, events=events)
+    if inactive_validation is not None:
+        return inactive_validation
 
-    selected_actor_ids = set(_clean_str_list(target.get("selected_actor_ids")))
-    allowed_modes = set(_clean_str_list(target.get("allowed_awareness_modes"), lower=True))
-    forbidden_modes = set(
-        _clean_str_list(target.get("forbidden_awareness_modes"), lower=True)
-    )
-    allowed_fourth_wall_levels = set(
-        _clean_str_list(target.get("allowed_fourth_wall_levels"), lower=True)
-    ) or {"none", "subtle"}
-    selected_memory_ref_ids = set(
-        _clean_str_list(target.get("selected_memory_ref_ids"))
-    )
-    max_events = max(0, int(target.get("max_events_per_turn") or 0))
-    max_direct_addresses = max(
-        0, int(target.get("max_direct_addresses_per_turn") or 0)
-    )
-    intensity = _text(target.get("intensity")).lower()
-    direct_allowed = bool(target.get("direct_player_address_allowed"))
-    narrator_negotiation_allowed = bool(target.get("narrator_negotiation_allowed"))
-    cross_session_memory_allowed = bool(target.get("cross_session_memory_allowed"))
+    rules = _meta_awareness_validation_rules(target)
     failure_codes: list[str] = []
-    realized_actor_ids: list[str] = []
-    awareness_modes: list[str] = []
-    fourth_wall_levels: list[str] = []
-    realized_memory_ref_ids: list[str] = []
-    direct_address_count = 0
+    actual = {
+        "realized_actor_ids": [],
+        "awareness_modes": [],
+        "fourth_wall_levels": [],
+        "direct_address_count": 0,
+        "realized_memory_ref_ids": [],
+    }
+    max_events = rules["max_events"]
+    max_direct_addresses = rules["max_direct_addresses"]
     if len(events) > max_events:
         failure_codes.append(META_NARRATIVE_FAILURE_EVENT_BUDGET_EXCEEDED)
     for row in events:
-        actor_id = _text(row.get("actor_id") or row.get("speaker_id"))
-        if actor_id and actor_id not in realized_actor_ids:
-            realized_actor_ids.append(actor_id)
-        if actor_id not in selected_actor_ids:
-            failure_codes.append(META_NARRATIVE_FAILURE_UNAUTHORIZED_ACTOR)
-        mode = _text(row.get("awareness_mode") or row.get("mode")).lower()
-        if mode and mode not in awareness_modes:
-            awareness_modes.append(mode)
-        if not mode or mode not in allowed_modes or mode in forbidden_modes:
-            failure_codes.append(META_NARRATIVE_FAILURE_FORBIDDEN_MODE)
-        if mode in {"narrator_negotiation", "story_form_negotiation"} and not narrator_negotiation_allowed:
-            failure_codes.append(META_NARRATIVE_FAILURE_CONSENT_SCOPE_EXCEEDED)
-        if bool(
-            row.get("discloses_system_prompt")
-            or row.get("discloses_tool_or_model")
-            or row.get("references_model_or_tools")
-            or row.get("names_runtime_system")
-            or row.get("system_disclosure_absent") is False
-        ):
-            failure_codes.append(META_NARRATIVE_FAILURE_SYSTEM_DISCLOSURE)
-        if bool(
-            row.get("forces_player_revision")
-            or row.get("rewrites_player_intent")
-            or row.get("unbounded_rewrite")
-            or row.get("claims_player_control")
-            or row.get("player_agency_preserved") is False
-        ):
-            failure_codes.append(META_NARRATIVE_FAILURE_UNBOUNDED_REWRITE)
-        fourth_wall_level = _text(row.get("fourth_wall_level")).lower()
-        if fourth_wall_level and fourth_wall_level not in fourth_wall_levels:
-            fourth_wall_levels.append(fourth_wall_level)
-        direct_address = bool(row.get("direct_player_address")) or mode in {
-            "direct_player_address",
-            "fourth_wall_address",
-        } or fourth_wall_level in {"direct", "full", "full_fourth_wall"}
-        if direct_address:
-            direct_address_count += 1
-            if not direct_allowed:
-                failure_codes.append(META_NARRATIVE_FAILURE_DIRECT_ADDRESS)
-        if fourth_wall_level and fourth_wall_level not in allowed_fourth_wall_levels:
-            failure_codes.append(META_NARRATIVE_FAILURE_FOURTH_WALL_SCOPE)
-        if intensity == "subtle" and (
-            bool(row.get("direct_player_address"))
-            or fourth_wall_level in {"direct", "full", "full_fourth_wall"}
-        ):
-            failure_codes.append(META_NARRATIVE_FAILURE_DIRECT_ADDRESS)
-        memory_refs = _clean_str_list(
-            row.get("memory_ref_ids")
-            or row.get("memory_refs")
-            or row.get("cross_session_memory_ref_ids")
+        _append_meta_awareness_event_validation(
+            row=row,
+            rules=rules,
+            actual=actual,
+            failure_codes=failure_codes,
         )
-        single_memory_ref = _text(row.get("memory_ref_id"))
-        if single_memory_ref and single_memory_ref not in memory_refs:
-            memory_refs.append(single_memory_ref)
-        if memory_refs:
-            if not cross_session_memory_allowed:
-                failure_codes.append(META_NARRATIVE_FAILURE_CONSENT_SCOPE_EXCEEDED)
-            for ref_id in memory_refs:
-                if ref_id not in realized_memory_ref_ids:
-                    realized_memory_ref_ids.append(ref_id)
-                if ref_id not in selected_memory_ref_ids:
-                    failure_codes.append(
-                        META_NARRATIVE_FAILURE_CROSS_SESSION_MEMORY_UNVERIFIED
-                    )
-        if mode == "cross_session_memory_reference" and not memory_refs:
-            failure_codes.append(META_NARRATIVE_FAILURE_CROSS_SESSION_MEMORY_UNVERIFIED)
-        if bool(
-            row.get("quotes_raw_player_input")
-            or row.get("raw_player_text_present")
-            or row.get("private_player_data_disclosed")
-            or row.get("reveals_private_player_data")
-        ):
-            failure_codes.append(META_NARRATIVE_FAILURE_PRIVACY_BOUNDARY)
-        if bool(
-            row.get("invented_memory")
-            or row.get("unverified_memory_claim")
-            or row.get("false_self_memory")
-        ):
-            failure_codes.append(META_NARRATIVE_FAILURE_FALSE_SELF_MEMORY)
 
-    if direct_address_count > max_direct_addresses:
+    if actual["direct_address_count"] > max_direct_addresses:
         failure_codes.append(META_NARRATIVE_FAILURE_FOURTH_WALL_SCOPE)
 
     deduped_failures = list(dict.fromkeys(failure_codes))
-    actual = {
+    actual_payload = {
         "structured_events_present": bool(events),
         "event_count": len(events),
-        "realized_actor_ids": realized_actor_ids,
-        "awareness_modes": awareness_modes,
-        "fourth_wall_levels": fourth_wall_levels,
-        "direct_address_count": direct_address_count,
-        "realized_memory_ref_ids": realized_memory_ref_ids,
-        "cross_session_memory_ref_count": len(realized_memory_ref_ids),
+        "realized_actor_ids": actual["realized_actor_ids"],
+        "awareness_modes": actual["awareness_modes"],
+        "fourth_wall_levels": actual["fourth_wall_levels"],
+        "direct_address_count": actual["direct_address_count"],
+        "realized_memory_ref_ids": actual["realized_memory_ref_ids"],
+        "cross_session_memory_ref_count": len(actual["realized_memory_ref_ids"]),
         "max_events_per_turn": max_events,
         "max_direct_addresses_per_turn": max_direct_addresses,
         "contract_pass": not deduped_failures,
@@ -793,7 +804,7 @@ def validate_meta_narrative_awareness_realization(
         failure_codes=deduped_failures,
         feedback_code=deduped_failures[0] if deduped_failures else None,
         target=target,
-        actual=actual,
+        actual=actual_payload,
         source_evidence=[
             {
                 "source": "structured_output",

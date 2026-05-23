@@ -219,14 +219,14 @@ def build_adr0041_validation_authority_preview(
             "live_or_staging_evidence": False,
         }
     )
-def _build_adr0041_plan_enforced_runtime_projection_dispatch(
+
+
+def _plan_enforced_runtime_sidecar_report(
     *,
     capability_context: dict[str, Any],
     graph_bundle: dict[str, Any],
-    dispatch_mode_warnings: tuple[str, ...],
     registry_for_turn_class: Callable[[str], dict[str, Any]] | None = None,
-) -> dict[str, Any]:
-    """Plan-enforced dispatch report for runtime_intelligence (graph runtime path only)."""
+) -> tuple[dict[str, Any], str, list[str], list[str]]:
     selection_for_sidecar, sidecar_deriv_warnings = _select_semantic_capabilities_from_runtime_context(
         **capability_context
     )
@@ -254,8 +254,16 @@ def _build_adr0041_plan_enforced_runtime_projection_dispatch(
         feature_flag_enabled=True,
     )
     semantic_validator_dispatch_report = report_obj.to_runtime_projection()["validator_dispatch_report"]
-    seam_summary = graph_bundle.get("validation_seam_summary")
-    visibility: dict[str, Any] = {
+    return semantic_validator_dispatch_report, turn_class_key, list(turn_class_hints), list(sidecar_deriv_warnings)
+
+
+def _adr0041_runtime_visibility(
+    *,
+    semantic_validator_dispatch_report: dict[str, Any],
+    seam_summary: Any,
+    turn_class_key: str,
+) -> dict[str, Any]:
+    return {
         "canonical_commitment_seam": GOC_TURN_VALIDATION_SEAM_SYMBOL,
         "adr0041_runtime_sidecar": (
             "ai_stack.story_runtime.runtime_aspect_ledger / ADR-0041 plan_enforced local validators"
@@ -275,6 +283,20 @@ def _build_adr0041_plan_enforced_runtime_projection_dispatch(
         ),
         "selected_turn_class": turn_class_key,
     }
+
+
+def _attach_adr0041_bridge_payloads(
+    *,
+    semantic_validator_dispatch_report: dict[str, Any],
+    seam_summary: Any,
+    turn_class_key: str,
+    turn_class_hints: list[str],
+) -> dict[str, Any]:
+    visibility = _adr0041_runtime_visibility(
+        semantic_validator_dispatch_report=semantic_validator_dispatch_report,
+        seam_summary=seam_summary,
+        turn_class_key=turn_class_key,
+    )
     semantic_validator_dispatch_report["run_validation_seam_outcome_echo"] = (
         _json_safe(seam_summary) if isinstance(seam_summary, dict) else {}
     )
@@ -296,6 +318,15 @@ def _build_adr0041_plan_enforced_runtime_projection_dispatch(
         selected_turn_class=turn_class_key,
     )
     semantic_validator_dispatch_report["validation_authority_bridge"] = _json_safe(bridge)
+    return bridge
+
+
+def _attach_validation_co_authority_decision(
+    *,
+    semantic_validator_dispatch_report: dict[str, Any],
+    bridge: dict[str, Any],
+    turn_class_key: str,
+) -> tuple[bool, dict[str, Any] | None, list[str]]:
     co_authority_enabled, co_authority_warnings = resolve_adr0041_scoped_co_authority_enabled()
     co_authority_decision: dict[str, Any] | None = None
     if co_authority_enabled:
@@ -310,6 +341,16 @@ def _build_adr0041_plan_enforced_runtime_projection_dispatch(
             semantic_validator_dispatch_report["validation_co_authority_decision"] = _json_safe(
                 co_authority_decision
             )
+    return co_authority_enabled, co_authority_decision, list(co_authority_warnings)
+
+
+def _attach_readiness_co_authority_preview(
+    *,
+    semantic_validator_dispatch_report: dict[str, Any],
+    bridge: dict[str, Any],
+    turn_class_key: str,
+    co_authority_decision: dict[str, Any] | None,
+) -> tuple[bool, list[str]]:
     readiness_preview_enabled, readiness_preview_warnings = (
         resolve_adr0041_readiness_co_authority_preview_enabled()
     )
@@ -325,6 +366,14 @@ def _build_adr0041_plan_enforced_runtime_projection_dispatch(
         semantic_validator_dispatch_report["readiness_co_authority_preview"] = _json_safe(
             readiness_preview
         )
+    return readiness_preview_enabled, list(readiness_preview_warnings)
+
+
+def _attach_readiness_co_authority_enforcement(
+    *,
+    semantic_validator_dispatch_report: dict[str, Any],
+    turn_class_key: str,
+) -> tuple[bool, list[str]]:
     enforcement_enabled, enforcement_warnings = (
         resolve_adr0041_scoped_readiness_enforcement_enabled()
     )
@@ -343,6 +392,25 @@ def _build_adr0041_plan_enforced_runtime_projection_dispatch(
         semantic_validator_dispatch_report["readiness_co_authority_enforcement"] = _json_safe(
             readiness_enforcement
         )
+    return enforcement_enabled, list(enforcement_warnings)
+
+
+def _append_adr0041_warning(report: dict[str, Any], message: str) -> None:
+    merged_pre = report.get("warnings")
+    merged_list = list(merged_pre) if isinstance(merged_pre, list) else []
+    if message not in merged_list:
+        merged_list.append(message)
+    report["warnings"] = merged_list
+
+
+def _attach_readiness_aggregation_decision(
+    *,
+    semantic_validator_dispatch_report: dict[str, Any],
+    seam_summary: Any,
+    co_authority_enabled: bool,
+    readiness_preview_enabled: bool,
+    enforcement_enabled: bool,
+) -> list[str]:
     aggregation_enabled, aggregation_warnings = (
         resolve_adr0041_scoped_readiness_aggregation_enabled()
     )
@@ -361,40 +429,87 @@ def _build_adr0041_plan_enforced_runtime_projection_dispatch(
                 )
             )
         elif not prereq_aggregation:
-            merged_pre = semantic_validator_dispatch_report.get("warnings")
-            merged_list = list(merged_pre) if isinstance(merged_pre, list) else []
-            msg = (
+            _append_adr0041_warning(
+                semantic_validator_dispatch_report,
                 "ADR-0041 scoped readiness aggregation skipped: prerequisite flags "
-                "(scoped co-authority, readiness preview, enforcement) not all enabled."
+                "(scoped co-authority, readiness preview, enforcement) not all enabled.",
             )
-            if msg not in merged_list:
-                merged_list.append(msg)
-            semantic_validator_dispatch_report["warnings"] = merged_list
         else:
-            merged_pre = semantic_validator_dispatch_report.get("warnings")
-            merged_list = list(merged_pre) if isinstance(merged_pre, list) else []
-            msg = (
+            _append_adr0041_warning(
+                semantic_validator_dispatch_report,
                 "ADR-0041 scoped readiness aggregation skipped: readiness policy input missing "
-                "(enable scoped readiness enforcement to emit enforcement payload)."
+                "(enable scoped readiness enforcement to emit enforcement payload).",
             )
-            if msg not in merged_list:
-                merged_list.append(msg)
-            semantic_validator_dispatch_report["warnings"] = merged_list
-    extra_warnings = [
-        *dispatch_mode_warnings,
-        *sidecar_deriv_warnings,
-        *co_authority_warnings,
-        *readiness_preview_warnings,
-        *enforcement_warnings,
-        *aggregation_warnings,
-    ]
+    return list(aggregation_warnings)
+
+
+def _merge_adr0041_dispatch_warnings(
+    semantic_validator_dispatch_report: dict[str, Any],
+    warnings: list[str],
+) -> None:
     existing_warnings = semantic_validator_dispatch_report.get("warnings")
     merged: list[str] = list(existing_warnings) if isinstance(existing_warnings, list) else []
-    for w in extra_warnings:
+    for w in warnings:
         t = str(w).strip()
         if t and t not in merged:
             merged.append(t)
     semantic_validator_dispatch_report["warnings"] = merged
+
+
+def _build_adr0041_plan_enforced_runtime_projection_dispatch(
+    *,
+    capability_context: dict[str, Any],
+    graph_bundle: dict[str, Any],
+    dispatch_mode_warnings: tuple[str, ...],
+    registry_for_turn_class: Callable[[str], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Plan-enforced dispatch report for runtime_intelligence (graph runtime path only)."""
+    report, turn_class_key, turn_class_hints, deriv_warnings = _plan_enforced_runtime_sidecar_report(
+        capability_context=capability_context,
+        graph_bundle=graph_bundle,
+        registry_for_turn_class=registry_for_turn_class,
+    )
+    seam_summary = graph_bundle.get("validation_seam_summary")
+    bridge = _attach_adr0041_bridge_payloads(
+        semantic_validator_dispatch_report=report,
+        seam_summary=seam_summary,
+        turn_class_key=turn_class_key,
+        turn_class_hints=turn_class_hints,
+    )
+    co_enabled, co_decision, co_warnings = _attach_validation_co_authority_decision(
+        semantic_validator_dispatch_report=report,
+        bridge=bridge,
+        turn_class_key=turn_class_key,
+    )
+    preview_enabled, preview_warnings = _attach_readiness_co_authority_preview(
+        semantic_validator_dispatch_report=report,
+        bridge=bridge,
+        turn_class_key=turn_class_key,
+        co_authority_decision=co_decision,
+    )
+    enforcement_enabled, enforcement_warnings = _attach_readiness_co_authority_enforcement(
+        semantic_validator_dispatch_report=report,
+        turn_class_key=turn_class_key,
+    )
+    aggregation_warnings = _attach_readiness_aggregation_decision(
+        semantic_validator_dispatch_report=report,
+        seam_summary=seam_summary,
+        co_authority_enabled=co_enabled,
+        readiness_preview_enabled=preview_enabled,
+        enforcement_enabled=enforcement_enabled,
+    )
+    _merge_adr0041_dispatch_warnings(
+        report,
+        [
+            *dispatch_mode_warnings,
+            *deriv_warnings,
+            *co_warnings,
+            *preview_warnings,
+            *enforcement_warnings,
+            *aggregation_warnings,
+        ],
+    )
+    semantic_validator_dispatch_report = report
     return _json_safe(semantic_validator_dispatch_report)
 def build_adr0041_validator_dispatch_harness_report(
     *,

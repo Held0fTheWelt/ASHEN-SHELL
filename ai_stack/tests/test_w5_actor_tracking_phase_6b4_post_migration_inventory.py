@@ -402,9 +402,10 @@ class TestF8F18F19F20NarratorStrictDefaultOnDemotesLegacy:
         # Phase 6B-6B removed the _legacy_compat insertion branch.
         assert "_legacy_compat" not in source_facts
 
-    def test_strict_off_keeps_transition_from_previous_first_class(
+    def test_transition_from_previous_absent_under_any_env_value(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """ADR-0068: transition_from_previous is never emitted regardless of env var."""
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
@@ -424,8 +425,7 @@ class TestF8F18F19F20NarratorStrictDefaultOnDemotesLegacy:
             previous_step=None,
         )
         source_facts = block["source_facts"]
-        assert "transition_from_previous" in source_facts
-        # Under default the legacy_compat surface is absent.
+        assert "transition_from_previous" not in source_facts
         assert "_legacy_compat" not in source_facts
 
 

@@ -9,7 +9,6 @@ emit bounded, read-only views.
 from __future__ import annotations
 
 import os
-import warnings
 from collections.abc import Mapping
 from typing import Any
 
@@ -34,17 +33,12 @@ W5_RUNTIME_METADATA_SCHEMA_VERSION = "w5_runtime_metadata.v1"
 
 
 class NarratorStrictOffDeprecationWarning(DeprecationWarning):
-    """Emitted once when W5_AST_NARRATOR_STRICT_ENABLED is explicitly disabled.
+    """Tombstone — ADR-0068.
 
-    Strict-off preserves the Phase 6B-3A rollback posture (transition_from_previous
-    first-class) but is deprecated as of Phase 6B-7 (ADR-0067). Future phases will
-    remove the strict-off branch entirely; operators should migrate to strict-on.
+    The strict-off rollback path (W5_AST_NARRATOR_STRICT_ENABLED=false) was
+    removed in Phase 6B-8 (ADR-0068). This class is retained only for import
+    compatibility with any code that references it by name; it is never emitted.
     """
-
-
-# Module-level sentinel — True once the deprecation warning has been emitted in
-# this process. Tests may reset this to False to observe warning emission again.
-_strict_off_deprecation_warned: bool = False
 
 
 def _flag_enabled(name: str) -> bool:
@@ -58,61 +52,18 @@ def _flag_enabled(name: str) -> bool:
 
 
 def w5_ast_narrator_strict_enabled() -> bool:
-    """Phase 6B-5C default-on narrator-strict gate.
+    """W5 narrator strict mode — permanently True (ADR-0068).
 
-    Distinct from ``W5_AST_NARRATOR_PROJECTION_ENABLED`` (Phase 6B-1
-    default-on, controls whether the typed ``w5_projection`` is added to
-    narrator ``source_facts``). This flag controls whether the legacy
-    ``transition_from_previous`` block is still treated as a first-class
-    narrator situation input.
+    The strict-off rollback path (W5_AST_NARRATOR_STRICT_ENABLED=false) was
+    removed in Phase 6B-8. W5 narrator projection (``source_facts.w5_projection``)
+    is the sole actor-situation authority. Setting W5_AST_NARRATOR_STRICT_ENABLED
+    to any value no longer changes narrator behavior; this function always
+    returns True.
 
-    Semantics (opt-out, Phase 6B-5C):
-
-    - unset / empty / unrecognized → ``True`` (W5 narrator projection is the
-      actor-situation authority; legacy ``transition_from_previous`` is
-      absent from top-level ``source_facts``).
-    - explicit ``0/false/no/off`` (case-insensitive) → ``False`` (explicit
-      opt-out; legacy ``transition_from_previous`` remains first-class in
-      narrator ``source_facts`` — Phase 6B-3A rollback posture).
-      **Deprecated as of Phase 6B-7 (ADR-0067).** A ``NarratorStrictOffDeprecationWarning``
-      is emitted once per process on the first detection.
-    - explicit ``1/true/yes/on`` → ``True``.
-
-    The Phase 2 W5 projection wiring and the malformed-W5 / explicit-opt-out
-    safety fallbacks of ``W5_AST_NARRATOR_PROJECTION_ENABLED`` are
-    unaffected. How remains first-class. Inferred Why remains soft truth.
+    How remains first-class. Inferred Why remains soft truth.
     """
 
-    raw = (os.environ.get("W5_AST_NARRATOR_STRICT_ENABLED") or "").strip().lower()
-    if raw in {"0", "false", "no", "off"}:
-        _emit_strict_off_deprecation_warning()
-        return False
     return True
-
-
-def _emit_strict_off_deprecation_warning() -> None:
-    """Emit NarratorStrictOffDeprecationWarning at most once per process.
-
-    Fires only when W5_AST_NARRATOR_STRICT_ENABLED is explicitly set to a
-    false value. Does not fire when the variable is unset (strict-on is the
-    default and correct posture).
-    """
-
-    global _strict_off_deprecation_warned
-    if _strict_off_deprecation_warned:
-        return
-    _strict_off_deprecation_warned = True
-    warnings.warn(
-        "W5_AST_NARRATOR_STRICT_ENABLED=false is deprecated rollback-only behavior "
-        "(Phase 6B-7, ADR-0067). The strict-off path preserves the legacy "
-        "transition_from_previous block as a first-class narrator source_facts entry, "
-        "but W5 projection (source_facts.w5_projection) is the authoritative "
-        "actor-situation surface since ADR-0065/ADR-0066. "
-        "Operators should remove this env-var override; strict-on is the permanent "
-        "default. The strict-off branch will be removed in a future phase.",
-        NarratorStrictOffDeprecationWarning,
-        stacklevel=3,
-    )
 
 
 def w5_projection_flag_states() -> dict[str, bool]:
@@ -570,7 +521,7 @@ def build_w5_admin_validation_view(
 
 
 __all__ = [
-    "NarratorStrictOffDeprecationWarning",
+    "NarratorStrictOffDeprecationWarning",  # tombstone — ADR-0068; retained for import compat
     "W5_ADMIN_DIAGNOSTIC_SCHEMA_VERSION",
     "W5_RUNTIME_METADATA_SCHEMA_VERSION",
     "build_w5_admin_actor_view",

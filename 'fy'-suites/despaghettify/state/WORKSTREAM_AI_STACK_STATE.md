@@ -1,5 +1,43 @@
 # Workstream: ai_stack
 
+## Closed — DS-026 / DS-027 AI-stack authority and narrative split (session 20260523)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-026 | Authority-preview, LangGraph package-output, validation-seam, and block-stream augmentation leaders now delegate to focused section builders. | `_build_adr0041_plan_enforced_runtime_projection_dispatch`, `package_runtime_graph_output`, `run_validation_seam`, `augment_envelope_with_block_stream` | Post: `artifacts/workstreams/ai_stack/post/session_20260523_DS-026-027_authority_narrative_comparison.*` |
+| DS-027 | Narrative, telemetry, NPC motivation, pacing, expectation-variation, and contract depth tails now use named derivation helpers; depth-6 tail removed. | `validate_meta_narrative_awareness_realization`, `_build_vitality_telemetry_v1`, `build_pacing_and_silence`, `_candidate_rows`, `_extract_relationship_axis_pressure`, `_safe_dict` | Same post comparison as DS-026. |
+
+**Gates (final):**
+
+- Corrected DS-026 focused suite: `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_adr0041_runtime_graph_sidecar.py ai_stack/tests/test_validation_authority_bridge.py ai_stack/tests/test_phase2_dual_mode.py ai_stack/tests/test_god_of_carnage_knowledge_runtime_gates.py ai_stack/tests/test_god_of_carnage_transcript_shell_validation.py ai_stack/tests/test_player_action_resolution.py --tb=short` — 157 passed.
+- Explicit package-output diagnostic exposure: `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_phase1_live_wiring.py::TestPhase1DiagnosticExposure::test_package_output_exposes_all_phase1_fields_when_present --tb=short` — 1 passed.
+- DS-027 focused suite: `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_meta_narrative_awareness_engine.py ai_stack/tests/test_expectation_variation_engine.py ai_stack/tests/test_vitality_telemetry_v1.py ai_stack/tests/test_phase2_director_pulse.py ai_stack/tests/test_hierarchical_memory_contracts.py ai_stack/tests/test_god_of_carnage_scene_director_extended.py -k 'pacing or silence or meta_narrative or expectation_variation or vitality or motivation or hierarchical' --tb=short` — 75 passed, 171 deselected.
+- `python -m py_compile` on all changed DS-026/DS-027 Python files — passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-23T14:33:12Z`.
+
+**Structural delta:** DS-026/DS-027 target symbols are no longer in the formal top-12 longest ranking, and the current full scan has `D6 = 0`. Current full scan: 11076 functions; L50 803; L100 139; D6 0; `M7_anteil` 3.8619.
+
+## Closed — DS-021 / DS-023 / DS-024 AI-stack granularization (session 20260523)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-021 | Director/Gathering and narrative derivation leaders now delegate to responder-selection, sensory-layer, relationship-state, and gathering-state helpers. | `build_responder_and_function`, `derive_sensory_context`, `derive_relationship_state`, `compute_gathering_state` | Pre: `artifacts/workstreams/ai_stack/pre/session_20260523_DS-021-023-024_wave_plan.*`; post: `artifacts/workstreams/ai_stack/post/session_20260523_DS-021-023-024_ai_stack_comparison.*` |
+| DS-023 | Diagnostics, LDSS, capability, semantic-plan, and forecast builders split into named assembly phases without weakening MVP03/MVP04 semantics. | `build_diagnostics_envelope`, `run_ldss`, `derive_turn_situation_from_runtime_context`, `_director_capability_manager_plan`, `build_branching_forecast` | Same pre/post artefacts as DS-021; tests below. |
+| DS-024 | Runtime readiness, temporal control, repro metadata, narrator consequence, authority drift, and adapter extraction depth tails flattened. | `resolve_runtime_readiness_with_adr0041`, `derive_temporal_control`, `build_repro_metadata_and_health`, `build_local_context_transition`, `classify_adr0041_validation_authority_drift`, `_extract_responses_text` | Same pre/post artefacts as DS-021; tests below. |
+
+**Gates (final):**
+
+- `python -m py_compile` on all changed DS-021/023/024 Python files — passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_god_of_carnage_scene_director_extended.py ai_stack/tests/test_sensory_context_engine.py ai_stack/tests/test_relationship_state_machine.py ai_stack/tests/test_pr_c_director_pause_mode.py --tb=short` — 201 passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q tests/gates/test_goc_mvp04_observability_diagnostics_gate.py ai_stack/tests/test_ldss_canonical_step_integration.py ai_stack/tests/test_capability_selector.py tests/branching/test_branching_forecast.py ai_stack/tests/test_semantic_scene_planner.py --tb=short` — 78 passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_runtime_readiness_consumer.py ai_stack/tests/test_temporal_control_engine.py ai_stack/tests/test_narrator_consequence_contract.py story_runtime_core/tests/test_adapters.py --tb=short` — 64 passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_adr0041_runtime_graph_sidecar.py ai_stack/tests/test_validation_authority_bridge.py -k 'authority_preview or drift or plan_enforced' --tb=short` — 24 passed, 40 deselected.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_langgraph_runtime.py::test_runtime_turn_graph_propagates_trace_and_host_versions ai_stack/tests/test_langgraph_runtime.py::test_runtime_turn_graph_uses_thin_path_for_player_turn ai_stack/tests/test_langgraph_runtime.py::test_runtime_turn_graph_meta_input_uses_non_story_control_path --tb=short` — 3 passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_temporal_control_engine.py --tb=short` — 3 passed after the final `_select_temporal_operation` flattening.
+- Final `check --with-metrics` — pass, report generated `2026-05-23T13:13:11Z`.
+
+**Structural delta:** DS-021/023/024 target symbols are no longer in the formal top-12 longest ranking, and the depth-6 count fell from 9 to 3. Current full scan: 10996 functions; L50 804; L100 149; D6 3; `M7_anteil` 3.908.
+
 ## Closed — DS-017 / DS-019 / DS-020 AI-stack granularization (session 20260523)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

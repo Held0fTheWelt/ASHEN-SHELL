@@ -398,6 +398,181 @@ def _dramatic_gate_outcome(
     )
 
 
+def _actor_lane_context_violation(
+    *,
+    actor_lane_context: dict[str, Any] | None,
+    generation: dict[str, Any],
+    hard_forbidden_rules: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not actor_lane_context or not isinstance(actor_lane_context, dict):
+        return None
+    ai_forbidden: set[str] = set()
+    for raw_actor_id in (actor_lane_context.get("ai_forbidden_actor_ids") or []):
+        ai_forbidden.update(expand_goc_actor_id_aliases(str(raw_actor_id)))
+    human_actor_id = str(actor_lane_context.get("human_actor_id") or "")
+    ai_forbidden.update(expand_goc_actor_id_aliases(human_actor_id))
+    if not ai_forbidden and not human_actor_id:
+        return None
+    gen_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
+    structured_check = gen_meta.get("structured_output") if isinstance(gen_meta.get("structured_output"), dict) else {}
+    violation = _check_human_actor_violations(structured_check, ai_forbidden, human_actor_id)
+    if violation is None:
+        return None
+    detection = hard_forbidden_detection_for_actor_lane_violation(
+        reason=str(violation.get("reason") or ""),
+        hard_forbidden_rules=hard_forbidden_rules,
+    )
+    return {
+        **violation,
+        "hard_forbidden_detection": detection,
+        "hard_forbidden_absent": False,
+        "opening_summary_only_absent": True,
+        "hard_boundary_failure": True,
+    }
+
+
+def _authoritative_action_resolution_outcome(
+    *,
+    module_id: str,
+    player_action_frame: dict[str, Any] | None,
+    affordance_resolution: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    paf = player_action_frame if isinstance(player_action_frame, dict) else {}
+    if module_id != GOC_MODULE_ID:
+        return None
+    if str(paf.get("validation_surface") or "").strip() != "authoritative_action_resolution":
+        return None
+    return {
+        "status": "approved",
+        "reason": "authoritative_action_resolution_surface",
+        "validator_lane": "goc_action_resolution_surface_v1",
+        "dramatic_quality_gate": "waived_authoritative_action_resolution_surface",
+        "dramatic_effect_weak_signal": False,
+        "intent_surface_diagnostics": {"npc_narrated_player_action_violation": False},
+        "player_action_frame": paf,
+        "affordance_resolution": affordance_resolution if isinstance(affordance_resolution, dict) else {},
+    }
+
+
+def _module_or_generation_validation_outcome(
+    *,
+    module_id: str,
+    generation: dict[str, Any],
+) -> dict[str, Any] | None:
+    if module_id != GOC_MODULE_ID:
+        return {
+            "status": "waived",
+            "reason": "non_goc_vertical_slice",
+            "validator_lane": "goc_rule_engine_v1",
+        }
+    if generation.get("success") is False or generation.get("error"):
+        return {
+            "status": "rejected",
+            "reason": "model_generation_failed",
+            "validator_lane": "goc_rule_engine_v1",
+        }
+    return None
+
+
+def _intent_surface_diagnostics(
+    *,
+    structured_output: dict[str, Any],
+    actor_lane_context: dict[str, Any] | None,
+    interpreted_input: dict[str, Any] | None,
+    raw_player_input: str | None,
+) -> dict[str, Any]:
+    diagnostics: dict[str, Any] = {"npc_narrated_player_action_violation": False}
+    if not structured_output or not isinstance(actor_lane_context, dict):
+        return diagnostics
+    hid = str(actor_lane_context.get("human_actor_id") or "").strip()
+    interp_loc = interpreted_input if isinstance(interpreted_input, dict) else {}
+    raw_pi_eff = str(raw_player_input or interp_loc.get("original_text") or "").strip()
+    pik_eff = str(interp_loc.get("player_input_kind") or "").strip().lower()
+    if hid and raw_pi_eff and pik_eff in ("action", "perception"):
+        diagnostics["npc_narrated_player_action_violation"] = _detect_npc_narrated_player_action_violation(
+            structured=structured_output,
+            raw_player_input=raw_pi_eff,
+            player_input_kind=pik_eff,
+            human_actor_id=hid,
+        )
+    return diagnostics
+
+
+def _structured_shell_validation_rejection(
+    *,
+    structured_output: dict[str, Any],
+    story_runtime_experience: dict[str, Any] | None,
+    intent_surface_diagnostics: dict[str, Any],
+) -> dict[str, Any] | None:
+    if not structured_output:
+        return None
+    shell_violation = _check_npc_spoken_action_lane_blob_cap(
+        structured_output,
+        npc_char_cap=_resolved_npc_lane_char_cap(story_runtime_experience),
+    )
+    if shell_violation is None:
+        return None
+    return {**shell_violation, "intent_surface_diagnostics": intent_surface_diagnostics}
+
+
+def _hard_forbidden_validation_rejection(
+    *,
+    hard_detection: dict[str, Any],
+    intent_surface_diagnostics: dict[str, Any],
+) -> dict[str, Any] | None:
+    if hard_detection.get("action") not in {"reject", "recover"}:
+        return None
+    recoverable = hard_detection.get("action") == "recover"
+    reason = str(hard_detection.get("reason") or "hard_forbidden_runtime_gate")
+    return {
+        "status": "rejected",
+        "reason": reason,
+        "error_code": reason,
+        "validator_lane": "goc_knowledge_runtime_gates_v1",
+        "hard_forbidden_detection": hard_detection,
+        "hard_forbidden_absent": bool(hard_detection.get("hard_forbidden_absent")),
+        "opening_summary_only_absent": bool(hard_detection.get("opening_summary_only_absent")),
+        "hard_boundary_failure": not recoverable,
+        "recoverable_rejection": recoverable,
+        "failure_class": "hard_forbidden_runtime_gate" if not recoverable else "recoverable_opening_contract",
+        "intent_surface_diagnostics": intent_surface_diagnostics,
+    }
+
+
+def _opening_coverage_validation(
+    *,
+    turn_input_class: str | None,
+    opening_scene_sequence: dict[str, Any] | None,
+    knowledge_text: str,
+    proposed_state_effects: list[dict[str, Any]],
+    structured_output: dict[str, Any],
+    actor_lane_context: dict[str, Any] | None,
+    scene_plan_record: dict[str, Any] | None,
+    current_scene_id: str | None,
+    hard_detection: dict[str, Any],
+    intent_surface_diagnostics: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    opening_coverage: dict[str, Any] = {
+        "opening_event_coverage_pass": True,
+        "applicable": False,
+    }
+    if str(turn_input_class or "").strip().lower() != "opening":
+        return opening_coverage, None
+    opening_coverage = evaluate_opening_event_coverage(
+        opening_scene_sequence=opening_scene_sequence,
+        text=knowledge_text or extract_proposed_narrative_text(proposed_state_effects),
+        structured_output=structured_output,
+        actor_lane_context=actor_lane_context if isinstance(actor_lane_context, dict) else None,
+        scene_plan_record=scene_plan_record if isinstance(scene_plan_record, dict) else None,
+        current_scene_id=current_scene_id,
+    )
+    return opening_coverage, _opening_coverage_rejection(
+        opening_coverage=opening_coverage,
+        hard_detection=hard_detection,
+        intent_surface_diagnostics=intent_surface_diagnostics,
+    )
+
+
 def run_validation_seam(
     *,
     module_id: str,
@@ -419,86 +594,46 @@ def run_validation_seam(
     w5_latest_snapshot: Any = None,
 ) -> dict[str, Any]:
     """Emit validation_outcome — no player text (CANONICAL_TURN_CONTRACT_GOC.md §2.1)."""
-    if actor_lane_context and isinstance(actor_lane_context, dict):
-        ai_forbidden: set[str] = set()
-        for raw_actor_id in (actor_lane_context.get("ai_forbidden_actor_ids") or []):
-            ai_forbidden.update(expand_goc_actor_id_aliases(str(raw_actor_id)))
-        human_actor_id: str = str(actor_lane_context.get("human_actor_id") or "")
-        ai_forbidden.update(expand_goc_actor_id_aliases(human_actor_id))
-        if ai_forbidden or human_actor_id:
-            gen_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
-            structured_check = (
-                gen_meta.get("structured_output") if isinstance(gen_meta.get("structured_output"), dict) else {}
-            )
-            violation = _check_human_actor_violations(structured_check, ai_forbidden, human_actor_id)
-            if violation is not None:
-                detection = hard_forbidden_detection_for_actor_lane_violation(
-                    reason=str(violation.get("reason") or ""),
-                    hard_forbidden_rules=hard_forbidden_rules,
-                )
-                return {
-                    **violation,
-                    "hard_forbidden_detection": detection,
-                    "hard_forbidden_absent": False,
-                    "opening_summary_only_absent": True,
-                    "hard_boundary_failure": True,
-                }
+    lane_violation = _actor_lane_context_violation(
+        actor_lane_context=actor_lane_context,
+        generation=generation,
+        hard_forbidden_rules=hard_forbidden_rules,
+    )
+    if lane_violation is not None:
+        return lane_violation
 
-    _paf_early = player_action_frame if isinstance(player_action_frame, dict) else {}
-    if (
-        module_id == GOC_MODULE_ID
-        and str(_paf_early.get("validation_surface") or "").strip() == "authoritative_action_resolution"
-    ):
-        _aff_early = affordance_resolution if isinstance(affordance_resolution, dict) else {}
-        return {
-            "status": "approved",
-            "reason": "authoritative_action_resolution_surface",
-            "validator_lane": "goc_action_resolution_surface_v1",
-            "dramatic_quality_gate": "waived_authoritative_action_resolution_surface",
-            "dramatic_effect_weak_signal": False,
-            "intent_surface_diagnostics": {"npc_narrated_player_action_violation": False},
-            "player_action_frame": _paf_early,
-            "affordance_resolution": _aff_early,
-        }
+    authoritative_outcome = _authoritative_action_resolution_outcome(
+        module_id=module_id,
+        player_action_frame=player_action_frame,
+        affordance_resolution=affordance_resolution,
+    )
+    if authoritative_outcome is not None:
+        return authoritative_outcome
 
-    if module_id != GOC_MODULE_ID:
-        return {
-            "status": "waived",
-            "reason": "non_goc_vertical_slice",
-            "validator_lane": "goc_rule_engine_v1",
-        }
-    if generation.get("success") is False or generation.get("error"):
-        return {
-            "status": "rejected",
-            "reason": "model_generation_failed",
-            "validator_lane": "goc_rule_engine_v1",
-        }
+    early_outcome = _module_or_generation_validation_outcome(
+        module_id=module_id,
+        generation=generation,
+    )
+    if early_outcome is not None:
+        return early_outcome
 
     gen_meta_pre = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
     structured_pre = (
         gen_meta_pre.get("structured_output") if isinstance(gen_meta_pre.get("structured_output"), dict) else {}
     )
-    intent_surface_diagnostics: dict[str, Any] = {"npc_narrated_player_action_violation": False}
-    if structured_pre and isinstance(actor_lane_context, dict) and module_id == GOC_MODULE_ID:
-        hid = str(actor_lane_context.get("human_actor_id") or "").strip()
-        interp_loc = interpreted_input if isinstance(interpreted_input, dict) else {}
-        raw_pi_eff = str(raw_player_input or interp_loc.get("original_text") or "").strip()
-        pik_eff = str(interp_loc.get("player_input_kind") or "").strip().lower()
-        if hid and raw_pi_eff and pik_eff in ("action", "perception"):
-            intent_surface_diagnostics["npc_narrated_player_action_violation"] = (
-                _detect_npc_narrated_player_action_violation(
-                    structured=structured_pre,
-                    raw_player_input=raw_pi_eff,
-                    player_input_kind=pik_eff,
-                    human_actor_id=hid,
-                )
-            )
-    if structured_pre:
-        shell_violation = _check_npc_spoken_action_lane_blob_cap(
-            structured_pre, npc_char_cap=_resolved_npc_lane_char_cap(story_runtime_experience)
-        )
-        if shell_violation is not None:
-            return {**shell_violation, "intent_surface_diagnostics": intent_surface_diagnostics}
+    intent_surface_diagnostics = _intent_surface_diagnostics(
+        structured_output=structured_pre,
+        actor_lane_context=actor_lane_context,
+        interpreted_input=interpreted_input,
+        raw_player_input=raw_player_input,
+    )
+    shell_reject = _structured_shell_validation_rejection(
+        structured_output=structured_pre,
+        story_runtime_experience=story_runtime_experience,
+        intent_surface_diagnostics=intent_surface_diagnostics,
+    )
+    if shell_reject is not None:
+        return shell_reject
 
     knowledge_text = text_from_generation_and_effects(
         generation=generation if isinstance(generation, dict) else {},
@@ -512,47 +647,31 @@ def run_validation_seam(
         actor_lane_context=actor_lane_context if isinstance(actor_lane_context, dict) else None,
         turn_input_class=turn_input_class,
     )
-    if hard_detection.get("action") in {"reject", "recover"}:
-        recoverable = hard_detection.get("action") == "recover"
-        reason = str(hard_detection.get("reason") or "hard_forbidden_runtime_gate")
-        return {
-            "status": "rejected",
-            "reason": reason,
-            "error_code": reason,
-            "validator_lane": "goc_knowledge_runtime_gates_v1",
-            "hard_forbidden_detection": hard_detection,
-            "hard_forbidden_absent": bool(hard_detection.get("hard_forbidden_absent")),
-            "opening_summary_only_absent": bool(hard_detection.get("opening_summary_only_absent")),
-            "hard_boundary_failure": not recoverable,
-            "recoverable_rejection": recoverable,
-            "failure_class": "hard_forbidden_runtime_gate" if not recoverable else "recoverable_opening_contract",
-            "intent_surface_diagnostics": intent_surface_diagnostics,
-        }
+    hard_reject = _hard_forbidden_validation_rejection(
+        hard_detection=hard_detection,
+        intent_surface_diagnostics=intent_surface_diagnostics,
+    )
+    if hard_reject is not None:
+        return hard_reject
 
     shape_reject = _reject_proposed_effects_shape(proposed_state_effects)
     if shape_reject is not None:
         return shape_reject
 
-    opening_coverage: dict[str, Any] = {
-        "opening_event_coverage_pass": True,
-        "applicable": False,
-    }
-    if str(turn_input_class or "").strip().lower() == "opening":
-        opening_coverage = evaluate_opening_event_coverage(
-            opening_scene_sequence=opening_scene_sequence,
-            text=knowledge_text or extract_proposed_narrative_text(proposed_state_effects),
-            structured_output=structured_pre,
-            actor_lane_context=actor_lane_context if isinstance(actor_lane_context, dict) else None,
-            scene_plan_record=scene_plan_record if isinstance(scene_plan_record, dict) else None,
-            current_scene_id=current_scene_id,
-        )
-        opening_reject = _opening_coverage_rejection(
-            opening_coverage=opening_coverage,
-            hard_detection=hard_detection,
-            intent_surface_diagnostics=intent_surface_diagnostics,
-        )
-        if opening_reject is not None:
-            return opening_reject
+    opening_coverage, opening_reject = _opening_coverage_validation(
+        turn_input_class=turn_input_class,
+        opening_scene_sequence=opening_scene_sequence,
+        knowledge_text=knowledge_text,
+        proposed_state_effects=proposed_state_effects,
+        structured_output=structured_pre,
+        actor_lane_context=actor_lane_context,
+        scene_plan_record=scene_plan_record,
+        current_scene_id=current_scene_id,
+        hard_detection=hard_detection,
+        intent_surface_diagnostics=intent_surface_diagnostics,
+    )
+    if opening_reject is not None:
+        return opening_reject
 
     return _dramatic_gate_outcome(
         module_id=module_id,

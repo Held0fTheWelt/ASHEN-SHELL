@@ -149,170 +149,135 @@ def _observation_names(raw_trace: dict[str, Any]) -> list[str]:
     ]
 
 
+def _invalid_arguments_response() -> dict[str, Any]:
+    return {
+        "ok": False,
+        "error": {"code": "invalid_input", "message": "arguments must be an object"},
+    }
+
+
+def _error_response(code: str, message: str) -> dict[str, Any]:
+    return {"ok": False, "error": {"code": code, "message": message}}
+
+
+def wos_quality_lab_review_judgments(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    scores, is_opening, expected_names = _extract_inputs(arguments)
+    if not scores:
+        return _error_response(
+            "no_scores_provided",
+            "Provide either 'scores' (a judge_name -> entry mapping) "
+            "or 'trace_scores_payload' (full fetch_langfuse_trace_scores output).",
+        )
+    result = interpret_judgments(
+        scores,
+        is_opening=is_opening,
+        expected_judge_names=expected_names,
+    )
+    return {"ok": True, **result}
+
+
+def wos_quality_lab_review_trace(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    raw_trace = _resolve_raw_trace(arguments)
+    if raw_trace is None:
+        return _error_response(
+            "no_trace_provided",
+            "Provide either 'trace_payload' (full fetch_langfuse_trace output) "
+            "or 'raw_trace' (the raw Langfuse trace dict).",
+        )
+    trace_id = str(raw_trace.get("id") or raw_trace.get("trace_id") or "").strip()
+    trace_name = str(raw_trace.get("name") or "").strip() or None
+    result = interpret_trace(
+        trace_id=trace_id or None,
+        trace_name=trace_name,
+        trace_metadata=_flatten_trace_metadata(raw_trace),
+        aspects_ledger=_aspects_inner(raw_trace),
+        observation_names=_observation_names(raw_trace),
+        is_opening=_coerce_bool(arguments.get("is_opening")),
+    )
+    return {"ok": True, **result}
+
+
+def wos_quality_lab_review_mcp_exchange(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    request = arguments.get("request")
+    response = arguments.get("response")
+    if not isinstance(request, dict) or not isinstance(response, dict):
+        return _error_response("no_exchange_provided", "Provide both 'request' and 'response' objects.")
+    focus = arguments.get("focus")
+    result = interpret_mcp_exchange(request, response, focus=focus if isinstance(focus, list) else None)
+    return {"ok": True, **result}
+
+
+def wos_quality_lab_find_patterns(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    cluster_by = arguments.get("cluster_by")
+    result = find_patterns(
+        trace_summaries=arguments.get("trace_summaries") or [],
+        judge_results=arguments.get("judge_results") or [],
+        cluster_by=cluster_by if isinstance(cluster_by, list) else None,
+        include_claude_context=bool(_coerce_bool(arguments.get("include_claude_context"))),
+    )
+    return {"ok": True, **result}
+
+
+def wos_quality_lab_suggest_investigation(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    cluster = arguments.get("problem_cluster")
+    if not isinstance(cluster, dict):
+        return _error_response("no_problem_cluster_provided", "Provide 'problem_cluster' as an object.")
+    include = _coerce_bool(arguments.get("include_claude_context"))
+    context = arguments.get("available_context")
+    result = suggest_investigation(
+        problem_cluster=cluster,
+        available_context=context if isinstance(context, dict) else {},
+        include_claude_context=True if include is None else bool(include),
+    )
+    return {"ok": True, **result}
+
+
+def wos_quality_lab_plan_repair_wave(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    constraints = arguments.get("constraints")
+    result = plan_repair_wave(
+        improvement_candidates=arguments.get("improvement_candidates") or [],
+        constraints=constraints if isinstance(constraints, dict) else {},
+    )
+    return {"ok": True, **result}
+
+
+def wos_quality_lab_refine_judge_set(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    result = refine_judge_set(
+        judge_names=arguments.get("judge_names") or [],
+        observed_failures=arguments.get("observed_failures") or [],
+        examples=arguments.get("examples") or [],
+        mode=str(arguments.get("mode") or "analysis_only"),
+    )
+    return {"ok": True, **result}
+
+
+def wos_quality_lab_plan_content_revision(arguments: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(arguments, dict):
+        return _invalid_arguments_response()
+    result = plan_content_revision(
+        content_module=arguments.get("content_module"),
+        quality_findings=arguments.get("quality_findings") or [],
+        scene_or_context=arguments.get("scene_or_context"),
+        include_claude_context=bool(_coerce_bool(arguments.get("include_claude_context"))),
+    )
+    return {"ok": True, **result}
+
+
 def build_quality_lab_mcp_handlers() -> dict[str, Callable[..., dict[str, Any]]]:
-    def wos_quality_lab_review_judgments(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        scores, is_opening, expected_names = _extract_inputs(arguments)
-        if not scores:
-            return {
-                "ok": False,
-                "error": {
-                    "code": "no_scores_provided",
-                    "message": (
-                        "Provide either 'scores' (a judge_name → entry mapping) "
-                        "or 'trace_scores_payload' (full fetch_langfuse_trace_scores output)."
-                    ),
-                },
-            }
-        result = interpret_judgments(
-            scores,
-            is_opening=is_opening,
-            expected_judge_names=expected_names,
-        )
-        return {"ok": True, **result}
-
-    def wos_quality_lab_review_trace(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        raw_trace = _resolve_raw_trace(arguments)
-        if raw_trace is None:
-            return {
-                "ok": False,
-                "error": {
-                    "code": "no_trace_provided",
-                    "message": (
-                        "Provide either 'trace_payload' (full fetch_langfuse_trace output) "
-                        "or 'raw_trace' (the raw Langfuse trace dict)."
-                    ),
-                },
-            }
-        trace_id = str(raw_trace.get("id") or raw_trace.get("trace_id") or "").strip()
-        trace_name = str(raw_trace.get("name") or "").strip() or None
-        is_opening_arg = _coerce_bool(arguments.get("is_opening"))
-        metadata = _flatten_trace_metadata(raw_trace)
-        aspects = _aspects_inner(raw_trace)
-        observation_names = _observation_names(raw_trace)
-        result = interpret_trace(
-            trace_id=trace_id or None,
-            trace_name=trace_name,
-            trace_metadata=metadata,
-            aspects_ledger=aspects,
-            observation_names=observation_names,
-            is_opening=is_opening_arg,
-        )
-        return {"ok": True, **result}
-
-    def wos_quality_lab_review_mcp_exchange(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        request = arguments.get("request")
-        response = arguments.get("response")
-        if not isinstance(request, dict) or not isinstance(response, dict):
-            return {
-                "ok": False,
-                "error": {
-                    "code": "no_exchange_provided",
-                    "message": "Provide both 'request' and 'response' objects.",
-                },
-            }
-        focus = arguments.get("focus")
-        focus_list = focus if isinstance(focus, list) else None
-        result = interpret_mcp_exchange(request, response, focus=focus_list)
-        return {"ok": True, **result}
-
-    def wos_quality_lab_find_patterns(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        include = _coerce_bool(arguments.get("include_claude_context"))
-        cluster_by = arguments.get("cluster_by")
-        result = find_patterns(
-            trace_summaries=arguments.get("trace_summaries") or [],
-            judge_results=arguments.get("judge_results") or [],
-            cluster_by=cluster_by if isinstance(cluster_by, list) else None,
-            include_claude_context=bool(include),
-        )
-        return {"ok": True, **result}
-
-    def wos_quality_lab_suggest_investigation(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        cluster = arguments.get("problem_cluster")
-        if not isinstance(cluster, dict):
-            return {
-                "ok": False,
-                "error": {
-                    "code": "no_problem_cluster_provided",
-                    "message": "Provide 'problem_cluster' as an object.",
-                },
-            }
-        include = _coerce_bool(arguments.get("include_claude_context"))
-        if include is None:
-            include = True
-        context = arguments.get("available_context")
-        result = suggest_investigation(
-            problem_cluster=cluster,
-            available_context=context if isinstance(context, dict) else {},
-            include_claude_context=bool(include),
-        )
-        return {"ok": True, **result}
-
-    def wos_quality_lab_plan_repair_wave(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        constraints = arguments.get("constraints")
-        result = plan_repair_wave(
-            improvement_candidates=arguments.get("improvement_candidates") or [],
-            constraints=constraints if isinstance(constraints, dict) else {},
-        )
-        return {"ok": True, **result}
-
-    def wos_quality_lab_refine_judge_set(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        result = refine_judge_set(
-            judge_names=arguments.get("judge_names") or [],
-            observed_failures=arguments.get("observed_failures") or [],
-            examples=arguments.get("examples") or [],
-            mode=str(arguments.get("mode") or "analysis_only"),
-        )
-        return {"ok": True, **result}
-
-    def wos_quality_lab_plan_content_revision(arguments: dict[str, Any]) -> dict[str, Any]:
-        if not isinstance(arguments, dict):
-            return {
-                "ok": False,
-                "error": {"code": "invalid_input", "message": "arguments must be an object"},
-            }
-        include = _coerce_bool(arguments.get("include_claude_context"))
-        result = plan_content_revision(
-            content_module=arguments.get("content_module"),
-            quality_findings=arguments.get("quality_findings") or [],
-            scene_or_context=arguments.get("scene_or_context"),
-            include_claude_context=bool(include),
-        )
-        return {"ok": True, **result}
 
     return {
         "wos.quality_lab.review_judgments": wos_quality_lab_review_judgments,

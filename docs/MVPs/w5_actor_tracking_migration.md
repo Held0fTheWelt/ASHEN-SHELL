@@ -802,9 +802,119 @@ on explicit opt-out. Author ADR-0067. Update inventory. Add semantic tests.
 
 **Current strict-on posture (default/correct):** unset/empty/`true` → `w5_projection` only. No warning.
 
-**Next step:** Phase 6B-7 final removal (future phase). Requires ADR-0067 §"Future Removal Criteria"
-to be satisfied: no active operator usage, one release cycle with warning, parity tests converted,
-inventory updated, dedicated removal ADR (tentatively ADR-0068).
+**Next step:** Phase 6B-7.5 audit complete (see below). ADR-0068 removal blocked by criteria 1 and 2.
+
+---
+
+### Phase 6B-7.5 — ADR-0067 Removal-Readiness Audit (complete, 2026-05-23)
+
+**Goal:** Prove whether ADR-0068 final strict-off removal is safe to begin. Produce the exact
+implementation plan. No runtime behavior removed.
+
+**ADR:** None (audit phase). References [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) — Accepted.
+
+**Summary:**
+
+ADR-0067 defines five criteria for final strict-off removal. As of 2026-05-23:
+
+| Criterion | Status |
+|-----------|--------|
+| 1. No active operator usage (prod/staging/preview) | **PARTIAL** — repo-local config clean; live/cloud not verifiable from repo |
+| 2. Warning observable for one release cycle | **NOT MET** — Phase 6B-7 warning introduced today; one cycle required |
+| 3. Parity test suite updated | **NOT MET** — 15+ strict-off test functions remain; rewrite plan documented |
+| 4. Inventory updated (transition_from_previous reclassified) | **NOT MET** (by design) — reclassification is ADR-0068 artifact |
+| 5. Dedicated removal ADR (ADR-0068) written and Accepted | **NOT MET** — blocked by 1 and 2 |
+
+**Overall: NOT SAFE TO BEGIN CODE REMOVAL.**
+
+**What was produced:**
+- Full operator/deployment audit (repo-local): no strict-off config found in `.env`, docker-compose, GitHub workflows, or `settings*.py`.
+- Runtime dependency audit: all `transition_from_previous` / `W5_AST_NARRATOR_STRICT_ENABLED` references classified by role. See `w5_legacy_consumer_removal_inventory.md §Phase 6B-7.5`.
+- Test dependency audit: 15+ test functions across 7 files identified for deletion/rewrite; 3 for update; strict-on tests preserved. See inventory §"Test Dependency Audit".
+- Exact ADR-0068 implementation scope documented: what to delete in `diagnostics.py`, `god_of_carnage_narrator_path.py`, `inventory_w5_legacy_consumers.py`, and test files.
+- Inventory script extended: `Phase 6B-7.5 ADR-0067 removal-readiness checklist` section added to `scripts/inventory_w5_legacy_consumers.py` output.
+
+**Constraints met:**
+- No runtime behavior changed.
+- No tests removed or rewritten.
+- All ADR-0067, ADR-0066, ADR-0065, ADR-0063, ADR-0033 constraints: unchanged.
+
+**Next step:** Phase 6B-7.6 — draft ADR-0068 and document removal plan. Then wait for blockers to clear. See below.
+
+---
+
+### Phase 6B-7.6 — ADR-0068 draft and removal-plan documentation (complete, 2026-05-23)
+
+**Goal:** Make the final strict-off removal mechanically ready — draft ADR-0068,
+document the exact implementation scope, record the stale worktree hygiene
+recommendation — without executing any runtime code removal. The runtime rollback
+path (`W5_AST_NARRATOR_STRICT_ENABLED=false`) remains intact.
+
+**ADR:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) — status **Draft / Blocked**.
+
+**Summary:**
+
+- ADR-0068 authored with status **Draft / Blocked**. It must not be marked
+  Accepted until both hard blockers are cleared:
+  1. `NarratorStrictOffDeprecationWarning` has been observable in production
+     logs for one full release cycle.
+  2. Authorized operator confirms no live/staging/cloud environment sets
+     `W5_AST_NARRATOR_STRICT_ENABLED=false`.
+
+- **Exact future runtime removals documented** in ADR-0068 §"Planned Implementation Scope":
+  - `ai_stack/actor_tracking/diagnostics.py`: `w5_ast_narrator_strict_enabled()`
+    becomes unconditional `True`; remove strict-off env parsing; remove
+    `_strict_off_deprecation_warned` sentinel; remove
+    `_emit_strict_off_deprecation_warning()`; retain `NarratorStrictOffDeprecationWarning`
+    as tombstone only if downstream imports exist, otherwise remove.
+  - `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py`: remove
+    `_transition_facts()`; remove the `if not w5_ast_narrator_strict_enabled():`
+    branch that inserts `source_facts["transition_from_previous"]`.
+  - `scripts/inventory_w5_legacy_consumers.py`: reclassify
+    `transition_from_previous` as `removed_by_adr_0068` after removal.
+
+- **Exact future test rewrites documented** in ADR-0068 §"Test removals / rewrites":
+  15+ test functions across 7 files identified for deletion or rewrite to
+  W5-only strict-on assertions. No test rewrite is executed in Phase 6B-7.6.
+
+- **Stale worktree hygiene:** `.worktrees/phase-6b5f` is an unpruned stale
+  worktree from Phase 6B-5F. It contains a historical test file not in the main
+  tree. The inventory script already excludes `.worktrees/` at lines 294–297
+  (added in Phase 6B-6B). Developer note for manual cleanup:
+  ```bash
+  git worktree list
+  rm -rf .worktrees/phase-6b5f
+  git worktree prune --verbose
+  ```
+
+**What Phase 6B-7.6 does NOT do:**
+
+- Does NOT remove `W5_AST_NARRATOR_STRICT_ENABLED` or its resolver.
+- Does NOT remove `transition_from_previous` (first-class under strict-off).
+- Does NOT remove `_transition_facts()`.
+- Does NOT remove `_emit_strict_off_deprecation_warning()` or the
+  `NarratorStrictOffDeprecationWarning` class.
+- Does NOT delete or rewrite any strict-off test.
+- Does NOT mutate committed events or committed output.
+- Does NOT weaken ADR-0033, ADR-0061, ADR-0063, ADR-0065, ADR-0066,
+  ADR-0067, Actor Lane, How, or Inferred Why.
+
+**Constraints met:**
+
+- Runtime rollback path (`W5_AST_NARRATOR_STRICT_ENABLED=false`) still operative.
+- `transition_from_previous` first-class under strict-off: unchanged.
+- `NarratorStrictOffDeprecationWarning`: still emitted on explicit strict-off.
+- Malformed-W5 safety fallback, public aliases, substrate writers: unchanged.
+- ADR-0033, ADR-0061, ADR-0063, ADR-0065, ADR-0066, ADR-0067: unchanged.
+- How remains first-class. Inferred Why remains soft truth.
+
+**Next step:** Wait for ADR-0067 blocking criteria to be cleared:
+1. `NarratorStrictOffDeprecationWarning` must survive one release cycle in
+   production logs.
+2. Ops/deployment team must confirm no live/staging/cloud environment sets
+   `W5_AST_NARRATOR_STRICT_ENABLED=false`.
+3. Once cleared, execute ADR-0068: rewrite tests, remove runtime code, mark
+   Accepted, update inventory.
 
 ---
 

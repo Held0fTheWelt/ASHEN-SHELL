@@ -273,29 +273,34 @@ def _callback_summary(*, open_pressures: list[str], social_state: dict[str, Any]
     return "A prior pressure line is still shaping the room."
 
 
+def _active_pressure_label(item: str) -> str:
+    low = item.lower()
+    if "departure" in low or "exit" in low:
+        return "departure pressure"
+    if "ambiguity" in low:
+        return "reading dispute"
+    if "blame" in low:
+        return "blame pressure"
+    if "repair" in low:
+        return "fragile repair"
+    if "alliance" in low:
+        return "alliance instability"
+    return item.replace("_", " ")
+
+
+def _active_pressure_labels(open_pressures: list[str]) -> list[str]:
+    deduped: list[str] = []
+    for item in open_pressures:
+        label = _active_pressure_label(item)
+        if label not in deduped:
+            deduped.append(label)
+    return deduped
+
+
 def _active_pressure_summary(open_pressures: list[str]) -> str:
     if not open_pressures:
         return "No single pressure has cleared the room; the tension remains socially distributed."
-    labels: list[str] = []
-    for item in open_pressures:
-        low = item.lower()
-        if "departure" in low or "exit" in low:
-            labels.append("departure pressure")
-        elif "ambiguity" in low:
-            labels.append("reading dispute")
-        elif "blame" in low:
-            labels.append("blame pressure")
-        elif "repair" in low:
-            labels.append("fragile repair")
-        elif "alliance" in low:
-            labels.append("alliance instability")
-        else:
-            labels.append(item.replace("_", " "))
-    deduped: list[str] = []
-    for label in labels:
-        if label not in deduped:
-            deduped.append(label)
-    return "Still live: " + ", ".join(deduped[:3])
+    return "Still live: " + ", ".join(_active_pressure_labels(open_pressures)[:3])
 
 
 def _recent_act_social_meaning(*, open_pressures: list[str], consequences: list[str], social_state: dict[str, Any]) -> str:

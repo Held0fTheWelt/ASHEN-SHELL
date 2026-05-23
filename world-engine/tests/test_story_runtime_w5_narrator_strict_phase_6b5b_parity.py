@@ -562,22 +562,25 @@ class TestPhase6B5BSourceFactsAuthorityShape:
     ``source_facts`` switches according to the strict flag, and the W5
     projection is always present (Phase 6B-1 default-on)."""
 
-    def test_strict_off_keeps_transition_from_previous_as_first_class(
+    def test_enrichment_preserves_existing_transition_data_without_modifying_it(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """ADR-0068: enrichment does not remove transition_from_previous from
+        legacy-committed session blocks; it only adds w5_projection. The GoC
+        narrator path no longer emits transition_from_previous in new blocks,
+        but old committed diagnostics may still contain it."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_session()
         enriched = _enrich(session, [_legacy_narrator_block()])
         facts = enriched[0]["source_facts"]
-        # Legacy first-class authority remains.
+        # Enrichment does not strip transition_from_previous from committed blocks.
         assert "transition_from_previous" in facts
         legacy = facts["transition_from_previous"]
         assert legacy["location_changed"] is True
         assert legacy["directed_transition"]["kind"] == "hard_cut"
-        # _legacy_compat namespace MUST NOT be created under strict-off; that
-        # namespace exists only as a strict-on demotion target.
+        # _legacy_compat is never created by enrichment.
         assert "_legacy_compat" not in facts
-        # W5 projection coexists as the additional default-on input.
+        # W5 projection is added by enrichment regardless of env var.
         assert "w5_projection" in facts
 
     def test_strict_on_no_legacy_compat(
@@ -632,31 +635,23 @@ class TestPhase6B5BPromptContract:
     strict-off posture; transition_from_previous must no longer be promoted as
     narrator authority under either posture."""
 
-    def test_strict_off_prompt_does_not_promote_legacy_fallback_guidance(
+    def test_prompt_does_not_promote_legacy_fallback_guidance(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-5D: strict-off prompt must not instruct the narrator to use
-        transition_from_previous as a fallback. W5 projection is the authority
-        in all postures.
+        """ADR-0068: env-var false has no effect on prompt. Legacy fallback
+        instruction is absent under all postures. W5 projection is the authority.
 
         Note: ``_legacy_narrator_block()`` embeds ``hard_cut`` in the serialised
         source_facts JSON payload; we check only the instruction portion (before
         the data payload) for the narrator-guidance phrases we removed."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
-        # Split instruction from the JSON data payload so assertions are
-        # specific to narrator guidance text, not block payload values.
         instruction = prompt.split("Narrator synthesis input:")[0]
-        # Legacy fallback instruction is absent from the strict-off prompt.
         assert "Use transition_from_previous only as a fallback" not in instruction
         assert "as a fallback when w5_projection is absent" not in instruction
-        # The hard_cut directed-transition narrator instruction is absent
-        # from the guidance portion (it may still appear in the data payload).
         assert "hard authored scene break" not in instruction
         assert "directed_transition.kind" not in instruction
-        # W5 projection is the actor-situation authority.
         assert "source_facts.w5_projection" in instruction
-        # W5 summaries are still named in the strict-off path.
         for summary in (
             "where_summary",
             "what_summary",
@@ -772,21 +767,21 @@ class TestPhase6B5BAdminDiagnosticsParity:
     W5-first location-change semantics under both postures and only switch
     the legacy parity label according to the strict flag."""
 
-    def test_strict_off_reports_w5_first_and_keeps_legacy_compat_visible(
+    def test_env_var_false_still_uses_w5_history_and_reports_strict_on(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """ADR-0068: env-var false no longer changes behavior. Strict is always
+        on; admin metadata reports narrator_strict_enabled=True and
+        removed_by_6b5e_policy regardless of env var."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_session()
         harness = _AdminParityHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)
-        # W5 history projection drives the signal even under strict-off.
+        # W5 history projection always drives the signal.
         assert meta["w5.location_changed_this_turn"] is True
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is False
-        # Operator parity surface remains visible.
-        assert meta["w5.legacy_transition_parity"] == "legacy_compat_visible"
-        # Semantic admin gates: How presence and inferred-Why presence are
-        # surfaced from the W5 snapshot, not from any legacy block.
+        assert meta["w5.narrator_strict_enabled"] is True
+        assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
         assert meta["w5.has_how"] is True
         assert meta["w5.has_inferred_why"] is True
 

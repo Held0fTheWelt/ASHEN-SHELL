@@ -66,19 +66,14 @@ class _OutputModuleAdapter(BaseModelAdapter):
         assert "text" not in source["scene_blocks"][0]
         assert source["scene_blocks"][0]["source_facts"]["semantic_input_language"] == "en"
         assert source["scene_blocks"][0]["source_facts"]["mandatory_beat"]["coverage_cues"]
-        assert any(
-            (block["source_facts"].get("transition_from_previous") or {}).get("location_changed")
+        # ADR-0068: transition_from_previous no longer emitted; verify absent.
+        assert not any(
+            "transition_from_previous" in (block.get("source_facts") or {})
             for block in source["scene_blocks"]
         )
-        hard_cut_blocks = [
-            block
-            for block in source["scene_blocks"]
-            if (block["source_facts"].get("transition_from_previous") or {})
-            .get("directed_transition", {})
-            .get("kind")
-            == "hard_cut"
-        ]
-        assert [block["canonical_mandatory_beat_id"] for block in hard_cut_blocks] == ["room_perception_winter_light"]
+        # Canonical hard-cut beat must still be present by beat id (content unchanged).
+        canonical_beat_ids = [block.get("canonical_mandatory_beat_id") for block in source["scene_blocks"]]
+        assert "room_perception_winter_light" in canonical_beat_ids
         assert any(block.get("visual_emphasis", {}).get("kind") == "dramatic_moment" for block in source["scene_blocks"])
         payload = {
             "scene_blocks": [
@@ -271,8 +266,7 @@ def test_goc_opening_defaults_to_module_language_without_output_pipeline() -> No
 
 
 def test_goc_opening_de_uses_output_module_for_visible_text(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Explicit opt-out: _OutputModuleAdapter validates legacy transition_from_previous surface.
-    monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
+    # ADR-0068: strict-off opt-out removed; no env-var monkeypatching needed.
     manager = StoryRuntimeManager(governed_runtime_config=_governed_config())
     _install_output_module(manager)
     manager.turn_graph = _ExplodingTurnGraph()  # type: ignore[assignment]

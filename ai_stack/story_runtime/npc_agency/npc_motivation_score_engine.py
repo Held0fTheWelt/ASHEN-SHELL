@@ -96,6 +96,42 @@ def _extract_social_pressure_score(output: dict[str, Any] | None) -> float:
     return _DEFAULT_PRESSURE_BASELINE
 
 
+def _relationship_pair_actor_ids(key: Any, pair: dict[str, Any]) -> set[str]:
+    key_text = str(key)
+    parts = key_text.split("|")
+    return {
+        parts[0] if len(parts) > 0 else "",
+        parts[1] if len(parts) > 1 else "",
+        str(pair.get("actor_a") or ""),
+        str(pair.get("actor_b") or ""),
+    }
+
+
+def _coerced_pressure_score(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return _clamp(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _pair_relationship_pressure(pair: dict[str, Any]) -> float | None:
+    for tension_key in ("tension_score", "tension"):
+        score = _coerced_pressure_score(pair.get(tension_key))
+        if score is not None:
+            return score
+    return None
+
+
+def _aggregate_relationship_pressure(output: dict[str, Any]) -> float | None:
+    for key in ("aggregate_tension", "tension_score"):
+        score = _coerced_pressure_score(output.get(key))
+        if score is not None:
+            return score
+    return None
+
+
 def _extract_relationship_axis_pressure(
     output: dict[str, Any] | None,
     npc_id: str,
@@ -108,28 +144,12 @@ def _extract_relationship_axis_pressure(
         for key, pair in pairs.items():
             if not isinstance(pair, dict):
                 continue
-            ids_in_pair = {
-                str(key).split("|")[0] if "|" in str(key) else "",
-                str(key).split("|")[1] if "|" in str(key) and len(str(key).split("|")) > 1 else "",
-                str(pair.get("actor_a") or ""),
-                str(pair.get("actor_b") or ""),
-            }
-            if npc_id in ids_in_pair:
-                for tension_key in ("tension_score", "tension"):
-                    raw = pair.get(tension_key)
-                    if raw is not None:
-                        try:
-                            return _clamp(float(raw))
-                        except (TypeError, ValueError):
-                            pass
-    for key in ("aggregate_tension", "tension_score"):
-        raw = output.get(key)
-        if raw is not None:
-            try:
-                return _clamp(float(raw))
-            except (TypeError, ValueError):
-                pass
-    return _DEFAULT_PRESSURE_BASELINE
+            if npc_id not in _relationship_pair_actor_ids(key, pair):
+                continue
+            score = _pair_relationship_pressure(pair)
+            if score is not None:
+                return score
+    return _aggregate_relationship_pressure(output) or _DEFAULT_PRESSURE_BASELINE
 
 
 def _extract_narrative_momentum_score(output: dict[str, Any] | None) -> float:

@@ -60,10 +60,14 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../
 | **DS-022** | `world_engine` | — | **CLOSED** 2026-05-23 |
 | **DS-023** | `ai_stack` | `story_runtime_core` | **CLOSED** 2026-05-23 |
 | **DS-024** | `ai_stack` | `story_runtime_core` | **CLOSED** 2026-05-23 |
-| **DS-025** | `world_engine` | — | **OPEN** 2026-05-23 |
-| **DS-026** | `ai_stack` | `story_runtime_core` | **OPEN** 2026-05-23 |
-| **DS-027** | `ai_stack` | `story_runtime_core` | **OPEN** 2026-05-23 |
-| **DS-028** | `repo_governance_rollout` | `tools/mcp_server`, `ai_stack` | **OPEN** 2026-05-23 |
+| **DS-025** | `world_engine` | — | **CLOSED** 2026-05-23 |
+| **DS-026** | `ai_stack` | `story_runtime_core` | **CLOSED** 2026-05-23 |
+| **DS-027** | `ai_stack` | `story_runtime_core` | **CLOSED** 2026-05-23 |
+| **DS-028** | `repo_governance_rollout` | `tools/mcp_server`, `ai_stack` | **CLOSED** 2026-05-23 |
+| **DS-029** | `ai_stack` | `story_runtime_core` | **OPEN** 2026-05-23 |
+| **DS-030** | `backend_runtime_services` | — | **OPEN** 2026-05-23 |
+| **DS-031** | `world_engine` | — | **OPEN** 2026-05-23 |
+| **DS-032** | `backend_runtime_services` | `ai_stack`, `world_engine`, `story_runtime_core`, `administration_tool` | **OPEN** 2026-05-23 |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](../state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
 
@@ -105,35 +109,35 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 | Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
 |-------|-------------------------------------|-------------------------------------|
-| **As of (date & time)** | — | **2026-05-23 13:13:11 (UTC)** |
+| **As of (date & time)** | — | **2026-05-23 14:33:12 (UTC)** |
 | Spaghetti scan command | — | `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` |
 | Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` from `fy-manifest.yaml` |
-| **M7** — gewichtete 7-Kategorien-Summe | **47.63** | **3.91** |
-| C1: Circular dependencies | **9.77** | **0.74** |
-| C2: Nesting depth | **11.31** | **1.46** |
-| C3: Long functions + complexity | **99.05** | **1.36** |
-| C4: Multi-responsibility modules | **73.18** | **7.31** |
-| C5: Magic numbers + global state | **40.25** | **0.85** |
-| C6: Missing abstractions / duplication | **41.84** | **13.77** |
-| C7: Confusing control flow | **64.38** | **6.97** |
-| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **10996** / **804** / **149** / **3** |
+| **M7** — gewichtete 7-Kategorien-Summe | **46.21** | **3.86** |
+| C1: Circular dependencies | **9.45** | **0.74** |
+| C2: Nesting depth | **0.00** | **1.39** |
+| C3: Long functions + complexity | **98.70** | **1.25** |
+| C4: Multi-responsibility modules | **72.88** | **7.25** |
+| C5: Magic numbers + global state | **40.09** | **0.84** |
+| C6: Missing abstractions / duplication | **39.47** | **13.75** |
+| C7: Confusing control flow | **64.16** | **6.85** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **11076** / **803** / **139** / **0** |
 | Extra check builtins | — | **0** matches for `def build_god_of_carnage_solo` in `**/builtins.py`; `story_runtime_core/goc_solo_builtin_template.py` still owns the definition |
 | Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **0**; imported **12** current runtime modules via `app.runtime.package_classification.runtime_module_import_path`. Grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
-| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **3.908** is below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.31** > **5**), **C5** (**0.85** > **0**), **C6** (**13.77** > **0**), and **C7** (**6.97** > **3**). **C4/C6 anchors:** current longest functions now cluster around world-engine opening/souffleuse/session surfaces (`_realize_souffleuse_output`, `_execute_opening_locked`, session manager `__init__`), AI-stack authority/validation/graph-output surfaces (`_build_adr0041_plan_enforced_runtime_projection_dispatch`, `package_runtime_graph_output`, `run_validation_seam`, `augment_envelope_with_block_stream`), AI-stack narrative/telemetry leaders (`validate_meta_narrative_awareness_realization`, `_build_vitality_telemetry_v1`, `build_pacing_and_silence`, `_candidate_rows`), and tooling (`build_quality_lab_mcp_handlers`). **C7 nesting tail:** depth-6 leaders are now `_extract_relationship_axis_pressure`, `_active_pressure_summary`, and `_safe_dict`. **Metric scan gate:** DS-005 imports **12** current runtime modules with exit **0**. |
+| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **3.862** is below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.25** > **5**), **C5** (**0.84** > **0**), **C6** (**13.75** > **0**), and **C7** (**6.85** > **3**). **C4/C7 anchors:** the current longest functions cluster around AI actor/NPC/narrative surfaces (`build_npc_agency_closure`, `extract_w5_snapshot_from_committed_event`, `classify_voice_semantic_lines`, `derive_narrative_momentum`, `build_post_cut_in_follow_up_event`, `assess_npc_agency_claim_readiness`, `hydrate_actor_lanes`), backend service snapshots (`build_world_engine_control_center_snapshot`, `get_runtime_dashboard`), and world-engine live envelope/narrator/opening surfaces (`_build_live_scene_turn_envelope`, `_realize_narrator_path_output`, `_build_opening_prompt`). **C5/C6 residual:** policy literals and duplicate-name proxies remain nonzero around prompt/store, HTTP shell, contract-policy normalization, pacing/context synthesis, and callback export surfaces. **C7 nesting tail:** depth-6 leaders are now closed; `D6` is **0**. **Metric scan gate:** DS-005 imports **12** current runtime modules with exit **0**. |
 
 ### Score *M7* — inputs, weights, and calculation
 
 | Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
 |--------|---------|------------------------|--------------|
-| **M7** | Gewichtete Summe | **47.63** | **3.91** |
-| **C1** | Circular dependencies | **9.77** | **0.74** |
-| **C2** | Nesting depth | **11.31** | **1.46** |
-| **C3** | Long functions + complexity | **99.05** | **1.36** |
-| **C4** | Multi-responsibility modules | **73.18** | **7.31** |
-| **C5** | Magic numbers + global state | **40.25** | **0.85** |
-| **C6** | Missing abstractions / duplication | **41.84** | **13.77** |
-| **C7** | Confusing control flow | **64.38** | **6.97** |
-| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **10996** / **804** / **149** / **3** |
+| **M7** | Gewichtete Summe | **46.21** | **3.86** |
+| **C1** | Circular dependencies | **9.45** | **0.74** |
+| **C2** | Nesting depth | **0.00** | **1.39** |
+| **C3** | Long functions + complexity | **98.70** | **1.25** |
+| **C4** | Multi-responsibility modules | **72.88** | **7.25** |
+| **C5** | Magic numbers + global state | **40.09** | **0.84** |
+| **C6** | Missing abstractions / duplication | **39.47** | **13.75** |
+| **C7** | Confusing control flow | **64.16** | **6.85** |
+| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **11076** / **803** / **139** / **0** |
 
 **Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
 
@@ -160,16 +164,16 @@ Each **open** row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-set
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
-| **DS-025** | **C4 · C7 ·** World-engine opening, souffleuse, and session-manager leaders | `world-engine/app/story_runtime/manager/souffleuse_output_realization.py`, `world-engine/app/story_runtime/manager/opening_execution.py`, `world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py`, `world-engine/app/shell_readout/social_pressure_readout.py` | Current scan anchors: `_realize_souffleuse_output` **178L**, `_execute_opening_locked` **170L**, session manager `__init__` **168L**, `_active_pressure_summary` depth **6** / **23L**. | Separate opening execution, souffleuse realization, session manager initialization/persistence, and shell pressure readout phases behind stable wrappers. | Route/runtime blast radius; preserve opening commit behavior, shell readout shape, and session persistence semantics. |
-| **DS-026** | **C4 · C6 · C7 ·** AI-stack authority, validation, and graph-output assembly | `ai_stack/story_runtime/runtime_aspect_ledger/authority_preview.py`, `ai_stack/langgraph/langgraph_runtime_package_output.py`, `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py`, `ai_stack/story_runtime/block_stream_dual_mode.py` | Current scan anchors: `_build_adr0041_plan_enforced_runtime_projection_dispatch` **177L**, `package_runtime_graph_output` **176L**, `run_validation_seam` **169L**, `augment_envelope_with_block_stream` **169L**. | Extract authority-preview sidecar sections, graph-output packaging phases, validation-seam phases, and block-stream augmentation helpers. | High semantic risk; do not weaken ADR-0041, validation_outcome, Canonical Path, Actor Lane, or block-stream contracts. |
-| **DS-027** | **C4 · C6 · C7 ·** AI narrative, telemetry, and expectation-variation leaders | `ai_stack/story_runtime/narrative/meta_narrative_awareness_engine.py`, `ai_stack/telemetry/actor_survival_telemetry.py`, `ai_stack/story_runtime/director/god_of_carnage_scene_director.py`, `ai_stack/story_runtime/narrative/expectation_variation_engine.py`, `ai_stack/story_runtime/npc_agency/npc_motivation_score_engine.py`, `ai_stack/contracts/hierarchical_memory_contracts.py` | Current scan anchors: `validate_meta_narrative_awareness_realization` **178L**, `_build_vitality_telemetry_v1` **176L**, `build_pacing_and_silence` **167L**, `_candidate_rows` **166L**, `_extract_relationship_axis_pressure` depth **6**, `_safe_dict` depth **6**. | Split validation, telemetry, pacing/silence, candidate-row, pressure-summary, and safe-dict helpers into named derivation phases. | Narrative/telemetry gates; keep narrator, vitality, NPC motivation, and hierarchical-memory response shapes stable. |
-| **DS-028** | **C4 · C5 ·** Quality-lab MCP handler assembly | `tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py` | Current scan anchor: `build_quality_lab_mcp_handlers` **175L** with handler registry/policy constants still dense. | Split handler registry construction, schema/policy literals, and endpoint wiring into readable helper sections under the existing handler package. | Tooling/MCP surface; keep public handler names and MCP response contracts stable. |
+| **DS-029** | **C4 · C6 · C7 ·** AI actor/NPC/narrative long-callable cluster | `ai_stack/story_runtime/npc_agency/npc_agency_realization.py`, `ai_stack/actor_tracking/extractor.py`, `ai_stack/story_runtime/npc_agency/character/character_voice_semantic_classifier.py`, `ai_stack/story_runtime/narrative/narrative_momentum_engine.py`, `ai_stack/story_runtime/session_loop/follow_up_event.py`, `ai_stack/story_runtime/npc_agency/npc_agency_claim_readiness.py`, `ai_stack/story_runtime/actor_lane_hydration.py` | Current scan anchors: `build_npc_agency_closure` **166L**, `extract_w5_snapshot_from_committed_event` **163L**, `classify_voice_semantic_lines` **159L**, `derive_narrative_momentum` **158L**, `build_post_cut_in_follow_up_event` **158L**, `assess_npc_agency_claim_readiness` **154L**, `hydrate_actor_lanes` **153L**. | Split closure, actor-tracking extraction, voice classification, momentum derivation, follow-up event, claim-readiness, and hydration phases behind stable public wrappers. | High semantic risk; preserve W5 actor-tracking authority, NPC agency contracts, Actor Lane, and committed-event/readiness semantics. |
+| **DS-030** | **C4 · C6 · C7 ·** Backend service snapshot/dashboard leaders | `backend/app/services/story_runtime/world_engine_control_center_service.py`, `backend/app/services/ai_stack/ai_engineer_suite/runtime_dashboard.py` | Current scan anchors: `build_world_engine_control_center_snapshot` **164L**, `get_runtime_dashboard` **163L**. | Extract snapshot collectors, status derivation, dashboard-section builders, and serializers while keeping API response shapes stable. | Backend/admin blast radius; preserve control-center and AI-engineer-suite response contracts and route/service call sites. |
+| **DS-031** | **C4 · C7 ·** World-engine live envelope, narrator output, and opening prompt leaders | `world-engine/app/story_runtime/manager/live_scene_turn_envelope.py`, `world-engine/app/story_runtime/manager/narrator_output_realization.py`, `world-engine/app/story_runtime/manager/opening_prompt_and_narrator_candidates.py` | Current scan anchors: `_build_live_scene_turn_envelope` **157L**, `_realize_narrator_path_output` **151L**, `_build_opening_prompt` **151L**. | Split live turn envelope assembly, narrator path output realization, and opening prompt/candidate construction into named manager phases. | Preserve visible output, diagnostics envelope, narrator projection, opening prompt, and session-manager behavior. |
+| **DS-032** | **C5 · C6 ·** Policy literal and duplicate-name residual tail | `world-engine/app/main.py`, `backend/app/services/prompts/prompt_store_service.py`, `backend/app/factory_http_shell.py`, `backend/app/services/analytics/metrics_service.py`, `ai_stack/contracts/consequence_cascade_contracts.py`, `ai_stack/contracts/callback_web_contracts.py`, `story_runtime_core/callbacks/callback_web.py`, `ai_stack/story_runtime/narrative/context_synthesis_engine.py`, `ai_stack/story_runtime/narrative/pacing_rhythm_engine.py` | Current scan anchors: C5 remains **0.84%** and C6 remains **13.75%**; literal-heavy leaders include `register_world_engine_ui_routes`, `update_prompt_record`, `register_http_shell`, `_range_end_and_buckets`, `normalize_consequence_cascade_policy`, `normalize_callback_web_policy`, and `derive_pacing_rhythm`. | Promote HTTP/status/bucket/policy literals into named constants and narrow duplicate helper families without renaming intentional public protocol methods. | Broad cross-package tail; keep HTTP behavior, prompt-store validation, analytics buckets, contract normalization, and callback export shapes stable. |
 
 ### Closed (archived)
 
 *None.* Closed **DS-*** detail lives in [despaghettification_completed_log.md](despaghettification_completed_log.md).
 
-**New rows:** next **DS-029**+ when check fills the open table; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
+**New rows:** next **DS-033**+ when check fills the open table; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
 ## Recommended implementation order
 
 Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in the information input list and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). **Mandatory** Mermaid `flowchart` **below** the table once open phase rows exist ([spaghetti-check-task.md](../spaghetti-check-task.md) §3).
@@ -178,16 +182,21 @@ Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in 
 
 | Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
 |------------------|----------|-------------|----------------------|----------------------------|
-| **1a** | **DS-025** | Stabilise world-engine opening/souffleuse/session-manager leaders before further manager edits. | `world_engine` | Parallel-eligible with **1b**; gates should include opening execution, shell readout, session persistence, and relevant world-engine route/runtime smoke tests. |
-| **1b** | **DS-026** | Split AI-stack authority, validation, and graph-output assembly while central semantics are still isolated. | `ai_stack` | Highest semantic risk; gates should include ADR-0041 authority, validation seam, LangGraph output, block-stream, and MVP03/MVP04 diagnostics gates. |
-| **2** | **DS-027** | Clean narrative/telemetry/expectation leaders after authority/validation surfaces stop moving. | `ai_stack` | Soft dependency on **DS-026** for shared narrative and validation evidence; keep narrator/vitality/NPC motivation outputs stable. |
-| **3** | **DS-028** | Split quality-lab MCP handler assembly after runtime-facing code is stable. | `repo_governance_rollout` | Tooling-only tail; gates should include MCP handler tests and `py_compile` for changed handler files. |
+| **1a** | **DS-029** | Stabilise AI actor/NPC/narrative authority surfaces before more narrator/world-engine manager edits. | `ai_stack` | Parallel-eligible with **1b**; gates should include actor-tracking projection, NPC agency, narrator/momentum, session-loop, and Actor Lane hydration tests. |
+| **1b** | **DS-030** | Shrink backend snapshot/dashboard service leaders independently of AI-stack runtime semantics. | `backend_runtime_services` | Parallel-eligible with **1a**; gates should include control-center/dashboard service tests and relevant backend route smoke tests. |
+| **2** | **DS-031** | Split world-engine live envelope/narrator/opening prompt after AI actor/narrator surfaces are clearer. | `world_engine` | Soft dependency on **DS-029**; gates should include live turn envelope, narrator path output, opening prompt/session, and MVP03/MVP04 diagnostics gates. |
+| **3** | **DS-032** | Clean policy-literal and duplicate-name residual tail after the largest semantic leaders stop moving. | `backend_runtime_services` | Broad tail; gates should include prompt store, HTTP shell, analytics, contract normalization, callback export, and `check --with-metrics`. |
 
 ```mermaid
 flowchart TD
-    A["1a DS-025<br/>world-engine opening/souffleuse/session"] --> C["2 DS-027<br/>AI narrative/telemetry leaders"]
-    B["1b DS-026<br/>AI authority/validation/graph output"] --> C
-    C --> D["3 DS-028<br/>quality-lab MCP handler assembly"]
+    P1A["1a · DS-029 · AI actor/NPC narrative"]
+    P1B["1b · DS-030 · Backend snapshots"]
+    P2["2 · DS-031 · World-engine envelope"]
+    P3["3 · DS-032 · Policy literal tail"]
+    P1A --> P2
+    P1A --> P3
+    P1B --> P3
+    P2 --> P3
 ```
 
 ### Closed phases (archived)

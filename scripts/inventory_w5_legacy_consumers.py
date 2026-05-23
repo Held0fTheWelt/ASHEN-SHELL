@@ -90,7 +90,7 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "complete_actor_locations_for_gathering": "S — Director baseline completion algorithm; called by F1/F4/F5",
     "gathering_scene_id": "S — derived from actor_locations by F5; consumed by ADR-0061 pause predicate",
     "derived_gathering_room_id": "S — Director alias (also produced by F5)",
-    "transition_from_previous": "strict_off_rollback_deprecated (6B-7/ADR-0067) — first-class only under W5_AST_NARRATOR_STRICT_ENABLED=false; deprecated rollback-only surface",
+    "transition_from_previous": "removed_by_adr_0068 (Phase 6B-8) — strict-off rollback path removed; transition_from_previous no longer emitted by narrator source_facts; any remaining hits are doc/test/historical references only",
     "location_changed": "S — W5 mirror of `transition_from_previous.location_changed`",
     "forbidden_ai_stack_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
     "forbidden_ai_stack_w5_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
@@ -183,12 +183,11 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "substrate_keep_future_adr — Director alias produced by F5"
     ),
     "transition_from_previous": (
-        "strict_off_rollback_deprecated (Phase 6B-7, ADR-0067) — first-class "
-        "narrator situation input only under explicit W5_AST_NARRATOR_STRICT_"
-        "ENABLED=false (deprecated rollback posture). Strict-on (permanent "
-        "default since 6B-5C) omits this field entirely; W5 projection is the "
-        "sole actor-situation authority. NarratorStrictOffDeprecationWarning "
-        "is emitted on opt-out. Final removal requires ADR-0068 or successor."
+        "removed_by_adr_0068 (Phase 6B-8) — strict-off rollback path removed; "
+        "transition_from_previous is no longer emitted by the narrator path. "
+        "Any remaining hits are doc/test-historical or the location_changed "
+        "W5 mirror (which is a separate substrate keep). "
+        "W5 where_summary.location_changed is the sole location-shift authority."
     ),
     "location_changed": (
         "substrate_keep_future_adr — W5 where_summary mirror of legacy "
@@ -460,14 +459,39 @@ def _format_human(report: ScanReport) -> str:
         label = PHASE_6B4_CLASSIFICATION.get(key, "—")
         out.append(f"  {key:48s} {count:3d}  {label[:60]}")
     out.append("")
-    out.append("Phase 6B-7 strict-off deprecation surface (ADR-0067):")
-    out.append("  transition_from_previous is deprecated rollback-only; strict-off emits")
-    out.append("  NarratorStrictOffDeprecationWarning. Not yet removed.")
+    out.append("Phase 6B-8 — ADR-0068 EXECUTED (operator waiver, 2026-05-23):")
+    out.append("  transition_from_previous strict-off rollback path REMOVED.")
+    out.append("  w5_ast_narrator_strict_enabled() is unconditionally True.")
+    out.append("  NarratorStrictOffDeprecationWarning retained as tombstone (import compat).")
     _6b7_keys = ("transition_from_previous", "location_changed")
     for key in _6b7_keys:
         count = sum(1 for f in report.findings if f.surface == key)
         label = PHASE_6B4_CLASSIFICATION.get(key, "—")
         out.append(f"  {key:48s} {count:3d}  {label[:70]}")
+    out.append("")
+    out.append("ADR-0068 execution checklist (Phase 6B-8, 2026-05-23):")
+    tfp_count = sum(1 for f in report.findings if f.surface == "transition_from_previous")
+    lc_count = sum(1 for f in report.findings if f.surface == "location_changed")
+    out.append(
+        "  1. Runtime removal: COMPLETE — _transition_facts() removed, strict-off branch removed."
+    )
+    out.append(
+        "  2. Operator waiver: GRANTED — repo-local config clean; release-cycle waived."
+    )
+    out.append(
+        "  3. Parity tests: COMPLETE — all strict-off test functions rewritten or removed."
+    )
+    out.append(
+        f"  4. Inventory: COMPLETE — transition_from_previous ({tfp_count} refs) reclassified"
+        " as removed_by_adr_0068."
+    )
+    out.append(
+        "  5. ADR-0068: ACCEPTED — see docs/ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md."
+    )
+    out.append("")
+    out.append("  OVERALL ADR-0068 STATUS: EXECUTED AND ACCEPTED.")
+    out.append("  transition_from_previous remaining hits are doc/test-historical or")
+    out.append("  location_changed W5 mirror (separate substrate keep, unrelated to rollback).")
     out.append("")
     forbidden_keys = (
         "forbidden_ai_stack_actor_situation",

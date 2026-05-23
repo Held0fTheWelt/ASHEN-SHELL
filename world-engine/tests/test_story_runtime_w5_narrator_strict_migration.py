@@ -88,38 +88,15 @@ def _build_narrator_prompt(target_language: str = "de") -> str:
 
 
 class TestF18NarratorPromptStrictMigration:
-    def test_strict_off_does_not_promote_transition_from_previous_as_authority(
+    def test_prompt_does_not_promote_transition_from_previous_as_authority(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-5D: explicit opt-out must not reintroduce the legacy
-        fallback paragraph that instructed the narrator to use
-        transition_from_previous as primary actor-situation guidance."""
+        """ADR-0068: transition_from_previous is never promoted to authority
+        in any posture; the env-var no longer changes prompt behavior."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
-        # The legacy fallback instruction is absent from both postures.
         assert "Use transition_from_previous only as a fallback" not in prompt
         assert "as a fallback when w5_projection is absent" not in prompt
-        # The hard_cut directed-transition narrator instruction is absent.
-        assert "hard_cut" not in prompt
-        # W5 projection is still named as the actor-situation authority.
-        assert "source_facts.w5_projection" in prompt
-        # transition_from_previous may appear as non-authoritative data notice.
-        if "transition_from_previous" in prompt:
-            assert (
-                "legacy compatibility" in prompt
-                or "not authoritative" in prompt
-                or "non-authoritative" in prompt
-            )
-
-    def test_strict_off_explicit_false_does_not_reintroduce_legacy_fallback(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5D: explicit W5_AST_NARRATOR_STRICT_ENABLED=false must
-        not reintroduce transition_from_previous as narrator authority or
-        the hard_cut directed-transition prompt instruction."""
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
-        prompt = _build_narrator_prompt()
-        assert "Use transition_from_previous only as a fallback" not in prompt
         assert "hard_cut" not in prompt
         assert "source_facts.w5_projection" in prompt
 
@@ -298,24 +275,24 @@ class _AdminParityManagerHarness:
 
 
 class TestF20AdminParityBridge:
-    def test_strict_off_reads_w5_history_first_for_location_changed(
+    def test_env_var_false_still_reads_w5_history_for_location_changed(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """ADR-0068: env-var false no longer changes behavior; w5_history is always used."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_admin_session()
         harness = _AdminParityManagerHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)
         assert meta["w5.location_changed_this_turn"] is True
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is False
-        # Legacy compat parity surface is visible for operator correlation.
-        assert meta["w5.legacy_transition_parity"] == "legacy_compat_visible"
+        assert meta["w5.narrator_strict_enabled"] is True
+        assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
 
     def test_strict_on_reports_removed_by_6b5e_policy(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-6B: strict-on always emits ``removed_by_6b5e_policy``.
-        The ``narrator_legacy_compat_diagnostics_enabled`` key is retired (ADR-0066)."""
+        """ADR-0068: strict-on is always active. removed_by_6b5e_policy is permanent.
+        The ``narrator_legacy_compat_diagnostics_enabled`` key remains retired (ADR-0066)."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         session = _make_admin_session()
         harness = _AdminParityManagerHarness(session)

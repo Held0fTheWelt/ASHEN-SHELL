@@ -68,13 +68,14 @@ class TestNarratorStrictFlagResolver:
         assert w5_ast_narrator_strict_enabled() is True
 
     @pytest.mark.parametrize("value", ["0", "false", "no", "off", "FALSE", "Off"])
-    def test_resolver_explicit_off_keeps_legacy_compatible_behavior(
+    def test_resolver_explicit_off_returns_true_after_adr_0068(
         self, monkeypatch: pytest.MonkeyPatch, value: str
     ) -> None:
+        """ADR-0068: explicit false/0/no/off no longer changes behavior."""
         from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", value)
-        assert w5_ast_narrator_strict_enabled() is False
+        assert w5_ast_narrator_strict_enabled() is True
 
     @pytest.mark.parametrize("value", ["1", "true", "yes", "on", "TRUE", "On"])
     def test_resolver_explicit_on_enables_strict_mode(
@@ -100,12 +101,13 @@ class TestNarratorStrictFlagResolver:
     def test_strict_flag_exposed_via_projection_flag_states(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """ADR-0068: narrator_strict is always True regardless of env var."""
         from ai_stack.actor_tracking import w5_projection_flag_states
 
         monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
         assert w5_projection_flag_states()["narrator_strict"] is True
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
-        assert w5_projection_flag_states()["narrator_strict"] is False
+        assert w5_projection_flag_states()["narrator_strict"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -117,9 +119,10 @@ class TestF8NarratorPathSourceFactsContract:
     """Pins the ``source_facts.transition_from_previous`` migration in
     ``ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py``."""
 
-    def test_strict_off_explicit_off_keeps_transition_from_previous_first_class(
+    def test_transition_from_previous_absent_under_explicit_off(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """ADR-0068: transition_from_previous is absent even when env is 'false'."""
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
@@ -128,26 +131,10 @@ class TestF8NarratorPathSourceFactsContract:
         )
         blocks = opening["scene_blocks"]
         assert blocks, "expected narrator opening blocks"
-        first = blocks[0]
-        assert "transition_from_previous" in first["source_facts"], (
-            "Phase 6B-3B strict-OFF (explicit opt-out) must preserve legacy "
-            "first-class transition_from_previous in source_facts."
-        )
-        assert first["source_facts"]["transition_from_previous"]["kind"] == "opening_start"
-        # Legacy compatibility breadcrumb is absent in unstrict mode.
-        assert "_legacy_compat" not in first["source_facts"]
-
-    def test_strict_off_explicit_false_keeps_transition_from_previous_first_class(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
-        opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
-            session_output_language="de",
-        )
-        for block in opening["scene_blocks"]:
-            assert "transition_from_previous" in block["source_facts"]
+        for block in blocks:
+            assert "transition_from_previous" not in block["source_facts"], (
+                "ADR-0068: transition_from_previous must be absent regardless of env value"
+            )
             assert "_legacy_compat" not in block["source_facts"]
 
     def test_strict_on_default_removes_transition_and_legacy_compat(
@@ -170,40 +157,33 @@ class TestF8NarratorPathSourceFactsContract:
                 "Phase 6B-6B: _legacy_compat breadcrumb path retired (ADR-0066)."
             )
 
-    def test_strict_on_preserves_canonical_step_and_beat_coverage(
+    def test_canonical_content_identical_regardless_of_env_value(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Strict mode is a source-of-truth migration, not a content rewrite.
-
-        The same canonical step IDs and mandatory-beat coverage that the
-        unstrict opening produces must be present under strict mode.
+        """ADR-0068: canonical content is identical regardless of env var value.
+        All runs produce the same step ids, block ids, beat ids, and mandatory_beat content.
         """
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
+        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
+        baseline = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
+            session_output_language="de",
+        )
+
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
-        unstrict = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
+        with_false = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
 
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        strict = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
-            session_output_language="de",
-        )
-
-        assert strict["canonical_step_ids"] == unstrict["canonical_step_ids"]
-        assert [block["id"] for block in strict["scene_blocks"]] == [
-            block["id"] for block in unstrict["scene_blocks"]
+        assert with_false["canonical_step_ids"] == baseline["canonical_step_ids"]
+        assert [block["id"] for block in with_false["scene_blocks"]] == [
+            block["id"] for block in baseline["scene_blocks"]
         ]
-        assert [block["canonical_mandatory_beat_id"] for block in strict["scene_blocks"]] == [
-            block["canonical_mandatory_beat_id"] for block in unstrict["scene_blocks"]
+        assert [block["canonical_mandatory_beat_id"] for block in with_false["scene_blocks"]] == [
+            block["canonical_mandatory_beat_id"] for block in baseline["scene_blocks"]
         ]
-        # Mandatory-beat coverage_cues survive strict mode (How and Why hooks
-        # in source_facts.mandatory_beat are untouched).
-        for strict_block, unstrict_block in zip(strict["scene_blocks"], unstrict["scene_blocks"]):
-            assert (
-                strict_block["source_facts"]["mandatory_beat"]
-                == unstrict_block["source_facts"]["mandatory_beat"]
-            )
+        for a, b in zip(baseline["scene_blocks"], with_false["scene_blocks"]):
+            assert a["source_facts"]["mandatory_beat"] == b["source_facts"]["mandatory_beat"]
 
 
 # ---------------------------------------------------------------------------

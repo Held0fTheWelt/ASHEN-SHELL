@@ -86,6 +86,30 @@ def _safe_key(key: str) -> bool:
     return not any(part in lowered for part in FORBIDDEN_TEXT_KEY_PARTS)
 
 
+def _safe_scalar(value: Any) -> Any:
+    return _text(value) if isinstance(value, str) else value
+
+
+def _safe_nested_dict(value: dict[str, Any], *, max_items: int = 6) -> dict[str, Any]:
+    nested: dict[str, Any] = {}
+    for nkey, nvalue in value.items():
+        if len(nested) >= max_items:
+            break
+        if _safe_key(str(nkey)) and not isinstance(nvalue, (dict, list)):
+            nested[str(nkey)] = _safe_scalar(nvalue)
+    return nested
+
+
+def _safe_dict_value(value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return _safe_scalar(value)
+    if isinstance(value, list):
+        return _unique_texts(value)
+    if isinstance(value, dict):
+        return _safe_nested_dict(value)
+    return None
+
+
 def _safe_dict(payload: dict[str, Any], *, max_items: int = 12) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for key, value in payload.items():
@@ -94,18 +118,9 @@ def _safe_dict(payload: dict[str, Any], *, max_items: int = 12) -> dict[str, Any
         skey = str(key)
         if not _safe_key(skey):
             continue
-        if isinstance(value, (str, int, float, bool)) or value is None:
-            out[skey] = _text(value) if isinstance(value, str) else value
-        elif isinstance(value, list):
-            out[skey] = _unique_texts(value)
-        elif isinstance(value, dict):
-            nested: dict[str, Any] = {}
-            for nkey, nvalue in value.items():
-                if len(nested) >= 6:
-                    break
-                if _safe_key(str(nkey)) and not isinstance(nvalue, (dict, list)):
-                    nested[str(nkey)] = _text(nvalue) if isinstance(nvalue, str) else nvalue
-            out[skey] = nested
+        safe_value = _safe_dict_value(value)
+        if safe_value is not None or value is None:
+            out[skey] = safe_value
     return _json_safe(out)
 
 

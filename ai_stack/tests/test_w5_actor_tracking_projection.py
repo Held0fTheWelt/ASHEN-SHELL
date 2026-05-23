@@ -782,33 +782,14 @@ def test_legacy_location_changed_parity_with_transition_from_previous() -> None:
     assert proj.where_summary["location_changed"] == legacy_transition_location_changed
 
 
-def test_location_changed_parity_with_goc_narrator_path_fixture(monkeypatch) -> None:
-    from ai_stack.story_runtime.narrator.god_of_carnage_narrator_path import build_goc_narrator_path_opening
-
-    # Explicit opt-out to read the legacy transition_from_previous surface as
-    # the parity reference for the W5 where_summary location_changed signal.
-    monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
-    narrator_path = build_goc_narrator_path_opening(session_output_language="de")
-    blocks = [
-        block
-        for block in narrator_path.get("scene_blocks", [])
-        if isinstance(block, dict)
-    ]
-    transition = next(
-        (
-            (block.get("source_facts") or {}).get("transition_from_previous")
-            for block in blocks
-            if isinstance(block.get("source_facts"), dict)
-            and (
-                (block.get("source_facts") or {}).get("transition_from_previous")
-                or {}
-            ).get("location_changed")
-        ),
-        None,
-    )
-    assert isinstance(transition, dict)
-    previous_location = transition["previous_location"]["id"]
-    current_location = transition["current_location"]["id"]
+def test_location_changed_parity_with_goc_narrator_path_fixture() -> None:
+    # ADR-0068: transition_from_previous is no longer emitted; use well-known
+    # GoC canonical step locations as the parity reference instead.
+    # Steps 001 (park_edge) → 002 (argument location) represent a location change
+    # in the canonical path; we use two distinct W5 snapshot locations to verify
+    # where_summary.location_changed mirrors the actual location shift.
+    previous_location = "park_edge"
+    current_location = "home_office"
 
     previous = _snapshot(
         _situation_with_all_dimensions(location=previous_location),
@@ -819,7 +800,6 @@ def test_location_changed_parity_with_goc_narrator_path_fixture(monkeypatch) -> 
         turn=3,
     )
     proj = build_w5_projection_for_narrator(current, previous_snapshot=previous)
-    assert transition["location_changed"] is True
     assert proj.where_summary["previous_location"] == previous_location
     assert proj.where_summary["current_location"] == current_location
     assert proj.where_summary["location_changed"] is True

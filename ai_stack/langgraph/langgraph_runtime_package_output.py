@@ -21,26 +21,153 @@ from ai_stack.langgraph.langgraph_runtime_tracking import _track
 from ai_stack.operational_profile import build_operational_cost_hints_for_runtime_graph
 
 
+def _repeated_graph_nodes(nodes_executed: list[str]) -> list[str]:
+    seen_nodes: set[str] = set()
+    repeated_nodes: list[str] = []
+    for node_name in nodes_executed:
+        if node_name in seen_nodes and node_name not in repeated_nodes:
+            repeated_nodes.append(str(node_name))
+        seen_nodes.add(str(node_name))
+    return repeated_nodes
+
+
+def _append_gathering_pause_diagnostics(*, state: RuntimeTurnState, diag: dict) -> None:
+    scene_plan = state.get("scene_plan_record") if isinstance(state.get("scene_plan_record"), dict) else {}
+    if "gathering_paused_beat_suppression" in state:
+        diag["gathering_paused_beat_suppression"] = bool(state.get("gathering_paused_beat_suppression"))
+        if not state.get("gathering_paused_beat_suppression"):
+            diag["gathering_paused_beat_suppression_reason"] = (
+                scene_plan.get("gathering_paused_beat_suppression_reason")
+                or "director_gathering_not_paused"
+            )
+        return
+    if "gathering_paused_beat_suppression" not in scene_plan:
+        return
+    diag["gathering_paused_beat_suppression"] = bool(scene_plan.get("gathering_paused_beat_suppression"))
+    if not scene_plan.get("gathering_paused_beat_suppression"):
+        diag["gathering_paused_beat_suppression_reason"] = (
+            scene_plan.get("gathering_paused_beat_suppression_reason")
+            or "director_gathering_not_paused"
+        )
+
+
+def _phase1_director_pause_diagnostics(state: RuntimeTurnState) -> dict:
+    diag: dict = {}
+    if isinstance(state.get("free_player_action_resolution"), dict):
+        diag["free_player_action_resolution"] = state["free_player_action_resolution"]
+    if isinstance(state.get("canonical_path_hold_effect"), dict):
+        diag["canonical_path_hold_effect"] = state["canonical_path_hold_effect"]
+    if isinstance(state.get("narrator_consequence_realization"), dict):
+        diag["narrator_consequence_realization"] = state["narrator_consequence_realization"]
+    if isinstance(state.get("director_gathering_state"), dict):
+        diag["director_gathering_state"] = state["director_gathering_state"]
+    _append_gathering_pause_diagnostics(state=state, diag=diag)
+    if isinstance(state.get("director_pause_transition_reaction"), dict):
+        diag["director_pause_transition_reaction"] = state["director_pause_transition_reaction"]
+    return diag
+
+
+def _graph_diagnostics_payload(
+    *,
+    state: RuntimeTurnState,
+    graph_name: str,
+    graph_version: str,
+    update: RuntimeTurnState,
+    fallback_taken: bool,
+    execution_health: dict,
+    graph_errors: list,
+    repro_metadata: dict,
+    cost_hints: dict,
+    dramatic_context_summary: dict,
+    validation: dict,
+    context_synthesis: dict,
+    quality_surface: dict,
+) -> dict:
+    nodes_executed = list(update["nodes_executed"])
+    repeated_nodes = _repeated_graph_nodes(nodes_executed)
+    gd = {
+        "graph_name": graph_name,
+        "graph_version": graph_version,
+        "nodes_executed": nodes_executed,
+        "node_outcomes": update["node_outcomes"],
+        "topology_invariants": {
+            "node_count": len(nodes_executed),
+            "duplicate_nodes": repeated_nodes,
+            "node_path_has_repeated_nodes": bool(repeated_nodes),
+        },
+        "fallback_path_taken": fallback_taken,
+        "execution_health": execution_health,
+        "errors": graph_errors,
+        "capability_audit": state.get("capability_audit", []),
+        "repro_metadata": repro_metadata,
+        "operational_cost_hints": cost_hints,
+        "dramatic_review": build_dramatic_review_section(state, validation),
+        "planner_state_projection": build_planner_state_projection(state),
+        "dramatic_context_summary": dramatic_context_summary,
+        "context_synthesis": context_synthesis,
+        "runtime_quality_surface": quality_surface,
+    }
+    if isinstance(state.get("environment_state"), dict):
+        gd["environment_state"] = state.get("environment_state")
+    if isinstance(state.get("environment_transition"), dict):
+        gd["environment_transition"] = state.get("environment_transition")
+    phase1_diag = _phase1_director_pause_diagnostics(state)
+    if phase1_diag:
+        gd["phase1_director_pause_diagnostics"] = phase1_diag
+    return gd
+
+
+def _diagnostics_refs_for_package_output(
+    *,
+    gd: dict,
+    experiment_preview: dict,
+    failure_markers: list,
+    repro_ok: bool,
+    transition_pattern: str,
+) -> dict:
+    alignment_note = gd["dramatic_review"]["dramatic_alignment_summary"]
+    return build_diagnostics_refs(
+        graph_diagnostics=gd,
+        experiment_preview=experiment_preview,
+        transition_pattern=transition_pattern,
+        gate_hints={
+            "turn_integrity": "seams_materialized_in_graph",
+            "diagnostic_sufficiency": "repro_complete" if repro_ok else "repro_incomplete",
+            "dramatic_quality": alignment_note,
+            "slice_boundary": "no_scope_breach_marker"
+            if not any(
+                isinstance(m, dict) and m.get("failure_class") == "scope_breach"
+                for m in (failure_markers or [])
+            )
+            else "scope_breach_recorded",
+        },
+    )
+
+
+def _actor_survival_telemetry_for_package_output(
+    *,
+    state: RuntimeTurnState,
+    generation: dict,
+    validation: dict,
+    committed: dict,
+    fallback_taken: bool,
+) -> dict:
+    return build_actor_survival_telemetry(
+        state,
+        generation_ok=generation.get("success") is True,
+        validation_ok=validation.get("status") == "approved",
+        commit_applied=committed.get("commit_applied") is True,
+        fallback_taken=fallback_taken,
+    )
+
+
 def package_runtime_graph_output(
     state: RuntimeTurnState,
     *,
     graph_name: str,
     graph_version: str,
 ) -> RuntimeTurnState:
-    """Describe what ``package_runtime_graph_output`` does in one line
-    (verb-led summary for this function).
-    
-    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
-    
-    Args:
-        state: ``state`` (RuntimeTurnState); meaning follows the type and call sites.
-        graph_name: ``graph_name`` (str); meaning follows the type and call sites.
-        graph_version: ``graph_version`` (str); meaning follows the type and call sites.
-    
-    Returns:
-        RuntimeTurnState:
-            Returns a value of type ``RuntimeTurnState``; see the function body for structure, error paths, and sentinels.
-    """
+    """Package runtime graph diagnostics, quality, refs, routing, and telemetry."""
     fallback_taken = "fallback_model" in state.get("nodes_executed", [])
     update = _track(state, node_name="package_output")
     routing = state.get("routing") or {}
@@ -86,93 +213,32 @@ def package_runtime_graph_output(
         model_prompt=state.get("model_prompt") if isinstance(state.get("model_prompt"), str) else None,
         fallback_path_taken=fallback_taken,
     )
-    vo = validation
     dramatic_context_summary = build_bounded_dramatic_context_summary(state)
-    nodes_executed = list(update["nodes_executed"])
-    seen_nodes: set[str] = set()
-    repeated_nodes: list[str] = []
-    for node_name in nodes_executed:
-        if node_name in seen_nodes and node_name not in repeated_nodes:
-            repeated_nodes.append(str(node_name))
-        seen_nodes.add(str(node_name))
-    gd = {
-        "graph_name": graph_name,
-        "graph_version": graph_version,
-        "nodes_executed": nodes_executed,
-        "node_outcomes": update["node_outcomes"],
-        "topology_invariants": {
-            "node_count": len(nodes_executed),
-            "duplicate_nodes": repeated_nodes,
-            "node_path_has_repeated_nodes": bool(repeated_nodes),
-        },
-        "fallback_path_taken": fallback_taken,
-        "execution_health": execution_health,
-        "errors": graph_errors,
-        "capability_audit": state.get("capability_audit", []),
-        "repro_metadata": repro_metadata,
-        "operational_cost_hints": cost_hints,
-        "dramatic_review": build_dramatic_review_section(state, vo),
-        "planner_state_projection": build_planner_state_projection(state),
-        "dramatic_context_summary": dramatic_context_summary,
-        "context_synthesis": context_synthesis,
-        "runtime_quality_surface": quality_surface,
-    }
-    if isinstance(state.get("environment_state"), dict):
-        gd["environment_state"] = state.get("environment_state")
-    if isinstance(state.get("environment_transition"), dict):
-        gd["environment_transition"] = state.get("environment_transition")
-    _phase1_diag: dict = {}
-    if isinstance(state.get("free_player_action_resolution"), dict):
-        _phase1_diag["free_player_action_resolution"] = state["free_player_action_resolution"]
-    if isinstance(state.get("canonical_path_hold_effect"), dict):
-        _phase1_diag["canonical_path_hold_effect"] = state["canonical_path_hold_effect"]
-    if isinstance(state.get("narrator_consequence_realization"), dict):
-        _phase1_diag["narrator_consequence_realization"] = state["narrator_consequence_realization"]
-    if isinstance(state.get("director_gathering_state"), dict):
-        _phase1_diag["director_gathering_state"] = state["director_gathering_state"]
-    _spr = state.get("scene_plan_record") if isinstance(state.get("scene_plan_record"), dict) else {}
-    if "gathering_paused_beat_suppression" in state:
-        _phase1_diag["gathering_paused_beat_suppression"] = bool(
-            state.get("gathering_paused_beat_suppression")
-        )
-        if not state.get("gathering_paused_beat_suppression"):
-            _phase1_diag["gathering_paused_beat_suppression_reason"] = (
-                _spr.get("gathering_paused_beat_suppression_reason")
-                or "director_gathering_not_paused"
-            )
-    elif "gathering_paused_beat_suppression" in _spr:
-        _phase1_diag["gathering_paused_beat_suppression"] = bool(
-            _spr.get("gathering_paused_beat_suppression")
-        )
-        if not _spr.get("gathering_paused_beat_suppression"):
-            _phase1_diag["gathering_paused_beat_suppression_reason"] = (
-                _spr.get("gathering_paused_beat_suppression_reason")
-                or "director_gathering_not_paused"
-            )
-    if isinstance(state.get("director_pause_transition_reaction"), dict):
-        _phase1_diag["director_pause_transition_reaction"] = state["director_pause_transition_reaction"]
-    if _phase1_diag:
-        gd["phase1_director_pause_diagnostics"] = _phase1_diag
+    gd = _graph_diagnostics_payload(
+        state=state,
+        graph_name=graph_name,
+        graph_version=graph_version,
+        update=update,
+        fallback_taken=fallback_taken,
+        execution_health=execution_health,
+        graph_errors=graph_errors,
+        repro_metadata=repro_metadata,
+        cost_hints=cost_hints,
+        dramatic_context_summary=dramatic_context_summary,
+        validation=validation,
+        context_synthesis=context_synthesis,
+        quality_surface=quality_surface,
+    )
     update["graph_diagnostics"] = gd
     update["dramatic_context_summary"] = dramatic_context_summary
     update["experiment_preview"] = experiment_preview
     tp = state.get("transition_pattern") or "diagnostics_only"
-    alignment_note = gd["dramatic_review"]["dramatic_alignment_summary"]
-    refs = build_diagnostics_refs(
-        graph_diagnostics=gd,
+    refs = _diagnostics_refs_for_package_output(
+        gd=gd,
         experiment_preview=experiment_preview,
         transition_pattern=str(tp),
-        gate_hints={
-            "turn_integrity": "seams_materialized_in_graph",
-            "diagnostic_sufficiency": "repro_complete" if repro_ok else "repro_incomplete",
-            "dramatic_quality": alignment_note,
-            "slice_boundary": "no_scope_breach_marker"
-            if not any(
-                isinstance(m, dict) and m.get("failure_class") == "scope_breach"
-                for m in (failure_markers or [])
-            )
-            else "scope_breach_recorded",
-        },
+        failure_markers=failure_markers,
+        repro_ok=repro_ok,
     )
     update["diagnostics_refs"] = refs
     update["failure_markers"] = failure_markers
@@ -183,17 +249,12 @@ def package_runtime_graph_output(
     update["degradation_signals"] = list(quality_surface["degradation_signals"])
     update["degradation_summary"] = quality_surface["degradation_summary"]
 
-    # WS-5: Actor-survival telemetry — track where agent behavior survived/degraded
-    gen_ok = generation.get("success") is True
-    val_ok = validation.get("status") == "approved"
-    commit_ok = committed.get("commit_applied") is True
-    actor_telemetry = build_actor_survival_telemetry(
-        state,
-        generation_ok=gen_ok,
-        validation_ok=val_ok,
-        commit_applied=commit_ok,
+    update["actor_survival_telemetry"] = _actor_survival_telemetry_for_package_output(
+        state=state,
+        generation=generation,
+        validation=validation,
+        committed=committed,
         fallback_taken=fallback_taken,
     )
-    update["actor_survival_telemetry"] = actor_telemetry
 
     return update

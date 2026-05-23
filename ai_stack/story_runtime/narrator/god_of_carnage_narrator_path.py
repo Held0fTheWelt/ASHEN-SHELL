@@ -16,9 +16,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_stack.actor_tracking import (
-    w5_ast_narrator_strict_enabled,
-)
 from ai_stack.story_runtime.god_of_carnage.god_of_carnage_yaml_authority import (
     load_goc_canonical_module_yaml,
     load_goc_canonical_path_yaml,
@@ -272,18 +269,6 @@ def _beat_source_facts(step: dict[str, Any], beat: dict[str, Any]) -> dict[str, 
     }
 
 
-def _location_ref_id(step: dict[str, Any] | None) -> str:
-    row = step if isinstance(step, dict) else {}
-    loc_ref = row.get("location_ref") if isinstance(row.get("location_ref"), dict) else {}
-    return str(loc_ref.get("location_id") or "").strip()
-
-
-def _scene_anchor_scene(step: dict[str, Any] | None) -> str:
-    row = step if isinstance(step, dict) else {}
-    anchor = row.get("scene_anchor") if isinstance(row.get("scene_anchor"), dict) else {}
-    return str(anchor.get("scene") or "").strip()
-
-
 def _scene_transition(step: dict[str, Any] | None) -> dict[str, Any]:
     row = step if isinstance(step, dict) else {}
     raw = row.get("scene_transition") if isinstance(row.get("scene_transition"), dict) else {}
@@ -307,42 +292,6 @@ def _scene_transition(step: dict[str, Any] | None) -> dict[str, Any]:
         if values:
             out[key] = values
     return {key: value for key, value in out.items() if value}
-
-
-def _transition_facts(
-    *,
-    previous_step: dict[str, Any] | None,
-    current_step: dict[str, Any],
-) -> dict[str, Any]:
-    prev_loc_id = _location_ref_id(previous_step)
-    curr_loc_id = _location_ref_id(current_step)
-    prev_scene = _scene_anchor_scene(previous_step)
-    curr_scene = _scene_anchor_scene(current_step)
-    if not previous_step:
-        return {"kind": "opening_start", "location_changed": False, "scene_changed": False}
-    transition = _scene_transition(current_step)
-    if prev_loc_id == curr_loc_id and prev_scene == curr_scene:
-        return {"kind": "continuous", "location_changed": False, "scene_changed": False}
-    locations = _locations_by_id()
-    previous_next = (
-        previous_step.get("next_point")
-        if isinstance(previous_step, dict) and isinstance(previous_step.get("next_point"), dict)
-        else {}
-    )
-    out = {
-        "kind": "location_or_scene_shift",
-        "location_changed": prev_loc_id != curr_loc_id,
-        "scene_changed": bool(prev_scene and curr_scene and prev_scene != curr_scene),
-        "previous_location": _compact_location(locations.get(prev_loc_id)),
-        "current_location": _compact_location(locations.get(curr_loc_id)),
-        "previous_scene": prev_scene,
-        "current_scene": curr_scene,
-        "handoff": str(previous_next.get("handoff") or "").strip(),
-        "module_context": _module_context(),
-    }
-    if transition:
-        out["directed_transition"] = transition
-    return out
 
 
 def _visual_emphasis(beat: dict[str, Any]) -> dict[str, Any] | None:
@@ -370,23 +319,8 @@ def _block(
     previous_step: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     source_facts = _beat_source_facts(step, mandatory_beat)
-    first_beat = next(iter(_mandatory_beats(step)), {})
-    transition_previous_step = (
-        previous_step
-        if str(first_beat.get("id") or "").strip() == str(mandatory_beat.get("id") or "").strip()
-        else step
-    )
-    transition_payload = _transition_facts(
-        previous_step=transition_previous_step,
-        current_step=step,
-    )
-    # Phase 6B-3B F8 / Phase 6B-6B: under W5_AST_NARRATOR_STRICT_ENABLED (the
-    # permanent default since Phase 6B-5C), the W5 narrator projection is the
-    # sole actor-situation authority. No _legacy_compat key is added.
-    # Under explicit strict opt-out (W5_AST_NARRATOR_STRICT_ENABLED=false),
-    # transition_from_previous remains first-class for rollback compatibility.
-    if not w5_ast_narrator_strict_enabled():
-        source_facts["transition_from_previous"] = transition_payload
+    # ADR-0068: strict-off rollback removed. W5 projection is the sole
+    # actor-situation authority; transition_from_previous is never emitted.
     block = {
         "id": f"opening-narrator-path-{index}",
         "block_type": "narrator",

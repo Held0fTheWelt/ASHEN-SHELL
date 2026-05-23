@@ -268,6 +268,119 @@ def block_stream_event_to_block_shape(event: dict[str, Any]) -> dict[str, Any]:
 # ── Top-level augmentation ────────────────────────────────────────────────────
 
 
+def _resolved_block_stream_npc_ids(envelope: dict[str, Any], npc_ids: list[str] | None) -> list[str]:
+    resolved_npc_ids: list[str] = list(npc_ids or [])
+    if resolved_npc_ids:
+        return resolved_npc_ids
+    raw = envelope.get("npc_actor_ids") or []
+    return [str(a) for a in raw if str(a).strip()]
+
+
+def _visible_bundle_blocks(envelope: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    vso = envelope.get("visible_scene_output")
+    bundle_blocks: list[dict[str, Any]] = []
+    if isinstance(vso, dict) and isinstance(vso.get("blocks"), list):
+        bundle_blocks = [b for b in vso["blocks"] if isinstance(b, dict)]
+    return (vso if isinstance(vso, dict) else {}), bundle_blocks
+
+
+def _motivation_score_sources(
+    *,
+    scene_energy_output: dict[str, Any] | None,
+    social_pressure_output: dict[str, Any] | None,
+    relationship_state_output: dict[str, Any] | None,
+    narrative_momentum_output: dict[str, Any] | None,
+) -> dict[str, Any]:
+    try:
+        from ai_stack.story_runtime.stream_readiness import classify_motivation_score_sources
+        score_sources = classify_motivation_score_sources(None)
+        score_sources["scene_energy"] = "real_capability_output" if scene_energy_output else "default_score"
+        score_sources["social_pressure"] = "real_capability_output" if social_pressure_output else "default_score"
+        score_sources["relationship_axis_pressure"] = "real_capability_output" if relationship_state_output else "default_score"
+        score_sources["narrative_momentum"] = "real_capability_output" if narrative_momentum_output else "default_score"
+        return score_sources
+    except Exception:
+        return {}
+
+
+def _motivation_component_sources_and_availability(
+    *,
+    scene_energy_output: dict[str, Any] | None,
+    social_pressure_output: dict[str, Any] | None,
+    relationship_state_output: dict[str, Any] | None,
+    narrative_momentum_output: dict[str, Any] | None,
+    actor_pressure_profiles: dict[str, Any] | None,
+    npc_motivation_score_policy: dict[str, Any] | None,
+    pacing_rhythm_policy: dict[str, Any] | None,
+) -> tuple[dict[str, Any], list[str], list[str]]:
+    try:
+        from ai_stack.story_runtime.stream_readiness import (
+            classify_capability_availability,
+            classify_motivation_component_sources,
+        )
+        component_sources = classify_motivation_component_sources(
+            scene_energy_output=scene_energy_output,
+            social_pressure_output=social_pressure_output,
+            relationship_state_output=relationship_state_output,
+            narrative_momentum_output=narrative_momentum_output,
+            actor_pressure_profiles=actor_pressure_profiles,
+            npc_motivation_score_policy=npc_motivation_score_policy,
+        )
+        cap_used, cap_missing = classify_capability_availability(
+            scene_energy_output=scene_energy_output,
+            social_pressure_output=social_pressure_output,
+            relationship_state_output=relationship_state_output,
+            narrative_momentum_output=narrative_momentum_output,
+            actor_pressure_profiles=actor_pressure_profiles,
+            npc_motivation_score_policy=npc_motivation_score_policy,
+            pacing_rhythm_policy=pacing_rhythm_policy,
+        )
+        return component_sources, cap_used, cap_missing
+    except Exception:
+        return {}, [], []
+
+
+def _director_pulse_diagnostics(
+    *,
+    pulse_result: dict[str, Any],
+    parity: dict[str, Any],
+    score_sources: dict[str, Any],
+    component_sources: dict[str, Any],
+    cap_used: list[str],
+    cap_missing: list[str],
+    scene_energy_output: dict[str, Any] | None,
+    social_pressure_output: dict[str, Any] | None,
+    relationship_state_output: dict[str, Any] | None,
+    narrative_momentum_output: dict[str, Any] | None,
+    actor_pressure_profiles: dict[str, Any] | None,
+    npc_motivation_score_policy: dict[str, Any] | None,
+    pacing_rhythm_policy: dict[str, Any] | None,
+    off_stage_updates_policy: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "director_tick_decision": pulse_result["director_tick_decision"],
+        "npc_motivation_scores": pulse_result["npc_motivation_scores"],
+        "player_cut_in_event": pulse_result.get("player_cut_in_event"),
+        "parity": parity,
+        "motivation_score_sources": score_sources,
+        "motivation_score_component_sources": component_sources,
+        "capability_outputs": {
+            "scene_energy_output": scene_energy_output,
+            "social_pressure_output": social_pressure_output,
+            "relationship_state_output": relationship_state_output,
+            "narrative_momentum_output": narrative_momentum_output,
+        },
+        "actor_pressure_profiles": actor_pressure_profiles,
+        "npc_motivation_score_policy": npc_motivation_score_policy,
+        "pacing_rhythm_policy": pacing_rhythm_policy,
+        "off_stage_updates_policy": off_stage_updates_policy,
+        "capability_outputs_used": cap_used,
+        "capability_outputs_missing": cap_missing,
+        "shadow_only": True,
+        "dual_mode_enabled": True,
+    }
+
+
 def augment_envelope_with_block_stream(
     envelope: dict[str, Any],
     *,
@@ -314,13 +427,8 @@ def augment_envelope_with_block_stream(
     if not isinstance(envelope, dict):
         return envelope
 
-    # Resolve NPC IDs from envelope if not supplied
-    resolved_npc_ids: list[str] = list(npc_ids or [])
-    if not resolved_npc_ids:
-        raw = envelope.get("npc_actor_ids") or []
-        resolved_npc_ids = [str(a) for a in raw if str(a).strip()]
+    resolved_npc_ids = _resolved_block_stream_npc_ids(envelope, npc_ids)
 
-    # Run one Director tick for this turn — no state mutation, no LLM call.
     pulse_result = evaluate_director_tick(
         npc_ids=resolved_npc_ids,
         scene_energy_output=scene_energy_output,
@@ -333,61 +441,45 @@ def augment_envelope_with_block_stream(
     )
     tick_id: str = pulse_result["director_tick_decision"]["tick_id"]
 
-    # Extract existing bundle blocks (read-only reference)
-    vso = envelope.get("visible_scene_output")
-    bundle_blocks: list[dict[str, Any]] = []
-    if isinstance(vso, dict) and isinstance(vso.get("blocks"), list):
-        bundle_blocks = [b for b in vso["blocks"] if isinstance(b, dict)]
-
-    # Determine source from tick decision
+    vso, bundle_blocks = _visible_bundle_blocks(envelope)
     chosen_actor = pulse_result["director_tick_decision"].get("chosen_actor_id") or "director"
 
-    # Convert bundle blocks → stream events
     stream_events = bundle_blocks_to_stream_events(
         bundle_blocks,
         tick_id=tick_id,
         source=chosen_actor,
     )
 
-    # Compute parity
     parity = compute_parity_diagnostics(bundle_blocks, stream_events)
-
-    # Build augmented visible_scene_output (contract + blocks unchanged)
     new_vso: dict[str, Any] = {
-        **(vso if isinstance(vso, dict) else {}),
+        **vso,
         "block_stream_events": stream_events,
     }
-
-    # Classify which inputs came from real capability outputs vs defaults.
-    # Imported here to avoid circular import (stream_readiness → director_pulse_contracts).
-    try:
-        from ai_stack.story_runtime.stream_readiness import classify_motivation_score_sources
-        score_sources = classify_motivation_score_sources(None)
-        # Override per actual inputs passed
-        score_sources["scene_energy"] = "real_capability_output" if scene_energy_output else "default_score"
-        score_sources["social_pressure"] = "real_capability_output" if social_pressure_output else "default_score"
-        score_sources["relationship_axis_pressure"] = "real_capability_output" if relationship_state_output else "default_score"
-        score_sources["narrative_momentum"] = "real_capability_output" if narrative_momentum_output else "default_score"
-    except Exception:
-        score_sources = {}
-
-    # Stage F — also classify component sources with the 3-tier vocabulary,
-    # and compute the capability-availability tuple, so the WS endpoint can
-    # surface them on the autonomous_tick_evaluated summary without recomputing.
-    try:
-        from ai_stack.story_runtime.stream_readiness import (
-            classify_capability_availability,
-            classify_motivation_component_sources,
-        )
-        component_sources = classify_motivation_component_sources(
-            scene_energy_output=scene_energy_output,
-            social_pressure_output=social_pressure_output,
-            relationship_state_output=relationship_state_output,
-            narrative_momentum_output=narrative_momentum_output,
-            actor_pressure_profiles=actor_pressure_profiles,
-            npc_motivation_score_policy=npc_motivation_score_policy,
-        )
-        cap_used, cap_missing = classify_capability_availability(
+    score_sources = _motivation_score_sources(
+        scene_energy_output=scene_energy_output,
+        social_pressure_output=social_pressure_output,
+        relationship_state_output=relationship_state_output,
+        narrative_momentum_output=narrative_momentum_output,
+    )
+    component_sources, cap_used, cap_missing = _motivation_component_sources_and_availability(
+        scene_energy_output=scene_energy_output,
+        social_pressure_output=social_pressure_output,
+        relationship_state_output=relationship_state_output,
+        narrative_momentum_output=narrative_momentum_output,
+        actor_pressure_profiles=actor_pressure_profiles,
+        npc_motivation_score_policy=npc_motivation_score_policy,
+        pacing_rhythm_policy=pacing_rhythm_policy,
+    )
+    existing_diag = envelope.get("diagnostics") or {}
+    new_diag: dict[str, Any] = {
+        **existing_diag,
+        "director_pulse": _director_pulse_diagnostics(
+            pulse_result=pulse_result,
+            parity=parity,
+            score_sources=score_sources,
+            component_sources=component_sources,
+            cap_used=cap_used,
+            cap_missing=cap_missing,
             scene_energy_output=scene_energy_output,
             social_pressure_output=social_pressure_output,
             relationship_state_output=relationship_state_output,
@@ -395,41 +487,8 @@ def augment_envelope_with_block_stream(
             actor_pressure_profiles=actor_pressure_profiles,
             npc_motivation_score_policy=npc_motivation_score_policy,
             pacing_rhythm_policy=pacing_rhythm_policy,
-        )
-    except Exception:
-        component_sources = {}
-        cap_used, cap_missing = [], []
-
-    # Build augmented diagnostics (all existing keys preserved).
-    # Stage F additions: capability_outputs (the structured outputs that fed
-    # this tick), actor_pressure_profiles, npc_motivation_score_policy,
-    # pacing_rhythm_policy, motivation_score_component_sources,
-    # capability_outputs_used, capability_outputs_missing.
-    existing_diag = envelope.get("diagnostics") or {}
-    new_diag: dict[str, Any] = {
-        **existing_diag,
-        "director_pulse": {
-            "director_tick_decision": pulse_result["director_tick_decision"],
-            "npc_motivation_scores": pulse_result["npc_motivation_scores"],
-            "player_cut_in_event": pulse_result.get("player_cut_in_event"),
-            "parity": parity,
-            "motivation_score_sources": score_sources,
-            "motivation_score_component_sources": component_sources,
-            "capability_outputs": {
-                "scene_energy_output": scene_energy_output,
-                "social_pressure_output": social_pressure_output,
-                "relationship_state_output": relationship_state_output,
-                "narrative_momentum_output": narrative_momentum_output,
-            },
-            "actor_pressure_profiles": actor_pressure_profiles,
-            "npc_motivation_score_policy": npc_motivation_score_policy,
-            "pacing_rhythm_policy": pacing_rhythm_policy,
-            "off_stage_updates_policy": off_stage_updates_policy,
-            "capability_outputs_used": cap_used,
-            "capability_outputs_missing": cap_missing,
-            "shadow_only": True,
-            "dual_mode_enabled": True,
-        },
+            off_stage_updates_policy=off_stage_updates_policy,
+        ),
     }
 
     return {

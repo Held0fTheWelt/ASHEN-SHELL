@@ -2,10 +2,8 @@ from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 from ai_stack.story_runtime.narrator.god_of_carnage_narrator_path import NARRATOR_PATH_ADAPTER, NARRATOR_PATH_INVOCATION_MODE
 
 
-def test_god_of_carnage_narrator_path_opening_is_speech_free_and_canonical(monkeypatch) -> None:
-    # Explicit opt-out so this test covers the legacy transition_from_previous
-    # surface contract. Strict-on behavior is covered by the 6B-5B parity tests.
-    monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
+def test_god_of_carnage_narrator_path_opening_is_speech_free_and_canonical() -> None:
+    # ADR-0068: strict-off opt-out removed; no env-var monkeypatching needed.
     out = god_of_carnage_narrator_path.build_goc_narrator_path_opening(session_output_language="de")
 
     assert out["path_mode"] == "narrator_path"
@@ -30,26 +28,15 @@ def test_god_of_carnage_narrator_path_opening_is_speech_free_and_canonical(monke
     assert blocks[0]["source_facts"]["module_context"]["setting"]
     assert blocks[0]["source_facts"]["location"]["id"] == "park_edge"
     assert blocks[0]["source_facts"]["mandatory_beat"]["coverage_cues"]
-    assert blocks[0]["source_facts"]["transition_from_previous"]["kind"] == "opening_start"
+    # ADR-0068: transition_from_previous is no longer emitted.
+    assert "transition_from_previous" not in blocks[0]["source_facts"]
+    assert "_legacy_compat" not in blocks[0]["source_facts"]
     assert "Winter afternoon" in blocks[0]["text"]
     assert any("home office" in block["text"] for block in blocks)
     assert any("Parc Mont Sourire" in str(block["source_facts"]) for block in blocks)
-    transition_blocks = [
-        block
-        for block in blocks
-        if (block["source_facts"].get("transition_from_previous") or {}).get("location_changed")
-    ]
-    assert transition_blocks
-    assert transition_blocks[0]["source_facts"]["transition_from_previous"]["current_location"]["id"]
-    hard_cut_blocks = [
-        block
-        for block in blocks
-        if (block["source_facts"].get("transition_from_previous") or {})
-        .get("directed_transition", {})
-        .get("kind")
-        == "hard_cut"
-    ]
-    assert [block["canonical_mandatory_beat_id"] for block in hard_cut_blocks] == ["room_perception_winter_light"]
+    # Canonical hard-cut beat must still be present (content unchanged by ADR-0068).
+    canonical_beat_ids = [block["canonical_mandatory_beat_id"] for block in blocks]
+    assert "room_perception_winter_light" in canonical_beat_ids
     emphasis_blocks = [block for block in blocks if block.get("visual_emphasis")]
     assert emphasis_blocks
     assert emphasis_blocks[0]["visual_emphasis"]["kind"] == "dramatic_moment"

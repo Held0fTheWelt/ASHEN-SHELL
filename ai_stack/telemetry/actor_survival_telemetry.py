@@ -389,6 +389,141 @@ def _vitality_quality_flags(
     return quality_class, degradation_signals, fallback_used, degraded_commit, retry_exhausted
 
 
+def _vitality_lane_context(state: dict[str, Any]) -> dict[str, Any]:
+    (
+        generated_spoken_rows,
+        generated_action_rows,
+        generated_initiative_rows,
+        validated_spoken_rows,
+        validated_action_rows,
+        validated_initiative_rows,
+    ) = _generated_and_validated_lane_rows(state)
+    rendered_spoken_lines, rendered_action_lines = _rendered_visible_rows(state)
+    realized_spoken_order = _collect_actor_ids_from_rows(
+        validated_spoken_rows,
+        speaker_key="speaker_id",
+        actor_key="actor_id",
+    )
+    realized_action_order = _collect_actor_ids_from_rows(
+        validated_action_rows,
+        speaker_key="speaker_id",
+        actor_key="actor_id",
+    )
+    rendered_spoken_line_count = len([line for line in rendered_spoken_lines if _clean_text(line)])
+    rendered_action_line_count = len([line for line in rendered_action_lines if _clean_text(line)])
+    return {
+        "generated_spoken_rows": generated_spoken_rows,
+        "generated_action_rows": generated_action_rows,
+        "generated_initiative_rows": generated_initiative_rows,
+        "validated_spoken_rows": validated_spoken_rows,
+        "validated_action_rows": validated_action_rows,
+        "validated_initiative_rows": validated_initiative_rows,
+        "generated_actor_ids": _collect_actor_ids_from_rows(
+            generated_spoken_rows + generated_action_rows,
+            speaker_key="speaker_id",
+            actor_key="actor_id",
+        ),
+        "realized_actor_ids": _collect_actor_ids_from_rows(
+            validated_spoken_rows + validated_action_rows,
+            speaker_key="speaker_id",
+            actor_key="actor_id",
+        ),
+        "rendered_actor_ids": _collect_rendered_actor_ids(rendered_spoken_lines, rendered_action_lines),
+        "rendered_spoken_line_count": rendered_spoken_line_count,
+        "rendered_action_line_count": rendered_action_line_count,
+        "response_present": bool(rendered_spoken_line_count or rendered_action_line_count),
+        "realized_spoken_order": realized_spoken_order,
+        "realized_action_order": realized_action_order,
+        "realized_actor_order": _dedupe_strings(realized_spoken_order + realized_action_order),
+    }
+
+
+def _vitality_pacing_context(state: dict[str, Any]) -> dict[str, Any]:
+    pacing_mode = _clean_text(state.get("pacing_mode"))
+    silence_decision = (
+        state.get("silence_brevity_decision")
+        if isinstance(state.get("silence_brevity_decision"), dict)
+        else {}
+    )
+    silence_mode = _clean_text(silence_decision.get("mode") or state.get("silence_mode"))
+    return {
+        "pacing_mode": pacing_mode,
+        "silence_mode": silence_mode,
+        "thin_edge_applied": pacing_mode == "thin_edge",
+        "withheld_applied": silence_mode == "withheld",
+        "compressed_applied": pacing_mode == "compressed" or silence_mode == "brief",
+        "prior_tension_present": _has_prior_tension(state),
+    }
+
+
+def _vitality_payload(
+    *,
+    state: dict[str, Any],
+    lane: dict[str, Any],
+    pacing: dict[str, Any],
+    quality: dict[str, Any],
+    responder: dict[str, Any],
+    initiative: dict[str, Any],
+    sparse_input_detected: bool,
+    sparse_input_recovery_applied: bool,
+    npc_initiative_realization: dict[str, Any] | None,
+    generation_ok: bool,
+    validation_ok: bool,
+    commit_applied: bool,
+) -> dict[str, Any]:
+    telemetry = {
+        "identity_stage": "runtime_turn_vitality_telemetry",
+        "schema_version": VITALITY_TELEMETRY_SCHEMA_VERSION,
+        "turn_number": state.get("turn_number"),
+        "trace_id": state.get("trace_id"),
+        "selected_primary_responder_id": responder["selected_primary_responder_id"] or None,
+        "selected_secondary_responder_ids": responder["selected_secondary_responder_ids"],
+        "realized_actor_ids": lane["realized_actor_ids"],
+        "realized_secondary_responder_ids": responder["realized_secondary_responder_ids"],
+        "rendered_actor_ids": lane["rendered_actor_ids"],
+        "generated_spoken_line_count": len(lane["generated_spoken_rows"]),
+        "generated_action_line_count": len(lane["generated_action_rows"]),
+        "validated_spoken_line_count": len(lane["validated_spoken_rows"]),
+        "validated_action_line_count": len(lane["validated_action_rows"]),
+        "rendered_spoken_line_count": lane["rendered_spoken_line_count"],
+        "rendered_action_line_count": lane["rendered_action_line_count"],
+        "initiative_generated_count": initiative["initiative_generated_count"],
+        "initiative_preserved_count": initiative["initiative_preserved_count"],
+        "initiative_seizer_id": initiative["initiative_seizer_id"],
+        "initiative_loser_id": initiative["initiative_loser_id"],
+        "initiative_pressure_label": initiative["initiative_pressure_label"],
+        "pacing_mode": pacing["pacing_mode"] or None,
+        "silence_mode": pacing["silence_mode"] or None,
+        "thin_edge_applied": pacing["thin_edge_applied"],
+        "withheld_applied": pacing["withheld_applied"],
+        "compressed_applied": pacing["compressed_applied"],
+        "prior_tension_present": pacing["prior_tension_present"],
+        "quality_class": quality["quality_class"],
+        "degradation_signals": quality["degradation_signals"],
+        "fallback_used": quality["fallback_used"],
+        "degraded_commit": quality["degraded_commit"],
+        "retry_exhausted": quality["retry_exhausted"],
+        "response_present": lane["response_present"],
+        "initiative_present": initiative["initiative_present"],
+        "multi_actor_realized": initiative["multi_actor_realized"],
+        "sparse_input_recovery_applied": sparse_input_recovery_applied,
+        "preferred_reaction_order_ids": responder["preferred_reaction_order_ids"],
+        "realized_spoken_order": lane["realized_spoken_order"],
+        "realized_action_order": lane["realized_action_order"],
+        "realized_actor_order": lane["realized_actor_order"],
+        "reaction_order_divergence": responder["reaction_order_divergence"],
+        "sparse_input_detected": sparse_input_detected,
+        "generated_actor_ids": lane["generated_actor_ids"],
+        "npc_initiative_realization_v1": npc_initiative_realization,
+        "generated_ok": bool(generation_ok),
+        "validation_ok": bool(validation_ok),
+        "commit_applied": bool(commit_applied),
+    }
+    for field in VITALITY_TELEMETRY_REQUIRED_FIELDS:
+        telemetry.setdefault(field, None)
+    return telemetry
+
+
 def _build_vitality_telemetry_v1(
     state: dict[str, Any],
     *,
@@ -400,32 +535,10 @@ def _build_vitality_telemetry_v1(
     responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
     selected_primary_responder_id = _resolve_selected_primary_responder_id(state, responders)
     selected_secondary_responder_ids = _selected_secondary_responder_ids(state, responders)
-    (
-        generated_spoken_rows,
-        generated_action_rows,
-        generated_initiative_rows,
-        validated_spoken_rows,
-        validated_action_rows,
-        validated_initiative_rows,
-    ) = _generated_and_validated_lane_rows(state)
-    rendered_spoken_lines, rendered_action_lines = _rendered_visible_rows(state)
-
-    generated_actor_ids = _collect_actor_ids_from_rows(
-        generated_spoken_rows + generated_action_rows,
-        speaker_key="speaker_id",
-        actor_key="actor_id",
-    )
-    realized_actor_ids = _collect_actor_ids_from_rows(
-        validated_spoken_rows + validated_action_rows,
-        speaker_key="speaker_id",
-        actor_key="actor_id",
-    )
-    rendered_actor_ids = _collect_rendered_actor_ids(rendered_spoken_lines, rendered_action_lines)
-
+    lane = _vitality_lane_context(state)
     realized_secondary_responder_ids = [
-        actor_id for actor_id in selected_secondary_responder_ids if actor_id in realized_actor_ids
+        actor_id for actor_id in selected_secondary_responder_ids if actor_id in lane["realized_actor_ids"]
     ]
-
     (
         initiative_generated_count,
         initiative_preserved_count,
@@ -434,24 +547,11 @@ def _build_vitality_telemetry_v1(
         initiative_pressure_label,
     ) = _extract_initiative_summary(
         state=state,
-        generated_initiative_rows=generated_initiative_rows,
-        validated_initiative_rows=validated_initiative_rows,
+        generated_initiative_rows=lane["generated_initiative_rows"],
+        validated_initiative_rows=lane["validated_initiative_rows"],
         selected_primary_responder_id=selected_primary_responder_id or None,
     )
-
-    pacing_mode = _clean_text(state.get("pacing_mode"))
-    silence_decision = (
-        state.get("silence_brevity_decision")
-        if isinstance(state.get("silence_brevity_decision"), dict)
-        else {}
-    )
-    silence_mode = _clean_text(silence_decision.get("mode") or state.get("silence_mode"))
-
-    thin_edge_applied = pacing_mode == "thin_edge"
-    withheld_applied = silence_mode == "withheld"
-    compressed_applied = pacing_mode == "compressed" or silence_mode == "brief"
-    prior_tension_present = _has_prior_tension(state)
-
+    pacing = _vitality_pacing_context(state)
     (
         quality_class,
         degradation_signals,
@@ -464,107 +564,64 @@ def _build_vitality_telemetry_v1(
         commit_applied=commit_applied,
         fallback_taken=fallback_taken,
     )
-
-    rendered_spoken_line_count = len([line for line in rendered_spoken_lines if _clean_text(line)])
-    rendered_action_line_count = len([line for line in rendered_action_lines if _clean_text(line)])
-
-    response_present = bool(rendered_spoken_line_count or rendered_action_line_count)
     initiative_present = initiative_preserved_count > 0
-    multi_actor_realized = len(realized_actor_ids) >= 2
-
-    # C2: Realized and preferred actor order tracking
+    multi_actor_realized = len(lane["realized_actor_ids"]) >= 2
     preferred_reaction_order_ids = _preferred_reaction_order_ids(responders)
-
-    # Build realized order from validated lanes (first-seen, deduplicated)
-    realized_spoken_order = _collect_actor_ids_from_rows(
-        validated_spoken_rows,
-        speaker_key="speaker_id",
-        actor_key="actor_id",
-    )
-    realized_action_order = _collect_actor_ids_from_rows(
-        validated_action_rows,
-        speaker_key="speaker_id",
-        actor_key="actor_id",
-    )
-    realized_actor_order = _dedupe_strings(realized_spoken_order + realized_action_order)
-
     reaction_order_divergence = _reaction_order_divergence(
         preferred_reaction_order_ids=preferred_reaction_order_ids,
         selected_secondary_responder_ids=selected_secondary_responder_ids,
-        realized_actor_order=realized_actor_order,
-        response_present=response_present,
+        realized_actor_order=lane["realized_actor_order"],
+        response_present=lane["response_present"],
     )
-
     sparse_input_detected = _is_sparse_input(state)
     sparse_input_recovery_applied = bool(
         sparse_input_detected
-        and response_present
-        and (initiative_present or multi_actor_realized or rendered_spoken_line_count > 0)
+        and lane["response_present"]
+        and (initiative_present or multi_actor_realized or lane["rendered_spoken_line_count"] > 0)
     )
     npc_initiative_realization = _build_npc_initiative_realization_v1(
         state=state,
         selected_primary_responder_id=selected_primary_responder_id or None,
         selected_secondary_responder_ids=selected_secondary_responder_ids,
         preferred_reaction_order_ids=preferred_reaction_order_ids,
-        realized_actor_ids=realized_actor_ids,
-        generated_initiative_rows=generated_initiative_rows,
-        validated_initiative_rows=validated_initiative_rows,
+        realized_actor_ids=lane["realized_actor_ids"],
+        generated_initiative_rows=lane["generated_initiative_rows"],
+        validated_initiative_rows=lane["validated_initiative_rows"],
     )
-
-    telemetry = {
-        "identity_stage": "runtime_turn_vitality_telemetry",
-        "schema_version": VITALITY_TELEMETRY_SCHEMA_VERSION,
-        "turn_number": state.get("turn_number"),
-        "trace_id": state.get("trace_id"),
-        "selected_primary_responder_id": selected_primary_responder_id or None,
-        "selected_secondary_responder_ids": selected_secondary_responder_ids,
-        "realized_actor_ids": realized_actor_ids,
-        "realized_secondary_responder_ids": realized_secondary_responder_ids,
-        "rendered_actor_ids": rendered_actor_ids,
-        "generated_spoken_line_count": len(generated_spoken_rows),
-        "generated_action_line_count": len(generated_action_rows),
-        "validated_spoken_line_count": len(validated_spoken_rows),
-        "validated_action_line_count": len(validated_action_rows),
-        "rendered_spoken_line_count": rendered_spoken_line_count,
-        "rendered_action_line_count": rendered_action_line_count,
-        "initiative_generated_count": initiative_generated_count,
-        "initiative_preserved_count": initiative_preserved_count,
-        "initiative_seizer_id": initiative_seizer_id,
-        "initiative_loser_id": initiative_loser_id,
-        "initiative_pressure_label": initiative_pressure_label,
-        "pacing_mode": pacing_mode or None,
-        "silence_mode": silence_mode or None,
-        "thin_edge_applied": thin_edge_applied,
-        "withheld_applied": withheld_applied,
-        "compressed_applied": compressed_applied,
-        "prior_tension_present": prior_tension_present,
-        "quality_class": quality_class,
-        "degradation_signals": degradation_signals,
-        "fallback_used": fallback_used,
-        "degraded_commit": degraded_commit,
-        "retry_exhausted": retry_exhausted,
-        "response_present": response_present,
-        "initiative_present": initiative_present,
-        "multi_actor_realized": multi_actor_realized,
-        "sparse_input_recovery_applied": sparse_input_recovery_applied,
-        "preferred_reaction_order_ids": preferred_reaction_order_ids,
-        "realized_spoken_order": realized_spoken_order,
-        "realized_action_order": realized_action_order,
-        "realized_actor_order": realized_actor_order,
-        "reaction_order_divergence": reaction_order_divergence,
-        # Optional diagnostic helper fields (non-required)
-        "sparse_input_detected": sparse_input_detected,
-        "generated_actor_ids": generated_actor_ids,
-        "npc_initiative_realization_v1": npc_initiative_realization,
-        "generated_ok": bool(generation_ok),
-        "validation_ok": bool(validation_ok),
-        "commit_applied": bool(commit_applied),
-    }
-
-    for field in VITALITY_TELEMETRY_REQUIRED_FIELDS:
-        telemetry.setdefault(field, None)
-
-    return telemetry
+    return _vitality_payload(
+        state=state,
+        lane=lane,
+        pacing=pacing,
+        quality={
+            "quality_class": quality_class,
+            "degradation_signals": degradation_signals,
+            "fallback_used": fallback_used,
+            "degraded_commit": degraded_commit,
+            "retry_exhausted": retry_exhausted,
+        },
+        responder={
+            "selected_primary_responder_id": selected_primary_responder_id,
+            "selected_secondary_responder_ids": selected_secondary_responder_ids,
+            "realized_secondary_responder_ids": realized_secondary_responder_ids,
+            "preferred_reaction_order_ids": preferred_reaction_order_ids,
+            "reaction_order_divergence": reaction_order_divergence,
+        },
+        initiative={
+            "initiative_generated_count": initiative_generated_count,
+            "initiative_preserved_count": initiative_preserved_count,
+            "initiative_seizer_id": initiative_seizer_id,
+            "initiative_loser_id": initiative_loser_id,
+            "initiative_pressure_label": initiative_pressure_label,
+            "initiative_present": initiative_present,
+            "multi_actor_realized": multi_actor_realized,
+        },
+        sparse_input_detected=sparse_input_detected,
+        sparse_input_recovery_applied=sparse_input_recovery_applied,
+        npc_initiative_realization=npc_initiative_realization,
+        generation_ok=generation_ok,
+        validation_ok=validation_ok,
+        commit_applied=commit_applied,
+    )
 
 
 def _derive_passivity_factors(vitality: dict[str, Any]) -> list[str]:
