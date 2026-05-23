@@ -368,22 +368,20 @@ class TestF8F18F19F20NarratorStrictDefaultOnDemotesLegacy:
         states = w5_projection_flag_states()
         assert states["narrator_strict"] is True
 
-    def test_strict_on_demotes_transition_from_previous_to_legacy_compat(
+    def test_strict_on_omits_transition_from_previous_and_legacy_compat(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """The default-on strict flag demotes the legacy block into
-        ``source_facts._legacy_compat`` so admin parity can still inspect it.
-        Phase 6B-4 does NOT delete this branch — it is kept as the debug
-        breadcrumb through Phase 6B-5E."""
+        """Phase 6B-6B: under strict-on the narrator block contains neither
+        ``transition_from_previous`` nor ``_legacy_compat`` in source_facts.
+        W5 projection is the sole actor-situation authority.
+
+        (Updated from Phase 6B-4 wording: Phase 6B-6B removed the
+        ``_legacy_compat`` insertion branch entirely. ADR-0066 Accepted.)
+        """
 
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "1")
-        # _block lives in the narrator path module's private API. We
-        # construct a minimal step + beat shape just to exercise the
-        # _legacy_compat demotion. The narrator path tests
-        # (test_god_of_carnage_narrator_path.py) cover the full block-shape
-        # contract.
         step = {
             "id": "step_x",
             "sequence": 0,
@@ -401,10 +399,8 @@ class TestF8F18F19F20NarratorStrictDefaultOnDemotesLegacy:
         )
         source_facts = block["source_facts"]
         assert "transition_from_previous" not in source_facts
-        legacy_compat = source_facts.get("_legacy_compat")
-        assert isinstance(legacy_compat, dict)
-        assert "transition_from_previous" in legacy_compat
-        assert legacy_compat.get("authority") == "w5_projection"
+        # Phase 6B-6B removed the _legacy_compat insertion branch.
+        assert "_legacy_compat" not in source_facts
 
     def test_strict_off_keeps_transition_from_previous_first_class(
         self, monkeypatch: pytest.MonkeyPatch

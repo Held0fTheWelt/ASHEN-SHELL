@@ -118,44 +118,44 @@ def _allowed_operation(operation: str, allowed_operations: list[str]) -> str:
     return allowed_operations[0] if allowed_operations else "resume_present"
 
 
-def derive_temporal_control(
-    *,
-    scene_plan_record: dict[str, Any] | None = None,
-    scene_energy_target: dict[str, Any] | None = None,
-    pacing_rhythm_target: dict[str, Any] | None = None,
-    semantic_move_record: dict[str, Any] | None = None,
-    prior_consequence_cascade_state: dict[str, Any] | None = None,
-    prior_callback_web_state: dict[str, Any] | None = None,
-    prior_temporal_control_state: dict[str, Any] | None = None,
-    prior_planner_truth: dict[str, Any] | None = None,
-    turn_id: str | None = None,
-    turn_number: int | None = None,
-    module_runtime_policy: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Derive a bounded temporal-control state and target from structured inputs."""
-
-    policy = temporal_control_policy_from_module_runtime(module_runtime_policy)
+def _temporal_policy_fields(policy: dict[str, Any]) -> tuple[list[str], int, int]:
     allowed_operations = [
         op for op in _clean_str_list(policy.get("allowed_operations")) if op in TEMPORAL_CONTROL_OPERATIONS
     ] or ["resume_present"]
     max_recalled = _bounded_int(policy.get("max_recalled_turns"), 3, minimum=0, maximum=12)
     max_elapsed = _bounded_int(policy.get("max_elapsed_turns"), 4, minimum=0, maximum=24)
-    prior = _prior_state(prior_temporal_control_state, prior_planner_truth)
-    prior_operation = _operation_from_prior(prior)
-    previous_elapsed = _bounded_int(prior.get("elapsed_turns"), 0, minimum=0, maximum=max_elapsed)
+    return allowed_operations, max_recalled, max_elapsed
 
+
+def _temporal_signal_fields(
+    *,
+    scene_plan_record: dict[str, Any] | None,
+    scene_energy_target: dict[str, Any] | None,
+    pacing_rhythm_target: dict[str, Any] | None,
+    semantic_move_record: dict[str, Any] | None,
+) -> dict[str, str]:
     plan = scene_plan_record if isinstance(scene_plan_record, dict) else {}
     energy = scene_energy_target if isinstance(scene_energy_target, dict) else {}
     rhythm = pacing_rhythm_target if isinstance(pacing_rhythm_target, dict) else {}
     semantic = semantic_move_record if isinstance(semantic_move_record, dict) else {}
-    scene_function = _clean_text(plan.get("selected_scene_function"))
-    transition = _clean_text(energy.get("target_transition"))
-    cadence = _clean_text(rhythm.get("cadence"))
-    move_family = _clean_text(
-        semantic.get("move_type")
-        or semantic.get("social_move_family")
-        or semantic.get("player_input_kind")
-    )
+    return {
+        "scene_function": _clean_text(plan.get("selected_scene_function")),
+        "transition": _clean_text(energy.get("target_transition")),
+        "cadence": _clean_text(rhythm.get("cadence")),
+        "move_family": _clean_text(
+            semantic.get("move_type")
+            or semantic.get("social_move_family")
+            or semantic.get("player_input_kind")
+        ),
+    }
+
+
+def _temporal_memory_refs(
+    *,
+    prior_consequence_cascade_state: dict[str, Any] | None,
+    prior_callback_web_state: dict[str, Any] | None,
+    max_recalled: int,
+) -> tuple[list[str], list[str], list[TemporalControlEvidenceRef], list[TemporalControlEvidenceRef]]:
     cascade_turn_ids, cascade_consequence_ids, cascade_evidence = _cascade_refs(
         prior_consequence_cascade_state,
         max_items=max_recalled,
@@ -164,58 +164,91 @@ def derive_temporal_control(
         prior_callback_web_state,
         max_items=max_recalled,
     )
-    recalled_turn_ids = list(dict.fromkeys(cascade_turn_ids + callback_turn_ids))[
-        :max_recalled
-    ]
+    recalled_turn_ids = list(dict.fromkeys(cascade_turn_ids + callback_turn_ids))[:max_recalled]
     recalled_consequence_ids = cascade_consequence_ids[:max_recalled]
+    return recalled_turn_ids, recalled_consequence_ids, cascade_evidence, callback_evidence
 
-    operation = "resume_present"
-    rationale: list[str] = ["temporal_control_resume_present"]
+
+def _temporal_recall_requested(signals: dict[str, str], recalled_turn_ids: list[str]) -> bool:
+    return bool(recalled_turn_ids) and (
+        signals["scene_function"] in {"redirect_blame", "probe_motive", "reveal_surface", "repair_or_stabilize"}
+        or signals["move_family"] in {"question", "probe", "challenge", "accuse", "memory_probe"}
+    )
+
+
+def _temporal_hold_evidence(signals: dict[str, str]) -> list[TemporalControlEvidenceRef]:
     evidence: list[TemporalControlEvidenceRef] = []
-    if scene_function in {"scene_pivot"}:
-        operation = "summarize_gap"
-        rationale = ["temporal_control_scene_pivot_gap"]
-        evidence.append(_evidence("scene_plan_record", "selected_scene_function", scene_function))
-    elif transition in {"pivot"}:
-        operation = "summarize_gap"
-        rationale = ["temporal_control_energy_pivot_gap"]
-        evidence.append(_evidence("scene_energy_target", "target_transition", transition))
-    elif transition in {"release", "deescalate"}:
-        operation = "advance_elapsed_time"
-        rationale = ["temporal_control_energy_release_elapsed"]
-        evidence.append(_evidence("scene_energy_target", "target_transition", transition))
-    elif recalled_turn_ids and (
-        scene_function in {"redirect_blame", "probe_motive", "reveal_surface", "repair_or_stabilize"}
-        or move_family in {"question", "probe", "challenge", "accuse", "memory_probe"}
-    ):
-        operation = "recall_committed_past"
-        rationale = ["temporal_control_recall_committed_consequence"]
-        evidence.extend(cascade_evidence or callback_evidence)
-    elif cadence in {"breathe", "hold"} or transition == "hold":
-        operation = "hold_current_moment"
-        rationale = ["temporal_control_hold_current_pressure"]
-        if cadence:
-            evidence.append(_evidence("pacing_rhythm_target", "cadence", cadence))
-        if transition:
-            evidence.append(_evidence("scene_energy_target", "target_transition", transition))
+    if signals["cadence"]:
+        evidence.append(_evidence("pacing_rhythm_target", "cadence", signals["cadence"]))
+    if signals["transition"]:
+        evidence.append(_evidence("scene_energy_target", "target_transition", signals["transition"]))
+    return evidence
 
-    selected_operation = _allowed_operation(operation, allowed_operations)
-    if selected_operation != operation:
-        rationale.append("temporal_control_policy_fallback")
-    if not bool(policy.get("enabled")):
-        selected_operation = "resume_present"
-        rationale = ["temporal_control_not_applicable"]
 
-    elapsed_turns = 0
-    if selected_operation in {"advance_elapsed_time", "summarize_gap"}:
-        elapsed_turns = min(max_elapsed, max(1, previous_elapsed + 1))
+def _select_temporal_operation(
+    *,
+    signals: dict[str, str],
+    recalled_turn_ids: list[str],
+    cascade_evidence: list[TemporalControlEvidenceRef],
+    callback_evidence: list[TemporalControlEvidenceRef],
+) -> tuple[str, list[str], list[TemporalControlEvidenceRef]]:
+    if signals["scene_function"] in {"scene_pivot"}:
+        return (
+            "summarize_gap",
+            ["temporal_control_scene_pivot_gap"],
+            [_evidence("scene_plan_record", "selected_scene_function", signals["scene_function"])],
+        )
+    if signals["transition"] in {"pivot"}:
+        return (
+            "summarize_gap",
+            ["temporal_control_energy_pivot_gap"],
+            [_evidence("scene_energy_target", "target_transition", signals["transition"])],
+        )
+    if signals["transition"] in {"release", "deescalate"}:
+        return (
+            "advance_elapsed_time",
+            ["temporal_control_energy_release_elapsed"],
+            [_evidence("scene_energy_target", "target_transition", signals["transition"])],
+        )
+    if _temporal_recall_requested(signals, recalled_turn_ids):
+        return (
+            "recall_committed_past",
+            ["temporal_control_recall_committed_consequence"],
+            list(cascade_evidence or callback_evidence),
+        )
+    if signals["cadence"] in {"breathe", "hold"} or signals["transition"] == "hold":
+        return (
+            "hold_current_moment",
+            ["temporal_control_hold_current_pressure"],
+            _temporal_hold_evidence(signals),
+        )
+    return "resume_present", ["temporal_control_resume_present"], []
 
+
+def _anchor_turn_fields(turn_id: str | None, turn_number: int | None) -> tuple[str | None, int | None]:
     try:
         anchor_turn_number = int(turn_number) if turn_number is not None else None
     except (TypeError, ValueError):
         anchor_turn_number = None
-    anchor_turn_id = _clean_text(turn_id) or None
+    return _clean_text(turn_id) or None, anchor_turn_number
 
+
+def _temporal_control_payload(
+    *,
+    policy: dict[str, Any],
+    prior_operation: str | None,
+    selected_operation: str,
+    allowed_operations: list[str],
+    max_recalled: int,
+    max_elapsed: int,
+    elapsed_turns: int,
+    anchor_turn_id: str | None,
+    anchor_turn_number: int | None,
+    recalled_turn_ids: list[str],
+    recalled_consequence_ids: list[str],
+    evidence: list[TemporalControlEvidenceRef],
+    rationale: list[str],
+) -> dict[str, Any]:
     state = TemporalControlState(
         current_operation=selected_operation,  # type: ignore[arg-type]
         prior_operation=prior_operation,  # type: ignore[arg-type]
@@ -249,6 +282,74 @@ def derive_temporal_control(
         "source_evidence": [row.to_runtime_dict() for row in evidence],
         "rationale_codes": list(dict.fromkeys(rationale)),
     }
+
+
+def derive_temporal_control(
+    *,
+    scene_plan_record: dict[str, Any] | None = None,
+    scene_energy_target: dict[str, Any] | None = None,
+    pacing_rhythm_target: dict[str, Any] | None = None,
+    semantic_move_record: dict[str, Any] | None = None,
+    prior_consequence_cascade_state: dict[str, Any] | None = None,
+    prior_callback_web_state: dict[str, Any] | None = None,
+    prior_temporal_control_state: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
+    turn_id: str | None = None,
+    turn_number: int | None = None,
+    module_runtime_policy: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Derive a bounded temporal-control state and target from structured inputs."""
+
+    policy = temporal_control_policy_from_module_runtime(module_runtime_policy)
+    allowed_operations, max_recalled, max_elapsed = _temporal_policy_fields(policy)
+    prior = _prior_state(prior_temporal_control_state, prior_planner_truth)
+    prior_operation = _operation_from_prior(prior)
+    previous_elapsed = _bounded_int(prior.get("elapsed_turns"), 0, minimum=0, maximum=max_elapsed)
+    signals = _temporal_signal_fields(
+        scene_plan_record=scene_plan_record,
+        scene_energy_target=scene_energy_target,
+        pacing_rhythm_target=pacing_rhythm_target,
+        semantic_move_record=semantic_move_record,
+    )
+    recalled_turn_ids, recalled_consequence_ids, cascade_evidence, callback_evidence = _temporal_memory_refs(
+        prior_consequence_cascade_state=prior_consequence_cascade_state,
+        prior_callback_web_state=prior_callback_web_state,
+        max_recalled=max_recalled,
+    )
+    operation, rationale, evidence = _select_temporal_operation(
+        signals=signals,
+        recalled_turn_ids=recalled_turn_ids,
+        cascade_evidence=cascade_evidence,
+        callback_evidence=callback_evidence,
+    )
+
+    selected_operation = _allowed_operation(operation, allowed_operations)
+    if selected_operation != operation:
+        rationale.append("temporal_control_policy_fallback")
+    if not bool(policy.get("enabled")):
+        selected_operation = "resume_present"
+        rationale = ["temporal_control_not_applicable"]
+
+    elapsed_turns = 0
+    if selected_operation in {"advance_elapsed_time", "summarize_gap"}:
+        elapsed_turns = min(max_elapsed, max(1, previous_elapsed + 1))
+
+    anchor_turn_id, anchor_turn_number = _anchor_turn_fields(turn_id, turn_number)
+    return _temporal_control_payload(
+        policy=policy,
+        prior_operation=prior_operation,
+        selected_operation=selected_operation,
+        allowed_operations=allowed_operations,
+        max_recalled=max_recalled,
+        max_elapsed=max_elapsed,
+        elapsed_turns=elapsed_turns,
+        anchor_turn_id=anchor_turn_id,
+        anchor_turn_number=anchor_turn_number,
+        recalled_turn_ids=recalled_turn_ids,
+        recalled_consequence_ids=recalled_consequence_ids,
+        evidence=evidence,
+        rationale=rationale,
+    )
 
 
 def compact_temporal_control_context(target: dict[str, Any] | None) -> dict[str, Any]:

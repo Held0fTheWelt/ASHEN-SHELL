@@ -353,6 +353,268 @@ def budget_for_situation(situation: TurnSituation) -> CapabilityBudget:
     )
 
 
+def _derive_turn_context(
+    *,
+    turn_kind: str | None,
+    turn_number: int | None,
+    raw_player_input: str | None,
+    input_kind: str | None,
+    active_actor: str | None,
+    non_lexical_input_present: bool | None,
+    visible_projection_required: bool | None,
+) -> dict[str, Any]:
+    raw = str(raw_player_input or "")
+    kind_text = str(turn_kind or "").strip().lower()
+    input_kind_text = str(input_kind or "").strip().lower()
+    actor_text = str(active_actor or "").strip().lower()
+    warnings: list[str] = []
+    try:
+        tn = int(turn_number) if turn_number is not None else None
+    except (TypeError, ValueError):
+        tn = None
+        warnings.append("situation_derivation:invalid_turn_number_defaulted")
+    player_input_present = bool(raw.strip())
+    explicit_player_turn = kind_text in {"player", "player_input"} or (
+        not kind_text and player_input_present and actor_text != ActiveActor.NPC.value
+    )
+    return {
+        "kind_text": kind_text,
+        "actor_text": actor_text,
+        "turn_number": tn,
+        "warnings": warnings,
+        "player_input_present": player_input_present,
+        "non_lexical": bool(non_lexical_input_present) or input_kind_text in _NON_LEXICAL_INPUT_KINDS,
+        "visibility": True if visible_projection_required is None else bool(visible_projection_required),
+        "explicit_player_turn": explicit_player_turn,
+    }
+
+
+def _opening_turn_situation(
+    *,
+    visibility: bool,
+    non_lexical: bool,
+    canonical_scene_seed: bool | None,
+    knowledge_gap_present: bool | None,
+) -> TurnSituation:
+    return TurnSituation(
+        turn_kind=TurnKind.OPENING,
+        active_actor=ActiveActor.NARRATOR,
+        player_input_present=False,
+        npc_decision_required=False,
+        action_resolution_required=False,
+        visible_projection_required=visibility,
+        canonical_scene_seed=True if canonical_scene_seed is None else bool(canonical_scene_seed),
+        non_lexical_input_present=non_lexical,
+        knowledge_gap_present=bool(knowledge_gap_present),
+        world_state_change_requested=False,
+        scene_phase=ScenePhase.OPENING,
+    )
+
+
+def _recovery_turn_situation(
+    *,
+    visibility: bool,
+    non_lexical: bool,
+    player_input_present: bool,
+    knowledge_gap_present: bool | None,
+    quality: LastTurnQuality,
+) -> TurnSituation:
+    return TurnSituation(
+        turn_kind=TurnKind.RECOVERY,
+        active_actor=ActiveActor.SYSTEM,
+        player_input_present=player_input_present,
+        npc_decision_required=False,
+        action_resolution_required=False,
+        visible_projection_required=visibility,
+        scene_phase=ScenePhase.RECOVERY,
+        last_turn_quality=quality,
+        non_lexical_input_present=non_lexical,
+        knowledge_gap_present=bool(knowledge_gap_present),
+        world_state_change_requested=False,
+    )
+
+
+def _system_turn_situation(
+    *,
+    visibility: bool,
+    non_lexical: bool,
+    player_input_present: bool,
+    knowledge_gap_present: bool | None,
+) -> TurnSituation:
+    return TurnSituation(
+        turn_kind=TurnKind.SYSTEM_TRANSITION,
+        active_actor=ActiveActor.SYSTEM,
+        player_input_present=player_input_present,
+        npc_decision_required=False,
+        action_resolution_required=False,
+        visible_projection_required=visibility,
+        non_lexical_input_present=non_lexical,
+        knowledge_gap_present=bool(knowledge_gap_present),
+        world_state_change_requested=False,
+    )
+
+
+def _player_turn_situation(
+    *,
+    visibility: bool,
+    non_lexical: bool,
+    player_input_present: bool,
+    npc_decision_required: bool | None,
+    action_resolution_required: bool | None,
+    knowledge_gap_present: bool | None,
+    world_state_change_requested: bool | None,
+    default_scene_phase: ScenePhase,
+) -> TurnSituation:
+    return TurnSituation(
+        turn_kind=TurnKind.PLAYER_INPUT,
+        active_actor=ActiveActor.PLAYER,
+        player_input_present=player_input_present,
+        npc_decision_required=bool(npc_decision_required),
+        action_resolution_required=bool(action_resolution_required)
+        if action_resolution_required is not None
+        else player_input_present,
+        visible_projection_required=visibility,
+        interpersonal_pressure=InterpersonalPressure.HIGH
+        if npc_decision_required
+        else InterpersonalPressure.NONE,
+        scene_phase=default_scene_phase,
+        non_lexical_input_present=non_lexical,
+        knowledge_gap_present=bool(knowledge_gap_present),
+        world_state_change_requested=bool(world_state_change_requested),
+    )
+
+
+def _npc_turn_situation(
+    *,
+    visibility: bool,
+    non_lexical: bool,
+    player_input_present: bool,
+    npc_decision_required: bool | None,
+    action_resolution_required: bool | None,
+    knowledge_gap_present: bool | None,
+    world_state_change_requested: bool | None,
+) -> TurnSituation:
+    return TurnSituation(
+        turn_kind=TurnKind.NPC_TURN,
+        active_actor=ActiveActor.NPC,
+        player_input_present=player_input_present,
+        npc_decision_required=True if npc_decision_required is None else bool(npc_decision_required),
+        action_resolution_required=bool(action_resolution_required),
+        visible_projection_required=visibility,
+        interpersonal_pressure=InterpersonalPressure.HIGH,
+        scene_phase=ScenePhase.CONFRONTATION,
+        non_lexical_input_present=non_lexical,
+        knowledge_gap_present=bool(knowledge_gap_present),
+        world_state_change_requested=bool(world_state_change_requested),
+    )
+
+
+def _special_turn_situation_from_context(
+    *,
+    ctx: dict[str, Any],
+    canonical_scene_seed: bool | None,
+    knowledge_gap_present: bool | None,
+) -> TurnSituation | None:
+    kind_text = ctx["kind_text"]
+    opening = kind_text in _OPENING_TURN_KINDS or (
+        ctx["turn_number"] is not None
+        and ctx["turn_number"] <= 0
+        and not ctx["player_input_present"]
+    )
+    if opening:
+        return _opening_turn_situation(
+            visibility=ctx["visibility"],
+            non_lexical=ctx["non_lexical"],
+            canonical_scene_seed=canonical_scene_seed,
+            knowledge_gap_present=knowledge_gap_present,
+        )
+    if kind_text in _DEGRADED_OR_FALLBACK_TURN_KINDS:
+        return _recovery_turn_situation(
+            visibility=ctx["visibility"],
+            non_lexical=ctx["non_lexical"],
+            player_input_present=ctx["player_input_present"],
+            knowledge_gap_present=knowledge_gap_present,
+            quality=LastTurnQuality.FALLBACK,
+        )
+    if kind_text in _RECOVERY_TURN_KINDS:
+        return _recovery_turn_situation(
+            visibility=ctx["visibility"],
+            non_lexical=ctx["non_lexical"],
+            player_input_present=ctx["player_input_present"],
+            knowledge_gap_present=knowledge_gap_present,
+            quality=LastTurnQuality.DEGRADED,
+        )
+    if kind_text in _SYSTEM_TURN_KINDS or (
+        ctx["actor_text"] == ActiveActor.SYSTEM.value and not ctx["explicit_player_turn"]
+    ):
+        return _system_turn_situation(
+            visibility=ctx["visibility"],
+            non_lexical=ctx["non_lexical"],
+            player_input_present=ctx["player_input_present"],
+            knowledge_gap_present=knowledge_gap_present,
+        )
+    return None
+
+
+def _player_scene_phase(*, npc_decision_required: bool | None, player_input_present: bool) -> ScenePhase:
+    if npc_decision_required:
+        return ScenePhase.CONFRONTATION
+    if player_input_present:
+        return ScenePhase.ESCALATION
+    return ScenePhase.OPENING
+
+
+def _actor_turn_situation_from_context(
+    *,
+    ctx: dict[str, Any],
+    npc_decision_required: bool | None,
+    action_resolution_required: bool | None,
+    knowledge_gap_present: bool | None,
+    world_state_change_requested: bool | None,
+) -> TurnSituation:
+    if ctx["explicit_player_turn"]:
+        return _player_turn_situation(
+            visibility=ctx["visibility"],
+            non_lexical=ctx["non_lexical"],
+            player_input_present=ctx["player_input_present"],
+            npc_decision_required=npc_decision_required,
+            action_resolution_required=action_resolution_required,
+            knowledge_gap_present=knowledge_gap_present,
+            world_state_change_requested=world_state_change_requested,
+            default_scene_phase=_player_scene_phase(
+                npc_decision_required=npc_decision_required,
+                player_input_present=ctx["player_input_present"],
+            ),
+        )
+    npc_turn = (
+        ctx["actor_text"] == ActiveActor.NPC.value
+        or ctx["kind_text"] in _NPC_TURN_KINDS
+        or bool(npc_decision_required)
+    )
+    if npc_turn:
+        return _npc_turn_situation(
+            visibility=ctx["visibility"],
+            non_lexical=ctx["non_lexical"],
+            player_input_present=ctx["player_input_present"],
+            npc_decision_required=npc_decision_required,
+            action_resolution_required=action_resolution_required,
+            knowledge_gap_present=knowledge_gap_present,
+            world_state_change_requested=world_state_change_requested,
+        )
+    if ctx["kind_text"] not in {"", "player", "player_input"}:
+        ctx["warnings"].append(f"situation_derivation:unknown_turn_kind:{ctx['kind_text']}")
+    return _player_turn_situation(
+        visibility=ctx["visibility"],
+        non_lexical=ctx["non_lexical"],
+        player_input_present=ctx["player_input_present"],
+        npc_decision_required=False,
+        action_resolution_required=action_resolution_required,
+        knowledge_gap_present=knowledge_gap_present,
+        world_state_change_requested=world_state_change_requested,
+        default_scene_phase=ScenePhase.ESCALATION if ctx["player_input_present"] else ScenePhase.OPENING,
+    )
+
+
 def derive_turn_situation_from_runtime_context(
     *,
     turn_kind: str | None = None,
@@ -374,174 +636,29 @@ def derive_turn_situation_from_runtime_context(
     forecast, judge, live/staging, and promotion signals remain disabled until
     later integration phases provide explicit evidence.
     """
-    raw = str(raw_player_input or "")
-    kind_text = str(turn_kind or "").strip().lower()
-    input_kind_text = str(input_kind or "").strip().lower()
-    actor_text = str(active_actor or "").strip().lower()
-    warnings: list[str] = []
-
-    try:
-        tn = int(turn_number) if turn_number is not None else None
-    except (TypeError, ValueError):
-        tn = None
-        warnings.append("situation_derivation:invalid_turn_number_defaulted")
-
-    player_input_present = bool(raw.strip())
-    explicit_non_lexical = bool(non_lexical_input_present)
-    derived_non_lexical = input_kind_text in _NON_LEXICAL_INPUT_KINDS
-    non_lexical = explicit_non_lexical or derived_non_lexical
-    visibility = True if visible_projection_required is None else bool(visible_projection_required)
-    known_player_kinds = {"", "player", "player_input"}
-    explicit_player_turn = kind_text in {"player", "player_input"} or (
-        not kind_text and player_input_present and actor_text != ActiveActor.NPC.value
+    ctx = _derive_turn_context(
+        turn_kind=turn_kind,
+        turn_number=turn_number,
+        raw_player_input=raw_player_input,
+        input_kind=input_kind,
+        active_actor=active_actor,
+        non_lexical_input_present=non_lexical_input_present,
+        visible_projection_required=visible_projection_required,
     )
-
-    opening = kind_text in _OPENING_TURN_KINDS or (
-        tn is not None and tn <= 0 and not player_input_present
+    situation = _special_turn_situation_from_context(
+        ctx=ctx,
+        canonical_scene_seed=canonical_scene_seed,
+        knowledge_gap_present=knowledge_gap_present,
     )
-    if opening:
-        return (
-            TurnSituation(
-                turn_kind=TurnKind.OPENING,
-                active_actor=ActiveActor.NARRATOR,
-                player_input_present=False,
-                npc_decision_required=False,
-                action_resolution_required=False,
-                visible_projection_required=visibility,
-                canonical_scene_seed=True
-                if canonical_scene_seed is None
-                else bool(canonical_scene_seed),
-                non_lexical_input_present=non_lexical,
-                knowledge_gap_present=bool(knowledge_gap_present),
-                world_state_change_requested=False,
-                scene_phase=ScenePhase.OPENING,
-            ),
-            tuple(warnings),
+    if situation is None:
+        situation = _actor_turn_situation_from_context(
+            ctx=ctx,
+            npc_decision_required=npc_decision_required,
+            action_resolution_required=action_resolution_required,
+            knowledge_gap_present=knowledge_gap_present,
+            world_state_change_requested=world_state_change_requested,
         )
-
-    if kind_text in _DEGRADED_OR_FALLBACK_TURN_KINDS:
-        return (
-            TurnSituation(
-                turn_kind=TurnKind.RECOVERY,
-                active_actor=ActiveActor.SYSTEM,
-                player_input_present=player_input_present,
-                npc_decision_required=False,
-                action_resolution_required=False,
-                visible_projection_required=visibility,
-                scene_phase=ScenePhase.RECOVERY,
-                last_turn_quality=LastTurnQuality.FALLBACK,
-                non_lexical_input_present=non_lexical,
-                knowledge_gap_present=bool(knowledge_gap_present),
-                world_state_change_requested=False,
-            ),
-            tuple(warnings),
-        )
-
-    if kind_text in _RECOVERY_TURN_KINDS:
-        return (
-            TurnSituation(
-                turn_kind=TurnKind.RECOVERY,
-                active_actor=ActiveActor.SYSTEM,
-                player_input_present=player_input_present,
-                npc_decision_required=False,
-                action_resolution_required=False,
-                visible_projection_required=visibility,
-                scene_phase=ScenePhase.RECOVERY,
-                last_turn_quality=LastTurnQuality.DEGRADED,
-                non_lexical_input_present=non_lexical,
-                knowledge_gap_present=bool(knowledge_gap_present),
-                world_state_change_requested=False,
-            ),
-            tuple(warnings),
-        )
-
-    if kind_text in _SYSTEM_TURN_KINDS or (actor_text == ActiveActor.SYSTEM.value and not explicit_player_turn):
-        return (
-            TurnSituation(
-                turn_kind=TurnKind.SYSTEM_TRANSITION,
-                active_actor=ActiveActor.SYSTEM,
-                player_input_present=player_input_present,
-                npc_decision_required=False,
-                action_resolution_required=False,
-                visible_projection_required=visibility,
-                non_lexical_input_present=non_lexical,
-                knowledge_gap_present=bool(knowledge_gap_present),
-                world_state_change_requested=False,
-            ),
-            tuple(warnings),
-        )
-
-    if explicit_player_turn:
-        return (
-            TurnSituation(
-                turn_kind=TurnKind.PLAYER_INPUT,
-                active_actor=ActiveActor.PLAYER,
-                player_input_present=player_input_present,
-                npc_decision_required=bool(npc_decision_required),
-                action_resolution_required=bool(action_resolution_required)
-                if action_resolution_required is not None
-                else player_input_present,
-                visible_projection_required=visibility,
-                interpersonal_pressure=InterpersonalPressure.HIGH
-                if npc_decision_required
-                else InterpersonalPressure.NONE,
-                scene_phase=ScenePhase.CONFRONTATION
-                if npc_decision_required
-                else ScenePhase.ESCALATION
-                if player_input_present
-                else ScenePhase.OPENING,
-                non_lexical_input_present=non_lexical,
-                knowledge_gap_present=bool(knowledge_gap_present),
-                world_state_change_requested=bool(world_state_change_requested),
-            ),
-            tuple(warnings),
-        )
-
-    npc_turn = (
-        actor_text == ActiveActor.NPC.value
-        or kind_text in _NPC_TURN_KINDS
-        or bool(npc_decision_required)
-    )
-    if npc_turn:
-        return (
-            TurnSituation(
-                turn_kind=TurnKind.NPC_TURN,
-                active_actor=ActiveActor.NPC,
-                player_input_present=player_input_present,
-                npc_decision_required=True
-                if npc_decision_required is None
-                else bool(npc_decision_required),
-                action_resolution_required=bool(action_resolution_required),
-                visible_projection_required=visibility,
-                interpersonal_pressure=InterpersonalPressure.HIGH,
-                scene_phase=ScenePhase.CONFRONTATION,
-                non_lexical_input_present=non_lexical,
-                knowledge_gap_present=bool(knowledge_gap_present),
-                world_state_change_requested=bool(world_state_change_requested),
-            ),
-            tuple(warnings),
-        )
-
-    if kind_text not in known_player_kinds:
-        warnings.append(f"situation_derivation:unknown_turn_kind:{kind_text}")
-
-    return (
-        TurnSituation(
-            turn_kind=TurnKind.PLAYER_INPUT,
-            active_actor=ActiveActor.PLAYER,
-            player_input_present=player_input_present,
-            npc_decision_required=False,
-            action_resolution_required=bool(action_resolution_required)
-            if action_resolution_required is not None
-            else player_input_present,
-            visible_projection_required=visibility,
-            scene_phase=ScenePhase.ESCALATION if player_input_present else ScenePhase.OPENING,
-            non_lexical_input_present=non_lexical,
-            knowledge_gap_present=bool(knowledge_gap_present),
-            world_state_change_requested=bool(world_state_change_requested),
-        ),
-        tuple(warnings),
-    )
+    return situation, tuple(ctx["warnings"])
 
 
 def _add_candidate(candidates: list[tuple[str, bool]], capability: str, *, required: bool) -> None:

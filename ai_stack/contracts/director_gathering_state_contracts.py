@@ -66,6 +66,157 @@ def _coerce_string(value: Any) -> str | None:
     return text or None
 
 
+def _named_character_ids(current_step_named_characters: list[str] | None) -> list[str]:
+    return (
+        [str(c).strip() for c in current_step_named_characters if str(c).strip()]
+        if current_step_named_characters
+        else []
+    )
+
+
+def _diagnostic_gathering_state(
+    *,
+    reason: str,
+    named_characters: list[str],
+    evidence_status: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "paused": False,
+        "missing_actor_ids": [],
+        "presence_required_for_step": named_characters,
+        "diagnostic_blocker": True,
+        "reason": reason,
+    }
+    if evidence_status is not None:
+        result["evidence_status"] = evidence_status
+    return result
+
+
+def _missing_actors_from_presence(
+    *,
+    named_characters: list[str],
+    locations: dict[str, str | None],
+    scene_id: str,
+) -> tuple[list[str], list[str]]:
+    missing_actor_ids: list[str] = []
+    reasons: list[str] = []
+    for actor_id in named_characters:
+        actor_loc = _coerce_string(locations.get(actor_id))
+        if actor_loc is None or actor_loc != scene_id:
+            if actor_id not in missing_actor_ids:
+                missing_actor_ids.append(actor_id)
+            if PAUSE_REASON_ACTOR_NOT_AT_SCENE not in reasons:
+                reasons.append(PAUSE_REASON_ACTOR_NOT_AT_SCENE)
+    return missing_actor_ids, reasons
+
+
+def _append_subject_pause_reason(
+    *,
+    missing_actor_ids: list[str],
+    reasons: list[str],
+    subject: str | None,
+    reason: str,
+) -> None:
+    if subject and subject not in missing_actor_ids:
+        if reason not in reasons:
+            reasons.append(reason)
+        missing_actor_ids.append(subject)
+    elif not subject and reason not in reasons:
+        reasons.append(reason)
+
+
+def _apply_participation_pause(
+    *,
+    missing_actor_ids: list[str],
+    reasons: list[str],
+    subject: str | None,
+    participation_text: str | None,
+) -> None:
+    if participation_text and participation_text.lower() in (
+        "broken",
+        "not_participating",
+        "disengaged",
+        "absent",
+    ):
+        _append_subject_pause_reason(
+            missing_actor_ids=missing_actor_ids,
+            reasons=reasons,
+            subject=subject,
+            reason=PAUSE_REASON_PARTICIPATION_BROKEN,
+        )
+
+
+def _apply_visibility_pause(
+    *,
+    missing_actor_ids: list[str],
+    reasons: list[str],
+    subject: str | None,
+    visibility_text: str | None,
+) -> None:
+    if visibility_text and visibility_text.lower() in (
+        "not_visible",
+        "not_audible",
+        "hidden",
+        "out_of_sight",
+        "inaudible",
+    ):
+        _append_subject_pause_reason(
+            missing_actor_ids=missing_actor_ids,
+            reasons=reasons,
+            subject=subject,
+            reason=PAUSE_REASON_VISIBILITY_LOST,
+        )
+
+
+def _paused_since_turn(
+    *,
+    previous_state: dict[str, Any],
+    current_turn_number: int | None,
+) -> int | None:
+    if not bool(previous_state.get("paused")):
+        return current_turn_number
+    prev_since_turn = previous_state.get("since_turn")
+    if prev_since_turn is None:
+        return current_turn_number
+    try:
+        return int(prev_since_turn)
+    except (TypeError, ValueError):
+        return current_turn_number
+
+
+def _paused_gathering_state(
+    *,
+    named_characters: list[str],
+    scene_id: str,
+    missing_actor_ids: list[str],
+    reasons: list[str],
+    participation_text: str | None,
+    visibility_text: str | None,
+    current_turn_number: int | None,
+    previous_state: dict[str, Any],
+) -> dict[str, Any]:
+    prev_step_id = _coerce_string(previous_state.get("step_id")) if bool(previous_state.get("paused")) else None
+    source = (
+        PAUSE_SOURCE_RESOLVER_EVIDENCE
+        if participation_text or visibility_text
+        else PAUSE_SOURCE_TOPOLOGY
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "paused": True,
+        "step_id": prev_step_id or scene_id,
+        "missing_actor_ids": missing_actor_ids,
+        "since_turn": _paused_since_turn(
+            previous_state=previous_state,
+            current_turn_number=current_turn_number,
+        ),
+        "presence_required_for_step": named_characters,
+        "reason": reasons[0] if reasons else PAUSE_REASON_ACTOR_NOT_AT_SCENE,
+        "source": source,
+    }
+
+
 def compute_gathering_state(
     *,
     actor_locations: dict[str, str | None] | None,
@@ -78,130 +229,57 @@ def compute_gathering_state(
     current_turn_number: int | None = None,
     previous_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Compute the ``director_gathering_state.v1`` snapshot.
-
-    Pure function. No I/O, no mutation, no LLM call, no content hardcoding.
-
-    The pause decision is a semantic composition over actor topology and
-    resolver signals:
-
-    * ``paused == True`` iff at least one actor in
-      ``current_step_named_characters`` is either not at
-      ``current_step_scene_id``, has lost ``participation_relevance``, or
-      has lost ``visibility_audibility`` relative to the gathering.
-    * ``missing_actor_ids`` is the subset failing any of those conditions.
-    * When ``paused == False``, ``missing_actor_ids`` is empty.
-
-    Args:
-        actor_locations: Mapping from actor_id to their current location_id.
-            ``None`` means location unknown (treated as not present).
-        current_step_named_characters: List of actor_ids required for the
-            current canonical step.
-        current_step_scene_id: The location_id where the gathering is held.
-        participation_relevance: Resolver evidence string. Values like
-            ``"broken"`` or ``"not_participating"`` contribute to pause.
-        visibility_audibility: Resolver evidence string. Values like
-            ``"not_visible"`` or ``"not_audible"`` contribute to pause.
-        current_turn_number: Current turn number for ``since_turn`` tracking.
-        previous_state: The prior ``director_gathering_state.v1`` dict, used
-            to preserve ``since_turn`` on ongoing pauses.
-
-    Returns:
-        A dict conforming to ``director_gathering_state.v1``.
-    """
-    named_characters = (
-        [str(c).strip() for c in current_step_named_characters if str(c).strip()]
-        if current_step_named_characters
-        else []
-    )
+    """Compute the pure ``director_gathering_state.v1`` pause snapshot."""
+    named_characters = _named_character_ids(current_step_named_characters)
     scene_id = _coerce_string(current_step_scene_id)
     locations = actor_locations if isinstance(actor_locations, dict) else {}
     prev = previous_state if isinstance(previous_state, dict) else {}
     subject = _coerce_string(subject_actor_id)
 
     if not named_characters:
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "paused": False,
-            "missing_actor_ids": [],
-            "presence_required_for_step": named_characters,
-            "diagnostic_blocker": True,
-            "reason": DIAGNOSTIC_BLOCKER_MISSING_NAMED_CHARACTERS,
-        }
+        return _diagnostic_gathering_state(
+            reason=DIAGNOSTIC_BLOCKER_MISSING_NAMED_CHARACTERS,
+            named_characters=named_characters,
+        )
     if not scene_id:
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "paused": False,
-            "missing_actor_ids": [],
-            "presence_required_for_step": named_characters,
-            "diagnostic_blocker": True,
-            "reason": DIAGNOSTIC_BLOCKER_MISSING_STEP_SCENE_ID,
-        }
+        return _diagnostic_gathering_state(
+            reason=DIAGNOSTIC_BLOCKER_MISSING_STEP_SCENE_ID,
+            named_characters=named_characters,
+        )
     if actor_locations is None or not isinstance(actor_locations, dict) or not locations:
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "paused": False,
-            "missing_actor_ids": [],
-            "presence_required_for_step": named_characters,
-            "diagnostic_blocker": True,
-            "reason": DIAGNOSTIC_BLOCKER_MISSING_ACTOR_LOCATIONS,
-        }
+        return _diagnostic_gathering_state(
+            reason=DIAGNOSTIC_BLOCKER_MISSING_ACTOR_LOCATIONS,
+            named_characters=named_characters,
+        )
 
-    missing_actor_ids: list[str] = []
-    reasons: list[str] = []
-
-    for actor_id in named_characters:
-        actor_loc = _coerce_string(locations.get(actor_id))
-        if actor_loc is None or actor_loc != scene_id:
-            if actor_id not in missing_actor_ids:
-                missing_actor_ids.append(actor_id)
-            if PAUSE_REASON_ACTOR_NOT_AT_SCENE not in reasons:
-                reasons.append(PAUSE_REASON_ACTOR_NOT_AT_SCENE)
-
+    missing_actor_ids, reasons = _missing_actors_from_presence(
+        named_characters=named_characters,
+        locations=locations,
+        scene_id=scene_id,
+    )
     participation_text = _coerce_string(participation_relevance)
     visibility_text = _coerce_string(visibility_audibility)
     if participation_evidence_required and (participation_text is None or visibility_text is None):
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "paused": False,
-            "missing_actor_ids": [],
-            "presence_required_for_step": named_characters,
-            "diagnostic_blocker": True,
-            "reason": DIAGNOSTIC_BLOCKER_MISSING_PARTICIPATION_EVIDENCE,
-            "evidence_status": {
+        return _diagnostic_gathering_state(
+            reason=DIAGNOSTIC_BLOCKER_MISSING_PARTICIPATION_EVIDENCE,
+            named_characters=named_characters,
+            evidence_status={
                 "participation_relevance_present": participation_text is not None,
                 "visibility_audibility_present": visibility_text is not None,
             },
-        }
-    if participation_text and participation_text.lower() in (
-        "broken",
-        "not_participating",
-        "disengaged",
-        "absent",
-    ):
-        if subject and subject not in missing_actor_ids:
-            if PAUSE_REASON_PARTICIPATION_BROKEN not in reasons:
-                reasons.append(PAUSE_REASON_PARTICIPATION_BROKEN)
-            missing_actor_ids.append(subject)
-        elif not subject:
-            # No subject specified: record reason without modifying missing list.
-            if PAUSE_REASON_PARTICIPATION_BROKEN not in reasons:
-                reasons.append(PAUSE_REASON_PARTICIPATION_BROKEN)
-
-    if visibility_text and visibility_text.lower() in (
-        "not_visible",
-        "not_audible",
-        "hidden",
-        "out_of_sight",
-        "inaudible",
-    ):
-        if subject and subject not in missing_actor_ids:
-            if PAUSE_REASON_VISIBILITY_LOST not in reasons:
-                reasons.append(PAUSE_REASON_VISIBILITY_LOST)
-            missing_actor_ids.append(subject)
-        elif not subject:
-            if PAUSE_REASON_VISIBILITY_LOST not in reasons:
-                reasons.append(PAUSE_REASON_VISIBILITY_LOST)
+        )
+    _apply_participation_pause(
+        missing_actor_ids=missing_actor_ids,
+        reasons=reasons,
+        subject=subject,
+        participation_text=participation_text,
+    )
+    _apply_visibility_pause(
+        missing_actor_ids=missing_actor_ids,
+        reasons=reasons,
+        subject=subject,
+        visibility_text=visibility_text,
+    )
 
     missing_actor_ids.sort()
     paused = len(missing_actor_ids) > 0 or len(reasons) > 0
@@ -214,38 +292,16 @@ def compute_gathering_state(
             "presence_required_for_step": named_characters,
         }
 
-    prev_paused = bool(prev.get("paused"))
-    prev_since_turn = prev.get("since_turn") if prev_paused else None
-    since_turn: int | None
-    if prev_since_turn is not None:
-        try:
-            since_turn = int(prev_since_turn)
-        except (TypeError, ValueError):
-            since_turn = current_turn_number
-    else:
-        since_turn = current_turn_number
-
-    prev_step_id = _coerce_string(prev.get("step_id")) if prev_paused else None
-    step_id = prev_step_id or scene_id
-
-    source = (
-        PAUSE_SOURCE_RESOLVER_EVIDENCE
-        if participation_text or visibility_text
-        else PAUSE_SOURCE_TOPOLOGY
+    return _paused_gathering_state(
+        named_characters=named_characters,
+        scene_id=scene_id,
+        missing_actor_ids=missing_actor_ids,
+        reasons=reasons,
+        participation_text=participation_text,
+        visibility_text=visibility_text,
+        current_turn_number=current_turn_number,
+        previous_state=prev,
     )
-
-    reason = reasons[0] if reasons else PAUSE_REASON_ACTOR_NOT_AT_SCENE
-
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "paused": True,
-        "step_id": step_id,
-        "missing_actor_ids": missing_actor_ids,
-        "since_turn": since_turn,
-        "presence_required_for_step": named_characters,
-        "reason": reason,
-        "source": source,
-    }
 
 
 def should_suppress_mandatory_beat_consumption(

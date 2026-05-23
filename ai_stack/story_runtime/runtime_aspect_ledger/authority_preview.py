@@ -86,32 +86,18 @@ def adr0041_validator_registry_for_turn_class(turn_class_key: str) -> dict[str, 
     if key == TURN_CLASS_DEGRADED_OR_FALLBACK_TURN:
         return dict(build_degraded_or_fallback_enforced_semantic_validator_registry())
     return {}
-def classify_adr0041_validation_authority_drift(
-    *,
-    validator_dispatch_report: dict[str, Any],
-    validation_seam_summary: dict[str, Any] | None,
-) -> dict[str, Any]:
-    """Classify disagreement between ``run_validation_seam`` and ADR-0041 local enforcement."""
-    would_run_raw = list(validator_dispatch_report.get("validators_would_run") or [])
-    would_run: list[str] = []
-    for item in would_run_raw:
+
+
+def _normalized_validator_ids(raw_items: Any) -> list[str]:
+    validator_ids: list[str] = []
+    for item in list(raw_items or []):
         text = str(item or "").strip()
-        if not text:
-            continue
-        would_run.append(validate_semantic_capability_name(text))
-    would_run_set = frozenset(would_run)
+        if text:
+            validator_ids.append(validate_semantic_capability_name(text))
+    return validator_ids
 
-    unavailable_raw = list(validator_dispatch_report.get("validators_unavailable") or [])
-    unavailable: set[str] = set()
-    for item in unavailable_raw:
-        text = str(item or "").strip()
-        if not text:
-            continue
-        unavailable.add(validate_semantic_capability_name(text))
 
-    seam = validation_seam_summary if isinstance(validation_seam_summary, dict) else {}
-    seam_ok = str(seam.get("status") or "").strip().lower() == "approved"
-
+def _local_execution_evidences(validator_dispatch_report: dict[str, Any]) -> list[dict[str, Any]]:
     entries = validator_dispatch_report.get("entries") or []
     evidences: list[dict[str, Any]] = []
     for ent in entries:
@@ -122,33 +108,57 @@ def classify_adr0041_validation_authority_drift(
         ev = ent.get("local_execution_evidence")
         if isinstance(ev, dict):
             evidences.append(ev)
+    return evidences
 
-    planned_unavailable = would_run_set & unavailable
+
+def _authority_drift_classification(
+    *,
+    would_run_set: frozenset[str],
+    planned_unavailable: set[str],
+    evidences: list[dict[str, Any]],
+    seam_ok: bool,
+) -> tuple[str, list[str]]:
     notes: list[str] = []
-    classification: str
-
     if would_run_set and planned_unavailable == would_run_set:
-        classification = ADR0041_DRIFT_MISSING_CONTEXT
         notes.append("all_planned_enforced_validators_unavailable")
-    elif planned_unavailable and planned_unavailable != would_run_set:
-        classification = ADR0041_DRIFT_UNAVAILABLE_VALIDATOR
+        return ADR0041_DRIFT_MISSING_CONTEXT, notes
+    if planned_unavailable and planned_unavailable != would_run_set:
         notes.append("partial_planned_enforced_unavailable")
-    elif not evidences:
-        classification = ADR0041_DRIFT_ALIGNED
+        return ADR0041_DRIFT_UNAVAILABLE_VALIDATOR, notes
+    if not evidences:
         notes.append("no_local_execution_evidence_rows")
-    else:
-        any_fail = any(not bool(e.get("passed")) for e in evidences)
-        all_pass = all(bool(e.get("passed")) for e in evidences)
+        return ADR0041_DRIFT_ALIGNED, notes
 
-        if seam_ok and any_fail:
-            classification = ADR0041_DRIFT_ADR_STRICTER
-        elif not seam_ok and all_pass:
-            classification = ADR0041_DRIFT_SEAM_STRICTER
-        elif not seam_ok and any_fail:
-            classification = ADR0041_DRIFT_CONFLICTING_RESULT
-            notes.append("seam_rejected_and_adr_local_failures_present")
-        else:
-            classification = ADR0041_DRIFT_ALIGNED
+    any_fail = any(not bool(e.get("passed")) for e in evidences)
+    all_pass = all(bool(e.get("passed")) for e in evidences)
+    if seam_ok and any_fail:
+        return ADR0041_DRIFT_ADR_STRICTER, notes
+    if not seam_ok and all_pass:
+        return ADR0041_DRIFT_SEAM_STRICTER, notes
+    if not seam_ok and any_fail:
+        notes.append("seam_rejected_and_adr_local_failures_present")
+        return ADR0041_DRIFT_CONFLICTING_RESULT, notes
+    return ADR0041_DRIFT_ALIGNED, notes
+
+
+def classify_adr0041_validation_authority_drift(
+    *,
+    validator_dispatch_report: dict[str, Any],
+    validation_seam_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Classify disagreement between ``run_validation_seam`` and ADR-0041 local enforcement."""
+    would_run_set = frozenset(_normalized_validator_ids(validator_dispatch_report.get("validators_would_run")))
+    unavailable = set(_normalized_validator_ids(validator_dispatch_report.get("validators_unavailable")))
+    seam = validation_seam_summary if isinstance(validation_seam_summary, dict) else {}
+    seam_ok = str(seam.get("status") or "").strip().lower() == "approved"
+    evidences = _local_execution_evidences(validator_dispatch_report)
+    planned_unavailable = would_run_set & unavailable
+    classification, notes = _authority_drift_classification(
+        would_run_set=would_run_set,
+        planned_unavailable=planned_unavailable,
+        evidences=evidences,
+        seam_ok=seam_ok,
+    )
 
     return {
         "classification": classification,

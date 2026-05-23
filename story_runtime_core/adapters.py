@@ -57,6 +57,74 @@ def _debug_openai_adapter_ndjson(payload: dict[str, Any]) -> None:
         return
 
 
+def _append_non_empty_text(acc: list[str], value: str) -> None:
+    stripped = value.strip()
+    if stripped:
+        acc.append(stripped)
+
+
+def _responses_output_text(payload: dict[str, Any]) -> str | None:
+    output_text = payload.get("output_text")
+    if isinstance(output_text, str) and output_text.strip():
+        return output_text.strip()
+    if isinstance(output_text, list):
+        parts = [p.strip() for p in output_text if isinstance(p, str) and p.strip()]
+        if parts:
+            return "\n".join(parts)
+    return None
+
+
+def _append_responses_reasoning_summary(chunks: list[str], item: dict[str, Any]) -> None:
+    summaries = item.get("summary")
+    if not isinstance(summaries, list):
+        return
+    for sm in summaries:
+        if isinstance(sm, dict):
+            st = sm.get("text")
+            if isinstance(st, str):
+                _append_non_empty_text(chunks, st)
+
+
+def _append_responses_content_items(chunks: list[str], content_items: Any) -> None:
+    if isinstance(content_items, str):
+        _append_non_empty_text(chunks, content_items)
+        return
+    if not isinstance(content_items, list):
+        return
+    for content_item in content_items:
+        if not isinstance(content_item, dict):
+            continue
+        text = content_item.get("text")
+        if isinstance(text, str):
+            _append_non_empty_text(chunks, text)
+        refusal = content_item.get("refusal")
+        if isinstance(refusal, str):
+            _append_non_empty_text(chunks, refusal)
+
+
+def _append_responses_output_item_text(chunks: list[str], item: dict[str, Any]) -> None:
+    itype = str(item.get("type") or "")
+    if itype == "output_text":
+        text = item.get("text")
+        if isinstance(text, str):
+            _append_non_empty_text(chunks, text)
+        return
+    if itype == "reasoning":
+        _append_responses_reasoning_summary(chunks, item)
+        return
+    _append_responses_content_items(chunks, item.get("content"))
+
+
+def _fallback_responses_output_text(output_items: list[Any]) -> str:
+    chunks: list[str] = []
+    for item in output_items:
+        if isinstance(item, dict):
+            text = item.get("text")
+            if isinstance(text, str) and text.strip():
+                _append_non_empty_text(chunks, text)
+    return "\n".join(chunks)
+
+
 @dataclass(slots=True)
 class ModelCallResult:
     content: str
@@ -192,19 +260,9 @@ class OpenAIChatAdapter(BaseModelAdapter):
         The HTTP JSON body does not always include the SDK-only ``output_text`` helper; it
         often only has ``output`` items (message, output_text, reasoning summaries, …).
         """
-
-        def _append_non_empty(acc: list[str], value: str) -> None:
-            stripped = value.strip()
-            if stripped:
-                acc.append(stripped)
-
-        output_text = payload.get("output_text")
-        if isinstance(output_text, str) and output_text.strip():
-            return output_text.strip()
-        if isinstance(output_text, list):
-            parts = [p.strip() for p in output_text if isinstance(p, str) and p.strip()]
-            if parts:
-                return "\n".join(parts)
+        output_text = _responses_output_text(payload)
+        if output_text:
+            return output_text
 
         chunks: list[str] = []
         output_items = payload.get("output")
@@ -214,50 +272,11 @@ class OpenAIChatAdapter(BaseModelAdapter):
         for item in output_items:
             if not isinstance(item, dict):
                 continue
-            itype = str(item.get("type") or "")
-
-            if itype == "output_text":
-                text = item.get("text")
-                if isinstance(text, str):
-                    _append_non_empty(chunks, text)
-                continue
-
-            if itype == "reasoning":
-                summaries = item.get("summary")
-                if isinstance(summaries, list):
-                    for sm in summaries:
-                        if isinstance(sm, dict):
-                            st = sm.get("text")
-                            if isinstance(st, str):
-                                _append_non_empty(chunks, st)
-                continue
-
-            content_items = item.get("content")
-            if isinstance(content_items, str):
-                _append_non_empty(chunks, content_items)
-                continue
-            if not isinstance(content_items, list):
-                continue
-
-            for content_item in content_items:
-                if not isinstance(content_item, dict):
-                    continue
-                text = content_item.get("text")
-                if isinstance(text, str):
-                    _append_non_empty(chunks, text)
-                refusal = content_item.get("refusal")
-                if isinstance(refusal, str):
-                    _append_non_empty(chunks, refusal)
+            _append_responses_output_item_text(chunks, item)
 
         if chunks:
             return "\n".join(chunks)
-
-        for item in output_items:
-            if isinstance(item, dict):
-                text = item.get("text")
-                if isinstance(text, str) and text.strip():
-                    _append_non_empty(chunks, text)
-        return "\n".join(chunks)
+        return _fallback_responses_output_text(output_items)
 
     @staticmethod
     def _usage_details(usage: dict[str, Any]) -> tuple[int, int, int]:

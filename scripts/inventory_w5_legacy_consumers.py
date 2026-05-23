@@ -90,7 +90,7 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "complete_actor_locations_for_gathering": "S — Director baseline completion algorithm; called by F1/F4/F5",
     "gathering_scene_id": "S — derived from actor_locations by F5; consumed by ADR-0061 pause predicate",
     "derived_gathering_room_id": "S — Director alias (also produced by F5)",
-    "transition_from_previous": "migrate_to_w5_first_before_removal (F8) — narrator legacy fallback; prompt + parity tests still read it",
+    "transition_from_previous": "strict_off_rollback_deprecated (6B-7/ADR-0067) — first-class only under W5_AST_NARRATOR_STRICT_ENABLED=false; deprecated rollback-only surface",
     "location_changed": "S — W5 mirror of `transition_from_previous.location_changed`",
     "forbidden_ai_stack_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
     "forbidden_ai_stack_w5_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
@@ -183,11 +183,12 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "substrate_keep_future_adr — Director alias produced by F5"
     ),
     "transition_from_previous": (
-        "w5_first_migrated_keep_temporarily under W5_AST_NARRATOR_STRICT_"
-        "ENABLED=on (F8/F18/F19/F20 demote / remove under strict); default "
-        "config (strict-OFF) still writes the legacy block as first-class "
-        "narrator situation input — needs_dedicated_adr_before_removal to "
-        "flip strict-on permanently"
+        "strict_off_rollback_deprecated (Phase 6B-7, ADR-0067) — first-class "
+        "narrator situation input only under explicit W5_AST_NARRATOR_STRICT_"
+        "ENABLED=false (deprecated rollback posture). Strict-on (permanent "
+        "default since 6B-5C) omits this field entirely; W5 projection is the "
+        "sole actor-situation authority. NarratorStrictOffDeprecationWarning "
+        "is emitted on opt-out. Final removal requires ADR-0068 or successor."
     ),
     "location_changed": (
         "substrate_keep_future_adr — W5 where_summary mirror of legacy "
@@ -265,6 +266,8 @@ PHASE_6B4_TAXONOMY: tuple[str, ...] = (
     "test_only_update",
     "doc_only_update",
     "unknown_needs_runtime_trace",
+    # Phase 6B-7 additions
+    "strict_off_rollback_deprecated",  # fires only under W5_AST_NARRATOR_STRICT_ENABLED=false; deprecated ADR-0067
 )
 
 
@@ -456,6 +459,15 @@ def _format_human(report: ScanReport) -> str:
         count = sum(1 for f in report.findings if f.surface == key)
         label = PHASE_6B4_CLASSIFICATION.get(key, "—")
         out.append(f"  {key:48s} {count:3d}  {label[:60]}")
+    out.append("")
+    out.append("Phase 6B-7 strict-off deprecation surface (ADR-0067):")
+    out.append("  transition_from_previous is deprecated rollback-only; strict-off emits")
+    out.append("  NarratorStrictOffDeprecationWarning. Not yet removed.")
+    _6b7_keys = ("transition_from_previous", "location_changed")
+    for key in _6b7_keys:
+        count = sum(1 for f in report.findings if f.surface == key)
+        label = PHASE_6B4_CLASSIFICATION.get(key, "—")
+        out.append(f"  {key:48s} {count:3d}  {label[:70]}")
     out.append("")
     forbidden_keys = (
         "forbidden_ai_stack_actor_situation",

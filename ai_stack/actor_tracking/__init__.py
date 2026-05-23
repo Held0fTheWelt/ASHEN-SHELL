@@ -52,6 +52,7 @@ from ai_stack.actor_tracking.validation import (
     w5_validation_fallback,
 )
 from ai_stack.actor_tracking.diagnostics import (
+    NarratorStrictOffDeprecationWarning,
     W5_ADMIN_DIAGNOSTIC_SCHEMA_VERSION,
     W5_RUNTIME_METADATA_SCHEMA_VERSION,
     build_w5_admin_actor_view,
@@ -97,6 +98,7 @@ __all__ = [
     "build_w5_projection_for_player_shell",
     "build_w5_admin_actor_view",
     "build_w5_admin_conflicts_view",
+    "NarratorStrictOffDeprecationWarning",
     "build_w5_admin_empty_view",
     "build_w5_admin_narrator_projection_preview",
     "build_w5_admin_npc_projection_preview",

@@ -292,6 +292,220 @@ def _prior_layer_ids(prior_planner_truth: dict[str, Any] | None) -> list[str]:
     return []
 
 
+def _append_mood_layer(
+    *,
+    selected: list[SensoryContextLayer],
+    evidence: list[SensoryContextEvidenceRef],
+    rationale: list[str],
+    narrator_sensory_palette: dict[str, Any] | None,
+    mood: str,
+) -> None:
+    if not mood:
+        return
+    mood_text = _palette_text(narrator_sensory_palette, "global_mood", mood)
+    mood_layer = _layer(
+        layer_id=f"mood:{mood}",
+        layer_kind="mood",
+        source="narrator_sensory_palette",
+        source_field=f"global_mood.{mood}",
+        source_ref=f"narrator_sensory_palette.global_mood.{mood}",
+        text=mood_text,
+        language=None,
+        required=False,
+    )
+    if mood_layer:
+        selected.append(mood_layer)
+        evidence.append(_evidence("narrator_sensory_palette", f"global_mood.{mood}", bool(mood_text)))
+        rationale.append("sensory_context_mood_from_scene_state")
+
+
+def _append_location_layers(
+    *,
+    selected: list[SensoryContextLayer],
+    evidence: list[SensoryContextEvidenceRef],
+    rationale: list[str],
+    narrator_sensory_palette: dict[str, Any] | None,
+    scene_affordances: dict[str, Any] | None,
+    local_context_transition: dict[str, Any] | None,
+    locations: dict[str, dict[str, Any]],
+    location_id: str | None,
+    language: str,
+) -> None:
+    if not location_id:
+        return
+    room_text = _palette_text(narrator_sensory_palette, "rooms", location_id, "ambient")
+    room_ref = _palette_ref(narrator_sensory_palette, "rooms", location_id, "ambient_ref")
+    room_source_ref = _palette_ref_source(room_ref, f"narrator_sensory_palette.rooms.{location_id}.ambient")
+    room_layer = _layer(
+        layer_id=f"room:{location_id}:ambient",
+        layer_kind="room_ambient",
+        source=_source_kind_from_ref(room_source_ref, "narrator_sensory_palette")
+        if room_ref
+        else "narrator_sensory_palette",
+        source_field=f"rooms.{location_id}.ambient_ref" if room_ref else f"rooms.{location_id}.ambient",
+        source_ref=room_source_ref,
+        text=room_text,
+        language=None,
+        required=True,
+    )
+    if room_layer:
+        selected.append(room_layer)
+        evidence.append(_evidence(room_layer.source, room_layer.source_field, bool(room_text or room_ref)))
+        rationale.append("sensory_context_room_ambient")
+
+    loc_row = locations.get(location_id)
+    if not isinstance(loc_row, dict):
+        return
+    entry_text = _language_detail(loc_row, "entry_sensory_detail", language)
+    entry_source_ref = _clean_text(loc_row.get("entry_sensory_source_ref")) or (
+        f"scene_affordances.locations.{location_id}.entry_sensory_detail"
+    )
+    entry_layer = _layer(
+        layer_id=f"location:{location_id}:entry",
+        layer_kind="location_entry",
+        source=_source_kind_from_ref(entry_source_ref, "scene_affordances"),
+        source_field=f"locations.{location_id}.entry_sensory_source_ref",
+        source_ref=entry_source_ref,
+        text=entry_text,
+        language=language,
+        required=bool(local_context_transition),
+    )
+    if entry_layer:
+        selected.append(entry_layer)
+        evidence.append(_evidence(entry_layer.source, entry_layer.source_field, bool(entry_text)))
+        rationale.append("sensory_context_location_entry")
+
+
+def _append_object_layers(
+    *,
+    selected: list[SensoryContextLayer],
+    evidence: list[SensoryContextEvidenceRef],
+    rationale: list[str],
+    narrator_sensory_palette: dict[str, Any] | None,
+    objects: dict[str, dict[str, Any]],
+    object_id: str | None,
+    language: str,
+) -> None:
+    if not object_id:
+        return
+    object_text = _palette_text(narrator_sensory_palette, "objects", object_id, "glance")
+    object_ref = _palette_ref(narrator_sensory_palette, "objects", object_id, "glance_ref")
+    object_source_ref = _palette_ref_source(object_ref, f"narrator_sensory_palette.objects.{object_id}.glance")
+    obj_layer = _layer(
+        layer_id=f"object:{object_id}:glance",
+        layer_kind="object_perception",
+        source=_source_kind_from_ref(object_source_ref, "narrator_sensory_palette")
+        if object_ref
+        else "narrator_sensory_palette",
+        source_field=f"objects.{object_id}.glance_ref" if object_ref else f"objects.{object_id}.glance",
+        source_ref=object_source_ref,
+        text=object_text,
+        language=None,
+        required=True,
+    )
+    if obj_layer:
+        selected.append(obj_layer)
+        evidence.append(_evidence(obj_layer.source, obj_layer.source_field, bool(object_text or object_ref)))
+        rationale.append("sensory_context_object_focus")
+
+    obj_row = objects.get(object_id)
+    if not isinstance(obj_row, dict):
+        return
+    perception_text = _language_detail(obj_row, "perception_detail", language)
+    perception_source_ref = _clean_text(obj_row.get("perception_source_ref")) or (
+        f"scene_affordances.objects.{object_id}.perception_detail"
+    )
+    perception_layer = _layer(
+        layer_id=f"object:{object_id}:perception",
+        layer_kind="object_perception",
+        source=_source_kind_from_ref(perception_source_ref, "scene_affordances"),
+        source_field=f"objects.{object_id}.perception_source_ref",
+        source_ref=perception_source_ref,
+        text=perception_text,
+        language=language,
+        required=True,
+    )
+    if perception_layer:
+        selected.append(perception_layer)
+        evidence.append(_evidence(perception_layer.source, perception_layer.source_field, bool(perception_text)))
+        rationale.append("sensory_context_object_perception")
+
+
+def _sensory_layer_budget(policy: dict[str, Any], intensity: str) -> tuple[int, int]:
+    min_layers = _bounded_int(policy.get("min_layers_per_turn"), 1, minimum=0, maximum=8)
+    max_layers = _bounded_int(policy.get("max_layers_per_turn"), 3, minimum=1, maximum=8)
+    if intensity == "low":
+        max_layers = min(max_layers, 2)
+    elif intensity == "high":
+        min_layers = max(min_layers, 2)
+    return min_layers, max_layers
+
+
+def _selected_sensory_layers(
+    selected: list[SensoryContextLayer],
+    *,
+    min_layers: int,
+    max_layers: int,
+) -> list[SensoryContextLayer]:
+    required_layers = [layer for layer in selected if layer.required]
+    required_ids = {layer.layer_id for layer in required_layers}
+    ordered = required_layers + [layer for layer in selected if layer.layer_id not in required_ids]
+    selected_layers = ordered[:max_layers]
+    if len(selected_layers) < min_layers:
+        selected_layers = ordered[: max(min_layers, len(selected_layers))]
+    return selected_layers
+
+
+def _sensory_context_payload(
+    *,
+    policy: dict[str, Any],
+    intensity: str,
+    location_id: str | None,
+    object_id: str | None,
+    mood: str,
+    selected_layers: list[SensoryContextLayer],
+    evidence: list[SensoryContextEvidenceRef],
+    rationale: list[str],
+    prior_planner_truth: dict[str, Any] | None,
+    min_layers: int,
+    max_layers: int,
+) -> dict[str, Any]:
+    layer_ids = [layer.layer_id for layer in selected_layers]
+    prior_layers = _prior_layer_ids(prior_planner_truth)
+    repeated = len(set(layer_ids).intersection(prior_layers))
+    target = SensoryContextTarget(
+        intensity=intensity,  # type: ignore[arg-type]
+        location_id=location_id,
+        object_id=object_id,
+        mood_key=mood,
+        selected_layers=selected_layers,
+        required_layer_ids=[layer.layer_id for layer in selected_layers if layer.required],
+        min_layers_per_turn=min_layers,
+        max_layers_per_turn=max_layers,
+        require_structured_events=bool(policy.get("require_structured_events", True)),
+        source_evidence=evidence,
+        rationale_codes=list(dict.fromkeys(rationale)),
+    )
+    state = SensoryContextState(
+        current_layer_ids=layer_ids,
+        prior_layer_ids=prior_layers,
+        repeated_layer_count=repeated,
+        location_id=location_id,
+        object_id=object_id,
+        mood_key=mood,
+        intensity=intensity,  # type: ignore[arg-type]
+        source_evidence=evidence,
+    )
+    return {
+        "schema_version": SENSORY_CONTEXT_SCHEMA_VERSION,
+        "policy": policy,
+        "state": state.to_runtime_dict(),
+        "target": target.to_runtime_dict(),
+        "source_evidence": [row.to_runtime_dict() for row in evidence],
+        "rationale_codes": list(dict.fromkeys(rationale)),
+    }
+
+
 def derive_sensory_context(
     *,
     scene_plan_record: dict[str, Any] | None,
@@ -346,152 +560,52 @@ def derive_sensory_context(
     rationale: list[str] = []
     selected: list[SensoryContextLayer] = []
 
-    if mood:
-        mood_text = _palette_text(narrator_sensory_palette, "global_mood", mood)
-        mood_layer = _layer(
-            layer_id=f"mood:{mood}",
-            layer_kind="mood",
-            source="narrator_sensory_palette",
-            source_field=f"global_mood.{mood}",
-            source_ref=f"narrator_sensory_palette.global_mood.{mood}",
-            text=mood_text,
-            language=None,
-            required=False,
-        )
-        if mood_layer:
-            selected.append(mood_layer)
-            evidence.append(_evidence("narrator_sensory_palette", f"global_mood.{mood}", bool(mood_text)))
-            rationale.append("sensory_context_mood_from_scene_state")
-
-    if location_id:
-        room_text = _palette_text(narrator_sensory_palette, "rooms", location_id, "ambient")
-        room_ref = _palette_ref(narrator_sensory_palette, "rooms", location_id, "ambient_ref")
-        room_source_ref = _palette_ref_source(
-            room_ref,
-            f"narrator_sensory_palette.rooms.{location_id}.ambient",
-        )
-        room_layer = _layer(
-            layer_id=f"room:{location_id}:ambient",
-            layer_kind="room_ambient",
-            source=_source_kind_from_ref(room_source_ref, "narrator_sensory_palette") if room_ref else "narrator_sensory_palette",
-            source_field=f"rooms.{location_id}.ambient_ref" if room_ref else f"rooms.{location_id}.ambient",
-            source_ref=room_source_ref,
-            text=room_text,
-            language=None,
-            required=True,
-        )
-        if room_layer:
-            selected.append(room_layer)
-            evidence.append(_evidence(room_layer.source, room_layer.source_field, bool(room_text or room_ref)))
-            rationale.append("sensory_context_room_ambient")
-        loc_row = locations.get(location_id)
-        if isinstance(loc_row, dict):
-            entry_text = _language_detail(loc_row, "entry_sensory_detail", language)
-            entry_source_ref = _clean_text(loc_row.get("entry_sensory_source_ref")) or (
-                f"scene_affordances.locations.{location_id}.entry_sensory_detail"
-            )
-            entry_layer = _layer(
-                layer_id=f"location:{location_id}:entry",
-                layer_kind="location_entry",
-                source=_source_kind_from_ref(entry_source_ref, "scene_affordances"),
-                source_field=f"locations.{location_id}.entry_sensory_source_ref",
-                source_ref=entry_source_ref,
-                text=entry_text,
-                language=language,
-                required=bool(local_context_transition),
-            )
-            if entry_layer:
-                selected.append(entry_layer)
-                evidence.append(_evidence(entry_layer.source, entry_layer.source_field, bool(entry_text)))
-                rationale.append("sensory_context_location_entry")
-
-    if object_id:
-        object_text = _palette_text(narrator_sensory_palette, "objects", object_id, "glance")
-        object_ref = _palette_ref(narrator_sensory_palette, "objects", object_id, "glance_ref")
-        object_source_ref = _palette_ref_source(
-            object_ref,
-            f"narrator_sensory_palette.objects.{object_id}.glance",
-        )
-        obj_layer = _layer(
-            layer_id=f"object:{object_id}:glance",
-            layer_kind="object_perception",
-            source=_source_kind_from_ref(object_source_ref, "narrator_sensory_palette") if object_ref else "narrator_sensory_palette",
-            source_field=f"objects.{object_id}.glance_ref" if object_ref else f"objects.{object_id}.glance",
-            source_ref=object_source_ref,
-            text=object_text,
-            language=None,
-            required=True,
-        )
-        if obj_layer:
-            selected.append(obj_layer)
-            evidence.append(_evidence(obj_layer.source, obj_layer.source_field, bool(object_text or object_ref)))
-            rationale.append("sensory_context_object_focus")
-        obj_row = objects.get(object_id)
-        if isinstance(obj_row, dict):
-            perception_text = _language_detail(obj_row, "perception_detail", language)
-            perception_source_ref = _clean_text(obj_row.get("perception_source_ref")) or (
-                f"scene_affordances.objects.{object_id}.perception_detail"
-            )
-            perception_layer = _layer(
-                layer_id=f"object:{object_id}:perception",
-                layer_kind="object_perception",
-                source=_source_kind_from_ref(perception_source_ref, "scene_affordances"),
-                source_field=f"objects.{object_id}.perception_source_ref",
-                source_ref=perception_source_ref,
-                text=perception_text,
-                language=language,
-                required=True,
-            )
-            if perception_layer:
-                selected.append(perception_layer)
-                evidence.append(_evidence(perception_layer.source, perception_layer.source_field, bool(perception_text)))
-                rationale.append("sensory_context_object_perception")
-
-    min_layers = _bounded_int(policy.get("min_layers_per_turn"), 1, minimum=0, maximum=8)
-    max_layers = _bounded_int(policy.get("max_layers_per_turn"), 3, minimum=1, maximum=8)
-    if intensity == "low":
-        max_layers = min(max_layers, 2)
-    elif intensity == "high":
-        min_layers = max(min_layers, 2)
-    required_layers = [layer for layer in selected if layer.required]
-    ordered = required_layers + [layer for layer in selected if layer.layer_id not in {r.layer_id for r in required_layers}]
-    selected_layers = ordered[:max_layers]
-    if len(selected_layers) < min_layers:
-        selected_layers = ordered[: max(min_layers, len(selected_layers))]
-    layer_ids = [layer.layer_id for layer in selected_layers]
-    prior_layers = _prior_layer_ids(prior_planner_truth)
-    repeated = len(set(layer_ids).intersection(prior_layers))
-    target = SensoryContextTarget(
-        intensity=intensity,  # type: ignore[arg-type]
+    _append_mood_layer(
+        selected=selected,
+        evidence=evidence,
+        rationale=rationale,
+        narrator_sensory_palette=narrator_sensory_palette,
+        mood=mood,
+    )
+    _append_location_layers(
+        selected=selected,
+        evidence=evidence,
+        rationale=rationale,
+        narrator_sensory_palette=narrator_sensory_palette,
+        scene_affordances=scene_affordances,
+        local_context_transition=local_context_transition,
+        locations=locations,
+        location_id=location_id,
+        language=language,
+    )
+    _append_object_layers(
+        selected=selected,
+        evidence=evidence,
+        rationale=rationale,
+        narrator_sensory_palette=narrator_sensory_palette,
+        objects=objects,
+        object_id=object_id,
+        language=language,
+    )
+    min_layers, max_layers = _sensory_layer_budget(policy, intensity)
+    selected_layers = _selected_sensory_layers(
+        selected,
+        min_layers=min_layers,
+        max_layers=max_layers,
+    )
+    return _sensory_context_payload(
+        policy=policy,
+        intensity=intensity,
         location_id=location_id,
         object_id=object_id,
-        mood_key=mood,
+        mood=mood,
         selected_layers=selected_layers,
-        required_layer_ids=[layer.layer_id for layer in selected_layers if layer.required],
-        min_layers_per_turn=min_layers,
-        max_layers_per_turn=max_layers,
-        require_structured_events=bool(policy.get("require_structured_events", True)),
-        source_evidence=evidence,
-        rationale_codes=list(dict.fromkeys(rationale)),
+        evidence=evidence,
+        rationale=rationale,
+        prior_planner_truth=prior_planner_truth,
+        min_layers=min_layers,
+        max_layers=max_layers,
     )
-    state = SensoryContextState(
-        current_layer_ids=layer_ids,
-        prior_layer_ids=prior_layers,
-        repeated_layer_count=repeated,
-        location_id=location_id,
-        object_id=object_id,
-        mood_key=mood,
-        intensity=intensity,  # type: ignore[arg-type]
-        source_evidence=evidence,
-    )
-    return {
-        "schema_version": SENSORY_CONTEXT_SCHEMA_VERSION,
-        "policy": policy,
-        "state": state.to_runtime_dict(),
-        "target": target.to_runtime_dict(),
-        "source_evidence": [row.to_runtime_dict() for row in evidence],
-        "rationale_codes": list(dict.fromkeys(rationale)),
-    }
 
 
 def _event_rows(structured_output: dict[str, Any] | None) -> list[dict[str, Any]]:

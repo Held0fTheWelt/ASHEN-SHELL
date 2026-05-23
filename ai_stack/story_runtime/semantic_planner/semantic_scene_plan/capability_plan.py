@@ -51,20 +51,7 @@ def _add_capability_step(
     )
 
 
-def _director_capability_manager_plan(
-
-
-    *,
-    narrative_scene_function: str,
-    realization_mode: str,
-    content_frame: dict[str, Any],
-    speech_policy: dict[str, Any],
-    dialogue_plan: list[dict[str, Any]],
-    dramatic_beats: list[dict[str, Any]],
-    actor_directives: list[dict[str, Any]],
-    turn_input_class: str,
-) -> dict[str, Any]:
-    steps: list[dict[str, Any]] = []
+def _beat_orders_by_kind(dramatic_beats: list[dict[str, Any]]) -> dict[str, list[int]]:
     beat_orders_by_kind: dict[str, list[int]] = {}
     for beat in dramatic_beats:
         if not isinstance(beat, dict):
@@ -76,7 +63,17 @@ def _director_capability_manager_plan(
             order = 0
         if kind and order:
             beat_orders_by_kind.setdefault(kind, []).append(order)
+    return beat_orders_by_kind
 
+
+def _add_narrator_capability_steps(
+    *,
+    steps: list[dict[str, Any]],
+    narrative_scene_function: str,
+    content_frame: dict[str, Any],
+    turn_input_class: str,
+    beat_orders_by_kind: dict[str, list[int]],
+) -> None:
     required_narration = narrative_scene_function in {
         "arrange_scene",
         "contain_out_of_scope",
@@ -95,7 +92,9 @@ def _director_capability_manager_plan(
             source="scene_director",
             beat_orders=beat_orders_by_kind.get("setup_beat") or beat_orders_by_kind.get("environment_beat"),
         )
-    if _clean(turn_input_class).lower() == "opening" or "opening" in _clean(content_frame.get("canonical_path_step_id")):
+    if _clean(turn_input_class).lower() == "opening" or "opening" in _clean(
+        content_frame.get("canonical_path_step_id")
+    ):
         _add_capability_step(
             steps,
             capability=NARRATOR_OPENING_EVENT_REALIZE,
@@ -104,6 +103,23 @@ def _director_capability_manager_plan(
             source="canonical_path",
             beat_orders=beat_orders_by_kind.get("setup_beat"),
         )
+    _add_narrator_focus_or_consequence_step(
+        steps=steps,
+        narrative_scene_function=narrative_scene_function,
+        content_frame=content_frame,
+        required_narration=required_narration,
+        beat_orders_by_kind=beat_orders_by_kind,
+    )
+
+
+def _add_narrator_focus_or_consequence_step(
+    *,
+    steps: list[dict[str, Any]],
+    narrative_scene_function: str,
+    content_frame: dict[str, Any],
+    required_narration: bool,
+    beat_orders_by_kind: dict[str, list[int]],
+) -> None:
     if narrative_scene_function == "narrate_sensory_focus":
         _add_capability_step(
             steps,
@@ -126,39 +142,50 @@ def _director_capability_manager_plan(
             source="content_frame",
             beat_orders=beat_orders_by_kind.get("information_beat") or beat_orders_by_kind.get("setup_beat"),
         )
-
-
     elif required_narration:
         _add_capability_step(
             steps,
             capability=NARRATOR_ACTION_CONSEQUENCE_DESCRIBE,
-            mode="required" if narrative_scene_function in {"contain_out_of_scope", "narrate_consequence"} else "optional",
+            mode="required"
+            if narrative_scene_function in {"contain_out_of_scope", "narrate_consequence"}
+            else "optional",
             reason=f"narrative_scene_function:{narrative_scene_function}",
             source="scene_director",
             beat_orders=beat_orders_by_kind.get("narration_beat"),
         )
 
-    if dialogue_plan:
+
+def _add_dialogue_capability_steps(
+    *,
+    steps: list[dict[str, Any]],
+    dialogue_plan: list[dict[str, Any]],
+    speech_policy: dict[str, Any],
+    beat_orders_by_kind: dict[str, list[int]],
+) -> None:
+    if not dialogue_plan:
+        return
+    _add_capability_step(
+        steps,
+        capability=NPC_SOCIAL_REACTION_OPTIONAL,
+        mode="required" if speech_policy.get("speech_required") else "optional",
+        reason=f"speech_function:{speech_policy.get('speech_function')}",
+        source="speech_policy",
+        beat_orders=beat_orders_by_kind.get("npc_speak_beat")
+        or beat_orders_by_kind.get("npc_dialogue_beat"),
+    )
+    if speech_policy.get("speech_function") in {"wording_dispute", "statement_procedure"}:
         _add_capability_step(
             steps,
-            capability=NPC_SOCIAL_REACTION_OPTIONAL,
-            mode="required" if speech_policy.get("speech_required") else "optional",
+            capability=NPC_DIRECT_ANSWER_ALLOWED,
+            mode="optional",
             reason=f"speech_function:{speech_policy.get('speech_function')}",
             source="speech_policy",
-            beat_orders=beat_orders_by_kind.get("npc_speak_beat")
-            or beat_orders_by_kind.get("npc_dialogue_beat"),
+            beat_orders=beat_orders_by_kind.get("npc_speak_beat"),
         )
-        if speech_policy.get("speech_function") in {"wording_dispute", "statement_procedure"}:
-            _add_capability_step(
-                steps,
-                capability=NPC_DIRECT_ANSWER_ALLOWED,
-                mode="optional",
-                reason=f"speech_function:{speech_policy.get('speech_function')}",
-                source="speech_policy",
-                beat_orders=beat_orders_by_kind.get("npc_speak_beat"),
-            )
 
-    if any(
+
+def _actor_directives_need_visible_npc_action(actor_directives: list[dict[str, Any]]) -> bool:
+    return any(
         _clean(row.get("directive")) in {
             "stage_npc_presence",
             "force_npc_reaction",
@@ -168,16 +195,34 @@ def _director_capability_manager_plan(
         }
         for row in actor_directives
         if isinstance(row, dict)
-    ):
-        _add_capability_step(
-            steps,
-            capability=NPC_ACTION_GESTURE_OPTIONAL,
-            mode="optional",
-            reason="actor_directives:visible_npc_action",
-            source="actor_directives",
-            beat_orders=beat_orders_by_kind.get("npc_action_beat") or beat_orders_by_kind.get("interruption_beat"),
-        )
+    )
 
+
+def _add_actor_directive_capability_steps(
+    *,
+    steps: list[dict[str, Any]],
+    actor_directives: list[dict[str, Any]],
+    beat_orders_by_kind: dict[str, list[int]],
+) -> None:
+    if not _actor_directives_need_visible_npc_action(actor_directives):
+        return
+    _add_capability_step(
+        steps,
+        capability=NPC_ACTION_GESTURE_OPTIONAL,
+        mode="optional",
+        reason="actor_directives:visible_npc_action",
+        source="actor_directives",
+        beat_orders=beat_orders_by_kind.get("npc_action_beat") or beat_orders_by_kind.get("interruption_beat"),
+    )
+
+
+def _capability_dispatch_summary(
+    *,
+    steps: list[dict[str, Any]],
+    dialogue_plan: list[dict[str, Any]],
+    speech_policy: dict[str, Any],
+    narrative_scene_function: str,
+) -> tuple[list[str], list[str], list[str], list[str], dict[str, Any]]:
     required = [row["capability"] for row in steps if row.get("mode") == "required"]
     optional = [row["capability"] for row in steps if row.get("mode") != "required"]
     selected = _unique_clean([*required, *optional])
@@ -194,6 +239,69 @@ def _director_capability_manager_plan(
     executable = list(dispatch_audit.get("executable_capabilities") or [])
     required = [cap for cap in required if cap in executable]
     optional = [cap for cap in optional if cap in executable]
+    return selected, executable, required, optional, suppressed, dispatch_audit
+
+
+def _capability_plan_decision_basis(
+    *,
+    narrative_scene_function: str,
+    realization_mode: str,
+    content_frame: dict[str, Any],
+    speech_policy: dict[str, Any],
+    dialogue_plan: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "narrative_scene_function": narrative_scene_function,
+        "realization_mode": realization_mode,
+        "canonical_path_step_id": content_frame.get("canonical_path_step_id"),
+        "canonical_path_mode": content_frame.get("canonical_path_mode"),
+        "location_id": content_frame.get("location_id"),
+        "object_focus_ids": list(content_frame.get("object_focus_ids") or []),
+        "speech_required": bool(speech_policy.get("speech_required")),
+        "speech_recommended": bool(speech_policy.get("speech_recommended")),
+        "speech_function": speech_policy.get("speech_function"),
+        "dialogue_beat_count": len(dialogue_plan),
+        "quote_anchor_refs": list(content_frame.get("quote_anchor_refs") or []),
+    }
+
+
+def _director_capability_manager_plan(
+    *,
+    narrative_scene_function: str,
+    realization_mode: str,
+    content_frame: dict[str, Any],
+    speech_policy: dict[str, Any],
+    dialogue_plan: list[dict[str, Any]],
+    dramatic_beats: list[dict[str, Any]],
+    actor_directives: list[dict[str, Any]],
+    turn_input_class: str,
+) -> dict[str, Any]:
+    steps: list[dict[str, Any]] = []
+    beat_orders_by_kind = _beat_orders_by_kind(dramatic_beats)
+    _add_narrator_capability_steps(
+        steps=steps,
+        narrative_scene_function=narrative_scene_function,
+        content_frame=content_frame,
+        turn_input_class=turn_input_class,
+        beat_orders_by_kind=beat_orders_by_kind,
+    )
+    _add_dialogue_capability_steps(
+        steps=steps,
+        dialogue_plan=dialogue_plan,
+        speech_policy=speech_policy,
+        beat_orders_by_kind=beat_orders_by_kind,
+    )
+    _add_actor_directive_capability_steps(
+        steps=steps,
+        actor_directives=actor_directives,
+        beat_orders_by_kind=beat_orders_by_kind,
+    )
+    selected, executable, required, optional, suppressed, dispatch_audit = _capability_dispatch_summary(
+        steps=steps,
+        dialogue_plan=dialogue_plan,
+        speech_policy=speech_policy,
+        narrative_scene_function=narrative_scene_function,
+    )
 
     return {
         "schema_version": DIRECTOR_CAPABILITY_MANAGER_PLAN_SCHEMA_VERSION,
@@ -204,19 +312,13 @@ def _director_capability_manager_plan(
 
         "run_only_selected_capabilities": True,
         "dispatch_status": dispatch_audit.get("status"),
-        "decision_basis": {
-            "narrative_scene_function": narrative_scene_function,
-            "realization_mode": realization_mode,
-            "canonical_path_step_id": content_frame.get("canonical_path_step_id"),
-            "canonical_path_mode": content_frame.get("canonical_path_mode"),
-            "location_id": content_frame.get("location_id"),
-            "object_focus_ids": list(content_frame.get("object_focus_ids") or []),
-            "speech_required": bool(speech_policy.get("speech_required")),
-            "speech_recommended": bool(speech_policy.get("speech_recommended")),
-            "speech_function": speech_policy.get("speech_function"),
-            "dialogue_beat_count": len(dialogue_plan),
-            "quote_anchor_refs": list(content_frame.get("quote_anchor_refs") or []),
-        },
+        "decision_basis": _capability_plan_decision_basis(
+            narrative_scene_function=narrative_scene_function,
+            realization_mode=realization_mode,
+            content_frame=content_frame,
+            speech_policy=speech_policy,
+            dialogue_plan=dialogue_plan,
+        ),
         "selected_capabilities": executable,
         "required_capabilities": required,
         "optional_capabilities": optional,

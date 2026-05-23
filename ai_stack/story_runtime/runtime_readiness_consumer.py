@@ -71,6 +71,115 @@ def adr0041_readiness_consumer_upstream_prerequisites_met() -> tuple[bool, tuple
     return True, tuple(warnings)
 
 
+def _readiness_aggregation_fields(
+    runtime_intelligence_projection: dict[str, Any] | None,
+) -> tuple[dict[str, Any] | None, str, bool, list[str]]:
+    agg: dict[str, Any] | None = None
+    if isinstance(runtime_intelligence_projection, dict):
+        raw = runtime_intelligence_projection.get("readiness_aggregation_decision")
+        if isinstance(raw, dict):
+            agg = raw
+    if not isinstance(agg, dict):
+        return None, "absent", False, []
+
+    raw_agg = str(agg.get("aggregated_readiness") or "").strip()
+    bl = agg.get("blockers")
+    blockers = [str(x) for x in bl if str(x).strip()] if isinstance(bl, list) else []
+    return agg, raw_agg if raw_agg else "absent", bool(agg.get("adr0041_veto_applied")), blockers
+
+
+def _degradation_readiness_fields(degradation_signals: list[Any] | None) -> tuple[bool, bool, list[str]]:
+    deg = degradation_signals if isinstance(degradation_signals, list) else []
+    degradation_tokens = {str(signal).strip().lower() for signal in deg if str(signal).strip()}
+    degradation_blockers = sorted(
+        token for token in degradation_tokens if token in _BLOCKING_DEGRADATION_TOKENS
+    )
+    return bool(deg), bool(degradation_blockers), degradation_blockers
+
+
+def _retrieval_authority_fields(retrieval_payload: dict[str, Any] | None) -> tuple[str, bool]:
+    retrieval_auth = (
+        retrieval_payload.get("retrieval_authority")
+        if isinstance(retrieval_payload, dict) and isinstance(retrieval_payload.get("retrieval_authority"), dict)
+        else {}
+    )
+    retrieval_authority_level = str(retrieval_auth.get("authority_level") or "").strip().lower()
+    retrieval_unverified = retrieval_authority_level in {"", "retrieved_unverified", "diagnostic_only"}
+    return retrieval_authority_level, retrieval_unverified
+
+
+def _base_readiness_status(base_runtime_session_ready: bool, base_can_execute: bool) -> str:
+    if base_runtime_session_ready and base_can_execute:
+        return "allow"
+    if (not base_runtime_session_ready) and (not base_can_execute):
+        return "reject"
+    return "unknown"
+
+
+def _inactive_consumer_reason(
+    *,
+    consumer_on: bool,
+    upstream_ok: bool,
+    agg: dict[str, Any] | None,
+) -> str:
+    if not consumer_on:
+        return "adr0041_runtime_readiness_consumer_disabled"
+    if not upstream_ok:
+        return "adr0041_upstream_prerequisites_not_met"
+    if not isinstance(agg, dict):
+        return "readiness_aggregation_decision_absent"
+    return "base_readiness_only"
+
+
+def _apply_adr0041_readiness_veto(
+    *,
+    base_runtime_session_ready: bool,
+    base_can_execute: bool,
+    base_readiness: str,
+    consumer_path_active: bool,
+    consumer_on: bool,
+    upstream_ok: bool,
+    agg: dict[str, Any] | None,
+    degradation_active: bool,
+    degradation_blocking_signal: bool,
+) -> tuple[bool, bool, str, str]:
+    final_rs = bool(base_runtime_session_ready)
+    final_ce = bool(base_can_execute)
+    if not consumer_path_active:
+        return final_rs, final_ce, "base_readiness", _inactive_consumer_reason(
+            consumer_on=consumer_on,
+            upstream_ok=upstream_ok,
+            agg=agg,
+        )
+
+    aggregated = str((agg or {}).get("aggregated_readiness") or "").strip()
+    if base_readiness == "unknown" and aggregated == "block":
+        return (
+            False,
+            False,
+            "adr0041_scoped_consumer",
+            "adr0041_veto_under_unknown_base"
+            if not degradation_active
+            else "adr0041_veto_under_unknown_base_with_degradation",
+        )
+    if base_readiness == "unknown":
+        return (
+            final_rs,
+            final_ce,
+            "adr0041_scoped_consumer",
+            "unknown_base_no_upgrade_degraded" if degradation_active else "unknown_base_no_upgrade",
+        )
+    if base_readiness == "reject":
+        return False, False, "adr0041_scoped_consumer", "base_reject_no_adr0041_upgrade"
+    if aggregated == "block":
+        return False, False, "adr0041_scoped_consumer", "adr0041_veto_over_base_allow"
+    if degradation_blocking_signal:
+        return False, False, "adr0041_scoped_consumer", "adr0041_degradation_veto_over_base_allow"
+    if aggregated == "allow":
+        return final_rs, final_ce, "adr0041_scoped_consumer", "base_allow_adr0041_allow"
+    return final_rs, final_ce, "adr0041_scoped_consumer", "base_allow_adr0041_unchanged_or_other"
+
+
 def resolve_runtime_readiness_with_adr0041(
     *,
     base_runtime_session_ready: bool,
@@ -89,102 +198,26 @@ def resolve_runtime_readiness_with_adr0041(
     upstream_ok, uw = adr0041_readiness_consumer_upstream_prerequisites_met()
     warnings = [*cw, *uw]
 
-    agg: dict[str, Any] | None = None
-    if isinstance(runtime_intelligence_projection, dict):
-        raw = runtime_intelligence_projection.get("readiness_aggregation_decision")
-        if isinstance(raw, dict):
-            agg = raw
-
-    adr0041_aggregation = "absent"
-    adr0041_veto_applied = False
-    blockers: list[str] = []
-    if isinstance(agg, dict):
-        raw_agg = str(agg.get("aggregated_readiness") or "").strip()
-        adr0041_aggregation = raw_agg if raw_agg else "absent"
-        adr0041_veto_applied = bool(agg.get("adr0041_veto_applied"))
-        bl = agg.get("blockers")
-        if isinstance(bl, list):
-            blockers = [str(x) for x in bl if str(x).strip()]
-
-    deg = degradation_signals if isinstance(degradation_signals, list) else []
-    degradation_active = bool(deg)
-    degradation_tokens = {
-        str(signal).strip().lower()
-        for signal in deg
-        if str(signal).strip()
-    }
-    degradation_blockers = sorted(
-        token for token in degradation_tokens if token in _BLOCKING_DEGRADATION_TOKENS
+    agg, adr0041_aggregation, adr0041_veto_applied, blockers = _readiness_aggregation_fields(
+        runtime_intelligence_projection
     )
-    degradation_blocking_signal = bool(degradation_blockers)
-    retrieval_auth = (
-        retrieval_payload.get("retrieval_authority")
-        if isinstance(retrieval_payload, dict) and isinstance(retrieval_payload.get("retrieval_authority"), dict)
-        else {}
+    degradation_active, degradation_blocking_signal, degradation_blockers = _degradation_readiness_fields(
+        degradation_signals
     )
-    retrieval_authority_level = str(retrieval_auth.get("authority_level") or "").strip().lower()
-    retrieval_unverified = retrieval_authority_level in {"", "retrieved_unverified", "diagnostic_only"}
-
-    if base_runtime_session_ready and base_can_execute:
-        base_readiness = "allow"
-    elif (not base_runtime_session_ready) and (not base_can_execute):
-        base_readiness = "reject"
-    else:
-        base_readiness = "unknown"
-
+    retrieval_authority_level, retrieval_unverified = _retrieval_authority_fields(retrieval_payload)
+    base_readiness = _base_readiness_status(base_runtime_session_ready, base_can_execute)
     consumer_path_active = bool(consumer_on and upstream_ok and isinstance(agg, dict))
-
-    final_rs = bool(base_runtime_session_ready)
-    final_ce = bool(base_can_execute)
-    source = "base_readiness"
-
-    if not consumer_path_active:
-        if not consumer_on:
-            reason = "adr0041_runtime_readiness_consumer_disabled"
-        elif not upstream_ok:
-            reason = "adr0041_upstream_prerequisites_not_met"
-        elif not isinstance(agg, dict):
-            reason = "readiness_aggregation_decision_absent"
-        else:
-            reason = "base_readiness_only"
-    else:
-        source = "adr0041_scoped_consumer"
-        aggregated = str(agg.get("aggregated_readiness") or "").strip()
-
-        if base_readiness == "unknown":
-            if aggregated == "block":
-                final_rs = False
-                final_ce = False
-                reason = (
-                    "adr0041_veto_under_unknown_base"
-                    if not degradation_active
-                    else "adr0041_veto_under_unknown_base_with_degradation"
-                )
-            else:
-                final_rs = bool(base_runtime_session_ready)
-                final_ce = bool(base_can_execute)
-                reason = (
-                    "unknown_base_no_upgrade_degraded"
-                    if degradation_active
-                    else "unknown_base_no_upgrade"
-                )
-        elif base_readiness == "reject":
-            final_rs = False
-            final_ce = False
-            reason = "base_reject_no_adr0041_upgrade"
-        else:
-            final_rs = bool(base_runtime_session_ready) and aggregated != "block"
-            final_ce = bool(base_can_execute) and aggregated != "block"
-            if aggregated == "block":
-                reason = "adr0041_veto_over_base_allow"
-            elif degradation_blocking_signal:
-                final_rs = False
-                final_ce = False
-                reason = "adr0041_degradation_veto_over_base_allow"
-            elif aggregated == "allow":
-                reason = "base_allow_adr0041_allow"
-            else:
-                reason = "base_allow_adr0041_unchanged_or_other"
+    final_rs, final_ce, source, reason = _apply_adr0041_readiness_veto(
+        base_runtime_session_ready=base_runtime_session_ready,
+        base_can_execute=base_can_execute,
+        base_readiness=base_readiness,
+        consumer_path_active=consumer_path_active,
+        consumer_on=consumer_on,
+        upstream_ok=upstream_ok,
+        agg=agg,
+        degradation_active=degradation_active,
+        degradation_blocking_signal=degradation_blocking_signal,
+    )
 
     return {
         "schema_version": RUNTIME_READINESS_CONSUMER_SCHEMA_VERSION,

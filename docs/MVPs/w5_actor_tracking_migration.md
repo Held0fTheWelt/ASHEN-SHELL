@@ -757,7 +757,54 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 - ADR-0033, ADR-0061, ADR-0063, ADR-0065, Actor Lane, Commit/Readiness, `validation_outcome`, Canonical Path, W5 validation semantics unchanged.
 - How remains first-class. Inferred Why remains soft truth.
 
-**Next step:** Phase 6B — Legacy localization decommission (see below).
+**Next step:** ~~Phase 6B-7 — Deprecate strict-off rollback surface~~ — **complete**, see below.
+
+---
+
+### Phase 6B-7 — Deprecate narrator strict-off transition rollback surface (complete, 2026-05-23)
+
+**Goal:** Mark `W5_AST_NARRATOR_STRICT_ENABLED=false` as deprecated rollback-only behavior
+without removing it. Emit a structured once-per-process `NarratorStrictOffDeprecationWarning`
+on explicit opt-out. Author ADR-0067. Update inventory. Add semantic tests.
+
+**ADR:** [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) — status **Accepted**.
+
+**Summary:**
+
+- Added `NarratorStrictOffDeprecationWarning(DeprecationWarning)` to
+  `ai_stack/actor_tracking/diagnostics.py`. Exported from `ai_stack.actor_tracking`.
+- Added `_strict_off_deprecation_warned` module-level sentinel (bool) and
+  `_emit_strict_off_deprecation_warning()` helper. Warning fires at most once per process.
+- Warning is emitted **only** when `W5_AST_NARRATOR_STRICT_ENABLED` is explicitly set to
+  `0/false/no/off`. Unset and empty values select strict-on and produce no warning.
+- Warning message identifies the flag, labels behavior deprecated, references ADR-0067.
+- `transition_from_previous` first-class behavior under strict-off is **unchanged**.
+- Malformed-W5 safety fallback, public aliases, substrate writers/readers, all ADR
+  constraints: **unchanged**.
+
+**Inventory updates:**
+- `PHASE_6B2_CLASSIFICATION["transition_from_previous"]` updated: `strict_off_rollback_deprecated`.
+- `PHASE_6B4_CLASSIFICATION["transition_from_previous"]` updated: names ADR-0067 as the removal path.
+- `PHASE_6B4_TAXONOMY` extended with `strict_off_rollback_deprecated` label.
+- Human-readable formatter has a Phase 6B-7 section showing `transition_from_previous` count.
+
+**Tests added:** `ai_stack/tests/test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py`
+
+**Constraints met:**
+- `W5_AST_NARRATOR_STRICT_ENABLED` flag retained.
+- `transition_from_previous` first-class under strict-off retained.
+- Malformed-W5 safety fallback, public compatibility aliases, substrate writers/readers retained.
+- No committed events mutated.
+- ADR-0033, ADR-0061, ADR-0063, ADR-0065, ADR-0066, Actor Lane, How, Inferred Why: unchanged.
+
+**Current strict-off posture (deprecated):** `W5_AST_NARRATOR_STRICT_ENABLED=false` →
+`transition_from_previous` (first-class) + `w5_projection` + `NarratorStrictOffDeprecationWarning` on first call.
+
+**Current strict-on posture (default/correct):** unset/empty/`true` → `w5_projection` only. No warning.
+
+**Next step:** Phase 6B-7 final removal (future phase). Requires ADR-0067 §"Future Removal Criteria"
+to be satisfied: no active operator usage, one release cycle with warning, parity tests converted,
+inventory updated, dedicated removal ADR (tentatively ADR-0068).
 
 ---
 

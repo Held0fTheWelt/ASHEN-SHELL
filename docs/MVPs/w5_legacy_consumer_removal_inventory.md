@@ -818,3 +818,39 @@ The following surfaces still exist and require classification in the Phase 6B-5F
 - Malformed-W5 safety fallback unchanged.
 
 **See:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) (Accepted).
+
+---
+
+### Phase 6B-7 — Strict-Off Deprecation (Complete, 2026-05-23)
+
+**Phase 6B-6B status:** `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` **retired** (see above).
+
+**Phase 6B-7 status:** Strict-off rollback surface **deprecated** (not yet removed). ADR-0067 Accepted.
+
+**What changed:**
+- `NarratorStrictOffDeprecationWarning(DeprecationWarning)` added to `ai_stack/actor_tracking/diagnostics.py` and exported from the package.
+- `w5_ast_narrator_strict_enabled()` emits this warning **once per process** when `W5_AST_NARRATOR_STRICT_ENABLED` is explicitly set to `0/false/no/off`.
+- Warning is **not** emitted for unset/empty (strict-on default, no change).
+- All strict-off rollback behavior preserved intact.
+
+**Strict-off surface classification (Phase 6B-7):**
+
+| Symbol | File | Classification |
+|--------|------|---------------|
+| `W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off` | env-var | **strict_off_rollback_deprecated** — ADR-0067; emits `NarratorStrictOffDeprecationWarning` |
+| `w5_ast_narrator_strict_enabled()` strict-off branch | `ai_stack/actor_tracking/diagnostics.py` | **strict_off_rollback_deprecated** — retained; removal needs ADR-0068 |
+| `source_facts["transition_from_previous"]` write | `god_of_carnage_narrator_path._narrator_block()` | **strict_off_rollback_deprecated** — present only under strict-off; not yet removed |
+| `NarratorStrictOffDeprecationWarning` | `ai_stack/actor_tracking/diagnostics.py`, `__init__.py` | **new_phase_6b7** — public warning class for filter guards |
+| `_strict_off_deprecation_warned` sentinel | `ai_stack/actor_tracking/diagnostics.py` | **new_phase_6b7** — module-level bool; tests reset via monkeypatch |
+
+**Still present (not removed in Phase 6B-7):**
+- `W5_AST_NARRATOR_STRICT_ENABLED` flag gate and `w5_ast_narrator_strict_enabled()` resolver.
+- `transition_from_previous` computation and first-class insertion under strict-off.
+- Malformed-W5 safety fallback.
+- All parity tests exercising `strict_off` parametrize cases.
+- Substrate writers/readers, public compatibility aliases.
+
+**Removal criteria for final strict-off removal (future ADR-0068 or successor):**
+See [ADR-0067 §Future Removal Criteria](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md#future-removal-criteria).
+
+**See:** [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) (Accepted).

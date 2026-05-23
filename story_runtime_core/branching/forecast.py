@@ -190,6 +190,213 @@ def _base_forecast(
     }
 
 
+def _forecast_turn_context(
+    *,
+    turn_number: int | None,
+    turn_kind: str | None,
+    narrative_commit: Any,
+    graph_state: dict[str, Any] | None,
+) -> tuple[dict[str, Any], dict[str, Any], int, str, str | None]:
+    commit = _as_dict(narrative_commit)
+    graph = graph_state if isinstance(graph_state, dict) else {}
+    tn = int(turn_number if turn_number is not None else commit.get("turn_number") or 0)
+    tk = str(turn_kind or ("opening" if tn <= 0 else "player")).strip() or "player"
+    scene_id = _short(commit.get("committed_scene_id") or graph.get("current_scene_id"), 64) or None
+    return commit, graph, tn, tk, scene_id
+
+
+def _not_applicable_forecast(
+    *,
+    story_session_id: str | None,
+    module_id: str | None,
+    runtime_profile_id: str | None,
+    canonical_turn_id: str | None,
+    turn_number: int,
+    turn_kind: str,
+    committed_scene_id: str | None,
+    reason: str,
+    source_inputs: list[dict[str, Any]] | None = None,
+    thread_pressure_level: int = 0,
+    dominant_thread_kind: str | None = None,
+) -> dict[str, Any]:
+    return _base_forecast(
+        story_session_id=story_session_id,
+        module_id=module_id,
+        runtime_profile_id=runtime_profile_id,
+        canonical_turn_id=canonical_turn_id,
+        turn_number=turn_number,
+        turn_kind=turn_kind,
+        committed_scene_id=committed_scene_id,
+        status="not_applicable",
+        trigger_reasons=[reason],
+        source_inputs=source_inputs or [],
+        thread_pressure_level=thread_pressure_level,
+        dominant_thread_kind=dominant_thread_kind,
+    )
+
+
+def _forecast_responders(
+    *,
+    selected_responder_set: list[Any] | None,
+    actor_turn_summary: dict[str, Any] | None,
+) -> list[Any]:
+    responders = selected_responder_set if isinstance(selected_responder_set, list) else []
+    actor_summary = actor_turn_summary if isinstance(actor_turn_summary, dict) else {}
+    if responders:
+        return responders
+    primary = actor_summary.get("primary_responder_id")
+    secondary = _str_list(actor_summary.get("secondary_responder_ids"), limit=4)
+    return [primary, *secondary] if primary or secondary else []
+
+
+def _forecast_pressure_inputs(
+    *,
+    commit: dict[str, Any],
+    narrative_threads: Any,
+    thread_metrics: dict[str, Any],
+    selected_responder_set: list[Any] | None,
+    actor_turn_summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    source_inputs: list[dict[str, Any]] = []
+    trigger_reasons: list[str] = []
+    open_pressures = _str_list(commit.get("open_pressures"), limit=6)
+    committed_consequences = _str_list(commit.get("committed_consequences"), limit=6)
+    threads = _active_threads(narrative_threads)
+    dominant = _dominant_thread(threads, thread_metrics)
+    dominant_kind = _short(dominant.get("thread_kind"), 48) or None
+    thread_pressure = int(thread_metrics.get("thread_pressure_level") or dominant.get("intensity") or 0)
+    responders = _forecast_responders(
+        selected_responder_set=selected_responder_set,
+        actor_turn_summary=actor_turn_summary,
+    )
+    responder_count = len([item for item in responders if item])
+    if open_pressures:
+        _add_reason(trigger_reasons, "open_pressure_present")
+        source_inputs.append(_source_input("narrative_commit.open_pressures", len(open_pressures), open_pressures[0]))
+    if committed_consequences:
+        source_inputs.append(
+            _source_input(
+                "narrative_commit.committed_consequences",
+                len(committed_consequences),
+                committed_consequences[0],
+            )
+        )
+    _add_thread_forecast_reasons(
+        trigger_reasons=trigger_reasons,
+        source_inputs=source_inputs,
+        threads=threads,
+        dominant_kind=dominant_kind,
+        thread_pressure=thread_pressure,
+        commit=commit,
+    )
+    _add_planner_forecast_reasons(trigger_reasons, source_inputs, _as_dict(commit.get("planner_truth")))
+    if responder_count > 1:
+        _add_reason(trigger_reasons, "multi_responder_pressure")
+        source_inputs.append(_source_input("selected_responder_set", responder_count))
+    return {
+        "source_inputs": source_inputs,
+        "trigger_reasons": trigger_reasons,
+        "threads": threads,
+        "dominant_kind": dominant_kind,
+        "thread_pressure": thread_pressure,
+        "responder_count": responder_count,
+    }
+
+
+def _add_thread_forecast_reasons(
+    *,
+    trigger_reasons: list[str],
+    source_inputs: list[dict[str, Any]],
+    threads: list[dict[str, Any]],
+    dominant_kind: str | None,
+    thread_pressure: int,
+    commit: dict[str, Any],
+) -> None:
+    if threads:
+        _add_reason(trigger_reasons, "active_narrative_threads")
+        source_inputs.append(_source_input("session.narrative_threads.active", len(threads), dominant_kind))
+    if thread_pressure >= 4:
+        _add_reason(trigger_reasons, "high_thread_pressure")
+    if str(commit.get("situation_status") or "") == "blocked":
+        _add_reason(trigger_reasons, "blocked_progression")
+
+
+def _add_planner_forecast_reasons(
+    trigger_reasons: list[str],
+    source_inputs: list[dict[str, Any]],
+    planner_truth: dict[str, Any],
+) -> None:
+    pressure_shift = _short(planner_truth.get("social_pressure_shift"), 48)
+    social_outcome = _short(planner_truth.get("social_outcome"), 48)
+    dramatic_direction = _short(planner_truth.get("dramatic_direction"), 48)
+    if pressure_shift or social_outcome or dramatic_direction:
+        _add_reason(trigger_reasons, "planner_pressure_signal")
+        source_inputs.append(
+            _source_input(
+                "narrative_commit.planner_truth",
+                1,
+                pressure_shift or social_outcome or dramatic_direction,
+            )
+        )
+
+
+def _branch_forecast_options(
+    *,
+    canonical_turn_id: str | None,
+    story_session_id: str | None,
+    turn_number: int,
+    scene_id: str | None,
+    trigger_reasons: list[str],
+    dominant_kind: str | None,
+    threads: list[dict[str, Any]],
+    responder_count: int,
+) -> list[dict[str, Any]]:
+    seed = "|".join(
+        [
+            str(canonical_turn_id or story_session_id or ""),
+            str(turn_number),
+            str(scene_id or ""),
+            "|".join(trigger_reasons),
+        ]
+    )
+    tag_kind = f"thread:{dominant_kind}" if dominant_kind else "thread:unspecified"
+    base_tags = ["branching_forecast", tag_kind]
+    options = [
+        _branch_option(
+            seed=seed,
+            family="press_pressure",
+            label="press_unresolved_pressure",
+            forecasted_consequence="The next turn can confront the unresolved pressure directly.",
+            trigger_reasons=trigger_reasons,
+            consequence_tags=[*base_tags, "pressure:increase"],
+            pressure_delta={"dramatic_pressure": 1},
+        ),
+        _branch_option(
+            seed=seed,
+            family="repair_pressure",
+            label="repair_or_deescalate",
+            forecasted_consequence="The next turn can reduce pressure by repair, clarification, or restraint.",
+            trigger_reasons=trigger_reasons,
+            consequence_tags=[*base_tags, "pressure:decrease"],
+            pressure_delta={"dramatic_pressure": -1},
+        ),
+    ]
+    related_entities = _thread_entities(threads)
+    if responder_count > 1 or related_entities:
+        options.append(
+            _branch_option(
+                seed=seed,
+                family="shift_focus",
+                label="shift_actor_or_thread_focus",
+                forecasted_consequence="The next turn can move attention to another implicated actor or thread.",
+                trigger_reasons=trigger_reasons,
+                consequence_tags=[*base_tags, "focus:shift"],
+                pressure_delta={"focus_shift": 1},
+            )
+        )
+    return options
+
+
 def build_branching_forecast(
     *,
     story_session_id: str | None,
@@ -211,17 +418,14 @@ def build_branching_forecast(
     It describes possible next pressures; inactive options cannot change history.
     """
 
-    commit = _as_dict(narrative_commit)
-    graph = graph_state if isinstance(graph_state, dict) else {}
-    metrics = thread_metrics if isinstance(thread_metrics, dict) else {}
-    tn = int(turn_number if turn_number is not None else commit.get("turn_number") or 0)
-    tk = str(turn_kind or ("opening" if tn <= 0 else "player")).strip() or "player"
-    scene_id = _short(commit.get("committed_scene_id") or graph.get("current_scene_id"), 64) or None
-
-    source_inputs: list[dict[str, Any]] = []
-    trigger_reasons: list[str] = []
+    commit, _graph, tn, tk, scene_id = _forecast_turn_context(
+        turn_number=turn_number,
+        turn_kind=turn_kind,
+        narrative_commit=narrative_commit,
+        graph_state=graph_state,
+    )
     if tn <= 0 or tk in {"opening", "engine_opening"}:
-        return _base_forecast(
+        return _not_applicable_forecast(
             story_session_id=story_session_id,
             module_id=module_id,
             runtime_profile_id=runtime_profile_id,
@@ -229,12 +433,10 @@ def build_branching_forecast(
             turn_number=tn,
             turn_kind=tk,
             committed_scene_id=scene_id,
-            status="not_applicable",
-            trigger_reasons=["opening_turn"],
-            source_inputs=[],
+            reason="opening_turn",
         )
     if bool(commit.get("is_terminal")) or str(commit.get("situation_status") or "") == "terminal":
-        return _base_forecast(
+        return _not_applicable_forecast(
             story_session_id=story_session_id,
             module_id=module_id,
             runtime_profile_id=runtime_profile_id,
@@ -242,62 +444,20 @@ def build_branching_forecast(
             turn_number=tn,
             turn_kind=tk,
             committed_scene_id=scene_id,
-            status="not_applicable",
-            trigger_reasons=["terminal_turn"],
-            source_inputs=[],
+            reason="terminal_turn",
         )
 
-    open_pressures = _str_list(commit.get("open_pressures"), limit=6)
-    committed_consequences = _str_list(commit.get("committed_consequences"), limit=6)
-    threads = _active_threads(narrative_threads)
-    dominant = _dominant_thread(threads, metrics)
-    dominant_kind = _short(dominant.get("thread_kind"), 48) or None
-    thread_pressure = int(metrics.get("thread_pressure_level") or dominant.get("intensity") or 0)
-    planner_truth = _as_dict(commit.get("planner_truth"))
-    responders = selected_responder_set if isinstance(selected_responder_set, list) else []
-    actor_summary = actor_turn_summary if isinstance(actor_turn_summary, dict) else {}
-    if not responders:
-        primary = actor_summary.get("primary_responder_id")
-        secondary = _str_list(actor_summary.get("secondary_responder_ids"), limit=4)
-        responders = [primary, *secondary] if primary or secondary else []
-    responder_count = len([item for item in responders if item])
+    metrics = thread_metrics if isinstance(thread_metrics, dict) else {}
+    pressure = _forecast_pressure_inputs(
+        commit=commit,
+        narrative_threads=narrative_threads,
+        thread_metrics=metrics,
+        selected_responder_set=selected_responder_set,
+        actor_turn_summary=actor_turn_summary,
+    )
 
-    if open_pressures:
-        _add_reason(trigger_reasons, "open_pressure_present")
-        source_inputs.append(_source_input("narrative_commit.open_pressures", len(open_pressures), open_pressures[0]))
-    if committed_consequences:
-        source_inputs.append(
-            _source_input(
-                "narrative_commit.committed_consequences",
-                len(committed_consequences),
-                committed_consequences[0],
-            )
-        )
-    if threads:
-        _add_reason(trigger_reasons, "active_narrative_threads")
-        source_inputs.append(_source_input("session.narrative_threads.active", len(threads), dominant_kind))
-    if thread_pressure >= 4:
-        _add_reason(trigger_reasons, "high_thread_pressure")
-    if str(commit.get("situation_status") or "") == "blocked":
-        _add_reason(trigger_reasons, "blocked_progression")
-    pressure_shift = _short(planner_truth.get("social_pressure_shift"), 48)
-    social_outcome = _short(planner_truth.get("social_outcome"), 48)
-    dramatic_direction = _short(planner_truth.get("dramatic_direction"), 48)
-    if pressure_shift or social_outcome or dramatic_direction:
-        _add_reason(trigger_reasons, "planner_pressure_signal")
-        source_inputs.append(
-            _source_input(
-                "narrative_commit.planner_truth",
-                1,
-                pressure_shift or social_outcome or dramatic_direction,
-            )
-        )
-    if responder_count > 1:
-        _add_reason(trigger_reasons, "multi_responder_pressure")
-        source_inputs.append(_source_input("selected_responder_set", responder_count))
-
-    if not trigger_reasons:
-        return _base_forecast(
+    if not pressure["trigger_reasons"]:
+        return _not_applicable_forecast(
             story_session_id=story_session_id,
             module_id=module_id,
             runtime_profile_id=runtime_profile_id,
@@ -305,59 +465,22 @@ def build_branching_forecast(
             turn_number=tn,
             turn_kind=tk,
             committed_scene_id=scene_id,
-            status="not_applicable",
-            trigger_reasons=["no_branching_pressure_signal"],
-            source_inputs=source_inputs,
-            thread_pressure_level=thread_pressure,
-            dominant_thread_kind=dominant_kind,
+            reason="no_branching_pressure_signal",
+            source_inputs=pressure["source_inputs"],
+            thread_pressure_level=pressure["thread_pressure"],
+            dominant_thread_kind=pressure["dominant_kind"],
         )
 
-    seed = "|".join(
-        [
-            str(canonical_turn_id or story_session_id or ""),
-            str(tn),
-            str(scene_id or ""),
-            "|".join(trigger_reasons),
-        ]
+    options = _branch_forecast_options(
+        canonical_turn_id=canonical_turn_id,
+        story_session_id=story_session_id,
+        turn_number=tn,
+        scene_id=scene_id,
+        trigger_reasons=pressure["trigger_reasons"],
+        dominant_kind=pressure["dominant_kind"],
+        threads=pressure["threads"],
+        responder_count=pressure["responder_count"],
     )
-    tag_kind = f"thread:{dominant_kind}" if dominant_kind else "thread:unspecified"
-    base_tags = ["branching_forecast", tag_kind]
-    options: list[dict[str, Any]] = []
-    options.append(
-        _branch_option(
-            seed=seed,
-            family="press_pressure",
-            label="press_unresolved_pressure",
-            forecasted_consequence="The next turn can confront the unresolved pressure directly.",
-            trigger_reasons=trigger_reasons,
-            consequence_tags=[*base_tags, "pressure:increase"],
-            pressure_delta={"dramatic_pressure": 1},
-        )
-    )
-    options.append(
-        _branch_option(
-            seed=seed,
-            family="repair_pressure",
-            label="repair_or_deescalate",
-            forecasted_consequence="The next turn can reduce pressure by repair, clarification, or restraint.",
-            trigger_reasons=trigger_reasons,
-            consequence_tags=[*base_tags, "pressure:decrease"],
-            pressure_delta={"dramatic_pressure": -1},
-        )
-    )
-    related_entities = _thread_entities(threads)
-    if responder_count > 1 or related_entities:
-        options.append(
-            _branch_option(
-                seed=seed,
-                family="shift_focus",
-                label="shift_actor_or_thread_focus",
-                forecasted_consequence="The next turn can move attention to another implicated actor or thread.",
-                trigger_reasons=trigger_reasons,
-                consequence_tags=[*base_tags, "focus:shift"],
-                pressure_delta={"focus_shift": 1},
-            )
-        )
 
     return _base_forecast(
         story_session_id=story_session_id,
@@ -368,9 +491,9 @@ def build_branching_forecast(
         turn_kind=tk,
         committed_scene_id=scene_id,
         status="forecasted",
-        trigger_reasons=trigger_reasons,
-        source_inputs=source_inputs,
+        trigger_reasons=pressure["trigger_reasons"],
+        source_inputs=pressure["source_inputs"],
         options=options,
-        thread_pressure_level=thread_pressure,
-        dominant_thread_kind=dominant_kind,
+        thread_pressure_level=pressure["thread_pressure"],
+        dominant_thread_kind=pressure["dominant_kind"],
     )

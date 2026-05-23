@@ -741,92 +741,88 @@ def _build_responder_set(
     }
 
 
-def build_responder_and_function(
+def _responder_input_context(
     *,
     player_input: str,
     interpreted_move: dict[str, Any],
-    interpreted_input: dict[str, Any] | None = None,
-    pacing_mode: str,
-    prior_continuity_impacts: list[dict[str, Any]] | None = None,
-    yaml_slice: dict[str, Any] | None = None,
-    current_scene_id: str = "",
-    semantic_move_record: dict[str, Any] | None = None,
-    social_state_record: dict[str, Any] | None = None,
-    prior_narrative_thread_state: dict[str, Any] | None = None,
-    prior_planner_truth: dict[str, Any] | None = None,
-) -> tuple[list[dict[str, Any]], str, dict[str, str], dict[str, Any]]:
-    """Choose responder set, scene function, implied continuity map, and
-    multi-pressure resolution record.
-    
-    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
-    
-    Args:
-        player_input: ``player_input`` (str); meaning follows the type and call sites.
-        interpreted_move: ``interpreted_move`` (dict[str,
-            Any]); meaning follows the type and call sites.
-        pacing_mode: ``pacing_mode`` (str); meaning follows the type and call sites.
-        prior_continuity_impacts: ``prior_continuity_impacts`` (list[dict[str, Any]] | None); meaning follows the type and call sites.
-        yaml_slice: ``yaml_slice`` (dict[str, Any] |
-            None); meaning follows the type and call sites.
-        current_scene_id: ``current_scene_id`` (str); meaning follows the type and call sites.
-        semantic_move_record: ``semantic_move_record`` (dict[str, Any] | None); meaning follows the type and call sites.
-        social_state_record: ``social_state_record`` (dict[str, Any] | None); meaning follows the type and call sites.
-        prior_narrative_thread_state: bounded committed thread continuity from
-            the story session, if any.
-    
-    Returns:
-        tuple[list[dict[str, Any]], str, dict[str, str], dict[str, A...:
-            Returns a value of type ``tuple[list[dict[str, Any]], str, dict[str,
-            str], dict[str, Any]]``; see the function body for structure, error paths, and sentinels.
-    """
+    interpreted_input: dict[str, Any] | None,
+    prior_continuity_impacts: list[dict[str, Any]] | None,
+) -> tuple[str, str, bool, bool, list[str]]:
     text = f"{player_input} {interpreted_move.get('player_intent', '')}".lower()
     interp = interpreted_input if isinstance(interpreted_input, dict) else {}
     player_input_kind = str(interp.get("player_input_kind") or "").strip().lower()
     narrator_expected = bool(interp.get("narrator_response_expected"))
     npc_expected = bool(interp.get("npc_response_expected"))
     prior_classes = prior_continuity_classes(prior_continuity_impacts)
-    selection_source = "semantic_pipeline_v1"
+    return text, player_input_kind, narrator_expected, npc_expected, prior_classes
+
+
+def _scene_candidates_from_semantic_move(
+    *,
+    semantic_move_record: dict[str, Any] | None,
+    pacing_mode: str,
+    prior_classes: list[str],
+    player_input: str,
+    interpreted_move: dict[str, Any],
+    prior_planner_truth: dict[str, Any] | None,
+) -> tuple[list[str], dict[str, str], list[str], str]:
     if semantic_move_record and isinstance(semantic_move_record, dict) and semantic_move_record.get("move_type"):
         move_type = str(semantic_move_record["move_type"])
         if move_type not in SEMANTIC_MOVE_TYPES:
-            selection_source = "invalid_semantic_move"
-            candidates = ["establish_pressure"]
-            implied = {"establish_pressure": "situational_pressure"}
-            heuristic_trace = [f"semantic:invalid_move_type={move_type[:80]}->establish_pressure"]
-        else:
-            candidates, implied, heuristic_trace = semantic_move_to_scene_candidates(
-                move_type=move_type,
-                pacing_mode=pacing_mode,
-                prior_classes=prior_classes,
-                player_input=player_input,
-                interpreted_move=interpreted_move,
-                prior_planner_truth=prior_planner_truth,
+            return (
+                ["establish_pressure"],
+                {"establish_pressure": "situational_pressure"},
+                [f"semantic:invalid_move_type={move_type[:80]}->establish_pressure"],
+                "invalid_semantic_move",
             )
-    else:
-        selection_source = "semantic_move_required"
-        candidates = ["scene_pivot"] if pacing_mode == "containment" else ["establish_pressure"]
-        implied = {
-            candidates[0]: "refused_cooperation" if pacing_mode == "containment" else "situational_pressure"
-        }
-        heuristic_trace = [
-            "semantic:missing_semantic_move_record->neutral_scene_candidate"
-        ]
+        candidates, implied, heuristic_trace = semantic_move_to_scene_candidates(
+            move_type=move_type,
+            pacing_mode=pacing_mode,
+            prior_classes=prior_classes,
+            player_input=player_input,
+            interpreted_move=interpreted_move,
+            prior_planner_truth=prior_planner_truth,
+        )
+        return candidates, implied, heuristic_trace, "semantic_pipeline_v1"
 
-    thread_feedback = _narrative_thread_feedback_signal(prior_narrative_thread_state)
-    if (
+    candidates = ["scene_pivot"] if pacing_mode == "containment" else ["establish_pressure"]
+    implied = {
+        candidates[0]: "refused_cooperation" if pacing_mode == "containment" else "situational_pressure"
+    }
+    return (
+        candidates,
+        implied,
+        ["semantic:missing_semantic_move_record->neutral_scene_candidate"],
+        "semantic_move_required",
+    )
+
+
+def _thread_feedback_requires_scene_pivot(thread_feedback: dict[str, Any]) -> bool:
+    return (
         thread_feedback.get("dominant_thread_kind") == "progression_blocked"
         and thread_feedback.get("thread_pressure_level", 0) >= 2
-    ):
+    )
+
+
+def _select_scene_function_with_feedback(
+    *,
+    candidates: list[str],
+    implied: dict[str, str],
+    heuristic_trace: list[str],
+    thread_feedback: dict[str, Any],
+    player_input: str,
+    player_input_kind: str,
+    narrator_expected: bool,
+    npc_expected: bool,
+) -> str:
+    if _thread_feedback_requires_scene_pivot(thread_feedback):
         if "scene_pivot" not in candidates:
             candidates.append("scene_pivot")
         implied["scene_pivot"] = "refused_cooperation"
         heuristic_trace.append("thread:progression_blocked->scene_pivot")
 
     scene_fn = select_single_scene_function(candidates, implied_continuity_by_function=implied)
-    if (
-        thread_feedback.get("dominant_thread_kind") == "progression_blocked"
-        and thread_feedback.get("thread_pressure_level", 0) >= 2
-    ):
+    if _thread_feedback_requires_scene_pivot(thread_feedback):
         scene_fn = "scene_pivot"
         heuristic_trace.append("thread:progression_blocked_override->scene_pivot")
     if (
@@ -839,20 +835,40 @@ def build_responder_and_function(
         scene_fn = "establish_pressure"
         heuristic_trace.append("intent_surface:action_or_perception_override->establish_pressure")
     assert_subdecision_label_in_matrix("scene_function", scene_fn)
+    return scene_fn
 
-    semantic_trace_ref = ""
+
+def _semantic_trace_ref(semantic_move_record: dict[str, Any] | None) -> str:
     if semantic_move_record and isinstance(semantic_move_record.get("interpretation_trace"), list):
         tr = semantic_move_record["interpretation_trace"]
         if tr and isinstance(tr[0], dict) and tr[0].get("detail_code"):
-            semantic_trace_ref = str(tr[0].get("detail_code"))[:120]
-    subtext_record = (
-        semantic_move_record.get("subtext")
-        if isinstance(semantic_move_record, dict)
-        and isinstance(semantic_move_record.get("subtext"), dict)
-        else {}
-    )
+            return str(tr[0].get("detail_code"))[:120]
+    return ""
 
-    resolution: dict[str, Any] = {
+
+def _semantic_subtext_record(semantic_move_record: dict[str, Any] | None) -> dict[str, Any]:
+    if isinstance(semantic_move_record, dict) and isinstance(semantic_move_record.get("subtext"), dict):
+        return semantic_move_record.get("subtext") or {}
+    return {}
+
+
+def _responder_resolution_record(
+    *,
+    candidates: list[str],
+    implied: dict[str, str],
+    scene_fn: str,
+    prior_classes: list[str],
+    heuristic_trace: list[str],
+    selection_source: str,
+    player_input_kind: str,
+    narrator_expected: bool,
+    npc_expected: bool,
+    semantic_move_record: dict[str, Any] | None,
+    social_state_record: dict[str, Any] | None,
+    thread_feedback: dict[str, Any],
+) -> dict[str, Any]:
+    subtext_record = _semantic_subtext_record(semantic_move_record)
+    return {
         "candidates": list(candidates),
         "implied_continuity_by_function": dict(implied),
         "chosen_scene_function": scene_fn,
@@ -868,7 +884,7 @@ def build_responder_and_function(
         "player_input_kind": player_input_kind or None,
         "narrator_response_expected": narrator_expected,
         "npc_response_expected": npc_expected,
-        "semantic_move_trace_ref": semantic_trace_ref,
+        "semantic_move_trace_ref": _semantic_trace_ref(semantic_move_record),
         "subtext_surface_mode": subtext_record.get("surface_mode"),
         "subtext_hidden_intent_hypothesis": subtext_record.get("hidden_intent_hypothesis"),
         "subtext_function": subtext_record.get("subtext_function"),
@@ -893,13 +909,89 @@ def build_responder_and_function(
         "narrative_thread_feedback": thread_feedback or None,
     }
 
-    hint = None
+
+def _target_actor_hint(semantic_move_record: dict[str, Any] | None) -> str | None:
     if semantic_move_record and isinstance(semantic_move_record.get("target_actor_hint"), str):
-        hint = semantic_move_record["target_actor_hint"]
+        return semantic_move_record["target_actor_hint"]
+    return None
+
+
+def _apply_narrator_only_responder_policy(
+    *,
+    responders: list[dict[str, Any]],
+    resolution: dict[str, Any],
+    player_input_kind: str,
+    narrator_expected: bool,
+    npc_expected: bool,
+) -> None:
+    if not (is_narrator_only_player_input_kind(player_input_kind) and narrator_expected and not npc_expected):
+        return
+    resolution["selection_source"] = "advisory_npc_reaction_after_player_action"
+    resolution["npc_response_policy"] = "optional_social_only"
+    if responders and isinstance(responders[0], dict):
+        responders[0] = {
+            **responders[0],
+            "reason": "advisory_npc_reaction_after_player_action",
+            "role": "advisory_reaction",
+        }
+
+
+def _selected_responder_roles(responders: list[dict[str, Any]]) -> list[dict[str, str]]:
+    return [
+        {
+            "actor_id": str(row.get("actor_id") or "").strip(),
+            "role": str(row.get("role") or "").strip() or "responder",
+            "reason": str(row.get("reason") or "").strip(),
+        }
+        for row in responders
+        if isinstance(row, dict)
+    ]
+
+
+def build_responder_and_function(
+    *,
+    player_input: str,
+    interpreted_move: dict[str, Any],
+    interpreted_input: dict[str, Any] | None = None,
+    pacing_mode: str,
+    prior_continuity_impacts: list[dict[str, Any]] | None = None,
+    yaml_slice: dict[str, Any] | None = None,
+    current_scene_id: str = "",
+    semantic_move_record: dict[str, Any] | None = None,
+    social_state_record: dict[str, Any] | None = None,
+    prior_narrative_thread_state: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], str, dict[str, str], dict[str, Any]]:
+    """Choose responders, scene function, implied continuity, and resolution trace."""
+    text, player_input_kind, narrator_expected, npc_expected, prior_classes = _responder_input_context(
+        player_input=player_input,
+        interpreted_move=interpreted_move,
+        interpreted_input=interpreted_input,
+        prior_continuity_impacts=prior_continuity_impacts,
+    )
+    candidates, implied, heuristic_trace, selection_source = _scene_candidates_from_semantic_move(
+        semantic_move_record=semantic_move_record,
+        pacing_mode=pacing_mode,
+        prior_classes=prior_classes,
+        player_input=player_input,
+        interpreted_move=interpreted_move,
+        prior_planner_truth=prior_planner_truth,
+    )
+    thread_feedback = _narrative_thread_feedback_signal(prior_narrative_thread_state)
+    scene_fn = _select_scene_function_with_feedback(
+        candidates=candidates,
+        implied=implied,
+        heuristic_trace=heuristic_trace,
+        thread_feedback=thread_feedback,
+        player_input=player_input,
+        player_input_kind=player_input_kind,
+        narrator_expected=narrator_expected,
+        npc_expected=npc_expected,
+    )
 
     actor, reason = _goc_primary_responder_from_context(
         text=text,
-        hint=hint,
+        hint=_target_actor_hint(semantic_move_record),
         yaml_slice=yaml_slice,
         prior_classes=prior_classes,
         current_scene_id=current_scene_id,
@@ -907,7 +999,20 @@ def build_responder_and_function(
         implied=implied,
         thread_feedback=thread_feedback,
     )
-
+    resolution = _responder_resolution_record(
+        candidates=candidates,
+        implied=implied,
+        scene_fn=scene_fn,
+        prior_classes=prior_classes,
+        heuristic_trace=heuristic_trace,
+        selection_source=selection_source,
+        player_input_kind=player_input_kind,
+        narrator_expected=narrator_expected,
+        npc_expected=npc_expected,
+        semantic_move_record=semantic_move_record,
+        social_state_record=social_state_record,
+        thread_feedback=thread_feedback,
+    )
     responders, responder_set_resolution = _build_responder_set(
         primary_actor=actor,
         primary_reason=reason,
@@ -921,24 +1026,14 @@ def build_responder_and_function(
         thread_feedback=thread_feedback,
     )
     resolution["responder_set_resolution"] = responder_set_resolution
-    if is_narrator_only_player_input_kind(player_input_kind) and narrator_expected and not npc_expected:
-        resolution["selection_source"] = "advisory_npc_reaction_after_player_action"
-        resolution["npc_response_policy"] = "optional_social_only"
-        if responders and isinstance(responders[0], dict):
-            responders[0] = {
-                **responders[0],
-                "reason": "advisory_npc_reaction_after_player_action",
-                "role": "advisory_reaction",
-            }
-    resolution["selected_responder_roles"] = [
-        {
-            "actor_id": str(row.get("actor_id") or "").strip(),
-            "role": str(row.get("role") or "").strip() or "responder",
-            "reason": str(row.get("reason") or "").strip(),
-        }
-        for row in responders
-        if isinstance(row, dict)
-    ]
+    _apply_narrator_only_responder_policy(
+        responders=responders,
+        resolution=resolution,
+        player_input_kind=player_input_kind,
+        narrator_expected=narrator_expected,
+        npc_expected=npc_expected,
+    )
+    resolution["selected_responder_roles"] = _selected_responder_roles(responders)
 
     return responders, scene_fn, implied, resolution
 

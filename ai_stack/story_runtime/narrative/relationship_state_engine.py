@@ -264,63 +264,60 @@ def _npc_edge_relationships(
     return out
 
 
-def derive_relationship_state(
-    *,
-    yaml_slice: dict[str, Any] | None,
-    social_state_record: dict[str, Any] | None,
-    relationship_dynamics_context: dict[str, Any] | None = None,
-    npc_agency_simulation: dict[str, Any] | None = None,
-    social_pressure_state: dict[str, Any] | None = None,
-    prior_relationship_state_record: dict[str, Any] | None = None,
-    prior_planner_truth: dict[str, Any] | None = None,
-    prior_continuity_impacts: list[dict[str, Any]] | None = None,
-    module_runtime_policy: dict[str, Any] | None = None,
-    turn_number: Any = None,
-) -> dict[str, Any]:
-    """Derive durable relationship state from structured runtime signals."""
+def _relationship_prior_from_planner(prior_planner_truth: dict[str, Any] | None) -> dict[str, Any] | None:
+    if isinstance(prior_planner_truth, dict) and isinstance(
+        prior_planner_truth.get("relationship_state_record"),
+        dict,
+    ):
+        return prior_planner_truth.get("relationship_state_record")
+    return None
 
-    policy = _runtime_policy_relationship_state(module_runtime_policy)
-    relationships = _canonical_relationships(yaml_slice)
-    axes = _canonical_axes(yaml_slice)
-    prior_from_planner = (
-        prior_planner_truth.get("relationship_state_record")
-        if isinstance(prior_planner_truth, dict) and isinstance(prior_planner_truth.get("relationship_state_record"), dict)
-        else None
-    )
-    prior_pairs, prior_fp = _prior_pair_map(prior_relationship_state_record or prior_from_planner)
-    if not relationships and prior_pairs:
-        relationships = {
-            rel_id: {
-                "relationship_id": rel_id,
-                "axis_ids": list(row.axis_ids),
-                "character_ids": list(row.character_ids),
-            }
-            for rel_id, row in prior_pairs.items()
-        }
-    if not relationships:
-        return {
-            "schema_version": RELATIONSHIP_STATE_SCHEMA_VERSION,
-            "policy": policy,
-            "state": {},
-            "target": {},
-            "source_evidence": [],
-            "rationale_codes": ["relationship_state_no_canonical_relationships"],
-        }
 
+def _relationships_with_prior_fallback(
+    relationships: dict[str, dict[str, Any]],
+    prior_pairs: dict[str, RelationshipPairState],
+) -> dict[str, dict[str, Any]]:
+    if relationships or not prior_pairs:
+        return relationships
+    return {
+        rel_id: {
+            "relationship_id": rel_id,
+            "axis_ids": list(row.axis_ids),
+            "character_ids": list(row.character_ids),
+        }
+        for rel_id, row in prior_pairs.items()
+    }
+
+
+def _relationship_empty_payload(policy: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": RELATIONSHIP_STATE_SCHEMA_VERSION,
+        "policy": policy,
+        "state": {},
+        "target": {},
+        "source_evidence": [],
+        "rationale_codes": ["relationship_state_no_canonical_relationships"],
+    }
+
+
+def _coerce_turn_number(turn_number: Any) -> int:
     try:
-        turn = int(turn_number or 0)
+        return int(turn_number or 0)
     except (TypeError, ValueError):
-        turn = 0
-    max_pairs = int(policy.get("max_tracked_pairs") or 24)
-    max_events = int(policy.get("max_transition_events") or 24)
-    default_tension = float(policy.get("default_tension_score") or 0.35)
-    default_trust = float(policy.get("default_trust_score") or 0.65)
-    default_alliance = float(policy.get("default_alliance_score") or 0.2)
-    default_dominance = float(policy.get("default_dominance_score") or 0.5)
+        return 0
 
+
+def _relationship_active_axis_ids(
+    *,
+    social_state_record: dict[str, Any] | None,
+    relationship_dynamics_context: dict[str, Any] | None,
+) -> list[str]:
     active_axis_ids = _active_axis_ids(social_state_record)
-    relationship_context = relationship_dynamics_context if isinstance(relationship_dynamics_context, dict) else {}
-    active_axis_ids = dedupe_strings(
+    relationship_context = relationship_dynamics_context if isinstance(
+        relationship_dynamics_context,
+        dict,
+    ) else {}
+    return dedupe_strings(
         active_axis_ids
         + (
             relationship_context.get("active_relationship_axis_ids")
@@ -328,6 +325,19 @@ def derive_relationship_state(
             else []
         )
     )
+
+
+def _relationship_transition_specs(
+    *,
+    relationships: dict[str, dict[str, Any]],
+    active_axis_ids: list[str],
+    prior_pairs: dict[str, RelationshipPairState],
+    max_pairs: int,
+    social_state_record: dict[str, Any] | None,
+    social_pressure_state: dict[str, Any] | None,
+    prior_continuity_impacts: list[dict[str, Any]] | None,
+    npc_agency_simulation: dict[str, Any] | None,
+) -> tuple[list[str], list[tuple[str, str, RelationshipStateEvidenceRef]]]:
     active_relationship_ids = _relationships_for_axes(relationships, active_axis_ids)
     transition_specs: list[tuple[str, str, RelationshipStateEvidenceRef]] = []
     social_codes = _social_transition_codes(
@@ -341,7 +351,9 @@ def derive_relationship_state(
         active_relationship_ids = list(relationships.keys())[: min(4, max_pairs)]
     for rel_id in active_relationship_ids:
         for code in social_codes:
-            transition_specs.append((rel_id, code, _evidence("social_state_record", "relationship_pressure_codes", code)))
+            transition_specs.append(
+                (rel_id, code, _evidence("social_state_record", "relationship_pressure_codes", code))
+            )
     for rel_id, evidence in _npc_edge_relationships(relationships, npc_agency_simulation):
         active_relationship_ids.append(rel_id)
         transition_specs.append((rel_id, "npc_initiative_pressure", evidence))
@@ -349,8 +361,22 @@ def derive_relationship_state(
     active_relationship_ids = dedupe_strings(active_relationship_ids)[:max_pairs]
     if not active_relationship_ids:
         active_relationship_ids = list(relationships.keys())[: min(4, max_pairs)]
+    return active_relationship_ids, transition_specs
 
-    transition_weights = policy.get("transition_weights") if isinstance(policy.get("transition_weights"), dict) else {}
+
+def _relationship_transition_events(
+    *,
+    transition_specs: list[tuple[str, str, RelationshipStateEvidenceRef]],
+    active_relationship_ids: list[str],
+    relationships: dict[str, dict[str, Any]],
+    policy: dict[str, Any],
+    turn: int,
+    max_events: int,
+) -> tuple[list[RelationshipTransitionEvent], dict[str, list[str]], dict[str, dict[str, float]]]:
+    transition_weights = policy.get("transition_weights") if isinstance(
+        policy.get("transition_weights"),
+        dict,
+    ) else {}
     events: list[RelationshipTransitionEvent] = []
     event_codes_by_rel: dict[str, list[str]] = {}
     deltas_by_rel: dict[str, dict[str, float]] = {}
@@ -382,11 +408,26 @@ def derive_relationship_state(
         )
         if len(events) >= max_events:
             break
+    return events, event_codes_by_rel, deltas_by_rel
 
+
+def _relationship_pair_states(
+    *,
+    active_relationship_ids: list[str],
+    relationships: dict[str, dict[str, Any]],
+    prior_pairs: dict[str, RelationshipPairState],
+    event_codes_by_rel: dict[str, list[str]],
+    deltas_by_rel: dict[str, dict[str, float]],
+    policy: dict[str, Any],
+    turn: int,
+    default_tension: float,
+    default_trust: float,
+    default_alliance: float,
+    default_dominance: float,
+) -> list[RelationshipPairState]:
     pair_states: list[RelationshipPairState] = []
     for rel_id in active_relationship_ids:
         prior = prior_pairs.get(rel_id)
-        prior_tension = prior.tension_score if prior else None
         rel = relationships.get(rel_id, {})
         deltas = deltas_by_rel.get(rel_id, {})
         tension = _clamp((prior.tension_score if prior else default_tension) + float(deltas.get("tension_delta") or 0.0))
@@ -403,12 +444,50 @@ def derive_relationship_state(
                 alliance_score=alliance,
                 dominance_score=dominance,
                 stability_band=_band_for_pair(tension, trust, policy),  # type: ignore[arg-type]
-                trend=_trend(tension, prior_tension, policy),  # type: ignore[arg-type]
+                trend=_trend(tension, prior.tension_score if prior else None, policy),  # type: ignore[arg-type]
                 last_transition_codes=dedupe_strings(event_codes_by_rel.get(rel_id, []))[:8],
-                last_updated_turn=turn if event_codes_by_rel.get(rel_id) else (prior.last_updated_turn if prior else turn),
+                last_updated_turn=turn if event_codes_by_rel.get(rel_id) else (
+                    prior.last_updated_turn if prior else turn
+                ),
             )
         )
+    return pair_states
 
+
+def _relationship_evidence(
+    *,
+    policy: dict[str, Any],
+    relationships: dict[str, dict[str, Any]],
+    social_state_record: dict[str, Any] | None,
+    social_pressure_state: dict[str, Any] | None,
+) -> list[RelationshipStateEvidenceRef]:
+    evidence = [
+        _evidence("relationship_state_policy", "enabled", policy.get("enabled")),
+        _evidence("canonical_relationships", "relationship_count", len(relationships)),
+    ]
+    social = social_state_record if isinstance(social_state_record, dict) else {}
+    if social.get("relationship_pressure_codes"):
+        evidence.append(
+            _evidence("social_state_record", "relationship_pressure_codes", social.get("relationship_pressure_codes"))
+        )
+    if social_pressure_state:
+        evidence.append(_evidence("social_pressure_state", "current_band", social_pressure_state.get("current_band")))
+    return evidence
+
+
+def _relationship_payload_from_record(
+    *,
+    policy: dict[str, Any],
+    relationships: dict[str, dict[str, Any]],
+    axes: dict[str, dict[str, Any]],
+    active_axis_ids: list[str],
+    pair_states: list[RelationshipPairState],
+    events: list[RelationshipTransitionEvent],
+    prior_fp: str | None,
+    social_state_record: dict[str, Any] | None,
+    social_pressure_state: dict[str, Any] | None,
+    turn: int,
+) -> dict[str, Any]:
     axis_states = _axis_states_from_pairs(
         pair_states=pair_states,
         axes=axes,
@@ -420,16 +499,6 @@ def derive_relationship_state(
         active_axis_ids = [row.axis_id for row in axis_states if row.active]
     if not active_axis_ids and axis_states:
         active_axis_ids = [axis_states[0].axis_id]
-    dominant_axis_id = active_axis_ids[0] if active_axis_ids else None
-    evidence = [
-        _evidence("relationship_state_policy", "enabled", policy.get("enabled")),
-        _evidence("canonical_relationships", "relationship_count", len(relationships)),
-    ]
-    social = social_state_record if isinstance(social_state_record, dict) else {}
-    if social.get("relationship_pressure_codes"):
-        evidence.append(_evidence("social_state_record", "relationship_pressure_codes", social.get("relationship_pressure_codes")))
-    if social_pressure_state:
-        evidence.append(_evidence("social_pressure_state", "current_band", social_pressure_state.get("current_band")))
     rationale = ["relationship_state_policy_applied"]
     if prior_fp:
         rationale.append("relationship_state_prior_rehydrated")
@@ -442,8 +511,13 @@ def derive_relationship_state(
         axis_states=axis_states,
         transition_events=events,
         active_relationship_axis_ids=dedupe_strings(active_axis_ids)[:16],
-        dominant_relationship_axis_id=dominant_axis_id,
-        source_evidence=evidence[:24],
+        dominant_relationship_axis_id=active_axis_ids[0] if active_axis_ids else None,
+        source_evidence=_relationship_evidence(
+            policy=policy,
+            relationships=relationships,
+            social_state_record=social_state_record,
+            social_pressure_state=social_pressure_state,
+        )[:24],
         rationale_codes=dedupe_strings(rationale),
     )
     target = _target_from_record(record)
@@ -455,6 +529,82 @@ def derive_relationship_state(
         "source_evidence": [row.to_runtime_dict() for row in record.source_evidence],
         "rationale_codes": record.rationale_codes,
     }
+
+
+def derive_relationship_state(
+    *,
+    yaml_slice: dict[str, Any] | None,
+    social_state_record: dict[str, Any] | None,
+    relationship_dynamics_context: dict[str, Any] | None = None,
+    npc_agency_simulation: dict[str, Any] | None = None,
+    social_pressure_state: dict[str, Any] | None = None,
+    prior_relationship_state_record: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
+    prior_continuity_impacts: list[dict[str, Any]] | None = None,
+    module_runtime_policy: dict[str, Any] | None = None,
+    turn_number: Any = None,
+) -> dict[str, Any]:
+    """Derive durable relationship state from structured runtime signals."""
+
+    policy = _runtime_policy_relationship_state(module_runtime_policy)
+    relationships = _canonical_relationships(yaml_slice)
+    axes = _canonical_axes(yaml_slice)
+    prior_from_planner = _relationship_prior_from_planner(prior_planner_truth)
+    prior_pairs, prior_fp = _prior_pair_map(prior_relationship_state_record or prior_from_planner)
+    relationships = _relationships_with_prior_fallback(relationships, prior_pairs)
+    if not relationships:
+        return _relationship_empty_payload(policy)
+
+    turn = _coerce_turn_number(turn_number)
+    max_pairs = int(policy.get("max_tracked_pairs") or 24)
+    max_events = int(policy.get("max_transition_events") or 24)
+    active_axis_ids = _relationship_active_axis_ids(
+        social_state_record=social_state_record,
+        relationship_dynamics_context=relationship_dynamics_context,
+    )
+    active_relationship_ids, transition_specs = _relationship_transition_specs(
+        relationships=relationships,
+        active_axis_ids=active_axis_ids,
+        prior_pairs=prior_pairs,
+        max_pairs=max_pairs,
+        social_state_record=social_state_record,
+        social_pressure_state=social_pressure_state,
+        prior_continuity_impacts=prior_continuity_impacts,
+        npc_agency_simulation=npc_agency_simulation,
+    )
+    events, event_codes_by_rel, deltas_by_rel = _relationship_transition_events(
+        transition_specs=transition_specs,
+        active_relationship_ids=active_relationship_ids,
+        relationships=relationships,
+        policy=policy,
+        turn=turn,
+        max_events=max_events,
+    )
+    pair_states = _relationship_pair_states(
+        active_relationship_ids=active_relationship_ids,
+        relationships=relationships,
+        prior_pairs=prior_pairs,
+        event_codes_by_rel=event_codes_by_rel,
+        deltas_by_rel=deltas_by_rel,
+        policy=policy,
+        turn=turn,
+        default_tension=float(policy.get("default_tension_score") or 0.35),
+        default_trust=float(policy.get("default_trust_score") or 0.65),
+        default_alliance=float(policy.get("default_alliance_score") or 0.2),
+        default_dominance=float(policy.get("default_dominance_score") or 0.5),
+    )
+    return _relationship_payload_from_record(
+        policy=policy,
+        relationships=relationships,
+        axes=axes,
+        active_axis_ids=active_axis_ids,
+        pair_states=pair_states,
+        events=events,
+        prior_fp=prior_fp,
+        social_state_record=social_state_record,
+        social_pressure_state=social_pressure_state,
+        turn=turn,
+    )
 
 
 def _axis_states_from_pairs(

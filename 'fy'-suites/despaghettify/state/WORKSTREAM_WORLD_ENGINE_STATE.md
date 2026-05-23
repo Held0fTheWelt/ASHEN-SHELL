@@ -1,5 +1,23 @@
 # Workstream: world_engine
 
+## Closed — DS-018 world-engine turn API / WebSocket split (session 20260523)
+
+| Sub-wave | Outcome | Primary files / symbols | Evidence |
+|----------|---------|--------------------------|----------|
+| w01 | HTTP story-turn execution now delegates trace/span setup, trace updates, turn execution, and span close to named helpers. | `story_turn_routes.py`; `execute_story_turn` | Pre: `artifacts/workstreams/world_engine/pre/session_20260523_DS-018_wave_plan.*`; post: `artifacts/workstreams/world_engine/post/session_20260523_DS-018_world_engine_turn_api_comparison.*` |
+| w02 | Locked manager turn execution delegates graph run and recoverable graph-exception persistence. | `turn_execution.py`; `_execute_turn_locked` | Same post comparison as w01. |
+| w03 | WebSocket session streaming and autonomous follow-up phases are explicit; MVP3 streaming fixture now uses canonical `npc_initiatives`. | `story_ws.py`; `story_session_stream`, `_run_autonomous_followup_after_turn`; `test_mvp3_narrative_streaming_endpoint.py` | Same post comparison as w01. |
+
+**Gates (final):**
+
+- `python -m py_compile` on all changed DS-018 Python files — passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_phase2_ws_session_loop_endpoint.py world-engine/tests/test_mvp3_narrative_streaming_endpoint.py world-engine/tests/test_story_runtime_narrative_commit.py --tb=short` — 79 passed.
+- `pytest -q tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py tests/gates/test_goc_mvp04_observability_diagnostics_gate.py --tb=short` — 75 passed.
+- `PYTHONPATH="'fy'-suites" python -m despaghettify.tools wave-plan-validate --file "'fy'-suites/despaghettify/state/artifacts/workstreams/world_engine/pre/session_20260523_DS-018_wave_plan.json" --check-primary-paths --gate-prefix-allowlist python,pytest,INTERNAL_RUNTIME_CONFIG_TOKEN,PYTHONPATH` — pass.
+- Final `check --with-metrics` — pass, report generated `2026-05-23T12:06:16Z`.
+
+**Structural delta:** `story_session_stream` 229 → 93 AST lines, `_run_autonomous_followup_after_turn` 181 → 128, `execute_story_turn` 225 → 66, `_execute_turn_locked` 214 → 81. DS-018 target symbols no longer appear in the current top-12 longest or top-6 nesting rankings.
+
 ## Closed — DS-014 world-engine runtime/readout split (session 20260522)
 
 | Sub-wave | Outcome | Primary files / symbols | Evidence |

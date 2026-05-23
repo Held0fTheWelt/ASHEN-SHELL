@@ -1,5 +1,24 @@
 # Workstream: ai_stack
 
+## Closed — DS-017 / DS-019 / DS-020 AI-stack granularization (session 20260523)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-017 | Telemetry/readout surfaces now delegate to focused helpers while public wrappers remain stable. | `_build_vitality_telemetry_v1`, `build_player_facing_narrative_cards`, `derive_meta_narrative_awareness`, `stream_narrator_blocks` | Pre: `artifacts/workstreams/ai_stack/pre/session_20260523_DS-017-019-020_wave_plan.*`; post: `artifacts/workstreams/ai_stack/post/session_20260523_DS-017-019-020_ai_stack_comparison.*` |
+| DS-019 | Runtime policy, autonomous tick, playability rewrite, off-stage commit, and Scenario C registry builders are split into named phases. | `load_module_runtime_policy`, `evaluate_autonomous_tick`, `build_rewrite_instruction`, `commit_off_stage_update_candidates`, `build_scenario_c_registry` | Same pre/post artefacts as DS-017; tests below. |
+| DS-020 | Branch timeline, visible narrative, synthetic action resolution, and quality-lab field extraction nesting tails are flattened. | `_snapshot_event_state`, `finalize_visible_scene_blocks`, `build_synthetic_generation_for_action_resolution`, `_field_values` | Same pre/post artefacts as DS-017; tests below. |
+
+**Gates (final):**
+
+- `python -m py_compile` on all changed DS-017/019/020 Python files — passed.
+- `pytest -q ai_stack/tests/test_vitality_telemetry_v1.py ai_stack/tests/test_player_narrative_cards.py ai_stack/tests/test_meta_narrative_awareness_engine.py ai_stack/tests/test_narrative_runtime_agent.py --tb=short` — 86 passed.
+- `pytest -q ai_stack/tests/test_module_runtime_policy.py ai_stack/tests/test_phase2_autonomous_tick.py ai_stack/tests/test_phase2_stage_f_capability_feeding.py ai_stack/tests/test_phase2_stage_g_off_stage_commits.py ai_stack/tests/test_story_runtime_playability.py tests/branching/test_evaluation_cycle.py --tb=short` — 131 passed.
+- `pytest -q tests/branching/test_branch_timeline.py ai_stack/tests/test_visible_narrative_contract.py ai_stack/tests/test_narrator_consequence_contract.py ai_stack/tests/test_return_movement_resolution.py ai_stack/tests/test_quality_lab_pattern_and_planning.py --tb=short` — 59 passed.
+- `PYTHONPATH="'fy'-suites" python -m despaghettify.tools wave-plan-validate --file "'fy'-suites/despaghettify/state/artifacts/workstreams/ai_stack/pre/session_20260523_DS-017-019-020_wave_plan.json" --check-primary-paths --gate-prefix-allowlist python,pytest,PYTHONPATH` — pass.
+- Final `check --with-metrics` — pass, report generated `2026-05-23T12:06:16Z`.
+
+**Structural delta:** DS-017/019/020 target symbols no longer appear in the current top-12 longest or top-6 nesting rankings. Current full scan: 10840 functions; L50 803; L100 164; D6 9; `M7_anteil` 3.9968.
+
 ## Closed — DS-015 duplicate-name proxy triage (session 20260522)
 
 | Sub-wave | Status | Outcome / next step | Evidence |

@@ -451,6 +451,171 @@ def build_traceable_decisions(
     return decisions
 
 
+def _runtime_projection_diagnostics(runtime_projection: dict[str, Any]) -> dict[str, Any]:
+    proj = runtime_projection if isinstance(runtime_projection, dict) else {}
+    human_actor_id = str(proj.get("human_actor_id") or "").strip()
+    npc_actor_ids = [str(a) for a in (proj.get("npc_actor_ids") or []) if str(a).strip()]
+    return {
+        "human_actor_id": human_actor_id,
+        "npc_actor_ids": npc_actor_ids,
+        "selected_player_role": str(proj.get("selected_player_role") or "").strip(),
+        "content_module_id": str(proj.get("content_module_id") or "god_of_carnage").strip(),
+        "runtime_profile_id": str(proj.get("runtime_profile_id") or "god_of_carnage_solo").strip(),
+        "runtime_module_id": str(proj.get("runtime_module_id") or "solo_story_runtime").strip(),
+        "ai_allowed": sorted(npc_actor_ids),
+        "ai_forbidden": [human_actor_id] if human_actor_id else [],
+    }
+
+
+def _graph_diagnostics_sources(graph_state: dict[str, Any]) -> dict[str, Any]:
+    routing = graph_state.get("routing") or {}
+    gen = graph_state.get("generation") or {}
+    gen_meta = (gen.get("metadata") or {}) if isinstance(gen.get("metadata"), dict) else {}
+    val = graph_state.get("validation_outcome") or {}
+    actor_lane_val = (
+        (val.get("actor_lane_validation") or {})
+        if isinstance(val.get("actor_lane_validation"), dict)
+        else {}
+    )
+    committed_result = (
+        graph_state.get("committed_result") or {}
+        if isinstance(graph_state.get("committed_result"), dict)
+        else {}
+    )
+    return {
+        "routing": routing,
+        "generation": gen,
+        "generation_metadata": gen_meta,
+        "validation": val,
+        "actor_lane_validation": actor_lane_val,
+        "committed_result": committed_result,
+    }
+
+
+def _generation_diagnostics(sources: dict[str, Any]) -> dict[str, Any]:
+    routing = sources["routing"]
+    gen = sources["generation"]
+    gen_meta = sources["generation_metadata"]
+    val = sources["validation"]
+    actor_lane_val = sources["actor_lane_validation"]
+    return {
+        "ai_provider": str(routing.get("selected_provider") or "").strip(),
+        "ai_model": str(routing.get("selected_model") or "").strip(),
+        "adapter_used": str(gen_meta.get("adapter") or gen_meta.get("adapter_invocation_mode") or "").strip(),
+        "fallback_stage": str(routing.get("fallback_stage_reached") or "primary_only").strip(),
+        "structured_output_present": bool(
+            gen.get("structured_output") is not None or gen_meta.get("structured_output") is not None
+        ),
+        "actor_lane_status": str(actor_lane_val.get("status") or val.get("status") or "").strip(),
+        "actor_lane_reason": str(actor_lane_val.get("reason") or "").strip(),
+        "dramatic_status": str(val.get("status") or "").strip(),
+        "dramatic_reason": str(val.get("reason") or "").strip(),
+    }
+
+
+def _scene_envelope_diagnostics(
+    scene_turn_envelope: dict[str, Any] | None,
+    graph_state: dict[str, Any],
+) -> dict[str, Any]:
+    scene_npc_agency = {}
+    scene_ldss_diag = {}
+    scene_block_count = 0
+    primary_responder_id = ""
+    secondary_responder_ids: list[str] = []
+    if isinstance(scene_turn_envelope, dict):
+        scene_npc_agency = scene_turn_envelope.get("diagnostics", {}).get("npc_agency", {}) or {}
+        scene_ldss_diag = (
+            scene_turn_envelope.get("diagnostics", {}).get("live_dramatic_scene_simulator", {}) or {}
+        )
+        blocks = scene_turn_envelope.get("visible_scene_output", {}).get("blocks", [])
+        scene_block_count = len(blocks) if isinstance(blocks, list) else 0
+        primary_responder_id = str(scene_npc_agency.get("primary_responder_id") or "").strip()
+        secondary_responder_ids = [
+            str(r) for r in (scene_npc_agency.get("secondary_responder_ids") or []) if str(r).strip()
+        ]
+    if not primary_responder_id:
+        primary_responder_id = str(graph_state.get("responder_id") or "").strip()
+    return {
+        "scene_npc_agency": scene_npc_agency,
+        "scene_ldss_diag": scene_ldss_diag,
+        "scene_block_count": scene_block_count,
+        "primary_responder_id": primary_responder_id,
+        "secondary_responder_ids": secondary_responder_ids,
+    }
+
+
+def _ldss_diagnostics_section(scene_ldss_diag: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": scene_ldss_diag.get("status") or "not_invoked",
+        "invoked": bool(scene_ldss_diag.get("invoked")),
+        "entrypoint": scene_ldss_diag.get("entrypoint") or "story.turn.execute",
+        "error_present": bool(scene_ldss_diag.get("error_present")),
+        "error_code": scene_ldss_diag.get("error_code"),
+        "error_message": scene_ldss_diag.get("error_message"),
+        "simulator_version": "ldss.v1",
+        "decision_count": int(scene_ldss_diag.get("decision_count") or 0),
+        "output_contract": "visible_scene_output.blocks.v1",
+        "input_hash": str(scene_ldss_diag.get("input_hash") or ""),
+        "output_hash": str(scene_ldss_diag.get("output_hash") or ""),
+    }
+
+
+def _npc_agency_diagnostics_section(
+    *,
+    npc_actor_ids: list[str],
+    scene_npc_agency: dict[str, Any],
+    primary_responder_id: str,
+    secondary_responder_ids: list[str],
+) -> dict[str, Any]:
+    return {
+        "agency_required": bool(npc_actor_ids),
+        "active_npc_ids": list(npc_actor_ids),
+        "primary_responder_id": primary_responder_id,
+        "secondary_responder_ids": secondary_responder_ids,
+        "npc_to_npc_dialogue_present": bool(secondary_responder_ids),
+        "visible_actor_response_required": True,
+        "visible_actor_response_present": bool(scene_npc_agency.get("visible_actor_response_present")),
+        "passivity_guard_status": "passed"
+        if scene_npc_agency.get("visible_actor_response_present")
+        else "unknown",
+        "validation_status": "approved" if scene_npc_agency.get("visible_actor_response_present") else "unknown",
+    }
+
+
+def _frontend_render_contract_section(scene_block_count: int, scene_ldss_diag: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "version": "dramatic_chat_blocks.v1",
+        "scene_block_count": scene_block_count,
+        "render_mode": "typewriter",
+        "typewriter_enabled": True,
+        "legacy_blob_used": bool(scene_ldss_diag.get("legacy_blob_used", False)),
+    }
+
+
+def _quality_diagnostics(graph_state: dict[str, Any]) -> tuple[str, list[str], dict[str, Any]]:
+    quality_class_val = str(graph_state.get("quality_class") or "").strip()
+    degradation_signals_raw = graph_state.get("degradation_signals") or []
+    degradation_signals = [str(s) for s in degradation_signals_raw if s]
+    quality_outcome = "ok"
+    if quality_class_val in ("degraded",):
+        quality_outcome = "ok_with_degradation"
+    elif quality_class_val in ("failed",):
+        quality_outcome = "failed"
+    return quality_class_val, degradation_signals, {
+        "outcome": quality_outcome,
+        "quality_class": quality_class_val or "unknown",
+        "degradation_signals": list(degradation_signals),
+    }
+
+
+def _langfuse_status(langfuse_enabled: bool, langfuse_trace_id: str) -> str:
+    if langfuse_enabled and langfuse_trace_id:
+        return "traced"
+    if langfuse_enabled:
+        return "enabled_no_trace"
+    return "disabled"
+
+
 def build_diagnostics_envelope(
     *,
     session_id: str,
@@ -468,140 +633,23 @@ def build_diagnostics_envelope(
 
     Only uses committed state — never raw AI proposals.
     """
-    proj = runtime_projection if isinstance(runtime_projection, dict) else {}
-    human_actor_id = str(proj.get("human_actor_id") or "").strip()
-    npc_actor_ids = [
-        str(a) for a in (proj.get("npc_actor_ids") or [])
-        if str(a).strip()
-    ]
-    selected_player_role = str(proj.get("selected_player_role") or "").strip()
-    content_module_id = str(proj.get("content_module_id") or "god_of_carnage").strip()
-    runtime_profile_id = str(proj.get("runtime_profile_id") or "god_of_carnage_solo").strip()
-    runtime_module_id = str(proj.get("runtime_module_id") or "solo_story_runtime").strip()
-
-    # Actor lane context
-    ai_allowed = sorted(npc_actor_ids)
-    ai_forbidden = [human_actor_id] if human_actor_id else []
-
-    # Routing / generation
-    routing = graph_state.get("routing") or {}
-    gen = graph_state.get("generation") or {}
-    gen_meta = gen.get("metadata") or {} if isinstance(gen.get("metadata"), dict) else {}
-    val = graph_state.get("validation_outcome") or {}
-    actor_lane_val = val.get("actor_lane_validation") or {} if isinstance(val.get("actor_lane_validation"), dict) else {}
-    committed_result = graph_state.get("committed_result") or {} if isinstance(graph_state.get("committed_result"), dict) else {}
-
-    ai_provider = str(routing.get("selected_provider") or "").strip()
-    ai_model = str(routing.get("selected_model") or "").strip()
-    adapter_used = str(gen_meta.get("adapter") or gen_meta.get("adapter_invocation_mode") or "").strip()
-    fallback_stage = str(routing.get("fallback_stage_reached") or "primary_only").strip()
-    structured_output_present = bool(gen.get("structured_output") is not None or gen_meta.get("structured_output") is not None)
-
-    actor_lane_status = str(actor_lane_val.get("status") or val.get("status") or "").strip()
-    actor_lane_reason = str(actor_lane_val.get("reason") or "").strip()
-
-    dramatic_status = str(val.get("status") or "").strip()
-    dramatic_reason = str(val.get("reason") or "").strip()
-
-    commit_applied = bool(committed_result.get("commit_applied"))
-
-    quality_class_val = str(graph_state.get("quality_class") or "").strip()
-    degradation_signals_raw = graph_state.get("degradation_signals") or []
-    degradation_signals = [str(s) for s in degradation_signals_raw if s]
-
-    # Primary/secondary responders from actor turn summary or scene envelope
-    scene_npc_agency = {}
-    scene_ldss_diag = {}
-    scene_block_count = 0
-    primary_responder_id = ""
-    secondary_responder_ids: list[str] = []
-
-    if isinstance(scene_turn_envelope, dict):
-        scene_npc_agency = scene_turn_envelope.get("diagnostics", {}).get("npc_agency", {}) or {}
-        scene_ldss_diag = scene_turn_envelope.get("diagnostics", {}).get("live_dramatic_scene_simulator", {}) or {}
-        blocks = scene_turn_envelope.get("visible_scene_output", {}).get("blocks", [])
-        scene_block_count = len(blocks) if isinstance(blocks, list) else 0
-        primary_responder_id = str(scene_npc_agency.get("primary_responder_id") or "").strip()
-        secondary_responder_ids = [
-            str(r) for r in (scene_npc_agency.get("secondary_responder_ids") or [])
-            if str(r).strip()
-        ]
-
-    # If no scene envelope, try graph state
-    if not primary_responder_id:
-        primary_responder_id = str(graph_state.get("responder_id") or "").strip()
-
-    # LDSS diagnostics section
-    ldss_diag: dict[str, Any] = {
-        "status": scene_ldss_diag.get("status") or "not_invoked",
-        "invoked": bool(scene_ldss_diag.get("invoked")),
-        "entrypoint": scene_ldss_diag.get("entrypoint") or "story.turn.execute",
-        "error_present": bool(scene_ldss_diag.get("error_present")),
-        "error_code": scene_ldss_diag.get("error_code"),
-        "error_message": scene_ldss_diag.get("error_message"),
-        "simulator_version": "ldss.v1",
-        "decision_count": int(scene_ldss_diag.get("decision_count") or 0),
-        "output_contract": "visible_scene_output.blocks.v1",
-        "input_hash": str(scene_ldss_diag.get("input_hash") or ""),
-        "output_hash": str(scene_ldss_diag.get("output_hash") or ""),
-    }
-
-    # NPC agency section
-    npc_agency_diag: dict[str, Any] = {
-        "agency_required": bool(npc_actor_ids),
-        "active_npc_ids": list(npc_actor_ids),
-        "primary_responder_id": primary_responder_id,
-        "secondary_responder_ids": secondary_responder_ids,
-        "npc_to_npc_dialogue_present": bool(secondary_responder_ids),
-        "visible_actor_response_required": True,
-        "visible_actor_response_present": bool(scene_npc_agency.get("visible_actor_response_present")),
-        "passivity_guard_status": "passed" if scene_npc_agency.get("visible_actor_response_present") else "unknown",
-        "validation_status": "approved" if scene_npc_agency.get("visible_actor_response_present") else "unknown",
-    }
-
-    # Frontend render contract section
-    frontend_contract: dict[str, Any] = {
-        "version": "dramatic_chat_blocks.v1",
-        "scene_block_count": scene_block_count,
-        "render_mode": "typewriter",
-        "typewriter_enabled": True,
-        "legacy_blob_used": bool(scene_ldss_diag.get("legacy_blob_used", False)),
-    }
-
-    # Quality section
-    quality_outcome = "ok"
-    if quality_class_val in ("degraded",):
-        quality_outcome = "ok_with_degradation"
-    elif quality_class_val in ("failed",):
-        quality_outcome = "failed"
-
-    quality_diag: dict[str, Any] = {
-        "outcome": quality_outcome,
-        "quality_class": quality_class_val or "unknown",
-        "degradation_signals": list(degradation_signals),
-    }
-
-    # Build traceable decisions
+    projection = _runtime_projection_diagnostics(runtime_projection)
+    graph_sources = _graph_diagnostics_sources(graph_state)
+    generation = _generation_diagnostics(graph_sources)
+    scene = _scene_envelope_diagnostics(scene_turn_envelope, graph_state)
+    quality_class_val, degradation_signals, quality_diag = _quality_diagnostics(graph_state)
+    commit_applied = bool(graph_sources["committed_result"].get("commit_applied"))
     decisions = build_traceable_decisions(
         session_id=session_id,
         turn_number=turn_number,
-        actor_lane_status=actor_lane_status,
-        actor_lane_reason=actor_lane_reason,
-        dramatic_status=dramatic_status,
-        dramatic_reason=dramatic_reason,
+        actor_lane_status=generation["actor_lane_status"],
+        actor_lane_reason=generation["actor_lane_reason"],
+        dramatic_status=generation["dramatic_status"],
+        dramatic_reason=generation["dramatic_reason"],
         commit_applied=commit_applied,
-        primary_responder_id=primary_responder_id,
-        human_actor_id=human_actor_id,
+        primary_responder_id=scene["primary_responder_id"],
+        human_actor_id=projection["human_actor_id"],
     )
-
-    # Langfuse status
-    if langfuse_enabled and langfuse_trace_id:
-        lf_status = "traced"
-    elif langfuse_enabled:
-        lf_status = "enabled_no_trace"
-    else:
-        lf_status = "disabled"
-
     cost_summary = aggregate_phase_costs(
         graph_state.get("phase_costs") if isinstance(graph_state.get("phase_costs"), dict) else {}
     )
@@ -610,39 +658,47 @@ def build_diagnostics_envelope(
         trace_id=trace_id or "",
         story_session_id=session_id,
         turn_number=turn_number,
-        content_module_id=content_module_id,
-        runtime_profile_id=runtime_profile_id,
-        runtime_module_id=runtime_module_id,
-        selected_player_role=selected_player_role,
-        human_actor_id=human_actor_id,
-        npc_actor_ids=npc_actor_ids,
-        ai_allowed_actor_ids=ai_allowed,
-        ai_forbidden_actor_ids=ai_forbidden,
+        content_module_id=projection["content_module_id"],
+        runtime_profile_id=projection["runtime_profile_id"],
+        runtime_module_id=projection["runtime_module_id"],
+        selected_player_role=projection["selected_player_role"],
+        human_actor_id=projection["human_actor_id"],
+        npc_actor_ids=projection["npc_actor_ids"],
+        ai_allowed_actor_ids=projection["ai_allowed"],
+        ai_forbidden_actor_ids=projection["ai_forbidden"],
         player_input_hash=_hash_text(player_input) if player_input else "",
         player_input_length=len(player_input) if player_input else 0,
-        ai_provider=ai_provider,
-        ai_model=ai_model,
-        adapter_used=adapter_used,
-        fallback_stage=fallback_stage,
-        structured_output_present=structured_output_present,
-        actor_lane_validation_status=actor_lane_status,
-        actor_lane_validation_reason=actor_lane_reason,
-        primary_responder_id=primary_responder_id,
-        secondary_responder_ids=secondary_responder_ids,
-        dramatic_validation_status=dramatic_status,
-        dramatic_validation_reason=dramatic_reason,
+        ai_provider=generation["ai_provider"],
+        ai_model=generation["ai_model"],
+        adapter_used=generation["adapter_used"],
+        fallback_stage=generation["fallback_stage"],
+        structured_output_present=generation["structured_output_present"],
+        actor_lane_validation_status=generation["actor_lane_status"],
+        actor_lane_validation_reason=generation["actor_lane_reason"],
+        primary_responder_id=scene["primary_responder_id"],
+        secondary_responder_ids=scene["secondary_responder_ids"],
+        dramatic_validation_status=generation["dramatic_status"],
+        dramatic_validation_reason=generation["dramatic_reason"],
         accepted_delta_count=len(decisions),
         rejected_delta_count=0,
         commit_applied=commit_applied,
         response_packaged_from_committed_state=True,
         quality_class=quality_class_val,
         degradation_signals=degradation_signals,
-        langfuse_status=lf_status,
+        langfuse_status=_langfuse_status(langfuse_enabled, langfuse_trace_id),
         langfuse_trace_id=langfuse_trace_id if langfuse_enabled else "",
         traceable_decisions=decisions,
-        live_dramatic_scene_simulator=ldss_diag,
-        npc_agency=npc_agency_diag,
-        frontend_render_contract=frontend_contract,
+        live_dramatic_scene_simulator=_ldss_diagnostics_section(scene["scene_ldss_diag"]),
+        npc_agency=_npc_agency_diagnostics_section(
+            npc_actor_ids=projection["npc_actor_ids"],
+            scene_npc_agency=scene["scene_npc_agency"],
+            primary_responder_id=scene["primary_responder_id"],
+            secondary_responder_ids=scene["secondary_responder_ids"],
+        ),
+        frontend_render_contract=_frontend_render_contract_section(
+            scene["scene_block_count"],
+            scene["scene_ldss_diag"],
+        ),
         quality=quality_diag,
         degradation_timeline=degradation_events or [],
         cost_summary=cost_summary,

@@ -73,6 +73,100 @@ def _find_object(
     return None
 
 
+def _action_target_fields(player_action_frame: dict[str, Any]) -> dict[str, Any]:
+    resolved_target = (
+        player_action_frame.get("resolved_target")
+        if isinstance(player_action_frame.get("resolved_target"), dict)
+        else {}
+    )
+    semantic_inference = (
+        player_action_frame.get("semantic_inference")
+        if isinstance(player_action_frame.get("semantic_inference"), dict)
+        else {}
+    )
+    return {
+        "target_id": str(resolved_target.get("target_id") or "").strip(),
+        "target_alias": str(
+            resolved_target.get("matched_alias") or resolved_target.get("canonical_name") or ""
+        ).strip(),
+        "target_resolution_source": str(player_action_frame.get("target_resolution_source") or "").strip(),
+        "access_status": str(player_action_frame.get("access_status") or "").strip(),
+        "semantic_inference": semantic_inference,
+    }
+
+
+def _plausible_inferred_target(target_fields: dict[str, Any]) -> bool:
+    return (
+        target_fields["target_resolution_source"] == "ai_semantic_resolution.plausible_inference"
+        or target_fields["access_status"] == "inferred_plausible"
+        or bool(target_fields["semantic_inference"])
+    )
+
+
+def _current_context_area(
+    *,
+    scene_affordance_model: dict[str, Any],
+    current_player_local_context: dict[str, Any] | None,
+) -> str:
+    scene_af = (scene_affordance_model.get("scene_affordances") or {}) if isinstance(
+        scene_affordance_model,
+        dict,
+    ) else {}
+    return str(
+        (current_player_local_context or {}).get("current_location_id")
+        or (current_player_local_context or {}).get("current_area")
+        or scene_af.get("current_area")
+        or ""
+    ).strip()
+
+
+def _base_local_context_transition(
+    *,
+    current_area: str,
+    transition_allowed: bool,
+    target_fields: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "from_area": current_area or None,
+        "to_area": None,
+        "from_location_id": current_area or None,
+        "to_location_id": None,
+        "transition_type": None,
+        "transition_allowed": transition_allowed,
+        "new_area_established": False,
+        "location_found": False,
+        "object_found": False,
+        "object_inferred": False,
+        "target_id": target_fields["target_id"] or None,
+        "target_alias": target_fields["target_alias"] or None,
+        "target_resolution_source": target_fields["target_resolution_source"] or None,
+        "semantic_inference": dict(target_fields["semantic_inference"])
+        if target_fields["semantic_inference"]
+        else None,
+    }
+
+
+def _mark_object_transition(
+    *,
+    transition: dict[str, Any],
+    scene_affordance_model: dict[str, Any],
+    target_fields: dict[str, Any],
+    plausible_inferred_target: bool,
+    transition_type: str,
+) -> None:
+    obj = _find_object(
+        scene_affordance_model,
+        target_fields["target_id"],
+        target_fields["target_alias"],
+    )
+    if obj:
+        transition["object_found"] = True
+    elif plausible_inferred_target:
+        transition["object_found"] = True
+        transition["object_inferred"] = True
+    transition["transition_type"] = transition_type
+
+
 def build_local_context_transition(
     *,
     player_action_frame: dict[str, Any],
@@ -81,59 +175,27 @@ def build_local_context_transition(
     current_player_local_context: dict[str, Any] | None,
 ) -> dict[str, Any]:
     """Compute a LocalContextTransition from action frame + scene affordances."""
-    verb = str(player_action_frame.get("verb") or "").strip().lower()
     action_kind = str(player_action_frame.get("action_kind") or "").strip().lower()
     affordance_status = str(affordance_resolution.get("affordance_status") or "").strip().lower()
-    rt = player_action_frame.get("resolved_target") if isinstance(player_action_frame.get("resolved_target"), dict) else {}
-    target_id = str(rt.get("target_id") or "").strip()
-    target_alias = str(rt.get("matched_alias") or rt.get("canonical_name") or "").strip()
-    target_resolution_source = str(player_action_frame.get("target_resolution_source") or "").strip()
-    access_status = str(player_action_frame.get("access_status") or "").strip()
-    semantic_inference = (
-        player_action_frame.get("semantic_inference")
-        if isinstance(player_action_frame.get("semantic_inference"), dict)
-        else {}
+    target_fields = _action_target_fields(player_action_frame)
+    current_area = _current_context_area(
+        scene_affordance_model=scene_affordance_model,
+        current_player_local_context=current_player_local_context,
     )
-    plausible_inferred_target = (
-        target_resolution_source == "ai_semantic_resolution.plausible_inference"
-        or access_status == "inferred_plausible"
-        or bool(semantic_inference)
-    )
-
-    scene_af = (scene_affordance_model.get("scene_affordances") or {}) if isinstance(scene_affordance_model, dict) else {}
-    current_loc = str(
-        (current_player_local_context or {}).get("current_location_id")
-        or (current_player_local_context or {}).get("current_area")
-        or scene_af.get("current_area")
-        or ""
-    ).strip()
-    current_area = current_loc
 
     is_movement = action_kind == "movement"
     is_posture_change = action_kind == "posture_change"
     is_perception = action_kind == "perception"
     is_object_interaction = action_kind == "object_interaction"
     transition_allowed = affordance_status in {"allowed", "allowed_offscreen", "partial"}
-
-    transition: dict[str, Any] = {
-        "from_area": current_area or None,
-        "to_area": None,
-        "from_location_id": current_loc or None,
-        "to_location_id": None,
-        "transition_type": None,
-        "transition_allowed": transition_allowed,
-        "new_area_established": False,
-        "location_found": False,
-        "object_found": False,
-        "object_inferred": False,
-        "target_id": target_id or None,
-        "target_alias": target_alias or None,
-        "target_resolution_source": target_resolution_source or None,
-        "semantic_inference": dict(semantic_inference) if semantic_inference else None,
-    }
+    transition = _base_local_context_transition(
+        current_area=current_area,
+        transition_allowed=transition_allowed,
+        target_fields=target_fields,
+    )
 
     if is_movement and transition_allowed:
-        loc = _find_location(scene_affordance_model, target_id, target_alias)
+        loc = _find_location(scene_affordance_model, target_fields["target_id"], target_fields["target_alias"])
         if loc:
             to_id = str(loc.get("id") or "").strip()
             transition["to_area"] = to_id
@@ -147,21 +209,21 @@ def build_local_context_transition(
         transition["transition_type"] = "posture_change"
         transition["new_area_established"] = False
     elif is_perception:
-        obj = _find_object(scene_affordance_model, target_id, target_alias)
-        if obj:
-            transition["object_found"] = True
-        elif plausible_inferred_target:
-            transition["object_found"] = True
-            transition["object_inferred"] = True
-        transition["transition_type"] = "perception"
+        _mark_object_transition(
+            transition=transition,
+            scene_affordance_model=scene_affordance_model,
+            target_fields=target_fields,
+            plausible_inferred_target=_plausible_inferred_target(target_fields),
+            transition_type="perception",
+        )
     elif is_object_interaction:
-        obj = _find_object(scene_affordance_model, target_id, target_alias)
-        if obj:
-            transition["object_found"] = True
-        elif plausible_inferred_target:
-            transition["object_found"] = True
-            transition["object_inferred"] = True
-        transition["transition_type"] = "object_interaction"
+        _mark_object_transition(
+            transition=transition,
+            scene_affordance_model=scene_affordance_model,
+            target_fields=target_fields,
+            plausible_inferred_target=_plausible_inferred_target(target_fields),
+            transition_type="object_interaction",
+        )
 
     return transition
 

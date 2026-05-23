@@ -647,6 +647,182 @@ def build_canonical_step_ldss_output(ldss_input: LDSSInput) -> LDSSOutput | None
 # Main entry point
 # ---------------------------------------------------------------------------
 
+def _load_ldss_langfuse_adapter() -> Any | None:
+    try:
+        from app.observability.langfuse_adapter import LangfuseAdapter
+
+        return LangfuseAdapter.get_instance()
+    except ImportError:
+        return None
+
+
+def _start_ldss_span(adapter: Any | None, ldss_input: LDSSInput) -> Any | None:
+    if not adapter:
+        return None
+    parent_span = adapter.get_active_span()
+    if not parent_span:
+        return None
+    return adapter.create_child_span(
+        name="live_dramatic_scene_simulator",
+        input={
+            "scene_id": ldss_input.current_scene_id,
+            "turn_number": ldss_input.turn_number,
+            "actor_ids": ldss_input.ai_allowed_actor_ids,
+        },
+        metadata={
+            "scene_id": ldss_input.current_scene_id,
+            "turn_number": ldss_input.turn_number,
+        },
+    )
+
+
+def _update_ldss_rejected_span(
+    *,
+    ldss_span: Any | None,
+    error_code: str | None,
+    phase_cost: dict[str, Any] | None = None,
+) -> None:
+    if not ldss_span:
+        return
+    metadata: dict[str, Any] = {"validation_failed": True, "error_code": error_code}
+    if phase_cost is not None:
+        metadata["phase_cost"] = dict(phase_cost)
+    ldss_span.update(output={"status": "rejected", "error": error_code}, metadata=metadata)
+
+
+def _update_ldss_approved_span(
+    *,
+    ldss_span: Any | None,
+    ldss_output: LDSSOutput,
+    canonical_step_id: str | None = None,
+) -> None:
+    if not ldss_span:
+        return
+    output = {
+        "block_count": len(ldss_output.visible_scene_output.blocks),
+        "decision_count": ldss_output.decision_count,
+        "status": "approved",
+    }
+    metadata = {
+        "block_count": len(ldss_output.visible_scene_output.blocks),
+        "decision_count": ldss_output.decision_count,
+        **ldss_output.phase_cost,
+        "phase_cost": dict(ldss_output.phase_cost),
+    }
+    if canonical_step_id is not None:
+        output["source"] = "canonical_path"
+        metadata["canonical_step_id"] = canonical_step_id
+    ldss_span.update(output=output, metadata=metadata)
+
+
+def _run_canonical_ldss_path(ldss_input: LDSSInput, ldss_span: Any | None) -> LDSSOutput | None:
+    canonical_output = build_canonical_step_ldss_output(ldss_input)
+    if canonical_output is None:
+        return None
+
+    lane_result = validate_actor_lane_blocks(
+        canonical_output.visible_scene_output.blocks,
+        human_actor_id=ldss_input.human_actor_id,
+        ai_forbidden_actor_ids=ldss_input.ai_forbidden_actor_ids,
+    )
+    if not lane_result.approved:
+        _update_ldss_rejected_span(ldss_span=ldss_span, error_code=lane_result.error_code)
+        return _build_rejected_ldss_output(
+            ldss_input=ldss_input,
+            error_code=lane_result.error_code or "actor_lane_validation_failed",
+            message=lane_result.message or "Actor lane validation rejected canonical output.",
+        )
+
+    _update_ldss_approved_span(
+        ldss_span=ldss_span,
+        ldss_output=canonical_output,
+        canonical_step_id=ldss_input.canonical_step_id,
+    )
+    return canonical_output
+
+
+def _update_ldss_degraded_span(ldss_span: Any | None, ldss_output: LDSSOutput) -> None:
+    if not ldss_span:
+        return
+    ldss_span.update(
+        output={
+            "status": "degraded_error",
+            "error_code": ldss_output.error_code,
+        },
+        metadata={
+            "validation_failed": False,
+            "error_code": ldss_output.error_code,
+            "error_message": ldss_output.error_message,
+            "phase_cost": dict(ldss_output.phase_cost),
+        },
+    )
+
+
+def _validate_ldss_output_or_reject(
+    *,
+    ldss_input: LDSSInput,
+    ldss_output: LDSSOutput,
+    ldss_span: Any | None,
+) -> LDSSOutput:
+    lane_result = validate_actor_lane_blocks(
+        ldss_output.visible_scene_output.blocks,
+        human_actor_id=ldss_input.human_actor_id,
+        ai_forbidden_actor_ids=ldss_input.ai_forbidden_actor_ids,
+    )
+    if not lane_result.approved:
+        _update_ldss_rejected_span(
+            ldss_span=ldss_span,
+            error_code=lane_result.error_code,
+            phase_cost=ldss_output.phase_cost,
+        )
+        return _build_rejected_ldss_output(
+            ldss_input=ldss_input,
+            error_code=lane_result.error_code or "actor_lane_validation_failed",
+            message=lane_result.message or "Actor lane validation rejected proposal.",
+        )
+
+    mass_result = validate_dramatic_mass(ldss_output.visible_scene_output.blocks)
+    if not mass_result.approved:
+        _update_ldss_rejected_span(
+            ldss_span=ldss_span,
+            error_code=mass_result.error_code,
+            phase_cost=ldss_output.phase_cost,
+        )
+        return _build_rejected_ldss_output(
+            ldss_input=ldss_input,
+            error_code=mass_result.error_code or "dramatic_alignment_insufficient_mass",
+            message=mass_result.message or "Insufficient dramatic mass.",
+        )
+
+    passivity_result = validate_passivity(ldss_output.visible_scene_output.blocks)
+    if not passivity_result.approved:
+        _update_ldss_rejected_span(
+            ldss_span=ldss_span,
+            error_code=passivity_result.error_code,
+            phase_cost=ldss_output.phase_cost,
+        )
+        return _build_rejected_ldss_output(
+            ldss_input=ldss_input,
+            error_code=passivity_result.error_code or "no_visible_actor_response",
+            message=passivity_result.message or "Passivity validation failed.",
+        )
+
+    _update_ldss_approved_span(ldss_span=ldss_span, ldss_output=ldss_output)
+    return ldss_output
+
+
+def _run_deterministic_ldss_path(ldss_input: LDSSInput, ldss_span: Any | None) -> LDSSOutput:
+    ldss_output = build_deterministic_ldss_output(ldss_input)
+    if _only_degraded_notice(ldss_output.visible_scene_output.blocks):
+        _update_ldss_degraded_span(ldss_span, ldss_output)
+        return ldss_output
+    return _validate_ldss_output_or_reject(
+        ldss_input=ldss_input,
+        ldss_output=ldss_output,
+        ldss_span=ldss_span,
+    )
+
+
 def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
     """Run the Live Dramatic Scene Simulator with Langfuse span tracking.
 
@@ -663,167 +839,14 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
     Returns output with embedded cost/token info for Phase B aggregation.
     """
     # Phase B: Create Langfuse span for LDSS simulation (lazy import).
-    try:
-        from app.observability.langfuse_adapter import LangfuseAdapter
-        adapter = LangfuseAdapter.get_instance()
-    except ImportError:
-        adapter = None
-
-    ldss_span = None
-    if adapter:
-        parent_span = adapter.get_active_span()
-        if parent_span:
-            ldss_span = adapter.create_child_span(
-                name="live_dramatic_scene_simulator",
-                input={
-                    "scene_id": ldss_input.current_scene_id,
-                    "turn_number": ldss_input.turn_number,
-                    "actor_ids": ldss_input.ai_allowed_actor_ids,
-                },
-                metadata={
-                    "scene_id": ldss_input.current_scene_id,
-                    "turn_number": ldss_input.turn_number,
-                }
-            )
+    adapter = _load_ldss_langfuse_adapter()
+    ldss_span = _start_ldss_span(adapter, ldss_input)
 
     try:
-        canonical_output = build_canonical_step_ldss_output(ldss_input)
+        canonical_output = _run_canonical_ldss_path(ldss_input, ldss_span)
         if canonical_output is not None:
-            ldss_output = canonical_output
-
-            # Canonical-step output is authored truth; only the actor-lane
-            # guard applies (no AI controlling the human). dramatic_mass and
-            # passivity assumptions are written for the live-generation
-            # fallback path and do not apply to authored narrator-only beats.
-            lane_result = validate_actor_lane_blocks(
-                ldss_output.visible_scene_output.blocks,
-                human_actor_id=ldss_input.human_actor_id,
-                ai_forbidden_actor_ids=ldss_input.ai_forbidden_actor_ids,
-            )
-            if not lane_result.approved:
-                if ldss_span:
-                    ldss_span.update(
-                        output={"status": "rejected", "error": lane_result.error_code},
-                        metadata={"validation_failed": True, "error_code": lane_result.error_code},
-                    )
-                return _build_rejected_ldss_output(
-                    ldss_input=ldss_input,
-                    error_code=lane_result.error_code or "actor_lane_validation_failed",
-                    message=lane_result.message or "Actor lane validation rejected canonical output.",
-                )
-
-            if ldss_span:
-                ldss_span.update(
-                    output={
-                        "block_count": len(ldss_output.visible_scene_output.blocks),
-                        "decision_count": ldss_output.decision_count,
-                        "status": "approved",
-                        "source": "canonical_path",
-                    },
-                    metadata={
-                        "block_count": len(ldss_output.visible_scene_output.blocks),
-                        "decision_count": ldss_output.decision_count,
-                        "canonical_step_id": ldss_input.canonical_step_id,
-                        **ldss_output.phase_cost,
-                        "phase_cost": dict(ldss_output.phase_cost),
-                    },
-                )
-            return ldss_output
-
-        ldss_output = build_deterministic_ldss_output(ldss_input)
-
-        if _only_degraded_notice(ldss_output.visible_scene_output.blocks):
-            if ldss_span:
-                ldss_span.update(
-                    output={
-                        "status": "degraded_error",
-                        "error_code": ldss_output.error_code,
-                    },
-                    metadata={
-                        "validation_failed": False,
-                        "error_code": ldss_output.error_code,
-                        "error_message": ldss_output.error_message,
-                        "phase_cost": dict(ldss_output.phase_cost),
-                    },
-                )
-            return ldss_output
-
-        # Validate actor lanes (must run before commit)
-        lane_result = validate_actor_lane_blocks(
-            ldss_output.visible_scene_output.blocks,
-            human_actor_id=ldss_input.human_actor_id,
-            ai_forbidden_actor_ids=ldss_input.ai_forbidden_actor_ids,
-        )
-        if not lane_result.approved:
-            # Return degraded output with validation error — do not commit illegal blocks
-            if ldss_span:
-                ldss_span.update(
-                    output={"status": "rejected", "error": lane_result.error_code},
-                    metadata={
-                        "validation_failed": True,
-                        "error_code": lane_result.error_code,
-                        "phase_cost": dict(ldss_output.phase_cost),
-                    },
-                )
-            return _build_rejected_ldss_output(
-                ldss_input=ldss_input,
-                error_code=lane_result.error_code or "actor_lane_validation_failed",
-                message=lane_result.message or "Actor lane validation rejected proposal.",
-            )
-
-        # Validate dramatic mass (before commit)
-        mass_result = validate_dramatic_mass(ldss_output.visible_scene_output.blocks)
-        if not mass_result.approved:
-            if ldss_span:
-                ldss_span.update(
-                    output={"status": "rejected", "error": mass_result.error_code},
-                    metadata={
-                        "validation_failed": True,
-                        "error_code": mass_result.error_code,
-                        "phase_cost": dict(ldss_output.phase_cost),
-                    },
-                )
-            return _build_rejected_ldss_output(
-                ldss_input=ldss_input,
-                error_code=mass_result.error_code or "dramatic_alignment_insufficient_mass",
-                message=mass_result.message or "Insufficient dramatic mass.",
-            )
-
-        # Validate passivity (before commit)
-        passivity_result = validate_passivity(ldss_output.visible_scene_output.blocks)
-        if not passivity_result.approved:
-            if ldss_span:
-                ldss_span.update(
-                    output={"status": "rejected", "error": passivity_result.error_code},
-                    metadata={
-                        "validation_failed": True,
-                        "error_code": passivity_result.error_code,
-                        "phase_cost": dict(ldss_output.phase_cost),
-                    },
-                )
-            return _build_rejected_ldss_output(
-                ldss_input=ldss_input,
-                error_code=passivity_result.error_code or "no_visible_actor_response",
-                message=passivity_result.message or "Passivity validation failed.",
-            )
-
-        # Phase B: Update span with LDSS output metrics
-        if ldss_span:
-            ldss_span.update(
-                output={
-                    "block_count": len(ldss_output.visible_scene_output.blocks),
-                    "decision_count": ldss_output.decision_count,
-                    "status": "approved"
-                },
-                metadata={
-                    "block_count": len(ldss_output.visible_scene_output.blocks),
-                    "decision_count": ldss_output.decision_count,
-                    **ldss_output.phase_cost,
-                    "phase_cost": dict(ldss_output.phase_cost),
-                },
-            )
-
-        return ldss_output
+            return canonical_output
+        return _run_deterministic_ldss_path(ldss_input, ldss_span)
 
     except Exception as e:
         if ldss_span:
