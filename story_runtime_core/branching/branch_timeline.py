@@ -298,47 +298,51 @@ def _tree_created_status(details: dict[str, Any]) -> str:
     return BRANCHING_TIMELINE_TREE_STATUS_ACTIVE
 
 
-def _snapshot_event_state(events: list[Any]) -> dict[str, Any]:
-    tree_states: dict[str, str] = {}
-    selection_count = 0
-    replay_commit_count = 0
-    replay_conflict_count = 0
-    last_event_type = None
-    last_event_at = None
+def _new_snapshot_event_state() -> dict[str, Any]:
+    return {
+        "tree_states": {},
+        "selection_count": 0,
+        "replay_commit_count": 0,
+        "replay_conflict_count": 0,
+        "last_event_type": None,
+        "last_event_at": None,
+    }
 
+
+def _apply_snapshot_event_state(state: dict[str, Any], event: dict[str, Any]) -> None:
+    event_type = str(event.get("event_type") or "")
+    tree_id = str(event.get("tree_id") or "").strip()
+    details = event.get("details") if isinstance(event.get("details"), dict) else {}
+    tree_states = state["tree_states"]
+    if event_type:
+        state["last_event_type"] = event_type
+        state["last_event_at"] = event.get("occurred_at")
+    if event_type == BRANCHING_TIMELINE_EVENT_TREE_CREATED and tree_id:
+        tree_states[tree_id] = _tree_created_status(details)
+        return
+    tree_status_updates = {
+        BRANCHING_TIMELINE_EVENT_TREE_BECAME_STALE: BRANCHING_TIMELINE_TREE_STATUS_STALE,
+        BRANCHING_TIMELINE_EVENT_TREE_EXPIRED: BRANCHING_TIMELINE_TREE_STATUS_EXPIRED,
+        BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_COMMITTED: BRANCHING_TIMELINE_TREE_STATUS_COMMITTED,
+        BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_CONFLICT: BRANCHING_TIMELINE_TREE_STATUS_COMMITTED,
+    }
+    if event_type == BRANCHING_TIMELINE_EVENT_NODE_SELECTED:
+        state["selection_count"] += 1
+    elif event_type == BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_COMMITTED:
+        state["replay_commit_count"] += 1
+    elif event_type == BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_CONFLICT:
+        state["replay_conflict_count"] += 1
+    if tree_id and event_type in tree_status_updates:
+        tree_states[tree_id] = tree_status_updates[event_type]
+
+
+def _snapshot_event_state(events: list[Any]) -> dict[str, Any]:
+    state = _new_snapshot_event_state()
     for event in events:
         if not isinstance(event, dict):
             continue
-        event_type = str(event.get("event_type") or "")
-        tree_id = str(event.get("tree_id") or "").strip()
-        details = event.get("details") if isinstance(event.get("details"), dict) else {}
-        if event_type:
-            last_event_type = event_type
-            last_event_at = event.get("occurred_at")
-        if event_type == BRANCHING_TIMELINE_EVENT_TREE_CREATED and tree_id:
-            tree_states[tree_id] = _tree_created_status(details)
-        elif event_type == BRANCHING_TIMELINE_EVENT_TREE_BECAME_STALE and tree_id:
-            tree_states[tree_id] = BRANCHING_TIMELINE_TREE_STATUS_STALE
-        elif event_type == BRANCHING_TIMELINE_EVENT_TREE_EXPIRED and tree_id:
-            tree_states[tree_id] = BRANCHING_TIMELINE_TREE_STATUS_EXPIRED
-        elif event_type == BRANCHING_TIMELINE_EVENT_NODE_SELECTED:
-            selection_count += 1
-        elif event_type == BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_COMMITTED:
-            replay_commit_count += 1
-            if tree_id:
-                tree_states[tree_id] = BRANCHING_TIMELINE_TREE_STATUS_COMMITTED
-        elif event_type == BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_CONFLICT:
-            replay_conflict_count += 1
-            if tree_id:
-                tree_states[tree_id] = BRANCHING_TIMELINE_TREE_STATUS_COMMITTED
-    return {
-        "tree_states": tree_states,
-        "selection_count": selection_count,
-        "replay_commit_count": replay_commit_count,
-        "replay_conflict_count": replay_conflict_count,
-        "last_event_type": last_event_type,
-        "last_event_at": last_event_at,
-    }
+        _apply_snapshot_event_state(state, event)
+    return state
 
 
 def _tree_ids_with_status(tree_states: dict[str, str], status: str) -> list[str]:

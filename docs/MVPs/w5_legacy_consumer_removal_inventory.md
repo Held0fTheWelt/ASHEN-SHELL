@@ -6,6 +6,10 @@
 
 **Phase 6B-5A status:** [ADR-0065](../ADR/adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md) is authored as the narrator strict default-on ADR and test plan. Phase 6B-5A changes documentation only: no runtime behavior changed, no flags were flipped, no legacy branches were removed, and the next executable step is the Phase 6B-5B strict-mode parity-test rewrite.
 
+**Phase 6B-6A status:** ADR-0066 authored (Proposed). Full dependency audit completed. No code changed. Phase was the audit/planning step for Phase 6B-6B removal.
+
+**Phase 6B-6B status:** `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` **retired** (2026-05-23). All runtime references removed: flag resolver function deleted, `_legacy_compat` insertion branch deleted, `w5.narrator_legacy_compat_diagnostics_enabled` metadata key deleted, `demoted_to_legacy_compat` parity label retired. `w5.legacy_transition_parity` simplified to two-value enum: `"legacy_compat_visible"` (strict-off) / `"removed_by_6b5e_policy"` (strict-on permanent). Inventory script updated to exclude `.worktrees/`, `.claude/worktrees/`, `.state_tmp/` auxiliary workspaces. ADR-0066 status: **Accepted**. See [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md).
+
 **Phase 6B-5B status:** Strict-mode parity tests are rewritten as semantic W5-authority contracts rather than legacy field-presence checks. Two new test files prove the strict-off / strict-on contract end-to-end: `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py` and `ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`. Both postures continue to work: strict-off keeps `transition_from_previous` first-class with the legacy fallback prompt paragraph and `legacy_compat_visible` admin label; strict-on demotes the same payload to `source_facts._legacy_compat["transition_from_previous"]` with `authority = "w5_projection"`, removes top-level `transition_from_previous`, names `source_facts.w5_projection` as the sole actor-situation authority in the narrator prompt, mentions all five W5 summaries, uses `where_summary.location_changed` as the scene-shift signal, keeps How first-class with the full attribute list, and marks inferred Why as soft / never-spoken-as-fact. Admin diagnostics always read W5 history first and switch only the legacy-parity label by posture. Phase 6B-5B is a test-contract phase: no runtime behavior changed, `W5_AST_NARRATOR_STRICT_ENABLED` remains opt-in / default-off, `transition_from_previous` and `_legacy_compat` are not removed, malformed-W5 and explicit-opt-out safety fallbacks remain testable, and no committed event is mutated. Required gates re-verified: MVP03 LDSS gate, MVP04 observability gate, langfuse docker config, the strict-migration tests from Phase 6B-3B, the narrator-projection wiring tests from Phase 6B-1, the W5 inventory test, and the new Phase 6B-5B parity files all pass with zero failures. The next executable step is the Phase 6B-5C default-on flip.
 
 **Phase 6B-5C status:** `W5_AST_NARRATOR_STRICT_ENABLED` is now **default-on** (opt-out semantics). Explicit disable (`W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off`) remains supported. No `transition_from_previous` or `_legacy_compat` data surface removed. No committed event mutated. All gate tests passed with zero failures at flip time.
@@ -751,12 +755,12 @@ The Phase 6B-4 inventory pass did not touch world-engine HTTP routing, did not m
 
 | Consumer | Location | Classification |
 |---|---|---|
-| `_legacy_compat["transition_from_previous"]` insertion | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py::_block()` | `gated_diagnostics_opt_in` |
-| `_legacy_compat["authority"]`, `_legacy_compat["notice"]` | same | `gated_diagnostics_opt_in` |
-| `w5.legacy_transition_parity` label | `world-engine/app/story_runtime/manager/diagnostics_api.py::get_w5_langfuse_metadata()` | `updated_three_value` |
-| `w5.narrator_legacy_compat_diagnostics_enabled` | same | `new_flag_report` |
-| Prompt guidance referencing `_legacy_compat` as possible breadcrumb | `world-engine/app/story_runtime/manager/narrator_output_prompts.py` | `updated_conditional` |
-| Test assertions on `_legacy_compat` presence under strict-on | various `test_w5_actor_tracking_phase_6b5b_parity.py` etc. | `test_only_update` |
+| `_legacy_compat["transition_from_previous"]` insertion | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py::_block()` | ~~`gated_diagnostics_opt_in`~~ **retired_phase_6b6b** |
+| `_legacy_compat["authority"]`, `_legacy_compat["notice"]` | same | ~~`gated_diagnostics_opt_in`~~ **retired_phase_6b6b** |
+| `w5.legacy_transition_parity` label | `world-engine/app/story_runtime/manager/diagnostics_api.py::get_w5_langfuse_metadata()` | **simplified_two_value_6b6b** (legacy_compat_visible / removed_by_6b5e_policy) |
+| `w5.narrator_legacy_compat_diagnostics_enabled` | same | ~~`new_flag_report`~~ **retired_phase_6b6b** |
+| Prompt guidance referencing `_legacy_compat` as possible breadcrumb | `world-engine/app/story_runtime/manager/narrator_output_prompts.py` | **updated_6b6b** (says "absent under strict-on") |
+| Test assertions on `_legacy_compat` presence under strict-on | various `test_w5_actor_tracking_phase_6b5b_parity.py` etc. | **removed_phase_6b6b** |
 
 ### What Remains for Phase 6B-5F
 
@@ -778,3 +782,39 @@ The following surfaces still exist and require classification in the Phase 6B-5F
 - MVP03 and MVP04 gates remain green.
 - No committed event was mutated.
 - No opt-out, malformed-W5, or substrate surface was removed.
+
+---
+
+### Phase 6B-6A — Diagnostics Flag Retirement ADR + Dependency Audit
+
+**Status: Complete (audit/planning only).** ADR-0066 authored, full dependency audit recorded. No code removed.
+
+---
+
+### Phase 6B-6B — Diagnostics Flag Removal (Complete, 2026-05-23)
+
+**Status: Complete.** All removals executed per ADR-0066 §Rollout Plan. ADR-0066 status: **Accepted**.
+
+**Inventory fix:** `.worktrees/phase-6b5f/` contained stale actor_situation references. Inventory script now excludes `.worktrees/`, `.claude/worktrees/`, `.state_tmp/` as non-active-source auxiliary workspaces. Tests assert these exclusions.
+
+**Diagnostics flag retirement surface classification (post-6B-6B):**
+
+| Symbol | File | Final Classification |
+|--------|------|---------------------|
+| `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` (env resolver) | `ai_stack/actor_tracking/diagnostics.py` | **retired_phase_6b6b** (deleted) |
+| `w5_ast_narrator_legacy_compat_diagnostics_enabled` (function + `__all__`) | `ai_stack/actor_tracking/diagnostics.py` | **retired_phase_6b6b** (deleted) |
+| `narrator_legacy_compat_diagnostics` (flag-states key) | `ai_stack/actor_tracking/diagnostics.py` | **retired_phase_6b6b** (deleted) |
+| `w5_ast_narrator_legacy_compat_diagnostics_enabled` (export) | `ai_stack/actor_tracking/__init__.py` | **retired_phase_6b6b** (deleted) |
+| `w5_ast_narrator_legacy_compat_diagnostics_enabled` (import + call) | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py` | **retired_phase_6b6b** (deleted) |
+| `_legacy_compat["transition_from_previous"]` write | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py` | **retired_phase_6b6b** (deleted) |
+| imports | `world-engine/.../external_imports_core.py`, `_imports_00.py` | **retired_phase_6b6b** (deleted) |
+| `legacy_compat_diag` + `w5.narrator_legacy_compat_diagnostics_enabled` | `world-engine/.../diagnostics_api.py` | **retired_phase_6b6b** (deleted) |
+| `demoted_to_legacy_compat` parity label | `diagnostics_api.py::get_w5_langfuse_metadata()` | **retired_phase_6b6b** (`removed_by_6b5e_policy` is the permanent strict-on label) |
+| `W5_FLAGS` fixture entry + monkeypatches | 4 test files | **retired_phase_6b6b** (removed) |
+
+**Remaining transition_from_previous behavior:**
+- Explicit strict opt-out (`W5_AST_NARRATOR_STRICT_ENABLED=false`) still writes `source_facts["transition_from_previous"]` first-class. This is the rollback posture.
+- `w5.legacy_transition_parity = "legacy_compat_visible"` is still emitted for strict-off sessions.
+- Malformed-W5 safety fallback unchanged.
+
+**See:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) (Accepted).

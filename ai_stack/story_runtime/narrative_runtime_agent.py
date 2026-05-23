@@ -126,6 +126,154 @@ class NarrativeRuntimeAgent:
         self._trace_scaffold = {}  # Collect trace metadata when tracing disabled
         self.phase_costs: list[dict[str, Any]] = []
 
+    def _load_langfuse_adapter(self) -> Any | None:
+        try:
+            from app.observability.langfuse_adapter import LangfuseAdapter
+
+            return LangfuseAdapter.get_instance()
+        except ImportError:
+            return None
+
+    def _start_narrator_block_span(
+        self,
+        *,
+        adapter: Any | None,
+        agent_input: NarrativeRuntimeAgentInput,
+        motivation_analysis: dict[str, Any],
+        block_count: int,
+    ) -> Any | None:
+        if not adapter:
+            logger.debug("[NARRATOR] Adapter not available - narrator blocks won't be traced")
+            return None
+        parent_span = adapter.get_active_span()
+        if not parent_span:
+            logger.warning("[NARRATOR] No active parent span - narrator blocks won't be traced")
+            return None
+        logger.info(
+            "[NARRATOR] Creating narrator.narrate_block span (block #%s) for session %s",
+            block_count,
+            agent_input.session_id,
+        )
+        span = adapter.create_child_span(
+            name="narrator.narrate_block",
+            input={
+                "block_sequence": block_count,
+                "pressure_score": motivation_analysis.get("pressure_score"),
+                "remaining_initiatives": motivation_analysis.get("remaining_initiatives"),
+            },
+            metadata={
+                "block_sequence": block_count,
+                "turn_number": agent_input.turn_number,
+                "session_id": agent_input.session_id,
+            },
+        )
+        if span:
+            logger.info("[NARRATOR] narrator.narrate_block span created successfully")
+        return span
+
+    def _update_narrator_block_span(
+        self,
+        *,
+        narrator_span: Any | None,
+        narrator_block: dict[str, Any],
+        narrator_phase_cost: dict[str, Any],
+    ) -> None:
+        if not narrator_span:
+            return
+        logger.info(
+            "[NARRATOR] Updating narrator.narrate_block span with block_id=%s",
+            narrator_block.get("block_id"),
+        )
+        narrator_span.update(
+            output={
+                "block_id": narrator_block.get("block_id"),
+                "atmospheric_tone": narrator_block.get("atmospheric_tone"),
+                "text_length": len(narrator_block.get("narrator_text", "")),
+            },
+            metadata={
+                **narrator_phase_cost,
+                "phase_cost": dict(narrator_phase_cost),
+                "atmospheric_tone": narrator_block.get("atmospheric_tone"),
+                "narrative_threads_referenced": len(
+                    narrator_block.get("narrative_threads_referenced", [])
+                ),
+            },
+        )
+        logger.info("[NARRATOR] Ending narrator.narrate_block span")
+        narrator_span.end()
+        logger.info("[NARRATOR] narrator.narrate_block span ended")
+
+    def _build_narrator_stream_event(
+        self,
+        *,
+        agent_input: NarrativeRuntimeAgentInput,
+        motivation_analysis: dict[str, Any],
+        block_count: int,
+        narrator_span: Any | None,
+    ) -> tuple[NarrativeRuntimeAgentEvent, bool, dict[str, Any] | None]:
+        try:
+            narrator_block = self._generate_narrator_block(
+                agent_input=agent_input,
+                motivation_analysis=motivation_analysis,
+                block_sequence=block_count,
+            )
+            narrator_phase_cost = build_deterministic_phase_cost(
+                phase="narrator",
+                provider="world_engine",
+                model="narrative_runtime_agent_deterministic",
+                block_sequence=block_count,
+                narration_length=len(narrator_block.get("narrator_text", "")),
+                atmospheric_tone=narrator_block.get("atmospheric_tone"),
+            )
+            self.phase_costs.append(narrator_phase_cost)
+
+            validation_error = self._validate_narrative_output(narrator_block, agent_input)
+            if validation_error:
+                if narrator_span:
+                    narrator_span.update(
+                        output={"status": "rejected", "error": validation_error},
+                        metadata={
+                            "validation_failed": True,
+                            "phase_cost": dict(narrator_phase_cost),
+                            **narrator_phase_cost,
+                        },
+                    )
+                    narrator_span.end()
+                return (
+                    self._emit_error_event(
+                        session_id=agent_input.session_id,
+                        error_code="narrative_validation_failed",
+                        error_message=validation_error,
+                    ),
+                    True,
+                    None,
+                )
+
+            self._update_narrator_block_span(
+                narrator_span=narrator_span,
+                narrator_block=narrator_block,
+                narrator_phase_cost=narrator_phase_cost,
+            )
+            if not agent_input.enable_langfuse_tracing:
+                self._record_trace_scaffold(
+                    event_type="narrator_block_generation",
+                    metadata={
+                        "block_id": narrator_block.get("block_id"),
+                        "atmospheric_tone": narrator_block.get("atmospheric_tone"),
+                        "block_sequence": block_count,
+                        "pressure_score": narrator_block.get("pressure_score"),
+                    },
+                )
+            return self._emit_narrator_event(narrator_block, block_sequence=block_count), False, narrator_block
+        except Exception as exc:
+            if narrator_span:
+                narrator_span.update(
+                    output={"status": "error", "error": str(exc)},
+                    metadata={"error": True},
+                )
+                narrator_span.end()
+            raise
+
     def stream_narrator_blocks(
         self,
         agent_input: NarrativeRuntimeAgentInput,
@@ -162,141 +310,41 @@ class NarrativeRuntimeAgent:
                 initial_remaining_initiatives,
             )
 
-            # Stream narrator blocks while initiatives pending
-            # Lazy import to avoid circular dependency with backend modules
-            try:
-                from app.observability.langfuse_adapter import LangfuseAdapter
-                adapter = LangfuseAdapter.get_instance()
-            except ImportError:
-                adapter = None
+            adapter = self._load_langfuse_adapter()
 
             while (
                 block_count < max_blocks_this_turn
                 and motivation_analysis["remaining_initiatives"] > 0
             ):
-                # Get parent span from context and create narrator block span
-                narrator_span = None
-                if adapter:
-                    parent_span = adapter.get_active_span()
-                    if parent_span:
-                        logger.info(f"[NARRATOR] Creating narrator.narrate_block span (block #{block_count}) for session {agent_input.session_id}")
-                        narrator_span = adapter.create_child_span(
-                            name="narrator.narrate_block",
-                            input={
-                                "block_sequence": block_count,
-                                "pressure_score": motivation_analysis.get("pressure_score"),
-                                "remaining_initiatives": motivation_analysis.get("remaining_initiatives"),
-                            },
-                            metadata={
-                                "block_sequence": block_count,
-                                "turn_number": agent_input.turn_number,
-                                "session_id": agent_input.session_id,
-                            },
-                        )
-                        if narrator_span:
-                            logger.info(f"[NARRATOR] narrator.narrate_block span created successfully")
-                    else:
-                        logger.warning(f"[NARRATOR] No active parent span - narrator blocks won't be traced")
-                else:
-                    logger.debug(f"[NARRATOR] Adapter not available - narrator blocks won't be traced")
+                narrator_span = self._start_narrator_block_span(
+                    adapter=adapter,
+                    agent_input=agent_input,
+                    motivation_analysis=motivation_analysis,
+                    block_count=block_count,
+                )
+                event, should_stop, _ = self._build_narrator_stream_event(
+                    agent_input=agent_input,
+                    motivation_analysis=motivation_analysis,
+                    block_count=block_count,
+                    narrator_span=narrator_span,
+                )
+                yield event
+                if should_stop:
+                    return
+                block_count += 1
 
-                try:
-                    narrator_block = self._generate_narrator_block(
-                        agent_input=agent_input,
-                        motivation_analysis=motivation_analysis,
-                        block_sequence=block_count,
-                    )
-                    narrator_phase_cost = build_deterministic_phase_cost(
-                        phase="narrator",
-                        provider="world_engine",
-                        model="narrative_runtime_agent_deterministic",
-                        block_sequence=block_count,
-                        narration_length=len(narrator_block.get("narrator_text", "")),
-                        atmospheric_tone=narrator_block.get("atmospheric_tone"),
-                    )
-                    self.phase_costs.append(narrator_phase_cost)
-
-                    # Validate narrator voice (no force, prediction, hidden intent)
-                    validation_error = self._validate_narrative_output(narrator_block, agent_input)
-                    if validation_error:
-                        if narrator_span:
-                            narrator_span.update(
-                                output={"status": "rejected", "error": validation_error},
-                                metadata={
-                                    "validation_failed": True,
-                                    "phase_cost": dict(narrator_phase_cost),
-                                    **narrator_phase_cost,
-                                },
-                            )
-                            narrator_span.end()
-                        yield self._emit_error_event(
-                            session_id=agent_input.session_id,
-                            error_code="narrative_validation_failed",
-                            error_message=validation_error,
-                        )
-                        return
-
-                    # Update span with block metrics
-                    if narrator_span:
-                        logger.info(f"[NARRATOR] Updating narrator.narrate_block span with block_id={narrator_block.get('block_id')}")
-                        narrator_span.update(
-                            output={
-                                "block_id": narrator_block.get("block_id"),
-                                "atmospheric_tone": narrator_block.get("atmospheric_tone"),
-                                "text_length": len(narrator_block.get("narrator_text", "")),
-                            },
-                            metadata={
-                                **narrator_phase_cost,
-                                "phase_cost": dict(narrator_phase_cost),
-                                "atmospheric_tone": narrator_block.get("atmospheric_tone"),
-                                "narrative_threads_referenced": len(narrator_block.get("narrative_threads_referenced", [])),
-                            },
-                        )
-                        logger.info(f"[NARRATOR] Ending narrator.narrate_block span")
-                        narrator_span.end()
-                        logger.info(f"[NARRATOR] narrator.narrate_block span ended")
-
-                    # Phase 6: Record trace scaffold for this narrator block
-                    if not agent_input.enable_langfuse_tracing:
-                        self._record_trace_scaffold(
-                            event_type="narrator_block_generation",
-                            metadata={
-                                "block_id": narrator_block.get("block_id"),
-                                "atmospheric_tone": narrator_block.get("atmospheric_tone"),
-                                "block_sequence": block_count,
-                                "pressure_score": narrator_block.get("pressure_score"),
-                            },
-                        )
-
-                    # Emit narrator block event
-                    yield self._emit_narrator_event(narrator_block, block_sequence=block_count)
-                    block_count += 1
-
-                    # One narrator block accounts for one pending initiative in this deterministic
-                    # stream. Re-reading the unchanged NPCAgencyPlan here would recreate the same
-                    # pressure forever until max_narrator_blocks, which produced repeated narrator
-                    # blocks in live traces.
-                    if block_count % self.config.ruhepunkt_check_interval == 0:
-                        remaining = max(0, initial_remaining_initiatives - block_count)
-                        motivation_analysis = {
-                            **motivation_analysis,
-                            "remaining_initiatives": remaining,
-                            "pressure_score": min(1.0, remaining * 0.1 + 0.3) if remaining > 0 else 0.0,
-                            "motivation_summary": (
-                                f"{remaining} unresolved initiatives after narrator coverage"
-                                if remaining > 0
-                                else "All NPC initiatives covered by narrator stream"
-                            ),
-                        }
-
-                except Exception as e:
-                    if narrator_span:
-                        narrator_span.update(
-                            output={"status": "error", "error": str(e)},
-                            metadata={"error": True}
-                        )
-                        narrator_span.end()
-                    raise
+                if block_count % self.config.ruhepunkt_check_interval == 0:
+                    remaining = max(0, initial_remaining_initiatives - block_count)
+                    motivation_analysis = {
+                        **motivation_analysis,
+                        "remaining_initiatives": remaining,
+                        "pressure_score": min(1.0, remaining * 0.1 + 0.3) if remaining > 0 else 0.0,
+                        "motivation_summary": (
+                            f"{remaining} unresolved initiatives after narrator coverage"
+                            if remaining > 0
+                            else "All NPC initiatives covered by narrator stream"
+                        ),
+                    }
 
             # Signal ruhepunkt (rest point) - input can now be processed
             yield self._emit_ruhepunkt_event(

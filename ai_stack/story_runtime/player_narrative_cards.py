@@ -312,6 +312,163 @@ def _combine_npc_story_display(
     )
 
 
+def _initial_player_card_diag(semantic_blocks: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "player_card_count": 0,
+        "semantic_block_count": len(semantic_blocks),
+        "actor_action_folded_into_actor_card": 0,
+        "subsumed_actor_action_removed": 0,
+        "near_duplicate_actor_action_removed": 0,
+        "name_only_actor_card_removed": 0,
+        "narrator_card_preserved": 0,
+    }
+
+
+def _simple_player_shell_card(
+    b: dict[str, Any],
+    *,
+    si: int,
+    card_style: str,
+    visible_lane: str,
+    display_text: str,
+) -> dict[str, Any]:
+    nb = dict(b)
+    nb["card_style"] = card_style
+    nb["visible_lane"] = visible_lane
+    nb["player_display_text"] = display_text
+    nb["player_shell_semantic_span"] = (si, si)
+    return nb
+
+
+def _build_actor_line_card(
+    sem: list[dict[str, Any]],
+    si: int,
+    *,
+    action_before_speech: bool,
+    diag: dict[str, Any],
+) -> tuple[dict[str, Any] | None, int]:
+    b = dict(sem[si])
+    speech = str(b.get("text") or "")
+    lab = str(b.get("speaker_label") or "").strip()
+    aid = str(b.get("actor_id") or "").strip() or None
+    j = si + 1
+    actions: list[str] = []
+    folded_idx: list[int] = []
+    while j < len(sem):
+        nxt = sem[j]
+        nbt = str(nxt.get("block_type") or nxt.get("type") or "").strip().lower()
+        if nbt != "actor_action" or not _same_actor_lane(b.get("actor_id"), nxt.get("actor_id")):
+            break
+        act_raw = str(nxt.get("text") or "").strip()
+        act = strip_duplicate_speaker_prefix(act_raw, speaker_label=lab, actor_id=aid).strip()
+        act = dedupe_goc_speaker_colon_stutter_visible(act, speaker_label=lab or None, actor_id=aid)
+        running = speech
+        for act0 in actions:
+            running = _combine_npc_story_display(
+                running,
+                act0,
+                speaker_label=lab,
+                actor_id=aid,
+                action_before_speech=action_before_speech,
+            )
+        sf = _goc_visible_lane_text_fold(running)
+        af = _goc_visible_lane_text_fold(act)
+        substring_subsumed = bool(af and len(af) >= 12 and af in sf)
+        redundant = bool(len(af) >= 12 and _goc_npc_action_redundant_vs_running_visible(act, running))
+        if redundant:
+            diag["subsumed_actor_action_removed"] += 1
+            if not substring_subsumed:
+                diag["near_duplicate_actor_action_removed"] += 1
+            folded_idx.append(j)
+            j += 1
+            continue
+        actions.append(act_raw)
+        folded_idx.append(j)
+        diag["actor_action_folded_into_actor_card"] += 1
+        j += 1
+
+    merged_speech = speech
+    for act in actions:
+        merged_speech = _combine_npc_story_display(
+            merged_speech,
+            act,
+            speaker_label=lab,
+            actor_id=aid,
+            action_before_speech=action_before_speech,
+        )
+    merged_speech = dedupe_goc_speaker_colon_stutter_visible(
+        merged_speech, speaker_label=lab or None, actor_id=aid
+    )
+    nb = _simple_player_shell_card(
+        b,
+        si=si,
+        card_style="npc_story",
+        visible_lane="story",
+        display_text=merged_speech,
+    )
+    nb["player_shell_semantic_span"] = (si, j - 1)
+    if folded_idx:
+        nb["player_shell_folded_semantic_indices"] = list(folded_idx)
+        nb = _merge_folded_origin_metadata(nb, [sem[k] for k in folded_idx if 0 <= k < len(sem)])
+    if _is_name_only_actor_block(
+        str(nb.get("player_display_text") or "").strip(),
+        speaker_label=lab,
+        actor_id=aid,
+        block_type="actor_line",
+    ):
+        diag["name_only_actor_card_removed"] += 1
+        return None, j
+    return nb, j
+
+
+def _build_actor_action_card(
+    b: dict[str, Any],
+    *,
+    si: int,
+    out: list[dict[str, Any]],
+    diag: dict[str, Any],
+) -> dict[str, Any] | None:
+    lab = str(b.get("speaker_label") or "").strip()
+    aid = str(b.get("actor_id") or "").strip() or None
+    disp = strip_duplicate_speaker_prefix(
+        str(b.get("text") or ""),
+        speaker_label=lab,
+        actor_id=aid,
+    ).strip()
+    disp = dedupe_goc_speaker_colon_stutter_visible(disp, speaker_label=lab or None, actor_id=aid)
+    if _is_name_only_actor_block(disp, speaker_label=lab, actor_id=aid, block_type="actor_action"):
+        diag["name_only_actor_card_removed"] += 1
+        return None
+    af = _goc_visible_lane_text_fold(disp)
+    idx = len(out) - 1
+    while idx >= 0:
+        prev = out[idx]
+        pbt = str(prev.get("block_type") or prev.get("type") or "").strip().lower()
+        if pbt in {"player_input", "player_input_outcome"}:
+            idx -= 1
+            continue
+        if pbt == "actor_line" and _same_actor_lane(aid, prev.get("actor_id")):
+            prev_disp = str(prev.get("player_display_text") or prev.get("text") or "")
+            sf = _goc_visible_lane_text_fold(prev_disp)
+            substring_subsumed = bool(af and len(af) >= 12 and sf and af in sf)
+            redundant = bool(len(af) >= 12 and _goc_npc_action_redundant_vs_running_visible(disp, prev_disp))
+            if redundant:
+                diag["subsumed_actor_action_removed"] += 1
+                if not substring_subsumed:
+                    diag["near_duplicate_actor_action_removed"] += 1
+                out[idx] = _merge_folded_origin_metadata(prev, [b])
+                return None
+            break
+        break
+    return _simple_player_shell_card(
+        b,
+        si=si,
+        card_style="npc_story",
+        visible_lane="story",
+        display_text=disp,
+    )
+
+
 def build_player_facing_narrative_cards(
     semantic_blocks: Sequence[dict[str, Any]],
     *,
@@ -337,15 +494,7 @@ def build_player_facing_narrative_cards(
         policy.get("narrator_adjacent_actor_line_dedupe", False)
     )
 
-    diag: dict[str, Any] = {
-        "player_card_count": 0,
-        "semantic_block_count": len(semantic_blocks),
-        "actor_action_folded_into_actor_card": 0,
-        "subsumed_actor_action_removed": 0,
-        "near_duplicate_actor_action_removed": 0,
-        "name_only_actor_card_removed": 0,
-        "narrator_card_preserved": 0,
-    }
+    diag: dict[str, Any] = _initial_player_card_diag(semantic_blocks)
     out: list[dict[str, Any]] = []
     sem = [dict(b) for b in semantic_blocks if isinstance(b, dict)]
     si = 0
@@ -357,164 +506,63 @@ def build_player_facing_narrative_cards(
         aid = str(b.get("actor_id") or "").strip() or None
 
         if bt in {"player_input", "player_input_outcome"}:
-            nb = dict(b)
-            nb["card_style"] = "player_lane"
-            nb["visible_lane"] = "player"
-            nb["player_display_text"] = str(b.get("text") or "")
-            nb["player_shell_semantic_span"] = (si, si)
-            out.append(nb)
+            out.append(
+                _simple_player_shell_card(
+                    b,
+                    si=si,
+                    card_style="player_lane",
+                    visible_lane="player",
+                    display_text=str(b.get("text") or ""),
+                )
+            )
             si += 1
             continue
 
         if bt.startswith("narrator"):
-            nb = dict(b)
-            nb["card_style"] = "narrative_story"
-            nb["visible_lane"] = "story"
-            nb["player_display_text"] = dedupe_goc_speaker_colon_stutter_visible(
-                str(b.get("text") or ""), speaker_label=lab or None, actor_id=aid
+            out.append(
+                _simple_player_shell_card(
+                    b,
+                    si=si,
+                    card_style="narrative_story",
+                    visible_lane="story",
+                    display_text=dedupe_goc_speaker_colon_stutter_visible(
+                        str(b.get("text") or ""), speaker_label=lab or None, actor_id=aid
+                    ),
+                )
             )
-            nb["player_shell_semantic_span"] = (si, si)
-            out.append(nb)
             diag["narrator_card_preserved"] += 1
             si += 1
             continue
 
         if bt == "souffleuse":
-            nb = dict(b)
-            nb["card_style"] = "director_notice"
-            nb["visible_lane"] = "player_hint"
-            nb["player_display_text"] = str(b.get("player_display_text") or b.get("text") or "")
-            nb["player_shell_semantic_span"] = (si, si)
-            out.append(nb)
+            out.append(
+                _simple_player_shell_card(
+                    b,
+                    si=si,
+                    card_style="director_notice",
+                    visible_lane="player_hint",
+                    display_text=str(b.get("player_display_text") or b.get("text") or ""),
+                )
+            )
             si += 1
             continue
 
         if bt == "actor_line":
-            speech = str(b.get("text") or "")
-            j = si + 1
-            actions: list[str] = []
-            folded_idx: list[int] = []
-            while j < len(sem):
-                nxt = sem[j]
-                nbt = str(nxt.get("block_type") or nxt.get("type") or "").strip().lower()
-                if nbt != "actor_action":
-                    break
-                if not _same_actor_lane(b.get("actor_id"), nxt.get("actor_id")):
-                    break
-                act_raw = str(nxt.get("text") or "").strip()
-                act = strip_duplicate_speaker_prefix(
-                    act_raw, speaker_label=lab, actor_id=aid
-                ).strip()
-                act = dedupe_goc_speaker_colon_stutter_visible(
-                    act, speaker_label=lab or None, actor_id=aid
-                )
-                running = speech
-                for act0 in actions:
-                    running = _combine_npc_story_display(
-                        running,
-                        act0,
-                        speaker_label=lab,
-                        actor_id=aid,
-                        action_before_speech=action_before_speech,
-                    )
-                sf = _goc_visible_lane_text_fold(running)
-                af = _goc_visible_lane_text_fold(act)
-                substring_subsumed = bool(af and len(af) >= 12 and af in sf)
-                redundant = bool(
-                    len(af) >= 12
-                    and _goc_npc_action_redundant_vs_running_visible(act, running)
-                )
-                if redundant:
-                    diag["subsumed_actor_action_removed"] += 1
-                    if not substring_subsumed:
-                        diag["near_duplicate_actor_action_removed"] += 1
-                    folded_idx.append(j)
-                    j += 1
-                    continue
-                actions.append(act_raw)
-                folded_idx.append(j)
-                diag["actor_action_folded_into_actor_card"] += 1
-                j += 1
-            merged_speech = speech
-            for act in actions:
-                merged_speech = _combine_npc_story_display(
-                    merged_speech,
-                    act,
-                    speaker_label=lab,
-                    actor_id=aid,
-                    action_before_speech=action_before_speech,
-                )
-            merged_speech = dedupe_goc_speaker_colon_stutter_visible(
-                merged_speech, speaker_label=lab or None, actor_id=aid
+            nb, j = _build_actor_line_card(
+                sem,
+                si,
+                action_before_speech=action_before_speech,
+                diag=diag,
             )
-            nb = dict(b)
-            nb["card_style"] = "npc_story"
-            nb["visible_lane"] = "story"
-            nb["player_display_text"] = merged_speech
-            nb["player_shell_semantic_span"] = (si, j - 1)
-            if folded_idx:
-                nb["player_shell_folded_semantic_indices"] = list(folded_idx)
-                nb = _merge_folded_origin_metadata(nb, [sem[k] for k in folded_idx if 0 <= k < len(sem)])
-            disp = str(nb.get("player_display_text") or "").strip()
-            if _is_name_only_actor_block(
-                disp, speaker_label=lab, actor_id=aid, block_type="actor_line"
-            ):
-                diag["name_only_actor_card_removed"] += 1
-                si = j
-                continue
-            out.append(nb)
+            if nb is not None:
+                out.append(nb)
             si = j
             continue
 
         if bt == "actor_action":
-            nb = dict(b)
-            nb["card_style"] = "npc_story"
-            nb["visible_lane"] = "story"
-            disp = strip_duplicate_speaker_prefix(
-                str(b.get("text") or ""),
-                speaker_label=lab,
-                actor_id=aid,
-            ).strip()
-            disp = dedupe_goc_speaker_colon_stutter_visible(
-                disp, speaker_label=lab or None, actor_id=aid
-            )
-            nb["player_display_text"] = disp
-            nb["player_shell_semantic_span"] = (si, si)
-            if _is_name_only_actor_block(
-                disp, speaker_label=lab, actor_id=aid, block_type="actor_action"
-            ):
-                diag["name_only_actor_card_removed"] += 1
-                si += 1
-                continue
-            af = _goc_visible_lane_text_fold(disp)
-            subsumed_after_gap = False
-            idx = len(out) - 1
-            while idx >= 0:
-                prev = out[idx]
-                pbt = str(prev.get("block_type") or prev.get("type") or "").strip().lower()
-                if pbt in {"player_input", "player_input_outcome"}:
-                    idx -= 1
-                    continue
-                if pbt == "actor_line" and _same_actor_lane(aid, prev.get("actor_id")):
-                    prev_disp = str(prev.get("player_display_text") or prev.get("text") or "")
-                    sf = _goc_visible_lane_text_fold(prev_disp)
-                    substring_subsumed = bool(af and len(af) >= 12 and sf and af in sf)
-                    redundant = bool(
-                        len(af) >= 12
-                        and _goc_npc_action_redundant_vs_running_visible(disp, prev_disp)
-                    )
-                    if redundant:
-                        diag["subsumed_actor_action_removed"] += 1
-                        if not substring_subsumed:
-                            diag["near_duplicate_actor_action_removed"] += 1
-                        subsumed_after_gap = True
-                        out[idx] = _merge_folded_origin_metadata(prev, [b])
-                    break
-                break
-            if subsumed_after_gap:
-                si += 1
-                continue
-            out.append(nb)
+            nb = _build_actor_action_card(b, si=si, out=out, diag=diag)
+            if nb is not None:
+                out.append(nb)
             si += 1
             continue
 

@@ -859,21 +859,8 @@ def _npc_visible_text_echoes_player_line(
     return False
 
 
-def finalize_visible_scene_blocks(
-    blocks: list[dict[str, Any]],
-    *,
-    expected_language: str,
-    human_actor_id: str | None,
-    selected_player_role: str | None,
-    turn_number: int,
-    player_input_echo_strings: Sequence[str] | None = None,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Sanitize, dedupe, and attach VISIBLE-NARRATIVE-CONTRACT-02 diagnostics."""
-    exp = str(expected_language or "de").strip().lower()[:2] or "de"
-    echo_candidates = _collect_player_echo_strings(player_input_echo_strings)
-    out: list[dict[str, Any]] = []
-    prev_key: tuple[Any, ...] | None = None
-    counts: dict[str, int] = {
+def _visible_contract_counts() -> dict[str, int]:
+    return {
         "name_only_actor_block_removed": 0,
         "label_only_line_removed": 0,
         "duplicate_actor_label_removed": 0,
@@ -884,74 +871,82 @@ def finalize_visible_scene_blocks(
         "player_input_echo_removed_from_npc_block": 0,
     }
 
-    for b in blocks:
-        if not isinstance(b, dict):
-            continue
-        nb = dict(b)
-        bt = str(nb.get("block_type") or nb.get("type") or "").strip().lower()
-        txt = str(nb.get("text") or "").strip()
-        lab = str(nb.get("speaker_label") or "")
-        aid = str(nb.get("actor_id") or "").strip() or None
-        cleaned, partial = sanitize_visible_block_text(
-            txt,
-            block_type=bt,
-            speaker_label=lab,
-            actor_id=aid,
-            expected_language=expected_language,
-        )
-        if partial.get("placeholder_action_removed"):
-            counts["placeholder_action_removed"] += 1
-        counts["duplicate_actor_label_removed"] += int(partial.get("duplicate_actor_label_removed") or 0)
-        if not cleaned:
-            continue
-        if _is_label_colon_without_substance(cleaned) and bt in {
-            "narrator",
-            "narrator_scene",
-            "narrator_perception",
-            "stage_direction",
-            "environmental",
-        }:
-            counts["label_only_line_removed"] += 1
-            continue
-        if _is_name_only_actor_block(cleaned, speaker_label=lab, actor_id=aid, block_type=bt):
-            counts["name_only_actor_block_removed"] += 1
-            continue
-        cleaned2, rep_stripped = _strip_actor_line_after_repeated_speaker_colon(
-            cleaned, speaker_label=lab, expected_language=exp, block_type=bt
-        )
-        if rep_stripped:
-            counts["actor_line_action_tail_stripped"] += 1
-        cleaned = cleaned2.strip()
-        cleaned2, tail_stripped = _strip_actor_line_mixed_tail(
-            cleaned, expected_language=exp, block_type=bt
-        )
-        if tail_stripped:
-            counts["actor_line_action_tail_stripped"] += 1
-        cleaned = cleaned2.strip()
-        if not cleaned:
-            continue
-        if echo_candidates and _npc_visible_text_echoes_player_line(
-            cleaned,
-            speaker_label=lab,
-            actor_id=aid,
-            block_type=bt,
-            human_actor_id=human_actor_id,
-            selected_player_role=selected_player_role,
-            player_strings=echo_candidates,
-        ):
-            counts["player_input_echo_removed_from_npc_block"] += 1
-            continue
-        nb["text"] = cleaned
-        key = (bt, nb.get("actor_id"), cleaned)
-        if key == prev_key and bt in {"actor_line", "actor_action"}:
-            counts["near_duplicate_visible_block_removed"] += 1
-            continue
-        prev_key = key
-        out.append(nb)
 
-    # Near-identical consecutive actor_line / actor_action (same actor).
+def _finalize_visible_block(
+    block: dict[str, Any],
+    *,
+    expected_language: str,
+    exp: str,
+    human_actor_id: str | None,
+    selected_player_role: str | None,
+    echo_candidates: list[str],
+    counts: dict[str, int],
+) -> tuple[dict[str, Any], tuple[Any, ...]] | None:
+    nb = dict(block)
+    bt = str(nb.get("block_type") or nb.get("type") or "").strip().lower()
+    txt = str(nb.get("text") or "").strip()
+    lab = str(nb.get("speaker_label") or "")
+    aid = str(nb.get("actor_id") or "").strip() or None
+    cleaned, partial = sanitize_visible_block_text(
+        txt,
+        block_type=bt,
+        speaker_label=lab,
+        actor_id=aid,
+        expected_language=expected_language,
+    )
+    if partial.get("placeholder_action_removed"):
+        counts["placeholder_action_removed"] += 1
+    counts["duplicate_actor_label_removed"] += int(partial.get("duplicate_actor_label_removed") or 0)
+    if not cleaned:
+        return None
+    if _is_label_colon_without_substance(cleaned) and bt in {
+        "narrator",
+        "narrator_scene",
+        "narrator_perception",
+        "stage_direction",
+        "environmental",
+    }:
+        counts["label_only_line_removed"] += 1
+        return None
+    if _is_name_only_actor_block(cleaned, speaker_label=lab, actor_id=aid, block_type=bt):
+        counts["name_only_actor_block_removed"] += 1
+        return None
+    cleaned2, rep_stripped = _strip_actor_line_after_repeated_speaker_colon(
+        cleaned, speaker_label=lab, expected_language=exp, block_type=bt
+    )
+    if rep_stripped:
+        counts["actor_line_action_tail_stripped"] += 1
+    cleaned = cleaned2.strip()
+    cleaned2, tail_stripped = _strip_actor_line_mixed_tail(
+        cleaned, expected_language=exp, block_type=bt
+    )
+    if tail_stripped:
+        counts["actor_line_action_tail_stripped"] += 1
+    cleaned = cleaned2.strip()
+    if not cleaned:
+        return None
+    if echo_candidates and _npc_visible_text_echoes_player_line(
+        cleaned,
+        speaker_label=lab,
+        actor_id=aid,
+        block_type=bt,
+        human_actor_id=human_actor_id,
+        selected_player_role=selected_player_role,
+        player_strings=echo_candidates,
+    ):
+        counts["player_input_echo_removed_from_npc_block"] += 1
+        return None
+    nb["text"] = cleaned
+    return nb, (bt, nb.get("actor_id"), cleaned)
+
+
+def _dedupe_consecutive_visible_blocks(
+    blocks: list[dict[str, Any]],
+    *,
+    counts: dict[str, int],
+) -> list[dict[str, Any]]:
     deduped: list[dict[str, Any]] = []
-    for nb in out:
+    for nb in blocks:
         if not deduped:
             deduped.append(nb)
             continue
@@ -963,65 +958,95 @@ def finalize_visible_scene_blocks(
             and pbt in {"actor_line", "actor_action"}
             and prev.get("actor_id") == nb.get("actor_id")
             and prev.get("actor_id")
+            and _near_duplicate_visible_texts(str(prev.get("text") or ""), str(nb.get("text") or ""))
         ):
-            if _near_duplicate_visible_texts(str(prev.get("text") or ""), str(nb.get("text") or "")):
-                counts["near_duplicate_visible_block_removed"] += 1
-                continue
+            counts["near_duplicate_visible_block_removed"] += 1
+            continue
         deduped.append(nb)
-    out = deduped
+    return deduped
 
-    # actor_action whose visible text is already contained in a prior actor_line (same actor).
+
+def _actor_action_subsumed_by_prior_line(
+    nb: dict[str, Any],
+    prior_blocks: list[dict[str, Any]],
+) -> bool:
+    aid = str(nb.get("actor_id") or "").strip()
+    nt = str(nb.get("text") or "")
+    nt_st = nt.strip()
+    if not aid or len(nt_st) < 10:
+        return False
+    nfold = _goc_visible_lane_text_fold(nt)
+    if len(nfold) < 12:
+        return False
+    for prev_nb in reversed(prior_blocks):
+        pbt = str(prev_nb.get("block_type") or "").strip().lower()
+        if pbt != "actor_line":
+            continue
+        if str(prev_nb.get("actor_id") or "").strip() != aid:
+            continue
+        pt = str(prev_nb.get("text") or "")
+        pfold = _goc_visible_lane_text_fold(pt)
+        if nfold and pfold and nfold in pfold:
+            return True
+    return False
+
+
+def _drop_actor_actions_subsumed_by_prior_lines(
+    blocks: list[dict[str, Any]],
+    *,
+    counts: dict[str, int],
+) -> list[dict[str, Any]]:
     merged_subsumption: list[dict[str, Any]] = []
-    for nb in out:
+    for nb in blocks:
         bt = str(nb.get("block_type") or "").strip().lower()
-        if bt == "actor_action":
-            aid = str(nb.get("actor_id") or "").strip()
-            nt = str(nb.get("text") or "")
-            nt_st = nt.strip()
-            drop = False
-            if aid and len(nt_st) >= 10:
-                nfold = _goc_visible_lane_text_fold(nt)
-                if len(nfold) >= 12:
-                    for prev_nb in reversed(merged_subsumption):
-                        pbt = str(prev_nb.get("block_type") or "").strip().lower()
-                        if pbt != "actor_line":
-                            continue
-                        if str(prev_nb.get("actor_id") or "").strip() != aid:
-                            continue
-                        pt = str(prev_nb.get("text") or "")
-                        pfold = _goc_visible_lane_text_fold(pt)
-                        if nfold and pfold and nfold in pfold:
-                            drop = True
-                            break
-            if drop:
-                counts["actor_action_subsumed_by_actor_line_removed"] += 1
-                continue
+        if bt == "actor_action" and _actor_action_subsumed_by_prior_line(nb, merged_subsumption):
+            counts["actor_action_subsumed_by_actor_line_removed"] += 1
+            continue
         merged_subsumption.append(nb)
-    out = merged_subsumption
+    return merged_subsumption
 
-    mixed = False
-    for nb in out:
+
+def _visible_mixed_language_detected(
+    blocks: list[dict[str, Any]],
+    *,
+    expected_language: str,
+) -> bool:
+    for nb in blocks:
         t = str(nb.get("text") or "")
-        if _mixed_language_in_session_text(t, expected_language=exp):
-            mixed = True
-            break
+        if _mixed_language_in_session_text(t, expected_language=expected_language):
+            return True
+    return False
 
+
+def _opening_role_visible(
+    blocks: list[dict[str, Any]],
+    *,
+    human_actor_id: str | None,
+    selected_player_role: str | None,
+    turn_number: int,
+) -> bool:
     role_tok = _role_token_for_legibility(
         human_actor_id=human_actor_id,
         selected_player_role=selected_player_role,
     )
     anchor_text = ""
-    if turn_number == 0 and len(out) >= 2:
-        anchor_text = str(out[1].get("text") or "")
+    if turn_number == 0 and len(blocks) >= 2:
+        anchor_text = str(blocks[1].get("text") or "")
     low_anchor = anchor_text.lower()
-    role_visible = bool(role_tok and role_tok in low_anchor) if role_tok else False
+    return bool(role_tok and role_tok in low_anchor) if role_tok else False
 
-    detected = exp
-    if mixed:
-        detected = "mixed"
+
+def _visible_contract_diag(
+    *,
+    exp: str,
+    mixed: bool,
+    role_visible: bool,
+    turn_number: int,
+    counts: dict[str, int],
+) -> dict[str, Any]:
+    detected = "mixed" if mixed else exp
     contract_pass = not mixed
-
-    diag: dict[str, Any] = {
+    return {
         "visible_language_detected": detected,
         "mixed_language_detected": mixed,
         "visible_language_contract_pass": contract_pass,
@@ -1039,4 +1064,60 @@ def finalize_visible_scene_blocks(
         ],
         "player_input_echo_removed_from_npc_block": counts["player_input_echo_removed_from_npc_block"],
     }
+
+
+def finalize_visible_scene_blocks(
+    blocks: list[dict[str, Any]],
+    *,
+    expected_language: str,
+    human_actor_id: str | None,
+    selected_player_role: str | None,
+    turn_number: int,
+    player_input_echo_strings: Sequence[str] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Sanitize, dedupe, and attach VISIBLE-NARRATIVE-CONTRACT-02 diagnostics."""
+    exp = str(expected_language or "de").strip().lower()[:2] or "de"
+    echo_candidates = _collect_player_echo_strings(player_input_echo_strings)
+    out: list[dict[str, Any]] = []
+    prev_key: tuple[Any, ...] | None = None
+    counts = _visible_contract_counts()
+
+    for b in blocks:
+        if not isinstance(b, dict):
+            continue
+        finalized = _finalize_visible_block(
+            b,
+            expected_language=expected_language,
+            exp=exp,
+            human_actor_id=human_actor_id,
+            selected_player_role=selected_player_role,
+            echo_candidates=echo_candidates,
+            counts=counts,
+        )
+        if finalized is None:
+            continue
+        nb, key = finalized
+        bt = str(nb.get("block_type") or nb.get("type") or "").strip().lower()
+        if key == prev_key and bt in {"actor_line", "actor_action"}:
+            counts["near_duplicate_visible_block_removed"] += 1
+            continue
+        prev_key = key
+        out.append(nb)
+
+    out = _dedupe_consecutive_visible_blocks(out, counts=counts)
+    out = _drop_actor_actions_subsumed_by_prior_lines(out, counts=counts)
+    mixed = _visible_mixed_language_detected(out, expected_language=exp)
+    role_visible = _opening_role_visible(
+        out,
+        human_actor_id=human_actor_id,
+        selected_player_role=selected_player_role,
+        turn_number=turn_number,
+    )
+    diag = _visible_contract_diag(
+        exp=exp,
+        mixed=mixed,
+        role_visible=role_visible,
+        turn_number=turn_number,
+        counts=counts,
+    )
     return out, diag

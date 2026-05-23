@@ -46,7 +46,7 @@ def sample_agent_input():
     return {
         "runtime_state": {"scene_id": "living_room", "session_id": "test_session"},
         "npc_agency_plan": {
-            "initiatives": [
+            "npc_initiatives": [
                 {"actor_id": "annette", "resolved": False},
             ]
         },
@@ -92,7 +92,7 @@ class TestNarratorStreamingEndpoint:
         result = _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],
@@ -122,7 +122,7 @@ class TestNarratorStreamingEndpoint:
         _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],
@@ -156,7 +156,7 @@ class TestNarratorStreamingEndpoint:
         _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],
@@ -189,7 +189,7 @@ class TestNarratorStreamingEndpoint:
         _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],
@@ -233,7 +233,7 @@ class TestNarratorStreamingEndpoint:
         _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],
@@ -278,7 +278,7 @@ class TestMVP3StreamingGate:
         _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],
@@ -295,7 +295,7 @@ class TestMVP3StreamingGate:
         _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],
@@ -321,7 +321,7 @@ class TestMVP3StreamingGate:
         _orchestrate_narrative_agent(
             manager=manager,
             session_id="test_session",
-            ldss_output={"npc_agency_plan": {"initiatives": [{"actor_id": "npc1", "resolved": False}]}},
+            ldss_output={"npc_agency_plan": {"npc_initiatives": [{"actor_id": "npc1", "resolved": False}]}},
             runtime_state={"scene_id": "test"},
             dramatic_signature={"primary_tension": "conflict"},
             narrative_threads=[],

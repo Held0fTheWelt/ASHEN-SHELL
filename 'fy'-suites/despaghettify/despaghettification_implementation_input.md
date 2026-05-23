@@ -48,10 +48,14 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../
 | **DS-010** | `ai_stack` | `backend_runtime_services` | **CLOSED** 2026-05-22 |
 | **DS-011** | `ai_stack` | `story_runtime_core`, `backend_runtime_services` | **CLOSED** 2026-05-22 |
 | **DS-012** | `backend_runtime_services` | — | **CLOSED** 2026-05-22 |
-| **DS-013** | `ai_stack` | `story_runtime_core` | **OPEN** |
+| **DS-013** | `ai_stack` | `story_runtime_core` | **CLOSED** 2026-05-23 |
 | **DS-014** | `world_engine` | — | **CLOSED** 2026-05-22 |
 | **DS-015** | `ai_stack` | `backend_runtime_services`, `administration_tool`, `story_runtime_core` | **CLOSED** 2026-05-22 |
 | **DS-016** | `repo_governance_rollout` | `tools/mcp_server`, `administration_tool` | **CLOSED** 2026-05-23 |
+| **DS-017** | `ai_stack` | — | **OPEN** 2026-05-23 |
+| **DS-018** | `world_engine` | `ai_stack` (runtime call surfaces only) | **OPEN** 2026-05-23 |
+| **DS-019** | `ai_stack` | `story_runtime_core` | **OPEN** 2026-05-23 |
+| **DS-020** | `ai_stack` | `story_runtime_core` | **OPEN** 2026-05-23 |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](../state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
 
@@ -93,35 +97,35 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 | Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
 |-------|-------------------------------------|-------------------------------------|
-| **As of (date & time)** | — | **2026-05-23 09:10:16 (UTC)** |
+| **As of (date & time)** | — | **2026-05-23 10:41:52 (UTC)** |
 | Spaghetti scan command | — | `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` |
 | Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` from `fy-manifest.yaml` |
-| **M7** — gewichtete 7-Kategorien-Summe | **52.11** | **4.11** |
-| C1: Circular dependencies | **10.95** | **0.74** |
-| C2: Nesting depth | **47.27** | **1.67** |
-| C3: Long functions + complexity | **99.70** | **1.75** |
-| C4: Multi-responsibility modules | **73.81** | **7.44** |
-| C5: Magic numbers + global state | **40.60** | **0.95** |
-| C6: Missing abstractions / duplication | **50.26** | **14.23** |
-| C7: Confusing control flow | **64.81** | **7.28** |
-| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **10653** / **793** / **186** / **16** |
+| **M7** — gewichtete 7-Kategorien-Summe | **51.71** | **4.05** |
+| C1: Circular dependencies | **10.66** | **0.74** |
+| C2: Nesting depth | **47.27** | **1.65** |
+| C3: Long functions + complexity | **99.60** | **1.65** |
+| C4: Multi-responsibility modules | **73.55** | **7.39** |
+| C5: Magic numbers + global state | **40.45** | **0.92** |
+| C6: Missing abstractions / duplication | **48.25** | **14.10** |
+| C7: Confusing control flow | **64.74** | **7.18** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **10748** / **794** / **177** / **16** |
 | Extra check builtins | — | **0** matches for `def build_god_of_carnage_solo` in `**/builtins.py`; `story_runtime_core/goc_solo_builtin_template.py` still owns the definition |
 | Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **0**; imported **12** current runtime modules via `app.runtime.package_classification.runtime_module_import_path`. Grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
-| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **4.108** is below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.44** > **5**), **C5** (**0.95** > **0**), **C6** (**14.23** > **0**), and **C7** (**7.28** > **3**). **C4/C7 anchors:** DS-016 tooling fixture and DS-014 world-engine targets are closed and no longer appear in the formal top-12 longest ranking. Remaining planned anchors are DS-013 AI-stack/story-runtime surfaces (`run_visible_render` **340L**, `resolve_player_action` **314L**, `build_semantic_scene_plan_enrichment` **297L**, `derive_symbolic_object_resonance` **270L**, `build_branch_timeline_snapshot` depth **8**). **C5/C6 anchors:** magic-int and duplicate-name pressure remains mostly in prompt/proxy/narrative policy builders, administration proxy/tests, intentional public protocols, and broader duplicate naming outside DS-015's closed helper-wrapper scope. **Metric scan gate repaired:** DS-005 imports **12** current runtime modules with exit **0**. |
+| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **4.053** is below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.39** > **5**), **C5** (**0.92** > **0**), **C6** (**14.10** > **0**), and **C7** (**7.18** > **3**). **C4/C6/C7 anchors:** current longest functions cluster around actor-survival telemetry, AI-stack narrative readouts, world-engine HTTP/WS turn execution, runtime policy/autonomous builders, and playability/off-stage update assembly; DS-013 long-callable targets remain outside the formal top-12. **C5 anchors:** magic-int/global-state pressure remains in policy and builder surfaces, especially module runtime policy, scenario registries, autonomous tick, and off-stage/playability instructions. **C7 nesting tail:** `story_runtime_core/branching/branch_timeline.py:_snapshot_event_state` remains a nesting-only hotspot after DS-013, with additional contract/langgraph nesting tails queued separately instead of reopening closed DS rows. **Metric scan gate:** DS-005 imports **12** current runtime modules with exit **0**. |
 
 ### Score *M7* — inputs, weights, and calculation
 
 | Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
 |--------|---------|------------------------|--------------|
-| **M7** | Gewichtete Summe | **52.11** | **4.11** |
-| **C1** | Circular dependencies | **10.95** | **0.74** |
-| **C2** | Nesting depth | **47.27** | **1.67** |
-| **C3** | Long functions + complexity | **99.70** | **1.75** |
-| **C4** | Multi-responsibility modules | **73.81** | **7.44** |
-| **C5** | Magic numbers + global state | **40.60** | **0.95** |
-| **C6** | Missing abstractions / duplication | **50.26** | **14.23** |
-| **C7** | Confusing control flow | **64.81** | **7.28** |
-| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **10653** / **793** / **186** / **16** |
+| **M7** | Gewichtete Summe | **51.71** | **4.05** |
+| **C1** | Circular dependencies | **10.66** | **0.74** |
+| **C2** | Nesting depth | **47.27** | **1.65** |
+| **C3** | Long functions + complexity | **99.60** | **1.65** |
+| **C4** | Multi-responsibility modules | **73.55** | **7.39** |
+| **C5** | Magic numbers + global state | **40.45** | **0.92** |
+| **C6** | Missing abstractions / duplication | **48.25** | **14.10** |
+| **C7** | Confusing control flow | **64.74** | **7.18** |
+| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **10748** / **794** / **177** / **16** |
 
 **Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
 
@@ -148,7 +152,10 @@ Each **open** row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-set
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
-| **DS-013** | **C4 · C5 · C7 ·** AI-stack story-runtime long-callable pass | `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py`, `ai_stack/story_runtime/player_action_resolution.py`, `ai_stack/story_runtime/semantic_planner/semantic_scene_plan/enrichment.py`, `ai_stack/story_runtime/narrative/*`, `story_runtime_core/branching/branch_timeline.py` | Top offenders include `run_visible_render` **340L**, `resolve_player_action` **314L**, `build_semantic_scene_plan_enrichment` **297L**, `derive_symbolic_object_resonance` **270L**, and `build_branch_timeline_snapshot` depth **8**. | Extract render/action/enrichment and branching decision phases behind stable wrappers; move constants out of narrative policy bodies where behavior is stable. | Avoid overlap with W5/narrator behavior changes; run focused `ai_stack` story-runtime and `story_runtime_core` branching suites. |
+| **DS-017** | **C4 · C6 · C7 ·** AI-stack telemetry and narrative readout surfaces | `ai_stack/telemetry/actor_survival_telemetry.py`, `ai_stack/story_runtime/player_narrative_cards.py`, `ai_stack/story_runtime/narrative/meta_narrative_awareness_engine.py`, `ai_stack/story_runtime/narrative_runtime_agent.py` | Top-longest anchors: `_build_vitality_telemetry_v1` **243L**, `build_player_facing_narrative_cards` **221L** / depth **6**, `derive_meta_narrative_awareness` **214L**, `stream_narrator_blocks` **200L**. | Split telemetry normalization, card assembly, awareness derivation, and streaming sections into named helpers while preserving public wrappers and projection contracts. | Collides with narrator/W5 projection and visible narrative contract work; avoid changing committed output or actor-tracking semantics. |
+| **DS-018** | **C4 · C7 ·** World-engine story turn API / WebSocket execution seam | `world-engine/app/api/story_ws.py`, `world-engine/app/api/http_routes/story_turn_routes.py`, `world-engine/app/story_runtime/manager/turn_execution.py` | Top-longest anchors: `story_session_stream` **229L**, `execute_story_turn` **225L**, `_execute_turn_locked` **214L**; nesting tail: `_run_autonomous_followup_after_turn` **181L** / depth **6**. | Extract request parsing, turn execution orchestration, diagnostics/readout assembly, and streaming follow-up phases behind stable route registrations. | High route/runtime blast radius; coordinate with diagnostics-envelope and MVP03/MVP04 gates before parallel HTTP route work. |
+| **DS-019** | **C4 · C5 · C6 · C7 ·** Runtime policy, autonomous tick, and builder registries | `ai_stack/module_runtime_policy.py`, `ai_stack/story_runtime/autonomous_tick.py`, `ai_stack/story_runtime/story_runtime_playability.py`, `ai_stack/story_runtime/off_stage_updates.py`, `story_runtime_core/branching/phase5_scenario_definitions.py` | Top-longest anchors: `load_module_runtime_policy` **224L**, `evaluate_autonomous_tick` **222L**, `build_scenario_c_registry` **213L**, `build_rewrite_instruction` **212L**, `commit_off_stage_update_candidates` **202L**; covers remaining C5 magic-int/global-state pressure. | Promote named policy tables, candidate phases, scenario sections, and instruction builders so constants and duplicated assembly logic are not hidden inside one callable. | Touches behavior-sensitive policy/prompt output; run focused playability, autonomous tick, off-stage update, and branching tests and compare committed-output snapshots. |
+| **DS-020** | **C7 · C6 ·** Nesting-only tail cleanup after long-callable waves | `story_runtime_core/branching/branch_timeline.py`, `ai_stack/contracts/visible_narrative_contract.py`, `ai_stack/langgraph/langgraph_synthetic_action_resolution.py`, `ai_stack/quality_lab/pattern_interpreter.py` | Top-nesting anchors: `_snapshot_event_state` depth **8**, `_field_values` depth **7**, `finalize_visible_scene_blocks` depth **6**, `build_synthetic_generation_for_action_resolution` depth **6**; mostly below top-longest threshold except contract/langgraph helpers. | Keep callable size stable but flatten nested decision trees into classified predicates, small result builders, and named branch phases. | Do not merge with DS-017/DS-019 unless one owner controls shared AI-stack tests; contract and branching outputs must stay byte/semantic compatible. |
 
 ### Closed (archived)
 
@@ -163,7 +170,10 @@ Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in 
 
 | Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
 |------------------|----------|-------------|----------------------|----------------------------|
-| **1** | **DS-013** | Refactor AI-stack story-runtime long-callable surfaces after backend duplicate, route vocabulary, world-engine readout, and tooling fixture splits settled. | `ai_stack` | Follows DS-015, DS-012, DS-014, and DS-016 closures; gates: focused `ai_stack` story-runtime suites and `story_runtime_core` branching tests. |
+| **1a** | **DS-018** | Stabilise the world-engine turn API/WS seam before more runtime-manager edits. | `world_engine` | Parallel-eligible with **1b** because hot files are package-separated; gates should include world-engine story API/WS tests plus MVP03/MVP04 diagnostics gates. |
+| **1b** | **DS-017** | Split AI-stack telemetry and narrative readout builders that feed player/narrator surfaces. | `ai_stack` | Parallel-eligible with **1a** if no route files are touched; gates should include narrator projection, visible narrative, actor-tracking/W5, and narrative runtime tests. |
+| **2** | **DS-019** | Tackle policy/autonomous/off-stage builders after the narrative readout seams are explicit. | `ai_stack` | Soft dependency on **DS-017** for shared story-runtime tests; add focused playability, autonomous tick, off-stage update, and branching registry checks. |
+| **3** | **DS-020** | Clean the remaining C7 nesting tails once the larger builder seams stop moving. | `ai_stack` | Keep as a flattening-only pass; gates should include branch timeline, visible narrative contract, langgraph synthetic action resolution, and quality-lab pattern interpreter tests. |
 
 ### Closed phases (archived)
 

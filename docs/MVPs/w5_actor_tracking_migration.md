@@ -690,6 +690,77 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 **Next step:** Phase 6B-5F fresh inventory pass after strict-on default + Phase 6B-5E flag policy are stable.
 
+---
+
+### Phase 6B-6A — Narrator diagnostics flag retirement ADR + dependency audit (complete)
+
+**Goal:** Create the ADR and dependency audit for retiring `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED`. No code removed in this phase.
+
+**ADR:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) — Retire Narrator Legacy Transition Compatibility Diagnostics Flag (Proposed).
+
+**Summary:**
+
+- ADR-0066 documents why `_legacy_compat["transition_from_previous"]` is no longer part of default strict-on `source_facts`, what W5 diagnostics replace it, and the exact removal plan for Phase 6B-6B.
+- Full dependency audit completed (§Dependency Audit in ADR-0066): 6 symbol/env-var patterns across 9 source files + 4 test files + 3 doc files classified.
+- Operator/deployment preconditions documented: `.env` and `docker-compose` are clear; cloud/staging/CI audit required before 6B-6B.
+- No runtime code changed. All existing gates remain green.
+
+**What Phase 6B-6A does NOT do:**
+
+- Does not remove the flag resolver.
+- Does not remove the `_legacy_compat` insertion branch.
+- Does not remove explicit strict opt-out.
+- Does not remove the malformed-W5 safety fallback.
+
+**Constraints met:**
+
+- ADR-0033, ADR-0061, ADR-0063, ADR-0065, Actor Lane, Commit/Readiness, `validation_outcome`, Canonical Path, and W5 validation semantics unchanged.
+- How remains first-class. Inferred Why remains soft truth.
+
+**Next step:** ~~Phase 6B-6B actual flag removal~~ — **complete**, see below.
+
+---
+
+### Phase 6B-6B — Narrator diagnostics flag removal (complete, 2026-05-23)
+
+**Goal:** Execute all removals specified in ADR-0066 §Rollout Plan.
+
+**ADR:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) — status updated to **Accepted**.
+
+**Summary:**
+
+**Preflight result:** Flag absent from all repo-managed env/CI config. Live/staging config not in repo (default-off semantics make this low-risk). No Langfuse dashboard dependencies found.
+
+**Inventory gate fix:** `.worktrees/phase-6b5f/` contained stale historical references. `scripts/inventory_w5_legacy_consumers.py` updated to exclude `.worktrees/`, `.claude/worktrees/`, and `.state_tmp/` as auxiliary workspaces. `tests/test_inventory_w5_legacy_consumers.py` now asserts these exclusions.
+
+**Runtime removals:**
+- Deleted `w5_ast_narrator_legacy_compat_diagnostics_enabled()` from `ai_stack/actor_tracking/diagnostics.py`
+- Removed `narrator_legacy_compat_diagnostics` key from `w5_projection_flag_states()`
+- Removed export from `ai_stack/actor_tracking/__init__.py`
+- Removed import and `_legacy_compat` insertion branch from `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py`
+- Removed `legacy_compat_diag` variable and `w5.narrator_legacy_compat_diagnostics_enabled` key from `world-engine/app/story_runtime/manager/diagnostics_api.py`
+- Simplified `w5.legacy_transition_parity` to two-value enum: `"legacy_compat_visible"` / `"removed_by_6b5e_policy"`
+- Removed import from `external_imports_core.py` and `_imports_00.py`
+- Updated narrator output prompt: removed `_legacy_compat` breadcrumb mention; strict-on now says `"absent under strict-on"`
+
+**Test removals:** Removed all `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` monkeypatch calls and flag-resolver assertions from 4 test files. Deleted `test_strict_on_with_diagnostics_flag_demotes_to_legacy_compat` and related opt-in tests.
+
+**Current strict-on source_facts shape:** `w5_projection` only. No `transition_from_previous`. No `_legacy_compat`.
+
+**Current strict-off source_facts shape:** `transition_from_previous` (first-class) + `w5_projection`. No `_legacy_compat`.
+
+**Constraints met:**
+- Explicit strict opt-out (`W5_AST_NARRATOR_STRICT_ENABLED=false`) unaffected.
+- Malformed-W5 safety fallback unaffected.
+- Public compatibility aliases, substrate writers/readers unaffected.
+- No committed events mutated.
+- ADR-0033, ADR-0061, ADR-0063, ADR-0065, Actor Lane, Commit/Readiness, `validation_outcome`, Canonical Path, W5 validation semantics unchanged.
+- How remains first-class. Inferred Why remains soft truth.
+
+**Next step:** Phase 6B — Legacy localization decommission (see below).
+
+---
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.

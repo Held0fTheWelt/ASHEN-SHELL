@@ -48,7 +48,6 @@ W5_FLAGS = (
     "W5_AST_VALIDATION_ENABLED",
     "W5_AST_FRONTEND_PLAYER_VIEW_ENABLED",
     "W5_AST_NARRATOR_STRICT_ENABLED",
-    "W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED",
 )
 
 
@@ -138,9 +137,8 @@ class TestF18NarratorPromptStrictMigration:
         assert (
             "source_facts.transition_from_previous.directed_transition" not in prompt
         )
-        # The legacy_compat namespace is mentioned only as a non-authoritative
-        # debug breadcrumb; it must not be promoted as primary authority.
-        assert "non-authoritative" in prompt
+        # Phase 6B-6B: _legacy_compat retired; prompt now says the field is absent.
+        assert "absent under strict-on" in prompt
         # The prompt instructs the narrator to disregard transition_from_previous.
         assert "Do not consult source_facts.transition_from_previous" in prompt
 
@@ -313,13 +311,12 @@ class TestF20AdminParityBridge:
         # Legacy compat parity surface is visible for operator correlation.
         assert meta["w5.legacy_transition_parity"] == "legacy_compat_visible"
 
-    def test_strict_on_default_reports_removed_by_6b5e_policy(
+    def test_strict_on_reports_removed_by_6b5e_policy(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-5E default: strict-on + diagnostics flag OFF removes the
-        legacy_compat breadcrumb and reports ``removed_by_6b5e_policy``."""
+        """Phase 6B-6B: strict-on always emits ``removed_by_6b5e_policy``.
+        The ``narrator_legacy_compat_diagnostics_enabled`` key is retired (ADR-0066)."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
         session = _make_admin_session()
         harness = _AdminParityManagerHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)
@@ -327,23 +324,7 @@ class TestF20AdminParityBridge:
         assert meta["w5.location_changed_source"] == "w5_history_projection"
         assert meta["w5.narrator_strict_enabled"] is True
         assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
-        assert meta["w5.narrator_legacy_compat_diagnostics_enabled"] is False
-
-    def test_strict_on_with_diagnostics_flag_demotes_legacy_parity_label(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E opt-in: strict-on + diagnostics flag ON preserves
-        ``demoted_to_legacy_compat`` parity label for operator audits."""
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
-        session = _make_admin_session()
-        harness = _AdminParityManagerHarness(session)
-        meta = harness.get_w5_langfuse_metadata(session.session_id)
-        assert meta["w5.location_changed_this_turn"] is True
-        assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
-        assert meta["w5.legacy_transition_parity"] == "demoted_to_legacy_compat"
-        assert meta["w5.narrator_legacy_compat_diagnostics_enabled"] is True
+        assert "w5.narrator_legacy_compat_diagnostics_enabled" not in meta
 
     def test_strict_on_does_not_read_transition_from_previous_for_location_changed(
         self, monkeypatch: pytest.MonkeyPatch

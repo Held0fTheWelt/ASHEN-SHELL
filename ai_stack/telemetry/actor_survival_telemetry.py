@@ -262,36 +262,34 @@ def _build_npc_initiative_realization_v1(
     )
 
 
-def _build_vitality_telemetry_v1(
+def _resolve_selected_primary_responder_id(
     state: dict[str, Any],
-    *,
-    generation_ok: bool,
-    validation_ok: bool,
-    commit_applied: bool,
-    fallback_taken: bool,
-) -> dict[str, Any]:
-    responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
-
+    responders: list[Any],
+) -> str:
     selected_primary_responder_id = _clean_text(state.get("responder_id"))
-    if not selected_primary_responder_id:
-        for row in responders:
-            if not isinstance(row, dict):
-                continue
-            role = _clean_text(row.get("role")).lower()
-            actor_id = _clean_text(row.get("actor_id") or row.get("responder_id"))
-            if actor_id and role in {"primary_responder", "primary"}:
-                selected_primary_responder_id = actor_id
-                break
-        if not selected_primary_responder_id:
-            for row in responders:
-                if not isinstance(row, dict):
-                    continue
-                actor_id = _clean_text(row.get("actor_id") or row.get("responder_id"))
-                if actor_id:
-                    selected_primary_responder_id = actor_id
-                    break
+    if selected_primary_responder_id:
+        return selected_primary_responder_id
+    for row in responders:
+        if not isinstance(row, dict):
+            continue
+        role = _clean_text(row.get("role")).lower()
+        actor_id = _clean_text(row.get("actor_id") or row.get("responder_id"))
+        if actor_id and role in {"primary_responder", "primary"}:
+            return actor_id
+    for row in responders:
+        if not isinstance(row, dict):
+            continue
+        actor_id = _clean_text(row.get("actor_id") or row.get("responder_id"))
+        if actor_id:
+            return actor_id
+    return ""
 
-    selected_secondary_responder_ids = _dedupe_strings(
+
+def _selected_secondary_responder_ids(
+    state: dict[str, Any],
+    responders: list[Any],
+) -> list[str]:
+    return _dedupe_strings(
         [
             _clean_text(row.get("actor_id") or row.get("responder_id"))
             for row in responders
@@ -304,6 +302,10 @@ def _build_vitality_telemetry_v1(
         ]
     )
 
+
+def _generated_and_validated_lane_rows(
+    state: dict[str, Any],
+) -> tuple[list[dict[str, Any]], ...]:
     generation = state.get("generation") if isinstance(state.get("generation"), dict) else {}
     generation_meta = generation.get("metadata") if isinstance(generation.get("metadata"), dict) else {}
     validated_structured = (
@@ -311,22 +313,26 @@ def _build_vitality_telemetry_v1(
         if isinstance(generation_meta.get("structured_output"), dict)
         else {}
     )
-
     generated_spoken_rows = _coerce_dict_rows(state.get("spoken_lines"))
     generated_action_rows = _coerce_dict_rows(state.get("action_lines"))
     generated_initiative_rows = _coerce_dict_rows(state.get("initiative_events"))
-
     if not generated_spoken_rows:
         generated_spoken_rows = _coerce_dict_rows(validated_structured.get("spoken_lines"))
     if not generated_action_rows:
         generated_action_rows = _coerce_dict_rows(validated_structured.get("action_lines"))
     if not generated_initiative_rows:
         generated_initiative_rows = _coerce_dict_rows(validated_structured.get("initiative_events"))
+    return (
+        generated_spoken_rows,
+        generated_action_rows,
+        generated_initiative_rows,
+        _coerce_dict_rows(validated_structured.get("spoken_lines")),
+        _coerce_dict_rows(validated_structured.get("action_lines")),
+        _coerce_dict_rows(validated_structured.get("initiative_events")),
+    )
 
-    validated_spoken_rows = _coerce_dict_rows(validated_structured.get("spoken_lines"))
-    validated_action_rows = _coerce_dict_rows(validated_structured.get("action_lines"))
-    validated_initiative_rows = _coerce_dict_rows(validated_structured.get("initiative_events"))
 
+def _rendered_visible_rows(state: dict[str, Any]) -> tuple[list[Any], list[Any]]:
     visible_bundle = state.get("visible_output_bundle") if isinstance(state.get("visible_output_bundle"), dict) else {}
     rendered_spoken_lines = (
         list(visible_bundle.get("spoken_lines"))
@@ -338,6 +344,71 @@ def _build_vitality_telemetry_v1(
         if isinstance(visible_bundle.get("action_lines"), list)
         else []
     )
+    return rendered_spoken_lines, rendered_action_lines
+
+
+def _reaction_order_divergence(
+    *,
+    preferred_reaction_order_ids: list[str],
+    selected_secondary_responder_ids: list[str],
+    realized_actor_order: list[str],
+    response_present: bool,
+) -> str | None:
+    if not preferred_reaction_order_ids:
+        return None
+    secondary_not_realized = [
+        actor_id for actor_id in selected_secondary_responder_ids
+        if actor_id not in realized_actor_order
+    ]
+    if secondary_not_realized and response_present:
+        return "secondary_responder_nominated_not_realized_in_output"
+    if len(preferred_reaction_order_ids) > 1 and len(realized_actor_order) == 1:
+        return "single_actor_only"
+    if realized_actor_order and realized_actor_order != preferred_reaction_order_ids:
+        return "realized_order_differs"
+    if not realized_actor_order and response_present is False:
+        return "no_response_with_preferred_order"
+    return None
+
+
+def _vitality_quality_flags(
+    *,
+    state: dict[str, Any],
+    validation_ok: bool,
+    commit_applied: bool,
+    fallback_taken: bool,
+) -> tuple[str, list[str], bool, bool, bool]:
+    quality_class = _clean_text(state.get("quality_class")) or "healthy"
+    degradation_signals = _dedupe_strings([str(signal) for signal in (state.get("degradation_signals") or [])])
+    fallback_used = bool(fallback_taken or DEGRADATION_SIGNAL_FALLBACK_USED in degradation_signals)
+    degraded_commit = bool(
+        DEGRADATION_SIGNAL_DEGRADED_COMMIT in degradation_signals
+        or (validation_ok and not commit_applied)
+    )
+    retry_exhausted = bool(DEGRADATION_SIGNAL_RETRY_EXHAUSTED in degradation_signals)
+    return quality_class, degradation_signals, fallback_used, degraded_commit, retry_exhausted
+
+
+def _build_vitality_telemetry_v1(
+    state: dict[str, Any],
+    *,
+    generation_ok: bool,
+    validation_ok: bool,
+    commit_applied: bool,
+    fallback_taken: bool,
+) -> dict[str, Any]:
+    responders = state.get("selected_responder_set") if isinstance(state.get("selected_responder_set"), list) else []
+    selected_primary_responder_id = _resolve_selected_primary_responder_id(state, responders)
+    selected_secondary_responder_ids = _selected_secondary_responder_ids(state, responders)
+    (
+        generated_spoken_rows,
+        generated_action_rows,
+        generated_initiative_rows,
+        validated_spoken_rows,
+        validated_action_rows,
+        validated_initiative_rows,
+    ) = _generated_and_validated_lane_rows(state)
+    rendered_spoken_lines, rendered_action_lines = _rendered_visible_rows(state)
 
     generated_actor_ids = _collect_actor_ids_from_rows(
         generated_spoken_rows + generated_action_rows,
@@ -381,15 +452,18 @@ def _build_vitality_telemetry_v1(
     compressed_applied = pacing_mode == "compressed" or silence_mode == "brief"
     prior_tension_present = _has_prior_tension(state)
 
-    quality_class = _clean_text(state.get("quality_class")) or "healthy"
-    degradation_signals = _dedupe_strings([str(signal) for signal in (state.get("degradation_signals") or [])])
-
-    fallback_used = bool(fallback_taken or DEGRADATION_SIGNAL_FALLBACK_USED in degradation_signals)
-    degraded_commit = bool(
-        DEGRADATION_SIGNAL_DEGRADED_COMMIT in degradation_signals
-        or (validation_ok and not commit_applied)
+    (
+        quality_class,
+        degradation_signals,
+        fallback_used,
+        degraded_commit,
+        retry_exhausted,
+    ) = _vitality_quality_flags(
+        state=state,
+        validation_ok=validation_ok,
+        commit_applied=commit_applied,
+        fallback_taken=fallback_taken,
     )
-    retry_exhausted = bool(DEGRADATION_SIGNAL_RETRY_EXHAUSTED in degradation_signals)
 
     rendered_spoken_line_count = len([line for line in rendered_spoken_lines if _clean_text(line)])
     rendered_action_line_count = len([line for line in rendered_action_lines if _clean_text(line)])
@@ -414,26 +488,12 @@ def _build_vitality_telemetry_v1(
     )
     realized_actor_order = _dedupe_strings(realized_spoken_order + realized_action_order)
 
-    # C2: Compute reaction order divergence with multiple reasons
-    reaction_order_divergence: str | None = None
-
-    if preferred_reaction_order_ids:
-        # Check if secondary responders were nominated but not realized (priority 1)
-        secondary_not_realized = [
-            actor_id for actor_id in selected_secondary_responder_ids
-            if actor_id not in realized_actor_order
-        ]
-        if secondary_not_realized and response_present:
-            reaction_order_divergence = "secondary_responder_nominated_not_realized_in_output"
-        # Check if only single actor realized when multiple preferred (priority 2)
-        elif len(preferred_reaction_order_ids) > 1 and len(realized_actor_order) == 1:
-            reaction_order_divergence = "single_actor_only"
-        # Check if order differs (priority 3)
-        elif realized_actor_order and realized_actor_order != preferred_reaction_order_ids:
-            reaction_order_divergence = "realized_order_differs"
-        # No response at all (priority 4)
-        elif preferred_reaction_order_ids and not realized_actor_order and response_present is False:
-            reaction_order_divergence = "no_response_with_preferred_order"
+    reaction_order_divergence = _reaction_order_divergence(
+        preferred_reaction_order_ids=preferred_reaction_order_ids,
+        selected_secondary_responder_ids=selected_secondary_responder_ids,
+        realized_actor_order=realized_actor_order,
+        response_present=response_present,
+    )
 
     sparse_input_detected = _is_sparse_input(state)
     sparse_input_recovery_applied = bool(

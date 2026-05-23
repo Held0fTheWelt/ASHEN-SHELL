@@ -101,6 +101,37 @@ def test_no_forbidden_package_references(inventory_module) -> None:
     )
 
 
+def test_stale_worktrees_excluded_from_scan(inventory_module) -> None:
+    """Phase 6B-6A.5: .worktrees/ and .claude/worktrees/ are auxiliary git
+    workspaces, not active source. The scanner must exclude them so stale
+    historical symbols in those directories do not trigger forbidden-import or
+    old-name violations against the active tree."""
+    report = inventory_module.scan(REPO_ROOT)
+    worktree_findings = [
+        f for f in report.findings
+        if f.path.startswith(".worktrees/") or f.path.startswith(".claude/worktrees/")
+    ]
+    assert not worktree_findings, (
+        "Stale worktree paths must be excluded from the active-source scan: "
+        + ", ".join(f"{f.path}:{f.line}" for f in worktree_findings[:5])
+    )
+
+
+def test_state_tmp_excluded_from_scan(inventory_module) -> None:
+    """Phase 6B-6A.5: .state_tmp/ is a scratch/backup workspace, not active
+    source. Excluding it prevents stale manager snapshots from triggering
+    violations."""
+    report = inventory_module.scan(REPO_ROOT)
+    state_tmp_findings = [
+        f for f in report.findings
+        if f.path.startswith(".state_tmp/")
+    ]
+    assert not state_tmp_findings, (
+        ".state_tmp/ must be excluded from the active-source scan: "
+        + ", ".join(f"{f.path}:{f.line}" for f in state_tmp_findings[:5])
+    )
+
+
 def test_main_returns_zero_and_emits_json(inventory_module) -> None:
     buffer = io.StringIO()
     saved_argv = sys.argv[:]

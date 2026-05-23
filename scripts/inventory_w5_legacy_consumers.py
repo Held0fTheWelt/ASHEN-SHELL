@@ -58,6 +58,17 @@ LEGACY_SURFACES: list[tuple[str, str]] = [
     ("validate_w5_actor_tracking_new", r"\bvalidate_w5_actor_tracking\b"),
     ("w5_actor_situation_validation_old", r"\bw5_actor_situation_validation\b"),
     ("w5_actor_tracking_validation_new", r"\bw5_actor_tracking_validation\b"),
+    # Phase 6B-6A — diagnostics flag retirement surface.
+    # These symbols are slated for removal in Phase 6B-6B (ADR-0066).
+    # The scanner reports all occurrences so the retirement audit can verify
+    # that every reference is addressed before Phase 6B-6B begins.
+    ("narrator_legacy_compat_diag_flag", r"W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED"),
+    ("narrator_legacy_compat_diag_fn", r"\bw5_ast_narrator_legacy_compat_diagnostics_enabled\b"),
+    ("narrator_legacy_compat_diag_key", r"\bnarrator_legacy_compat_diagnostics\b"),
+    ("legacy_compat_transition_write", r'_legacy_compat\[.transition_from_previous.\]'),
+    ("demoted_to_legacy_compat", r"\bdemoted_to_legacy_compat\b"),
+    ("removed_by_6b5e_policy", r"\bremoved_by_6b5e_policy\b"),
+    ("legacy_transition_parity", r"\blegacy_transition_parity\b"),
 ]
 
 
@@ -88,6 +99,14 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "validate_w5_actor_tracking_new": "current — Phase 6B-0 R1 rename target",
     "w5_actor_situation_validation_old": "D/historical — old failure_class string (R2 in 6B-0)",
     "w5_actor_tracking_validation_new": "current — Phase 6B-0 R2 rename target",
+    # Phase 6B-6A diagnostics flag retirement surfaces
+    "narrator_legacy_compat_diag_flag": "pending_retirement_6b6b — env-var name; resolved by w5_ast_narrator_legacy_compat_diagnostics_enabled(). ADR-0066.",
+    "narrator_legacy_compat_diag_fn": "pending_retirement_6b6b — Python function + public export in ai_stack.actor_tracking. ADR-0066.",
+    "narrator_legacy_compat_diag_key": "pending_retirement_6b6b — key in w5_projection_flag_states() + admin metadata. ADR-0066.",
+    "legacy_compat_transition_write": "pending_retirement_6b6b — _legacy_compat insertion branch in god_of_carnage_narrator_path._block(). ADR-0066.",
+    "demoted_to_legacy_compat": "pending_retirement_6b6b — w5.legacy_transition_parity value emitted only when diag flag on. Disappears after 6B-6B. ADR-0066.",
+    "removed_by_6b5e_policy": "keep_two_value_after_6b6b — w5.legacy_transition_parity value for default strict-on. Retained in simplified two-value form.",
+    "legacy_transition_parity": "keep_two_value_after_6b6b — w5.legacy_transition_parity admin metadata key; simplified to two values after 6B-6B.",
 }
 
 
@@ -195,6 +214,36 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "in 6B-0)"
     ),
     "w5_actor_tracking_validation_new": "current — Phase 6B-0 R2 rename target",
+    # Phase 6B-6A diagnostics flag retirement surfaces — classified for completeness.
+    # Authoritative removal plan: ADR-0066.
+    "narrator_legacy_compat_diag_flag": (
+        "needs_dedicated_adr_before_removal — runtime_flag_resolver; "
+        "ADR-0066 Proposed (Phase 6B-6A). Remove in Phase 6B-6B."
+    ),
+    "narrator_legacy_compat_diag_fn": (
+        "needs_dedicated_adr_before_removal — runtime_flag_resolver + "
+        "public export; ADR-0066 Proposed."
+    ),
+    "narrator_legacy_compat_diag_key": (
+        "needs_dedicated_adr_before_removal — diagnostics_metadata key in "
+        "w5_projection_flag_states(); ADR-0066 Proposed."
+    ),
+    "legacy_compat_transition_write": (
+        "needs_dedicated_adr_before_removal — runtime_branch in "
+        "god_of_carnage_narrator_path._block(); ADR-0066 Proposed."
+    ),
+    "demoted_to_legacy_compat": (
+        "needs_dedicated_adr_before_removal — admin_view parity label value; "
+        "disappears after Phase 6B-6B. ADR-0066 Proposed."
+    ),
+    "removed_by_6b5e_policy": (
+        "w5_first_migrated_keep_temporarily — admin_view parity label; "
+        "retained as two-value enum after 6B-6B."
+    ),
+    "legacy_transition_parity": (
+        "w5_first_migrated_keep_temporarily — admin metadata key; "
+        "simplified to two values in 6B-6B but key kept."
+    ),
 }
 
 
@@ -239,6 +288,11 @@ EXCLUDED_PATH_FRAGMENTS: tuple[str, ...] = (
     "'fy'-suites/despaghettify/",
     "tests/reports/",
     "world-engine/app/story_runtime/manager/_legacy_sources/",
+    # Stale git worktrees are auxiliary workspaces, not active source.
+    # Their content may reference historical symbols removed in the main tree.
+    ".worktrees/",
+    ".claude/worktrees/",
+    ".state_tmp/",
 )
 
 # Filename patterns to exclude
@@ -386,6 +440,22 @@ def _format_human(report: ScanReport) -> str:
     out.append(
         "matrix in the inventory doc for the full reachability proof."
     )
+    out.append("")
+    out.append("Phase 6B-6A diagnostics flag retirement surface (informational; authoritative")
+    out.append("removal plan in docs/ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md):")
+    _6b6a_keys = (
+        "narrator_legacy_compat_diag_flag",
+        "narrator_legacy_compat_diag_fn",
+        "narrator_legacy_compat_diag_key",
+        "legacy_compat_transition_write",
+        "demoted_to_legacy_compat",
+        "removed_by_6b5e_policy",
+        "legacy_transition_parity",
+    )
+    for key in _6b6a_keys:
+        count = sum(1 for f in report.findings if f.surface == key)
+        label = PHASE_6B4_CLASSIFICATION.get(key, "—")
+        out.append(f"  {key:48s} {count:3d}  {label[:60]}")
     out.append("")
     forbidden_keys = (
         "forbidden_ai_stack_actor_situation",

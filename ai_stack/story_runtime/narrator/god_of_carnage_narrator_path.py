@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import Any
 
 from ai_stack.actor_tracking import (
-    w5_ast_narrator_legacy_compat_diagnostics_enabled,
     w5_ast_narrator_strict_enabled,
 )
 from ai_stack.story_runtime.god_of_carnage.god_of_carnage_yaml_authority import (
@@ -381,29 +380,12 @@ def _block(
         previous_step=transition_previous_step,
         current_step=step,
     )
-    # Phase 6B-3B F8 / Phase 6B-5E: under W5_AST_NARRATOR_STRICT_ENABLED the
-    # W5 narrator projection is the actor-situation authority. Phase 6B-5E
-    # gates the _legacy_compat["transition_from_previous"] breadcrumb behind an
-    # opt-in diagnostics flag (W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED,
-    # default-off). When the flag is off (default), no _legacy_compat key is
-    # added to source_facts under strict-on. When the flag is on, the legacy
-    # transition payload is demoted as a non-authoritative diagnostic breadcrumb.
-    # Strict-off (explicit opt-out) keeps transition_from_previous first-class
-    # regardless of the diagnostics flag.
-    if w5_ast_narrator_strict_enabled():
-        if w5_ast_narrator_legacy_compat_diagnostics_enabled():
-            legacy_compat = source_facts.get("_legacy_compat")
-            if not isinstance(legacy_compat, dict):
-                legacy_compat = {}
-            legacy_compat["transition_from_previous"] = transition_payload
-            legacy_compat["authority"] = "w5_projection"
-            legacy_compat["notice"] = (
-                "non-authoritative; W5 narrator projection is the actor-situation authority"
-            )
-            source_facts["_legacy_compat"] = legacy_compat
-        # When diagnostics flag is off: no _legacy_compat key added.
-        # W5 projection alone carries actor-situation authority.
-    else:
+    # Phase 6B-3B F8 / Phase 6B-6B: under W5_AST_NARRATOR_STRICT_ENABLED (the
+    # permanent default since Phase 6B-5C), the W5 narrator projection is the
+    # sole actor-situation authority. No _legacy_compat key is added.
+    # Under explicit strict opt-out (W5_AST_NARRATOR_STRICT_ENABLED=false),
+    # transition_from_previous remains first-class for rollback compatibility.
+    if not w5_ast_narrator_strict_enabled():
         source_facts["transition_from_previous"] = transition_payload
     block = {
         "id": f"opening-narrator-path-{index}",

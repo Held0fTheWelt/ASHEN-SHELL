@@ -1,6 +1,6 @@
 {
   "kind": "despaghettify_check",
-  "generated_at_utc": "2026-05-23T09:10:16Z",
+  "generated_at_utc": "2026-05-23T12:06:16Z",
   "repo_root": "/mnt/d/WorldOfShadows",
   "archive_sync": {
     "changed": false,
@@ -9,130 +9,130 @@
     "message": "already normalized"
   },
   "ast": {
-    "total_functions": 10653,
-    "total_python_files": 1552,
-    "count_over_50_lines": 793,
-    "count_over_100_lines": 186,
+    "total_functions": 10840,
+    "total_python_files": 1553,
+    "count_over_50_lines": 803,
+    "count_over_100_lines": 164,
     "count_nesting_ge_3": 588,
-    "count_nesting_ge_4": 178,
-    "count_nesting_ge_5": 67,
-    "count_nesting_ge_6": 16,
-    "count_functions_magic_int_literals_ge_5": 101,
-    "count_functions_duplicate_name_across_files": 1516,
-    "count_functions_control_flow_heavy": 776,
+    "count_nesting_ge_4": 169,
+    "count_nesting_ge_5": 56,
+    "count_nesting_ge_6": 9,
+    "count_functions_magic_int_literals_ge_5": 96,
+    "count_functions_duplicate_name_across_files": 1512,
+    "count_functions_control_flow_heavy": 773,
     "c1_files_in_import_cycles_pct": 0.7421,
     "c1_import_graph_files": 539,
     "c1_files_in_cycles": 4,
     "top12_longest": [
       {
-        "name": "run_visible_render",
-        "lines": 340,
-        "nest_depth": 5,
-        "path": "ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py"
-      },
-      {
-        "name": "resolve_player_action",
-        "lines": 314,
-        "nest_depth": 3,
-        "path": "ai_stack/story_runtime/player_action_resolution.py"
-      },
-      {
-        "name": "build_semantic_scene_plan_enrichment",
-        "lines": 297,
+        "name": "build_responder_and_function",
+        "lines": 200,
         "nest_depth": 2,
-        "path": "ai_stack/story_runtime/semantic_planner/semantic_scene_plan/enrichment.py"
+        "path": "ai_stack/story_runtime/director/god_of_carnage_scene_director.py"
       },
       {
-        "name": "derive_symbolic_object_resonance",
-        "lines": 270,
+        "name": "derive_sensory_context",
+        "lines": 200,
         "nest_depth": 3,
-        "path": "ai_stack/story_runtime/narrative/symbolic_object_resonance_engine.py"
+        "path": "ai_stack/story_runtime/narrative/sensory_context_engine.py"
       },
       {
-        "name": "build_npc_agency_simulation",
-        "lines": 261,
-        "nest_depth": 5,
-        "path": "ai_stack/story_runtime/npc_agency/npc_agency_planner.py"
-      },
-      {
-        "name": "_build_vitality_telemetry_v1",
-        "lines": 243,
-        "nest_depth": 5,
-        "path": "ai_stack/telemetry/actor_survival_telemetry.py"
-      },
-      {
-        "name": "story_session_stream",
-        "lines": 229,
-        "nest_depth": 5,
-        "path": "world-engine/app/api/story_ws.py"
-      },
-      {
-        "name": "execute_story_turn",
-        "lines": 225,
+        "name": "select_branching_tree_node",
+        "lines": 198,
         "nest_depth": 4,
-        "path": "world-engine/app/api/http_routes/story_turn_routes.py"
+        "path": "world-engine/app/story_runtime/manager/branch_selection.py"
       },
       {
-        "name": "load_module_runtime_policy",
-        "lines": 224,
+        "name": "build_diagnostics_envelope",
+        "lines": 196,
         "nest_depth": 2,
-        "path": "ai_stack/module_runtime_policy.py"
+        "path": "ai_stack/telemetry/diagnostics_envelope.py"
       },
       {
-        "name": "evaluate_autonomous_tick",
-        "lines": 222,
+        "name": "derive_relationship_state",
+        "lines": 191,
         "nest_depth": 2,
-        "path": "ai_stack/story_runtime/autonomous_tick.py"
+        "path": "ai_stack/story_runtime/narrative/relationship_state_engine.py"
       },
       {
-        "name": "build_player_facing_narrative_cards",
-        "lines": 221,
-        "nest_depth": 6,
-        "path": "ai_stack/story_runtime/player_narrative_cards.py"
+        "name": "run_ldss",
+        "lines": 189,
+        "nest_depth": 4,
+        "path": "ai_stack/live_dramatic_scene_simulator.py"
       },
       {
-        "name": "_execute_turn_locked",
-        "lines": 214,
-        "nest_depth": 2,
-        "path": "world-engine/app/story_runtime/manager/turn_execution.py"
+        "name": "derive_turn_situation_from_runtime_context",
+        "lines": 189,
+        "nest_depth": 1,
+        "path": "ai_stack/capabilities/capability_selector.py"
+      },
+      {
+        "name": "create_story_session",
+        "lines": 185,
+        "nest_depth": 3,
+        "path": "world-engine/app/api/http_routes/story_session_lifecycle_routes.py"
+      },
+      {
+        "name": "_director_capability_manager_plan",
+        "lines": 185,
+        "nest_depth": 3,
+        "path": "ai_stack/story_runtime/semantic_planner/semantic_scene_plan/capability_plan.py"
+      },
+      {
+        "name": "build_branching_forecast",
+        "lines": 184,
+        "nest_depth": 1,
+        "path": "story_runtime_core/branching/forecast.py"
+      },
+      {
+        "name": "_ldss_opening_fallback_state",
+        "lines": 180,
+        "nest_depth": 3,
+        "path": "world-engine/app/story_runtime/manager/opening_fallback_observability.py"
+      },
+      {
+        "name": "compute_gathering_state",
+        "lines": 180,
+        "nest_depth": 4,
+        "path": "ai_stack/contracts/director_gathering_state_contracts.py"
       }
     ],
     "top6_nesting": [
       {
-        "name": "build_branch_timeline_snapshot",
-        "lines": 90,
-        "nest_depth": 8,
-        "path": "story_runtime_core/branching/branch_timeline.py"
-      },
-      {
-        "name": "_field_values",
-        "lines": 30,
-        "nest_depth": 7,
-        "path": "ai_stack/quality_lab/pattern_interpreter.py"
-      },
-      {
-        "name": "build_player_facing_narrative_cards",
-        "lines": 221,
+        "name": "resolve_runtime_readiness_with_adr0041",
+        "lines": 144,
         "nest_depth": 6,
-        "path": "ai_stack/story_runtime/player_narrative_cards.py"
+        "path": "ai_stack/story_runtime/runtime_readiness_consumer.py"
       },
       {
-        "name": "_run_autonomous_followup_after_turn",
-        "lines": 181,
+        "name": "derive_temporal_control",
+        "lines": 131,
         "nest_depth": 6,
-        "path": "world-engine/app/api/story_ws.py"
+        "path": "ai_stack/story_runtime/narrative/temporal_control_engine.py"
       },
       {
-        "name": "finalize_visible_scene_blocks",
-        "lines": 181,
+        "name": "build_repro_metadata_and_health",
+        "lines": 113,
         "nest_depth": 6,
-        "path": "ai_stack/contracts/visible_narrative_contract.py"
+        "path": "ai_stack/langgraph/langgraph_runtime_package_output_repro.py"
       },
       {
-        "name": "build_synthetic_generation_for_action_resolution",
-        "lines": 151,
+        "name": "build_local_context_transition",
+        "lines": 91,
         "nest_depth": 6,
-        "path": "ai_stack/langgraph/langgraph_synthetic_action_resolution.py"
+        "path": "ai_stack/contracts/narrator_consequence_contracts.py"
+      },
+      {
+        "name": "classify_adr0041_validation_authority_drift",
+        "lines": 73,
+        "nest_depth": 6,
+        "path": "ai_stack/story_runtime/runtime_aspect_ledger/authority_preview.py"
+      },
+      {
+        "name": "_extract_responses_text",
+        "lines": 72,
+        "nest_depth": 6,
+        "path": "story_runtime_core/adapters.py"
       }
     ],
     "ai_turn_executor": null
@@ -164,92 +164,92 @@
     "schema_version": 1,
     "source": "ast_heuristic_v2",
     "category_scores": {
-      "C1": 10.952,
-      "C2": 47.270757595695144,
-      "C3": 99.7010054143687,
-      "C4": 73.81292591049619,
-      "C5": 40.59710925077291,
-      "C6": 50.26169465014591,
-      "C7": 64.80565351933966
+      "C1": 10.248000000000001,
+      "C2": 30.232367392896897,
+      "C3": 99.40537826435279,
+      "C4": 73.64190727718864,
+      "C5": 40.50304900245375,
+      "C6": 45.40162423975194,
+      "C7": 64.61349587182931
     },
     "score": {
       "legend_de": "``trigger_v2`` = Heuristik v2 (0\u2026100, saturierend); **kein** Balkenvergleich, nur beratend. ``anteil_pct`` = operationaler Mess-Anteil in % (``literal_rates.condition_shares_pct``); **Balken** / ``M7_ref`` aus ``spaghetti-setup`` gelten **nur** hier. **C1** = Prozent der Dateien unter ``backend/app`` im Importgraph; **C2\u2013C7** = Prozent der gemessenen Funktionen. ``m7_trigger_v2`` / ``m7_anteil_pct_gewichtet``: gleiche ``weights``.",
       "categories": {
         "C1": {
-          "trigger_v2": 10.952,
+          "trigger_v2": 10.248,
           "anteil_pct": 0.7421
         },
         "C2": {
-          "trigger_v2": 47.2708,
-          "anteil_pct": 1.6709
+          "trigger_v2": 30.2324,
+          "anteil_pct": 1.559
         },
         "C3": {
-          "trigger_v2": 99.701,
-          "anteil_pct": 1.746
+          "trigger_v2": 99.4054,
+          "anteil_pct": 1.5129
         },
         "C4": {
-          "trigger_v2": 73.8129,
-          "anteil_pct": 7.4439
+          "trigger_v2": 73.6419,
+          "anteil_pct": 7.4077
         },
         "C5": {
-          "trigger_v2": 40.5971,
-          "anteil_pct": 0.9481
+          "trigger_v2": 40.503,
+          "anteil_pct": 0.8856
         },
         "C6": {
-          "trigger_v2": 50.2617,
-          "anteil_pct": 14.2307
+          "trigger_v2": 45.4016,
+          "anteil_pct": 13.9483
         },
         "C7": {
-          "trigger_v2": 64.8057,
-          "anteil_pct": 7.2843
+          "trigger_v2": 64.6135,
+          "anteil_pct": 7.131
         }
       },
-      "m7_trigger_v2": 52.1051,
-      "m7_anteil_pct_gewichtet": 4.1083
+      "m7_trigger_v2": 49.8762,
+      "m7_anteil_pct_gewichtet": 3.9968
     },
     "literal_rates": {
-      "total_functions_measured": 10653,
-      "total_python_files_measured": 1552,
-      "functions_over_100_lines_pct": 1.746,
-      "functions_over_50_lines_pct": 7.4439,
-      "functions_nesting_ge_6_pct": 0.1502,
-      "over_100_lines_among_over_50_lines_pct": 23.4552,
+      "total_functions_measured": 10840,
+      "total_python_files_measured": 1553,
+      "functions_over_100_lines_pct": 1.5129,
+      "functions_over_50_lines_pct": 7.4077,
+      "functions_nesting_ge_6_pct": 0.083,
+      "over_100_lines_among_over_50_lines_pct": 20.4234,
       "condition_shares_pct": {
         "C1": 0.7421,
-        "C2": 1.6709,
-        "C3": 1.746,
-        "C4": 7.4439,
-        "C5": 0.9481,
-        "C6": 14.2307,
-        "C7": 7.2843
+        "C2": 1.559,
+        "C3": 1.5129,
+        "C4": 7.4077,
+        "C5": 0.8856,
+        "C6": 13.9483,
+        "C7": 7.131
       },
       "c1_import_graph_files": 539,
       "c1_files_in_cycles": 4
     },
     "plain_language_de": {
       "C1": "Anteil der 539 analysierten Python-Dateien unter ``backend/app``, die in einem Importzyklus liegen (nur explizite ``app.*``-Kanten, v1): 0.74 % (4 Dateien).",
-      "C2": "Anteil der 10653 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.67 %.",
-      "C3": "Anteil der 10653 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.75 %.",
-      "C4": "Anteil der 10653 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.44 %.",
-      "C5": "Anteil der 10653 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.95 %.",
-      "C6": "Anteil der 10653 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 14.23 %.",
-      "C7": "Anteil der 10653 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 7.28 %."
+      "C2": "Anteil der 10840 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.56 %.",
+      "C3": "Anteil der 10840 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 1.51 %.",
+      "C4": "Anteil der 10840 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.41 %.",
+      "C5": "Anteil der 10840 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.89 %.",
+      "C6": "Anteil der 10840 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 13.95 %.",
+      "C7": "Anteil der 10840 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 7.13 %."
     },
     "metric_a": {
       "id": "share_weighted_m7",
       "description_de": "Gewichtetes Mittel der ``condition_shares_pct``; **Trigger-Policy**-Komposit (Vergleich mit ``M7_ref`` / Balken f\u00fcr **Anteil %**, nicht f\u00fcr ``m7`` Trigger).",
       "category_scores": {
         "C1": 0.7421,
-        "C2": 1.6709,
-        "C3": 1.746,
-        "C4": 7.4439,
-        "C5": 0.9481,
-        "C6": 14.2307,
-        "C7": 7.2843
+        "C2": 1.559,
+        "C3": 1.5129,
+        "C4": 7.4077,
+        "C5": 0.8856,
+        "C6": 13.9483,
+        "C7": 7.131
       },
-      "m7": 4.1083
+      "m7": 3.9968
     },
-    "m7": 52.1051,
+    "m7": 49.8762,
     "m7_ref": 4.24,
     "trigger_policy_basis": "anteil_pct",
     "trigger_bars": {

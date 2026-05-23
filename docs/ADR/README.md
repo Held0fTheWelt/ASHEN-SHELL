@@ -76,6 +76,7 @@ For the **record shape** (optional sections, testing expectations), see [`adr-te
 | [ADR-0063](adr-0063-w5-actor-tracking.md) | W5 actor tracking | Proposed |
 | [ADR-0064](adr-0064-python-314-unified-interpreter-standard.md) | Unified Python 3.14 interpreter standard | Accepted |
 | [ADR-0065](adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md) | W5 narrator strict mode becomes the default actor-situation surface | Proposed |
+| [ADR-0066](adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) | Retire narrator legacy transition compatibility diagnostics flag | Accepted |
 
 _Status values mirror each file's `## Status` line; update the table when an ADR's status changes._
 

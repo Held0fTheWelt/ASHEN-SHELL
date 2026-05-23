@@ -70,41 +70,12 @@ def w5_ast_narrator_strict_enabled() -> bool:
     return _flag_enabled("W5_AST_NARRATOR_STRICT_ENABLED")
 
 
-def w5_ast_narrator_legacy_compat_diagnostics_enabled() -> bool:
-    """Phase 6B-5E opt-in gate for the strict-on ``_legacy_compat`` breadcrumb.
-
-    Controls whether ``source_facts._legacy_compat["transition_from_previous"]``
-    is included in strict-on narrator blocks as a diagnostic/parity breadcrumb.
-
-    Semantics (opt-in, default-off, Phase 6B-5E):
-
-    - unset / empty / ``0/false/no/off`` → ``False`` (default). Under
-      strict-on, ``source_facts`` contains no ``_legacy_compat`` key. W5
-      narrator projection is the sole actor-situation authority surface.
-    - explicit ``1/true/yes/on`` → ``True`` (opt-in diagnostics). Under
-      strict-on, ``source_facts._legacy_compat["transition_from_previous"]``
-      is included as a non-authoritative diagnostic breadcrumb with
-      ``authority="w5_projection"`` and ``notice`` labelling it non-authoritative.
-
-    This flag has no effect under strict-off (``W5_AST_NARRATOR_STRICT_ENABLED``
-    = false): the legacy ``transition_from_previous`` block remains first-class
-    in that posture regardless of this flag.
-
-    The narrator prompt must not consult ``_legacy_compat`` fields under any
-    flag combination. How remains first-class. Inferred Why remains soft truth.
-    """
-
-    raw = (os.environ.get("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED") or "").strip().lower()
-    return raw in {"1", "true", "yes", "on"}
-
-
 def w5_projection_flag_states() -> dict[str, bool]:
     """Return current W5 feature-flag posture without mutating runtime config."""
 
     return {
         "narrator": _flag_enabled("W5_AST_NARRATOR_PROJECTION_ENABLED"),
         "narrator_strict": w5_ast_narrator_strict_enabled(),
-        "narrator_legacy_compat_diagnostics": w5_ast_narrator_legacy_compat_diagnostics_enabled(),
         "director": _flag_enabled("W5_AST_DIRECTOR_PROJECTION_ENABLED"),
         "npc": _flag_enabled("W5_AST_NPC_PROJECTION_ENABLED"),
         "player_shell": _flag_enabled("W5_AST_FRONTEND_PLAYER_VIEW_ENABLED"),
@@ -566,7 +537,6 @@ __all__ = [
     "build_w5_langfuse_metadata",
     "build_w5_runtime_metadata",
     "coerce_w5_snapshot",
-    "w5_ast_narrator_legacy_compat_diagnostics_enabled",
     "w5_ast_narrator_strict_enabled",
     "w5_projection_flag_states",
 ]

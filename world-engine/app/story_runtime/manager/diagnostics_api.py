@@ -115,17 +115,13 @@ class _DiagnosticsApiMixin:
         metadata["w5.narrator_strict_enabled"] = strict
         if location_changed_compute_failed:
             metadata["w5.location_changed_compute_failed"] = True
-        legacy_compat_diag = w5_ast_narrator_legacy_compat_diagnostics_enabled()
-        metadata["w5.narrator_legacy_compat_diagnostics_enabled"] = legacy_compat_diag
+        # Phase 6B-6B: two-value enum. Under strict-off, transition_from_previous
+        # remains first-class (rollback posture). Under strict-on (permanent
+        # default since 6B-5C), the _legacy_compat breadcrumb path has been
+        # removed (ADR-0066).
         if not strict:
-            # Under explicit opt-out, transition_from_previous remains first-class
-            # in narrator source_facts for rollback compatibility.
             metadata["w5.legacy_transition_parity"] = "legacy_compat_visible"
-        elif legacy_compat_diag:
-            # Strict-on + diagnostics flag on: _legacy_compat breadcrumb present.
-            metadata["w5.legacy_transition_parity"] = "demoted_to_legacy_compat"
         else:
-            # Strict-on + diagnostics flag off (default): no _legacy_compat.
             metadata["w5.legacy_transition_parity"] = "removed_by_6b5e_policy"
         return metadata
 

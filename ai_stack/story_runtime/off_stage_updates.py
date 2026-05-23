@@ -587,59 +587,72 @@ def _updated_axis_rows(
     return axis_rows
 
 
-def _commit_relationship_candidate(
+def _relationship_commit_rejection(reason: str, **extra: Any) -> dict[str, Any]:
+    result = {
+        "target": COMMIT_TARGET_RELATIONSHIP_STATE,
+        "committed": False,
+        "reason": reason,
+    }
+    result.update(extra)
+    return result
+
+
+def _relationship_commit_context(
     *,
     candidate: dict[str, Any],
     prior_record: dict[str, Any] | None,
-    turn_number: int | None,
-    module_runtime_policy: dict[str, Any] | None,
-) -> dict[str, Any]:
-    from ai_stack.story_runtime.narrative.relationship_state_engine import (
-        relationship_state_fingerprint,
-        validate_relationship_state_realization,
-    )
-
+) -> tuple[str, RelationshipStateRecord | None, int, Any, dict[str, Any] | None]:
     if not isinstance(prior_record, dict) or not prior_record:
-        return {
-            "target": COMMIT_TARGET_RELATIONSHIP_STATE,
-            "committed": False,
-            "reason": "relationship_state_missing",
-        }
+        return "", None, 0, None, _relationship_commit_rejection(
+            "relationship_state_missing"
+        )
     actor_id = _clean(candidate.get("actor_id"))
     if not actor_id:
-        return {
-            "target": COMMIT_TARGET_RELATIONSHIP_STATE,
-            "committed": False,
-            "reason": "candidate_actor_missing",
-        }
+        return "", None, 0, None, _relationship_commit_rejection(
+            "candidate_actor_missing"
+        )
     try:
         record = RelationshipStateRecord.model_validate(prior_record)
     except Exception as exc:  # noqa: BLE001
-        return {
-            "target": COMMIT_TARGET_RELATIONSHIP_STATE,
-            "committed": False,
-            "reason": "relationship_state_contract_rejected",
-            "detail": str(exc),
-        }
+        return "", None, 0, None, _relationship_commit_rejection(
+            "relationship_state_contract_rejected",
+            detail=str(exc),
+        )
     match = _relationship_pair_for_actor(record, actor_id)
     if match is None:
-        return {
-            "target": COMMIT_TARGET_RELATIONSHIP_STATE,
-            "committed": False,
-            "reason": "relationship_target_missing",
-        }
+        return actor_id, record, 0, None, _relationship_commit_rejection(
+            "relationship_target_missing"
+        )
     pair_index, pair = match
+    return actor_id, record, pair_index, pair, None
+
+
+def _relationship_commit_turn(
+    *,
+    turn_number: int | None,
+    record: RelationshipStateRecord,
+) -> int:
     try:
-        turn = max(0, int(turn_number or record.turn_number or 0))
+        return max(0, int(turn_number or record.turn_number or 0))
     except (TypeError, ValueError):
-        turn = record.turn_number
-    prior_fingerprint = relationship_state_fingerprint(record)
+        return record.turn_number
+
+
+def _candidate_score_value(candidate: dict[str, Any]) -> float | None:
     score = candidate.get("observed_motivation_score")
     try:
-        score_value = float(score) if score is not None else None
+        return float(score) if score is not None else None
     except (TypeError, ValueError):
-        score_value = None
-    tension_delta = 0.03 if score_value is not None and score_value >= 0.5 else 0.01
+        return None
+
+
+def _relationship_pair_rows_with_pressure(
+    *,
+    record: RelationshipStateRecord,
+    pair_index: int,
+    turn: int,
+    tension_delta: float,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     pair_rows = [row.model_dump(mode="json") for row in record.pair_states]
     pair_row = dict(pair_rows[pair_index])
     pair_row["tension_score"] = min(
@@ -657,13 +670,18 @@ def _commit_relationship_candidate(
         codes.append("npc_initiative_pressure")
     pair_row["last_transition_codes"] = codes[-8:]
     pair_rows[pair_index] = pair_row
+    return pair_rows, pair_row
 
-    evidence = RelationshipStateEvidenceRef(
-        source="off_stage_update_candidate",
-        field="observed_motivation_score",
-        value=score_value,
-    )
-    transition = RelationshipTransitionEvent(
+
+def _relationship_transition_for_candidate(
+    *,
+    candidate: dict[str, Any],
+    pair: Any,
+    turn: int,
+    tension_delta: float,
+    evidence: RelationshipStateEvidenceRef,
+) -> RelationshipTransitionEvent:
+    return RelationshipTransitionEvent(
         transition_id=f"off_stage:{candidate.get('candidate_id') or uuid.uuid4()}",
         turn_number=turn,
         relationship_id=pair.relationship_id,
@@ -672,6 +690,18 @@ def _commit_relationship_candidate(
         tension_delta=tension_delta,
         source_evidence=[evidence],
     )
+
+
+def _relationship_record_data_for_commit(
+    *,
+    record: RelationshipStateRecord,
+    pair: Any,
+    turn: int,
+    prior_fingerprint: str,
+    pair_rows: list[dict[str, Any]],
+    transition: RelationshipTransitionEvent,
+    evidence: RelationshipStateEvidenceRef,
+) -> dict[str, Any]:
     record_data = record.model_dump(mode="json")
     record_data["turn_number"] = turn
     record_data["prior_record_fingerprint"] = prior_fingerprint
@@ -695,17 +725,16 @@ def _commit_relationship_candidate(
     if "off_stage_relationship_candidate_committed" not in rationale:
         rationale.append("off_stage_relationship_candidate_committed")
     record_data["rationale_codes"] = rationale[-24:]
+    return record_data
 
-    try:
-        updated_record = RelationshipStateRecord.model_validate(record_data)
-    except Exception as exc:  # noqa: BLE001
-        return {
-            "target": COMMIT_TARGET_RELATIONSHIP_STATE,
-            "committed": False,
-            "reason": "relationship_state_contract_rejected",
-            "detail": str(exc),
-        }
-    target = RelationshipDynamicsTarget(
+
+def _relationship_dynamics_target_for_commit(
+    *,
+    pair: Any,
+    pair_row: dict[str, Any],
+    evidence: RelationshipStateEvidenceRef,
+) -> dict[str, Any]:
+    return RelationshipDynamicsTarget(
         schema_version=RELATIONSHIP_STATE_SCHEMA_VERSION,
         target_axis_ids=list(pair.axis_ids)[:4],
         target_relationship_ids=[pair.relationship_id],
@@ -715,6 +744,71 @@ def _commit_relationship_candidate(
         source_evidence=[evidence],
         rationale_codes=["off_stage_relationship_target"],
     ).to_runtime_dict()
+
+
+def _commit_relationship_candidate(
+    *,
+    candidate: dict[str, Any],
+    prior_record: dict[str, Any] | None,
+    turn_number: int | None,
+    module_runtime_policy: dict[str, Any] | None,
+) -> dict[str, Any]:
+    from ai_stack.story_runtime.narrative.relationship_state_engine import (
+        relationship_state_fingerprint,
+        validate_relationship_state_realization,
+    )
+
+    actor_id, record, pair_index, pair, rejection = _relationship_commit_context(
+        candidate=candidate,
+        prior_record=prior_record,
+    )
+    if rejection is not None:
+        return rejection
+    if record is None:
+        return _relationship_commit_rejection("relationship_state_missing")
+    turn = _relationship_commit_turn(turn_number=turn_number, record=record)
+    prior_fingerprint = relationship_state_fingerprint(record)
+    score_value = _candidate_score_value(candidate)
+    tension_delta = 0.03 if score_value is not None and score_value >= 0.5 else 0.01
+    pair_rows, pair_row = _relationship_pair_rows_with_pressure(
+        record=record,
+        pair_index=pair_index,
+        turn=turn,
+        tension_delta=tension_delta,
+    )
+    evidence = RelationshipStateEvidenceRef(
+        source="off_stage_update_candidate",
+        field="observed_motivation_score",
+        value=score_value,
+    )
+    transition = _relationship_transition_for_candidate(
+        candidate=candidate,
+        pair=pair,
+        turn=turn,
+        tension_delta=tension_delta,
+        evidence=evidence,
+    )
+    record_data = _relationship_record_data_for_commit(
+        record=record,
+        pair=pair,
+        turn=turn,
+        prior_fingerprint=prior_fingerprint,
+        pair_rows=pair_rows,
+        transition=transition,
+        evidence=evidence,
+    )
+    try:
+        updated_record = RelationshipStateRecord.model_validate(record_data)
+    except Exception as exc:  # noqa: BLE001
+        return _relationship_commit_rejection(
+            "relationship_state_contract_rejected",
+            detail=str(exc),
+        )
+    target = _relationship_dynamics_target_for_commit(
+        pair=pair,
+        pair_row=pair_row,
+        evidence=evidence,
+    )
     validation = validate_relationship_state_realization(
         relationship_state_record=updated_record.to_runtime_dict(),
         relationship_dynamics_target=target,
@@ -730,12 +824,10 @@ def _commit_relationship_candidate(
         module_runtime_policy=module_runtime_policy,
     )
     if validation.get("status") != "approved":
-        return {
-            "target": COMMIT_TARGET_RELATIONSHIP_STATE,
-            "committed": False,
-            "reason": "relationship_state_validation_rejected",
-            "validation": validation,
-        }
+        return _relationship_commit_rejection(
+            "relationship_state_validation_rejected",
+            validation=validation,
+        )
     return {
         "target": COMMIT_TARGET_RELATIONSHIP_STATE,
         "committed": True,
@@ -798,6 +890,224 @@ def _commit_memory_candidate(
     }
 
 
+def _off_stage_commit_base_audit(
+    *,
+    policy: dict[str, Any],
+    targets: list[tuple[str, dict[str, Any]]],
+) -> dict[str, Any]:
+    return {
+        "policy": policy,
+        "candidate_ids": [
+            target_candidate.get("candidate_id")
+            for _, target_candidate in targets
+            if target_candidate.get("candidate_id")
+        ],
+    }
+
+
+def _off_stage_result_invariants(candidate_result: dict[str, Any]) -> dict[str, bool]:
+    return {
+        "canonical_path_advanced": bool(candidate_result.get("canonical_path_advanced", False)),
+        "mandatory_beat_consumed": bool(candidate_result.get("mandatory_beat_consumed", False)),
+    }
+
+
+def _reject_all_targets(
+    *,
+    targets: list[tuple[str, dict[str, Any]]],
+    reason: str,
+) -> list[dict[str, Any]]:
+    return [_reject_target(target, reason, cand) for target, cand in targets]
+
+
+def _off_stage_preflight_rejection(
+    *,
+    candidate_result: dict[str, Any],
+    policy: dict[str, Any],
+    safety_gate: str | None,
+    targets: list[tuple[str, dict[str, Any]]],
+    attempted: bool,
+    base_audit: dict[str, Any],
+) -> dict[str, Any] | None:
+    invariants = _off_stage_result_invariants(candidate_result)
+    if not targets:
+        return _diagnostic_result(
+            attempted=False,
+            committed=False,
+            reason="no_off_stage_candidate",
+            safety_gate_result=safety_gate,
+            audit=base_audit,
+            **invariants,
+        )
+    if not policy.get("auto_commit_enabled"):
+        return _diagnostic_result(
+            attempted=attempted,
+            committed=False,
+            rejected_targets=_reject_all_targets(targets=targets, reason="auto_commit_disabled"),
+            reason="auto_commit_disabled",
+            safety_gate_result=safety_gate,
+            audit=base_audit,
+            **invariants,
+        )
+    if policy.get("require_safety_gate_pass") and safety_gate != SAFETY_GATE_PASS:
+        return _diagnostic_result(
+            attempted=attempted,
+            committed=False,
+            rejected_targets=_reject_all_targets(targets=targets, reason="safety_gate_not_pass"),
+            reason="safety_gate_not_pass",
+            safety_gate_result=safety_gate,
+            audit=base_audit,
+            **invariants,
+        )
+    blockers = [
+        _clean(blocker)
+        for blocker in (candidate_result.get("blockers") or [])
+        if _clean(blocker)
+    ]
+    if blockers:
+        return _diagnostic_result(
+            attempted=attempted,
+            committed=False,
+            rejected_targets=_reject_all_targets(targets=targets, reason="candidate_blocked"),
+            reason="candidate_blocked",
+            safety_gate_result=safety_gate,
+            audit={**base_audit, "blockers": sorted(set(blockers))},
+            **invariants,
+        )
+    if bool(candidate_result.get("canonical_path_advanced")):
+        return _diagnostic_result(
+            attempted=attempted,
+            committed=False,
+            rejected_targets=_reject_all_targets(
+                targets=targets,
+                reason=BLOCKER_CANONICAL_PATH_ADVANCE_ATTEMPTED,
+            ),
+            reason=BLOCKER_CANONICAL_PATH_ADVANCE_ATTEMPTED,
+            safety_gate_result=safety_gate,
+            canonical_path_advanced=True,
+            mandatory_beat_consumed=bool(candidate_result.get("mandatory_beat_consumed", False)),
+            audit=base_audit,
+        )
+    if bool(candidate_result.get("mandatory_beat_consumed")):
+        return _diagnostic_result(
+            attempted=attempted,
+            committed=False,
+            rejected_targets=_reject_all_targets(
+                targets=targets,
+                reason=BLOCKER_MANDATORY_BEAT_CONSUME_ATTEMPTED,
+            ),
+            reason=BLOCKER_MANDATORY_BEAT_CONSUME_ATTEMPTED,
+            safety_gate_result=safety_gate,
+            canonical_path_advanced=False,
+            mandatory_beat_consumed=True,
+            audit=base_audit,
+        )
+    return None
+
+
+def _off_stage_target_policy_rejection(
+    *,
+    target: str,
+    candidate: dict[str, Any],
+    committed_targets: list[str],
+    max_commits: int,
+    allowed_kinds: set[str],
+    inputs: OffStageCommitInputs,
+) -> dict[str, Any] | None:
+    if len(committed_targets) >= max_commits:
+        return _reject_target(target, "max_commits_per_tick_exceeded", candidate)
+    kind = _clean(candidate.get("candidate_kind"))
+    if kind not in RECOGNIZED_CANDIDATE_KINDS:
+        return _reject_target(target, "candidate_kind_unrecognized", candidate)
+    if kind not in allowed_kinds:
+        return _reject_target(target, "candidate_kind_not_allowed", candidate)
+    if (
+        target == COMMIT_TARGET_RELATIONSHIP_STATE
+        and kind != CANDIDATE_KIND_RELATIONSHIP_TENSION_UPDATE
+    ) or (
+        target == COMMIT_TARGET_HIERARCHICAL_MEMORY
+        and kind != CANDIDATE_KIND_OFF_STAGE_MEMORY_NOTE
+    ):
+        return _reject_target(target, "candidate_target_mismatch", candidate)
+    candidate_blockers = validate_external_candidate(
+        candidate,
+        known_actor_ids=list(inputs.known_actor_ids),
+        known_room_ids=list(inputs.known_room_ids),
+    )
+    if candidate_blockers:
+        return _reject_target(target, ",".join(candidate_blockers), candidate)
+    return None
+
+
+def _commit_off_stage_target(
+    *,
+    target: str,
+    candidate: dict[str, Any],
+    inputs: OffStageCommitInputs,
+) -> dict[str, Any]:
+    if target == COMMIT_TARGET_RELATIONSHIP_STATE:
+        return _commit_relationship_candidate(
+            candidate=candidate,
+            prior_record=inputs.relationship_state_record,
+            turn_number=inputs.turn_number,
+            module_runtime_policy=inputs.module_runtime_policy,
+        )
+    return _commit_memory_candidate(
+        candidate=candidate,
+        prior_snapshot=inputs.hierarchical_memory_snapshot,
+        memory_policy=inputs.hierarchical_memory_policy,
+        module_id=inputs.module_id,
+        runtime_profile_id=inputs.runtime_profile_id,
+        turn_number=inputs.turn_number,
+    )
+
+
+def _commit_off_stage_targets(
+    *,
+    inputs: OffStageCommitInputs,
+    policy: dict[str, Any],
+    targets: list[tuple[str, dict[str, Any]]],
+    base_audit: dict[str, Any],
+) -> tuple[list[str], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    committed_targets: list[str] = []
+    rejected_targets: list[dict[str, Any]] = []
+    target_results: list[dict[str, Any]] = []
+    audit: dict[str, Any] = dict(base_audit)
+    max_commits = int(policy.get("max_commits_per_tick") or 0)
+    allowed_kinds = set(policy.get("allowed_candidate_kinds") or [])
+    for target, candidate in targets:
+        rejection = _off_stage_target_policy_rejection(
+            target=target,
+            candidate=candidate,
+            committed_targets=committed_targets,
+            max_commits=max_commits,
+            allowed_kinds=allowed_kinds,
+            inputs=inputs,
+        )
+        if rejection is not None:
+            rejected_targets.append(rejection)
+            continue
+        target_result = _commit_off_stage_target(
+            target=target,
+            candidate=candidate,
+            inputs=inputs,
+        )
+        target_results.append(target_result)
+        if target_result.get("committed"):
+            committed_targets.append(target)
+            if isinstance(target_result.get("audit"), dict):
+                audit[target] = target_result["audit"]
+        else:
+            rejected_targets.append(
+                _reject_target(
+                    target,
+                    str(target_result.get("reason") or "target_rejected"),
+                    candidate,
+                )
+            )
+    return committed_targets, rejected_targets, target_results, audit
+
+
 def commit_off_stage_update_candidates(inputs: OffStageCommitInputs) -> dict[str, Any]:
     """Safely commit Stage F candidates when policy and target contracts pass.
 
@@ -813,176 +1123,23 @@ def commit_off_stage_update_candidates(inputs: OffStageCommitInputs) -> dict[str
     safety_gate = candidate_result.get("off_stage_safety_gate_result")
     targets = _candidate_targets(candidate_result)
     attempted = bool(targets)
-    base_audit = {
-        "policy": policy,
-        "candidate_ids": [
-            target_candidate.get("candidate_id")
-            for _, target_candidate in targets
-            if target_candidate.get("candidate_id")
-        ],
-    }
-
-    if not targets:
-        return _diagnostic_result(
-            attempted=False,
-            committed=False,
-            reason="no_off_stage_candidate",
-            safety_gate_result=safety_gate,
-            canonical_path_advanced=bool(candidate_result.get("canonical_path_advanced", False)),
-            mandatory_beat_consumed=bool(candidate_result.get("mandatory_beat_consumed", False)),
-            audit=base_audit,
-        )
-    if not policy.get("auto_commit_enabled"):
-        return _diagnostic_result(
-            attempted=attempted,
-            committed=False,
-            rejected_targets=[
-                _reject_target(target, "auto_commit_disabled", cand)
-                for target, cand in targets
-            ],
-            reason="auto_commit_disabled",
-            safety_gate_result=safety_gate,
-            canonical_path_advanced=bool(candidate_result.get("canonical_path_advanced", False)),
-            mandatory_beat_consumed=bool(candidate_result.get("mandatory_beat_consumed", False)),
-            audit=base_audit,
-        )
-    if policy.get("require_safety_gate_pass") and safety_gate != SAFETY_GATE_PASS:
-        return _diagnostic_result(
-            attempted=attempted,
-            committed=False,
-            rejected_targets=[
-                _reject_target(target, "safety_gate_not_pass", cand)
-                for target, cand in targets
-            ],
-            reason="safety_gate_not_pass",
-            safety_gate_result=safety_gate,
-            canonical_path_advanced=bool(candidate_result.get("canonical_path_advanced", False)),
-            mandatory_beat_consumed=bool(candidate_result.get("mandatory_beat_consumed", False)),
-            audit=base_audit,
-        )
-    blockers = [
-        _clean(blocker)
-        for blocker in (candidate_result.get("blockers") or [])
-        if _clean(blocker)
-    ]
-    if blockers:
-        return _diagnostic_result(
-            attempted=attempted,
-            committed=False,
-            rejected_targets=[
-                _reject_target(target, "candidate_blocked", cand)
-                for target, cand in targets
-            ],
-            reason="candidate_blocked",
-            safety_gate_result=safety_gate,
-            canonical_path_advanced=bool(candidate_result.get("canonical_path_advanced", False)),
-            mandatory_beat_consumed=bool(candidate_result.get("mandatory_beat_consumed", False)),
-            audit={**base_audit, "blockers": sorted(set(blockers))},
-        )
-    if bool(candidate_result.get("canonical_path_advanced")):
-        return _diagnostic_result(
-            attempted=attempted,
-            committed=False,
-            rejected_targets=[
-                _reject_target(target, BLOCKER_CANONICAL_PATH_ADVANCE_ATTEMPTED, cand)
-                for target, cand in targets
-            ],
-            reason=BLOCKER_CANONICAL_PATH_ADVANCE_ATTEMPTED,
-            safety_gate_result=safety_gate,
-            canonical_path_advanced=True,
-            mandatory_beat_consumed=bool(candidate_result.get("mandatory_beat_consumed", False)),
-            audit=base_audit,
-        )
-    if bool(candidate_result.get("mandatory_beat_consumed")):
-        return _diagnostic_result(
-            attempted=attempted,
-            committed=False,
-            rejected_targets=[
-                _reject_target(target, BLOCKER_MANDATORY_BEAT_CONSUME_ATTEMPTED, cand)
-                for target, cand in targets
-            ],
-            reason=BLOCKER_MANDATORY_BEAT_CONSUME_ATTEMPTED,
-            safety_gate_result=safety_gate,
-            canonical_path_advanced=False,
-            mandatory_beat_consumed=True,
-            audit=base_audit,
-        )
-
-    committed_targets: list[str] = []
-    rejected_targets: list[dict[str, Any]] = []
-    target_results: list[dict[str, Any]] = []
-    audit: dict[str, Any] = dict(base_audit)
-    max_commits = int(policy.get("max_commits_per_tick") or 0)
-    allowed_kinds = set(policy.get("allowed_candidate_kinds") or [])
-
-    for target, candidate in targets:
-        if len(committed_targets) >= max_commits:
-            rejected_targets.append(
-                _reject_target(target, "max_commits_per_tick_exceeded", candidate)
-            )
-            continue
-        kind = _clean(candidate.get("candidate_kind"))
-        if kind not in RECOGNIZED_CANDIDATE_KINDS:
-            rejected_targets.append(
-                _reject_target(target, "candidate_kind_unrecognized", candidate)
-            )
-            continue
-        if kind not in allowed_kinds:
-            rejected_targets.append(
-                _reject_target(target, "candidate_kind_not_allowed", candidate)
-            )
-            continue
-        if (
-            target == COMMIT_TARGET_RELATIONSHIP_STATE
-            and kind != CANDIDATE_KIND_RELATIONSHIP_TENSION_UPDATE
-        ) or (
-            target == COMMIT_TARGET_HIERARCHICAL_MEMORY
-            and kind != CANDIDATE_KIND_OFF_STAGE_MEMORY_NOTE
-        ):
-            rejected_targets.append(
-                _reject_target(target, "candidate_target_mismatch", candidate)
-            )
-            continue
-        candidate_blockers = validate_external_candidate(
-            candidate,
-            known_actor_ids=list(inputs.known_actor_ids),
-            known_room_ids=list(inputs.known_room_ids),
-        )
-        if candidate_blockers:
-            rejected_targets.append(
-                _reject_target(target, ",".join(candidate_blockers), candidate)
-            )
-            continue
-
-        if target == COMMIT_TARGET_RELATIONSHIP_STATE:
-            target_result = _commit_relationship_candidate(
-                candidate=candidate,
-                prior_record=inputs.relationship_state_record,
-                turn_number=inputs.turn_number,
-                module_runtime_policy=inputs.module_runtime_policy,
-            )
-        else:
-            target_result = _commit_memory_candidate(
-                candidate=candidate,
-                prior_snapshot=inputs.hierarchical_memory_snapshot,
-                memory_policy=inputs.hierarchical_memory_policy,
-                module_id=inputs.module_id,
-                runtime_profile_id=inputs.runtime_profile_id,
-                turn_number=inputs.turn_number,
-            )
-        target_results.append(target_result)
-        if target_result.get("committed"):
-            committed_targets.append(target)
-            if isinstance(target_result.get("audit"), dict):
-                audit[target] = target_result["audit"]
-        else:
-            rejected_targets.append(
-                _reject_target(
-                    target,
-                    str(target_result.get("reason") or "target_rejected"),
-                    candidate,
-                )
-            )
+    base_audit = _off_stage_commit_base_audit(policy=policy, targets=targets)
+    preflight = _off_stage_preflight_rejection(
+        candidate_result=candidate_result,
+        policy=policy,
+        safety_gate=safety_gate,
+        targets=targets,
+        attempted=attempted,
+        base_audit=base_audit,
+    )
+    if preflight is not None:
+        return preflight
+    committed_targets, rejected_targets, target_results, audit = _commit_off_stage_targets(
+        inputs=inputs,
+        policy=policy,
+        targets=targets,
+        base_audit=base_audit,
+    )
 
     committed = bool(committed_targets)
     reason = "committed" if committed else (

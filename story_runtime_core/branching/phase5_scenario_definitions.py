@@ -5,11 +5,192 @@ Scenario C (Branching Architecture): Tests path divergence with 3 approaches
 Scenario E (Replayability): Same scenario, different evaluation sessions
 """
 
-from typing import Dict
+from typing import Any, Dict
 
 from .decision_point import (
     DecisionPoint, DecisionPointType, DecisionOption, DecisionPointRegistry
 )
+
+
+def _decision_option(spec: tuple[str, str, str, list[str]]) -> DecisionOption:
+    option_id, label, description, consequence_tags = spec
+    return DecisionOption(
+        id=option_id,
+        label=label,
+        description=description,
+        consequence_tags=consequence_tags,
+    )
+
+
+def _register_decision_point(
+    registry: DecisionPointRegistry,
+    *,
+    point_id: str,
+    turn_number: int,
+    decision_type: DecisionPointType,
+    prompt: str,
+    option_specs: list[tuple[str, str, str, list[str]]],
+) -> None:
+    registry.register(
+        DecisionPoint(
+            id=point_id,
+            turn_number=turn_number,
+            scenario_id="salon_mediation",
+            decision_type=decision_type,
+            prompt=prompt,
+            options=[_decision_option(spec) for spec in option_specs],
+        )
+    )
+
+
+SCENARIO_C_DECISION_POINT_SPECS: list[dict[str, Any]] = [
+    {
+        "point_id": "opening_posture",
+        "turn_number": 2,
+        "decision_type": DecisionPointType.APPROACH,
+        "prompt": "How do you open this mediation?",
+        "option_specs": [
+            (
+                "escalate",
+                "Confront Power Imbalance",
+                "Directly challenge the unequal dynamic that got you here",
+                ["escalation_path", "high_pressure_early", "direct_style"],
+            ),
+            (
+                "divide",
+                "Separate the Issues",
+                "Break the conflict into discrete, manageable pieces",
+                ["divide_path", "measured_pressure", "analytical_style"],
+            ),
+            (
+                "understand",
+                "Lead with Empathy",
+                "First seek to understand what each person really wants",
+                ["understanding_path", "low_pressure_early", "relational_style"],
+            ),
+        ],
+    },
+    {
+        "point_id": "pressure_response_escalation",
+        "turn_number": 8,
+        "decision_type": DecisionPointType.STRATEGY,
+        "prompt": "The conversation is getting heated. What do you do?",
+        "option_specs": [
+            (
+                "esc_hold_firm",
+                "Hold Firm on Principle",
+                "Maintain that the imbalance must be addressed",
+                ["escalation_path", "escalation_intensifies", "confrontational"],
+            ),
+            (
+                "esc_pivot",
+                "Pivot to Understanding",
+                "Recognize the risk and shift tone",
+                ["escalation_path", "late_empathy", "course_correction"],
+            ),
+        ],
+    },
+    {
+        "point_id": "pressure_response_divide",
+        "turn_number": 8,
+        "decision_type": DecisionPointType.STRATEGY,
+        "prompt": "The details are getting complex. How do you proceed?",
+        "option_specs": [
+            (
+                "div_dig_deeper",
+                "Dig Deeper into Details",
+                "More analysis, more structure",
+                ["divide_path", "analysis_deepens", "methodical"],
+            ),
+            (
+                "div_broaden",
+                "Broaden to Bigger Picture",
+                "Step back and see connections",
+                ["divide_path", "systemic_view", "integrative"],
+            ),
+        ],
+    },
+    {
+        "point_id": "pressure_response_understanding",
+        "turn_number": 8,
+        "decision_type": DecisionPointType.STRATEGY,
+        "prompt": "You're starting to understand each person's real concern. What now?",
+        "option_specs": [
+            (
+                "und_deepen",
+                "Deepen Emotional Connection",
+                "Go deeper into feelings and needs",
+                ["understanding_path", "intimacy_grows", "vulnerable"],
+            ),
+            (
+                "und_bridge",
+                "Bridge to Shared Ground",
+                "Show common ground and mutual interests",
+                ["understanding_path", "common_ground_found", "collaborative"],
+            ),
+        ],
+    },
+    {
+        "point_id": "closure_escalation",
+        "turn_number": 15,
+        "decision_type": DecisionPointType.ALIGNMENT,
+        "prompt": "You've both held your ground. What happens now?",
+        "option_specs": [
+            (
+                "esc_forced",
+                "Force a Compromise",
+                "Use your leverage to get a deal done",
+                ["escalation_ending", "hollow_compromise", "power_imposed"],
+            ),
+            (
+                "esc_learned",
+                "Hard-Won Respect",
+                "The confrontation led to genuine acknowledgment",
+                ["escalation_ending", "mutual_respect_earned", "transformation"],
+            ),
+        ],
+    },
+    {
+        "point_id": "closure_divide",
+        "turn_number": 15,
+        "decision_type": DecisionPointType.ALIGNMENT,
+        "prompt": "You've mapped out the pieces. How do they fit together?",
+        "option_specs": [
+            (
+                "div_structured",
+                "Structured Agreement",
+                "Clear terms, measurable outcomes",
+                ["divide_ending", "clear_contract", "professional"],
+            ),
+            (
+                "div_adaptive",
+                "Adaptive Framework",
+                "Agreement that can evolve as things change",
+                ["divide_ending", "flexible_solution", "forward_looking"],
+            ),
+        ],
+    },
+    {
+        "point_id": "closure_understanding",
+        "turn_number": 15,
+        "decision_type": DecisionPointType.ALIGNMENT,
+        "prompt": "You both understand each other now. What comes next?",
+        "option_specs": [
+            (
+                "und_connected",
+                "Genuine Reconciliation",
+                "Real relationship healing",
+                ["understanding_ending", "healing_achieved", "reconnected"],
+            ),
+            (
+                "und_grounded",
+                "Grounded in Friendship",
+                "Return to friendship with new understanding",
+                ["understanding_ending", "friendship_renewed", "deepened_bond"],
+            ),
+        ],
+    },
+]
 
 
 def build_scenario_c_registry() -> DecisionPointRegistry:
@@ -31,199 +212,8 @@ def build_scenario_c_registry() -> DecisionPointRegistry:
        - Different endings for each approach
     """
     registry = DecisionPointRegistry()
-
-    # ========== Decision Point 1: Opening Posture (Turn 2) ==========
-    dp1_options = [
-        DecisionOption(
-            id="escalate",
-            label="Confront Power Imbalance",
-            description="Directly challenge the unequal dynamic that got you here",
-            consequence_tags=["escalation_path", "high_pressure_early", "direct_style"]
-        ),
-        DecisionOption(
-            id="divide",
-            label="Separate the Issues",
-            description="Break the conflict into discrete, manageable pieces",
-            consequence_tags=["divide_path", "measured_pressure", "analytical_style"]
-        ),
-        DecisionOption(
-            id="understand",
-            label="Lead with Empathy",
-            description="First seek to understand what each person really wants",
-            consequence_tags=["understanding_path", "low_pressure_early", "relational_style"]
-        ),
-    ]
-
-    dp1 = DecisionPoint(
-        id="opening_posture",
-        turn_number=2,
-        scenario_id="salon_mediation",
-        decision_type=DecisionPointType.APPROACH,
-        prompt="How do you open this mediation?",
-        options=dp1_options
-    )
-    registry.register(dp1)
-
-    # ========== Decision Point 2: Pressure Response (Turn 8) ==========
-    # Different options depending on which approach was taken
-
-    # Escalation path: Response options
-    escalation_response_options = [
-        DecisionOption(
-            id="esc_hold_firm",
-            label="Hold Firm on Principle",
-            description="Maintain that the imbalance must be addressed",
-            consequence_tags=["escalation_path", "escalation_intensifies", "confrontational"]
-        ),
-        DecisionOption(
-            id="esc_pivot",
-            label="Pivot to Understanding",
-            description="Recognize the risk and shift tone",
-            consequence_tags=["escalation_path", "late_empathy", "course_correction"]
-        ),
-    ]
-
-    # Divide path: Response options
-    divide_response_options = [
-        DecisionOption(
-            id="div_dig_deeper",
-            label="Dig Deeper into Details",
-            description="More analysis, more structure",
-            consequence_tags=["divide_path", "analysis_deepens", "methodical"]
-        ),
-        DecisionOption(
-            id="div_broaden",
-            label="Broaden to Bigger Picture",
-            description="Step back and see connections",
-            consequence_tags=["divide_path", "systemic_view", "integrative"]
-        ),
-    ]
-
-    # Understanding path: Response options
-    understanding_response_options = [
-        DecisionOption(
-            id="und_deepen",
-            label="Deepen Emotional Connection",
-            description="Go deeper into feelings and needs",
-            consequence_tags=["understanding_path", "intimacy_grows", "vulnerable"]
-        ),
-        DecisionOption(
-            id="und_bridge",
-            label="Bridge to Shared Ground",
-            description="Show common ground and mutual interests",
-            consequence_tags=["understanding_path", "common_ground_found", "collaborative"]
-        ),
-    ]
-
-    # Register all three path variants at Turn 8
-    dp2_esc = DecisionPoint(
-        id="pressure_response_escalation",
-        turn_number=8,
-        scenario_id="salon_mediation",
-        decision_type=DecisionPointType.STRATEGY,
-        prompt="The conversation is getting heated. What do you do?",
-        options=escalation_response_options
-    )
-    registry.register(dp2_esc)
-
-    dp2_div = DecisionPoint(
-        id="pressure_response_divide",
-        turn_number=8,
-        scenario_id="salon_mediation",
-        decision_type=DecisionPointType.STRATEGY,
-        prompt="The details are getting complex. How do you proceed?",
-        options=divide_response_options
-    )
-    registry.register(dp2_div)
-
-    dp2_und = DecisionPoint(
-        id="pressure_response_understanding",
-        turn_number=8,
-        scenario_id="salon_mediation",
-        decision_type=DecisionPointType.STRATEGY,
-        prompt="You're starting to understand each person's real concern. What now?",
-        options=understanding_response_options
-    )
-    registry.register(dp2_und)
-
-    # ========== Decision Point 3: Closure Type (Turn 15) ==========
-    # Different closure options for each path
-
-    escalation_closure_options = [
-        DecisionOption(
-            id="esc_forced",
-            label="Force a Compromise",
-            description="Use your leverage to get a deal done",
-            consequence_tags=["escalation_ending", "hollow_compromise", "power_imposed"]
-        ),
-        DecisionOption(
-            id="esc_learned",
-            label="Hard-Won Respect",
-            description="The confrontation led to genuine acknowledgment",
-            consequence_tags=["escalation_ending", "mutual_respect_earned", "transformation"]
-        ),
-    ]
-
-    divide_closure_options = [
-        DecisionOption(
-            id="div_structured",
-            label="Structured Agreement",
-            description="Clear terms, measurable outcomes",
-            consequence_tags=["divide_ending", "clear_contract", "professional"]
-        ),
-        DecisionOption(
-            id="div_adaptive",
-            label="Adaptive Framework",
-            description="Agreement that can evolve as things change",
-            consequence_tags=["divide_ending", "flexible_solution", "forward_looking"]
-        ),
-    ]
-
-    understanding_closure_options = [
-        DecisionOption(
-            id="und_connected",
-            label="Genuine Reconciliation",
-            description="Real relationship healing",
-            consequence_tags=["understanding_ending", "healing_achieved", "reconnected"]
-        ),
-        DecisionOption(
-            id="und_grounded",
-            label="Grounded in Friendship",
-            description="Return to friendship with new understanding",
-            consequence_tags=["understanding_ending", "friendship_renewed", "deepened_bond"]
-        ),
-    ]
-
-    dp3_esc = DecisionPoint(
-        id="closure_escalation",
-        turn_number=15,
-        scenario_id="salon_mediation",
-        decision_type=DecisionPointType.ALIGNMENT,
-        prompt="You've both held your ground. What happens now?",
-        options=escalation_closure_options
-    )
-    registry.register(dp3_esc)
-
-    dp3_div = DecisionPoint(
-        id="closure_divide",
-        turn_number=15,
-        scenario_id="salon_mediation",
-        decision_type=DecisionPointType.ALIGNMENT,
-        prompt="You've mapped out the pieces. How do they fit together?",
-        options=divide_closure_options
-    )
-    registry.register(dp3_div)
-
-    dp3_und = DecisionPoint(
-        id="closure_understanding",
-        turn_number=15,
-        scenario_id="salon_mediation",
-        decision_type=DecisionPointType.ALIGNMENT,
-        prompt="You both understand each other now. What comes next?",
-        options=understanding_closure_options
-    )
-    registry.register(dp3_und)
-
+    for spec in SCENARIO_C_DECISION_POINT_SPECS:
+        _register_decision_point(registry, **spec)
     return registry
 
 

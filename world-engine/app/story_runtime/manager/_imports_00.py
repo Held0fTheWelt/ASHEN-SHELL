@@ -30,7 +30,6 @@ from ai_stack.actor_tracking import (
     build_w5_projection_for_narrator,
     build_w5_projection_for_player_shell,
     extract_w5_snapshot_from_committed_event,
-    w5_ast_narrator_legacy_compat_diagnostics_enabled,
     w5_ast_narrator_strict_enabled,
 )
 from story_runtime_core import ModelRegistry, RoutingPolicy, interpret_player_input

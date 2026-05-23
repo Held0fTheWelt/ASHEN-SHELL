@@ -25,6 +25,19 @@ QUALITY_LAB_PATTERN_TOOL_NAMES: tuple[str, ...] = (
     "wos.quality_lab.suggest_investigation",
 )
 
+_FIELD_VALUE_SPECS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    "judge": (("judge", "evaluator", "evaluator_name"), ("affected_judges",)),
+    "category": (("category", "score_category"), ("repeated_categories",)),
+    "runtime_area": (
+        ("runtime_area", "affected_area", "repair_area"),
+        ("affected_runtime_areas", "suggested_repair_areas"),
+    ),
+    "actor": (("actor", "player_actor", "selected_actor", "player_role"), ()),
+    "beat": (("beat", "selected_beat", "selected_beat_id", "beat_id"), ()),
+    "content_module": (("content_module", "module_id", "module"), ()),
+    "trace_name": (("trace_name",), ()),
+}
+
 
 def _coerce_str(value: Any) -> str:
     return str(value).strip() if value is not None else ""
@@ -67,29 +80,10 @@ def _trace_ref(item: Mapping[str, Any]) -> str | None:
 
 
 def _field_values(item: Mapping[str, Any], field: str) -> list[str]:
-    if field == "judge":
-        raw = _first_present(item, ("judge", "evaluator", "evaluator_name"))
-        vals = _as_list(raw) + _as_list(item.get("affected_judges"))
-    elif field == "category":
-        vals = _as_list(_first_present(item, ("category", "score_category"))) + _as_list(
-            item.get("repeated_categories")
-        )
-    elif field == "runtime_area":
-        vals = (
-            _as_list(_first_present(item, ("runtime_area", "affected_area", "repair_area")))
-            + _as_list(item.get("affected_runtime_areas"))
-            + _as_list(item.get("suggested_repair_areas"))
-        )
-    elif field == "actor":
-        vals = _as_list(_first_present(item, ("actor", "player_actor", "selected_actor", "player_role")))
-    elif field == "beat":
-        vals = _as_list(_first_present(item, ("beat", "selected_beat", "selected_beat_id", "beat_id")))
-    elif field == "content_module":
-        vals = _as_list(_first_present(item, ("content_module", "module_id", "module")))
-    elif field == "trace_name":
-        vals = _as_list(item.get("trace_name"))
-    else:
-        vals = []
+    primary_keys, extra_keys = _FIELD_VALUE_SPECS.get(field, ((), ()))
+    vals = _as_list(_first_present(item, primary_keys)) if primary_keys else []
+    for key in extra_keys:
+        vals += _as_list(item.get(key))
     out: list[str] = []
     for val in vals:
         token = _coerce_str(val)

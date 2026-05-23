@@ -61,7 +61,6 @@ W5_FLAGS = (
     "W5_AST_VALIDATION_ENABLED",
     "W5_AST_FRONTEND_PLAYER_VIEW_ENABLED",
     "W5_AST_NARRATOR_STRICT_ENABLED",
-    "W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED",
 )
 
 
@@ -165,49 +164,22 @@ class TestPhase6B5BStrictResolverPosture:
             is False
         )
 
-    # Phase 6B-5E: legacy_compat_diagnostics flag resolver matrix
+    # Phase 6B-6B: diagnostics flag retired — assert it is absent from flag_states
 
-    def test_legacy_compat_diagnostics_default_off(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E: the diagnostics flag must default to False (opt-in)."""
-        from ai_stack.actor_tracking import w5_ast_narrator_legacy_compat_diagnostics_enabled
-
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
-        assert w5_ast_narrator_legacy_compat_diagnostics_enabled() is False
-
-    @pytest.mark.parametrize("value", ["", "0", "false", "no", "off", "garbage"])
-    def test_legacy_compat_diagnostics_off_values(
-        self, monkeypatch: pytest.MonkeyPatch, value: str
-    ) -> None:
-        from ai_stack.actor_tracking import w5_ast_narrator_legacy_compat_diagnostics_enabled
-
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", value)
-        assert w5_ast_narrator_legacy_compat_diagnostics_enabled() is False
-
-    @pytest.mark.parametrize("value", ["1", "true", "yes", "on", "TRUE", "On", "  true  "])
-    def test_legacy_compat_diagnostics_on_values(
-        self, monkeypatch: pytest.MonkeyPatch, value: str
-    ) -> None:
-        from ai_stack.actor_tracking import w5_ast_narrator_legacy_compat_diagnostics_enabled
-
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", value)
-        assert w5_ast_narrator_legacy_compat_diagnostics_enabled() is True
-
-    def test_flag_states_include_legacy_compat_diagnostics(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E: w5_projection_flag_states must report the new flag."""
+    def test_flag_states_no_legacy_compat_diagnostics_key(self) -> None:
+        """Phase 6B-6B: w5_projection_flag_states must NOT include the retired
+        narrator_legacy_compat_diagnostics key (ADR-0066)."""
         from ai_stack.actor_tracking import w5_projection_flag_states
 
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
         states = w5_projection_flag_states()
-        assert "narrator_legacy_compat_diagnostics" in states
-        assert states["narrator_legacy_compat_diagnostics"] is False
+        assert "narrator_legacy_compat_diagnostics" not in states
 
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
-        states = w5_projection_flag_states()
-        assert states["narrator_legacy_compat_diagnostics"] is True
+    def test_legacy_compat_diagnostics_not_importable(self) -> None:
+        """Phase 6B-6B: the retired symbol must not be importable from the
+        package public API (ADR-0066)."""
+        import ai_stack.actor_tracking as pkg
+
+        assert not hasattr(pkg, "w5_ast_narrator_legacy_compat_diagnostics_enabled")
 
 
 # ---------------------------------------------------------------------------
@@ -232,19 +204,10 @@ def _first_block_with_legacy_transition(blocks: list[dict[str, Any]]) -> dict[st
 
 def _first_block_with_legacy_compat_transition(
     blocks: list[dict[str, Any]],
-) -> dict[str, Any]:
-    for block in blocks:
-        facts = block.get("source_facts") or {}
-        legacy = facts.get("_legacy_compat") or {}
-        if (
-            isinstance(legacy, dict)
-            and isinstance(legacy.get("transition_from_previous"), dict)
-            and legacy["transition_from_previous"].get("location_changed")
-        ):
-            return block
+) -> dict[str, Any]:  # pragma: no cover — helper retained for reference only, not called post-6B-6B
     raise AssertionError(
-        "expected at least one strict-on narrator block with a demoted "
-        "_legacy_compat.transition_from_previous.location_changed=True breadcrumb"
+        "_legacy_compat breadcrumb retired in Phase 6B-6B (ADR-0066); "
+        "this helper must not be called"
     )
 
 
@@ -282,15 +245,14 @@ class TestPhase6B5BGoCNarratorPathSourceFactsShape:
             block["canonical_mandatory_beat_id"] for block in hard_cut_blocks
         ] == ["room_perception_winter_light"]
 
-    def test_strict_on_default_has_no_legacy_compat(
+    def test_strict_on_has_no_legacy_compat(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-5E default: strict-on + diagnostics flag OFF → no _legacy_compat
-        in source_facts. W5 projection is the sole actor-situation authority surface."""
+        """Phase 6B-6B: strict-on must never include _legacy_compat or
+        transition_from_previous. W5 projection is the sole authority (ADR-0066)."""
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
         opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
@@ -302,116 +264,28 @@ class TestPhase6B5BGoCNarratorPathSourceFactsShape:
                 "strict-on must not expose transition_from_previous at top level"
             )
             assert "_legacy_compat" not in facts, (
-                "Phase 6B-5E: strict-on with diagnostics flag off must not include "
-                "_legacy_compat in source_facts — W5 projection is the sole authority"
+                "Phase 6B-6B: _legacy_compat breadcrumb path retired (ADR-0066)"
             )
 
-    def test_strict_on_with_diagnostics_flag_demotes_to_legacy_compat(
+    def test_strict_on_canonical_content_unchanged(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-5E opt-in: strict-on + diagnostics flag ON → _legacy_compat
-        breadcrumb is present with authority/notice markers."""
+        """Phase 6B-6B: canonical beat ids present under strict-on even without
+        legacy compat. W5 where_summary is the location-change authority."""
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
         opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
         blocks = opening["scene_blocks"]
-        assert blocks
-        for block in blocks:
-            facts = block["source_facts"]
-            assert "transition_from_previous" not in facts
-            legacy = facts.get("_legacy_compat")
-            assert isinstance(legacy, dict), (
-                "diagnostics flag on: strict-on must include _legacy_compat"
-            )
-            assert "transition_from_previous" in legacy, (
-                "diagnostics flag on: _legacy_compat must contain transition_from_previous"
-            )
-            assert legacy["authority"] == "w5_projection", (
-                "diagnostics flag on: _legacy_compat must name W5 as authority"
-            )
-            notice = str(legacy.get("notice") or "")
-            assert "W5" in notice
-            assert "non-authoritative" in notice or "non_authoritative" in notice
-            assert "actor-situation authority" in notice or "actor_situation_authority" in notice
-
-    def test_strict_on_with_diagnostics_flag_preserves_hard_cut_breadcrumb(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E opt-in: with diagnostics flag on, the hard-cut authored
-        transition is still inspectable under _legacy_compat for operator parity."""
-        from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
-        opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
-            session_output_language="de",
-        )
-        blocks = opening["scene_blocks"]
-        hard_cut_blocks = [
-            block
-            for block in blocks
-            if (
-                (block["source_facts"].get("_legacy_compat") or {})
-                .get("transition_from_previous", {})
-                .get("directed_transition", {})
-                .get("kind")
-                == "hard_cut"
-            )
-        ]
-        assert [
-            block["canonical_mandatory_beat_id"] for block in hard_cut_blocks
-        ] == ["room_perception_winter_light"]
-
-    def test_strict_on_default_no_hard_cut_breadcrumb_without_diagnostics_flag(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E default: with diagnostics flag off, no _legacy_compat
-        breadcrumb exists and no legacy hard-cut is inspectable via that path.
-        W5 where_summary.location_changed is the replacement signal (supplied by
-        the WE enrichment layer, tested in world-engine projection tests)."""
-        from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
-        opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
-            session_output_language="de",
-        )
-        blocks = opening["scene_blocks"]
-        # No _legacy_compat → no legacy hard-cut breadcrumb path.
         for block in blocks:
             assert "_legacy_compat" not in block["source_facts"]
             assert "transition_from_previous" not in block["source_facts"]
-        # Canonical content (beat ids, step ids) must be unchanged.
-        hard_cut_beats = [
-            block["canonical_mandatory_beat_id"]
-            for block in blocks
-        ]
+        hard_cut_beats = [block["canonical_mandatory_beat_id"] for block in blocks]
         assert "room_perception_winter_light" in hard_cut_beats, (
-            "Canonical beat content must be preserved even when _legacy_compat is absent"
+            "Canonical beat content must be preserved after _legacy_compat removal"
         )
-
-    def test_strict_on_with_diagnostics_flag_preserves_location_changed_breadcrumb(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E opt-in: with diagnostics flag on, _legacy_compat carries
-        location_changed for operator parity audits."""
-
-        from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
-        opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
-            session_output_language="de",
-        )
-        block = _first_block_with_legacy_compat_transition(opening["scene_blocks"])
-        legacy = block["source_facts"]["_legacy_compat"]["transition_from_previous"]
-        assert legacy["location_changed"] is True
-        assert legacy["current_location"]["id"]
-        assert legacy["previous_location"]["id"]
 
     def test_strict_on_does_not_alter_canonical_content(
         self, monkeypatch: pytest.MonkeyPatch
@@ -456,38 +330,6 @@ class TestPhase6B5BGoCNarratorPathSourceFactsShape:
             # text content is the canonical perception output and must not
             # change under strict mode.
             assert strict_block["text"] == unstrict_block["text"]
-
-    def test_strict_on_with_diagnostics_flag_payload_matches_strict_off(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E opt-in: when diagnostics flag is on, the legacy payload
-        in strict-on ``_legacy_compat.transition_from_previous`` is exactly the
-        same payload that strict-off keeps at top-level (operator parity gate)."""
-
-        from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
-        unstrict = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
-            session_output_language="de",
-        )
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
-        strict = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
-            session_output_language="de",
-        )
-        for strict_block, unstrict_block in zip(
-            strict["scene_blocks"], unstrict["scene_blocks"]
-        ):
-            unstrict_transition = unstrict_block["source_facts"].get(
-                "transition_from_previous"
-            )
-            strict_legacy = strict_block["source_facts"].get("_legacy_compat") or {}
-            strict_transition = strict_legacy.get("transition_from_previous")
-            assert unstrict_transition == strict_transition, (
-                "diagnostics flag on: _legacy_compat.transition_from_previous "
-                "must preserve the exact legacy transition payload for operator parity"
-            )
 
 
 # ---------------------------------------------------------------------------

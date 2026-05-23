@@ -465,6 +465,226 @@ def should_emit_autonomous_tick(
     return True, None
 
 
+def _capability_tick_metadata(
+    inputs: AutonomousTickInputs,
+) -> tuple[dict[str, Any], list[str], dict[str, str]]:
+    capability_outputs_used, capability_outputs_missing = classify_capability_availability(
+        scene_energy_output=inputs.scene_energy_output,
+        social_pressure_output=inputs.social_pressure_output,
+        relationship_state_output=inputs.relationship_state_output,
+        narrative_momentum_output=inputs.narrative_momentum_output,
+        actor_pressure_profiles=inputs.actor_pressure_profiles,
+        npc_motivation_score_policy=inputs.npc_motivation_score_policy,
+        pacing_rhythm_policy=inputs.pacing_rhythm_policy,
+    )
+    component_sources = classify_motivation_component_sources(
+        scene_energy_output=inputs.scene_energy_output,
+        social_pressure_output=inputs.social_pressure_output,
+        relationship_state_output=inputs.relationship_state_output,
+        narrative_momentum_output=inputs.narrative_momentum_output,
+        actor_pressure_profiles=inputs.actor_pressure_profiles,
+        npc_motivation_score_policy=inputs.npc_motivation_score_policy,
+    )
+    return capability_outputs_used, capability_outputs_missing, component_sources
+
+
+def _block_event_for_autonomous_choice(
+    *,
+    chosen_action: str,
+    chosen_actor: str | None,
+    resolved_tick_id: str,
+) -> dict[str, Any] | None:
+    if chosen_action != ACTION_SPEAK or not chosen_actor:
+        return None
+    return build_block_stream_event(
+        tick_id=resolved_tick_id,
+        block_type=BLOCK_TYPE_ACTOR_LINE,
+        block_payload=_build_actor_line_payload(
+            chosen_actor_id=chosen_actor,
+            tick_id=resolved_tick_id,
+        ),
+        cut_in_state=CUT_IN_UNINTERRUPTED,
+        lane=LANE_VISIBLE_SCENE_OUTPUT,
+        source=chosen_actor,
+    )
+
+
+def _silence_reason_for_autonomous_choice(
+    *,
+    inputs: AutonomousTickInputs,
+    tick_decision: dict[str, Any],
+    block_event: dict[str, Any] | None,
+) -> str | None:
+    if block_event is not None:
+        return None
+    silence_reason = (
+        SILENCE_GATHERING_PAUSED_OFF_STAGE
+        if inputs.gathering_paused
+        else SILENCE_NO_NPC_ABOVE_THRESHOLD
+    )
+    tick_decision["silence_reason"] = silence_reason
+    tick_decision["chosen_action_kind"] = ACTION_SILENCE
+    tick_decision["chosen_actor_id"] = None
+    return silence_reason
+
+
+def _suppressed_autonomous_tick_outcome(
+    *,
+    inputs: AutonomousTickInputs,
+    enabled: bool,
+    resolved_tick_id: str,
+    cooldown_state: dict[str, Any],
+    suppression: str | None,
+    capability_outputs_used: dict[str, Any],
+    capability_outputs_missing: list[str],
+    component_sources: dict[str, str],
+) -> AutonomousTickOutcome:
+    from ai_stack.contracts.director_pulse_contracts import build_director_tick_decision
+
+    silent_decision = build_director_tick_decision(
+        trigger_kind=inputs.trigger_kind if _validate_trigger(inputs.trigger_kind) else TRIGGER_STATE_CHANGE,
+        triggering_actor_id=inputs.triggering_actor_id,
+        chosen_action_kind=ACTION_SILENCE,
+        chosen_actor_id=None,
+        composition_inputs=[],
+        since_last_tick_ms=inputs.since_last_tick_ms,
+        silence_reason=SILENCE_DIRECTOR_CHOSE,
+        tick_id=resolved_tick_id,
+    )
+    suppressed_off_stage = build_off_stage_update_candidate(
+        OffStageUpdateInputs(
+            tick_id=resolved_tick_id,
+            chosen_actor_id=None,
+            chosen_action_kind=ACTION_SILENCE,
+            motivation_scores={},
+            visible_npc_ids=list(inputs.visible_npc_ids),
+            known_actor_ids=list(inputs.known_actor_ids),
+            known_room_ids=list(inputs.known_room_ids),
+            gathering_paused=inputs.gathering_paused,
+        )
+    )
+    return AutonomousTickOutcome(
+        tick_id=resolved_tick_id,
+        autonomous_tick_enabled=enabled,
+        tick_trigger_kind=inputs.trigger_kind,
+        chosen_actor_id=None,
+        chosen_action_kind=ACTION_SILENCE,
+        block_stream_event=None,
+        director_tick_decision=silent_decision,
+        npc_motivation_scores=[],
+        motivation_scores={},
+        silence_reason=SILENCE_DIRECTOR_CHOSE,
+        cooldown_state=cooldown_state,
+        autonomous_tick_suppressed_reason=suppression,
+        gathering_paused=inputs.gathering_paused,
+        capability_outputs_used=capability_outputs_used,
+        capability_outputs_missing=capability_outputs_missing,
+        motivation_score_component_sources=component_sources,
+        off_stage_update_candidate=suppressed_off_stage,
+        off_stage_commit_result=build_default_off_stage_commit_result(
+            suppressed_off_stage,
+            reason="no_off_stage_candidate",
+        ),
+    )
+
+
+def _allowed_autonomous_tick_outcome(
+    *,
+    inputs: AutonomousTickInputs,
+    enabled: bool,
+    resolved_tick_id: str,
+    cooldown_state: dict[str, Any],
+    capability_outputs_used: dict[str, Any],
+    capability_outputs_missing: list[str],
+    component_sources: dict[str, str],
+) -> AutonomousTickOutcome:
+    shadow = evaluate_director_tick(
+        trigger_kind=inputs.trigger_kind,
+        triggering_actor_id=inputs.triggering_actor_id,
+        npc_ids=list(inputs.npc_ids),
+        scene_energy_output=inputs.scene_energy_output,
+        social_pressure_output=inputs.social_pressure_output,
+        relationship_state_output=inputs.relationship_state_output,
+        narrative_momentum_output=inputs.narrative_momentum_output,
+        actor_pressure_profiles=inputs.actor_pressure_profiles,
+        npc_motivation_score_policy=inputs.npc_motivation_score_policy,
+        gathering_paused=inputs.gathering_paused,
+        since_last_tick_ms=inputs.since_last_tick_ms,
+        current_block_id=None,
+        current_block_type=None,
+        block_payload=None,
+        player_input_payload=None,
+        tick_id=resolved_tick_id,
+    )
+    tick_decision: dict[str, Any] = dict(shadow["director_tick_decision"])
+    motivation_scores: list[dict[str, Any]] = list(shadow["npc_motivation_scores"])
+    score_map: dict[str, float] = {
+        str(s.get("npc_id") or ""): float(s.get("score") or 0.0)
+        for s in motivation_scores
+        if isinstance(s, dict)
+    }
+    chosen_actor: str | None = tick_decision.get("chosen_actor_id")
+    chosen_action = str(tick_decision.get("chosen_action_kind") or ACTION_SILENCE)
+    block_event = _block_event_for_autonomous_choice(
+        chosen_action=chosen_action,
+        chosen_actor=chosen_actor,
+        resolved_tick_id=resolved_tick_id,
+    )
+    silence_reason = _silence_reason_for_autonomous_choice(
+        inputs=inputs,
+        tick_decision=tick_decision,
+        block_event=block_event,
+    )
+    off_stage_result = build_off_stage_update_candidate(
+        OffStageUpdateInputs(
+            tick_id=resolved_tick_id,
+            chosen_actor_id=chosen_actor if block_event else None,
+            chosen_action_kind=chosen_action if block_event else ACTION_SILENCE,
+            motivation_scores=score_map,
+            visible_npc_ids=list(inputs.visible_npc_ids),
+            known_actor_ids=list(inputs.known_actor_ids),
+            known_room_ids=list(inputs.known_room_ids),
+            gathering_paused=inputs.gathering_paused,
+        )
+    )
+    off_stage_commit_result = commit_off_stage_update_candidates(
+        OffStageCommitInputs(
+            candidate_result=off_stage_result,
+            policy=inputs.off_stage_updates_policy,
+            known_actor_ids=list(inputs.known_actor_ids),
+            known_room_ids=list(inputs.known_room_ids),
+            relationship_state_record=inputs.relationship_state_record
+            or inputs.relationship_state_output,
+            hierarchical_memory_snapshot=inputs.hierarchical_memory_snapshot,
+            hierarchical_memory_policy=inputs.hierarchical_memory_policy,
+            module_runtime_policy=inputs.module_runtime_policy,
+            module_id=inputs.module_id,
+            runtime_profile_id=inputs.runtime_profile_id,
+            turn_number=inputs.turn_number,
+        )
+    )
+    return AutonomousTickOutcome(
+        tick_id=resolved_tick_id,
+        autonomous_tick_enabled=enabled,
+        tick_trigger_kind=inputs.trigger_kind,
+        chosen_actor_id=chosen_actor if block_event else None,
+        chosen_action_kind=chosen_action if block_event else ACTION_SILENCE,
+        block_stream_event=block_event,
+        director_tick_decision=tick_decision,
+        npc_motivation_scores=motivation_scores,
+        motivation_scores=score_map,
+        silence_reason=silence_reason,
+        cooldown_state=cooldown_state,
+        autonomous_tick_suppressed_reason=None,
+        gathering_paused=inputs.gathering_paused,
+        capability_outputs_used=capability_outputs_used,
+        capability_outputs_missing=capability_outputs_missing,
+        motivation_score_component_sources=component_sources,
+        off_stage_update_candidate=off_stage_result,
+        off_stage_commit_result=off_stage_commit_result,
+    )
+
+
 def evaluate_autonomous_tick(
     inputs: AutonomousTickInputs,
     *,
@@ -504,188 +724,30 @@ def evaluate_autonomous_tick(
             min_tick_interval_ms=min_interval,
         ),
     }
-
-    # Stage F — capability availability + per-component source labels are
-    # always emitted, even when the tick is suppressed.
-    capability_outputs_used, capability_outputs_missing = classify_capability_availability(
-        scene_energy_output=inputs.scene_energy_output,
-        social_pressure_output=inputs.social_pressure_output,
-        relationship_state_output=inputs.relationship_state_output,
-        narrative_momentum_output=inputs.narrative_momentum_output,
-        actor_pressure_profiles=inputs.actor_pressure_profiles,
-        npc_motivation_score_policy=inputs.npc_motivation_score_policy,
-        pacing_rhythm_policy=inputs.pacing_rhythm_policy,
-    )
-    component_sources = classify_motivation_component_sources(
-        scene_energy_output=inputs.scene_energy_output,
-        social_pressure_output=inputs.social_pressure_output,
-        relationship_state_output=inputs.relationship_state_output,
-        narrative_momentum_output=inputs.narrative_momentum_output,
-        actor_pressure_profiles=inputs.actor_pressure_profiles,
-        npc_motivation_score_policy=inputs.npc_motivation_score_policy,
-    )
+    capability_outputs_used, capability_outputs_missing, component_sources = _capability_tick_metadata(inputs)
 
     allowed, suppression = should_emit_autonomous_tick(inputs=inputs, enabled=enabled)
 
     if not allowed:
-        # Build a silence director_tick_decision so the audit trail is
-        # complete even when emission is suppressed.
-        from ai_stack.contracts.director_pulse_contracts import build_director_tick_decision
-
-        composition_inputs: list[str] = []
-        silent_decision = build_director_tick_decision(
-            trigger_kind=inputs.trigger_kind if _validate_trigger(inputs.trigger_kind) else TRIGGER_STATE_CHANGE,
-            triggering_actor_id=inputs.triggering_actor_id,
-            chosen_action_kind=ACTION_SILENCE,
-            chosen_actor_id=None,
-            composition_inputs=composition_inputs,
-            since_last_tick_ms=inputs.since_last_tick_ms,
-            silence_reason=SILENCE_DIRECTOR_CHOSE,
-            tick_id=resolved_tick_id,
-        )
-        suppressed_off_stage = build_off_stage_update_candidate(
-            OffStageUpdateInputs(
-                tick_id=resolved_tick_id,
-                chosen_actor_id=None,
-                chosen_action_kind=ACTION_SILENCE,
-                motivation_scores={},
-                visible_npc_ids=list(inputs.visible_npc_ids),
-                known_actor_ids=list(inputs.known_actor_ids),
-                known_room_ids=list(inputs.known_room_ids),
-                gathering_paused=inputs.gathering_paused,
-            )
-        )
-        suppressed_commit_result = build_default_off_stage_commit_result(
-            suppressed_off_stage,
-            reason="no_off_stage_candidate",
-        )
-        return AutonomousTickOutcome(
-            tick_id=resolved_tick_id,
-            autonomous_tick_enabled=enabled,
-            tick_trigger_kind=inputs.trigger_kind,
-            chosen_actor_id=None,
-            chosen_action_kind=ACTION_SILENCE,
-            block_stream_event=None,
-            director_tick_decision=silent_decision,
-            npc_motivation_scores=[],
-            motivation_scores={},
-            silence_reason=SILENCE_DIRECTOR_CHOSE,
+        return _suppressed_autonomous_tick_outcome(
+            inputs=inputs,
+            enabled=enabled,
+            resolved_tick_id=resolved_tick_id,
             cooldown_state=cooldown_state,
-            autonomous_tick_suppressed_reason=suppression,
-            gathering_paused=inputs.gathering_paused,
+            suppression=suppression,
             capability_outputs_used=capability_outputs_used,
             capability_outputs_missing=capability_outputs_missing,
-            motivation_score_component_sources=component_sources,
-            off_stage_update_candidate=suppressed_off_stage,
-            off_stage_commit_result=suppressed_commit_result,
+            component_sources=component_sources,
         )
 
-    # Allowed — delegate the actor-selection logic to evaluate_director_tick.
-    shadow = evaluate_director_tick(
-        trigger_kind=inputs.trigger_kind,
-        triggering_actor_id=inputs.triggering_actor_id,
-        npc_ids=list(inputs.npc_ids),
-        scene_energy_output=inputs.scene_energy_output,
-        social_pressure_output=inputs.social_pressure_output,
-        relationship_state_output=inputs.relationship_state_output,
-        narrative_momentum_output=inputs.narrative_momentum_output,
-        actor_pressure_profiles=inputs.actor_pressure_profiles,
-        npc_motivation_score_policy=inputs.npc_motivation_score_policy,
-        gathering_paused=inputs.gathering_paused,
-        since_last_tick_ms=inputs.since_last_tick_ms,
-        current_block_id=None,
-        current_block_type=None,
-        block_payload=None,
-        player_input_payload=None,
-        tick_id=resolved_tick_id,
-    )
-
-    tick_decision: dict[str, Any] = dict(shadow["director_tick_decision"])
-    motivation_scores: list[dict[str, Any]] = list(shadow["npc_motivation_scores"])
-    score_map: dict[str, float] = {
-        str(s.get("npc_id") or ""): float(s.get("score") or 0.0)
-        for s in motivation_scores
-        if isinstance(s, dict)
-    }
-
-    chosen_actor: str | None = tick_decision.get("chosen_actor_id")
-    chosen_action: str = str(tick_decision.get("chosen_action_kind") or ACTION_SILENCE)
-
-    block_event: dict[str, Any] | None = None
-    silence_reason: str | None = None
-
-    if chosen_action == ACTION_SPEAK and chosen_actor:
-        payload = _build_actor_line_payload(
-            chosen_actor_id=chosen_actor,
-            tick_id=resolved_tick_id,
-        )
-        block_event = build_block_stream_event(
-            tick_id=resolved_tick_id,
-            block_type=BLOCK_TYPE_ACTOR_LINE,
-            block_payload=payload,
-            cut_in_state=CUT_IN_UNINTERRUPTED,
-            lane=LANE_VISIBLE_SCENE_OUTPUT,
-            source=chosen_actor,
-        )
-    else:
-        # Director chose silence — pick the most specific reason available.
-        if inputs.gathering_paused:
-            silence_reason = SILENCE_GATHERING_PAUSED_OFF_STAGE
-        else:
-            silence_reason = SILENCE_NO_NPC_ABOVE_THRESHOLD
-        # Make sure the tick_decision reflects the same reason for audit parity.
-        tick_decision["silence_reason"] = silence_reason
-        tick_decision["chosen_action_kind"] = ACTION_SILENCE
-        tick_decision["chosen_actor_id"] = None
-
-    off_stage_result = build_off_stage_update_candidate(
-        OffStageUpdateInputs(
-            tick_id=resolved_tick_id,
-            chosen_actor_id=chosen_actor if block_event else None,
-            chosen_action_kind=chosen_action if block_event else ACTION_SILENCE,
-            motivation_scores=score_map,
-            visible_npc_ids=list(inputs.visible_npc_ids),
-            known_actor_ids=list(inputs.known_actor_ids),
-            known_room_ids=list(inputs.known_room_ids),
-            gathering_paused=inputs.gathering_paused,
-        )
-    )
-    off_stage_commit_result = commit_off_stage_update_candidates(
-        OffStageCommitInputs(
-            candidate_result=off_stage_result,
-            policy=inputs.off_stage_updates_policy,
-            known_actor_ids=list(inputs.known_actor_ids),
-            known_room_ids=list(inputs.known_room_ids),
-            relationship_state_record=inputs.relationship_state_record
-            or inputs.relationship_state_output,
-            hierarchical_memory_snapshot=inputs.hierarchical_memory_snapshot,
-            hierarchical_memory_policy=inputs.hierarchical_memory_policy,
-            module_runtime_policy=inputs.module_runtime_policy,
-            module_id=inputs.module_id,
-            runtime_profile_id=inputs.runtime_profile_id,
-            turn_number=inputs.turn_number,
-        )
-    )
-
-    return AutonomousTickOutcome(
-        tick_id=resolved_tick_id,
-        autonomous_tick_enabled=enabled,
-        tick_trigger_kind=inputs.trigger_kind,
-        chosen_actor_id=chosen_actor if block_event else None,
-        chosen_action_kind=chosen_action if block_event else ACTION_SILENCE,
-        block_stream_event=block_event,
-        director_tick_decision=tick_decision,
-        npc_motivation_scores=motivation_scores,
-        motivation_scores=score_map,
-        silence_reason=silence_reason,
+    return _allowed_autonomous_tick_outcome(
+        inputs=inputs,
+        enabled=enabled,
+        resolved_tick_id=resolved_tick_id,
         cooldown_state=cooldown_state,
-        autonomous_tick_suppressed_reason=None,
-        gathering_paused=inputs.gathering_paused,
         capability_outputs_used=capability_outputs_used,
         capability_outputs_missing=capability_outputs_missing,
-        motivation_score_component_sources=component_sources,
-        off_stage_update_candidate=off_stage_result,
-        off_stage_commit_result=off_stage_commit_result,
+        component_sources=component_sources,
     )
 
 

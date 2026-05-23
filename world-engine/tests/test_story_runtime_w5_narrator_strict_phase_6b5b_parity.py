@@ -89,7 +89,6 @@ W5_FLAGS = (
     "W5_AST_VALIDATION_ENABLED",
     "W5_AST_FRONTEND_PLAYER_VIEW_ENABLED",
     "W5_AST_NARRATOR_STRICT_ENABLED",
-    "W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED",
 )
 
 
@@ -581,51 +580,21 @@ class TestPhase6B5BSourceFactsAuthorityShape:
         # W5 projection coexists as the additional default-on input.
         assert "w5_projection" in facts
 
-    def test_strict_on_default_no_legacy_compat(
+    def test_strict_on_no_legacy_compat(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-5E default: strict-on + diagnostics flag OFF produces
-        no ``_legacy_compat`` in source_facts. W5 projection is the sole
-        actor-situation authority surface."""
+        """Phase 6B-6B: strict-on never produces _legacy_compat in source_facts.
+        W5 projection is the sole actor-situation authority (ADR-0066)."""
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
         session = _make_session()
         enriched = _enrich(session, [_strict_clean_block()])
         facts = enriched[0]["source_facts"]
         assert "transition_from_previous" not in facts
         assert "_legacy_compat" not in facts, (
-            "Phase 6B-5E default: no _legacy_compat in strict-on source_facts "
-            "when diagnostics flag is off"
+            "Phase 6B-6B: _legacy_compat breadcrumb path retired (ADR-0066)"
         )
-        # W5 projection is enriched and carries location_changed signal.
-        proj = facts["w5_projection"]
-        assert proj["where_summary"]["location_changed"] is True
-        assert proj["where_summary"]["current_location"] == "parlor"
-        assert proj["where_summary"]["previous_location"] == "foyer"
-
-    def test_strict_on_with_diagnostics_flag_carries_legacy_compat_breadcrumb(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E opt-in: strict-on + diagnostics flag ON preserves the
-        demoted ``_legacy_compat`` breadcrumb alongside the W5 projection."""
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
-        session = _make_session()
-        enriched = _enrich(session, [_strict_demoted_block()])
-        facts = enriched[0]["source_facts"]
-        assert "transition_from_previous" not in facts
-        legacy_compat = facts["_legacy_compat"]
-        assert isinstance(legacy_compat, dict)
-        assert legacy_compat["authority"] == "w5_projection"
-        notice = str(legacy_compat["notice"])
-        assert "W5" in notice
-        assert "non-authoritative" in notice or "non_authoritative" in notice
-        assert (
-            legacy_compat["transition_from_previous"]["directed_transition"]["kind"]
-            == "hard_cut"
-        )
+        # W5 projection carries the location_changed signal.
         proj = facts["w5_projection"]
         assert proj["where_summary"]["location_changed"] is True
         assert proj["where_summary"]["current_location"] == "parlor"
@@ -640,14 +609,15 @@ class TestPhase6B5BSourceFactsAuthorityShape:
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         session = _make_session(previous_location="foyer", current_location="parlor")
-        enriched = _enrich(session, [_strict_demoted_block()])
+        enriched = _enrich(session, [_strict_clean_block()])
         proj = enriched[0]["source_facts"]["w5_projection"]
         # The strict prompt expects all three signals from W5 alone.
         assert proj["where_summary"]["location_changed"] is True
         assert proj["where_summary"]["current_location"] == "parlor"
         assert proj["where_summary"]["previous_location"] == "foyer"
-        # No top-level transition_from_previous to disagree.
+        # No top-level transition_from_previous and no _legacy_compat.
         assert "transition_from_previous" not in enriched[0]["source_facts"]
+        assert "_legacy_compat" not in enriched[0]["source_facts"]
 
 
 # ---------------------------------------------------------------------------
@@ -715,11 +685,9 @@ class TestPhase6B5BPromptContract:
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         prompt = _build_narrator_prompt()
         # The strict-on prompt explicitly tells the narrator not to consult
-        # the legacy transition surface, and labels _legacy_compat as a
-        # non-authoritative debug breadcrumb only.
+        # the legacy transition surface (Phase 6B-6B: _legacy_compat retired).
         assert "Do not consult source_facts.transition_from_previous" in prompt
-        assert "_legacy_compat" in prompt
-        assert "non-authoritative" in prompt
+        assert "absent under strict-on" in prompt
         # The unstrict-only fallback paragraph must be absent.
         assert "Use transition_from_previous only as a fallback" not in prompt
         assert "source_facts.transition_from_previous.location_changed" not in prompt
@@ -822,13 +790,13 @@ class TestPhase6B5BAdminDiagnosticsParity:
         assert meta["w5.has_how"] is True
         assert meta["w5.has_inferred_why"] is True
 
-    def test_strict_on_default_reports_removed_by_6b5e_policy(
+    def test_strict_on_reports_removed_by_6b5e_policy(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-5E default: strict-on + diagnostics flag OFF reports
-        ``removed_by_6b5e_policy`` for the legacy parity label."""
+        """Phase 6B-6B: strict-on always emits ``removed_by_6b5e_policy`` and
+        the retired ``narrator_legacy_compat_diagnostics_enabled`` key is absent
+        (ADR-0066)."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
         session = _make_session()
         harness = _AdminParityHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)
@@ -836,25 +804,7 @@ class TestPhase6B5BAdminDiagnosticsParity:
         assert meta["w5.location_changed_source"] == "w5_history_projection"
         assert meta["w5.narrator_strict_enabled"] is True
         assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
-        assert meta["w5.narrator_legacy_compat_diagnostics_enabled"] is False
-        assert meta["w5.has_how"] is True
-        assert meta["w5.has_inferred_why"] is True
-
-    def test_strict_on_with_diagnostics_flag_reports_demoted_to_legacy_compat(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Phase 6B-5E opt-in: strict-on + diagnostics flag ON reports
-        ``demoted_to_legacy_compat`` for operator parity audits."""
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
-        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
-        session = _make_session()
-        harness = _AdminParityHarness(session)
-        meta = harness.get_w5_langfuse_metadata(session.session_id)
-        assert meta["w5.location_changed_this_turn"] is True
-        assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
-        assert meta["w5.legacy_transition_parity"] == "demoted_to_legacy_compat"
-        assert meta["w5.narrator_legacy_compat_diagnostics_enabled"] is True
+        assert "w5.narrator_legacy_compat_diagnostics_enabled" not in meta
         assert meta["w5.has_how"] is True
         assert meta["w5.has_inferred_why"] is True
 

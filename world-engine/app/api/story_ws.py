@@ -781,6 +781,117 @@ async def _drain_cut_in_messages(
                 return
 
 
+def _autonomous_loop_config(tick_inputs: AutonomousTickInputs) -> dict[str, Any]:
+    loop_enabled = is_autonomous_pause_loop_enabled()
+    return {
+        "loop_enabled": loop_enabled,
+        "max_ticks_per_pause": resolve_max_ticks_per_pause(tick_inputs.pacing_rhythm_policy)
+        if loop_enabled
+        else 1,
+        "min_tick_interval_ms": resolve_min_tick_interval_ms(
+            tick_inputs.pacing_rhythm_policy,
+            tick_inputs.min_tick_interval_ms_override,
+        ),
+        "loop_trigger_kind": LOOP_TRIGGER_GATHERING_PAUSED
+        if tick_inputs.gathering_paused
+        else LOOP_TRIGGER_USER_PAUSE,
+    }
+
+
+async def _handle_autonomous_pause_input(
+    *,
+    websocket: WebSocket,
+    session_id: str,
+    wait_message: dict[str, Any],
+    tick_index: int,
+    max_ticks_per_pause: int,
+    queued_carryover: list[dict[str, Any]],
+    processed_handoff_input_ids: set[str],
+) -> dict[str, Any]:
+    if wait_message.get("source_kind") == CLIENT_MSG_START_TURN:
+        return {
+            "kind": CLIENT_MSG_START_TURN,
+            "player_input": str(wait_message.get("player_input") or ""),
+        }
+    idle_cut_state = WSSessionLoopState(session_id=session_id)
+    cut_outcome = apply_cut_in(
+        idle_cut_state,
+        tick_id=str(uuid.uuid4()),
+        player_input_payload=wait_message,
+        pending_events=[],
+        canceled_autonomous_ticks=max(0, max_ticks_per_pause - tick_index),
+    )
+    await websocket.send_json(msg_block_cut(cut_outcome=cut_outcome))
+    await _emit_replanned_events(
+        websocket,
+        cut_outcome.get("replanning_decision")
+        if isinstance(cut_outcome.get("replanning_decision"), dict)
+        else None,
+    )
+    return _queue_handoff_for_next_turn(
+        cut_outcome,
+        queued_carryover,
+        processed_handoff_input_ids,
+    )
+
+
+def _autonomous_stop_reason_for_outcome(
+    outcome: AutonomousTickOutcome,
+    summary: dict[str, Any],
+    *,
+    tick_index: int,
+    max_ticks_per_pause: int,
+) -> str | None:
+    if outcome.autonomous_tick_suppressed_reason == LOOP_STOP_COOLDOWN_ACTIVE:
+        stop_reason = LOOP_STOP_COOLDOWN_ACTIVE
+    elif outcome.autonomous_tick_suppressed_reason:
+        stop_reason = LOOP_STOP_TICK_SUPPRESSED
+    elif _autonomous_candidate_blocked(outcome):
+        stop_reason = LOOP_STOP_UNSAFE_CANDIDATE
+    elif outcome.block_stream_event is None:
+        stop_reason = LOOP_STOP_NO_MOTIVATION_THRESHOLD
+    elif tick_index + 1 >= max_ticks_per_pause:
+        stop_reason = LOOP_STOP_MAX_TICKS
+    else:
+        return None
+    summary["autonomous_pause_loop"]["stop_reason"] = stop_reason
+    return stop_reason
+
+
+async def _stream_autonomous_outcome_block(
+    *,
+    websocket: WebSocket,
+    session_id: str,
+    outcome: AutonomousTickOutcome,
+    pacing_seconds: float,
+    canceled_autonomous_ticks_on_cut: int,
+) -> WSSessionLoopState:
+    autonomous_state = WSSessionLoopState(session_id=session_id)
+    cut_in_queue = asyncio.Queue(maxsize=1)
+    reader_task = asyncio.create_task(
+        _drain_cut_in_messages(websocket, cut_in_queue, autonomous_state)
+    )
+    try:
+        await _stream_events_to_client(
+            websocket,
+            autonomous_state,
+            [outcome.block_stream_event],
+            cut_in_queue=cut_in_queue,
+            pacing_seconds=pacing_seconds,
+            autonomous_originator=True,
+            canceled_autonomous_ticks_on_cut=canceled_autonomous_ticks_on_cut,
+        )
+    finally:
+        autonomous_state.stream_finished = True
+        if not reader_task.done():
+            reader_task.cancel()
+            try:
+                await reader_task
+            except (asyncio.CancelledError, Exception):
+                pass
+    return autonomous_state
+
+
 async def _run_autonomous_followup_after_turn(
     *,
     websocket: WebSocket,
@@ -804,21 +915,11 @@ async def _run_autonomous_followup_after_turn(
         await websocket.send_json(msg_stream_idle(reason="completed"))
         return autonomous_last_tick_ms, None
 
-    loop_enabled = is_autonomous_pause_loop_enabled()
-    max_ticks_per_pause = (
-        resolve_max_ticks_per_pause(tick_inputs.pacing_rhythm_policy)
-        if loop_enabled
-        else 1
-    )
-    min_tick_interval_ms = resolve_min_tick_interval_ms(
-        tick_inputs.pacing_rhythm_policy,
-        tick_inputs.min_tick_interval_ms_override,
-    )
-    loop_trigger_kind = (
-        LOOP_TRIGGER_GATHERING_PAUSED
-        if tick_inputs.gathering_paused
-        else LOOP_TRIGGER_USER_PAUSE
-    )
+    config = _autonomous_loop_config(tick_inputs)
+    loop_enabled = bool(config["loop_enabled"])
+    max_ticks_per_pause = int(config["max_ticks_per_pause"])
+    min_tick_interval_ms = int(config["min_tick_interval_ms"])
+    loop_trigger_kind = str(config["loop_trigger_kind"])
     stop_reason = LOOP_STOP_MAX_TICKS
     autonomous_block_emitted = False
     autonomous_stop_cut_in = False
@@ -835,34 +936,15 @@ async def _run_autonomous_followup_after_turn(
             if wait_message is not None:
                 stop_reason = LOOP_STOP_PLAYER_CUT_IN
                 autonomous_stop_cut_in = True
-                if wait_message.get("source_kind") == CLIENT_MSG_START_TURN:
-                    pending_priority_start = {
-                        "kind": CLIENT_MSG_START_TURN,
-                        "player_input": str(wait_message.get("player_input") or ""),
-                    }
-                else:
-                    idle_cut_state = WSSessionLoopState(session_id=session_id)
-                    cut_outcome = apply_cut_in(
-                        idle_cut_state,
-                        tick_id=str(uuid.uuid4()),
-                        player_input_payload=wait_message,
-                        pending_events=[],
-                        canceled_autonomous_ticks=max(
-                            0, max_ticks_per_pause - tick_index
-                        ),
-                    )
-                    await websocket.send_json(msg_block_cut(cut_outcome=cut_outcome))
-                    await _emit_replanned_events(
-                        websocket,
-                        cut_outcome.get("replanning_decision")
-                        if isinstance(cut_outcome.get("replanning_decision"), dict)
-                        else None,
-                    )
-                    pending_priority_start = _queue_handoff_for_next_turn(
-                        cut_outcome,
-                        queued_carryover,
-                        processed_handoff_input_ids,
-                    )
+                pending_priority_start = await _handle_autonomous_pause_input(
+                    websocket=websocket,
+                    session_id=session_id,
+                    wait_message=wait_message,
+                    tick_index=tick_index,
+                    max_ticks_per_pause=max_ticks_per_pause,
+                    queued_carryover=queued_carryover,
+                    processed_handoff_input_ids=processed_handoff_input_ids,
+                )
                 break
             tick_inputs.since_last_tick_ms = min_tick_interval_ms
 
@@ -876,21 +958,15 @@ async def _run_autonomous_followup_after_turn(
             loop_enabled=loop_enabled,
             loop_trigger_kind=loop_trigger_kind,
         )
-
-        if autonomous_outcome.autonomous_tick_suppressed_reason == LOOP_STOP_COOLDOWN_ACTIVE:
-            stop_reason = LOOP_STOP_COOLDOWN_ACTIVE
-            summary["autonomous_pause_loop"]["stop_reason"] = stop_reason
-        elif autonomous_outcome.autonomous_tick_suppressed_reason:
-            stop_reason = LOOP_STOP_TICK_SUPPRESSED
-            summary["autonomous_pause_loop"]["stop_reason"] = stop_reason
-        elif _autonomous_candidate_blocked(autonomous_outcome):
-            stop_reason = LOOP_STOP_UNSAFE_CANDIDATE
-            summary["autonomous_pause_loop"]["stop_reason"] = stop_reason
-        elif autonomous_outcome.block_stream_event is None:
-            stop_reason = LOOP_STOP_NO_MOTIVATION_THRESHOLD
-            summary["autonomous_pause_loop"]["stop_reason"] = stop_reason
-        elif tick_index + 1 >= max_ticks_per_pause:
-            summary["autonomous_pause_loop"]["stop_reason"] = LOOP_STOP_MAX_TICKS
+        stop_reason = (
+            _autonomous_stop_reason_for_outcome(
+                autonomous_outcome,
+                summary,
+                tick_index=tick_index,
+                max_ticks_per_pause=max_ticks_per_pause,
+            )
+            or stop_reason
+        )
 
         autonomous_summaries.append(summary)
         autonomous_last_tick_ms = 0.0
@@ -908,31 +984,13 @@ async def _run_autonomous_followup_after_turn(
             break
 
         autonomous_block_emitted = True
-        autonomous_state = WSSessionLoopState(session_id=session_id)
-        cut_in_queue = asyncio.Queue(maxsize=1)
-        reader_task = asyncio.create_task(
-            _drain_cut_in_messages(websocket, cut_in_queue, autonomous_state)
+        autonomous_state = await _stream_autonomous_outcome_block(
+            websocket=websocket,
+            session_id=session_id,
+            outcome=autonomous_outcome,
+            pacing_seconds=pacing_seconds,
+            canceled_autonomous_ticks_on_cut=max(0, max_ticks_per_pause - tick_index - 1),
         )
-        try:
-            await _stream_events_to_client(
-                websocket,
-                autonomous_state,
-                [autonomous_outcome.block_stream_event],
-                cut_in_queue=cut_in_queue,
-                pacing_seconds=pacing_seconds,
-                autonomous_originator=True,
-                canceled_autonomous_ticks_on_cut=max(
-                    0, max_ticks_per_pause - tick_index - 1
-                ),
-            )
-        finally:
-            autonomous_state.stream_finished = True
-            if not reader_task.done():
-                reader_task.cancel()
-                try:
-                    await reader_task
-                except (asyncio.CancelledError, Exception):
-                    pass
 
         if autonomous_state.last_cut_kind is not None:
             stop_reason = LOOP_STOP_PLAYER_CUT_IN
@@ -964,11 +1022,246 @@ async def _run_autonomous_followup_after_turn(
     return autonomous_last_tick_ms, None
 
 
+async def _accept_story_ws_connection(
+    websocket: WebSocket,
+) -> StoryRuntimeManager | None:
+    if not is_ws_session_loop_enabled():
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="ws_session_loop_disabled")
+        return None
+
+    provided_key = websocket.query_params.get("key") or websocket.headers.get("x-play-service-key")
+    if not _verify_internal_key(provided_key):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="auth_required")
+        return None
+
+    manager: StoryRuntimeManager | None = getattr(websocket.app.state, "story_manager", None)
+    if manager is None:
+        await websocket.close(code=status.WS_1011_INTERNAL_ERROR, reason="story_manager_unavailable")
+        return None
+
+    await websocket.accept()
+    return manager
+
+
+def _start_turn_payload_from_message(
+    message: dict[str, Any],
+    queued_carryover: list[dict[str, Any]],
+) -> dict[str, Any]:
+    source_kind = str(message.get("source_kind") or "")
+    message_input_id = str(message.get("player_input_id") or "").strip()
+    handoff_cut_outcome = (
+        message.get("_cut_outcome")
+        if isinstance(message.get("_cut_outcome"), dict)
+        else None
+    )
+    player_input = str(message.get("player_input") or "").strip()
+    if not player_input and queued_carryover:
+        carryover = queued_carryover[-1]
+        player_input = str(carryover.get("player_input") or "").strip()
+        source_kind = str(carryover.get("source_kind") or source_kind)
+        message_input_id = str(carryover.get("player_input_id") or message_input_id).strip()
+        handoff_cut_outcome = (
+            carryover.get("_cut_outcome")
+            if isinstance(carryover.get("_cut_outcome"), dict)
+            else handoff_cut_outcome
+        )
+    return {
+        "source_kind": source_kind,
+        "message_input_id": message_input_id,
+        "handoff_cut_outcome": handoff_cut_outcome,
+        "player_input": player_input,
+        "is_handoff_turn": source_kind == NEXT_TURN_TRIGGER_PLAYER_CUT_IN_HANDOFF,
+    }
+
+
+async def _execute_ws_turn_or_report(
+    *,
+    websocket: WebSocket,
+    manager: StoryRuntimeManager,
+    session_id: str,
+    player_input: str,
+) -> tuple[dict[str, Any] | None, bool]:
+    try:
+        turn = await run_in_threadpool(
+            manager.execute_turn,
+            session_id=session_id,
+            player_input=player_input,
+            trace_id=None,
+        )
+        return turn, False
+    except KeyError:
+        await websocket.send_json(msg_stream_error(reason="session_not_found"))
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="session_not_found")
+        return None, True
+    except LiveStoryGovernanceError as exc:
+        await websocket.send_json(msg_stream_error(reason="governance_error", detail=str(exc)))
+        return None, False
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("WS turn execution failed: %s", exc)
+        await websocket.send_json(msg_stream_error(reason="turn_execution_failed", detail=str(exc)))
+        return None, False
+
+
+def _mark_handoff_processed(
+    *,
+    is_handoff_turn: bool,
+    message_input_id: str,
+    queued_carryover: list[dict[str, Any]],
+    processed_handoff_input_ids: set[str],
+) -> None:
+    if is_handoff_turn and message_input_id:
+        processed_handoff_input_ids.add(message_input_id)
+        queued_carryover[:] = [
+            item for item in queued_carryover
+            if str(item.get("player_input_id") or "").strip() != message_input_id
+        ]
+    else:
+        queued_carryover.clear()
+
+
+async def _append_post_cut_in_follow_up(
+    *,
+    websocket: WebSocket,
+    turn: dict[str, Any],
+    events: list[dict[str, Any]],
+    handoff_cut_outcome: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    post_cut_in_decision = _build_post_cut_in_decision_for_turn(
+        turn=turn,
+        events=events,
+        cut_outcome=handoff_cut_outcome,
+    )
+    if post_cut_in_decision is None:
+        return events
+    await websocket.send_json(
+        msg_post_cut_in_replanning_decision(decision=post_cut_in_decision)
+    )
+    follow_up = build_post_cut_in_follow_up_event(decision=post_cut_in_decision)
+    await websocket.send_json(msg_post_cut_in_follow_up_event(follow_up=follow_up))
+    follow_up_event = follow_up.get("block_stream_event")
+    if isinstance(follow_up_event, dict):
+        return [*events, follow_up_event]
+    return events
+
+
+async def _stream_ws_turn_events(
+    *,
+    websocket: WebSocket,
+    session_id: str,
+    events: list[dict[str, Any]],
+    pacing_seconds: float,
+) -> WSSessionLoopState:
+    state = WSSessionLoopState(session_id=session_id)
+    cut_in_queue: asyncio.Queue = asyncio.Queue(maxsize=1)
+    reader_task = asyncio.create_task(_drain_cut_in_messages(websocket, cut_in_queue, state))
+    try:
+        await _stream_events_to_client(
+            websocket,
+            state,
+            events,
+            cut_in_queue=cut_in_queue,
+            pacing_seconds=pacing_seconds,
+        )
+    finally:
+        state.stream_finished = True
+        if not reader_task.done():
+            reader_task.cancel()
+            try:
+                await reader_task
+            except (asyncio.CancelledError, Exception):
+                pass
+    return state
+
+
+async def _handle_story_ws_start_turn(
+    *,
+    websocket: WebSocket,
+    manager: StoryRuntimeManager,
+    session_id: str,
+    message: dict[str, Any],
+    queued_carryover: list[dict[str, Any]],
+    processed_handoff_input_ids: set[str],
+    pacing_seconds: float,
+    autonomous_last_tick_ms: float | None,
+    autonomous_summaries: list[dict[str, Any]],
+) -> tuple[float | None, dict[str, Any] | None, bool]:
+    payload = _start_turn_payload_from_message(message, queued_carryover)
+    player_input = payload["player_input"]
+    message_input_id = payload["message_input_id"]
+    is_handoff_turn = bool(payload["is_handoff_turn"])
+
+    if not player_input:
+        await websocket.send_json(msg_stream_error(reason="missing_player_input"))
+        return autonomous_last_tick_ms, None, False
+    if is_handoff_turn and message_input_id in processed_handoff_input_ids:
+        await websocket.send_json(msg_stream_idle(reason="duplicate_handoff_input_ignored"))
+        return autonomous_last_tick_ms, None, False
+
+    turn, should_return = await _execute_ws_turn_or_report(
+        websocket=websocket,
+        manager=manager,
+        session_id=session_id,
+        player_input=player_input,
+    )
+    if turn is None:
+        return autonomous_last_tick_ms, None, should_return
+
+    _mark_handoff_processed(
+        is_handoff_turn=is_handoff_turn,
+        message_input_id=message_input_id,
+        queued_carryover=queued_carryover,
+        processed_handoff_input_ids=processed_handoff_input_ids,
+    )
+    events = _extract_block_stream_events(turn)
+    await websocket.send_json(
+        msg_stream_started(session_id=session_id, turn_id=_extract_turn_id(turn))
+    )
+    if is_handoff_turn:
+        events = await _append_post_cut_in_follow_up(
+            websocket=websocket,
+            turn=turn,
+            events=events,
+            handoff_cut_outcome=payload["handoff_cut_outcome"],
+        )
+    if not events:
+        await websocket.send_json(msg_stream_idle(reason="no_events"))
+        return autonomous_last_tick_ms, None, False
+
+    stream_state = await _stream_ws_turn_events(
+        websocket=websocket,
+        session_id=session_id,
+        events=events,
+        pacing_seconds=pacing_seconds,
+    )
+    if stream_state.last_cut_kind is not None:
+        pending = _queue_handoff_for_next_turn(
+            stream_state.last_cut_outcome,
+            queued_carryover,
+            processed_handoff_input_ids,
+        )
+        return autonomous_last_tick_ms, pending, False
+    if is_handoff_turn:
+        await websocket.send_json(msg_stream_idle(reason="player_cut_in_handoff_completed"))
+        return autonomous_last_tick_ms, None, False
+
+    autonomous_last_tick_ms, pending = await _run_autonomous_followup_after_turn(
+        websocket=websocket,
+        session_id=session_id,
+        turn=turn,
+        queued_carryover=queued_carryover,
+        processed_handoff_input_ids=processed_handoff_input_ids,
+        pacing_seconds=pacing_seconds,
+        autonomous_last_tick_ms=autonomous_last_tick_ms,
+        autonomous_summaries=autonomous_summaries,
+    )
+    return autonomous_last_tick_ms, pending, False
+
+
 # ── Endpoint ──────────────────────────────────────────────────────────────────
 
 
 @story_ws_router.websocket("/api/story/sessions/{session_id}/stream")
-async def story_session_stream(websocket: WebSocket, session_id: str) -> None:  # noqa: C901
+async def story_session_stream(websocket: WebSocket, session_id: str) -> None:
     """Live block-stream WebSocket for a story session.
 
     Connection lifecycle:
@@ -981,25 +1274,13 @@ async def story_session_stream(websocket: WebSocket, session_id: str) -> None:  
            ``block_cut``, ends the stream. Player input is queued and
            replayed on the next ``start_turn``.
     """
-    if not is_ws_session_loop_enabled():
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="ws_session_loop_disabled")
-        return
-
-    provided_key = websocket.query_params.get("key") or websocket.headers.get("x-play-service-key")
-    if not _verify_internal_key(provided_key):
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="auth_required")
-        return
-
-    manager: StoryRuntimeManager | None = getattr(websocket.app.state, "story_manager", None)
+    manager = await _accept_story_ws_connection(websocket)
     if manager is None:
-        await websocket.close(code=status.WS_1011_INTERNAL_ERROR, reason="story_manager_unavailable")
         return
 
-    await websocket.accept()
     state = WSSessionLoopState(session_id=session_id)
     pacing_seconds = _block_pacing_seconds()
     queued_carryover: list[dict[str, Any]] = []
-    # Stage E — autonomous tick bookkeeping (per-connection).
     autonomous_last_tick_ms: float | None = None
     autonomous_summaries: list[dict[str, Any]] = []
     pending_priority_start: dict[str, Any] | None = None
@@ -1046,144 +1327,20 @@ async def story_session_stream(websocket: WebSocket, session_id: str) -> None:  
                 await websocket.send_json(msg_stream_error(reason="unknown_kind", detail=kind))
                 continue
 
-            source_kind = str(message.get("source_kind") or "")
-            message_input_id = str(message.get("player_input_id") or "").strip()
-            handoff_cut_outcome = (
-                message.get("_cut_outcome")
-                if isinstance(message.get("_cut_outcome"), dict)
-                else None
-            )
-            player_input = str(message.get("player_input") or "").strip()
-            if not player_input and queued_carryover:
-                # Replay carryover from a prior cut-in if the immediate
-                # handoff could not be processed before another start request.
-                carryover = queued_carryover[-1]
-                player_input = str(carryover.get("player_input") or "").strip()
-                source_kind = str(carryover.get("source_kind") or source_kind)
-                message_input_id = str(
-                    carryover.get("player_input_id") or message_input_id
-                ).strip()
-                handoff_cut_outcome = (
-                    carryover.get("_cut_outcome")
-                    if isinstance(carryover.get("_cut_outcome"), dict)
-                    else handoff_cut_outcome
-                )
-
-            if not player_input:
-                await websocket.send_json(msg_stream_error(reason="missing_player_input"))
-                continue
-
-            is_handoff_turn = source_kind == NEXT_TURN_TRIGGER_PLAYER_CUT_IN_HANDOFF
-            if is_handoff_turn and message_input_id in processed_handoff_input_ids:
-                await websocket.send_json(msg_stream_idle(reason="duplicate_handoff_input_ignored"))
-                continue
-
-            try:
-                turn = await run_in_threadpool(
-                    manager.execute_turn,
-                    session_id=session_id,
-                    player_input=player_input,
-                    trace_id=None,
-                )
-            except KeyError:
-                await websocket.send_json(msg_stream_error(reason="session_not_found"))
-                await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="session_not_found")
-                return
-            except LiveStoryGovernanceError as exc:
-                await websocket.send_json(msg_stream_error(reason="governance_error", detail=str(exc)))
-                continue
-            except Exception as exc:  # noqa: BLE001
-                logger.exception("WS turn execution failed: %s", exc)
-                await websocket.send_json(msg_stream_error(reason="turn_execution_failed", detail=str(exc)))
-                continue
-
-            if is_handoff_turn and message_input_id:
-                processed_handoff_input_ids.add(message_input_id)
-                queued_carryover[:] = [
-                    item for item in queued_carryover
-                    if str(item.get("player_input_id") or "").strip() != message_input_id
-                ]
-            else:
-                queued_carryover.clear()
-            turn_id = _extract_turn_id(turn)
-            events = _extract_block_stream_events(turn)
-            await websocket.send_json(msg_stream_started(session_id=session_id, turn_id=turn_id))
-            if is_handoff_turn:
-                post_cut_in_decision = _build_post_cut_in_decision_for_turn(
-                    turn=turn,
-                    events=events,
-                    cut_outcome=handoff_cut_outcome,
-                )
-                if post_cut_in_decision is not None:
-                    await websocket.send_json(
-                        msg_post_cut_in_replanning_decision(
-                            decision=post_cut_in_decision,
-                        )
-                    )
-                    follow_up = build_post_cut_in_follow_up_event(
-                        decision=post_cut_in_decision,
-                    )
-                    await websocket.send_json(
-                        msg_post_cut_in_follow_up_event(follow_up=follow_up)
-                    )
-                    follow_up_event = follow_up.get("block_stream_event")
-                    if isinstance(follow_up_event, dict):
-                        events = [*events, follow_up_event]
-            state = WSSessionLoopState(session_id=session_id)
-
-            if not events:
-                await websocket.send_json(msg_stream_idle(reason="no_events"))
-                continue
-
-            cut_in_queue: asyncio.Queue = asyncio.Queue(maxsize=1)
-            reader_task = asyncio.create_task(_drain_cut_in_messages(websocket, cut_in_queue, state))
-            try:
-                await _stream_events_to_client(
-                    websocket,
-                    state,
-                    events,
-                    cut_in_queue=cut_in_queue,
-                    pacing_seconds=pacing_seconds,
-                )
-            finally:
-                state.stream_finished = True
-                if not reader_task.done():
-                    reader_task.cancel()
-                    try:
-                        await reader_task
-                    except (asyncio.CancelledError, Exception):
-                        pass
-
-            user_turn_cut = state.last_cut_kind is not None
-
-            if user_turn_cut:
-                # Player interrupted the user-input turn — promote the queued
-                # input into the next Director evaluation and pause autonomy.
-                pending_priority_start = _queue_handoff_for_next_turn(
-                    state.last_cut_outcome,
-                    queued_carryover,
-                    processed_handoff_input_ids,
-                )
-                continue
-
-            if is_handoff_turn:
-                await websocket.send_json(msg_stream_idle(reason="player_cut_in_handoff_completed"))
-                continue
-
-            # ── Stage E/H: Autonomous Director Tick / Pause Loop ───────────
-            # After a clean user-turn delivery, the Director MAY emit
-            # autonomous NPC blocks. Stage E remains a single tick by default;
-            # Stage H enables a bounded explicit-pause loop behind its own flag.
-            autonomous_last_tick_ms, pending_priority_start = await _run_autonomous_followup_after_turn(
+            autonomous_last_tick_ms, pending_priority_start, should_return = await _handle_story_ws_start_turn(
                 websocket=websocket,
+                manager=manager,
                 session_id=session_id,
-                turn=turn,
+                message=message,
                 queued_carryover=queued_carryover,
                 processed_handoff_input_ids=processed_handoff_input_ids,
                 pacing_seconds=pacing_seconds,
                 autonomous_last_tick_ms=autonomous_last_tick_ms,
                 autonomous_summaries=autonomous_summaries,
             )
+            state = WSSessionLoopState(session_id=session_id)
+            if should_return:
+                return
 
     except WebSocketDisconnect:
         return

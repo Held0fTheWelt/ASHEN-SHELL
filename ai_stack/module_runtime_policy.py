@@ -501,6 +501,161 @@ class ModuleRuntimePolicy:
         return _json_safe(asdict(self))
 
 
+def _load_module_policy_sources(module_dir: Path, module_id: str, root: Path) -> dict[str, Any]:
+    module_yaml = _read_yaml(module_dir / "module.yaml")
+    character_documents = _read_character_documents(module_dir)
+    return {
+        "module_yaml": module_yaml,
+        "character_documents": character_documents,
+        "characters": character_documents
+        or _read_first_yaml(
+            [
+                module_dir / "characters" / "index.yaml",
+                module_dir / "characters.yaml",
+            ]
+        ),
+        "layout": _read_first_yaml(
+            [
+                module_dir / "locations" / "appartment_vallon" / "apartment_layout.yaml",
+                module_dir / "locations" / "appartment" / "apartment_layout.yaml",
+                module_dir / "locations" / "apartment" / "apartment_layout.yaml",
+                module_dir / "locations" / "apartment_layout.yaml",
+                module_dir / "apartment_layout.yaml",
+            ]
+        ),
+        "objects": _read_objects(module_dir),
+        "locations": _read_locations(module_dir),
+        "actor_pressure": _read_first_yaml(
+            [
+                module_dir / "characters" / "details" / "actor_pressure_profiles.yaml",
+                module_dir / "characters" / "actor_pressure_profiles.yaml",
+                module_dir / "actor_pressure_profiles.yaml",
+            ]
+        ),
+        "phase_policy": _unwrap(_read_yaml(module_dir / "phase_beat_policy.yaml"), "phase_beat_policy"),
+        "opening_policy": _unwrap(
+            _read_yaml(module_dir / "knowledge" / "opening_scene_sequence.yaml"),
+            "opening_scene_sequence",
+        ),
+        "hard_forbidden": _unwrap(
+            _read_yaml(module_dir / "knowledge" / "hard_forbidden_rules.yaml"),
+            "hard_forbidden_rules",
+        ),
+        "scene_affordances": build_interaction_surface(module_id, content_modules_root=root),
+    }
+
+
+def _normalized_policy_documents(module_dir: Path, module_yaml: dict[str, Any]) -> dict[str, Any]:
+    runtime_intelligence = (
+        module_yaml.get("runtime_intelligence")
+        if isinstance(module_yaml.get("runtime_intelligence"), dict)
+        else {}
+    )
+    raw = {
+        "dramatic_irony": runtime_intelligence.get("dramatic_irony")
+        if isinstance(runtime_intelligence.get("dramatic_irony"), dict)
+        else {},
+        "improvisational_coherence": runtime_intelligence.get("improvisational_coherence")
+        if isinstance(runtime_intelligence.get("improvisational_coherence"), dict)
+        else {},
+        "expectation_variation": runtime_intelligence.get("expectation_variation")
+        if isinstance(runtime_intelligence.get("expectation_variation"), dict)
+        else {},
+        "narrative_momentum": runtime_intelligence.get("narrative_momentum")
+        if isinstance(runtime_intelligence.get("narrative_momentum"), dict)
+        else {},
+        "meta_narrative_awareness": runtime_intelligence.get("meta_narrative_awareness")
+        if isinstance(runtime_intelligence.get("meta_narrative_awareness"), dict)
+        else {},
+        "tonal_consistency": runtime_intelligence.get("tonal_consistency")
+        if isinstance(runtime_intelligence.get("tonal_consistency"), dict)
+        else {},
+        "genre_awareness": runtime_intelligence.get("genre_awareness")
+        if isinstance(runtime_intelligence.get("genre_awareness"), dict)
+        else {},
+        "symbolic_object_resonance": runtime_intelligence.get("symbolic_object_resonance")
+        if isinstance(runtime_intelligence.get("symbolic_object_resonance"), dict)
+        else {},
+    }
+    return {
+        "runtime_intelligence": runtime_intelligence,
+        "narrative_aspect_policy": normalize_narrative_aspect_policy(
+            _unwrap(_read_yaml(module_dir / "narrative_aspect_policy.yaml"), "narrative_aspect_policy")
+        ),
+        "information_disclosure_policy": normalize_information_disclosure_policy(
+            _unwrap(_read_yaml(module_dir / "information_disclosure_policy.yaml"), "information_disclosure_policy")
+        ),
+        "memory_policy": normalize_hierarchical_memory_policy(
+            _unwrap(_read_yaml(module_dir / "memory_policy.yaml"), "memory_policy")
+        ),
+        "raw": raw,
+        "dramatic_irony_policy": normalize_dramatic_irony_policy(raw["dramatic_irony"] or None),
+        "improvisational_coherence_policy": normalize_improvisational_coherence_policy(
+            raw["improvisational_coherence"] or None
+        ),
+        "expectation_variation_policy": normalize_expectation_variation_policy(
+            raw["expectation_variation"] or None
+        ),
+        "narrative_momentum_policy": normalize_narrative_momentum_policy(raw["narrative_momentum"] or None),
+        "meta_narrative_awareness_policy": normalize_meta_narrative_awareness_policy(
+            raw["meta_narrative_awareness"] or None
+        ),
+        "tonal_consistency_policy": normalize_tonal_consistency_policy(raw["tonal_consistency"] or None),
+        "genre_awareness_policy": normalize_genre_awareness_policy(raw["genre_awareness"] or None),
+        "symbolic_object_resonance_policy": normalize_symbolic_object_resonance_policy(
+            raw["symbolic_object_resonance"] or None
+        ),
+    }
+
+
+def _module_policy_content_sources(
+    sources: dict[str, Any],
+    policies: dict[str, Any],
+) -> list[str]:
+    raw = policies["raw"]
+    labels: list[str] = []
+    for label, payload in (
+        ("module", sources["module_yaml"]),
+        ("character_documents", sources["character_documents"]),
+        ("characters", sources["characters"]),
+        ("apartment_layout", sources["layout"]),
+        ("objects", sources["objects"]),
+        ("locations", sources["locations"]),
+        ("actor_pressure_profiles", sources["actor_pressure"]),
+        ("phase_beat_policy", sources["phase_policy"]),
+        ("opening_scene_sequence", sources["opening_policy"]),
+        ("hard_forbidden_rules", sources["hard_forbidden"]),
+        ("interaction_surface", sources["scene_affordances"]),
+        ("universal_language_adapter", {"enabled": True}),
+        (
+            "narrative_aspect_policy",
+            policies["narrative_aspect_policy"]
+            if policies["narrative_aspect_policy"].get("aspects")
+            else {},
+        ),
+        (
+            "information_disclosure_policy",
+            policies["information_disclosure_policy"]
+            if policies["information_disclosure_policy"].get("enabled")
+            and policies["information_disclosure_policy"].get("units")
+            else {},
+        ),
+        ("memory_policy", policies["memory_policy"] if policies["memory_policy"].get("enabled") else {}),
+        ("dramatic_irony_policy", raw["dramatic_irony"]),
+        ("improvisational_coherence_policy", raw["improvisational_coherence"]),
+        ("tonal_consistency_policy", raw["tonal_consistency"]),
+        ("genre_awareness_policy", raw["genre_awareness"]),
+        ("symbolic_object_resonance_policy", raw["symbolic_object_resonance"]),
+        ("expectation_variation_policy", raw["expectation_variation"]),
+        ("narrative_momentum_policy", raw["narrative_momentum"]),
+        ("meta_narrative_awareness_policy", raw["meta_narrative_awareness"]),
+        ("runtime_intelligence", policies["runtime_intelligence"]),
+    ):
+        if payload:
+            labels.append(label)
+    return labels
+
+
 def load_module_runtime_policy(
     module_id: str,
     runtime_profile_id: str | None = None,
@@ -511,171 +666,13 @@ def load_module_runtime_policy(
     mid = str(module_id or "").strip()
     root = Path(content_modules_root) if content_modules_root else _repo_root() / "content" / "modules"
     module_dir = root / mid
-    module_yaml = _read_yaml(module_dir / "module.yaml")
-    character_documents = _read_character_documents(module_dir)
-    characters = character_documents or _read_first_yaml(
-        [
-            module_dir / "characters" / "index.yaml",
-            module_dir / "characters.yaml",
-        ]
-    )
-    layout = _read_first_yaml(
-            [
-                module_dir / "locations" / "appartment_vallon" / "apartment_layout.yaml",
-                module_dir / "locations" / "appartment" / "apartment_layout.yaml",
-                module_dir / "locations" / "apartment" / "apartment_layout.yaml",
-                module_dir / "locations" / "apartment_layout.yaml",
-                module_dir / "apartment_layout.yaml",
-            ]
-    )
-    objects = _read_objects(module_dir)
-    locations = _read_locations(module_dir)
-    actor_pressure = _read_first_yaml(
-        [
-            module_dir / "characters" / "details" / "actor_pressure_profiles.yaml",
-            module_dir / "characters" / "actor_pressure_profiles.yaml",
-            module_dir / "actor_pressure_profiles.yaml",
-        ]
-    )
-    phase_policy_raw = _read_yaml(module_dir / "phase_beat_policy.yaml")
-    phase_policy = _unwrap(phase_policy_raw, "phase_beat_policy")
-    opening_policy = _unwrap(
-        _read_yaml(module_dir / "knowledge" / "opening_scene_sequence.yaml"),
-        "opening_scene_sequence",
-    )
-    hard_forbidden = _unwrap(
-        _read_yaml(module_dir / "knowledge" / "hard_forbidden_rules.yaml"),
-        "hard_forbidden_rules",
-    )
-    scene_affordances = build_interaction_surface(mid, content_modules_root=root)
-    narrative_aspect_policy = normalize_narrative_aspect_policy(
-        _unwrap(
-            _read_yaml(module_dir / "narrative_aspect_policy.yaml"),
-            "narrative_aspect_policy",
-        )
-    )
-    information_disclosure_policy = normalize_information_disclosure_policy(
-        _unwrap(
-            _read_yaml(module_dir / "information_disclosure_policy.yaml"),
-            "information_disclosure_policy",
-        )
-    )
-    memory_policy = normalize_hierarchical_memory_policy(
-        _unwrap(
-            _read_yaml(module_dir / "memory_policy.yaml"),
-            "memory_policy",
-        )
-    )
-    runtime_intelligence = (
-        module_yaml.get("runtime_intelligence")
-        if isinstance(module_yaml.get("runtime_intelligence"), dict)
-        else {}
-    )
-    dramatic_irony_raw = (
-        runtime_intelligence.get("dramatic_irony")
-        if isinstance(runtime_intelligence.get("dramatic_irony"), dict)
-        else {}
-    )
-    dramatic_irony_policy = normalize_dramatic_irony_policy(
-        dramatic_irony_raw if dramatic_irony_raw else None
-    )
-    improvisational_coherence_raw = (
-        runtime_intelligence.get("improvisational_coherence")
-        if isinstance(runtime_intelligence.get("improvisational_coherence"), dict)
-        else {}
-    )
-    improvisational_coherence_policy = normalize_improvisational_coherence_policy(
-        improvisational_coherence_raw if improvisational_coherence_raw else None
-    )
-    expectation_variation_raw = (
-        runtime_intelligence.get("expectation_variation")
-        if isinstance(runtime_intelligence.get("expectation_variation"), dict)
-        else {}
-    )
-    expectation_variation_policy = normalize_expectation_variation_policy(
-        expectation_variation_raw if expectation_variation_raw else None
-    )
-    narrative_momentum_raw = (
-        runtime_intelligence.get("narrative_momentum")
-        if isinstance(runtime_intelligence.get("narrative_momentum"), dict)
-        else {}
-    )
-    narrative_momentum_policy = normalize_narrative_momentum_policy(
-        narrative_momentum_raw if narrative_momentum_raw else None
-    )
-    meta_narrative_awareness_raw = (
-        runtime_intelligence.get("meta_narrative_awareness")
-        if isinstance(runtime_intelligence.get("meta_narrative_awareness"), dict)
-        else {}
-    )
-    meta_narrative_awareness_policy = normalize_meta_narrative_awareness_policy(
-        meta_narrative_awareness_raw if meta_narrative_awareness_raw else None
-    )
-    tonal_consistency_raw = (
-        runtime_intelligence.get("tonal_consistency")
-        if isinstance(runtime_intelligence.get("tonal_consistency"), dict)
-        else {}
-    )
-    tonal_consistency_policy = normalize_tonal_consistency_policy(
-        tonal_consistency_raw if tonal_consistency_raw else None
-    )
-    genre_awareness_raw = (
-        runtime_intelligence.get("genre_awareness")
-        if isinstance(runtime_intelligence.get("genre_awareness"), dict)
-        else {}
-    )
-    genre_awareness_policy = normalize_genre_awareness_policy(
-        genre_awareness_raw if genre_awareness_raw else None
-    )
-    symbolic_object_resonance_raw = (
-        runtime_intelligence.get("symbolic_object_resonance")
-        if isinstance(runtime_intelligence.get("symbolic_object_resonance"), dict)
-        else {}
-    )
-    symbolic_object_resonance_policy = normalize_symbolic_object_resonance_policy(
-        symbolic_object_resonance_raw if symbolic_object_resonance_raw else None
-    )
+    sources = _load_module_policy_sources(module_dir, mid, root)
+    policies = _normalized_policy_documents(module_dir, sources["module_yaml"])
 
-    sources = []
-    for label, payload in (
-        ("module", module_yaml),
-        ("character_documents", character_documents),
-        ("characters", characters),
-        ("apartment_layout", layout),
-        ("objects", objects),
-        ("locations", locations),
-        ("actor_pressure_profiles", actor_pressure),
-        ("phase_beat_policy", phase_policy),
-        ("opening_scene_sequence", opening_policy),
-        ("hard_forbidden_rules", hard_forbidden),
-        ("interaction_surface", scene_affordances),
-        ("universal_language_adapter", {"enabled": True}),
-        ("narrative_aspect_policy", narrative_aspect_policy if narrative_aspect_policy.get("aspects") else {}),
-        (
-            "information_disclosure_policy",
-            information_disclosure_policy
-            if information_disclosure_policy.get("enabled")
-            and information_disclosure_policy.get("units")
-            else {},
-        ),
-        ("memory_policy", memory_policy if memory_policy.get("enabled") else {}),
-        ("dramatic_irony_policy", dramatic_irony_raw),
-        ("improvisational_coherence_policy", improvisational_coherence_raw),
-        ("tonal_consistency_policy", tonal_consistency_raw),
-        ("genre_awareness_policy", genre_awareness_raw),
-        ("symbolic_object_resonance_policy", symbolic_object_resonance_raw),
-        ("expectation_variation_policy", expectation_variation_raw),
-        ("narrative_momentum_policy", narrative_momentum_raw),
-        ("meta_narrative_awareness_policy", meta_narrative_awareness_raw),
-        ("runtime_intelligence", module_yaml.get("runtime_intelligence") if isinstance(module_yaml.get("runtime_intelligence"), dict) else {}),
-    ):
-        if payload:
-            sources.append(label)
-
-    actor_roster = _actors_from_characters(characters)
-    playable_roles = _playable_roles_from_opening(opening_policy)
+    actor_roster = _actors_from_characters(sources["characters"])
+    playable_roles = _playable_roles_from_opening(sources["opening_policy"])
     language_policy = {
-        "interaction_surface": scene_affordances,
+        "interaction_surface": sources["scene_affordances"],
         "adapter": {
             "id": "universal_language_adapter",
             "module_language_lookup_files_required": False,
@@ -691,39 +688,39 @@ def load_module_runtime_policy(
         actor_roster=actor_roster,
         playable_roles=playable_roles,
         location_model=_location_model(
-            layout_payload=layout,
-            interaction_surface_payload=scene_affordances,
-            locations_payload=locations,
+            layout_payload=sources["layout"],
+            interaction_surface_payload=sources["scene_affordances"],
+            locations_payload=sources["locations"],
         ),
         object_model=_object_model(
-            objects_payload=objects,
-            interaction_surface_payload=scene_affordances,
+            objects_payload=sources["objects"],
+            interaction_surface_payload=sources["scene_affordances"],
         ),
-        phase_policy=phase_policy,
+        phase_policy=sources["phase_policy"],
         beat_policy={
-            "phase_policy": phase_policy,
-            "opening_events": opening_policy.get("narrative_events")
-            if isinstance(opening_policy.get("narrative_events"), list)
+            "phase_policy": sources["phase_policy"],
+            "opening_events": sources["opening_policy"].get("narrative_events")
+            if isinstance(sources["opening_policy"].get("narrative_events"), list)
             else [],
         },
-        authority_policy=_authority_policy(hard_forbidden),
-        capability_policy=_capability_policy(hard_forbidden),
-        hard_forbidden_policy=hard_forbidden,
-        opening_policy=opening_policy,
+        authority_policy=_authority_policy(sources["hard_forbidden"]),
+        capability_policy=_capability_policy(sources["hard_forbidden"]),
+        hard_forbidden_policy=sources["hard_forbidden"],
+        opening_policy=sources["opening_policy"],
         language_policy=language_policy,
-        narrative_aspect_policy=narrative_aspect_policy,
-        information_disclosure_policy=information_disclosure_policy,
-        memory_policy=memory_policy,
-        dramatic_irony_policy=dramatic_irony_policy,
-        improvisational_coherence_policy=improvisational_coherence_policy,
-        tonal_consistency_policy=tonal_consistency_policy,
-        genre_awareness_policy=genre_awareness_policy,
-        symbolic_object_resonance_policy=symbolic_object_resonance_policy,
-        expectation_variation_policy=expectation_variation_policy,
-        narrative_momentum_policy=narrative_momentum_policy,
-        meta_narrative_awareness_policy=meta_narrative_awareness_policy,
-        runtime_governance_policy=_runtime_governance_policy(module_yaml),
-        content_sources=sources,
+        narrative_aspect_policy=policies["narrative_aspect_policy"],
+        information_disclosure_policy=policies["information_disclosure_policy"],
+        memory_policy=policies["memory_policy"],
+        dramatic_irony_policy=policies["dramatic_irony_policy"],
+        improvisational_coherence_policy=policies["improvisational_coherence_policy"],
+        tonal_consistency_policy=policies["tonal_consistency_policy"],
+        genre_awareness_policy=policies["genre_awareness_policy"],
+        symbolic_object_resonance_policy=policies["symbolic_object_resonance_policy"],
+        expectation_variation_policy=policies["expectation_variation_policy"],
+        narrative_momentum_policy=policies["narrative_momentum_policy"],
+        meta_narrative_awareness_policy=policies["meta_narrative_awareness_policy"],
+        runtime_governance_policy=_runtime_governance_policy(sources["module_yaml"]),
+        content_sources=_module_policy_content_sources(sources, policies),
     )
 
 
