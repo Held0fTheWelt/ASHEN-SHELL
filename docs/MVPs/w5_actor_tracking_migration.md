@@ -595,6 +595,101 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 **Next step:** Phase 6B-5E decides whether `_legacy_compat["transition_from_previous"]` is removed from the data surface entirely or further demoted. This is a separate ADR decision gated on a rollout window.
 
+### Phase 6B-5E — `_legacy_compat` transition breadcrumb policy (complete)
+
+**Goal:** Decide and implement the Phase 6B-5E policy for `_legacy_compat["transition_from_previous"]` in strict-on narrator blocks. **Decision: Option B — gate behind opt-in diagnostics flag, default-off.**
+
+**Decision rationale:** Tests prove that W5 `where_summary.location_changed`, `current_location`, and `previous_location` supply the complete hard-cut / location-shift replacement signal without the `_legacy_compat` breadcrumb. Removing unconditionally (Option A) would permanently destroy an opt-in diagnostics path that operators may need during rollback audits. Retaining permanently (Option C) would leave dead data in the default path and delay the full W5 authority migration. Option B gates the breadcrumb behind an explicit diagnostics flag so the default path is clean while the opt-in diagnostic path remains available for authorized parity audits.
+
+**New flag: `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED`**
+
+- Semantics: **opt-in, default-off**. Unset / empty / `0/false/no/off` / unrecognized → `False`. Only explicit `1/true/yes/on` → `True`.
+- When `False` (default): strict-on `source_facts` contains **no** `_legacy_compat` key. W5 projection is the sole actor-situation authority surface. The `transition_from_previous` computation still runs under explicit strict-off.
+- When `True` (opt-in diagnostics): strict-on `source_facts._legacy_compat["transition_from_previous"]` is included as a non-authoritative diagnostic breadcrumb with `authority="w5_projection"` and a `notice` labelling it non-authoritative.
+- No effect under strict-off (`W5_AST_NARRATOR_STRICT_ENABLED=false`): `transition_from_previous` remains first-class in that posture regardless of this flag.
+
+**Runtime / source_facts shape after Phase 6B-5E:**
+
+| Flag posture | `source_facts` shape |
+|---|---|
+| Strict-on default (diagnostics flag off) | `w5_projection`, `mandatory_beat`, `module_context`, `location`, `w5_narrator_projection_failed`; **NO** `_legacy_compat`, **NO** top-level `transition_from_previous` |
+| Strict-on + diagnostics flag on | Same as above, PLUS `_legacy_compat["transition_from_previous"]` with `authority`, `notice` |
+| Strict-off (explicit opt-out) | `w5_projection`, `mandatory_beat`, `module_context`, `location`, `transition_from_previous` (first-class); **NO** `_legacy_compat` |
+
+**Admin / diagnostics behavior after Phase 6B-5E:**
+
+- `w5.narrator_legacy_compat_diagnostics_enabled` added to `get_w5_langfuse_metadata()` output.
+- `w5.legacy_transition_parity` values:
+  - `"legacy_compat_visible"` — strict-off (unchanged from Phase 6B-5D).
+  - `"demoted_to_legacy_compat"` — strict-on + diagnostics flag on.
+  - `"removed_by_6b5e_policy"` — strict-on + diagnostics flag off (default).
+- `w5_projection_flag_states()` now includes `"narrator_legacy_compat_diagnostics": bool`.
+
+**What remains for Phase 6B-5F:**
+
+- The `transition_from_previous` computation itself (data generation, not inclusion in `source_facts`) still runs under explicit strict-off. Removing that computation requires a separate ADR.
+- Public compatibility aliases (`current_room`, `actor_locations`, `gathering_scene_id`) are untouched.
+- Malformed-W5 safety fallbacks are untouched.
+- Substrate writers are untouched.
+
+**Files changed:**
+
+- `ai_stack/actor_tracking/diagnostics.py`: added `w5_ast_narrator_legacy_compat_diagnostics_enabled()`, updated `w5_projection_flag_states()`, updated `__all__`.
+- `ai_stack/actor_tracking/__init__.py`: re-exported the new flag function.
+- `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py`: import of new flag; `_block()` gates `_legacy_compat` insertion behind `w5_ast_narrator_legacy_compat_diagnostics_enabled()`.
+- `world-engine/app/story_runtime/manager/external_imports_core.py` and `_imports_00.py`: added `w5_ast_narrator_legacy_compat_diagnostics_enabled` to the from-`ai_stack.actor_tracking` import blocks.
+- `world-engine/app/story_runtime/manager/diagnostics_api.py`: `get_w5_langfuse_metadata()` now exposes `w5.narrator_legacy_compat_diagnostics_enabled` and emits three-value `w5.legacy_transition_parity`.
+- `world-engine/app/story_runtime/manager/narrator_output_prompts.py`: updated comments to reflect Phase 6B-5E; prompt text updated to note `_legacy_compat` may not be present by default.
+
+**Tests added / updated:**
+
+- `ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`:
+  - Added `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` to `W5_FLAGS` isolation fixture.
+  - New resolver posture tests: `test_legacy_compat_diagnostics_default_off`, `test_legacy_compat_diagnostics_off_values`, `test_legacy_compat_diagnostics_on_values`, `test_flag_states_include_legacy_compat_diagnostics`.
+  - Updated `test_strict_on_demotes_transition_with_w5_authority_notice` → split into `test_strict_on_default_has_no_legacy_compat` (flag-off) and `test_strict_on_with_diagnostics_flag_demotes_to_legacy_compat` (flag-on).
+  - Updated hard-cut breadcrumb test → `test_strict_on_with_diagnostics_flag_preserves_hard_cut_breadcrumb` (flag-on) + `test_strict_on_default_no_hard_cut_breadcrumb_without_diagnostics_flag` (flag-off, canonical content preserved).
+  - Updated location_changed breadcrumb test → `test_strict_on_with_diagnostics_flag_preserves_location_changed_breadcrumb` (flag-on).
+  - Updated parity payload test → `test_strict_on_with_diagnostics_flag_payload_matches_strict_off` (flag-on).
+- `ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py`:
+  - Added diagnostics flag to `W5_FLAGS`.
+  - Updated `test_strict_on_demotes_transition_from_previous_to_legacy_compat` → `test_strict_on_default_removes_transition_and_legacy_compat` (flag-off) + `test_strict_on_with_diagnostics_flag_demotes_to_legacy_compat` (flag-on).
+  - Updated hard-cut breadcrumb test → `test_strict_on_with_diagnostics_flag_preserves_hard_cut_breadcrumb` (flag-on).
+- `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py`:
+  - Added diagnostics flag to `W5_FLAGS`.
+  - Added `_strict_clean_block()` fixture (no `_legacy_compat`).
+  - Updated `_strict_demoted_block()` docstring.
+  - Replaced `test_strict_on_only_carries_legacy_compat_breadcrumb` with `test_strict_on_default_no_legacy_compat` (flag-off) + `test_strict_on_with_diagnostics_flag_carries_legacy_compat_breadcrumb` (flag-on).
+  - Updated admin parity tests: `test_strict_on_reports_w5_first_and_demotes_legacy_parity_label` → `test_strict_on_default_reports_removed_by_6b5e_policy` + `test_strict_on_with_diagnostics_flag_reports_demoted_to_legacy_compat`.
+  - Updated `test_strict_on_ignores_disagreeing_transition_from_previous_in_diagnostics`: parity label → `removed_by_6b5e_policy`.
+- `world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py`:
+  - Added diagnostics flag to `W5_FLAGS`.
+  - Updated `test_strict_on_uses_w5_first_and_demotes_legacy_parity_label` → `test_strict_on_default_reports_removed_by_6b5e_policy` + `test_strict_on_with_diagnostics_flag_demotes_legacy_parity_label`.
+
+**Gate verification:**
+
+- `python -m py_compile` on all changed Python files: clean.
+- `pytest -q ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`: 53 passed, 0 failed.
+- `pytest -q ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py`: 24 passed, 0 failed.
+- `PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py`: 32 passed, 0 failed.
+- `PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py world-engine/tests/test_story_runtime_w5_narrator_projection.py`: 24 passed, 0 failed.
+- `PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_runtime_w5_admin_diagnostics.py`: 3 passed, 0 failed.
+- `pytest -q ai_stack/tests/test_god_of_carnage_narrator_path.py`: 3 passed, 0 failed.
+- `pytest -q ai_stack/tests/test_w5_actor_tracking_projection.py ai_stack/tests/test_w5_actor_tracking_validation.py`: 49 passed, 0 failed.
+- `pytest -q tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py`: 25 passed, 0 failed.
+- `pytest -q tests/gates/test_goc_mvp04_observability_diagnostics_gate.py tests/test_local_langfuse_docker_config.py`: 59 passed, 0 failed.
+
+**Constraints preserved:**
+
+- Explicit strict-off behavior (opt-out) unchanged.
+- Malformed-W5 safety fallback unchanged.
+- Public compatibility aliases unchanged.
+- Substrate writers unchanged.
+- No committed event mutated.
+- ADR-0033, ADR-0061, ADR-0063, ADR-0065, Actor Lane, Commit/Readiness, `validation_outcome`, Canonical Path, and W5 validation semantics unchanged.
+- How remains first-class. Inferred Why remains soft truth.
+
+**Next step:** Phase 6B-5F fresh inventory pass after strict-on default + Phase 6B-5E flag policy are stable.
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.

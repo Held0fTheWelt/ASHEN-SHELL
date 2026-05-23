@@ -17,7 +17,7 @@ from .common import *
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_runtime_token_budget(session_id: str):
     """Get current token budget and usage for session."""
-    def _do():
+    def _get_runtime_token_budget_action():
         from app.services.governance.observability_governance_service import TokenBudgetService, get_runtime_governance_storage
 
         service = TokenBudgetService(get_runtime_governance_storage())
@@ -38,7 +38,7 @@ def get_runtime_token_budget(session_id: str):
             ),
         }
 
-    return _handle("token_budget_get", _do)
+    return _handle("token_budget_get", _get_runtime_token_budget_action)
 
 
 @api_v1_bp.route("/admin/mvp4/game/session/<session_id>/token-budget/override", methods=["POST"])
@@ -47,7 +47,7 @@ def get_runtime_token_budget(session_id: str):
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def override_runtime_token_budget(session_id: str):
     """Admin override: add tokens to session budget."""
-    def _do():
+    def _override_runtime_token_budget_action():
         from app.services.governance.observability_governance_service import TokenBudgetService, get_runtime_governance_storage
 
         body = _body()
@@ -70,7 +70,7 @@ def override_runtime_token_budget(session_id: str):
             "override_applied": True,
         }
 
-    return _handle("token_budget_override", _do)
+    return _handle("token_budget_override", _override_runtime_token_budget_action)
 
 
 @api_v1_bp.route("/admin/mvp4/game/session/<session_id>/summary", methods=["GET"])
@@ -79,7 +79,7 @@ def override_runtime_token_budget(session_id: str):
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_runtime_session_summary(session_id: str):
     """Return live runtime, cost, budget, override, and evaluation truth for one session."""
-    def _do():
+    def _get_runtime_session_summary_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline
         from app.services.game.game_service import get_story_state
         from app.services.governance.observability_governance_service import (
@@ -134,7 +134,7 @@ def get_runtime_session_summary(session_id: str):
             },
         }
 
-    return _handle("runtime_session_summary", _do)
+    return _handle("runtime_session_summary", _get_runtime_session_summary_action)
 
 
 @api_v1_bp.route("/admin/mvp4/costs/daily", methods=["GET"])
@@ -143,14 +143,14 @@ def get_runtime_session_summary(session_id: str):
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_runtime_daily_cost_report():
     """Return aggregated truthful cost usage for one UTC day."""
-    def _do():
+    def _get_runtime_daily_cost_report_action():
         from app.services.governance.observability_governance_service import CostDashboard, get_runtime_governance_storage
 
         date_value = (request.args.get("date") or datetime.now(timezone.utc).date().isoformat()).strip()
         dashboard = CostDashboard(get_runtime_governance_storage())
         return dashboard.get_daily_cost_report(date_value)
 
-    return _handle("runtime_daily_cost_report", _do)
+    return _handle("runtime_daily_cost_report", _get_runtime_daily_cost_report_action)
 
 
 @api_v1_bp.route("/admin/mvp4/costs/weekly", methods=["GET"])
@@ -159,14 +159,14 @@ def get_runtime_daily_cost_report():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_runtime_weekly_cost_report():
     """Return aggregated truthful cost usage for the requested UTC week window."""
-    def _do():
+    def _get_runtime_weekly_cost_report_action():
         from app.services.governance.observability_governance_service import CostDashboard, get_runtime_governance_storage
 
         week_start = (request.args.get("week_start") or datetime.now(timezone.utc).date().isoformat()).strip()
         dashboard = CostDashboard(get_runtime_governance_storage())
         return dashboard.get_weekly_cost_report(week_start)
 
-    return _handle("runtime_weekly_cost_report", _do)
+    return _handle("runtime_weekly_cost_report", _get_runtime_weekly_cost_report_action)
 
 __all__ = (
     'get_runtime_token_budget',

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.contracts.serialization import strict_list as _as_list
 from typing import Any
 
 
@@ -17,10 +18,6 @@ def _append_unique(out: list[str], value: str) -> None:
 
 def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
-
-
-def _as_list(value: Any) -> list[Any]:
-    return value if isinstance(value, list) else []
 
 
 def _unique_clean(values: list[Any] | tuple[Any, ...]) -> list[str]:

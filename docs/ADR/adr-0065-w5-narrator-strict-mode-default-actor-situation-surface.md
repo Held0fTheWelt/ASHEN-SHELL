@@ -244,10 +244,73 @@ The later default-on phase is accepted only when all test gates above pass and t
 
 **Risk: W5 authority weakens Actor Lane or Canonical Path contracts.** Mitigation: W5 remains downstream of commit and cannot authorize actor-lane behavior, advance canonical path, or rewrite committed events.
 
+## Phase 6B-5E Decision — `_legacy_compat` Transition Breadcrumb Policy
+
+### Status
+
+Accepted (2026-05-22).
+
+### Decision
+
+**Option B: Gate `_legacy_compat["transition_from_previous"]` behind an opt-in diagnostics flag (`W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED`), default-off.**
+
+Option A (unconditional removal) was considered but rejected because it would permanently destroy a diagnostics path that operators may need during rollback audits. Option C (retain unchanged) was rejected because it would leave non-authoritative data in the default strict-on path indefinitely, conflicting with the W5-sole-authority goal.
+
+### New Flag
+
+`W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` (opt-in, default-off):
+
+- Unset / empty / `0/false/no/off` / unrecognized → `False` (default). Under strict-on, `source_facts` contains **no** `_legacy_compat` key.
+- Explicit `1/true/yes/on` → `True` (opt-in diagnostics). Under strict-on, `source_facts._legacy_compat["transition_from_previous"]` is included as a non-authoritative diagnostic breadcrumb.
+- No effect under explicit strict-off (`W5_AST_NARRATOR_STRICT_ENABLED=false`): `transition_from_previous` remains first-class in that posture.
+
+### Narrator Prompt Behavior
+
+The narrator prompt must not consult `_legacy_compat` fields under any flag combination. Under strict-on (default), if `_legacy_compat` is absent, the prompt does not reference it. Under strict-on + diagnostics flag on, if `_legacy_compat` is present, the prompt labels it as non-authoritative diagnostic breadcrumb only.
+
+### Diagnostics Replacement
+
+W5 `where_summary.location_changed`, `current_location`, and `previous_location` supply the complete location-shift / hard-cut replacement signal. `w5.legacy_transition_parity` in admin metadata now reports one of:
+- `"legacy_compat_visible"` — strict-off.
+- `"demoted_to_legacy_compat"` — strict-on + diagnostics flag on.
+- `"removed_by_6b5e_policy"` — strict-on + diagnostics flag off (default).
+
+`w5.narrator_legacy_compat_diagnostics_enabled` is added to `get_w5_langfuse_metadata()` output.
+
+### Rollback Behavior
+
+- Explicit strict-off (`W5_AST_NARRATOR_STRICT_ENABLED=false`) is unchanged: `transition_from_previous` remains first-class.
+- Malformed-W5 safety fallback is unchanged.
+- The `transition_from_previous` computation itself is unchanged under explicit opt-out.
+- No committed event is mutated.
+
+### Acceptance Criteria
+
+Phase 6B-5E is accepted when:
+
+- `w5_ast_narrator_legacy_compat_diagnostics_enabled()` resolver defaults to `False`.
+- Default strict-on `source_facts` contains no `_legacy_compat` key.
+- With diagnostics flag on, `_legacy_compat["transition_from_previous"]` is present with `authority = "w5_projection"` and a non-authoritative `notice`.
+- Admin metadata reports `w5.narrator_legacy_compat_diagnostics_enabled` and the three-value `w5.legacy_transition_parity`.
+- Tests required before later full deletion:
+  - Flag-off path: no `_legacy_compat` in source_facts, no `transition_from_previous` at top level.
+  - Flag-on path: `_legacy_compat` present with authority/notice, payload identical to explicit strict-off top-level payload.
+  - W5 `where_summary.location_changed` covers the location-shift signal without the breadcrumb.
+  - Admin diagnostics carry the new parity label correctly in all three postures.
+- MVP03 and MVP04 gates remain green.
+
+### Tests Required Before Later Full Deletion
+
+Before `transition_from_previous` computation under explicit opt-out is removed, a dedicated ADR must prove:
+- The opt-out path still has active consumers.
+- No committed diagnostics or production dashboards depend on the strict-off top-level payload.
+- A fresh Phase 6B-5F inventory has classified all remaining consumers.
+
 ## Required Follow-up Phases
 
 - Phase 6B-5B: strict-mode parity test rewrite.
 - Phase 6B-5C: default-on flip for `W5_AST_NARRATOR_STRICT_ENABLED`.
 - Phase 6B-5D: removal of the strict-off narrator prompt fallback paragraph.
-- Phase 6B-5E: removal or further demotion of `_legacy_compat["transition_from_previous"]`.
+- Phase 6B-5E: `_legacy_compat` breadcrumb policy (gated behind opt-in flag, default-off) — **ACCEPTED**.
+- Phase 6B-5F: fresh inventory pass after strict-on default + Phase 6B-5E flag policy are stable.
 - Phase 6B-5F: fresh inventory pass after narrator strict default-on.

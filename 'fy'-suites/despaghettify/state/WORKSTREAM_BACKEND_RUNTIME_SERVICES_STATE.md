@@ -1,5 +1,28 @@
 # Workstream: backend_runtime_services
 
+## Closed — DS-012 backend route/content/runtime hotspots (session 20260522)
+
+DS-012 split the listed backend hotspots behind stable compatibility surfaces:
+
+| Wave | Outcome | Evidence |
+|------|---------|----------|
+| w01 | Content module YAML document loading moved out of `ModuleFileLoader.load_all_module_files` into `module_loader_documents.py`. | `artifacts/workstreams/backend_runtime_services/pre/session_20260522_DS-012_wave_plan.json`; `artifacts/workstreams/backend_runtime_services/post/session_20260522_DS-012_backend_hotspot_comparison.*` |
+| w02 | AI Engineer Suite orchestration status now delegates to `orchestration_status_snapshot.py`. | Same DS-012 post comparison artefacts |
+| w03 | Narrative governance condition matching and runtime health rollup helpers moved into focused modules. | Same DS-012 post comparison artefacts |
+| w04 | Forum route monolith replaced by compatibility facades and route modules for public, thread, post, moderation, report, tag, and readout flows. | Same DS-012 post comparison artefacts |
+
+**Gates (final):**
+
+- `PYTHONPATH=backend pytest -q backend/tests/content/test_module_loader.py backend/tests/content/test_module_validator.py --tb=short` — 58 passed
+- `PYTHONPATH=backend pytest -q backend/tests/test_ai_engineer_suite_routes.py backend/tests/test_ai_engineer_suite_service_phase3.py --tb=short` — 19 passed
+- `PYTHONPATH=backend pytest -q backend/tests/test_narrative_governance_service.py backend/tests/test_narrative_governance_routes.py --tb=short` — 19 passed
+- `PYTHONPATH=backend pytest -q backend/tests/test_forum_routes.py backend/tests/test_forum_validation.py backend/tests/test_search_stability.py backend/tests/test_state_transition_rules.py backend/tests/test_service_layer_edge_cases.py --tb=short` — 160 passed
+- `PYTHONPATH=backend pytest -q backend/tests/content/test_module_loader.py backend/tests/content/test_module_validator.py backend/tests/test_ai_engineer_suite_routes.py backend/tests/test_ai_engineer_suite_service_phase3.py backend/tests/test_narrative_governance_service.py backend/tests/test_narrative_governance_routes.py --tb=short` — 96 passed
+- `PYTHONPATH="'fy'-suites" python "'fy'-suites/despaghettify/tools/ds005_runtime_import_check.py"` — exit 0, 12 imports
+- `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` — pass (`generated_at_utc=2026-05-22T18:41:40Z`)
+
+**Result:** The prior DS-012 symbols (`forum_routes.py`, `load_all_module_files`, `get_orchestration_status`, `_is_condition_match`) no longer appear in the top longest/nesting scan rankings. Public backend routes and service entry points remain compatible.
+
 ## Closed — DS-001, DS-002, DS-004, DS-005 (session 20260520)
 
 Runtime import seams (C1), service/runtime splits (C4), route constants (C5), and relationship derive clarity (C7 backend slice) verified on current tree.

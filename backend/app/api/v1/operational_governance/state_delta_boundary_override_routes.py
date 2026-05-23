@@ -13,7 +13,7 @@ from .common import *
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def list_state_delta_boundary_overrides():
     """Get active state delta boundary overrides."""
-    def _do():
+    def _list_state_delta_boundary_overrides_action():
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
         storage_key = "state_delta_overrides:all"
@@ -25,7 +25,7 @@ def list_state_delta_boundary_overrides():
             "total_count": len(overrides),
         }
 
-    return _handle("state_delta_overrides_get", _do)
+    return _handle("state_delta_overrides_get", _list_state_delta_boundary_overrides_action)
 
 
 @api_v1_bp.route("/admin/mvp4/overrides/state-delta-boundary", methods=["POST"])
@@ -34,7 +34,7 @@ def list_state_delta_boundary_overrides():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def create_state_delta_boundary_override():
     """Create state delta boundary protection override (breakglass)."""
-    def _do():
+    def _create_state_delta_boundary_override_action():
         from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
         import uuid
@@ -96,7 +96,7 @@ def create_state_delta_boundary_override():
             "breakglass": True,
         }
 
-    return _handle("state_delta_override_create", _do)
+    return _handle("state_delta_override_create", _create_state_delta_boundary_override_action)
 
 
 @api_v1_bp.route("/admin/mvp4/overrides/state-delta-boundary/<override_id>", methods=["DELETE"])
@@ -105,7 +105,7 @@ def create_state_delta_boundary_override():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def revoke_state_delta_boundary_override(override_id: str):
     """Revoke state delta boundary override."""
-    def _do():
+    def _revoke_state_delta_boundary_override_action():
         from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -146,7 +146,7 @@ def revoke_state_delta_boundary_override(override_id: str):
 
         return {"override_id": override_id, "revoked": True}
 
-    return _handle("state_delta_override_revoke", _do)
+    return _handle("state_delta_override_revoke", _revoke_state_delta_boundary_override_action)
 
 __all__ = (
     'list_state_delta_boundary_overrides',

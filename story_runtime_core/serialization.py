@@ -29,6 +29,11 @@ def as_list(value: Any) -> list[Any]:
     return [value]
 
 
+def clean_text(value: Any) -> str:
+    """Return a stripped string for scalar runtime evidence values."""
+    return str(value or "").strip()
+
+
 def sequence_list(value: Any) -> list[Any]:
     """Return only list/tuple input as a list; ignore scalar values."""
     if isinstance(value, list):

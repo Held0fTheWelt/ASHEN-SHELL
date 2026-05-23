@@ -36,6 +36,7 @@ W5_FLAGS = (
     "W5_AST_VALIDATION_ENABLED",
     "W5_AST_FRONTEND_PLAYER_VIEW_ENABLED",
     "W5_AST_NARRATOR_STRICT_ENABLED",
+    "W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED",
 )
 
 
@@ -150,31 +151,50 @@ class TestF8NarratorPathSourceFactsContract:
             assert "transition_from_previous" in block["source_facts"]
             assert "_legacy_compat" not in block["source_facts"]
 
-    def test_strict_on_demotes_transition_from_previous_to_legacy_compat(
+    def test_strict_on_default_removes_transition_and_legacy_compat(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Phase 6B-5E default: strict-on + diagnostics flag OFF → no
+        transition_from_previous at top level AND no _legacy_compat key.
+        W5 projection is the sole actor-situation authority."""
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
+        monkeypatch.delenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", raising=False)
         opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
         for block in opening["scene_blocks"]:
             facts = block["source_facts"]
-            # First-class key is gone.
             assert "transition_from_previous" not in facts, (
-                "Phase 6B-3B strict-ON must remove transition_from_previous "
+                "Phase 6B-5E strict-on must remove transition_from_previous "
                 "from top-level narrator source_facts."
             )
-            # Demoted into _legacy_compat with W5 authority marker.
+            assert "_legacy_compat" not in facts, (
+                "Phase 6B-5E default: strict-on must not include _legacy_compat "
+                "when diagnostics flag is off."
+            )
+
+    def test_strict_on_with_diagnostics_flag_demotes_to_legacy_compat(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Phase 6B-5E opt-in: strict-on + diagnostics flag ON demotes
+        transition_from_previous into _legacy_compat with authority markers."""
+        from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
+
+        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
+        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
+        opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
+            session_output_language="de",
+        )
+        for block in opening["scene_blocks"]:
+            facts = block["source_facts"]
+            assert "transition_from_previous" not in facts
             legacy = facts.get("_legacy_compat")
             assert isinstance(legacy, dict), (
-                "strict-ON narrator block must carry _legacy_compat namespace"
+                "diagnostics flag on: strict-on must carry _legacy_compat"
             )
-            assert "transition_from_previous" in legacy, (
-                "strict-ON narrator block must keep transition_from_previous as a "
-                "non-authoritative compatibility breadcrumb under _legacy_compat."
-            )
+            assert "transition_from_previous" in legacy
             assert legacy["authority"] == "w5_projection"
             notice = str(legacy.get("notice") or "")
             assert "W5" in notice
@@ -215,16 +235,18 @@ class TestF8NarratorPathSourceFactsContract:
                 == unstrict_block["source_facts"]["mandatory_beat"]
             )
 
-    def test_strict_on_preserves_hard_cut_directed_transition_breadcrumb(
+    def test_strict_on_with_diagnostics_flag_preserves_hard_cut_breadcrumb(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """The authored hard_cut transition must still be inspectable as a
-        debug breadcrumb under strict mode so operators can audit dramatic
-        scene boundaries; it just no longer drives the prompt fallback."""
+        """Phase 6B-5E: with diagnostics flag on, the authored hard_cut
+        transition is still inspectable under _legacy_compat. Without the
+        flag (default), _legacy_compat is absent and W5 where_summary is
+        the location-change authority."""
 
         from ai_stack.story_runtime.narrator import god_of_carnage_narrator_path
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
+        monkeypatch.setenv("W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED", "true")
         opening = god_of_carnage_narrator_path.build_goc_narrator_path_opening(
             session_output_language="de",
         )
@@ -242,8 +264,8 @@ class TestF8NarratorPathSourceFactsContract:
         assert [
             block["canonical_mandatory_beat_id"] for block in hard_cut_blocks
         ] == ["room_perception_winter_light"], (
-            "Strict-ON must preserve the authored hard_cut transition under "
-            "_legacy_compat for operator parity inspection."
+            "Diagnostics flag on: authored hard_cut transition must be "
+            "inspectable under _legacy_compat for operator parity."
         )
 
 

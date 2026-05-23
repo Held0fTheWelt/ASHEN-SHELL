@@ -7,8 +7,10 @@ change commit/readiness gates.
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Any
 
+from ai_stack.contracts.normalization import clean_text as _clean_text
 from story_runtime_core.player_input_intent_contract import (
     is_action_like_player_input_kind,
     is_known_player_input_kind,
@@ -30,8 +32,7 @@ LOCAL_EVIDENCE_SCOPE = "local_runtime_projection"
 _RECORD_VERSION = "runtime_aspect_record.v1"
 
 
-def _text(value: Any, *, max_chars: int = 160) -> str:
-    return str(value or "").strip()[:max_chars]
+_text = partial(_clean_text, max_chars=160)
 
 
 def _unique_texts(values: Any, *, max_items: int = 8) -> list[str]:

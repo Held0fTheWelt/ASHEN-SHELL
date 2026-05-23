@@ -115,13 +115,18 @@ class _DiagnosticsApiMixin:
         metadata["w5.narrator_strict_enabled"] = strict
         if location_changed_compute_failed:
             metadata["w5.location_changed_compute_failed"] = True
+        legacy_compat_diag = w5_ast_narrator_legacy_compat_diagnostics_enabled()
+        metadata["w5.narrator_legacy_compat_diagnostics_enabled"] = legacy_compat_diag
         if not strict:
-            # Under unstrict, legacy parity context remains visible for
-            # operators inspecting transition_from_previous in committed
-            # narrator blocks; the field is informational, not authoritative.
+            # Under explicit opt-out, transition_from_previous remains first-class
+            # in narrator source_facts for rollback compatibility.
             metadata["w5.legacy_transition_parity"] = "legacy_compat_visible"
-        else:
+        elif legacy_compat_diag:
+            # Strict-on + diagnostics flag on: _legacy_compat breadcrumb present.
             metadata["w5.legacy_transition_parity"] = "demoted_to_legacy_compat"
+        else:
+            # Strict-on + diagnostics flag off (default): no _legacy_compat.
+            metadata["w5.legacy_transition_parity"] = "removed_by_6b5e_policy"
         return metadata
 
     def get_diagnostics(self, session_id: str) -> dict[str, Any]:

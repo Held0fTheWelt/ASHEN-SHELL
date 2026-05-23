@@ -38,7 +38,7 @@ def admin_story_runtime_experience_update():
         update_story_runtime_experience_settings,
     )
 
-    def _do():
+    def _admin_story_runtime_experience_update_action():
         result = update_story_runtime_experience_settings(_body(), _actor_identifier())
         # Rebuild resolved runtime config so world-engine fetches the new
         # Story Runtime Experience section on its next reload call.
@@ -56,7 +56,7 @@ def admin_story_runtime_experience_update():
         truth["world_engine_story_runtime_rebind"] = rebind_result
         return truth
 
-    return _handle("story_runtime_experience_update", _do)
+    return _handle("story_runtime_experience_update", _admin_story_runtime_experience_update_action)
 
 __all__ = (
     'admin_governance_audit',

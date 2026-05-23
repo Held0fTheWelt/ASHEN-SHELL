@@ -7,9 +7,24 @@ from typing import Any
 from ai_stack.contracts.serialization import as_list
 
 
-def clean_text(value: Any) -> str:
+def clean_text(
+    value: Any,
+    *,
+    max_chars: int | None = None,
+    collapse_whitespace: bool = False,
+    rstrip_truncated: bool = False,
+) -> str:
     """Return a stripped string for scalar contract values."""
-    return str(value or "").strip()
+    raw = str(value or "")
+    if collapse_whitespace:
+        text = " ".join(raw.replace("\n", " ").strip().split())
+    else:
+        text = raw.strip()
+    if max_chars is not None and len(text) > max_chars:
+        text = text[:max_chars]
+        if rstrip_truncated:
+            text = text.rstrip()
+    return text
 
 
 def clean_str_list(

@@ -738,3 +738,43 @@ The Phase 6B-4 inventory pass did not touch world-engine HTTP routing, did not m
 ### Phase 6B-4 — is Phase 6B-5 targeted removal safe to begin?
 
 **Yes, conditionally.** Phase 6B-5 may begin with 6B-5A (ADR-0065, complete) and then 6B-5B (strict-mode parity-test rewrite). Phase 6B-5 may **not** start by deleting any opt-out short-circuit, malformed-W5 safety net, old-payload compatibility, substrate read, public payload alias, or F8 / F18 / F19 / F20 strict-OFF branch before the ADR lands, parity tests are rewritten, and the default-on safety gates are green.
+
+---
+
+## Phase 6B-5E — `_legacy_compat` Transition Breadcrumb Consumer Classification
+
+### Decision
+
+**Option B accepted:** `_legacy_compat["transition_from_previous"]` is gated behind opt-in diagnostics flag `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` (default-off). See ADR-0065 Phase 6B-5E Decision section and migration doc Phase 6B-5E section for full rationale.
+
+### Consumer Inventory (Phase 6B-5E scope)
+
+| Consumer | Location | Classification |
+|---|---|---|
+| `_legacy_compat["transition_from_previous"]` insertion | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py::_block()` | `gated_diagnostics_opt_in` |
+| `_legacy_compat["authority"]`, `_legacy_compat["notice"]` | same | `gated_diagnostics_opt_in` |
+| `w5.legacy_transition_parity` label | `world-engine/app/story_runtime/manager/diagnostics_api.py::get_w5_langfuse_metadata()` | `updated_three_value` |
+| `w5.narrator_legacy_compat_diagnostics_enabled` | same | `new_flag_report` |
+| Prompt guidance referencing `_legacy_compat` as possible breadcrumb | `world-engine/app/story_runtime/manager/narrator_output_prompts.py` | `updated_conditional` |
+| Test assertions on `_legacy_compat` presence under strict-on | various `test_w5_actor_tracking_phase_6b5b_parity.py` etc. | `test_only_update` |
+
+### What Remains for Phase 6B-5F
+
+The following surfaces still exist and require classification in the Phase 6B-5F fresh inventory:
+
+- `transition_from_previous` **computation** under explicit strict-off (data generation; not included in strict-on source_facts).
+- Explicit strict-off path (entire `else` branch in `_block()`).
+- Malformed-W5 safety fallback (unchanged).
+- Public compatibility aliases (unchanged).
+- All substrate writers (unchanged).
+- The `_legacy_compat` presence tests now split into flag-off and flag-on variants — flag-on tests will become newly-dead candidates if the diagnostics flag is permanently removed in a future ADR.
+
+### Is Phase 6B-5F Fresh Inventory Safe to Begin?
+
+**Yes.** Phase 6B-5E gate conditions are met:
+- Default strict-on source_facts contains no `_legacy_compat`.
+- Diagnostics flag opt-in supplies the breadcrumb for authorized parity audits.
+- W5 `where_summary.location_changed` covers the location-shift signal.
+- MVP03 and MVP04 gates remain green.
+- No committed event was mutated.
+- No opt-out, malformed-W5, or substrate surface was removed.

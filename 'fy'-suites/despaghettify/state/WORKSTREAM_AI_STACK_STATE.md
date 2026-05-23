@@ -1,18 +1,36 @@
 # Workstream: ai_stack
 
-## In flight — DS-015 duplicate-name proxy triage (session 20260522)
+## Closed — DS-015 duplicate-name proxy triage (session 20260522)
 
 | Sub-wave | Status | Outcome / next step | Evidence |
 |----------|--------|---------------------|----------|
 | w01 | completed | Added executable duplicate-name proxy classification so intentional public protocol names are not renamed blindly; helper candidates remain queued for centralization. | Pre: `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_w01_duplicate_proxy_classification_snapshot.*`; post: `artifacts/workstreams/ai_stack/post/session_20260522_DS-015_w01_duplicate_proxy_classification_comparison.*` |
-| w02 | next | Centralize equivalent AI-stack contract/narrative helper families (`_text`, `_clean_str_list`, `_bounded_int`, `_as_list`) without changing public contract methods. | Plan: `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_wave_plan.*` |
-| w03 | pending | Triage operational-governance `_do` wrapper duplication and close DS-015 after final gates. | Plan: `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_wave_plan.*` |
+| w02 | completed | Centralized equivalent AI-stack contract/narrative helper families (`_text`, `_clean_str_list`, `_bounded_int`, `_as_list`) without changing public contract methods. | Post: `artifacts/workstreams/ai_stack/post/session_20260522_DS-015_w02_helper_centralization_comparison.*` |
+| w03 | completed | Replaced local operational-governance `_do` callback duplicates with route-specific action names while preserving `_handle` behavior. | Pre: `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_w03_operational_wrapper_snapshot.*`; post: `artifacts/workstreams/ai_stack/post/session_20260522_DS-015_w03_operational_wrapper_comparison.*` |
 
 **w01 gates:**
 
 - `PYTHONPATH="'fy'-suites" python -m despaghettify.tools wave-plan-validate --file "'fy'-suites/despaghettify/state/artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_wave_plan.json" --check-primary-paths --gate-prefix-allowlist python,pytest,PYTHONPATH` — pass
 - `python -m py_compile "'fy'-suites/despaghettify/tools/duplicate_name_proxy_classification.py" "'fy'-suites/despaghettify/tools/tests/test_duplicate_name_proxy_classification.py"` — pass
 - `PYTHONPATH="'fy'-suites" pytest -q "'fy'-suites/despaghettify/tools/tests/test_duplicate_name_proxy_classification.py" --tb=short` — 3 passed
+
+**w02 gates:**
+
+- `python -m py_compile ai_stack/contracts/*.py ai_stack/story_runtime/narrative/*.py ai_stack/quality_lab/*.py ai_stack/story_runtime/god_of_carnage/god_of_carnage_knowledge_runtime_gates.py ai_stack/story_runtime/semantic_planner/semantic_scene_plan/utils.py story_runtime_core/*.py story_runtime_core/recovery/*.py` — pass
+- `pytest -q ai_stack/tests/test_expectation_variation_engine.py ai_stack/tests/test_genre_awareness_engine.py ai_stack/tests/test_improvisational_coherence_engine.py ai_stack/tests/test_information_disclosure_contracts.py ai_stack/tests/test_meta_narrative_awareness_engine.py ai_stack/tests/test_narrative_momentum_engine.py ai_stack/tests/test_symbolic_object_resonance_engine.py ai_stack/tests/test_temporal_control_engine.py ai_stack/tests/test_tonal_consistency_engine.py --tb=short` — 32 passed
+- `pytest -q ai_stack/tests/test_god_of_carnage_knowledge_runtime_gates.py ai_stack/tests/test_semantic_planner_contracts.py --tb=short` — 19 passed
+- `pytest -q ai_stack/tests/test_active_listening_contracts.py ai_stack/tests/test_hierarchical_memory_contracts.py --tb=short` — 7 passed
+- Scoped duplicate-helper grep for `_text`, `_clean_text`, `_clean_str_list`, `_bounded_int`, and `_as_list` — 0 matches
+
+**w03 gates:**
+
+- `python -m py_compile backend/app/api/v1/operational_governance/*.py` — pass
+- `PYTHONPATH=backend pytest -q backend/tests/test_operational_governance_routes_structure.py backend/tests/test_operational_governance_mvp.py --tb=short` — 26 passed
+- `PYTHONPATH="'fy'-suites" python "'fy'-suites/despaghettify/tools/ds005_runtime_import_check.py"` — exit 0, 12 imports
+- `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` — pass
+- Operational-governance `_do` grep — 0 matches
+
+**Final result:** DS-015 targeted package helper and local wrapper duplicate families are closed. Intentional public protocol names (`to_dict`, `to_runtime_dict`, `generate`) remain protected by the classification guard.
 
 ## Closed — DS-010 / DS-011 semantic boundary and helper triage (session 20260522)
 

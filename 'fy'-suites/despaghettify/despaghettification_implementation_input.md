@@ -47,10 +47,10 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../
 | **DS-009** | `world_engine` | — | **CLOSED** 2026-05-20 |
 | **DS-010** | `ai_stack` | `backend_runtime_services` | **CLOSED** 2026-05-22 |
 | **DS-011** | `ai_stack` | `story_runtime_core`, `backend_runtime_services` | **CLOSED** 2026-05-22 |
-| **DS-012** | `backend_runtime_services` | — | **OPEN** |
+| **DS-012** | `backend_runtime_services` | — | **CLOSED** 2026-05-22 |
 | **DS-013** | `ai_stack` | `story_runtime_core` | **OPEN** |
-| **DS-014** | `world_engine` | — | **OPEN** |
-| **DS-015** | `ai_stack` | `backend_runtime_services`, `administration_tool`, `story_runtime_core` | **OPEN** |
+| **DS-014** | `world_engine` | — | **CLOSED** 2026-05-22 |
+| **DS-015** | `ai_stack` | `backend_runtime_services`, `administration_tool`, `story_runtime_core` | **CLOSED** 2026-05-22 |
 | **DS-016** | `repo_governance_rollout` | `tools/mcp_server`, `administration_tool` | **OPEN** |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](../state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
@@ -93,35 +93,35 @@ For every relevant **DS-*** / despaghettification **wave**, update this file in 
 
 | Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
 |-------|-------------------------------------|-------------------------------------|
-| **As of (date & time)** | — | **2026-05-22 17:00:29 (UTC)** |
+| **As of (date & time)** | — | **2026-05-22 19:50:52 (UTC)** |
 | Spaghetti scan command | — | `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` |
 | Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` from `fy-manifest.yaml` |
-| **M7** — gewichtete 7-Kategorien-Summe | **52.98** | **4.25** |
-| C1: Circular dependencies | **11.18** | **0.78** |
-| C2: Nesting depth | **55.07** | **1.71** |
-| C3: Long functions + complexity | **99.76** | **1.81** |
-| C4: Multi-responsibility modules | **73.90** | **7.46** |
-| C5: Magic numbers + global state | **40.64** | **0.97** |
-| C6: Missing abstractions / duplication | **51.59** | **15.15** |
-| C7: Confusing control flow | **64.84** | **7.26** |
-| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **10641** / **794** / **193** / **20** |
+| **M7** — gewichtete 7-Kategorien-Summe | **52.16** | **4.12** |
+| C1: Circular dependencies | **10.98** | **0.74** |
+| C2: Nesting depth | **47.27** | **1.67** |
+| C3: Long functions + complexity | **99.71** | **1.76** |
+| C4: Multi-responsibility modules | **73.91** | **7.46** |
+| C5: Magic numbers + global state | **40.65** | **0.97** |
+| C6: Missing abstractions / duplication | **50.50** | **14.25** |
+| C7: Confusing control flow | **64.81** | **7.31** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **10638** / **794** / **187** / **16** |
 | Extra check builtins | — | **0** matches for `def build_god_of_carnage_solo` in `**/builtins.py`; `story_runtime_core/goc_solo_builtin_template.py` still owns the definition |
 | Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **0**; imported **12** current runtime modules via `app.runtime.package_classification.runtime_module_import_path`. Grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
-| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **4.2456** ≥ `M7_ref` **4.24**; Anteil exceeds bars on **C4** (**7.46** > **5**), **C5** (**0.97** > **0**), **C6** (**15.15** > **0**), and **C7** (**7.26** > **3**). **C4/C7 anchors:** `backend/app/api/v1/forum_routes.py` **2240** lines, `backend/app/content/module_loader.py:load_all_module_files` **310L**, `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py:run_visible_render` **340L**, `ai_stack/story_runtime/player_action_resolution.py:resolve_player_action` **314L**, `world-engine/app/story_runtime/manager/story_window_entries.py:_story_window_entries_for_session` depth **6** / **237L**, and `story_runtime_core/branching/branch_timeline.py:build_branch_timeline_snapshot` depth **8**. **C5 anchor:** magic-int proxy remains concentrated in prompt/proxy/narrative policy builders such as `prompt_store_service.update_prompt_record`, `symbolic_object_resonance_engine.derive_symbolic_object_resonance`, and administration proxy tests. **C6 anchor:** DS-015 w01 now classifies public protocol duplicates (`to_dict`, `to_runtime_dict`, `generate`) separately from actionable helper families (`_text`, `_clean_str_list`, `_bounded_int`, `_do`, `_as_list`); helper centralization remains open for w02/w03. **Metric scan gate repaired:** DS-005 imports **12** current runtime modules with exit **0**. |
+| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **4.121** is below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.46** > **5**), **C5** (**0.97** > **0**), **C6** (**14.25** > **0**), and **C7** (**7.31** > **3**). **C4/C7 anchors:** DS-014 world-engine manager/readout targets are closed and no longer appear in the formal top-12 longest ranking. Remaining planned anchors are DS-016 tooling test fixture `tools/mcp_server/tests/test_langfuse_verify_tools.py:test_summarize_runtime_aspect_matrix_reads_ledger_from_path_summary` **558L** and DS-013 AI-stack/story-runtime surfaces (`run_visible_render` **340L**, `resolve_player_action` **314L**, `build_semantic_scene_plan_enrichment` **297L**, `derive_symbolic_object_resonance` **270L**, `build_branch_timeline_snapshot` depth **8**). **C5/C6 anchors:** magic-int and duplicate-name pressure remains mostly in prompt/proxy/narrative policy builders, administration proxy/tests, intentional public protocols, and broader duplicate naming outside DS-015's closed helper-wrapper scope. **Metric scan gate repaired:** DS-005 imports **12** current runtime modules with exit **0**. |
 
 ### Score *M7* — inputs, weights, and calculation
 
 | Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
 |--------|---------|------------------------|--------------|
-| **M7** | Gewichtete Summe | **52.98** | **4.25** |
-| **C1** | Circular dependencies | **11.18** | **0.78** |
-| **C2** | Nesting depth | **55.07** | **1.71** |
-| **C3** | Long functions + complexity | **99.76** | **1.81** |
-| **C4** | Multi-responsibility modules | **73.90** | **7.46** |
-| **C5** | Magic numbers + global state | **40.64** | **0.97** |
-| **C6** | Missing abstractions / duplication | **51.59** | **15.15** |
-| **C7** | Confusing control flow | **64.84** | **7.26** |
-| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **10641** / **794** / **193** / **20** |
+| **M7** | Gewichtete Summe | **52.16** | **4.12** |
+| **C1** | Circular dependencies | **10.98** | **0.74** |
+| **C2** | Nesting depth | **47.27** | **1.67** |
+| **C3** | Long functions + complexity | **99.71** | **1.76** |
+| **C4** | Multi-responsibility modules | **73.91** | **7.46** |
+| **C5** | Magic numbers + global state | **40.65** | **0.97** |
+| **C6** | Missing abstractions / duplication | **50.50** | **14.25** |
+| **C7** | Confusing control flow | **64.81** | **7.31** |
+| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **10638** / **794** / **187** / **16** |
 
 **Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
 
@@ -148,10 +148,7 @@ Each **open** row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-set
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
-| **DS-012** | **C4 · C5 · C7 ·** Backend route/content runtime hotspots | `backend/app/api/v1/forum_routes.py`, `backend/app/content/module_loader.py`, `backend/app/services/ai_stack/ai_engineer_suite/orchestration_status.py`, `backend/app/services/governance/narrative_governance_service.py` | `forum_routes.py` is **2240** lines; `load_all_module_files` is **310L** depth **4**; `get_orchestration_status` is **161L** depth **7**; `_is_condition_match` reaches depth **8**. | Split route/content orchestration into coherent submodules, flatten governance predicates, and keep external route contracts stable. | High collision with backend API/service edits; run backend route/runtime tests and `ds005_runtime_import_check.py`. |
 | **DS-013** | **C4 · C5 · C7 ·** AI-stack story-runtime long-callable pass | `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py`, `ai_stack/story_runtime/player_action_resolution.py`, `ai_stack/story_runtime/semantic_planner/semantic_scene_plan/enrichment.py`, `ai_stack/story_runtime/narrative/*`, `story_runtime_core/branching/branch_timeline.py` | Top offenders include `run_visible_render` **340L**, `resolve_player_action` **314L**, `build_semantic_scene_plan_enrichment` **297L**, `derive_symbolic_object_resonance` **270L**, and `build_branch_timeline_snapshot` depth **8**. | Extract render/action/enrichment and branching decision phases behind stable wrappers; move constants out of narrative policy bodies where behavior is stable. | Avoid overlap with W5/narrator behavior changes; run focused `ai_stack` story-runtime and `story_runtime_core` branching suites. |
-| **DS-014** | **C4 · C7 ·** World-engine manager readout/session hotspots | `world-engine/app/story_runtime/manager/player_visible_persistence.py`, `session/session_state_api.py`, `story_window_entries.py`, `committed_dramatic_context.py`, `world-engine/app/story_runtime/governed_runtime.py` | Current scan lists `_persist_player_visible_turn_event` **255L**, `get_state` **250L**, `_story_window_entries_for_session` **237L** depth **6**, `_build_committed_dramatic_context_summary` **235L**, and `build_governed_model_adapters` depth **7**. | Split persistence, state readout, story-window entry assembly, and adapter governance into testable manager helpers without changing committed output. | Coordinate with active narrator-strict worktree changes; run world-engine manager/runtime diagnostics tests. |
-| **DS-015** | **C6 · C5 ·** Remaining duplicate-name proxy triage | `ai_stack/contracts/*`, `ai_stack/story_runtime/narrative/*`, `backend/app/api/v1/operational_governance/*`, `administration-tool/tests/*`, `story_runtime_core/*` | C6 Anteil remains **15.149** after DS-011; intentional protocol names (`to_dict`, `to_runtime_dict`, `generate`) coexist with actionable helper families (`_text`, `_clean_str_list`, `_bounded_int`, `_do`, `_as_list`) and repeated magic-literal policy builders. | Classify intentional protocol duplicates, centralize only true helper duplication per package, and add scan guards so proxy cleanup does not rename public contracts blindly. | Cross-package blast radius; do not rename public dataclass/protocol methods without call-site audit. |
 | **DS-016** | **C4 · C5 · C7 ·** Tooling/test fixture hotspot cleanup | `tools/mcp_server/tests/test_langfuse_verify_tools.py`, `administration-tool/route_registration_proxy.py`, `administration-tool/tests/*` | Largest callable is `test_summarize_runtime_aspect_matrix_reads_ledger_from_path_summary` at **558L**; administration proxy tests and routes carry repeated status-code and policy literals. | Split large verification tests into fixtures/assertion helpers and extract proxy status/policy constants while preserving test intent. | Keep production MCP handler behavior untouched; run MCP server tests and administration-tool proxy tests. |
 
 ### Closed (archived)
@@ -167,33 +164,21 @@ Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in 
 
 | Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
 |------------------|----------|-------------|----------------------|----------------------------|
-| **1** | **DS-015** | Separate intentional protocol duplicates from real helper duplication before broader module movement. | `ai_stack` | Gates: duplicate-helper grep, focused contract/narrative tests, backend operational-governance smoke if `_do` helpers move. |
-| **2a** | **DS-012** | Shrink backend route/content/governance hotspots behind stable route contracts. | `backend_runtime_services` | Parallel with **DS-014** / **DS-016** after DS-015 classification; gates: backend route/service tests plus `ds005_runtime_import_check.py`. |
-| **2b** | **DS-014** | Split world-engine manager state/readout surfaces into granular manager helpers. | `world_engine` | Parallel with **DS-012** / **DS-016**; avoid narrator-strict behavior changes; gates: world-engine manager diagnostics/runtime tests. |
-| **2c** | **DS-016** | Clean tool/test fixture hotspots without touching production MCP handler behavior. | `repo_governance_rollout` | Parallel with **DS-012** / **DS-014**; gates: MCP server tests and administration-tool proxy tests. |
-| **3** | **DS-013** | Refactor AI-stack story-runtime long-callable surfaces after duplicate-helper vocabulary is settled. | `ai_stack` | Depends softly on **DS-015**; gates: focused `ai_stack` story-runtime suites and `story_runtime_core` branching tests. |
+| **1** | **DS-016** | Clean tool/test fixture hotspots without touching production MCP handler behavior. | `repo_governance_rollout` | Gates: MCP server tests and administration-tool proxy tests. |
+| **2** | **DS-013** | Refactor AI-stack story-runtime long-callable surfaces after backend duplicate, route vocabulary, and world-engine readout splits settled. | `ai_stack` | Follows DS-015, DS-012, and DS-014 closures; gates: focused `ai_stack` story-runtime suites and `story_runtime_core` branching tests. |
 
 ```mermaid
 flowchart TD
-P1["1 · DS-015 · Duplicate proxy triage"]
-P2A["2a · DS-012 · Backend route/content hotspots"]
-P2B["2b · DS-014 · World-engine manager readouts"]
-P2C["2c · DS-016 · Tool/test fixture cleanup"]
-P3["3 · DS-013 · AI-stack story-runtime split"]
-P1 --> P2A
-P1 --> P2B
-P1 --> P2C
-P1 --> P3
+    DS016["DS-016 tooling/test fixture cleanup"] --> DS013["DS-013 AI-stack story-runtime long-callable pass"]
 ```
 
 ### Closed phases (archived)
 
-See [despaghettification_completed_log.md](despaghettification_completed_log.md).
+DS-014 closed on 2026-05-22. See [despaghettification_completed_log.md](despaghettification_completed_log.md).
 
-**Current order:** classify duplicate proxies first, then run backend/world-engine/tooling cleanup in parallel where owners do not share hot files; AI-stack story-runtime split follows after DS-015 settles helper vocabulary.
+**Fill in:** one phase row per **open** **DS-*** when check repopulates the backlog. **Mermaid:** omit while the open table is only `—`.
 
 **Implementation:** invoke [spaghetti-solve-task.md](../spaghetti-solve-task.md) with **one** **DS-ID** per run.
-
 ## Active progress (in-flight only)
 
 **Completed waves** live in **[despaghettification_completed_log.md](despaghettification_completed_log.md)** — append there when a **DS-ID** is **CLOSED** or a check/reset pass is finished; do **not** grow this table with closed work.
@@ -206,7 +191,7 @@ Use this section only for:
 
 | date | ID(s) | short description | pre artefacts (rel. to `despaghettify/state/`) | post artefacts (rel. to `despaghettify/state/`) | state doc(s) updated | PR / commit |
 |------|-------|-------------------|----------------------------------------|----------------------------------------|----------------------|-------------|
-| 2026-05-22 | **DS-015** | `w01`/3 completed: duplicate-name proxy classification guard added; next `w02` centralizes AI-stack helper families. | `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_wave_plan.*`; `artifacts/workstreams/ai_stack/pre/session_20260522_DS-015_w01_duplicate_proxy_classification_snapshot.*` | `artifacts/workstreams/ai_stack/post/session_20260522_DS-015_w01_duplicate_proxy_classification_comparison.*` | `WORKSTREAM_AI_STACK_STATE.md` | working tree |
+| — | — | — | — | — | — | — |
 
 **Rules:** [`despaghettification_completed_log.md`](despaghettification_completed_log.md) § *When to append here*; formal evidence still under `despaghettify/state/artifacts/…` per [`EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md).
 

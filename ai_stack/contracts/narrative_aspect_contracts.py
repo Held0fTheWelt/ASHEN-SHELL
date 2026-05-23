@@ -7,6 +7,7 @@ concrete aspect ids and their authored meaning.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import clean_text as _text
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -30,12 +31,6 @@ EVIDENCE_KINDS: frozenset[str] = frozenset(
         "ledger_aspect_status",
     }
 )
-
-
-
-
-def _text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def _get_path(root: dict[str, Any], path: str | None) -> Any:

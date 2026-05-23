@@ -8,6 +8,7 @@ policy.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import clean_text as _clean_text
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
@@ -54,10 +55,6 @@ DEFAULT_DRAMATIC_IRONY_FORBIDDEN_SURFACE_MODES: tuple[str, ...] = (
     DRAMATIC_IRONY_SURFACE_DIRECT_REVEAL,
     DRAMATIC_IRONY_SURFACE_OMNISCIENT_REVEAL,
 )
-
-
-def _clean_text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def _dedupe_strings(values: Any) -> list[str]:

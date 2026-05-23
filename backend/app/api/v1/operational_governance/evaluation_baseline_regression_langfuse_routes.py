@@ -10,7 +10,7 @@ from .common import *
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def add_evaluation_baseline_turn():
     """Promote an annotated turn into the canonical baseline set."""
-    def _do():
+    def _add_evaluation_baseline_turn_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline, TurnScore
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -52,7 +52,7 @@ def add_evaluation_baseline_turn():
             "updated": True,
         }
 
-    return _handle("evaluation_baseline_turn_add", _do)
+    return _handle("evaluation_baseline_turn_add", _add_evaluation_baseline_turn_action)
 
 
 @api_v1_bp.route("/admin/mvp4/evaluation/session/<session_id>/regression", methods=["GET"])
@@ -61,7 +61,7 @@ def add_evaluation_baseline_turn():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_evaluation_session_regression(session_id: str):
     """Compare recent live annotations against the canonical baseline."""
-    def _do():
+    def _get_evaluation_session_regression_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -74,7 +74,7 @@ def get_evaluation_session_regression(session_id: str):
             baseline_id=baseline_id,
         )
 
-    return _handle("evaluation_session_regression_get", _do)
+    return _handle("evaluation_session_regression_get", _get_evaluation_session_regression_action)
 
 
 # Langfuse Configuration

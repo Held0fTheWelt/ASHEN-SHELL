@@ -6,6 +6,7 @@ counts are the oracle. Generated prose wording is not.
 
 from __future__ import annotations
 
+from ai_stack.contracts.normalization import clean_text as _clean_text
 from ai_stack.contracts.normalization import bounded_int as _bounded_int
 from typing import Any, Literal
 
@@ -135,10 +136,6 @@ class PacingRhythmValidation(BaseModel):
 
     def to_runtime_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
-
-
-def _clean_text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def normalize_pacing_rhythm_policy(policy: dict[str, Any] | None) -> dict[str, Any]:

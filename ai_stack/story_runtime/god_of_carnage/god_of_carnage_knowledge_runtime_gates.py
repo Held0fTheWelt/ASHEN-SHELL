@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ai_stack.contracts.serialization import strict_list as _as_list
 from typing import Any
 
 from ai_stack.story_runtime.god_of_carnage.god_of_carnage_frozen_vocabulary import canonicalize_goc_actor_id, expand_goc_actor_id_aliases
@@ -12,10 +13,6 @@ KNOWLEDGE_RUNTIME_GATES_CONTRACT = "god_of_carnage_knowledge_runtime_gates.v1"
 
 def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
-
-
-def _as_list(value: Any) -> list[Any]:
-    return value if isinstance(value, list) else []
 
 
 def _unique_strs(values: Any) -> list[str]:

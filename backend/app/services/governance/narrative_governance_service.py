@@ -23,10 +23,17 @@ from app.models import (
     NarrativeRevisionStatusHistory,
     NarrativeRuntimeHealthEvent,
     NarrativeRuntimeHealthRollup,
-    SiteSetting,
 )
 from app.models.world_engine.narrative_contracts import DraftPatchBundle, ValidationFeedback
 from app.models.world_engine.narrative_enums import NarrativeEventType
+from app.services.governance.narrative_condition_matching import is_condition_match
+from app.services.governance.narrative_runtime_health import (
+    build_runtime_health_event,
+    build_runtime_health_rollup,
+    fallback_alert_settings,
+    runtime_health_counts,
+    should_emit_fallback_threshold_alert,
+)
 from app.services.game.game_service import (
     GameServiceError,
     end_narrative_preview_session,
@@ -200,34 +207,6 @@ def _request_world_engine_active_reload(*, module_id: str, target_version: str) 
         )
 
 
-def _is_condition_match(condition: dict[str, object], payload: dict[str, object]) -> bool:
-    """Evaluate basic JSON-rule condition operators for notification rules."""
-    if not condition:
-        return True
-    for key, expected in condition.items():
-        actual = payload.get(key)
-        if isinstance(expected, dict):
-            for op, value in expected.items():
-                if op == "$gte":
-                    if not isinstance(actual, (int, float)) or actual < value:
-                        return False
-                elif op == "$lte":
-                    if not isinstance(actual, (int, float)) or actual > value:
-                        return False
-                elif op == "$eq":
-                    if actual != value:
-                        return False
-                elif op == "$in":
-                    if not isinstance(value, list) or actual not in value:
-                        return False
-                else:
-                    return False
-        else:
-            if actual != expected:
-                return False
-    return True
-
-
 def emit_narrative_event(
     *,
     event_type: str,
@@ -239,7 +218,7 @@ def emit_narrative_event(
     """Emit a governance event and evaluate notification rules for feed routing."""
     event_payload: dict[str, object] = {"module_id": module_id, "related_ref": related_ref, **payload}
     rules = NarrativeNotificationRule.query.filter_by(event_type=event_type, enabled=True).all()
-    matched_rules = [rule for rule in rules if _is_condition_match(rule.condition_json or {}, event_payload)]
+    matched_rules = [rule for rule in rules if is_condition_match(rule.condition_json or {}, event_payload)]
     if not matched_rules:
         matched_rules = []
 
@@ -951,16 +930,17 @@ def ingest_runtime_health_event(
     payload: dict[str, object],
 ) -> dict[str, object]:
     """Ingest one runtime health event and optionally emit threshold alerts."""
-    row = NarrativeRuntimeHealthEvent(
+    occurred_at = _utc_now()
+    row = build_runtime_health_event(
         event_id=_new_id("rt_evt"),
         module_id=module_id,
         scene_id=scene_id,
         turn_number=turn_number,
         event_type=event_type,
         severity=severity,
-        failure_types_json=failure_types,
-        payload_json=payload,
-        occurred_at=_utc_now(),
+        failure_types=failure_types,
+        payload=payload,
+        occurred_at=occurred_at,
     )
     db.session.add(row)
     emit_narrative_event(
@@ -970,51 +950,23 @@ def ingest_runtime_health_event(
         related_ref=row.event_id,
         payload={"scene_id": scene_id, "turn_number": turn_number, "failure_types": failure_types},
     )
-    window_start = _utc_now() - timedelta(hours=1)
-    total = NarrativeRuntimeHealthEvent.query.filter(
-        NarrativeRuntimeHealthEvent.module_id == module_id,
-        NarrativeRuntimeHealthEvent.occurred_at >= window_start,
-    ).count()
-    fallback = NarrativeRuntimeHealthEvent.query.filter(
-        NarrativeRuntimeHealthEvent.module_id == module_id,
-        NarrativeRuntimeHealthEvent.occurred_at >= window_start,
-        NarrativeRuntimeHealthEvent.event_type == NarrativeEventType.SAFE_FALLBACK_USED.value,
-    ).count()
-    retry = NarrativeRuntimeHealthEvent.query.filter(
-        NarrativeRuntimeHealthEvent.module_id == module_id,
-        NarrativeRuntimeHealthEvent.occurred_at >= window_start,
-        NarrativeRuntimeHealthEvent.event_type == NarrativeEventType.CORRECTIVE_RETRY_USED.value,
-    ).count()
-    success = max(total - fallback - retry, 0)
-    rollup = NarrativeRuntimeHealthRollup(
+    window_start = occurred_at - timedelta(hours=1)
+    window_end = _utc_now()
+    counts = runtime_health_counts(module_id, window_start)
+    rollup = build_runtime_health_rollup(
         module_id=module_id,
-        window_key="last_hour",
         window_start=window_start,
-        window_end=_utc_now(),
-        total_turns=total,
-        first_pass_success_rate=(success / total) if total else 0.0,
-        corrective_retry_rate=(retry / total) if total else 0.0,
-        safe_fallback_rate=(fallback / total) if total else 0.0,
-        top_failure_types_json=failure_types[:5],
-        created_at=_utc_now(),
+        window_end=window_end,
+        counts=counts,
+        failure_types=failure_types,
     )
     db.session.add(rollup)
-    config: dict[str, object] = {}
-    row_cfg = SiteSetting.query.filter_by(key="narrative_runtime_config").first()
-    if row_cfg and row_cfg.value:
-        try:
-            parsed = json.loads(row_cfg.value)
-            if isinstance(parsed, dict):
-                config = parsed
-        except json.JSONDecodeError:
-            config = {}
-    fallback_cfg = config.get("fallback") if isinstance(config.get("fallback"), dict) else {}
-    alert_enabled = bool(fallback_cfg.get("alert_on_frequent_fallbacks", True))
-    threshold = int(fallback_cfg.get("fallback_alert_threshold", 5) or 5)
-    if (
-        alert_enabled
-        and fallback >= threshold
-        and event_type == NarrativeEventType.SAFE_FALLBACK_USED.value
+    alert_enabled, threshold = fallback_alert_settings()
+    if should_emit_fallback_threshold_alert(
+        event_type=event_type,
+        fallback_count=counts["fallback"],
+        threshold=threshold,
+        enabled=alert_enabled,
     ):
         emit_narrative_event(
             event_type=NarrativeEventType.FALLBACK_THRESHOLD_EXCEEDED.value,
@@ -1023,7 +975,7 @@ def ingest_runtime_health_event(
             related_ref=scene_id,
             payload={
                 "message": "Safe fallback threshold exceeded in the last hour.",
-                "safe_fallback_count_last_hour": fallback,
+                "safe_fallback_count_last_hour": counts["fallback"],
                 "threshold": threshold,
             },
         )

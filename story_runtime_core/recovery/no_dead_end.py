@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+from story_runtime_core.serialization import clean_text as _text
 
 NO_DEAD_END_RECOVERY_SCHEMA_VERSION = "no_dead_end_recovery.v1"
 NO_DEAD_END_RECOVERY_VALIDATION_VERSION = "no_dead_end_recovery_validation.v1"
@@ -57,10 +58,6 @@ TECHNICAL_LEAK_TOKENS = frozenset(
         "commit_applied",
     }
 )
-
-
-def _text(value: Any) -> str:
-    return str(value or "").strip()
 
 
 def _lower(value: Any) -> str:

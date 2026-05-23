@@ -13,7 +13,7 @@ from .common import *
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def list_object_admission_overrides():
     """Get active object admission overrides."""
-    def _do():
+    def _list_object_admission_overrides_action():
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
         # Fetch all object admission overrides from session storage
@@ -26,7 +26,7 @@ def list_object_admission_overrides():
             "total_count": len(overrides),
         }
 
-    return _handle("object_admission_overrides_get", _do)
+    return _handle("object_admission_overrides_get", _list_object_admission_overrides_action)
 
 
 @api_v1_bp.route("/admin/mvp4/overrides/object-admission", methods=["POST"])
@@ -35,7 +35,7 @@ def list_object_admission_overrides():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def create_object_admission_override():
     """Create object admission tier override."""
-    def _do():
+    def _create_object_admission_override_action():
         from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
         import uuid
@@ -98,7 +98,7 @@ def create_object_admission_override():
             "created": True,
         }
 
-    return _handle("object_admission_override_create", _do)
+    return _handle("object_admission_override_create", _create_object_admission_override_action)
 
 
 @api_v1_bp.route("/admin/mvp4/overrides/object-admission/<override_id>", methods=["DELETE"])
@@ -107,7 +107,7 @@ def create_object_admission_override():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def revoke_object_admission_override(override_id: str):
     """Revoke object admission override."""
-    def _do():
+    def _revoke_object_admission_override_action():
         from app.auth.admin_security import OverrideAuditEvent, OverrideEventType, OverrideAuditConfig, OverrideAuditConfigManager, _log_override_event
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -147,7 +147,7 @@ def revoke_object_admission_override(override_id: str):
 
         return {"override_id": override_id, "revoked": True}
 
-    return _handle("object_admission_override_revoke", _do)
+    return _handle("object_admission_override_revoke", _revoke_object_admission_override_action)
 
 __all__ = (
     'list_object_admission_overrides',

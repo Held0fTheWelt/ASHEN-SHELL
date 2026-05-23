@@ -41,14 +41,16 @@ class _NarratorOutputPromptsMixin:
             ],
         }
         strict = w5_ast_narrator_strict_enabled()
-        # Phase 6B-3B F18 / Phase 6B-5D: under W5_AST_NARRATOR_STRICT_ENABLED
-        # the prompt treats ``source_facts.w5_projection`` as the actor-situation
-        # authority. Phase 6B-5D removed the legacy ``transition_from_previous``
-        # fallback paragraph from both postures — prompt guidance must not
-        # promote it in any posture. Who / Where / What / How / Why guidance is
-        # preserved explicitly; How stays first-class; inferred Why stays soft
-        # truth. Explicit opt-out (strict=false) retains the data surface for
-        # compatibility/diagnostics but must not name it as narrator authority.
+        # Phase 6B-3B F18 / Phase 6B-5D / Phase 6B-5E: under
+        # W5_AST_NARRATOR_STRICT_ENABLED the prompt treats
+        # ``source_facts.w5_projection`` as the actor-situation authority.
+        # Phase 6B-5D removed the legacy ``transition_from_previous`` fallback
+        # paragraph from both postures. Phase 6B-5E gates the
+        # ``_legacy_compat`` breadcrumb behind an opt-in diagnostics flag
+        # (default-off). Under strict-on default, ``source_facts`` contains
+        # no ``_legacy_compat`` key. Prompt guidance must not promote
+        # ``transition_from_previous`` or ``_legacy_compat`` in any posture.
+        # How stays first-class. Inferred Why stays soft truth.
         if strict:
             w5_authority_paragraph = (
                 "Treat source_facts.w5_projection as the sole actor-situation authority for this turn. "
@@ -60,11 +62,11 @@ class _NarratorOutputPromptsMixin:
                 "dramatic_function — soft inferred truth, never spoken as observed fact). "
                 "Use where_summary.location_changed to decide whether the block must narratively "
                 "orient a scene/location shift before describing local detail. "
-                "Do not consult source_facts.transition_from_previous; any "
-                "source_facts._legacy_compat fields are non-authoritative debug breadcrumbs only. "
+                "Do not consult source_facts.transition_from_previous; if source_facts._legacy_compat "
+                "is present, its fields are non-authoritative diagnostic breadcrumbs only. "
             )
         else:
-            # Phase 6B-5D: strict-off prompt fallback paragraph removed.
+            # Phase 6B-5D / 5E: strict-off prompt fallback paragraph removed.
             # W5 projection is the actor-situation authority in all postures.
             # transition_from_previous may still appear in data for explicit
             # opt-out compatibility/diagnostics but must not be promoted here.

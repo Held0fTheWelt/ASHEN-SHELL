@@ -18,12 +18,12 @@ def admin_costs_usage_events():
 @jwt_required()
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def admin_costs_usage_events_ingest():
-    def _do():
+    def _admin_costs_usage_events_ingest_action():
         body = _body()
         enforce_budget_guard(body.get("provider_id"), body.get("workflow_scope"))
         return ingest_usage_event(body, _actor_identifier())
 
-    return _handle("costs_usage_events_ingest", _do)
+    return _handle("costs_usage_events_ingest", _admin_costs_usage_events_ingest_action)
 
 
 @api_v1_bp.route("/admin/costs/rollups", methods=["GET"])

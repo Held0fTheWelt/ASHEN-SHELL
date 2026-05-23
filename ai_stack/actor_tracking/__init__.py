@@ -64,6 +64,7 @@ from ai_stack.actor_tracking.diagnostics import (
     build_w5_langfuse_metadata,
     build_w5_runtime_metadata,
     coerce_w5_snapshot,
+    w5_ast_narrator_legacy_compat_diagnostics_enabled,
     w5_ast_narrator_strict_enabled,
     w5_projection_flag_states,
 )
@@ -107,6 +108,7 @@ __all__ = [
     "coerce_w5_snapshot",
     "extract_w5_snapshot_from_committed_event",
     "validate_w5_actor_tracking",
+    "w5_ast_narrator_legacy_compat_diagnostics_enabled",
     "w5_ast_narrator_strict_enabled",
     "w5_ast_validation_enabled",
     "w5_projection_flag_states",

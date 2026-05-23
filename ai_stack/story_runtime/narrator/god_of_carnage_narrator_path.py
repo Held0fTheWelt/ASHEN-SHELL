@@ -16,7 +16,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
+from ai_stack.actor_tracking import (
+    w5_ast_narrator_legacy_compat_diagnostics_enabled,
+    w5_ast_narrator_strict_enabled,
+)
 from ai_stack.story_runtime.god_of_carnage.god_of_carnage_yaml_authority import (
     load_goc_canonical_module_yaml,
     load_goc_canonical_path_yaml,
@@ -378,22 +381,28 @@ def _block(
         previous_step=transition_previous_step,
         current_step=step,
     )
-    # Phase 6B-3B F8: under W5_AST_NARRATOR_STRICT_ENABLED the W5 narrator
-    # projection (added by Phase 2 wiring in source_facts.w5_projection) is the
-    # actor-situation authority. The legacy transition_from_previous block is
-    # demoted to a non-authoritative compatibility/debug field so consumers can
-    # detect strict mode without losing the parity trail. Default-off keeps
-    # the Phase 6B-3A behavior exactly.
+    # Phase 6B-3B F8 / Phase 6B-5E: under W5_AST_NARRATOR_STRICT_ENABLED the
+    # W5 narrator projection is the actor-situation authority. Phase 6B-5E
+    # gates the _legacy_compat["transition_from_previous"] breadcrumb behind an
+    # opt-in diagnostics flag (W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED,
+    # default-off). When the flag is off (default), no _legacy_compat key is
+    # added to source_facts under strict-on. When the flag is on, the legacy
+    # transition payload is demoted as a non-authoritative diagnostic breadcrumb.
+    # Strict-off (explicit opt-out) keeps transition_from_previous first-class
+    # regardless of the diagnostics flag.
     if w5_ast_narrator_strict_enabled():
-        legacy_compat = source_facts.get("_legacy_compat")
-        if not isinstance(legacy_compat, dict):
-            legacy_compat = {}
-        legacy_compat["transition_from_previous"] = transition_payload
-        legacy_compat["authority"] = "w5_projection"
-        legacy_compat["notice"] = (
-            "non-authoritative; W5 narrator projection is the actor-situation authority"
-        )
-        source_facts["_legacy_compat"] = legacy_compat
+        if w5_ast_narrator_legacy_compat_diagnostics_enabled():
+            legacy_compat = source_facts.get("_legacy_compat")
+            if not isinstance(legacy_compat, dict):
+                legacy_compat = {}
+            legacy_compat["transition_from_previous"] = transition_payload
+            legacy_compat["authority"] = "w5_projection"
+            legacy_compat["notice"] = (
+                "non-authoritative; W5 narrator projection is the actor-situation authority"
+            )
+            source_facts["_legacy_compat"] = legacy_compat
+        # When diagnostics flag is off: no _legacy_compat key added.
+        # W5 projection alone carries actor-situation authority.
     else:
         source_facts["transition_from_previous"] = transition_payload
     block = {

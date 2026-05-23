@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from story_runtime_core.serialization import clean_text as _clean_text
 
 RECOVERABLE_TURN_OUTCOMES = frozenset(
     {
@@ -37,8 +38,7 @@ RECOVERABLE_COMMIT_REASON_CODES = frozenset(
 )
 
 
-def _text(value: Any) -> str:
-    return str(value or "").strip().lower()
+_text = lambda value: _clean_text(value).lower()
 
 
 def is_committed_story_truth_row(row: dict[str, Any] | None) -> bool:

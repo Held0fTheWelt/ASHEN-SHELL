@@ -9,9 +9,11 @@ content modules own the policy that enables tiers and retention.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from functools import partial
 import hashlib
 from typing import Any
 
+from ai_stack.contracts.normalization import clean_text as _clean_text
 from ai_stack.contracts.serialization import as_list as _as_list, json_safe as _json_safe
 
 
@@ -51,12 +53,12 @@ FORBIDDEN_TEXT_KEY_PARTS: tuple[str, ...] = (
 
 
 
-def _text(value: Any, *, max_chars: int = 160) -> str:
-    raw = str(value or "").replace("\n", " ").strip()
-    text = " ".join(raw.split())
-    if len(text) > max_chars:
-        return text[:max_chars].rstrip()
-    return text
+_text = partial(
+    _clean_text,
+    max_chars=160,
+    collapse_whitespace=True,
+    rstrip_truncated=True,
+)
 
 
 def _unique_texts(values: Any, *, max_items: int = 12, max_chars: int = 80) -> list[str]:

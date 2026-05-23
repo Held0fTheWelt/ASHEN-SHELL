@@ -17,12 +17,12 @@ def admin_ai_providers_list():
 @jwt_required()
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def admin_ai_provider_create():
-    def _do():
+    def _admin_ai_provider_create_action():
         row = create_provider(_body(), _actor_identifier())
         db_commit = row.provider_id  # force identity access before envelope
         return {"provider_id": db_commit, "created": True}
 
-    return _handle("provider_create", _do)
+    return _handle("provider_create", _admin_ai_provider_create_action)
 
 
 @api_v1_bp.route("/admin/ai/providers/<provider_id>", methods=["PATCH"])

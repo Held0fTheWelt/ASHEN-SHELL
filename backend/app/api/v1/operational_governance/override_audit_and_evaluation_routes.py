@@ -13,7 +13,7 @@ from .common import *
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_override_audit_config():
     """Get audit granularity configuration for all override types."""
-    def _do():
+    def _get_override_audit_config_action():
         from app.auth.admin_security import OverrideAuditConfigManager
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -26,7 +26,7 @@ def get_override_audit_config():
             "description": "Control which override events are logged per override type",
         }
 
-    return _handle("override_audit_config_get", _do)
+    return _handle("override_audit_config_get", _get_override_audit_config_action)
 
 
 @api_v1_bp.route("/admin/mvp4/overrides/audit-config/<override_type>", methods=["PATCH"])
@@ -35,7 +35,7 @@ def get_override_audit_config():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def update_override_audit_config(override_type: str):
     """Update audit granularity configuration for override type."""
-    def _do():
+    def _update_override_audit_config_action():
         from app.auth.admin_security import OverrideAuditConfig, OverrideAuditConfigManager
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -60,7 +60,7 @@ def update_override_audit_config(override_type: str):
             "updated": True,
         }
 
-    return _handle("override_audit_config_update", _do)
+    return _handle("override_audit_config_update", _update_override_audit_config_action)
 
 
 # Evaluation Configuration
@@ -72,7 +72,7 @@ def update_override_audit_config(override_type: str):
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_evaluation_rubric():
     """Get quality evaluation rubric."""
-    def _do():
+    def _get_evaluation_rubric_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -80,7 +80,7 @@ def get_evaluation_rubric():
         rubric = pipeline.get_rubric("goc_quality_v1")
         return rubric.to_dict()
 
-    return _handle("evaluation_rubric_get", _do)
+    return _handle("evaluation_rubric_get", _get_evaluation_rubric_action)
 
 
 @api_v1_bp.route("/admin/mvp4/evaluation/baseline", methods=["GET"])
@@ -89,7 +89,7 @@ def get_evaluation_rubric():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_evaluation_baseline():
     """Get offline baseline test set."""
-    def _do():
+    def _get_evaluation_baseline_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -105,7 +105,7 @@ def get_evaluation_baseline():
             "created_at": baseline.created_at,
         }
 
-    return _handle("evaluation_baseline_get", _do)
+    return _handle("evaluation_baseline_get", _get_evaluation_baseline_action)
 
 
 @api_v1_bp.route("/admin/mvp4/evaluation/weights/<session_id>", methods=["GET"])
@@ -114,7 +114,7 @@ def get_evaluation_baseline():
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_evaluation_rubric_weights(session_id: str):
     """Get current rubric weights (auto-tuning state) for session."""
-    def _do():
+    def _get_evaluation_rubric_weights_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -125,7 +125,7 @@ def get_evaluation_rubric_weights(session_id: str):
             "weights": weights.to_dict(),
         }
 
-    return _handle("evaluation_weights_get", _do)
+    return _handle("evaluation_weights_get", _get_evaluation_rubric_weights_action)
 
 
 @api_v1_bp.route("/admin/mvp4/evaluation/weights/<session_id>/manual-tune", methods=["POST"])
@@ -134,7 +134,7 @@ def get_evaluation_rubric_weights(session_id: str):
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def manual_tune_evaluation_weights(session_id: str):
     """Manually trigger rubric weight tuning from recent turns."""
-    def _do():
+    def _manual_tune_evaluation_weights_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -154,7 +154,7 @@ def manual_tune_evaluation_weights(session_id: str):
             "tuned_at": weights.last_updated,
         }
 
-    return _handle("evaluation_manual_tune", _do)
+    return _handle("evaluation_manual_tune", _manual_tune_evaluation_weights_action)
 
 
 @api_v1_bp.route("/admin/mvp4/evaluation/session/<session_id>/recent-turns", methods=["GET"])
@@ -163,7 +163,7 @@ def manual_tune_evaluation_weights(session_id: str):
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def get_recent_evaluation_turn_scores(session_id: str):
     """List recent human-annotated evaluation turns for a live session."""
-    def _do():
+    def _get_recent_evaluation_turn_scores_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -176,7 +176,7 @@ def get_recent_evaluation_turn_scores(session_id: str):
             "quality_summary": pipeline.get_session_quality_summary(session_id, limit=limit),
         }
 
-    return _handle("evaluation_recent_turns_get", _do)
+    return _handle("evaluation_recent_turns_get", _get_recent_evaluation_turn_scores_action)
 
 
 @api_v1_bp.route("/admin/mvp4/evaluation/session/<session_id>/turn-score", methods=["POST"])
@@ -185,7 +185,7 @@ def get_recent_evaluation_turn_scores(session_id: str):
 @require_feature(FEATURE_MANAGE_AI_RUNTIME_GOVERNANCE)
 def record_evaluation_turn_score(session_id: str):
     """Record or update a human annotation for one turn."""
-    def _do():
+    def _record_evaluation_turn_score_action():
         from ai_stack.quality_lab.evaluation_pipeline import EvaluationPipeline, TurnScore
         from app.services.governance.observability_governance_service import get_runtime_governance_storage
 
@@ -215,7 +215,7 @@ def record_evaluation_turn_score(session_id: str):
             "recorded": True,
         }
 
-    return _handle("evaluation_turn_score_record", _do)
+    return _handle("evaluation_turn_score_record", _record_evaluation_turn_score_action)
 
 __all__ = (
     'get_override_audit_config',

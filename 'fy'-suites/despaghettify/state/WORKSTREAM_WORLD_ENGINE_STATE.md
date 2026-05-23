@@ -1,5 +1,38 @@
 # Workstream: world_engine
 
+## Closed — DS-014 world-engine runtime/readout split (session 20260522)
+
+| Sub-wave | Outcome | Primary files / symbols | Evidence |
+|----------|---------|--------------------------|----------|
+| w01 | Player-visible persistence now delegates event defaults, runtime-surface copy, and canonical record assembly to focused helpers. | `player_visible_persistence.py`, `player_visible_event_defaults.py`, `player_visible_runtime_surfaces.py`, `player_visible_canonical_record.py`; `_persist_player_visible_turn_event` | Post comparison: `artifacts/workstreams/world_engine/post/session_20260522_DS-014_world_engine_runtime_readout_comparison.*` |
+| w02 | Session-state readout now delegates last-turn extraction, canonical counts, snapshots, loop readout, committed-state readout, and final response assembly. | `session/session_state_api.py`, `session_state_readout_parts.py`, `session_state_response_parts.py`; `get_state` | Post comparison: `artifacts/workstreams/world_engine/post/session_20260522_DS-014_world_engine_runtime_readout_comparison.*` |
+| w03 | Story-window entry construction and committed dramatic-context sections are split into named helpers while preserving projection fields. | `story_window_entries.py`, `story_window_entry_parts.py`, `committed_dramatic_context.py`, `committed_dramatic_context_parts.py` | Post comparison: `artifacts/workstreams/world_engine/post/session_20260522_DS-014_world_engine_runtime_readout_comparison.*` |
+| w04 | Governed provider adapter construction and route/model selection helpers are outside the policy class body. | `governed_runtime.py`, `governed_runtime_adapters.py`; `GovernedStoryRoutingPolicy`, `build_governed_model_adapters` | Post comparison: `artifacts/workstreams/world_engine/post/session_20260522_DS-014_world_engine_runtime_readout_comparison.*` |
+
+**Plan mirror:** `artifacts/workstreams/world_engine/pre/session_20260522_DS-014_wave_plan.json`
+
+**Current metrics report:** `../reports/latest_check_with_metrics.json` generated `2026-05-22T19:50:52Z`.
+
+## Gates
+
+- `python -m py_compile` on all changed DS-014 Python files — passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_window_projection.py world-engine/tests/test_story_runtime_w5_player_view.py --tb=short` — 15 passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_authority_version_and_route_family_truth.py::test_narrative_task_reports_route_family_truth world-engine/tests/test_authority_version_and_route_family_truth.py::test_build_governed_components_uses_new_policy world-engine/tests/test_authority_version_and_route_family_truth.py::test_governed_routing_prefers_rich_model_for_high_complexity_turns world-engine/tests/test_live_story_runtime_governance.py::test_governed_config_enables_live_path --tb=short` — 4 passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_runtime_narrative_commit.py::test_recoverable_validation_rejection_returns_structured_turn world-engine/tests/test_story_runtime_narrative_commit.py::test_execute_turn_propagates_vitality_telemetry_to_event_and_governance world-engine/tests/test_story_runtime_narrative_commit.py::test_human_input_attribution_uses_player_input_kind_surface --tb=short` — 3 passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=world-engine:. pytest -q world-engine/tests/test_story_runtime_narrative_threads.py::test_committed_dramatic_context_reaches_history_story_window_and_shell --tb=short` — 1 passed.
+- `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` — passed.
+- `git diff --check` for touched DS-014 files — passed with CRLF normalization warnings only.
+
+## Structural delta
+
+- `_persist_player_visible_turn_event`: 120 AST lines → 91.
+- `get_state`: 153 AST lines → 94.
+- `_story_window_entries_for_session`: 123 AST lines → 91.
+- `_build_committed_dramatic_context_summary`: 235 AST lines → 93.
+- `GovernedStoryRoutingPolicy`: 168 AST lines → 83.
+- Current full scan: 10638 functions; L50 794; L100 187; D6 16.
+- DS-014 world-engine targets no longer appear in the formal top-12 longest ranking.
+
 ## Closed — DS-009 world-engine runtime split (session 20260520)
 
 | Sub-wave | Outcome | Primary files / symbols | Evidence |
