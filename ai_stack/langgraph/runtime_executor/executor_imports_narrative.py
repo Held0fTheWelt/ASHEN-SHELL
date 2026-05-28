@@ -150,7 +150,6 @@ SOURCE_LINES = [
     'from ai_stack.language_io.language_adapter import (\n',
     '    build_interaction_surface,\n',
     '    default_player_intent_commit_flags,\n',
-    '    load_session_language_model_directive,\n',
     '    prepare_player_input_semantic_resolution,\n',
     ')\n',
     '\n',

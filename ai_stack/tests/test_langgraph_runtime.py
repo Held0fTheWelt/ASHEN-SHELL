@@ -91,6 +91,45 @@ class SemanticTranslationAdapter(BaseModelAdapter):
         return ModelCallResult(content="ok", success=True, metadata={"adapter": self.adapter_name})
 
 
+class OutputTranslationAdapter(BaseModelAdapter):
+    adapter_name = "openai"
+
+    def __init__(
+        self,
+        translations: list[str] | None = None,
+        *,
+        success: bool = True,
+        error: Exception | None = None,
+    ) -> None:
+        self.translations = list(translations or [])
+        self.success = success
+        self.error = error
+        self.prompts: list[str] = []
+        self.model_names: list[str | None] = []
+
+    def generate(
+        self,
+        prompt: str,
+        *,
+        timeout_seconds: float = 10.0,
+        retrieval_context: str | None = None,
+        model_name: str | None = None,
+    ) -> ModelCallResult:
+        self.prompts.append(prompt)
+        self.model_names.append(model_name)
+        assert timeout_seconds == 30.0
+        assert retrieval_context is None
+        if self.error is not None:
+            raise self.error
+        if not self.success:
+            return ModelCallResult(content="", success=False, metadata={"error": "forced_translation_failure"})
+        return ModelCallResult(
+            content=json.dumps({"translated": list(self.translations)}),
+            success=True,
+            metadata={"adapter": self.adapter_name},
+        )
+
+
 class SemanticTranslationNarrationAdapter(BaseModelAdapter):
     adapter_name = "openai"
 
@@ -294,6 +333,15 @@ def _build_graph_with_semantic_translation(tmp_path: Path, semantic_action: dict
     )
 
 
+def _output_translation_executor(adapter: BaseModelAdapter | None = None) -> RuntimeTurnGraphExecutor:
+    registry = build_default_registry()
+    graph = object.__new__(RuntimeTurnGraphExecutor)
+    graph.routing = RoutingPolicy(registry)
+    graph.registry = registry
+    graph.adapters = {"openai": adapter} if adapter is not None else {}
+    return graph
+
+
 def _build_graph_with_semantic_translation_and_narration(
     tmp_path: Path,
     semantic_action: dict,
@@ -348,6 +396,89 @@ def test_translate_player_input_skips_adapter_for_english_input(tmp_path: Path) 
     assert translation["semantic_resolution_required"] is False
     assert translation["normalized_english_text"] == "Go to the kitchen"
     assert translator.prompts == []
+
+
+def test_translate_output_skips_adapter_for_english_output() -> None:
+    translator = OutputTranslationAdapter(["unused"])
+    graph = _output_translation_executor(translator)
+
+    update = graph._translate_output(
+        {
+            "session_output_language": "en",
+            "visible_output_bundle": {"gm_narration": ["The room is quiet."]},
+        }
+    )
+
+    assert update["output_translation"]["status"] == "skipped_same_language"
+    assert "visible_output_bundle" not in update
+    assert translator.prompts == []
+
+
+def test_translate_output_updates_only_visible_text_fields() -> None:
+    translator = OutputTranslationAdapter(
+        [
+            "Der Raum ist still.",
+            '"Guten Tag."',
+            "Annette legt die Hand auf den Tisch.",
+        ]
+    )
+    graph = _output_translation_executor(translator)
+    original_bundle = {
+        "gm_narration": ["The room is quiet."],
+        "spoken_lines": [{"speaker_id": "annette_reille", "text": '"Hello."'}],
+        "action_lines": [{"actor_id": "annette_reille", "text": "Annette sets her hand on the table."}],
+    }
+
+    update = graph._translate_output(
+        {
+            "session_output_language": "de",
+            "visible_output_bundle": original_bundle,
+        }
+    )
+
+    assert update["output_translation"]["status"] == "translated"
+    assert update["output_translation"]["language"] == "de"
+    assert update["output_translation"]["count"] == 3
+    translated = update["visible_output_bundle"]
+    assert translated["gm_narration"] == ["Der Raum ist still."]
+    assert translated["spoken_lines"] == [{"speaker_id": "annette_reille", "text": '"Guten Tag."'}]
+    assert translated["action_lines"] == [
+        {"actor_id": "annette_reille", "text": "Annette legt die Hand auf den Tisch."}
+    ]
+    assert original_bundle["gm_narration"] == ["The room is quiet."]
+    assert original_bundle["spoken_lines"][0]["text"] == '"Hello."'
+
+
+def test_translate_output_passthrough_on_adapter_error_and_length_mismatch() -> None:
+    unavailable_graph = _output_translation_executor()
+    unavailable_update = unavailable_graph._translate_output(
+        {
+            "session_output_language": "de",
+            "visible_output_bundle": {"gm_narration": ["The room is quiet."]},
+        }
+    )
+    assert unavailable_update["output_translation"]["status"] == "adapter_unavailable"
+    assert "visible_output_bundle" not in unavailable_update
+
+    failing_graph = _output_translation_executor(OutputTranslationAdapter(error=RuntimeError("boom")))
+    failing_update = failing_graph._translate_output(
+        {
+            "session_output_language": "de",
+            "visible_output_bundle": {"gm_narration": ["The room is quiet."]},
+        }
+    )
+    assert failing_update["output_translation"]["status"] == "adapter_error_passthrough"
+    assert "visible_output_bundle" not in failing_update
+
+    mismatch_graph = _output_translation_executor(OutputTranslationAdapter(["eins", "zwei"]))
+    mismatch_update = mismatch_graph._translate_output(
+        {
+            "session_output_language": "de",
+            "visible_output_bundle": {"gm_narration": ["The room is quiet."]},
+        }
+    )
+    assert mismatch_update["output_translation"]["status"] == "length_mismatch_passthrough"
+    assert "visible_output_bundle" not in mismatch_update
 
 
 def test_runtime_turn_graph_propagates_trace_and_host_versions(tmp_path: Path) -> None:

@@ -169,6 +169,9 @@ class RuntimeTurnState(TypedDict, total=False):
     # may ground it against content.
     input_translation: dict[str, Any]
     semantic_resolution_contract: dict[str, Any]
+    # Output language adapter egress. Populated after visible render so the
+    # narrator can remain in the internal English authoring language.
+    output_translation: dict[str, Any]
     # MVP2 actor-lane enforcement context: human_actor_id + ai_forbidden_actor_ids.
     # Populated by the host at turn start; consumed by validate_seam before commit.
     actor_lane_context: dict[str, Any]

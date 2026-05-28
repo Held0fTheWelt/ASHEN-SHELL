@@ -70,6 +70,7 @@ def test_single_runtime_graph_executes_validation_and_commit_seams(tmp_path: Pat
         "validate_seam",
         "commit_seam",
         "render_visible",
+        "translate_output",
         "package_output",
     ]
     assert "director_assess_scene" not in nodes

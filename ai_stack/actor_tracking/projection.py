@@ -12,8 +12,9 @@ Phase 2 scope (ADR-0063 + ``docs/MVPs/w5_actor_tracking_migration.md``):
 - ``why_summary`` may include INFERRED / DIRECTOR_ASSIGNED / CANONICAL /
   DECLARED facts, but never OBSERVED (see ``why_truth_level_is_admitted``).
 - ``source_attribution`` and ``truth_attribution`` are populated per
-  ``summary_path`` so the narrator can be audited and so admin can later
-  diff against the legacy ``transition_from_previous`` block.
+  ``summary_path`` so the narrator can be audited. (Phase 2 originally
+  noted a parity goal against ``transition_from_previous``; that block
+  was removed by ADR-0068 — ``source_attribution`` audit purpose remains.)
 - Raw ledgers (per-fact dicts) are **not** exposed; only compact summaries.
 """
 
@@ -655,9 +656,11 @@ def build_w5_projection_for_narrator(
     - ``actor_id_aliases`` lets runtime code pass canonical role aliases
       without reading raw persisted W5 dicts. The builder still resolves
       against the typed ``W5Snapshot``.
-    - ``previous_snapshot`` is used only to detect ``location_changed`` parity
-      against the prior persisted snapshot — same semantics as the legacy
-      ``transition_from_previous.location_changed`` flag.
+    - ``previous_snapshot`` is used only to detect ``location_changed``:
+      when the actor's ``scene_location`` in ``previous_snapshot`` differs
+      from the current snapshot, ``where_summary.location_changed`` is True.
+      (ADR-0068 removed ``source_facts.transition_from_previous``; this
+      field is now the sole location-shift signal.)
 
     The returned ``W5Projection`` carries compact, prompt-ready summaries —
     not raw per-fact ledgers — and always records ``source_attribution`` and

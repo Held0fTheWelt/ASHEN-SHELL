@@ -976,6 +976,67 @@ compatibility consolidation under a separate ADR.
 
 ---
 
+### Phase 6B-8.1 — No-legacy audit and stale documentation cleanup (complete, 2026-05-28)
+
+**Goal:** Remove or update stale wording in tests, docs, production docstrings,
+and inventory labels that still described retired narrator strict-off /
+`transition_from_previous` / `_legacy_compat` behavior as current.
+
+**Scope:** stale docstrings, test function names, inventory table entries.
+Public compatibility surfaces, substrate writers/readers, NPC context bundle
+mechanisms, committed events, and ADR historical sections unchanged.
+
+**Changes made:**
+
+- `ai_stack/actor_tracking/projection.py` module docstring and
+  `build_w5_projection_for_narrator` docstring: removed stale references to
+  "diff against the legacy `transition_from_previous` block" and "same
+  semantics as the legacy `transition_from_previous.location_changed` flag".
+  Both now describe the W5-first semantics directly.
+- `ai_stack/tests/test_w5_actor_tracking_projection.py`: updated module
+  docstring (no longer frames `where_summary.location_changed` as a legacy
+  mirror); renamed `test_legacy_location_changed_parity_with_transition_from_previous`
+  → `test_location_changed_true_when_snapshots_disagree_on_location`, removed
+  `legacy_transition_location_changed` variable name, updated docstring to
+  name ADR-0068.
+- `ai_stack/tests/test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py`:
+  added `TestADR0068PositiveRuntimeContracts` class with two tests:
+  `test_w5_projection_present_in_narrator_source_facts` and
+  `test_where_summary_location_changed_available_in_projection`, proving that
+  `source_facts.w5_projection` is the narrator authority and
+  `where_summary.location_changed` remains available post-ADR-0068.
+- `docs/MVPs/w5_legacy_consumer_removal_inventory.md`: added
+  "Removed by ADR-0068" historical markers to S8 (Phase 6A table), and to
+  F8 / F18 / F20 entries in both the Phase 6B-2 and Phase 6B-4 tables.
+
+**Stale-reference audit classifications:**
+- `current_w5_runtime`: all ADR-0068 absence-checking tests and prompt
+  instructions; `w5.narrator_strict_enabled` / `w5.legacy_transition_parity`
+  absence assertions in world-engine tests; `npc_context_legacy_compat_visible`
+  in `reaction_order_governance.py` (NPC domain, unrelated to narrator).
+- `historical_doc_ok`: ADR comments in `diagnostics_api.py`,
+  `opening_fallback_observability.py`; all ADR-006x files; Phase 6B-3B/4/5
+  migration doc sections.
+- `stale_doc_update` → updated: `projection.py` docstrings (×2).
+- `stale_test_update` → updated: `test_w5_actor_tracking_projection.py`
+  module docstring and test function.
+- `unrelated_domain_use`: `scene_changed` in `backend/` (backend scene
+  tracking, not narrator); `_legacy_compat` / `npc_context_legacy_compat_visible`
+  in `reaction_order_governance.py` (NPC planner F11 mechanism, retained).
+- `public_compatibility_keep` / `substrate_keep`: all current-room aliases,
+  actor_locations, gathering_scene_id, NPC context bundle fallback, malformed-W5
+  safety fallback, environment_state substrate writers/readers.
+
+**No remaining active runtime references** to retired narrator strict-off
+surfaces after ADR-0068 execution. All remaining hits are historical docs,
+tests proving absence, or unrelated domain uses.
+
+**Recommended next phase:** Substrate / public payload compatibility
+consolidation under a separate ADR (current-room alias retirement,
+WS viewer_room_id client upgrade, narrator-consequence W5-first builder).
+
+---
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.

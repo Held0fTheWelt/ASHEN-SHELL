@@ -507,8 +507,8 @@ def load_session_language_model_directive(
     return (
         "Resolve player input semantically. The player input is written in "
         f"session_input_language={input_language}; first translate/normalize it to English for "
-        "internal semantic grounding against the English-authored content catalog. Then write "
-        f"player-visible narration in session_output_language={output_language}. Do not use module "
+        "internal semantic grounding against the English-authored content catalog. Preserve "
+        f"session_output_language={output_language} as metadata for the output translation gateway. Do not use module "
         "language lookup files or engine lookup maps for meaning; infer intent from the utterance and "
         "grounded content catalog. If the catalog is silent but the requested affordance is mundane, "
         "local, reversible, and canon-compatible, mark it as a low-risk plausible affordance inference "

@@ -10,10 +10,10 @@ Covers:
   ``truth_attribution`` and never as OBSERVED).
 - ``source_attribution`` and ``truth_attribution`` are populated.
 - The builder accepts both a typed ``W5Snapshot`` and a persisted dict.
-- ``where_summary.location_changed`` mirrors the legacy
-  ``transition_from_previous.location_changed`` truth: when previous and
-  current snapshots disagree on ``scene_location``, the flag is True; when
-  they agree, the flag is False.
+- ``where_summary.location_changed`` is True when previous and current
+  snapshots disagree on ``scene_location``, and False when they agree.
+  (ADR-0068 removed ``source_facts.transition_from_previous``; this W5
+  field is the sole location-shift signal.)
 """
 
 from __future__ import annotations
@@ -768,18 +768,16 @@ def test_location_changed_false_when_locations_match() -> None:
     assert proj.where_summary["location_changed"] is False
 
 
-def test_legacy_location_changed_parity_with_transition_from_previous() -> None:
-    """Phase 2 parity: when ``transition_from_previous.location_changed`` is
-    True for a turn, ``where_summary.location_changed`` must also be True.
+def test_location_changed_true_when_snapshots_disagree_on_location() -> None:
+    """ADR-0068: ``where_summary.location_changed`` is the sole location-shift
+    signal. When previous and current snapshots have different scene_locations
+    the flag must be True. (``transition_from_previous`` was retired.)
     """
 
-    # Build matching W5 snapshots: previous foyer -> current parlor mirrors
-    # the legacy transition flag that prev != current => location_changed True.
     previous = _snapshot(_situation_with_all_dimensions(location="foyer"), turn=2)
     current = _snapshot(_situation_with_all_dimensions(location="parlor"), turn=3)
-    legacy_transition_location_changed = True
     proj = build_w5_projection_for_narrator(current, previous_snapshot=previous)
-    assert proj.where_summary["location_changed"] == legacy_transition_location_changed
+    assert proj.where_summary["location_changed"] is True
 
 
 def test_location_changed_parity_with_goc_narrator_path_fixture() -> None:

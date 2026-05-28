@@ -1,6 +1,7 @@
 """Semantic input translation helpers.
 
-Defines the session language directive, safe model JSON parsing, compact content catalog, translation prompt, and payload extraction used before the runtime interprets player input.
+Defines safe model JSON parsing, compact content catalog, translation prompt,
+and payload extraction used before the runtime interprets player input.
 """
 SOURCE_LINES = [
     'def _runtime_profile_id_from_host_template(host_experience_template: dict[str, Any] | None) -> str | None:\n',
@@ -26,20 +27,8 @@ SOURCE_LINES = [
     '\n',
     '\n',
     'def _session_language_directive_for_model(state: RuntimeTurnState) -> str:\n',
-    '    """Bind model output to ``session_output_language`` for non-opening turns (opening prompt already binds)."""\n',
-    '    if str(state.get("turn_input_class") or "").strip().lower() == "opening":\n',
-    '        return ""\n',
-    '    output_lang = str(state.get("session_output_language") or "de").strip().lower()[:2] or "de"\n',
-    '    input_lang = str(state.get("session_input_language") or output_lang).strip().lower()[:2] or output_lang\n',
-    '    mid = str(state.get("module_id") or "").strip()\n',
-    '    if not mid:\n',
-    '        return ""\n',
-    '    return load_session_language_model_directive(\n',
-    '        module_id=mid,\n',
-    '        lang=output_lang,\n',
-    '        session_input_language=input_lang,\n',
-    '        content_modules_root=None,\n',
-    '    )\n',
+    '    """Output-language binding is handled after render by translate_output."""\n',
+    '    return ""\n',
     '\n',
     '\n',
     'def _safe_json_object_from_model_text(text: str) -> dict[str, Any]:\n',

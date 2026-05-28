@@ -149,9 +149,10 @@ SOURCE_BOUNDARIES: tuple[RuntimeExecutorBoundary, ...] = (
             "executor_validation_commit",
             "executor_commit_render_start",
             "executor_visible_render",
+            "executor_output_translation",
             "executor_package_output",
         ),
-        description="validation, commit, visible render, and output packaging",
+        description="validation, commit, visible render, output translation, and output packaging",
     ),
 )
 

@@ -118,7 +118,7 @@ SOURCE_LINES = [
     '        f"  label: {label}",\n',
     '    ]\n',
     '    if detail:\n',
-    '        lines.append(f"  description (English source; translate to session_output_language): {detail}")\n',
+    '        lines.append(f"  description (English source): {detail}")\n',
     '    if sensory_tags:\n',
     '        lines.append(f"  sensory_anchors: {\', \'.join(sensory_tags)}")\n',
     '    if inventory_ids:\n',

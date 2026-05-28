@@ -111,6 +111,58 @@ class TestStrictEnvVarIsBehaviorallyInert:
             assert "_legacy_compat" not in facts
 
 
+class TestADR0068PositiveRuntimeContracts:
+    """ADR-0068 positive contracts: surfaces that MUST remain available.
+
+    Phase 6B-8.1 verification: the narrator projection API remains the
+    actor-situation authority and where_summary.location_changed is the
+    location-shift signal. The actual source_facts.w5_projection enrichment
+    for a live session is tested end-to-end by the world-engine parity tests
+    (test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py); these tests
+    verify the ai_stack-level contracts that underpin it.
+    """
+
+    def test_build_w5_projection_for_narrator_is_available(self) -> None:
+        """source_facts.w5_projection is built by build_w5_projection_for_narrator.
+        Verify the function is importable and returns a narrator-targeted projection.
+        """
+        from ai_stack.actor_tracking.projection import build_w5_projection_for_narrator
+
+        minimal_snap = {
+            "snapshot_id": "test",
+            "story_session_id": "s1",
+            "turn_number": 1,
+            "created_at": "2026-01-01",
+            "actors": {},
+        }
+        proj = build_w5_projection_for_narrator(minimal_snap)
+        assert proj.target_consumer.value == "narrator", (
+            "build_w5_projection_for_narrator must target the narrator consumer "
+            "(ADR-0065 / ADR-0068)"
+        )
+
+    def test_where_summary_location_changed_available_in_projection(self) -> None:
+        """where_summary.location_changed remains the sole location-shift signal
+        after ADR-0068 removed source_facts.transition_from_previous.
+        The detailed parity contract (True when locations differ) is pinned by
+        test_w5_actor_tracking_projection.py::test_location_changed_true_when_snapshots_disagree_on_location.
+        """
+        from ai_stack.actor_tracking.projection import build_w5_projection_for_narrator
+
+        minimal_snap = {
+            "snapshot_id": "test",
+            "story_session_id": "s1",
+            "turn_number": 1,
+            "created_at": "2026-01-01",
+            "actors": {},
+        }
+        proj = build_w5_projection_for_narrator(minimal_snap)
+        assert "location_changed" in proj.where_summary, (
+            "where_summary.location_changed must remain available as the W5 "
+            "location-shift signal (ADR-0068)"
+        )
+
+
 class TestInventoryClassifiesStrictOffTransitionAsRemoved:
     @staticmethod
     def _inventory_module():
