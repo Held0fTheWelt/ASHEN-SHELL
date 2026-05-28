@@ -157,103 +157,79 @@ def _primary_responder_id(state: RuntimeTurnState) -> str | None:
     return _bounded_str(state.get("responder_id"))
 
 
-def build_bounded_dramatic_context_summary(state: RuntimeTurnState) -> dict[str, Any]:
-    """Build the compact dramatic context carried across output surfaces."""
-    scene = state.get("scene_assessment") if isinstance(state.get("scene_assessment"), dict) else {}
-    social = state.get("social_state_record") if isinstance(state.get("social_state_record"), dict) else {}
-    semantic = state.get("semantic_move_record") if isinstance(state.get("semantic_move_record"), dict) else {}
-    retrieval = state.get("retrieval") if isinstance(state.get("retrieval"), dict) else {}
-    continuity_query = (
-        retrieval.get("continuity_query_signal")
-        if isinstance(retrieval.get("continuity_query_signal"), dict)
-        else {}
-    )
-    silence = (
-        state.get("silence_brevity_decision")
-        if isinstance(state.get("silence_brevity_decision"), dict)
-        else {}
-    )
-    continuity_classes = [
-        str(x.get("class") or x.get("continuity_class"))
-        for x in (state.get("continuity_impacts") or [])
-        if isinstance(x, dict) and (x.get("class") or x.get("continuity_class"))
-    ]
+def _dict_state_value(state: RuntimeTurnState, key: str) -> dict[str, Any]:
+    value = state.get(key)
+    return value if isinstance(value, dict) else {}
 
+
+def _validation_status_from_state(state: RuntimeTurnState, key: str) -> Any:
+    value = state.get(key)
+    return value.get("status") if isinstance(value, dict) else None
+
+
+def _bounded_module_scope(state: RuntimeTurnState) -> dict[str, Any]:
     return {
-        "contract": "bounded_dramatic_context.v1",
-        "source": "runtime_turn_state.package_output",
-        "module_id": state.get("module_id"),
-        "module_scope": {
-            "runtime_scope": "module_specific",
-            "supported_live_module_ids": [GOC_MODULE_ID],
-            "requested_module_supported": state.get("module_id") == GOC_MODULE_ID,
-        },
-        "current_scene_id": state.get("current_scene_id"),
-        "selected_scene_function": state.get("selected_scene_function"),
-        "function_type": state.get("function_type"),
-        "responder": {
-            "responder_id": _primary_responder_id(state),
-            "responder_scope": _bounded_str_list(
-                [
-                    r.get("actor_id") or r.get("responder_id")
-                    for r in (state.get("selected_responder_set") or [])
-                    if isinstance(r, dict)
-                ]
-            ),
-        },
+        "runtime_scope": "module_specific",
+        "supported_live_module_ids": [GOC_MODULE_ID],
+        "requested_module_supported": state.get("module_id") == GOC_MODULE_ID,
+    }
+
+
+def _bounded_responder_context(state: RuntimeTurnState) -> dict[str, Any]:
+    return {
+        "responder_id": _primary_responder_id(state),
+        "responder_scope": _bounded_str_list(
+            [
+                row.get("actor_id") or row.get("responder_id")
+                for row in (state.get("selected_responder_set") or [])
+                if isinstance(row, dict)
+            ]
+        ),
+    }
+
+
+def _bounded_capability_context(state: RuntimeTurnState) -> dict[str, Any]:
+    silence = _dict_state_value(state, "silence_brevity_decision")
+    return {
         "pacing": {
             "pacing_mode": state.get("pacing_mode"),
             "silence_mode": silence.get("mode"),
         },
         "scene_energy": {
-            "target": state.get("scene_energy_target")
-            if isinstance(state.get("scene_energy_target"), dict)
-            else {},
-            "transition": state.get("scene_energy_transition")
-            if isinstance(state.get("scene_energy_transition"), dict)
-            else {},
-            "validation_status": (
-                state.get("scene_energy_validation", {}).get("status")
-                if isinstance(state.get("scene_energy_validation"), dict)
-                else None
-            ),
+            "target": _dict_state_value(state, "scene_energy_target"),
+            "transition": _dict_state_value(state, "scene_energy_transition"),
+            "validation_status": _validation_status_from_state(state, "scene_energy_validation"),
         },
         "pacing_rhythm": {
-            "state": state.get("pacing_rhythm_state")
-            if isinstance(state.get("pacing_rhythm_state"), dict)
-            else {},
-            "target": state.get("pacing_rhythm_target")
-            if isinstance(state.get("pacing_rhythm_target"), dict)
-            else {},
-            "validation_status": (
-                state.get("pacing_rhythm_validation", {}).get("status")
-                if isinstance(state.get("pacing_rhythm_validation"), dict)
-                else None
-            ),
+            "state": _dict_state_value(state, "pacing_rhythm_state"),
+            "target": _dict_state_value(state, "pacing_rhythm_target"),
+            "validation_status": _validation_status_from_state(state, "pacing_rhythm_validation"),
         },
         "genre_awareness": {
-            "state": state.get("genre_awareness_state")
-            if isinstance(state.get("genre_awareness_state"), dict)
-            else {},
-            "target": state.get("genre_awareness_target")
-            if isinstance(state.get("genre_awareness_target"), dict)
-            else {},
-            "validation_status": (
-                state.get("genre_awareness_validation", {}).get("status")
-                if isinstance(state.get("genre_awareness_validation"), dict)
-                else None
-            ),
+            "state": _dict_state_value(state, "genre_awareness_state"),
+            "target": _dict_state_value(state, "genre_awareness_target"),
+            "validation_status": _validation_status_from_state(state, "genre_awareness_validation"),
         },
         "tonal_consistency": {
-            "target": state.get("tonal_consistency_target")
-            if isinstance(state.get("tonal_consistency_target"), dict)
-            else {},
-            "validation_status": (
-                state.get("tonal_consistency_validation", {}).get("status")
-                if isinstance(state.get("tonal_consistency_validation"), dict)
-                else None
-            ),
+            "target": _dict_state_value(state, "tonal_consistency_target"),
+            "validation_status": _validation_status_from_state(state, "tonal_consistency_validation"),
         },
+    }
+
+
+def _bounded_scene_and_social_context(
+    *,
+    state: RuntimeTurnState,
+    scene: dict[str, Any],
+    social: dict[str, Any],
+    semantic: dict[str, Any],
+) -> dict[str, Any]:
+    continuity_classes = [
+        str(x.get("class") or x.get("continuity_class"))
+        for x in (state.get("continuity_impacts") or [])
+        if isinstance(x, dict) and (x.get("class") or x.get("continuity_class"))
+    ]
+    return {
         "scene_assessment": {
             "pressure_state": scene.get("pressure_state"),
             "thread_pressure_state": scene.get("thread_pressure_state"),
@@ -276,12 +252,47 @@ def build_bounded_dramatic_context_summary(state: RuntimeTurnState) -> dict[str,
             "dramatic_direction": state.get("dramatic_direction"),
             "continuity_classes": _bounded_str_list(continuity_classes),
         },
-        "retrieval_context": {
-            "continuity_query_attached": bool(continuity_query.get("attached")),
-            "continuity_query_sources": _bounded_str_list(continuity_query.get("sources")),
-            "retrieval_status": retrieval.get("status"),
-            "retrieval_route": retrieval.get("retrieval_route"),
-        },
+    }
+
+
+def _bounded_retrieval_context(retrieval: dict[str, Any]) -> dict[str, Any]:
+    continuity_query = (
+        retrieval.get("continuity_query_signal")
+        if isinstance(retrieval.get("continuity_query_signal"), dict)
+        else {}
+    )
+    return {
+        "continuity_query_attached": bool(continuity_query.get("attached")),
+        "continuity_query_sources": _bounded_str_list(continuity_query.get("sources")),
+        "retrieval_status": retrieval.get("status"),
+        "retrieval_route": retrieval.get("retrieval_route"),
+    }
+
+
+def build_bounded_dramatic_context_summary(state: RuntimeTurnState) -> dict[str, Any]:
+    """Build the compact dramatic context carried across output surfaces."""
+    scene = _dict_state_value(state, "scene_assessment")
+    social = _dict_state_value(state, "social_state_record")
+    semantic = _dict_state_value(state, "semantic_move_record")
+    retrieval = _dict_state_value(state, "retrieval")
+    capability_context = _bounded_capability_context(state)
+    return {
+        "contract": "bounded_dramatic_context.v1",
+        "source": "runtime_turn_state.package_output",
+        "module_id": state.get("module_id"),
+        "module_scope": _bounded_module_scope(state),
+        "current_scene_id": state.get("current_scene_id"),
+        "selected_scene_function": state.get("selected_scene_function"),
+        "function_type": state.get("function_type"),
+        "responder": _bounded_responder_context(state),
+        **capability_context,
+        **_bounded_scene_and_social_context(
+            state=state,
+            scene=scene,
+            social=social,
+            semantic=semantic,
+        ),
+        "retrieval_context": _bounded_retrieval_context(retrieval),
         "visibility": {
             "visibility_class_markers": _bounded_str_list(state.get("visibility_class_markers")),
             "player_visible_shell_context": True,

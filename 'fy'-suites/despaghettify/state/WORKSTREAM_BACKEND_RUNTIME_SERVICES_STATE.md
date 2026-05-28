@@ -1,5 +1,19 @@
 # Workstream: backend_runtime_services
 
+## Closed — DS-039 turn dispatcher split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-039 | Backend turn dispatch now delegates governed mode resolution, adapter resolution, execution path selection, mock-decision fallback, and observability detail extraction. | `dispatch_turn` | Pre: `artifacts/workstreams/backend_runtime_services/pre/session_20260528_DS-039_wave_plan.md`; post: `artifacts/workstreams/backend_runtime_services/post/session_20260528_DS-039_comparison.md` |
+
+**Gates (final):**
+
+- `python -m py_compile backend/app/runtime/turn/turn_dispatcher.py` — passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows/backend python -m pytest -q backend/tests/runtime/test_turn_dispatcher.py backend/tests/runtime/test_runtime_ai_stages_contracts.py --tb=short` — 29 passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T18:18:39Z`.
+
+**Structural delta:** DS-039 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11299 functions; L50 809; L100 102; D6 0; `M7_anteil` 3.6891.
+
 ## Closed — DS-034 compiler projection and RAG operations status split (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

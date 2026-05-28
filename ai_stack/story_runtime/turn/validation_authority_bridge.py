@@ -813,6 +813,113 @@ def _dramatic_mirror_fidelity(validator_dispatch_report: dict[str, Any]) -> str 
     return None
 
 
+def _unavailable_validator_ids(adr0041: dict[str, Any]) -> list[str]:
+    return [str(x) for x in (adr0041.get("unavailable_validator_ids") or []) if str(x)]
+
+
+def _failed_validator_ids(validator_dispatch_report: dict[str, Any]) -> list[str]:
+    failed_validators: list[str] = []
+    for entry in validator_dispatch_report.get("entries") or []:
+        if not isinstance(entry, dict):
+            continue
+        if not entry.get("actually_executed") or entry.get("unavailable"):
+            continue
+        evidence = entry.get("local_execution_evidence")
+        if isinstance(evidence, dict) and evidence.get("passed") is False:
+            validator_id = str(entry.get("validator_id") or "")
+            if validator_id and validator_id not in failed_validators:
+                failed_validators.append(validator_id)
+    return failed_validators
+
+
+def _dedupe_readiness_blockers(blockers: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for row in blockers:
+        text = str(row).strip()
+        if text and text not in seen:
+            seen.add(text)
+            out.append(text)
+    return out
+
+
+def _readiness_preview_blockers(
+    *,
+    adr: dict[str, Any],
+    dramatic_fidelity: str | None,
+    unavailable_validators: list[str],
+    drift_classification: str | None,
+    partial_blocked: list[str],
+    failed_validators: list[str],
+    has_scoped_decision: bool,
+) -> list[str]:
+    blockers: list[str] = []
+    if adr.get("engagement") != "plan_enforced":
+        blockers.append("no_sidecar_or_not_plan_enforced")
+    if dramatic_fidelity == "partial_defaults":
+        blockers.append("partial_defaults")
+    if unavailable_validators:
+        blockers.append("unavailable_validator")
+    if drift_classification == "missing_context" or any("missing_context" in b for b in partial_blocked):
+        blockers.append("missing_context")
+    if drift_classification and drift_classification != _DRIFT_ALIGNED:
+        blockers.append("drift_not_aligned")
+    if failed_validators:
+        blockers.append("failed_validator")
+    if not has_scoped_decision and adr.get("engagement") == "plan_enforced":
+        blockers.append("no_scoped_co_authority_decision")
+    return _dedupe_readiness_blockers(blockers)
+
+
+def _readiness_preview_status_fields(
+    *,
+    blockers: list[str],
+    has_scoped_decision: bool,
+) -> dict[str, Any]:
+    if "no_sidecar_or_not_plan_enforced" in blockers:
+        return _readiness_status_payload(READINESS_POLICY_NOT_ELIGIBLE, "not_eligible")
+    if any(x in blockers for x in ("missing_context", "unavailable_validator", "partial_defaults")):
+        return _readiness_status_payload(READINESS_POLICY_NOT_ELIGIBLE, "not_eligible")
+    if has_scoped_decision and not blockers:
+        return _readiness_status_payload(
+            READINESS_POLICY_PREVIEW_ALLOW,
+            "readiness_preview_allow",
+            candidate=True,
+            would_allow_readiness=True,
+        )
+    if has_scoped_decision:
+        return _readiness_status_payload(
+            READINESS_POLICY_PREVIEW_CANDIDATE,
+            "readiness_preview_candidate",
+            candidate=True,
+            would_block_readiness=True,
+        )
+    if blockers:
+        return _readiness_status_payload(
+            READINESS_POLICY_PREVIEW_BLOCK,
+            "readiness_preview_block",
+            would_block_readiness=True,
+        )
+    return _readiness_status_payload(READINESS_POLICY_SHADOW_ONLY, "shadow_only")
+
+
+def _readiness_status_payload(
+    policy_stage: str,
+    status: str,
+    *,
+    candidate: bool = False,
+    would_allow_readiness: bool = False,
+    would_block_readiness: bool = False,
+) -> dict[str, Any]:
+    return {
+        "policy_stage": policy_stage,
+        "status": status,
+        "candidate": candidate,
+        "would_allow_readiness": would_allow_readiness,
+        "would_block_readiness": would_block_readiness,
+    }
+
+
 def build_validation_co_authority_decision(
     *,
     validation_authority_bridge: dict[str, Any],
@@ -944,79 +1051,28 @@ def build_readiness_co_authority_preview(
     scope = sorted(_critical_concerns_for_turn_class(tc_key))
     drift_classification = str(bridge.get("drift_classification") or "").strip() or None
     dramatic_fidelity = _dramatic_mirror_fidelity(report)
-    unavailable_validators = [str(x) for x in (adr.get("unavailable_validator_ids") or []) if str(x)]
-    failed_validators: list[str] = []
-    for ent in report.get("entries") or []:
-        if not isinstance(ent, dict):
-            continue
-        if not ent.get("actually_executed") or ent.get("unavailable"):
-            continue
-        ev = ent.get("local_execution_evidence")
-        if isinstance(ev, dict) and ev.get("passed") is False:
-            vid = str(ent.get("validator_id") or "")
-            if vid and vid not in failed_validators:
-                failed_validators.append(vid)
+    unavailable_validators = _unavailable_validator_ids(adr)
+    failed_validators = _failed_validator_ids(report)
     partial_blocked = [str(x) for x in (snap.get("partial_transfer_blocked") or []) if str(x)]
-
-    blockers: list[str] = []
-    if adr.get("engagement") != "plan_enforced":
-        blockers.append("no_sidecar_or_not_plan_enforced")
-    if dramatic_fidelity == "partial_defaults":
-        blockers.append("partial_defaults")
-    if unavailable_validators:
-        blockers.append("unavailable_validator")
-    if drift_classification == "missing_context" or any("missing_context" in b for b in partial_blocked):
-        blockers.append("missing_context")
-    if drift_classification and drift_classification != _DRIFT_ALIGNED:
-        blockers.append("drift_not_aligned")
-    if failed_validators:
-        blockers.append("failed_validator")
     has_scoped_decision = isinstance(validation_co_authority_decision, dict)
-    if not has_scoped_decision and adr.get("engagement") == "plan_enforced":
-        blockers.append("no_scoped_co_authority_decision")
-
-    blocker_seen: set[str] = set()
-    blocker_out: list[str] = []
-    for row in blockers:
-        text = str(row).strip()
-        if text and text not in blocker_seen:
-            blocker_seen.add(text)
-            blocker_out.append(text)
-
-    policy_stage = READINESS_POLICY_SHADOW_ONLY
-    candidate = False
-    would_allow_readiness = False
-    would_block_readiness = False
-    status = "shadow_only"
-    if "no_sidecar_or_not_plan_enforced" in blocker_out:
-        policy_stage = READINESS_POLICY_NOT_ELIGIBLE
-        status = "not_eligible"
-    elif any(x in blocker_out for x in ("missing_context", "unavailable_validator", "partial_defaults")):
-        policy_stage = READINESS_POLICY_NOT_ELIGIBLE
-        status = "not_eligible"
-    elif has_scoped_decision and not blocker_out:
-        policy_stage = READINESS_POLICY_PREVIEW_ALLOW
-        status = "readiness_preview_allow"
-        candidate = True
-        would_allow_readiness = True
-    elif has_scoped_decision:
-        policy_stage = READINESS_POLICY_PREVIEW_CANDIDATE
-        status = "readiness_preview_candidate"
-        candidate = True
-        would_block_readiness = True
-    elif blocker_out:
-        policy_stage = READINESS_POLICY_PREVIEW_BLOCK
-        status = "readiness_preview_block"
-        would_block_readiness = True
+    blocker_out = _readiness_preview_blockers(
+        adr=adr,
+        dramatic_fidelity=dramatic_fidelity,
+        unavailable_validators=unavailable_validators,
+        drift_classification=drift_classification,
+        partial_blocked=partial_blocked,
+        failed_validators=failed_validators,
+        has_scoped_decision=has_scoped_decision,
+    )
+    status_fields = _readiness_preview_status_fields(
+        blockers=blocker_out,
+        has_scoped_decision=has_scoped_decision,
+    )
 
     return {
         "schema_version": READINESS_CO_AUTHORITY_PREVIEW_SCHEMA_VERSION,
         "mode": "shadow_readiness_preview",
-        "policy_stage": policy_stage,
-        "status": status,
-        "candidate": candidate,
-        "would_allow_readiness": would_allow_readiness,
-        "would_block_readiness": would_block_readiness,
+        **status_fields,
         "scope": scope,
         "turn_class": tc_key,
         "source": (
@@ -1153,6 +1209,68 @@ def build_readiness_co_authority_enforcement(
         "affects_readiness": False,
         "feature_flag": feature_flag_name,
         "feature_flag_enabled": bool(feature_flag_enabled),
+    }
+
+
+def _bridge_drift_classification(preview: dict[str, Any]) -> str:
+    drift_block = preview.get("drift_vs_validation_seam")
+    if isinstance(drift_block, dict):
+        return str(drift_block.get("classification") or "").strip()
+    return ""
+
+
+def _bridge_seam_area_relationship(
+    *,
+    seam_concern_coverage: dict[str, Any],
+    turn_class_key: str,
+) -> dict[str, str]:
+    relationship = {
+        cid: str(entry.get("seam_area_adr0041_relationship") or SEAM_AREA_REL_NOT_SAFE)
+        for cid, entry in seam_concern_coverage.items()
+        if isinstance(entry, dict) and "seam_area_adr0041_relationship" in entry
+    }
+    enforced_set = _turn_class_enforced_set(turn_class_key)
+    for cid, spec in SEAM_CONCERN_SPECS.items():
+        relationship.setdefault(
+            cid,
+            _seam_area_relationship_for_concern(cid, spec, enforced_set),
+        )
+    return relationship
+
+
+def _bridge_authority_classification() -> tuple[dict[str, str], dict[str, list[str]]]:
+    classification_index = {
+        cid: str(spec.get("authority_classification") or "")
+        for cid, spec in SEAM_CONCERN_SPECS.items()
+    }
+    buckets: dict[str, list[str]] = {
+        AUTHORITY_CLASSIFICATION_MIRROR: [],
+        AUTHORITY_CLASSIFICATION_SEAM_OWNED: [],
+        AUTHORITY_CLASSIFICATION_CANDIDATE: [],
+        AUTHORITY_CLASSIFICATION_REQUIRES_NEW: [],
+        AUTHORITY_CLASSIFICATION_NOT_SAFE_YET: [],
+    }
+    for cid, spec in SEAM_CONCERN_SPECS.items():
+        authority_class = str(spec.get("authority_classification") or "")
+        if authority_class in buckets:
+            buckets[authority_class].append(cid)
+    return classification_index, buckets
+
+
+def _bridge_retrieval_fields(
+    retrieval_observation: dict[str, Any] | None,
+) -> dict[str, Any]:
+    retrieval_auth = (
+        retrieval_observation.get("retrieval_authority")
+        if isinstance(retrieval_observation, dict)
+        and isinstance(retrieval_observation.get("retrieval_authority"), dict)
+        else {}
+    )
+    authority_level = str(retrieval_auth.get("authority_level") or "").strip().lower()
+    return {
+        "retrieval_observation_only": authority_level
+        in {"", "retrieved_unverified", "diagnostic_only"},
+        "retrieval_authority_level": authority_level or "unknown",
     }
 
 
@@ -1293,11 +1411,7 @@ def build_validation_authority_bridge(
     """Build structured bridge payload (JSON-safe dict)."""
     seam = validation_seam_summary if isinstance(validation_seam_summary, dict) else {}
     preview = validation_authority_preview if isinstance(validation_authority_preview, dict) else {}
-    drift_block = preview.get("drift_vs_validation_seam")
-    drift_classification = ""
-    if isinstance(drift_block, dict):
-        drift_classification = str(drift_block.get("classification") or "").strip()
-
+    drift_classification = _bridge_drift_classification(preview)
     adr0041 = _adr0041_aggregate_status(validator_dispatch_report)
     tc_key = normalize_turn_class_key(selected_turn_class)
     blockers = _collect_blockers(
@@ -1332,16 +1446,10 @@ def build_validation_authority_bridge(
         validator_dispatch_report=validator_dispatch_report,
         partial_transfer_ready=partial_transfer_ready,
     )
-    seam_area_relationship: dict[str, str] = {
-        cid: str(entry.get("seam_area_adr0041_relationship") or SEAM_AREA_REL_NOT_SAFE)
-        for cid, entry in seam_concern_coverage.items()
-        if isinstance(entry, dict) and "seam_area_adr0041_relationship" in entry
-    }
-    for cid, spec in SEAM_CONCERN_SPECS.items():
-        seam_area_relationship.setdefault(
-            cid,
-            _seam_area_relationship_for_concern(cid, spec, _turn_class_enforced_set(tc_key)),
-        )
+    seam_area_relationship = _bridge_seam_area_relationship(
+        seam_concern_coverage=seam_concern_coverage,
+        turn_class_key=tc_key,
+    )
 
     handoff = build_authority_handoff_candidate(
         selected_turn_class=tc_key,
@@ -1353,32 +1461,8 @@ def build_validation_authority_bridge(
         bridge_blockers=blockers,
     )
 
-    classification_index = {
-        cid: str(spec.get("authority_classification") or "") for cid, spec in SEAM_CONCERN_SPECS.items()
-    }
-    buckets: dict[str, list[str]] = {
-        AUTHORITY_CLASSIFICATION_MIRROR: [],
-        AUTHORITY_CLASSIFICATION_SEAM_OWNED: [],
-        AUTHORITY_CLASSIFICATION_CANDIDATE: [],
-        AUTHORITY_CLASSIFICATION_REQUIRES_NEW: [],
-        AUTHORITY_CLASSIFICATION_NOT_SAFE_YET: [],
-    }
-    for cid, spec in SEAM_CONCERN_SPECS.items():
-        ac = str(spec.get("authority_classification") or "")
-        if ac in buckets:
-            buckets[ac].append(cid)
-    retrieval_auth = (
-        retrieval_observation.get("retrieval_authority")
-        if isinstance(retrieval_observation, dict)
-        and isinstance(retrieval_observation.get("retrieval_authority"), dict)
-        else {}
-    )
-    retrieval_authority_level = str(retrieval_auth.get("authority_level") or "").strip().lower()
-    retrieval_observation_only = retrieval_authority_level in {
-        "",
-        "retrieved_unverified",
-        "diagnostic_only",
-    }
+    classification_index, buckets = _bridge_authority_classification()
+    retrieval_fields = _bridge_retrieval_fields(retrieval_observation)
 
     return {
         "schema_version": VALIDATION_AUTHORITY_BRIDGE_SCHEMA_VERSION,
@@ -1404,8 +1488,7 @@ def build_validation_authority_bridge(
         "seam_area_adr0041_relationship": seam_area_relationship,
         "seam_area_adr0041_relationship_buckets": _invert_seam_area_buckets(seam_area_relationship),
         "authority_handoff_candidate": handoff,
-        "retrieval_observation_only": retrieval_observation_only,
-        "retrieval_authority_level": retrieval_authority_level or "unknown",
+        **retrieval_fields,
         "authority_critical_consumers_require_canonical_provenance": True,
         "affects_commit": False,
         "affects_readiness": False,

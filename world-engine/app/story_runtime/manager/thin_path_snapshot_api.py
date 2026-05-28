@@ -7,6 +7,114 @@ from __future__ import annotations
 from ._deps import *
 
 class _ThinPathSnapshotApiMixin:
+    @staticmethod
+    def _selected_thin_path_row(
+        rows: list[Any],
+        turn_number: int | None,
+    ) -> dict[str, Any] | None:
+        if turn_number is not None:
+            for row in rows:
+                if isinstance(row, dict) and row.get("turn_number") == turn_number:
+                    return row
+            return None
+        if rows:
+            last = rows[-1]
+            return last if isinstance(last, dict) else None
+        return None
+
+    @staticmethod
+    def _diagnostic_contract_name(key: str) -> str:
+        mapping = {
+            "free_player_action_resolution": "free_player_action_resolution.v1",
+            "director_gathering_state": "director_gathering_state.v1",
+            "canonical_path_hold_effect": "canonical_path_hold_effect.v1",
+            "narrator_consequence_realization": "narrator_consequence_realization.v1",
+        }
+        return mapping.get(key, f"{key}.v1")
+
+    @classmethod
+    def _diagnostic_contract_payload(
+        cls,
+        key: str,
+        selected_row: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        if selected_row and selected_row.get(key) is not None:
+            return {
+                "contract_name": cls._diagnostic_contract_name(key),
+                "payload": selected_row.get(key),
+                "not_yet_wired": False,
+            }
+        return {
+            "contract_name": cls._diagnostic_contract_name(key),
+            "payload": None,
+            "not_yet_wired": True,
+        }
+
+    @staticmethod
+    def _empty_diagnostic_section(contract_name: str) -> dict[str, Any]:
+        return {
+            "contract_name": contract_name,
+            "payload": None,
+            "not_yet_wired": True,
+        }
+
+    @staticmethod
+    def _diagnostics_envelope_from_event(event: dict[str, Any]) -> dict[str, Any]:
+        diag = event.get("diagnostics") if isinstance(event.get("diagnostics"), dict) else {}
+        if not diag and isinstance(event.get("diagnostics_envelope"), dict):
+            diag = event["diagnostics_envelope"]
+        return diag if isinstance(diag, dict) else {}
+
+    @classmethod
+    def _pulse_and_parity_sections(
+        cls,
+        *,
+        diagnostics: list[Any],
+        turn_number: int | None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        pulse_section = cls._empty_diagnostic_section("director_pulse_diagnostics.v1")
+        bundle_parity = cls._empty_diagnostic_section("bundle_vs_event_stream_parity.v1")
+        for event in reversed(diagnostics):
+            if not isinstance(event, dict):
+                continue
+            if turn_number is not None and event.get("turn_number") != turn_number:
+                continue
+            diag = cls._diagnostics_envelope_from_event(event)
+            director_pulse = diag.get("director_pulse")
+            if not isinstance(director_pulse, dict):
+                director_pulse = (
+                    event.get("director_pulse")
+                    if isinstance(event.get("director_pulse"), dict)
+                    else None
+                )
+            if isinstance(director_pulse, dict):
+                pulse_section = {
+                    "contract_name": "director_pulse_diagnostics.v1",
+                    "payload": director_pulse,
+                    "not_yet_wired": False,
+                }
+            parity = diag.get("bundle_vs_event_stream_parity")
+            if not isinstance(parity, dict):
+                parity = director_pulse.get("parity") if isinstance(director_pulse, dict) else None
+            if isinstance(parity, dict):
+                bundle_parity = {
+                    "contract_name": "bundle_vs_event_stream_parity.v1",
+                    "payload": parity,
+                    "not_yet_wired": False,
+                }
+            if pulse_section.get("payload") is not None or bundle_parity.get("payload") is not None:
+                break
+        return pulse_section, bundle_parity
+
+    @staticmethod
+    def _selected_capability_names(selected_row: dict[str, Any] | None) -> list[str]:
+        if not selected_row:
+            return []
+        capabilities = selected_row.get("selected_capabilities") or []
+        if not isinstance(capabilities, list):
+            return []
+        return [str(capability) for capability in capabilities if str(capability).strip()]
+
     def get_thin_path_summary(self, session_id: str, limit: int = 20) -> dict[str, Any]:
         """Slim per-turn Resolver -> Director -> Narrator evidence for the
         narrative_systems UI. Reads ``observability_path_summary`` off each
@@ -97,89 +205,11 @@ class _ThinPathSnapshotApiMixin:
         session = self.get_session(session_id)
         thin = self.get_thin_path_summary(session_id, limit=thin_path_limit)
         rows = thin.get("rows") if isinstance(thin.get("rows"), list) else []
-
-        selected_row: dict[str, Any] | None = None
-        if turn_number is not None:
-            for row in rows:
-                if isinstance(row, dict) and row.get("turn_number") == turn_number:
-                    selected_row = row
-                    break
-        elif rows:
-            last = rows[-1]
-            selected_row = last if isinstance(last, dict) else None
-
-        def _contract_name_for_key(key: str) -> str:
-            mapping = {
-                "free_player_action_resolution": "free_player_action_resolution.v1",
-                "director_gathering_state": "director_gathering_state.v1",
-                "canonical_path_hold_effect": "canonical_path_hold_effect.v1",
-                "narrator_consequence_realization": "narrator_consequence_realization.v1",
-            }
-            return mapping.get(key, f"{key}.v1")
-
-        def _contract_payload(
-            key: str,
-            *,
-            from_row: bool = True,
-        ) -> dict[str, Any]:
-            if from_row and selected_row and selected_row.get(key) is not None:
-                return {
-                    "contract_name": _contract_name_for_key(key),
-                    "payload": selected_row.get(key),
-                    "not_yet_wired": False,
-                }
-            return {
-                "contract_name": _contract_name_for_key(key),
-                "payload": None,
-                "not_yet_wired": True,
-            }
-
-        pulse_section: dict[str, Any] = {
-            "contract_name": "director_pulse_diagnostics.v1",
-            "payload": None,
-            "not_yet_wired": True,
-        }
-        bundle_parity: dict[str, Any] = {
-            "contract_name": "bundle_vs_event_stream_parity.v1",
-            "payload": None,
-            "not_yet_wired": True,
-        }
-        for event in reversed(session.diagnostics):
-            if not isinstance(event, dict):
-                continue
-            if turn_number is not None and event.get("turn_number") != turn_number:
-                continue
-            diag = event.get("diagnostics") if isinstance(event.get("diagnostics"), dict) else {}
-            if not diag and isinstance(event.get("diagnostics_envelope"), dict):
-                diag = event["diagnostics_envelope"]
-            if not isinstance(diag, dict):
-                diag = {}
-            dp = diag.get("director_pulse")
-            if not isinstance(dp, dict):
-                dp = event.get("director_pulse") if isinstance(event.get("director_pulse"), dict) else None
-            if isinstance(dp, dict):
-                pulse_section = {
-                    "contract_name": "director_pulse_diagnostics.v1",
-                    "payload": dp,
-                    "not_yet_wired": False,
-                }
-            parity = diag.get("bundle_vs_event_stream_parity")
-            if not isinstance(parity, dict):
-                parity = dp.get("parity") if isinstance(dp, dict) else None
-            if isinstance(parity, dict):
-                bundle_parity = {
-                    "contract_name": "bundle_vs_event_stream_parity.v1",
-                    "payload": parity,
-                    "not_yet_wired": False,
-                }
-            if pulse_section.get("payload") is not None or bundle_parity.get("payload") is not None:
-                break
-
-        capability_names: list[str] = []
-        if selected_row:
-            caps = selected_row.get("selected_capabilities") or []
-            if isinstance(caps, list):
-                capability_names = [str(c) for c in caps if str(c).strip()]
+        selected_row = self._selected_thin_path_row(rows, turn_number)
+        pulse_section, bundle_parity = self._pulse_and_parity_sections(
+            diagnostics=session.diagnostics,
+            turn_number=turn_number,
+        )
 
         return {
             "schema_version": "runtime_diagnostic_snapshot.v1",
@@ -193,15 +223,27 @@ class _ThinPathSnapshotApiMixin:
             "visible_block_emitted": (
                 selected_row.get("visible_block_emitted") if selected_row else None
             ),
-            "resolver_output": _contract_payload("free_player_action_resolution"),
-            "director_gathering_state": _contract_payload("director_gathering_state"),
-            "canonical_path_hold_effect": _contract_payload("canonical_path_hold_effect"),
-            "narrator_consequence_realization": _contract_payload(
-                "narrator_consequence_realization"
+            "resolver_output": self._diagnostic_contract_payload(
+                "free_player_action_resolution",
+                selected_row,
+            ),
+            "director_gathering_state": self._diagnostic_contract_payload(
+                "director_gathering_state",
+                selected_row,
+            ),
+            "canonical_path_hold_effect": self._diagnostic_contract_payload(
+                "canonical_path_hold_effect",
+                selected_row,
+            ),
+            "narrator_consequence_realization": self._diagnostic_contract_payload(
+                "narrator_consequence_realization",
+                selected_row,
             ),
             "pulse": pulse_section,
             "bundle_vs_event_stream_parity": bundle_parity,
-            "semantic_capability_consultation_names": capability_names,
+            "semantic_capability_consultation_names": self._selected_capability_names(
+                selected_row
+            ),
             "thin_path_summary": {
                 "schema_version": thin.get("schema_version"),
                 "row_count": len(rows),

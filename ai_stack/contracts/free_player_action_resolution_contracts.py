@@ -344,6 +344,95 @@ def _visibility_audibility_from_semantic(semantic: dict[str, Any] | None) -> str
     return None
 
 
+def _free_action_input_dicts(
+    *,
+    affordance_resolution: dict[str, Any] | None,
+    player_action_frame: dict[str, Any] | None,
+    semantic_payload: dict[str, Any] | None,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any] | None]:
+    aff = affordance_resolution if isinstance(affordance_resolution, dict) else {}
+    frame = player_action_frame if isinstance(player_action_frame, dict) else {}
+    semantic = semantic_payload if isinstance(semantic_payload, dict) else None
+    return aff, frame, semantic
+
+
+def _free_action_raw_fields(
+    aff: dict[str, Any],
+    frame: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "resolved_target_id": (
+            frame.get("resolved_target_id")
+            if frame.get("resolved_target_id") is not None
+            else aff.get("resolved_target_id")
+        ),
+        "resolved_target_type": (
+            frame.get("resolved_target_type")
+            if frame.get("resolved_target_type") is not None
+            else aff.get("resolved_target_type")
+        ),
+        "affordance_status": (
+            aff.get("affordance_status")
+            if aff.get("affordance_status") is not None
+            else frame.get("affordance_status")
+        ),
+        "action_commit_policy": (
+            aff.get("action_commit_policy")
+            if aff.get("action_commit_policy") is not None
+            else frame.get("action_commit_policy")
+        ),
+    }
+
+
+def _semantic_inference_frame(frame: dict[str, Any]) -> dict[str, Any]:
+    semantic_inference = frame.get("semantic_inference")
+    return semantic_inference if isinstance(semantic_inference, dict) else {}
+
+
+def _free_action_canon_safety_raw(
+    semantic_inference: dict[str, Any],
+    semantic: dict[str, Any] | None,
+) -> Any:
+    canon_safety_raw = semantic_inference.get("canon_safety") if semantic_inference else None
+    if canon_safety_raw is None and isinstance(semantic, dict):
+        return semantic.get("canon_safety") or semantic.get("canonical_safety")
+    return canon_safety_raw
+
+
+def _free_action_canonical_risk_raw(
+    semantic_inference: dict[str, Any],
+    semantic: dict[str, Any] | None,
+) -> Any:
+    canonical_risk_raw = semantic_inference.get("canonical_risk") if semantic_inference else None
+    if canonical_risk_raw is None and isinstance(semantic, dict):
+        return semantic.get("canonical_risk") or semantic.get("canon_risk")
+    return canonical_risk_raw
+
+
+def _semantic_reason(semantic: dict[str, Any] | None) -> Any:
+    if isinstance(semantic, dict):
+        return semantic.get("reason") or semantic.get("reasoning_summary")
+    return None
+
+
+def _presence_breaks_gathering_evidence(
+    semantic: dict[str, Any] | None,
+    target_location: str | None,
+) -> dict[str, Any]:
+    evidence = (
+        semantic.get("presence_breaks_gathering_evidence")
+        if isinstance(semantic, dict)
+        else None
+    )
+    return {
+        "target_location": (
+            evidence.get("target_location") if isinstance(evidence, dict) else target_location
+        ),
+        "participation_relevance": _participation_relevance_from_semantic(semantic),
+        "visibility_audibility": _visibility_audibility_from_semantic(semantic),
+    }
+
+
 def build_free_player_action_resolution(
     *,
     affordance_resolution: dict[str, Any] | None,
@@ -379,61 +468,25 @@ def build_free_player_action_resolution(
         + evidence). Every field listed in ``REQUIRED_CONTRACT_KEYS`` is
         present.
     """
-    aff = affordance_resolution if isinstance(affordance_resolution, dict) else {}
-    frame = player_action_frame if isinstance(player_action_frame, dict) else {}
-    semantic = semantic_payload if isinstance(semantic_payload, dict) else None
-
-    raw_resolved_target_id = (
-        frame.get("resolved_target_id")
-        if frame.get("resolved_target_id") is not None
-        else aff.get("resolved_target_id")
+    aff, frame, semantic = _free_action_input_dicts(
+        affordance_resolution=affordance_resolution,
+        player_action_frame=player_action_frame,
+        semantic_payload=semantic_payload,
     )
-    raw_resolved_target_type = (
-        frame.get("resolved_target_type")
-        if frame.get("resolved_target_type") is not None
-        else aff.get("resolved_target_type")
-    )
-    raw_affordance_status = (
-        aff.get("affordance_status")
-        if aff.get("affordance_status") is not None
-        else frame.get("affordance_status")
-    )
-    raw_action_commit_policy = (
-        aff.get("action_commit_policy")
-        if aff.get("action_commit_policy") is not None
-        else frame.get("action_commit_policy")
-    )
-
-    semantic_inference = frame.get("semantic_inference")
-    semantic_inference = semantic_inference if isinstance(semantic_inference, dict) else {}
-    canon_safety_raw = (
-        semantic_inference.get("canon_safety")
-        if semantic_inference
-        else None
-    )
-    if canon_safety_raw is None and isinstance(semantic, dict):
-        canon_safety_raw = semantic.get("canon_safety") or semantic.get("canonical_safety")
-    canonical_risk_raw = (
-        semantic_inference.get("canonical_risk")
-        if semantic_inference
-        else None
-    )
-    if canonical_risk_raw is None and isinstance(semantic, dict):
-        canonical_risk_raw = semantic.get("canonical_risk") or semantic.get("canon_risk")
-    semantic_reason = None
-    if isinstance(semantic, dict):
-        semantic_reason = semantic.get("reason") or semantic.get("reasoning_summary")
-
-    commit_policy = _normalize_action_commit_policy(raw_action_commit_policy)
+    raw_fields = _free_action_raw_fields(aff, frame)
+    semantic_inference = _semantic_inference_frame(frame)
+    commit_policy = _normalize_action_commit_policy(raw_fields["action_commit_policy"])
     affordance_status = _normalize_affordance_status(
-        raw_status=raw_affordance_status,
+        raw_status=raw_fields["affordance_status"],
         commit_policy=commit_policy,
     )
-    resolved_target_id = _coerce_string(raw_resolved_target_id)
-    resolved_target_type = _normalize_resolved_target_type(raw_resolved_target_type)
-    canon_safety = _normalize_canon_safety(canon_safety_raw)
+    resolved_target_id = _coerce_string(raw_fields["resolved_target_id"])
+    resolved_target_type = _normalize_resolved_target_type(raw_fields["resolved_target_type"])
+    canon_safety = _normalize_canon_safety(
+        _free_action_canon_safety_raw(semantic_inference, semantic)
+    )
     canonical_risk = _normalize_canonical_risk(
-        raw_risk=canonical_risk_raw,
+        raw_risk=_free_action_canonical_risk_raw(semantic_inference, semantic),
         commit_policy=commit_policy,
     )
     target_location = _derive_target_location(
@@ -449,19 +502,8 @@ def build_free_player_action_resolution(
             else aff.get("target_resolution_source")
         ),
         affordance_reason=aff.get("reason"),
-        semantic_reason=semantic_reason,
+        semantic_reason=_semantic_reason(semantic),
     )
-
-    presence_evidence: dict[str, Any] = {
-        "target_location": (
-            semantic.get("presence_breaks_gathering_evidence", {}).get("target_location")
-            if isinstance(semantic, dict)
-            and isinstance(semantic.get("presence_breaks_gathering_evidence"), dict)
-            else target_location
-        ),
-        "participation_relevance": _participation_relevance_from_semantic(semantic),
-        "visibility_audibility": _visibility_audibility_from_semantic(semantic),
-    }
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -475,7 +517,10 @@ def build_free_player_action_resolution(
         "presence_breaks_gathering": False,
         "presence_breaks_gathering_authority": PRESENCE_AUTHORITY_DIRECTOR_FINAL,
         "presence_breaks_gathering_provenance": PRESENCE_PROVENANCE_PRELIMINARY,
-        "presence_breaks_gathering_evidence": presence_evidence,
+        "presence_breaks_gathering_evidence": _presence_breaks_gathering_evidence(
+            semantic,
+            target_location,
+        ),
         "affordance_status": affordance_status,
         "canon_safety": canon_safety,
         "canonical_risk": canonical_risk,

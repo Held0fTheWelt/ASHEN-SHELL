@@ -1,5 +1,23 @@
 # Workstream: ai_stack
 
+## Closed — DS-037 policy/contracts, DS-039 narrator continuation, and DS-040 director/session/research split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-037 | Runtime governance, meta-awareness derivation, free-player-action resolution, and NPC-agency plan normalization now delegate to named section helpers. | `_runtime_governance_policy`, `derive_meta_narrative_awareness`, `build_free_player_action_resolution`, `normalize_npc_agency_plan` | Pre: `artifacts/workstreams/ai_stack/pre/session_20260528_DS-037-040_wave_plan.md`; post: `artifacts/workstreams/ai_stack/post/session_20260528_DS-037-040_comparison.md` |
+| DS-039 | GoC scripted continuation block and payload construction now delegates NPC-speak, perception, director-plan, and result payload sections. | `build_goc_scripted_continuation` | Same AI-stack post comparison. |
+| DS-040 | Director pulse, template/semantic follow-up composition, and bounded research expansion now delegate motivation/action, result, gate, and child-record helpers. | `evaluate_director_tick`, `_compose_template_render_follow_up`, `run_bounded_exploration_expand_loop` | Same AI-stack post comparison. |
+
+**Gates (final):**
+
+- DS-037 focused suite — 41 passed.
+- DS-039 AI narrator suite — 28 passed.
+- DS-040 Director/session/research suite — 207 passed.
+- `python -m py_compile` on touched DS-037/039/040 AI-stack files — passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T18:18:39Z`.
+
+**Structural delta:** DS-037 through DS-040 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11299 functions; L50 809; L100 102; D6 0; `M7_anteil` 3.6891.
+
 ## Closed — DS-033 actor/ledger split and DS-036 policy/RAG residuals (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

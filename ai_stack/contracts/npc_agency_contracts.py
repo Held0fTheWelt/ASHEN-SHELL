@@ -302,6 +302,184 @@ def normalize_npc_agency_simulation(
     return normalized
 
 
+def _npc_plan_primary_id(
+    raw_plan: dict[str, Any],
+    *,
+    raw_row_actor_ids: list[str],
+    selected_primary_responder_id: str | None,
+    actor_lane_context: dict[str, Any] | None,
+) -> str:
+    primary_id = (
+        clean_text(raw_plan.get("primary_responder_id"))
+        or clean_text(selected_primary_responder_id)
+        or (raw_row_actor_ids[0] if raw_row_actor_ids else "")
+    )
+    if is_forbidden_actor_id(primary_id, actor_lane_context=actor_lane_context):
+        return ""
+    return primary_id
+
+
+def _npc_plan_secondary_ids(
+    raw_plan: dict[str, Any],
+    *,
+    raw_row_actor_ids: list[str],
+    selected_secondary_responder_ids: list[str] | None,
+    primary_id: str,
+    actor_lane_context: dict[str, Any] | None,
+) -> list[str]:
+    secondary_ids = coerce_string_list(
+        raw_plan.get("secondary_responder_ids")
+    ) or coerce_string_list(selected_secondary_responder_ids or [])
+    if not secondary_ids and raw_row_actor_ids:
+        secondary_ids = [
+            actor_id for actor_id in raw_row_actor_ids if actor_id != primary_id
+        ]
+    return [
+        actor_id
+        for actor_id in dedupe_strings(secondary_ids)
+        if actor_id != primary_id
+        and not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
+    ]
+
+
+def _npc_plan_actor_order(
+    *,
+    preferred_reaction_order_ids: list[str] | None,
+    primary_id: str,
+    secondary_ids: list[str],
+    raw_row_actor_ids: list[str],
+    actor_lane_context: dict[str, Any] | None,
+) -> list[str]:
+    planned_actor_ids = (
+        dedupe_strings(preferred_reaction_order_ids or [])
+        or dedupe_strings([primary_id, *secondary_ids])
+        or raw_row_actor_ids
+    )
+    for actor_id in raw_row_actor_ids:
+        if actor_id not in planned_actor_ids:
+            planned_actor_ids.append(actor_id)
+    return [
+        actor_id
+        for actor_id in planned_actor_ids
+        if not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
+    ]
+
+
+def _npc_plan_required_actor_ids(
+    raw_plan: dict[str, Any],
+    *,
+    primary_id: str,
+    first_secondary_id: str | None,
+    planned_actor_ids: list[str],
+    actor_lane_context: dict[str, Any] | None,
+) -> list[str]:
+    explicit_required_actor_ids = [
+        actor_id
+        for actor_id in coerce_string_list(raw_plan.get("required_actor_ids"))
+        if not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
+    ]
+    required_actor_ids = explicit_required_actor_ids or dedupe_strings(
+        [primary_id, *([first_secondary_id] if first_secondary_id else [])]
+    )
+    return [actor_id for actor_id in required_actor_ids if actor_id in planned_actor_ids]
+
+
+def _npc_plan_row_metadata(row: dict[str, Any]) -> dict[str, Any]:
+    excluded = {
+        "actor_id",
+        "role",
+        "intent",
+        "initiative_type",
+        "allowed_block_types",
+        "allowed_output_lanes",
+        "target_actor_id",
+        "target_id",
+        "required",
+        "requirement_scope",
+        "resolved",
+    }
+    return {key: value for key, value in row.items() if key not in excluded}
+
+
+def _npc_plan_fallbacks(
+    actor_id: str,
+    *,
+    primary_id: str,
+    first_secondary_id: str | None,
+) -> tuple[str, str]:
+    if actor_id == primary_id:
+        return "claim_primary_response", "primary_required"
+    if actor_id == first_secondary_id:
+        return "react_to_primary_or_scene_pressure", "one_secondary_minimum"
+    return "react_to_primary_or_scene_pressure", "optional_secondary"
+
+
+def _npc_plan_initiative(
+    *,
+    actor_id: str,
+    row: dict[str, Any],
+    primary_id: str,
+    first_secondary_id: str | None,
+    required_actor_ids: list[str],
+) -> NPCInitiative:
+    fallback_intent, requirement_scope = _npc_plan_fallbacks(
+        actor_id,
+        primary_id=primary_id,
+        first_secondary_id=first_secondary_id,
+    )
+    role = clean_text(row.get("role")) or (
+        "primary_responder" if actor_id == primary_id else "secondary_reactor"
+    )
+    return NPCInitiative(
+        actor_id=actor_id,
+        role=role,
+        intent=clean_text(row.get("intent")) or fallback_intent,
+        allowed_block_types=tuple(
+            coerce_string_list(row.get("allowed_block_types"))
+            or DEFAULT_ALLOWED_BLOCK_TYPES
+        ),
+        allowed_output_lanes=tuple(
+            coerce_string_list(row.get("allowed_output_lanes"))
+            or DEFAULT_ALLOWED_OUTPUT_LANES
+        ),
+        target_actor_id=clean_text(row.get("target_actor_id") or row.get("target_id")) or None,
+        required=bool(row.get("required")) or actor_id in required_actor_ids,
+        requirement_scope=clean_text(row.get("requirement_scope")) or requirement_scope,
+        resolved=bool(row.get("resolved")),
+        metadata=_npc_plan_row_metadata(row),
+    )
+
+
+def _npc_plan_initiatives(
+    *,
+    initiative_rows: list[dict[str, Any]],
+    planned_actor_ids: list[str],
+    primary_id: str,
+    first_secondary_id: str | None,
+    required_actor_ids: list[str],
+    actor_lane_context: dict[str, Any] | None,
+) -> list[NPCInitiative]:
+    row_by_actor = {
+        clean_text(row.get("actor_id")): row
+        for row in initiative_rows
+        if clean_text(row.get("actor_id"))
+    }
+    initiatives: list[NPCInitiative] = []
+    for actor_id in planned_actor_ids:
+        if is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context):
+            continue
+        initiatives.append(
+            _npc_plan_initiative(
+                actor_id=actor_id,
+                row=row_by_actor.get(actor_id, {}),
+                primary_id=primary_id,
+                first_secondary_id=first_secondary_id,
+                required_actor_ids=required_actor_ids,
+            )
+        )
+    return initiatives
+
+
 def normalize_npc_agency_plan(
     plan: dict[str, Any] | None,
     *,
@@ -315,37 +493,26 @@ def normalize_npc_agency_plan(
     initiative_rows = coerce_dict_rows(raw_plan.get("npc_initiatives"))
 
     raw_row_actor_ids = dedupe_strings([row.get("actor_id") for row in initiative_rows])
-    selected_secondary = coerce_string_list(selected_secondary_responder_ids or [])
-    plan_secondary = coerce_string_list(raw_plan.get("secondary_responder_ids"))
-
-    primary_id = (
-        clean_text(raw_plan.get("primary_responder_id"))
-        or clean_text(selected_primary_responder_id)
-        or (raw_row_actor_ids[0] if raw_row_actor_ids else "")
+    primary_id = _npc_plan_primary_id(
+        raw_plan,
+        raw_row_actor_ids=raw_row_actor_ids,
+        selected_primary_responder_id=selected_primary_responder_id,
+        actor_lane_context=actor_lane_context,
     )
-    if is_forbidden_actor_id(primary_id, actor_lane_context=actor_lane_context):
-        primary_id = ""
-
-    secondary_ids = plan_secondary or selected_secondary
-    if not secondary_ids and raw_row_actor_ids:
-        secondary_ids = [actor_id for actor_id in raw_row_actor_ids if actor_id != primary_id]
-    secondary_ids = [
-        actor_id
-        for actor_id in dedupe_strings(secondary_ids)
-        if actor_id != primary_id
-        and not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
-    ]
-
-    preferred_ids = dedupe_strings(preferred_reaction_order_ids or [])
-    planned_actor_ids = preferred_ids or dedupe_strings([primary_id, *secondary_ids]) or raw_row_actor_ids
-    for actor_id in raw_row_actor_ids:
-        if actor_id not in planned_actor_ids:
-            planned_actor_ids.append(actor_id)
-    planned_actor_ids = [
-        actor_id
-        for actor_id in planned_actor_ids
-        if not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
-    ]
+    secondary_ids = _npc_plan_secondary_ids(
+        raw_plan,
+        raw_row_actor_ids=raw_row_actor_ids,
+        selected_secondary_responder_ids=selected_secondary_responder_ids,
+        primary_id=primary_id,
+        actor_lane_context=actor_lane_context,
+    )
+    planned_actor_ids = _npc_plan_actor_order(
+        preferred_reaction_order_ids=preferred_reaction_order_ids,
+        primary_id=primary_id,
+        secondary_ids=secondary_ids,
+        raw_row_actor_ids=raw_row_actor_ids,
+        actor_lane_context=actor_lane_context,
+    )
     if primary_id and primary_id not in planned_actor_ids:
         planned_actor_ids.insert(0, primary_id)
     if not primary_id and planned_actor_ids:
@@ -355,68 +522,21 @@ def normalize_npc_agency_plan(
         secondary_ids = [actor_id for actor_id in planned_actor_ids if actor_id != primary_id]
 
     first_secondary_id = secondary_ids[0] if secondary_ids else None
-    explicit_required_actor_ids = [
-        actor_id
-        for actor_id in coerce_string_list(raw_plan.get("required_actor_ids"))
-        if not is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
-    ]
-    required_actor_ids = explicit_required_actor_ids or dedupe_strings(
-        [primary_id, *([first_secondary_id] if first_secondary_id else [])]
+    required_actor_ids = _npc_plan_required_actor_ids(
+        raw_plan,
+        primary_id=primary_id,
+        first_secondary_id=first_secondary_id,
+        planned_actor_ids=planned_actor_ids,
+        actor_lane_context=actor_lane_context,
     )
-    required_actor_ids = [actor_id for actor_id in required_actor_ids if actor_id in planned_actor_ids]
-
-    row_by_actor = {
-        clean_text(row.get("actor_id")): row
-        for row in initiative_rows
-        if clean_text(row.get("actor_id"))
-    }
-    initiatives: list[NPCInitiative] = []
-    for index, actor_id in enumerate(planned_actor_ids):
-        if is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context):
-            continue
-        row = row_by_actor.get(actor_id, {})
-        role = clean_text(row.get("role")) or ("primary_responder" if actor_id == primary_id else "secondary_reactor")
-        if actor_id == primary_id:
-            fallback_intent = "claim_primary_response"
-            requirement_scope = "primary_required"
-        elif actor_id == first_secondary_id:
-            fallback_intent = "react_to_primary_or_scene_pressure"
-            requirement_scope = "one_secondary_minimum"
-        else:
-            fallback_intent = "react_to_primary_or_scene_pressure"
-            requirement_scope = "optional_secondary"
-
-        metadata = {
-            key: value
-            for key, value in row.items()
-            if key
-            not in {
-                "actor_id",
-                "role",
-                "intent",
-                "initiative_type",
-                "allowed_block_types",
-                "allowed_output_lanes",
-                "target_actor_id",
-                "target_id",
-                "required",
-                "requirement_scope",
-                "resolved",
-            }
-        }
-        initiative = NPCInitiative(
-            actor_id=actor_id,
-            role=role,
-            intent=clean_text(row.get("intent")) or fallback_intent,
-            allowed_block_types=tuple(coerce_string_list(row.get("allowed_block_types")) or DEFAULT_ALLOWED_BLOCK_TYPES),
-            allowed_output_lanes=tuple(coerce_string_list(row.get("allowed_output_lanes")) or DEFAULT_ALLOWED_OUTPUT_LANES),
-            target_actor_id=clean_text(row.get("target_actor_id") or row.get("target_id")) or None,
-            required=bool(row.get("required")) or actor_id in required_actor_ids,
-            requirement_scope=clean_text(row.get("requirement_scope")) or requirement_scope,
-            resolved=bool(row.get("resolved")),
-            metadata=metadata,
-        )
-        initiatives.append(initiative)
+    initiatives = _npc_plan_initiatives(
+        initiative_rows=initiative_rows,
+        planned_actor_ids=planned_actor_ids,
+        primary_id=primary_id,
+        first_secondary_id=first_secondary_id,
+        required_actor_ids=required_actor_ids,
+        actor_lane_context=actor_lane_context,
+    )
 
     if not initiatives:
         return None

@@ -17,6 +17,116 @@ from .voice_profiles import (
 )
 
 
+def _template_follow_up_result(
+    *,
+    composed: bool,
+    reason: str,
+    actor_id: str,
+    profile: dict[str, Any],
+    source_field: str | None,
+    placeholders: list[str],
+    motivation_score: float | None,
+    replanning: dict[str, Any],
+    context: dict[str, Any],
+    safety_gate_result: str,
+    safety_gate_decisions: dict[str, Any],
+    rejected_reason: str | None,
+    text: str | None = None,
+) -> dict[str, Any]:
+    result = {
+        "attempted": True,
+        "composed": composed,
+        "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
+        "composition_mode": COMPOSITION_MODE_TEMPLATE_RENDER,
+        "reason": reason,
+        "voice_profile_used": True,
+        "voice_profile_actor_id": _voice_profile_actor_id(profile),
+        "voice_profile_source_field": source_field,
+        "input_fields_used": placeholders,
+        "motivation_score": motivation_score,
+        "source_contexts": _derive_source_contexts(
+            replanning=replanning,
+            context=context,
+            profile_used=True,
+            motivation_score=motivation_score,
+            placeholders_used=placeholders,
+        ),
+        "safety_gate_result": safety_gate_result,
+        "safety_gate_decisions": safety_gate_decisions,
+        "rejected_reason": rejected_reason,
+        "new_people_introduced": False,
+        "new_rooms_introduced": False,
+        "plot_facts_introduced": False,
+        "provider_metadata": None,
+    }
+    if text is not None:
+        result["text"] = text
+    return result
+
+
+def _template_material_unavailable_result(
+    *,
+    replanning: dict[str, Any],
+    context: dict[str, Any],
+    actor_id: str,
+    profile: dict[str, Any],
+    motivation_score: float | None,
+) -> dict[str, Any]:
+    return _template_follow_up_result(
+        composed=False,
+        reason="voice_profile_follow_up_material_unavailable",
+        actor_id=actor_id,
+        profile=profile,
+        source_field=None,
+        placeholders=[],
+        motivation_score=motivation_score,
+        replanning=replanning,
+        context=context,
+        safety_gate_result="reject",
+        safety_gate_decisions={},
+        rejected_reason="voice_profile_follow_up_material_unavailable",
+    )
+
+
+def _semantic_follow_up_result(
+    *,
+    composed: bool,
+    reason: str,
+    actor_id: str,
+    profile: dict[str, Any],
+    motivation_score: float | None,
+    source_contexts: list[dict[str, Any]],
+    safety_gate_result: str,
+    safety_gate_decisions: dict[str, Any],
+    rejected_reason: str | None,
+    provider_metadata: dict[str, Any] | None,
+    text: str | None = None,
+) -> dict[str, Any]:
+    result = {
+        "attempted": True,
+        "composed": composed,
+        "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
+        "composition_mode": COMPOSITION_MODE_SEMANTIC_GENERATION,
+        "reason": reason,
+        "voice_profile_used": True,
+        "voice_profile_actor_id": _voice_profile_actor_id(profile),
+        "voice_profile_source_field": None,
+        "input_fields_used": [],
+        "motivation_score": motivation_score,
+        "source_contexts": source_contexts,
+        "safety_gate_result": safety_gate_result,
+        "safety_gate_decisions": safety_gate_decisions,
+        "rejected_reason": rejected_reason,
+        "new_people_introduced": False,
+        "new_rooms_introduced": False,
+        "plot_facts_introduced": False,
+        "provider_metadata": provider_metadata,
+    }
+    if text is not None:
+        result["text"] = text
+    return result
+
+
 def _compose_template_render_follow_up(
     *,
     replanning: dict[str, Any],
@@ -30,31 +140,13 @@ def _compose_template_render_follow_up(
     selected_template = _follow_up_template_from_profile(profile)
     motivation_score = _motivation_score_for_actor(context=context, actor_id=actor_id)
     if selected_template is None:
-        return {
-            "attempted": True,
-            "composed": False,
-            "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-            "composition_mode": COMPOSITION_MODE_TEMPLATE_RENDER,
-            "reason": "voice_profile_follow_up_material_unavailable",
-            "voice_profile_used": True,
-            "voice_profile_actor_id": _voice_profile_actor_id(profile),
-            "voice_profile_source_field": None,
-            "input_fields_used": [],
-            "motivation_score": motivation_score,
-            "source_contexts": _derive_source_contexts(
-                replanning=replanning,
-                context=context,
-                profile_used=True,
-                motivation_score=motivation_score,
-            ),
-            "safety_gate_result": "reject",
-            "safety_gate_decisions": {},
-            "rejected_reason": "voice_profile_follow_up_material_unavailable",
-            "new_people_introduced": False,
-            "new_rooms_introduced": False,
-            "plot_facts_introduced": False,
-            "provider_metadata": None,
-        }
+        return _template_material_unavailable_result(
+            replanning=replanning,
+            context=context,
+            actor_id=actor_id,
+            profile=profile,
+            motivation_score=motivation_score,
+        )
 
     template, source_field = selected_template
     text, placeholders, reason = _render_follow_up_template(
@@ -65,32 +157,20 @@ def _compose_template_render_follow_up(
         motivation_score=motivation_score,
     )
     if reason:
-        return {
-            "attempted": True,
-            "composed": False,
-            "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-            "composition_mode": COMPOSITION_MODE_TEMPLATE_RENDER,
-            "reason": reason,
-            "voice_profile_used": True,
-            "voice_profile_actor_id": _voice_profile_actor_id(profile),
-            "voice_profile_source_field": source_field,
-            "input_fields_used": placeholders,
-            "motivation_score": motivation_score,
-            "source_contexts": _derive_source_contexts(
-                replanning=replanning,
-                context=context,
-                profile_used=True,
-                motivation_score=motivation_score,
-                placeholders_used=placeholders,
-            ),
-            "safety_gate_result": "reject",
-            "safety_gate_decisions": {},
-            "rejected_reason": reason,
-            "new_people_introduced": False,
-            "new_rooms_introduced": False,
-            "plot_facts_introduced": False,
-            "provider_metadata": None,
-        }
+        return _template_follow_up_result(
+            composed=False,
+            reason=reason,
+            actor_id=actor_id,
+            profile=profile,
+            source_field=source_field,
+            placeholders=placeholders,
+            motivation_score=motivation_score,
+            replanning=replanning,
+            context=context,
+            safety_gate_result="reject",
+            safety_gate_decisions={},
+            rejected_reason=reason,
+        )
 
     gate_result = _run_safety_gates(
         text=text,
@@ -99,59 +179,35 @@ def _compose_template_render_follow_up(
         context=context,
     )
     if not gate_result["all_pass"]:
-        return {
-            "attempted": True,
-            "composed": False,
-            "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-            "composition_mode": COMPOSITION_MODE_TEMPLATE_RENDER,
-            "reason": gate_result["rejected_reason"] or "safety_gate_rejected",
-            "voice_profile_used": True,
-            "voice_profile_actor_id": _voice_profile_actor_id(profile),
-            "voice_profile_source_field": source_field,
-            "input_fields_used": placeholders,
-            "motivation_score": motivation_score,
-            "source_contexts": _derive_source_contexts(
-                replanning=replanning,
-                context=context,
-                profile_used=True,
-                motivation_score=motivation_score,
-                placeholders_used=placeholders,
-            ),
-            "safety_gate_result": "reject",
-            "safety_gate_decisions": gate_result["decisions"],
-            "rejected_reason": gate_result["rejected_reason"],
-            "new_people_introduced": False,
-            "new_rooms_introduced": False,
-            "plot_facts_introduced": False,
-            "provider_metadata": None,
-        }
-    return {
-        "attempted": True,
-        "composed": True,
-        "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-        "composition_mode": COMPOSITION_MODE_TEMPLATE_RENDER,
-        "reason": "composed_from_voice_profile",
-        "text": text,
-        "voice_profile_used": True,
-        "voice_profile_actor_id": _voice_profile_actor_id(profile),
-        "voice_profile_source_field": source_field,
-        "input_fields_used": placeholders,
-        "motivation_score": motivation_score,
-        "source_contexts": _derive_source_contexts(
+        return _template_follow_up_result(
+            composed=False,
+            reason=gate_result["rejected_reason"] or "safety_gate_rejected",
+            actor_id=actor_id,
+            profile=profile,
+            source_field=source_field,
+            placeholders=placeholders,
+            motivation_score=motivation_score,
             replanning=replanning,
             context=context,
-            profile_used=True,
-            motivation_score=motivation_score,
-            placeholders_used=placeholders,
-        ),
-        "safety_gate_result": "pass",
-        "safety_gate_decisions": gate_result["decisions"],
-        "rejected_reason": None,
-        "new_people_introduced": False,
-        "new_rooms_introduced": False,
-        "plot_facts_introduced": False,
-        "provider_metadata": None,
-    }
+            safety_gate_result="reject",
+            safety_gate_decisions=gate_result["decisions"],
+            rejected_reason=gate_result["rejected_reason"],
+        )
+    return _template_follow_up_result(
+        composed=True,
+        reason="composed_from_voice_profile",
+        actor_id=actor_id,
+        profile=profile,
+        source_field=source_field,
+        placeholders=placeholders,
+        motivation_score=motivation_score,
+        replanning=replanning,
+        context=context,
+        safety_gate_result="pass",
+        safety_gate_decisions=gate_result["decisions"],
+        rejected_reason=None,
+        text=text,
+    )
 
 
 def _build_follow_up_composition_request(
@@ -253,26 +309,18 @@ def _compose_semantic_npc_follow_up(
     try:
         response = provider(request) or {}
     except Exception as exc:  # noqa: BLE001 — provider faults must not crash the loop
-        return {
-            "attempted": True,
-            "composed": False,
-            "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-            "composition_mode": COMPOSITION_MODE_SEMANTIC_GENERATION,
-            "reason": "semantic_provider_exception",
-            "voice_profile_used": True,
-            "voice_profile_actor_id": _voice_profile_actor_id(profile),
-            "voice_profile_source_field": None,
-            "input_fields_used": [],
-            "motivation_score": motivation_score,
-            "source_contexts": source_contexts,
-            "safety_gate_result": "not_applicable",
-            "safety_gate_decisions": {},
-            "rejected_reason": "semantic_provider_exception",
-            "new_people_introduced": False,
-            "new_rooms_introduced": False,
-            "plot_facts_introduced": False,
-            "provider_metadata": {"exception_type": type(exc).__name__},
-        }
+        return _semantic_follow_up_result(
+            composed=False,
+            reason="semantic_provider_exception",
+            actor_id=actor_id,
+            profile=profile,
+            motivation_score=motivation_score,
+            source_contexts=source_contexts,
+            safety_gate_result="not_applicable",
+            safety_gate_decisions={},
+            rejected_reason="semantic_provider_exception",
+            provider_metadata={"exception_type": type(exc).__name__},
+        )
     if not isinstance(response, dict):
         response = {}
     provider_metadata = (
@@ -280,26 +328,18 @@ def _compose_semantic_npc_follow_up(
     )
     if not response.get("success") or not isinstance(response.get("text"), str):
         error_code = str(response.get("error_code") or "semantic_provider_returned_no_text")
-        return {
-            "attempted": True,
-            "composed": False,
-            "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-            "composition_mode": COMPOSITION_MODE_SEMANTIC_GENERATION,
-            "reason": error_code,
-            "voice_profile_used": True,
-            "voice_profile_actor_id": _voice_profile_actor_id(profile),
-            "voice_profile_source_field": None,
-            "input_fields_used": [],
-            "motivation_score": motivation_score,
-            "source_contexts": source_contexts,
-            "safety_gate_result": "not_applicable",
-            "safety_gate_decisions": {},
-            "rejected_reason": error_code,
-            "new_people_introduced": False,
-            "new_rooms_introduced": False,
-            "plot_facts_introduced": False,
-            "provider_metadata": dict(provider_metadata),
-        }
+        return _semantic_follow_up_result(
+            composed=False,
+            reason=error_code,
+            actor_id=actor_id,
+            profile=profile,
+            motivation_score=motivation_score,
+            source_contexts=source_contexts,
+            safety_gate_result="not_applicable",
+            safety_gate_decisions={},
+            rejected_reason=error_code,
+            provider_metadata=dict(provider_metadata),
+        )
     candidate_text = _compact_one_line(
         str(response.get("text") or ""), limit=MAX_COMPOSED_FOLLOW_UP_CHARS
     )
@@ -310,47 +350,31 @@ def _compose_semantic_npc_follow_up(
         context=context,
     )
     if not gate_result["all_pass"]:
-        return {
-            "attempted": True,
-            "composed": False,
-            "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-            "composition_mode": COMPOSITION_MODE_SEMANTIC_GENERATION,
-            "reason": gate_result["rejected_reason"] or "semantic_output_safety_gate_rejected",
-            "voice_profile_used": True,
-            "voice_profile_actor_id": _voice_profile_actor_id(profile),
-            "voice_profile_source_field": None,
-            "input_fields_used": [],
-            "motivation_score": motivation_score,
-            "source_contexts": source_contexts,
-            "safety_gate_result": "reject",
-            "safety_gate_decisions": gate_result["decisions"],
-            "rejected_reason": gate_result["rejected_reason"],
-            "new_people_introduced": False,
-            "new_rooms_introduced": False,
-            "plot_facts_introduced": False,
-            "provider_metadata": dict(provider_metadata),
-        }
-    return {
-        "attempted": True,
-        "composed": True,
-        "composition_kind": NEXT_ACTION_SOURCE_NPC_RESPONSE,
-        "composition_mode": COMPOSITION_MODE_SEMANTIC_GENERATION,
-        "reason": "composed_from_semantic_provider",
-        "text": candidate_text,
-        "voice_profile_used": True,
-        "voice_profile_actor_id": _voice_profile_actor_id(profile),
-        "voice_profile_source_field": None,
-        "input_fields_used": [],
-        "motivation_score": motivation_score,
-        "source_contexts": source_contexts,
-        "safety_gate_result": "pass",
-        "safety_gate_decisions": gate_result["decisions"],
-        "rejected_reason": None,
-        "new_people_introduced": False,
-        "new_rooms_introduced": False,
-        "plot_facts_introduced": False,
-        "provider_metadata": dict(provider_metadata),
-    }
+        return _semantic_follow_up_result(
+            composed=False,
+            reason=gate_result["rejected_reason"] or "semantic_output_safety_gate_rejected",
+            actor_id=actor_id,
+            profile=profile,
+            motivation_score=motivation_score,
+            source_contexts=source_contexts,
+            safety_gate_result="reject",
+            safety_gate_decisions=gate_result["decisions"],
+            rejected_reason=gate_result["rejected_reason"],
+            provider_metadata=dict(provider_metadata),
+        )
+    return _semantic_follow_up_result(
+        composed=True,
+        reason="composed_from_semantic_provider",
+        actor_id=actor_id,
+        profile=profile,
+        motivation_score=motivation_score,
+        source_contexts=source_contexts,
+        safety_gate_result="pass",
+        safety_gate_decisions=gate_result["decisions"],
+        rejected_reason=None,
+        provider_metadata=dict(provider_metadata),
+        text=candidate_text,
+    )
 
 
 def _compose_npc_follow_up(

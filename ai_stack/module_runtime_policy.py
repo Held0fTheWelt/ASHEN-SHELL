@@ -325,145 +325,142 @@ def _capability_policy(hard_forbidden_policy: dict[str, Any]) -> dict[str, Any]:
     return policy
 
 
+def _runtime_intelligence_section(raw: dict[str, Any], key: str) -> dict[str, Any]:
+    value = raw.get(key)
+    return value if isinstance(value, dict) else {}
+
+
+def _action_resolution_governance(action_short_path: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "enabled": bool(action_short_path.get("enabled", False)),
+        "routing_basis": str(
+            action_short_path.get("routing_basis")
+            or "semantic_action_frame_evidence"
+        ).strip()
+        or "semantic_action_frame_evidence",
+        "no_verb_or_input_kind_whitelists": bool(
+            action_short_path.get("no_verb_or_input_kind_whitelists", True)
+        ),
+    }
+
+
+def _player_freedom_governance(player_freedom: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "enabled": bool(player_freedom.get("enabled", False)),
+        "policy_ref": str(player_freedom.get("policy_ref") or "").strip() or None,
+        "canonical_path_control": str(
+            player_freedom.get("canonical_path_control") or ""
+        ).strip()
+        or None,
+        "plausible_affordance_inference": str(
+            player_freedom.get("plausible_affordance_inference") or ""
+        ).strip()
+        or None,
+    }
+
+
+def _visible_projection_governance(visible_projection: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "enabled": bool(visible_projection.get("enabled", False)),
+        "hard_failure_behavior": str(
+            visible_projection.get("hard_failure_behavior") or "recover"
+        ).strip()
+        or "recover",
+        "require_origin_metadata": bool(
+            visible_projection.get("require_origin_metadata", True)
+        ),
+    }
+
+
+def _capability_gate_governance(capability_gate: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "forbidden_capability_behavior": str(
+            capability_gate.get("forbidden_capability_behavior") or "reject"
+        ).strip()
+        or "reject",
+        "missing_required_capability_behavior": str(
+            capability_gate.get("missing_required_capability_behavior") or "recover"
+        ).strip()
+        or "recover",
+    }
+
+
+def _continuity_governance(continuity: dict[str, Any]) -> dict[str, Any]:
+    hooks = continuity.get("hooks") if isinstance(continuity.get("hooks"), list) else []
+    return {"hooks": _json_safe(hooks)}
+
+
 def _runtime_governance_policy(module_yaml: dict[str, Any]) -> dict[str, Any]:
     raw = module_yaml.get("runtime_intelligence")
     raw = raw if isinstance(raw, dict) else {}
-    action_short_path = raw.get("action_resolution_short_path")
-    action_short_path = action_short_path if isinstance(action_short_path, dict) else {}
-    player_freedom = raw.get("player_freedom")
-    player_freedom = player_freedom if isinstance(player_freedom, dict) else {}
-    visible_projection = raw.get("visible_projection")
-    visible_projection = visible_projection if isinstance(visible_projection, dict) else {}
-    continuity = raw.get("continuity")
-    continuity = continuity if isinstance(continuity, dict) else {}
-    capability_gate = raw.get("capability_gate")
-    capability_gate = capability_gate if isinstance(capability_gate, dict) else {}
-    scene_energy = raw.get("scene_energy")
-    scene_energy = scene_energy if isinstance(scene_energy, dict) else {}
-    dramatic_irony = raw.get("dramatic_irony")
-    dramatic_irony = dramatic_irony if isinstance(dramatic_irony, dict) else {}
-    callback_web = raw.get("callback_web")
-    callback_web = callback_web if isinstance(callback_web, dict) else {}
-    consequence_cascade = raw.get("consequence_cascade")
-    consequence_cascade = consequence_cascade if isinstance(consequence_cascade, dict) else {}
-    temporal_control = raw.get("temporal_control")
-    temporal_control = temporal_control if isinstance(temporal_control, dict) else {}
-    tonal_consistency = raw.get("tonal_consistency")
-    tonal_consistency = tonal_consistency if isinstance(tonal_consistency, dict) else {}
-    genre_awareness = raw.get("genre_awareness")
-    genre_awareness = genre_awareness if isinstance(genre_awareness, dict) else {}
-    expectation_variation = raw.get("expectation_variation")
-    expectation_variation = (
-        expectation_variation if isinstance(expectation_variation, dict) else {}
-    )
-    narrative_momentum = raw.get("narrative_momentum")
-    narrative_momentum = narrative_momentum if isinstance(narrative_momentum, dict) else {}
-    pacing_rhythm = raw.get("pacing_rhythm")
-    pacing_rhythm = pacing_rhythm if isinstance(pacing_rhythm, dict) else {}
-    sensory_context = raw.get("sensory_context")
-    sensory_context = sensory_context if isinstance(sensory_context, dict) else {}
-    symbolic_object_resonance = raw.get("symbolic_object_resonance")
-    symbolic_object_resonance = (
-        symbolic_object_resonance
-        if isinstance(symbolic_object_resonance, dict)
-        else {}
-    )
-    improvisational_coherence = raw.get("improvisational_coherence")
-    improvisational_coherence = (
-        improvisational_coherence
-        if isinstance(improvisational_coherence, dict)
-        else {}
-    )
-    meta_narrative_awareness = raw.get("meta_narrative_awareness")
-    meta_narrative_awareness = (
-        meta_narrative_awareness
-        if isinstance(meta_narrative_awareness, dict)
-        else {}
-    )
-    social_pressure = raw.get("social_pressure")
-    social_pressure = social_pressure if isinstance(social_pressure, dict) else {}
-    relationship_state_machine = raw.get("relationship_state_machine")
-    relationship_state_machine = (
-        relationship_state_machine
-        if isinstance(relationship_state_machine, dict)
-        else {}
-    )
-    off_stage_updates = raw.get("off_stage_updates")
-    off_stage_updates = (
-        off_stage_updates if isinstance(off_stage_updates, dict) else {}
-    )
 
     return {
-        "action_resolution_short_path": {
-            "enabled": bool(action_short_path.get("enabled", False)),
-            "routing_basis": str(
-                action_short_path.get("routing_basis")
-                or "semantic_action_frame_evidence"
-            ).strip()
-            or "semantic_action_frame_evidence",
-            "no_verb_or_input_kind_whitelists": bool(
-                action_short_path.get("no_verb_or_input_kind_whitelists", True)
-            ),
-        },
-        "player_freedom": {
-            "enabled": bool(player_freedom.get("enabled", False)),
-            "policy_ref": str(player_freedom.get("policy_ref") or "").strip() or None,
-            "canonical_path_control": str(player_freedom.get("canonical_path_control") or "").strip() or None,
-            "plausible_affordance_inference": str(player_freedom.get("plausible_affordance_inference") or "").strip()
-            or None,
-        },
-        "visible_projection": {
-            "enabled": bool(visible_projection.get("enabled", False)),
-            "hard_failure_behavior": str(
-                visible_projection.get("hard_failure_behavior") or "recover"
-            ).strip()
-            or "recover",
-            "require_origin_metadata": bool(visible_projection.get("require_origin_metadata", True)),
-        },
-        "capability_gate": {
-            "forbidden_capability_behavior": str(
-                capability_gate.get("forbidden_capability_behavior") or "reject"
-            ).strip()
-            or "reject",
-            "missing_required_capability_behavior": str(
-                capability_gate.get("missing_required_capability_behavior") or "recover"
-            ).strip()
-            or "recover",
-        },
-        "continuity": {
-            "hooks": _json_safe(
-                continuity.get("hooks") if isinstance(continuity.get("hooks"), list) else []
-            ),
-        },
-        "scene_energy": normalize_scene_energy_policy(scene_energy),
-        "pacing_rhythm": normalize_pacing_rhythm_policy(pacing_rhythm),
-        "sensory_context": normalize_sensory_context_policy(sensory_context),
+        "action_resolution_short_path": _action_resolution_governance(
+            _runtime_intelligence_section(raw, "action_resolution_short_path")
+        ),
+        "player_freedom": _player_freedom_governance(
+            _runtime_intelligence_section(raw, "player_freedom")
+        ),
+        "visible_projection": _visible_projection_governance(
+            _runtime_intelligence_section(raw, "visible_projection")
+        ),
+        "capability_gate": _capability_gate_governance(
+            _runtime_intelligence_section(raw, "capability_gate")
+        ),
+        "continuity": _continuity_governance(
+            _runtime_intelligence_section(raw, "continuity")
+        ),
+        "scene_energy": normalize_scene_energy_policy(
+            _runtime_intelligence_section(raw, "scene_energy")
+        ),
+        "pacing_rhythm": normalize_pacing_rhythm_policy(
+            _runtime_intelligence_section(raw, "pacing_rhythm")
+        ),
+        "sensory_context": normalize_sensory_context_policy(
+            _runtime_intelligence_section(raw, "sensory_context")
+        ),
         "symbolic_object_resonance": normalize_symbolic_object_resonance_policy(
-            symbolic_object_resonance
+            _runtime_intelligence_section(raw, "symbolic_object_resonance")
         ),
         "improvisational_coherence": normalize_improvisational_coherence_policy(
-            improvisational_coherence
+            _runtime_intelligence_section(raw, "improvisational_coherence")
         ),
         "meta_narrative_awareness": normalize_meta_narrative_awareness_policy(
-            meta_narrative_awareness
+            _runtime_intelligence_section(raw, "meta_narrative_awareness")
         ),
-        "social_pressure": normalize_social_pressure_policy(social_pressure),
+        "social_pressure": normalize_social_pressure_policy(
+            _runtime_intelligence_section(raw, "social_pressure")
+        ),
         "relationship_state_machine": normalize_relationship_state_policy(
-            relationship_state_machine
+            _runtime_intelligence_section(raw, "relationship_state_machine")
         ),
-        "off_stage_updates": normalize_off_stage_updates_policy(off_stage_updates),
-        "dramatic_irony": normalize_dramatic_irony_policy(dramatic_irony),
+        "off_stage_updates": normalize_off_stage_updates_policy(
+            _runtime_intelligence_section(raw, "off_stage_updates")
+        ),
+        "dramatic_irony": normalize_dramatic_irony_policy(
+            _runtime_intelligence_section(raw, "dramatic_irony")
+        ),
         "expectation_variation": normalize_expectation_variation_policy(
-            expectation_variation
+            _runtime_intelligence_section(raw, "expectation_variation")
         ),
         "narrative_momentum": normalize_narrative_momentum_policy(
-            narrative_momentum
+            _runtime_intelligence_section(raw, "narrative_momentum")
         ),
-        "callback_web": normalize_callback_web_policy(callback_web),
-        "consequence_cascade": normalize_consequence_cascade_policy(consequence_cascade),
-        "temporal_control": normalize_temporal_control_policy(temporal_control),
-        "tonal_consistency": normalize_tonal_consistency_policy(tonal_consistency),
-        "genre_awareness": normalize_genre_awareness_policy(genre_awareness),
+        "callback_web": normalize_callback_web_policy(
+            _runtime_intelligence_section(raw, "callback_web")
+        ),
+        "consequence_cascade": normalize_consequence_cascade_policy(
+            _runtime_intelligence_section(raw, "consequence_cascade")
+        ),
+        "temporal_control": normalize_temporal_control_policy(
+            _runtime_intelligence_section(raw, "temporal_control")
+        ),
+        "tonal_consistency": normalize_tonal_consistency_policy(
+            _runtime_intelligence_section(raw, "tonal_consistency")
+        ),
+        "genre_awareness": normalize_genre_awareness_policy(
+            _runtime_intelligence_section(raw, "genre_awareness")
+        ),
     }
 
 

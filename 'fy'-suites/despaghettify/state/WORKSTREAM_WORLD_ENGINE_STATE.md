@@ -1,5 +1,19 @@
 # Workstream: world_engine
 
+## Closed — DS-038 manager scene-block and diagnostic snapshot split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-038 | NPC scripted speech realization, player-input scene-block construction, and thin-path diagnostic snapshot aggregation now delegate to named helper phases without changing manager payloads. | `_realize_npc_speak_block`, `_player_input_scene_blocks_for_story_window`, `get_runtime_diagnostic_snapshot` | Pre: `artifacts/workstreams/world_engine/pre/session_20260528_DS-038_wave_plan.md`; post: `artifacts/workstreams/world_engine/post/session_20260528_DS-038_comparison.md` |
+
+**Gates (final):**
+
+- `python -m py_compile` on touched DS-038 world-engine files — passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_story_runtime_shell_readout.py world-engine/tests/test_story_runtime_shell_readout_structure.py world-engine/tests/test_story_runtime_manager_session_layout.py world-engine/tests/test_mvp1_experience_identity.py -k 'thin or diagnostic or player or scene or narrator or opening or session' --tb=short` — 24 passed, 62 deselected.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T18:18:39Z`.
+
+**Structural delta:** DS-038 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11299 functions; L50 809; L100 102; D6 0; `M7_anteil` 3.6891.
+
 ## Closed — DS-035 turn graph and branching executor split (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

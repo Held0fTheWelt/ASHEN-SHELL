@@ -442,6 +442,179 @@ def _npc_agency_fields(graph_state: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _planner_truth_sources(
+    *,
+    graph_state: dict[str, Any] | None,
+    generation: dict[str, Any] | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Normalize the untrusted runtime inputs used by planner truth."""
+    state = graph_state if isinstance(graph_state, dict) else {}
+    gen = generation if isinstance(generation, dict) else {}
+    structured = _as_dict(_as_dict(gen.get("metadata")).get("structured_output"))
+    return state, structured
+
+
+def _planner_truth_validation_fields(graph_state: dict[str, Any]) -> dict[str, Any]:
+    """Collect validator and gate state for the committed planner truth."""
+    validation = _as_dict(graph_state.get("validation_outcome"))
+    gate = _as_dict(graph_state.get("dramatic_effect_gate_outcome"))
+    if not gate:
+        gate = _as_dict(graph_state.get("dramatic_effect_gate"))
+    return {
+        "dramatic_effect_gate": gate,
+        "validation_status": _opt_str(validation.get("status")),
+        "validation_reason": _opt_str(validation.get("reason")),
+        "validator_layers_used": _resolve_validator_layers(validation, gate),
+    }
+
+
+def _planner_truth_scene_assessment(graph_state: dict[str, Any]) -> dict[str, Any]:
+    """Return the bounded scene assessment under its canonical output key."""
+    scene_assessment = _as_dict(graph_state.get("scene_assessment"))
+    if not scene_assessment:
+        scene_assessment = _as_dict(graph_state.get("scene_assessment_core"))
+    return scene_assessment
+
+
+def _planner_truth_responder_fields(
+    *,
+    graph_state: dict[str, Any],
+    structured: dict[str, Any],
+) -> dict[str, Any]:
+    """Resolve primary, secondary, and scoped responders without duplication."""
+    responder_scope = _as_str_list(
+        graph_state.get("responder_scope")
+        or graph_state.get("selected_responder_set")
+        or structured.get("responder_scope")
+    )
+    primary = _opt_str(
+        graph_state.get("responder_id"),
+        graph_state.get("primary_responder_id"),
+        structured.get("primary_responder_id"),
+        structured.get("responder_id"),
+    )
+    secondary = _as_str_list(
+        graph_state.get("secondary_responder_ids")
+        or structured.get("secondary_responder_ids")
+        or structured.get("responder_actor_ids")
+    )
+    if primary and primary in secondary:
+        secondary = [actor_id for actor_id in secondary if actor_id != primary]
+    return {
+        "responder_id": _opt_str(graph_state.get("responder_id"), structured.get("responder_id"), primary),
+        "primary_responder_id": primary,
+        "secondary_responder_ids": secondary,
+        "responder_scope": responder_scope,
+    }
+
+
+def _planner_truth_mode_fields(
+    *,
+    graph_state: dict[str, Any],
+    structured: dict[str, Any],
+) -> dict[str, Any]:
+    """Project scene function and runtime mode selections."""
+    return {
+        "selected_scene_function": _opt_str(
+            graph_state.get("selected_scene_function"),
+            structured.get("selected_scene_function"),
+        ),
+        "function_type": _opt_str(graph_state.get("function_type"), structured.get("function_type")),
+        "pacing_mode": _opt_str(
+            graph_state.get("pacing_mode"),
+            structured.get("pacing_mode"),
+            graph_state.get("selected_pacing_mode"),
+        ),
+        "silence_mode": _opt_str(
+            graph_state.get("silence_mode"),
+            structured.get("silence_mode"),
+            graph_state.get("selected_silence_mode"),
+        ),
+    }
+
+
+def _planner_truth_output_counts(
+    *,
+    graph_state: dict[str, Any],
+    structured: dict[str, Any],
+) -> dict[str, Any]:
+    """Summarize visible output lanes and initiative events."""
+    bundle = _as_dict(graph_state.get("visible_output_bundle"))
+    return {
+        "spoken_line_count": _lane_count(bundle.get("spoken_lines")),
+        "action_line_count": _lane_count(bundle.get("action_lines")),
+        "initiative_summary": _initiative_summary(structured.get("initiative_events")),
+    }
+
+
+def _planner_truth_last_actor_summary(
+    *,
+    primary_responder_id: str,
+    counts: dict[str, Any],
+    social_outcome: str,
+    dramatic_direction: str,
+) -> dict[str, Any]:
+    """Build the compact last-actor outcome summary for persistence."""
+    return _last_actor_outcome_summary(
+        primary_responder_id=primary_responder_id,
+        spoken_line_count=int(counts.get("spoken_line_count") or 0),
+        action_line_count=int(counts.get("action_line_count") or 0),
+        initiative_summary=_as_dict(counts.get("initiative_summary")),
+        social_outcome=social_outcome,
+        dramatic_direction=dramatic_direction,
+    )
+
+
+def _planner_truth_actor_realization_fields(
+    *,
+    structured: dict[str, Any],
+    secondary_responder_ids: list[str],
+    primary_responder_id: str,
+) -> dict[str, Any]:
+    """Capture which actors appeared in realized text or actions."""
+    initiative_events = structured.get("initiative_events")
+    spoken_lines = structured.get("spoken_lines")
+    action_lines = structured.get("action_lines")
+    return {
+        "realized_secondary_responder_ids": _realized_secondary_responder_ids(
+            spoken_lines=spoken_lines,
+            action_lines=action_lines,
+            secondary_responder_ids=secondary_responder_ids,
+        ),
+        "interruption_actor_id": _interruption_actor_id(initiative_events),
+        "spoken_actor_summaries": _actor_line_summaries(spoken_lines, actor_key="speaker_id"),
+        "action_actor_summaries": _actor_line_summaries(action_lines, actor_key="actor_id"),
+        "initiative_seizer_id": _initiative_seizer_id(initiative_events),
+        "initiative_loser_id": _initiative_loser_id(
+            initiative_events=initiative_events,
+            primary_responder_id=primary_responder_id,
+        ),
+        "initiative_pressure_label": _initiative_pressure_label(initiative_events),
+    }
+
+
+def _planner_truth_pressure_fields(
+    *,
+    graph_state: dict[str, Any],
+    structured: dict[str, Any],
+    social_outcome: str,
+) -> dict[str, Any]:
+    """Derive pressure carry-forward from realized effects and initiatives."""
+    state_effects = structured.get("state_effects")
+    initiative_events = structured.get("initiative_events")
+    return {
+        "social_pressure_shift": _social_pressure_shift(
+            state_effects=state_effects,
+            social_outcome=social_outcome,
+            graph_state=graph_state,
+        ),
+        "carry_forward_tension_notes": _carry_forward_tension_notes(
+            state_effects=state_effects,
+            initiative_events=initiative_events,
+        ),
+    }
+
+
 def build_planner_truth_payload(
     *,
     graph_state: dict[str, Any] | None,

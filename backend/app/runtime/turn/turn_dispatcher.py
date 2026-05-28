@@ -22,6 +22,93 @@ from app.runtime.turn.turn_executor import execute_turn
 from app.services.governance.governance_runtime_service import get_active_runtime_snapshot
 
 
+def _governed_execution_mode(session: SessionState) -> str:
+    execution_mode = session.execution_mode.lower() if session.execution_mode else "mock"
+    active_snapshot = get_active_runtime_snapshot()
+    if not active_snapshot:
+        return execution_mode
+    governed_mode = (active_snapshot.get("generation_execution_mode") or "").strip().lower()
+    if governed_mode == "mock_only":
+        return "mock"
+    if governed_mode in {"ai_only", "routed_llm_slm", "hybrid_routed_with_mock_fallback"} and execution_mode != "ai":
+        return "ai"
+    return execution_mode
+
+
+def _resolved_ai_adapter(
+    session: SessionState,
+    ai_adapter: StoryAIAdapter | None,
+) -> StoryAIAdapter:
+    resolved_adapter = ai_adapter or get_adapter(session.adapter_name)
+    if not resolved_adapter:
+        raise ValueError(
+            f"AI execution mode selected but adapter '{session.adapter_name}' "
+            f"not found in registry. Register it with register_adapter()."
+        )
+    return resolved_adapter
+
+
+def _mock_decision(mock_decision_provider: callable | None) -> MockDecision:
+    return mock_decision_provider() if mock_decision_provider else MockDecision()
+
+
+async def _execute_dispatch_path(
+    *,
+    execution_mode: str,
+    session: SessionState,
+    current_turn: int,
+    module: ContentModule,
+    mock_decision_provider: callable | None,
+    ai_adapter: StoryAIAdapter | None,
+    operator_input: str,
+) -> TurnExecutionResult:
+    if execution_mode == "ai":
+        return await execute_turn_with_ai(
+            session,
+            current_turn,
+            _resolved_ai_adapter(session, ai_adapter),
+            module,
+            operator_input=operator_input,
+        )
+    return await execute_turn(
+        session,
+        current_turn,
+        _mock_decision(mock_decision_provider),
+        module,
+    )
+
+
+def _turn_observability_details(
+    result: TurnExecutionResult,
+) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    canonical_state = result.updated_canonical_state or {}
+    generation = canonical_state.get("generation") or {}
+    validation = canonical_state.get("validation_outcome") or {}
+    committed = canonical_state.get("committed_result") or {}
+    degradation_signals = canonical_state.get("degradation_signals", [])
+    llm_invocation_details = {
+        "fallback_used": bool(generation.get("fallback_used")),
+        "parser_error": generation.get("metadata", {}).get("langchain_parser_error"),
+        "structured_output_present": bool(
+            generation.get("metadata", {}).get("structured_output")
+        ),
+        "retry_exhausted": "retry_exhausted" in degradation_signals,
+    }
+    validation_details = {
+        "status": validation.get("status"),
+        "reason": validation.get("reason"),
+        "rejected_reasons": validation.get("rejection_reasons", []),
+    }
+    commit_details = {
+        "committed": committed.get("commit_applied", False),
+        "degraded": "degraded_commit" in degradation_signals,
+        "degradation_reason": validation.get("reason")
+        if "degraded_commit" in degradation_signals
+        else None,
+    }
+    return llm_invocation_details, validation_details, commit_details
+
+
 async def dispatch_turn(
     session: SessionState,
     current_turn: int,
@@ -60,17 +147,7 @@ async def dispatch_turn(
     Raises:
         ValueError: If execution_mode=="ai" but adapter cannot be resolved
     """
-    execution_mode = session.execution_mode.lower() if session.execution_mode else "mock"
-    active_snapshot = get_active_runtime_snapshot()
-    if active_snapshot:
-        governed_mode = (active_snapshot.get("generation_execution_mode") or "").strip().lower()
-        if governed_mode == "mock_only":
-            execution_mode = "mock"
-        elif governed_mode in {"ai_only", "routed_llm_slm", "hybrid_routed_with_mock_fallback"} and execution_mode != "ai":
-            # Governance can elevate execution to AI-capable path if session is stale.
-            execution_mode = "ai"
-
-    # Ensure trace_id is set for observability (works with/without Flask request context)
+    execution_mode = _governed_execution_mode(session)
     trace_id = get_trace_id() or ensure_trace_id(None)
 
     # W2 Helper-Role Layer: Deferred to W4
@@ -84,69 +161,16 @@ async def dispatch_turn(
     # AI adapter input format, whether triggers inform actual dispatcher routing,
     # and whether delta normalization belongs before or after LLM output parsing.
 
-    result: TurnExecutionResult
-    if execution_mode == "ai":
-        # AI execution path
-        # Resolve adapter: explicit parameter overrides session configuration
-        resolved_adapter = ai_adapter
-        if not resolved_adapter:
-            # Look up adapter from session.adapter_name
-            resolved_adapter = get_adapter(session.adapter_name)
-
-        if not resolved_adapter:
-            raise ValueError(
-                f"AI execution mode selected but adapter '{session.adapter_name}' "
-                f"not found in registry. Register it with register_adapter()."
-            )
-
-        result = await execute_turn_with_ai(
-            session,
-            current_turn,
-            resolved_adapter,
-            module,
-            operator_input=operator_input,
-        )
-
-    else:
-        # Mock execution path (default)
-        # Use provided mock_decision_provider or default to empty MockDecision
-        if mock_decision_provider:
-            decision = mock_decision_provider()
-        else:
-            decision = MockDecision()
-
-        result = await execute_turn(session, current_turn, decision, module)
-
-    # Extract diagnostic details from canonical state for observability
-    canonical_state = result.updated_canonical_state or {}
-    generation = canonical_state.get("generation") or {}
-    validation = canonical_state.get("validation_outcome") or {}
-    committed = canonical_state.get("committed_result") or {}
-
-    llm_invocation_details = {
-        "fallback_used": bool(generation.get("fallback_used")),
-        "parser_error": generation.get("metadata", {}).get("langchain_parser_error"),
-        "structured_output_present": bool(
-            generation.get("metadata", {}).get("structured_output")
-        ),
-        "retry_exhausted": "retry_exhausted" in canonical_state.get("degradation_signals", []),
-    }
-
-    validation_details = {
-        "status": validation.get("status"),
-        "reason": validation.get("reason"),
-        "rejected_reasons": validation.get("rejection_reasons", []),
-    }
-
-    commit_details = {
-        "committed": committed.get("commit_applied", False),
-        "degraded": "degraded_commit" in canonical_state.get("degradation_signals", []),
-        "degradation_reason": None,
-    }
-    if "degraded_commit" in canonical_state.get("degradation_signals", []):
-        commit_details["degradation_reason"] = validation.get("reason")
-
-    # Log turn execution event for observability (A2 runtime boundary)
+    result = await _execute_dispatch_path(
+        execution_mode=execution_mode,
+        session=session,
+        current_turn=current_turn,
+        module=module,
+        mock_decision_provider=mock_decision_provider,
+        ai_adapter=ai_adapter,
+        operator_input=operator_input,
+    )
+    llm_details, validation_details, commit_details = _turn_observability_details(result)
     log_turn_execution(
         trace_id=trace_id,
         session_id=session.session_id,
@@ -154,7 +178,7 @@ async def dispatch_turn(
         turn_before=current_turn,
         turn_after=result.turn_number,
         outcome=result.execution_status,
-        llm_invocation_details=llm_invocation_details,
+        llm_invocation_details=llm_details,
         validation_details=validation_details,
         commit_details=commit_details,
     )

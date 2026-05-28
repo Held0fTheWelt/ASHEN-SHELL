@@ -121,6 +121,95 @@ def _explicit_silence_signal(
     return interpreted, non_lexical
 
 
+def _semantic_feature_snapshot(
+    *,
+    module_id: str,
+    payload: dict[str, Any],
+    interpreted_silence_signal: bool,
+    non_lexical_silence: bool,
+    player_input_kind: str,
+    player_action_committed: bool,
+    player_speech_committed: bool,
+) -> dict[str, bool | int | str]:
+    return {
+        "semantic_move_ai_present": bool(payload),
+        "semantic_move_ai_required": not bool(payload),
+        "interpreted_silence_signal": interpreted_silence_signal,
+        "non_lexical_silence_signal": non_lexical_silence,
+        "player_input_kind": player_input_kind,
+        "player_input_kind_family": player_input_kind_family(player_input_kind),
+        "player_input_kind_is_action": is_action_like_player_input_kind(player_input_kind),
+        "player_input_kind_is_perception": is_perception_like_player_input_kind(player_input_kind),
+        "player_input_kind_is_speech": player_input_kind == "speech",
+        "player_input_kind_is_mixed": is_mixed_player_input_kind(player_input_kind),
+        "player_input_kind_question_shape_may_probe": question_shape_may_probe(player_input_kind),
+        "player_input_kind_question_shape_guarded": is_question_punctuation_probe_guarded(player_input_kind),
+        "player_action_committed": player_action_committed,
+        "player_speech_committed": player_speech_committed,
+        "non_goc": module_id != GOC_MODULE_ID,
+    }
+
+
+def _primary_semantic_move_candidate(
+    *,
+    payload: dict[str, Any],
+    interpreted_silence_signal: bool,
+) -> RankedMoveCandidate:
+    if payload:
+        candidate = _candidate_from_payload(payload, rank=1, fallback_trace="ai_semantic_move")
+        if candidate is not None:
+            return candidate
+        trace_detail = "invalid_ai_semantic_move_fallback"
+    elif interpreted_silence_signal:
+        return RankedMoveCandidate(
+            move_type="silence_withdrawal",
+            social_move_family="withdraw",
+            directness="ambiguous",
+            pressure_tactic=None,
+            scene_risk_band="moderate",
+            rank=1,
+            confidence=0.85,
+            trace_detail="runtime_signal:silence_negative_space",
+        )
+    else:
+        trace_detail = "semantic_move_ai_required"
+    return RankedMoveCandidate(
+        move_type="establish_situational_pressure",
+        social_move_family="neutral",
+        directness="ambiguous",
+        pressure_tactic=None,
+        scene_risk_band="low",
+        rank=1,
+        confidence=0.5,
+        trace_detail=trace_detail,
+    )
+
+
+def _semantic_move_target_actor_hint(payload: dict[str, Any]) -> str | None:
+    return (
+        _clean(payload.get("target_actor_hint"))
+        or _clean(payload.get("target_actor_id"))
+        or _clean(payload.get("resolved_target_id"))
+        or None
+    )
+
+
+def _semantic_move_evidence_codes(
+    primary: RankedMoveCandidate,
+    feature_snapshot: dict[str, bool | int | str],
+) -> list[str]:
+    evidence_codes = [
+        primary.trace_detail,
+        f"move_type:{primary.move_type}",
+        f"directness:{primary.directness}",
+        f"risk:{primary.scene_risk_band}",
+    ]
+    for key, value in sorted(feature_snapshot.items()):
+        if isinstance(value, bool) and value:
+            evidence_codes.append(f"feature:{key}")
+    return evidence_codes
+
+
 def interpret_goc_semantic_move(
     *,
     module_id: str,
@@ -160,84 +249,30 @@ def interpret_goc_semantic_move(
             detail_code="present" if payload else "missing",
         )
     )
-    feature_snapshot: dict[str, bool | int | str] = {
-        "semantic_move_ai_present": bool(payload),
-        "semantic_move_ai_required": not bool(payload),
-        "interpreted_silence_signal": interpreted_silence_signal,
-        "non_lexical_silence_signal": non_lexical_silence,
-        "player_input_kind": player_input_kind,
-        "player_input_kind_family": player_input_kind_family(player_input_kind),
-        "player_input_kind_is_action": is_action_like_player_input_kind(player_input_kind),
-        "player_input_kind_is_perception": is_perception_like_player_input_kind(player_input_kind),
-        "player_input_kind_is_speech": player_input_kind == "speech",
-        "player_input_kind_is_mixed": is_mixed_player_input_kind(player_input_kind),
-        "player_input_kind_question_shape_may_probe": question_shape_may_probe(player_input_kind),
-        "player_input_kind_question_shape_guarded": is_question_punctuation_probe_guarded(player_input_kind),
-        "player_action_committed": player_action_committed,
-        "player_speech_committed": player_speech_committed,
-        "non_goc": module_id != GOC_MODULE_ID,
-    }
-
-    if payload:
-        primary = _candidate_from_payload(payload, rank=1, fallback_trace="ai_semantic_move")
-    elif interpreted_silence_signal:
-        primary = RankedMoveCandidate(
-            move_type="silence_withdrawal",
-            social_move_family="withdraw",
-            directness="ambiguous",
-            pressure_tactic=None,
-            scene_risk_band="moderate",
-            rank=1,
-            confidence=0.85,
-            trace_detail="runtime_signal:silence_negative_space",
-        )
-    else:
-        primary = RankedMoveCandidate(
-            move_type="establish_situational_pressure",
-            social_move_family="neutral",
-            directness="ambiguous",
-            pressure_tactic=None,
-            scene_risk_band="low",
-            rank=1,
-            confidence=0.5,
-            trace_detail="semantic_move_ai_required",
-        )
-    if primary is None:
-        primary = RankedMoveCandidate(
-            move_type="establish_situational_pressure",
-            social_move_family="neutral",
-            directness="ambiguous",
-            pressure_tactic=None,
-            scene_risk_band="low",
-            rank=1,
-            confidence=0.5,
-            trace_detail="invalid_ai_semantic_move_fallback",
-        )
+    feature_snapshot = _semantic_feature_snapshot(
+        module_id=module_id,
+        payload=payload,
+        interpreted_silence_signal=interpreted_silence_signal,
+        non_lexical_silence=non_lexical_silence,
+        player_input_kind=player_input_kind,
+        player_action_committed=player_action_committed,
+        player_speech_committed=player_speech_committed,
+    )
+    primary = _primary_semantic_move_candidate(
+        payload=payload,
+        interpreted_silence_signal=interpreted_silence_signal,
+    )
 
     ranked_candidates = _ranked_candidates(payload, primary) if payload else [primary]
     secondary_move_type = ranked_candidates[1].move_type if len(ranked_candidates) > 1 else None
     secondary_features = [f"secondary_move:{secondary_move_type}"] if secondary_move_type else []
-    target_actor_hint = (
-        _clean(payload.get("target_actor_hint"))
-        or _clean(payload.get("target_actor_id"))
-        or _clean(payload.get("resolved_target_id"))
-        or None
-    )
+    target_actor_hint = _semantic_move_target_actor_hint(payload)
     trace.append(InterpretationTraceItem(step_id="emit_record", detail_code=f"move_type={primary.move_type}"))
-    evidence_codes = [
-        primary.trace_detail,
-        f"move_type:{primary.move_type}",
-        f"directness:{primary.directness}",
-        f"risk:{primary.scene_risk_band}",
-    ]
-    for key, value in sorted(feature_snapshot.items()):
-        if isinstance(value, bool) and value:
-            evidence_codes.append(f"feature:{key}")
     subtext = build_subtext_record_from_policy(
         move_type=primary.move_type,
         explicit_intent=_clean(inp.get("intent") or mv.get("player_intent")) or None,
         trace_detail=primary.trace_detail,
-        evidence_codes=evidence_codes,
+        evidence_codes=_semantic_move_evidence_codes(primary, feature_snapshot),
     )
 
     return SemanticMoveRecord(

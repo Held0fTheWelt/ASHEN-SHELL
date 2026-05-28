@@ -7,42 +7,42 @@ from __future__ import annotations
 from ._deps import *
 
 class _ScriptedContinuationMixin:
-    def _realize_npc_speak_block(
-        self,
-        *,
-        block: dict[str, Any],
-        session: StorySession,
-        continuation: dict[str, Any],
-        trace_id: str | None,
-    ) -> dict[str, Any]:
-        """Realize a single ``npc_speak`` block via LLM.
+    @staticmethod
+    def _npc_speak_directive(block: dict[str, Any]) -> dict[str, Any]:
+        directive = block.get("npc_speak_directive")
+        return directive if isinstance(directive, dict) else {}
 
-        Builds a prompt from the block's ``npc_speak_directive`` and
-        ``source_facts``, calls the same adapter used for narrator path
-        output, and replaces the placeholder text with the realized speech.
-        """
-        directive = block.get("npc_speak_directive") if isinstance(block.get("npc_speak_directive"), dict) else {}
-        source_facts = block.get("source_facts") if isinstance(block.get("source_facts"), dict) else {}
-        actor_id = str(directive.get("actor") or block.get("actor_id") or "").strip()
-        intent = str(directive.get("intent") or "").strip()
-        required_facts = directive.get("required_facts") or []
-        paraphrase_policy = str(directive.get("paraphrase_policy") or "structural_paraphrase_required").strip()
-        minimum_visible = str(directive.get("minimum_visible") or "").strip()
-        forbidden_drift = directive.get("forbidden_drift") or []
-        quote_excerpt = str(directive.get("quote_anchor_excerpt") or "").strip()
-        quote_use_as = str(directive.get("quote_anchor_use_as") or "").strip()
-        narrator_perception = directive.get("narrator_perception")
+    @staticmethod
+    def _npc_speak_source_facts(block: dict[str, Any]) -> dict[str, Any]:
+        source_facts = block.get("source_facts")
+        return source_facts if isinstance(source_facts, dict) else {}
 
-        target_language = (
+    @staticmethod
+    def _npc_speak_target_language(session: StorySession) -> str:
+        return (
             str(session.session_output_language or DEFAULT_SESSION_LANGUAGE).strip().lower()[:2]
             or DEFAULT_SESSION_LANGUAGE
         )
 
+    @staticmethod
+    def _npc_speak_prompt_lines(
+        *,
+        actor_id: str,
+        intent: str,
+        required_facts: Any,
+        paraphrase_policy: str,
+        minimum_visible: str,
+        forbidden_drift: Any,
+        quote_excerpt: str,
+        quote_use_as: str,
+        source_facts: dict[str, Any],
+        target_language: str,
+    ) -> list[str]:
         prompt_lines = [
             f"You are realizing scripted NPC speech for character '{actor_id}' in the God of Carnage interactive experience.",
             f"Output language: {target_language}",
-            f"",
-            f"## Directive",
+            "",
+            "## Directive",
             f"- Actor: {actor_id}",
             f"- Intent: {intent}",
             f"- Required facts to include: {', '.join(str(f) for f in required_facts) if isinstance(required_facts, list) else str(required_facts)}",
@@ -52,8 +52,8 @@ class _ScriptedContinuationMixin:
         ]
         if quote_excerpt:
             prompt_lines.extend([
-                f"",
-                f"## Quote anchor (short reference only, do NOT reproduce verbatim)",
+                "",
+                "## Quote anchor (short reference only, do NOT reproduce verbatim)",
                 f"- Excerpt: \"{quote_excerpt}\"",
                 f"- Use as: {quote_use_as}",
             ])
@@ -62,30 +62,47 @@ class _ScriptedContinuationMixin:
         presence = source_facts.get("presence") if isinstance(source_facts.get("presence"), dict) else {}
         if step_info or presence:
             prompt_lines.extend([
-                f"",
-                f"## Scene context",
+                "",
+                "## Scene context",
                 f"- Step: {step_info.get('name', '')}",
                 f"- Present characters: {', '.join(presence.get('named_characters', []))}",
                 f"- Speaker in focus: {presence.get('speaker_in_focus', actor_id)}",
             ])
+        return prompt_lines
 
-        prompt_lines.extend([
-            f"",
-            f"## Instructions",
+    @staticmethod
+    def _npc_speak_instruction_lines(
+        *,
+        actor_id: str,
+        target_language: str,
+        paraphrase_policy: str,
+        minimum_visible: str,
+    ) -> list[str]:
+        return [
+            "",
+            "## Instructions",
             f"Produce a single spoken line (1-3 sentences) for {actor_id}.",
-            f"The line must:",
+            "The line must:",
             f"- Be in {target_language}",
-            f"- Include all required facts naturally",
+            "- Include all required facts naturally",
             f"- Respect the paraphrase policy ({paraphrase_policy})",
-            f"- Match the character's voice and personality",
+            "- Match the character's voice and personality",
             f"- Stay within the minimum_visible description",
-            f"- Avoid all forbidden drift items",
-            f"",
-            f"Return ONLY the spoken line text, nothing else.",
-        ])
+            "- Avoid all forbidden drift items",
+            "",
+            "Return ONLY the spoken line text, nothing else.",
+        ]
 
-        prompt_text = "\n".join(prompt_lines)
-
+    def _realized_or_fallback_npc_speech(
+        self,
+        *,
+        prompt_text: str,
+        actor_id: str,
+        intent: str,
+        required_facts: Any,
+        quote_excerpt: str,
+        target_language: str,
+    ) -> tuple[str, str, Any, Any, Any, Any]:
         fallback_speech = _scripted_npc_speech_text(
             actor_ref=actor_id,
             intent=intent,
@@ -93,40 +110,53 @@ class _ScriptedContinuationMixin:
             quote_excerpt=quote_excerpt,
             language=target_language,
         )
-        fallback_status = "deterministic_scripted_speech"
         speech_text = fallback_speech
-
+        fallback_status = "deterministic_scripted_speech"
         model_id, provider, adapter, api_model, timeout_seconds = self._narrator_path_output_adapter_candidate()
-        if adapter is not None:
-            try:
-                result = adapter.generate(
-                    prompt_text,
-                    timeout_seconds=timeout_seconds or 20.0,
-                    model_name=api_model,
-                )
-                generated = str(result.content or "").strip() if result.success else ""
-                if generated and not generated.startswith("["):
-                    speech_text = generated.strip().strip("\"“”„")
-                    fallback_status = "realized"
-                else:
-                    fallback_status = "fallback_generation_failed"
-            except Exception:
-                fallback_status = "fallback_adapter_error"
-        else:
-            fallback_status = "fallback_no_adapter"
+        if adapter is None:
+            return speech_text, "fallback_no_adapter", model_id, provider, adapter, api_model
+        try:
+            result = adapter.generate(
+                prompt_text,
+                timeout_seconds=timeout_seconds or 20.0,
+                model_name=api_model,
+            )
+            generated = str(result.content or "").strip() if result.success else ""
+            if generated and not generated.startswith("["):
+                speech_text = generated.strip().strip("\"“”„")
+                fallback_status = "realized"
+            else:
+                fallback_status = "fallback_generation_failed"
+        except Exception:
+            fallback_status = "fallback_adapter_error"
+        return speech_text, fallback_status, model_id, provider, adapter, api_model
 
+    @staticmethod
+    def _realized_npc_speech_block(
+        *,
+        block: dict[str, Any],
+        actor_id: str,
+        intent: str,
+        narrator_perception: Any,
+        target_language: str,
+        speech_text: str,
+        fallback_speech: str,
+        fallback_status: str,
+        model_id: Any,
+        provider: Any,
+        adapter: Any,
+        api_model: Any,
+    ) -> dict[str, Any]:
         frame = _scripted_narration_frame(
             actor_ref=actor_id,
             intent=intent,
             perception=narrator_perception,
             language=target_language,
         )
-        quoted = _scripted_quote(speech_text, language=target_language)
-        visible_text = f"{frame} {quoted}".strip()
         realized_block = dict(block)
         realized_block["block_type"] = "narrator"
         realized_block["composition_kind"] = "narrated_actor_speech"
-        realized_block["text"] = visible_text
+        realized_block["text"] = f"{frame} {_scripted_quote(speech_text, language=target_language)}".strip()
         realized_block["speaker_label"] = "Narrator"
         realized_block["actor_id"] = None
         realized_block["target_actor_id"] = _resolve_goc_runtime_actor_id(actor_id) or None
@@ -148,6 +178,83 @@ class _ScriptedContinuationMixin:
             "speech_composition": "narrator_with_embedded_actor_speech",
         }
         return realized_block
+
+    def _realize_npc_speak_block(
+        self,
+        *,
+        block: dict[str, Any],
+        session: StorySession,
+        continuation: dict[str, Any],
+        trace_id: str | None,
+    ) -> dict[str, Any]:
+        """Realize a single ``npc_speak`` block via LLM.
+
+        Builds a prompt from the block's ``npc_speak_directive`` and
+        ``source_facts``, calls the same adapter used for narrator path
+        output, and replaces the placeholder text with the realized speech.
+        """
+        directive = self._npc_speak_directive(block)
+        source_facts = self._npc_speak_source_facts(block)
+        actor_id = str(directive.get("actor") or block.get("actor_id") or "").strip()
+        intent = str(directive.get("intent") or "").strip()
+        required_facts = directive.get("required_facts") or []
+        paraphrase_policy = str(directive.get("paraphrase_policy") or "structural_paraphrase_required").strip()
+        minimum_visible = str(directive.get("minimum_visible") or "").strip()
+        forbidden_drift = directive.get("forbidden_drift") or []
+        quote_excerpt = str(directive.get("quote_anchor_excerpt") or "").strip()
+        quote_use_as = str(directive.get("quote_anchor_use_as") or "").strip()
+        narrator_perception = directive.get("narrator_perception")
+
+        target_language = self._npc_speak_target_language(session)
+        prompt_lines = self._npc_speak_prompt_lines(
+            actor_id=actor_id,
+            intent=intent,
+            required_facts=required_facts,
+            paraphrase_policy=paraphrase_policy,
+            minimum_visible=minimum_visible,
+            forbidden_drift=forbidden_drift,
+            quote_excerpt=quote_excerpt,
+            quote_use_as=quote_use_as,
+            source_facts=source_facts,
+            target_language=target_language,
+        )
+        prompt_lines.extend(
+            self._npc_speak_instruction_lines(
+                actor_id=actor_id,
+                target_language=target_language,
+                paraphrase_policy=paraphrase_policy,
+                minimum_visible=minimum_visible,
+            )
+        )
+        fallback_speech = _scripted_npc_speech_text(
+            actor_ref=actor_id,
+            intent=intent,
+            required_facts=required_facts,
+            quote_excerpt=quote_excerpt,
+            language=target_language,
+        )
+        speech_text, fallback_status, model_id, provider, adapter, api_model = self._realized_or_fallback_npc_speech(
+            prompt_text="\n".join(prompt_lines),
+            actor_id=actor_id,
+            intent=intent,
+            required_facts=required_facts,
+            quote_excerpt=quote_excerpt,
+            target_language=target_language,
+        )
+        return self._realized_npc_speech_block(
+            block=block,
+            actor_id=actor_id,
+            intent=intent,
+            narrator_perception=narrator_perception,
+            target_language=target_language,
+            speech_text=speech_text,
+            fallback_speech=fallback_speech,
+            fallback_status=fallback_status,
+            model_id=model_id,
+            provider=provider,
+            adapter=adapter,
+            api_model=api_model,
+        )
 
     @staticmethod
     def _merge_continuation_into_opening_state(

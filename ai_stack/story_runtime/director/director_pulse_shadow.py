@@ -70,6 +70,95 @@ def _std_composition_inputs() -> list[str]:
     ]
 
 
+def _director_motivation_scores(
+    *,
+    npc_ids: list[str],
+    tick_id: str,
+    scene_energy_output: dict[str, Any] | None,
+    social_pressure_output: dict[str, Any] | None,
+    relationship_state_output: dict[str, Any] | None,
+    narrative_momentum_output: dict[str, Any] | None,
+    actor_pressure_profiles: dict[str, Any] | None,
+    npc_motivation_score_policy: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    return compute_npc_motivation_scores(
+        npc_ids=npc_ids,
+        tick_id=tick_id,
+        scene_energy_output=scene_energy_output,
+        social_pressure_output=social_pressure_output,
+        relationship_state_output=relationship_state_output,
+        narrative_momentum_output=narrative_momentum_output,
+        actor_pressure_profiles=actor_pressure_profiles,
+        npc_motivation_score_policy=npc_motivation_score_policy,
+    )
+
+
+def _director_action_choice(
+    *,
+    player_input_payload: dict[str, Any] | None,
+    initiative_actor_id: str | None,
+    trigger_kind: str,
+    triggering_actor_id: str | None,
+) -> tuple[str, str, str | None]:
+    if player_input_payload:
+        return TRIGGER_PLAYER_INPUT, ACTION_SPEAK, triggering_actor_id or "player"
+    if initiative_actor_id:
+        return trigger_kind, ACTION_SPEAK, initiative_actor_id
+    return trigger_kind, ACTION_SILENCE, None
+
+
+def _director_block_stream_event(
+    *,
+    block_payload: dict[str, Any] | None,
+    current_block_type: str | None,
+    current_block_id: str | None,
+    player_input_payload: dict[str, Any] | None,
+    tick_id: str,
+    chosen_actor: str | None,
+) -> dict[str, Any] | None:
+    if not block_payload or not current_block_type:
+        return None
+    cut_in_state = CUT_IN_UNINTERRUPTED
+    if player_input_payload and current_block_id:
+        cut_kind = resolve_cut_kind_for_block_type(current_block_type)
+        cut_in_state = (
+            CUT_IN_CUT_EM_DASH
+            if cut_kind == CUT_KIND_EM_DASH
+            else CUT_IN_CUT_SKIP_TO_END
+        )
+    lane = (
+        LANE_PLAYER_HINT
+        if current_block_type == BLOCK_TYPE_SOUFFLEUSE
+        else LANE_VISIBLE_SCENE_OUTPUT
+    )
+    return build_block_stream_event(
+        tick_id=tick_id,
+        block_type=current_block_type,
+        block_payload=block_payload,
+        cut_in_state=cut_in_state,
+        lane=lane,
+        source=chosen_actor or "director",
+    )
+
+
+def _director_player_cut_in_event(
+    *,
+    player_input_payload: dict[str, Any] | None,
+    tick_id: str,
+    current_block_id: str | None,
+    current_block_type: str | None,
+) -> dict[str, Any] | None:
+    if not player_input_payload:
+        return None
+    return build_player_cut_in_event(
+        tick_id=tick_id,
+        interrupted_block_id=current_block_id,
+        interrupted_block_type=current_block_type,
+        cut_kind=resolve_cut_kind_for_block_type(current_block_type),
+        player_input_payload=player_input_payload,
+    )
+
+
 def evaluate_director_tick(
     *,
     trigger_kind: str = TRIGGER_MOTIVATION_THRESHOLD_CROSSED,
@@ -89,45 +178,10 @@ def evaluate_director_tick(
     player_input_payload: dict[str, Any] | None = None,
     tick_id: str | None = None,
 ) -> dict[str, Any]:
-    """Evaluate one Director tick. Returns the full Pulse diagnostic bundle.
-
-    This is the shadow-path entry point. Caller may pass structured capability
-    outputs extracted from the existing turn state; this function does not read
-    turn state directly.
-
-    Args:
-        trigger_kind: What caused this tick evaluation (closed enum).
-        triggering_actor_id: Actor that triggered (or None).
-        npc_ids: NPC actor IDs present in the current scene.
-        scene_energy_output: Structured output from scene_energy capability.
-        social_pressure_output: Structured output from social_pressure capability.
-        relationship_state_output: Structured output from relationship_dynamics.
-        narrative_momentum_output: Structured output from narrative_momentum.
-        actor_pressure_profiles: Loaded actor_pressure_profiles.yaml data.
-        npc_motivation_score_policy: runtime_intelligence.npc_motivation_score from module.yaml.
-        gathering_paused: Whether gathering_paused is active (ADR-0061).
-            When True, shadow diagnostics still run; mandatory beats remain blocked.
-        since_last_tick_ms: Elapsed ms since last tick (None on first tick).
-        current_block_id: ID of the block currently being delivered (for cut-in).
-        current_block_type: Type of block being delivered (determines cut-in kind).
-        block_payload: The block being delivered this tick (if any).
-        player_input_payload: Player's input, if player is cutting in.
-        tick_id: Optional explicit tick ID (auto-generated when None).
-
-    Returns:
-        dict with keys:
-            ``director_tick_decision`` — director_tick_decision.v1
-            ``npc_motivation_scores`` — list of npc_motivation_score.v1
-            ``block_stream_event`` — block_stream_event.v1 or None
-            ``player_cut_in_event`` — player_cut_in_event.v1 or None
-            ``gathering_paused`` — bool (passed through for diagnostic transparency)
-            ``shadow_only`` — always True
-    """
+    """Evaluate one shadow Director tick and return the Pulse diagnostics."""
     resolved_tick_id = tick_id or _new_id()
 
-    # 1. Per-NPC motivation scores
-    #    Always computed — including when gathering_paused — for diagnostic record.
-    motivation_scores = compute_npc_motivation_scores(
+    motivation_scores = _director_motivation_scores(
         npc_ids=npc_ids,
         tick_id=resolved_tick_id,
         scene_energy_output=scene_energy_output,
@@ -137,26 +191,13 @@ def evaluate_director_tick(
         actor_pressure_profiles=actor_pressure_profiles,
         npc_motivation_score_policy=npc_motivation_score_policy,
     )
-
-    # 2. Initiative selection
     initiative_actor_id = select_initiative_actor(motivation_scores)
-
-    # 3. Resolve trigger kind, action, and chosen actor
-    if player_input_payload:
-        resolved_trigger = TRIGGER_PLAYER_INPUT
-        chosen_action = ACTION_SPEAK
-        chosen_actor = triggering_actor_id or "player"
-    elif initiative_actor_id:
-        resolved_trigger = trigger_kind
-        chosen_action = ACTION_SPEAK
-        chosen_actor = initiative_actor_id
-    else:
-        # Silence is a first-class Director decision, not a fallback.
-        resolved_trigger = trigger_kind
-        chosen_action = ACTION_SILENCE
-        chosen_actor = None
-
-    # 4. director_tick_decision
+    resolved_trigger, chosen_action, chosen_actor = _director_action_choice(
+        player_input_payload=player_input_payload,
+        initiative_actor_id=initiative_actor_id,
+        trigger_kind=trigger_kind,
+        triggering_actor_id=triggering_actor_id,
+    )
     tick_decision = build_director_tick_decision(
         trigger_kind=resolved_trigger,
         triggering_actor_id=triggering_actor_id,
@@ -168,40 +209,23 @@ def evaluate_director_tick(
         tick_id=resolved_tick_id,
     )
 
-    # 5. block_stream_event — emitted when a block is being delivered
-    block_stream_ev: dict[str, Any] | None = None
-    if block_payload and current_block_type:
-        cut_in_state = CUT_IN_UNINTERRUPTED
-        if player_input_payload and current_block_id:
-            cut_kind = resolve_cut_kind_for_block_type(current_block_type)
-            cut_in_state = CUT_IN_CUT_EM_DASH if cut_kind == CUT_KIND_EM_DASH else CUT_IN_CUT_SKIP_TO_END
-        lane = LANE_PLAYER_HINT if current_block_type == BLOCK_TYPE_SOUFFLEUSE else LANE_VISIBLE_SCENE_OUTPUT
-        block_stream_ev = build_block_stream_event(
-            tick_id=resolved_tick_id,
-            block_type=current_block_type,
-            block_payload=block_payload,
-            cut_in_state=cut_in_state,
-            lane=lane,
-            source=chosen_actor or "director",
-        )
-
-    # 6. player_cut_in_event — emitted when player interrupts
-    cut_in_ev: dict[str, Any] | None = None
-    if player_input_payload:
-        cut_kind = resolve_cut_kind_for_block_type(current_block_type)
-        cut_in_ev = build_player_cut_in_event(
-            tick_id=resolved_tick_id,
-            interrupted_block_id=current_block_id,
-            interrupted_block_type=current_block_type,
-            cut_kind=cut_kind,
-            player_input_payload=player_input_payload,
-        )
-
     return {
         "director_tick_decision": tick_decision,
         "npc_motivation_scores": motivation_scores,
-        "block_stream_event": block_stream_ev,
-        "player_cut_in_event": cut_in_ev,
+        "block_stream_event": _director_block_stream_event(
+            block_payload=block_payload,
+            current_block_type=current_block_type,
+            current_block_id=current_block_id,
+            player_input_payload=player_input_payload,
+            tick_id=resolved_tick_id,
+            chosen_actor=chosen_actor,
+        ),
+        "player_cut_in_event": _director_player_cut_in_event(
+            player_input_payload=player_input_payload,
+            tick_id=resolved_tick_id,
+            current_block_id=current_block_id,
+            current_block_type=current_block_type,
+        ),
         "gathering_paused": gathering_paused,
         "shadow_only": True,
     }

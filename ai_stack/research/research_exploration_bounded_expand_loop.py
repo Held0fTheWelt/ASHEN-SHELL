@@ -56,6 +56,119 @@ _TERMINAL_ABORTS = frozenset(
 )
 
 
+def _budget_abort_reason(
+    *,
+    budget: ExplorationBudget,
+    start: float,
+    nodes: list[dict[str, Any]],
+    counters: _ExplorationExpandCounters,
+) -> str | None:
+    if int((time.time() - start) * 1000) >= budget.time_budget_ms:
+        return ExplorationAbortReason.TIME_BUDGET_EXHAUSTED.value
+    if len(nodes) >= budget.max_total_nodes:
+        return ExplorationAbortReason.NODE_BUDGET_EXHAUSTED.value
+    if counters.llm_calls >= budget.llm_call_budget:
+        return ExplorationAbortReason.LLM_BUDGET_EXHAUSTED.value
+    if counters.token_use >= budget.token_budget:
+        return ExplorationAbortReason.TOKEN_BUDGET_EXHAUSTED.value
+    return None
+
+
+def _child_evidence_ids(
+    *,
+    current: dict[str, Any],
+    relation: ExplorationRelationType,
+) -> list[str]:
+    evidence_ids = list(current.get("evidence_anchor_ids", []))
+    if relation in (ExplorationRelationType.CONTRAST, ExplorationRelationType.COUNTERREAD):
+        return evidence_ids[:1]
+    return evidence_ids
+
+
+def _record_low_evidence_abort(
+    *,
+    evidence_ids: list[str],
+    budget: ExplorationBudget,
+    counters: _ExplorationExpandCounters,
+) -> str | None:
+    if evidence_ids:
+        return None
+    counters.low_evidence_expansions += 1
+    if counters.low_evidence_expansions > budget.max_low_evidence_expansions:
+        return ExplorationAbortReason.LOW_EVIDENCE_LIMIT_REACHED.value
+    return None
+
+
+def _exploration_outcome(
+    *,
+    novelty: float,
+    counters: _ExplorationExpandCounters,
+) -> ExplorationOutcome:
+    if novelty < 0.18:
+        counters.rejected_count += 1
+        return ExplorationOutcome.REJECTED
+    if novelty < 0.24:
+        counters.unresolved_count += 1
+        return ExplorationOutcome.UNRESOLVED
+    return ExplorationOutcome.KEPT_FOR_VALIDATION
+
+
+def _exploration_child_records(
+    *,
+    current: dict[str, Any],
+    relation: ExplorationRelationType,
+    depth: int,
+    used_child: int,
+    child_hypothesis: str,
+    speculative_level: float,
+    evidence_ids: list[str],
+    outcome: ExplorationOutcome,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    child_id = deterministic_node_id(current["node_id"], relation, depth + 1, used_child)
+    child = ExplorationNodeRecord(
+        node_id=child_id,
+        parent_node_id=current["node_id"],
+        seed_aspect_id=str(current.get("seed_aspect_id", "")),
+        perspective=Perspective(str(current.get("perspective", Perspective.PLAYWRIGHT.value))),
+        hypothesis=child_hypothesis,
+        rationale=f"derived_via:{relation.value}",
+        speculative_level=speculative_level,
+        evidence_anchor_ids=evidence_ids,
+        novelty_score=novelty_score(child_hypothesis),
+        status=ResearchStatus.EXPLORATORY,
+        outcome=outcome,
+    ).to_dict()
+    edge = ExplorationEdgeRecord(
+        edge_id=deterministic_edge_id(current["node_id"], child_id, relation),
+        from_node_id=current["node_id"],
+        to_node_id=child_id,
+        relation_type=relation,
+    ).to_dict()
+    return child, edge
+
+
+def _append_exploration_child(
+    *,
+    child: dict[str, Any],
+    edge: dict[str, Any],
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    seen_hypothesis: set[str],
+    normalized: str,
+    counters: _ExplorationExpandCounters,
+    queue: deque[tuple[dict[str, Any], int]],
+    depth: int,
+    outcome: ExplorationOutcome,
+) -> None:
+    nodes.append(child)
+    edges.append(edge)
+    seen_hypothesis.add(normalized)
+    if outcome == ExplorationOutcome.KEPT_FOR_VALIDATION:
+        queue.append((child, depth + 1))
+        if candidate_eligible(child):
+            counters.promoted_count += 1
+
+
 def run_bounded_exploration_expand_loop(
     *,
     budget: ExplorationBudget,
@@ -67,34 +180,17 @@ def run_bounded_exploration_expand_loop(
     counters: _ExplorationExpandCounters,
     abort_reason: str,
 ) -> str:
-    """Run main BFS expansion until queue empty or budget/abort.
-    
-    Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
-    
-    Args:
-        budget: ``budget`` (ExplorationBudget); meaning follows the type and call sites.
-        start: ``start`` (float); meaning follows the type and call sites.
-        queue: ``queue`` (deque[tuple[dict[str, Any],
-            int]]); meaning follows the type and call sites.
-        nodes: ``nodes`` (list[dict[str, Any]]); meaning follows the type and call sites.
-        edges: ``edges`` (list[dict[str, Any]]); meaning follows the type and call sites.
-        seen_hypothesis: ``seen_hypothesis`` (set[str]); meaning follows the type and call sites.
-        counters: ``counters`` (_ExplorationExpandCounters); meaning follows the type and call sites.
-        abort_reason: ``abort_reason`` (str); meaning follows the type and call sites.
-    
-    Returns:
-        str:
-            Returns a value of type ``str``; see the function body for structure, error paths, and sentinels.
-    """
+    """Expand queued research hypotheses breadth-first until a budget gate stops."""
     ar = abort_reason
     while queue:
         current, depth = queue.popleft()
-        elapsed_ms = int((time.time() - start) * 1000)
-        if elapsed_ms >= budget.time_budget_ms:
-            ar = ExplorationAbortReason.TIME_BUDGET_EXHAUSTED.value
-            break
-        if len(nodes) >= budget.max_total_nodes:
-            ar = ExplorationAbortReason.NODE_BUDGET_EXHAUSTED.value
+        ar = _budget_abort_reason(
+            budget=budget,
+            start=start,
+            nodes=nodes,
+            counters=counters,
+        ) or ar
+        if ar in _TERMINAL_ABORTS:
             break
         if depth >= budget.max_depth:
             if ar == ExplorationAbortReason.COMPLETED_WITHIN_BUDGET.value:
@@ -108,14 +204,13 @@ def run_bounded_exploration_expand_loop(
                 if ar == ExplorationAbortReason.COMPLETED_WITHIN_BUDGET.value:
                     ar = ExplorationAbortReason.BRANCH_BUDGET_EXHAUSTED.value
                 break
-            if counters.llm_calls >= budget.llm_call_budget:
-                ar = ExplorationAbortReason.LLM_BUDGET_EXHAUSTED.value
-                break
-            if counters.token_use >= budget.token_budget:
-                ar = ExplorationAbortReason.TOKEN_BUDGET_EXHAUSTED.value
-                break
-            if len(nodes) >= budget.max_total_nodes:
-                ar = ExplorationAbortReason.NODE_BUDGET_EXHAUSTED.value
+            ar = _budget_abort_reason(
+                budget=budget,
+                start=start,
+                nodes=nodes,
+                counters=counters,
+            ) or ar
+            if ar in _TERMINAL_ABORTS:
                 break
 
             parent_hyp = str(current.get("hypothesis", ""))
@@ -134,57 +229,43 @@ def run_bounded_exploration_expand_loop(
                 ar = ExplorationAbortReason.SPECULATIVE_DRIFT_ABORT.value
                 break
 
-            evidence_ids = list(current.get("evidence_anchor_ids", []))
-            if relation in (ExplorationRelationType.CONTRAST, ExplorationRelationType.COUNTERREAD):
-                evidence_ids = evidence_ids[:1]
-            if not evidence_ids:
-                counters.low_evidence_expansions += 1
-                if counters.low_evidence_expansions > budget.max_low_evidence_expansions:
-                    ar = ExplorationAbortReason.LOW_EVIDENCE_LIMIT_REACHED.value
-                    break
+            evidence_ids = _child_evidence_ids(current=current, relation=relation)
+            ar = _record_low_evidence_abort(
+                evidence_ids=evidence_ids,
+                budget=budget,
+                counters=counters,
+            ) or ar
+            if ar in _TERMINAL_ABORTS:
+                break
 
             counters.llm_calls += 1
             counters.token_use += max(10, len(child_hyp.split()))
             counters.branch_count += 1
-            child_id = deterministic_node_id(current["node_id"], relation, depth + 1, used_child)
             novelty = novelty_score(child_hyp)
-            outcome = ExplorationOutcome.KEPT_FOR_VALIDATION
-            if novelty < 0.18:
-                outcome = ExplorationOutcome.REJECTED
-                counters.rejected_count += 1
-            elif novelty < 0.24:
-                outcome = ExplorationOutcome.UNRESOLVED
-                counters.unresolved_count += 1
-
-            child = ExplorationNodeRecord(
-                node_id=child_id,
-                parent_node_id=current["node_id"],
-                seed_aspect_id=str(current.get("seed_aspect_id", "")),
-                perspective=Perspective(str(current.get("perspective", Perspective.PLAYWRIGHT.value))),
-                hypothesis=child_hyp,
-                rationale=f"derived_via:{relation.value}",
+            outcome = _exploration_outcome(novelty=novelty, counters=counters)
+            child, edge = _exploration_child_records(
+                current=current,
+                relation=relation,
+                depth=depth,
+                used_child=used_child,
+                child_hypothesis=child_hyp,
                 speculative_level=speculative_level,
-                evidence_anchor_ids=evidence_ids,
-                novelty_score=novelty,
-                status=ResearchStatus.EXPLORATORY,
+                evidence_ids=evidence_ids,
                 outcome=outcome,
-            ).to_dict()
-            edge = ExplorationEdgeRecord(
-                edge_id=deterministic_edge_id(current["node_id"], child_id, relation),
-                from_node_id=current["node_id"],
-                to_node_id=child_id,
-                relation_type=relation,
-            ).to_dict()
-
-            nodes.append(child)
-            edges.append(edge)
-            seen_hypothesis.add(normalized)
+            )
             used_child += 1
-
-            if outcome == ExplorationOutcome.KEPT_FOR_VALIDATION:
-                queue.append((child, depth + 1))
-                if candidate_eligible(child):
-                    counters.promoted_count += 1
+            _append_exploration_child(
+                child=child,
+                edge=edge,
+                nodes=nodes,
+                edges=edges,
+                seen_hypothesis=seen_hypothesis,
+                normalized=normalized,
+                counters=counters,
+                queue=queue,
+                depth=depth,
+                outcome=outcome,
+            )
 
         if ar in _TERMINAL_ABORTS:
             break

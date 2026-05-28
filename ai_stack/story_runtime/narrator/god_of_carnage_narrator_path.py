@@ -598,6 +598,142 @@ def _step_order_after(after_step_id: str) -> list[str]:
     return step_order[idx + 1:]
 
 
+def _scripted_continuation_authoring_language() -> str:
+    canonical_path = load_goc_canonical_path_yaml()
+    return str(canonical_path.get("authoring_language") or "en").strip().lower()[:2] or "en"
+
+
+def _scripted_session_language(session_output_language: str) -> str | None:
+    return str(session_output_language or "").strip().lower()[:2] or None
+
+
+def _scripted_requires_output_realization(
+    *,
+    session_output_language: str,
+    authoring_language: str,
+) -> bool:
+    requested = str(session_output_language or "").strip()
+    return bool(requested) and requested.lower()[:2] != authoring_language
+
+
+def _append_npc_speak_continuation_block(
+    *,
+    blocks: list[dict[str, Any]],
+    source_refs: list[str],
+    block_idx: int,
+    npc_speak: dict[str, Any],
+    beat: dict[str, Any],
+    step: dict[str, Any],
+    previous_step: dict[str, Any] | None,
+) -> int:
+    anchor_ref = str(npc_speak.get("quote_anchor") or "").strip()
+    quote_anchor = _load_quote_anchor(anchor_ref) if anchor_ref else {}
+    block = _npc_speak_block(
+        index=block_idx,
+        npc_speak=npc_speak,
+        beat=beat,
+        step=step,
+        quote_anchor=quote_anchor,
+        previous_step=previous_step,
+    )
+    blocks.append(block)
+    source_refs.extend(str(ref) for ref in block.get("source_refs") or [])
+    return block_idx + 1
+
+
+def _append_perception_continuation_block(
+    *,
+    blocks: list[dict[str, Any]],
+    source_refs: list[str],
+    block_idx: int,
+    perception: list[str],
+    beat_id: str,
+    beat: dict[str, Any],
+    step: dict[str, Any],
+    previous_step: dict[str, Any] | None,
+) -> int:
+    text = sanitize_gm_narration_beat_line(" ".join(perception))
+    if not text:
+        return block_idx
+    block = _block(
+        index=block_idx,
+        text=text,
+        beat=beat_id,
+        step=step,
+        mandatory_beat=beat,
+        previous_step=previous_step,
+    )
+    block["id"] = f"scripted-continuation-{block_idx}"
+    block["source"] = "narrator_path_scripted_perception"
+    blocks.append(block)
+    source_refs.extend(str(ref) for ref in block.get("source_refs") or [])
+    return block_idx + 1
+
+
+def _scripted_continuation_director_plan(
+    *,
+    canonical_step_ids: list[str],
+    source_refs: list[str],
+) -> dict[str, Any]:
+    return {
+        "contract": "director_narrator_path_plan.v1",
+        "path_mode": "narrator_path_scripted_continuation",
+        "speech_allowed": True,
+        "npc_agency_required": False,
+        "player_action_resolution_required": False,
+        "selected_capabilities": [
+            "narrator.opening_event.realize",
+            "narrator.scripted_npc_speech.realize",
+        ],
+        "skipped_capability_groups": [
+            "player_action_resolution",
+            "affordance_evaluation",
+            "npc_agency",
+            "dramatic_irony",
+            "branch_forecast",
+        ],
+        "canonical_step_ids": canonical_step_ids,
+        "content_source_refs": source_refs,
+    }
+
+
+def _scripted_continuation_payload(
+    *,
+    authoring_language: str,
+    session_output_language: str,
+    blocks: list[dict[str, Any]],
+    source_refs: list[str],
+    canonical_step_ids: list[str],
+    last_step_id: str,
+    realized_beat_ids: list[str],
+    stopped_at_player_window: bool,
+    stopped_at_beat_id: str | None,
+) -> dict[str, Any]:
+    return {
+        "contract": SCRIPTED_CONTINUATION_CONTRACT,
+        "path_mode": "narrator_path_scripted_continuation",
+        "adapter": NARRATOR_PATH_ADAPTER,
+        "adapter_invocation_mode": NARRATOR_PATH_INVOCATION_MODE,
+        "authoring_language": authoring_language,
+        "session_output_language": _scripted_session_language(session_output_language),
+        "requires_output_realization": _scripted_requires_output_realization(
+            session_output_language=session_output_language,
+            authoring_language=authoring_language,
+        ),
+        "scene_blocks": blocks,
+        "source_refs": source_refs,
+        "canonical_step_ids": canonical_step_ids,
+        "last_step_id": last_step_id,
+        "realized_beat_ids": realized_beat_ids,
+        "stopped_at_player_window": stopped_at_player_window,
+        "stopped_at_beat_id": stopped_at_beat_id,
+        "director_plan": _scripted_continuation_director_plan(
+            canonical_step_ids=canonical_step_ids,
+            source_refs=source_refs,
+        ),
+    }
+
+
 def build_goc_scripted_continuation(
     *,
     after_step_id: str,
@@ -655,37 +791,28 @@ def build_goc_scripted_continuation(
             npc_speak = _extract_npc_speak(beat)
 
             if npc_speak:
-                anchor_ref = str(npc_speak.get("quote_anchor") or "").strip()
-                quote_anchor = _load_quote_anchor(anchor_ref) if anchor_ref else {}
-                blk = _npc_speak_block(
-                    index=block_idx,
+                block_idx = _append_npc_speak_continuation_block(
+                    blocks=blocks,
+                    source_refs=source_refs,
+                    block_idx=block_idx,
                     npc_speak=npc_speak,
                     beat=beat,
                     step=step,
-                    quote_anchor=quote_anchor,
                     previous_step=previous_step,
                 )
-                blocks.append(blk)
-                source_refs.extend(str(ref) for ref in blk.get("source_refs") or [])
-                block_idx += 1
 
             perception = [] if npc_speak else _perception_lines(beat)
             if perception:
-                text = sanitize_gm_narration_beat_line(" ".join(perception))
-                if text:
-                    blk = _block(
-                        index=block_idx,
-                        text=text,
-                        beat=beat_id,
-                        step=step,
-                        mandatory_beat=beat,
-                        previous_step=previous_step,
-                    )
-                    blk["id"] = f"scripted-continuation-{block_idx}"
-                    blk["source"] = "narrator_path_scripted_perception"
-                    blocks.append(blk)
-                    source_refs.extend(str(ref) for ref in blk.get("source_refs") or [])
-                    block_idx += 1
+                block_idx = _append_perception_continuation_block(
+                    blocks=blocks,
+                    source_refs=source_refs,
+                    block_idx=block_idx,
+                    perception=perception,
+                    beat_id=beat_id,
+                    beat=beat,
+                    step=step,
+                    previous_step=previous_step,
+                )
 
             realized_beat_ids.append(beat_id)
 
@@ -693,46 +820,16 @@ def build_goc_scripted_continuation(
             break
         previous_step = step
 
-    canonical_path = load_goc_canonical_path_yaml()
-    authoring_language = str(canonical_path.get("authoring_language") or "en").strip().lower()[:2] or "en"
+    authoring_language = _scripted_continuation_authoring_language()
     source_refs = list(dict.fromkeys(source_refs))
-
-    return {
-        "contract": SCRIPTED_CONTINUATION_CONTRACT,
-        "path_mode": "narrator_path_scripted_continuation",
-        "adapter": NARRATOR_PATH_ADAPTER,
-        "adapter_invocation_mode": NARRATOR_PATH_INVOCATION_MODE,
-        "authoring_language": authoring_language,
-        "session_output_language": str(session_output_language or "").strip().lower()[:2] or None,
-        "requires_output_realization": (
-            bool(str(session_output_language or "").strip())
-            and (str(session_output_language or "").strip().lower()[:2] != authoring_language)
-        ),
-        "scene_blocks": blocks,
-        "source_refs": source_refs,
-        "canonical_step_ids": canonical_step_ids,
-        "last_step_id": last_step_id,
-        "realized_beat_ids": realized_beat_ids,
-        "stopped_at_player_window": stopped_at_player_window,
-        "stopped_at_beat_id": stopped_at_beat_id,
-        "director_plan": {
-            "contract": "director_narrator_path_plan.v1",
-            "path_mode": "narrator_path_scripted_continuation",
-            "speech_allowed": True,
-            "npc_agency_required": False,
-            "player_action_resolution_required": False,
-            "selected_capabilities": [
-                "narrator.opening_event.realize",
-                "narrator.scripted_npc_speech.realize",
-            ],
-            "skipped_capability_groups": [
-                "player_action_resolution",
-                "affordance_evaluation",
-                "npc_agency",
-                "dramatic_irony",
-                "branch_forecast",
-            ],
-            "canonical_step_ids": canonical_step_ids,
-            "content_source_refs": source_refs,
-        },
-    }
+    return _scripted_continuation_payload(
+        authoring_language=authoring_language,
+        session_output_language=session_output_language,
+        blocks=blocks,
+        source_refs=source_refs,
+        canonical_step_ids=canonical_step_ids,
+        last_step_id=last_step_id,
+        realized_beat_ids=realized_beat_ids,
+        stopped_at_player_window=stopped_at_player_window,
+        stopped_at_beat_id=stopped_at_beat_id,
+    )
