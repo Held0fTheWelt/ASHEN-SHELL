@@ -46,6 +46,11 @@ from app.services.story_runtime.runtime_status_semantics import STATUS_SEMANTICS
 
 
 _REQUIRED_TASK_KINDS: tuple[str, ...] = (
+    # Runtime-Turn core — must have routes for live gameplay
+    "classification",
+    "narrative_formulation",
+    "translation",
+    # Research and retrieval
     "narrative_live_generation",
     "narrative_preview_generation",
     "narrative_validation_semantic",

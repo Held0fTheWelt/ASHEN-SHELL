@@ -37,6 +37,14 @@ from ai_stack.story_runtime.runtime_aspect_ledger import (
 )
 
 
+def _is_semantic_translation_prompt(prompt: str) -> bool:
+    return (
+        "Resolve the player input before any story turn processing." in prompt
+        or "Translate the following player input" in prompt
+        or "Translate player input" in prompt
+    )
+
+
 class SuccessAdapter(BaseModelAdapter):
     adapter_name = "mock"
 
@@ -68,7 +76,10 @@ class SemanticTranslationAdapter(BaseModelAdapter):
         model_name: str | None = None,
     ) -> ModelCallResult:
         self.prompts.append(prompt)
-        if "Resolve the player input before any story turn processing." in prompt:
+        if _is_semantic_translation_prompt(prompt):
+            assert timeout_seconds == 30.0
+            assert "content_catalog" not in prompt
+            assert "semantic_resolution_contract" not in prompt
             payload = {"semantic_action": dict(self.semantic_action)}
             if self.semantic_move:
                 payload["semantic_move"] = dict(self.semantic_move)
@@ -97,7 +108,10 @@ class SemanticTranslationNarrationAdapter(BaseModelAdapter):
         model_name: str | None = None,
     ) -> ModelCallResult:
         self.prompts.append(prompt)
-        if "Resolve the player input before any story turn processing." in prompt:
+        if _is_semantic_translation_prompt(prompt):
+            assert timeout_seconds == 30.0
+            assert "content_catalog" not in prompt
+            assert "semantic_resolution_contract" not in prompt
             return ModelCallResult(
                 content=json.dumps({"semantic_action": dict(self.semantic_action)}),
                 success=True,
@@ -300,6 +314,40 @@ def _build_graph_with_semantic_translation_and_narration(
         retriever=ContextRetriever(corpus),
         assembler=ContextPackAssembler(),
     )
+
+
+def test_translate_player_input_skips_adapter_for_english_input(tmp_path: Path) -> None:
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("God of Carnage graph semantic translation sample.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    registry = build_default_registry()
+    routing = RoutingPolicy(registry)
+    translator = SemanticTranslationAdapter({"normalized_english_text": "unused"})
+    graph = RuntimeTurnGraphExecutor(
+        interpreter=interpret_player_input,
+        routing=routing,
+        registry=registry,
+        adapters={"mock": SuccessAdapter(), "openai": translator, "ollama": translator},
+        retriever=ContextRetriever(corpus),
+        assembler=ContextPackAssembler(),
+    )
+
+    update = graph._translate_player_input(
+        {
+            "module_id": "god_of_carnage",
+            "player_input": "Go to the kitchen",
+            "session_input_language": "en",
+            "session_output_language": "en",
+            "turn_number": 1,
+        }
+    )
+
+    translation = update["input_translation"]
+    assert translation["status"] == "skipped_same_language"
+    assert translation["semantic_resolution_required"] is False
+    assert translation["normalized_english_text"] == "Go to the kitchen"
+    assert translator.prompts == []
 
 
 def test_runtime_turn_graph_propagates_trace_and_host_versions(tmp_path: Path) -> None:

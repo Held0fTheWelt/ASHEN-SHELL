@@ -1,37 +1,30 @@
-"""Phase 6B-5B — narrator strict-mode parity contract (ai_stack side).
+"""Phase 6B-5B / 6B-8 — narrator strict-mode parity contract (ai_stack side).
 
-Phase 6B-5B is the test-contract rewrite phase that precedes the Phase 6B-5C
-default-on flip of ``W5_AST_NARRATOR_STRICT_ENABLED`` (see
-[ADR-0065](../../docs/ADR/adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md)).
+Phase 6B-5B originally rewrote the parity contract before the Phase 6B-5C
+default-on flip. ADR-0068 now makes strict mode permanent: explicit
+``W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off`` is ignored.
 
 These tests strengthen the existing ai_stack strict-migration coverage in:
 
 - ``ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py``
 - ``ai_stack/tests/test_god_of_carnage_narrator_path.py``
 
-so that the future default-on flip is gated by *semantic* assertions, not
+so permanent strict-on behavior is gated by *semantic* assertions, not
 field-presence-only assertions. The world-engine-side end-to-end parity
 contract lives in
 ``world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py``.
 
 Scope of this file:
 
-1. ``ai_stack.actor_tracking.w5_ast_narrator_strict_enabled`` resolver
-   posture matrix (default-off, explicit-off, explicit-on, env-noise).
-2. ``ai_stack.actor_tracking.w5_projection_flag_states`` reports the
-   strict flag accurately under each posture.
+1. ``ai_stack.actor_tracking.w5_ast_narrator_strict_enabled`` is removed from
+   the public surface.
+2. ``ai_stack.actor_tracking.w5_projection_flag_states`` no longer reports a
+   narrator strict switch.
 3. ``ai_stack.story_runtime.narrator.god_of_carnage_narrator_path``:
-   - Strict-off → ``source_facts["transition_from_previous"]`` is first
-     class, ``_legacy_compat`` is absent.
-   - Strict-on → ``source_facts["transition_from_previous"]`` is removed
-     from the top-level contract, demoted to
-     ``source_facts["_legacy_compat"]["transition_from_previous"]`` with
-     an ``authority = "w5_projection"`` marker and a ``notice`` string
-     that names the W5 narrator projection as the actor-situation
-     authority and labels the breadcrumb as non-authoritative.
-   - Strict-on preserves the authored hard-cut directed-transition
-     breadcrumb (so operator parity audits remain possible) but the
-     prompt-side authority moves to W5.
+   - ``source_facts["transition_from_previous"]`` is absent under every
+     env value.
+   - ``_legacy_compat`` remains absent (ADR-0066).
+   - W5 projection is the sole actor-situation authority.
    - Canonical step ids, mandatory-beat coverage cues, and source_refs
      are unchanged by the strict flag — strict mode is a source-of-truth
      migration, not a content rewrite.
@@ -41,10 +34,8 @@ Scope of this file:
    strict-on prompt names this projection as the actor-situation
    authority, so its semantic content is a Phase 6B-5B gate.
 
-These tests do not flip ``W5_AST_NARRATOR_STRICT_ENABLED``, do not remove
-``transition_from_previous``, do not remove ``_legacy_compat``, do not weaken
-malformed-W5 fallback, and do not mutate committed events. How remains
-first-class. Inferred Why remains soft truth.
+These tests do not weaken malformed-W5 fallback and do not mutate committed
+events. How remains first-class. Inferred Why remains soft truth.
 """
 
 from __future__ import annotations
@@ -76,24 +67,19 @@ def _isolate_w5_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestPhase6B5BStrictResolverPosture:
-    """Phase 6B-5B parity gate — the strict resolver must report posture
-    accurately so Phase 6B-5C can flip the default safely. The W5 module
-    is imported only from the active package
-    ``ai_stack.actor_tracking``; the retired
-    ``ai_stack.actor_situation`` / ``ai_stack.w5_actor_situation``
-    packages must not be importable."""
+    """Phase 6B-8 gate - the strict resolver surface is gone. The W5 module is
+    imported only from ``ai_stack.actor_tracking``; the retired
+    ``ai_stack.actor_situation`` / ``ai_stack.w5_actor_situation`` packages
+    must not be importable."""
 
-    def test_active_module_path_is_actor_tracking(self) -> None:
-        from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
+    def test_strict_resolver_removed_from_public_surface(self) -> None:
+        import ai_stack.actor_tracking as actor_tracking
+        import ai_stack.actor_tracking.diagnostics as diagnostics
 
-        # The resolver originates from ai_stack/actor_tracking/diagnostics.py
-        # via the package __init__ re-export. Both surfaces must be available
-        # and identical.
-        from ai_stack.actor_tracking.diagnostics import (
-            w5_ast_narrator_strict_enabled as direct_resolver,
-        )
-
-        assert w5_ast_narrator_strict_enabled is direct_resolver
+        assert not hasattr(actor_tracking, "w5_ast_narrator_strict_enabled")
+        assert not hasattr(diagnostics, "w5_ast_narrator_strict_enabled")
+        assert "w5_ast_narrator_strict_enabled" not in actor_tracking.__all__
+        assert "w5_ast_narrator_strict_enabled" not in diagnostics.__all__
 
     def test_retired_packages_are_not_importable(self) -> None:
         # Phase 6B-4 + ADR-0065 require these packages to remain absent.
@@ -103,68 +89,20 @@ class TestPhase6B5BStrictResolverPosture:
             with pytest.raises(ModuleNotFoundError):
                 importlib.import_module(retired)
 
-    def test_default_unset_is_strict_on(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
-
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-        assert w5_ast_narrator_strict_enabled() is True
-
-    @pytest.mark.parametrize("value", ["", "  ", "garbage", "maybe"])
-    def test_invalid_env_values_default_to_strict_on(
-        self, monkeypatch: pytest.MonkeyPatch, value: str
-    ) -> None:
-        """An ambiguous or empty env value defaults to strict-on (Phase 6B-5C
-        default-on semantics). Only explicit 0/false/no/off opts out."""
-
-        from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", value)
-        assert w5_ast_narrator_strict_enabled() is True
-
     @pytest.mark.parametrize(
-        "value", ["0", "false", "no", "off", "FALSE", "Off", "  false  "]
+        "value",
+        ["", "  ", "garbage", "0", "false", "no", "off", "1", "true", "yes", "on"],
     )
-    def test_explicit_off_values_return_true_after_adr_0068(
+    def test_env_values_do_not_recreate_strict_switch(
         self, monkeypatch: pytest.MonkeyPatch, value: str
     ) -> None:
-        """ADR-0068: explicit false/0/no/off no longer changes narrator behavior."""
-        from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
+        """ADR-0068: the env var no longer has a behavior-changing resolver."""
+        from ai_stack.actor_tracking import w5_projection_flag_states
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", value)
-        assert w5_ast_narrator_strict_enabled() is True
-
-    @pytest.mark.parametrize(
-        "value", ["1", "true", "yes", "on", "TRUE", "On", "  true  "]
-    )
-    def test_explicit_on_values_are_strict_on(
-        self, monkeypatch: pytest.MonkeyPatch, value: str
-    ) -> None:
-        from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
-
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", value)
-        assert w5_ast_narrator_strict_enabled() is True
-
-    def test_flag_states_narrator_strict_always_true(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """ADR-0068: narrator_strict is always True regardless of env var."""
-        from ai_stack.actor_tracking import (
-            w5_ast_narrator_strict_enabled,
-            w5_projection_flag_states,
-        )
-
-        monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-        assert (
-            w5_projection_flag_states()["narrator_strict"]
-            is w5_ast_narrator_strict_enabled()
-            is True
-        )
-        monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
-        assert (
-            w5_projection_flag_states()["narrator_strict"]
-            is w5_ast_narrator_strict_enabled()
-            is True
-        )
+        states = w5_projection_flag_states()
+        assert "narrator_strict" not in states
+        assert states["narrator"] is True
 
     # Phase 6B-6B: diagnostics flag retired — assert it is absent from flag_states
 
@@ -185,32 +123,8 @@ class TestPhase6B5BStrictResolverPosture:
 
 
 # ---------------------------------------------------------------------------
-# 2) GoC narrator path — strict-off vs strict-on source_facts shape
+# 2) GoC narrator path — permanent strict-on source_facts shape
 # ---------------------------------------------------------------------------
-
-
-def _first_block_with_legacy_transition(blocks: list[dict[str, Any]]) -> dict[str, Any]:
-    for block in blocks:
-        facts = block.get("source_facts") or {}
-        if (
-            "transition_from_previous" in facts
-            and isinstance(facts["transition_from_previous"], dict)
-            and facts["transition_from_previous"].get("location_changed")
-        ):
-            return block
-    raise AssertionError(
-        "expected at least one narrator block with a legacy "
-        "transition_from_previous.location_changed=True payload"
-    )
-
-
-def _first_block_with_legacy_compat_transition(
-    blocks: list[dict[str, Any]],
-) -> dict[str, Any]:  # pragma: no cover — helper retained for reference only, not called post-6B-6B
-    raise AssertionError(
-        "_legacy_compat breadcrumb retired in Phase 6B-6B (ADR-0066); "
-        "this helper must not be called"
-    )
 
 
 class TestPhase6B5BGoCNarratorPathSourceFactsShape:
@@ -580,20 +494,16 @@ class TestPhase6B5BNarratorProjectionSemanticContent:
 class TestPhase6B5BNonRegression:
     """Phase 6B-5B must not weaken Phase 6B-3B or Phase 6B-1 contracts."""
 
-    def test_strict_flag_is_independent_of_projection_flag(
+    def test_removed_strict_switch_is_independent_of_projection_flag(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from ai_stack.actor_tracking import (
-            w5_ast_narrator_strict_enabled,
-            w5_projection_flag_states,
-        )
+        from ai_stack.actor_tracking import w5_projection_flag_states
 
-        # Projection flag toggled; strict flag remains default-on.
+        # Projection flag toggled; the strict switch remains absent.
         for projection_value in ("0", "1", "false", "true", "off", "on"):
             monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", projection_value)
             monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
-            assert w5_ast_narrator_strict_enabled() is True
-            assert w5_projection_flag_states()["narrator_strict"] is True
+            assert "narrator_strict" not in w5_projection_flag_states()
 
     def test_strict_on_does_not_disable_other_w5_projections(
         self, monkeypatch: pytest.MonkeyPatch
@@ -606,4 +516,4 @@ class TestPhase6B5BNonRegression:
         assert states["narrator"] is True
         assert states["director"] is True
         assert states["npc"] is True
-        assert states["narrator_strict"] is True
+        assert "narrator_strict" not in states

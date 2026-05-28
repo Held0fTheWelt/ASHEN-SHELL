@@ -1,8 +1,8 @@
-"""Phase 6B-5B — narrator strict-mode parity contract (world-engine side).
+"""Phase 6B-5B / 6B-8 — narrator strict-mode parity contract (world-engine side).
 
-Phase 6B-5B is the test-contract rewrite phase that precedes the Phase 6B-5C
-default-on flip of ``W5_AST_NARRATOR_STRICT_ENABLED`` (see
-[ADR-0065](../../docs/ADR/adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md)).
+Phase 6B-5B originally rewrote the test contract before the Phase 6B-5C
+default-on flip. ADR-0068 now makes strict mode permanent:
+``W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off`` is ignored.
 
 These tests strengthen — rather than replace — the existing strict-migration
 coverage in:
@@ -11,29 +11,11 @@ coverage in:
 - ``world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py``
 - ``ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py``
 
-The Phase 6B-5B gate is semantic, end-to-end, and dual-posture:
-
-A. **Strict OFF** (current default, must continue to work)
-
-   - ``source_facts["transition_from_previous"]`` remains a first-class
-     legacy authority on the narrator path.
-   - The narrator prompt still names ``transition_from_previous`` as the
-     fallback when ``source_facts.w5_projection`` is absent.
-   - Admin diagnostics expose ``w5.legacy_transition_parity =
-     legacy_compat_visible`` so operators can correlate narrator blocks
-     against the legacy surface.
-   - The W5 narrator projection (default-on Phase 6B-1) coexists with the
-     legacy block and supplies typed Who / Where / What / How / Why summaries
-     with full ``source_attribution`` / ``truth_attribution`` regardless of
-     the strict flag.
-
-B. **Strict ON** (future default; gate target)
+The Phase 6B-8 gate is semantic and end-to-end:
 
    - ``source_facts["transition_from_previous"]`` is removed from the
      top-level narrator contract.
-   - ``source_facts._legacy_compat["transition_from_previous"]`` remains as a
-     non-authoritative debug breadcrumb and explicitly names the W5 narrator
-     projection as the actor-situation authority.
+   - ``source_facts._legacy_compat`` remains absent (ADR-0066).
    - The narrator prompt:
 
      - explicitly treats ``source_facts.w5_projection`` as the *sole*
@@ -60,14 +42,11 @@ B. **Strict ON** (future default; gate target)
    - W5 ``why_summary`` carries inferred motive only, with
      ``truth_attribution`` marked ``inferred`` (never ``observed``).
    - Admin diagnostics expose
-     ``w5.narrator_strict_enabled = True``,
-     ``w5.location_changed_source = w5_history_projection`` (W5-first), and
-     ``w5.legacy_transition_parity = demoted_to_legacy_compat``.
+     ``w5.location_changed_source = w5_history_projection`` (W5-first) and do
+     not expose narrator strict/parity compatibility metadata.
 
 The tests below assert semantic content, not field-presence-only. They do not
-flip the runtime default, do not remove ``transition_from_previous``, do not
-remove ``_legacy_compat``, do not weaken malformed-W5 fallback, and do not
-mutate committed output. They prove that the future default-on flip is safe.
+weaken malformed-W5 fallback, and they do not mutate committed output.
 
 How remains first-class. Inferred Why remains soft truth.
 """
@@ -99,7 +78,7 @@ def _isolate_w5_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Helpers — typed W5 snapshot + GoC-shaped legacy narrator block
+# Helpers - typed W5 snapshot + GoC-shaped narrator block
 # ---------------------------------------------------------------------------
 
 
@@ -272,9 +251,8 @@ def _make_session(
     )
 
 
-def _legacy_narrator_block() -> dict[str, Any]:
-    """A narrator block as it would be emitted under strict-off:
-    ``source_facts.transition_from_previous`` first-class."""
+def _source_narrator_block() -> dict[str, Any]:
+    """A narrator block with ADR-0068 source_facts shape."""
 
     return {
         "id": "phase-6b5b-narrator-1",
@@ -287,17 +265,6 @@ def _legacy_narrator_block() -> dict[str, Any]:
         "canonical_mandatory_beat_id": "room_perception_winter_light",
         "source_facts": {
             "location": {"id": "parlor"},
-            "transition_from_previous": {
-                "kind": "location_or_scene_shift",
-                "location_changed": True,
-                "scene_changed": True,
-                "previous_location": {"id": "foyer"},
-                "current_location": {"id": "parlor"},
-                "directed_transition": {
-                    "kind": "hard_cut",
-                    "applies_to": "first_visible_block_only",
-                },
-            },
         },
     }
 
@@ -321,44 +288,6 @@ def _strict_clean_block() -> dict[str, Any]:
     }
 
 
-def _strict_demoted_block() -> dict[str, Any]:
-    """A narrator block as it would be emitted under strict-on + diagnostics flag ON:
-    ``transition_from_previous`` demoted to ``_legacy_compat``."""
-
-    legacy_payload = {
-        "kind": "location_or_scene_shift",
-        "location_changed": True,
-        "scene_changed": True,
-        "previous_location": {"id": "foyer"},
-        "current_location": {"id": "parlor"},
-        "directed_transition": {
-            "kind": "hard_cut",
-            "applies_to": "first_visible_block_only",
-        },
-    }
-    return {
-        "id": "phase-6b5b-narrator-1",
-        "block_type": "narrator",
-        "speaker_label": "Narrator",
-        "actor_id": None,
-        "target_actor_id": None,
-        "text": "...",
-        "canonical_step_id": "opening_004_room_perception_winter_light",
-        "canonical_mandatory_beat_id": "room_perception_winter_light",
-        "source_facts": {
-            "location": {"id": "parlor"},
-            "_legacy_compat": {
-                "transition_from_previous": legacy_payload,
-                "authority": "w5_projection",
-                "notice": (
-                    "non-authoritative; W5 narrator projection is the "
-                    "actor-situation authority"
-                ),
-            },
-        },
-    }
-
-
 def _enrich(session: StorySession, blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Invoke the W5 narrator-projection enrichment helper without booting
     the full StoryRuntimeManager."""
@@ -377,7 +306,7 @@ def _enrich(session: StorySession, blocks: list[dict[str, Any]]) -> list[dict[st
 
 def _build_narrator_prompt(target_language: str = "de") -> str:
     return StoryRuntimeManager._narrator_path_output_prompt(
-        source_blocks=[_legacy_narrator_block()],
+        source_blocks=[_source_narrator_block()],
         narrator_path={
             "source_input_mode": "semantic_frames_with_fallback_blocks",
             "path_id": "goc_opening_canonical_path",
@@ -417,10 +346,8 @@ class TestPhase6B5BW5ProjectionSemanticAuthority:
     """Phase 6B-5B parity gate — the W5 narrator projection that the
     strict-on prompt names as the actor-situation authority must carry
     *semantically meaningful* Who / Where / What / How / Why content with
-    full source/truth attribution. These assertions hold under both strict
-    postures because the projection itself is independent of the strict
-    flag; only the *primary-authority* status of the projection vs.
-    ``transition_from_previous`` changes."""
+    full source/truth attribution. These assertions hold under every value of
+    the retired strict env var because ADR-0068 removed the posture switch."""
 
     @pytest.mark.parametrize("strict_value", [None, "false", "true"])
     def test_w5_where_summary_supplies_current_location_and_change(
@@ -431,7 +358,7 @@ class TestPhase6B5BW5ProjectionSemanticAuthority:
         else:
             monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", strict_value)
         session = _make_session(current_location="parlor", previous_location="foyer")
-        enriched = _enrich(session, [_legacy_narrator_block()])
+        enriched = _enrich(session, [_source_narrator_block()])
         proj = enriched[0]["source_facts"]["w5_projection"]
         where = proj["where_summary"]
         assert where["current_location"] == "parlor", (
@@ -456,7 +383,7 @@ class TestPhase6B5BW5ProjectionSemanticAuthority:
         else:
             monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", strict_value)
         session = _make_session()
-        enriched = _enrich(session, [_legacy_narrator_block()])
+        enriched = _enrich(session, [_source_narrator_block()])
         proj = enriched[0]["source_facts"]["w5_projection"]
         what_facts = proj["what_summary"]["facts"]
         assert what_facts["current_action"] == "accuses"
@@ -486,7 +413,7 @@ class TestPhase6B5BW5ProjectionSemanticAuthority:
         else:
             monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", strict_value)
         session = _make_session()
-        enriched = _enrich(session, [_legacy_narrator_block()])
+        enriched = _enrich(session, [_source_narrator_block()])
         proj = enriched[0]["source_facts"]["w5_projection"]
         how_facts = proj["how_summary"]["facts"]
         assert how_facts["tone"] == "sharp", "tone must be the strongest How fact"
@@ -511,7 +438,7 @@ class TestPhase6B5BW5ProjectionSemanticAuthority:
         else:
             monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", strict_value)
         session = _make_session()
-        enriched = _enrich(session, [_legacy_narrator_block()])
+        enriched = _enrich(session, [_source_narrator_block()])
         proj = enriched[0]["source_facts"]["w5_projection"]
         why_facts = proj["why_summary"]["facts"]
         assert why_facts["motive"] == "defend_son"
@@ -538,7 +465,7 @@ class TestPhase6B5BW5ProjectionSemanticAuthority:
         else:
             monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", strict_value)
         session = _make_session()
-        enriched = _enrich(session, [_legacy_narrator_block()])
+        enriched = _enrich(session, [_source_narrator_block()])
         proj = enriched[0]["source_facts"]["w5_projection"]
         who = proj["who_summary"]
         # Who summary identifies the actor and scope so the narrator does not
@@ -553,34 +480,24 @@ class TestPhase6B5BW5ProjectionSemanticAuthority:
 
 
 # ---------------------------------------------------------------------------
-# 2) source_facts shape under strict-off vs strict-on
+# 2) source_facts shape under permanent strict-on
 # ---------------------------------------------------------------------------
 
 
 class TestPhase6B5BSourceFactsAuthorityShape:
-    """Phase 6B-5B parity gate — the *primary* actor-situation surface in
-    ``source_facts`` switches according to the strict flag, and the W5
-    projection is always present (Phase 6B-1 default-on)."""
+    """ADR-0068 gate - W5 projection is the actor-situation surface and removed
+    transition compatibility payloads are not recreated."""
 
-    def test_enrichment_preserves_existing_transition_data_without_modifying_it(
+    def test_enrichment_does_not_create_transition_data(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """ADR-0068: enrichment does not remove transition_from_previous from
-        legacy-committed session blocks; it only adds w5_projection. The GoC
-        narrator path no longer emits transition_from_previous in new blocks,
-        but old committed diagnostics may still contain it."""
+        """ADR-0068: env-var false does not recreate transition source_facts."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_session()
-        enriched = _enrich(session, [_legacy_narrator_block()])
+        enriched = _enrich(session, [_source_narrator_block()])
         facts = enriched[0]["source_facts"]
-        # Enrichment does not strip transition_from_previous from committed blocks.
-        assert "transition_from_previous" in facts
-        legacy = facts["transition_from_previous"]
-        assert legacy["location_changed"] is True
-        assert legacy["directed_transition"]["kind"] == "hard_cut"
-        # _legacy_compat is never created by enrichment.
+        assert "transition_from_previous" not in facts
         assert "_legacy_compat" not in facts
-        # W5 projection is added by enrichment regardless of env var.
         assert "w5_projection" in facts
 
     def test_strict_on_no_legacy_compat(
@@ -603,11 +520,10 @@ class TestPhase6B5BSourceFactsAuthorityShape:
         assert proj["where_summary"]["current_location"] == "parlor"
         assert proj["where_summary"]["previous_location"] == "foyer"
 
-    def test_strict_on_w5_projection_replaces_legacy_hard_cut_signal(
+    def test_strict_on_w5_projection_supplies_location_shift_signal(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """When the strict prompt drops legacy hard_cut guidance, the
-        replacement signal must come from W5: where_summary.location_changed
+        """The location-shift signal comes from W5: where_summary.location_changed
         plus current/previous location."""
 
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
@@ -624,26 +540,25 @@ class TestPhase6B5BSourceFactsAuthorityShape:
 
 
 # ---------------------------------------------------------------------------
-# 3) Narrator prompt-contract (strict-off vs strict-on)
+# 3) Narrator prompt contract under permanent strict-on
 # ---------------------------------------------------------------------------
 
 
 class TestPhase6B5BPromptContract:
     """Phase 6B-5B / Phase 6B-5D parity gate — the narrator output prompt must
     name source_facts.w5_projection as the actor-situation authority in all
-    postures. Phase 6B-5D removed the legacy fallback paragraph from the
-    strict-off posture; transition_from_previous must no longer be promoted as
-    narrator authority under either posture."""
+    postures. ``transition_from_previous`` must not be promoted as narrator
+    authority under any env-var value."""
 
-    def test_prompt_does_not_promote_legacy_fallback_guidance(
+    def test_prompt_does_not_promote_removed_fallback_guidance(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """ADR-0068: env-var false has no effect on prompt. Legacy fallback
+        """ADR-0068: env-var false has no effect on prompt. Removed fallback
         instruction is absent under all postures. W5 projection is the authority.
 
-        Note: ``_legacy_narrator_block()`` embeds ``hard_cut`` in the serialised
-        source_facts JSON payload; we check only the instruction portion (before
-        the data payload) for the narrator-guidance phrases we removed."""
+        Note: source blocks no longer embed transition hard-cut payloads in
+        source_facts. We check only the instruction portion before the data
+        payload for the narrator-guidance phrases we removed."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         prompt = _build_narrator_prompt()
         instruction = prompt.split("Narrator synthesis input:")[0]
@@ -682,7 +597,7 @@ class TestPhase6B5BPromptContract:
         # The strict-on prompt explicitly tells the narrator not to consult
         # the legacy transition surface (Phase 6B-6B: _legacy_compat retired).
         assert "Do not consult source_facts.transition_from_previous" in prompt
-        assert "absent under strict-on" in prompt
+        assert "that field is absent" in prompt
         # The unstrict-only fallback paragraph must be absent.
         assert "Use transition_from_previous only as a fallback" not in prompt
         assert "source_facts.transition_from_previous.location_changed" not in prompt
@@ -714,9 +629,8 @@ class TestPhase6B5BPromptContract:
     ) -> None:
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         prompt = _build_narrator_prompt()
-        # The replacement for transition_from_previous.location_changed is the
-        # W5 where_summary.location_changed signal; the strict prompt steers
-        # scene-shift orientation from W5, not from the legacy block.
+        # The W5 where_summary.location_changed signal steers scene-shift
+        # orientation.
         assert "where_summary.location_changed" in prompt
 
     def test_strict_on_prompt_keeps_how_first_class_with_attributes(
@@ -758,21 +672,19 @@ class TestPhase6B5BPromptContract:
 
 
 # ---------------------------------------------------------------------------
-# 4) Admin / diagnostics parity (strict-off vs strict-on)
+# 4) Admin / diagnostics parity under permanent strict-on
 # ---------------------------------------------------------------------------
 
 
 class TestPhase6B5BAdminDiagnosticsParity:
     """Phase 6B-5B parity gate — ``get_w5_langfuse_metadata`` must report
-    W5-first location-change semantics under both postures and only switch
-    the legacy parity label according to the strict flag."""
+    W5-first location-change semantics under all env-var postures without
+    strict/parity compatibility metadata."""
 
     def test_env_var_false_still_uses_w5_history_and_reports_strict_on(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """ADR-0068: env-var false no longer changes behavior. Strict is always
-        on; admin metadata reports narrator_strict_enabled=True and
-        removed_by_6b5e_policy regardless of env var."""
+        """ADR-0068: env-var false no longer changes behavior."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "false")
         session = _make_session()
         harness = _AdminParityHarness(session)
@@ -780,25 +692,23 @@ class TestPhase6B5BAdminDiagnosticsParity:
         # W5 history projection always drives the signal.
         assert meta["w5.location_changed_this_turn"] is True
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
-        assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
+        assert "w5.narrator_strict_enabled" not in meta
+        assert "w5.legacy_transition_parity" not in meta
         assert meta["w5.has_how"] is True
         assert meta["w5.has_inferred_why"] is True
 
-    def test_strict_on_reports_removed_by_6b5e_policy(
+    def test_strict_on_admin_metadata_has_no_compatibility_parity(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Phase 6B-6B: strict-on always emits ``removed_by_6b5e_policy`` and
-        the retired ``narrator_legacy_compat_diagnostics_enabled`` key is absent
-        (ADR-0066)."""
+        """ADR-0068: strict/parity admin metadata is absent."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         session = _make_session()
         harness = _AdminParityHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)
         assert meta["w5.location_changed_this_turn"] is True
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
-        assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
+        assert "w5.narrator_strict_enabled" not in meta
+        assert "w5.legacy_transition_parity" not in meta
         assert "w5.narrator_legacy_compat_diagnostics_enabled" not in meta
         assert meta["w5.has_how"] is True
         assert meta["w5.has_inferred_why"] is True
@@ -841,12 +751,11 @@ class TestPhase6B5BAdminDiagnosticsParity:
         )
         harness = _AdminParityHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)
-        # W5-first wins — regardless of legacy parity label.
+        # W5-first wins regardless of historical diagnostics payloads.
         assert meta["w5.location_changed_this_turn"] is False
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
-        # Phase 6B-5E: default flag-off → removed_by_6b5e_policy.
-        assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
+        assert "w5.narrator_strict_enabled" not in meta
+        assert "w5.legacy_transition_parity" not in meta
 
 
 # ---------------------------------------------------------------------------
@@ -855,17 +764,15 @@ class TestPhase6B5BAdminDiagnosticsParity:
 
 
 class TestPhase6B5BSafetyFallbacksStillRequired:
-    """Phase 6B-5B does not remove safety branches. We pin that they are
-    still testable so Phase 6B-5C cannot silently drop them in the same
-    change as the default flip."""
+    """ADR-0068 does not remove malformed-W5 or projection opt-out safety."""
 
-    def test_explicit_projection_opt_out_keeps_legacy_only(
+    def test_explicit_projection_opt_out_leaves_source_facts_unenriched(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", "0")
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         session = _make_session()
-        blocks = [_legacy_narrator_block()]
+        blocks = [_source_narrator_block()]
         enriched = _enrich(session, blocks)
         # Projection enrichment is suppressed.
         assert enriched is blocks
@@ -880,7 +787,7 @@ class TestPhase6B5BSafetyFallbacksStillRequired:
             "schema_version": "w5_snapshot.v1",
             "this_is": "garbage",
         }
-        enriched = _enrich(session, [_legacy_narrator_block()])
+        enriched = _enrich(session, [_source_narrator_block()])
         # Safety fallback: no projection added, diagnostic recorded.
         assert "w5_projection" not in enriched[0]["source_facts"]
         kinds = [d.get("diagnostic_kind") for d in session.diagnostics]

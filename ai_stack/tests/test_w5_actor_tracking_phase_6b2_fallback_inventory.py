@@ -373,15 +373,13 @@ def test_w5_projection_flag_states_reports_default_on_under_phase_6b2(
 ) -> None:
     """Phase 6B-2 must not regress the Phase 6B-1 default-on flag posture.
     The reporter must mirror the live resolver state, with every Phase 6B-1
-    consumer flag default-on when no env var is set. The Phase 6B-3B
-    narrator-strict flag is reported alongside as default-off."""
+    consumer flag default-on when no env var is set. ADR-0068 removed the
+    separate narrator-strict switch from this reporter."""
 
     monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
     states = w5_projection_flag_states()
-    # Phase 6B-5C: narrator_strict is now default-on alongside the other flags.
     assert states == {
         "narrator": True,
-        "narrator_strict": True,
         "director": True,
         "npc": True,
         "player_shell": True,

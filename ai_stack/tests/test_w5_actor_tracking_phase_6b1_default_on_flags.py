@@ -98,11 +98,10 @@ def test_w5_projection_flag_states_reports_all_default_on_when_env_unset(
     _clear_w5_env(monkeypatch)
     monkeypatch.delenv("W5_AST_NARRATOR_STRICT_ENABLED", raising=False)
     states = w5_projection_flag_states()
-    # Semantic: all five W5 consumer flags must be default-on. The
-    # Phase 6B-5C narrator-strict flag is now also default-on.
+    # Semantic: all five W5 consumer flags must be default-on. ADR-0068 removed
+    # the separate narrator-strict switch from this reporter.
     assert states == {
         "narrator": True,
-        "narrator_strict": True,
         "director": True,
         "npc": True,
         "player_shell": True,

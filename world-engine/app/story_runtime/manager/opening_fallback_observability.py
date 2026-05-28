@@ -290,16 +290,14 @@ class _OpeningFallbackObservabilityMixin:
 
         Returns True when unset/empty: narrator composition treats the typed
         W5 projection as the actor-situation authority on a W5-first basis.
-        The legacy ``transition_from_previous`` block continues to be emitted
-        as legacy-compatibility breadcrumb under Phase 6B-3B until
-        ``W5_AST_NARRATOR_STRICT_ENABLED`` is opted in, at which point the
-        legacy block is demoted into ``source_facts._legacy_compat`` and the
-        prompt fallback paragraph is removed.
+        ADR-0068 removed the separate narrator strict-off rollback path, so
+        ``transition_from_previous`` is no longer emitted by the GoC narrator
+        source_facts and ``_legacy_compat`` remains retired.
 
         Explicit opt-out is preserved — setting this env var to
         ``0/false/no/off`` restores Phase 1 behavior (no ``w5_projection`` in
-        narrator ``source_facts``). The Phase 6B-3B strict flag is a separate
-        opt-in switch and does not affect this resolver.
+        narrator ``source_facts``). The old Phase 6B-3B strict flag no longer
+        changes behavior.
         """
 
         raw = (os.environ.get("W5_AST_NARRATOR_PROJECTION_ENABLED") or "").strip().lower()

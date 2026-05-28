@@ -28,6 +28,7 @@ class TaskKind(str, Enum):
 
     # SLM-first
     classification = "classification"
+    translation = "translation"
     trigger_signal_extraction = "trigger_signal_extraction"
     repetition_consistency_check = "repetition_consistency_check"
     ranking = "ranking"

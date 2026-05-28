@@ -1,17 +1,16 @@
-"""Phase 6B-3B / Phase 6B-5D — narrator strict migration semantic tests (world-engine side).
+"""Phase 6B-3B / 6B-8 — narrator strict migration semantic tests (world-engine side).
 
 Pins the F18 prompt-text migration and the F20 admin parity bridge labeling
-for the ``W5_AST_NARRATOR_STRICT_ENABLED`` flag (default-on since Phase 6B-5C).
+for the ``W5_AST_NARRATOR_STRICT_ENABLED`` flag, which is behaviorally inert
+after ADR-0068.
 
 These tests focus on three contracts:
 
 1. **F18 narrator prompt.** Phase 6B-5D removed the legacy
    ``transition_from_previous`` fallback paragraph from both strict postures.
-   Under strict-OFF the prompt now names ``source_facts.w5_projection`` as the
-   actor-situation authority without promoting ``transition_from_previous`` as a
-   fallback. Under strict-ON the prompt explicitly names
-   ``source_facts.w5_projection`` as the *sole* actor-situation authority and
-   explicitly forbids consulting ``transition_from_previous``. In both postures
+   The prompt explicitly names ``source_facts.w5_projection`` as the *sole*
+   actor-situation authority and explicitly forbids consulting
+   ``transition_from_previous``. In all env-var postures
    the prompt preserves Who / Where / What / How / Why guidance. How is
    first-class and not folded into What. Inferred Why is marked as inferred /
    soft truth and must not be described as observed fact.
@@ -19,12 +18,9 @@ These tests focus on three contracts:
 2. **F20 admin parity bridge.** ``StoryRuntimeManager.get_w5_langfuse_metadata``
    computes ``w5.location_changed_this_turn`` from the typed W5 history
    projection on both strict postures (no ``transition_from_previous``
-   inspection). Under strict-ON the response advertises
-   ``w5.narrator_strict_enabled = True`` and annotates the legacy parity
-   surface as ``demoted_to_legacy_compat``. Under strict-OFF the same
-   primary signal is computed but the legacy parity surface remains
-   ``legacy_compat_visible`` so operators can correlate against
-   ``source_facts.transition_from_previous`` from committed narrator blocks.
+   inspection). ADR-0068 removes the narrator strict/admin parity metadata
+   keys; ``w5.narrator_strict_enabled`` and ``w5.legacy_transition_parity``
+   are absent.
 
 3. The strict flag does not weaken Actor Lane, Commit/Readiness,
    ``validation_outcome``, ADR-0033, ADR-0061, ADR-0063, the Canonical Path,
@@ -114,8 +110,8 @@ class TestF18NarratorPromptStrictMigration:
         assert (
             "source_facts.transition_from_previous.directed_transition" not in prompt
         )
-        # Phase 6B-6B: _legacy_compat retired; prompt now says the field is absent.
-        assert "absent under strict-on" in prompt
+        # ADR-0068: the field is absent, full stop.
+        assert "that field is absent" in prompt
         # The prompt instructs the narrator to disregard transition_from_previous.
         assert "Do not consult source_facts.transition_from_previous" in prompt
 
@@ -285,22 +281,21 @@ class TestF20AdminParityBridge:
         meta = harness.get_w5_langfuse_metadata(session.session_id)
         assert meta["w5.location_changed_this_turn"] is True
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
-        assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
+        assert "w5.narrator_strict_enabled" not in meta
+        assert "w5.legacy_transition_parity" not in meta
 
-    def test_strict_on_reports_removed_by_6b5e_policy(
+    def test_strict_on_admin_metadata_has_no_legacy_parity_surface(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """ADR-0068: strict-on is always active. removed_by_6b5e_policy is permanent.
-        The ``narrator_legacy_compat_diagnostics_enabled`` key remains retired (ADR-0066)."""
+        """ADR-0068: strict-on is permanent, so strict/parity metadata is gone."""
         monkeypatch.setenv("W5_AST_NARRATOR_STRICT_ENABLED", "true")
         session = _make_admin_session()
         harness = _AdminParityManagerHarness(session)
         meta = harness.get_w5_langfuse_metadata(session.session_id)
         assert meta["w5.location_changed_this_turn"] is True
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
-        assert meta["w5.legacy_transition_parity"] == "removed_by_6b5e_policy"
+        assert "w5.narrator_strict_enabled" not in meta
+        assert "w5.legacy_transition_parity" not in meta
         assert "w5.narrator_legacy_compat_diagnostics_enabled" not in meta
 
     def test_strict_on_does_not_read_transition_from_previous_for_location_changed(
@@ -344,4 +339,5 @@ class TestF20AdminParityBridge:
         # W5 says no change; the strict bridge agrees.
         assert meta["w5.location_changed_this_turn"] is False
         assert meta["w5.location_changed_source"] == "w5_history_projection"
-        assert meta["w5.narrator_strict_enabled"] is True
+        assert "w5.narrator_strict_enabled" not in meta
+        assert "w5.legacy_transition_parity" not in meta

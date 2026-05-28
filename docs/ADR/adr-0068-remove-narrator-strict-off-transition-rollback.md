@@ -2,7 +2,7 @@
 id: ADR-0068
 title: "Remove Narrator Strict-Off Transition Rollback Surface"
 status: Accepted
-date: 2026-05-23
+date: 2026-05-28
 phase: 6B-8
 supersedes: []
 related:
@@ -16,27 +16,27 @@ related:
 
 ## Status
 
-**Accepted** — Phase 6B-8 (2026-05-23).
+**Accepted** — Phase 6B-8 (2026-05-28).
 
 ---
 
 ## Operator Waiver
 
-**Waiver granted by authorized operator decision (2026-05-23).**
+**Waiver granted by authorized operator decision (2026-05-28).**
 
 ADR-0067 Criteria 1 and 2 were not fully satisfied from repository evidence alone:
 
 | Criterion | Status | Waiver Rationale |
 |---|---|---|
 | 1. No active operator usage in prod/staging/cloud | **Partially met** — repo-local config is clean; live/cloud config is not verifiable from the repository | Operator waives the live-config audit requirement. Repo-local audit (no `.env`, `docker-compose`, GitHub workflows, `settings*.py` sets `W5_AST_NARRATOR_STRICT_ENABLED=false`) is accepted as sufficient evidence. |
-| 2. NarratorStrictOffDeprecationWarning observed for one full release cycle | **Not met** — the warning was introduced the same day as ADR-0067 (2026-05-23) | Operator waives the release-cycle observation period. The rollback window has effectively closed: strict-on has been the permanent default since Phase 6B-5C; no production rollback has been triggered; the payload produced under strict-off (`source_facts["transition_from_previous"]`) has not been narrator-authoritative since ADR-0065/ADR-0066. |
+| 2. NarratorStrictOffDeprecationWarning observed for one full release cycle | **Not met from repository evidence** — the repository cannot prove a complete production release-cycle observation window | Operator waives the release-cycle observation period. The rollback window has effectively closed: strict-on has been the permanent default since Phase 6B-5C; no production rollback has been triggered; the payload produced under strict-off (`source_facts["transition_from_previous"]`) has not been narrator-authoritative since ADR-0065/ADR-0066. |
 | 3. Parity test suite updated | **Met by this phase (6B-8)** | — |
 | 4. Inventory updated | **Met by this phase (6B-8)** | — |
 | 5. This ADR written and Accepted | **Met by this document** | — |
 
 **Waiver scope:** This waiver covers the removal of the strict-off rollback path in `ai_stack/actor_tracking/diagnostics.py` and `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py` as specified in this ADR. It does not waive any other ADR criterion or constraint.
 
-**Repo-local config evidence (Phase 6B-7.5 audit, 2026-05-23):**
+**Repo-local config evidence (Phase 6B-7.5 audit, accepted for ADR-0068 on 2026-05-28):**
 
 No file in the repository sets `W5_AST_NARRATOR_STRICT_ENABLED` to a false value. Files audited:
 
@@ -53,7 +53,7 @@ No file in the repository sets `W5_AST_NARRATOR_STRICT_ENABLED` to a false value
 
 ### State entering this phase
 
-Phase 6B-7 (ADR-0067, Accepted, 2026-05-23) deprecated the narrator strict-off
+Phase 6B-7 (ADR-0067, Accepted) deprecated the narrator strict-off
 rollback surface. Entering Phase 6B-8, the runtime state was:
 
 | Posture | Trigger | `source_facts["transition_from_previous"]` | Warning |
@@ -78,9 +78,10 @@ rollback surface. Entering Phase 6B-8, the runtime state was:
    (the only production posture since Phase 6B-5C), `_transition_facts()` was
    never called.
 
-4. **`NarratorStrictOffDeprecationWarning` made removal safe.** Any operator
+4. **`NarratorStrictOffDeprecationWarning` made removal safe before ADR-0068.** Any operator
    process that still set `W5_AST_NARRATOR_STRICT_ENABLED=false` would have seen
-   the warning immediately upon Phase 6B-7 deployment.
+   the warning immediately upon Phase 6B-7 deployment. ADR-0068 removes the
+   warning class itself because the opt-out surface is gone.
 
 5. **Test suite carried dead strict-off coverage.** Fifteen-plus test functions
    asserted strict-off behavior that became permanently unreachable after removal.
@@ -91,9 +92,10 @@ rollback surface. Entering Phase 6B-8, the runtime state was:
 
 Remove the narrator strict-off transition rollback surface:
 
-1. **`w5_ast_narrator_strict_enabled()`** is unconditionally `True`. The function
-   body is now `return True`. The env-var `W5_AST_NARRATOR_STRICT_ENABLED` no
-   longer affects narrator behavior.
+1. **`w5_ast_narrator_strict_enabled()`** is removed from
+   `ai_stack/actor_tracking/diagnostics.py` and from the package public export.
+   The env-var `W5_AST_NARRATOR_STRICT_ENABLED` is no longer read by the W5
+   narrator runtime and no longer affects narrator behavior.
 
 2. **`_transition_facts()`** is removed from
    `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py`.
@@ -104,9 +106,9 @@ Remove the narrator strict-off transition rollback surface:
 4. **`_strict_off_deprecation_warned`** and **`_emit_strict_off_deprecation_warning()`**
    are removed from `ai_stack/actor_tracking/diagnostics.py`.
 
-5. **`NarratorStrictOffDeprecationWarning`** is retained as an empty tombstone
-   class in `ai_stack/actor_tracking/diagnostics.py` for import compatibility.
-   It is never emitted.
+5. **`NarratorStrictOffDeprecationWarning`** is removed. No tombstone class is
+   retained because this branch is pre-release and the operator rejected keeping
+   a legacy runtime/import surface.
 
 6. **`_location_ref_id()`** and **`_scene_anchor_scene()`** are removed as they
    were only used by the removed `_transition_facts()`.
@@ -114,9 +116,14 @@ Remove the narrator strict-off transition rollback surface:
 7. **`_scene_transition()`** is retained — it feeds `_beat_source_facts()` and
    `build_goc_narrator_path_opening()`.
 
-8. **Inventory** reclassifies `transition_from_previous` as `removed_by_adr_0068`.
+8. **Diagnostics/admin metadata** no longer emits narrator strict/parity
+   compatibility keys. `w5.narrator_strict_enabled`,
+   `w5.legacy_transition_parity`, `legacy_compat_visible`, and
+   `removed_by_6b5e_policy` are removed from the current admin surface.
 
-9. **All strict-off tests** are rewritten to assert strict-on-only behavior.
+9. **Inventory** reclassifies `transition_from_previous` as `removed_by_adr_0068`.
+
+10. **All strict-off tests** are rewritten to assert strict-on-only behavior.
 
 ---
 
@@ -128,8 +135,16 @@ Remove the narrator strict-off transition rollback surface:
   Operators who set this variable will see no runtime effect (no error, no warning).
 - `source_facts["transition_from_previous"]` is permanently absent from narrator
   blocks under all environment configurations.
-- `NarratorStrictOffDeprecationWarning` can still be imported but is never emitted.
+- `NarratorStrictOffDeprecationWarning` is no longer importable.
+- `w5_ast_narrator_strict_enabled` is no longer importable.
 - `W5 where_summary.location_changed` is the sole location-shift signal.
+- `source_facts.w5_projection` is the sole actor-situation authority; no
+  top-level `transition_from_previous` and no `_legacy_compat` are emitted by
+  the narrator path.
+- Narrator strict/parity admin metadata is gone:
+  `w5.narrator_strict_enabled`, `w5.legacy_transition_parity`,
+  `legacy_compat_visible`, and `removed_by_6b5e_policy` are not current
+  runtime metadata.
 - Test suite no longer covers the strict-off path (it is gone).
 - All prior strict-off rollback tests have been rewritten to the strict-on contract.
 

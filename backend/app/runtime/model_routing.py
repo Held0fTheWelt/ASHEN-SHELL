@@ -31,6 +31,7 @@ from app.runtime.model_routing_contracts import (
 
 TASK_ROUTING_MODE: dict[TaskKind, TaskRoutingMode] = {
     TaskKind.classification: TaskRoutingMode.slm_first,
+    TaskKind.translation: TaskRoutingMode.slm_first,
     TaskKind.trigger_signal_extraction: TaskRoutingMode.slm_first,
     TaskKind.repetition_consistency_check: TaskRoutingMode.slm_first,
     TaskKind.ranking: TaskRoutingMode.slm_first,

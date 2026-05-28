@@ -339,9 +339,9 @@ class TestF21F22DefaultOnRemainsW5First:
 
 
 # ===========================================================================
-# F8 / F18 / F19 / F20 — narrator strict (Phase 6B-3B). Default config
-# (strict-OFF) keeps the legacy transition surface first-class; strict-ON
-# demotes it.
+# F8 / F18 / F19 / F20 — narrator strict (Phase 6B-3B through ADR-0068).
+# Strict mode is now permanent; explicit false no longer restores the legacy
+# transition surface.
 # ===========================================================================
 
 
@@ -349,24 +349,25 @@ class TestF8F18F19F20NarratorStrictDefaultOnDemotesLegacy:
     """Phase 6B-4 classification: ``w5_first_migrated_keep_temporarily``
     + ``needs_dedicated_adr_before_removal``.
 
-    Phase 6B-5C: ``W5_AST_NARRATOR_STRICT_ENABLED`` is now default-on. The
-    default configuration demotes ``transition_from_previous`` to
-    ``_legacy_compat`` so W5 narrator projection is the actor-situation
-    authority. Explicit ``0/false/no/off`` opt-out restores the Phase 6B-3A
-    legacy-first behavior during rollout. Removal of the opt-out path and the
-    legacy surfaces requires Phase 6B-5D/5E ADRs.
+    ADR-0068: ``W5_AST_NARRATOR_STRICT_ENABLED`` is now behaviorally inert and
+    strict mode is permanent. New narrator source_facts contain neither
+    ``transition_from_previous`` nor ``_legacy_compat``; W5 narrator projection
+    is the actor-situation authority.
     """
 
-    def test_strict_resolver_default_on(self) -> None:
-        from ai_stack.actor_tracking import w5_ast_narrator_strict_enabled
+    def test_strict_resolver_removed(self) -> None:
+        import ai_stack.actor_tracking as actor_tracking
+        import ai_stack.actor_tracking.diagnostics as diagnostics
 
-        assert w5_ast_narrator_strict_enabled() is True
+        assert not hasattr(actor_tracking, "w5_ast_narrator_strict_enabled")
+        assert not hasattr(diagnostics, "w5_ast_narrator_strict_enabled")
 
-    def test_projection_flag_states_includes_narrator_strict_true_default(
+    def test_projection_flag_states_omits_narrator_strict_switch(
         self,
     ) -> None:
         states = w5_projection_flag_states()
-        assert states["narrator_strict"] is True
+        assert "narrator_strict" not in states
+        assert states["narrator"] is True
 
     def test_strict_on_omits_transition_from_previous_and_legacy_compat(
         self, monkeypatch: pytest.MonkeyPatch

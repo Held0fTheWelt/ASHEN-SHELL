@@ -91,7 +91,7 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "gathering_scene_id": "S — derived from actor_locations by F5; consumed by ADR-0061 pause predicate",
     "derived_gathering_room_id": "S — Director alias (also produced by F5)",
     "transition_from_previous": "removed_by_adr_0068 (Phase 6B-8) — strict-off rollback path removed; transition_from_previous no longer emitted by narrator source_facts; any remaining hits are doc/test/historical references only",
-    "location_changed": "S — W5 mirror of `transition_from_previous.location_changed`",
+    "location_changed": "S — W5 where_summary location-shift signal; not a narrator strict-off rollback surface",
     "forbidden_ai_stack_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
     "forbidden_ai_stack_w5_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
     "w5_actor_situation_term": "D/historical — only inventory/audit artifacts may mention this term",
@@ -100,13 +100,13 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "w5_actor_situation_validation_old": "D/historical — old failure_class string (R2 in 6B-0)",
     "w5_actor_tracking_validation_new": "current — Phase 6B-0 R2 rename target",
     # Phase 6B-6A diagnostics flag retirement surfaces
-    "narrator_legacy_compat_diag_flag": "pending_retirement_6b6b — env-var name; resolved by w5_ast_narrator_legacy_compat_diagnostics_enabled(). ADR-0066.",
-    "narrator_legacy_compat_diag_fn": "pending_retirement_6b6b — Python function + public export in ai_stack.actor_tracking. ADR-0066.",
-    "narrator_legacy_compat_diag_key": "pending_retirement_6b6b — key in w5_projection_flag_states() + admin metadata. ADR-0066.",
-    "legacy_compat_transition_write": "pending_retirement_6b6b — _legacy_compat insertion branch in god_of_carnage_narrator_path._block(). ADR-0066.",
-    "demoted_to_legacy_compat": "pending_retirement_6b6b — w5.legacy_transition_parity value emitted only when diag flag on. Disappears after 6B-6B. ADR-0066.",
-    "removed_by_6b5e_policy": "keep_two_value_after_6b6b — w5.legacy_transition_parity value for default strict-on. Retained in simplified two-value form.",
-    "legacy_transition_parity": "keep_two_value_after_6b6b — w5.legacy_transition_parity admin metadata key; simplified to two values after 6B-6B.",
+    "narrator_legacy_compat_diag_flag": "retired_phase_6b6b — env-var name; historical/docs only after ADR-0066.",
+    "narrator_legacy_compat_diag_fn": "retired_phase_6b6b — Python function + public export removed by ADR-0066.",
+    "narrator_legacy_compat_diag_key": "retired_phase_6b6b — flag-states/admin metadata key removed by ADR-0066.",
+    "legacy_compat_transition_write": "retired_phase_6b6b — _legacy_compat insertion branch removed by ADR-0066.",
+    "demoted_to_legacy_compat": "retired_phase_6b6b — former w5.legacy_transition_parity diagnostics value; historical/docs only after ADR-0066.",
+    "removed_by_6b5e_policy": "removed_by_adr_0068_admin_metadata — former w5.legacy_transition_parity value; historical/docs/tests only.",
+    "legacy_transition_parity": "removed_by_adr_0068_admin_metadata — admin metadata key removed; historical/docs/tests only.",
 }
 
 
@@ -190,9 +190,9 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "W5 where_summary.location_changed is the sole location-shift authority."
     ),
     "location_changed": (
-        "substrate_keep_future_adr — W5 where_summary mirror of legacy "
-        "transition_from_previous.location_changed; admin parity bridge "
-        "now reads W5 first under both postures"
+        "substrate_keep_future_adr — W5 where_summary location-shift signal; "
+        "admin diagnostics read W5 history and do not consult "
+        "transition_from_previous"
     ),
     "forbidden_ai_stack_actor_situation": (
         "FORBIDDEN — must be zero outside inventory docs/scripts/tests"
@@ -214,35 +214,34 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "in 6B-0)"
     ),
     "w5_actor_tracking_validation_new": "current — Phase 6B-0 R2 rename target",
-    # Phase 6B-6A diagnostics flag retirement surfaces — classified for completeness.
-    # Authoritative removal plan: ADR-0066.
+    # Phase 6B-6B diagnostics flag retirement surfaces — classified for completeness.
+    # Authoritative removal record: ADR-0066.
     "narrator_legacy_compat_diag_flag": (
-        "needs_dedicated_adr_before_removal — runtime_flag_resolver; "
-        "ADR-0066 Proposed (Phase 6B-6A). Remove in Phase 6B-6B."
+        "retired_phase_6b6b — runtime_flag_resolver removed by ADR-0066."
     ),
     "narrator_legacy_compat_diag_fn": (
-        "needs_dedicated_adr_before_removal — runtime_flag_resolver + "
-        "public export; ADR-0066 Proposed."
+        "retired_phase_6b6b — runtime_flag_resolver + public export removed "
+        "by ADR-0066."
     ),
     "narrator_legacy_compat_diag_key": (
-        "needs_dedicated_adr_before_removal — diagnostics_metadata key in "
-        "w5_projection_flag_states(); ADR-0066 Proposed."
+        "retired_phase_6b6b — diagnostics_metadata key removed from "
+        "w5_projection_flag_states() by ADR-0066."
     ),
     "legacy_compat_transition_write": (
-        "needs_dedicated_adr_before_removal — runtime_branch in "
-        "god_of_carnage_narrator_path._block(); ADR-0066 Proposed."
+        "retired_phase_6b6b — runtime_branch in "
+        "god_of_carnage_narrator_path._block() removed by ADR-0066."
     ),
     "demoted_to_legacy_compat": (
-        "needs_dedicated_adr_before_removal — admin_view parity label value; "
-        "disappears after Phase 6B-6B. ADR-0066 Proposed."
+        "retired_phase_6b6b — former admin_view parity label value; "
+        "historical/docs only after ADR-0066."
     ),
     "removed_by_6b5e_policy": (
-        "w5_first_migrated_keep_temporarily — admin_view parity label; "
-        "retained as two-value enum after 6B-6B."
+        "removed_by_adr_0068_admin_metadata — former admin_view parity label; "
+        "historical/docs/tests only."
     ),
     "legacy_transition_parity": (
-        "w5_first_migrated_keep_temporarily — admin metadata key; "
-        "simplified to two values in 6B-6B but key kept."
+        "removed_by_adr_0068_admin_metadata — admin metadata key removed by "
+        "ADR-0068; historical/docs/tests only."
     ),
 }
 
@@ -265,8 +264,10 @@ PHASE_6B4_TAXONOMY: tuple[str, ...] = (
     "test_only_update",
     "doc_only_update",
     "unknown_needs_runtime_trace",
-    # Phase 6B-7 additions
-    "strict_off_rollback_deprecated",  # fires only under W5_AST_NARRATOR_STRICT_ENABLED=false; deprecated ADR-0067
+    # Phase 6B-8 additions
+    "removed_by_adr_0068",
+    "retired_phase_6b6b",
+    "removed_by_adr_0068_admin_metadata",
 )
 
 
@@ -459,17 +460,18 @@ def _format_human(report: ScanReport) -> str:
         label = PHASE_6B4_CLASSIFICATION.get(key, "—")
         out.append(f"  {key:48s} {count:3d}  {label[:60]}")
     out.append("")
-    out.append("Phase 6B-8 — ADR-0068 EXECUTED (operator waiver, 2026-05-23):")
+    out.append("Phase 6B-8 — ADR-0068 EXECUTED (operator waiver, 2026-05-28):")
     out.append("  transition_from_previous strict-off rollback path REMOVED.")
-    out.append("  w5_ast_narrator_strict_enabled() is unconditionally True.")
-    out.append("  NarratorStrictOffDeprecationWarning retained as tombstone (import compat).")
+    out.append("  w5_ast_narrator_strict_enabled() API REMOVED.")
+    out.append("  NarratorStrictOffDeprecationWarning REMOVED; no tombstone retained.")
+    out.append("  w5.legacy_transition_parity admin metadata REMOVED.")
     _6b7_keys = ("transition_from_previous", "location_changed")
     for key in _6b7_keys:
         count = sum(1 for f in report.findings if f.surface == key)
         label = PHASE_6B4_CLASSIFICATION.get(key, "—")
         out.append(f"  {key:48s} {count:3d}  {label[:70]}")
     out.append("")
-    out.append("ADR-0068 execution checklist (Phase 6B-8, 2026-05-23):")
+    out.append("ADR-0068 execution checklist (Phase 6B-8, 2026-05-28):")
     tfp_count = sum(1 for f in report.findings if f.surface == "transition_from_previous")
     lc_count = sum(1 for f in report.findings if f.surface == "location_changed")
     out.append(

@@ -8,9 +8,9 @@
 
 **Phase 6B-6A status:** ADR-0066 authored (Proposed). Full dependency audit completed. No code changed. Phase was the audit/planning step for Phase 6B-6B removal.
 
-**Phase 6B-7.6 status:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) authored as **Draft / Blocked** (2026-05-23). No runtime code removed. ADR-0068 documents the exact future removal scope for `transition_from_previous`, `_transition_facts()`, the strict-off env parsing in `w5_ast_narrator_strict_enabled()`, and the `_strict_off_deprecation_warned` / `_emit_strict_off_deprecation_warning()` machinery. Stale worktree `.worktrees/phase-6b5f` noted; inventory script exclusion already in place (Phase 6B-6B). Hard blockers: (1) `NarratorStrictOffDeprecationWarning` must complete one release cycle in production logs; (2) operator must confirm no live/staging/cloud environment sets `W5_AST_NARRATOR_STRICT_ENABLED=false`. ADR-0068 must not be marked Accepted until both blockers are cleared and all runtime removals are executed. Strict-off rollback path remains operative.
+**Phase 6B-8 status:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) is **Accepted under operator waiver** (2026-05-28). Runtime removal is executed: `w5_ast_narrator_strict_enabled()`, `NarratorStrictOffDeprecationWarning`, `_strict_off_deprecation_warned`, `_emit_strict_off_deprecation_warning()`, `_transition_facts()`, the strict-off `source_facts["transition_from_previous"]` insertion, and narrator strict/parity admin metadata are removed. `W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off` no longer changes narrator behavior because the narrator runtime no longer reads it. The operator explicitly waived ADR-0067 criteria 1 and 2: repo-local config evidence is accepted as sufficient, and the release-cycle waiting period is waived.
 
-**Phase 6B-6B status:** `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` **retired** (2026-05-23). All runtime references removed: flag resolver function deleted, `_legacy_compat` insertion branch deleted, `w5.narrator_legacy_compat_diagnostics_enabled` metadata key deleted, `demoted_to_legacy_compat` parity label retired. `w5.legacy_transition_parity` simplified to two-value enum: `"legacy_compat_visible"` (strict-off) / `"removed_by_6b5e_policy"` (strict-on permanent). Inventory script updated to exclude `.worktrees/`, `.claude/worktrees/`, `.state_tmp/` auxiliary workspaces. ADR-0066 status: **Accepted**. See [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md).
+**Phase 6B-6B status:** `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` **retired** (2026-05-23). All runtime references removed: flag resolver function deleted, `_legacy_compat` insertion branch deleted, `w5.narrator_legacy_compat_diagnostics_enabled` metadata key deleted, `demoted_to_legacy_compat` parity label retired. ADR-0068 later removed `w5.legacy_transition_parity` and `removed_by_6b5e_policy` from current narrator admin metadata. Inventory script updated to exclude `.worktrees/`, `.claude/worktrees/`, `.state_tmp/` auxiliary workspaces. ADR-0066 status: **Accepted**. See [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md).
 
 **Phase 6B-5B status:** Strict-mode parity tests are rewritten as semantic W5-authority contracts rather than legacy field-presence checks. Two new test files prove the strict-off / strict-on contract end-to-end: `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py` and `ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`. Both postures continue to work: strict-off keeps `transition_from_previous` first-class with the legacy fallback prompt paragraph and `legacy_compat_visible` admin label; strict-on demotes the same payload to `source_facts._legacy_compat["transition_from_previous"]` with `authority = "w5_projection"`, removes top-level `transition_from_previous`, names `source_facts.w5_projection` as the sole actor-situation authority in the narrator prompt, mentions all five W5 summaries, uses `where_summary.location_changed` as the scene-shift signal, keeps How first-class with the full attribute list, and marks inferred Why as soft / never-spoken-as-fact. Admin diagnostics always read W5 history first and switch only the legacy-parity label by posture. Phase 6B-5B is a test-contract phase: no runtime behavior changed, `W5_AST_NARRATOR_STRICT_ENABLED` remains opt-in / default-off, `transition_from_previous` and `_legacy_compat` are not removed, malformed-W5 and explicit-opt-out safety fallbacks remain testable, and no committed event is mutated. Required gates re-verified: MVP03 LDSS gate, MVP04 observability gate, langfuse docker config, the strict-migration tests from Phase 6B-3B, the narrator-projection wiring tests from Phase 6B-1, the W5 inventory test, and the new Phase 6B-5B parity files all pass with zero failures. The next executable step is the Phase 6B-5C default-on flip.
 
@@ -759,9 +759,9 @@ The Phase 6B-4 inventory pass did not touch world-engine HTTP routing, did not m
 |---|---|---|
 | `_legacy_compat["transition_from_previous"]` insertion | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py::_block()` | ~~`gated_diagnostics_opt_in`~~ **retired_phase_6b6b** |
 | `_legacy_compat["authority"]`, `_legacy_compat["notice"]` | same | ~~`gated_diagnostics_opt_in`~~ **retired_phase_6b6b** |
-| `w5.legacy_transition_parity` label | `world-engine/app/story_runtime/manager/diagnostics_api.py::get_w5_langfuse_metadata()` | **simplified_two_value_6b6b** (legacy_compat_visible / removed_by_6b5e_policy) |
+| `w5.legacy_transition_parity` label | `world-engine/app/story_runtime/manager/diagnostics_api.py::get_w5_langfuse_metadata()` | ~~**simplified_two_value_6b6b**~~ **removed_by_adr_0068_admin_metadata** |
 | `w5.narrator_legacy_compat_diagnostics_enabled` | same | ~~`new_flag_report`~~ **retired_phase_6b6b** |
-| Prompt guidance referencing `_legacy_compat` as possible breadcrumb | `world-engine/app/story_runtime/manager/narrator_output_prompts.py` | **updated_6b6b** (says "absent under strict-on") |
+| Prompt guidance referencing `_legacy_compat` as possible breadcrumb | `world-engine/app/story_runtime/manager/narrator_output_prompts.py` | **updated_6b6b**; ADR-0068 later says "that field is absent" |
 | Test assertions on `_legacy_compat` presence under strict-on | various `test_w5_actor_tracking_phase_6b5b_parity.py` etc. | **removed_phase_6b6b** |
 
 ### What Remains for Phase 6B-5F
@@ -811,13 +811,17 @@ The following surfaces still exist and require classification in the Phase 6B-5F
 | `_legacy_compat["transition_from_previous"]` write | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py` | **retired_phase_6b6b** (deleted) |
 | imports | `world-engine/.../external_imports_core.py`, `_imports_00.py` | **retired_phase_6b6b** (deleted) |
 | `legacy_compat_diag` + `w5.narrator_legacy_compat_diagnostics_enabled` | `world-engine/.../diagnostics_api.py` | **retired_phase_6b6b** (deleted) |
-| `demoted_to_legacy_compat` parity label | `diagnostics_api.py::get_w5_langfuse_metadata()` | **retired_phase_6b6b** (`removed_by_6b5e_policy` is the permanent strict-on label) |
+| `demoted_to_legacy_compat` parity label | `diagnostics_api.py::get_w5_langfuse_metadata()` | **retired_phase_6b6b**; ADR-0068 later removes the remaining parity key/value from current admin metadata |
 | `W5_FLAGS` fixture entry + monkeypatches | 4 test files | **retired_phase_6b6b** (removed) |
 
-**Remaining transition_from_previous behavior:**
-- Explicit strict opt-out (`W5_AST_NARRATOR_STRICT_ENABLED=false`) still writes `source_facts["transition_from_previous"]` first-class. This is the rollback posture.
-- `w5.legacy_transition_parity = "legacy_compat_visible"` is still emitted for strict-off sessions.
-- Malformed-W5 safety fallback unchanged.
+**Post-ADR-0068 transition_from_previous behavior:**
+- Explicit strict opt-out (`W5_AST_NARRATOR_STRICT_ENABLED=false`) no longer
+  changes narrator behavior.
+- New GoC narrator `source_facts` never emit top-level
+  `transition_from_previous`.
+- `w5.legacy_transition_parity`, `legacy_compat_visible`, and
+  `removed_by_6b5e_policy` are no longer current narrator admin metadata.
+- Malformed-W5 safety fallback is unchanged.
 
 **See:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) (Accepted).
 
@@ -827,7 +831,7 @@ The following surfaces still exist and require classification in the Phase 6B-5F
 
 **Phase 6B-6B status:** `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` **retired** (see above).
 
-**Phase 6B-7 status:** Strict-off rollback surface **deprecated** (not yet removed). ADR-0067 Accepted.
+**Phase 6B-7 status:** Strict-off rollback surface **deprecated** by ADR-0067 and later **removed** by ADR-0068.
 
 **What changed:**
 - `NarratorStrictOffDeprecationWarning(DeprecationWarning)` added to `ai_stack/actor_tracking/diagnostics.py` and exported from the package.
@@ -845,15 +849,19 @@ The following surfaces still exist and require classification in the Phase 6B-5F
 | `NarratorStrictOffDeprecationWarning` | `ai_stack/actor_tracking/diagnostics.py`, `__init__.py` | **new_phase_6b7** — public warning class for filter guards |
 | `_strict_off_deprecation_warned` sentinel | `ai_stack/actor_tracking/diagnostics.py` | **new_phase_6b7** — module-level bool; tests reset via monkeypatch |
 
-**Still present (not removed in Phase 6B-7):**
-- `W5_AST_NARRATOR_STRICT_ENABLED` flag gate and `w5_ast_narrator_strict_enabled()` resolver.
+**Removed in Phase 6B-8 (ADR-0068):**
+- `W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off` behavior change.
 - `transition_from_previous` computation and first-class insertion under strict-off.
-- Malformed-W5 safety fallback.
-- All parity tests exercising `strict_off` parametrize cases.
-- Substrate writers/readers, public compatibility aliases.
+- `_strict_off_deprecation_warned` and `_emit_strict_off_deprecation_warning()`.
+- Strict-off parity tests were rewritten to assert permanent strict-on behavior.
 
-**Removal criteria for final strict-off removal (future ADR-0068 or successor):**
-See [ADR-0067 §Future Removal Criteria](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md#future-removal-criteria).
+**Still present after Phase 6B-8:**
+- Malformed-W5 safety fallback.
+- Substrate writers/readers and public compatibility aliases.
+
+**Removal criteria for final strict-off removal:** Superseded by
+[ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md),
+Accepted under operator waiver on 2026-05-28.
 
 **See:** [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) (Accepted).
 
@@ -870,20 +878,18 @@ implementation plan if it is. This is an audit + planning phase only. No runtime
 
 | # | Criterion | Current Evidence | Tests Proving It | Status |
 |---|-----------|-----------------|-----------------|--------|
-| 1 | **No active operator usage** — `W5_AST_NARRATOR_STRICT_ENABLED=false` not set in any prod/staging/preview deployment | Repo-local config (`.env`, `.env.*`, `docker-compose*.yml`, GitHub workflows, `settings*.py`, ops docs) contain **zero** assignments of `false/0/no/off` to this flag. All occurrences are documentation or test `monkeypatch.setenv`. | Operator config grep (see audit §below) | **PARTIAL** — repo clean; live/staging/cloud config is not available in repo and must be confirmed separately by ops/deployment review |
-| 2 | **Warning observable in logs** — `NarratorStrictOffDeprecationWarning` in place for at least one release cycle without operator escalation | Warning implemented 2026-05-23 (Phase 6B-7). Zero operator escalations. However, Phase 6B-7 was committed **today** — one release cycle has not elapsed. | `test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py` (all warning-fire tests) | **NOT MET** — warning is new; one release cycle required before removal may proceed |
-| 3 | **Parity test suite updated** — all strict-off rollback path tests removed or converted to strict-on-only | **15+ test functions** across **7 files** still exercise `W5_AST_NARRATOR_STRICT_ENABLED=false`. See §"Test Dependency Audit" below. | — | **NOT MET** — test rewrite plan documented; execution deferred to ADR-0068 implementation phase |
-| 4 | **Inventory updated** — `transition_from_previous` and `location_changed` removed from `LEGACY_SURFACES` or reclassified as doc-only | Both surfaces remain in `LEGACY_SURFACES` as `strict_off_rollback_deprecated`. Reclassification to `removed` is the ADR-0068 artifact, not a precondition. | `test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py::test_legacy_surfaces_include_transition_from_previous` | **NOT MET** (by design) — will be satisfied as part of ADR-0068 implementation, not before |
-| 5 | **Dedicated removal ADR (ADR-0068)** written, reviewed, and Accepted | ADR-0068 does not exist. Blocked by criteria 1 (external monitoring) and 2 (release cycle). | — | **NOT MET** — blocked by 1 and 2 |
+| 1 | **No active operator usage** — `W5_AST_NARRATOR_STRICT_ENABLED=false` not set in any prod/staging/preview deployment | Repo-local config (`.env`, `.env.*`, `docker-compose*.yml`, GitHub workflows, `settings*.py`, ops docs) contain **zero** assignments of `false/0/no/off` to this flag. Live/staging/cloud config is not available from the repository. | Operator config grep (see audit §below) | **WAIVED** — operator accepts repo-local config evidence as sufficient for ADR-0068 |
+| 2 | **Warning observable in logs** — `NarratorStrictOffDeprecationWarning` in place for at least one release cycle without operator escalation | Release-cycle observation is not provable from repository evidence. | `test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py` rewritten for removed-warning/no-warning behavior | **WAIVED** — operator waives release-cycle waiting period |
+| 3 | **Parity test suite updated** — all strict-off rollback path tests removed or converted to strict-on-only | Strict-off rollback tests rewritten to assert permanent strict-on behavior. | ADR-0068 required tests | **MET by Phase 6B-8** |
+| 4 | **Inventory updated** — `transition_from_previous` and `location_changed` removed from rollback taxonomy or reclassified | `transition_from_previous` reclassified as `removed_by_adr_0068`; `location_changed` remains W5 where_summary authority, not rollback. | `test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py::test_phase_6b4_classification_marks_transition_removed` | **MET by Phase 6B-8** |
+| 5 | **Dedicated removal ADR (ADR-0068)** written, reviewed, and Accepted | ADR-0068 exists and records the operator waiver. | ADR index + ADR document | **MET** |
 
-**Overall readiness: NOT SAFE TO BEGIN CODE REMOVAL.**
+**Overall readiness:** authorized by operator waiver in ADR-0068. Criteria 1
+and 2 are explicitly waived; criteria 3 through 5 are satisfied by Phase 6B-8.
 
-Immediate blockers: criterion 2 (release cycle not elapsed) and criterion 1 (external monitoring required).
-Planning, test-rewrite design, and scoping work may proceed now.
-
-**Required action before ADR-0068:**
-- Wait for one release cycle post-Phase 6B-7 (warning must be observable in production logs).
-- Obtain ops/deployment confirmation that no live/staging/cloud environment sets `W5_AST_NARRATOR_STRICT_ENABLED=false`.
+**Operator waiver before ADR-0068:**
+- Repo-local config evidence is sufficient for this branch.
+- The release-cycle waiting period is waived.
 
 ---
 
@@ -903,8 +909,9 @@ sets `W5_AST_NARRATOR_STRICT_ENABLED` to any value. The flag name appears only i
 - `ai_stack/tests/` and `world-engine/tests/` — `monkeypatch.setenv` in tests (expected)
 - `docs/ADR/`, `docs/MVPs/` — documentation references (expected)
 
-**Conclusion:** Repo-local operator config is **clean**. Live/staging/cloud config must be
-confirmed by separate ops review before ADR-0068 can be written.
+**Conclusion:** Repo-local operator config is **clean**. Live/staging/cloud
+config is not available from the repository; ADR-0068 records the operator
+waiver accepting repo-local evidence as sufficient for this branch.
 
 ---
 
@@ -914,19 +921,20 @@ All references to the removal-relevant symbols, classified by role:
 
 | Symbol | File:Line | Classification | ADR-0068 Action |
 |--------|-----------|---------------|-----------------|
-| `W5_AST_NARRATOR_STRICT_ENABLED` (env read) | `ai_stack/actor_tracking/diagnostics.py:86` | `strict_off_rollback_runtime` | **Delete** — remove env-var gate from `w5_ast_narrator_strict_enabled()` |
-| `_strict_off_deprecation_warned` sentinel | `ai_stack/actor_tracking/diagnostics.py` | `strict_off_rollback_runtime` | **Delete** — remove sentinel and `_emit_strict_off_deprecation_warning()` |
-| `NarratorStrictOffDeprecationWarning` class | `ai_stack/actor_tracking/diagnostics.py:36` | `public_compatibility` | **Keep or deprecate-in-place** — class can remain as a tombstone import guard; ADR-0068 decides |
-| `NarratorStrictOffDeprecationWarning` export | `ai_stack/actor_tracking/__init__.py:55,101` | `public_compatibility` | **Keep** — must remain importable for `warnings.filterwarnings` guards |
-| `source_facts["transition_from_previous"]` write | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py:389` | `strict_off_rollback_runtime` | **Delete** — entire strict-off branch in `_narrator_block()` |
-| `_transition_facts()` method | `god_of_carnage_narrator_path.py:320–345` | `strict_off_rollback_runtime` | **Delete entire method** — only called under strict-off branch |
-| `location_changed` in `_transition_facts()` | `god_of_carnage_narrator_path.py:322,325,334` | `strict_off_rollback_runtime` | **Delete** with `_transition_facts()` |
-| `scene_changed` in `_transition_facts()` | `god_of_carnage_narrator_path.py:322,325,335` | `strict_off_rollback_runtime` | **Delete** with `_transition_facts()` |
-| `directed_transition` in `_transition_facts()` | `god_of_carnage_narrator_path.py:344` | `strict_off_rollback_runtime` | **Delete** with `_transition_facts()` |
+| `W5_AST_NARRATOR_STRICT_ENABLED` (env read) | `ai_stack/actor_tracking/diagnostics.py` | `removed_by_adr_0068` | **Done** — narrator runtime no longer reads this env var |
+| `_strict_off_deprecation_warned` sentinel | `ai_stack/actor_tracking/diagnostics.py` | `removed_by_adr_0068` | **Done** — sentinel and `_emit_strict_off_deprecation_warning()` removed |
+| `w5_ast_narrator_strict_enabled()` | `ai_stack/actor_tracking/diagnostics.py` | `removed_by_adr_0068` | **Done** — function and public export removed |
+| `NarratorStrictOffDeprecationWarning` class | `ai_stack/actor_tracking/diagnostics.py` | `removed_by_adr_0068` | **Done** — warning class removed; no tombstone retained |
+| `NarratorStrictOffDeprecationWarning` export | `ai_stack/actor_tracking/__init__.py` | `removed_by_adr_0068` | **Done** — package export removed |
+| `source_facts["transition_from_previous"]` write | `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py` | `removed_by_adr_0068` | **Done** — strict-off branch removed |
+| `_transition_facts()` method | `god_of_carnage_narrator_path.py` | `removed_by_adr_0068` | **Done** — method removed |
+| `location_changed` in `_transition_facts()` | `god_of_carnage_narrator_path.py` | `removed_by_adr_0068` | **Done** with `_transition_facts()` |
+| `scene_changed` in `_transition_facts()` | `god_of_carnage_narrator_path.py` | `removed_by_adr_0068` | **Done** with `_transition_facts()` |
+| `directed_transition` in `_transition_facts()` | `god_of_carnage_narrator_path.py` | `removed_by_adr_0068` | **Done** with `_transition_facts()` |
 | `where_summary.location_changed` | `ai_stack/actor_tracking/projection.py:214–221` | `strict_on_w5_primary_runtime` | **Keep** — W5 projection, not legacy |
 | `location_changed` docstring refs | `ai_stack/actor_tracking/projection.py:660`, `diagnostics.py` | `doc_only` | **Update** — remove "mirrors `transition_from_previous`" language |
-| `legacy_transition_parity` key | `ai_stack/actor_tracking/diagnostics.py` | `diagnostics_metadata` | **Keep** — admin diagnostics; `removed_by_6b5e_policy` label remains valid |
-| `removed_by_6b5e_policy` | `ai_stack/actor_tracking/diagnostics.py` | `diagnostics_metadata` | **Keep** — permanent strict-on label; unrelated to ADR-0068 removal |
+| `legacy_transition_parity` key | `world-engine/app/story_runtime/manager/diagnostics_api.py` | `removed_by_adr_0068_admin_metadata` | **Done** — narrator admin metadata key removed |
+| `removed_by_6b5e_policy` | `world-engine/app/story_runtime/manager/diagnostics_api.py` | `removed_by_adr_0068_admin_metadata` | **Done** — former label no longer emitted |
 | `npc_context_legacy_compat_visible` | `ai_stack/langgraph/runtime_executor/reaction_order_governance.py` | `unrelated` | **No change** — NPC planner compat flag; separate from narrator strict-off |
 | `scene_changed` in `backend/` | `backend/app/runtime/narrative/` | `unrelated` | **No change** — backend narrative context; not W5 narrator path |
 
@@ -934,92 +942,119 @@ All references to the removal-relevant symbols, classified by role:
 
 #### Test Dependency Audit
 
-Tests that still require the strict-off rollback path, with ADR-0068 disposition:
+Historical tests that required the strict-off rollback path, with ADR-0068 disposition:
 
 **Files with entire test scope gated on strict-off:**
 
 | File | Test(s) | Disposition |
 |------|---------|------------|
-| `ai_stack/tests/test_god_of_carnage_narrator_path.py` | All tests (`strict_off` autouse fixture at line 8) — `test_goc_narrator_path_*` | **DELETE** file or **REWRITE** all tests as strict-on-only. The strict-on equivalents should live in a new `test_god_of_carnage_narrator_path_strict_on.py` or replace this file. |
+| `ai_stack/tests/test_god_of_carnage_narrator_path.py` | Historical strict-off fixture | **Rewritten** as strict-on-only source_facts assertions. |
 
 **Files with mixed strict-on / strict-off tests:**
 
 | File | Test(s) to DELETE | Tests to KEEP |
 |------|------------------|--------------|
-| `ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py` | `test_strict_off_explicit_off_keeps_transition_from_previous_first_class` (L120), `test_strict_off_explicit_false_keeps_transition_from_previous_first_class` (L140), `false` parametrize cases (L107, L125, L145, L183) | `test_strict_on_never_produces_transition_from_previous_at_top_level` (L156) and all strict-on parametrize cases |
-| `ai_stack/tests/test_w5_actor_tracking_phase_6b4_post_migration_inventory.py` | `test_strict_off_keeps_transition_from_previous_first_class` (L405), `false` parametrize case (L410) | `test_strict_on_omits_transition_from_previous_and_legacy_compat` (L371) and all strict-on tests |
-| `ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py` | `test_explicit_off_values_are_strict_off` (L127), `test_strict_off_keeps_transition_first_class_and_no_legacy_compat` (L221), `false` parametrize (L299) | All strict-on parity tests; `location_changed` W5 projection tests |
-| `ai_stack/tests/test_w5_actor_tracking_projection.py` | `test_location_changed_parity_with_goc_narrator_path_fixture` (L785–825) — uses strict-off as parity reference | `test_legacy_location_changed_parity_with_transition_from_previous` (L771–782) — pure strict-on; `test_location_changed_true_when_previous_location_differs` (L754); `test_location_changed_false_when_locations_match` (L763) |
-| `world-engine/tests/test_goc_narrator_path_opening.py` | `test_strict_off_*` test at L275 | All strict-on tests |
-| `world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py` | `test_strict_off_does_not_promote_transition_from_previous_as_authority` (L91), `test_strict_off_explicit_false_does_not_reintroduce_legacy_fallback` (L114), `test_strict_off_reads_w5_history_first_for_location_changed` (L301) | `test_strict_on_does_not_read_transition_from_previous_for_location_changed` (L329) and all strict-on tests |
-| `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py` | `test_strict_off_keeps_transition_from_previous_as_first_class` (L565), `test_strict_off_prompt_does_not_promote_legacy_fallback_guidance` (L635), `test_strict_off_reports_w5_first_and_keeps_legacy_compat_visible` (L775) | `test_strict_on_ignores_disagreeing_transition_from_previous_in_diagnostics` (L811) and all strict-on parity tests |
+| `ai_stack/tests/test_w5_actor_tracking_phase_6b3b_narrator_strict_migration.py` | Historical strict-off source_facts tests | **Rewritten** to assert explicit false is ignored and no transition is emitted. |
+| `ai_stack/tests/test_w5_actor_tracking_phase_6b4_post_migration_inventory.py` | Historical strict-off source_facts tests | **Rewritten** to assert no transition under any env value. |
+| `ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py` | Historical strict-off parity tests | **Rewritten** to assert canonical output and W5 projection are stable under explicit false. |
+| `ai_stack/tests/test_w5_actor_tracking_projection.py` | Historical strict-off parity reference | **Rewritten** to use W5 `where_summary.location_changed` authority. |
+| `world-engine/tests/test_goc_narrator_path_opening.py` | Historical strict-off opening test | **Rewritten** to assert no transition in narrator source_facts. |
+| `world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py` | Historical strict-off prompt/admin tests | **Rewritten** to assert explicit false is ignored and admin parity remains removed. |
+| `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py` | Historical strict-off prompt/admin tests | **Rewritten** to assert permanent strict-on behavior and W5 authority. |
 
 **Files that test the deprecation mechanism (update at ADR-0068, not delete now):**
 
 | File | Current role | ADR-0068 update |
 |------|-------------|-----------------|
-| `ai_stack/tests/test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py` | Tests that `strict_off` emits `NarratorStrictOffDeprecationWarning` and that rollback behavior still works | Rewrite to test the *removed* state: either `strict_off` env-var is silently ignored (strict-on always) or raises if ADR-0068 decides to error on explicit false. Update `test_phase_6b4_classification_contains_transition_from_previous` and `test_legacy_surfaces_include_transition_from_previous` to verify `removed` classification. |
+| `ai_stack/tests/test_w5_actor_tracking_phase_6b7_strict_off_deprecation.py` | Formerly tested warning emission and rollback behavior | **Rewritten** to test the removed state: explicit false is silently ignored, no warning is emitted, and inventory verifies `removed_by_adr_0068`. |
 
 **Summary counts:**
-- Test functions to **delete**: ~15 across 7 files
-- Test functions to **rewrite**: ~3 (projection parity + 6B-7 deprecation tests)
-- Test functions to **keep unchanged**: all strict-on parametrize cases
+- Historical strict-off test functions were deleted or rewritten as strict-on-only assertions.
+- Projection parity now uses W5 `where_summary.location_changed`.
+- Deprecation-warning tests now pin removed-warning/no-warning behavior.
 
 ---
 
-#### Exact ADR-0068 Removal Scope
+#### Exact ADR-0068 Removal Scope (Executed)
 
-If all five criteria are met, ADR-0068 removes the following — and only the following:
+ADR-0068 removes the following — and only the following:
 
 **`ai_stack/actor_tracking/diagnostics.py`:**
-- Remove strict-off branch from `w5_ast_narrator_strict_enabled()` — function becomes one-liner returning `True` (always strict-on).
-- Remove `_strict_off_deprecation_warned` module-level sentinel.
-- Remove `_emit_strict_off_deprecation_warning()` helper function.
-- Keep `NarratorStrictOffDeprecationWarning` class and export (tombstone; ADR-0068 decides whether to deprecate-in-place or keep permanently for `warnings.filterwarnings` guards).
-- Update docstrings that reference the strict-off posture.
+- `w5_ast_narrator_strict_enabled()` function and public export removed.
+- `_strict_off_deprecation_warned` module-level sentinel removed.
+- `_emit_strict_off_deprecation_warning()` helper function removed.
+- `NarratorStrictOffDeprecationWarning` class and public export removed.
+- Docstrings that reference the old strict-off posture updated where they describe current behavior.
 
 **`ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py`:**
-- Remove `_transition_facts()` method entirely (lines ~320–345). This eliminates `location_changed`, `scene_changed`, `directed_transition` fields from the legacy path.
-- Remove the strict-off branch in `_narrator_block()` (lines ~383–389): the `if not w5_ast_narrator_strict_enabled():` block and its `transition_payload` assignment.
-- Update comment at line 383 to remove Phase 6B-3B / Phase 6B-6B rollback documentation.
+- `_transition_facts()` method removed entirely. This eliminates `location_changed`, `scene_changed`, `directed_transition` fields from the legacy transition path.
+- Strict-off branch in `_block()` removed: no `if not w5_ast_narrator_strict_enabled()` block and no `transition_payload` assignment remain.
+- Current comment records ADR-0068 permanent strict-on behavior.
 
 **`scripts/inventory_w5_legacy_consumers.py`:**
-- Reclassify `transition_from_previous` in `LEGACY_SURFACES` from `strict_off_rollback_deprecated` to `removed_phase_6b8` (or remove from scanner if no live references remain).
-- Reclassify `location_changed` from W5-mirror note to `strict_on_w5_primary_runtime` or remove from scanner.
-- Update `PHASE_6B4_CLASSIFICATION["transition_from_previous"]` to `removed`.
-- Update `PHASE_6B4_TAXONOMY` to replace `strict_off_rollback_deprecated` with `removed`.
-- Update Phase 6B-7.5 readiness section to show all criteria met.
+- `transition_from_previous` remains tracked but is reclassified as `removed_by_adr_0068`.
+- `location_changed` is classified as W5 where_summary location-shift authority, not rollback.
+- `PHASE_6B4_CLASSIFICATION["transition_from_previous"]` records ADR-0068 removal.
+- `PHASE_6B4_TAXONOMY` no longer contains `strict_off_rollback_deprecated`; it includes `removed_by_adr_0068`.
+- Phase 6B-7.5 readiness section records criteria 1 and 2 as waived and criteria 3 through 5 as met.
 
 **`docs/MVPs/w5_legacy_consumer_removal_inventory.md`:**
-- Add Phase 6B-8 section (or Phase 6B-7-final) recording the removal.
-- Update Phase 6B-7 and Phase 6B-7.5 sections to show removed status.
+- Phase 6B-8 section records the removal.
+- Phase 6B-7 and Phase 6B-7.5 sections show removed/waived status.
 
-**`docs/ADR/adr-0068-*.md`:** (new file)
-- Must be written, reviewed, and Accepted **before** any code is deleted.
-- Must reference ADR-0067 and confirm all five criteria are met.
-- Must include the removal diff at function and branch level.
-- Must include rollback plan (revert commit or feature flag) for the release window.
-- Must confirm no narrator prompt, parity test, or admin diagnostic reads `transition_from_previous` outside a strict-off gate after removal.
+**`world-engine/app/story_runtime/manager/diagnostics_api.py`:**
+- `w5.narrator_strict_enabled` metadata removed.
+- `w5.legacy_transition_parity` metadata removed.
+- `removed_by_6b5e_policy` and `legacy_compat_visible` are no longer emitted
+  narrator admin values.
+
+**`docs/ADR/adr-0068-*.md`:**
+- Written and marked Accepted under operator waiver.
+- References ADR-0067 and records criteria 1 and 2 as waived.
+- Includes the removal diff at function and branch level.
+- Includes rollback plan.
+- Confirms no narrator prompt, parity test, or admin diagnostic reads `transition_from_previous` as narrator authority after removal.
 
 **What ADR-0068 must NOT touch:**
-- `W5_AST_NARRATOR_STRICT_ENABLED` flag resolver function signature (may simplify body, not delete function)
 - Malformed-W5 safety fallback (separate code path)
 - Public compatibility aliases (substrate writers/readers, W5 projection surfaces)
-- Admin diagnostics `removed_by_6b5e_policy` / `legacy_transition_parity` labels
 - Any committed event structure
 - ADR-0033, ADR-0061, ADR-0063, ADR-0065, ADR-0066, ADR-0067 constraints
 
 ---
 
-#### No Runtime Changes in Phase 6B-7.5
+#### Phase 6B-8 Runtime Status
 
-This phase is audit and planning only. All of the following remain unchanged:
-- `W5_AST_NARRATOR_STRICT_ENABLED` flag gate and resolver.
-- `transition_from_previous` first-class under explicit strict-off.
-- Malformed-W5 safety fallback.
-- All strict-off parity tests.
-- `NarratorStrictOffDeprecationWarning` class and warning behavior.
-- Substrate writers/readers, public compatibility aliases.
-- All committed events and committed output.
+ADR-0068 changes only the narrator strict-off rollback path:
+- `W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off` no longer changes behavior.
+- `transition_from_previous` is no longer emitted by new narrator source_facts.
+- Malformed-W5 safety fallback remains unchanged.
+- Strict-off parity tests are rewritten to assert permanent strict-on behavior.
+- `NarratorStrictOffDeprecationWarning` and `w5_ast_narrator_strict_enabled`
+  are no longer importable.
+- `w5.narrator_strict_enabled` and `w5.legacy_transition_parity` are no longer
+  current narrator admin metadata.
+- Substrate writers/readers, public compatibility aliases, committed events, and
+  committed output remain unchanged.
 
-**See:** [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) (Accepted).
+**See:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) (Accepted).
+
+---
+
+### Phase 6B-8 — Strict-Off Rollback Removal (Complete, 2026-05-28)
+
+**Current source_facts shape:** `w5_projection` is the sole actor-situation
+authority. `transition_from_previous` and `_legacy_compat` are absent from new
+GoC narrator blocks. `where_summary.location_changed` remains the location-shift
+source. How remains first-class. Inferred Why remains soft truth.
+
+**Inventory reclassification:** `transition_from_previous` is
+`removed_by_adr_0068`; remaining hits are documentation, tests, or historical
+fixtures. Remaining legacy surfaces are current-room, visibility,
+actor-location, public payload, or NPC planner compatibility surfaces; they are
+not narrator strict-off rollback.
+
+**Recommended next phase:** Phase 6B-8.1 no-legacy audit: remove stale
+documentation language that describes retired narrator strict-off intermediate
+states as current behavior, then continue substrate/public payload compatibility
+consolidation under a separate ADR.

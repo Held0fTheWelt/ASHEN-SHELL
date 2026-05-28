@@ -49,6 +49,7 @@ TASK_TYPES: Final[frozenset[str]] = frozenset(
         "classification",
         "trigger_signal_extraction",
         "repetition_consistency_check",
+        "translation",
         "ranking",
         "cheap_preflight",
         "scene_direction",

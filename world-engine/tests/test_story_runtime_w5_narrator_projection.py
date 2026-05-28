@@ -7,16 +7,14 @@ can verify both flag states without booting the full runtime.
 Asserted behavior:
 
 - Default-on (Phase 6B-1): when ``W5_AST_NARRATOR_PROJECTION_ENABLED`` is
-  unset, narrator ``source_facts`` DOES contain ``w5_projection`` and the
-  legacy ``transition_from_previous`` block remains as fallback.
+  unset, narrator ``source_facts`` DOES contain ``w5_projection``.
 - When the flag is explicitly disabled (``0``/``false``), narrator
-  ``source_facts`` does NOT contain ``w5_projection`` — i.e. behavior is
-  identical to pre-Phase-2.
+  ``source_facts`` does NOT contain ``w5_projection``.
 - When the flag is enabled, narrator ``source_facts`` DOES contain the typed
   projection payload with the five W5 summaries.
 - The projection in ``source_facts`` carries semantic values, not just keys.
-- When ``w5_latest_snapshot`` is malformed, the helper falls back to legacy
-  behavior and records a diagnostic — the turn is not failed.
+- When ``w5_latest_snapshot`` is malformed, the helper leaves source facts
+  untouched and records a diagnostic; the turn is not failed.
 """
 
 from __future__ import annotations
@@ -130,7 +128,7 @@ def _snapshot_with_five_dimensions(
     }
 
 
-def _legacy_block() -> dict[str, Any]:
+def _source_block() -> dict[str, Any]:
     """A narrator source_block as built by god_of_carnage_narrator_path._block()."""
 
     return {
@@ -138,13 +136,6 @@ def _legacy_block() -> dict[str, Any]:
         "block_type": "narrator",
         "text": "...",
         "source_facts": {
-            "transition_from_previous": {
-                "kind": "location_or_scene_shift",
-                "location_changed": True,
-                "scene_changed": True,
-                "previous_location": {"id": "foyer"},
-                "current_location": {"id": "parlor"},
-            },
             "location": {"id": "parlor"},
         },
     }
@@ -173,17 +164,13 @@ def test_default_on_unset_env_adds_w5_projection_with_semantic_values(
 
     monkeypatch.delenv("W5_AST_NARRATOR_PROJECTION_ENABLED", raising=False)
     session = _make_session(w5_latest=_snapshot_with_five_dimensions())
-    enriched = _enrich(session, [_legacy_block()])
+    enriched = _enrich(session, [_source_block()])
     proj = enriched[0]["source_facts"]["w5_projection"]
     assert proj["target_consumer"] == "narrator"
     # Semantic values, not just key presence.
     assert proj["how_summary"]["facts"]["tone"] == "sharp"
     assert proj["where_summary"]["current_location"] == "parlor"
-    # Legacy transition_from_previous fallback block is preserved.
-    assert (
-        enriched[0]["source_facts"]["transition_from_previous"]["location_changed"]
-        is True
-    )
+    assert "transition_from_previous" not in enriched[0]["source_facts"]
 
 
 def test_explicit_opt_out_zero_does_not_add_w5_projection_to_source_facts(
@@ -193,21 +180,17 @@ def test_explicit_opt_out_zero_does_not_add_w5_projection_to_source_facts(
 
     monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", "0")
     session = _make_session(w5_latest=_snapshot_with_five_dimensions())
-    blocks = [_legacy_block()]
+    blocks = [_source_block()]
     enriched = _enrich(session, blocks)
     assert enriched is blocks  # untouched
     assert "w5_projection" not in enriched[0]["source_facts"]
-    # Legacy fields preserved exactly.
-    assert (
-        enriched[0]["source_facts"]["transition_from_previous"]["location_changed"]
-        is True
-    )
+    assert "transition_from_previous" not in enriched[0]["source_facts"]
 
 
 def test_flag_disabled_via_explicit_false(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", "false")
     session = _make_session(w5_latest=_snapshot_with_five_dimensions())
-    enriched = _enrich(session, [_legacy_block()])
+    enriched = _enrich(session, [_source_block()])
     assert "w5_projection" not in enriched[0]["source_facts"]
 
 
@@ -216,7 +199,7 @@ def test_flag_enabled_adds_typed_projection_with_five_summaries(
 ) -> None:
     monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", "true")
     session = _make_session(w5_latest=_snapshot_with_five_dimensions())
-    enriched = _enrich(session, [_legacy_block()])
+    enriched = _enrich(session, [_source_block()])
     proj = enriched[0]["source_facts"]["w5_projection"]
     assert proj["schema_version"] == "w5_projection.v1"
     assert proj["target_consumer"] == "narrator"
@@ -233,11 +216,7 @@ def test_flag_enabled_adds_typed_projection_with_five_summaries(
     # truth_attribution preserved.
     assert proj["truth_attribution"]["why_summary.facts.motive"] == "inferred"
     assert proj["truth_attribution"]["how_summary.facts.intensity"] == "director_assigned"
-    # Legacy fields stay in place as fallback.
-    assert (
-        enriched[0]["source_facts"]["transition_from_previous"]["location_changed"]
-        is True
-    )
+    assert "transition_from_previous" not in enriched[0]["source_facts"]
 
 
 def test_flag_enabled_centers_projection_on_session_human_actor(
@@ -262,7 +241,7 @@ def test_flag_enabled_centers_projection_on_session_human_actor(
         runtime_projection={"human_actor_id": "veronique"},
     )
 
-    enriched = _enrich(session, [_legacy_block()])
+    enriched = _enrich(session, [_source_block()])
     proj = enriched[0]["source_facts"]["w5_projection"]
     assert proj["actor_id"] == "veronique"
     assert proj["where_summary"]["current_location"] == "parlor"
@@ -270,20 +249,17 @@ def test_flag_enabled_centers_projection_on_session_human_actor(
     assert proj["how_summary"]["facts"]["tone"] == "sharp"
 
 
-def test_flag_enabled_legacy_location_changed_parity(
+def test_flag_enabled_location_changed_comes_from_w5_history(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Phase 2 parity: when ``transition_from_previous.location_changed`` is
-    True, the W5 ``where_summary.location_changed`` must also be True.
-    """
+    """ADR-0068: location_changed comes from W5 history, not transition payloads."""
 
     monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", "true")
     previous = _snapshot_with_five_dimensions(turn=2, location="foyer")
     current = _snapshot_with_five_dimensions(turn=3, location="parlor")
     session = _make_session(w5_latest=current, w5_history=[previous, current])
 
-    blocks = [_legacy_block()]
-    assert blocks[0]["source_facts"]["transition_from_previous"]["location_changed"] is True
+    blocks = [_source_block()]
     enriched = _enrich(session, blocks)
     proj = enriched[0]["source_facts"]["w5_projection"]
     assert proj["where_summary"]["location_changed"] is True
@@ -297,7 +273,7 @@ def test_flag_enabled_with_malformed_snapshot_falls_back_and_records_diagnostic(
     monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", "true")
     bad = {"schema_version": "w5_snapshot.v1", "this_is": "garbage"}
     session = _make_session(w5_latest=bad)
-    enriched = _enrich(session, [_legacy_block()])
+    enriched = _enrich(session, [_source_block()])
     # No w5_projection added.
     assert "w5_projection" not in enriched[0]["source_facts"]
     # Diagnostic recorded.
@@ -310,7 +286,7 @@ def test_flag_enabled_with_no_snapshot_returns_safe_defaults(
 ) -> None:
     monkeypatch.setenv("W5_AST_NARRATOR_PROJECTION_ENABLED", "true")
     session = _make_session(w5_latest=None)
-    enriched = _enrich(session, [_legacy_block()])
+    enriched = _enrich(session, [_source_block()])
     proj = enriched[0]["source_facts"]["w5_projection"]
     assert proj["target_consumer"] == "narrator"
     assert proj["where_summary"]["location_changed"] is False

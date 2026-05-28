@@ -78,7 +78,7 @@ For the **record shape** (optional sections, testing expectations), see [`adr-te
 | [ADR-0065](adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md) | W5 narrator strict mode becomes the default actor-situation surface | Proposed |
 | [ADR-0066](adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) | Retire narrator legacy transition compatibility diagnostics flag | Accepted |
 | [ADR-0067](adr-0067-deprecate-narrator-strict-off-transition-rollback.md) | Deprecate narrator strict-off transition rollback surface | Accepted |
-| [ADR-0068](adr-0068-remove-narrator-strict-off-transition-rollback.md) | Remove narrator strict-off transition rollback surface | Draft / Blocked |
+| [ADR-0068](adr-0068-remove-narrator-strict-off-transition-rollback.md) | Remove narrator strict-off transition rollback surface | Accepted |
 
 _Status values mirror each file's `## Status` line; update the table when an ADR's status changes._
 

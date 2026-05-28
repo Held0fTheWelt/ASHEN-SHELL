@@ -32,15 +32,6 @@ W5_ADMIN_DIAGNOSTIC_SCHEMA_VERSION = "w5_admin_diagnostics.v1"
 W5_RUNTIME_METADATA_SCHEMA_VERSION = "w5_runtime_metadata.v1"
 
 
-class NarratorStrictOffDeprecationWarning(DeprecationWarning):
-    """Tombstone — ADR-0068.
-
-    The strict-off rollback path (W5_AST_NARRATOR_STRICT_ENABLED=false) was
-    removed in Phase 6B-8 (ADR-0068). This class is retained only for import
-    compatibility with any code that references it by name; it is never emitted.
-    """
-
-
 def _flag_enabled(name: str) -> bool:
     # Phase 6B-1: W5 projection flags are default-on. Reporter mirrors runtime
     # gate semantics — unset/empty → enabled; explicit "0/false/no/off" →
@@ -51,27 +42,11 @@ def _flag_enabled(name: str) -> bool:
     return True
 
 
-def w5_ast_narrator_strict_enabled() -> bool:
-    """W5 narrator strict mode — permanently True (ADR-0068).
-
-    The strict-off rollback path (W5_AST_NARRATOR_STRICT_ENABLED=false) was
-    removed in Phase 6B-8. W5 narrator projection (``source_facts.w5_projection``)
-    is the sole actor-situation authority. Setting W5_AST_NARRATOR_STRICT_ENABLED
-    to any value no longer changes narrator behavior; this function always
-    returns True.
-
-    How remains first-class. Inferred Why remains soft truth.
-    """
-
-    return True
-
-
 def w5_projection_flag_states() -> dict[str, bool]:
     """Return current W5 feature-flag posture without mutating runtime config."""
 
     return {
         "narrator": _flag_enabled("W5_AST_NARRATOR_PROJECTION_ENABLED"),
-        "narrator_strict": w5_ast_narrator_strict_enabled(),
         "director": _flag_enabled("W5_AST_DIRECTOR_PROJECTION_ENABLED"),
         "npc": _flag_enabled("W5_AST_NPC_PROJECTION_ENABLED"),
         "player_shell": _flag_enabled("W5_AST_FRONTEND_PLAYER_VIEW_ENABLED"),
@@ -521,7 +496,6 @@ def build_w5_admin_validation_view(
 
 
 __all__ = [
-    "NarratorStrictOffDeprecationWarning",  # tombstone — ADR-0068; retained for import compat
     "W5_ADMIN_DIAGNOSTIC_SCHEMA_VERSION",
     "W5_RUNTIME_METADATA_SCHEMA_VERSION",
     "build_w5_admin_actor_view",
@@ -534,6 +508,5 @@ __all__ = [
     "build_w5_langfuse_metadata",
     "build_w5_runtime_metadata",
     "coerce_w5_snapshot",
-    "w5_ast_narrator_strict_enabled",
     "w5_projection_flag_states",
 ]

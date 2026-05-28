@@ -40,44 +40,21 @@ class _NarratorOutputPromptsMixin:
                 for block in source_blocks
             ],
         }
-        strict = w5_ast_narrator_strict_enabled()
-        # Phase 6B-3B F18 / Phase 6B-5D / Phase 6B-6B: under
-        # W5_AST_NARRATOR_STRICT_ENABLED (permanent default since 6B-5C),
-        # source_facts.w5_projection is the sole actor-situation authority.
-        # Phase 6B-5D removed the legacy transition_from_previous fallback
-        # paragraph. Phase 6B-6B retired the _legacy_compat diagnostics path
-        # entirely (ADR-0066). How stays first-class. Inferred Why stays soft truth.
-        if strict:
-            w5_authority_paragraph = (
-                "Treat source_facts.w5_projection as the sole actor-situation authority for this turn. "
-                "Honor who_summary (actor identity / role), where_summary "
-                "(current_location, location_changed), what_summary "
-                "(current_action / interaction_type), how_summary "
-                "(tone / manner / intensity / pace / physicality / method / style — first-class, "
-                "never folded into what), and why_summary (inferred motive / goal / pressure / "
-                "dramatic_function — soft inferred truth, never spoken as observed fact). "
-                "Use where_summary.location_changed to decide whether the block must narratively "
-                "orient a scene/location shift before describing local detail. "
-                "Do not consult source_facts.transition_from_previous; that field is absent under strict-on. "
-            )
-        else:
-            # Phase 6B-5D: strict-off prompt fallback paragraph removed.
-            # W5 projection is the actor-situation authority in all postures.
-            # transition_from_previous may still appear for explicit opt-out
-            # rollback compatibility but must not be promoted here.
-            w5_authority_paragraph = (
-                "Treat source_facts.w5_projection as the actor-situation authority for this turn. "
-                "Honor who_summary (actor identity / role), where_summary "
-                "(current_location, location_changed), what_summary "
-                "(current_action / interaction_type), how_summary "
-                "(tone / manner / intensity / pace / physicality / method / style — first-class, "
-                "never folded into what), and why_summary (inferred motive / goal / pressure / "
-                "dramatic_function — soft inferred truth, never spoken as observed fact). "
-                "Use where_summary.location_changed to decide whether the block must narratively "
-                "orient a scene/location shift before describing local detail. "
-                "Any source_facts.transition_from_previous data present is legacy rollback "
-                "compatibility information only and is not authoritative narrator guidance. "
-            )
+        # ADR-0068: narrator strict mode is permanent. The env-var no longer
+        # changes prompt behavior; W5 projection is the sole actor-situation
+        # authority. How stays first-class. Inferred Why stays soft truth.
+        w5_authority_paragraph = (
+            "Treat source_facts.w5_projection as the sole actor-situation authority for this turn. "
+            "Honor who_summary (actor identity / role), where_summary "
+            "(current_location, location_changed), what_summary "
+            "(current_action / interaction_type), how_summary "
+            "(tone / manner / intensity / pace / physicality / method / style — first-class, "
+            "never folded into what), and why_summary (inferred motive / goal / pressure / "
+            "dramatic_function — soft inferred truth, never spoken as observed fact). "
+            "Use where_summary.location_changed to decide whether the block must narratively "
+            "orient a scene/location shift before describing local detail. "
+            "Do not consult source_facts.transition_from_previous; that field is absent. "
+        )
         return (
             "You are the World of Shadows narrator synthesis module.\n"
             "Input is English semantic content authority, not player-visible prose. "
