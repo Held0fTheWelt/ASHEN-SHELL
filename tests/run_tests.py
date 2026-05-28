@@ -138,6 +138,7 @@ AI_STACK_DOMAIN_SUITES: tuple[str, ...] = (
     "ai_stack_langfuse",
     "ai_stack_langgraph",
     "ai_stack_language_io",
+    "ai_stack_output_gateway",
     "ai_stack_mcp",
     "ai_stack_prompt_store",
     "ai_stack_quality_lab",
@@ -687,6 +688,9 @@ AI_STACK_LANGUAGE_IO_TARGETS: tuple[str, ...] = _ai_stack_tests(
     "test_human_input_attribution_visible_render.py",
     "test_visible_narrative_contract.py",
 )
+AI_STACK_OUTPUT_GATEWAY_TARGETS: tuple[str, ...] = (
+    "ai_stack/tests/test_output_language_gateway.py",
+)
 AI_STACK_MCP_TARGETS: tuple[str, ...] = _ai_stack_tests(
     "test_mcp_agent_interface.py",
     "test_mcp_canonical_surface.py",
@@ -913,6 +917,7 @@ SUITE_DISPLAY_NAMES: dict[str, str] = {
     "ai_stack_langfuse": "AI stack langfuse package",
     "ai_stack_langgraph": "AI stack langgraph package",
     "ai_stack_language_io": "AI stack language_io package",
+    "ai_stack_output_gateway": "AI stack output language gateway",
     "ai_stack_mcp": "AI stack mcp package",
     "ai_stack_prompt_store": "AI stack prompt_store package",
     "ai_stack_quality_lab": "AI stack quality_lab package",
@@ -1349,6 +1354,7 @@ SUITE_CONFIGS: dict[str, SuiteConfig] = {
     "ai_stack_langfuse": _pytest_slice(cwd=PROJECT_ROOT, targets=AI_STACK_LANGFUSE_TARGETS),
     "ai_stack_langgraph": _pytest_slice(cwd=PROJECT_ROOT, targets=AI_STACK_LANGGRAPH_TARGETS),
     "ai_stack_language_io": _pytest_slice(cwd=PROJECT_ROOT, targets=AI_STACK_LANGUAGE_IO_TARGETS),
+    "ai_stack_output_gateway": _pytest_slice(cwd=PROJECT_ROOT, targets=AI_STACK_OUTPUT_GATEWAY_TARGETS),
     "ai_stack_mcp": _pytest_slice(cwd=PROJECT_ROOT, targets=AI_STACK_MCP_TARGETS),
     "ai_stack_prompt_store": _pytest_slice(cwd=PROJECT_ROOT, targets=AI_STACK_PROMPT_STORE_TARGETS),
     "ai_stack_quality_lab": _pytest_slice(cwd=PROJECT_ROOT, targets=AI_STACK_QUALITY_LAB_TARGETS),
