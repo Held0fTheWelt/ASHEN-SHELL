@@ -8,11 +8,19 @@
       "category": "AI Stack / Game Reasoning",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["game-reasoning", "runtime", "important"],
+      "tags": [
+        "game-reasoning",
+        "runtime",
+        "important"
+      ],
       "description": "Analyzes game state and the player's queued action to produce possible narrative outcomes.",
       "source_path": "ai_stack/canonical_prompt_catalog.py",
       "source_symbol": "CanonicalPromptCatalog.decision_context",
-      "variables": ["game_state", "player_action", "previous_result"],
+      "variables": [
+        "game_state",
+        "player_action",
+        "previous_result"
+      ],
       "template_lines": [
         "You are an AI agent in a game world. Analyze the current game state and the player's queued action.",
         "",
@@ -40,11 +48,16 @@
       "category": "AI Stack / Game Reasoning",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["game-reasoning", "runtime"],
+      "tags": [
+        "game-reasoning",
+        "runtime"
+      ],
       "description": "Selects the best player action outcome from a decision analysis.",
       "source_path": "ai_stack/canonical_prompt_catalog.py",
       "source_symbol": "CanonicalPromptCatalog.action_selection",
-      "variables": ["decision_analysis"],
+      "variables": [
+        "decision_analysis"
+      ],
       "template_lines": [
         "Based on the decision analysis below, select the single best action outcome for the player.",
         "",
@@ -69,11 +82,19 @@
       "category": "AI Stack / Narrative Generation",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["narrative-generation", "runtime", "player-facing"],
+      "tags": [
+        "narrative-generation",
+        "runtime",
+        "player-facing"
+      ],
       "description": "Generates concise player-facing narrative text for a resolved action.",
       "source_path": "ai_stack/canonical_prompt_catalog.py",
       "source_symbol": "CanonicalPromptCatalog.narrative_response",
-      "variables": ["action", "outcome", "world_context"],
+      "variables": [
+        "action",
+        "outcome",
+        "world_context"
+      ],
       "template_lines": [
         "Generate a short, engaging narrative response to the player's action.",
         "",
@@ -95,11 +116,19 @@
       "category": "AI Stack / Narrative Generation",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["narrative-generation", "runtime", "failure"],
+      "tags": [
+        "narrative-generation",
+        "runtime",
+        "failure"
+      ],
       "description": "Explains failed player actions in-world without punishing player agency.",
       "source_path": "ai_stack/canonical_prompt_catalog.py",
       "source_symbol": "CanonicalPromptCatalog.failure_explanation",
-      "variables": ["action", "reason", "game_state"],
+      "variables": [
+        "action",
+        "reason",
+        "game_state"
+      ],
       "template_lines": [
         "The player's action failed. Explain why in narrative terms.",
         "",
@@ -121,7 +150,11 @@
       "category": "AI Stack / Runtime Turn",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["runtime-turn", "actor-lane", "important"],
+      "tags": [
+        "runtime-turn",
+        "actor-lane",
+        "important"
+      ],
       "description": "System prompt for World of Shadows runtime turn generation with actor lanes as the source of truth.",
       "source_path": "ai_stack/canonical_prompt_catalog.py",
       "source_symbol": "CanonicalPromptCatalog.runtime_turn_system",
@@ -147,7 +180,7 @@
         "- state_effects document what world-state changes result from actor choices",
         "- narration_summary describes what happened (derived from actor output above)",
         "- narrative_response MUST be a copy of narration_summary only",
-        "- PLAYER-VISIBLE TYPOGRAPHY (spoken vs stage; apply in the session_output_language): spoken_lines[].text puts actual spoken words in ASCII double quotes. Optional attributive lead-ins are allowed before the quote. Do not leave a line that is only a name plus colon with no quoted speech. action_lines[].text is pure blocking/gesture in third-person prose; weave the actor's name inside the sentence and never start this field with a name-colon prefix.",
+        "- OUTPUT LANGUAGE: Write ALL visible text (narration_summary, spoken_lines[].text, action_lines[].text) in the session_output_language provided in the context. If session_output_language=de, write in German. If session_output_language=en, write in English. Never default to English when another language is specified. - PLAYER-VISIBLE TYPOGRAPHY (spoken vs stage; apply in the session_output_language): spoken_lines[].text puts actual spoken words in ASCII double quotes. Optional attributive lead-ins are allowed before the quote. Do not leave a line that is only a name plus colon with no quoted speech. action_lines[].text is pure blocking/gesture in third-person prose; weave the actor's name inside the sentence and never start this field with a name-colon prefix.",
         "- TRANSCRIPT / SHELL: The play surface renders typed blocks whose count follows the cast and beats. Do not replace that with a single omniscient paragraph. When multiple people have speech or blocking this turn, emit separate spoken_lines/action_lines rows per speaker and per physical actor.",
         "- When prior_initiative_truth shows unresolved tension, the next turn MUST show an actor response that addresses or escalates that pressure.",
         "- When secondary_responder_ids are nominated, at least one SHOULD appear in spoken_lines or action_lines unless an interruption or validation constraint makes that impossible.",
@@ -165,11 +198,20 @@
       "category": "AI Stack / Runtime Turn",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["runtime-turn", "actor-lane", "json-output", "important"],
+      "tags": [
+        "runtime-turn",
+        "actor-lane",
+        "json-output",
+        "important"
+      ],
       "description": "Human prompt template for runtime turn generation, actor realization, prose projection, and JSON format instructions.",
       "source_path": "ai_stack/canonical_prompt_catalog.py",
       "source_symbol": "CanonicalPromptCatalog.runtime_turn_human",
-      "variables": ["full_context", "correction_block", "format_instructions"],
+      "variables": [
+        "full_context",
+        "correction_block",
+        "format_instructions"
+      ],
       "template_lines": [
         "{full_context}{correction_block}ACTOR REALIZATION TASK:",
         "1. Identify the primary responder (the actor who responds to this move/input).",
@@ -201,7 +243,10 @@
       "category": "AI Stack / Writers Room",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["writers-room", "review"],
+      "tags": [
+        "writers-room",
+        "review"
+      ],
       "description": "System instruction for structured writers-room review output.",
       "source_path": "ai_stack/langchain/bridges.py",
       "source_symbol": "_WRITERS_ROOM_PROMPT_TEMPLATE.system",
@@ -217,11 +262,19 @@
       "category": "AI Stack / Writers Room",
       "prompt_type": "runtime_prompt",
       "domain": "ai_stack",
-      "tags": ["writers-room", "review"],
+      "tags": [
+        "writers-room",
+        "review"
+      ],
       "description": "Human message template for module review focus, retrieved evidence, and format instructions.",
       "source_path": "ai_stack/langchain/bridges.py",
       "source_symbol": "_WRITERS_ROOM_PROMPT_TEMPLATE.human",
-      "variables": ["module_id", "focus", "retrieval_context", "format_instructions"],
+      "variables": [
+        "module_id",
+        "focus",
+        "retrieval_context",
+        "format_instructions"
+      ],
       "template_lines": [
         "Module: {module_id}",
         "Review focus: {focus}",
@@ -239,7 +292,11 @@
       "category": "AI Stack / Runtime Turn",
       "prompt_type": "runtime_fragment",
       "domain": "ai_stack",
-      "tags": ["runtime-fragment", "runtime-turn", "important"],
+      "tags": [
+        "runtime-fragment",
+        "runtime-turn",
+        "important"
+      ],
       "description": "Final directive appended to the assembled runtime model context.",
       "source_path": "ai_stack/langgraph/langgraph_runtime_executor.py",
       "source_symbol": "RuntimeTurnGraphExecutor._assemble_model_context",
