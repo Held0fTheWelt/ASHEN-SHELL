@@ -16,35 +16,35 @@ Here you find the **living working basis**: structural and spaghetti topics in *
 
 | Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
 |-------|-------------------------------------|-------------------------------------|
-| **As of (date & time)** | — | **2026-05-28 18:18:39 (UTC)** |
+| **As of (date & time)** | — | **2026-05-28 18:57:09 (UTC)** |
 | Spaghetti scan command | — | `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` |
 | Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` from `fy-manifest.yaml` |
-| **M7** — gewichtete 7-Kategorien-Summe | **44.06** | **3.69** |
-| C1: Circular dependencies | **8.26** | **0.74** |
-| C2: Nesting depth | **0.00** | **1.32** |
-| C3: Long functions + complexity | **95.87** | **0.90** |
-| C4: Multi-responsibility modules | **72.44** | **7.16** |
-| C5: Magic numbers + global state | **39.84** | **0.70** |
-| C6: Missing abstractions / duplication | **30.31** | **13.36** |
-| C7: Confusing control flow | **62.32** | **6.56** |
-| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **11299** / **809** / **102** / **0** |
+| **M7** — gewichtete 7-Kategorien-Summe | **43.09** | **3.64** |
+| C1: Circular dependencies | **7.88** | **0.74** |
+| C2: Nesting depth | **0.00** | **1.29** |
+| C3: Long functions + complexity | **93.99** | **0.79** |
+| C4: Multi-responsibility modules | **72.16** | **7.10** |
+| C5: Magic numbers + global state | **39.69** | **0.69** |
+| C6: Missing abstractions / duplication | **27.13** | **13.28** |
+| C7: Confusing control flow | **61.10** | **6.46** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **11374** / **808** / **90** / **0** |
 | Extra check builtins | — | **0** matches for `def build_god_of_carnage_solo` in `**/builtins.py`; `story_runtime_core/goc_solo_builtin_template.py` still owns the definition |
 | Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **0**; imported **12** current runtime modules via `app.runtime.package_classification.runtime_module_import_path`. Grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
-| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **3.689** remains below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.16** > **5**), **C5** (**0.70** > **0**), **C6** (**13.36** > **0**), and **C7** (**6.56** > **3**). **DS-037 through DS-040 anchors are pruned:** their named leaders no longer appear in the current top-12 longest ranking. Current top-12 leaders seed **DS-041** through **DS-044**: `interpret_goc_semantic_move`, `build_planner_truth_payload`, `_record_hierarchical_memory_aspect`, `build_readiness_co_authority_preview`, `build_off_stage_hierarchical_memory_write`, `compute_stream_readiness`, `validate_voice_consistency`, `build_bounded_dramatic_context_summary`, `apply_action_to_environment_state`, `validate_temporal_control_realization`, `build_validation_authority_bridge`, and `_extract_npc_agency_breakdown`. **C7 nesting tail:** `D6` remains **0**. **Metric scan gate:** DS-005 imports **12** current runtime modules with exit **0**. |
+| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **3.640** remains below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.10** > **5**), **C5** (**0.69** > **0**), **C6** (**13.28** > **0**), and **C7** (**6.46** > **3**). **DS-041 through DS-044 anchors are pruned:** their named leaders no longer appear in the current top-12 longest ranking. Current top-12 leaders seed **DS-045** through **DS-048**: `derive_scene_energy`, `_redis_governance_posture`, `_run_autonomous_followup_after_turn`, `build_character_voice_profiles_for_goc`, `build_hierarchical_memory_write`, `verify_and_promote_claims`, `derive_social_pressure`, `_build_adr0041_plan_projection_sibling`, `enrich_improvement_package_with_task2a_routing`, `build_authority_handoff_candidate`, `initialize_runtime_world`, and `validate_narrative_aspects`. **C7 nesting tail:** `D6` remains **0**. **Metric scan gate:** DS-005 imports **12** current runtime modules with exit **0**. |
 
 ### Score *M7* — inputs, weights, and calculation
 
 | Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
 |--------|---------|------------------------|--------------|
-| **M7** | Gewichtete Summe | **44.06** | **3.69** |
-| **C1** | Circular dependencies | **8.26** | **0.74** |
-| **C2** | Nesting depth | **0.00** | **1.32** |
-| **C3** | Long functions + complexity | **95.87** | **0.90** |
-| **C4** | Multi-responsibility modules | **72.44** | **7.16** |
-| **C5** | Magic numbers + global state | **39.84** | **0.70** |
-| **C6** | Missing abstractions / duplication | **30.31** | **13.36** |
-| **C7** | Confusing control flow | **62.32** | **6.56** |
-| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **11299** / **809** / **102** / **0** |
+| **M7** | Gewichtete Summe | **43.09** | **3.64** |
+| **C1** | Circular dependencies | **7.88** | **0.74** |
+| **C2** | Nesting depth | **0.00** | **1.29** |
+| **C3** | Long functions + complexity | **93.99** | **0.79** |
+| **C4** | Multi-responsibility modules | **72.16** | **7.10** |
+| **C5** | Magic numbers + global state | **39.69** | **0.69** |
+| **C6** | Missing abstractions / duplication | **27.13** | **13.28** |
+| **C7** | Confusing control flow | **61.10** | **6.46** |
+| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **11374** / **808** / **90** / **0** |
 
 **Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
 
@@ -71,16 +71,16 @@ Each **open** row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-set
 
 | ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
 |----|---------|--------------------|-------------------------|----------------------------|----------------|
-| **DS-041** | **C4 · C6 · C7 ·** AI semantic move and readiness authority leaders | `ai_stack/story_runtime/semantic_planner/god_of_carnage_semantic_move_interpretation.py`; `ai_stack/story_runtime/turn/validation_authority_bridge.py`; `ai_stack/langgraph/langgraph_runtime_package_output_sections.py` | Current leaders: `interpret_goc_semantic_move` **134L**, `build_readiness_co_authority_preview` **133L**, `build_validation_authority_bridge` **130L**, `build_bounded_dramatic_context_summary` **131L**. Re-run semantic planner, validation authority, and LangGraph package-output tests. | Split semantic interpretation, readiness preview, validation bridge, and bounded dramatic context into named extraction, policy, and payload sections. | Primary owner: `ai_stack`. Keep LangGraph and runtime authority public payload names stable. |
-| **DS-042** | **C4 · C7 ·** World-engine planner truth and hierarchical memory snapshot leaders | `world-engine/app/story_runtime/planner_truth_projection.py`; `world-engine/app/story_runtime/manager/session/session_memory_policies.py` | Current leaders: `build_planner_truth_payload` **133L**, `_record_hierarchical_memory_aspect` **133L**. Re-run planner truth, validator lane, and story session memory/readout tests. | Extract planner truth sections and hierarchical memory aspect recording into named evidence, actor, memory, and response helpers without changing manager payloads. | Primary owner: `world_engine`. Coordinate with DS-041 if authority/ledger naming overlaps. |
-| **DS-043** | **C4 · C6 · C7 ·** AI memory, stream readiness, voice, environment, and temporal-control leaders | `ai_stack/contracts/hierarchical_memory_contracts.py`; `ai_stack/story_runtime/stream_readiness.py`; `ai_stack/story_runtime/npc_agency/character/character_voice_validation.py`; `ai_stack/contracts/environment_state_contracts.py`; `ai_stack/story_runtime/narrative/temporal_control_engine.py` | Current leaders: `build_off_stage_hierarchical_memory_write` **132L**, `compute_stream_readiness` **132L**, `validate_voice_consistency` **132L**, `apply_action_to_environment_state` **130L**, `validate_temporal_control_realization` **130L**. Re-run focused memory/readiness/voice/environment/temporal tests. | Split validation, readiness, environment mutation, and memory-write assembly into named evidence, guard, and result helpers with stable contract envelopes. | Primary owner: `ai_stack`. Keep story-runtime-core contract surfaces stable. |
-| **DS-044** | **C4 · C6 · C7 ·** Backend operator turn history NPC-agency breakdown leader | `backend/app/services/story_runtime/operator_turn_history_service.py` | Current leader: `_extract_npc_agency_breakdown` **129L**. Re-run operator turn history/service tests and AST top-12. | Extract NPC-agency breakdown collection, normalization, status, and display-row helpers while preserving operator response shape. | Primary owner: `backend_runtime_services`. Coordinate with AI-stack only if NPC-agency contract field names move. |
+| **DS-045** | **C4 · C6 · C7 ·** AI narrative, voice-profile, social-pressure, and memory-write leaders | `ai_stack/story_runtime/narrative/scene_energy_engine.py`; `ai_stack/story_runtime/npc_agency/character/god_of_carnage_character_voice.py`; `ai_stack/contracts/hierarchical_memory_contracts.py`; `ai_stack/story_runtime/narrative/social_pressure_engine.py` | Current leaders: `derive_scene_energy` **129L**, `build_character_voice_profiles_for_goc` **127L**, `build_hierarchical_memory_write` **125L**, `derive_social_pressure` **125L**. Re-run narrative, voice-profile, and memory contract tests. | Split narrative derivation and memory write assembly into named policy, signal, item, and validation helpers while preserving public contract envelopes. | Primary owner: `ai_stack`. Coordinate with DS-048 if shared narrative-aspect naming moves. |
+| **DS-046** | **C4 · C5 · C6 ·** Backend governance and improvement-package leaders | `backend/app/services/governance/security_governance_service.py`; `backend/app/services/improvement/improvement_task2a_routing.py` | Current leaders: `_redis_governance_posture` **128L**, `enrich_improvement_package_with_task2a_routing` **124L**. Re-run governance/security and improvement service tests. | Extract Redis governance posture checks and Task2A enrichment assembly into named evidence, decision, and payload helpers. | Primary owner: `backend_runtime_services`. Keep route/service response shapes stable. |
+| **DS-047** | **C4 · C7 ·** World-engine autonomous follow-up and runtime-world initialization leaders | `world-engine/app/api/story_ws.py`; `world-engine/app/story_runtime/runtime_world.py` | Current leaders: `_run_autonomous_followup_after_turn` **128L**, `initialize_runtime_world` **123L**. Re-run websocket/autonomous follow-up and runtime-world tests. | Split follow-up orchestration and runtime-world initialization into explicit wait, signal, creation, and persistence phases. | Primary owner: `world_engine`. Coordinate with AI-stack only for runtime-world contract field names. |
+| **DS-048** | **C4 · C6 · C7 ·** AI research validation, runtime-aspect projection, authority handoff, and narrative-aspect residuals | `ai_stack/research/research_validation.py`; `ai_stack/story_runtime/runtime_aspect_ledger/capability_projection.py`; `ai_stack/story_runtime/turn/validation_authority_bridge.py`; `ai_stack/contracts/narrative_aspect_contracts.py` | Current leaders: `verify_and_promote_claims` **125L**, `_build_adr0041_plan_projection_sibling` **125L**, `build_authority_handoff_candidate` **124L**, `validate_narrative_aspects` **122L**. Re-run research validation, runtime-aspect ledger, authority bridge, and narrative-aspect tests. | Extract claim gates, projection sibling assembly, authority handoff sections, and narrative-aspect validation into named guard/result helpers. | Primary owner: `ai_stack`. Preserve runtime aspect and authority bridge payload names. |
 
 ### Closed (archived)
 
 *None.* Closed **DS-*** detail lives in [despaghettification_completed_log.md](despaghettification_completed_log.md).
 
-**New rows:** next **DS-045**+ when check fills the open table; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
+**New rows:** next **DS-049**+ when check fills the open table; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
 ## Recommended implementation order
 
 Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in the information input list and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). **Mandatory** Mermaid `flowchart` **below** the table once open phase rows exist ([spaghetti-check-task.md](../spaghetti-check-task.md) §3).
@@ -89,17 +89,17 @@ Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in 
 
 | Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
 |------------------|----------|-------------|----------------------|----------------------------|
-| **1a** | **DS-041** | AI authority and semantic interpretation leaders shape names used by later world-engine planner and memory surfaces. | `ai_stack` | Can run in parallel with DS-042 if authority payload names stay stable. |
-| **1b** | **DS-042** | World-engine planner truth and memory snapshot leaders are isolated manager/readout surfaces. | `world_engine` | Can run in parallel with DS-041 unless ledger/authority names move. |
-| **2a** | **DS-043** | AI memory/readiness/voice/environment/temporal leaders should follow DS-041 authority naming. | `ai_stack` | Preserve public contract envelopes and story-runtime-core import surfaces. |
-| **2b** | **DS-044** | Backend operator turn history can follow DS-043 if NPC-agency field names change; otherwise isolated backend service wave. | `backend_runtime_services` | Preserve operator response shape. |
+| **1a** | **DS-045** | AI narrative, voice, and memory leaders are shared contract surfaces for later authority and world-engine work. | `ai_stack` | Keep public memory and narrative payload names stable. |
+| **1b** | **DS-046** | Backend governance and improvement enrichment are isolated service surfaces. | `backend_runtime_services` | Can run independently if service response shapes stay stable. |
+| **2a** | **DS-048** | AI authority/research/runtime-aspect residuals should follow DS-045 naming if narrative helpers move. | `ai_stack` | Preserve runtime aspect and authority bridge payload names. |
+| **2b** | **DS-047** | World-engine follow-up/runtime-world work can follow AI contract naming; otherwise isolated runtime wave. | `world_engine` | Re-run websocket and runtime-world gates. |
 
 ```mermaid
 flowchart TD
-    Start["Check 2026-05-28 18:18 UTC · trigger fires"] --> P1A["1a · DS-041 · AI semantic authority"]
-    Start --> P1B["1b · DS-042 · World planner memory"]
-    P1A --> P2A["2a · DS-043 · AI memory readiness"]
-    P2A --> P2B["2b · DS-044 · Backend operator history"]
+    Start["Check 2026-05-28 18:57 UTC · trigger fires"] --> P1A["1a · DS-045 · AI narrative memory"]
+    Start --> P1B["1b · DS-046 · Backend governance"]
+    P1A --> P2A["2a · DS-048 · AI authority residuals"]
+    P2A --> P2B["2b · DS-047 · World follow-up runtime"]
     P1B --> P2B
 ```
 
@@ -238,10 +238,14 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../
 | **DS-038** | `world_engine` | `ai_stack` contract surfaces only | **CLOSED** 2026-05-28 |
 | **DS-039** | `backend_runtime_services` | `ai_stack` narrator-path surfaces | **CLOSED** 2026-05-28 |
 | **DS-040** | `ai_stack` | `story_runtime_core` contract surfaces only | **CLOSED** 2026-05-28 |
-| **DS-041** | `ai_stack` | `backend_runtime_services`, `world_engine` authority surfaces only | **OPEN** 2026-05-28 |
-| **DS-042** | `world_engine` | `ai_stack` authority/ledger surfaces only | **OPEN** 2026-05-28 |
-| **DS-043** | `ai_stack` | `story_runtime_core` contract surfaces only | **OPEN** 2026-05-28 |
-| **DS-044** | `backend_runtime_services` | `ai_stack` NPC-agency contract fields only | **OPEN** 2026-05-28 |
+| **DS-041** | `ai_stack` | `backend_runtime_services`, `world_engine` authority surfaces only | **CLOSED** 2026-05-28 |
+| **DS-042** | `world_engine` | `ai_stack` authority/ledger surfaces only | **CLOSED** 2026-05-28 |
+| **DS-043** | `ai_stack` | `story_runtime_core` contract surfaces only | **CLOSED** 2026-05-28 |
+| **DS-044** | `backend_runtime_services` | `ai_stack` NPC-agency contract fields only | **CLOSED** 2026-05-28 |
+| **DS-045** | `ai_stack` | `story_runtime_core` narrative/memory contract surfaces only | **OPEN** 2026-05-28 |
+| **DS-046** | `backend_runtime_services` | — | **OPEN** 2026-05-28 |
+| **DS-047** | `world_engine` | `ai_stack` runtime contract surfaces only | **OPEN** 2026-05-28 |
+| **DS-048** | `ai_stack` | `backend_runtime_services`, `world_engine` authority/runtime-aspect surfaces only | **OPEN** 2026-05-28 |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](../state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
 

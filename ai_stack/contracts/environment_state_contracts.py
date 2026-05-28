@@ -365,6 +365,168 @@ def scene_affordance_model_with_environment_state(
     return model
 
 
+def _environment_action_committable(
+    *,
+    frame: dict[str, Any],
+    affordance: dict[str, Any],
+) -> tuple[bool, str, str]:
+    """Return whether a resolved player action may mutate environment state."""
+    policy = _clean_id(affordance.get("action_commit_policy") or frame.get("action_commit_policy")).lower()
+    status = _clean_id(affordance.get("affordance_status") or frame.get("affordance_status")).lower()
+    return policy == "commit_action" and status in {"allowed", "allowed_offscreen", "partial"}, policy, status
+
+
+def _environment_action_target(
+    *,
+    frame: dict[str, Any],
+    affordance: dict[str, Any],
+) -> tuple[str, str]:
+    """Resolve the action target id and type from frame plus affordance result."""
+    resolved_target = _as_dict(frame.get("resolved_target"))
+    target_id = _clean_id(
+        resolved_target.get("target_id")
+        or affordance.get("resolved_target_id")
+        or frame.get("resolved_target_id")
+    )
+    target_type = _clean_id(
+        resolved_target.get("target_type")
+        or affordance.get("resolved_target_type")
+        or frame.get("resolved_target_type")
+    ).lower()
+    return target_id, target_type
+
+
+def _environment_action_actor(
+    *,
+    frame: dict[str, Any],
+    actor_lane_context: dict[str, Any] | None,
+) -> str:
+    """Resolve the actor whose committed action changes environment state."""
+    lanes = _as_dict(actor_lane_context)
+    return _clean_id(
+        frame.get("selected_actor_id")
+        or frame.get("actor_id")
+        or lanes.get("human_actor_id")
+        or lanes.get("selected_player_role")
+    )
+
+
+def _apply_environment_movement(
+    *,
+    state: dict[str, Any],
+    target_id: str,
+    transition: dict[str, Any],
+    actor_id: str,
+) -> tuple[str, str, str]:
+    """Apply a room movement and return current, previous, event type."""
+    previous = _clean_id(state.get("current_room_id") or state.get("current_area"))
+    to_room = _clean_id(transition.get("to_location_id") or transition.get("to_area") or target_id)
+    if not to_room:
+        return previous, previous, "action"
+    state["current_room_id"] = to_room
+    state["current_area"] = to_room
+    state["previous_room_id"] = previous or None
+    state["previous_area"] = previous or None
+    if actor_id:
+        actor_locations = _as_dict(state.get("actor_locations"))
+        actor_locations[actor_id] = to_room
+        state["actor_locations"] = actor_locations
+    return to_room, previous, "movement"
+
+
+def _apply_environment_object_interaction(
+    *,
+    state: dict[str, Any],
+    target_id: str,
+    verb: str,
+    action_kind: str,
+    actor_id: str,
+    current_room_id: str,
+    turn_number: int | None,
+) -> str:
+    """Apply object state changes and return the resulting event type."""
+    prop_states = _as_dict(state.get("prop_states"))
+    prop = dict(prop_states.get(target_id) if isinstance(prop_states.get(target_id), dict) else {})
+    prop.setdefault("object_id", target_id)
+    prop.setdefault("room_id", current_room_id)
+    if verb in {"activate", "deactivate", "open", "close", "take", "place"}:
+        prop["interaction_state"] = verb
+        prop["status"] = "changed"
+        prop["last_changed_turn"] = int(turn_number or state.get("turn_number") or 0)
+        if verb == "take" and actor_id:
+            prop["held_by_actor_id"] = actor_id
+        elif verb == "place":
+            prop["held_by_actor_id"] = None
+            prop["room_id"] = current_room_id
+    prop_states[target_id] = prop
+    state["prop_states"] = prop_states
+    salient = [_clean_id(x) for x in _strict_list(state.get("salient_object_ids")) if _clean_id(x)]
+    state["salient_object_ids"] = [target_id] + [oid for oid in salient if oid != target_id]
+    if verb in {"look_at", "listen_to"} or action_kind == "perception":
+        return "perception"
+    return "object_interaction"
+
+
+def _refresh_environment_visibility(
+    *,
+    state: dict[str, Any],
+    model: dict[str, Any],
+    current_room_id: str,
+) -> None:
+    """Recompute visible rooms and salient objects after a committed action."""
+    visible_rooms = _visible_room_ids(environment_model=model, current_room_id=current_room_id)
+    held_ids = [
+        oid
+        for oid, prop in _as_dict(state.get("prop_states")).items()
+        if isinstance(prop, dict) and _clean_id(prop.get("held_by_actor_id"))
+    ]
+    visible_objects = _visible_object_ids(
+        environment_model=model,
+        visible_room_ids=visible_rooms,
+        held_object_ids=held_ids,
+    )
+    salient = [_clean_id(x) for x in _strict_list(state.get("salient_object_ids")) if _clean_id(x)]
+    state["visible_room_ids"] = visible_rooms
+    deduped_salient: list[str] = []
+    for oid in salient + visible_objects:
+        if oid and oid not in deduped_salient:
+            deduped_salient.append(oid)
+    state["salient_object_ids"] = deduped_salient[:8]
+
+
+def _append_environment_event(
+    *,
+    state: dict[str, Any],
+    event_type: str,
+    verb: str,
+    action_kind: str,
+    actor_id: str,
+    target_id: str,
+    target_type: str,
+    previous_room_id: str,
+    current_room_id: str,
+    status: str,
+    consequence: dict[str, Any],
+    turn_number: int | None,
+) -> None:
+    """Append the bounded environment event for this committed action."""
+    event = {
+        "schema_version": ENVIRONMENT_EVENT_SCHEMA_VERSION,
+        "event_type": event_type,
+        "verb": verb or None,
+        "action_kind": action_kind or None,
+        "actor_id": actor_id or None,
+        "target_id": target_id or None,
+        "target_type": target_type or None,
+        "from_room_id": previous_room_id or None,
+        "to_room_id": current_room_id or None,
+        "affordance_status": status or None,
+        "consequence_type": consequence.get("consequence_type"),
+        "turn_number": int(turn_number or state.get("turn_number") or 0),
+    }
+    state["last_environment_events"] = (_strict_list(state.get("last_environment_events")) + [event])[-8:]
+
+
 def apply_action_to_environment_state(
     *,
     environment_state: dict[str, Any] | None,
@@ -386,106 +548,56 @@ def apply_action_to_environment_state(
         actor_lane_context=actor_lane_context,
         turn_number=turn_number,
     )
-    policy = _clean_id(aff.get("action_commit_policy") or frame.get("action_commit_policy")).lower()
-    status = _clean_id(aff.get("affordance_status") or frame.get("affordance_status")).lower()
-    if policy != "commit_action" or status not in {"allowed", "allowed_offscreen", "partial"}:
+    committable, _, status = _environment_action_committable(frame=frame, affordance=aff)
+    if not committable:
         return state
 
-    rt = _as_dict(frame.get("resolved_target"))
-    target_id = _clean_id(
-        rt.get("target_id")
-        or aff.get("resolved_target_id")
-        or frame.get("resolved_target_id")
-    )
-    target_type = _clean_id(
-        rt.get("target_type")
-        or aff.get("resolved_target_type")
-        or frame.get("resolved_target_type")
-    ).lower()
+    target_id, target_type = _environment_action_target(frame=frame, affordance=aff)
     verb = _clean_id(frame.get("verb")).lower()
     action_kind = _clean_id(frame.get("action_kind")).lower()
     transition = _as_dict(local_context_transition)
     consequence = _as_dict(narrator_consequence_plan)
-    actor_id = _clean_id(
-        frame.get("selected_actor_id")
-        or frame.get("actor_id")
-        or _as_dict(actor_lane_context).get("human_actor_id")
-        or _as_dict(actor_lane_context).get("selected_player_role")
+    actor_id = _environment_action_actor(
+        frame=frame,
+        actor_lane_context=actor_lane_context,
     )
 
     current = _clean_id(state.get("current_room_id") or state.get("current_area"))
     previous = current
     event_type = "action"
     if target_type == "location" and (verb == "move_to" or action_kind == "movement"):
-        to_room = _clean_id(
-            transition.get("to_location_id")
-            or transition.get("to_area")
-            or target_id
+        current, previous, event_type = _apply_environment_movement(
+            state=state,
+            target_id=target_id,
+            transition=transition,
+            actor_id=actor_id,
         )
-        if to_room:
-            state["current_room_id"] = to_room
-            state["current_area"] = to_room
-            state["previous_room_id"] = previous or None
-            state["previous_area"] = previous or None
-            if actor_id:
-                actor_locations = _as_dict(state.get("actor_locations"))
-                actor_locations[actor_id] = to_room
-                state["actor_locations"] = actor_locations
-            current = to_room
-            event_type = "movement"
     elif target_type == "object" and target_id:
-        prop_states = _as_dict(state.get("prop_states"))
-        prop = dict(prop_states.get(target_id) if isinstance(prop_states.get(target_id), dict) else {})
-        prop.setdefault("object_id", target_id)
-        prop.setdefault("room_id", current)
-        if verb in {"activate", "deactivate", "open", "close", "take", "place"}:
-            prop["interaction_state"] = verb
-            prop["status"] = "changed"
-            prop["last_changed_turn"] = int(turn_number or state.get("turn_number") or 0)
-            if verb == "take" and actor_id:
-                prop["held_by_actor_id"] = actor_id
-            elif verb == "place":
-                prop["held_by_actor_id"] = None
-                prop["room_id"] = current
-        prop_states[target_id] = prop
-        state["prop_states"] = prop_states
-        salient = [_clean_id(x) for x in _strict_list(state.get("salient_object_ids")) if _clean_id(x)]
-        state["salient_object_ids"] = [target_id] + [oid for oid in salient if oid != target_id]
-        event_type = "perception" if verb in {"look_at", "listen_to"} or action_kind == "perception" else "object_interaction"
+        event_type = _apply_environment_object_interaction(
+            state=state,
+            target_id=target_id,
+            verb=verb,
+            action_kind=action_kind,
+            actor_id=actor_id,
+            current_room_id=current,
+            turn_number=turn_number,
+        )
 
-    visible_rooms = _visible_room_ids(environment_model=model, current_room_id=current)
-    held_ids = [
-        oid
-        for oid, prop in _as_dict(state.get("prop_states")).items()
-        if isinstance(prop, dict) and _clean_id(prop.get("held_by_actor_id"))
-    ]
-    visible_objects = _visible_object_ids(
-        environment_model=model,
-        visible_room_ids=visible_rooms,
-        held_object_ids=held_ids,
+    _refresh_environment_visibility(state=state, model=model, current_room_id=current)
+    _append_environment_event(
+        state=state,
+        event_type=event_type,
+        verb=verb,
+        action_kind=action_kind,
+        actor_id=actor_id,
+        target_id=target_id,
+        target_type=target_type,
+        previous_room_id=previous,
+        current_room_id=current,
+        status=status,
+        consequence=consequence,
+        turn_number=turn_number,
     )
-    salient = [_clean_id(x) for x in _strict_list(state.get("salient_object_ids")) if _clean_id(x)]
-    state["visible_room_ids"] = visible_rooms
-    deduped_salient: list[str] = []
-    for oid in salient + visible_objects:
-        if oid and oid not in deduped_salient:
-            deduped_salient.append(oid)
-    state["salient_object_ids"] = deduped_salient[:8]
-    event = {
-        "schema_version": ENVIRONMENT_EVENT_SCHEMA_VERSION,
-        "event_type": event_type,
-        "verb": verb or None,
-        "action_kind": action_kind or None,
-        "actor_id": actor_id or None,
-        "target_id": target_id or None,
-        "target_type": target_type or None,
-        "from_room_id": previous or None,
-        "to_room_id": current or None,
-        "affordance_status": status or None,
-        "consequence_type": consequence.get("consequence_type"),
-        "turn_number": int(turn_number or state.get("turn_number") or 0),
-    }
-    state["last_environment_events"] = (_strict_list(state.get("last_environment_events")) + [event])[-8:]
     state["turn_number"] = int(turn_number or state.get("turn_number") or 0)
     state["source"] = "committed_action_resolution"
     return normalize_environment_state(

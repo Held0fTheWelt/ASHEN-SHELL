@@ -1,5 +1,19 @@
 # Workstream: backend_runtime_services
 
+## Closed — DS-044 operator turn-history NPC-agency split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-044 | Operator NPC-agency breakdown now delegates runtime projection lookup, planner-truth input collection, merged runtime summary, and actor-list breakdown while preserving the dashboard row payload. | `_extract_npc_agency_breakdown` | Pre: `artifacts/workstreams/backend_runtime_services/pre/session_20260528_DS-044_wave_plan.md`; post: `artifacts/workstreams/backend_runtime_services/post/session_20260528_DS-044_comparison.md` |
+
+**Gates (final):**
+
+- `python -m py_compile backend/app/services/story_runtime/operator_turn_history_service.py` — passed.
+- Focused backend operator turn-history gate — 5 passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T18:57:09Z`.
+
+**Structural delta:** DS-044 target symbol is pruned from the current top-12 longest ranking. Current full scan: 11374 functions; L50 808; L100 90; D6 0; `M7_anteil` 3.6402.
+
 ## Closed — DS-039 turn dispatcher split (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

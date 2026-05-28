@@ -111,61 +111,85 @@ def _detect_forbidden_language_markers(
     ]
 
 
-def validate_voice_consistency(
-    *,
-    structured_output: dict[str, Any] | None,
-    voice_profiles: list[dict[str, Any] | CharacterVoiceProfileRecord],
-    validation_mode: str | None = None,
-) -> VoiceConsistencyValidationResult:
-    """Validate structured actor speech against content-derived voice records."""
-
+def _voice_validation_mode(validation_mode: str | None) -> VoiceValidationMode:
+    """Normalize caller-supplied validation mode to the contract vocabulary."""
     mode = str(validation_mode or "schema_plus_semantic").strip().lower()
     if mode not in {"schema_only", "schema_plus_semantic", "strict_rule_engine"}:
         mode = "schema_plus_semantic"
-    typed_mode: VoiceValidationMode = mode  # type: ignore[assignment]
+    return mode  # type: ignore[return-value]
 
+
+def _voice_profiles_from_raw(
+    voice_profiles: list[dict[str, Any] | CharacterVoiceProfileRecord],
+) -> list[CharacterVoiceProfileRecord]:
+    """Parse usable voice profile records and ignore malformed rows."""
     profiles: list[CharacterVoiceProfileRecord] = []
     for raw_profile in voice_profiles:
         try:
             profiles.append(CharacterVoiceProfileRecord.model_validate(raw_profile))
         except Exception:
             continue
+    return profiles
 
+
+def _spoken_voice_rows(structured_output: dict[str, Any] | None) -> list[Any]:
+    """Return spoken rows that contain text."""
     structured = structured_output if isinstance(structured_output, dict) else {}
     spoken = structured.get("spoken_lines") if isinstance(structured.get("spoken_lines"), list) else []
-    rows = [row for row in spoken if _line_text(row)]
+    return [row for row in spoken if _line_text(row)]
 
-    if not rows:
-        return VoiceConsistencyValidationResult(
-            status="not_applicable",
-            reason="no_spoken_lines",
-            validation_mode=typed_mode,
-            profiles_checked=len(profiles),
-            spoken_line_count=0,
-        )
 
+def _empty_voice_result(
+    *,
+    reason: str,
+    mode: VoiceValidationMode,
+    profiles_checked: int,
+) -> VoiceConsistencyValidationResult:
+    """Return an early voice validation result for no-op cases."""
+    return VoiceConsistencyValidationResult(
+        status="not_applicable" if reason == "no_spoken_lines" else "approved",
+        reason=reason,
+        validation_mode=mode,
+        profiles_checked=profiles_checked,
+        spoken_line_count=0,
+        policy_sources=["character_voice_contract"] if reason != "no_spoken_lines" else [],
+    )
+
+
+def _schema_only_voice_result(
+    *,
+    mode: VoiceValidationMode,
+    profiles_checked: int,
+    spoken_line_count: int,
+) -> VoiceConsistencyValidationResult:
+    """Return the approved schema-only validation result."""
+    return VoiceConsistencyValidationResult(
+        status="approved",
+        reason="schema_only_voice_validation_skipped",
+        validation_mode=mode,
+        profiles_checked=profiles_checked,
+        spoken_line_count=spoken_line_count,
+        policy_sources=["character_voice_contract"],
+    )
+
+
+def _profile_marker_findings(
+    *,
+    rows: list[Any],
+    profiles: list[CharacterVoiceProfileRecord],
+    strict: bool,
+) -> list[VoiceDriftFinding]:
+    """Validate direct profile availability and forbidden-language markers."""
     findings: list[VoiceDriftFinding] = []
-    if mode == "schema_only":
-        return VoiceConsistencyValidationResult(
-            status="approved",
-            reason="schema_only_voice_validation_skipped",
-            validation_mode=typed_mode,
-            profiles_checked=len(profiles),
-            spoken_line_count=len(rows),
-            policy_sources=["character_voice_contract"],
-        )
-
-    strict = mode == "strict_rule_engine"
     for row in rows:
         speaker = _speaker_id(row)
         text = _line_text(row)
         profile = _profile_for_speaker(speaker, profiles)
         if profile is None:
-            severity = "failure" if strict else "warning"
             findings.append(
                 VoiceDriftFinding(
                     drift_class="missing_voice_profile",
-                    severity=severity,
+                    severity="failure" if strict else "warning",
                     speaker_id=speaker,
                     policy_source="character_voice.characters",
                     evidence={"line_present": bool(text)},
@@ -179,19 +203,28 @@ def validate_voice_consistency(
                 speaker_id=speaker,
             )
         )
+    return findings
 
-    semantic_classifications = classify_voice_semantic_lines(
+
+def _semantic_voice_findings(
+    *,
+    rows: list[Any],
+    profiles: list[CharacterVoiceProfileRecord],
+    typed_mode: VoiceValidationMode,
+    strict: bool,
+) -> tuple[list[VoiceDriftFinding], list[Any]]:
+    """Run semantic voice classification and translate drifts to findings."""
+    findings: list[VoiceDriftFinding] = []
+    classifications = classify_voice_semantic_lines(
         spoken_rows=rows,
         profiles=profiles,
         validation_mode=typed_mode,
     )
-    for classification in semantic_classifications:
+    for classification in classifications:
         for finding_code in classification.finding_codes:
             severity = (
                 "failure"
-                if strict
-                and finding_code
-                in {"cross_actor_voice_confusion", "mixed_voice_signature"}
+                if strict and finding_code in {"cross_actor_voice_confusion", "mixed_voice_signature"}
                 else "warning"
             )
             evidence = dict(classification.evidence)
@@ -200,9 +233,7 @@ def validate_voice_consistency(
                     "classifier_version": classification.classifier_version,
                     "expected_profile_alignment": classification.expected_profile_alignment,
                     "best_profile_alignment": classification.best_profile_alignment,
-                    "cross_actor_confusion_margin": (
-                        classification.cross_actor_confusion_margin
-                    ),
+                    "cross_actor_confusion_margin": classification.cross_actor_confusion_margin,
                     "confidence": classification.confidence,
                     "dimension_scores": classification.dimension_scores,
                     "best_dimension_scores": classification.best_dimension_scores,
@@ -221,7 +252,11 @@ def validate_voice_consistency(
                     evidence=evidence,
                 )
             )
+    return findings, classifications
 
+
+def _voice_policy_sources(profiles: list[CharacterVoiceProfileRecord]) -> list[str]:
+    """List policy sources that participated in the validation."""
     policy_sources = [
         "character_voice.characters",
         "character_voice.voice_consistency",
@@ -230,6 +265,50 @@ def validate_voice_consistency(
         policy_sources.append("character_voice.voice_consistency.forbidden_language_markers")
     if semantic_policy_enabled(profiles):
         policy_sources.append(SEMANTIC_CLASSIFICATION_POLICY_SOURCE)
+    return policy_sources
+
+
+def validate_voice_consistency(
+    *,
+    structured_output: dict[str, Any] | None,
+    voice_profiles: list[dict[str, Any] | CharacterVoiceProfileRecord],
+    validation_mode: str | None = None,
+) -> VoiceConsistencyValidationResult:
+    """Validate structured actor speech against content-derived voice records."""
+
+    typed_mode = _voice_validation_mode(validation_mode)
+    mode = str(typed_mode)
+    profiles = _voice_profiles_from_raw(voice_profiles)
+    rows = _spoken_voice_rows(structured_output)
+
+    if not rows:
+        return _empty_voice_result(
+            reason="no_spoken_lines",
+            profiles_checked=len(profiles),
+            mode=typed_mode,
+        )
+
+    if mode == "schema_only":
+        return _schema_only_voice_result(
+            mode=typed_mode,
+            profiles_checked=len(profiles),
+            spoken_line_count=len(rows),
+        )
+
+    strict = mode == "strict_rule_engine"
+    findings = _profile_marker_findings(
+        rows=rows,
+        profiles=profiles,
+        strict=strict,
+    )
+    semantic_findings, semantic_classifications = _semantic_voice_findings(
+        rows=rows,
+        profiles=profiles,
+        typed_mode=typed_mode,
+        strict=strict,
+    )
+    findings.extend(semantic_findings)
+    policy_sources = _voice_policy_sources(profiles)
 
     blocking = [finding for finding in findings if finding.severity == "failure"]
     return VoiceConsistencyValidationResult(

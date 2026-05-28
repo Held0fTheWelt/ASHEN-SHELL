@@ -395,6 +395,135 @@ def _event_consequence_ids(event: dict[str, Any]) -> list[str]:
     )
 
 
+def _temporal_validation_target(
+    target_dict: dict[str, Any],
+) -> TemporalControlTarget | dict[str, Any]:
+    """Return a validated temporal target or a rejection payload."""
+    try:
+        return TemporalControlTarget.model_validate(target_dict)
+    except Exception:
+        return TemporalControlValidation(
+            status="rejected",
+            contract_pass=False,
+            failure_codes=[TEMPORAL_CONTROL_FAILURE_TARGET_MISMATCH],
+            feedback_code=TEMPORAL_CONTROL_FAILURE_TARGET_MISMATCH,
+            target=target_dict,
+            actual={"reason": "invalid_temporal_control_target"},
+        ).to_runtime_dict()
+
+
+def _temporal_validation_scope(target: TemporalControlTarget) -> dict[str, Any]:
+    """Collect allowed operations and source ids for realization validation."""
+    allowed_turn_ids = set(target.recalled_turn_ids or [])
+    if target.anchor_turn_id:
+        allowed_turn_ids.add(target.anchor_turn_id)
+    return {
+        "allowed_operations": set(target.allowed_operations or []),
+        "allowed_turn_ids": allowed_turn_ids,
+        "selected_consequence_ids": set(target.recalled_consequence_ids or []),
+    }
+
+
+def _temporal_event_failures(
+    *,
+    event: dict[str, Any],
+    target: TemporalControlTarget,
+    scope: dict[str, Any],
+) -> tuple[list[str], dict[str, Any]]:
+    """Validate one realized temporal event and return failures plus facts."""
+    failure_codes: list[str] = []
+    operation = _clean_text(event.get("operation") or event.get("type"))
+    allowed_operations = scope["allowed_operations"]
+    allowed_turn_ids = scope["allowed_turn_ids"]
+    selected_consequence_ids = scope["selected_consequence_ids"]
+    if operation and operation != target.operation:
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNSELECTED_EVENT)
+    if operation and operation not in allowed_operations:
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_OPERATION_NOT_ALLOWED)
+    if bool(event.get("rewrites_history") or event.get("history_rewrite")):
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_HISTORY_REWRITE_ATTEMPT)
+    if bool(event.get("adopts_branch_state") or event.get("inactive_branch_authoritative") or event.get("branch_state_adopted")):
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_BRANCH_STATE_ADOPTION)
+    if bool(event.get("mutates_canonical_state")):
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNCOMMITTED_SOURCE)
+    event_turn_ids = _event_turn_ids(event)
+    event_consequence_ids = _event_consequence_ids(event)
+    if event_turn_ids and not set(event_turn_ids).issubset(allowed_turn_ids):
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNCOMMITTED_SOURCE)
+    if event_consequence_ids and not set(event_consequence_ids).issubset(selected_consequence_ids):
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNCOMMITTED_SOURCE)
+    elapsed = _bounded_int(
+        event.get("elapsed_turns") or event.get("elapsed_time_units"),
+        0,
+        minimum=0,
+        maximum=999,
+    )
+    if elapsed > target.max_elapsed_turns:
+        failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNBOUNDED_JUMP)
+    return failure_codes, {
+        "operation": operation,
+        "turn_ids": event_turn_ids,
+        "consequence_ids": event_consequence_ids,
+        "elapsed": elapsed,
+    }
+
+
+def _scan_temporal_events(
+    *,
+    events: list[dict[str, Any]],
+    target: TemporalControlTarget,
+    scope: dict[str, Any],
+) -> dict[str, Any]:
+    """Scan realized temporal events and collect validation facts."""
+    failure_codes: list[str] = []
+    realized_operations: list[str] = []
+    realized_turn_ids: list[str] = []
+    realized_consequence_ids: list[str] = []
+    max_elapsed_observed = 0
+    for event in events:
+        event_failures, facts = _temporal_event_failures(event=event, target=target, scope=scope)
+        failure_codes.extend(event_failures)
+        if facts["operation"]:
+            realized_operations.append(facts["operation"])
+        realized_turn_ids.extend(facts["turn_ids"])
+        realized_consequence_ids.extend(facts["consequence_ids"])
+        max_elapsed_observed = max(max_elapsed_observed, int(facts["elapsed"] or 0))
+    return {
+        "failure_codes": failure_codes,
+        "realized_operations": realized_operations,
+        "realized_turn_ids": realized_turn_ids,
+        "realized_consequence_ids": realized_consequence_ids,
+        "max_elapsed_observed": max_elapsed_observed,
+    }
+
+
+def _temporal_validation_actual(
+    *,
+    events: list[dict[str, Any]],
+    target: TemporalControlTarget,
+    scan: dict[str, Any],
+    temporal_control_state: dict[str, Any] | None,
+    deduped_failures: list[str],
+) -> dict[str, Any]:
+    """Build the actual observed temporal-control validation payload."""
+    return {
+        "structured_events_present": bool(events),
+        "event_count": len(events),
+        "operation": target.operation,
+        "realized_operations": list(dict.fromkeys(scan["realized_operations"])),
+        "realized_turn_ids": list(dict.fromkeys(scan["realized_turn_ids"])),
+        "realized_consequence_ids": list(dict.fromkeys(scan["realized_consequence_ids"])),
+        "elapsed_turns": scan["max_elapsed_observed"]
+        or (
+            temporal_control_state.get("elapsed_turns")
+            if isinstance(temporal_control_state, dict)
+            else 0
+        ),
+        "contract_pass": not deduped_failures,
+        "failure_codes": deduped_failures,
+    }
+
+
 def validate_temporal_control_realization(
     *,
     temporal_control_target: dict[str, Any] | None,
@@ -410,31 +539,15 @@ def validate_temporal_control_realization(
             contract_pass=True,
             target=target_dict,
         ).to_runtime_dict()
-    try:
-        target = TemporalControlTarget.model_validate(target_dict)
-    except Exception:
-        return TemporalControlValidation(
-            status="rejected",
-            contract_pass=False,
-            failure_codes=[TEMPORAL_CONTROL_FAILURE_TARGET_MISMATCH],
-            feedback_code=TEMPORAL_CONTROL_FAILURE_TARGET_MISMATCH,
-            target=target_dict,
-            actual={"reason": "invalid_temporal_control_target"},
-        ).to_runtime_dict()
+    target = _temporal_validation_target(target_dict)
+    if isinstance(target, dict):
+        return target
 
     events = _event_rows(structured_output)
-    allowed_operations = set(target.allowed_operations or [])
-    allowed_turn_ids = set(target.recalled_turn_ids or [])
-    if target.anchor_turn_id:
-        allowed_turn_ids.add(target.anchor_turn_id)
-    selected_consequence_ids = set(target.recalled_consequence_ids or [])
+    scope = _temporal_validation_scope(target)
     failure_codes: list[str] = []
-    realized_operations: list[str] = []
-    realized_turn_ids: list[str] = []
-    realized_consequence_ids: list[str] = []
-    max_elapsed_observed = 0
 
-    if target.operation not in allowed_operations:
+    if target.operation not in scope["allowed_operations"]:
         failure_codes.append(TEMPORAL_CONTROL_FAILURE_OPERATION_NOT_ALLOWED)
     if (
         target.require_structured_events
@@ -443,46 +556,11 @@ def validate_temporal_control_realization(
     ):
         failure_codes.append(TEMPORAL_CONTROL_FAILURE_MISSING_REQUIRED_EVENT)
 
-    for event in events:
-        operation = _clean_text(event.get("operation") or event.get("type"))
-        if operation:
-            realized_operations.append(operation)
-        if operation and operation != target.operation:
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNSELECTED_EVENT)
-        if operation and operation not in allowed_operations:
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_OPERATION_NOT_ALLOWED)
-        if bool(event.get("rewrites_history") or event.get("history_rewrite")):
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_HISTORY_REWRITE_ATTEMPT)
-        if bool(
-            event.get("adopts_branch_state")
-            or event.get("inactive_branch_authoritative")
-            or event.get("branch_state_adopted")
-        ):
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_BRANCH_STATE_ADOPTION)
-        if bool(event.get("mutates_canonical_state")):
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNCOMMITTED_SOURCE)
-        event_turn_ids = _event_turn_ids(event)
-        event_consequence_ids = _event_consequence_ids(event)
-        realized_turn_ids.extend(event_turn_ids)
-        realized_consequence_ids.extend(event_consequence_ids)
-        if event_turn_ids and not set(event_turn_ids).issubset(allowed_turn_ids):
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNCOMMITTED_SOURCE)
-        if event_consequence_ids and not set(event_consequence_ids).issubset(
-            selected_consequence_ids
-        ):
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNCOMMITTED_SOURCE)
-        elapsed = _bounded_int(
-            event.get("elapsed_turns") or event.get("elapsed_time_units"),
-            0,
-            minimum=0,
-            maximum=999,
-        )
-        max_elapsed_observed = max(max_elapsed_observed, elapsed)
-        if elapsed > target.max_elapsed_turns:
-            failure_codes.append(TEMPORAL_CONTROL_FAILURE_UNBOUNDED_JUMP)
+    scan = _scan_temporal_events(events=events, target=target, scope=scope)
+    failure_codes.extend(scan["failure_codes"])
 
     if target.require_structured_events and target.operation == "recall_committed_past":
-        missing_turn_ids = set(target.recalled_turn_ids or []).difference(realized_turn_ids)
+        missing_turn_ids = set(target.recalled_turn_ids or []).difference(scan["realized_turn_ids"])
         if missing_turn_ids:
             failure_codes.append(TEMPORAL_CONTROL_FAILURE_MISSING_REQUIRED_EVENT)
 
@@ -494,22 +572,13 @@ def validate_temporal_control_realization(
     status = "approved"
     if failed:
         status = "degraded" if commit_impact == "diagnostic" else "rejected"
-    actual = {
-        "structured_events_present": bool(events),
-        "event_count": len(events),
-        "operation": target.operation,
-        "realized_operations": list(dict.fromkeys(realized_operations)),
-        "realized_turn_ids": list(dict.fromkeys(realized_turn_ids)),
-        "realized_consequence_ids": list(dict.fromkeys(realized_consequence_ids)),
-        "elapsed_turns": max_elapsed_observed
-        or (
-            temporal_control_state.get("elapsed_turns")
-            if isinstance(temporal_control_state, dict)
-            else 0
-        ),
-        "contract_pass": not failed,
-        "failure_codes": deduped_failures,
-    }
+    actual = _temporal_validation_actual(
+        events=events,
+        target=target,
+        scan=scan,
+        temporal_control_state=temporal_control_state,
+        deduped_failures=deduped_failures,
+    )
     return TemporalControlValidation(
         status=status,  # type: ignore[arg-type]
         contract_pass=not failed,

@@ -621,91 +621,43 @@ def build_planner_truth_payload(
     generation: dict[str, Any] | None,
 ) -> dict[str, Any]:
     """Extract a bounded planner-truth snapshot from the live runtime state."""
-    if not isinstance(graph_state, dict):
-        graph_state = {}
-    gen = generation if isinstance(generation, dict) else {}
-    structured = _as_dict(_as_dict(gen.get("metadata")).get("structured_output"))
-    validation = _as_dict(graph_state.get("validation_outcome"))
-    gate = _as_dict(graph_state.get("dramatic_effect_gate_outcome"))
-    if not gate:
-        gate = _as_dict(graph_state.get("dramatic_effect_gate"))
-    scene_assessment = _as_dict(graph_state.get("scene_assessment"))
-    if not scene_assessment:
-        scene_assessment = _as_dict(graph_state.get("scene_assessment_core"))
+    graph_state, structured = _planner_truth_sources(
+        graph_state=graph_state,
+        generation=generation,
+    )
+    validation_fields = _planner_truth_validation_fields(graph_state)
 
-    responder_scope = _as_str_list(
-        graph_state.get("responder_scope")
-        or graph_state.get("selected_responder_set")
-        or structured.get("responder_scope")
+    responder_fields = _planner_truth_responder_fields(
+        graph_state=graph_state,
+        structured=structured,
     )
-    primary_responder_id = _opt_str(
-        graph_state.get("responder_id"),
-        graph_state.get("primary_responder_id"),
-        structured.get("primary_responder_id"),
-        structured.get("responder_id"),
-    )
-    secondary_responder_ids = _as_str_list(
-        graph_state.get("secondary_responder_ids")
-        or structured.get("secondary_responder_ids")
-        or structured.get("responder_actor_ids")
-    )
-    if primary_responder_id and primary_responder_id in secondary_responder_ids:
-        secondary_responder_ids = [x for x in secondary_responder_ids if x != primary_responder_id]
 
-    bundle = _as_dict(graph_state.get("visible_output_bundle"))
-    spoken_line_count = _lane_count(bundle.get("spoken_lines"))
-    action_line_count = _lane_count(bundle.get("action_lines"))
-    initiative_events = structured.get("initiative_events")
-    initiative_summary = _initiative_summary(initiative_events)
+    output_counts = _planner_truth_output_counts(
+        graph_state=graph_state,
+        structured=structured,
+    )
     social_outcome = _opt_str(graph_state.get("social_outcome"), structured.get("social_outcome"))
     dramatic_direction = _opt_str(
         graph_state.get("dramatic_direction"),
         structured.get("dramatic_direction"),
     )
-    spoken_lines = structured.get("spoken_lines")
-    action_lines = structured.get("action_lines")
-    state_effects = structured.get("state_effects")
     dramatic_fields = _dramatic_context_fields(graph_state)
-    npc_agency_fields = _npc_agency_fields(graph_state)
+    primary_responder_id = str(responder_fields["primary_responder_id"] or "")
+    secondary_responder_ids = list(responder_fields["secondary_responder_ids"])
 
     return {
-        "selected_scene_function": _opt_str(
-            graph_state.get("selected_scene_function"),
-            structured.get("selected_scene_function"),
-        ),
-        "responder_id": _opt_str(
-            graph_state.get("responder_id"),
-            structured.get("responder_id"),
-            primary_responder_id,
-        ),
-        "primary_responder_id": primary_responder_id,
-        "secondary_responder_ids": secondary_responder_ids,
-        "responder_scope": responder_scope,
-        "function_type": _opt_str(graph_state.get("function_type"), structured.get("function_type")),
-        "pacing_mode": _opt_str(
-            graph_state.get("pacing_mode"),
-            structured.get("pacing_mode"),
-            graph_state.get("selected_pacing_mode"),
-        ),
-        "silence_mode": _opt_str(
-            graph_state.get("silence_mode"),
-            structured.get("silence_mode"),
-            graph_state.get("selected_silence_mode"),
-        ),
+        **_planner_truth_mode_fields(graph_state=graph_state, structured=structured),
+        **responder_fields,
         **dramatic_fields,
         "scene_energy_level": _opt_str(dramatic_fields["scene_energy_target"].get("energy_level")),
-        "spoken_line_count": spoken_line_count,
-        "action_line_count": action_line_count,
-        "initiative_summary": initiative_summary,
-        "last_actor_outcome_summary": _last_actor_outcome_summary(
+        **output_counts,
+        "last_actor_outcome_summary": _planner_truth_last_actor_summary(
             primary_responder_id=primary_responder_id,
-            spoken_line_count=spoken_line_count,
-            action_line_count=action_line_count,
-            initiative_summary=initiative_summary,
+            counts=output_counts,
             social_outcome=social_outcome,
             dramatic_direction=dramatic_direction,
         ),
-        "scene_assessment_core": scene_assessment,
+        "scene_assessment_core": _planner_truth_scene_assessment(graph_state),
         "scene_plan_ref": _opt_str(
             graph_state.get("scene_plan_ref"),
             graph_state.get("scene_plan_id"),
@@ -714,37 +666,24 @@ def build_planner_truth_payload(
         "emotional_shift": _as_dict(graph_state.get("emotional_shift") or structured.get("emotional_shift")),
         "social_outcome": social_outcome,
         "dramatic_direction": dramatic_direction,
-        "dramatic_effect_gate": gate,
+        "dramatic_effect_gate": validation_fields["dramatic_effect_gate"],
         "social_state_summary": _social_state_summary_from_graph_state(graph_state),
         "character_mind_summary": _as_dict(graph_state.get("character_mind_summary")),
-        "validation_status": _opt_str(validation.get("status")),
-        "validation_reason": _opt_str(validation.get("reason")),
-        "validator_layers_used": _resolve_validator_layers(validation, gate),
+        "validation_status": validation_fields["validation_status"],
+        "validation_reason": validation_fields["validation_reason"],
+        "validator_layers_used": validation_fields["validator_layers_used"],
         "continuity_impacts": [
             x for x in (graph_state.get("continuity_impacts") or []) if isinstance(x, dict)
         ],
-        "realized_secondary_responder_ids": _realized_secondary_responder_ids(
-            spoken_lines=spoken_lines,
-            action_lines=action_lines,
+        **_planner_truth_actor_realization_fields(
+            structured=structured,
             secondary_responder_ids=secondary_responder_ids,
-        ),
-        "interruption_actor_id": _interruption_actor_id(initiative_events),
-        "spoken_actor_summaries": _actor_line_summaries(spoken_lines, actor_key="speaker_id"),
-        "action_actor_summaries": _actor_line_summaries(action_lines, actor_key="actor_id"),
-        "social_pressure_shift": _social_pressure_shift(
-            state_effects=state_effects,
-            social_outcome=social_outcome,
-            graph_state=graph_state,
-        ),
-        "carry_forward_tension_notes": _carry_forward_tension_notes(
-            state_effects=state_effects,
-            initiative_events=initiative_events,
-        ),
-        "initiative_seizer_id": _initiative_seizer_id(initiative_events),
-        "initiative_loser_id": _initiative_loser_id(
-            initiative_events=initiative_events,
             primary_responder_id=primary_responder_id,
         ),
-        "initiative_pressure_label": _initiative_pressure_label(initiative_events),
-        **npc_agency_fields,
+        **_planner_truth_pressure_fields(
+            graph_state=graph_state,
+            structured=structured,
+            social_outcome=social_outcome,
+        ),
+        **_npc_agency_fields(graph_state),
     }

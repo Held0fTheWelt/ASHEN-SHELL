@@ -1,5 +1,21 @@
 # Workstream: ai_stack
 
+## Closed — DS-041 semantic/authority and DS-043 contract readiness split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-041 | Semantic move interpretation, readiness co-authority preview, validation authority bridge, and bounded dramatic context summary now delegate to named snapshot, status, classification, retrieval, and context helpers. | `interpret_goc_semantic_move`, `build_readiness_co_authority_preview`, `build_validation_authority_bridge`, `build_bounded_dramatic_context_summary` | Pre: `artifacts/workstreams/ai_stack/pre/session_20260528_DS-041-043_wave_plan.md`; post: `artifacts/workstreams/ai_stack/post/session_20260528_DS-041-043_comparison.md` |
+| DS-043 | Off-stage memory write, stream readiness, voice consistency, environment-state mutation, and temporal-control realization now delegate to named guard, evidence, mutation, and result helpers. | `build_off_stage_hierarchical_memory_write`, `compute_stream_readiness`, `validate_voice_consistency`, `apply_action_to_environment_state`, `validate_temporal_control_realization` | Same AI-stack pre/post artefacts. |
+
+**Gates (final):**
+
+- DS-041 focused semantic/authority/LangGraph gate — 76 passed.
+- DS-043 focused memory/readiness/voice/environment/temporal gate — 76 passed.
+- `python -m py_compile` on all touched AI-stack files — passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T18:57:09Z`.
+
+**Structural delta:** DS-041 through DS-044 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11374 functions; L50 808; L100 90; D6 0; `M7_anteil` 3.6402.
+
 ## Closed — DS-037 policy/contracts, DS-039 narrator continuation, and DS-040 director/session/research split (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

@@ -343,6 +343,83 @@ def compute_cut_in_readiness(
 # ── Stream readiness ──────────────────────────────────────────────────────────
 
 
+def _invalid_stream_readiness(ws_session_loop_supported: bool) -> dict[str, Any]:
+    """Return readiness diagnostics for a malformed envelope."""
+    return {
+        "event_stream_present": False,
+        "bundle_fallback_available": False,
+        "parity_status": "not_applicable",
+        "parity_warnings": ["envelope is not a dict"],
+        "frontend_event_adapter_supported": False,
+        "motivation_score_sources": {},
+        "can_be_primary_candidate": False,
+        "blockers": ["envelope_invalid"],
+        "proof_level": PROOF_LEVEL_NONE,
+        "ws_session_loop_supported": ws_session_loop_supported,
+        "cut_in_readiness": compute_cut_in_readiness(
+            ws_session_loop_supported=ws_session_loop_supported,
+        ),
+    }
+
+
+def _stream_readiness_envelope_fields(envelope: dict[str, Any]) -> dict[str, Any]:
+    """Extract event, bundle, and parity facts from the envelope diagnostics."""
+    vso = envelope.get("visible_scene_output") or {}
+    diag = envelope.get("diagnostics") or {}
+    pulse = diag.get("director_pulse") or {}
+    parity = pulse.get("parity") or {}
+    stream_events = vso.get("block_stream_events")
+    bundle_blocks = vso.get("blocks")
+    return {
+        "event_stream_present": isinstance(stream_events, list) and len(stream_events) > 0,
+        "bundle_fallback_available": isinstance(bundle_blocks, list) and len(bundle_blocks) > 0,
+        "parity_status": str(parity.get("parity_status") or "not_applicable"),
+        "parity_warnings": list(parity.get("parity_warnings") or []),
+    }
+
+
+def _stream_readiness_blockers(
+    *,
+    event_stream_present: bool,
+    bundle_fallback_available: bool,
+    parity_status: str,
+    frontend_event_adapter_deployed: bool,
+    ws_session_loop_supported: bool,
+    default_sources: list[str],
+) -> list[str]:
+    """Return explicit blockers for promoting event-stream rendering."""
+    blockers: list[str] = []
+    if not event_stream_present and bundle_fallback_available:
+        blockers.append("event_stream_empty_dual_mode_may_be_off")
+    elif not event_stream_present and not bundle_fallback_available:
+        blockers.append("both_stream_and_bundle_empty")
+    if parity_status not in ("aligned",):
+        blockers.append(f"parity_not_aligned:{parity_status}")
+    if not frontend_event_adapter_deployed:
+        blockers.append("frontend_event_adapter_not_deployed")
+    if not ws_session_loop_supported:
+        blockers.append("ws_session_loop_not_ready")
+    if default_sources:
+        blockers.append(f"motivation_inputs_defaulted:{','.join(sorted(default_sources))}")
+    return blockers
+
+
+def _stream_readiness_proof_level(
+    *,
+    parity_ok: bool,
+    frontend_event_adapter_deployed: bool,
+    ws_session_loop_supported: bool,
+) -> str:
+    """Resolve the readiness proof level from infrastructure facts."""
+    if not parity_ok:
+        return PROOF_LEVEL_NONE
+    if not frontend_event_adapter_deployed:
+        return PROOF_LEVEL_LOCAL_ONLY
+    if not ws_session_loop_supported:
+        return PROOF_LEVEL_CANDIDATE
+    return PROOF_LEVEL_PRIMARY_READY
+
+
 def compute_stream_readiness(
     envelope: dict[str, Any],
     *,
@@ -383,80 +460,30 @@ def compute_stream_readiness(
     if ws_session_loop_supported is None:
         ws_session_loop_supported = is_ws_session_loop_enabled()
     if not isinstance(envelope, dict):
-        return {
-            "event_stream_present": False,
-            "bundle_fallback_available": False,
-            "parity_status": "not_applicable",
-            "parity_warnings": ["envelope is not a dict"],
-            "frontend_event_adapter_supported": False,
-            "motivation_score_sources": {},
-            "can_be_primary_candidate": False,
-            "blockers": ["envelope_invalid"],
-            "proof_level": PROOF_LEVEL_NONE,
-            "ws_session_loop_supported": ws_session_loop_supported,
-            "cut_in_readiness": compute_cut_in_readiness(
-                ws_session_loop_supported=ws_session_loop_supported,
-            ),
-        }
+        return _invalid_stream_readiness(bool(ws_session_loop_supported))
 
-    vso = envelope.get("visible_scene_output") or {}
-    diag = envelope.get("diagnostics") or {}
-    pulse = diag.get("director_pulse") or {}
-    parity = pulse.get("parity") or {}
-
-    # Event stream present?
-    stream_events = vso.get("block_stream_events")
-    event_stream_present = isinstance(stream_events, list) and len(stream_events) > 0
-
-    # Bundle present?
-    bundle_blocks = vso.get("blocks")
-    bundle_fallback_available = isinstance(bundle_blocks, list) and len(bundle_blocks) > 0
-
-    # Parity
-    parity_status = str(parity.get("parity_status") or "not_applicable")
-    parity_warnings: list[str] = list(parity.get("parity_warnings") or [])
-
-    # Motivation score sources
+    envelope_fields = _stream_readiness_envelope_fields(envelope)
+    event_stream_present = bool(envelope_fields["event_stream_present"])
+    bundle_fallback_available = bool(envelope_fields["bundle_fallback_available"])
+    parity_status = str(envelope_fields["parity_status"])
+    parity_warnings: list[str] = list(envelope_fields["parity_warnings"])
     score_sources = classify_motivation_score_sources(graph_state)
     default_sources = [k for k, v in score_sources.items() if v == SCORE_SOURCE_DEFAULT]
-
-    # Compute blockers
-    blockers: list[str] = []
-
-    if not event_stream_present and bundle_fallback_available:
-        blockers.append("event_stream_empty_dual_mode_may_be_off")
-    elif not event_stream_present and not bundle_fallback_available:
-        blockers.append("both_stream_and_bundle_empty")
-
-    if parity_status not in ("aligned",):
-        blockers.append(f"parity_not_aligned:{parity_status}")
-
-    if not frontend_event_adapter_deployed:
-        blockers.append("frontend_event_adapter_not_deployed")
-
-    if not ws_session_loop_supported:
-        blockers.append("ws_session_loop_not_ready")
-
-    if default_sources:
-        blockers.append(f"motivation_inputs_defaulted:{','.join(sorted(default_sources))}")
-
-    # Determine proof level
     parity_ok = parity_status == "aligned" and event_stream_present
-    if not parity_ok:
-        proof_level = PROOF_LEVEL_NONE
-    elif not frontend_event_adapter_deployed:
-        proof_level = PROOF_LEVEL_LOCAL_ONLY
-    elif not ws_session_loop_supported:
-        proof_level = PROOF_LEVEL_CANDIDATE
-    else:
-        proof_level = PROOF_LEVEL_PRIMARY_READY
-
-    # Primary candidate: parity aligned, events present, frontend adapter ready
-    can_be_primary_candidate = (
-        parity_ok
-        and frontend_event_adapter_deployed
-        and not event_stream_present is False
+    blockers = _stream_readiness_blockers(
+        event_stream_present=event_stream_present,
+        bundle_fallback_available=bundle_fallback_available,
+        parity_status=parity_status,
+        frontend_event_adapter_deployed=frontend_event_adapter_deployed,
+        ws_session_loop_supported=bool(ws_session_loop_supported),
+        default_sources=default_sources,
     )
+    proof_level = _stream_readiness_proof_level(
+        parity_ok=parity_ok,
+        frontend_event_adapter_deployed=frontend_event_adapter_deployed,
+        ws_session_loop_supported=bool(ws_session_loop_supported),
+    )
+    can_be_primary_candidate = parity_ok and frontend_event_adapter_deployed
 
     cut_in_readiness = compute_cut_in_readiness(
         ws_session_loop_supported=bool(ws_session_loop_supported),

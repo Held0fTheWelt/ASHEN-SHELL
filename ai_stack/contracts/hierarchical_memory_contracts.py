@@ -616,6 +616,105 @@ def build_hierarchical_memory_write(
     ).to_dict()
 
 
+def _off_stage_source_ids(candidate: dict[str, Any]) -> tuple[str, str, str]:
+    """Return source tick, candidate id, and local-only source id."""
+    source_tick_id = _text(candidate.get("originating_tick_id"), max_chars=120)
+    candidate_id = _text(candidate.get("candidate_id"), max_chars=120)
+    source_id = f"local_only:off_stage:{source_tick_id or candidate_id}"
+    return source_tick_id, candidate_id, source_id
+
+
+def _off_stage_policy_present(policy: dict[str, Any]) -> bool:
+    """Report whether a memory policy exists even when disabled."""
+    return bool(
+        policy.get("enabled")
+        or any(t.get("enabled") for t in policy.get("tiers") or [] if isinstance(t, dict))
+    )
+
+
+def _off_stage_rejected_write(
+    *,
+    status: str,
+    policy_present: bool,
+    policy_enabled: bool,
+    source_id: str,
+    failure_reason: str,
+    selected_tiers: list[str] | None = None,
+) -> dict[str, Any]:
+    """Build a non-writing off-stage memory result."""
+    skipped = selected_tiers if selected_tiers is not None else list(MEMORY_TIERS)
+    return HierarchicalMemoryWriteResult(
+        status=status,
+        policy_present=policy_present,
+        policy_enabled=policy_enabled,
+        write_allowed=False,
+        source_canonical_turn_id=source_id,
+        selected_tiers=selected_tiers or [],
+        skipped_tiers=skipped,
+        failure_reason=failure_reason,
+    ).to_dict()
+
+
+def _off_stage_source_turn_number(turn_number: Any) -> int:
+    """Normalize the local-only turn number used by memory evidence."""
+    try:
+        return max(0, int(turn_number or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _off_stage_score(value: Any) -> float | None:
+    """Normalize a candidate motivation score if present."""
+    try:
+        return round(float(value), 3) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _off_stage_memory_item(
+    *,
+    candidate: dict[str, Any],
+    tier: str,
+    source_id: str,
+    source_tick_id: str,
+    candidate_id: str,
+    module_id: str | None,
+    runtime_profile_id: str | None,
+    source_turn_number: int,
+) -> dict[str, Any]:
+    """Build the single bounded local-only memory item for an off-stage tick."""
+    actor_id = _text(candidate.get("actor_id"), max_chars=120)
+    evidence_kind = _text(candidate.get("evidence_kind"), max_chars=80) or "off_stage_update"
+    score_value = _off_stage_score(candidate.get("observed_motivation_score"))
+    summary = (
+        f"off_stage_update; actor={actor_id or 'unknown'}; "
+        f"evidence={evidence_kind}; score={score_value if score_value is not None else 'none'}"
+    )
+    return HierarchicalMemoryItem(
+        tier=tier,
+        item_id=_stable_id(tier, source_id, actor_id, evidence_kind, score_value),
+        source_canonical_turn_id=source_id,
+        source_turn_number=source_turn_number,
+        module_id=module_id,
+        runtime_profile_id=runtime_profile_id,
+        summary=summary,
+        tags=_unique_texts(["off_stage_update", evidence_kind], max_items=6),
+        actor_ids=_unique_texts([actor_id], max_items=4),
+        evidence_refs=_unique_texts([source_id, candidate_id], max_items=4),
+        data=_safe_dict(
+            {
+                "candidate_id": candidate_id,
+                "candidate_kind": candidate.get("candidate_kind"),
+                "originating_tick_id": source_tick_id,
+                "evidence_kind": evidence_kind,
+                "observed_motivation_score": score_value,
+                "structured_only": candidate.get("structured_only"),
+                "proof_level": "local_only",
+            }
+        ),
+    ).to_dict()
+
+
 def build_off_stage_hierarchical_memory_write(
     *,
     memory_policy: dict[str, Any] | None,
@@ -633,109 +732,68 @@ def build_off_stage_hierarchical_memory_write(
     """
     policy = normalize_hierarchical_memory_policy(memory_policy)
     cand = candidate if isinstance(candidate, dict) else {}
-    source_tick_id = _text(cand.get("originating_tick_id"), max_chars=120)
-    candidate_id = _text(cand.get("candidate_id"), max_chars=120)
-    source_id = f"local_only:off_stage:{source_tick_id or candidate_id}"
-    policy_present = bool(
-        policy.get("enabled")
-        or any(t.get("enabled") for t in policy.get("tiers") or [] if isinstance(t, dict))
-    )
+    source_tick_id, candidate_id, source_id = _off_stage_source_ids(cand)
+    policy_present = _off_stage_policy_present(policy)
     if not policy_present:
-        return HierarchicalMemoryWriteResult(
+        return _off_stage_rejected_write(
             status="not_applicable",
             policy_present=False,
             policy_enabled=False,
-            write_allowed=False,
-            source_canonical_turn_id=source_id,
-            skipped_tiers=list(MEMORY_TIERS),
+            source_id=source_id,
             failure_reason="memory_policy_missing",
-        ).to_dict()
+        )
     if not policy.get("enabled"):
-        return HierarchicalMemoryWriteResult(
+        selected = enabled_memory_tiers(policy)
+        return _off_stage_rejected_write(
             status="not_applicable",
             policy_present=True,
             policy_enabled=False,
-            write_allowed=False,
-            source_canonical_turn_id=source_id,
-            selected_tiers=enabled_memory_tiers(policy),
-            skipped_tiers=enabled_memory_tiers(policy),
+            source_id=source_id,
             failure_reason="memory_policy_disabled",
-        ).to_dict()
+            selected_tiers=selected,
+        )
     if not cand:
-        return HierarchicalMemoryWriteResult(
+        selected = enabled_memory_tiers(policy)
+        return _off_stage_rejected_write(
             status="failed",
             policy_present=True,
             policy_enabled=True,
-            write_allowed=False,
-            source_canonical_turn_id=source_id,
-            selected_tiers=enabled_memory_tiers(policy),
-            skipped_tiers=enabled_memory_tiers(policy),
+            source_id=source_id,
             failure_reason="memory_candidate_missing",
-        ).to_dict()
+            selected_tiers=selected,
+        )
 
     tier = _text(cand.get("memory_tier_target") or "actor", max_chars=48)
+    selected = enabled_memory_tiers(policy)
     if tier not in MEMORY_TIERS:
-        return HierarchicalMemoryWriteResult(
+        return _off_stage_rejected_write(
             status="failed",
             policy_present=True,
             policy_enabled=True,
-            write_allowed=False,
-            source_canonical_turn_id=source_id,
-            selected_tiers=enabled_memory_tiers(policy),
-            skipped_tiers=enabled_memory_tiers(policy),
+            source_id=source_id,
             failure_reason="memory_tier_not_recognized",
-        ).to_dict()
-    selected = enabled_memory_tiers(policy)
+            selected_tiers=selected,
+        )
     if tier not in selected:
-        return HierarchicalMemoryWriteResult(
+        return _off_stage_rejected_write(
             status="not_applicable",
             policy_present=True,
             policy_enabled=True,
-            write_allowed=False,
-            source_canonical_turn_id=source_id,
-            selected_tiers=selected,
-            skipped_tiers=selected,
+            source_id=source_id,
             failure_reason="memory_tier_not_enabled",
-        ).to_dict()
+            selected_tiers=selected,
+        )
 
-    try:
-        source_turn_number = max(0, int(turn_number or 0))
-    except (TypeError, ValueError):
-        source_turn_number = 0
-    actor_id = _text(cand.get("actor_id"), max_chars=120)
-    evidence_kind = _text(cand.get("evidence_kind"), max_chars=80) or "off_stage_update"
-    score = cand.get("observed_motivation_score")
-    try:
-        score_value = round(float(score), 3) if score is not None else None
-    except (TypeError, ValueError):
-        score_value = None
-    summary = (
-        f"off_stage_update; actor={actor_id or 'unknown'}; "
-        f"evidence={evidence_kind}; score={score_value if score_value is not None else 'none'}"
-    )
-    item = HierarchicalMemoryItem(
+    item = _off_stage_memory_item(
+        candidate=cand,
         tier=tier,
-        item_id=_stable_id(tier, source_id, actor_id, evidence_kind, score_value),
-        source_canonical_turn_id=source_id,
-        source_turn_number=source_turn_number,
+        source_id=source_id,
+        source_tick_id=source_tick_id,
+        candidate_id=candidate_id,
         module_id=module_id,
         runtime_profile_id=runtime_profile_id,
-        summary=summary,
-        tags=_unique_texts(["off_stage_update", evidence_kind], max_items=6),
-        actor_ids=_unique_texts([actor_id], max_items=4),
-        evidence_refs=_unique_texts([source_id, candidate_id], max_items=4),
-        data=_safe_dict(
-            {
-                "candidate_id": candidate_id,
-                "candidate_kind": cand.get("candidate_kind"),
-                "originating_tick_id": source_tick_id,
-                "evidence_kind": evidence_kind,
-                "observed_motivation_score": score_value,
-                "structured_only": cand.get("structured_only"),
-                "proof_level": "local_only",
-            }
-        ),
-    ).to_dict()
+        source_turn_number=_off_stage_source_turn_number(turn_number),
+    )
     return HierarchicalMemoryWriteResult(
         status="passed",
         policy_present=True,

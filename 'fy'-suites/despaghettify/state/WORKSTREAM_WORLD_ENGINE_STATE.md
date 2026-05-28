@@ -1,5 +1,19 @@
 # Workstream: world_engine
 
+## Closed — DS-042 planner truth and session memory aspect split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-042 | Planner truth now delegates source normalization, validation fields, responder fields, mode fields, output counts, actor realization, and pressure fields; hierarchical memory aspect recording now delegates snapshot/write/surface/ledger phases. | `build_planner_truth_payload`, `_record_hierarchical_memory_aspect` | Pre: `artifacts/workstreams/world_engine/pre/session_20260528_DS-042_wave_plan.md`; post: `artifacts/workstreams/world_engine/post/session_20260528_DS-042_comparison.md` |
+
+**Gates (final):**
+
+- `python -m py_compile world-engine/app/story_runtime/planner_truth_projection.py world-engine/app/story_runtime/manager/session/session_memory_policies.py` — passed.
+- Focused planner truth / validator lane / aspect-ledger gate — 35 passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T18:57:09Z`.
+
+**Structural delta:** DS-042 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11374 functions; L50 808; L100 90; D6 0; `M7_anteil` 3.6402.
+
 ## Closed — DS-038 manager scene-block and diagnostic snapshot split (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

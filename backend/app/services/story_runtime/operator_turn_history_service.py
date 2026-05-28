@@ -34,62 +34,63 @@ def _extract_operator_hints(event: dict[str, Any]) -> dict[str, Any]:
     return telemetry.get("operator_diagnostic_hints") if isinstance(telemetry.get("operator_diagnostic_hints"), dict) else {}
 
 
-def _extract_npc_agency_breakdown(
-    event: dict[str, Any],
-    vitality: dict[str, Any],
-) -> dict[str, Any]:
-    realization = (
-        vitality.get("npc_initiative_realization_v1")
-        if isinstance(vitality.get("npc_initiative_realization_v1"), dict)
-        else {}
-    )
+def _runtime_projection_npc_agency(event: dict[str, Any]) -> dict[str, Any]:
+    """Read the NPC agency aspect from the runtime-intelligence projection."""
     ledger = event.get("turn_aspect_ledger") if isinstance(event.get("turn_aspect_ledger"), dict) else {}
     projection = (
         ledger.get("runtime_intelligence_projection")
         if isinstance(ledger.get("runtime_intelligence_projection"), dict)
         else {}
     )
-    npc_agency = (
-        projection.get("npc_agency")
-        if isinstance(projection.get("npc_agency"), dict)
-        else {}
-    )
-    planner_truth = {}
+    npc_agency = projection.get("npc_agency")
+    return npc_agency if isinstance(npc_agency, dict) else {}
+
+
+def _planner_truth_from_event(event: dict[str, Any]) -> dict[str, Any]:
+    """Read committed planner truth from the event narrative commit."""
     commit = event.get("narrative_commit") if isinstance(event.get("narrative_commit"), dict) else {}
-    if isinstance(commit.get("planner_truth"), dict):
-        planner_truth = commit["planner_truth"]
-    closure = (
-        planner_truth.get("npc_agency_closure")
-        if isinstance(planner_truth.get("npc_agency_closure"), dict)
-        else {}
-    )
-    simulation = (
-        planner_truth.get("npc_agency_simulation")
-        if isinstance(planner_truth.get("npc_agency_simulation"), dict)
-        else {}
-    )
-    long_horizon_state = (
-        planner_truth.get("npc_long_horizon_state")
-        if isinstance(planner_truth.get("npc_long_horizon_state"), dict)
-        else simulation.get("npc_long_horizon_state")
-        if isinstance(simulation.get("npc_long_horizon_state"), dict)
-        else {}
-    )
-    private_plans = (
-        planner_truth.get("npc_private_plans")
-        if isinstance(planner_truth.get("npc_private_plans"), list)
-        else simulation.get("npc_private_plans")
-        if isinstance(simulation.get("npc_private_plans"), list)
-        else []
-    )
-    conflict = (
-        planner_truth.get("npc_plan_conflict_resolution")
-        if isinstance(planner_truth.get("npc_plan_conflict_resolution"), dict)
-        else simulation.get("npc_plan_conflict_resolution")
-        if isinstance(simulation.get("npc_plan_conflict_resolution"), dict)
-        else {}
-    )
-    runtime_npc_agency = {
+    planner_truth = commit.get("planner_truth")
+    return planner_truth if isinstance(planner_truth, dict) else {}
+
+
+def _npc_agency_planner_truth_inputs(planner_truth: dict[str, Any]) -> dict[str, Any]:
+    """Collect NPC agency planner-truth inputs used by the operator surface."""
+    closure = planner_truth.get("npc_agency_closure")
+    simulation = planner_truth.get("npc_agency_simulation")
+    simulation_dict = simulation if isinstance(simulation, dict) else {}
+    long_horizon = planner_truth.get("npc_long_horizon_state")
+    private_plans = planner_truth.get("npc_private_plans")
+    conflict = planner_truth.get("npc_plan_conflict_resolution")
+    return {
+        "closure": closure if isinstance(closure, dict) else {},
+        "simulation": simulation_dict,
+        "long_horizon_state": long_horizon
+        if isinstance(long_horizon, dict)
+        else simulation_dict.get("npc_long_horizon_state")
+        if isinstance(simulation_dict.get("npc_long_horizon_state"), dict)
+        else {},
+        "private_plans": private_plans
+        if isinstance(private_plans, list)
+        else simulation_dict.get("npc_private_plans")
+        if isinstance(simulation_dict.get("npc_private_plans"), list)
+        else [],
+        "conflict": conflict
+        if isinstance(conflict, dict)
+        else simulation_dict.get("npc_plan_conflict_resolution")
+        if isinstance(simulation_dict.get("npc_plan_conflict_resolution"), dict)
+        else {},
+    }
+
+
+def _runtime_npc_agency_summary(
+    *,
+    npc_agency: dict[str, Any],
+    closure: dict[str, Any],
+    long_horizon_state: dict[str, Any],
+    conflict: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge projection facts with planner-truth fallback evidence."""
+    return {
         **npc_agency,
         "long_horizon_state_present": bool(
             npc_agency.get("long_horizon_state_present") or long_horizon_state
@@ -118,21 +119,26 @@ def _extract_npc_agency_breakdown(
         ),
         "private_plan_visibility_respected": npc_agency.get("private_plan_visibility_respected") is not False,
     }
-    claim_readiness = assess_npc_agency_claim_readiness(
-        simulation=simulation,
-        closure=closure,
-        runtime_aspect=runtime_npc_agency,
-        operator_evidence={"operator_npc_agency_breakdown_present": True},
-    )
+
+
+def _npc_agency_actor_breakdown(
+    *,
+    realization: dict[str, Any],
+    runtime_npc_agency: dict[str, Any],
+    closure: dict[str, Any],
+) -> dict[str, Any]:
+    """Resolve operator-facing NPC agency actor lists."""
     return {
-        "schema_version": realization.get("schema_version"),
-        "contract_status": npc_agency.get("contract_status") or realization.get("contract_status"),
-        "independent_planning_used": bool(
-            runtime_npc_agency.get("independent_planning_used")
-            or realization.get("independent_planning_used")
+        "candidate_actor_ids": list(
+            runtime_npc_agency.get("candidate_actor_ids")
+            or realization.get("candidate_actor_ids")
+            or []
         ),
-        "candidate_actor_ids": list(runtime_npc_agency.get("candidate_actor_ids") or realization.get("candidate_actor_ids") or []),
-        "planned_actor_ids": list(realization.get("planned_actor_ids") or runtime_npc_agency.get("planned_actor_ids") or []),
+        "planned_actor_ids": list(
+            realization.get("planned_actor_ids")
+            or runtime_npc_agency.get("planned_actor_ids")
+            or []
+        ),
         "realized_actor_ids": list(
             realization.get("realized_initiative_actor_ids")
             or runtime_npc_agency.get("realized_actor_ids")
@@ -143,16 +149,60 @@ def _extract_npc_agency_breakdown(
             or runtime_npc_agency.get("missing_required_actor_ids")
             or []
         ),
-        "multi_npc_initiative_realized": bool(
-            realization.get("multi_npc_initiative_realized")
-            or runtime_npc_agency.get("multi_npc_initiative_realized")
-        ),
-        "closure_status": closure.get("closure_status") or runtime_npc_agency.get("closure_status"),
         "carry_forward_actor_ids": list(
             closure.get("unresolved_actor_ids")
             or runtime_npc_agency.get("carry_forward_actor_ids")
             or []
         ),
+    }
+
+
+def _extract_npc_agency_breakdown(
+    event: dict[str, Any],
+    vitality: dict[str, Any],
+) -> dict[str, Any]:
+    realization = (
+        vitality.get("npc_initiative_realization_v1")
+        if isinstance(vitality.get("npc_initiative_realization_v1"), dict)
+        else {}
+    )
+    npc_agency = _runtime_projection_npc_agency(event)
+    planner_inputs = _npc_agency_planner_truth_inputs(_planner_truth_from_event(event))
+    closure = planner_inputs["closure"]
+    simulation = planner_inputs["simulation"]
+    long_horizon_state = planner_inputs["long_horizon_state"]
+    private_plans = planner_inputs["private_plans"]
+    conflict = planner_inputs["conflict"]
+    runtime_npc_agency = _runtime_npc_agency_summary(
+        npc_agency=npc_agency,
+        closure=closure,
+        long_horizon_state=long_horizon_state,
+        conflict=conflict,
+    )
+    claim_readiness = assess_npc_agency_claim_readiness(
+        simulation=simulation,
+        closure=closure,
+        runtime_aspect=runtime_npc_agency,
+        operator_evidence={"operator_npc_agency_breakdown_present": True},
+    )
+    actor_breakdown = _npc_agency_actor_breakdown(
+        realization=realization,
+        runtime_npc_agency=runtime_npc_agency,
+        closure=closure,
+    )
+    return {
+        "schema_version": realization.get("schema_version"),
+        "contract_status": npc_agency.get("contract_status") or realization.get("contract_status"),
+        "independent_planning_used": bool(
+            runtime_npc_agency.get("independent_planning_used")
+            or realization.get("independent_planning_used")
+        ),
+        **actor_breakdown,
+        "multi_npc_initiative_realized": bool(
+            realization.get("multi_npc_initiative_realized")
+            or runtime_npc_agency.get("multi_npc_initiative_realized")
+        ),
+        "closure_status": closure.get("closure_status") or runtime_npc_agency.get("closure_status"),
         "long_horizon_state_present": runtime_npc_agency["long_horizon_state_present"],
         "intention_threads_active": runtime_npc_agency["intention_threads_active"],
         "intention_threads_carried_forward": runtime_npc_agency["intention_threads_carried_forward"],

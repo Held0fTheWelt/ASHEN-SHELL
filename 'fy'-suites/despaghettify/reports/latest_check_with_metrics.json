@@ -1,6 +1,6 @@
 {
   "kind": "despaghettify_check",
-  "generated_at_utc": "2026-05-28T18:18:39Z",
+  "generated_at_utc": "2026-05-28T18:57:09Z",
   "repo_root": "/mnt/d/WorldOfShadows",
   "archive_sync": {
     "changed": false,
@@ -9,92 +9,92 @@
     "message": "already normalized"
   },
   "ast": {
-    "total_functions": 11299,
+    "total_functions": 11374,
     "total_python_files": 1555,
-    "count_over_50_lines": 809,
-    "count_over_100_lines": 102,
-    "count_nesting_ge_3": 562,
-    "count_nesting_ge_4": 149,
-    "count_nesting_ge_5": 45,
+    "count_over_50_lines": 808,
+    "count_over_100_lines": 90,
+    "count_nesting_ge_3": 561,
+    "count_nesting_ge_4": 147,
+    "count_nesting_ge_5": 43,
     "count_nesting_ge_6": 0,
     "count_functions_magic_int_literals_ge_5": 79,
     "count_functions_duplicate_name_across_files": 1510,
-    "count_functions_control_flow_heavy": 741,
+    "count_functions_control_flow_heavy": 735,
     "c1_files_in_import_cycles_pct": 0.7421,
     "c1_import_graph_files": 539,
     "c1_files_in_cycles": 4,
     "top12_longest": [
       {
-        "name": "interpret_goc_semantic_move",
-        "lines": 134,
+        "name": "derive_scene_energy",
+        "lines": 129,
         "nest_depth": 2,
-        "path": "ai_stack/story_runtime/semantic_planner/god_of_carnage_semantic_move_interpretation.py"
+        "path": "ai_stack/story_runtime/narrative/scene_energy_engine.py"
       },
       {
-        "name": "build_planner_truth_payload",
-        "lines": 133,
+        "name": "_redis_governance_posture",
+        "lines": 128,
         "nest_depth": 1,
-        "path": "world-engine/app/story_runtime/planner_truth_projection.py"
+        "path": "backend/app/services/governance/security_governance_service.py"
       },
       {
-        "name": "_record_hierarchical_memory_aspect",
-        "lines": 133,
+        "name": "_run_autonomous_followup_after_turn",
+        "lines": 128,
+        "nest_depth": 3,
+        "path": "world-engine/app/api/story_ws.py"
+      },
+      {
+        "name": "build_character_voice_profiles_for_goc",
+        "lines": 127,
         "nest_depth": 2,
-        "path": "world-engine/app/story_runtime/manager/session/session_memory_policies.py"
+        "path": "ai_stack/story_runtime/npc_agency/character/god_of_carnage_character_voice.py"
       },
       {
-        "name": "build_readiness_co_authority_preview",
-        "lines": 133,
-        "nest_depth": 5,
-        "path": "ai_stack/story_runtime/turn/validation_authority_bridge.py"
-      },
-      {
-        "name": "build_off_stage_hierarchical_memory_write",
-        "lines": 132,
+        "name": "build_hierarchical_memory_write",
+        "lines": 125,
         "nest_depth": 1,
         "path": "ai_stack/contracts/hierarchical_memory_contracts.py"
       },
       {
-        "name": "compute_stream_readiness",
-        "lines": 132,
+        "name": "verify_and_promote_claims",
+        "lines": 125,
+        "nest_depth": 2,
+        "path": "ai_stack/research/research_validation.py"
+      },
+      {
+        "name": "derive_social_pressure",
+        "lines": 125,
+        "nest_depth": 2,
+        "path": "ai_stack/story_runtime/narrative/social_pressure_engine.py"
+      },
+      {
+        "name": "_build_adr0041_plan_projection_sibling",
+        "lines": 125,
         "nest_depth": 3,
-        "path": "ai_stack/story_runtime/stream_readiness.py"
+        "path": "ai_stack/story_runtime/runtime_aspect_ledger/capability_projection.py"
       },
       {
-        "name": "validate_voice_consistency",
-        "lines": 132,
-        "nest_depth": 2,
-        "path": "ai_stack/story_runtime/npc_agency/character/character_voice_validation.py"
+        "name": "enrich_improvement_package_with_task2a_routing",
+        "lines": 124,
+        "nest_depth": 3,
+        "path": "backend/app/services/improvement/improvement_task2a_routing.py"
       },
       {
-        "name": "build_bounded_dramatic_context_summary",
-        "lines": 131,
-        "nest_depth": 0,
-        "path": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py"
-      },
-      {
-        "name": "apply_action_to_environment_state",
-        "lines": 130,
+        "name": "build_authority_handoff_candidate",
+        "lines": 124,
         "nest_depth": 5,
-        "path": "ai_stack/contracts/environment_state_contracts.py"
-      },
-      {
-        "name": "validate_temporal_control_realization",
-        "lines": 130,
-        "nest_depth": 2,
-        "path": "ai_stack/story_runtime/narrative/temporal_control_engine.py"
-      },
-      {
-        "name": "build_validation_authority_bridge",
-        "lines": 130,
-        "nest_depth": 2,
         "path": "ai_stack/story_runtime/turn/validation_authority_bridge.py"
       },
       {
-        "name": "_extract_npc_agency_breakdown",
-        "lines": 129,
-        "nest_depth": 1,
-        "path": "backend/app/services/story_runtime/operator_turn_history_service.py"
+        "name": "initialize_runtime_world",
+        "lines": 123,
+        "nest_depth": 2,
+        "path": "world-engine/app/story_runtime/runtime_world.py"
+      },
+      {
+        "name": "validate_narrative_aspects",
+        "lines": 122,
+        "nest_depth": 3,
+        "path": "ai_stack/contracts/narrative_aspect_contracts.py"
       }
     ],
     "top6_nesting": [],
@@ -127,92 +127,92 @@
     "schema_version": 1,
     "source": "ast_heuristic_v2",
     "category_scores": {
-      "C1": 8.264,
+      "C1": 7.88,
       "C2": 0.0,
-      "C3": 95.87250706142024,
-      "C4": 72.43950056534096,
-      "C5": 39.841725310937534,
-      "C6": 30.308644626260783,
-      "C7": 62.317129589923155
+      "C3": 93.9945332104692,
+      "C4": 72.16026363714909,
+      "C5": 39.688145000432,
+      "C6": 27.131325300179686,
+      "C7": 61.09644658680498
     },
     "score": {
       "legend_de": "``trigger_v2`` = Heuristik v2 (0\u2026100, saturierend); **kein** Balkenvergleich, nur beratend. ``anteil_pct`` = operationaler Mess-Anteil in % (``literal_rates.condition_shares_pct``); **Balken** / ``M7_ref`` aus ``spaghetti-setup`` gelten **nur** hier. **C1** = Prozent der Dateien unter ``backend/app`` im Importgraph; **C2\u2013C7** = Prozent der gemessenen Funktionen. ``m7_trigger_v2`` / ``m7_anteil_pct_gewichtet``: gleiche ``weights``.",
       "categories": {
         "C1": {
-          "trigger_v2": 8.264,
+          "trigger_v2": 7.88,
           "anteil_pct": 0.7421
         },
         "C2": {
           "trigger_v2": 0.0,
-          "anteil_pct": 1.3187
+          "anteil_pct": 1.2924
         },
         "C3": {
-          "trigger_v2": 95.8725,
-          "anteil_pct": 0.9027
+          "trigger_v2": 93.9945,
+          "anteil_pct": 0.7913
         },
         "C4": {
-          "trigger_v2": 72.4395,
-          "anteil_pct": 7.1599
+          "trigger_v2": 72.1603,
+          "anteil_pct": 7.1039
         },
         "C5": {
-          "trigger_v2": 39.8417,
-          "anteil_pct": 0.6992
+          "trigger_v2": 39.6881,
+          "anteil_pct": 0.6946
         },
         "C6": {
-          "trigger_v2": 30.3086,
-          "anteil_pct": 13.364
+          "trigger_v2": 27.1313,
+          "anteil_pct": 13.2759
         },
         "C7": {
-          "trigger_v2": 62.3171,
-          "anteil_pct": 6.5581
+          "trigger_v2": 61.0964,
+          "anteil_pct": 6.4621
         }
       },
-      "m7_trigger_v2": 44.0632,
-      "m7_anteil_pct_gewichtet": 3.6891
+      "m7_trigger_v2": 43.0881,
+      "m7_anteil_pct_gewichtet": 3.6402
     },
     "literal_rates": {
-      "total_functions_measured": 11299,
+      "total_functions_measured": 11374,
       "total_python_files_measured": 1555,
-      "functions_over_100_lines_pct": 0.9027,
-      "functions_over_50_lines_pct": 7.1599,
+      "functions_over_100_lines_pct": 0.7913,
+      "functions_over_50_lines_pct": 7.1039,
       "functions_nesting_ge_6_pct": 0.0,
-      "over_100_lines_among_over_50_lines_pct": 12.6082,
+      "over_100_lines_among_over_50_lines_pct": 11.1386,
       "condition_shares_pct": {
         "C1": 0.7421,
-        "C2": 1.3187,
-        "C3": 0.9027,
-        "C4": 7.1599,
-        "C5": 0.6992,
-        "C6": 13.364,
-        "C7": 6.5581
+        "C2": 1.2924,
+        "C3": 0.7913,
+        "C4": 7.1039,
+        "C5": 0.6946,
+        "C6": 13.2759,
+        "C7": 6.4621
       },
       "c1_import_graph_files": 539,
       "c1_files_in_cycles": 4
     },
     "plain_language_de": {
       "C1": "Anteil der 539 analysierten Python-Dateien unter ``backend/app``, die in einem Importzyklus liegen (nur explizite ``app.*``-Kanten, v1): 0.74 % (4 Dateien).",
-      "C2": "Anteil der 11299 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.32 %.",
-      "C3": "Anteil der 11299 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 0.90 %.",
-      "C4": "Anteil der 11299 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.16 %.",
-      "C5": "Anteil der 11299 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.70 %.",
-      "C6": "Anteil der 11299 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 13.36 %.",
-      "C7": "Anteil der 11299 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 6.56 %."
+      "C2": "Anteil der 11374 gemessenen Funktionen mit AST-Verschachtelungstiefe \u2265 4: 1.29 %.",
+      "C3": "Anteil der 11374 gemessenen Funktionen mit mehr als 100 AST-Zeilen: 0.79 %.",
+      "C4": "Anteil der 11374 gemessenen Funktionen mit mehr als 50 AST-Zeilen: 7.10 %.",
+      "C5": "Anteil der 11374 gemessenen Funktionen mit \u2265 5 nicht-trivialen int-Literalen im Body (Heuristik, ohne globalen Modulzustand): 0.69 %.",
+      "C6": "Anteil der 11374 gemessenen Funktionen, deren Name in mehreren Dateien vorkommt (schwacher Duplikat-/Namenskollisions-Proxy): 13.28 %.",
+      "C7": "Anteil der 11374 gemessenen Funktionen mit Verschachtelung \u2265 3 **oder** mehr als 80 AST-Zeilen (Kontrollfluss-/Lesbarkeits-Proxy): 6.46 %."
     },
     "metric_a": {
       "id": "share_weighted_m7",
       "description_de": "Gewichtetes Mittel der ``condition_shares_pct``; **Trigger-Policy**-Komposit (Vergleich mit ``M7_ref`` / Balken f\u00fcr **Anteil %**, nicht f\u00fcr ``m7`` Trigger).",
       "category_scores": {
         "C1": 0.7421,
-        "C2": 1.3187,
-        "C3": 0.9027,
-        "C4": 7.1599,
-        "C5": 0.6992,
-        "C6": 13.364,
-        "C7": 6.5581
+        "C2": 1.2924,
+        "C3": 0.7913,
+        "C4": 7.1039,
+        "C5": 0.6946,
+        "C6": 13.2759,
+        "C7": 6.4621
       },
-      "m7": 3.6891
+      "m7": 3.6402
     },
-    "m7": 44.0632,
+    "m7": 43.0881,
     "m7_ref": 4.24,
     "trigger_policy_basis": "anteil_pct",
     "trigger_bars": {
