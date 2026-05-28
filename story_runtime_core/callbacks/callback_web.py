@@ -9,13 +9,17 @@ being reused. It never mutates canonical history.
 from __future__ import annotations
 
 import hashlib
-import json
 from datetime import datetime, timezone
 from typing import Any
 
 from story_runtime_core.serialization import json_safe as _json_safe
 
 from story_runtime_core.committed_truth import committed_story_truth_rows
+from story_runtime_core.evidence_projection_helpers import (
+    compact_evidence_text,
+    dedupe_sorted_evidence_text,
+    stable_evidence_hash,
+)
 
 
 CALLBACK_WEB_RECORD_SCHEMA_VERSION = "callback_web_record.v1"
@@ -41,36 +45,19 @@ CALLBACK_WEB_DEFAULT_MAX_OBSERVATIONS = 60
 CALLBACK_WEB_DEFAULT_MAX_EVIDENCE_REFS = 8
 CALLBACK_WEB_MIN_MAX_EDGES = 8
 CALLBACK_WEB_MIN_MAX_OBSERVATIONS = 4
+CALLBACK_WEB_COMMIT_LIST_LIMIT = 12
+CALLBACK_WEB_SIGNAL_TEXT_LIMIT = 80
+CALLBACK_WEB_SIGNAL_HASH_LENGTH = 12
+CALLBACK_WEB_STABLE_ID_LENGTH = 16
+CALLBACK_WEB_SNAPSHOT_LIST_LIMIT = 16
+CALLBACK_WEB_GRAPH_DEFAULT_MAX_EDGES = 4
+CALLBACK_WEB_GRAPH_HARD_MAX_EDGES = 16
+CALLBACK_WEB_GRAPH_ITEM_LIST_LIMIT = 4
+CALLBACK_WEB_GRAPH_SUMMARY_LIST_LIMIT = 8
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-
-def _short(value: Any, limit: int = 96) -> str:
-    text = str(value or "").strip()
-    if len(text) <= limit:
-        return text
-    return text[: limit - 1] + "..."
-
-
-def _stable_hash(payload: Any, length: int = 16) -> str:
-    raw = json.dumps(_json_safe(payload), sort_keys=True, default=str)
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:length]
-
-
-def _dedupe_sorted(values: list[Any], *, limit: int | None = None) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        text = str(value or "").strip()
-        if not text or text in seen:
-            continue
-        seen.add(text)
-        out.append(text)
-    out.sort()
-    return out[:limit] if limit is not None else out
 
 
 def default_callback_web_bounds() -> dict[str, int]:
@@ -97,7 +84,7 @@ def normalize_callback_web_bounds(bounds: dict[str, Any] | None = None) -> dict[
 
 
 def stable_callback_web_id(*, story_session_id: str) -> str:
-    digest = hashlib.sha256(str(story_session_id).encode("utf-8")).hexdigest()[:16]
+    digest = hashlib.sha256(str(story_session_id).encode("utf-8")).hexdigest()[:CALLBACK_WEB_STABLE_ID_LENGTH]
     return f"callback_web_{digest}"
 
 
@@ -123,7 +110,7 @@ def _continuity_classes_from_impacts(impacts: Any) -> list[str]:
             if value:
                 out.append(value)
                 break
-    return _dedupe_sorted(out)
+    return dedupe_sorted_evidence_text(out)
 
 
 def _continuity_classes_for_commit(commit: dict[str, Any]) -> list[str]:
@@ -134,7 +121,7 @@ def _continuity_classes_for_commit(commit: dict[str, Any]) -> list[str]:
     pressure = str(beat.get("pressure_state") or "").strip()
     if pressure:
         classes.append(pressure)
-    return _dedupe_sorted(classes)
+    return dedupe_sorted_evidence_text(classes)
 
 
 def _entities_for_commit(commit: dict[str, Any]) -> list[str]:
@@ -148,7 +135,7 @@ def _entities_for_commit(commit: dict[str, Any]) -> list[str]:
         raw = planner.get(key)
         if isinstance(raw, list):
             values.extend(raw)
-    return _dedupe_sorted(values, limit=12)
+    return dedupe_sorted_evidence_text(values, limit=CALLBACK_WEB_COMMIT_LIST_LIMIT)
 
 
 def _signals_for_commit(commit: dict[str, Any]) -> list[str]:
@@ -156,8 +143,12 @@ def _signals_for_commit(commit: dict[str, Any]) -> list[str]:
     for key in ("open_pressures", "committed_consequences", "resolved_pressures"):
         raw = commit.get(key)
         if isinstance(raw, list):
-            values.extend(_short(x, 80) for x in raw if str(x or "").strip())
-    return _dedupe_sorted(values, limit=12)
+            values.extend(
+                compact_evidence_text(x, CALLBACK_WEB_SIGNAL_TEXT_LIMIT)
+                for x in raw
+                if str(x or "").strip()
+            )
+    return dedupe_sorted_evidence_text(values, limit=CALLBACK_WEB_COMMIT_LIST_LIMIT)
 
 
 def _thread_dicts(narrative_threads: Any) -> list[dict[str, Any]]:
@@ -196,7 +187,7 @@ def _threads_for_observation(*, scene_id: str, classes: list[str], signals: list
             continue
         if evidence_tokens and evidence_tokens.intersection(signal_set):
             out.append(thread_id)
-    return _dedupe_sorted(out)
+    return dedupe_sorted_evidence_text(out)
 
 
 def _observation_for_row(
@@ -219,7 +210,7 @@ def _observation_for_row(
         signals=signals,
         narrative_threads=narrative_threads,
     )
-    signal_hashes = [_stable_hash(signal, 12) for signal in signals]
+    signal_hashes = [stable_evidence_hash(signal, CALLBACK_WEB_SIGNAL_HASH_LENGTH) for signal in signals]
     return {
         "schema_version": CALLBACK_OBSERVATION_SCHEMA_VERSION,
         "turn_id": turn_id,
@@ -234,7 +225,7 @@ def _observation_for_row(
 
 
 def _edge_id(seed: dict[str, Any]) -> str:
-    return "callback_edge_" + _stable_hash(seed, 16)
+    return "callback_edge_" + stable_evidence_hash(seed, CALLBACK_WEB_STABLE_ID_LENGTH)
 
 
 def _make_edge(
@@ -251,10 +242,10 @@ def _make_edge(
     evidence_hashes: list[str] | None = None,
     confidence: float = 0.5,
 ) -> dict[str, Any]:
-    classes = _dedupe_sorted(continuity_classes or [])
-    threads = _dedupe_sorted(thread_ids or [])
-    entities = _dedupe_sorted(related_entities or [])
-    branch_ids = _dedupe_sorted(branch_tree_ids or [])
+    classes = dedupe_sorted_evidence_text(continuity_classes or [])
+    threads = dedupe_sorted_evidence_text(thread_ids or [])
+    entities = dedupe_sorted_evidence_text(related_entities or [])
+    branch_ids = dedupe_sorted_evidence_text(branch_tree_ids or [])
     source_turn_id = str(source.get("turn_id") or "")
     target_turn_id = str(target.get("turn_id") or "")
     seed = {
@@ -279,8 +270,8 @@ def _make_edge(
         "related_entities": entities,
         "branch_tree_ids": branch_ids,
         "evidence": {
-            "source_fields": _dedupe_sorted(evidence_fields or []),
-            "signal_hashes": _dedupe_sorted(evidence_hashes or []),
+            "source_fields": dedupe_sorted_evidence_text(evidence_fields or []),
+            "signal_hashes": dedupe_sorted_evidence_text(evidence_hashes or []),
         },
         "confidence": max(0.0, min(1.0, float(confidence))),
         "non_authoritative": True,
@@ -386,7 +377,7 @@ def _edges_from_branch_timeline(
                 set(source.get("continuity_classes") or []).intersection(target.get("continuity_classes") or [])
             ),
             evidence_fields=["branch_timeline.events", "branching_tree.selection"],
-            evidence_hashes=[_stable_hash(event, 12)],
+            evidence_hashes=[stable_evidence_hash(event, CALLBACK_WEB_SIGNAL_HASH_LENGTH)],
             confidence=0.8,
         )
         edges.append(edge)
@@ -401,11 +392,11 @@ def _bounded_edges(edges: list[dict[str, Any]], bounds: dict[str, int]) -> list[
         evidence = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
         if evidence:
             row["evidence"] = {
-                "source_fields": _dedupe_sorted(
+                "source_fields": dedupe_sorted_evidence_text(
                     evidence.get("source_fields") if isinstance(evidence.get("source_fields"), list) else [],
                     limit=bounds["max_evidence_refs"],
                 ),
-                "signal_hashes": _dedupe_sorted(
+                "signal_hashes": dedupe_sorted_evidence_text(
                     evidence.get("signal_hashes") if isinstance(evidence.get("signal_hashes"), list) else [],
                     limit=bounds["max_evidence_refs"],
                 ),
@@ -456,9 +447,9 @@ def build_callback_web_snapshot(record: dict[str, Any]) -> dict[str, Any]:
         "edge_count": len(edges),
         "observation_count": len(observations),
         "callback_kind_counts": dict(sorted(kind_counts.items())),
-        "continuity_classes": _dedupe_sorted(classes, limit=16),
-        "thread_ids": _dedupe_sorted(thread_ids, limit=16),
-        "branch_tree_ids": _dedupe_sorted(branch_tree_ids, limit=16),
+        "continuity_classes": dedupe_sorted_evidence_text(classes, limit=CALLBACK_WEB_SNAPSHOT_LIST_LIMIT),
+        "thread_ids": dedupe_sorted_evidence_text(thread_ids, limit=CALLBACK_WEB_SNAPSHOT_LIST_LIMIT),
+        "branch_tree_ids": dedupe_sorted_evidence_text(branch_tree_ids, limit=CALLBACK_WEB_SNAPSHOT_LIST_LIMIT),
         "latest_turn_id": latest_turn_id,
         "latest_turn_number": latest_turn_number,
         "non_authoritative": True,
@@ -469,7 +460,7 @@ def build_callback_web_snapshot(record: dict[str, Any]) -> dict[str, Any]:
 def build_graph_callback_web_export(
     record: dict[str, Any] | None,
     *,
-    max_edges: int = 4,
+    max_edges: int = CALLBACK_WEB_GRAPH_DEFAULT_MAX_EDGES,
 ) -> dict[str, Any] | None:
     """Project callback-web record into a tight graph feedback payload."""
     if not isinstance(record, dict):
@@ -491,7 +482,7 @@ def build_graph_callback_web_export(
         ),
         reverse=True,
     )
-    edge_limit = max(1, min(16, int(max_edges or 4)))
+    edge_limit = max(1, min(CALLBACK_WEB_GRAPH_HARD_MAX_EDGES, int(max_edges or CALLBACK_WEB_GRAPH_DEFAULT_MAX_EDGES)))
     graph_edges: list[dict[str, Any]] = []
     for edge in bounded_edges[:edge_limit]:
         graph_edges.append(
@@ -502,9 +493,9 @@ def build_graph_callback_web_export(
                 "target_turn_id": edge.get("target_turn_id"),
                 "source_turn_number": int(edge.get("source_turn_number") or 0),
                 "target_turn_number": int(edge.get("target_turn_number") or 0),
-                "continuity_classes": list(edge.get("continuity_classes") or [])[:4],
-                "thread_ids": list(edge.get("thread_ids") or [])[:4],
-                "branch_tree_ids": list(edge.get("branch_tree_ids") or [])[:4],
+                "continuity_classes": list(edge.get("continuity_classes") or [])[:CALLBACK_WEB_GRAPH_ITEM_LIST_LIMIT],
+                "thread_ids": list(edge.get("thread_ids") or [])[:CALLBACK_WEB_GRAPH_ITEM_LIST_LIMIT],
+                "branch_tree_ids": list(edge.get("branch_tree_ids") or [])[:CALLBACK_WEB_GRAPH_ITEM_LIST_LIMIT],
                 "confidence": edge.get("confidence"),
                 "non_authoritative": True,
                 "mutates_canonical_state": False,
@@ -533,8 +524,8 @@ def build_graph_callback_web_export(
         "selected_continuity_classes": selected_classes,
         "selected_thread_ids": selected_threads,
         "edges": graph_edges,
-        "continuity_classes": list(snapshot.get("continuity_classes") or [])[:8],
-        "thread_ids": list(snapshot.get("thread_ids") or [])[:8],
+        "continuity_classes": list(snapshot.get("continuity_classes") or [])[:CALLBACK_WEB_GRAPH_SUMMARY_LIST_LIMIT],
+        "thread_ids": list(snapshot.get("thread_ids") or [])[:CALLBACK_WEB_GRAPH_SUMMARY_LIST_LIMIT],
         "non_authoritative": True,
         "mutates_canonical_state": False,
     }

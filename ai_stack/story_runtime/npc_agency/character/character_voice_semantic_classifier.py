@@ -292,6 +292,277 @@ def _classification_status(finding_codes: list[str]) -> str:
     return "pass"
 
 
+def _rank_profiles_for_line(
+    *,
+    line_tokens: set[str],
+    expected_profile: CharacterVoiceProfileRecord,
+    profiles: list[CharacterVoiceProfileRecord],
+    weights: dict[str, float],
+    tokens_by_actor: dict[str, dict[str, set[str]]],
+    token_index: dict[str, set[str]],
+) -> tuple[
+    float,
+    dict[str, float],
+    CharacterVoiceProfileRecord,
+    float,
+    dict[str, float],
+    list[tuple[float, CharacterVoiceProfileRecord, dict[str, float]]],
+]:
+    expected_score, expected_dimensions = _score_profile(
+        line_tokens=line_tokens,
+        profile=expected_profile,
+        weights=weights,
+        profile_tokens=tokens_by_actor.get(expected_profile.runtime_actor_id, {}),
+        token_index=token_index,
+    )
+    best_profile = expected_profile
+    best_score = expected_score
+    best_dimensions = expected_dimensions
+    scored_profiles: list[tuple[float, CharacterVoiceProfileRecord, dict[str, float]]] = []
+    for profile in profiles:
+        score, dimensions = _score_profile(
+            line_tokens=line_tokens,
+            profile=profile,
+            weights=weights,
+            profile_tokens=tokens_by_actor.get(profile.runtime_actor_id, {}),
+            token_index=token_index,
+        )
+        scored_profiles.append((score, profile, dimensions))
+        if score > best_score:
+            best_profile = profile
+            best_score = score
+            best_dimensions = dimensions
+    return (
+        expected_score,
+        expected_dimensions,
+        best_profile,
+        best_score,
+        best_dimensions,
+        sorted(scored_profiles, key=lambda item: item[0], reverse=True),
+    )
+
+
+def _dimension_voice_winners(
+    scored_profiles: list[tuple[float, CharacterVoiceProfileRecord, dict[str, float]]],
+) -> tuple[dict[str, str], dict[str, float]]:
+    dimension_best_matching_actor_ids: dict[str, str] = {}
+    dimension_winner_scores: dict[str, float] = {}
+    for dimension in SEMANTIC_DIMENSIONS:
+        best_actor = ""
+        best_dimension_score = 0.0
+        for _score, profile, dimensions in scored_profiles:
+            dimension_score = float(dimensions.get(dimension) or 0.0)
+            if dimension_score > best_dimension_score:
+                best_actor = profile.runtime_actor_id
+                best_dimension_score = dimension_score
+        if best_actor:
+            dimension_best_matching_actor_ids[dimension] = best_actor
+            dimension_winner_scores[dimension] = round(best_dimension_score, 3)
+    return dimension_best_matching_actor_ids, dimension_winner_scores
+
+
+def _voice_finding_codes(
+    *,
+    best_profile: CharacterVoiceProfileRecord,
+    expected_profile: CharacterVoiceProfileRecord,
+    best_score: float,
+    expected_score: float,
+    runner_up_profile: CharacterVoiceProfileRecord | None,
+    runner_up_score: float,
+    margin: float,
+    confidence: float,
+    strong_dimension_winners: set[str],
+    thresholds: dict[str, float],
+) -> list[str]:
+    finding_codes: list[str] = []
+    if (
+        best_profile.runtime_actor_id != expected_profile.runtime_actor_id
+        and best_score >= thresholds["min_profile_alignment"]
+        and margin >= thresholds["max_cross_actor_confusion"]
+        and confidence >= thresholds["min_confidence_to_block"]
+    ):
+        finding_codes.append("cross_actor_voice_confusion")
+    if (
+        len(strong_dimension_winners) >= int(thresholds["min_mixed_dimensions"])
+        and len(strong_dimension_winners) > 1
+        and best_score >= thresholds["min_profile_alignment"]
+    ):
+        finding_codes.append("mixed_voice_signature")
+    if (
+        runner_up_profile is not None
+        and best_score >= thresholds["min_profile_alignment"]
+        and (best_score - runner_up_score) <= thresholds["max_ambiguous_margin"]
+        and runner_up_profile.runtime_actor_id != best_profile.runtime_actor_id
+    ):
+        finding_codes.append("ambiguous_voice_signature")
+    elif (
+        expected_score < thresholds["min_profile_alignment"]
+        and best_score < thresholds["min_profile_alignment"]
+    ):
+        finding_codes.append("weak_profile_alignment")
+    return finding_codes
+
+
+def _build_voice_line_classification(
+    *,
+    version: str,
+    speaker: str,
+    expected_profile: CharacterVoiceProfileRecord,
+    best_profile: CharacterVoiceProfileRecord,
+    runner_up_profile: CharacterVoiceProfileRecord | None,
+    expected_score: float,
+    best_score: float,
+    runner_up_score: float,
+    margin: float,
+    confidence: float,
+    expected_dimensions: dict[str, float],
+    best_dimensions: dict[str, float],
+    profile_alignments: dict[str, float],
+    dimension_best_matching_actor_ids: dict[str, str],
+    finding_codes: list[str],
+    line_index: int,
+    text: str,
+    line_tokens: set[str],
+    dimension_winner_scores: dict[str, float],
+    strong_dimension_winners: set[str],
+    top_margin: float,
+    thresholds: dict[str, float],
+    policy: dict[str, Any],
+) -> VoiceSemanticLineClassification:
+    return VoiceSemanticLineClassification(
+        classifier_version=version,
+        speaker_id=speaker,
+        expected_profile_actor_id=expected_profile.runtime_actor_id,
+        best_matching_actor_id=best_profile.runtime_actor_id,
+        runner_up_actor_id=runner_up_profile.runtime_actor_id
+        if runner_up_profile is not None
+        else None,
+        expected_profile_alignment=expected_score,
+        best_profile_alignment=best_score,
+        runner_up_profile_alignment=round(runner_up_score, 3),
+        cross_actor_confusion_margin=margin,
+        confidence=confidence,
+        dimension_scores=expected_dimensions,
+        best_dimension_scores=best_dimensions,
+        profile_alignments=profile_alignments,
+        dimension_best_matching_actor_ids=dimension_best_matching_actor_ids,
+        classification_status=_classification_status(finding_codes),
+        finding_codes=finding_codes,
+        policy_sources=[SEMANTIC_CLASSIFICATION_POLICY_SOURCE],
+        evidence={
+            "line_index": line_index,
+            "line_text_sha256": _stable_line_hash(text),
+            "line_token_count": len(line_tokens),
+            "matched_dimensions": [
+                dimension
+                for dimension, score in best_dimensions.items()
+                if score > 0
+            ],
+            "dimension_winner_scores": dimension_winner_scores,
+            "strong_dimension_winner_actor_ids": sorted(strong_dimension_winners),
+            "top_profile_margin": top_margin,
+            "low_dimensions": [
+                dimension
+                for dimension, score in expected_dimensions.items()
+                if score < thresholds["min_profile_alignment"]
+            ],
+            "thresholds": thresholds,
+            "gate_mode": str(policy.get("gate_mode") or "observe_then_reject"),
+        },
+    )
+
+
+def _classify_voice_row(
+    *,
+    row: Any,
+    line_index: int,
+    profiles: list[CharacterVoiceProfileRecord],
+    weights: dict[str, float],
+    thresholds: dict[str, float],
+    version: str,
+    tokens_by_actor: dict[str, dict[str, set[str]]],
+    token_index: dict[str, set[str]],
+    policy: dict[str, Any],
+) -> VoiceSemanticLineClassification | None:
+    speaker = _speaker_id(row)
+    text = _line_text(row)
+    line_tokens = _tokens(text)
+    expected_profile = _profile_for_speaker(speaker, profiles)
+    if expected_profile is None or not text:
+        return None
+    (
+        expected_score,
+        expected_dimensions,
+        best_profile,
+        best_score,
+        best_dimensions,
+        ranked_profiles,
+    ) = _rank_profiles_for_line(
+        line_tokens=line_tokens,
+        expected_profile=expected_profile,
+        profiles=profiles,
+        weights=weights,
+        tokens_by_actor=tokens_by_actor,
+        token_index=token_index,
+    )
+    runner_up_profile: CharacterVoiceProfileRecord | None = None
+    runner_up_score = 0.0
+    if len(ranked_profiles) > 1:
+        runner_up_score, runner_up_profile, _runner_dimensions = ranked_profiles[1]
+    profile_alignments = {
+        profile.runtime_actor_id: round(score, 3)
+        for score, profile, _dimensions in ranked_profiles
+    }
+    dimension_best_matching_actor_ids, dimension_winner_scores = _dimension_voice_winners(
+        ranked_profiles
+    )
+    margin = round(max(best_score - expected_score, 0.0), 3)
+    top_margin = round(max(best_score - runner_up_score, 0.0), 3)
+    confidence = round(min(1.0, max(best_score, best_score + margin, top_margin)), 3)
+    strong_dimension_winners = {
+        actor_id
+        for dimension, actor_id in dimension_best_matching_actor_ids.items()
+        if dimension_winner_scores.get(dimension, 0.0) >= thresholds["min_dimension_alignment"]
+    }
+    finding_codes = _voice_finding_codes(
+        best_profile=best_profile,
+        expected_profile=expected_profile,
+        best_score=best_score,
+        expected_score=expected_score,
+        runner_up_profile=runner_up_profile,
+        runner_up_score=runner_up_score,
+        margin=margin,
+        confidence=confidence,
+        strong_dimension_winners=strong_dimension_winners,
+        thresholds=thresholds,
+    )
+    return _build_voice_line_classification(
+        version=version,
+        speaker=speaker,
+        expected_profile=expected_profile,
+        best_profile=best_profile,
+        runner_up_profile=runner_up_profile,
+        expected_score=expected_score,
+        best_score=best_score,
+        runner_up_score=runner_up_score,
+        margin=margin,
+        confidence=confidence,
+        expected_dimensions=expected_dimensions,
+        best_dimensions=best_dimensions,
+        profile_alignments=profile_alignments,
+        dimension_best_matching_actor_ids=dimension_best_matching_actor_ids,
+        finding_codes=finding_codes,
+        line_index=line_index,
+        text=text,
+        line_tokens=line_tokens,
+        dimension_winner_scores=dimension_winner_scores,
+        strong_dimension_winners=strong_dimension_winners,
+        top_margin=top_margin,
+        thresholds=thresholds,
+        policy=policy,
+    )
+
+
 def classify_voice_semantic_lines(
     *,
     spoken_rows: list[Any],
@@ -316,138 +587,18 @@ def classify_voice_semantic_lines(
     classifications: list[VoiceSemanticLineClassification] = []
 
     for line_index, row in enumerate(spoken_rows):
-        speaker = _speaker_id(row)
-        text = _line_text(row)
-        line_tokens = _tokens(text)
-        expected_profile = _profile_for_speaker(speaker, profiles)
-        if expected_profile is None or not text:
-            continue
-        expected_score, expected_dimensions = _score_profile(
-            line_tokens=line_tokens,
-            profile=expected_profile,
+        classification = _classify_voice_row(
+            row=row,
+            line_index=line_index,
+            profiles=profiles,
             weights=weights,
-            profile_tokens=tokens_by_actor.get(expected_profile.runtime_actor_id, {}),
+            thresholds=thresholds,
+            version=version,
+            tokens_by_actor=tokens_by_actor,
             token_index=token_index,
+            policy=policy,
         )
-        best_profile = expected_profile
-        best_score = expected_score
-        best_dimensions = expected_dimensions
-        scored_profiles: list[tuple[float, CharacterVoiceProfileRecord, dict[str, float]]] = []
-        for profile in profiles:
-            score, dimensions = _score_profile(
-                line_tokens=line_tokens,
-                profile=profile,
-                weights=weights,
-                profile_tokens=tokens_by_actor.get(profile.runtime_actor_id, {}),
-                token_index=token_index,
-            )
-            scored_profiles.append((score, profile, dimensions))
-            if score > best_score:
-                best_profile = profile
-                best_score = score
-                best_dimensions = dimensions
-
-        ranked_profiles = sorted(scored_profiles, key=lambda item: item[0], reverse=True)
-        runner_up_profile: CharacterVoiceProfileRecord | None = None
-        runner_up_score = 0.0
-        if len(ranked_profiles) > 1:
-            runner_up_score, runner_up_profile, _runner_dimensions = ranked_profiles[1]
-
-        profile_alignments = {
-            profile.runtime_actor_id: round(score, 3)
-            for score, profile, _dimensions in ranked_profiles
-        }
-        dimension_best_matching_actor_ids: dict[str, str] = {}
-        dimension_winner_scores: dict[str, float] = {}
-        for dimension in SEMANTIC_DIMENSIONS:
-            best_actor = ""
-            best_dimension_score = 0.0
-            for _score, profile, dimensions in scored_profiles:
-                dimension_score = float(dimensions.get(dimension) or 0.0)
-                if dimension_score > best_dimension_score:
-                    best_actor = profile.runtime_actor_id
-                    best_dimension_score = dimension_score
-            if best_actor:
-                dimension_best_matching_actor_ids[dimension] = best_actor
-                dimension_winner_scores[dimension] = round(best_dimension_score, 3)
-
-        margin = round(max(best_score - expected_score, 0.0), 3)
-        top_margin = round(max(best_score - runner_up_score, 0.0), 3)
-        confidence = round(min(1.0, max(best_score, best_score + margin, top_margin)), 3)
-        strong_dimension_winners = {
-            actor_id
-            for dimension, actor_id in dimension_best_matching_actor_ids.items()
-            if dimension_winner_scores.get(dimension, 0.0) >= thresholds["min_dimension_alignment"]
-        }
-        finding_codes: list[str] = []
-        if (
-            best_profile.runtime_actor_id != expected_profile.runtime_actor_id
-            and best_score >= thresholds["min_profile_alignment"]
-            and margin >= thresholds["max_cross_actor_confusion"]
-            and confidence >= thresholds["min_confidence_to_block"]
-        ):
-            finding_codes.append("cross_actor_voice_confusion")
-        if (
-            len(strong_dimension_winners) >= int(thresholds["min_mixed_dimensions"])
-            and len(strong_dimension_winners) > 1
-            and best_score >= thresholds["min_profile_alignment"]
-        ):
-            finding_codes.append("mixed_voice_signature")
-        if (
-            runner_up_profile is not None
-            and best_score >= thresholds["min_profile_alignment"]
-            and (best_score - runner_up_score) <= thresholds["max_ambiguous_margin"]
-            and runner_up_profile.runtime_actor_id != best_profile.runtime_actor_id
-        ):
-            finding_codes.append("ambiguous_voice_signature")
-        elif (
-            expected_score < thresholds["min_profile_alignment"]
-            and best_score < thresholds["min_profile_alignment"]
-        ):
-            finding_codes.append("weak_profile_alignment")
-
-        classifications.append(
-            VoiceSemanticLineClassification(
-                classifier_version=version,
-                speaker_id=speaker,
-                expected_profile_actor_id=expected_profile.runtime_actor_id,
-                best_matching_actor_id=best_profile.runtime_actor_id,
-                runner_up_actor_id=runner_up_profile.runtime_actor_id
-                if runner_up_profile is not None
-                else None,
-                expected_profile_alignment=expected_score,
-                best_profile_alignment=best_score,
-                runner_up_profile_alignment=round(runner_up_score, 3),
-                cross_actor_confusion_margin=margin,
-                confidence=confidence,
-                dimension_scores=expected_dimensions,
-                best_dimension_scores=best_dimensions,
-                profile_alignments=profile_alignments,
-                dimension_best_matching_actor_ids=dimension_best_matching_actor_ids,
-                classification_status=_classification_status(finding_codes),
-                finding_codes=finding_codes,
-                policy_sources=[SEMANTIC_CLASSIFICATION_POLICY_SOURCE],
-                evidence={
-                    "line_index": line_index,
-                    "line_text_sha256": _stable_line_hash(text),
-                    "line_token_count": len(line_tokens),
-                    "matched_dimensions": [
-                        dimension
-                        for dimension, score in best_dimensions.items()
-                        if score > 0
-                    ],
-                    "dimension_winner_scores": dimension_winner_scores,
-                    "strong_dimension_winner_actor_ids": sorted(strong_dimension_winners),
-                    "top_profile_margin": top_margin,
-                    "low_dimensions": [
-                        dimension
-                        for dimension, score in expected_dimensions.items()
-                        if score < thresholds["min_profile_alignment"]
-                    ],
-                    "thresholds": thresholds,
-                    "gate_mode": str(policy.get("gate_mode") or "observe_then_reject"),
-                },
-            )
-        )
+        if classification is not None:
+            classifications.append(classification)
 
     return classifications

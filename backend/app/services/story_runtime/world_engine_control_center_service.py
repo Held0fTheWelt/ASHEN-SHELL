@@ -76,15 +76,9 @@ DRILL_DOWN_PAGES: list[dict[str, str]] = [
 ]
 
 
-def build_world_engine_control_center_snapshot(app: Flask, *, trace_id: str | None = None) -> dict:
-    """Build one coherent operational snapshot for the control center page."""
-    control_payload = get_control_payload(app)
-    desired = control_payload.get("desired_state") or {}
-    observed = control_payload.get("observed_state") or {}
-
+def _control_center_config_findings(observed: dict) -> tuple[list[dict], list[dict]]:
     blockers: list[dict] = []
     warnings: list[dict] = []
-
     if not observed.get("config_complete"):
         blockers.append(
             {
@@ -109,13 +103,17 @@ def build_world_engine_control_center_snapshot(app: Flask, *, trace_id: str | No
                 "suggested_action": "Check connectivity JSON below, confirm the engine is up, and re-test from **Play-Service control**.",
             }
         )
+    return blockers, warnings
 
-    ready_probe: dict = {}
-    ready_probe_error: dict | None = None
+
+def _ready_probe_snapshot(
+    *,
+    trace_id: str | None,
+    blockers: list[dict],
+) -> tuple[dict, dict | None]:
     try:
-        ready_probe = get_play_service_ready(trace_id=trace_id)
+        return get_play_service_ready(trace_id=trace_id), None
     except GameServiceError as exc:
-        ready_probe_error = {"message": str(exc), "status_code": exc.status_code}
         blockers.append(
             {
                 "code": "backend_to_play_service_connectivity_failed",
@@ -123,9 +121,18 @@ def build_world_engine_control_center_snapshot(app: Flask, *, trace_id: str | No
                 "suggested_action": "Verify the play service is running, URLs match **Play-Service control**, and shared secrets are aligned, then use **Test desired config** above.",
             }
         )
+        return {}, {"message": str(exc), "status_code": exc.status_code}
 
+
+def _active_runtime_snapshot(
+    *,
+    trace_id: str | None,
+    warnings: list[dict],
+) -> tuple[dict, dict | None, dict, dict | None]:
     runs_payload: dict = {"items": []}
+    sessions_payload: dict = {"items": []}
     runs_error: dict | None = None
+    sessions_error: dict | None = None
     try:
         runs_payload = {"items": list_runs()}
     except GameServiceError as exc:
@@ -137,9 +144,6 @@ def build_world_engine_control_center_snapshot(app: Flask, *, trace_id: str | No
                 "suggested_action": "Open **World Engine console** once connectivity is healthy — run listing uses the same backend proxy path.",
             }
         )
-
-    sessions_payload: dict = {"items": []}
-    sessions_error: dict | None = None
     try:
         sessions_payload = list_story_sessions(trace_id=trace_id)
     except GameServiceError as exc:
@@ -151,13 +155,19 @@ def build_world_engine_control_center_snapshot(app: Flask, *, trace_id: str | No
                 "suggested_action": "Retry after play-service health is green; use **World Engine console** for session-level detail when listing works.",
             }
         )
+    return runs_payload, runs_error, sessions_payload, sessions_error
 
+
+def _control_center_operator_summary(
+    *,
+    observed: dict,
+    blockers: list[dict],
+    warnings: list[dict],
+    ready_probe: dict,
+    ready_probe_error: dict | None,
+) -> tuple[str, bool, str, list[str]]:
     control_plane_ok = not blockers
-    state = "healthy"
-    if blockers:
-        state = "blocked"
-    elif warnings:
-        state = "degraded"
+    state = "blocked" if blockers else "degraded" if warnings else "healthy"
     headline = (
         "Play-service control plane looks healthy from the backend perspective."
         if control_plane_ok
@@ -172,7 +182,30 @@ def build_world_engine_control_center_snapshot(app: Flask, *, trace_id: str | No
         sub_lines.append("Backend successfully reached the play-service ready probe.")
     elif ready_probe_error:
         sub_lines.append("Backend could not complete the ready probe — see blockers.")
+    return state, control_plane_ok, headline, sub_lines
 
+
+def build_world_engine_control_center_snapshot(app: Flask, *, trace_id: str | None = None) -> dict:
+    """Build one coherent operational snapshot for the control center page."""
+    control_payload = get_control_payload(app)
+    desired = control_payload.get("desired_state") or {}
+    observed = control_payload.get("observed_state") or {}
+    blockers, warnings = _control_center_config_findings(observed)
+    ready_probe, ready_probe_error = _ready_probe_snapshot(
+        trace_id=trace_id,
+        blockers=blockers,
+    )
+    runs_payload, runs_error, sessions_payload, sessions_error = _active_runtime_snapshot(
+        trace_id=trace_id,
+        warnings=warnings,
+    )
+    state, control_plane_ok, headline, sub_lines = _control_center_operator_summary(
+        observed=observed,
+        blockers=blockers,
+        warnings=warnings,
+        ready_probe=ready_probe,
+        ready_probe_error=ready_probe_error,
+    )
     posture_at_a_glance = _posture_at_a_glance(desired, observed)
 
     return {

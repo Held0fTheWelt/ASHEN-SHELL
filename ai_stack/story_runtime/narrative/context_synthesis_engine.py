@@ -43,6 +43,24 @@ _SOCIAL_KEYS = (
     "social_continuity_status",
     "active_thread_count",
 )
+CONTEXT_DEFAULT_TEXT_LIMIT = 220
+CONTEXT_ELLIPSIS_WIDTH = 3
+CONTEXT_RUNTIME_FIELD_TEXT_LIMIT = 90
+CONTEXT_RETRIEVAL_SNIPPET_LIMIT = 240
+CONTEXT_RETRIEVAL_REASON_LIMIT = 160
+CONTEXT_MEMORY_LINE_LIMIT = 220
+CONTEXT_RETRIEVAL_CANONICAL_PRIORITY = 5
+CONTEXT_MEMORY_CANONICAL_PRIORITY = 8
+CONTEXT_RUNTIME_CANONICAL_PRIORITY = 10
+CONTEXT_OBLIGATION_SOURCE_LIMIT = 8
+CONTEXT_PROMPT_EVIDENCE_LIMIT = 5
+CONTEXT_PROMPT_OBLIGATION_LIMIT = 6
+CONTEXT_PROMPT_CONFLICT_LIMIT = 4
+CONTEXT_MEMORY_LINE_COUNT = 4
+CONTEXT_PROMPT_GAP_LIMIT = 6
+CONTEXT_PROMPT_ID_LIMIT = 48
+CONTEXT_PROMPT_CODE_LIMIT = 80
+CONTEXT_PROMPT_SUMMARY_LIMIT = 180
 
 
 def _mapping(value: Any) -> dict[str, Any]:
@@ -53,11 +71,11 @@ def _list(value: Any) -> list[Any]:
     return list(value) if isinstance(value, list) else []
 
 
-def _short(value: Any, *, max_chars: int = 220) -> str:
+def _compact_context_text(value: Any, *, max_chars: int = CONTEXT_DEFAULT_TEXT_LIMIT) -> str:
     text = " ".join(str(value or "").split())
     if len(text) <= max_chars:
         return text
-    return text[: max_chars - 3].rstrip() + "..."
+    return text[: max_chars - CONTEXT_ELLIPSIS_WIDTH].rstrip() + "..."
 
 
 def _token(value: Any, *, default: str = "unknown") -> str:
@@ -127,7 +145,7 @@ def _runtime_item(
         source_visibility_class="internal_runtime",
         confidence=confidence,
         derived_from=(derived_from,),
-        canonical_priority=10,
+        canonical_priority=CONTEXT_RUNTIME_CANONICAL_PRIORITY,
     )
 
 
@@ -143,7 +161,7 @@ def _append_runtime_record(
     for key in keys:
         value = record.get(key)
         if value is not None and str(value).strip():
-            parts.append(f"{key}={_short(value, max_chars=90)}")
+            parts.append(f"{key}={_compact_context_text(value, max_chars=CONTEXT_RUNTIME_FIELD_TEXT_LIMIT)}")
     if not parts:
         return
     evidence_items.append(
@@ -162,9 +180,12 @@ def _retrieval_evidence(retrieval: dict[str, Any]) -> list[ContextEvidenceItem]:
         source = _mapping(raw_source)
         if not source:
             continue
-        snippet = _short(source.get("snippet"), max_chars=240)
+        snippet = _compact_context_text(source.get("snippet"), max_chars=CONTEXT_RETRIEVAL_SNIPPET_LIMIT)
         if not snippet:
-            snippet = _short(source.get("selection_reason") or source.get("why_selected"), max_chars=160)
+            snippet = _compact_context_text(
+                source.get("selection_reason") or source.get("why_selected"),
+                max_chars=CONTEXT_RETRIEVAL_REASON_LIMIT,
+            )
         evidence_items.append(
             ContextEvidenceItem(
                 item_id=f"retrieval:{index:03d}",
@@ -174,11 +195,19 @@ def _retrieval_evidence(retrieval: dict[str, Any]) -> list[ContextEvidenceItem]:
                 source_visibility_class=_token(source.get("source_visibility_class")),
                 confidence=_confidence_for_source(source),
                 derived_from=("retrieval",),
-                canonical_priority=5 if _token(source.get("source_evidence_lane")) == "canonical" else 1,
+                canonical_priority=CONTEXT_RETRIEVAL_CANONICAL_PRIORITY
+                if _token(source.get("source_evidence_lane")) == "canonical"
+                else 1,
                 pack_role=str(source.get("pack_role") or ""),
                 score=str(source.get("score") or ""),
-                why_selected=_short(source.get("why_selected") or source.get("selection_reason"), max_chars=160),
-                policy_note=_short(source.get("policy_note"), max_chars=160),
+                why_selected=_compact_context_text(
+                    source.get("why_selected") or source.get("selection_reason"),
+                    max_chars=CONTEXT_RETRIEVAL_REASON_LIMIT,
+                ),
+                policy_note=_compact_context_text(
+                    source.get("policy_note"),
+                    max_chars=CONTEXT_RETRIEVAL_REASON_LIMIT,
+                ),
             )
         )
     return evidence_items
@@ -186,8 +215,8 @@ def _retrieval_evidence(retrieval: dict[str, Any]) -> list[ContextEvidenceItem]:
 
 def _memory_evidence(memory_context: dict[str, Any]) -> list[ContextEvidenceItem]:
     evidence_items: list[ContextEvidenceItem] = []
-    for index, raw_line in enumerate(_list(memory_context.get("context_lines"))[:4], start=1):
-        text = _short(raw_line, max_chars=220)
+    for index, raw_line in enumerate(_list(memory_context.get("context_lines"))[:CONTEXT_MEMORY_LINE_COUNT], start=1):
+        text = _compact_context_text(raw_line, max_chars=CONTEXT_MEMORY_LINE_LIMIT)
         if not text:
             continue
         evidence_items.append(
@@ -200,7 +229,7 @@ def _memory_evidence(memory_context: dict[str, Any]) -> list[ContextEvidenceItem
                 source_visibility_class="internal_runtime",
                 confidence="high",
                 derived_from=("hierarchical_memory_context",),
-                canonical_priority=8,
+                canonical_priority=CONTEXT_MEMORY_CANONICAL_PRIORITY,
             )
         )
     return evidence_items
@@ -232,7 +261,7 @@ def _validation_feedback_evidence(validation_feedback: dict[str, Any]) -> Contex
     codes = validation_feedback.get("codes")
     if not isinstance(codes, list):
         codes = validation_feedback.get("feedback_codes")
-    code_text = ", ".join(str(code) for code in _list(codes)[:8]) or "validation feedback present"
+    code_text = ", ".join(str(code) for code in _list(codes)[:CONTEXT_OBLIGATION_SOURCE_LIMIT]) or "validation feedback present"
     return _runtime_item(
         item_id="validation_feedback:001",
         summary=f"validation_feedback: {code_text}",
@@ -371,8 +400,8 @@ def _obligations(
             instruction=(
                 "Use synthesis only as model-prompt support; validator approval and runtime commit remain authoritative."
             ),
-            evidence_item_ids=tuple(item.item_id for item in evidence_items[:8]),
-            source_refs=_source_refs_for(evidence_items[:8]),
+            evidence_item_ids=tuple(item.item_id for item in evidence_items[:CONTEXT_OBLIGATION_SOURCE_LIMIT]),
+            source_refs=_source_refs_for(evidence_items[:CONTEXT_OBLIGATION_SOURCE_LIMIT]),
         )
     ]
     if retrieval_items:
@@ -396,8 +425,8 @@ def _obligations(
                 instruction=(
                     "Align response planning with director scene state, semantic move, social state, and responder scope."
                 ),
-                evidence_item_ids=tuple(item.item_id for item in runtime_items[:8]),
-                source_refs=_source_refs_for(runtime_items[:8]),
+                evidence_item_ids=tuple(item.item_id for item in runtime_items[:CONTEXT_OBLIGATION_SOURCE_LIMIT]),
+                source_refs=_source_refs_for(runtime_items[:CONTEXT_OBLIGATION_SOURCE_LIMIT]),
             )
         )
     if validation_feedback:
@@ -410,16 +439,15 @@ def _obligations(
                 source_refs=_source_refs_for(feedback_items),
             )
         )
+    runtime_items = [item for item in evidence_items if item.source_evidence_lane == "runtime_state"]
     obligations.append(
         SynthesisObligation(
             code="respect_actor_lanes_and_validation",
             instruction=(
                 "Do not assign output to forbidden actor lanes; generated effects remain proposals until validation."
             ),
-            evidence_item_ids=tuple(item.item_id for item in evidence_items if item.source_evidence_lane == "runtime_state")[:8],
-            source_refs=_source_refs_for(
-                [item for item in evidence_items if item.source_evidence_lane == "runtime_state"][:8]
-            ),
+            evidence_item_ids=tuple(item.item_id for item in runtime_items[:CONTEXT_OBLIGATION_SOURCE_LIMIT]),
+            source_refs=_source_refs_for(runtime_items[:CONTEXT_OBLIGATION_SOURCE_LIMIT]),
         )
     )
     return obligations
@@ -615,27 +643,36 @@ def context_synthesis_prompt_lines(bundle: dict[str, Any] | None) -> list[str]:
     ]
     if evidence:
         lines.append("Synthesis Evidence Summary:")
-        for item in evidence[:5]:
-            item_id = _short(item.get("item_id"), max_chars=48)
-            lane = _short(item.get("source_evidence_lane"), max_chars=48)
-            summary = _short(item.get("summary"), max_chars=180)
+        for item in evidence[:CONTEXT_PROMPT_EVIDENCE_LIMIT]:
+            item_id = _compact_context_text(item.get("item_id"), max_chars=CONTEXT_PROMPT_ID_LIMIT)
+            lane = _compact_context_text(item.get("source_evidence_lane"), max_chars=CONTEXT_PROMPT_ID_LIMIT)
+            summary = _compact_context_text(item.get("summary"), max_chars=CONTEXT_PROMPT_SUMMARY_LIMIT)
             lines.append(f"- {item_id} lane={lane}: {summary}")
     if obligations:
         lines.append("Synthesis Obligations:")
-        for obligation in obligations[:6]:
-            code = _short(obligation.get("code"), max_chars=80)
-            instruction = _short(obligation.get("instruction"), max_chars=180)
+        for obligation in obligations[:CONTEXT_PROMPT_OBLIGATION_LIMIT]:
+            code = _compact_context_text(obligation.get("code"), max_chars=CONTEXT_PROMPT_CODE_LIMIT)
+            instruction = _compact_context_text(
+                obligation.get("instruction"),
+                max_chars=CONTEXT_PROMPT_SUMMARY_LIMIT,
+            )
             lines.append(f"- {code}: {instruction}")
     if conflicts:
         lines.append("Synthesis Conflicts:")
-        for conflict in conflicts[:4]:
-            code = _short(conflict.get("code"), max_chars=80)
-            description = _short(conflict.get("description"), max_chars=180)
+        for conflict in conflicts[:CONTEXT_PROMPT_CONFLICT_LIMIT]:
+            code = _compact_context_text(conflict.get("code"), max_chars=CONTEXT_PROMPT_CODE_LIMIT)
+            description = _compact_context_text(
+                conflict.get("description"),
+                max_chars=CONTEXT_PROMPT_SUMMARY_LIMIT,
+            )
             lines.append(f"- {code}: {description}")
     if gaps:
         lines.append("Synthesis Gaps:")
-        for gap in gaps[:6]:
-            code = _short(gap.get("code"), max_chars=80)
-            description = _short(gap.get("description"), max_chars=180)
+        for gap in gaps[:CONTEXT_PROMPT_GAP_LIMIT]:
+            code = _compact_context_text(gap.get("code"), max_chars=CONTEXT_PROMPT_CODE_LIMIT)
+            description = _compact_context_text(
+                gap.get("description"),
+                max_chars=CONTEXT_PROMPT_SUMMARY_LIMIT,
+            )
             lines.append(f"- {code}: {description}")
     return lines

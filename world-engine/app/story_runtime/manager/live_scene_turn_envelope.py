@@ -6,14 +6,7 @@ from __future__ import annotations
 
 from ._deps import *
 
-def _build_live_scene_turn_envelope(
-    *,
-    session: StorySession,
-    graph_state: dict[str, Any],
-    scene_blocks: list[dict[str, Any]],
-    turn_number: int,
-) -> dict[str, Any]:
-    proj = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
+def _live_actor_identity(proj: dict[str, Any]) -> tuple[str, str, list[str], set[str], list[str]]:
     selected_player_role = str(proj.get("selected_player_role") or "").strip()
     human_actor_id = str(proj.get("human_actor_id") or "").strip()
     npc_actor_ids = [
@@ -25,13 +18,11 @@ def _build_live_scene_turn_envelope(
     for actor_id in npc_actor_ids:
         ai_allowed_actor_ids.update(expand_goc_actor_id_aliases(actor_id))
     ai_forbidden_actor_ids = sorted(expand_goc_actor_id_aliases(human_actor_id))
-    responders = graph_state.get("selected_responder_set")
-    responder_ids = [
-        str(row.get("actor_id") or row.get("responder_id") or "").strip()
-        for row in (responders if isinstance(responders, list) else [])
-        if isinstance(row, dict) and str(row.get("actor_id") or row.get("responder_id") or "").strip()
-    ]
-    embedded_speech_actor_ids: list[str] = []
+    return selected_player_role, human_actor_id, npc_actor_ids, ai_allowed_actor_ids, ai_forbidden_actor_ids
+
+
+def _embedded_speech_actor_ids(scene_blocks: list[dict[str, Any]]) -> list[str]:
+    actor_ids: list[str] = []
     for block in scene_blocks:
         if not isinstance(block, dict):
             continue
@@ -43,40 +34,65 @@ def _build_live_scene_turn_envelope(
                 continue
             actor_id = str(span.get("actor_id") or "").strip()
             speech_text = str(span.get("speech_text") or "").strip()
-            if actor_id and speech_text and actor_id not in embedded_speech_actor_ids:
-                embedded_speech_actor_ids.append(actor_id)
-    if not responder_ids and embedded_speech_actor_ids:
-        responder_ids = embedded_speech_actor_ids
-    primary_responder_id = responder_ids[0] if responder_ids else ""
-    secondary_responder_ids = responder_ids[1:]
-    visible_actor_response_present = any(
+            if actor_id and speech_text and actor_id not in actor_ids:
+                actor_ids.append(actor_id)
+    return actor_ids
+
+
+def _live_responder_ids(
+    *,
+    graph_state: dict[str, Any],
+    scene_blocks: list[dict[str, Any]],
+) -> list[str]:
+    responders = graph_state.get("selected_responder_set")
+    responder_ids = [
+        str(row.get("actor_id") or row.get("responder_id") or "").strip()
+        for row in (responders if isinstance(responders, list) else [])
+        if isinstance(row, dict) and str(row.get("actor_id") or row.get("responder_id") or "").strip()
+    ]
+    return responder_ids or _embedded_speech_actor_ids(scene_blocks)
+
+
+def _visible_actor_response_present(
+    *,
+    scene_blocks: list[dict[str, Any]],
+    responder_ids: list[str],
+) -> bool:
+    return any(
         str(block.get("block_type") or "") in {"actor_line", "actor_action"}
         for block in scene_blocks
         if isinstance(block, dict)
-    ) or bool(embedded_speech_actor_ids) or bool(primary_responder_id)
+    ) or bool(_embedded_speech_actor_ids(scene_blocks)) or bool(responder_ids)
+
+
+def _live_npc_agency(
+    *,
+    graph_state: dict[str, Any],
+    scene_blocks: list[dict[str, Any]],
+    human_actor_id: str,
+    turn_number: int,
+) -> tuple[dict[str, Any] | None, dict[str, Any], bool]:
+    responder_ids = _live_responder_ids(graph_state=graph_state, scene_blocks=scene_blocks)
+    primary_responder_id = responder_ids[0] if responder_ids else ""
+    secondary_responder_ids = responder_ids[1:]
+    visible_actor_response_present = _visible_actor_response_present(
+        scene_blocks=scene_blocks,
+        responder_ids=responder_ids,
+    )
     narrator_path_no_npc = (
         str(graph_state.get("director_path_mode") or "").strip() == "narrator_path"
         and not visible_actor_response_present
         and not primary_responder_id
     )
-
     initiatives = []
-    if primary_responder_id and not narrator_path_no_npc:
-        initiatives.append(
-            {
-                "actor_id": primary_responder_id,
-                "intent": "live_runtime_generated_response",
-                "allowed_block_types": ["actor_line", "actor_action"],
-                "target_actor_id": human_actor_id or None,
-                "passivity_risk": "low",
-            }
-        )
-    for actor_id in secondary_responder_ids:
-        if not narrator_path_no_npc:
+    for actor_id, intent in [(primary_responder_id, "live_runtime_generated_response")] + [
+        (actor_id, "live_runtime_secondary_response") for actor_id in secondary_responder_ids
+    ]:
+        if actor_id and not narrator_path_no_npc:
             initiatives.append(
                 {
                     "actor_id": actor_id,
-                    "intent": "live_runtime_secondary_response",
+                    "intent": intent,
                     "allowed_block_types": ["actor_line", "actor_action"],
                     "target_actor_id": human_actor_id or None,
                     "passivity_risk": "low",
@@ -103,6 +119,83 @@ def _build_live_scene_turn_envelope(
                 "npc_agency_plan_built": False,
             }
         )
+    return npc_agency_plan, npc_agency_diag, visible_actor_response_present
+
+
+def _live_scene_diagnostics(
+    *,
+    session: StorySession,
+    scene_blocks: list[dict[str, Any]],
+    turn_number: int,
+    visible_actor_response_present: bool,
+    npc_agency_diag: dict[str, Any],
+    human_actor_id: str,
+    ai_allowed_actor_ids: set[str],
+    ai_forbidden_actor_ids: list[str],
+) -> dict[str, Any]:
+    return {
+        "live_dramatic_scene_simulator": {
+            "status": "not_invoked_live_graph_primary",
+            "invoked": False,
+            "entrypoint": "story.turn.execute",
+            "decision_count": 0,
+            "output_contract": "visible_scene_output.blocks.v1",
+            "scene_block_count": len(scene_blocks),
+            "visible_actor_response_present": visible_actor_response_present,
+            "legacy_blob_used": False,
+            "story_session_id": session.session_id,
+            "turn_number": turn_number,
+            "input_hash": "",
+            "output_hash": "",
+        },
+        "npc_agency": npc_agency_diag,
+        "actor_lane_enforcement": {
+            "human_actor_id": human_actor_id,
+            "ai_allowed_actor_ids": sorted(ai_allowed_actor_ids),
+            "ai_forbidden_actor_ids": ai_forbidden_actor_ids,
+            "validation_ran_before_commit": True,
+        },
+        "phase_cost": {
+            "phase": "live_runtime_graph_projection",
+            "billing_mode": "included_in_model_invoke",
+            "token_source": "model_generation",
+            "billable": False,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cost_usd": 0.0,
+            "provider": "world_engine",
+            "model": "live_runtime_graph_projection",
+            "currency": "USD",
+            "pricing_source": "included_in_model_invoke",
+            "latency_ms": None,
+            "decision_count": 0,
+            "scene_block_count": len(scene_blocks),
+            "visible_actor_response_present": visible_actor_response_present,
+        },
+    }
+
+
+def _build_live_scene_turn_envelope(
+    *,
+    session: StorySession,
+    graph_state: dict[str, Any],
+    scene_blocks: list[dict[str, Any]],
+    turn_number: int,
+) -> dict[str, Any]:
+    proj = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
+    (
+        selected_player_role,
+        human_actor_id,
+        npc_actor_ids,
+        ai_allowed_actor_ids,
+        ai_forbidden_actor_ids,
+    ) = _live_actor_identity(proj)
+    npc_agency_plan, npc_agency_diag, visible_actor_response_present = _live_npc_agency(
+        graph_state=graph_state,
+        scene_blocks=scene_blocks,
+        human_actor_id=human_actor_id,
+        turn_number=turn_number,
+    )
 
     return {
         "contract": "scene_turn_envelope.v2",
@@ -122,46 +215,16 @@ def _build_live_scene_turn_envelope(
             "contract": "visible_scene_output.blocks.v1",
             "blocks": [dict(block) for block in scene_blocks],
         },
-        "diagnostics": {
-            "live_dramatic_scene_simulator": {
-                "status": "not_invoked_live_graph_primary",
-                "invoked": False,
-                "entrypoint": "story.turn.execute",
-                "decision_count": 0,
-                "output_contract": "visible_scene_output.blocks.v1",
-                "scene_block_count": len(scene_blocks),
-                "visible_actor_response_present": visible_actor_response_present,
-                "legacy_blob_used": False,
-                "story_session_id": session.session_id,
-                "turn_number": turn_number,
-                "input_hash": "",
-                "output_hash": "",
-            },
-            "npc_agency": npc_agency_diag,
-            "actor_lane_enforcement": {
-                "human_actor_id": human_actor_id,
-                "ai_allowed_actor_ids": sorted(ai_allowed_actor_ids),
-                "ai_forbidden_actor_ids": ai_forbidden_actor_ids,
-                "validation_ran_before_commit": True,
-            },
-            "phase_cost": {
-                "phase": "live_runtime_graph_projection",
-                "billing_mode": "included_in_model_invoke",
-                "token_source": "model_generation",
-                "billable": False,
-                "input_tokens": 0,
-                "output_tokens": 0,
-                "cost_usd": 0.0,
-                "provider": "world_engine",
-                "model": "live_runtime_graph_projection",
-                "currency": "USD",
-                "pricing_source": "included_in_model_invoke",
-                "latency_ms": None,
-                "decision_count": 0,
-                "scene_block_count": len(scene_blocks),
-                "visible_actor_response_present": visible_actor_response_present,
-            },
-        },
+        "diagnostics": _live_scene_diagnostics(
+            session=session,
+            scene_blocks=scene_blocks,
+            turn_number=turn_number,
+            visible_actor_response_present=visible_actor_response_present,
+            npc_agency_diag=npc_agency_diag,
+            human_actor_id=human_actor_id,
+            ai_allowed_actor_ids=ai_allowed_actor_ids,
+            ai_forbidden_actor_ids=ai_forbidden_actor_ids,
+        ),
     }
 
 __all__ = [

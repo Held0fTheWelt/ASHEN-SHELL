@@ -4,12 +4,30 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_stack.contracts.normalization import bounded_int, clean_str_list
 from ai_stack.contracts.serialization import json_safe as _json_safe
 
 
 CONSEQUENCE_CASCADE_POLICY_SCHEMA_VERSION = "consequence_cascade_policy.v1"
 CONSEQUENCE_CASCADE_VALIDATION_SCHEMA_VERSION = "consequence_cascade_validation.v1"
 CONSEQUENCE_CASCADE_ASPECT_CONTRACT = "consequence_cascade_aspect.v1"
+CONSEQUENCE_CASCADE_POLICY_SOURCE = "module_runtime_policy"
+CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_ATOMS = 80
+CONSEQUENCE_CASCADE_POLICY_MIN_MAX_ATOMS = 8
+CONSEQUENCE_CASCADE_POLICY_HARD_MAX_ATOMS = 500
+CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_EDGES = 120
+CONSEQUENCE_CASCADE_POLICY_MIN_MAX_EDGES = 8
+CONSEQUENCE_CASCADE_POLICY_HARD_MAX_EDGES = 800
+CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_EVIDENCE_REFS = 8
+CONSEQUENCE_CASCADE_POLICY_MIN_MAX_EVIDENCE_REFS = 1
+CONSEQUENCE_CASCADE_POLICY_HARD_MAX_EVIDENCE_REFS = 32
+CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_GRAPH_ITEMS = 5
+CONSEQUENCE_CASCADE_POLICY_MIN_MAX_GRAPH_ITEMS = 1
+CONSEQUENCE_CASCADE_POLICY_HARD_MAX_GRAPH_ITEMS = 24
+CONSEQUENCE_CASCADE_POLICY_DEFAULT_DECAY_AFTER_TURNS = 4
+CONSEQUENCE_CASCADE_POLICY_MIN_DECAY_AFTER_TURNS = 1
+CONSEQUENCE_CASCADE_POLICY_HARD_DECAY_AFTER_TURNS = 100
+CONSEQUENCE_CASCADE_POLICY_ALLOWED_CLASS_LIMIT = 64
 
 CONSEQUENCE_CASCADE_FAILURE_CODES: frozenset[str] = frozenset(
     {
@@ -22,52 +40,40 @@ CONSEQUENCE_CASCADE_FAILURE_CODES: frozenset[str] = frozenset(
 )
 
 
-
-def _coerce_int(value: Any, *, default: int, minimum: int, maximum: int) -> int:
-    try:
-        out = int(value)
-    except (TypeError, ValueError):
-        out = int(default)
-    return max(minimum, min(maximum, out))
-
-
-def _string_list(value: Any, *, limit: int = 64) -> list[str]:
-    if not isinstance(value, list):
-        return []
-    out: list[str] = []
-    for item in value:
-        text = str(item or "").strip()
-        if text and text not in out:
-            out.append(text)
-        if len(out) >= limit:
-            break
-    return out
-
-
 def normalize_consequence_cascade_policy(policy: dict[str, Any] | None = None) -> dict[str, Any]:
     """Normalize module consequence-cascade policy into a neutral runtime contract."""
 
     raw = policy if isinstance(policy, dict) else {}
     present = bool(raw)
-    max_atoms = _coerce_int(raw.get("max_atoms"), default=80, minimum=8, maximum=500)
-    max_edges = _coerce_int(raw.get("max_edges"), default=120, minimum=8, maximum=800)
-    max_evidence_refs = _coerce_int(
+    max_atoms = bounded_int(
+        raw.get("max_atoms"),
+        CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_ATOMS,
+        minimum=CONSEQUENCE_CASCADE_POLICY_MIN_MAX_ATOMS,
+        maximum=CONSEQUENCE_CASCADE_POLICY_HARD_MAX_ATOMS,
+    )
+    max_edges = bounded_int(
+        raw.get("max_edges"),
+        CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_EDGES,
+        minimum=CONSEQUENCE_CASCADE_POLICY_MIN_MAX_EDGES,
+        maximum=CONSEQUENCE_CASCADE_POLICY_HARD_MAX_EDGES,
+    )
+    max_evidence_refs = bounded_int(
         raw.get("max_evidence_refs_per_consequence") or raw.get("max_evidence_refs"),
-        default=8,
-        minimum=1,
-        maximum=32,
+        CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_EVIDENCE_REFS,
+        minimum=CONSEQUENCE_CASCADE_POLICY_MIN_MAX_EVIDENCE_REFS,
+        maximum=CONSEQUENCE_CASCADE_POLICY_HARD_MAX_EVIDENCE_REFS,
     )
-    max_graph_items = _coerce_int(
+    max_graph_items = bounded_int(
         raw.get("max_graph_items") or raw.get("max_export_consequences"),
-        default=5,
-        minimum=1,
-        maximum=24,
+        CONSEQUENCE_CASCADE_POLICY_DEFAULT_MAX_GRAPH_ITEMS,
+        minimum=CONSEQUENCE_CASCADE_POLICY_MIN_MAX_GRAPH_ITEMS,
+        maximum=CONSEQUENCE_CASCADE_POLICY_HARD_MAX_GRAPH_ITEMS,
     )
-    decay_after_turns = _coerce_int(
+    decay_after_turns = bounded_int(
         raw.get("decay_after_turns"),
-        default=4,
-        minimum=1,
-        maximum=100,
+        CONSEQUENCE_CASCADE_POLICY_DEFAULT_DECAY_AFTER_TURNS,
+        minimum=CONSEQUENCE_CASCADE_POLICY_MIN_DECAY_AFTER_TURNS,
+        maximum=CONSEQUENCE_CASCADE_POLICY_HARD_DECAY_AFTER_TURNS,
     )
     return {
         "schema_version": str(raw.get("schema_version") or CONSEQUENCE_CASCADE_POLICY_SCHEMA_VERSION),
@@ -78,8 +84,11 @@ def normalize_consequence_cascade_policy(policy: dict[str, Any] | None = None) -
         "max_evidence_refs": max_evidence_refs,
         "max_graph_items": max_graph_items,
         "decay_after_turns": decay_after_turns,
-        "allowed_continuity_classes": _string_list(raw.get("allowed_continuity_classes")),
-        "source": str(raw.get("source") or "module_runtime_policy"),
+        "allowed_continuity_classes": clean_str_list(
+            raw.get("allowed_continuity_classes"),
+            allow_scalar=False,
+        )[:CONSEQUENCE_CASCADE_POLICY_ALLOWED_CLASS_LIMIT],
+        "source": str(raw.get("source") or CONSEQUENCE_CASCADE_POLICY_SOURCE),
     }
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from hashlib import sha256
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,13 @@ from app.utils.time_utils import utc_now
 
 
 PROMPT_STORE_BUNDLE_VERSION = "prompt_store_bundle.v1"
+PROMPT_NAME_MAX_CHARS = 180
+PROMPT_CATEGORY_MAX_CHARS = 96
+PROMPT_TYPE_MAX_CHARS = 64
+PROMPT_DOMAIN_MAX_CHARS = 96
+HTTP_NOT_FOUND = int(HTTPStatus.NOT_FOUND)
+HTTP_BAD_REQUEST = int(HTTPStatus.BAD_REQUEST)
+HTTP_CONFLICT = int(HTTPStatus.CONFLICT)
 
 
 def _content_hash(template: str) -> str:
@@ -215,63 +223,74 @@ def list_prompt_records(
 def get_prompt_record(prompt_key: str) -> dict[str, Any]:
     row = db.session.get(PromptStorePrompt, prompt_key)
     if row is None:
-        raise governance_error("prompt_not_found", "Prompt not found.", 404, {"prompt_key": prompt_key})
+        raise governance_error("prompt_not_found", "Prompt not found.", HTTP_NOT_FOUND, {"prompt_key": prompt_key})
     return row.to_dict(include_template=True)
 
 
-def update_prompt_record(prompt_key: str, payload: dict[str, Any], *, actor: str) -> dict[str, Any]:
+def _editable_prompt_row(prompt_key: str) -> PromptStorePrompt:
     row = db.session.get(PromptStorePrompt, prompt_key)
     if row is None:
-        raise governance_error("prompt_not_found", "Prompt not found.", 404, {"prompt_key": prompt_key})
+        raise governance_error("prompt_not_found", "Prompt not found.", HTTP_NOT_FOUND, {"prompt_key": prompt_key})
     if not row.is_editable:
-        raise governance_error("prompt_not_editable", "Prompt is not editable.", 409, {"prompt_key": prompt_key})
+        raise governance_error("prompt_not_editable", "Prompt is not editable.", HTTP_CONFLICT, {"prompt_key": prompt_key})
+    return row
 
+
+def _required_payload_text(payload: dict[str, Any], key: str, label: str, max_chars: int) -> str:
+    value = str(payload.get(key) or "").strip()
+    if not value:
+        raise governance_error("prompt_value_invalid", f"Prompt {label} is required.", HTTP_BAD_REQUEST, {})
+    return value[:max_chars]
+
+
+def _payload_string_list(payload: dict[str, Any], key: str) -> list[str]:
+    raw_value = payload.get(key)
+    if not isinstance(raw_value, list):
+        raise governance_error("prompt_value_invalid", f"{key} must be a list.", HTTP_BAD_REQUEST, {})
+    return [str(item).strip() for item in raw_value if str(item).strip()]
+
+
+def _payload_metadata(payload: dict[str, Any]) -> dict[str, Any]:
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        raise governance_error("prompt_value_invalid", "metadata must be an object.", HTTP_BAD_REQUEST, {})
+    return metadata
+
+
+def _apply_prompt_scalar_updates(row: PromptStorePrompt, payload: dict[str, Any]) -> None:
     if "name" in payload:
-        name = str(payload.get("name") or "").strip()
-        if not name:
-            raise governance_error("prompt_value_invalid", "Prompt name is required.", 400, {})
-        row.name = name[:180]
+        row.name = _required_payload_text(payload, "name", "name", PROMPT_NAME_MAX_CHARS)
     if "description" in payload:
         row.description = str(payload.get("description") or "").strip()
     if "category" in payload:
-        category = str(payload.get("category") or "").strip()
-        if not category:
-            raise governance_error("prompt_value_invalid", "Prompt category is required.", 400, {})
-        row.category = category[:96]
+        row.category = _required_payload_text(payload, "category", "category", PROMPT_CATEGORY_MAX_CHARS)
     if "prompt_type" in payload:
-        prompt_type = str(payload.get("prompt_type") or "").strip()
-        if not prompt_type:
-            raise governance_error("prompt_value_invalid", "Prompt type is required.", 400, {})
-        row.prompt_type = prompt_type[:64]
+        row.prompt_type = _required_payload_text(payload, "prompt_type", "type", PROMPT_TYPE_MAX_CHARS)
     if "domain" in payload:
-        domain = str(payload.get("domain") or "").strip()
-        if not domain:
-            raise governance_error("prompt_value_invalid", "Prompt domain is required.", 400, {})
-        row.domain = domain[:96]
+        row.domain = _required_payload_text(payload, "domain", "domain", PROMPT_DOMAIN_MAX_CHARS)
+
+
+def _apply_prompt_content_updates(row: PromptStorePrompt, payload: dict[str, Any]) -> None:
     if "template" in payload:
         template = str(payload.get("template") or "")
         if not template.strip():
-            raise governance_error("prompt_value_invalid", "Prompt template is required.", 400, {})
+            raise governance_error("prompt_value_invalid", "Prompt template is required.", HTTP_BAD_REQUEST, {})
         row.template = template
         row.current_content_hash = _content_hash(template)
     if "variables" in payload:
-        raw_variables = payload.get("variables")
-        if not isinstance(raw_variables, list):
-            raise governance_error("prompt_value_invalid", "variables must be a list.", 400, {})
-        row.variables_json = [str(item).strip() for item in raw_variables if str(item).strip()]
+        row.variables_json = _payload_string_list(payload, "variables")
     if "tags" in payload:
-        raw_tags = payload.get("tags")
-        if not isinstance(raw_tags, list):
-            raise governance_error("prompt_value_invalid", "tags must be a list.", 400, {})
-        row.tags_json = [str(item).strip() for item in raw_tags if str(item).strip()]
+        row.tags_json = _payload_string_list(payload, "tags")
     if "metadata" in payload:
-        metadata = payload.get("metadata")
-        if not isinstance(metadata, dict):
-            raise governance_error("prompt_value_invalid", "metadata must be an object.", 400, {})
-        row.metadata_json = metadata
+        row.metadata_json = _payload_metadata(payload)
     if "is_active" in payload:
         row.is_active = bool(payload.get("is_active"))
 
+
+def update_prompt_record(prompt_key: str, payload: dict[str, Any], *, actor: str) -> dict[str, Any]:
+    row = _editable_prompt_row(prompt_key)
+    _apply_prompt_scalar_updates(row, payload)
+    _apply_prompt_content_updates(row, payload)
     row.updated_by = actor
     row.updated_at = utc_now()
     db.session.commit()

@@ -9,6 +9,126 @@ from .composition import _compose_npc_follow_up, _non_composed_result
 from .constants import *
 
 
+def _known_actor_ids(context: dict[str, Any]) -> set[str]:
+    return {
+        str(raw)
+        for raw in context.get("known_actor_ids") or []
+        if isinstance(raw, str) and raw
+    }
+
+
+def _actor_line_follow_up_block_event(
+    *,
+    replanning: dict[str, Any],
+    actor_id: str,
+    action_kind: str,
+    resolved_follow_up_id: str,
+    composition_result: dict[str, Any],
+) -> dict[str, Any]:
+    payload = {
+        "id": str(uuid.uuid4()),
+        "block_type": BLOCK_TYPE_ACTOR_LINE,
+        "actor_id": actor_id,
+        "text": str(composition_result.get("text") or ""),
+        "originator": POST_CUT_IN_FOLLOW_UP_GENERATION,
+        "post_cut_in_replanning_id": replanning.get("replanning_id"),
+        "post_cut_in_follow_up_id": resolved_follow_up_id,
+        "selected_next_action_source": NEXT_ACTION_SOURCE_NPC_RESPONSE,
+        "selected_next_action_kind": action_kind,
+        "composition_mode": composition_result.get("composition_mode"),
+        "source_contexts": list(composition_result.get("source_contexts") or []),
+        "safety_gate_decisions": dict(composition_result.get("safety_gate_decisions") or {}),
+        "provider_metadata": composition_result.get("provider_metadata"),
+        "voice_profile_used": True,
+        "voice_profile_actor_id": composition_result.get("voice_profile_actor_id"),
+        "voice_profile_source_field": composition_result.get("voice_profile_source_field"),
+        "composition_inputs_used": list(composition_result.get("input_fields_used") or []),
+        "motivation_score": composition_result.get("motivation_score"),
+        "new_people_introduced": False,
+        "new_rooms_introduced": False,
+        "plot_facts_introduced": False,
+    }
+    block_event = build_block_stream_event(
+        tick_id=str(uuid.uuid4()),
+        block_type=BLOCK_TYPE_ACTOR_LINE,
+        block_payload=payload,
+        cut_in_state=CUT_IN_UNINTERRUPTED,
+        lane=LANE_VISIBLE_SCENE_OUTPUT,
+        source=actor_id,
+    )
+    block_event["event_generation"] = POST_CUT_IN_FOLLOW_UP_GENERATION
+    block_event["post_cut_in_replanning_id"] = replanning.get("replanning_id")
+    block_event["post_cut_in_follow_up_id"] = resolved_follow_up_id
+    return block_event
+
+
+def _npc_response_follow_up_result(
+    *,
+    replanning: dict[str, Any],
+    context: dict[str, Any],
+    actor_id: str | None,
+    action_kind: str,
+    resolved_follow_up_id: str,
+    composition_provider: FollowUpSemanticProvider | None,
+) -> tuple[dict[str, Any], dict[str, Any] | None, str | None]:
+    if not actor_id:
+        reason = "missing_selected_actor_id"
+        return (
+            _non_composed_result(
+                composition_kind=NEXT_ACTION_SOURCE_NPC_RESPONSE,
+                reason=reason,
+                attempted=True,
+            ),
+            None,
+            reason,
+        )
+    if _known_actor_ids(context) and actor_id not in _known_actor_ids(context):
+        reason = "unsafe_unknown_actor"
+        return (
+            _non_composed_result(
+                composition_kind=NEXT_ACTION_SOURCE_NPC_RESPONSE,
+                reason=reason,
+                attempted=True,
+            ),
+            None,
+            reason,
+        )
+    if action_kind != ACTION_SPEAK:
+        reason = "unsupported_next_action_kind"
+        return (
+            _non_composed_result(
+                composition_kind=NEXT_ACTION_SOURCE_NPC_RESPONSE,
+                reason=reason,
+                attempted=True,
+            ),
+            None,
+            reason,
+        )
+    composition_result = _compose_npc_follow_up(
+        replanning=replanning,
+        context=context,
+        actor_id=actor_id,
+        composition_provider=composition_provider,
+    )
+    if not composition_result.get("composed"):
+        return (
+            composition_result,
+            None,
+            str(composition_result.get("reason") or "follow_up_composition_rejected"),
+        )
+    return (
+        composition_result,
+        _actor_line_follow_up_block_event(
+            replanning=replanning,
+            actor_id=actor_id,
+            action_kind=action_kind,
+            resolved_follow_up_id=resolved_follow_up_id,
+            composition_result=composition_result,
+        ),
+        None,
+    )
+
+
 def build_post_cut_in_follow_up_event(
     *,
     decision: dict[str, Any],
@@ -39,11 +159,6 @@ def build_post_cut_in_follow_up_event(
         if isinstance(replanning.get("new_director_context"), dict)
         else {}
     )
-    known_actor_ids = {
-        str(raw)
-        for raw in context.get("known_actor_ids") or []
-        if isinstance(raw, str) and raw
-    }
     block_event: dict[str, Any] | None = None
     silence_reason = replanning.get("silence_reason")
     no_follow_up_reason: str | None = None
@@ -53,84 +168,14 @@ def build_post_cut_in_follow_up_event(
     )
 
     if source == NEXT_ACTION_SOURCE_NPC_RESPONSE:
-        if not actor_id:
-            no_follow_up_reason = "missing_selected_actor_id"
-            composition_result = _non_composed_result(
-                composition_kind=NEXT_ACTION_SOURCE_NPC_RESPONSE,
-                reason=no_follow_up_reason,
-                attempted=True,
-            )
-        elif known_actor_ids and actor_id not in known_actor_ids:
-            no_follow_up_reason = "unsafe_unknown_actor"
-            composition_result = _non_composed_result(
-                composition_kind=NEXT_ACTION_SOURCE_NPC_RESPONSE,
-                reason=no_follow_up_reason,
-                attempted=True,
-            )
-        elif action_kind != ACTION_SPEAK:
-            no_follow_up_reason = "unsupported_next_action_kind"
-            composition_result = _non_composed_result(
-                composition_kind=NEXT_ACTION_SOURCE_NPC_RESPONSE,
-                reason=no_follow_up_reason,
-                attempted=True,
-            )
-        else:
-            composition_result = _compose_npc_follow_up(
-                replanning=replanning,
-                context=context,
-                actor_id=actor_id,
-                composition_provider=composition_provider,
-            )
-            if not composition_result.get("composed"):
-                no_follow_up_reason = str(
-                    composition_result.get("reason") or "follow_up_composition_rejected"
-                )
-            else:
-                composed_text = str(composition_result.get("text") or "")
-                voice_profile_actor_id = composition_result.get("voice_profile_actor_id")
-                source_field = composition_result.get("voice_profile_source_field")
-                input_fields_used = list(composition_result.get("input_fields_used") or [])
-                motivation_score = composition_result.get("motivation_score")
-                composition_mode = composition_result.get("composition_mode")
-                source_contexts = list(composition_result.get("source_contexts") or [])
-                safety_gate_decisions = dict(
-                    composition_result.get("safety_gate_decisions") or {}
-                )
-                provider_metadata = composition_result.get("provider_metadata")
-                payload = {
-                    "id": str(uuid.uuid4()),
-                    "block_type": BLOCK_TYPE_ACTOR_LINE,
-                    "actor_id": actor_id,
-                    "text": composed_text,
-                    "originator": POST_CUT_IN_FOLLOW_UP_GENERATION,
-                    "post_cut_in_replanning_id": replanning.get("replanning_id"),
-                    "post_cut_in_follow_up_id": resolved_follow_up_id,
-                    "selected_next_action_source": source,
-                    "selected_next_action_kind": action_kind,
-                    "composition_mode": composition_mode,
-                    "source_contexts": source_contexts,
-                    "safety_gate_decisions": safety_gate_decisions,
-                    "provider_metadata": provider_metadata,
-                    "voice_profile_used": True,
-                    "voice_profile_actor_id": voice_profile_actor_id,
-                    "voice_profile_source_field": source_field,
-                    "composition_inputs_used": input_fields_used,
-                    "motivation_score": motivation_score,
-                    "new_people_introduced": False,
-                    "new_rooms_introduced": False,
-                    "plot_facts_introduced": False,
-                }
-                block_event = build_block_stream_event(
-                    tick_id=str(uuid.uuid4()),
-                    block_type=BLOCK_TYPE_ACTOR_LINE,
-                    block_payload=payload,
-                    cut_in_state=CUT_IN_UNINTERRUPTED,
-                    lane=LANE_VISIBLE_SCENE_OUTPUT,
-                    source=actor_id,
-                )
-                block_event["event_generation"] = POST_CUT_IN_FOLLOW_UP_GENERATION
-                block_event["post_cut_in_replanning_id"] = replanning.get("replanning_id")
-                block_event["post_cut_in_follow_up_id"] = resolved_follow_up_id
+        composition_result, block_event, no_follow_up_reason = _npc_response_follow_up_result(
+            replanning=replanning,
+            context=context,
+            actor_id=actor_id,
+            action_kind=action_kind,
+            resolved_follow_up_id=resolved_follow_up_id,
+            composition_provider=composition_provider,
+        )
     elif source == NEXT_ACTION_SOURCE_SILENCE or action_kind == ACTION_SILENCE:
         silence_reason = silence_reason or "director_chose_silence"
         composition_result = _non_composed_result(

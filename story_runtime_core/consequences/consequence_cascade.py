@@ -9,7 +9,6 @@ later play. It does not mutate canonical history.
 from __future__ import annotations
 
 import hashlib
-import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -20,6 +19,11 @@ from story_runtime_core.branching import (
     BRANCHING_TIMELINE_EVENT_SELECTION_REPLAY_CONFLICT,
 )
 from story_runtime_core.committed_truth import committed_story_truth_rows
+from story_runtime_core.evidence_projection_helpers import (
+    compact_evidence_text,
+    dedupe_sorted_evidence_text,
+    stable_evidence_hash,
+)
 
 
 CONSEQUENCE_CASCADE_RECORD_SCHEMA_VERSION = "consequence_cascade_record.v1"
@@ -55,36 +59,18 @@ CONSEQUENCE_CASCADE_DEFAULT_MAX_EVIDENCE_REFS = 8
 CONSEQUENCE_CASCADE_DEFAULT_DECAY_AFTER_TURNS = 4
 CONSEQUENCE_CASCADE_MIN_MAX_ATOMS = 8
 CONSEQUENCE_CASCADE_MIN_MAX_EDGES = 8
+CONSEQUENCE_CASCADE_STABLE_ID_LENGTH = 16
+CONSEQUENCE_CASCADE_EVIDENCE_HASH_LENGTH = 12
+CONSEQUENCE_CASCADE_EDGE_ID_HASH_LENGTH = 18
+CONSEQUENCE_CASCADE_COMMIT_LIST_LIMIT = 12
+CONSEQUENCE_CASCADE_SIGNAL_TEXT_LIMIT = 96
+CONSEQUENCE_CASCADE_RESOLVED_CLASS_LIMIT = 16
+CONSEQUENCE_CASCADE_THREAD_LIMIT = 8
+CONSEQUENCE_CASCADE_GRAPH_DEFAULT_MAX_ITEMS = 5
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-
-def _stable_hash(payload: Any, length: int = 16) -> str:
-    raw = json.dumps(_json_safe(payload), sort_keys=True, default=str)
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:length]
-
-
-def _dedupe_sorted(values: list[Any], *, limit: int | None = None) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        text = str(value or "").strip()
-        if not text or text in seen:
-            continue
-        seen.add(text)
-        out.append(text)
-    out.sort()
-    return out[:limit] if limit is not None else out
-
-
-def _short(value: Any, limit: int = 96) -> str:
-    text = str(value or "").strip()
-    if len(text) <= limit:
-        return text
-    return text[: limit - 1] + "..."
 
 
 def default_consequence_cascade_bounds() -> dict[str, int]:
@@ -113,7 +99,9 @@ def normalize_consequence_cascade_bounds(bounds: dict[str, Any] | None = None) -
 
 
 def stable_consequence_cascade_id(*, story_session_id: str) -> str:
-    digest = hashlib.sha256(str(story_session_id).encode("utf-8")).hexdigest()[:16]
+    digest = hashlib.sha256(str(story_session_id).encode("utf-8")).hexdigest()[
+        :CONSEQUENCE_CASCADE_STABLE_ID_LENGTH
+    ]
     return f"consequence_cascade_{digest}"
 
 
@@ -164,7 +152,7 @@ def _entities_for_commit(commit: dict[str, Any]) -> list[str]:
         raw = planner.get(key)
         if isinstance(raw, list):
             values.extend(raw)
-    return _dedupe_sorted(values, limit=12)
+    return dedupe_sorted_evidence_text(values, limit=CONSEQUENCE_CASCADE_COMMIT_LIST_LIMIT)
 
 
 def _signal_hashes_for_commit(commit: dict[str, Any], *, max_refs: int) -> list[str]:
@@ -172,15 +160,22 @@ def _signal_hashes_for_commit(commit: dict[str, Any], *, max_refs: int) -> list[
     for key in ("open_pressures", "committed_consequences", "resolved_pressures"):
         raw = commit.get(key)
         if isinstance(raw, list):
-            values.extend(_short(x, 96) for x in raw if str(x or "").strip())
-    return [_stable_hash(value, length=12) for value in _dedupe_sorted(values, limit=max_refs)]
+            values.extend(
+                compact_evidence_text(x, CONSEQUENCE_CASCADE_SIGNAL_TEXT_LIMIT)
+                for x in raw
+                if str(x or "").strip()
+            )
+    return [
+        stable_evidence_hash(value, length=CONSEQUENCE_CASCADE_EVIDENCE_HASH_LENGTH)
+        for value in dedupe_sorted_evidence_text(values, limit=max_refs)
+    ]
 
 
 def _resolved_classes_for_commit(commit: dict[str, Any]) -> list[str]:
     raw = commit.get("resolved_pressures")
     if not isinstance(raw, list):
         return []
-    return _dedupe_sorted(raw, limit=16)
+    return dedupe_sorted_evidence_text(raw, limit=CONSEQUENCE_CASCADE_RESOLVED_CLASS_LIMIT)
 
 
 def _thread_dicts(narrative_threads: Any) -> list[dict[str, Any]]:
@@ -213,7 +208,7 @@ def _threads_for_atom(*, scene_id: str, continuity_class: str, narrative_threads
             continue
         if scene and (scene == str(thread.get("scene_anchor") or "") or scene in related_scenes):
             out.append(thread_id)
-    return _dedupe_sorted(out, limit=8)
+    return dedupe_sorted_evidence_text(out, limit=CONSEQUENCE_CASCADE_THREAD_LIMIT)
 
 
 def _atoms_for_row(
@@ -243,7 +238,7 @@ def _atoms_for_row(
             status = CONSEQUENCE_STATUS_RESOLVED
         elif age >= bounds["decay_after_turns"]:
             status = CONSEQUENCE_STATUS_FADING
-        consequence_id = "cons_" + _stable_hash(
+        consequence_id = "cons_" + stable_evidence_hash(
             {
                 "story_session_id": story_session_id,
                 "turn_id": turn_id,
@@ -251,7 +246,7 @@ def _atoms_for_row(
                 "continuity_class": continuity_class,
                 "idx": idx,
             },
-            length=18,
+            length=CONSEQUENCE_CASCADE_EDGE_ID_HASH_LENGTH,
         )
         source_note = str(impact.get("note") or impact.get("source") or "").strip()
         source_fields = ["narrative_commit.planner_truth.continuity_impacts"]
@@ -311,7 +306,8 @@ def _make_edge(
     }
     return {
         "schema_version": CONSEQUENCE_EDGE_SCHEMA_VERSION,
-        "edge_id": "cascade_edge_" + _stable_hash(payload, length=18),
+        "edge_id": "cascade_edge_"
+        + stable_evidence_hash(payload, length=CONSEQUENCE_CASCADE_EDGE_ID_HASH_LENGTH),
         "edge_kind": edge_kind,
         "source_consequence_id": source.get("consequence_id"),
         "target_consequence_id": target.get("consequence_id"),
@@ -320,7 +316,7 @@ def _make_edge(
         "source_turn_number": source.get("source_turn_number"),
         "target_turn_number": target.get("source_turn_number"),
         "continuity_class": continuity_class,
-        "thread_ids": _dedupe_sorted(thread_ids or [], limit=8),
+        "thread_ids": dedupe_sorted_evidence_text(thread_ids or [], limit=CONSEQUENCE_CASCADE_THREAD_LIMIT),
         "evidence": {"source_fields": evidence_fields or []},
         "derived_from_committed_truth": True,
         "mutates_canonical_state": False,
@@ -449,7 +445,7 @@ def _snapshot(*, cascade_id: str, atoms: list[dict[str, Any]], edges: list[dict[
         "active_atom_count": status_counts.get(CONSEQUENCE_STATUS_ACTIVE, 0),
         "status_counts": status_counts,
         "edge_kind_counts": edge_kind_counts,
-        "continuity_classes": _dedupe_sorted(classes),
+        "continuity_classes": dedupe_sorted_evidence_text(classes),
     }
 
 
@@ -532,7 +528,7 @@ def build_consequence_cascade_record(
 def build_graph_consequence_cascade_export(
     record: dict[str, Any] | None,
     *,
-    max_items: int = 5,
+    max_items: int = CONSEQUENCE_CASCADE_GRAPH_DEFAULT_MAX_ITEMS,
 ) -> dict[str, Any] | None:
     if not isinstance(record, dict):
         return None
@@ -551,8 +547,8 @@ def build_graph_consequence_cascade_export(
         reverse=True,
     )[:max_n]
     selected_ids = [str(atom.get("consequence_id")) for atom in ranked_atoms if atom.get("consequence_id")]
-    selected_classes = _dedupe_sorted([atom.get("continuity_class") for atom in ranked_atoms])
-    selected_statuses = _dedupe_sorted([atom.get("status") for atom in ranked_atoms])
+    selected_classes = dedupe_sorted_evidence_text([atom.get("continuity_class") for atom in ranked_atoms])
+    selected_statuses = dedupe_sorted_evidence_text([atom.get("status") for atom in ranked_atoms])
     selected_edges = [
         edge
         for edge in edges

@@ -28,6 +28,7 @@ from fastapi.requests import Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette import status as http_status
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 import httpx
@@ -75,6 +76,19 @@ AUTH_ME_PATH = "/api/v1/auth/me"
 SESSION_KEY_ACCESS_TOKEN = "world_engine_access_token"
 SESSION_KEY_REFRESH_TOKEN = "world_engine_refresh_token"
 SESSION_KEY_CURRENT_USER = "world_engine_current_user"
+WORLD_ENGINE_UI_PAGES = (
+    ("/dashboard", "ui/dashboard.html", "dashboard"),
+    ("/runs-sessions", "ui/runs_sessions.html", "runs-sessions"),
+    ("/live-runtime", "ui/live_runtime.html", "live-runtime"),
+    ("/validation-authority", "ui/validation_authority.html", "validation-authority"),
+    ("/runtime-ledger", "ui/runtime_ledger.html", "runtime-ledger"),
+    ("/narrative-systems", "ui/narrative_systems.html", "narrative-systems"),
+    ("/traces", "ui/traces_observability.html", "traces"),
+    ("/history", "ui/history_events.html", "history"),
+    ("/runtime-status", "ui/health.html", "runtime-status"),
+    ("/health", "ui/health.html", "runtime-status"),
+    ("/engine", "ui/engine.html", "engine"),
+)
 
 
 def _ui_session_secret() -> str:
@@ -121,7 +135,7 @@ def _clear_ui_session(request: Request) -> None:
 def _backend_login(username: str, password: str) -> tuple[bool, dict[str, Any], int]:
     base_url = _backend_base_url()
     if not base_url:
-        return False, {"message": "Backend authentication service is not configured."}, 503
+        return False, {"message": "Backend authentication service is not configured."}, http_status.HTTP_503_SERVICE_UNAVAILABLE
     try:
         with httpx.Client(timeout=6.0) as client:
             response = client.post(
@@ -130,14 +144,14 @@ def _backend_login(username: str, password: str) -> tuple[bool, dict[str, Any], 
                 headers={"Accept": "application/json"},
             )
     except httpx.HTTPError:
-        return False, {"message": "Authentication service is currently unavailable."}, 503
+        return False, {"message": "Authentication service is currently unavailable."}, http_status.HTTP_503_SERVICE_UNAVAILABLE
 
     try:
         payload = response.json()
     except ValueError:
         payload = {}
 
-    if response.status_code >= 400:
+    if response.status_code >= http_status.HTTP_400_BAD_REQUEST:
         return False, payload if isinstance(payload, dict) else {}, response.status_code
     return True, payload if isinstance(payload, dict) else {}, response.status_code
 
@@ -145,7 +159,7 @@ def _backend_login(username: str, password: str) -> tuple[bool, dict[str, Any], 
 def _backend_fetch_user(access_token: str) -> tuple[bool, dict[str, Any], int]:
     base_url = _backend_base_url()
     if not base_url:
-        return False, {"message": "Backend authentication service is not configured."}, 503
+        return False, {"message": "Backend authentication service is not configured."}, http_status.HTTP_503_SERVICE_UNAVAILABLE
     try:
         with httpx.Client(timeout=6.0) as client:
             response = client.get(
@@ -153,21 +167,21 @@ def _backend_fetch_user(access_token: str) -> tuple[bool, dict[str, Any], int]:
                 headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
             )
     except httpx.HTTPError:
-        return False, {"message": "Authentication service is currently unavailable."}, 503
+        return False, {"message": "Authentication service is currently unavailable."}, http_status.HTTP_503_SERVICE_UNAVAILABLE
 
     try:
         payload = response.json()
     except ValueError:
         payload = {}
 
-    if response.status_code >= 400:
+    if response.status_code >= http_status.HTTP_400_BAD_REQUEST:
         return False, payload if isinstance(payload, dict) else {}, response.status_code
     return True, payload if isinstance(payload, dict) else {}, response.status_code
 
 
 def _login_redirect(request: Request) -> RedirectResponse:
     next_path = quote(request.url.path, safe="/")
-    return RedirectResponse(url=f"/login?next={next_path}", status_code=303)
+    return RedirectResponse(url=f"/login?next={next_path}", status_code=http_status.HTTP_303_SEE_OTHER)
 
 
 def _authenticated_user_or_redirect(request: Request) -> tuple[dict[str, Any] | None, RedirectResponse | None]:
@@ -178,7 +192,7 @@ def _authenticated_user_or_redirect(request: Request) -> tuple[dict[str, Any] | 
     if not ok:
         _clear_ui_session(request)
         redirect = _login_redirect(request)
-        if status == 503:
+        if status == http_status.HTTP_503_SERVICE_UNAVAILABLE:
             # Service unavailable is treated as unauthenticated in the UI boundary.
             return None, redirect
         return None, redirect
@@ -201,7 +215,12 @@ async def _extract_login_credentials(request: Request) -> tuple[str, str]:
     return username, password
 
 
-def _render_login_page(request: Request, *, error: str | None = None, status_code: int = 200):
+def _render_login_page(
+    request: Request,
+    *,
+    error: str | None = None,
+    status_code: int = http_status.HTTP_200_OK,
+):
     safe_next = _safe_next_path(request.query_params.get("next"))
     return TEMPLATES.TemplateResponse(
         request=request,
@@ -243,9 +262,7 @@ def _render_ui_page(
     )
 
 
-def register_world_engine_ui_routes(app: FastAPI, *, web_root: Path | None = None) -> None:
-    ui_root = web_root or WEB_ROOT
-
+def _register_world_engine_entry_routes(app: FastAPI, *, ui_root: Path) -> None:
     @app.get("/favicon.ico", include_in_schema=False)
     def favicon():
         return FileResponse(ui_root / "static" / "favicon.ico", media_type="image/vnd.microsoft.icon")
@@ -253,13 +270,16 @@ def register_world_engine_ui_routes(app: FastAPI, *, web_root: Path | None = Non
     @app.get("/")
     def root_entry(request: Request):
         if request.session.get(SESSION_KEY_ACCESS_TOKEN):
-            return RedirectResponse(url="/dashboard", status_code=303)
-        return RedirectResponse(url="/login", status_code=303)
+            return RedirectResponse(url="/dashboard", status_code=http_status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/login", status_code=http_status.HTTP_303_SEE_OTHER)
+
+
+def _register_world_engine_auth_routes(app: FastAPI) -> None:
 
     @app.get("/login")
     def login_page(request: Request):
         if request.session.get(SESSION_KEY_ACCESS_TOKEN):
-            return RedirectResponse(url="/dashboard", status_code=303)
+            return RedirectResponse(url="/dashboard", status_code=http_status.HTTP_303_SEE_OTHER)
         return _render_login_page(request)
 
     @app.post("/login")
@@ -270,94 +290,78 @@ def register_world_engine_ui_routes(app: FastAPI, *, web_root: Path | None = Non
             return _render_login_page(
                 request,
                 error="Username and password are required.",
-                status_code=400,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
             )
 
         ok, payload, status = await run_in_threadpool(_backend_login, username, password)
         if not ok:
             # Return a generic/safe message; never expose internals.
-            if status == 401:
+            if status == http_status.HTTP_401_UNAUTHORIZED:
                 error = "Invalid username or password."
-            elif status == 503:
+            elif status == http_status.HTTP_503_SERVICE_UNAVAILABLE:
                 error = "Authentication service is temporarily unavailable."
             else:
                 error = "Login failed."
-            return _render_login_page(request, error=error, status_code=401 if status == 401 else 400)
+            status_code = (
+                http_status.HTTP_401_UNAUTHORIZED
+                if status == http_status.HTTP_401_UNAUTHORIZED
+                else http_status.HTTP_400_BAD_REQUEST
+            )
+            return _render_login_page(request, error=error, status_code=status_code)
 
         access_token = str(payload.get("access_token") or "").strip()
         refresh_token = str(payload.get("refresh_token") or "").strip()
         if not access_token:
-            return _render_login_page(request, error="Login failed.", status_code=400)
+            return _render_login_page(
+                request,
+                error="Login failed.",
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+            )
 
         request.session[SESSION_KEY_ACCESS_TOKEN] = access_token
         request.session[SESSION_KEY_REFRESH_TOKEN] = refresh_token
         me_ok, me_payload, _me_status = await run_in_threadpool(_backend_fetch_user, access_token)
         request.session[SESSION_KEY_CURRENT_USER] = me_payload if me_ok else (payload.get("user") or {})
-        return RedirectResponse(url=next_path, status_code=303)
+        return RedirectResponse(url=next_path, status_code=http_status.HTTP_303_SEE_OTHER)
 
     @app.post("/logout")
     def logout(request: Request):
         _clear_ui_session(request)
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/login", status_code=http_status.HTTP_303_SEE_OTHER)
 
+
+def _register_world_engine_backend_proxy(app: FastAPI) -> None:
     @app.api_route("/ui-api/{backend_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def ui_backend_api_proxy(request: Request, backend_path: str):
         """Same-origin proxy to backend ``/api/v1/*`` using the UI session JWT."""
         if not request.session.get(SESSION_KEY_ACCESS_TOKEN):
-            return JSONResponse({"error": "Authentication required."}, status_code=401)
+            return JSONResponse(
+                {"error": "Authentication required."},
+                status_code=http_status.HTTP_401_UNAUTHORIZED,
+            )
         return await backend_proxy_response(request, backend_path)
 
-    @app.get("/dashboard")
-    def dashboard(request: Request):
-        return _render_ui_page(request, template_name="ui/dashboard.html", active_page="dashboard")
 
-    @app.get("/runs-sessions")
-    def runs_sessions(request: Request):
-        return _render_ui_page(request, template_name="ui/runs_sessions.html", active_page="runs-sessions")
+def _register_rendered_ui_page(app: FastAPI, *, path: str, template_name: str, active_page: str) -> None:
+    route_name = f"ui_{active_page.replace('-', '_')}_{path.strip('/').replace('/', '_')}"
 
-    @app.get("/live-runtime")
-    def live_runtime(request: Request):
-        return _render_ui_page(request, template_name="ui/live_runtime.html", active_page="live-runtime")
+    @app.get(path, name=route_name)
+    def rendered_ui_page(request: Request):
+        return _render_ui_page(request, template_name=template_name, active_page=active_page)
 
-    @app.get("/validation-authority")
-    def validation_authority(request: Request):
-        return _render_ui_page(
-            request,
-            template_name="ui/validation_authority.html",
-            active_page="validation-authority",
+
+def _register_world_engine_page_routes(app: FastAPI, *, ui_root: Path) -> None:
+    for path, template_name, active_page in WORLD_ENGINE_UI_PAGES:
+        _register_rendered_ui_page(
+            app,
+            path=path,
+            template_name=template_name,
+            active_page=active_page,
         )
-
-    @app.get("/runtime-ledger")
-    def runtime_ledger(request: Request):
-        return _render_ui_page(request, template_name="ui/runtime_ledger.html", active_page="runtime-ledger")
-
-    @app.get("/narrative-systems")
-    def narrative_systems(request: Request):
-        return _render_ui_page(request, template_name="ui/narrative_systems.html", active_page="narrative-systems")
-
-    @app.get("/traces")
-    def traces_observability(request: Request):
-        return _render_ui_page(request, template_name="ui/traces_observability.html", active_page="traces")
-
-    @app.get("/history")
-    def history_events(request: Request):
-        return _render_ui_page(request, template_name="ui/history_events.html", active_page="history")
-
-    @app.get("/runtime-status")
-    def runtime_status(request: Request):
-        return _render_ui_page(request, template_name="ui/health.html", active_page="runtime-status")
-
-    @app.get("/health")
-    def health_page(request: Request):
-        return _render_ui_page(request, template_name="ui/health.html", active_page="runtime-status")
 
     @app.get("/diagnostics")
     def diagnostics(request: Request):
-        return RedirectResponse(url="/health", status_code=303)
-
-    @app.get("/engine")
-    def engine_shell(request: Request):
-        return _render_ui_page(request, template_name="ui/engine.html", active_page="engine")
+        return RedirectResponse(url="/health", status_code=http_status.HTTP_303_SEE_OTHER)
 
     @app.get("/engine/app")
     def legacy_engine_page(request: Request):
@@ -365,6 +369,14 @@ def register_world_engine_ui_routes(app: FastAPI, *, web_root: Path | None = Non
         if redirect is not None:
             return redirect
         return FileResponse(ui_root / "templates" / "index.html")
+
+
+def register_world_engine_ui_routes(app: FastAPI, *, web_root: Path | None = None) -> None:
+    ui_root = web_root or WEB_ROOT
+    _register_world_engine_entry_routes(app, ui_root=ui_root)
+    _register_world_engine_auth_routes(app)
+    _register_world_engine_backend_proxy(app)
+    _register_world_engine_page_routes(app, ui_root=ui_root)
 
 
 @asynccontextmanager

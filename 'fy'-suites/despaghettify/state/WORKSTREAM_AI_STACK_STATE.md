@@ -1,5 +1,21 @@
 # Workstream: ai_stack
 
+## Closed — DS-029 AI actor/NPC/narrative split and DS-032 policy-tail support (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-029 | NPC agency closure, W5 extraction, voice semantic classification, narrative momentum, post-cut-in follow-up, claim-readiness, and actor-lane hydration now delegate to named semantic helpers. | `build_npc_agency_closure`, `extract_w5_snapshot_from_committed_event`, `classify_voice_semantic_lines`, `derive_narrative_momentum`, `build_post_cut_in_follow_up_event`, `assess_npc_agency_claim_readiness`, `hydrate_actor_lanes` | Pre: `artifacts/workstreams/ai_stack/pre/session_20260528_DS-029_*`; post: `artifacts/workstreams/ai_stack/post/session_20260528_DS-029_comparison.*` |
+| DS-032 | Contract policy normalization, context synthesis prompt rendering, and pacing-rhythm derivation use named constants/shared normalization; duplicate local `_coerce_int` / `_string_list` contract helpers were removed. | `normalize_consequence_cascade_policy`, `normalize_callback_web_policy`, `context_synthesis_prompt_lines`, `derive_pacing_rhythm` | Post evidence is recorded under the primary backend workstream: `artifacts/workstreams/backend_runtime_services/post/session_20260528_DS-032_comparison.*` |
+
+**Gates (final):**
+
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_npc_agency_long_horizon_claim_readiness.py ai_stack/tests/test_npc_agency_planner.py ai_stack/tests/test_narrative_momentum_engine.py ai_stack/tests/test_pacing_rhythm_engine.py ai_stack/tests/test_phase2_ws_session_loop.py ai_stack/tests/test_runtime_authority_aspects.py --tb=short` — 156 passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_consequence_cascade_contracts.py ai_stack/tests/test_callback_web_contracts.py ai_stack/tests/test_context_synthesis_engine.py ai_stack/tests/test_context_synthesis_retry_loop.py ai_stack/tests/test_pacing_rhythm_engine.py story_runtime_core/tests/test_callback_web.py story_runtime_core/tests/test_consequence_cascade.py --tb=short` — 40 passed.
+- `python -m py_compile` on all changed DS-029/DS-032 AI-stack and story-runtime-core files — passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T15:25:17Z`.
+
+**Structural delta:** DS-029 leaders are pruned from the current top-12 longest ranking. `derive_pacing_rhythm` is 89 AST lines and has 0 counted magic integer literals; DS-032 contract/context targets have 0 counted magic integer literals in their target functions.
+
 ## Closed — DS-026 / DS-027 AI-stack authority and narrative split (session 20260523)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

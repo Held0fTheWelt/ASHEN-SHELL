@@ -140,13 +140,27 @@ def _build_dashboard_next_actions(
     return actions[:12]
 
 
-def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
-    governance = evaluate_runtime_readiness()
-    rag = get_rag_operations_status()
-    orchestration = get_orchestration_status(trace_id=trace_id)
-    world_engine = build_world_engine_control_center_snapshot(current_app._get_current_object(), trace_id=trace_id)
-    blockers: list[dict[str, str]] = []
-    blockers.extend(_merge_governance_blockers(governance))
+def _runtime_dashboard_sources(trace_id: str | None) -> dict[str, Any]:
+    return {
+        "governance": evaluate_runtime_readiness(),
+        "rag": get_rag_operations_status(),
+        "orchestration": get_orchestration_status(trace_id=trace_id),
+        "world_engine": build_world_engine_control_center_snapshot(
+            current_app._get_current_object(),
+            trace_id=trace_id,
+        ),
+        "effective": _effective_config_payload(),
+    }
+
+
+def _runtime_dashboard_blockers(
+    *,
+    governance: dict[str, Any],
+    rag: dict[str, Any],
+    orchestration: dict[str, Any],
+    world_engine: dict[str, Any],
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    blockers = _merge_governance_blockers(governance)
     if not blockers and not governance.get("ai_only_valid"):
         blockers.append(
             _dashboard_operator_row(
@@ -195,19 +209,27 @@ def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
             )
     world_blockers, world_warnings = _merge_world_engine_rows(world_engine)
     blockers.extend(world_blockers)
-    effective = _effective_config_payload()
+    return blockers, world_warnings
+
+
+def _runtime_domain_status(
+    *,
+    governance: dict[str, Any],
+    rag: dict[str, Any],
+    orchestration: dict[str, Any],
+    world_engine: dict[str, Any],
+    effective: dict[str, Any],
+) -> list[dict[str, str]]:
     governance_state = str(governance.get("readiness_severity") or "unknown")
     if governance_state not in {"healthy", "degraded", "blocked", "configured_disabled", "unknown"}:
         governance_state = "unknown"
-    rag_state = str(rag.get("operational_state") or "unknown")
-    orchestration_state = str(orchestration.get("overall_state") or "unknown")
     world_status = world_engine.get("status") or {}
     world_state = "healthy"
     if world_status.get("control_plane_ok") is False:
         world_state = "blocked"
     elif int(world_status.get("warning_count") or 0) > 0:
         world_state = "degraded"
-    domain_status = [
+    return [
         {
             "domain": "governance",
             "state": governance_state,
@@ -216,23 +238,21 @@ def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
         },
         {
             "domain": "runtime_settings",
-            "state": (
-                "degraded"
-                if (effective.get("guardrail_warnings") or []) or (effective.get("drift_keys") or [])
-                else "healthy"
-            ),
+            "state": "degraded"
+            if (effective.get("guardrail_warnings") or []) or (effective.get("drift_keys") or [])
+            else "healthy",
             "consequence": "Preset intent can diverge when manual overrides are active.",
             "fix_path": "/manage/runtime-settings",
         },
         {
             "domain": "rag",
-            "state": rag_state,
+            "state": str(rag.get("operational_state") or "unknown"),
             "consequence": "Retrieval degradation can lower grounding quality.",
             "fix_path": "/manage/rag-operations",
         },
         {
             "domain": "orchestration",
-            "state": orchestration_state,
+            "state": str(orchestration.get("overall_state") or "unknown"),
             "consequence": "Orchestration degradation affects runtime traceability and structured output reliability.",
             "fix_path": "/manage/ai-orchestration",
         },
@@ -243,7 +263,15 @@ def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
             "fix_path": "/manage/world-engine-control-center",
         },
     ]
-    degraded_or_warning: list[dict[str, str]] = list(world_warnings)
+
+
+def _runtime_warning_rows(
+    *,
+    rag: dict[str, Any],
+    orchestration: dict[str, Any],
+    world_warnings: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    degraded_or_warning = list(world_warnings)
     _append_guidance_rows(
         degraded_or_warning,
         domain="rag",
@@ -258,6 +286,69 @@ def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
         severities={"degraded", "warn", "info"},
         default_fix_path="/manage/ai-orchestration",
     )
+    return degraded_or_warning
+
+
+def _runtime_dashboard_summary(
+    *,
+    governance: dict[str, Any],
+    rag: dict[str, Any],
+    orchestration: dict[str, Any],
+    world_engine: dict[str, Any],
+    effective: dict[str, Any],
+    ai_only_valid: bool,
+) -> dict[str, Any]:
+    return {
+        "provider_readiness": governance.get("provider_summary", {}),
+        "model_route_readiness": governance.get("route_summary", {}),
+        "ai_only_valid": ai_only_valid,
+        "task_routes_green": bool(governance.get("task_routes_green")),
+        "rag": {
+            "chunk_count": (rag.get("corpus") or {}).get("chunk_count", 0),
+            "embedding_backend_available": (rag.get("embedding_backend") or {}).get("available", False),
+            "dense_artifact_validity": (rag.get("dense_index") or {}).get("artifact_validity"),
+        },
+        "orchestration": {
+            "langgraph_dependency_available": bool((orchestration.get("langgraph") or {}).get("dependency_available")),
+            "langchain_bridge_available": bool((orchestration.get("langchain") or {}).get("bridge_available")),
+            "recent_graph_errors": (orchestration.get("langgraph") or {}).get("fallback_posture", {}).get("graph_error_count_recent", 0),
+        },
+        "world_engine": world_engine.get("status", {}),
+        "active_runtime": world_engine.get("active_runtime", {}),
+        "settings_layer": {
+            "active_preset_id": effective.get("active_preset_id"),
+            "override_count": effective.get("override_count", 0),
+            "drift_key_count": len(effective.get("drift_keys") or []),
+            "guardrail_warning_count": len(effective.get("guardrail_warnings") or []),
+        },
+    }
+
+
+def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
+    sources = _runtime_dashboard_sources(trace_id)
+    governance = sources["governance"]
+    rag = sources["rag"]
+    orchestration = sources["orchestration"]
+    world_engine = sources["world_engine"]
+    effective = sources["effective"]
+    blockers, world_warnings = _runtime_dashboard_blockers(
+        governance=governance,
+        rag=rag,
+        orchestration=orchestration,
+        world_engine=world_engine,
+    )
+    domain_status = _runtime_domain_status(
+        governance=governance,
+        rag=rag,
+        orchestration=orchestration,
+        world_engine=world_engine,
+        effective=effective,
+    )
+    degraded_or_warning = _runtime_warning_rows(
+        rag=rag,
+        orchestration=orchestration,
+        world_warnings=world_warnings,
+    )
     ai_only_valid = bool(governance.get("ai_only_valid"))
     next_actions = _build_dashboard_next_actions(
         blockers=blockers,
@@ -266,30 +357,14 @@ def get_runtime_dashboard(*, trace_id: str | None = None) -> dict[str, Any]:
         ai_only_valid=ai_only_valid,
     )
     return {
-        "summary": {
-            "provider_readiness": governance.get("provider_summary", {}),
-            "model_route_readiness": governance.get("route_summary", {}),
-            "ai_only_valid": ai_only_valid,
-            "task_routes_green": bool(governance.get("task_routes_green")),
-            "rag": {
-                "chunk_count": (rag.get("corpus") or {}).get("chunk_count", 0),
-                "embedding_backend_available": (rag.get("embedding_backend") or {}).get("available", False),
-                "dense_artifact_validity": (rag.get("dense_index") or {}).get("artifact_validity"),
-            },
-            "orchestration": {
-                "langgraph_dependency_available": bool((orchestration.get("langgraph") or {}).get("dependency_available")),
-                "langchain_bridge_available": bool((orchestration.get("langchain") or {}).get("bridge_available")),
-                "recent_graph_errors": (orchestration.get("langgraph") or {}).get("fallback_posture", {}).get("graph_error_count_recent", 0),
-            },
-            "world_engine": world_engine.get("status", {}),
-            "active_runtime": world_engine.get("active_runtime", {}),
-            "settings_layer": {
-                "active_preset_id": effective.get("active_preset_id"),
-                "override_count": effective.get("override_count", 0),
-                "drift_key_count": len(effective.get("drift_keys") or []),
-                "guardrail_warning_count": len(effective.get("guardrail_warnings") or []),
-            },
-        },
+        "summary": _runtime_dashboard_summary(
+            governance=governance,
+            rag=rag,
+            orchestration=orchestration,
+            world_engine=world_engine,
+            effective=effective,
+            ai_only_valid=ai_only_valid,
+        ),
         "status_semantics": STATUS_SEMANTICS,
         "domain_status": domain_status,
         "blockers": blockers,

@@ -656,6 +656,174 @@ def _supersede_previous(
     return conflicts
 
 
+def _snapshot_derived_from_ids(
+    *,
+    committed_event: dict[str, Any],
+    active_canonical_step: dict[str, Any] | None,
+) -> tuple[str | None, list[str]]:
+    derived_from: list[str] = []
+    committed_event_id = _committed_event_id(committed_event)
+    if committed_event_id:
+        derived_from.append(committed_event_id)
+    if isinstance(active_canonical_step, dict):
+        step_id = active_canonical_step.get("step_id") or active_canonical_step.get("id")
+        if isinstance(step_id, str) and step_id.strip():
+            derived_from.append(step_id)
+    return committed_event_id, derived_from
+
+
+def _merge_observed_and_declared_what(
+    *,
+    what_observed: dict[str, list[W5Fact]],
+    what_declared: dict[str, list[W5Fact]],
+) -> dict[str, list[W5Fact]]:
+    what_by_actor: dict[str, list[W5Fact]] = {}
+    for actor_id, facts in what_observed.items():
+        what_by_actor.setdefault(actor_id, []).extend(facts)
+    for actor_id, facts in what_declared.items():
+        observed_keys = {fact.key for fact in what_by_actor.get(actor_id, [])}
+        for fact in facts:
+            if fact.key not in observed_keys:
+                what_by_actor.setdefault(actor_id, []).append(fact)
+    return what_by_actor
+
+
+def _all_actor_ids_from_fact_buckets(
+    *buckets: dict[str, list[W5Fact]],
+) -> set[str]:
+    all_actor_ids: set[str] = set()
+    for bucket in buckets:
+        all_actor_ids.update(bucket.keys())
+    return all_actor_ids
+
+
+def _actor_role_and_involvement(actor_who: list[W5Fact]) -> tuple[str | None, str | None]:
+    actor_role = None
+    involvement = None
+    for fact in actor_who:
+        if fact.key == "actor_role_in_scene" and isinstance(fact.value, str):
+            actor_role = fact.value
+        if fact.key == "involvement_type" and isinstance(fact.value, str):
+            involvement = fact.value
+    return actor_role, involvement
+
+
+def _build_actor_situations_from_w5_buckets(
+    *,
+    all_actor_ids: set[str],
+    who: dict[str, list[W5Fact]],
+    where: dict[str, list[W5Fact]],
+    what_by_actor: dict[str, list[W5Fact]],
+    how: dict[str, list[W5Fact]],
+    why: dict[str, list[W5Fact]],
+    previous_situations: dict[str, W5ActorSituation],
+    actor_lane_context: dict[str, Any] | None,
+    turn_number: int,
+) -> tuple[dict[str, W5ActorSituation], list[W5Conflict]]:
+    actors: dict[str, W5ActorSituation] = {}
+    conflicts: list[W5Conflict] = []
+    for actor_id in sorted(all_actor_ids):
+        actor_who = list(who.get(actor_id, []))
+        actor_where = list(where.get(actor_id, []))
+        actor_what = list(what_by_actor.get(actor_id, []))
+        actor_how = list(how.get(actor_id, []))
+        actor_why = list(why.get(actor_id, []))
+        new_facts = actor_where + actor_what + actor_how + actor_why + actor_who
+        conflicts.extend(
+            _supersede_previous(
+                actor_id=actor_id,
+                new_facts=new_facts,
+                previous_situations=previous_situations,
+            )
+        )
+        last_confirmed = int(turn_number) if new_facts else (
+            previous_situations[actor_id].last_confirmed_turn
+            if actor_id in previous_situations
+            else int(turn_number)
+        )
+        actor_role, involvement = _actor_role_and_involvement(actor_who)
+        actors[actor_id] = W5ActorSituation(
+            actor_id=actor_id,
+            actor_type=_resolve_actor_type(
+                who_facts=actor_who,
+                actor_lane_context=actor_lane_context,
+                actor_id=actor_id,
+            ),
+            actor_role_in_scene=actor_role,
+            involvement_type=involvement,
+            where=tuple(actor_where),
+            what=tuple(actor_what),
+            how=tuple(actor_how),
+            why=tuple(actor_why),
+            freshness_status=W5FreshnessStatus.FRESH,
+            last_confirmed_turn=last_confirmed,
+        )
+    return actors, conflicts
+
+
+def _extract_w5_fact_buckets(
+    *,
+    snapshot_seed: str,
+    committed_event: dict[str, Any],
+    environment_state_after: dict[str, Any],
+    director_gathering_state: dict[str, Any] | None,
+    free_player_action_resolution: dict[str, Any] | None,
+    actor_lane_context: dict[str, Any] | None,
+    npc_agency_simulation: dict[str, Any] | None,
+    character_mind_records: dict[str, Any] | None,
+    committed_event_id: str | None,
+    turn_number: int,
+) -> tuple[
+    dict[str, list[W5Fact]],
+    dict[str, list[W5Fact]],
+    dict[str, list[W5Fact]],
+    dict[str, list[W5Fact]],
+    dict[str, list[W5Fact]],
+    dict[str, list[W5Fact]],
+]:
+    who = _extract_who(
+        snapshot_seed=snapshot_seed,
+        actor_lane_context=actor_lane_context,
+        turn_number=turn_number,
+    )
+    where = _extract_where_observed(
+        snapshot_seed=snapshot_seed,
+        environment_state_after=environment_state_after,
+        committed_event_id=committed_event_id,
+        turn_number=turn_number,
+    )
+    return (
+        who,
+        where,
+        _extract_what_observed_from_event(
+            snapshot_seed=snapshot_seed,
+            committed_event=committed_event,
+            committed_event_id=committed_event_id,
+            turn_number=turn_number,
+        ),
+        _extract_what_declared(
+            snapshot_seed=snapshot_seed,
+            free_player_action_resolution=free_player_action_resolution,
+            turn_number=turn_number,
+        ),
+        _extract_how_first_class(
+            snapshot_seed=snapshot_seed,
+            committed_event=committed_event,
+            actor_lane_context=actor_lane_context,
+            npc_agency_simulation=npc_agency_simulation,
+            turn_number=turn_number,
+            committed_event_id=committed_event_id,
+        ),
+        _extract_why_inferred(
+            snapshot_seed=snapshot_seed,
+            character_mind_records=character_mind_records,
+            npc_agency_simulation=npc_agency_simulation,
+            director_gathering_state=director_gathering_state,
+            turn_number=turn_number,
+        ),
+    )
+
+
 def extract_w5_snapshot_from_committed_event(
     *,
     previous_snapshot: W5Snapshot | None,
@@ -688,14 +856,10 @@ def extract_w5_snapshot_from_committed_event(
         raise ValueError("story_session_id must be a non-empty string")
 
     env_state = _as_dict(environment_state_after)
-    derived_from: list[str] = []
-    committed_event_id = _committed_event_id(committed_event)
-    if committed_event_id:
-        derived_from.append(committed_event_id)
-    if isinstance(active_canonical_step, dict):
-        step_id = active_canonical_step.get("step_id") or active_canonical_step.get("id")
-        if isinstance(step_id, str) and step_id.strip():
-            derived_from.append(step_id)
+    committed_event_id, derived_from = _snapshot_derived_from_ids(
+        committed_event=committed_event,
+        active_canonical_step=active_canonical_step,
+    )
 
     snapshot_id = _snapshot_id(
         story_session_id=story_session_id,
@@ -704,108 +868,36 @@ def extract_w5_snapshot_from_committed_event(
     )
     snapshot_seed = snapshot_id
 
-    who = _extract_who(
+    who, where, what_observed, what_declared, how, why = _extract_w5_fact_buckets(
         snapshot_seed=snapshot_seed,
-        actor_lane_context=actor_lane_context,
-        turn_number=turn_number,
-    )
-    where = _extract_where_observed(
-        snapshot_seed=snapshot_seed,
+        committed_event=committed_event,
         environment_state_after=env_state,
-        committed_event_id=committed_event_id,
-        turn_number=turn_number,
-    )
-    what_observed = _extract_what_observed_from_event(
-        snapshot_seed=snapshot_seed,
-        committed_event=committed_event,
-        committed_event_id=committed_event_id,
-        turn_number=turn_number,
-    )
-    what_declared = _extract_what_declared(
-        snapshot_seed=snapshot_seed,
+        director_gathering_state=director_gathering_state,
         free_player_action_resolution=free_player_action_resolution,
-        turn_number=turn_number,
-    )
-    how = _extract_how_first_class(
-        snapshot_seed=snapshot_seed,
-        committed_event=committed_event,
         actor_lane_context=actor_lane_context,
         npc_agency_simulation=npc_agency_simulation,
-        turn_number=turn_number,
-        committed_event_id=committed_event_id,
-    )
-    why = _extract_why_inferred(
-        snapshot_seed=snapshot_seed,
         character_mind_records=character_mind_records,
-        npc_agency_simulation=npc_agency_simulation,
-        director_gathering_state=director_gathering_state,
+        committed_event_id=committed_event_id,
         turn_number=turn_number,
     )
 
-    # OBSERVED what wins over DECLARED what for the same actor+key.
-    what_by_actor: dict[str, list[W5Fact]] = {}
-    for actor_id, facts in what_observed.items():
-        what_by_actor.setdefault(actor_id, []).extend(facts)
-    for actor_id, facts in what_declared.items():
-        observed_keys = {f.key for f in what_by_actor.get(actor_id, [])}
-        for fact in facts:
-            if fact.key in observed_keys:
-                continue
-            what_by_actor.setdefault(actor_id, []).append(fact)
-
-    all_actor_ids: set[str] = set()
-    for bucket in (who, where, what_by_actor, how, why):
-        all_actor_ids.update(bucket.keys())
-
+    what_by_actor = _merge_observed_and_declared_what(
+        what_observed=what_observed,
+        what_declared=what_declared,
+    )
+    all_actor_ids = _all_actor_ids_from_fact_buckets(who, where, what_by_actor, how, why)
     previous_situations = previous_snapshot.actors if previous_snapshot is not None else {}
-
-    actors: dict[str, W5ActorSituation] = {}
-    conflicts: list[W5Conflict] = []
-    for actor_id in sorted(all_actor_ids):
-        actor_who = list(who.get(actor_id, []))
-        actor_where = list(where.get(actor_id, []))
-        actor_what = list(what_by_actor.get(actor_id, []))
-        actor_how = list(how.get(actor_id, []))
-        actor_why = list(why.get(actor_id, []))
-        actor_type = _resolve_actor_type(
-            who_facts=actor_who,
-            actor_lane_context=actor_lane_context,
-            actor_id=actor_id,
-        )
-        # Build conflicts against the prior snapshot, then merge in carry-over
-        # OBSERVED/CANONICAL facts the new snapshot did not refresh.
-        new_facts = actor_where + actor_what + actor_how + actor_why + actor_who
-        conflicts.extend(
-            _supersede_previous(
-                actor_id=actor_id,
-                new_facts=new_facts,
-                previous_situations=previous_situations,
-            )
-        )
-        last_confirmed = int(turn_number) if new_facts else (
-            previous_situations[actor_id].last_confirmed_turn
-            if actor_id in previous_situations
-            else int(turn_number)
-        )
-        actor_role = None
-        involvement = None
-        for fact in actor_who:
-            if fact.key == "actor_role_in_scene" and isinstance(fact.value, str):
-                actor_role = fact.value
-            if fact.key == "involvement_type" and isinstance(fact.value, str):
-                involvement = fact.value
-        actors[actor_id] = W5ActorSituation(
-            actor_id=actor_id,
-            actor_type=actor_type,
-            actor_role_in_scene=actor_role,
-            involvement_type=involvement,
-            where=tuple(actor_where),
-            what=tuple(actor_what),
-            how=tuple(actor_how),
-            why=tuple(actor_why),
-            freshness_status=W5FreshnessStatus.FRESH,
-            last_confirmed_turn=last_confirmed,
-        )
+    actors, conflicts = _build_actor_situations_from_w5_buckets(
+        all_actor_ids=all_actor_ids,
+        who=who,
+        where=where,
+        what_by_actor=what_by_actor,
+        how=how,
+        why=why,
+        previous_situations=previous_situations,
+        actor_lane_context=actor_lane_context,
+        turn_number=turn_number,
+    )
 
     created_at = "w5:turn:" + str(int(turn_number))
 

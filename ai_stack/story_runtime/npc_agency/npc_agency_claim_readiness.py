@@ -37,33 +37,59 @@ def _gate_record(passed: bool, *, evidence: dict[str, Any] | None = None, blocke
     }
 
 
-def assess_npc_agency_claim_readiness(
+def _claim_readiness_sources(
     *,
-    simulation: dict[str, Any] | None = None,
-    closure: dict[str, Any] | None = None,
-    runtime_aspect: dict[str, Any] | None = None,
-    live_trace_evidence: dict[str, Any] | None = None,
-    operator_evidence: dict[str, Any] | None = None,
-    mcp_evidence: dict[str, Any] | None = None,
-    replay_evidence: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Return the only supported readiness surface for Pi7 status promotion."""
+    simulation: dict[str, Any] | None,
+    closure: dict[str, Any] | None,
+    runtime_aspect: dict[str, Any] | None,
+    live_trace_evidence: dict[str, Any] | None,
+    operator_evidence: dict[str, Any] | None,
+    mcp_evidence: dict[str, Any] | None,
+    replay_evidence: dict[str, Any] | None,
+) -> dict[str, dict[str, Any]]:
     sim = simulation if isinstance(simulation, dict) else {}
-    close = closure if isinstance(closure, dict) else {}
-    aspect = runtime_aspect if isinstance(runtime_aspect, dict) else {}
-    live = live_trace_evidence if isinstance(live_trace_evidence, dict) else {}
-    operator = operator_evidence if isinstance(operator_evidence, dict) else {}
-    mcp = mcp_evidence if isinstance(mcp_evidence, dict) else {}
-    replay = replay_evidence if isinstance(replay_evidence, dict) else {}
+    return {
+        "sim": sim,
+        "close": closure if isinstance(closure, dict) else {},
+        "aspect": runtime_aspect if isinstance(runtime_aspect, dict) else {},
+        "live": live_trace_evidence if isinstance(live_trace_evidence, dict) else {},
+        "operator": operator_evidence if isinstance(operator_evidence, dict) else {},
+        "mcp": mcp_evidence if isinstance(mcp_evidence, dict) else {},
+        "replay": replay_evidence if isinstance(replay_evidence, dict) else {},
+        "long_state": (
+            sim.get("npc_long_horizon_state")
+            if isinstance(sim.get("npc_long_horizon_state"), dict)
+            else {}
+        ),
+        "conflict": (
+            sim.get("npc_plan_conflict_resolution")
+            if isinstance(sim.get("npc_plan_conflict_resolution"), dict)
+            else {}
+        ),
+    }
 
-    long_state = sim.get("npc_long_horizon_state") if isinstance(sim.get("npc_long_horizon_state"), dict) else {}
-    private_plans = coerce_dict_rows(sim.get("npc_private_plans"))
-    conflict = (
-        sim.get("npc_plan_conflict_resolution")
-        if isinstance(sim.get("npc_plan_conflict_resolution"), dict)
-        else {}
-    )
 
+def _aspect_forbidden_actor_absent(aspect: dict[str, Any]) -> Any:
+    forbidden_actor_absent = aspect.get("npc_forbidden_actor_absent")
+    if forbidden_actor_absent is None:
+        forbidden_actor_absent = aspect.get("forbidden_actor_absent")
+    return True if forbidden_actor_absent is None else forbidden_actor_absent
+
+
+def _claim_readiness_gate_flags(
+    *,
+    sources: dict[str, dict[str, Any]],
+    private_plans: list[dict[str, Any]],
+) -> dict[str, bool]:
+    sim = sources["sim"]
+    close = sources["close"]
+    aspect = sources["aspect"]
+    live = sources["live"]
+    operator = sources["operator"]
+    mcp = sources["mcp"]
+    replay = sources["replay"]
+    long_state = sources["long_state"]
+    conflict = sources["conflict"]
     bounded_pass = (
         sim.get("schema_version") == NPC_AGENCY_SIMULATION_SCHEMA_VERSION
         and sim.get("contract_status") == NPC_AGENCY_SIMULATION_IMPLEMENTED_STATUS
@@ -96,22 +122,39 @@ def assess_npc_agency_claim_readiness(
             _truthy(replay.get("player_visible_replay_present")),
         ]
     )
-    forbidden_actor_absent = aspect.get("npc_forbidden_actor_absent")
-    if forbidden_actor_absent is None:
-        forbidden_actor_absent = aspect.get("forbidden_actor_absent")
-    if forbidden_actor_absent is None:
-        forbidden_actor_absent = True
     aspect_pass = (
         _truthy(aspect.get("npc_independent_planning_used") or aspect.get("independent_planning_used"))
-        and _truthy(forbidden_actor_absent)
+        and _truthy(_aspect_forbidden_actor_absent(aspect))
         and _truthy(aspect.get("long_horizon_state_present"))
         and _truthy(aspect.get("private_plan_resolution_present"))
         and _truthy(aspect.get("private_plan_visibility_respected"))
     )
+    return {
+        "bounded_pass": bounded_pass,
+        "long_horizon_pass": long_horizon_pass,
+        "private_plan_pass": private_plan_pass,
+        "closure_pass": closure_pass,
+        "aspect_pass": aspect_pass,
+        "live_pass": live_pass,
+    }
 
-    gates = {
+
+def _claim_readiness_gates(
+    *,
+    sources: dict[str, dict[str, Any]],
+    private_plans: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    sim = sources["sim"]
+    close = sources["close"]
+    aspect = sources["aspect"]
+    live = sources["live"]
+    mcp = sources["mcp"]
+    long_state = sources["long_state"]
+    conflict = sources["conflict"]
+    flags = _claim_readiness_gate_flags(sources=sources, private_plans=private_plans)
+    return {
         "bounded_runtime_simulation": _gate_record(
-            bounded_pass,
+            flags["bounded_pass"],
             evidence={
                 "schema_version": sim.get("schema_version"),
                 "contract_status": sim.get("contract_status"),
@@ -120,12 +163,12 @@ def assess_npc_agency_claim_readiness(
             blocker="bounded_runtime_simulation_evidence_missing",
         ),
         "long_horizon_state": _gate_record(
-            long_horizon_pass,
+            flags["long_horizon_pass"],
             evidence={"schema_version": long_state.get("schema_version")},
             blocker="long_horizon_state_evidence_missing",
         ),
         "private_independent_planning": _gate_record(
-            private_plan_pass,
+            flags["private_plan_pass"],
             evidence={
                 "private_plan_count": len(private_plans),
                 "conflict_resolution_schema": conflict.get("schema_version"),
@@ -133,7 +176,7 @@ def assess_npc_agency_claim_readiness(
             blocker="private_plan_resolution_evidence_missing",
         ),
         "durable_closure": _gate_record(
-            closure_pass,
+            flags["closure_pass"],
             evidence={
                 "schema_version": close.get("schema_version"),
                 "closure_status": close.get("closure_status"),
@@ -141,7 +184,7 @@ def assess_npc_agency_claim_readiness(
             blocker="durable_closure_evidence_missing",
         ),
         "operator_mcp_trace_surface": _gate_record(
-            aspect_pass,
+            flags["aspect_pass"],
             evidence={
                 "runtime_aspect_present": bool(aspect),
                 "long_horizon_state_present": aspect.get("long_horizon_state_present"),
@@ -151,7 +194,7 @@ def assess_npc_agency_claim_readiness(
             blocker="runtime_aspect_evidence_missing",
         ),
         "live_staging": _gate_record(
-            live_pass,
+            flags["live_pass"],
             evidence={
                 "live_trace_present": live.get("live_trace_present"),
                 "non_mock_generation_pass": live.get("non_mock_generation_pass"),
@@ -160,11 +203,9 @@ def assess_npc_agency_claim_readiness(
             blocker="live_staging_evidence_missing",
         ),
     }
-    blockers = [
-        row["blocker"]
-        for row in gates.values()
-        if isinstance(row, dict) and row.get("blocker")
-    ]
+
+
+def _claim_readiness_status(gates: dict[str, dict[str, Any]]) -> tuple[str, bool]:
     implementation_ready = all(
         gates[key]["passed"]
         for key in (
@@ -176,11 +217,41 @@ def assess_npc_agency_claim_readiness(
         )
     )
     if implementation_ready and gates["live_staging"]["passed"]:
-        status = NPC_AGENCY_CLAIM_FULL_LONG_HORIZON_READY_STATUS
-    elif gates["bounded_runtime_simulation"]["passed"] and gates["live_staging"]["passed"]:
-        status = NPC_AGENCY_CLAIM_LIVE_STAGING_READY_STATUS
-    else:
-        status = NPC_AGENCY_CLAIM_BOUNDED_RUNTIME_STATUS
+        return NPC_AGENCY_CLAIM_FULL_LONG_HORIZON_READY_STATUS, implementation_ready
+    if gates["bounded_runtime_simulation"]["passed"] and gates["live_staging"]["passed"]:
+        return NPC_AGENCY_CLAIM_LIVE_STAGING_READY_STATUS, implementation_ready
+    return NPC_AGENCY_CLAIM_BOUNDED_RUNTIME_STATUS, implementation_ready
+
+
+def assess_npc_agency_claim_readiness(
+    *,
+    simulation: dict[str, Any] | None = None,
+    closure: dict[str, Any] | None = None,
+    runtime_aspect: dict[str, Any] | None = None,
+    live_trace_evidence: dict[str, Any] | None = None,
+    operator_evidence: dict[str, Any] | None = None,
+    mcp_evidence: dict[str, Any] | None = None,
+    replay_evidence: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return the only supported readiness surface for Pi7 status promotion."""
+    sources = _claim_readiness_sources(
+        simulation=simulation,
+        closure=closure,
+        runtime_aspect=runtime_aspect,
+        live_trace_evidence=live_trace_evidence,
+        operator_evidence=operator_evidence,
+        mcp_evidence=mcp_evidence,
+        replay_evidence=replay_evidence,
+    )
+    sim = sources["sim"]
+    private_plans = coerce_dict_rows(sim.get("npc_private_plans"))
+    gates = _claim_readiness_gates(sources=sources, private_plans=private_plans)
+    blockers = [
+        row["blocker"]
+        for row in gates.values()
+        if isinstance(row, dict) and row.get("blocker")
+    ]
+    status, implementation_ready = _claim_readiness_status(gates)
 
     return {
         "schema_version": NPC_AGENCY_CLAIM_READINESS_SCHEMA_VERSION,

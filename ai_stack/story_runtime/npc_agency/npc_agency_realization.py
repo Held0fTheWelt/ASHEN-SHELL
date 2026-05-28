@@ -405,74 +405,43 @@ def validate_npc_initiative_realization(
     return result
 
 
-def build_npc_agency_closure(
-    agency: dict[str, Any] | None,
-    *,
-    validation: dict[str, Any] | None = None,
-    prior_planner_truth: dict[str, Any] | None = None,
-    actor_lane_context: dict[str, Any] | None = None,
-    turn_number: Any = None,
-    closure_context: dict[str, Any] | None = None,
-) -> dict[str, Any] | None:
-    source_validation = validation if isinstance(validation, dict) else {}
-    source_agency = (
-        source_validation.get("npc_agency_simulation")
-        if isinstance(source_validation.get("npc_agency_simulation"), dict)
-        else agency
-    )
-    simulation, plan = _simulation_and_plan_payload(
-        source_agency if isinstance(source_agency, dict) else source_validation.get("npc_agency_plan"),
-        actor_lane_context=actor_lane_context,
-        turn_number=turn_number,
-    )
-    if not isinstance(plan, dict):
-        return None
-
-    realization = (
-        source_validation.get("npc_initiative_realization_v1")
-        if isinstance(source_validation.get("npc_initiative_realization_v1"), dict)
+def _closure_prior_rows(
+    prior_planner_truth: dict[str, Any] | None,
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]], list[str]]:
+    prior = prior_planner_truth if isinstance(prior_planner_truth, dict) else {}
+    prior_closure = (
+        prior.get("npc_agency_closure")
+        if isinstance(prior.get("npc_agency_closure"), dict)
         else {}
     )
-    planned_actor_ids = (
-        list(realization.get("planned_actor_ids") or [])
-        if realization
-        else planned_actor_ids_from_plan(plan)
-    )
-    realized_actor_ids = dedupe_strings(
-        list(source_validation.get("realized_actor_ids") or [])
-        + list(realization.get("realized_initiative_actor_ids") or [])
-    )
-    missing_required_actor_ids = dedupe_strings(
-        list(source_validation.get("missing_required_actor_ids") or [])
-        + list(realization.get("unrealized_required_initiative_actor_ids") or [])
-    )
-    private_plan_evidence = _private_plan_evidence(simulation)
-    selected_private_plan_by_actor = private_plan_evidence["private_plan_by_actor"]
-
-    prior = prior_planner_truth if isinstance(prior_planner_truth, dict) else {}
-    prior_closure = prior.get("npc_agency_closure") if isinstance(prior.get("npc_agency_closure"), dict) else {}
     prior_rows = coerce_dict_rows(prior_closure.get("carried_forward_npc_initiatives"))
     prior_by_actor = {
         clean_text(row.get("actor_id")): row
         for row in prior_rows
         if clean_text(row.get("actor_id"))
     }
-    prior_actor_ids = dedupe_strings([row.get("actor_id") for row in prior_rows])
-    closed_actor_ids = [
-        actor_id for actor_id in prior_actor_ids if actor_id in realized_actor_ids
-    ]
+    return prior_rows, prior_by_actor, dedupe_strings([row.get("actor_id") for row in prior_rows])
+
+
+def _closure_context_actor_sets(
+    closure_context: dict[str, Any] | None,
+) -> tuple[list[str], list[str], list[str], set[str]]:
     close_ctx = closure_context if isinstance(closure_context, dict) else {}
     superseded_actor_ids = dedupe_strings(close_ctx.get("superseded_actor_ids") or [])
     blocked_actor_ids = dedupe_strings(close_ctx.get("blocked_by_player_action_actor_ids") or [])
     expired_actor_ids = dedupe_strings(close_ctx.get("expired_by_scene_transition_actor_ids") or [])
     non_carry_actor_ids = set(superseded_actor_ids + blocked_actor_ids + expired_actor_ids)
+    return superseded_actor_ids, blocked_actor_ids, expired_actor_ids, non_carry_actor_ids
 
-    initiatives = coerce_dict_rows(plan.get("npc_initiatives"))
-    initiative_by_actor = {
-        clean_text(row.get("actor_id")): row
-        for row in initiatives
-        if clean_text(row.get("actor_id"))
-    }
+
+def _closure_unresolved_actor_ids(
+    *,
+    missing_required_actor_ids: list[str],
+    prior_actor_ids: list[str],
+    realized_actor_ids: list[str],
+    non_carry_actor_ids: set[str],
+    actor_lane_context: dict[str, Any] | None,
+) -> list[str]:
     unresolved_actor_ids = dedupe_strings(
         [
             *missing_required_actor_ids,
@@ -485,7 +454,19 @@ def build_npc_agency_closure(
             ],
         ]
     )
-    unresolved_actor_ids = [actor_id for actor_id in unresolved_actor_ids if actor_id not in non_carry_actor_ids]
+    return [actor_id for actor_id in unresolved_actor_ids if actor_id not in non_carry_actor_ids]
+
+
+def _closure_carried_rows(
+    *,
+    unresolved_actor_ids: list[str],
+    initiative_by_actor: dict[str, dict[str, Any]],
+    prior_by_actor: dict[str, dict[str, Any]],
+    selected_private_plan_by_actor: dict[str, dict[str, Any]],
+    missing_required_actor_ids: list[str],
+    source_validation: dict[str, Any],
+    turn_number: Any,
+) -> list[dict[str, Any]]:
     carried_rows: list[dict[str, Any]] = []
     for actor_id in unresolved_actor_ids:
         row = initiative_by_actor.get(actor_id, {})
@@ -520,18 +501,69 @@ def build_npc_agency_closure(
                 or NPC_INITIATIVE_VALIDATION_SCHEMA_VERSION,
             }
         )
+    return carried_rows
 
-    full_simulation = isinstance(simulation, dict)
+
+def _closure_status(
+    *,
+    carried_rows: list[dict[str, Any]],
+    superseded_actor_ids: list[str],
+    blocked_actor_ids: list[str],
+    expired_actor_ids: list[str],
+) -> str:
     if carried_rows:
-        closure_status = NPC_AGENCY_CLOSURE_CARRY_FORWARD_STATUS
-    elif superseded_actor_ids:
-        closure_status = NPC_AGENCY_CLOSURE_SUPERSEDED_STATUS
-    elif blocked_actor_ids:
-        closure_status = NPC_AGENCY_CLOSURE_BLOCKED_BY_PLAYER_ACTION_STATUS
-    elif expired_actor_ids:
-        closure_status = NPC_AGENCY_CLOSURE_EXPIRED_BY_SCENE_TRANSITION_STATUS
-    else:
-        closure_status = NPC_AGENCY_CLOSURE_CLOSED_STATUS
+        return NPC_AGENCY_CLOSURE_CARRY_FORWARD_STATUS
+    if superseded_actor_ids:
+        return NPC_AGENCY_CLOSURE_SUPERSEDED_STATUS
+    if blocked_actor_ids:
+        return NPC_AGENCY_CLOSURE_BLOCKED_BY_PLAYER_ACTION_STATUS
+    if expired_actor_ids:
+        return NPC_AGENCY_CLOSURE_EXPIRED_BY_SCENE_TRANSITION_STATUS
+    return NPC_AGENCY_CLOSURE_CLOSED_STATUS
+
+
+def _closure_actor_validation_evidence(
+    *,
+    source_validation: dict[str, Any],
+    plan: dict[str, Any],
+) -> tuple[dict[str, Any], list[str], list[str], list[str]]:
+    realization = (
+        source_validation.get("npc_initiative_realization_v1")
+        if isinstance(source_validation.get("npc_initiative_realization_v1"), dict)
+        else {}
+    )
+    planned_actor_ids = (
+        list(realization.get("planned_actor_ids") or [])
+        if realization
+        else planned_actor_ids_from_plan(plan)
+    )
+    realized_actor_ids = dedupe_strings(
+        list(source_validation.get("realized_actor_ids") or [])
+        + list(realization.get("realized_initiative_actor_ids") or [])
+    )
+    missing_required_actor_ids = dedupe_strings(
+        list(source_validation.get("missing_required_actor_ids") or [])
+        + list(realization.get("unrealized_required_initiative_actor_ids") or [])
+    )
+    return realization, planned_actor_ids, realized_actor_ids, missing_required_actor_ids
+
+
+def _closure_payload(
+    *,
+    simulation: dict[str, Any] | None,
+    closure_status: str,
+    turn_number: Any,
+    planned_actor_ids: list[str],
+    realized_actor_ids: list[str],
+    missing_required_actor_ids: list[str],
+    carried_rows: list[dict[str, Any]],
+    closed_actor_ids: list[str],
+    superseded_actor_ids: list[str],
+    blocked_actor_ids: list[str],
+    expired_actor_ids: list[str],
+    private_plan_evidence: dict[str, Any],
+) -> dict[str, Any]:
+    full_simulation = isinstance(simulation, dict)
     return {
         "schema_version": NPC_AGENCY_CLOSURE_SCHEMA_VERSION,
         "contract_status": (
@@ -571,3 +603,85 @@ def build_npc_agency_closure(
         "carried_forward_npc_initiatives": carried_rows,
         "durable_carry_forward_required": bool(carried_rows),
     }
+
+
+def build_npc_agency_closure(
+    agency: dict[str, Any] | None,
+    *,
+    validation: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
+    actor_lane_context: dict[str, Any] | None = None,
+    turn_number: Any = None,
+    closure_context: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    source_validation = validation if isinstance(validation, dict) else {}
+    source_agency = (
+        source_validation.get("npc_agency_simulation")
+        if isinstance(source_validation.get("npc_agency_simulation"), dict)
+        else agency
+    )
+    simulation, plan = _simulation_and_plan_payload(
+        source_agency if isinstance(source_agency, dict) else source_validation.get("npc_agency_plan"),
+        actor_lane_context=actor_lane_context,
+        turn_number=turn_number,
+    )
+    if not isinstance(plan, dict):
+        return None
+
+    _realization, planned_actor_ids, realized_actor_ids, missing_required_actor_ids = (
+        _closure_actor_validation_evidence(source_validation=source_validation, plan=plan)
+    )
+    private_plan_evidence = _private_plan_evidence(simulation)
+    selected_private_plan_by_actor = private_plan_evidence["private_plan_by_actor"]
+
+    _prior_rows, prior_by_actor, prior_actor_ids = _closure_prior_rows(prior_planner_truth)
+    closed_actor_ids = [actor_id for actor_id in prior_actor_ids if actor_id in realized_actor_ids]
+    (
+        superseded_actor_ids,
+        blocked_actor_ids,
+        expired_actor_ids,
+        non_carry_actor_ids,
+    ) = _closure_context_actor_sets(closure_context)
+    initiatives = coerce_dict_rows(plan.get("npc_initiatives"))
+    initiative_by_actor = {
+        clean_text(row.get("actor_id")): row
+        for row in initiatives
+        if clean_text(row.get("actor_id"))
+    }
+    unresolved_actor_ids = _closure_unresolved_actor_ids(
+        missing_required_actor_ids=missing_required_actor_ids,
+        prior_actor_ids=prior_actor_ids,
+        realized_actor_ids=realized_actor_ids,
+        non_carry_actor_ids=non_carry_actor_ids,
+        actor_lane_context=actor_lane_context,
+    )
+    carried_rows = _closure_carried_rows(
+        unresolved_actor_ids=unresolved_actor_ids,
+        initiative_by_actor=initiative_by_actor,
+        prior_by_actor=prior_by_actor,
+        selected_private_plan_by_actor=selected_private_plan_by_actor,
+        missing_required_actor_ids=missing_required_actor_ids,
+        source_validation=source_validation,
+        turn_number=turn_number,
+    )
+
+    closure_status = _closure_status(
+        carried_rows=carried_rows,
+        superseded_actor_ids=superseded_actor_ids,
+        blocked_actor_ids=blocked_actor_ids,
+        expired_actor_ids=expired_actor_ids,
+    )
+    return _closure_payload(
+        simulation=simulation,
+        closure_status=closure_status,
+        turn_number=turn_number,
+        planned_actor_ids=planned_actor_ids,
+        realized_actor_ids=realized_actor_ids,
+        missing_required_actor_ids=missing_required_actor_ids,
+        carried_rows=carried_rows,
+        closed_actor_ids=closed_actor_ids,
+        superseded_actor_ids=superseded_actor_ids,
+        blocked_actor_ids=blocked_actor_ids,
+        expired_actor_ids=expired_actor_ids,
+        private_plan_evidence=private_plan_evidence,
+    )

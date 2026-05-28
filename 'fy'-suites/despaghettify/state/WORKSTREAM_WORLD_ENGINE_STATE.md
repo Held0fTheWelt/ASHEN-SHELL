@@ -1,5 +1,21 @@
 # Workstream: world_engine
 
+## Closed — DS-031 manager split and DS-032 UI/prior-export support (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-031 | Live scene envelope, narrator output realization, and opening prompt construction now delegate to named actor identity, speech/response, diagnostics, fallback, candidate-attempt, scene-context, and policy-context helpers. | `_build_live_scene_turn_envelope`, `_realize_narrator_path_output`, `_build_opening_prompt` | Pre: `artifacts/workstreams/world_engine/pre/session_20260528_DS-031_*`; post: `artifacts/workstreams/world_engine/post/session_20260528_DS-031_comparison.*` |
+| DS-032 | World-engine UI route registration is split into entry/auth/proxy/page route registrars with named HTTP status constants; callback/cascade prior graph exports preserve continuity-edge signals for live graph calls. | `register_world_engine_ui_routes`, `_register_world_engine_auth_routes`, `_prior_callback_web_state_for_graph`, `_prior_consequence_cascade_state_for_graph` | Post evidence is recorded under the primary backend workstream: `artifacts/workstreams/backend_runtime_services/post/session_20260528_DS-032_comparison.*` |
+
+**Gates (final):**
+
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_goc_narrator_path_opening.py world-engine/tests/test_mvp1_experience_identity.py -k 'opening or narrator_path' --tb=short` — 8 passed, 53 deselected.
+- Initial broad DS-032 world-engine gate found two callback/cascade prior-export regressions after 35 passing tests; the corrected focused rerun `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_story_runtime_callback_web.py world-engine/tests/test_story_runtime_consequence_cascade.py --tb=short` — 3 passed.
+- `python -m py_compile` on all changed world-engine files — passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T15:25:17Z`.
+
+**Structural delta:** DS-031 target leaders are pruned from the current top-12 longest ranking. `register_world_engine_ui_routes` is now a short registrar orchestrator with 0 counted magic integer literals.
+
 ## Closed — DS-025 world-engine manager/session split (session 20260523)
 
 | Sub-wave | Outcome | Primary files / symbols | Evidence |

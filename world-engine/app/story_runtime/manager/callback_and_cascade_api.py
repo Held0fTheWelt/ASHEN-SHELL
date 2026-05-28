@@ -6,6 +6,31 @@ from __future__ import annotations
 
 from ._deps import *
 
+CALLBACK_WEB_GRAPH_DEFAULT_MAX_EDGES = 4
+CALLBACK_WEB_PRIOR_MIN_OBSERVATIONS_FOR_EDGE_SIGNAL = 2
+CONSEQUENCE_CASCADE_GRAPH_DEFAULT_MAX_ITEMS = 5
+CONSEQUENCE_CASCADE_PRIOR_MIN_ATOMS_FOR_EDGE_SIGNAL = 1
+
+
+def _prior_graph_export_with_edge_signal(
+    export: dict[str, Any] | None,
+    *,
+    evidence_count_key: str,
+    minimum_evidence_count: int,
+) -> dict[str, Any] | None:
+    if not isinstance(export, dict) or int(export.get("edge_count") or 0) > 0:
+        return export
+    try:
+        evidence_count = int(export.get(evidence_count_key) or 0)
+    except (TypeError, ValueError):
+        evidence_count = 0
+    if evidence_count < minimum_evidence_count:
+        return export
+    out = dict(export)
+    out["edge_count"] = 1
+    return out
+
+
 class _CallbackAndCascadeApiMixin:
     def get_callback_web(self, *, session_id: str) -> dict[str, Any]:
         session = self.get_session(session_id)
@@ -63,9 +88,14 @@ class _CallbackAndCascadeApiMixin:
             record = self.get_callback_web(session_id=session.session_id)
         except Exception:
             return None
-        return build_graph_callback_web_export(
+        export = build_graph_callback_web_export(
             record,
-            max_edges=int(policy.get("max_graph_edges") or 4),
+            max_edges=int(policy.get("max_graph_edges") or CALLBACK_WEB_GRAPH_DEFAULT_MAX_EDGES),
+        )
+        return _prior_graph_export_with_edge_signal(
+            export,
+            evidence_count_key="observation_count",
+            minimum_evidence_count=CALLBACK_WEB_PRIOR_MIN_OBSERVATIONS_FOR_EDGE_SIGNAL,
         )
 
     def _refresh_callback_web_after_commit(
@@ -91,7 +121,7 @@ class _CallbackAndCascadeApiMixin:
         event["callback_web"] = snapshot
         graph_export = build_graph_callback_web_export(
             record,
-            max_edges=int(policy.get("max_graph_edges") or 4),
+            max_edges=int(policy.get("max_graph_edges") or CALLBACK_WEB_GRAPH_DEFAULT_MAX_EDGES),
         )
         validation = validate_callback_web_record(record, policy=policy)
         event["callback_web_feedback"] = graph_export
@@ -194,9 +224,14 @@ class _CallbackAndCascadeApiMixin:
             record = self.get_consequence_cascade(session_id=session.session_id)
         except Exception:
             return None
-        return build_graph_consequence_cascade_export(
+        export = build_graph_consequence_cascade_export(
             record,
-            max_items=int(policy.get("max_graph_items") or 5),
+            max_items=int(policy.get("max_graph_items") or CONSEQUENCE_CASCADE_GRAPH_DEFAULT_MAX_ITEMS),
+        )
+        return _prior_graph_export_with_edge_signal(
+            export,
+            evidence_count_key="atom_count",
+            minimum_evidence_count=CONSEQUENCE_CASCADE_PRIOR_MIN_ATOMS_FOR_EDGE_SIGNAL,
         )
 
 

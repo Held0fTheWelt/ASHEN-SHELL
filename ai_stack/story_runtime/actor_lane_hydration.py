@@ -115,6 +115,148 @@ def should_hydrate_actor_lanes(
     return _actor_lane_substance_count(structured_output) == 0
 
 
+def _hydration_narrative(structured_output: dict[str, Any]) -> str:
+    narrative = narration_summary_to_plain_str(structured_output.get("narration_summary"))
+    return narrative or str(structured_output.get("narrative_response") or "").strip()
+
+
+def _primary_and_secondary_responders(
+    *,
+    structured_output: dict[str, Any],
+    responder_ids: list[str],
+) -> tuple[str, list[str]]:
+    primary = str(structured_output.get("primary_responder_id") or "").strip()
+    if not primary and responder_ids:
+        primary = responder_ids[0]
+    secondary = [
+        str(x).strip()
+        for x in (structured_output.get("secondary_responder_ids") or [])
+        if str(x).strip()
+    ]
+    if not secondary and len(responder_ids) > 1:
+        secondary = responder_ids[1:]
+    return primary, secondary
+
+
+def _append_allowed_actor(
+    target_actors: list[str],
+    actor_id: str,
+    *,
+    actor_lane_context: dict[str, Any] | None,
+) -> None:
+    if not actor_id or actor_id in target_actors:
+        return
+    if is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context):
+        return
+    target_actors.append(actor_id)
+
+
+def _fill_from_secondary_actors(
+    target_actors: list[str],
+    *,
+    secondary: list[str],
+    min_actors: int,
+    actor_lane_context: dict[str, Any] | None,
+    enforce_lane_filter: bool,
+) -> None:
+    while len(target_actors) < min_actors and secondary:
+        for actor_id in secondary:
+            if enforce_lane_filter:
+                _append_allowed_actor(
+                    target_actors,
+                    actor_id,
+                    actor_lane_context=actor_lane_context,
+                )
+            elif actor_id not in target_actors:
+                target_actors.append(actor_id)
+            if len(target_actors) >= min_actors:
+                break
+
+
+def _hydration_target_actors(
+    *,
+    primary: str,
+    secondary: list[str],
+    responder_ids: list[str],
+    required_npc: list[str],
+    min_actors: int,
+    low_density_pacing: bool,
+    actor_lane_context: dict[str, Any] | None,
+) -> list[str]:
+    target_actors: list[str] = []
+    if low_density_pacing:
+        actor_pool = dedupe_strings(([primary] if primary else []) + required_npc + responder_ids + secondary)
+    else:
+        actor_pool = dedupe_strings(responder_ids + required_npc + ([primary] if primary else []))
+    for actor_id in actor_pool:
+        _append_allowed_actor(target_actors, actor_id, actor_lane_context=actor_lane_context)
+    _fill_from_secondary_actors(
+        target_actors,
+        secondary=secondary,
+        min_actors=min_actors,
+        actor_lane_context=actor_lane_context,
+        enforce_lane_filter=low_density_pacing,
+    )
+    return target_actors or ([primary] if primary else [])
+
+
+def _hydrated_actor_rows(
+    *,
+    target_actors: list[str],
+    required_npc: list[str],
+    narrative: str,
+    low_density_pacing: bool,
+) -> tuple[list[dict[str, str]], list[dict[str, str]], list[dict[str, str]]]:
+    spoken_lines: list[dict[str, str]] = []
+    action_lines: list[dict[str, str]] = []
+    for idx, actor_id in enumerate(target_actors):
+        if idx == 0:
+            spoken_lines.append(
+                {"speaker_id": actor_id, "text": _spoken_line_text(narrative=narrative, actor_index=idx)}
+            )
+        else:
+            action_lines.append(
+                {"actor_id": actor_id, "text": _action_line_text(narrative=narrative, actor_id=actor_id)}
+            )
+    initiative_events = (
+        []
+        if low_density_pacing
+        else [
+            {"actor_id": actor_id, "type": "seize", "reason": "actor_lane_hydration"}
+            for actor_id in required_npc
+            if actor_id in target_actors
+        ]
+    )
+    return spoken_lines, action_lines, initiative_events
+
+
+def _apply_hydration_density_budget(
+    *,
+    scene_energy_target: dict[str, Any] | None,
+    narrative: str,
+    spoken_lines: list[dict[str, str]],
+    action_lines: list[dict[str, str]],
+    initiative_events: list[dict[str, str]],
+) -> None:
+    if not isinstance(scene_energy_target, dict):
+        return
+    raw_max = scene_energy_target.get("maximum_visible_density_count")
+    if not isinstance(raw_max, int) or raw_max <= 0:
+        return
+    lane_budget = max(0, raw_max - (1 if narrative else 0))
+    while _actor_lane_substance_count(
+        {"spoken_lines": spoken_lines, "action_lines": action_lines, "initiative_events": initiative_events}
+    ) > lane_budget:
+        if initiative_events:
+            initiative_events.pop()
+        elif action_lines:
+            action_lines.pop()
+        elif len(spoken_lines) > 1:
+            spoken_lines.pop()
+        else:
+            break
+
+
 def hydrate_actor_lanes(
     structured_output: dict[str, Any],
     *,
@@ -134,22 +276,12 @@ def hydrate_actor_lanes(
     ):
         return structured_output, False
 
-    narrative = narration_summary_to_plain_str(structured_output.get("narration_summary"))
-    if not narrative:
-        narrative = str(structured_output.get("narrative_response") or "").strip()
-
+    narrative = _hydration_narrative(structured_output)
     responder_ids = _responder_actor_ids(selected_responder_set)
-    primary = str(structured_output.get("primary_responder_id") or "").strip()
-    if not primary and responder_ids:
-        primary = responder_ids[0]
-    secondary = [
-        str(x).strip()
-        for x in (structured_output.get("secondary_responder_ids") or [])
-        if str(x).strip()
-    ]
-    if not secondary and len(responder_ids) > 1:
-        secondary = responder_ids[1:]
-
+    primary, secondary = _primary_and_secondary_responders(
+        structured_output=structured_output,
+        responder_ids=responder_ids,
+    )
     min_actors = minimum_actor_response_count_from_governance(
         actor_response_floor_target=scene_energy_target,
         pacing_mode=pacing_mode,
@@ -159,90 +291,31 @@ def hydrate_actor_lanes(
     required_npc = _required_npc_actor_ids(npc_agency_plan, actor_lane_context=actor_lane_context)
     low_density_pacing = str(pacing_mode or "").strip().lower() in {"thin_edge", "compressed"}
 
-    target_actors: list[str] = []
-    if low_density_pacing:
-        for actor_id in dedupe_strings(
-            ([primary] if primary else [])
-            + required_npc
-            + responder_ids
-            + secondary
-        ):
-            if not actor_id or actor_id in target_actors:
-                continue
-            if is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context):
-                continue
-            target_actors.append(actor_id)
-        while len(target_actors) < min_actors and secondary:
-            for actor_id in secondary:
-                if actor_id in target_actors:
-                    continue
-                if is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context):
-                    continue
-                target_actors.append(actor_id)
-                if len(target_actors) >= min_actors:
-                    break
-    else:
-        for actor_id in dedupe_strings(responder_ids + required_npc + ([primary] if primary else [])):
-            if not actor_id:
-                continue
-            if is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context):
-                continue
-            if actor_id not in target_actors:
-                target_actors.append(actor_id)
-
-        while len(target_actors) < min_actors and secondary:
-            for actor_id in secondary:
-                if actor_id not in target_actors:
-                    target_actors.append(actor_id)
-                if len(target_actors) >= min_actors:
-                    break
-
-    if not target_actors and primary:
-        target_actors = [primary]
+    target_actors = _hydration_target_actors(
+        primary=primary,
+        secondary=secondary,
+        responder_ids=responder_ids,
+        required_npc=required_npc,
+        min_actors=min_actors,
+        low_density_pacing=low_density_pacing,
+        actor_lane_context=actor_lane_context,
+    )
     if not target_actors:
         return structured_output, False
 
-    max_density = None
-    if isinstance(scene_energy_target, dict):
-        raw_max = scene_energy_target.get("maximum_visible_density_count")
-        if isinstance(raw_max, int) and raw_max > 0:
-            max_density = raw_max
-
-    spoken_lines: list[dict[str, str]] = []
-    action_lines: list[dict[str, str]] = []
-    for idx, actor_id in enumerate(target_actors):
-        if idx == 0:
-            spoken_lines.append(
-                {"speaker_id": actor_id, "text": _spoken_line_text(narrative=narrative, actor_index=idx)}
-            )
-        else:
-            action_lines.append(
-                {"actor_id": actor_id, "text": _action_line_text(narrative=narrative, actor_id=actor_id)}
-            )
-
-    initiative_events: list[dict[str, str]] = []
-    skip_initiative = low_density_pacing
-    if not skip_initiative:
-        for actor_id in required_npc:
-            if actor_id in target_actors:
-                initiative_events.append(
-                    {"actor_id": actor_id, "type": "seize", "reason": "actor_lane_hydration"}
-                )
-
-    if max_density is not None:
-        narrative_blocks = 1 if narrative else 0
-        lane_budget = max(0, max_density - narrative_blocks)
-        while _actor_lane_substance_count(
-            {"spoken_lines": spoken_lines, "action_lines": action_lines, "initiative_events": initiative_events}
-        ) > lane_budget:
-            if initiative_events:
-                initiative_events.pop()
-            elif action_lines:
-                action_lines.pop()
-            elif len(spoken_lines) > 1:
-                spoken_lines.pop()
-            else:
-                break
+    spoken_lines, action_lines, initiative_events = _hydrated_actor_rows(
+        target_actors=target_actors,
+        required_npc=required_npc,
+        narrative=narrative,
+        low_density_pacing=low_density_pacing,
+    )
+    _apply_hydration_density_budget(
+        scene_energy_target=scene_energy_target,
+        narrative=narrative,
+        spoken_lines=spoken_lines,
+        action_lines=action_lines,
+        initiative_events=initiative_events,
+    )
 
     hydrated = dict(structured_output)
     hydrated["schema_version"] = RUNTIME_ACTOR_TURN_SCHEMA

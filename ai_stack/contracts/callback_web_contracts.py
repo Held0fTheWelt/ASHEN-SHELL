@@ -4,12 +4,27 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_stack.contracts.normalization import bounded_int, clean_str_list
 from ai_stack.contracts.serialization import json_safe as _json_safe
 
 
 CALLBACK_WEB_POLICY_SCHEMA_VERSION = "callback_web_policy.v1"
 CALLBACK_WEB_VALIDATION_SCHEMA_VERSION = "callback_web_validation.v1"
 CALLBACK_WEB_ASPECT_CONTRACT = "callback_web_aspect.v1"
+CALLBACK_WEB_POLICY_SOURCE = "module_runtime_policy"
+CALLBACK_WEB_POLICY_DEFAULT_MAX_EDGES = 80
+CALLBACK_WEB_POLICY_MIN_MAX_EDGES = 8
+CALLBACK_WEB_POLICY_HARD_MAX_EDGES = 500
+CALLBACK_WEB_POLICY_DEFAULT_MAX_OBSERVATIONS = 60
+CALLBACK_WEB_POLICY_MIN_MAX_OBSERVATIONS = 4
+CALLBACK_WEB_POLICY_HARD_MAX_OBSERVATIONS = 500
+CALLBACK_WEB_POLICY_DEFAULT_MAX_EVIDENCE_REFS = 8
+CALLBACK_WEB_POLICY_MIN_MAX_EVIDENCE_REFS = 1
+CALLBACK_WEB_POLICY_HARD_MAX_EVIDENCE_REFS = 32
+CALLBACK_WEB_POLICY_DEFAULT_MAX_GRAPH_EDGES = 4
+CALLBACK_WEB_POLICY_MIN_MAX_GRAPH_EDGES = 1
+CALLBACK_WEB_POLICY_HARD_MAX_GRAPH_EDGES = 16
+CALLBACK_WEB_POLICY_ALLOWED_CLASS_LIMIT = 32
 
 CALLBACK_WEB_FAILURE_CODES: frozenset[str] = frozenset(
     {
@@ -21,50 +36,33 @@ CALLBACK_WEB_FAILURE_CODES: frozenset[str] = frozenset(
 )
 
 
-
-def _coerce_int(value: Any, *, default: int, minimum: int, maximum: int) -> int:
-    try:
-        out = int(value)
-    except (TypeError, ValueError):
-        out = int(default)
-    return max(minimum, min(maximum, out))
-
-
-def _string_list(value: Any, *, limit: int = 32) -> list[str]:
-    if not isinstance(value, list):
-        return []
-    out: list[str] = []
-    for item in value:
-        text = str(item or "").strip()
-        if text and text not in out:
-            out.append(text)
-        if len(out) >= limit:
-            break
-    return out
-
-
 def normalize_callback_web_policy(policy: dict[str, Any] | None = None) -> dict[str, Any]:
     """Normalize module callback-web policy into a neutral runtime contract."""
     raw = policy if isinstance(policy, dict) else {}
     present = bool(raw)
-    max_edges = _coerce_int(raw.get("max_edges"), default=80, minimum=8, maximum=500)
-    max_observations = _coerce_int(
+    max_edges = bounded_int(
+        raw.get("max_edges"),
+        CALLBACK_WEB_POLICY_DEFAULT_MAX_EDGES,
+        minimum=CALLBACK_WEB_POLICY_MIN_MAX_EDGES,
+        maximum=CALLBACK_WEB_POLICY_HARD_MAX_EDGES,
+    )
+    max_observations = bounded_int(
         raw.get("max_observations"),
-        default=60,
-        minimum=4,
-        maximum=500,
+        CALLBACK_WEB_POLICY_DEFAULT_MAX_OBSERVATIONS,
+        minimum=CALLBACK_WEB_POLICY_MIN_MAX_OBSERVATIONS,
+        maximum=CALLBACK_WEB_POLICY_HARD_MAX_OBSERVATIONS,
     )
-    max_evidence_refs = _coerce_int(
+    max_evidence_refs = bounded_int(
         raw.get("max_evidence_refs_per_candidate") or raw.get("max_evidence_refs"),
-        default=8,
-        minimum=1,
-        maximum=32,
+        CALLBACK_WEB_POLICY_DEFAULT_MAX_EVIDENCE_REFS,
+        minimum=CALLBACK_WEB_POLICY_MIN_MAX_EVIDENCE_REFS,
+        maximum=CALLBACK_WEB_POLICY_HARD_MAX_EVIDENCE_REFS,
     )
-    max_graph_edges = _coerce_int(
+    max_graph_edges = bounded_int(
         raw.get("max_graph_edges") or raw.get("max_export_callbacks"),
-        default=4,
-        minimum=1,
-        maximum=16,
+        CALLBACK_WEB_POLICY_DEFAULT_MAX_GRAPH_EDGES,
+        minimum=CALLBACK_WEB_POLICY_MIN_MAX_GRAPH_EDGES,
+        maximum=CALLBACK_WEB_POLICY_HARD_MAX_GRAPH_EDGES,
     )
     return {
         "schema_version": str(raw.get("schema_version") or CALLBACK_WEB_POLICY_SCHEMA_VERSION),
@@ -74,8 +72,11 @@ def normalize_callback_web_policy(policy: dict[str, Any] | None = None) -> dict[
         "max_observations": max_observations,
         "max_evidence_refs": max_evidence_refs,
         "max_graph_edges": max_graph_edges,
-        "allowed_continuity_classes": _string_list(raw.get("allowed_continuity_classes")),
-        "source": str(raw.get("source") or "module_runtime_policy"),
+        "allowed_continuity_classes": clean_str_list(
+            raw.get("allowed_continuity_classes"),
+            allow_scalar=False,
+        )[:CALLBACK_WEB_POLICY_ALLOWED_CLASS_LIMIT],
+        "source": str(raw.get("source") or CALLBACK_WEB_POLICY_SOURCE),
     }
 
 

@@ -6,157 +6,198 @@ from __future__ import annotations
 
 from ._deps import *
 
+def _opening_scene_context(
+    *,
+    projection: dict[str, Any],
+    session: StorySession,
+) -> dict[str, Any]:
+    scene_id = str(projection.get("start_scene_id") or session.current_scene_id or "opening")
+    scenes = projection.get("scenes") if isinstance(projection.get("scenes"), list) else []
+    scene_row = next(
+        (
+            row
+            for row in scenes
+            if isinstance(row, dict) and str(row.get("scene_id") or row.get("id") or "") == scene_id
+        ),
+        {},
+    )
+    chars = projection.get("character_ids") if isinstance(projection.get("character_ids"), list) else []
+    return {
+        "scene_id": scene_id,
+        "scene_name": str(scene_row.get("name") or scene_id),
+        "scene_desc": str(scene_row.get("description") or ""),
+        "cast": ", ".join(str(c) for c in chars[:8]) if chars else "unknown",
+    }
+
+
+def _opening_prompt_policy_context(
+    *,
+    session: StorySession,
+    runtime_profile_id: str | None,
+) -> dict[str, Any]:
+    context: dict[str, Any] = {
+        "opening_scene_sequence_id": "",
+        "opening_event_ids": [],
+        "opening_must_establish": [],
+        "opening_min_visible_blocks": 0,
+        "opening_preferred_visible_blocks": 0,
+        "opening_max_visible_blocks": 0,
+        "hard_forbidden_reject_on": [],
+        "hard_forbidden_recover_on": [],
+        "first_playable_phase": "",
+        "anchor": "configured opening location and social premise",
+    }
+    try:
+        policy = load_module_runtime_policy(
+            module_id=session.module_id,
+            runtime_profile_id=runtime_profile_id,
+        )
+        _fill_opening_policy_context(context, policy.to_dict())
+    except Exception:
+        pass
+    return context
+
+
+def _fill_opening_policy_context(context: dict[str, Any], policy_dict: dict[str, Any]) -> None:
+    opening_policy = (
+        policy_dict.get("opening_policy")
+        if isinstance(policy_dict.get("opening_policy"), dict)
+        else {}
+    )
+    location_model = (
+        policy_dict.get("location_model")
+        if isinstance(policy_dict.get("location_model"), dict)
+        else {}
+    )
+    context["anchor"] = str(
+        location_model.get("narrative_anchor_area_id")
+        or location_model.get("setting_id")
+        or context["anchor"]
+    ).strip() or context["anchor"]
+    context["opening_scene_sequence_id"] = str(opening_policy.get("id") or "").strip()
+    narration_mode = (
+        opening_policy.get("narration_mode")
+        if isinstance(opening_policy.get("narration_mode"), dict)
+        else {}
+    )
+    for source, target in (
+        ("min_visible_blocks", "opening_min_visible_blocks"),
+        ("preferred_visible_blocks", "opening_preferred_visible_blocks"),
+        ("max_visible_blocks", "opening_max_visible_blocks"),
+    ):
+        try:
+            context[target] = int(narration_mode.get(source) or 0)
+        except (TypeError, ValueError):
+            context[target] = 0
+    contract = (
+        opening_policy.get("opening_contract")
+        if isinstance(opening_policy.get("opening_contract"), dict)
+        else {}
+    )
+    context["opening_must_establish"] = [
+        str(item).strip()
+        for item in (contract.get("must_establish") or [])
+        if str(item).strip()
+    ]
+    _fill_opening_event_context(context, opening_policy)
+    _fill_hard_forbidden_context(context, policy_dict)
+
+
+def _fill_opening_event_context(context: dict[str, Any], opening_policy: dict[str, Any]) -> None:
+    narrative_events = (
+        opening_policy.get("narrative_events")
+        if isinstance(opening_policy.get("narrative_events"), list)
+        else []
+    )
+    context["opening_event_ids"] = [
+        str(row.get("id") or "").strip()
+        for row in narrative_events
+        if isinstance(row, dict) and str(row.get("id") or "").strip()
+    ]
+    for row in narrative_events:
+        if isinstance(row, dict) and row.get("first_playable_scene_phase"):
+            context["first_playable_phase"] = str(
+                row.get("first_playable_scene_phase") or context["first_playable_phase"]
+            ).strip() or context["first_playable_phase"]
+            break
+
+
+def _fill_hard_forbidden_context(context: dict[str, Any], policy_dict: dict[str, Any]) -> None:
+    hard_forbidden_policy = (
+        policy_dict.get("hard_forbidden_policy")
+        if isinstance(policy_dict.get("hard_forbidden_policy"), dict)
+        else {}
+    )
+    detection = (
+        hard_forbidden_policy.get("hard_forbidden_detection")
+        if isinstance(hard_forbidden_policy.get("hard_forbidden_detection"), dict)
+        else {}
+    )
+    context["hard_forbidden_reject_on"] = [
+        str(item).strip() for item in (detection.get("reject_on") or []) if str(item).strip()
+    ]
+    context["hard_forbidden_recover_on"] = [
+        str(item).strip() for item in (detection.get("recover_on") or []) if str(item).strip()
+    ]
+
+
+def _opening_visible_block_bounds(policy_context: dict[str, Any]) -> tuple[int, int, int]:
+    event_ids = policy_context["opening_event_ids"]
+    visible_min = max(
+        policy_context["opening_min_visible_blocks"],
+        min(len(event_ids), 6) if event_ids else 0,
+        6,
+    )
+    visible_preferred = max(policy_context["opening_preferred_visible_blocks"], visible_min)
+    visible_max = (
+        policy_context["opening_max_visible_blocks"]
+        if policy_context["opening_max_visible_blocks"] >= visible_preferred
+        else max(visible_preferred, 12)
+    )
+    return visible_min, visible_preferred, visible_max
+
+
 class _OpeningPromptAndNarratorCandidatesMixin:
     def _build_opening_prompt(self, session: StorySession) -> str:
         projection = session.runtime_projection if isinstance(session.runtime_projection, dict) else {}
-        scene_id = str(projection.get("start_scene_id") or session.current_scene_id or "opening")
-        scenes = projection.get("scenes") if isinstance(projection.get("scenes"), list) else []
-        scene_row = next(
-            (
-                row
-                for row in scenes
-                if isinstance(row, dict) and str(row.get("scene_id") or row.get("id") or "") == scene_id
-            ),
-            {},
-        )
-        scene_name = str(scene_row.get("name") or scene_id)
-        scene_desc = str(scene_row.get("description") or "")
-        chars = projection.get("character_ids") if isinstance(projection.get("character_ids"), list) else []
-        cast = ", ".join(str(c) for c in chars[:8]) if chars else "unknown"
+        scene_context = _opening_scene_context(projection=projection, session=session)
         lang_label = "German" if session.session_output_language == "de" else "English"
         runtime_profile_id = _runtime_profile_id_from_projection(projection)
-        opening_scene_sequence_id = ""
-        opening_event_ids: list[str] = []
-        opening_must_establish: list[str] = []
-        opening_min_visible_blocks = 0
-        opening_preferred_visible_blocks = 0
-        opening_max_visible_blocks = 0
-        hard_forbidden_reject_on: list[str] = []
-        hard_forbidden_recover_on: list[str] = []
-        first_playable_phase = ""
-        anchor = "configured opening location and social premise"
-        try:
-            policy = load_module_runtime_policy(
-                module_id=session.module_id,
-                runtime_profile_id=runtime_profile_id,
-            )
-            policy_dict = policy.to_dict()
-            opening_policy = (
-                policy_dict.get("opening_policy")
-                if isinstance(policy_dict.get("opening_policy"), dict)
-                else {}
-            )
-            location_model = (
-                policy_dict.get("location_model")
-                if isinstance(policy_dict.get("location_model"), dict)
-                else {}
-            )
-            anchor = str(
-                location_model.get("narrative_anchor_area_id")
-                or location_model.get("setting_id")
-                or anchor
-            ).strip() or anchor
-            opening_scene_sequence_id = str(opening_policy.get("id") or "").strip()
-            narration_mode = (
-                opening_policy.get("narration_mode")
-                if isinstance(opening_policy.get("narration_mode"), dict)
-                else {}
-            )
-            try:
-                opening_min_visible_blocks = int(narration_mode.get("min_visible_blocks") or 0)
-            except (TypeError, ValueError):
-                opening_min_visible_blocks = 0
-            try:
-                opening_preferred_visible_blocks = int(narration_mode.get("preferred_visible_blocks") or 0)
-            except (TypeError, ValueError):
-                opening_preferred_visible_blocks = 0
-            try:
-                opening_max_visible_blocks = int(narration_mode.get("max_visible_blocks") or 0)
-            except (TypeError, ValueError):
-                opening_max_visible_blocks = 0
-            contract = (
-                opening_policy.get("opening_contract")
-                if isinstance(opening_policy.get("opening_contract"), dict)
-                else {}
-            )
-            if isinstance(contract, dict):
-                opening_must_establish = [
-                    str(item).strip()
-                    for item in (contract.get("must_establish") or [])
-                    if str(item).strip()
-                ]
-            narrative_events = (
-                opening_policy.get("narrative_events")
-                if isinstance(opening_policy.get("narrative_events"), list)
-                else []
-            )
-            if isinstance(narrative_events, list):
-                opening_event_ids = [
-                    str(row.get("id") or "").strip()
-                    for row in narrative_events
-                    if isinstance(row, dict) and str(row.get("id") or "").strip()
-                ]
-                for row in narrative_events:
-                    if isinstance(row, dict) and row.get("first_playable_scene_phase"):
-                        first_playable_phase = str(
-                            row.get("first_playable_scene_phase") or first_playable_phase
-                        ).strip() or first_playable_phase
-                        break
-            hard_forbidden_policy = (
-                policy_dict.get("hard_forbidden_policy")
-                if isinstance(policy_dict.get("hard_forbidden_policy"), dict)
-                else {}
-            )
-            detection = (
-                hard_forbidden_policy.get("hard_forbidden_detection")
-                if isinstance(hard_forbidden_policy.get("hard_forbidden_detection"), dict)
-                else {}
-            )
-            hard_forbidden_reject_on = [
-                str(item).strip() for item in (detection.get("reject_on") or []) if str(item).strip()
-            ]
-            hard_forbidden_recover_on = [
-                str(item).strip() for item in (detection.get("recover_on") or []) if str(item).strip()
-            ]
-        except Exception:
-            pass
+        policy_context = _opening_prompt_policy_context(
+            session=session,
+            runtime_profile_id=runtime_profile_id,
+        )
         human_actor_id = str(projection.get("human_actor_id") or "").strip()
         role_label = human_actor_id if human_actor_id else "the player character"
         first_playable_clause = (
-            f"After the required opening evidence, establish first playable scene phase {first_playable_phase}. "
-            if first_playable_phase
+            f"After the required opening evidence, establish first playable scene phase {policy_context['first_playable_phase']}. "
+            if policy_context["first_playable_phase"]
             else "After the required opening evidence, establish the configured first playable state. "
         )
-        visible_min = max(opening_min_visible_blocks, min(len(opening_event_ids), 6) if opening_event_ids else 0, 6)
-        visible_preferred = max(opening_preferred_visible_blocks, visible_min)
-        visible_max = (
-            opening_max_visible_blocks
-            if opening_max_visible_blocks >= visible_preferred
-            else max(visible_preferred, 12)
-        )
+        visible_min, visible_preferred, visible_max = _opening_visible_block_bounds(policy_context)
         return render_prompt(
             "world_engine.opening_prompt",
             language_label=lang_label,
             module_id=session.module_id,
-            scene_name=scene_name,
-            scene_id=scene_id,
-            scene_description=scene_desc or "n/a",
-            cast=cast,
-            anchor=anchor,
+            scene_name=scene_context["scene_name"],
+            scene_id=scene_context["scene_id"],
+            scene_description=scene_context["scene_desc"] or "n/a",
+            cast=scene_context["cast"],
+            anchor=policy_context["anchor"],
             role_label=role_label,
             first_playable_clause=first_playable_clause,
             # Backward-compatible prompt-store alias. The live DB may still
             # carry the pre-rename variable, while local seed prompts use
             # first_playable_clause.
             handover_clause=first_playable_clause,
-            opening_scene_sequence_id=opening_scene_sequence_id or "opening_scene_sequence",
-            opening_event_ids=opening_event_ids,
-            opening_must_establish=opening_must_establish,
+            opening_scene_sequence_id=policy_context["opening_scene_sequence_id"] or "opening_scene_sequence",
+            opening_event_ids=policy_context["opening_event_ids"],
+            opening_must_establish=policy_context["opening_must_establish"],
             visible_min=visible_min,
             visible_preferred=visible_preferred,
             visible_max=visible_max,
-            hard_forbidden_reject_on=hard_forbidden_reject_on,
-            hard_forbidden_recover_on=hard_forbidden_recover_on,
+            hard_forbidden_reject_on=policy_context["hard_forbidden_reject_on"],
+            hard_forbidden_recover_on=policy_context["hard_forbidden_recover_on"],
         )
 
     def _opening_commit_acceptable(self, graph_state: dict[str, Any]) -> bool:

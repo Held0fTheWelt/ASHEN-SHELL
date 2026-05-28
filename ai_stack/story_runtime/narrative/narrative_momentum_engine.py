@@ -234,27 +234,19 @@ def _variation_signal(expectation_variation_target: dict[str, Any] | None) -> st
     return "absent"
 
 
-def derive_narrative_momentum(
+def _momentum_candidate_score(
     *,
-    scene_plan_record: dict[str, Any] | None = None,
-    scene_energy_target: dict[str, Any] | None = None,
-    pacing_rhythm_target: dict[str, Any] | None = None,
-    social_pressure_target: dict[str, Any] | None = None,
-    expectation_variation_target: dict[str, Any] | None = None,
-    prior_narrative_momentum_state: dict[str, Any] | None = None,
-    prior_planner_truth: dict[str, Any] | None = None,
-    module_runtime_policy: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Derive bounded momentum state and selected target from structured state."""
-
-    policy = _runtime_policy_narrative_momentum(module_runtime_policy)
-    scores = _score_maps(policy)
+    policy: dict[str, Any],
+    scores: dict[str, dict[str, float]],
+    scene_plan_record: dict[str, Any] | None,
+    scene_energy_target: dict[str, Any] | None,
+    pacing_rhythm_target: dict[str, Any] | None,
+    social_pressure_target: dict[str, Any] | None,
+    expectation_variation_target: dict[str, Any] | None,
+) -> tuple[float, list[dict[str, Any]], list[str]]:
     energy = scene_energy_target if isinstance(scene_energy_target, dict) else {}
     rhythm = pacing_rhythm_target if isinstance(pacing_rhythm_target, dict) else {}
     pressure = social_pressure_target if isinstance(social_pressure_target, dict) else {}
-    prior = _prior_state(prior_narrative_momentum_state, prior_planner_truth)
-    prior_score, prior_state, prior_stall_count = _prior_score_and_state(prior)
-
     evidence: list[dict[str, Any]] = []
     rationale: list[str] = []
     candidates: list[float] = []
@@ -275,45 +267,56 @@ def derive_narrative_momentum(
         )
         if score is not None:
             candidates.append(score)
-
     if candidates:
-        candidate_score = _clamp_score((max(candidates) * 0.65) + ((sum(candidates) / len(candidates)) * 0.35))
+        candidate_score = _clamp_score(
+            (max(candidates) * 0.65) + ((sum(candidates) / len(candidates)) * 0.35)
+        )
     else:
         candidate_score = _clamp_score(float(policy.get("default_score") or 0.35))
         rationale.append("narrative_momentum_default_score")
+    return candidate_score, evidence, rationale
 
+
+def _apply_momentum_prior_dynamics(
+    *,
+    candidate_score: float,
+    prior_score: float | None,
+    policy: dict[str, Any],
+) -> float:
     max_delta = float(policy.get("max_velocity_delta") or 0.4)
     decay = float(policy.get("decay_per_turn") or 0.05)
-    if prior_score is not None:
-        if candidate_score < prior_score:
-            candidate_score = max(candidate_score, _clamp_score(prior_score - decay))
-        delta = max(-max_delta, min(max_delta, candidate_score - prior_score))
-        current_score = _clamp_score(prior_score + delta)
-    else:
-        current_score = candidate_score
+    if prior_score is None:
+        return candidate_score
+    if candidate_score < prior_score:
+        candidate_score = max(candidate_score, _clamp_score(prior_score - decay))
+    delta = max(-max_delta, min(max_delta, candidate_score - prior_score))
+    return _clamp_score(prior_score + delta)
 
+
+def _momentum_trend_and_velocity(
+    *,
+    current_score: float,
+    prior_score: float | None,
+    policy: dict[str, Any],
+) -> tuple[str, float]:
     thresholds = (
         policy.get("state_thresholds")
         if isinstance(policy.get("state_thresholds"), dict)
         else {}
     )
     deadband = float(thresholds.get("trend_deadband") or 0.05)
-    trend = "stable"
-    velocity = 0.0
-    if prior_score is not None:
-        velocity = round(current_score - prior_score, 3)
-        if velocity > deadband:
-            trend = "rising"
-        elif velocity < -deadband:
-            trend = "falling"
+    if prior_score is None:
+        return "stable", 0.0
+    velocity = round(current_score - prior_score, 3)
+    if velocity > deadband:
+        return "rising", velocity
+    if velocity < -deadband:
+        return "falling", velocity
+    return "stable", velocity
 
-    current_state = _state_for_score(
-        current_score,
-        policy,
-        prior_score=prior_score,
-        prior_state=prior_state,
-    )
-    forward_signal = any(
+
+def _momentum_forward_signal(evidence: list[dict[str, Any]]) -> bool:
+    return any(
         ref.get("source") in {
             "scene_energy_transition",
             "pacing_cadence",
@@ -323,29 +326,21 @@ def derive_narrative_momentum(
         and str(ref.get("value") or "") not in {"release", "deescalate", "breathe", "absent", "observe", "wait"}
         for ref in evidence
     )
-    clamped_state = _clamp_transition_target(
-        policy,
-        prior_state=prior_state,
-        desired_state=current_state,
-        trend=trend,
-        score=current_score,
-    )
-    if clamped_state != current_state:
-        current_state = clamped_state
-        rationale.append("narrative_momentum_transition_clamped")
-    if (
-        prior_state in {NARRATIVE_MOMENTUM_BUILDING, NARRATIVE_MOMENTUM_DRIVING, NARRATIVE_MOMENTUM_STALLED}
-        and not forward_signal
-        and trend != "rising"
-    ):
-        stall_turn_count = prior_stall_count + 1
-    elif current_state == NARRATIVE_MOMENTUM_STALLED:
-        stall_turn_count = prior_stall_count
-    else:
-        stall_turn_count = 0
-    if stall_turn_count > int(policy.get("stall_budget_turns") or 0):
-        current_state = NARRATIVE_MOMENTUM_STALLED
 
+
+def _narrative_momentum_payload(
+    *,
+    policy: dict[str, Any],
+    current_state: str,
+    current_score: float,
+    prior_state: str | None,
+    prior_score: float | None,
+    trend: str,
+    velocity: float,
+    stall_turn_count: int,
+    evidence: list[dict[str, Any]],
+    rationale: list[str],
+) -> dict[str, Any]:
     allowed_next = _allowed_next_states(policy, current_state)
     min_events = int(policy.get("min_progress_event_count") or 0)
     requires_forward_motion = bool(
@@ -358,7 +353,6 @@ def derive_narrative_momentum(
     if bool(policy.get("require_structured_events")) and requires_forward_motion:
         min_events = max(1, min_events)
     release_allowed = current_state in {"cresting", NARRATIVE_MOMENTUM_DRIVING, NARRATIVE_MOMENTUM_RELEASING}
-
     state = NarrativeMomentumState(
         current_state=current_state,
         current_score=current_score,
@@ -392,6 +386,86 @@ def derive_narrative_momentum(
         "source_evidence": evidence[:8],
         "rationale_codes": list(dict.fromkeys(rationale)),
     }
+
+
+def derive_narrative_momentum(
+    *,
+    scene_plan_record: dict[str, Any] | None = None,
+    scene_energy_target: dict[str, Any] | None = None,
+    pacing_rhythm_target: dict[str, Any] | None = None,
+    social_pressure_target: dict[str, Any] | None = None,
+    expectation_variation_target: dict[str, Any] | None = None,
+    prior_narrative_momentum_state: dict[str, Any] | None = None,
+    prior_planner_truth: dict[str, Any] | None = None,
+    module_runtime_policy: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Derive bounded momentum state and selected target from structured state."""
+
+    policy = _runtime_policy_narrative_momentum(module_runtime_policy)
+    scores = _score_maps(policy)
+    prior = _prior_state(prior_narrative_momentum_state, prior_planner_truth)
+    prior_score, prior_state, prior_stall_count = _prior_score_and_state(prior)
+    candidate_score, evidence, rationale = _momentum_candidate_score(
+        policy=policy,
+        scores=scores,
+        scene_plan_record=scene_plan_record,
+        scene_energy_target=scene_energy_target,
+        pacing_rhythm_target=pacing_rhythm_target,
+        social_pressure_target=social_pressure_target,
+        expectation_variation_target=expectation_variation_target,
+    )
+    current_score = _apply_momentum_prior_dynamics(
+        candidate_score=candidate_score,
+        prior_score=prior_score,
+        policy=policy,
+    )
+    trend, velocity = _momentum_trend_and_velocity(
+        current_score=current_score,
+        prior_score=prior_score,
+        policy=policy,
+    )
+    current_state = _state_for_score(
+        current_score,
+        policy,
+        prior_score=prior_score,
+        prior_state=prior_state,
+    )
+    forward_signal = _momentum_forward_signal(evidence)
+    clamped_state = _clamp_transition_target(
+        policy,
+        prior_state=prior_state,
+        desired_state=current_state,
+        trend=trend,
+        score=current_score,
+    )
+    if clamped_state != current_state:
+        current_state = clamped_state
+        rationale.append("narrative_momentum_transition_clamped")
+    if (
+        prior_state in {NARRATIVE_MOMENTUM_BUILDING, NARRATIVE_MOMENTUM_DRIVING, NARRATIVE_MOMENTUM_STALLED}
+        and not forward_signal
+        and trend != "rising"
+    ):
+        stall_turn_count = prior_stall_count + 1
+    elif current_state == NARRATIVE_MOMENTUM_STALLED:
+        stall_turn_count = prior_stall_count
+    else:
+        stall_turn_count = 0
+    if stall_turn_count > int(policy.get("stall_budget_turns") or 0):
+        current_state = NARRATIVE_MOMENTUM_STALLED
+
+    return _narrative_momentum_payload(
+        policy=policy,
+        current_state=current_state,
+        current_score=current_score,
+        prior_state=prior_state,
+        prior_score=prior_score,
+        trend=trend,
+        velocity=velocity,
+        stall_turn_count=stall_turn_count,
+        evidence=evidence,
+        rationale=rationale,
+    )
 
 
 def compact_narrative_momentum_context(

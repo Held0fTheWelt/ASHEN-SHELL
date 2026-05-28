@@ -1,5 +1,23 @@
 # Workstream: backend_runtime_services
 
+## Closed — DS-030 backend snapshots and DS-032 policy literal tail (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-030 | World-engine control-center and AI-engineer runtime-dashboard leaders now delegate to config findings, readiness/runtime snapshots, blocker rows, warning rows, and operator summaries. | `build_world_engine_control_center_snapshot`, `get_runtime_dashboard` | Pre: `artifacts/workstreams/backend_runtime_services/pre/session_20260528_DS-030_*`; post: `artifacts/workstreams/backend_runtime_services/post/session_20260528_DS-030_comparison.*` |
+| DS-032 | Backend HTTP shell, prompt store, analytics buckets, world-engine UI route registration, and cross-package policy bounds now use named constants/helper phases instead of local literal clusters. | `register_http_shell`, `update_prompt_record`, `_range_end_and_buckets`, `register_world_engine_ui_routes`; plus contract/context/pacing/callback support files | Pre: `artifacts/workstreams/backend_runtime_services/pre/session_20260528_DS-032_*`; post: `artifacts/workstreams/backend_runtime_services/post/session_20260528_DS-032_comparison.*` |
+
+**Gates (final):**
+
+- `PYTHONPATH=backend python -m pytest -q backend/tests/test_world_engine_control_center.py backend/tests/test_ai_engineer_suite_service_phase3.py backend/tests/test_ai_engineer_suite_routes.py --tb=short` — 21 passed.
+- `PYTHONPATH=backend python -m pytest -q backend/tests/test_prompt_store.py backend/tests/test_metrics_dashboard.py backend/tests/test_https_enforcement.py --tb=short` — 36 passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_consequence_cascade_contracts.py ai_stack/tests/test_callback_web_contracts.py ai_stack/tests/test_context_synthesis_engine.py ai_stack/tests/test_context_synthesis_retry_loop.py ai_stack/tests/test_pacing_rhythm_engine.py story_runtime_core/tests/test_callback_web.py story_runtime_core/tests/test_consequence_cascade.py --tb=short` — 40 passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q world-engine/tests/test_story_runtime_callback_web.py world-engine/tests/test_story_runtime_consequence_cascade.py --tb=short` — 3 passed.
+- `python -m py_compile` on all changed DS-030/DS-032 Python files — passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T15:25:17Z`.
+
+**Structural delta:** DS-030 leaders are pruned from the current top-12 longest ranking. DS-032 target functions now report 0 counted magic integer literals in the local AST check; full-scan C5 fell from 0.84% to 0.71%.
+
 ## Closed — DS-012 backend route/content/runtime hotspots (session 20260522)
 
 DS-012 split the listed backend hotspots behind stable compatibility surfaces:

@@ -94,6 +94,19 @@ _TRANSITION_TO_CADENCE: dict[str, str] = {
     "pivot": "pivot",
     "interrupt": "interrupt",
 }
+PACING_RECENT_CADENCE_LIMIT = 6
+PACING_DEFAULT_MAX_REPEATED_CADENCE_COUNT = 2
+PACING_CALLBACK_PRESSURE_THRESHOLD = 2
+PACING_DEFAULT_MAX_VISIBLE_BLOCKS = 6
+PACING_HARD_MAX_VISIBLE_BLOCKS = 12
+PACING_DEFAULT_MIN_VISIBLE_BLOCKS = 1
+PACING_DEFAULT_MIN_ACTOR_TURNS = 0
+PACING_REQUIRED_TURN_CHANGE_MIN_ACTOR_TURNS = 2
+PACING_DEFAULT_MAX_ACTOR_TURNS = 4
+PACING_SILENCE_MAX_ACTOR_TURNS = 1
+PACING_ACTOR_TURN_ID_LIMIT = 8
+PACING_RELEASE_CADENCES = frozenset({"press", "interrupt"})
+PACING_RELEASE_BLOCKED_TRANSITIONS = frozenset({"rise", "interrupt"})
 
 
 def _evidence(source: str, field: str, value: Any) -> PacingRhythmEvidenceRef:
@@ -197,6 +210,219 @@ def _cadence_from_inputs(
     return pacing_cadence or cadence or "hold", evidence, rationale or ["pacing_rhythm_default_hold"]
 
 
+def _consecutive_cadence_count(prior_cadences: list[str], cadence: str) -> tuple[str | None, int]:
+    prior_cadence = prior_cadences[-1] if prior_cadences else None
+    repeated_count = 1
+    if prior_cadence == cadence:
+        for item in reversed(prior_cadences):
+            if item != cadence:
+                break
+            repeated_count += 1
+    return prior_cadence, repeated_count
+
+
+def _policy_max_repeated_cadences(policy: dict[str, Any]) -> int:
+    try:
+        return int(policy.get("max_repeated_cadence_count") or PACING_DEFAULT_MAX_REPEATED_CADENCE_COUNT)
+    except (TypeError, ValueError):
+        return PACING_DEFAULT_MAX_REPEATED_CADENCE_COUNT
+
+
+def _cadence_after_repetition(
+    *,
+    cadence: str,
+    repeated_count: int,
+    target_energy: dict[str, Any],
+    policy: dict[str, Any],
+    rationale: list[str],
+) -> tuple[str, bool]:
+    release_due = (
+        cadence in PACING_RELEASE_CADENCES
+        and repeated_count >= _policy_max_repeated_cadences(policy)
+    )
+    if release_due and _clean_text(target_energy.get("target_transition")) not in PACING_RELEASE_BLOCKED_TRANSITIONS:
+        rationale.append("pacing_rhythm_release_after_repetition")
+        return "release", release_due
+    return cadence, release_due
+
+
+def _thread_pressure_level(prior_narrative_thread_state: dict[str, Any] | None) -> int:
+    thread_state = prior_narrative_thread_state if isinstance(prior_narrative_thread_state, dict) else {}
+    try:
+        return int(thread_state.get("thread_pressure_level") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _cadence_after_callback_pressure(
+    *,
+    cadence: str,
+    thread_pressure: int,
+    prior_callback_web_state: dict[str, Any] | None,
+    rationale: list[str],
+) -> str:
+    callback_state = prior_callback_web_state if isinstance(prior_callback_web_state, dict) else {}
+    if (
+        callback_state.get("selected_edge_id")
+        and cadence == "hold"
+        and thread_pressure >= PACING_CALLBACK_PRESSURE_THRESHOLD
+    ):
+        rationale.append("pacing_rhythm_callback_thread_pressure")
+        return "press"
+    return cadence
+
+
+def _profile_for_rhythm(
+    *,
+    policy: dict[str, Any],
+    cadence: str,
+    pacing: str,
+    scene_function: str,
+) -> dict[str, Any]:
+    policy_profiles = policy.get("cadence_profiles") if isinstance(policy.get("cadence_profiles"), dict) else {}
+    pacing_profiles = policy.get("pacing_mode_profiles") if isinstance(policy.get("pacing_mode_profiles"), dict) else {}
+    scene_profiles = policy.get("scene_function_profiles") if isinstance(policy.get("scene_function_profiles"), dict) else {}
+    profile = _DEFAULT_CADENCE_PROFILES.get(cadence, _DEFAULT_CADENCE_PROFILES["hold"])
+    profile = _overlay(profile, policy_profiles.get(cadence) if isinstance(policy_profiles, dict) else None)
+    profile = _overlay(profile, pacing_profiles.get(pacing) if isinstance(pacing_profiles, dict) else None)
+    return _overlay(profile, scene_profiles.get(scene_function) if scene_function else None)
+
+
+def _profile_after_silence_policy(
+    *,
+    profile: dict[str, Any],
+    silence_brevity_decision: dict[str, Any] | None,
+    rationale: list[str],
+) -> dict[str, Any]:
+    if not _silence_blocks_forced_speech(silence_brevity_decision):
+        return profile
+    rationale.append("pacing_rhythm_forced_speech_block")
+    return _overlay(
+        profile,
+        {
+            "turn_change_policy": "silence_or_action_only",
+            "requires_pause": True,
+            "blocks_forced_speech": True,
+            "min_actor_turns": PACING_DEFAULT_MIN_ACTOR_TURNS,
+            "max_actor_turns": min(
+                PACING_SILENCE_MAX_ACTOR_TURNS,
+                _bounded_int(
+                    profile.get("max_actor_turns"),
+                    PACING_SILENCE_MAX_ACTOR_TURNS,
+                    minimum=PACING_DEFAULT_MIN_ACTOR_TURNS,
+                    maximum=PACING_DEFAULT_MAX_ACTOR_TURNS,
+                ),
+            ),
+        },
+    )
+
+
+def _responder_count(selected_responder_set: list[dict[str, Any]] | None) -> int:
+    responders = selected_responder_set if isinstance(selected_responder_set, list) else []
+    return len([row for row in responders if isinstance(row, dict)])
+
+
+def _actor_turn_bounds(profile: dict[str, Any], responder_count: int) -> tuple[int, int]:
+    min_actor_turns = _bounded_int(
+        profile.get("min_actor_turns"),
+        PACING_DEFAULT_MIN_ACTOR_TURNS,
+        minimum=PACING_DEFAULT_MIN_ACTOR_TURNS,
+        maximum=PACING_DEFAULT_MAX_ACTOR_TURNS,
+    )
+    if profile.get("turn_change_policy") == "require_actor_turn_change" and responder_count >= PACING_REQUIRED_TURN_CHANGE_MIN_ACTOR_TURNS:
+        min_actor_turns = max(min_actor_turns, PACING_REQUIRED_TURN_CHANGE_MIN_ACTOR_TURNS)
+    max_actor_turns = _bounded_int(
+        profile.get("max_actor_turns"),
+        PACING_DEFAULT_MAX_ACTOR_TURNS,
+        minimum=PACING_DEFAULT_MIN_ACTOR_TURNS,
+        maximum=PACING_DEFAULT_MAX_ACTOR_TURNS,
+    )
+    return min_actor_turns, max_actor_turns
+
+
+def _visible_block_bounds(profile: dict[str, Any], policy: dict[str, Any]) -> tuple[int, int]:
+    max_blocks_default = int(policy.get("default_max_visible_blocks") or PACING_DEFAULT_MAX_VISIBLE_BLOCKS)
+    max_visible_blocks = _bounded_int(
+        profile.get("max_visible_blocks"),
+        max_blocks_default,
+        minimum=PACING_DEFAULT_MIN_VISIBLE_BLOCKS,
+        maximum=PACING_HARD_MAX_VISIBLE_BLOCKS,
+    )
+    min_visible_blocks = _bounded_int(
+        profile.get("min_visible_blocks"),
+        PACING_DEFAULT_MIN_VISIBLE_BLOCKS,
+        minimum=PACING_DEFAULT_MIN_ACTOR_TURNS,
+        maximum=max_visible_blocks,
+    )
+    return min_visible_blocks, max_visible_blocks
+
+
+def _pacing_rhythm_state(
+    *,
+    cadence: str,
+    prior_cadence: str | None,
+    prior_cadences: list[str],
+    repeated_count: int,
+    thread_pressure: int,
+    release_due: bool,
+    profile: dict[str, Any],
+    pacing: str,
+    scene_function: str,
+    plan: dict[str, Any],
+    prior_dramatic_signature: dict[str, Any] | None,
+    evidence: list[PacingRhythmEvidenceRef],
+) -> PacingRhythmState:
+    return PacingRhythmState(
+        current_cadence=cadence,  # type: ignore[arg-type]
+        prior_cadence=prior_cadence,  # type: ignore[arg-type]
+        recent_cadences=(prior_cadences + [cadence])[-PACING_RECENT_CADENCE_LIMIT:],  # type: ignore[list-item]
+        repeated_cadence_count=repeated_count,
+        pressure_streak=repeated_count if cadence in PACING_RELEASE_CADENCES else max(0, thread_pressure),
+        release_due=release_due,
+        pause_obligation_active=bool(profile.get("requires_pause")),
+        last_pacing_mode=pacing,
+        last_scene_function=scene_function or None,
+        last_beat_id=_selected_beat_id(plan)
+        or _clean_text((prior_dramatic_signature or {}).get("prior_beat_id"))
+        or None,
+        source_evidence=evidence,
+    )
+
+
+def _pacing_rhythm_target(
+    *,
+    cadence: str,
+    profile: dict[str, Any],
+    min_visible_blocks: int,
+    max_visible_blocks: int,
+    min_actor_turns: int,
+    max_actor_turns: int,
+    release_due: bool,
+    evidence: list[PacingRhythmEvidenceRef],
+    rationale: list[str],
+) -> PacingRhythmTarget:
+    return PacingRhythmTarget(
+        cadence=cadence,  # type: ignore[arg-type]
+        tempo_arc=_profile_value(profile, "tempo_arc", PACING_RHYTHM_TEMPO_ARCS, "standard"),  # type: ignore[arg-type]
+        response_shape=_profile_value(profile, "response_shape", PACING_RHYTHM_RESPONSE_SHAPES, "single_beat"),  # type: ignore[arg-type]
+        turn_change_policy=_profile_value(
+            profile,
+            "turn_change_policy",
+            PACING_RHYTHM_TURN_CHANGE_POLICIES,
+            "allow_hold",
+        ),  # type: ignore[arg-type]
+        min_visible_blocks=min_visible_blocks,
+        max_visible_blocks=max_visible_blocks,
+        min_actor_turns=min_actor_turns,
+        max_actor_turns=max_actor_turns,
+        requires_pause=bool(profile.get("requires_pause", False)),
+        blocks_forced_speech=bool(profile.get("blocks_forced_speech", False)),
+        release_due_after_turn=release_due,
+        source_evidence=evidence,
+        rationale_codes=list(dict.fromkeys(rationale)),
+    )
+
+
 def derive_pacing_rhythm(
     *,
     scene_plan_record: dict[str, Any] | None,
@@ -222,101 +448,61 @@ def derive_pacing_rhythm(
         scene_energy_target=target_energy,
         silence_brevity_decision=silence_brevity_decision,
     )
-
-    prior_cads = _prior_cadences(prior_pacing_rhythm_state, prior_planner_truth)
-    prior_cadence = prior_cads[-1] if prior_cads else None
-    repeated_count = 1
-    if prior_cadence == cadence:
-        for item in reversed(prior_cads):
-            if item != cadence:
-                break
-            repeated_count += 1
-    max_repeated = int(policy.get("max_repeated_cadence_count") or 2)
-    release_due = cadence in {"press", "interrupt"} and repeated_count >= max_repeated
-    if release_due and _clean_text(target_energy.get("target_transition")) not in {"rise", "interrupt"}:
-        cadence = "release"
-        rationale.append("pacing_rhythm_release_after_repetition")
-
-    thread_pressure = 0
-    thread_state = prior_narrative_thread_state if isinstance(prior_narrative_thread_state, dict) else {}
-    try:
-        thread_pressure = int(thread_state.get("thread_pressure_level") or 0)
-    except (TypeError, ValueError):
-        thread_pressure = 0
-    callback_state = prior_callback_web_state if isinstance(prior_callback_web_state, dict) else {}
-    if callback_state.get("selected_edge_id") and cadence == "hold" and thread_pressure >= 2:
-        cadence = "press"
-        rationale.append("pacing_rhythm_callback_thread_pressure")
-
-    policy_profiles = policy.get("cadence_profiles") if isinstance(policy.get("cadence_profiles"), dict) else {}
-    pacing_profiles = policy.get("pacing_mode_profiles") if isinstance(policy.get("pacing_mode_profiles"), dict) else {}
-    scene_profiles = policy.get("scene_function_profiles") if isinstance(policy.get("scene_function_profiles"), dict) else {}
-    scene_function = _clean_text(plan.get("selected_scene_function"))
-    profile = _DEFAULT_CADENCE_PROFILES.get(cadence, _DEFAULT_CADENCE_PROFILES["hold"])
-    profile = _overlay(profile, policy_profiles.get(cadence) if isinstance(policy_profiles, dict) else None)
-    profile = _overlay(profile, pacing_profiles.get(pacing) if isinstance(pacing_profiles, dict) else None)
-    profile = _overlay(profile, scene_profiles.get(scene_function) if scene_function else None)
-
-    if _silence_blocks_forced_speech(silence_brevity_decision):
-        profile = _overlay(
-            profile,
-            {
-                "turn_change_policy": "silence_or_action_only",
-                "requires_pause": True,
-                "blocks_forced_speech": True,
-                "min_actor_turns": 0,
-                "max_actor_turns": min(1, _bounded_int(profile.get("max_actor_turns"), 1, minimum=0, maximum=4)),
-            },
-        )
-        rationale.append("pacing_rhythm_forced_speech_block")
-
-    responders = selected_responder_set if isinstance(selected_responder_set, list) else []
-    responder_count = len([row for row in responders if isinstance(row, dict)])
-    min_actor_turns = _bounded_int(profile.get("min_actor_turns"), 0, minimum=0, maximum=4)
-    if profile.get("turn_change_policy") == "require_actor_turn_change" and responder_count >= 2:
-        min_actor_turns = max(min_actor_turns, 2)
-    max_blocks_default = int(policy.get("default_max_visible_blocks") or 6)
-    max_visible_blocks = _bounded_int(profile.get("max_visible_blocks"), max_blocks_default, minimum=1, maximum=12)
-    min_visible_blocks = _bounded_int(profile.get("min_visible_blocks"), 1, minimum=0, maximum=max_visible_blocks)
-
-    state = PacingRhythmState(
-        current_cadence=cadence,  # type: ignore[arg-type]
-        prior_cadence=prior_cadence,  # type: ignore[arg-type]
-        recent_cadences=(prior_cads + [cadence])[-6:],  # type: ignore[list-item]
-        repeated_cadence_count=repeated_count,
-        pressure_streak=(
-            repeated_count
-            if cadence in {"press", "interrupt"}
-            else max(0, thread_pressure)
-        ),
-        release_due=release_due,
-        pause_obligation_active=bool(profile.get("requires_pause")),
-        last_pacing_mode=pacing,
-        last_scene_function=scene_function or None,
-        last_beat_id=_selected_beat_id(plan)
-        or _clean_text((prior_dramatic_signature or {}).get("prior_beat_id"))
-        or None,
-        source_evidence=evidence,
+    prior_cadences = _prior_cadences(prior_pacing_rhythm_state, prior_planner_truth)
+    prior_cadence, repeated_count = _consecutive_cadence_count(prior_cadences, cadence)
+    cadence, release_due = _cadence_after_repetition(
+        cadence=cadence,
+        repeated_count=repeated_count,
+        target_energy=target_energy,
+        policy=policy,
+        rationale=rationale,
     )
-    target = PacingRhythmTarget(
-        cadence=cadence,  # type: ignore[arg-type]
-        tempo_arc=_profile_value(profile, "tempo_arc", PACING_RHYTHM_TEMPO_ARCS, "standard"),  # type: ignore[arg-type]
-        response_shape=_profile_value(profile, "response_shape", PACING_RHYTHM_RESPONSE_SHAPES, "single_beat"),  # type: ignore[arg-type]
-        turn_change_policy=_profile_value(
-            profile,
-            "turn_change_policy",
-            PACING_RHYTHM_TURN_CHANGE_POLICIES,
-            "allow_hold",
-        ),  # type: ignore[arg-type]
+    thread_pressure = _thread_pressure_level(prior_narrative_thread_state)
+    cadence = _cadence_after_callback_pressure(
+        cadence=cadence,
+        thread_pressure=thread_pressure,
+        prior_callback_web_state=prior_callback_web_state,
+        rationale=rationale,
+    )
+    scene_function = _clean_text(plan.get("selected_scene_function"))
+    profile = _profile_for_rhythm(
+        policy=policy,
+        cadence=cadence,
+        pacing=pacing,
+        scene_function=scene_function,
+    )
+    profile = _profile_after_silence_policy(
+        profile=profile,
+        silence_brevity_decision=silence_brevity_decision,
+        rationale=rationale,
+    )
+    min_visible_blocks, max_visible_blocks = _visible_block_bounds(profile, policy)
+    min_actor_turns, max_actor_turns = _actor_turn_bounds(profile, _responder_count(selected_responder_set))
+
+    state = _pacing_rhythm_state(
+        cadence=cadence,
+        prior_cadence=prior_cadence,
+        prior_cadences=prior_cadences,
+        repeated_count=repeated_count,
+        thread_pressure=thread_pressure,
+        release_due=release_due,
+        profile=profile,
+        pacing=pacing,
+        scene_function=scene_function,
+        plan=plan,
+        prior_dramatic_signature=prior_dramatic_signature,
+        evidence=evidence,
+    )
+    target = _pacing_rhythm_target(
+        cadence=cadence,
+        profile=profile,
         min_visible_blocks=min_visible_blocks,
         max_visible_blocks=max_visible_blocks,
         min_actor_turns=min_actor_turns,
-        max_actor_turns=_bounded_int(profile.get("max_actor_turns"), 4, minimum=0, maximum=4),
-        requires_pause=bool(profile.get("requires_pause", False)),
-        blocks_forced_speech=bool(profile.get("blocks_forced_speech", False)),
-        release_due_after_turn=release_due,
-        source_evidence=evidence,
-        rationale_codes=list(dict.fromkeys(rationale)),
+        max_actor_turns=max_actor_turns,
+        release_due=release_due,
+        evidence=evidence,
+        rationale=rationale,
     )
     return {
         "schema_version": PACING_RHYTHM_SCHEMA_VERSION,
@@ -441,7 +627,7 @@ def validate_pacing_rhythm_realization(
         actual={
             "visible_block_count": visible_count,
             "actor_turn_count": unique_actor_turn_count,
-            "actor_turn_ids": actor_turn_ids[:8],
+            "actor_turn_ids": actor_turn_ids[:PACING_ACTOR_TURN_ID_LIMIT],
             "spoken_line_count": spoken_count,
             "repeated_cadence_count": repeated_count,
             "release_due": release_due,
