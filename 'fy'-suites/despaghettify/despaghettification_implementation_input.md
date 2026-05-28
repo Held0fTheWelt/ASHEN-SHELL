@@ -10,6 +10,168 @@ Here you find the **living working basis**: structural and spaghetti topics in *
 
 **Language:** [Repository language](../docs/dev/contributing.md#repository-language) — English for every editor-maintained field here (DS rows, structure scan prose, Open hotspots, coordination, active progress). **Closed** wave history: [despaghettification_completed_log.md](despaghettification_completed_log.md).
 
+## Latest structure scan (orientation, no warranty)
+
+**Purpose:** A **fillable** overview after measurable runs — update **date and time**, **`metrics_bundle.score`** (**Trigger v2** + **Anteil %**), **AST telemetry**, optional **extra checks**, and **open hotspots** per [spaghetti-check-task.md](../spaghetti-check-task.md). **Numeric** thresholds (**bars**, **weights**, **`M7_ref`**) are canonical in [spaghetti-setup.md](../spaghetti-setup.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when the **trigger policy** in § *Trigger policy for check task updates* fires (per **setup**); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings:** `python "./'fy'-suites/despaghettify/tools/spaghetti_ast_scan.py"` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
+
+| Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
+|-------|-------------------------------------|-------------------------------------|
+| **As of (date & time)** | — | **2026-05-28 17:36:09 (UTC)** |
+| Spaghetti scan command | — | `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` |
+| Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` from `fy-manifest.yaml` |
+| **M7** — gewichtete 7-Kategorien-Summe | **44.87** | **3.73** |
+| C1: Circular dependencies | **8.65** | **0.74** |
+| C2: Nesting depth | **0.00** | **1.34** |
+| C3: Long functions + complexity | **97.16** | **1.02** |
+| C4: Multi-responsibility modules | **72.61** | **7.20** |
+| C5: Magic numbers + global state | **39.94** | **0.70** |
+| C6: Missing abstractions / duplication | **33.37** | **13.45** |
+| C7: Confusing control flow | **63.16** | **6.65** |
+| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **11230** / **808** / **114** / **0** |
+| Extra check builtins | — | **0** matches for `def build_god_of_carnage_solo` in `**/builtins.py`; `story_runtime_core/goc_solo_builtin_template.py` still owns the definition |
+| Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **0**; imported **12** current runtime modules via `app.runtime.package_classification.runtime_module_import_path`. Grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
+| **Open hotspots** | — | **Trigger policy fires:** `M7_anteil` **3.734** remains below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.20** > **5**), **C5** (**0.70** > **0**), **C6** (**13.45** > **0**), and **C7** (**6.65** > **3**). **DS-033 through DS-036 anchors are pruned:** their named leaders no longer appear in the current top-12 longest ranking. Current top-12 leaders seed **DS-037** through **DS-040**: `_realize_npc_speak_block`, `_runtime_governance_policy`, `derive_meta_narrative_awareness`, `_player_input_scene_blocks_for_story_window`, `dispatch_turn`, `build_free_player_action_resolution`, `build_goc_scripted_continuation`, `normalize_npc_agency_plan`, `evaluate_director_tick`, `_compose_template_render_follow_up`, `get_runtime_diagnostic_snapshot`, and `run_bounded_exploration_expand_loop`. **C7 nesting tail:** `D6` remains **0**. **Metric scan gate:** DS-005 imports **12** current runtime modules with exit **0**. |
+
+### Score *M7* — inputs, weights, and calculation
+
+| Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
+|--------|---------|------------------------|--------------|
+| **M7** | Gewichtete Summe | **44.87** | **3.73** |
+| **C1** | Circular dependencies | **8.65** | **0.74** |
+| **C2** | Nesting depth | **0.00** | **1.34** |
+| **C3** | Long functions + complexity | **97.16** | **1.02** |
+| **C4** | Multi-responsibility modules | **72.61** | **7.20** |
+| **C5** | Magic numbers + global state | **39.94** | **0.70** |
+| **C6** | Missing abstractions / duplication | **33.37** | **13.45** |
+| **C7** | Confusing control flow | **63.16** | **6.65** |
+| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **11230** / **808** / **114** / **0** |
+
+**Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
+
+**Evaluation:** From **`check --with-metrics`**: fill **`metrics_bundle.score`** (both columns); **AST** from **`spaghetti_ast_scan`**. **Bars** apply to **Anteil %** / **`metric_a.m7`** only (see [spaghetti-check-task.md](../spaghetti-check-task.md) §1).
+
+**Trigger policy for check task updates:**
+
+Update § *Information input list*, § *Recommended implementation order*, and the bottom appendix § *DS-ID → primary workstream* when **`metrics_bundle.trigger_policy_fires`** is true — i.e. **Anteil(C*n*) > bar*n*** or **`M7_anteil ≥ M7_ref`** per [spaghetti-setup.md](../spaghetti-setup.md). Update the appendix in place; do not move it above this operational scan.
+
+| Condition | Rule |
+|-----------|------|
+| **Per-category** | **Anteil(C*n*)** **>** **bar*n*** per [spaghetti-setup.md](../spaghetti-setup.md) § *Per-category trigger bars*. |
+| **Composite** | **`M7_anteil` ≥ `M7_ref`** (`metric_a.m7`). |
+
+**Otherwise** (no per-category exceedance **and** **`M7_anteil` < `M7_ref`**): update **only** § *Latest structure scan*.
+
+*Note:* **`trigger_policy_basis`:** `anteil_pct`. **Trigger v2** is advisory. No hand edits.
+
+## Information input list (extensible)
+
+Each **open** row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-setup.md](../spaghetti-setup.md) § *Per-category trigger bars*, e.g. **`C3 ·`** …), **location**, **hint / measurement idea**, **direction**, **collision hint**.
+
+### Open
+
+| ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
+|----|---------|--------------------|-------------------------|----------------------------|----------------|
+| **DS-037** | **C4 · C6 · C7 ·** AI runtime policy and narrative contract leader cluster | `ai_stack/module_runtime_policy.py`; `ai_stack/story_runtime/narrative/meta_narrative_awareness_engine.py`; `ai_stack/contracts/free_player_action_resolution_contracts.py`; `ai_stack/contracts/npc_agency_contracts.py` | Current leaders: `_runtime_governance_policy` **140L**, `derive_meta_narrative_awareness` **140L**, `build_free_player_action_resolution` **138L**, `normalize_npc_agency_plan` **137L**. Re-run AST top-12 and focused policy/narrative/contract tests. | Split policy normalization, meta-awareness derivation, free-action resolution, and NPC-agency plan assembly into named sections while preserving public contract envelopes. | Primary owner: `ai_stack`. Keep backend and world-engine import-facing contract names stable. |
+| **DS-038** | **C4 · C7 ·** World-engine manager scene-block and diagnostic snapshot leaders | `world-engine/app/story_runtime/manager/scripted_continuation.py`; `world-engine/app/story_runtime/manager/player_input_scene_blocks.py`; `world-engine/app/story_runtime/manager/thin_path_snapshot_api.py` | Current leaders: `_realize_npc_speak_block` **141L**, `_player_input_scene_blocks_for_story_window` **139L**, `get_runtime_diagnostic_snapshot` **134L**. Re-run manager/shell/readout focused tests and AST top-12. | Extract scripted continuation realization, player-input scene-block assembly, and diagnostic snapshot sections into readable helper phases without changing manager API payloads. | Primary owner: `world_engine`. Coordinate with DS-037 only if contract payload names move. |
+| **DS-039** | **C4 · C6 · C7 ·** Turn dispatch and scripted-continuation cross-runtime leaders | `backend/app/runtime/turn/turn_dispatcher.py`; `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py` | Current leaders: `dispatch_turn` **138L**, `build_goc_scripted_continuation` **138L**. Re-run backend runtime turn tests plus GoC narrator/scripted continuation tests. | Split dispatch route selection, request/result assembly, narrator continuation state, and scripted continuation block construction behind named helpers with stable runtime contracts. | Primary owner: `backend_runtime_services`; `ai_stack` co-owner for narrator path. Start after DS-037 contract-impact check. |
+| **DS-040** | **C4 · C5 · C6 · C7 ·** AI director/session/research residual leader cluster | `ai_stack/story_runtime/director/director_pulse_shadow.py`; `ai_stack/story_runtime/session_loop/composition.py`; `ai_stack/research/research_exploration_bounded_expand_loop.py` | Current leaders: `evaluate_director_tick` **135L**, `_compose_template_render_follow_up` **135L**, `run_bounded_exploration_expand_loop` **134L**. Re-run focused director/session/research tests and AST top-12. | Split director tick evaluation, template follow-up composition, and bounded research exploration loop into named decision, evidence, and result helpers. | Primary owner: `ai_stack`. Follow DS-037 where policy naming overlaps. |
+
+### Closed (archived)
+
+*None.* Closed **DS-*** detail lives in [despaghettification_completed_log.md](despaghettification_completed_log.md).
+
+**New rows:** next **DS-041**+ when check fills the open table; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
+## Recommended implementation order
+
+Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in the information input list and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). **Mandatory** Mermaid `flowchart` **below** the table once open phase rows exist ([spaghetti-check-task.md](../spaghetti-check-task.md) §3).
+
+### Open phases
+
+| Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
+|------------------|----------|-------------|----------------------|----------------------------|
+| **1a** | **DS-037** | AI policy/contract leaders shape names used by backend dispatch, world-engine manager payloads, and later AI residual work. | `ai_stack` | Can run in parallel with **DS-038** if public contract names stay stable. |
+| **1b** | **DS-038** | World-engine manager scene-block/snapshot leaders are the largest isolated runtime-manager cluster. | `world_engine` | Can run in parallel with **DS-037** unless shared payload names move. |
+| **2a** | **DS-039** | Backend dispatch and GoC narrator continuation should follow DS-037 contract-impact checks before runtime routing is split. | `backend_runtime_services` | Co-owned with `ai_stack`; preserve turn-dispatch and narrator-path response shapes. |
+| **2b** | **DS-040** | AI director/session/research residual leaders can follow the policy split so helper naming stays coherent. | `ai_stack` | Keep director/session/research public entry points stable. |
+
+```mermaid
+flowchart TD
+    Start["Check 2026-05-28 17:36 UTC · trigger fires"] --> P1A["1a · DS-037 · AI policy contracts"]
+    Start --> P1B["1b · DS-038 · World manager scene blocks"]
+    P1A --> P2A["2a · DS-039 · Dispatch continuation"]
+    P1A --> P2B["2b · DS-040 · AI director session research"]
+    P1B --> P2A
+```
+
+**Fill in:** one phase row per **open** **DS-*** when check repopulates the backlog. **Mermaid:** present because open phase rows exist.
+
+**Implementation:** invoke [spaghetti-solve-task.md](../spaghetti-solve-task.md) with **one** **DS-ID** per run.
+## Active progress (in-flight only)
+
+**Completed waves** live in **[despaghettification_completed_log.md](despaghettification_completed_log.md)** — append there when a **DS-ID** is **CLOSED** or a check/reset pass is finished; do **not** grow this table with closed work.
+
+Use this section only for:
+
+- **Partial** solve runs (`k < N` sub-waves; resume anchor),
+- **Open** DS waves before final closure,
+- At most **3** rows — archive older **closed** rows to the completed log.
+
+| date | ID(s) | short description | pre artefacts (rel. to `despaghettify/state/`) | post artefacts (rel. to `despaghettify/state/`) | state doc(s) updated | PR / commit |
+|------|-------|-------------------|----------------------------------------|----------------------------------------|----------------------|-------------|
+| — | — | — | — | — | — | — |
+
+**Rules:** [`despaghettification_completed_log.md`](despaghettification_completed_log.md) § *When to append here*; formal evidence still under `despaghettify/state/artifacts/…` per [`EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md).
+
+## Closed phases (archived)
+
+*None.* See [despaghettification_completed_log.md](despaghettification_completed_log.md).
+
+
+## Link to documentation-consolidation-2026
+
+| Archive artefact | Link to code despaghettification |
+|------------------|----------------------------------|
+| [`TOPIC_CONSOLIDATION_MAP.md`](../../docs/archive/documentation-consolidation-2026/TOPIC_CONSOLIDATION_MAP.md) | Topics map to **one** active doc per topic; code refactors should not reopen the same functional edge across two parallel implementations (e.g. RAG, MCP, runtime). |
+| [`DURABLE_TRUTH_MIGRATION_LEDGER.md`](../../docs/archive/documentation-consolidation-2026/DURABLE_TRUTH_MIGRATION_LEDGER.md) | Model for **traceable** moves instead of silent drift; despaghettification: **one source** for shared building blocks (e.g. builtins). |
+| [`FINAL_DOCUMENTATION_VALIDATION_REPORT.md`](../../docs/archive/documentation-consolidation-2026/FINAL_DOCUMENTATION_VALIDATION_REPORT.md) | Closure criteria for a **documentation** strand; for code: tests/CI green, behaviour unchanged, interfaces explicit. |
+
+## Coordination — extend work without colliding
+
+1. **Claims:** Before larger refactors, name the **ID(s)** in team/issue/PR (all **`DS-*** you are taking from this information input list). Preferably **one** clear owner per ID.
+2. **No double track:** Two implementers do **not** work the same ID in parallel; if split: separate sub-tasks explicitly (e.g. DS-003a backend wiring only, DS-003b world-engine import only).
+3. **Leave archive alone:** Do not mirror code findings into `documentation-consolidation-2026/*.md`; use CHANGELOG, PR description, **`despaghettify/state/` artefacts**, **this input list** (§ *Latest structure scan*, open DS rows only), **[despaghettification_completed_log.md](despaghettification_completed_log.md)** for closed waves, and matching **`WORKSTREAM_*_STATE.md`**.
+4. **Interfaces first:** For cycles (runtime cluster) small **DTO / protocol modules** before big moves; avoids PRs that touch half of `app.runtime` at once.
+5. **Measurement optional:** AST/review-based lengths are **guidance**; success is **understandable** boundaries + green suites, not a percentage score.
+
+### Maintaining this file during structural waves (move with the code)
+
+For every relevant **DS-*** / despaghettification **wave**, update this file in the **same PR/commit logic** (not “code only”):
+
+| What | Content |
+|------|---------|
+| **Information input list** | **Open** rows only; **pattern** starts with **C1..C7** per [spaghetti-check-task.md](../spaghetti-check-task.md) §2. On closure: strikethrough here **or** remove row and record in [despaghettification_completed_log.md](despaghettification_completed_log.md) (preferred when batch is done). |
+| **§ Latest structure scan** | After measurable change: **main table** — **Trigger v2** + **Anteil %** for **M7** / **C1..C7** from **`metrics_bundle.score`** via `check --with-metrics` ([spaghetti-check-task.md](../spaghetti-check-task.md) §1); telemetry **N / L₅₀ / L₁₀₀ / D₆** from `spaghetti_ast_scan`; § *Score M7* **same** dual columns + **AST telemetry** row **under C7**; optional **extra checks**; **open hotspots** (**prune** solved items). For runtime edges `despaghettify/tools/ds005_runtime_import_check.py`. Rankings: script output only. |
+| **§ Recommended implementation order** | Update when priority, dependency, or phase changes; **mandatory** Mermaid `flowchart` below the phase table on every [spaghetti-check-task.md](../spaghetti-check-task.md) pass that fills phases (see that doc §3). |
+| **§ Active progress** | **In-flight only** (partial sub-waves, open DS): at most **3** rows; see [despaghettification_completed_log.md](despaghettification_completed_log.md) when a **DS-ID** is **CLOSED** or a pass is done. |
+| **Appendix § DS-ID → workstream table** | Place new or moved **DS-*** in the bottom appendix; note co-involved workstreams. Keep the appendix below the operational sections so checks and resets do not hide the current scan/open backlog. |
+
+**Governance:** `despaghettify/state/artifacts/workstreams/<slug>/pre|post/` and `WORKSTREAM_*_STATE.md` remain **formal** evidence; this file is the **compact** working and review map.
+
+## Canonical technical reading paths (after refactor)
+
+After structural changes to runtime/AI/RAG/MCP, align **active** technical docs (not the 2026 archive):
+
+- Runtime / authority: [`docs/technical/runtime/runtime-authority-and-state-flow.md`](../../docs/technical/runtime/runtime-authority-and-state-flow.md) — supervisor orchestration: `supervisor_orchestrate_execute.py` + `supervisor_orchestrate_execute_sections.py`; subagent invocation: `supervisor_invoke_agent.py` + `supervisor_invoke_agent_sections.py`
+- Inspector projection (backend): `inspector_turn_projection_sections.py` orchestrates; pieces in `inspector_turn_projection_sections_{utils,constants,semantic,provenance}.py`
+- Admin tool routes: `administration-tool/route_registration.py` + `route_registration_{proxy,pages,manage,security}.py`
+- God-of-Carnage solo builtin (core): `story_runtime_core/goc_solo_builtin_template.py` + `goc_solo_builtin_catalog.py` + `goc_solo_builtin_roles_rooms.py`
+- AI / RAG / LangGraph: [`docs/technical/ai/RAG.md`](../../docs/technical/ai/RAG.md), [`docs/technical/integration/LangGraph.md`](../../docs/technical/integration/LangGraph.md), [`docs/technical/integration/MCP.md`](../../docs/technical/integration/MCP.md)
+- Dev seam overview: [`docs/dev/architecture/ai-stack-rag-langgraph-and-goc-seams.md`](../../docs/dev/architecture/ai-stack-rag-langgraph-and-goc-seams.md)
+
+## Appendix — execution governance and DS-ID workstream map
+
+This appendix intentionally lives below the operational scan, open DS rows, implementation order, and active progress. Hub archive sync and `spaghetti-check` must keep it here; do not move it back above § *Latest structure scan*.
+
 ## Link to `despaghettify/state/` (execution governance, pre/post)
 
 This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md); it is the **functional input side** for structural refactors that should use the **same** evidence and restart rules.
@@ -68,156 +230,18 @@ This document is **not** a replacement for [`state/EXECUTION_GOVERNANCE.md`](../
 | **DS-030** | `backend_runtime_services` | — | **CLOSED** 2026-05-28 |
 | **DS-031** | `world_engine` | — | **CLOSED** 2026-05-28 |
 | **DS-032** | `backend_runtime_services` | `ai_stack`, `world_engine`, `story_runtime_core`, `administration_tool` | **CLOSED** 2026-05-28 |
+| **DS-033** | `ai_stack` | `story_runtime_core` contract surfaces only | **CLOSED** 2026-05-28 |
+| **DS-034** | `backend_runtime_services` | `ai_stack` service contracts only | **CLOSED** 2026-05-28 |
+| **DS-035** | `world_engine` | `ai_stack` runtime contract surfaces only | **CLOSED** 2026-05-28 |
+| **DS-036** | `ai_stack` | `story_runtime_core`, `backend_runtime_services` contract surfaces only | **CLOSED** 2026-05-28 |
+| **DS-037** | `ai_stack` | `backend_runtime_services`, `world_engine` contract surfaces only | **OPEN** 2026-05-28 |
+| **DS-038** | `world_engine` | `ai_stack` contract surfaces only | **OPEN** 2026-05-28 |
+| **DS-039** | `backend_runtime_services` | `ai_stack` narrator-path surfaces | **OPEN** 2026-05-28 |
+| **DS-040** | `ai_stack` | `story_runtime_core` contract surfaces only | **OPEN** 2026-05-28 |
 
 **Fill in:** For each active **DS-*** one row (or a group sharing the same primary workstream); slugs as in [`WORKSTREAM_INDEX.md`](../state/WORKSTREAM_INDEX.md): `backend_runtime_services`, `ai_stack`, `administration_tool`, `world_engine`, `documentation`. Repo-wide cross-check without product code: optional `artifacts/repo_governance_rollout/pre|post/` (e.g. **DS-REPLAY-G**).
 
 Implementers: tick the **completion gate** from `EXECUTION_GOVERNANCE.md`; record the wave and new artefact paths in the matching `WORKSTREAM_*_STATE.md`. Avoid crossings: one clear wave owner per **DS-ID**; multiple workstreams only with agreed **separate** artefact sets.
-
-## Link to documentation-consolidation-2026
-
-| Archive artefact | Link to code despaghettification |
-|------------------|----------------------------------|
-| [`TOPIC_CONSOLIDATION_MAP.md`](../../docs/archive/documentation-consolidation-2026/TOPIC_CONSOLIDATION_MAP.md) | Topics map to **one** active doc per topic; code refactors should not reopen the same functional edge across two parallel implementations (e.g. RAG, MCP, runtime). |
-| [`DURABLE_TRUTH_MIGRATION_LEDGER.md`](../../docs/archive/documentation-consolidation-2026/DURABLE_TRUTH_MIGRATION_LEDGER.md) | Model for **traceable** moves instead of silent drift; despaghettification: **one source** for shared building blocks (e.g. builtins). |
-| [`FINAL_DOCUMENTATION_VALIDATION_REPORT.md`](../../docs/archive/documentation-consolidation-2026/FINAL_DOCUMENTATION_VALIDATION_REPORT.md) | Closure criteria for a **documentation** strand; for code: tests/CI green, behaviour unchanged, interfaces explicit. |
-
-## Coordination — extend work without colliding
-
-1. **Claims:** Before larger refactors, name the **ID(s)** in team/issue/PR (all **`DS-*** you are taking from this information input list). Preferably **one** clear owner per ID.
-2. **No double track:** Two implementers do **not** work the same ID in parallel; if split: separate sub-tasks explicitly (e.g. DS-003a backend wiring only, DS-003b world-engine import only).
-3. **Leave archive alone:** Do not mirror code findings into `documentation-consolidation-2026/*.md`; use CHANGELOG, PR description, **`despaghettify/state/` artefacts**, **this input list** (§ *Latest structure scan*, open DS rows only), **[despaghettification_completed_log.md](despaghettification_completed_log.md)** for closed waves, and matching **`WORKSTREAM_*_STATE.md`**.
-4. **Interfaces first:** For cycles (runtime cluster) small **DTO / protocol modules** before big moves; avoids PRs that touch half of `app.runtime` at once.
-5. **Measurement optional:** AST/review-based lengths are **guidance**; success is **understandable** boundaries + green suites, not a percentage score.
-
-### Maintaining this file during structural waves (move with the code)
-
-For every relevant **DS-*** / despaghettification **wave**, update this file in the **same PR/commit logic** (not “code only”):
-
-| What | Content |
-|------|---------|
-| **Information input list** | **Open** rows only; **pattern** starts with **C1..C7** per [spaghetti-check-task.md](../spaghetti-check-task.md) §2. On closure: strikethrough here **or** remove row and record in [despaghettification_completed_log.md](despaghettification_completed_log.md) (preferred when batch is done). |
-| **§ Latest structure scan** | After measurable change: **main table** — **Trigger v2** + **Anteil %** for **M7** / **C1..C7** from **`metrics_bundle.score`** via `check --with-metrics` ([spaghetti-check-task.md](../spaghetti-check-task.md) §1); telemetry **N / L₅₀ / L₁₀₀ / D₆** from `spaghetti_ast_scan`; § *Score M7* **same** dual columns + **AST telemetry** row **under C7**; optional **extra checks**; **open hotspots** (**prune** solved items). For runtime edges `despaghettify/tools/ds005_runtime_import_check.py`. Rankings: script output only. |
-| **§ Recommended implementation order** | Update when priority, dependency, or phase changes; **mandatory** Mermaid `flowchart` below the phase table on every [spaghetti-check-task.md](../spaghetti-check-task.md) pass that fills phases (see that doc §3). |
-| **§ Active progress** | **In-flight only** (partial sub-waves, open DS): at most **3** rows; see [despaghettification_completed_log.md](despaghettification_completed_log.md) when a **DS-ID** is **CLOSED** or a pass is done. |
-| **DS-ID → workstream table** | Place new or moved **DS-*** here; note co-involved workstreams. |
-
-**Governance:** `despaghettify/state/artifacts/workstreams/<slug>/pre|post/` and `WORKSTREAM_*_STATE.md` remain **formal** evidence; this file is the **compact** working and review map.
-
-## Latest structure scan (orientation, no warranty)
-
-**Purpose:** A **fillable** overview after measurable runs — update **date and time**, **`metrics_bundle.score`** (**Trigger v2** + **Anteil %**), **AST telemetry**, optional **extra checks**, and **open hotspots** per [spaghetti-check-task.md](../spaghetti-check-task.md). **Numeric** thresholds (**bars**, **weights**, **`M7_ref`**) are canonical in [spaghetti-setup.md](../spaghetti-setup.md). The spaghetti check maintains the **information input list** and **recommended implementation order** when the **trigger policy** in § *Trigger policy for check task updates* fires (per **setup**); otherwise this scan section (including M7 and category breakdown) is enough. **Rankings:** `python "./'fy'-suites/despaghettify/tools/spaghetti_ast_scan.py"` only (repo root). **Open hotspots:** [spaghetti-solve-task.md](../spaghetti-solve-task.md) clears or narrows items when waves resolve them; on every spaghetti-check run, **prune** so solved items are not listed.
-
-| Field | **Trigger v2** (0–100; advisory) | **Anteil %** (vs. bars / `M7_ref`; **M7** row = `m7_anteil_pct_gewichtet`) |
-|-------|-------------------------------------|-------------------------------------|
-| **As of (date & time)** | — | **2026-05-28 15:25:17 (UTC)** |
-| Spaghetti scan command | — | `PYTHONPATH="'fy'-suites" python -m despaghettify.tools check --with-metrics --out "'fy'-suites/despaghettify/reports/latest_check_with_metrics.json"` |
-| Measurement scope (ROOTS) | — | `backend/app`, `world-engine/app`, `ai_stack`, `story_runtime_core`, `tools/mcp_server`, `administration-tool` from `fy-manifest.yaml` |
-| **M7** — gewichtete 7-Kategorien-Summe | **45.58** | **3.79** |
-| C1: Circular dependencies | **9.00** | **0.74** |
-| C2: Nesting depth | **0.00** | **1.35** |
-| C3: Long functions + complexity | **97.99** | **1.12** |
-| C4: Multi-responsibility modules | **73.08** | **7.29** |
-| C5: Magic numbers + global state | **40.19** | **0.71** |
-| C6: Missing abstractions / duplication | **36.13** | **13.54** |
-| C7: Confusing control flow | **63.69** | **6.78** |
-| **AST telemetry N / L₅₀ / L₁₀₀ / D₆** | — | **11152** / **813** / **125** / **0** |
-| Extra check builtins | — | **0** matches for `def build_god_of_carnage_solo` in `**/builtins.py`; `story_runtime_core/goc_solo_builtin_template.py` still owns the definition |
-| Extra check runtime | — | **`ds005_runtime_import_check.py`** exit **0**; imported **12** current runtime modules via `app.runtime.package_classification.runtime_module_import_path`. Grep `TYPE_CHECKING` / `avoid circular` / `circular dependency` under `backend/app/runtime`: **0** hits |
-| **Open hotspots** | — | **Trigger policy still fires:** `M7_anteil` **3.790** remains below `M7_ref` **4.24**, but Anteil exceeds bars on **C4** (**7.29** > **5**), **C5** (**0.71** > **0**), **C6** (**13.54** > **0**), and **C7** (**6.78** > **3**). **DS-029 through DS-032 anchors are pruned:** their named leaders no longer appear in the current top-12 longest ranking, and DS-032 target magic-literal functions are cleared. Remaining leaders now start around `validate_npc_initiative_realization`, `aspect_score_metadata`, `_build_runtime_projection`, `run`, `validate_w5_actor_tracking`, `build_goc_opening_souffleuse_projection`, `get_rag_operations_status`, and `execute_turn`. Treat these as the next check/add-task classification input, not as reopened DS-029 through DS-032. **C7 nesting tail:** `D6` remains **0**. **Metric scan gate:** DS-005 imports **12** current runtime modules with exit **0**. |
-
-### Score *M7* — inputs, weights, and calculation
-
-| Symbol | Meaning | **Trigger v2** (0–100) | **Anteil %** |
-|--------|---------|------------------------|--------------|
-| **M7** | Gewichtete Summe | **45.58** | **3.79** |
-| **C1** | Circular dependencies | **9.00** | **0.74** |
-| **C2** | Nesting depth | **0.00** | **1.35** |
-| **C3** | Long functions + complexity | **97.99** | **1.12** |
-| **C4** | Multi-responsibility modules | **73.08** | **7.29** |
-| **C5** | Magic numbers + global state | **40.19** | **0.71** |
-| **C6** | Missing abstractions / duplication | **36.13** | **13.54** |
-| **C7** | Confusing control flow | **63.69** | **6.78** |
-| **AST telemetry** | N / L₅₀ / L₁₀₀ / D₆ | — | **11152** / **813** / **125** / **0** |
-
-**Formeln:** **Trigger:** `M7_trigger = Σ weight_i × trigger_v2(Ci)` aus **`metrics_bundle.m7`** / **`score`**. **Anteil:** `M7_anteil = Σ weight_i × anteil_pct(Ci)` aus **`score.m7_anteil_pct_gewichtet`**. **Weights:** [spaghetti-setup.md](../spaghetti-setup.md) § *M7 category weights*.
-
-**Evaluation:** From **`check --with-metrics`**: fill **`metrics_bundle.score`** (both columns); **AST** from **`spaghetti_ast_scan`**. **Bars** apply to **Anteil %** / **`metric_a.m7`** only (see [spaghetti-check-task.md](../spaghetti-check-task.md) §1).
-
-**Trigger policy for check task updates:**
-
-Update § *Information input list*, § *Recommended implementation order*, and § *DS-ID → primary workstream* when **`metrics_bundle.trigger_policy_fires`** is true — i.e. **Anteil(C*n*) > bar*n*** or **`M7_anteil ≥ M7_ref`** per [spaghetti-setup.md](../spaghetti-setup.md).
-
-| Condition | Rule |
-|-----------|------|
-| **Per-category** | **Anteil(C*n*)** **>** **bar*n*** per [spaghetti-setup.md](../spaghetti-setup.md) § *Per-category trigger bars*. |
-| **Composite** | **`M7_anteil` ≥ `M7_ref`** (`metric_a.m7`). |
-
-**Otherwise** (no per-category exceedance **and** **`M7_anteil` < `M7_ref`**): update **only** § *Latest structure scan*.
-
-*Note:* **`trigger_policy_basis`:** `anteil_pct`. **Trigger v2** is advisory. No hand edits.
-
-## Information input list (extensible)
-
-Each **open** row: **ID**, **pattern** (lead with **C1..C7** from [spaghetti-setup.md](../spaghetti-setup.md) § *Per-category trigger bars*, e.g. **`C3 ·`** …), **location**, **hint / measurement idea**, **direction**, **collision hint**.
-
-### Open
-
-| ID | pattern | location (typical) | hint / measurement idea | direction (solution sketch) | collision hint |
-|----|---------|--------------------|-------------------------|----------------------------|----------------|
-| — | — | — | — | — | — |
-
-*No open **DS-*** rows. Next backlog comes from **`spaghetti-check`** when [trigger policy](#trigger-policy-for-check-task-updates) fires — do not hand-copy closed rows back here.*
-
-### Closed (archived)
-
-DS-029 through DS-032 are archived in [despaghettification_completed_log.md](despaghettification_completed_log.md).
-
-**New rows:** next **DS-033**+ when check fills the open table; on closure append [despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.
-## Recommended implementation order
-
-Prioritised **phases** for **open** **DS-*** only — aligned with § *Open* in the information input list and [`EXECUTION_GOVERNANCE.md`](../state/EXECUTION_GOVERNANCE.md). **Mandatory** Mermaid `flowchart` **below** the table once open phase rows exist ([spaghetti-check-task.md](../spaghetti-check-task.md) §3).
-
-### Open phases
-
-| Priority / phase | DS-ID(s) | short logic | workstream (primary) | note (dependencies, gates) |
-|------------------|----------|-------------|----------------------|----------------------------|
-| — | — | — | — | — |
-
-*Filled on next **`spaghetti-check`** when trigger policy adds **DS-033**+ to § *Open*.*
-
-### Closed phases (archived)
-
-*None.* See [despaghettification_completed_log.md](despaghettification_completed_log.md).
-
-**Fill in:** one phase row per **open** **DS-*** when check repopulates the backlog. **Mermaid:** omit while the open table is only `—`.
-
-**Implementation:** invoke [spaghetti-solve-task.md](../spaghetti-solve-task.md) with **one** **DS-ID** per run.
-## Active progress (in-flight only)
-
-**Completed waves** live in **[despaghettification_completed_log.md](despaghettification_completed_log.md)** — append there when a **DS-ID** is **CLOSED** or a check/reset pass is finished; do **not** grow this table with closed work.
-
-Use this section only for:
-
-- **Partial** solve runs (`k < N` sub-waves; resume anchor),
-- **Open** DS waves before final closure,
-- At most **3** rows — archive older **closed** rows to the completed log.
-
-| date | ID(s) | short description | pre artefacts (rel. to `despaghettify/state/`) | post artefacts (rel. to `despaghettify/state/`) | state doc(s) updated | PR / commit |
-|------|-------|-------------------|----------------------------------------|----------------------------------------|----------------------|-------------|
-| — | — | — | — | — | — | — |
-
-**Rules:** [`despaghettification_completed_log.md`](despaghettification_completed_log.md) § *When to append here*; formal evidence still under `despaghettify/state/artifacts/…` per [`EXECUTION_GOVERNANCE.md`](state/EXECUTION_GOVERNANCE.md).
-
-## Canonical technical reading paths (after refactor)
-
-After structural changes to runtime/AI/RAG/MCP, align **active** technical docs (not the 2026 archive):
-
-- Runtime / authority: [`docs/technical/runtime/runtime-authority-and-state-flow.md`](../../docs/technical/runtime/runtime-authority-and-state-flow.md) — supervisor orchestration: `supervisor_orchestrate_execute.py` + `supervisor_orchestrate_execute_sections.py`; subagent invocation: `supervisor_invoke_agent.py` + `supervisor_invoke_agent_sections.py`
-- Inspector projection (backend): `inspector_turn_projection_sections.py` orchestrates; pieces in `inspector_turn_projection_sections_{utils,constants,semantic,provenance}.py`
-- Admin tool routes: `administration-tool/route_registration.py` + `route_registration_{proxy,pages,manage,security}.py`
-- God-of-Carnage solo builtin (core): `story_runtime_core/goc_solo_builtin_template.py` + `goc_solo_builtin_catalog.py` + `goc_solo_builtin_roles_rooms.py`
-- AI / RAG / LangGraph: [`docs/technical/ai/RAG.md`](../../docs/technical/ai/RAG.md), [`docs/technical/integration/LangGraph.md`](../../docs/technical/integration/LangGraph.md), [`docs/technical/integration/MCP.md`](../../docs/technical/integration/MCP.md)
-- Dev seam overview: [`docs/dev/architecture/ai-stack-rag-langgraph-and-goc-seams.md`](../../docs/dev/architecture/ai-stack-rag-langgraph-and-goc-seams.md)
 
 ---
 

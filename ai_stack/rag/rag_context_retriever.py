@@ -259,128 +259,107 @@ class ContextRetriever:
             )
         return hits
 
-    def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
-        """``retrieve`` — see implementation for behaviour and contracts.
-        
-        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
-        
-        Args:
-            request: ``request`` (RetrievalRequest); meaning follows the type and call sites.
-        
-        Returns:
-            RetrievalResult:
-                Returns a value of type ``RetrievalResult``; see the function body for structure, error paths, and sentinels.
-        """
-        if request.domain not in DOMAIN_CONTENT_ACCESS:
-            raise RetrievalDomainError(f"Unknown retrieval domain: {request.domain}")
+    def _dense_retrieval_metadata(self) -> dict[str, Any]:
         trace = self._corpus_trace()
-        c = self.corpus
-        emb_idx_ver = c.rag_embedding_index_version or EMBEDDING_INDEX_VERSION
-        emb_cache_id = c.rag_embedding_cache_dir_identity
-        dense_action = c.rag_dense_index_build_action
-        dense_validity = c.rag_dense_artifact_validity
-        dense_rebuild_reason = c.rag_dense_rebuild_reason
+        corpus = self.corpus
+        return {
+            "index_version": trace[0],
+            "corpus_fingerprint": trace[1],
+            "storage_path": trace[2],
+            "dense_index_build_action": corpus.rag_dense_index_build_action,
+            "dense_rebuild_reason": corpus.rag_dense_rebuild_reason,
+            "dense_artifact_validity": corpus.rag_dense_artifact_validity,
+            "embedding_index_version": corpus.rag_embedding_index_version or EMBEDDING_INDEX_VERSION,
+            "embedding_cache_dir_identity": corpus.rag_embedding_cache_dir_identity,
+        }
 
-        if not self.corpus.chunks:
-            result = _retrieval_result_degraded_empty_corpus(
-                request=request,
-                index_version=trace[0],
-                corpus_fingerprint=trace[1],
-                storage_path=trace[2],
-                dense_index_build_action=dense_action,
-                dense_rebuild_reason=dense_rebuild_reason,
-                dense_artifact_validity=dense_validity,
-                embedding_reason_codes=c.rag_dense_load_reason_codes,
-                embedding_index_version=emb_idx_ver,
-                embedding_cache_dir_identity=emb_cache_id,
-            )
-            self.last_retrieval_route = result.retrieval_route
-            self.last_embedding_model_id = result.embedding_model_id
-            self.last_retrieval_corpus_fingerprint = result.corpus_fingerprint
-            return result
+    def _remember_retrieval_result(self, result: RetrievalResult) -> RetrievalResult:
+        self.last_retrieval_route = result.retrieval_route
+        self.last_embedding_model_id = result.embedding_model_id
+        self.last_retrieval_corpus_fingerprint = result.corpus_fingerprint
+        return result
 
-        phase = _run_retrieval_encode_score_pool_phase(self, request)
-        qpc = phase.qpc
-        hybrid_state = phase.hybrid_state
-        use_hybrid = hybrid_state.use_hybrid
-        query_enc_codes = hybrid_state.query_enc_codes
-        query_encode_failed = hybrid_state.query_encode_failed
-        retrieval_route = hybrid_state.retrieval_route
-        embedding_mid = hybrid_state.embedding_mid
-        degradation_mode = hybrid_state.degradation_mode
-        prefix_notes = phase.prefix_notes
-        quality_notes = phase.quality_notes
-        pool = phase.pool
-        hard_policy_notes = phase.hard_policy_notes
-        strong_authored = phase.strong_authored
-        published_canonical_in_pool = phase.published_canonical_in_pool
-
-        policy_notes: list[str] = [f"retrieval_policy_version={RETRIEVAL_POLICY_VERSION}"]
-        policy_notes.extend(hard_policy_notes)
-
-        reranked = _rerank_retrieval_candidate_pool(
-            pool,
-            profile_name=qpc.profile_name,
+    def _empty_corpus_result(
+        self,
+        request: RetrievalRequest,
+        metadata: dict[str, Any],
+    ) -> RetrievalResult:
+        return _retrieval_result_degraded_empty_corpus(
             request=request,
-            use_hybrid=use_hybrid,
-            strong_authored_for_module=strong_authored,
+            **metadata,
+            embedding_reason_codes=self.corpus.rag_dense_load_reason_codes,
+        )
+
+    def _selected_retrieval_hits(
+        self,
+        request: RetrievalRequest,
+        phase: _RetrievalEncodeScorePoolPhase,
+    ) -> tuple[list[RetrievalHit], list[str]]:
+        reranked = _rerank_retrieval_candidate_pool(
+            phase.pool,
+            profile_name=phase.qpc.profile_name,
+            request=request,
+            use_hybrid=phase.hybrid_state.use_hybrid,
+            strong_authored_for_module=phase.strong_authored,
         )
         selected_tuples, dup_notes = _dedup_select(
             reranked,
             max_chunks=request.max_chunks,
-            profile_name=qpc.profile_name,
+            profile_name=phase.qpc.profile_name,
         )
-        _append_dedup_suppression_quality_notes(quality_notes, dup_notes)
-
         hits = self._build_retrieval_hits_from_selection(
             selected_tuples,
-            profile_name=qpc.profile_name,
-            published_canonical_in_pool=published_canonical_in_pool,
+            profile_name=phase.qpc.profile_name,
+            published_canonical_in_pool=phase.published_canonical_in_pool,
             audience_scope=request.audience_scope or "",
         )
+        return hits, dup_notes
 
-        emb_codes_fallback = query_enc_codes if query_encode_failed else c.rag_dense_load_reason_codes
-        emb_codes_ok = query_enc_codes if query_encode_failed else ()
-
-        if not hits:
-            result = _retrieval_result_fallback_empty_hits(
+    def _retrieval_result_from_hits(
+        self,
+        *,
+        request: RetrievalRequest,
+        phase: _RetrievalEncodeScorePoolPhase,
+        hits: list[RetrievalHit],
+        metadata: dict[str, Any],
+        policy_notes: list[str],
+    ) -> RetrievalResult:
+        hybrid_state = phase.hybrid_state
+        embedding_codes = (
+            hybrid_state.query_enc_codes
+            if hybrid_state.query_encode_failed
+            else self.corpus.rag_dense_load_reason_codes
+        )
+        if hits:
+            return _retrieval_result_ok_with_hits(
                 request=request,
-                index_version=trace[0],
-                corpus_fingerprint=trace[1],
-                storage_path=trace[2],
-                prefix_notes=prefix_notes,
-                quality_notes=quality_notes,
-                policy_notes=policy_notes,
-                retrieval_route=retrieval_route,
-                embedding_model_id=embedding_mid,
-                degradation_mode=degradation_mode,
-                dense_index_build_action=dense_action,
-                dense_rebuild_reason=dense_rebuild_reason,
-                dense_artifact_validity=dense_validity,
-                embedding_reason_codes=emb_codes_fallback,
-                embedding_index_version=emb_idx_ver,
-                embedding_cache_dir_identity=emb_cache_id,
-            )
-        else:
-            result = _retrieval_result_ok_with_hits(
-                request=request,
-                index_version=trace[0],
-                corpus_fingerprint=trace[1],
-                storage_path=trace[2],
+                **metadata,
                 hits=hits,
-                prefix_notes=prefix_notes,
-                quality_notes=quality_notes,
+                prefix_notes=phase.prefix_notes,
+                quality_notes=phase.quality_notes,
                 policy_notes=policy_notes,
-                retrieval_route=retrieval_route,
-                embedding_model_id=embedding_mid,
-                degradation_mode=degradation_mode,
-                dense_index_build_action=dense_action,
-                dense_rebuild_reason=dense_rebuild_reason,
-                dense_artifact_validity=dense_validity,
-                embedding_reason_codes=emb_codes_ok,
-                embedding_index_version=emb_idx_ver,
-                embedding_cache_dir_identity=emb_cache_id,
+                retrieval_route=hybrid_state.retrieval_route,
+                embedding_model_id=hybrid_state.embedding_mid,
+                degradation_mode=hybrid_state.degradation_mode,
+                embedding_reason_codes=hybrid_state.query_enc_codes if hybrid_state.query_encode_failed else (),
             )
+        return _retrieval_result_fallback_empty_hits(
+            request=request,
+            **metadata,
+            prefix_notes=phase.prefix_notes,
+            quality_notes=phase.quality_notes,
+            policy_notes=policy_notes,
+            retrieval_route=hybrid_state.retrieval_route,
+            embedding_model_id=hybrid_state.embedding_mid,
+            degradation_mode=hybrid_state.degradation_mode,
+            embedding_reason_codes=embedding_codes,
+        )
+
+    def _attach_retrieval_authority(
+        self,
+        result: RetrievalResult,
+        request: RetrievalRequest,
+    ) -> None:
         result.retrieval_authority = build_retrieval_authority_metadata(
             plan=type(
                 "_P",
@@ -397,10 +376,42 @@ class ContextRetriever:
             corpus_fingerprint=result.corpus_fingerprint,
             authority_level="retrieved_unverified",
         )
-        self.last_retrieval_route = result.retrieval_route
-        self.last_embedding_model_id = result.embedding_model_id
-        self.last_retrieval_corpus_fingerprint = result.corpus_fingerprint
-        return result
+
+    def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
+        """``retrieve`` — see implementation for behaviour and contracts.
+
+        Behaviour, edge cases, and invariants should be inferred from the implementation and public contract of this symbol.
+
+        Args:
+            request: ``request`` (RetrievalRequest); meaning follows the type and call sites.
+
+        Returns:
+            RetrievalResult:
+                Returns a value of type ``RetrievalResult``; see the function body for structure, error paths, and sentinels.
+        """
+        if request.domain not in DOMAIN_CONTENT_ACCESS:
+            raise RetrievalDomainError(f"Unknown retrieval domain: {request.domain}")
+        metadata = self._dense_retrieval_metadata()
+
+        if not self.corpus.chunks:
+            return self._remember_retrieval_result(
+                self._empty_corpus_result(request, metadata)
+            )
+
+        phase = _run_retrieval_encode_score_pool_phase(self, request)
+        policy_notes: list[str] = [f"retrieval_policy_version={RETRIEVAL_POLICY_VERSION}"]
+        policy_notes.extend(phase.hard_policy_notes)
+        hits, dup_notes = self._selected_retrieval_hits(request, phase)
+        _append_dedup_suppression_quality_notes(phase.quality_notes, dup_notes)
+        result = self._retrieval_result_from_hits(
+            request=request,
+            phase=phase,
+            hits=hits,
+            metadata=metadata,
+            policy_notes=policy_notes,
+        )
+        self._attach_retrieval_authority(result, request)
+        return self._remember_retrieval_result(result)
 
 
 def _run_retrieval_encode_score_pool_phase(

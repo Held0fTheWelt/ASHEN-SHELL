@@ -39,9 +39,7 @@ from ai_stack.story_runtime.runtime_aspect_ledger import (
 MODULE_ID = "god_of_carnage"
 
 
-def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
-    policy = load_module_runtime_policy(MODULE_ID, "solo_test").to_dict()
-
+def _assert_module_policy_surfaces(policy: dict) -> None:
     assert policy["module_id"] == MODULE_ID
     assert policy["runtime_profile_id"] == "solo_test"
     assert policy["actor_roster"]
@@ -62,6 +60,10 @@ def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
     assert policy["dramatic_irony_policy"]["require_structured_realization"] is True
     assert policy["runtime_governance_policy"]["dramatic_irony"]["enabled"] is True
     assert policy["runtime_governance_policy"]["dramatic_irony"]["hidden_fact_echo_check"] is True
+
+
+def _assert_callback_cascade_and_timing_policy(policy: dict) -> None:
+    governance = policy["runtime_governance_policy"]
     assert policy["runtime_governance_policy"]["callback_web"]["schema_version"] == CALLBACK_WEB_POLICY_SCHEMA_VERSION
     assert policy["runtime_governance_policy"]["callback_web"]["enabled"] is True
     assert policy["runtime_governance_policy"]["callback_web"]["max_graph_edges"] == 4
@@ -85,6 +87,20 @@ def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
     assert policy["runtime_governance_policy"]["sensory_context"]["schema_version"] == SENSORY_CONTEXT_POLICY_VERSION
     assert policy["runtime_governance_policy"]["sensory_context"]["enabled"] is True
     assert policy["runtime_governance_policy"]["sensory_context"]["require_structured_events"] is True
+    assert governance["off_stage_updates"]["auto_commit_enabled"] is False
+    assert "relationship_tension_update" in governance["off_stage_updates"]["allowed_candidate_kinds"]
+    assert governance["action_resolution_short_path"]["enabled"] is True
+    assert governance["action_resolution_short_path"]["routing_basis"] == "semantic_action_frame_evidence"
+    assert "allowed_verbs" not in governance["action_resolution_short_path"]
+    assert "allowed_player_input_kinds" not in governance["action_resolution_short_path"]
+    assert "blocked_player_input_kinds" not in governance["action_resolution_short_path"]
+    assert governance["player_freedom"]["enabled"] is True
+    assert governance["player_freedom"]["canonical_path_control"] == "hold_current_canonical_step_for_free_player_actions"
+    assert governance["visible_projection"]["hard_failure_behavior"] == "recover"
+
+
+def _assert_symbolic_genre_and_tone_policy(policy: dict) -> None:
+    governance = policy["runtime_governance_policy"]
     assert (
         policy["runtime_governance_policy"]["symbolic_object_resonance"]["schema_version"]
         == SYMBOLIC_OBJECT_RESONANCE_POLICY_VERSION
@@ -112,6 +128,11 @@ def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
     assert policy["runtime_governance_policy"]["genre_awareness"]["required_conventions"]
     assert policy["runtime_governance_policy"]["genre_awareness"]["require_structured_events"] is True
     assert policy["genre_awareness_policy"]["enabled"] is True
+    assert governance["tonal_consistency"]["tone_profiles"]
+
+
+def _assert_improv_momentum_and_meta_policy(policy: dict) -> None:
+    governance = policy["runtime_governance_policy"]
     assert (
         policy["runtime_governance_policy"]["improvisational_coherence"]["schema_version"]
         == IMPROVISATIONAL_COHERENCE_POLICY_VERSION
@@ -144,6 +165,15 @@ def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
     assert policy["runtime_governance_policy"]["meta_narrative_awareness"]["allow_direct_player_address"] is True
     assert policy["runtime_governance_policy"]["meta_narrative_awareness"]["allow_cross_session_memory"] is True
     assert policy["runtime_governance_policy"]["meta_narrative_awareness"]["characters_with_awareness"]
+    assert governance["social_pressure"]["schema_version"] == SOCIAL_PRESSURE_POLICY_VERSION
+    assert governance["social_pressure"]["enabled"] is True
+    assert governance["social_pressure"]["source_scores"]["social_risk_band"]
+    assert governance["relationship_state_machine"]["schema_version"] == RELATIONSHIP_STATE_POLICY_VERSION
+    assert governance["relationship_state_machine"]["enabled"] is True
+    assert governance["relationship_state_machine"]["transition_weights"]
+
+
+def _assert_social_relationship_and_content_sources(policy: dict) -> None:
     assert policy["runtime_governance_policy"]["social_pressure"]["schema_version"] == SOCIAL_PRESSURE_POLICY_VERSION
     assert policy["runtime_governance_policy"]["social_pressure"]["enabled"] is True
     assert policy["runtime_governance_policy"]["social_pressure"]["source_scores"]["social_risk_band"]
@@ -153,25 +183,6 @@ def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
     )
     assert policy["runtime_governance_policy"]["relationship_state_machine"]["enabled"] is True
     assert policy["runtime_governance_policy"]["relationship_state_machine"]["transition_weights"]
-    assert policy["runtime_governance_policy"]["off_stage_updates"]["auto_commit_enabled"] is False
-    assert (
-        "relationship_tension_update"
-        in policy["runtime_governance_policy"]["off_stage_updates"]["allowed_candidate_kinds"]
-    )
-    assert policy["runtime_governance_policy"]["action_resolution_short_path"]["enabled"] is True
-    assert (
-        policy["runtime_governance_policy"]["action_resolution_short_path"]["routing_basis"]
-        == "semantic_action_frame_evidence"
-    )
-    assert "allowed_verbs" not in policy["runtime_governance_policy"]["action_resolution_short_path"]
-    assert "allowed_player_input_kinds" not in policy["runtime_governance_policy"]["action_resolution_short_path"]
-    assert "blocked_player_input_kinds" not in policy["runtime_governance_policy"]["action_resolution_short_path"]
-    assert policy["runtime_governance_policy"]["player_freedom"]["enabled"] is True
-    assert (
-        policy["runtime_governance_policy"]["player_freedom"]["canonical_path_control"]
-        == "hold_current_canonical_step_for_free_player_actions"
-    )
-    assert policy["runtime_governance_policy"]["visible_projection"]["hard_failure_behavior"] == "recover"
     assert "character_documents" in policy["content_sources"]
     assert "actor_pressure_profiles" in policy["content_sources"]
     assert "universal_language_adapter" in policy["content_sources"]
@@ -186,6 +197,16 @@ def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
     assert "meta_narrative_awareness_policy" in policy["content_sources"]
     assert "tonal_consistency_policy" in policy["content_sources"]
     assert "runtime_intelligence" in policy["content_sources"]
+
+
+def test_module_runtime_policy_loads_goc_without_runtime_hardcoding() -> None:
+    policy = load_module_runtime_policy(MODULE_ID, "solo_test").to_dict()
+
+    _assert_module_policy_surfaces(policy)
+    _assert_callback_cascade_and_timing_policy(policy)
+    _assert_symbolic_genre_and_tone_policy(policy)
+    _assert_improv_momentum_and_meta_policy(policy)
+    _assert_social_relationship_and_content_sources(policy)
 
 
 def test_runtime_aspect_ledger_schema_is_module_neutral() -> None:

@@ -10,20 +10,19 @@ from typing import Any, Callable
 
 from .normalization import get_aspect_record, normalize_runtime_aspect_ledger
 
-def aspect_score_metadata(
+
+Normalizer = Callable[[dict[str, Any] | None], dict[str, Any]]
+RecordGetter = Callable[[dict[str, Any], str], dict[str, Any]]
+
+
+def _base_score_metadata(
     *,
-    ledger: dict[str, Any] | None,
+    normalized: dict[str, Any],
+    aspect: dict[str, Any],
     aspect_name: str,
     score_name: str,
 ) -> dict[str, Any]:
-    """Build required reason metadata for deterministic aspect scores."""
-    normalized = (normalizer or normalize_runtime_aspect_ledger)(ledger)
-    aspect = get_aspect_record(normalized, aspect_name)
     reasons = aspect.get("reasons") if isinstance(aspect.get("reasons"), list) else []
-    actual = aspect.get("actual") if isinstance(aspect.get("actual"), dict) else {}
-    selected = aspect.get("selected") if isinstance(aspect.get("selected"), dict) else {}
-    target = selected.get("target") if isinstance(selected.get("target"), dict) else {}
-    transition = selected.get("transition") if isinstance(selected.get("transition"), dict) else {}
     return {
         "score_name": score_name,
         "aspect_name": aspect_name,
@@ -42,12 +41,28 @@ def aspect_score_metadata(
         "realized_capability": aspect.get("realized_capability"),
         "selected_beat": aspect.get("selected_beat"),
         "lost_at_stage": aspect.get("lost_at_stage"),
+    }
+
+
+def _npc_agency_score_metadata(actual: dict[str, Any]) -> dict[str, Any]:
+    return {
         "planned_actor_ids": actual.get("planned_actor_ids"),
         "realized_actor_ids": actual.get("realized_actor_ids"),
         "missing_required_actor_ids": actual.get("missing_required_actor_ids"),
         "candidate_actor_ids": actual.get("candidate_actor_ids"),
         "independent_planning_used": actual.get("independent_planning_used"),
         "npc_agency_closure_status": actual.get("closure_status"),
+    }
+
+
+def _scene_and_sensory_score_metadata(
+    *,
+    selected: dict[str, Any],
+    target: dict[str, Any],
+    transition: dict[str, Any],
+    actual: dict[str, Any],
+) -> dict[str, Any]:
+    return {
         "scene_energy_level": selected.get("energy_level") or target.get("energy_level"),
         "scene_energy_transition": selected.get("target_transition")
         or transition.get("transition_intent"),
@@ -61,6 +76,15 @@ def aspect_score_metadata(
         "sensory_context_realized_layer_ids": actual.get("realized_layer_ids"),
         "sensory_context_contract_pass": actual.get("contract_pass"),
         "sensory_context_failure_codes": actual.get("failure_codes"),
+    }
+
+
+def _improv_and_meta_score_metadata(
+    *,
+    selected: dict[str, Any],
+    actual: dict[str, Any],
+) -> dict[str, Any]:
+    return {
         "improvisational_coherence_contribution_id": selected.get("contribution_id"),
         "improvisational_coherence_contribution_kind": selected.get("contribution_kind"),
         "improvisational_coherence_acceptance_mode": selected.get("acceptance_mode")
@@ -95,6 +119,16 @@ def aspect_score_metadata(
         ),
         "meta_narrative_awareness_contract_pass": actual.get("contract_pass"),
         "meta_narrative_awareness_failure_codes": actual.get("failure_codes"),
+    }
+
+
+def _pressure_disclosure_variation_score_metadata(
+    *,
+    selected: dict[str, Any],
+    target: dict[str, Any],
+    actual: dict[str, Any],
+) -> dict[str, Any]:
+    return {
         "social_pressure_target_score": selected.get("target_score")
         or target.get("target_score"),
         "social_pressure_target_band": selected.get("target_band")
@@ -117,6 +151,16 @@ def aspect_score_metadata(
         "expectation_variation_budget_used": actual.get("budget_used"),
         "expectation_variation_contract_pass": actual.get("contract_pass"),
         "expectation_variation_failure_codes": actual.get("failure_codes"),
+    }
+
+
+def _momentum_genre_cascade_irony_score_metadata(
+    *,
+    selected: dict[str, Any],
+    target: dict[str, Any],
+    actual: dict[str, Any],
+) -> dict[str, Any]:
+    return {
         "narrative_momentum_target_state": selected.get("target_state")
         or target.get("target_state"),
         "narrative_momentum_target_score": selected.get("target_score")
@@ -160,3 +204,52 @@ def aspect_score_metadata(
         "dramatic_irony_leak_blocked": actual.get("leak_blocked"),
         "dramatic_irony_violation_codes": actual.get("violation_codes"),
     }
+
+
+def aspect_score_metadata(
+    ledger: dict[str, Any] | None = None,
+    *,
+    aspect_name: str = "",
+    score_name: str = "",
+    normalizer: Normalizer | None = None,
+    record_getter: RecordGetter | None = None,
+) -> dict[str, Any]:
+    """Build required reason metadata for deterministic aspect scores."""
+    normalized = (normalizer or normalize_runtime_aspect_ledger)(ledger)
+    getter = record_getter or get_aspect_record
+    aspect = getter(normalized, aspect_name) if aspect_name else {}
+    actual = aspect.get("actual") if isinstance(aspect.get("actual"), dict) else {}
+    selected = aspect.get("selected") if isinstance(aspect.get("selected"), dict) else {}
+    target = selected.get("target") if isinstance(selected.get("target"), dict) else {}
+    transition = selected.get("transition") if isinstance(selected.get("transition"), dict) else {}
+    metadata = _base_score_metadata(
+        normalized=normalized,
+        aspect=aspect,
+        aspect_name=aspect_name,
+        score_name=score_name,
+    )
+    metadata.update(_npc_agency_score_metadata(actual))
+    metadata.update(
+        _scene_and_sensory_score_metadata(
+            selected=selected,
+            target=target,
+            transition=transition,
+            actual=actual,
+        )
+    )
+    metadata.update(_improv_and_meta_score_metadata(selected=selected, actual=actual))
+    metadata.update(
+        _pressure_disclosure_variation_score_metadata(
+            selected=selected,
+            target=target,
+            actual=actual,
+        )
+    )
+    metadata.update(
+        _momentum_genre_cascade_irony_score_metadata(
+            selected=selected,
+            target=target,
+            actual=actual,
+        )
+    )
+    return metadata

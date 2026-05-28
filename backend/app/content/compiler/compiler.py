@@ -23,12 +23,57 @@ def _resolve_start_scene_id(module: ContentModule) -> str:
     return min(module.scene_phases.items(), key=lambda kv: kv[1].sequence)[0]
 
 
-def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
-    scenes: list[dict] = []
+def _scene_row_from_graph_node(
+    *,
+    node: dict,
+    phase_by_id: dict,
+    sequence_fallback: int,
+) -> dict:
+    scene_id = str(node.get("id") or "").strip()
+    phase_id = str(node.get("phase_id") or "").strip()
+    phase = phase_by_id.get(phase_id)
+    return {
+        "id": scene_id,
+        "scene_id": scene_id,
+        "name": str(node.get("title") or scene_id),
+        "sequence": int(node.get("sequence") or sequence_fallback),
+        "description": str(node.get("summary") or ""),
+        "phase_id": phase_id or None,
+        "location_id": node.get("location_id"),
+        "scene_function": node.get("scene_function"),
+        "visibility": node.get("visibility"),
+        "required_event_ids": list(node.get("required_event_ids") or []),
+        "content_focus": list(phase.content_focus) if phase else [],
+        "engine_tasks": [str(node.get("scene_function") or "scene_node")]
+        + (list(phase.engine_tasks) if phase else []),
+        "active_triggers": list(phase.active_triggers) if phase else [],
+        "enforced_constraints": list(phase.enforced_constraints or []) if phase else [],
+        "turn_estimate": phase.turn_estimate if phase else None,
+        "exit_condition": phase.exit_condition if phase else None,
+    }
+
+
+def _scene_row_from_phase(scene_id: str, phase: object) -> dict:
+    return {
+        "id": scene_id,
+        "scene_id": scene_id,
+        "name": phase.name,
+        "sequence": phase.sequence,
+        "description": phase.description,
+        "content_focus": list(phase.content_focus),
+        "engine_tasks": list(phase.engine_tasks),
+        "active_triggers": list(phase.active_triggers),
+        "enforced_constraints": list(phase.enforced_constraints or []),
+        "turn_estimate": phase.turn_estimate,
+        "exit_condition": phase.exit_condition,
+    }
+
+
+def _runtime_scenes(module: ContentModule) -> list[dict]:
     scene_graph = module.scene_graph if isinstance(module.scene_graph, dict) else {}
     graph_nodes = scene_graph.get("nodes") if isinstance(scene_graph.get("nodes"), list) else []
     if graph_nodes:
-        phase_by_id = module.scene_phases
+        scenes: list[dict] = []
         sorted_nodes = sorted(
             [row for row in graph_nodes if isinstance(row, dict)],
             key=lambda row: int(row.get("sequence") or 0),
@@ -37,117 +82,115 @@ def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
             scene_id = str(node.get("id") or "").strip()
             if not scene_id:
                 continue
-            phase_id = str(node.get("phase_id") or "").strip()
-            phase = phase_by_id.get(phase_id)
             scenes.append(
-                {
-                    "id": scene_id,
-                    "scene_id": scene_id,
-                    "name": str(node.get("title") or scene_id),
-                    "sequence": int(node.get("sequence") or len(scenes) + 1),
-                    "description": str(node.get("summary") or ""),
-                    "phase_id": phase_id or None,
-                    "location_id": node.get("location_id"),
-                    "scene_function": node.get("scene_function"),
-                    "visibility": node.get("visibility"),
-                    "required_event_ids": list(node.get("required_event_ids") or []),
-                    "content_focus": list(phase.content_focus) if phase else [],
-                    "engine_tasks": [str(node.get("scene_function") or "scene_node")] + (list(phase.engine_tasks) if phase else []),
-                    "active_triggers": list(phase.active_triggers) if phase else [],
-                    "enforced_constraints": list(phase.enforced_constraints or []) if phase else [],
-                    "turn_estimate": phase.turn_estimate if phase else None,
-                    "exit_condition": phase.exit_condition if phase else None,
-                }
+                _scene_row_from_graph_node(
+                    node=node,
+                    phase_by_id=module.scene_phases,
+                    sequence_fallback=len(scenes) + 1,
+                )
             )
-    else:
-        for scene_id, phase in sorted(module.scene_phases.items(), key=lambda item: item[1].sequence):
-            scenes.append(
-                {
-                    "id": scene_id,
-                    "scene_id": scene_id,
-                    "name": phase.name,
-                    "sequence": phase.sequence,
-                    "description": phase.description,
-                    "content_focus": list(phase.content_focus),
-                    "engine_tasks": list(phase.engine_tasks),
-                    "active_triggers": list(phase.active_triggers),
-                    "enforced_constraints": list(phase.enforced_constraints or []),
-                    "turn_estimate": phase.turn_estimate,
-                    "exit_condition": phase.exit_condition,
-                }
-            )
-
-    triggers: list[dict] = []
-    for trigger_id, trigger in sorted(module.trigger_definitions.items()):
-        triggers.append(
-            {
-                "trigger_id": trigger_id,
-                "name": trigger.name,
-                "active_in_phases": list(trigger.active_in_phases),
-                "recognition_markers": list(trigger.recognition_markers),
-                "character_vulnerability": dict(trigger.character_vulnerability),
-                "escalation_impact": dict(trigger.escalation_impact),
-            }
+        return scenes
+    return [
+        _scene_row_from_phase(scene_id, phase)
+        for scene_id, phase in sorted(
+            module.scene_phases.items(), key=lambda item: item[1].sequence
         )
+    ]
 
-    endings: list[dict] = []
-    for ending_id, ending in sorted(module.ending_conditions.items()):
-        endings.append(
-            {
-                "ending_id": ending_id,
-                "title": ending.name,
-                "description": ending.description,
-                "conditions": ending.trigger_conditions,
-                "outcome": dict(ending.outcome),
-                "closure_action": list(ending.closure_action or []),
-            }
-        )
 
-    relationship_axes: list[dict] = []
-    for axis_id, axis in sorted(module.relationship_axes.items()):
-        relationship_axes.append(
-            {
-                "axis_id": axis_id,
-                "id": axis.id,
-                "name": axis.name,
-                "description": axis.description,
-                "relationships": list(axis.relationships),
-                "baseline": dict(axis.baseline),
-                "escalation": dict(axis.escalation),
-            }
-        )
+def _runtime_triggers(module: ContentModule) -> list[dict]:
+    return [
+        {
+            "trigger_id": trigger_id,
+            "name": trigger.name,
+            "active_in_phases": list(trigger.active_in_phases),
+            "recognition_markers": list(trigger.recognition_markers),
+            "character_vulnerability": dict(trigger.character_vulnerability),
+            "escalation_impact": dict(trigger.escalation_impact),
+        }
+        for trigger_id, trigger in sorted(module.trigger_definitions.items())
+    ]
 
+
+def _runtime_endings(module: ContentModule) -> list[dict]:
+    return [
+        {
+            "ending_id": ending_id,
+            "title": ending.name,
+            "description": ending.description,
+            "conditions": ending.trigger_conditions,
+            "outcome": dict(ending.outcome),
+            "closure_action": list(ending.closure_action or []),
+        }
+        for ending_id, ending in sorted(module.ending_conditions.items())
+    ]
+
+
+def _runtime_relationship_axes(module: ContentModule) -> list[dict]:
+    return [
+        {
+            "axis_id": axis_id,
+            "id": axis.id,
+            "name": axis.name,
+            "description": axis.description,
+            "relationships": list(axis.relationships),
+            "baseline": dict(axis.baseline),
+            "escalation": dict(axis.escalation),
+        }
+        for axis_id, axis in sorted(module.relationship_axes.items())
+    ]
+
+
+def _runtime_relationships(module: ContentModule) -> list[dict]:
     relationships: list[dict] = []
     for rel_id, rel in sorted(module.relationship_definitions.items()):
-        if isinstance(rel, dict):
-            relationships.append({"relationship_id": rel_id, **rel})
-        else:
-            relationships.append({"relationship_id": rel_id, "value": rel})
+        row = {"relationship_id": rel_id, **rel} if isinstance(rel, dict) else {
+            "relationship_id": rel_id,
+            "value": rel,
+        }
+        relationships.append(row)
+    return relationships
 
-    characters: list[dict] = []
-    for character_id, character in sorted(module.characters.items()):
-        characters.append(
-            {
-                "character_id": character_id,
-                "id": character.id,
-                "name": character.name,
-                "role": character.role,
-                "actor_id": character.actor_id or character.runtime_actor_id or character.id,
-                "runtime_actor_id": character.runtime_actor_id or character.actor_id or character.id,
-                "baseline_attitude": character.baseline_attitude,
-                "extras": dict(character.extras),
-            }
-        )
 
+def _runtime_characters(module: ContentModule) -> list[dict]:
+    return [
+        {
+            "character_id": character_id,
+            "id": character.id,
+            "name": character.name,
+            "role": character.role,
+            "actor_id": character.actor_id or character.runtime_actor_id or character.id,
+            "runtime_actor_id": character.runtime_actor_id or character.actor_id or character.id,
+            "baseline_attitude": character.baseline_attitude,
+            "extras": dict(character.extras),
+        }
+        for character_id, character in sorted(module.characters.items())
+    ]
+
+
+def _runtime_transition_hints(module: ContentModule) -> list[dict]:
+    return [
+        {
+            "from": transition.from_phase,
+            "to": transition.to_phase,
+            "trigger_conditions": list(transition.trigger_conditions),
+            "engine_checks": list(transition.engine_checks),
+            "transition_action": transition.transition_action,
+        }
+        for _, transition in sorted(module.phase_transitions.items())
+    ]
+
+
+def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
     return RuntimeProjection(
         module_id=module.metadata.module_id,
         module_version=module.metadata.version,
         start_scene_id=_resolve_start_scene_id(module),
-        scenes=scenes,
-        triggers=triggers,
-        endings=endings,
-        relationship_axes=relationship_axes,
-        relationships=relationships,
+        scenes=_runtime_scenes(module),
+        triggers=_runtime_triggers(module),
+        endings=_runtime_endings(module),
+        relationship_axes=_runtime_relationship_axes(module),
+        relationships=_runtime_relationships(module),
         escalation_axes=dict(module.escalation_axes),
         opening_scene_sequence=dict(module.opening_scene_sequence),
         opening_quote_anchors=dict(module.opening_quote_anchors),
@@ -159,18 +202,9 @@ def _build_runtime_projection(module: ContentModule) -> RuntimeProjection:
         objects=dict(module.objects),
         content_access_policy=dict(module.content_access_policy),
         character_ids=sorted(module.characters.keys()),
-        characters=characters,
+        characters=_runtime_characters(module),
         character_documents=dict(module.character_documents),
-        transition_hints=[
-            {
-                "from": transition.from_phase,
-                "to": transition.to_phase,
-                "trigger_conditions": list(transition.trigger_conditions),
-                "engine_checks": list(transition.engine_checks),
-                "transition_action": transition.transition_action,
-            }
-            for _, transition in sorted(module.phase_transitions.items())
-        ],
+        transition_hints=_runtime_transition_hints(module),
     )
 
 

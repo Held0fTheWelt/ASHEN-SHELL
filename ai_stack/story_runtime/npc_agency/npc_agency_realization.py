@@ -253,16 +253,17 @@ def build_npc_initiative_realization(
     return result
 
 
-def validate_npc_initiative_realization(
+def _initiative_validation_inputs(
     plan: dict[str, Any] | None,
     structured_output: dict[str, Any] | None,
     *,
-    actor_lane_context: dict[str, Any] | None = None,
-    strict_required: bool = True,
+    actor_lane_context: dict[str, Any] | None,
 ) -> dict[str, Any]:
     realized_actor_ids = realized_actor_ids_from_structured_output(structured_output)
     initiative_rows = coerce_dict_rows(
-        structured_output.get("initiative_events") if isinstance(structured_output, dict) else []
+        structured_output.get("initiative_events")
+        if isinstance(structured_output, dict)
+        else []
     )
     simulation, normalized = _simulation_and_plan_payload(
         plan,
@@ -275,7 +276,47 @@ def validate_npc_initiative_realization(
         validated_initiative_rows=initiative_rows,
         actor_lane_context=actor_lane_context,
     )
+    return {
+        "realized_actor_ids": realized_actor_ids,
+        "simulation": simulation,
+        "normalized": normalized,
+        "realization": realization,
+    }
 
+
+def _initiative_validation_private_plan_failures(
+    realization: dict[str, Any] | None,
+) -> tuple[list[str], list[str]]:
+    if not isinstance(realization, dict):
+        return [], []
+    return (
+        list(realization.get("unrealized_selected_private_plan_actor_ids") or []),
+        list(realization.get("withheld_required_actor_ids") or []),
+    )
+
+
+def _initiative_validation_secondary_failure(
+    *,
+    normalized: dict[str, Any] | None,
+    realized_actor_ids: list[str],
+) -> bool:
+    if not isinstance(normalized, dict):
+        return False
+    secondary_ids = list(normalized.get("secondary_responder_ids") or [])
+    minimum_secondary = int(normalized.get("minimum_secondary_initiatives_required") or 0)
+    realized_secondary_ids = [
+        actor_id for actor_id in secondary_ids if actor_id in realized_actor_ids
+    ]
+    return minimum_secondary > 0 and not realized_secondary_ids
+
+
+def _initiative_validation_error_codes(
+    *,
+    normalized: dict[str, Any] | None,
+    realization: dict[str, Any] | None,
+    realized_actor_ids: list[str],
+    actor_lane_context: dict[str, Any] | None,
+) -> dict[str, Any]:
     missing_required_actor_ids = (
         list(realization.get("unrealized_required_initiative_actor_ids") or [])
         if isinstance(realization, dict)
@@ -290,7 +331,9 @@ def validate_npc_initiative_realization(
         for actor_id in realized_actor_ids
         if is_forbidden_actor_id(actor_id, actor_lane_context=actor_lane_context)
     ]
-
+    unrealized_private_ids, withheld_required_ids = (
+        _initiative_validation_private_plan_failures(realization)
+    )
     error_codes: list[str] = []
     if not normalized:
         error_codes.append("npc_agency_plan_empty")
@@ -300,49 +343,98 @@ def validate_npc_initiative_realization(
         error_codes.append("npc_initiative_forbidden_actor_realized")
     if missing_required_actor_ids:
         error_codes.append("npc_initiative_missing_required")
-    unrealized_selected_private_plan_actor_ids = (
-        list(realization.get("unrealized_selected_private_plan_actor_ids") or [])
-        if isinstance(realization, dict)
-        else []
-    )
-    withheld_required_actor_ids = (
-        list(realization.get("withheld_required_actor_ids") or [])
-        if isinstance(realization, dict)
-        else []
-    )
-    if unrealized_selected_private_plan_actor_ids:
+    if unrealized_private_ids:
         error_codes.append("npc_private_plan_selected_actor_unrealized")
-    if withheld_required_actor_ids:
+    if withheld_required_ids:
         error_codes.append("npc_private_plan_visibility_violation")
-
-    secondary_ids = list(normalized.get("secondary_responder_ids") or []) if isinstance(normalized, dict) else []
-    minimum_secondary = (
-        int(normalized.get("minimum_secondary_initiatives_required") or 0)
-        if isinstance(normalized, dict)
-        else 0
-    )
-    realized_secondary_ids = [actor_id for actor_id in secondary_ids if actor_id in realized_actor_ids]
-    if minimum_secondary > 0 and not realized_secondary_ids:
+    if _initiative_validation_secondary_failure(
+        normalized=normalized,
+        realized_actor_ids=realized_actor_ids,
+    ):
         error_codes.append("npc_initiative_missing_required_secondary")
+    return {
+        "error_codes": error_codes,
+        "missing_required_actor_ids": missing_required_actor_ids,
+        "forbidden_planned_actor_ids": forbidden_plan_ids,
+        "forbidden_realized_actor_ids": forbidden_realized_actor_ids,
+        "unrealized_selected_private_plan_actor_ids": unrealized_private_ids,
+        "withheld_required_actor_ids": withheld_required_ids,
+    }
 
+
+def _initiative_validation_status(
+    *,
+    validation: dict[str, Any],
+    normalized: dict[str, Any] | None,
+    strict_required: bool,
+) -> str:
     strict_failure = bool(
-        forbidden_plan_ids
-        or forbidden_realized_actor_ids
-        or withheld_required_actor_ids
+        validation["forbidden_planned_actor_ids"]
+        or validation["forbidden_realized_actor_ids"]
+        or validation["withheld_required_actor_ids"]
         or not normalized
     )
     required_failure = bool(
-        missing_required_actor_ids
-        or unrealized_selected_private_plan_actor_ids
-        or "npc_initiative_missing_required_secondary" in error_codes
+        validation["missing_required_actor_ids"]
+        or validation["unrealized_selected_private_plan_actor_ids"]
+        or "npc_initiative_missing_required_secondary" in validation["error_codes"]
     )
     if strict_failure or (strict_required and required_failure):
-        status = "rejected"
-    elif required_failure:
-        status = "degraded"
-    else:
-        status = "approved"
+        return "rejected"
+    if required_failure:
+        return "degraded"
+    return "approved"
 
+
+def _initiative_validation_realization_fields(
+    realization: dict[str, Any] | None,
+) -> dict[str, Any]:
+    source = realization if isinstance(realization, dict) else {}
+    return {
+        "private_plan_resolution_present": bool(
+            source.get("private_plan_resolution_present")
+        ),
+        "private_plan_visibility_respected": bool(
+            source.get("private_plan_visibility_respected")
+        ),
+        "selected_private_plan_ids": list(source.get("selected_private_plan_ids") or []),
+        "selected_private_plan_actor_ids": list(
+            source.get("selected_private_plan_actor_ids") or []
+        ),
+        "withheld_private_plan_ids": list(source.get("withheld_private_plan_ids") or []),
+        "selected_private_plan_source_intention_thread_ids": list(
+            source.get("selected_private_plan_source_intention_thread_ids") or []
+        ),
+    }
+
+
+def validate_npc_initiative_realization(
+    plan: dict[str, Any] | None,
+    structured_output: dict[str, Any] | None,
+    *,
+    actor_lane_context: dict[str, Any] | None = None,
+    strict_required: bool = True,
+) -> dict[str, Any]:
+    inputs = _initiative_validation_inputs(
+        plan,
+        structured_output,
+        actor_lane_context=actor_lane_context,
+    )
+    simulation = inputs["simulation"]
+    normalized = inputs["normalized"]
+    realization = inputs["realization"]
+    realized_actor_ids = inputs["realized_actor_ids"]
+    validation = _initiative_validation_error_codes(
+        normalized=normalized,
+        realization=realization,
+        realized_actor_ids=realized_actor_ids,
+        actor_lane_context=actor_lane_context,
+    )
+    status = _initiative_validation_status(
+        validation=validation,
+        normalized=normalized,
+        strict_required=strict_required,
+    )
     full_simulation = isinstance(simulation, dict)
     result = {
         "schema_version": NPC_INITIATIVE_VALIDATION_SCHEMA_VERSION,
@@ -359,43 +451,18 @@ def validate_npc_initiative_realization(
         ),
         "status": status,
         "contract_pass": status == "approved",
-        "error_codes": dedupe_strings(error_codes),
-        "feedback_code": error_codes[0] if error_codes else None,
-        "missing_required_actor_ids": missing_required_actor_ids,
-        "unrealized_selected_private_plan_actor_ids": unrealized_selected_private_plan_actor_ids,
-        "withheld_required_actor_ids": withheld_required_actor_ids,
-        "private_plan_resolution_present": bool(
-            realization.get("private_plan_resolution_present")
-            if isinstance(realization, dict)
-            else False
-        ),
-        "private_plan_visibility_respected": bool(
-            realization.get("private_plan_visibility_respected")
-            if isinstance(realization, dict)
-            else False
-        ),
-        "selected_private_plan_ids": list(
-            realization.get("selected_private_plan_ids") or []
-        )
-        if isinstance(realization, dict)
-        else [],
-        "selected_private_plan_actor_ids": list(
-            realization.get("selected_private_plan_actor_ids") or []
-        )
-        if isinstance(realization, dict)
-        else [],
-        "withheld_private_plan_ids": list(
-            realization.get("withheld_private_plan_ids") or []
-        )
-        if isinstance(realization, dict)
-        else [],
-        "selected_private_plan_source_intention_thread_ids": list(
-            realization.get("selected_private_plan_source_intention_thread_ids") or []
-        )
-        if isinstance(realization, dict)
-        else [],
-        "forbidden_planned_actor_ids": forbidden_plan_ids,
-        "forbidden_realized_actor_ids": forbidden_realized_actor_ids,
+        "error_codes": dedupe_strings(validation["error_codes"]),
+        "feedback_code": validation["error_codes"][0]
+        if validation["error_codes"]
+        else None,
+        "missing_required_actor_ids": validation["missing_required_actor_ids"],
+        "unrealized_selected_private_plan_actor_ids": validation[
+            "unrealized_selected_private_plan_actor_ids"
+        ],
+        "withheld_required_actor_ids": validation["withheld_required_actor_ids"],
+        **_initiative_validation_realization_fields(realization),
+        "forbidden_planned_actor_ids": validation["forbidden_planned_actor_ids"],
+        "forbidden_realized_actor_ids": validation["forbidden_realized_actor_ids"],
         "realized_actor_ids": realized_actor_ids,
         "npc_agency_plan": normalized,
         "npc_initiative_realization_v1": realization,

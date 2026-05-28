@@ -1,5 +1,19 @@
 # Workstream: backend_runtime_services
 
+## Closed — DS-034 compiler projection and RAG operations status split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-034 | Runtime projection assembly now delegates scene, trigger, ending, relationship, character, and transition sections; RAG operations status now delegates degraded reason, operational state, guidance, corpus, retrieval, embedding, dense-index, and comparison sections. | `_build_runtime_projection`, `get_rag_operations_status` | Pre: `artifacts/workstreams/backend_runtime_services/pre/session_20260528_DS-034_wave_plan.*`; post: `artifacts/workstreams/backend_runtime_services/post/session_20260528_DS-034_comparison.*` |
+
+**Gates (final):**
+
+- `python -m py_compile backend/app/content/compiler/compiler.py backend/app/services/ai_stack/ai_engineer_suite/rag_operations.py` — passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows/backend python -m pytest -q backend/tests/content/test_content_compiler.py backend/tests/test_ai_engineer_suite_service_phase3.py backend/tests/test_ai_engineer_suite_routes.py --tb=short` — 22 passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T17:36:09Z`.
+
+**Structural delta:** DS-034 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11230 functions; L50 808; L100 114; D6 0; `M7_anteil` 3.7336.
+
 ## Closed — DS-030 backend snapshots and DS-032 policy literal tail (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

@@ -351,6 +351,174 @@ def _block_delivery() -> dict[str, Any]:
     }
 
 
+def _souffleuse_diagnostics(lang: str) -> dict[str, Any]:
+    return {
+        "contract": SOUFFLEUSE_CONTRACT,
+        "adapter": SOUFFLEUSE_ADAPTER,
+        "adapter_invocation_mode": SOUFFLEUSE_INVOCATION_MODE,
+        "internal_resolution_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
+        "source_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
+        "session_output_language": lang,
+        "requires_output_realization": lang != SOUFFLEUSE_INTERNAL_LANGUAGE,
+        "selected": False,
+        "errors": [],
+    }
+
+
+def _souffleuse_character_context(
+    runtime_projection: dict[str, Any] | None,
+) -> tuple[str, str, dict[str, Any]]:
+    actor_id = _human_actor_id(runtime_projection)
+    character_key, character_doc = _character_doc_for_actor(actor_id)
+    return actor_id, character_key, character_doc
+
+
+def _render_souffleuse_prompt(
+    cue: dict[str, Any],
+    step: dict[str, Any],
+    *,
+    character_doc: dict[str, Any],
+    diagnostics: dict[str, Any],
+) -> tuple[str, str]:
+    key = _prompt_key(cue, lang=SOUFFLEUSE_INTERNAL_LANGUAGE)
+    if not key:
+        diagnostics["errors"].append("missing_prompt_key")
+        return "", ""
+    variables = _projection_variables(
+        lang=SOUFFLEUSE_INTERNAL_LANGUAGE,
+        character_doc=character_doc,
+        current_step=step,
+    )
+    try:
+        text = render_prompt(key, **variables).strip()
+    except Exception as exc:  # noqa: BLE001 - opening should survive prompt-store drift.
+        diagnostics["errors"].append(f"prompt_render_failed:{type(exc).__name__}")
+        diagnostics["prompt_key"] = key
+        return key, ""
+    if not text:
+        diagnostics["errors"].append("empty_prompt_render")
+    return key, text
+
+
+def _souffleuse_guidance_kinds(cue: dict[str, Any]) -> list[str]:
+    raw_kinds = cue.get("guidance_kinds") if isinstance(cue.get("guidance_kinds"), list) else []
+    return [_clean(item) for item in raw_kinds if _clean(item)]
+
+
+def _souffleuse_source_facts(
+    *,
+    cue: dict[str, Any],
+    step: dict[str, Any],
+    character_key: str,
+    character_doc: dict[str, Any],
+    guidance_kinds: list[str],
+) -> dict[str, Any]:
+    opening_canon = character_doc.get("opening_canon")
+    character_opening_canon = opening_canon if isinstance(opening_canon, dict) else {}
+    attitude_refs = character_opening_canon.get("later_development_attitude_refs")
+    later_development_attitude_refs = attitude_refs if isinstance(attitude_refs, dict) else {}
+    current_location = _location_for_step(step)
+    incident_location = _opening_incident_location()
+    return {
+        "character_name": _clean(character_doc.get("name")),
+        "character_role": _clean(character_doc.get("role")),
+        "character_professional_identity": _clean(character_doc.get("professional_identity")),
+        "character_partner": _partner_fact(character_doc),
+        "character_household_side": _clean(character_doc.get("household_side")),
+        "character_public_identity": _clean(character_doc.get("public_identity")),
+        "character_baseline_attitude": _clean(character_doc.get("baseline_attitude")),
+        "character_voice": character_doc.get("voice") if isinstance(character_doc.get("voice"), dict) else {},
+        "character_voice_profile": _full_character_voice_profile(character_key),
+        "character_player_agency_policy": _clean(character_opening_canon.get("player_agency_policy")),
+        "character_situational_stance": _structured_stance(character_doc),
+        "character_souffleuse_guidance": _structured_guidance(character_doc),
+        "later_development_attitude_refs": later_development_attitude_refs,
+        "future_knowledge_policy": _clean(cue.get("future_knowledge_policy") or later_development_attitude_refs.get("use_policy")),
+        "current_location": _location_fact(current_location),
+        "incident_location": _location_fact(incident_location),
+        "guidance_kinds": guidance_kinds,
+        "cue_surface_policy": cue.get("surface_policy") if isinstance(cue.get("surface_policy"), dict) else {},
+    }
+
+
+def _souffleuse_block(
+    *,
+    cue: dict[str, Any],
+    step: dict[str, Any],
+    actor_id: str,
+    character_key: str,
+    character_doc: dict[str, Any],
+    lang: str,
+    prompt_key: str,
+    text: str,
+) -> dict[str, Any]:
+    cue_id = _clean(cue.get("id")) or "souffleuse_cue"
+    guidance_kinds = _souffleuse_guidance_kinds(cue)
+    capability = _clean(cue.get("capability")) or SOUFFLEUSE_OPENING_ROLE_ORIENTATION
+    return {
+        "id": f"opening-souffleuse-{cue_id}",
+        "block_type": SOUFFLEUSE_BLOCK_TYPE,
+        "speaker_label": "Souffleuse",
+        "actor_id": None,
+        "target_actor_id": actor_id,
+        "text": text,
+        "player_display_text": text,
+        "visible_lane": "player_hint",
+        "card_style": "director_notice",
+        "delivery": _block_delivery(),
+        "source": "canonical_path_souffleuse_cue",
+        "narration_beat": "souffleuse_orientation",
+        "canonical_step_id": _clean(step.get("id")),
+        "canonical_step_sequence": int(step.get("sequence") or 0),
+        "souffleuse_cue_id": cue_id,
+        "contract": SOUFFLEUSE_CONTRACT,
+        "voice_mode": _clean(cue.get("voice_mode")) or "second_person_inner",
+        "guidance_kinds": guidance_kinds,
+        "commit_impact": _clean(cue.get("commit_impact")) or "ui_guidance_only",
+        "internal_resolution_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
+        "source_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
+        "session_output_language": lang,
+        "visible_output_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
+        "requires_output_realization": lang != SOUFFLEUSE_INTERNAL_LANGUAGE,
+        "prompt_key": prompt_key,
+        "origin_aspect": "souffleuse",
+        "origin_beat_id": cue_id,
+        "origin_capability": capability,
+        "authority_owner": "director",
+        "expected_owner": "director",
+        "actual_owner": "director",
+        "evidence_role": "supporting",
+        "source_refs": _source_refs_for_cue(cue, character_key=character_key, step=step),
+        "source_facts": _souffleuse_source_facts(
+            cue=cue,
+            step=step,
+            character_key=character_key,
+            character_doc=character_doc,
+            guidance_kinds=guidance_kinds,
+        ),
+    }
+
+
+def _mark_selected_souffleuse_block(
+    diagnostics: dict[str, Any],
+    *,
+    block: dict[str, Any],
+    cue: dict[str, Any],
+    step: dict[str, Any],
+    actor_id: str,
+) -> None:
+    diagnostics.update(
+        {
+            "selected": True,
+            "cue_id": _clean(cue.get("id")) or "souffleuse_cue",
+            "prompt_key": block["prompt_key"],
+            "capability": block["origin_capability"],
+            "target_actor_id": actor_id,
+            "canonical_step_id": _clean(step.get("id")),
+        }
+    )
+
+
 def build_goc_opening_souffleuse_projection(
     *,
     session_output_language: str = "de",
@@ -362,19 +530,8 @@ def build_goc_opening_souffleuse_projection(
     lang = _lang(session_output_language)
     path = narrator_path if isinstance(narrator_path, dict) else {}
     blocks = [dict(block) for block in (scene_blocks or []) if isinstance(block, dict)]
-    diagnostics: dict[str, Any] = {
-        "contract": SOUFFLEUSE_CONTRACT,
-        "adapter": SOUFFLEUSE_ADAPTER,
-        "adapter_invocation_mode": SOUFFLEUSE_INVOCATION_MODE,
-        "internal_resolution_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
-        "source_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
-        "session_output_language": lang,
-        "requires_output_realization": lang != SOUFFLEUSE_INTERNAL_LANGUAGE,
-        "selected": False,
-        "errors": [],
-    }
-    actor_id = _human_actor_id(runtime_projection)
-    character_key, character_doc = _character_doc_for_actor(actor_id)
+    diagnostics = _souffleuse_diagnostics(lang)
+    actor_id, character_key, character_doc = _souffleuse_character_context(runtime_projection)
     if not actor_id or not character_doc:
         diagnostics["errors"].append("missing_human_actor_character_document")
         return {"blocks": [], "diagnostics": diagnostics}
@@ -390,111 +547,26 @@ def build_goc_opening_souffleuse_projection(
         if _cue_is_suppressed(cue, scene_blocks=blocks, player_name=player_name):
             diagnostics["reason"] = "content_cue_suppressed"
             continue
-        key = _prompt_key(cue, lang=SOUFFLEUSE_INTERNAL_LANGUAGE)
-        if not key:
-            diagnostics["errors"].append("missing_prompt_key")
-            continue
-        variables = _projection_variables(
-            lang=SOUFFLEUSE_INTERNAL_LANGUAGE,
+        key, text = _render_souffleuse_prompt(
+            cue,
+            step,
             character_doc=character_doc,
-            current_step=step,
+            diagnostics=diagnostics,
         )
-        try:
-            text = render_prompt(key, **variables).strip()
-        except Exception as exc:  # noqa: BLE001 - opening should survive prompt-store drift.
-            diagnostics["errors"].append(f"prompt_render_failed:{type(exc).__name__}")
-            diagnostics["prompt_key"] = key
-            continue
         if not text:
-            diagnostics["errors"].append("empty_prompt_render")
             continue
-        cue_id = _clean(cue.get("id")) or "souffleuse_cue"
-        capability = _clean(cue.get("capability")) or SOUFFLEUSE_OPENING_ROLE_ORIENTATION
-        guidance_kinds = [
-            _clean(item)
-            for item in (cue.get("guidance_kinds") if isinstance(cue.get("guidance_kinds"), list) else [])
-            if _clean(item)
-        ]
-        character_opening_canon = (
-            character_doc.get("opening_canon") if isinstance(character_doc.get("opening_canon"), dict) else {}
+        block = _souffleuse_block(
+            cue=cue,
+            step=step,
+            actor_id=actor_id,
+            character_key=character_key,
+            character_doc=character_doc,
+            lang=lang,
+            prompt_key=key,
+            text=text,
         )
-        character_souffleuse_guidance = _structured_guidance(character_doc)
-        later_development_attitude_refs = (
-            character_opening_canon.get("later_development_attitude_refs")
-            if isinstance(character_opening_canon.get("later_development_attitude_refs"), dict)
-            else {}
-        )
-        current_location = _location_for_step(step)
-        incident_location = _opening_incident_location()
-        block = {
-            "id": f"opening-souffleuse-{cue_id}",
-            "block_type": SOUFFLEUSE_BLOCK_TYPE,
-            "speaker_label": "Souffleuse",
-            "actor_id": None,
-            "target_actor_id": actor_id,
-            "text": text,
-            "player_display_text": text,
-            "visible_lane": "player_hint",
-            "card_style": "director_notice",
-            "delivery": _block_delivery(),
-            "source": "canonical_path_souffleuse_cue",
-            "narration_beat": "souffleuse_orientation",
-            "canonical_step_id": _clean(step.get("id")),
-            "canonical_step_sequence": int(step.get("sequence") or 0),
-            "souffleuse_cue_id": cue_id,
-            "contract": SOUFFLEUSE_CONTRACT,
-            "voice_mode": _clean(cue.get("voice_mode")) or "second_person_inner",
-            "guidance_kinds": guidance_kinds,
-            "commit_impact": _clean(cue.get("commit_impact")) or "ui_guidance_only",
-            "internal_resolution_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
-            "source_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
-            "session_output_language": lang,
-            "visible_output_language": SOUFFLEUSE_INTERNAL_LANGUAGE,
-            "requires_output_realization": lang != SOUFFLEUSE_INTERNAL_LANGUAGE,
-            "prompt_key": key,
-            "origin_aspect": "souffleuse",
-            "origin_beat_id": cue_id,
-            "origin_capability": capability,
-            "authority_owner": "director",
-            "expected_owner": "director",
-            "actual_owner": "director",
-            "evidence_role": "supporting",
-            "source_refs": _source_refs_for_cue(cue, character_key=character_key, step=step),
-            "source_facts": {
-                "character_name": _clean(character_doc.get("name")),
-                "character_role": _clean(character_doc.get("role")),
-                "character_professional_identity": _clean(character_doc.get("professional_identity")),
-                "character_partner": _partner_fact(character_doc),
-                "character_household_side": _clean(character_doc.get("household_side")),
-                "character_public_identity": _clean(character_doc.get("public_identity")),
-                "character_baseline_attitude": _clean(character_doc.get("baseline_attitude")),
-                "character_voice": character_doc.get("voice") if isinstance(character_doc.get("voice"), dict) else {},
-                "character_voice_profile": _full_character_voice_profile(character_key),
-                "character_player_agency_policy": _clean(character_opening_canon.get("player_agency_policy")),
-                "character_situational_stance": _structured_stance(character_doc),
-                "character_souffleuse_guidance": character_souffleuse_guidance,
-                "later_development_attitude_refs": later_development_attitude_refs,
-                "future_knowledge_policy": _clean(
-                    cue.get("future_knowledge_policy")
-                    or later_development_attitude_refs.get("use_policy")
-                ),
-                "current_location": _location_fact(current_location),
-                "incident_location": _location_fact(incident_location),
-                "guidance_kinds": guidance_kinds,
-                "cue_surface_policy": cue.get("surface_policy") if isinstance(cue.get("surface_policy"), dict) else {},
-            },
-        }
         out_blocks.append(block)
-        diagnostics.update(
-            {
-                "selected": True,
-                "cue_id": cue_id,
-                "prompt_key": key,
-                "capability": capability,
-                "target_actor_id": actor_id,
-                "canonical_step_id": _clean(step.get("id")),
-            }
-        )
+        _mark_selected_souffleuse_block(diagnostics, block=block, cue=cue, step=step, actor_id=actor_id)
 
     return {"blocks": out_blocks, "diagnostics": diagnostics}
 

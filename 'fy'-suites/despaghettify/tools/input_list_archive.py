@@ -16,6 +16,7 @@ COMPLETED_EMPTY_TEMPLATE = "despaghettification_completed_log.EMPTY.md"
 MARK_INFO = "## Information input list"
 MARK_ORDER = "## Recommended implementation order"
 MARK_ACTIVE = "## Active progress"
+MARK_CLOSED_PHASES = "## Closed phases"
 
 OPEN_DS_ROW = re.compile(r"^\|\s*\*\*(DS-\d+)\*\*\s*\|")
 CLOSED_DS_ROW = re.compile(r"^\|\s*~~\s*\*{0,2}(DS-\d+)\*{0,2}\s*~~", re.I)
@@ -254,6 +255,10 @@ def _render_info_section(open_rows: list[DsTableRow], closed_ids: list[str], bat
             "[despaghettification_completed_log.md](despaghettification_completed_log.md).\n"
         )
 
+    known_ids = [r.ds_id for r in open_rows] + closed_ids
+    next_num = max((int(ds.split("-")[1]) for ds in known_ids), default=5) + 1
+    next_id = f"DS-{next_num:03d}"
+
     return (
         "## Information input list (extensible)\n\n"
         "Each **open** row: **ID**, **pattern** (lead with **C1..C7** from "
@@ -265,7 +270,7 @@ def _render_info_section(open_rows: list[DsTableRow], closed_ids: list[str], bat
         f"{open_body}"
         f"{no_open_note}"
         f"{closed_note}\n"
-        "**New rows:** next **DS-006**+ when check fills the open table; on closure append "
+        f"**New rows:** next **{next_id}**+ when check fills the open table; on closure append "
         "[despaghettification_completed_log.md](despaghettification_completed_log.md) and remove from *Open* above.\n"
     )
 
@@ -298,21 +303,15 @@ def _render_order_section(
         open_body = "\n".join(open_phase_lines) + "\n"
         open_note = ""
 
-    closed_note = ""
-    if closed_phase_ids:
-        chain = " → ".join(closed_phase_ids)
-        closed_note = (
-            f"\n### Closed phases (archived)\n\n"
-            f"Executed **{batch_date}** in order: **{chain}**. Detail and gates: "
-            f"[despaghettification_completed_log.md](despaghettification_completed_log.md).\n"
-        )
-        if keep_mermaid and mermaid_block.strip():
-            closed_note += f"\nHistorical flow (reference only):\n\n{mermaid_block.strip()}\n"
-    else:
-        closed_note = (
-            "\n### Closed phases (archived)\n\n"
-            "*None.* See [despaghettification_completed_log.md](despaghettification_completed_log.md).\n"
-        )
+    open_mermaid = ""
+    if open_phase_lines and mermaid_block.strip():
+        open_mermaid = f"\n{mermaid_block.strip()}\n"
+
+    mermaid_note = (
+        "**Mermaid:** present because open phase rows exist."
+        if open_phase_lines and mermaid_block.strip()
+        else "**Mermaid:** omit while the open table is only `—`."
+    )
 
     return (
         "## Recommended implementation order\n\n"
@@ -324,11 +323,30 @@ def _render_order_section(
         "|------------------|----------|-------------|----------------------|----------------------------|\n"
         f"{open_body}"
         f"{open_note}"
-        f"{closed_note}\n"
+        f"{open_mermaid}\n"
         "**Fill in:** one phase row per **open** **DS-*** when check repopulates the backlog. "
-        "**Mermaid:** omit while the open table is only `—`.\n\n"
+        f"{mermaid_note}\n\n"
         "**Implementation:** invoke [spaghetti-solve-task.md](../spaghetti-solve-task.md) with **one** **DS-ID** per run.\n"
     )
+
+
+def _render_closed_phases_section(
+    closed_phase_ids: list[str],
+    batch_date: str,
+    keep_mermaid: bool,
+    mermaid_block: str,
+) -> str:
+    if closed_phase_ids:
+        chain = " → ".join(closed_phase_ids)
+        body = (
+            f"Executed **{batch_date}** in order: **{chain}**. Detail and gates: "
+            f"[despaghettification_completed_log.md](despaghettification_completed_log.md).\n"
+        )
+        if keep_mermaid and mermaid_block.strip():
+            body += f"\nHistorical flow (reference only):\n\n{mermaid_block.strip()}\n"
+    else:
+        body = "*None.* See [despaghettification_completed_log.md](despaghettification_completed_log.md).\n"
+    return f"## Closed phases (archived)\n\n{body}\n"
 
 
 def _extract_mermaid(order_section: str) -> str:
@@ -347,6 +365,26 @@ def _replace_section(md: str, start: str, end: str, new_body: str) -> str:
     if i == -1 or j == -1 or j <= i:
         return md
     return md[:i] + new_body + md[j:]
+
+
+def _find_next_h2(md: str, start: int) -> int:
+    """Return the next level-2 heading after ``start`` or EOF."""
+    match = re.search(r"\n## ", md[start + 1 :])
+    if not match:
+        return len(md)
+    return start + 1 + match.start()
+
+
+def _replace_or_insert_closed_phases(md: str, new_body: str) -> str:
+    start = md.find(MARK_CLOSED_PHASES)
+    if start != -1:
+        end = _find_next_h2(md, start)
+        return md[:start] + new_body + md[end:]
+    active = md.find(MARK_ACTIVE)
+    if active == -1:
+        return md
+    insert_at = _find_next_h2(md, active)
+    return md[:insert_at] + new_body + md[insert_at:]
 
 
 def sync_input_archive(hub_dir: Path, *, dry_run: bool = False) -> SyncResult:
@@ -373,7 +411,10 @@ def sync_input_archive(hub_dir: Path, *, dry_run: bool = False) -> SyncResult:
 
     info_sec = _slice_section(md, MARK_INFO, MARK_ORDER)
     order_sec = _slice_section(md, MARK_ORDER, MARK_ACTIVE)
-    active_sec = _slice_section(md, MARK_ACTIVE, "## Canonical")
+    active_end_marker = MARK_CLOSED_PHASES if MARK_CLOSED_PHASES in md else "## Canonical"
+    active_sec = _slice_section(md, MARK_ACTIVE, active_end_marker)
+    closed_start = md.find(MARK_CLOSED_PHASES)
+    closed_sec = md[closed_start : _find_next_h2(md, closed_start)] if closed_start != -1 else ""
 
     all_info_rows = _parse_table_data_rows(info_sec)
     open_block_rows = _parse_table_data_rows(_subsection_block(info_sec, "Open") or info_sec)
@@ -387,7 +428,7 @@ def sync_input_archive(hub_dir: Path, *, dry_run: bool = False) -> SyncResult:
 
     open_phase_lines: list[str] = []
     closed_phase_ids: list[str] = []
-    for line in order_sec.splitlines():
+    for line in (order_sec + "\n" + closed_sec).splitlines():
         if CLOSED_PHASE_ROW.match(line):
             closed_phase_ids.append(CLOSED_PHASE_ROW.match(line).group(1).upper())
         elif OPEN_PHASE_ROW.match(line):
@@ -453,9 +494,16 @@ def sync_input_archive(hub_dir: Path, *, dry_run: bool = False) -> SyncResult:
         keep_mermaid=bool(closed_phase_ids),
         mermaid_block=mermaid,
     )
+    new_closed_phases = _render_closed_phases_section(
+        sorted(set(closed_phase_ids), key=lambda s: int(s.split("-")[1])),
+        batch_date,
+        keep_mermaid=bool(closed_phase_ids),
+        mermaid_block=mermaid,
+    )
 
     new_md = _replace_section(md, MARK_INFO, MARK_ORDER, new_info)
     new_md = _replace_section(new_md, MARK_ORDER, MARK_ACTIVE, new_order)
+    new_md = _replace_or_insert_closed_phases(new_md, new_closed_phases)
 
     if result.archived_active_rows > 0:
         prose_end = active_sec.find("| date |")
@@ -475,7 +523,7 @@ def sync_input_archive(hub_dir: Path, *, dry_run: bool = False) -> SyncResult:
             + "\n\n"
             + suffix
         )
-        new_md = _replace_section(new_md, MARK_ACTIVE, "## Canonical", rebuilt_active)
+        new_md = _replace_section(new_md, MARK_ACTIVE, active_end_marker, rebuilt_active)
 
     open_block = _subsection_block(info_sec, "Open") or ""
     needs_layout = (

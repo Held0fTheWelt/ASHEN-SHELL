@@ -58,6 +58,113 @@ class BranchingTurnExecutor:
         self.path_manager = path_manager
         self.consequence_filter = consequence_filter
 
+    def _get_or_create_path(self, *, session_id: str, session):
+        path = self.path_manager.get_path(session_id)
+        if path:
+            return path
+        return self.path_manager.create_path(session_id, session.scenario_id)
+
+    def _resolve_decision_choice(
+        self,
+        *,
+        session,
+        current_turn: int,
+        action: Dict[str, Any],
+    ) -> tuple[Any | None, str | None, Any | None, str | None]:
+        decision_point = self.decision_registry.get_for_turn(
+            session.scenario_id,
+            current_turn,
+        )
+        decision_option_id = action.get("decision_option_id")
+        if decision_point is None and decision_option_id:
+            decision_point = self.decision_registry.get_for_option(
+                session.scenario_id,
+                str(decision_option_id),
+            )
+        if not decision_point:
+            return None, decision_option_id, None, None
+        if not decision_option_id:
+            return (
+                decision_point,
+                None,
+                None,
+                f"Decision point {decision_point.id} requires decision_option_id",
+            )
+        chosen_option = decision_point.get_option(decision_option_id)
+        if not chosen_option:
+            return (
+                decision_point,
+                decision_option_id,
+                None,
+                f"Invalid option {decision_option_id} for decision {decision_point.id}",
+            )
+        return decision_point, decision_option_id, chosen_option, None
+
+    def _validation_error(
+        self,
+        *,
+        action: Dict[str, Any],
+        decision_point,
+        chosen_option,
+        decision_option_id: str | None,
+        session,
+        player_id: str,
+    ) -> str | None:
+        if not self._is_valid_action(action):
+            return "Invalid action format"
+        if decision_point and chosen_option:
+            if not self._is_valid_decision_choice(chosen_option, session, player_id):
+                return f"Cannot choose {decision_option_id} in current state"
+        return None
+
+    def _record_branch_decision(
+        self,
+        *,
+        session_id: str,
+        current_turn: int,
+        decision_point,
+        decision_option_id: str | None,
+        chosen_option,
+    ) -> List[str]:
+        if not decision_point or not chosen_option:
+            return []
+        consequence_tags = chosen_option.consequence_tags
+        self.path_manager.record_decision(
+            session_id=session_id,
+            turn=current_turn,
+            decision_id=decision_point.id,
+            option_id=decision_option_id,
+            consequence_tags=consequence_tags,
+        )
+        return consequence_tags
+
+    @staticmethod
+    def _append_turn_history(
+        *,
+        session,
+        current_turn: int,
+        player_id: str,
+        action: Dict[str, Any],
+        state_delta: Dict[str, Any],
+        decision_point,
+        decision_option_id: str | None,
+        consequence_tags: List[str],
+    ) -> None:
+        session.history.append({
+            "turn": current_turn,
+            "player_id": player_id,
+            "action": action,
+            "delta": state_delta,
+            "decision_point_id": decision_point.id if decision_point else None,
+            "chosen_option_id": decision_option_id,
+            "consequence_tags": consequence_tags,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+
+    def _path_signature(self, session_id: str) -> str | None:
+        current_path = self.path_manager.get_path(session_id)
+        return current_path.get_path_signature() if current_path else None
+
     def execute_turn(
         self,
         session_id: str,
@@ -90,107 +197,59 @@ class BranchingTurnExecutor:
                 error_message=f"Session {session_id} not found"
             )
 
-        # Get or create player path state
-        path = self.path_manager.get_path(session_id)
-        if not path:
-            path = self.path_manager.create_path(session_id, session.scenario_id)
+        self._get_or_create_path(session_id=session_id, session=session)
 
         current_turn = session.turn_number
 
-        # ============================================
-        # SEAM 1: PROPOSAL
-        # Detect if this turn has a decision point
-        # ============================================
-        decision_point = self.decision_registry.get_for_turn(session.scenario_id, current_turn)
-        decision_option_id = None
-        chosen_option = None
-
-        decision_option_id = action.get("decision_option_id")
-        if decision_point is None and decision_option_id:
-            # Compatibility with evaluation harnesses that submit explicit option ids
-            # before reaching scripted turn numbers.
-            decision_point = self.decision_registry.get_for_option(session.scenario_id, str(decision_option_id))
-
-        if decision_point:
-            # This turn has a decision point
-            # Check if action specifies a choice
-            if not decision_option_id:
-                return BranchingTurnResult(
-                    success=False,
-                    new_turn_number=current_turn,
-                    error_message=f"Decision point {decision_point.id} requires decision_option_id"
-                )
-
-            chosen_option = decision_point.get_option(decision_option_id)
-            if not chosen_option:
-                return BranchingTurnResult(
-                    success=False,
-                    new_turn_number=current_turn,
-                    error_message=f"Invalid option {decision_option_id} for decision {decision_point.id}"
-                )
-
-        # ============================================
-        # SEAM 2: VALIDATION
-        # Validate action format and decision options
-        # ============================================
-        if not self._is_valid_action(action):
+        decision_point, decision_option_id, chosen_option, decision_error = (
+            self._resolve_decision_choice(
+                session=session,
+                current_turn=current_turn,
+                action=action,
+            )
+        )
+        if decision_error:
             return BranchingTurnResult(
                 success=False,
                 new_turn_number=current_turn,
-                error_message="Invalid action format"
+                error_message=decision_error,
             )
 
-        if decision_point and chosen_option:
-            # Validate decision option (could have constraints)
-            if not self._is_valid_decision_choice(chosen_option, session, player_id):
-                return BranchingTurnResult(
-                    success=False,
-                    new_turn_number=current_turn,
-                    error_message=f"Cannot choose {decision_option_id} in current state"
-                )
+        validation_error = self._validation_error(
+            action=action,
+            decision_point=decision_point,
+            chosen_option=chosen_option,
+            decision_option_id=decision_option_id,
+            session=session,
+            player_id=player_id,
+        )
+        if validation_error:
+            return BranchingTurnResult(
+                success=False,
+                new_turn_number=current_turn,
+                error_message=validation_error,
+            )
 
-        # ============================================
-        # SEAM 3: COMMIT
-        # Execute action and record path state
-        # ============================================
         state_delta = self._execute_action(session, player_id, action)
-
-        # If decision was made, record it in path state
-        consequence_tags = []
-        if decision_point and chosen_option:
-            consequence_tags = chosen_option.consequence_tags
-            self.path_manager.record_decision(
-                session_id=session_id,
-                turn=current_turn,
-                decision_id=decision_point.id,
-                option_id=decision_option_id,
-                consequence_tags=consequence_tags
-            )
-
-        # Increment turn number (AFTER successful execution)
+        consequence_tags = self._record_branch_decision(
+            session_id=session_id,
+            current_turn=current_turn,
+            decision_point=decision_point,
+            decision_option_id=decision_option_id,
+            chosen_option=chosen_option,
+        )
         session.turn_number += 1
-
-        # Record in history
-        session.history.append({
-            "turn": current_turn,
-            "player_id": player_id,
-            "action": action,
-            "delta": state_delta,
-            "decision_point_id": decision_point.id if decision_point else None,
-            "chosen_option_id": decision_option_id,
-            "consequence_tags": consequence_tags,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        })
-
-        # ============================================
-        # SEAM 4: RENDER
-        # Filter output based on player's branch path
-        # ============================================
+        self._append_turn_history(
+            session=session,
+            current_turn=current_turn,
+            player_id=player_id,
+            action=action,
+            state_delta=state_delta,
+            decision_point=decision_point,
+            decision_option_id=decision_option_id,
+            consequence_tags=consequence_tags,
+        )
         filtered_delta = self._filter_output(state_delta, session_id)
-
-        # Get current path signature
-        current_path = self.path_manager.get_path(session_id)
-        path_signature = current_path.get_path_signature() if current_path else None
 
         return BranchingTurnResult(
             success=True,
@@ -200,7 +259,7 @@ class BranchingTurnExecutor:
             decision_point_id=decision_point.id if decision_point else None,
             chosen_option_id=decision_option_id,
             consequence_tags=consequence_tags,
-            path_signature=path_signature
+            path_signature=self._path_signature(session_id),
         )
 
     def _is_valid_action(self, action: Dict[str, Any]) -> bool:

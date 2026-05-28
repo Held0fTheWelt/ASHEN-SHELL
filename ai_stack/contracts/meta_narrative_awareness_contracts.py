@@ -184,12 +184,10 @@ def default_meta_narrative_awareness_policy() -> dict[str, Any]:
     }
 
 
-def normalize_meta_narrative_awareness_policy(
-    policy: dict[str, Any] | None,
+def _normalize_meta_awareness_levels(
+    raw: dict[str, Any],
+    default: dict[str, Any],
 ) -> dict[str, Any]:
-    """Normalize module/runtime policy into a stable JSON-safe envelope."""
-    raw = policy if isinstance(policy, dict) else {}
-    default = default_meta_narrative_awareness_policy()
     allowed_tiers = _clean_str_list(
         raw.get("allowed_awareness_tiers"),
         allowed=META_NARRATIVE_AWARENESS_TIERS,
@@ -206,6 +204,18 @@ def normalize_meta_narrative_awareness_policy(
     default_intensity = _text(raw.get("default_intensity")).lower()
     if default_intensity not in allowed_intensities:
         default_intensity = allowed_intensities[0]
+    return {
+        "allowed_awareness_tiers": allowed_tiers,
+        "default_awareness_tier": default_tier,
+        "allowed_intensities": allowed_intensities,
+        "default_intensity": default_intensity,
+    }
+
+
+def _normalize_meta_trigger_frequency(
+    raw: dict[str, Any],
+    default: dict[str, Any],
+) -> dict[str, Any]:
     allowed_frequencies = _clean_str_list(
         raw.get("allowed_trigger_frequencies"),
         allowed=META_NARRATIVE_TRIGGER_FREQUENCIES,
@@ -214,6 +224,16 @@ def normalize_meta_narrative_awareness_policy(
     default_frequency = _text(raw.get("default_trigger_frequency")).lower()
     if default_frequency not in allowed_frequencies:
         default_frequency = allowed_frequencies[0]
+    return {
+        "allowed_trigger_frequencies": allowed_frequencies,
+        "default_trigger_frequency": default_frequency,
+    }
+
+
+def _normalize_meta_awareness_modes(
+    raw: dict[str, Any],
+    default: dict[str, Any],
+) -> dict[str, Any]:
     forbidden_modes = _clean_str_list(
         raw.get("forbidden_awareness_modes"),
         allowed=META_NARRATIVE_FORBIDDEN_MODES,
@@ -239,6 +259,17 @@ def normalize_meta_narrative_awareness_policy(
         allowed=META_NARRATIVE_FOURTH_WALL_LEVELS,
         lower=True,
     ) or list(default["allowed_fourth_wall_levels"])
+    return {
+        "allowed_awareness_modes": allowed_modes,
+        "forbidden_awareness_modes": forbidden_modes,
+        "allowed_fourth_wall_levels": allowed_fourth_wall_levels,
+    }
+
+
+def _normalize_meta_memory_policy(
+    raw: dict[str, Any],
+    default: dict[str, Any],
+) -> dict[str, Any]:
     allowed_memory_scopes = _clean_str_list(
         raw.get("allowed_memory_scopes"),
         allowed=META_NARRATIVE_MEMORY_SCOPES,
@@ -247,27 +278,65 @@ def normalize_meta_narrative_awareness_policy(
     default_memory_scope = _text(raw.get("default_memory_retention_scope")).lower()
     if default_memory_scope not in allowed_memory_scopes:
         default_memory_scope = allowed_memory_scopes[0]
+    return {
+        "allowed_memory_scopes": allowed_memory_scopes,
+        "default_memory_retention_scope": default_memory_scope,
+        "allow_cross_session_memory": bool(
+            raw.get(
+                "allow_cross_session_memory",
+                default["allow_cross_session_memory"],
+            )
+        ),
+        "max_cross_session_memory_refs": _bounded_int(
+            raw.get("max_cross_session_memory_refs"),
+            int(default["max_cross_session_memory_refs"]),
+            minimum=0,
+            maximum=5,
+        ),
+        "require_verified_memory_refs": bool(
+            raw.get(
+                "require_verified_memory_refs",
+                default["require_verified_memory_refs"],
+            )
+        ),
+        "privacy_safe_memory_only": bool(
+            raw.get("privacy_safe_memory_only", default["privacy_safe_memory_only"])
+        ),
+    }
+
+
+def _normalize_meta_commit_impact(
+    raw: dict[str, Any],
+    default: dict[str, Any],
+) -> str:
     commit_impact = _text(
         raw.get("default_commit_impact") or default["default_commit_impact"]
     ).lower()
     if commit_impact not in META_NARRATIVE_COMMIT_IMPACTS:
         commit_impact = default["default_commit_impact"]
+    return commit_impact
+
+
+def normalize_meta_narrative_awareness_policy(
+    policy: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Normalize module/runtime policy into a stable JSON-safe envelope."""
+    raw = policy if isinstance(policy, dict) else {}
+    default = default_meta_narrative_awareness_policy()
+    levels = _normalize_meta_awareness_levels(raw, default)
+    frequency = _normalize_meta_trigger_frequency(raw, default)
+    modes = _normalize_meta_awareness_modes(raw, default)
+    memory = _normalize_meta_memory_policy(raw, default)
     return {
         "schema_version": _text(raw.get("schema_version"))
         or META_NARRATIVE_AWARENESS_POLICY_VERSION,
         "enabled": bool(raw.get("enabled", default["enabled"])),
-        "allowed_awareness_tiers": allowed_tiers,
-        "default_awareness_tier": default_tier,
-        "allowed_intensities": allowed_intensities,
-        "default_intensity": default_intensity,
-        "allowed_trigger_frequencies": allowed_frequencies,
-        "default_trigger_frequency": default_frequency,
+        **levels,
+        **frequency,
         "characters_with_awareness": _clean_str_list(
             raw.get("characters_with_awareness")
         ),
-        "allowed_awareness_modes": allowed_modes,
-        "forbidden_awareness_modes": forbidden_modes,
-        "allowed_fourth_wall_levels": allowed_fourth_wall_levels,
+        **modes,
         "max_events_per_turn": _bounded_int(
             raw.get("max_events_per_turn"),
             int(default["max_events_per_turn"]),
@@ -298,31 +367,9 @@ def normalize_meta_narrative_awareness_policy(
                 default["allow_narrator_negotiation"],
             )
         ),
-        "allow_cross_session_memory": bool(
-            raw.get(
-                "allow_cross_session_memory",
-                default["allow_cross_session_memory"],
-            )
-        ),
-        "allowed_memory_scopes": allowed_memory_scopes,
-        "default_memory_retention_scope": default_memory_scope,
-        "max_cross_session_memory_refs": _bounded_int(
-            raw.get("max_cross_session_memory_refs"),
-            int(default["max_cross_session_memory_refs"]),
-            minimum=0,
-            maximum=5,
-        ),
-        "require_verified_memory_refs": bool(
-            raw.get(
-                "require_verified_memory_refs",
-                default["require_verified_memory_refs"],
-            )
-        ),
-        "privacy_safe_memory_only": bool(
-            raw.get("privacy_safe_memory_only", default["privacy_safe_memory_only"])
-        ),
+        **memory,
         "model_context_visibility": _text(raw.get("model_context_visibility"))
         or default["model_context_visibility"],
-        "default_commit_impact": commit_impact,
+        "default_commit_impact": _normalize_meta_commit_impact(raw, default),
         "source": "module_runtime_policy.meta_narrative_awareness",
     }

@@ -281,116 +281,163 @@ def _is_hard_fact(fact: W5Fact) -> bool:
     )
 
 
-def validate_w5_actor_tracking(
+def _validate_claim_location(
     *,
-    snapshot: W5Snapshot | Mapping[str, Any] | None,
-    generation: Mapping[str, Any] | None,
-    proposed_state_effects: list[dict[str, Any]] | None = None,
-    player_action_frame: Mapping[str, Any] | None = None,
-    affordance_resolution: Mapping[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Validate proposed actor-tracking claims against a typed W5 snapshot."""
-
-    typed_snapshot = _coerce_snapshot(snapshot)
-    structured = _structured_output(generation)
-    claims = list(_iter_claims(structured))
-    allowed_locations = _allowed_target_locations(
-        player_action_frame=player_action_frame,
-        affordance_resolution=affordance_resolution,
+    typed_snapshot: W5Snapshot,
+    claim: dict[str, Any],
+    allowed_locations: set[str],
+) -> list[dict[str, Any]]:
+    actor_id = claim["actor_id"]
+    block = claim["block"]
+    where_fact = _strongest_fact(
+        _facts_for_actor(typed_snapshot, actor_id, W5Dimension.WHERE),
+        "scene_location",
+        active_only=True,
     )
-    fact_index = _fact_by_id(typed_snapshot)
+    if where_fact is None:
+        return [
+            _issue(
+                W5ValidationFailureCode.W5_ACTOR_NOT_PRESENT,
+                actor_id=actor_id,
+                lane=claim["lane"],
+                index=claim["index"],
+                details={"claim_kind": claim["kind"]},
+            )
+        ]
+    claimed_location = _block_location(block)
+    if (
+        claimed_location
+        and claimed_location != str(where_fact.value)
+        and claimed_location not in allowed_locations
+        and not _has_location_transition_support(block)
+    ):
+        return [
+            _issue(
+                W5ValidationFailureCode.W5_LOCATION_CONTINUITY_BREAK,
+                actor_id=actor_id,
+                lane=claim["lane"],
+                index=claim["index"],
+                fact_refs=[_fact_ref(where_fact)],
+                details={
+                    "w5_scene_location": str(where_fact.value),
+                    "claimed_location": claimed_location,
+                },
+            )
+        ]
+    return []
+
+
+def _validate_claim_fact_access(
+    *,
+    typed_snapshot: W5Snapshot,
+    claim: dict[str, Any],
+    fact_index: dict[str, W5Fact],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    actor_id = claim["actor_id"]
+    for fact_id in _referenced_fact_ids(claim["block"]):
+        fact = fact_index.get(fact_id)
+        if fact is None or _actor_can_access_fact(typed_snapshot, actor_id, fact):
+            continue
+        issues.append(
+            _issue(
+                W5ValidationFailureCode.W5_PERCEPTION_BREAK,
+                actor_id=actor_id,
+                lane=claim["lane"],
+                index=claim["index"],
+                fact_refs=[_fact_ref(fact)],
+                details={"referenced_fact_id": fact_id},
+            )
+        )
+    return issues
+
+
+def _validate_claim_action_state(
+    *,
+    typed_snapshot: W5Snapshot,
+    claim: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    block = claim["block"]
+    next_action_state = _clean_str(block.get("action_state"))
+    if not next_action_state or _clean_str(block.get("action_transition")):
+        return [], []
+    state_fact = _strongest_fact(
+        _facts_for_actor(typed_snapshot, claim["actor_id"], W5Dimension.WHAT),
+        "action_state",
+        active_only=False,
+    )
+    if state_fact is None or next_action_state == str(state_fact.value):
+        return [], []
+    issue = _issue(
+        W5ValidationFailureCode.W5_ACTION_CONTINUITY_BREAK,
+        actor_id=claim["actor_id"],
+        severity="error" if _is_hard_fact(state_fact) else "warning",
+        lane=claim["lane"],
+        index=claim["index"],
+        fact_refs=[_fact_ref(state_fact)],
+        details={
+            "w5_action_state": str(state_fact.value),
+            "claimed_action_state": next_action_state,
+        },
+    )
+    if issue["severity"] == "error":
+        return [issue], []
+    return [], [issue]
+
+
+def _validate_claims_against_snapshot(
+    *,
+    typed_snapshot: W5Snapshot,
+    claims: list[dict[str, Any]],
+    allowed_locations: set[str],
+    fact_index: dict[str, W5Fact],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     failures: list[dict[str, Any]] = []
     warnings: list[dict[str, Any]] = []
-
     for claim in claims:
-        actor_id = claim["actor_id"]
-        block = claim["block"]
-        where_fact = _strongest_fact(
-            _facts_for_actor(typed_snapshot, actor_id, W5Dimension.WHERE),
-            "scene_location",
-            active_only=True,
+        failures.extend(
+            _validate_claim_location(
+                typed_snapshot=typed_snapshot,
+                claim=claim,
+                allowed_locations=allowed_locations,
+            )
         )
-        if where_fact is None:
-            failures.append(
-                _issue(
-                    W5ValidationFailureCode.W5_ACTOR_NOT_PRESENT,
-                    actor_id=actor_id,
-                    lane=claim["lane"],
-                    index=claim["index"],
-                    details={"claim_kind": claim["kind"]},
-                )
+        failures.extend(
+            _validate_claim_fact_access(
+                typed_snapshot=typed_snapshot,
+                claim=claim,
+                fact_index=fact_index,
             )
-        else:
-            claimed_location = _block_location(block)
-            if (
-                claimed_location
-                and claimed_location != str(where_fact.value)
-                and claimed_location not in allowed_locations
-                and not _has_location_transition_support(block)
-            ):
-                failures.append(
-                    _issue(
-                        W5ValidationFailureCode.W5_LOCATION_CONTINUITY_BREAK,
-                        actor_id=actor_id,
-                        lane=claim["lane"],
-                        index=claim["index"],
-                        fact_refs=[_fact_ref(where_fact)],
-                        details={
-                            "w5_scene_location": str(where_fact.value),
-                            "claimed_location": claimed_location,
-                        },
-                    )
-                )
+        )
+        claim_failures, claim_warnings = _validate_claim_action_state(
+            typed_snapshot=typed_snapshot,
+            claim=claim,
+        )
+        failures.extend(claim_failures)
+        warnings.extend(claim_warnings)
+    return failures, warnings
 
-        for fact_id in _referenced_fact_ids(block):
-            fact = fact_index.get(fact_id)
-            if fact is None:
-                continue
-            if not _actor_can_access_fact(typed_snapshot, actor_id, fact):
-                failures.append(
-                    _issue(
-                        W5ValidationFailureCode.W5_PERCEPTION_BREAK,
-                        actor_id=actor_id,
-                        lane=claim["lane"],
-                        index=claim["index"],
-                        fact_refs=[_fact_ref(fact)],
-                        details={"referenced_fact_id": fact_id},
-                    )
-                )
 
-        next_action_state = _clean_str(block.get("action_state"))
-        if next_action_state and not _clean_str(block.get("action_transition")):
-            state_fact = _strongest_fact(
-                _facts_for_actor(typed_snapshot, actor_id, W5Dimension.WHAT),
-                "action_state",
-                active_only=False,
-            )
-            if state_fact is not None and next_action_state != str(state_fact.value):
-                issue = _issue(
-                    W5ValidationFailureCode.W5_ACTION_CONTINUITY_BREAK,
-                    actor_id=actor_id,
-                    severity="error" if _is_hard_fact(state_fact) else "warning",
-                    lane=claim["lane"],
-                    index=claim["index"],
-                    fact_refs=[_fact_ref(state_fact)],
-                    details={
-                        "w5_action_state": str(state_fact.value),
-                        "claimed_action_state": next_action_state,
-                    },
-                )
-                if issue["severity"] == "error":
-                    failures.append(issue)
-                else:
-                    warnings.append(issue)
-
+def _validate_unresolved_conflicts(
+    *,
+    typed_snapshot: W5Snapshot,
+    claims: list[dict[str, Any]],
+    fact_index: dict[str, W5Fact],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     claimed_actor_ids = {claim["actor_id"] for claim in claims}
+    failures: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = []
     for conflict in typed_snapshot.conflicts:
         if conflict.resolution_status is not W5ConflictResolutionStatus.UNRESOLVED:
             continue
         if claimed_actor_ids and conflict.actor_id not in claimed_actor_ids:
             continue
         refs = [fact_index[fid] for fid in conflict.competing_fact_ids if fid in fact_index]
-        hard_refs = [fact for fact in refs if fact.truth_level in {W5TruthLevel.CANONICAL, W5TruthLevel.OBSERVED}]
+        hard_refs = [
+            fact
+            for fact in refs
+            if fact.truth_level in {W5TruthLevel.CANONICAL, W5TruthLevel.OBSERVED}
+        ]
         inferred_why_only = (
             conflict.dimension is W5Dimension.WHY
             and refs
@@ -411,18 +458,55 @@ def validate_w5_actor_tracking(
             failures.append(issue)
         else:
             warnings.append(issue)
+    return failures, warnings
 
-    failure_codes = []
+
+def _failure_codes(failures: list[dict[str, Any]]) -> list[str]:
+    codes: list[str] = []
     for item in failures:
         code = str(item.get("code") or "")
-        if code and code not in failure_codes:
-            failure_codes.append(code)
+        if code and code not in codes:
+            codes.append(code)
+    return codes
+
+
+def validate_w5_actor_tracking(
+    *,
+    snapshot: W5Snapshot | Mapping[str, Any] | None,
+    generation: Mapping[str, Any] | None,
+    proposed_state_effects: list[dict[str, Any]] | None = None,
+    player_action_frame: Mapping[str, Any] | None = None,
+    affordance_resolution: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Validate proposed actor-tracking claims against a typed W5 snapshot."""
+
+    typed_snapshot = _coerce_snapshot(snapshot)
+    structured = _structured_output(generation)
+    claims = list(_iter_claims(structured))
+    allowed_locations = _allowed_target_locations(
+        player_action_frame=player_action_frame,
+        affordance_resolution=affordance_resolution,
+    )
+    fact_index = _fact_by_id(typed_snapshot)
+    failures, warnings = _validate_claims_against_snapshot(
+        typed_snapshot=typed_snapshot,
+        claims=claims,
+        allowed_locations=allowed_locations,
+        fact_index=fact_index,
+    )
+    conflict_failures, conflict_warnings = _validate_unresolved_conflicts(
+        typed_snapshot=typed_snapshot,
+        claims=claims,
+        fact_index=fact_index,
+    )
+    failures.extend(conflict_failures)
+    warnings.extend(conflict_warnings)
 
     return {
         "schema_version": W5_VALIDATION_SCHEMA_VERSION,
         "status": "failed" if failures else "passed",
         "w5_validation_failed": bool(failures),
-        "w5_validation_failure_codes": failure_codes,
+        "w5_validation_failure_codes": _failure_codes(failures),
         "w5_snapshot_id": typed_snapshot.snapshot_id,
         "w5_validation_source": "w5_snapshot",
         "failures": failures,

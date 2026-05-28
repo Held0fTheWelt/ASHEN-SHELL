@@ -21,35 +21,37 @@ def _effective_retrieval_execution_mode(
     return "disabled"
 
 
-def get_rag_operations_status() -> dict[str, Any]:
-    retriever, _, corpus = _build_rag_stack()
-    probe = embedding_backend_probe()
-    runtime_modes = get_runtime_modes()
-    retrieval_settings = read_scope_settings("retrieval")
-    class_counts = Counter(chunk.content_class.value for chunk in corpus.chunks)
-    source_paths = sorted({chunk.source_path for chunk in corpus.chunks})
-    root = _repo_root()
-    corpus_path = root / _RUNTIME_CORPUS_REL
-    npz_path = root / _EMBED_NPZ_REL
-    meta_path = root / _EMBED_META_REL
+def _rag_degraded_reasons(*, probe: Any, corpus: Any) -> list[str]:
     degraded_reasons: list[str] = []
     if not probe.available:
         degraded_reasons.extend(list(probe.messages))
     degraded_reasons.extend(list(corpus.rag_dense_load_reason_codes or ()))
     if corpus.rag_dense_rebuild_reason:
         degraded_reasons.append(corpus.rag_dense_rebuild_reason)
-    mode_effective = _effective_retrieval_execution_mode(
-        runtime_modes=runtime_modes,
-        retrieval_settings=retrieval_settings,
-    )
-    scope_mode_setting = str(retrieval_settings.get("retrieval_execution_mode") or "").strip() or None
-    operational_state = "healthy"
+    return degraded_reasons
+
+
+def _rag_operational_state(
+    *,
+    mode_effective: str,
+    chunk_count: int,
+    degraded_reasons: list[str],
+) -> str:
     if mode_effective == "disabled":
-        operational_state = "configured_disabled"
-    elif len(corpus.chunks) == 0:
-        operational_state = "blocked"
-    elif degraded_reasons:
-        operational_state = "degraded"
+        return "configured_disabled"
+    if chunk_count == 0:
+        return "blocked"
+    if degraded_reasons:
+        return "degraded"
+    return "healthy"
+
+
+def _rag_guidance(
+    *,
+    operational_state: str,
+    mode_effective: str,
+    probe: Any,
+) -> list[dict[str, str]]:
     guidance: list[dict[str, str]] = []
     if operational_state == "blocked":
         guidance.append(
@@ -81,6 +83,139 @@ def get_rag_operations_status() -> dict[str, Any]:
                 "fix_path": "/manage/rag-operations",
             }
         )
+    return guidance
+
+
+def _rag_corpus_status(*, corpus: Any, corpus_path: Any) -> dict[str, Any]:
+    class_counts = Counter(chunk.content_class.value for chunk in corpus.chunks)
+    source_paths = sorted({chunk.source_path for chunk in corpus.chunks})
+    return {
+        "chunk_count": len(corpus.chunks),
+        "source_count": corpus.source_count,
+        "content_class_counts": dict(class_counts),
+        "sample_source_paths": source_paths[:10],
+        "corpus_fingerprint": corpus.corpus_fingerprint,
+        "index_version": corpus.index_version,
+        "storage_path": corpus.storage_path or str(corpus_path),
+        "built_at": corpus.built_at,
+    }
+
+
+def _rag_retrieval_status(
+    *,
+    retriever: Any,
+    runtime_modes: dict[str, Any],
+    retrieval_settings: dict[str, Any],
+    mode_effective: str,
+    scope_mode_setting: str | None,
+) -> dict[str, Any]:
+    return {
+        "retrieval_mode_bootstrap_setting": runtime_modes.get("retrieval_execution_mode"),
+        "mode_effective": mode_effective,
+        "mode_runtime": mode_effective,
+        "mode_setting": scope_mode_setting,
+        "mode_scope_drift": bool(scope_mode_setting and scope_mode_setting != mode_effective),
+        "retrieval_profile": retrieval_settings.get("retrieval_profile")
+        or "runtime_turn_support",
+        "retrieval_top_k": retrieval_settings.get("retrieval_top_k") or 4,
+        "retrieval_min_score": retrieval_settings.get("retrieval_min_score"),
+        "embeddings_enabled_setting": retrieval_settings.get("embeddings_enabled"),
+        "governance_wired_to_live_path": True,
+        "last_observed_route": getattr(retriever, "last_retrieval_route", "") or "",
+        "last_observed_embedding_model_id": getattr(
+            retriever,
+            "last_embedding_model_id",
+            "",
+        )
+        or "",
+    }
+
+
+def _rag_embedding_status(*, probe: Any) -> dict[str, Any]:
+    return {
+        "available": probe.available,
+        "disabled_by_env": probe.disabled_by_env,
+        "import_ok": probe.import_ok,
+        "encode_ok": probe.encode_ok,
+        "model_id": probe.model_id,
+        "cache_dir": probe.cache_dir,
+        "cache_dir_identity": probe.cache_dir_identity,
+        "primary_reason_code": probe.primary_reason_code,
+        "messages": list(probe.messages),
+        "env_disable_embeddings_var": "WOS_RAG_DISABLE_EMBEDDINGS",
+        "env_disable_embeddings_set": probe.disabled_by_env,
+        "env_cache_dir_var": "WOS_RAG_EMBEDDING_CACHE_DIR",
+        "env_cache_dir_resolved": probe.cache_dir or "__default__",
+    }
+
+
+def _rag_dense_index_status(
+    *,
+    retriever: Any,
+    corpus: Any,
+    npz_path: Any,
+    meta_path: Any,
+) -> dict[str, Any]:
+    return {
+        "present_on_retriever": bool(getattr(retriever, "_embedding_index", None) is not None),
+        "artifact_validity": corpus.rag_dense_artifact_validity,
+        "index_build_action": corpus.rag_dense_index_build_action,
+        "rebuild_reason": corpus.rag_dense_rebuild_reason,
+        "load_reason_codes": list(corpus.rag_dense_load_reason_codes or ()),
+        "embedding_index_version": corpus.rag_embedding_index_version,
+        "embedding_cache_dir_identity": corpus.rag_embedding_cache_dir_identity,
+        "embedding_backend_primary_code": corpus.rag_embedding_backend_primary_code,
+        "npz_path": str(npz_path),
+        "npz_exists": npz_path.exists(),
+        "meta_path": str(meta_path),
+        "meta_exists": meta_path.exists(),
+    }
+
+
+def _rag_status_comparison(
+    *,
+    retriever: Any,
+    mode_effective: str,
+    scope_mode_setting: str | None,
+) -> dict[str, Any]:
+    return {
+        "retrieval_mode_runtime": mode_effective,
+        "retrieval_mode_effective": mode_effective,
+        "retrieval_mode_setting": scope_mode_setting,
+        "dense_index_attached": bool(getattr(retriever, "_embedding_index", None) is not None),
+        "expected_healthy": {
+            "embedding_backend_available": True,
+            "dense_index_attached": True,
+            "retrieval_mode_not_disabled": True,
+        },
+    }
+
+
+def get_rag_operations_status() -> dict[str, Any]:
+    retriever, _, corpus = _build_rag_stack()
+    probe = embedding_backend_probe()
+    runtime_modes = get_runtime_modes()
+    retrieval_settings = read_scope_settings("retrieval")
+    root = _repo_root()
+    corpus_path = root / _RUNTIME_CORPUS_REL
+    npz_path = root / _EMBED_NPZ_REL
+    meta_path = root / _EMBED_META_REL
+    degraded_reasons = _rag_degraded_reasons(probe=probe, corpus=corpus)
+    mode_effective = _effective_retrieval_execution_mode(
+        runtime_modes=runtime_modes,
+        retrieval_settings=retrieval_settings,
+    )
+    scope_mode_setting = str(retrieval_settings.get("retrieval_execution_mode") or "").strip() or None
+    operational_state = _rag_operational_state(
+        mode_effective=mode_effective,
+        chunk_count=len(corpus.chunks),
+        degraded_reasons=degraded_reasons,
+    )
+    guidance = _rag_guidance(
+        operational_state=operational_state,
+        mode_effective=mode_effective,
+        probe=probe,
+    )
     from app.services.governance.hf_hub_governance_service import get_hf_hub_status
 
     hf_hub_status = get_hf_hub_status()
@@ -88,75 +223,27 @@ def get_rag_operations_status() -> dict[str, Any]:
         "generated_at": corpus.built_at,
         "operational_state": operational_state,
         "status_semantics": STATUS_SEMANTICS,
-        "corpus": {
-            "chunk_count": len(corpus.chunks),
-            "source_count": corpus.source_count,
-            "content_class_counts": dict(class_counts),
-            "sample_source_paths": source_paths[:10],
-            "corpus_fingerprint": corpus.corpus_fingerprint,
-            "index_version": corpus.index_version,
-            "storage_path": corpus.storage_path or str(corpus_path),
-            "built_at": corpus.built_at,
-        },
-        "retrieval": {
-            # retrieval_mode_bootstrap_setting: the value from the governed DB bootstrap record.
-            # This IS wired to the live turn path via governed_runtime_config → RuntimeRetrievalConfig.
-            "retrieval_mode_bootstrap_setting": runtime_modes.get("retrieval_execution_mode"),
-            "mode_effective": mode_effective,
-            # mode_runtime kept as alias for backwards-compat with existing admin UI JS.
-            "mode_runtime": mode_effective,
-            "mode_setting": scope_mode_setting,
-            "mode_scope_drift": bool(scope_mode_setting and scope_mode_setting != mode_effective),
-            "retrieval_profile": retrieval_settings.get("retrieval_profile") or "runtime_turn_support",
-            "retrieval_top_k": retrieval_settings.get("retrieval_top_k") or 4,
-            "retrieval_min_score": retrieval_settings.get("retrieval_min_score"),
-            "embeddings_enabled_setting": retrieval_settings.get("embeddings_enabled"),
-            "governance_wired_to_live_path": True,
-            "last_observed_route": getattr(retriever, "last_retrieval_route", "") or "",
-            "last_observed_embedding_model_id": getattr(retriever, "last_embedding_model_id", "") or "",
-        },
-        "embedding_backend": {
-            "available": probe.available,
-            "disabled_by_env": probe.disabled_by_env,
-            "import_ok": probe.import_ok,
-            "encode_ok": probe.encode_ok,
-            "model_id": probe.model_id,
-            "cache_dir": probe.cache_dir,
-            "cache_dir_identity": probe.cache_dir_identity,
-            "primary_reason_code": probe.primary_reason_code,
-            "messages": list(probe.messages),
-            # Real env var controls — these are the authoritative gates on embedding availability.
-            "env_disable_embeddings_var": "WOS_RAG_DISABLE_EMBEDDINGS",
-            "env_disable_embeddings_set": probe.disabled_by_env,
-            "env_cache_dir_var": "WOS_RAG_EMBEDDING_CACHE_DIR",
-            "env_cache_dir_resolved": probe.cache_dir or "__default__",
-        },
-        "dense_index": {
-            "present_on_retriever": bool(getattr(retriever, "_embedding_index", None) is not None),
-            "artifact_validity": corpus.rag_dense_artifact_validity,
-            "index_build_action": corpus.rag_dense_index_build_action,
-            "rebuild_reason": corpus.rag_dense_rebuild_reason,
-            "load_reason_codes": list(corpus.rag_dense_load_reason_codes or ()),
-            "embedding_index_version": corpus.rag_embedding_index_version,
-            "embedding_cache_dir_identity": corpus.rag_embedding_cache_dir_identity,
-            "embedding_backend_primary_code": corpus.rag_embedding_backend_primary_code,
-            "npz_path": str(npz_path),
-            "npz_exists": npz_path.exists(),
-            "meta_path": str(meta_path),
-            "meta_exists": meta_path.exists(),
-        },
+        "corpus": _rag_corpus_status(corpus=corpus, corpus_path=corpus_path),
+        "retrieval": _rag_retrieval_status(
+            retriever=retriever,
+            runtime_modes=runtime_modes,
+            retrieval_settings=retrieval_settings,
+            mode_effective=mode_effective,
+            scope_mode_setting=scope_mode_setting,
+        ),
+        "embedding_backend": _rag_embedding_status(probe=probe),
+        "dense_index": _rag_dense_index_status(
+            retriever=retriever,
+            corpus=corpus,
+            npz_path=npz_path,
+            meta_path=meta_path,
+        ),
         "degraded_reasons": sorted(set(r for r in degraded_reasons if r)),
-        "comparison": {
-            "retrieval_mode_runtime": mode_effective,
-            "retrieval_mode_effective": mode_effective,
-            "retrieval_mode_setting": scope_mode_setting,
-            "dense_index_attached": bool(getattr(retriever, "_embedding_index", None) is not None),
-            "expected_healthy": {
-                "embedding_backend_available": True,
-                "dense_index_attached": True,
-                "retrieval_mode_not_disabled": True,
-            },
-        },
+        "comparison": _rag_status_comparison(
+            retriever=retriever,
+            mode_effective=mode_effective,
+            scope_mode_setting=scope_mode_setting,
+        ),
         "guidance": guidance,
         "safe_actions": [
             {"action_id": "refresh_corpus", "label": "Refresh corpus from repository sources"},

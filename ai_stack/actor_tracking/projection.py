@@ -957,23 +957,14 @@ def _player_visible_scene_location(
     return fact
 
 
-def build_w5_projection_for_player_shell(
+def _player_shell_context(
     snapshot: W5Snapshot | Mapping[str, Any] | None,
     *,
-    player_actor_id: str | None = None,
-) -> W5Projection:
-    """Build a compact player-shell W5 projection.
-
-    The player shell receives only player-visible facts and a bounded
-    scene/location surface. Persisted snapshot dicts are coerced through
-    ``W5Snapshot.from_dict`` before any field is read; raw W5 ledgers are not
-    part of the frontend contract.
-    """
-
+    player_actor_id: str | None,
+) -> tuple[W5Snapshot | None, str | None, W5ActorSituation | None]:
     typed_snapshot = _coerce_snapshot(snapshot)
     if typed_snapshot is None or not typed_snapshot.actors:
-        return _empty_projection(W5ProjectionConsumer.PLAYER_SHELL)
-
+        return None, None, None
     chosen_actor_id = _select_player_actor_id(
         typed_snapshot,
         player_actor_id=player_actor_id,
@@ -981,39 +972,51 @@ def build_w5_projection_for_player_shell(
     player_situation = (
         typed_snapshot.actors.get(chosen_actor_id) if chosen_actor_id is not None else None
     )
+    return typed_snapshot, chosen_actor_id, player_situation
 
-    source_attribution: dict[str, str] = {}
-    truth_attribution: dict[str, str] = {}
 
-    if player_situation is not None:
-        who_summary = _who_summary(
-            player_situation,
-            source_attribution=source_attribution,
-            truth_attribution=truth_attribution,
-        )
-    else:
-        who_summary = {}
-
-    where_summary = _player_dimension_summary(
-        dimension_name="where",
-        player_actor_id=chosen_actor_id,
-        player_situation=player_situation,
-        all_situations=typed_snapshot.actors,
+def _player_shell_who_summary(
+    *,
+    player_situation: W5ActorSituation | None,
+    source_attribution: dict[str, str],
+    truth_attribution: dict[str, str],
+) -> dict[str, Any]:
+    if player_situation is None:
+        return {}
+    return _who_summary(
+        player_situation,
         source_attribution=source_attribution,
         truth_attribution=truth_attribution,
     )
-    current_location: str | None = None
-    if isinstance(where_summary.get("facts"), dict):
-        own_location = where_summary["facts"].get("scene_location")
-        if isinstance(own_location, str) and own_location.strip():
-            current_location = own_location.strip()
-            where_summary["current_visible_location"] = current_location
-            where_summary["current_location"] = current_location
-            where_summary["scene_location"] = {
-                "value": current_location,
-                "actor_id": chosen_actor_id,
-            }
 
+
+def _apply_player_location_surface(
+    *,
+    where_summary: dict[str, Any],
+    chosen_actor_id: str | None,
+) -> str | None:
+    if not isinstance(where_summary.get("facts"), dict):
+        return None
+    own_location = where_summary["facts"].get("scene_location")
+    if not isinstance(own_location, str) or not own_location.strip():
+        return None
+    current_location = own_location.strip()
+    where_summary["current_visible_location"] = current_location
+    where_summary["current_location"] = current_location
+    where_summary["scene_location"] = {
+        "value": current_location,
+        "actor_id": chosen_actor_id,
+    }
+    return current_location
+
+
+def _visible_player_actors(
+    *,
+    typed_snapshot: W5Snapshot,
+    chosen_actor_id: str | None,
+    source_attribution: dict[str, str],
+    truth_attribution: dict[str, str],
+) -> list[dict[str, Any]]:
     visible_actors: list[dict[str, Any]] = []
     for actor_id in sorted(typed_snapshot.actors.keys()):
         situation = typed_snapshot.actors[actor_id]
@@ -1037,50 +1040,88 @@ def build_w5_projection_for_player_shell(
             path=f"where_summary.visible_actors.{actor_id}.scene_location",
             fact=location_fact,
         )
+    return visible_actors
+
+
+def _player_shell_where_summary(
+    *,
+    typed_snapshot: W5Snapshot,
+    chosen_actor_id: str | None,
+    player_situation: W5ActorSituation | None,
+    source_attribution: dict[str, str],
+    truth_attribution: dict[str, str],
+) -> dict[str, Any]:
+    where_summary = _player_dimension_summary(
+        dimension_name="where",
+        player_actor_id=chosen_actor_id,
+        player_situation=player_situation,
+        all_situations=typed_snapshot.actors,
+        source_attribution=source_attribution,
+        truth_attribution=truth_attribution,
+    )
+    current_location = _apply_player_location_surface(
+        where_summary=where_summary,
+        chosen_actor_id=chosen_actor_id,
+    )
+    visible_actors = _visible_player_actors(
+        typed_snapshot=typed_snapshot,
+        chosen_actor_id=chosen_actor_id,
+        source_attribution=source_attribution,
+        truth_attribution=truth_attribution,
+    )
     where_summary["visible_actors"] = visible_actors
-    if current_location is not None:
-        where_summary["nearby_interactable_actors"] = [
+    where_summary["nearby_interactable_actors"] = (
+        [
             actor
             for actor in visible_actors
             if actor["actor_id"] != chosen_actor_id
             and actor.get("scene_location") == current_location
         ]
-    else:
-        where_summary["nearby_interactable_actors"] = []
+        if current_location is not None
+        else []
+    )
     where_summary["w5_snapshot_id"] = typed_snapshot.snapshot_id
     _record_structural_attribution(
         source_attribution=source_attribution,
         truth_attribution=truth_attribution,
         path="where_summary.w5_snapshot_id",
     )
+    return where_summary
 
-    what_summary = _player_dimension_summary(
-        dimension_name="what",
-        player_actor_id=chosen_actor_id,
-        player_situation=player_situation,
-        all_situations=typed_snapshot.actors,
-        source_attribution=source_attribution,
-        truth_attribution=truth_attribution,
-    )
-    how_summary = _player_dimension_summary(
-        dimension_name="how",
-        player_actor_id=chosen_actor_id,
-        player_situation=player_situation,
-        all_situations=typed_snapshot.actors,
-        source_attribution=source_attribution,
-        truth_attribution=truth_attribution,
-    )
-    why_summary = _player_dimension_summary(
-        dimension_name="why",
-        player_actor_id=chosen_actor_id,
-        player_situation=player_situation,
-        all_situations=typed_snapshot.actors,
-        source_attribution=source_attribution,
-        truth_attribution=truth_attribution,
-    )
+
+def _player_shell_dimension_summaries(
+    *,
+    typed_snapshot: W5Snapshot,
+    chosen_actor_id: str | None,
+    player_situation: W5ActorSituation | None,
+    source_attribution: dict[str, str],
+    truth_attribution: dict[str, str],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    summaries = []
+    for dimension_name in ("what", "how", "why"):
+        summaries.append(
+            _player_dimension_summary(
+                dimension_name=dimension_name,
+                player_actor_id=chosen_actor_id,
+                player_situation=player_situation,
+                all_situations=typed_snapshot.actors,
+                source_attribution=source_attribution,
+                truth_attribution=truth_attribution,
+            )
+        )
+    return summaries[0], summaries[1], summaries[2]
+
+
+def _attach_player_actor_situation(
+    *,
+    where_summary: dict[str, Any],
+    what_summary: dict[str, Any],
+    how_summary: dict[str, Any],
+    chosen_actor_id: str | None,
+) -> None:
     where_summary["player_actor_situation"] = {
         "actor_id": chosen_actor_id,
-        "scene_location": current_location,
+        "scene_location": where_summary.get("current_location"),
         "current_action": what_summary.get("facts", {}).get("current_action")
         if isinstance(what_summary.get("facts"), dict)
         else None,
@@ -1088,6 +1129,55 @@ def build_w5_projection_for_player_shell(
         if isinstance(how_summary.get("facts"), dict)
         else {},
     }
+
+
+def build_w5_projection_for_player_shell(
+    snapshot: W5Snapshot | Mapping[str, Any] | None,
+    *,
+    player_actor_id: str | None = None,
+) -> W5Projection:
+    """Build a compact player-shell W5 projection.
+
+    The player shell receives only player-visible facts and a bounded
+    scene/location surface. Persisted snapshot dicts are coerced through
+    ``W5Snapshot.from_dict`` before any field is read; raw W5 ledgers are not
+    part of the frontend contract.
+    """
+
+    typed_snapshot, chosen_actor_id, player_situation = _player_shell_context(
+        snapshot,
+        player_actor_id=player_actor_id,
+    )
+    if typed_snapshot is None or not typed_snapshot.actors:
+        return _empty_projection(W5ProjectionConsumer.PLAYER_SHELL)
+
+    source_attribution: dict[str, str] = {}
+    truth_attribution: dict[str, str] = {}
+    who_summary = _player_shell_who_summary(
+        player_situation=player_situation,
+        source_attribution=source_attribution,
+        truth_attribution=truth_attribution,
+    )
+    where_summary = _player_shell_where_summary(
+        typed_snapshot=typed_snapshot,
+        chosen_actor_id=chosen_actor_id,
+        player_situation=player_situation,
+        source_attribution=source_attribution,
+        truth_attribution=truth_attribution,
+    )
+    what_summary, how_summary, why_summary = _player_shell_dimension_summaries(
+        typed_snapshot=typed_snapshot,
+        chosen_actor_id=chosen_actor_id,
+        player_situation=player_situation,
+        source_attribution=source_attribution,
+        truth_attribution=truth_attribution,
+    )
+    _attach_player_actor_situation(
+        where_summary=where_summary,
+        what_summary=what_summary,
+        how_summary=how_summary,
+        chosen_actor_id=chosen_actor_id,
+    )
 
     return W5Projection(
         schema_version=W5_PROJECTION_SCHEMA_VERSION,

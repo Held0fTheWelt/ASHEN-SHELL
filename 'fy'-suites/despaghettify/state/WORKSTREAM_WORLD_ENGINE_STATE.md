@@ -1,5 +1,21 @@
 # Workstream: world_engine
 
+## Closed — DS-035 turn graph and branching executor split (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-035 | Minimal turn graph execution now delegates prompt creation, primary/fallback route invocation, generation metadata, visible output, and diagnostics; branching turn execution now delegates path lookup, decision resolution, validation errors, decision recording, history updates, and path signatures. | `MinimalRuntimeTurnGraphExecutor.run`, `execute_turn` | Pre: `artifacts/workstreams/world_engine/pre/session_20260528_DS-035_wave_plan.*`; post: `artifacts/workstreams/world_engine/post/session_20260528_DS-035_comparison.*` |
+
+**Gates (final):**
+
+- `python -m py_compile world-engine/app/story_runtime/minimal_turn_graph.py world-engine/app/runtime/branching_turn_executor.py` — passed.
+- `INTERNAL_RUNTIME_CONFIG_TOKEN= PYTHONPATH=/mnt/d/WorldOfShadows/world-engine:/mnt/d/WorldOfShadows python -m pytest -q tests/branching/test_branching_turn_executor.py tests/branching/test_evaluation_cycle.py --tb=short` — 29 passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T17:36:09Z`.
+
+**Structural delta:** DS-035 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11230 functions; L50 808; L100 114; D6 0; `M7_anteil` 3.7336.
+
+**Caveat:** The broader `world-engine/tests/test_turn_execution.py` collection still fails on the existing import path `app.runtime.session_manager`; the focused DS-035 branching gate passes and the failure is outside these touched files.
+
 ## Closed — DS-031 manager split and DS-032 UI/prior-export support (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |

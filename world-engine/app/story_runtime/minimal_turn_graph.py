@@ -87,89 +87,60 @@ class MinimalRuntimeTurnGraphExecutor:
         }
 
         nodes_executed = ["interpret_input", "retrieve_context", "route_model", "invoke_model"]
-        errors: list[str] = []
-
-        primary_result, primary_provider = self._invoke_provider(
-            provider=route.selected_provider,
-            prompt=self._build_prompt(
-                module_id=module_id,
-                current_scene_id=current_scene_id,
-                player_input=player_input,
-                interpreted_input=interpreted,
-                context_text=context_text,
-            ),
+        prompt = self._prompt_for_turn(
+            module_id=module_id,
+            current_scene_id=current_scene_id,
+            player_input=player_input,
+            interpreted=interpreted,
+            context_text=context_text,
+        )
+        model_result, provider_used, errors = self._invoke_primary_route(
+            route=route,
+            prompt=prompt,
             context_text=context_text,
         )
 
-        model_result = primary_result
-        provider_used = primary_provider
-        fallback_used = False
-        adapter_invocation_mode = MINIMAL_PRIMARY_ADAPTER_INVOCATION_MODE
-        graph_path_summary = MINIMAL_PRIMARY_GRAPH_PATH_SUMMARY
-        execution_health = "healthy" if model_result.success else "degraded_generation"
-
         if not model_result.success:
-            errors.append(str(model_result.metadata.get("error") or f"primary_provider_failed:{route.selected_provider}"))
-            fallback_candidates = self._fallback_candidates(route.fallback_model, excluding={route.selected_provider})
-            if fallback_candidates:
+            if self._fallback_candidates(route.fallback_model, excluding={route.selected_provider}):
                 nodes_executed.append("fallback_model")
-            for fallback_provider in fallback_candidates:
-                fallback_result, fallback_provider_used = self._invoke_provider(
-                    provider=fallback_provider,
-                    prompt=self._build_prompt(
-                        module_id=module_id,
-                        current_scene_id=current_scene_id,
-                        player_input=player_input,
-                        interpreted_input=interpreted,
-                        context_text=context_text,
-                    ),
-                    context_text=context_text,
-                )
-                if fallback_result.success:
-                    model_result = fallback_result
-                    provider_used = fallback_provider_used
-                    fallback_used = True
-                    adapter_invocation_mode = RAW_FALLBACK_ADAPTER_INVOCATION_MODE
-                    graph_path_summary = RAW_FALLBACK_GRAPH_PATH_SUMMARY
-                    execution_health = "model_fallback"
-                    break
-                errors.append(
-                    str(
-                        fallback_result.metadata.get("error")
-                        or f"fallback_provider_failed:{fallback_provider}"
-                    )
-                )
+            model_result, provider_used, fallback_used, errors = self._invoke_fallback_route(
+                route=route,
+                prompt=prompt,
+                context_text=context_text,
+                primary_result=model_result,
+                primary_provider=provider_used,
+                errors=errors,
+            )
+        else:
+            fallback_used = False
+        adapter_invocation_mode, graph_path_summary, execution_health = (
+            self._adapter_path_metadata(
+                fallback_used=fallback_used,
+                model_success=model_result.success,
+            )
+        )
 
         structured_output = self._structured_output_from_result(model_result, interpreted)
-        generation_metadata = dict(model_result.metadata)
-        generation_metadata.setdefault("structured_output", structured_output)
-        generation_metadata["provider_used"] = provider_used
-        generation_metadata["runtime_mode"] = "minimal_runtime_fallback"
-        generation_metadata["retrieval_context_attached"] = bool(context_text)
-
-        visible_output_bundle = {
-            "gm_narration": [structured_output.get("narrative_response") or MINIMAL_RUNTIME_FALLBACK_NOTICE],
-            "spoken_lines": [],
-        }
-
-        graph_diagnostics = {
-            "graph_name": self.graph_name,
-            "graph_version": self.graph_version,
-            "nodes_executed": nodes_executed,
-            "capability_audit": capability_audit,
-            "errors": [] if (model_result.success or fallback_used) else errors,
-            "fallback_path_taken": fallback_used,
-            "execution_health": execution_health,
-            "repro_metadata": {
-                "trace_id": trace_id or "",
-                "module_id": module_id,
-                "session_id": session_id,
-                "adapter_invocation_mode": adapter_invocation_mode,
-                "graph_path_summary": graph_path_summary,
-                "provider_used": provider_used,
-                "world_engine_minimal_runtime_fallback": True,
-            },
-        }
+        generation_metadata = self._generation_metadata(
+            model_result=model_result,
+            structured_output=structured_output,
+            provider_used=provider_used,
+            context_text=context_text,
+        )
+        visible_output_bundle = self._visible_output_bundle(structured_output)
+        graph_diagnostics = self._graph_diagnostics(
+            nodes_executed=nodes_executed,
+            capability_audit=capability_audit,
+            errors=[] if (model_result.success or fallback_used) else errors,
+            fallback_used=fallback_used,
+            execution_health=execution_health,
+            trace_id=trace_id,
+            module_id=module_id,
+            session_id=session_id,
+            adapter_invocation_mode=adapter_invocation_mode,
+            graph_path_summary=graph_path_summary,
+            provider_used=provider_used,
+        )
 
         return {
             "interpreted_input": interpreted,
@@ -245,6 +216,151 @@ class MinimalRuntimeTurnGraphExecutor:
             "ranking_notes": context_pack.ranking_notes,
         }
         return retrieval, context_pack.compact_context, []
+
+    def _prompt_for_turn(
+        self,
+        *,
+        module_id: str,
+        current_scene_id: str,
+        player_input: str,
+        interpreted: dict[str, Any],
+        context_text: str,
+    ) -> str:
+        return self._build_prompt(
+            module_id=module_id,
+            current_scene_id=current_scene_id,
+            player_input=player_input,
+            interpreted_input=interpreted,
+            context_text=context_text,
+        )
+
+    def _invoke_primary_route(
+        self,
+        *,
+        route: Any,
+        prompt: str,
+        context_text: str,
+    ) -> tuple[ModelCallResult, str, list[str]]:
+        result, provider = self._invoke_provider(
+            provider=route.selected_provider,
+            prompt=prompt,
+            context_text=context_text,
+        )
+        errors: list[str] = []
+        if not result.success:
+            errors.append(
+                str(
+                    result.metadata.get("error")
+                    or f"primary_provider_failed:{route.selected_provider}"
+                )
+            )
+        return result, provider, errors
+
+    def _invoke_fallback_route(
+        self,
+        *,
+        route: Any,
+        prompt: str,
+        context_text: str,
+        primary_result: ModelCallResult,
+        primary_provider: str,
+        errors: list[str],
+    ) -> tuple[ModelCallResult, str, bool, list[str]]:
+        for fallback_provider in self._fallback_candidates(
+            route.fallback_model,
+            excluding={route.selected_provider},
+        ):
+            fallback_result, fallback_provider_used = self._invoke_provider(
+                provider=fallback_provider,
+                prompt=prompt,
+                context_text=context_text,
+            )
+            if fallback_result.success:
+                return fallback_result, fallback_provider_used, True, errors
+            errors.append(
+                str(
+                    fallback_result.metadata.get("error")
+                    or f"fallback_provider_failed:{fallback_provider}"
+                )
+            )
+        return primary_result, primary_provider, False, errors
+
+    @staticmethod
+    def _adapter_path_metadata(
+        *,
+        fallback_used: bool,
+        model_success: bool,
+    ) -> tuple[str, str, str]:
+        if fallback_used:
+            return (
+                RAW_FALLBACK_ADAPTER_INVOCATION_MODE,
+                RAW_FALLBACK_GRAPH_PATH_SUMMARY,
+                "model_fallback",
+            )
+        return (
+            MINIMAL_PRIMARY_ADAPTER_INVOCATION_MODE,
+            MINIMAL_PRIMARY_GRAPH_PATH_SUMMARY,
+            "healthy" if model_success else "degraded_generation",
+        )
+
+    @staticmethod
+    def _generation_metadata(
+        *,
+        model_result: ModelCallResult,
+        structured_output: dict[str, Any],
+        provider_used: str,
+        context_text: str,
+    ) -> dict[str, Any]:
+        generation_metadata = dict(model_result.metadata)
+        generation_metadata.setdefault("structured_output", structured_output)
+        generation_metadata["provider_used"] = provider_used
+        generation_metadata["runtime_mode"] = "minimal_runtime_fallback"
+        generation_metadata["retrieval_context_attached"] = bool(context_text)
+        return generation_metadata
+
+    @staticmethod
+    def _visible_output_bundle(structured_output: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "gm_narration": [
+                structured_output.get("narrative_response")
+                or MINIMAL_RUNTIME_FALLBACK_NOTICE
+            ],
+            "spoken_lines": [],
+        }
+
+    def _graph_diagnostics(
+        self,
+        *,
+        nodes_executed: list[str],
+        capability_audit: list[dict[str, Any]],
+        errors: list[str],
+        fallback_used: bool,
+        execution_health: str,
+        trace_id: str | None,
+        module_id: str,
+        session_id: str,
+        adapter_invocation_mode: str,
+        graph_path_summary: str,
+        provider_used: str,
+    ) -> dict[str, Any]:
+        return {
+            "graph_name": self.graph_name,
+            "graph_version": self.graph_version,
+            "nodes_executed": nodes_executed,
+            "capability_audit": capability_audit,
+            "errors": errors,
+            "fallback_path_taken": fallback_used,
+            "execution_health": execution_health,
+            "repro_metadata": {
+                "trace_id": trace_id or "",
+                "module_id": module_id,
+                "session_id": session_id,
+                "adapter_invocation_mode": adapter_invocation_mode,
+                "graph_path_summary": graph_path_summary,
+                "provider_used": provider_used,
+                "world_engine_minimal_runtime_fallback": True,
+            },
+        }
 
     def _fallback_candidates(self, fallback_model: str | None, *, excluding: set[str]) -> list[str]:
         candidates: list[str] = []

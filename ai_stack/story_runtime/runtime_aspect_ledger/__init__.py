@@ -91,10 +91,17 @@ def stable_ledger_json(ledger: dict[str, Any]) -> str:
     return _stable_ledger_json(ledger, normalizer=normalize_runtime_aspect_ledger)
 
 
-def aspect_score_metadata(ledger: dict[str, Any] | None) -> dict[str, Any]:
+def aspect_score_metadata(
+    ledger: dict[str, Any] | None,
+    *,
+    aspect_name: str = "",
+    score_name: str = "",
+) -> dict[str, Any]:
     """Return Langfuse/governance score metadata for the current ledger."""
     return _score_metadata.aspect_score_metadata(
         ledger,
+        aspect_name=aspect_name,
+        score_name=score_name,
         normalizer=normalize_runtime_aspect_ledger,
         record_getter=get_aspect_record,
     )

@@ -1,5 +1,21 @@
 # Workstream: ai_stack
 
+## Closed — DS-033 actor/ledger split and DS-036 policy/RAG residuals (session 20260528)
+
+| DS-ID | Outcome | Primary files / symbols | Evidence |
+|-------|---------|--------------------------|----------|
+| DS-033 | NPC initiative validation, runtime aspect-ledger score metadata, W5 actor validation, and W5 player-shell projection now delegate to named input, policy, failure-code, status, summary, and payload helpers. | `validate_npc_initiative_realization`, `aspect_score_metadata`, `validate_w5_actor_tracking`, `build_w5_projection_for_player_shell` | Pre: `artifacts/workstreams/ai_stack/pre/session_20260528_DS-033-036_wave_plan.*`; post: `artifacts/workstreams/ai_stack/post/session_20260528_DS-033-036_comparison.*` |
+| DS-036 | Souffleuse projection, meta-awareness policy normalization, RAG retrieval orchestration, and module-runtime-policy assertions now use named context, normalization, result-building, authority, and assertion helpers. | `build_goc_opening_souffleuse_projection`, `normalize_meta_narrative_awareness_policy`, `retrieve`, `test_module_runtime_policy_loads_goc_without_runtime_hardcoding` | Same DS-033/036 pre/post artefacts. |
+
+**Gates (final):**
+
+- `python -m py_compile` on all touched DS-033/DS-036 AI-stack files — passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_actor_lane_hydration.py ai_stack/tests/test_w5_actor_tracking_validation.py ai_stack/tests/test_w5_actor_tracking_projection.py ai_stack/tests/test_runtime_aspect_ledger.py --tb=short` — 73 passed.
+- `PYTHONPATH=/mnt/d/WorldOfShadows python -m pytest -q ai_stack/tests/test_god_of_carnage_souffleuse.py ai_stack/tests/test_meta_narrative_awareness_engine.py ai_stack/tests/test_retrieval_governance_wiring.py ai_stack/tests/test_module_runtime_policy.py --tb=short` — 42 passed.
+- Final `check --with-metrics` — pass, report generated `2026-05-28T17:36:09Z`.
+
+**Structural delta:** DS-033/DS-036 target symbols are pruned from the current top-12 longest ranking. Current full scan: 11230 functions; L50 808; L100 114; D6 0; `M7_anteil` 3.7336.
+
 ## Closed — DS-029 AI actor/NPC/narrative split and DS-032 policy-tail support (session 20260528)
 
 | DS-ID | Outcome | Primary files / symbols | Evidence |
