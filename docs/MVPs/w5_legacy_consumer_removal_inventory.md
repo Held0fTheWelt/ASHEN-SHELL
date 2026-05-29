@@ -1099,12 +1099,12 @@ when a caller passes it explicitly or via `instance.metadata["_w5_player_view"]`
 
 | Field | Status |
 |-------|--------|
-| `viewer_room_id` | compat alias — **keep** (ADR-0069; removal in 6B-12) |
-| `current_room` | compat alias — **keep** (ADR-0069; removal in 6B-12) |
+| `viewer_room_id` | compat alias — **keep** (ADR-0069; removal deferred to future ADR) |
+| `current_room` | compat alias — **keep** (ADR-0069; removal deferred to future ADR) |
 | `w5_player_view` | **present** — `None` in base WS path; callers may populate |
 | `feature_flags` | **present** — always emits `W5_AST_FRONTEND_PLAYER_VIEW_ENABLED` |
 
-**Next phase:** 6B-11 — Public alias deprecation policy and client compatibility window.
+**Next phase:** 6B-11 — Production WS `w5_player_view` population.
 Requires: confirmed `w5_player_view` population in production WS sessions, documented
 client upgrade window, separate ADR.
 
@@ -1122,8 +1122,8 @@ per-viewer direct kwargs into `RuntimeEngine.build_snapshot()`, not a run-scoped
 
 `viewer_room_id`, `current_room`, and HTTP/player-shell `current_room_id` are now
 deprecated public aliases for the compatibility window. They remain present and
-must not be removed before Phase 6B-12 or later records a dedicated removal ADR
-and client migration evidence.
+must not be removed before a future dedicated removal ADR records client
+migration evidence.
 
 **WS diagnostic status (post 6B-11):**
 
@@ -1136,5 +1136,38 @@ and client migration evidence.
 | `viewer_room_id` | deprecated compat alias — keep during migration window |
 | `current_room` | deprecated compat alias — keep during migration window |
 
-**Next phase:** 6B-12 readiness audit for public alias removal. Do not remove
-substrate fields, `actor_locations`, or `complete_actor_locations_for_gathering`.
+**Next phase:** 6B-12 public alias deprecation metadata and client fallback
+warning. Do not remove substrate fields, `actor_locations`, or
+`complete_actor_locations_for_gathering`.
+
+---
+
+### Phase 6B-12 — Public alias deprecation metadata + compatibility window (Complete, 2026-05-29)
+
+**ADR:** ADR-0069 (Accepted)
+
+Public room aliases are observable deprecated compatibility aliases, not active
+authority:
+
+| Surface | Phase 6B-12 classification |
+|---------|----------------------------|
+| `w5_player_view` | `public_authority` |
+| `viewer_room_id` | `deprecated_public_client_alias_keep` |
+| `current_room` | `deprecated_public_client_alias_keep` |
+| `current_room_id` | `deprecated_public_client_alias_keep` for public player-shell payload; `substrate_keep_future_adr` for participant/runtime substrate |
+| `runtime_world.current_room_id` / `environment_state.current_room_id` | `substrate_keep_future_adr` |
+| `actor_locations` | `substrate_keep_future_adr` |
+| `complete_actor_locations_for_gathering` | `substrate_keep_future_adr` |
+
+**Payload metadata:** WS `RuntimeSnapshot.metadata.deprecations.room_aliases`
+and HTTP/player-shell `deprecations.room_aliases` advertise replacement
+`w5_player_view`, authority path
+`w5_player_view.where_summary.current_visible_location`, alias set
+`viewer_room_id/current_room/current_room_id`, and future-ADR removal policy.
+
+**Client behavior:** frontend helpers read W5 first and emit a one-time
+developer-console warning only when they fall back to legacy `current_room`
+while W5 is enabled. The W5-success path does not warn.
+
+**Next phase:** 6B-13 alias-usage telemetry and client-readiness gate. Public
+alias removal is still deferred and requires a future ADR.

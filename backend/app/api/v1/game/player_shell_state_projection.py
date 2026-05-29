@@ -5,6 +5,20 @@ Loaded by game_routes.py so route monkeypatches keep their public module namespa
 
 SOURCE = r'''
 
+def _room_alias_deprecations() -> dict[str, Any]:
+    return {
+        "room_aliases": {
+            "status": "deprecated_compatibility_aliases_active",
+            "phase": "6B-12",
+            "replacement": "w5_player_view",
+            "authority": "w5_player_view.where_summary.current_visible_location",
+            "fallback_authority": "w5_player_view.where_summary.scene_location.value",
+            "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+            "removal": "deferred_future_adr_after_client_readiness",
+        }
+    }
+
+
 def _player_shell_state_view(
     *,
     state: dict[str, Any],
@@ -73,6 +87,7 @@ def _player_shell_state_view(
         view["current_room_fallback_value"] = w5_player_diag.get("current_room_fallback_value")
         view["current_room_w5_value"] = w5_player_diag.get("current_room_w5_value")
         view["current_room_mismatch"] = bool(w5_player_diag.get("current_room_mismatch"))
+        view["deprecations"] = _room_alias_deprecations()
         feature_flags = state.get("feature_flags") if isinstance(state.get("feature_flags"), dict) else {}
         view["feature_flags"] = {
             "W5_AST_FRONTEND_PLAYER_VIEW_ENABLED": bool(

@@ -1105,9 +1105,38 @@ WS viewer_room_id client upgrade, narrator-consequence W5-first builder).
 - [x] How remains first-class; inferred Why remains soft truth; private NPC inferred Why and
   raw W5 history are not emitted in WS payloads.
 
-**Next phase:** Phase 6B-12 — public alias removal readiness ADR after the client
-compatibility window has produced evidence that WS clients no longer consume
-`viewer_room_id` / `current_room`.
+**Next phase:** Phase 6B-12 — public alias deprecation metadata, one-time client
+fallback warning, and inventory classification. No alias removal.
+
+---
+
+### Phase 6B-12 — Public alias deprecation metadata + client compatibility window (complete, 2026-05-29)
+
+**ADR:** ADR-0069 (covers 6B-9 through 6B-12 public alias migration)
+
+**Goal:** make public alias status observable while preserving compatibility.
+`w5_player_view` is now the public player-facing actor-situation authority.
+`viewer_room_id`, `current_room`, and HTTP/player-shell `current_room_id` are
+deprecated compatibility aliases and remain present.
+
+- [x] Added compact additive WS metadata:
+  `RuntimeSnapshot.metadata.deprecations.room_aliases`.
+- [x] Added matching HTTP/player-shell `deprecations.room_aliases` whenever
+  `current_room_id` is emitted.
+- [x] Kept all compatibility aliases: `viewer_room_id`, `current_room`,
+  `current_room_id`, and `runtime_world.current_room_id`.
+- [x] Added one-time dev-console warning when frontend helpers fall back to
+  legacy `current_room` while W5 is enabled.
+- [x] W5-success path does not warn; helpers remain W5-first.
+- [x] Inventory reclassified public aliases as
+  `deprecated_public_client_alias_keep` and `w5_player_view` as
+  `public_authority`.
+- [x] Substrates remain out of scope: `actor_locations`,
+  `complete_actor_locations_for_gathering`, `runtime_world.current_room_id`,
+  and `environment_state.current_room_id` are `substrate_keep_future_adr`.
+
+**Next phase:** Phase 6B-13 — alias-usage telemetry and client-readiness gate.
+Public alias removal remains deferred to a future ADR after evidence is available.
 
 ---
 

@@ -120,14 +120,35 @@ architectural decision.
 6. Compact WS diagnostics are emitted under
    `RuntimeSnapshot.metadata.w5_player_view_diagnostics`.
 
-Phase 6B-11 starts the public compatibility window: `viewer_room_id`,
-`current_room`, and HTTP/player-shell `current_room_id` are deprecated aliases,
-but they remain present and are not removed in this phase.
+Phase 6B-11 starts the public compatibility window by making WS `w5_player_view`
+production-populated while preserving `viewer_room_id`, `current_room`, and
+HTTP/player-shell `current_room_id`. Phase 6B-12 makes the deprecation explicit
+and observable; aliases remain present.
 
-### Planned Phase 6B-12 (future ADR): Remove Legacy WS Fields
+### Phase 6B-12 (this ADR — Accepted): Public Alias Deprecation Metadata
 
-Remove `viewer_room_id` and `current_room` from `RuntimeSnapshot`. Requires all
-known WS clients to have migrated to W5-first reads.
+**Implemented in Phase 6B-12:**
+
+1. `w5_player_view` is the public player-facing actor-situation authority.
+2. `viewer_room_id`, `current_room`, and HTTP/player-shell `current_room_id`
+   are marked as deprecated compatibility aliases through additive payload
+   metadata.
+3. WebSocket `RuntimeSnapshot.metadata.deprecations.room_aliases` advertises
+   the replacement and the full alias set.
+4. HTTP/player-shell payloads that emit `current_room_id` include
+   `deprecations.room_aliases` with the same replacement contract.
+5. Frontend room helpers continue to read W5 first and fall back to legacy room
+   aliases only when W5 is missing or malformed. The fallback path emits a
+   one-time developer-console warning; the W5 path emits no warning.
+6. Alias removal is explicitly deferred to a future ADR after telemetry proves
+   clients have migrated.
+
+### Planned Phase 6B-13 (future): Alias Usage Telemetry / Readiness Gate
+
+Add explicit alias-usage telemetry and a client-readiness gate. Removal of
+`viewer_room_id`, `current_room`, or `current_room_id` remains out of scope until
+the gate proves no supported public client depends on them and a future ADR
+accepts the removal.
 
 ## Current Public Payload Shape
 
@@ -207,6 +228,17 @@ remained compat aliases.
     }
   },
   "metadata": {
+    "deprecations": {
+      "room_aliases": {
+        "status": "deprecated_compatibility_aliases_active",
+        "phase": "6B-12",
+        "replacement": "w5_player_view",
+        "authority": "w5_player_view.where_summary.current_visible_location",
+        "fallback_authority": "w5_player_view.where_summary.scene_location.value",
+        "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+        "removal": "deferred_future_adr_after_client_readiness"
+      }
+    },
     "w5_player_view_diagnostics": {
       "w5_player_view_used": true,
       "ws_w5_player_view_source": "w5_projection",
@@ -221,8 +253,8 @@ remained compat aliases.
 ```
 
 `viewer_room_id` and `current_room` are retained as compatibility aliases until
-Phase 6B-12 or later. They are deprecated in Phase 6B-11 but remain contractually
-present throughout the client migration window.
+a future removal ADR. They are deprecated in Phase 6B-12 but remain
+contractually present throughout the client migration window.
 
 ## W5 Player View Contract
 
@@ -254,15 +286,17 @@ never emitted on the player-facing surface.
 
 ## Client Compatibility Policy
 
-1. **Never remove `current_room` or `viewer_room_id` without a dedicated ADR and
-   proven client upgrade.** These are public WebSocket payload fields consumed by
-   unknown clients.
+1. **Never remove `current_room`, `current_room_id`, or `viewer_room_id` without
+   a dedicated ADR and proven client upgrade.** These are public payload fields
+   consumed by unknown clients.
 2. **Never remove the malformed-W5 fallback** in `session_state_w5_view.py`.
    The `try/except` in `_maybe_build_w5_player_view_for_session()` is a safety net
    for missing/malformed W5 snapshots, not dead code.
 3. **`W5_AST_FRONTEND_PLAYER_VIEW_ENABLED=0`** remains a supported opt-out. Any code
    gating on this flag must keep the legacy `current_room` path alive.
-4. All frontend code consuming room location MUST follow W5-first with legacy fallback:
+4. All frontend code consuming room location MUST follow W5-first with legacy
+   fallback and SHOULD log a one-time developer warning when it must fall back
+   while the W5 feature flag is active:
 
    ```js
    function currentRoomFromSnapshot(snapshot) {
@@ -271,9 +305,15 @@ never emitted on the player-facing surface.
        const w5Room = roomFromW5PlayerView(snapshot);
        if (w5Room) return w5Room;
      }
-     return snapshot.current_room || null;
+     const legacyRoom = snapshot.current_room || null;
+     if (legacyRoom) warnLegacyRoomAliasFallbackOnce(snapshot);
+     return legacyRoom;
    }
    ```
+
+5. Clients MUST migrate to `w5_player_view.where_summary.current_visible_location`
+   first, then `current_location`, then `scene_location.value`. Legacy aliases
+   may be retained only as temporary compatibility fallback during the window.
 
 ## Deprecation Timeline
 
@@ -281,8 +321,10 @@ never emitted on the player-facing surface.
 |-------|--------|-----|--------|
 | 6B-9 | Preparatory: compat comments, WE UI W5-first, inventory scanner, tests | 0069 | Complete |
 | 6B-10 | Wire `w5_player_view` + `feature_flags` into `RuntimeSnapshot` + WS tests | 0069 | Complete |
-| 6B-11 | Populate production WS `w5_player_view`; deprecate compat aliases | 0069 | Complete |
-| 6B-12 | Remove `viewer_room_id` + `current_room` from `RuntimeSnapshot` | future ADR | Pending |
+| 6B-11 | Populate production WS `w5_player_view`; begin compat window | 0069 | Complete |
+| 6B-12 | Add public deprecation metadata/warnings; classify aliases as deprecated keeps | 0069 | Complete |
+| 6B-13 | Add alias usage telemetry and client-readiness gate | future ADR | Pending |
+| future | Remove public room aliases only after readiness evidence | future ADR | Deferred |
 
 ## Feature Flag / Rollback Behavior
 
@@ -368,7 +410,8 @@ the WS path.
 | `ws_w5_player_view_source` | `"w5_projection"`, `"missing_w5"`, `"malformed_w5"`, or `"legacy_only"` |
 | `w5_player_view_has_how` | Boolean — How dimension present in projection |
 | `w5_player_view_has_inferred_why` | Boolean — any Why facts are inferred |
-| `ws_current_room_aliases_deprecated` | Boolean — Phase 6B-11 deprecation marker for WS aliases |
+| `ws_current_room_aliases_deprecated` | Boolean — Phase 6B-12 deprecation marker for WS aliases |
+| `metadata.deprecations.room_aliases` | Public metadata proving alias status, replacement, alias list, and deferred removal policy |
 
 These diagnostics let engineers confirm W5 is active and detect `current_room_source`
 divergence without needing to read internal state.
@@ -409,6 +452,17 @@ divergence without needing to read internal state.
 - [x] How remains first-class; inferred Why remains soft truth
 - [x] Raw `w5_history` / `w5_latest_snapshot` is not emitted in WS payloads
 
+### Phase 6B-12 (Complete)
+
+- [x] `w5_player_view` documented as the public player-facing actor-situation authority
+- [x] `viewer_room_id`, `current_room`, and `current_room_id` marked as deprecated compatibility aliases
+- [x] WS `RuntimeSnapshot.metadata.deprecations.room_aliases` added as compact additive metadata
+- [x] HTTP/player-shell payloads that emit `current_room_id` include `deprecations.room_aliases`
+- [x] Frontend helpers warn once only on legacy alias fallback while W5 is enabled
+- [x] W5-success path emits no client warning
+- [x] Inventory classifications updated: public aliases are `deprecated_public_client_alias_keep`; `w5_player_view` is `public_authority`
+- [x] Public aliases preserved — no removal in this phase
+
 ## Rejected Alternatives
 
 **Remove `current_room` immediately.** Rejected — WebSocket clients consume this field.
@@ -421,7 +475,7 @@ threading, and WS-side tests. Phase 6B-10 completed that work under ADR-0069.
 **Make `viewer_room_id` a computed property on `RuntimeSnapshot`.** Rejected —
 `RuntimeSnapshot` is a Pydantic model; adding a validator that derives `viewer_room_id`
 from `w5_player_view` would introduce a complex bidirectional dependency in the model
-layer. Direct field removal in Phase 6B-12 is cleaner.
+layer. Direct field removal belongs in a future removal ADR after telemetry/readiness evidence.
 
 **Use a single shared JS module for W5 helpers.** Rejected — the three static JS files
 are served from different endpoints with no shared module system. Code duplication is
@@ -447,5 +501,5 @@ This ADR intentionally does NOT address:
 - `environment_state` removal.
 - `actor_locations` substrate removal.
 - `complete_actor_locations_for_gathering` removal.
-- Removing any public alias (deferred to Phase 6B-11 and 6B-12).
+- Removing any public alias (deferred to a future ADR after Phase 6B-13 telemetry/readiness evidence).
 - `current_area` or `previous_room_id` substrate migration (separate ADR).

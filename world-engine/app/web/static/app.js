@@ -7,6 +7,8 @@ const state = {
   snapshot: null,
 };
 
+let legacyRoomAliasFallbackWarned = false;
+
 const el = {
   accountId: document.getElementById('accountId'),
   displayName: document.getElementById('displayName'),
@@ -114,13 +116,25 @@ function roomFromW5PlayerView(snapshot) {
   return { id: roomId, name: roomId, description: '' };
 }
 
+function warnLegacyRoomAliasFallbackOnce(snapshot) {
+  if (legacyRoomAliasFallbackWarned || !w5FrontendPlayerViewEnabled(snapshot)) return;
+  legacyRoomAliasFallbackWarned = true;
+  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn(
+      'Deprecated room alias fallback: using current_room because w5_player_view is missing or malformed. Migrate clients to w5_player_view.where_summary.'
+    );
+  }
+}
+
 function currentRoomFromSnapshot(snapshot) {
   if (!snapshot) return null;
   if (w5FrontendPlayerViewEnabled(snapshot)) {
     const w5Room = roomFromW5PlayerView(snapshot);
     if (w5Room) return w5Room;
   }
-  return snapshot.current_room || null;
+  const legacyRoom = snapshot.current_room || null;
+  if (legacyRoom) warnLegacyRoomAliasFallbackOnce(snapshot);
+  return legacyRoom;
 }
 
 function currentRoom() {

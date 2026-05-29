@@ -213,6 +213,11 @@ def test_ws_runtime_snapshot_populates_w5_player_view_from_bound_story_session(
     assert diagnostics["current_room_w5_value"] == "salon_w5"
     assert diagnostics["current_room_mismatch"] is True
     assert diagnostics["ws_current_room_aliases_deprecated"] is True
+    assert diagnostics["ws_current_room_aliases"] == ["viewer_room_id", "current_room", "current_room_id"]
+    deprecation = payload["metadata"]["deprecations"]["room_aliases"]
+    assert deprecation["status"] == "deprecated_compatibility_aliases_active"
+    assert deprecation["replacement"] == "w5_player_view"
+    assert deprecation["aliases"] == ["viewer_room_id", "current_room", "current_room_id"]
 
 
 def test_ws_runtime_snapshot_falls_back_when_w5_snapshot_missing(

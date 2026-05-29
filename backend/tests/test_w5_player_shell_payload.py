@@ -76,6 +76,13 @@ def test_shell_state_view_includes_w5_player_view_and_current_room_source_when_e
     assert shell["current_room_w5_value"] == "salon_w5"
     assert shell["current_room_mismatch"] is True
     assert shell["feature_flags"]["W5_AST_FRONTEND_PLAYER_VIEW_ENABLED"] is True
+    assert shell["deprecations"]["room_aliases"]["status"] == "deprecated_compatibility_aliases_active"
+    assert shell["deprecations"]["room_aliases"]["replacement"] == "w5_player_view"
+    assert shell["deprecations"]["room_aliases"]["aliases"] == [
+        "viewer_room_id",
+        "current_room",
+        "current_room_id",
+    ]
     assert "w5_history" not in shell
 
 
@@ -113,6 +120,7 @@ def test_shell_state_view_falls_back_to_fallback_current_room_when_w5_unused() -
     assert shell["current_room_source"] == "fallback_current_room"
     assert shell["w5_player_view_diagnostics"]["w5_player_view_fallback_reason"] == "missing_w5_latest_snapshot"
     assert shell["current_room_mismatch"] is False
+    assert shell["deprecations"]["room_aliases"]["status"] == "deprecated_compatibility_aliases_active"
 
 
 def test_backend_static_current_room_helper_is_w5_first_with_fallback() -> None:
@@ -121,7 +129,9 @@ def test_backend_static_current_room_helper_is_w5_first_with_fallback() -> None:
     assert "if (w5FrontendPlayerViewEnabled(snapshot))" in source
     assert "const w5Room = roomFromW5PlayerView(snapshot);" in source
     assert "if (w5Room) return w5Room;" in source
-    assert "return snapshot.current_room || null;" in source
+    assert "const legacyRoom = snapshot.current_room || null;" in source
+    assert "return legacyRoom;" in source
+    assert "warnLegacyRoomAliasFallbackOnce(snapshot)" in source
     assert "function currentRoom() {\n  return currentRoomFromSnapshot(state.snapshot);\n}" in source
     assert "if (!where) return null;" in source
     assert "where.scene_location && where.scene_location.value" in source
@@ -133,10 +143,20 @@ def test_live_ws_room_helper_is_w5_first_and_does_not_render_private_why() -> No
     assert "function roomFromSnapshot(snapshot)" in source
     assert "if (w5FrontendPlayerViewEnabled(snapshot))" in source
     assert "const roomId = w5PlayerViewLocation(snapshot);" in source
-    assert "return snapshot.current_room || null;" in source
+    assert "const legacyRoom = snapshot.current_room || null;" in source
+    assert "return legacyRoom;" in source
+    assert "warnLegacyRoomAliasFallbackOnce(snapshot)" in source
     assert "if (!where) return null;" in source
     assert "where.scene_location && where.scene_location.value" in source
     assert "why_summary" not in source
+
+
+def test_frontend_room_alias_warning_is_fallback_only() -> None:
+    source = Path("frontend/static/play_live_ws.js").read_text(encoding="utf-8")
+    assert "function warnLegacyRoomAliasFallbackOnce(snapshot)" in source
+    assert "if (roomId) {" in source
+    assert "if (legacyRoom) warnLegacyRoomAliasFallbackOnce(snapshot);" in source
+    assert source.index("if (roomId) {") < source.index("warnLegacyRoomAliasFallbackOnce(snapshot);")
 
 
 def test_runtime_snapshot_viewer_room_id_has_compatibility_alias_comment() -> None:
@@ -175,8 +195,14 @@ def test_world_engine_static_currentroom_is_w5_first_with_fallback() -> None:
     assert "if (w5FrontendPlayerViewEnabled(snapshot))" in source, (
         "currentRoomFromSnapshot must gate on the feature flag"
     )
-    assert "return snapshot.current_room || null;" in source, (
+    assert "const legacyRoom = snapshot.current_room || null;" in source, (
         "legacy fallback must remain present"
+    )
+    assert "return legacyRoom;" in source, (
+        "legacy fallback must remain present"
+    )
+    assert "warnLegacyRoomAliasFallbackOnce(snapshot)" in source, (
+        "legacy fallback must emit the one-time deprecation warning hook"
     )
     assert "if (!where) return null;" in source, (
         "w5PlayerViewLocation must guard against missing where_summary"

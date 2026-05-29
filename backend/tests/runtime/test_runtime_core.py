@@ -306,6 +306,10 @@ def test_runtime_engine_commands_and_snapshot(monkeypatch):
     snapshot = engine.build_snapshot(instance, actor.id)
     assert snapshot.viewer_display_name == "Owner"
     assert snapshot.metadata["store_backend"] == "unknown"
+    deprecation = snapshot.metadata["deprecations"]["room_aliases"]
+    assert deprecation["status"] == "deprecated_compatibility_aliases_active"
+    assert deprecation["replacement"] == "w5_player_view"
+    assert deprecation["aliases"] == ["viewer_room_id", "current_room", "current_room_id"]
 
     # Test invalid command handling
     assert engine.apply_command(instance, actor.id, {"action": "unknown"}).accepted is False

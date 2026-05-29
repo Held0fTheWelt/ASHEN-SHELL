@@ -88,9 +88,10 @@ def _with_ws_alias_deprecation_diagnostics(diagnostics: dict[str, Any] | None) -
     out.update(
         {
             "ws_current_room_aliases_deprecated": True,
-            "ws_current_room_aliases": ["viewer_room_id", "current_room"],
-            "ws_current_room_aliases_deprecation_phase": "6B-11",
-            "ws_current_room_aliases_removal_phase": "6B-12_or_later_with_dedicated_ADR",
+            "ws_current_room_aliases": ["viewer_room_id", "current_room", "current_room_id"],
+            "ws_current_room_aliases_deprecation_phase": "6B-12",
+            "ws_current_room_aliases_replacement": "w5_player_view",
+            "ws_current_room_aliases_removal_phase": "future_adr_after_client_readiness",
         }
     )
     return out

@@ -300,6 +300,8 @@ def test_phase_6b9_taxonomy_extended(inventory_module) -> None:
         "PHASE_6B4_TAXONOMY must include w5_first_already_migrated for Phase 6B-9 (ADR-0069)"
     )
     assert "still_needed_public_client_compatibility" in inventory_module.PHASE_6B4_TAXONOMY
+    assert "deprecated_public_client_alias_keep" in inventory_module.PHASE_6B4_TAXONOMY
+    assert "public_authority" in inventory_module.PHASE_6B4_TAXONOMY
 
 
 def test_scan_finds_viewer_room_id(inventory_report) -> None:
@@ -329,3 +331,21 @@ def test_phase_6b9_classification_entries_present(inventory_module) -> None:
     )
     assert "needs_dedicated_adr_before_removal" in inventory_module.PHASE_6B4_CLASSIFICATION["viewer_room_id"]
     assert "w5_first_already_migrated" in inventory_module.PHASE_6B4_CLASSIFICATION["w5_player_view"]
+
+
+def test_phase_6b12_public_alias_classifications(inventory_module) -> None:
+    """Phase 6B-12 marks public room aliases as deprecated keeps, not legacy to retain."""
+
+    for key in ("viewer_room_id", "current_room", "current_room_id"):
+        label = inventory_module.PHASE_6B4_CLASSIFICATION[key]
+        assert "deprecated_public_client_alias_keep" in label
+        assert "needs_dedicated_adr_before_removal" in label
+
+    assert "public_authority" in inventory_module.PHASE_6B4_CLASSIFICATION["w5_player_view"]
+    assert "runtime_world.current_room_id" in inventory_module.PHASE_6B4_CLASSIFICATION["current_room_id"]
+    assert "environment_state.current_room_id" in inventory_module.PHASE_6B4_CLASSIFICATION["current_room_id"]
+    assert "substrate_keep_future_adr" in inventory_module.PHASE_6B4_CLASSIFICATION["actor_locations"]
+    assert (
+        "substrate_keep_future_adr"
+        in inventory_module.PHASE_6B4_CLASSIFICATION["complete_actor_locations_for_gathering"]
+    )

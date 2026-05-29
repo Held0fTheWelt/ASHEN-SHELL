@@ -18,6 +18,20 @@ from app.runtime.npc_behaviors import RuntimeNpcDirector
 from app.runtime.visibility import RuntimeVisibilityPolicy
 
 
+def _room_alias_deprecation_metadata() -> dict[str, Any]:
+    return {
+        "room_aliases": {
+            "status": "deprecated_compatibility_aliases_active",
+            "phase": "6B-12",
+            "replacement": "w5_player_view",
+            "authority": "w5_player_view.where_summary.current_visible_location",
+            "fallback_authority": "w5_player_view.where_summary.scene_location.value",
+            "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+            "removal": "deferred_future_adr_after_client_readiness",
+        }
+    }
+
+
 class RuntimeEngine:
     def __init__(self, template: ExperienceTemplate) -> None:
         self.template = template
@@ -45,6 +59,7 @@ class RuntimeEngine:
             **self.visibility.public_metadata(instance),
             "min_humans_to_start": self.template.min_humans_to_start,
             "store_backend": instance.metadata.get("store_backend", "unknown"),
+            "deprecations": _room_alias_deprecation_metadata(),
         }
         if w5_player_view_diagnostics is not None:
             metadata["w5_player_view_diagnostics"] = w5_player_view_diagnostics

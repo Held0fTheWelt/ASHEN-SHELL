@@ -1,4 +1,6 @@
 (function () {
+  let legacyRoomAliasFallbackWarned = false;
+
   function escapeHtml(s) {
     const d = document.createElement("div");
     d.textContent = s == null ? "" : String(s);
@@ -22,6 +24,16 @@
     return null;
   }
 
+  function warnLegacyRoomAliasFallbackOnce(snapshot) {
+    if (legacyRoomAliasFallbackWarned || !w5FrontendPlayerViewEnabled(snapshot)) return;
+    legacyRoomAliasFallbackWarned = true;
+    if (typeof console !== "undefined" && typeof console.warn === "function") {
+      console.warn(
+        "Deprecated room alias fallback: using current_room because w5_player_view is missing or malformed. Migrate clients to w5_player_view.where_summary."
+      );
+    }
+  }
+
   function roomFromSnapshot(snapshot) {
     if (!snapshot) return null;
     if (w5FrontendPlayerViewEnabled(snapshot)) {
@@ -32,7 +44,9 @@
         return { id: roomId, name: roomId, description: "" };
       }
     }
-    return snapshot.current_room || null;
+    const legacyRoom = snapshot.current_room || null;
+    if (legacyRoom) warnLegacyRoomAliasFallbackOnce(snapshot);
+    return legacyRoom;
   }
 
   function renderLiveSnapshot(root, snapshot) {

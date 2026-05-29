@@ -85,8 +85,8 @@ LEGACY_SURFACES: list[tuple[str, str]] = [
 # reads (`S`), compatibility aliases for legacy clients (`L`), or are pure
 # documentation/comment mentions (`D`).
 PHASE_6B2_CLASSIFICATION: dict[str, str] = {
-    "current_room": "L/S — compatibility alias on player-shell + WS payloads; also substrate read in runtime_world/environment_state",
-    "current_room_id": "L/S — compatibility alias + Participant dataclass substrate field",
+    "current_room": "deprecated_public_client_alias_keep/S — compatibility alias on player-shell + WS payloads; also substrate read in runtime_world/environment_state",
+    "current_room_id": "deprecated_public_client_alias_keep/S — HTTP/player-shell alias + Participant/runtime_world/environment_state substrate field",
     "current_area": "S/L — substrate field; read by C5/C8 affordance + sensory engines (migrate_to_w5_first_before_removal)",
     "previous_room_id": "S — substrate field on environment_state",
     "actor_locations": "S — substrate field on environment_state; read by W5 extractor + Director baseline completion",
@@ -114,8 +114,8 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "removed_by_6b5e_policy": "removed_by_adr_0068_admin_metadata — former w5.legacy_transition_parity value; historical/docs/tests only.",
     "legacy_transition_parity": "removed_by_adr_0068_admin_metadata — admin metadata key removed; historical/docs/tests only.",
     # Phase 6B-9 surfaces
-    "viewer_room_id": "L — deprecated public WS RuntimeSnapshot compat alias; keep during ADR-0069 Phase 6B-11 compatibility window; needs_dedicated_adr_before_removal",
-    "w5_player_view": "current — W5 player-shell projection surface; w5_first_already_migrated in Phase 6B-1",
+    "viewer_room_id": "deprecated_public_client_alias_keep — public WS RuntimeSnapshot compat alias; keep during ADR-0069 Phase 6B-12 compatibility window; needs_dedicated_adr_before_removal",
+    "w5_player_view": "public_authority — W5 player-shell projection surface; w5_first_already_migrated in Phase 6B-1",
 }
 
 
@@ -146,14 +146,16 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
 # lives in docs/MVPs/w5_legacy_consumer_removal_inventory.md §"Phase 6B-4".
 PHASE_6B4_CLASSIFICATION: dict[str, str] = {
     "current_room": (
-        "substrate_keep_future_adr + needs_dedicated_adr_before_removal — "
-        "substrate read in runtime_world/environment_state AND public "
-        "player-shell + WS payload alias; frontend/WS clients still read it"
+        "deprecated_public_client_alias_keep + substrate_keep_future_adr + "
+        "needs_dedicated_adr_before_removal — public player-shell + WS "
+        "payload alias; frontend/WS clients still read it. Substrate reads "
+        "remain in runtime_world/environment_state and require a future ADR"
     ),
     "current_room_id": (
-        "substrate_keep_future_adr + needs_dedicated_adr_before_removal — "
-        "Participant dataclass substrate field AND public player-shell + WS "
-        "payload alias"
+        "deprecated_public_client_alias_keep + substrate_keep_future_adr + "
+        "needs_dedicated_adr_before_removal — HTTP/player-shell public alias "
+        "AND Participant.current_room_id substrate field. runtime_world.current_room_id "
+        "and environment_state.current_room_id are substrate_keep_future_adr"
     ),
     "current_area": (
         "substrate_keep_future_adr — C5 player_action_resolution / C7 "
@@ -254,14 +256,16 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
     ),
     # Phase 6B-9 surfaces (ADR-0069)
     "viewer_room_id": (
-        "still_needed_public_client_compatibility + needs_dedicated_adr_before_removal — "
-        "deprecated public WS RuntimeSnapshot field; Phase 6B-11 starts the "
-        "client compatibility window while preserving the alias. Removal "
-        "requires Phase 6B-12+ ADR + proven client migration (ADR-0069)"
+        "deprecated_public_client_alias_keep + still_needed_public_client_compatibility + "
+        "needs_dedicated_adr_before_removal — deprecated public WS RuntimeSnapshot "
+        "field. Phase 6B-12 adds public deprecation metadata and one-time "
+        "client fallback warnings while preserving the alias. Removal requires "
+        "a future ADR + proven client migration (ADR-0069)"
     ),
     "w5_player_view": (
-        "w5_first_already_migrated — W5 player-shell projection surface; "
-        "wired in Phase 6B-1; current authority for player-facing location (ADR-0069)"
+        "public_authority + w5_first_already_migrated — W5 player-shell "
+        "projection surface; wired in Phase 6B-1; public authority for "
+        "player-facing actor-situation/location (ADR-0069)"
     ),
 }
 
@@ -290,6 +294,9 @@ PHASE_6B4_TAXONOMY: tuple[str, ...] = (
     "removed_by_adr_0068_admin_metadata",
     # Phase 6B-9 additions
     "w5_first_already_migrated",
+    # Phase 6B-12 additions
+    "deprecated_public_client_alias_keep",
+    "public_authority",
 )
 
 
@@ -539,14 +546,15 @@ def _format_human(report: ScanReport) -> str:
     else:
         out.append("OK — no active forbidden package references detected.")
     out.append("")
-    out.append("Phase 6B-9/6B-10/6B-11 — ADR-0069 ACCEPTED (2026-05-29):")
-    out.append("  viewer_room_id: deprecated public WS RuntimeSnapshot compat alias; kept for the client migration window.")
-    out.append("  w5_player_view: current W5 player-shell projection; migrated in Phase 6B-1.")
+    out.append("Phase 6B-9/6B-10/6B-11/6B-12 — ADR-0069 ACCEPTED (2026-05-29):")
+    out.append("  viewer_room_id/current_room/current_room_id: deprecated public client aliases; kept for the client migration window.")
+    out.append("  w5_player_view: public W5 player-shell authority; migrated in Phase 6B-1.")
     out.append("  world-engine/app/web/static/app.js currentRoom(): upgraded to W5-first.")
     out.append("  WS RuntimeSnapshot w5_player_view gap: CLOSED in Phase 6B-10.")
     out.append("  Production WS w5_player_view population: COMPLETE in Phase 6B-11.")
-    out.append("  RuntimeSnapshot.viewer_room_id + .current_room: compat alias comments added.")
-    _6b9_keys = ("viewer_room_id", "w5_player_view")
+    out.append("  Deprecation metadata + one-time client fallback warnings: COMPLETE in Phase 6B-12.")
+    out.append("  RuntimeSnapshot.viewer_room_id + .current_room: compat alias comments added; aliases not removed.")
+    _6b9_keys = ("current_room", "current_room_id", "viewer_room_id", "w5_player_view")
     for key in _6b9_keys:
         count = sum(1 for f in report.findings if f.surface == key)
         label = PHASE_6B4_CLASSIFICATION.get(key, "—")
