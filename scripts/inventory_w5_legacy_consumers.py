@@ -69,6 +69,12 @@ LEGACY_SURFACES: list[tuple[str, str]] = [
     ("demoted_to_legacy_compat", r"\bdemoted_to_legacy_compat\b"),
     ("removed_by_6b5e_policy", r"\bremoved_by_6b5e_policy\b"),
     ("legacy_transition_parity", r"\blegacy_transition_parity\b"),
+    # Phase 6B-9 — public payload alias migration surfaces (ADR-0069).
+    # viewer_room_id is a public WS RuntimeSnapshot compat alias slated for
+    # Phase 6B-11 deprecation once Phase 6B-10 wires w5_player_view into WS.
+    # w5_player_view is the W5 player-shell projection surface (current authority).
+    ("viewer_room_id", r"\bviewer_room_id\b"),
+    ("w5_player_view", r"\bw5_player_view\b"),
 ]
 
 
@@ -107,6 +113,9 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "demoted_to_legacy_compat": "retired_phase_6b6b — former w5.legacy_transition_parity diagnostics value; historical/docs only after ADR-0066.",
     "removed_by_6b5e_policy": "removed_by_adr_0068_admin_metadata — former w5.legacy_transition_parity value; historical/docs/tests only.",
     "legacy_transition_parity": "removed_by_adr_0068_admin_metadata — admin metadata key removed; historical/docs/tests only.",
+    # Phase 6B-9 surfaces
+    "viewer_room_id": "L — public WS RuntimeSnapshot compat alias; needs_dedicated_adr_before_removal (ADR-0069 Phase 6B-11)",
+    "w5_player_view": "current — W5 player-shell projection surface; w5_first_already_migrated in Phase 6B-1",
 }
 
 
@@ -243,6 +252,16 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "removed_by_adr_0068_admin_metadata — admin metadata key removed by "
         "ADR-0068; historical/docs/tests only."
     ),
+    # Phase 6B-9 surfaces (ADR-0069)
+    "viewer_room_id": (
+        "still_needed_public_client_compatibility + needs_dedicated_adr_before_removal — "
+        "public WS RuntimeSnapshot field read by all WS frontend clients; "
+        "removal requires Phase 6B-11 ADR + proven client migration (ADR-0069)"
+    ),
+    "w5_player_view": (
+        "w5_first_already_migrated — W5 player-shell projection surface; "
+        "wired in Phase 6B-1; current authority for player-facing location (ADR-0069)"
+    ),
 }
 
 
@@ -268,6 +287,8 @@ PHASE_6B4_TAXONOMY: tuple[str, ...] = (
     "removed_by_adr_0068",
     "retired_phase_6b6b",
     "removed_by_adr_0068_admin_metadata",
+    # Phase 6B-9 additions
+    "w5_first_already_migrated",
 )
 
 
@@ -506,6 +527,18 @@ def _format_human(report: ScanReport) -> str:
             out.append(f"  {f.path}:{f.line}: {f.text[:200]}")
     else:
         out.append("OK — no forbidden package references detected.")
+    out.append("")
+    out.append("Phase 6B-9 — ADR-0069 PROPOSED (2026-05-29):")
+    out.append("  viewer_room_id: public WS RuntimeSnapshot compat alias; kept until Phase 6B-11.")
+    out.append("  w5_player_view: current W5 player-shell projection; migrated in Phase 6B-1.")
+    out.append("  world-engine/app/web/static/app.js currentRoom(): upgraded to W5-first.")
+    out.append("  WS RuntimeSnapshot w5_player_view gap: tracked; Phase 6B-10 will wire it.")
+    out.append("  RuntimeSnapshot.viewer_room_id + .current_room: compat alias comments added.")
+    _6b9_keys = ("viewer_room_id", "w5_player_view")
+    for key in _6b9_keys:
+        count = sum(1 for f in report.findings if f.surface == key)
+        label = PHASE_6B4_CLASSIFICATION.get(key, "—")
+        out.append(f"  {key:48s} {count:3d}  {label[:70]}")
     out.append("")
     out.append("This report is informational; the authoritative inventory and")
     out.append("classification live in docs/MVPs/w5_legacy_consumer_removal_inventory.md.")

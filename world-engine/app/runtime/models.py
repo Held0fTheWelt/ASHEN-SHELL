@@ -136,10 +136,10 @@ class RuntimeSnapshot(BaseModel):
     viewer_participant_id: str
     viewer_account_id: str | None = None
     viewer_character_id: str | None = None
-    viewer_room_id: str
+    viewer_room_id: str  # compat alias — W5 replacement: w5_player_view.where_summary.current_visible_location (ADR-0069)
     viewer_role_id: str
     viewer_display_name: str
-    current_room: dict[str, Any] | None = None
+    current_room: dict[str, Any] | None = None  # compat alias — W5 replacement: w5_player_view.where_summary (ADR-0069)
     visible_occupants: list[dict[str, Any]] = Field(default_factory=list)
     rooms: list[dict[str, Any]] = Field(default_factory=list)
     room_occupants: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)

@@ -281,3 +281,54 @@ def test_current_code_uses_actor_tracking_package() -> None:
     assert "from ai_stack.w5_actor_situation" not in src
     assert "import ai_stack.actor_situation" not in src
     assert "import ai_stack.w5_actor_situation" not in src
+
+
+# ---------------------------------------------------------------------------
+# Phase 6B-9 — ADR-0069 surface coverage guarantees
+# ---------------------------------------------------------------------------
+
+
+def test_phase_6b9_surfaces_are_declared(inventory_module) -> None:
+    """Phase 6B-9: viewer_room_id and w5_player_view must be in the scanner."""
+    keys = {key for key, _ in inventory_module.LEGACY_SURFACES}
+    assert "viewer_room_id" in keys, "viewer_room_id surface missing from LEGACY_SURFACES"
+    assert "w5_player_view" in keys, "w5_player_view surface missing from LEGACY_SURFACES"
+
+
+def test_phase_6b9_taxonomy_extended(inventory_module) -> None:
+    """Phase 6B-9 taxonomy must include w5_first_already_migrated."""
+    assert "w5_first_already_migrated" in inventory_module.PHASE_6B4_TAXONOMY, (
+        "PHASE_6B4_TAXONOMY must include w5_first_already_migrated for Phase 6B-9 (ADR-0069)"
+    )
+    assert "still_needed_public_client_compatibility" in inventory_module.PHASE_6B4_TAXONOMY
+
+
+def test_scan_finds_viewer_room_id(inventory_module) -> None:
+    """viewer_room_id appears in both RuntimeSnapshot definitions."""
+    report = inventory_module.scan(REPO_ROOT)
+    counts = report.by_surface()
+    assert counts.get("viewer_room_id", 0) > 0, (
+        "viewer_room_id must appear in scan results (present in RuntimeSnapshot model fields)"
+    )
+
+
+def test_scan_finds_w5_player_view(inventory_module) -> None:
+    """w5_player_view appears in the player-shell projection and session state view."""
+    report = inventory_module.scan(REPO_ROOT)
+    counts = report.by_surface()
+    assert counts.get("w5_player_view", 0) > 0, (
+        "w5_player_view must appear in scan results (present in player_shell_state_projection.py "
+        "and session_state_w5_view.py)"
+    )
+
+
+def test_phase_6b9_classification_entries_present(inventory_module) -> None:
+    """Phase 6B-9 classification entries must be present for new surfaces."""
+    assert "viewer_room_id" in inventory_module.PHASE_6B4_CLASSIFICATION, (
+        "viewer_room_id must have a PHASE_6B4_CLASSIFICATION entry"
+    )
+    assert "w5_player_view" in inventory_module.PHASE_6B4_CLASSIFICATION, (
+        "w5_player_view must have a PHASE_6B4_CLASSIFICATION entry"
+    )
+    assert "needs_dedicated_adr_before_removal" in inventory_module.PHASE_6B4_CLASSIFICATION["viewer_room_id"]
+    assert "w5_first_already_migrated" in inventory_module.PHASE_6B4_CLASSIFICATION["w5_player_view"]
