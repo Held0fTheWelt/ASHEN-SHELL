@@ -114,7 +114,7 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "removed_by_6b5e_policy": "removed_by_adr_0068_admin_metadata — former w5.legacy_transition_parity value; historical/docs/tests only.",
     "legacy_transition_parity": "removed_by_adr_0068_admin_metadata — admin metadata key removed; historical/docs/tests only.",
     # Phase 6B-9 surfaces
-    "viewer_room_id": "L — public WS RuntimeSnapshot compat alias; needs_dedicated_adr_before_removal (ADR-0069 Phase 6B-11)",
+    "viewer_room_id": "L — deprecated public WS RuntimeSnapshot compat alias; keep during ADR-0069 Phase 6B-11 compatibility window; needs_dedicated_adr_before_removal",
     "w5_player_view": "current — W5 player-shell projection surface; w5_first_already_migrated in Phase 6B-1",
 }
 
@@ -255,8 +255,9 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
     # Phase 6B-9 surfaces (ADR-0069)
     "viewer_room_id": (
         "still_needed_public_client_compatibility + needs_dedicated_adr_before_removal — "
-        "public WS RuntimeSnapshot field read by all WS frontend clients; "
-        "removal requires Phase 6B-11 ADR + proven client migration (ADR-0069)"
+        "deprecated public WS RuntimeSnapshot field; Phase 6B-11 starts the "
+        "client compatibility window while preserving the alias. Removal "
+        "requires Phase 6B-12+ ADR + proven client migration (ADR-0069)"
     ),
     "w5_player_view": (
         "w5_first_already_migrated — W5 player-shell projection surface; "
@@ -520,19 +521,30 @@ def _format_human(report: ScanReport) -> str:
         "forbidden_ai_stack_actor_situation",
         "forbidden_ai_stack_w5_actor_situation",
     )
-    forbidden = [f for f in report.findings if f.surface in forbidden_keys]
+    allowed_forbidden_reference_paths = {
+        "docs/MVPs/w5_legacy_consumer_removal_inventory.md",
+        "docs/MVPs/w5_actor_tracking_migration.md",
+        "scripts/inventory_w5_legacy_consumers.py",
+        "tests/test_inventory_w5_legacy_consumers.py",
+    }
+    forbidden = [
+        f
+        for f in report.findings
+        if f.surface in forbidden_keys and f.path not in allowed_forbidden_reference_paths
+    ]
     if forbidden:
         out.append("WARNING — forbidden package references detected:")
         for f in forbidden:
             out.append(f"  {f.path}:{f.line}: {f.text[:200]}")
     else:
-        out.append("OK — no forbidden package references detected.")
+        out.append("OK — no active forbidden package references detected.")
     out.append("")
-    out.append("Phase 6B-9 — ADR-0069 PROPOSED (2026-05-29):")
-    out.append("  viewer_room_id: public WS RuntimeSnapshot compat alias; kept until Phase 6B-11.")
+    out.append("Phase 6B-9/6B-10/6B-11 — ADR-0069 ACCEPTED (2026-05-29):")
+    out.append("  viewer_room_id: deprecated public WS RuntimeSnapshot compat alias; kept for the client migration window.")
     out.append("  w5_player_view: current W5 player-shell projection; migrated in Phase 6B-1.")
     out.append("  world-engine/app/web/static/app.js currentRoom(): upgraded to W5-first.")
-    out.append("  WS RuntimeSnapshot w5_player_view gap: tracked; Phase 6B-10 will wire it.")
+    out.append("  WS RuntimeSnapshot w5_player_view gap: CLOSED in Phase 6B-10.")
+    out.append("  Production WS w5_player_view population: COMPLETE in Phase 6B-11.")
     out.append("  RuntimeSnapshot.viewer_room_id + .current_room: compat alias comments added.")
     _6b9_keys = ("viewer_room_id", "w5_player_view")
     for key in _6b9_keys:

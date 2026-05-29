@@ -412,8 +412,8 @@ async def lifespan(app: FastAPI):
 
     app.state.resolved_runtime_config = resolved_runtime_config
     json_at_rest_codec = JsonAtRestCodec.from_env()
-    app.state.manager = RuntimeManager(store_root=RUN_STORE_DIR, governed_runtime_config=resolved_runtime_config)
-    app.state.story_manager = StoryRuntimeManager(
+    runtime_manager = RuntimeManager(store_root=RUN_STORE_DIR, governed_runtime_config=resolved_runtime_config)
+    story_manager = StoryRuntimeManager(
         session_store=JsonStorySessionStore(STORY_SESSION_STORE_DIR, codec=json_at_rest_codec),
         branching_tree_store=JsonBranchingTreeStore(BRANCHING_TREE_STORE_DIR, codec=json_at_rest_codec),
         branch_timeline_store=JsonBranchTimelineStore(BRANCH_TIMELINE_STORE_DIR, codec=json_at_rest_codec),
@@ -421,6 +421,9 @@ async def lifespan(app: FastAPI):
         consequence_cascade_store=JsonConsequenceCascadeStore(CONSEQUENCE_CASCADE_STORE_DIR, codec=json_at_rest_codec),
         governed_runtime_config=resolved_runtime_config,
     )
+    runtime_manager.attach_story_manager(story_manager)
+    app.state.manager = runtime_manager
+    app.state.story_manager = story_manager
     app.state.ticket_manager = TicketManager()
     app.state.narrative_package_loader = NarrativePackageLoader(repo_root=REPO_ROOT)
     app.state.preview_isolation_registry = PreviewIsolationRegistry()

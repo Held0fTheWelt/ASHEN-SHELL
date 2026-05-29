@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Any
 
@@ -27,9 +28,26 @@ class RuntimeEngine:
         self.visibility = RuntimeVisibilityPolicy(template)
         self.npc_director = RuntimeNpcDirector(template, self._emit_npc_event)
 
-    def build_snapshot(self, instance: RuntimeInstance, viewer_participant_id: str) -> RuntimeSnapshot:
+    def build_snapshot(
+        self,
+        instance: RuntimeInstance,
+        viewer_participant_id: str,
+        *,
+        w5_player_view: dict[str, Any] | None = None,
+        feature_flags: dict[str, Any] | None = None,
+        w5_player_view_diagnostics: dict[str, Any] | None = None,
+    ) -> RuntimeSnapshot:
         viewer = instance.participants[viewer_participant_id]
         available_actions = self.available_actions(instance, viewer)
+        resolved_w5 = w5_player_view if w5_player_view is not None else instance.metadata.get("_w5_player_view")
+        resolved_flags = feature_flags if feature_flags is not None else _default_feature_flags()
+        metadata = {
+            **self.visibility.public_metadata(instance),
+            "min_humans_to_start": self.template.min_humans_to_start,
+            "store_backend": instance.metadata.get("store_backend", "unknown"),
+        }
+        if w5_player_view_diagnostics is not None:
+            metadata["w5_player_view_diagnostics"] = w5_player_view_diagnostics
         return RuntimeSnapshot(
             run_id=instance.id,
             template_id=self.template.id,
@@ -43,19 +61,17 @@ class RuntimeEngine:
             viewer_participant_id=viewer.id,
             viewer_account_id=viewer.account_id,
             viewer_character_id=viewer.character_id,
-            viewer_room_id=viewer.current_room_id,
+            viewer_room_id=viewer.current_room_id,  # compat alias — ADR-0069; do not remove
             viewer_role_id=viewer.role_id,
             viewer_display_name=viewer.display_name,
-            current_room=self.visibility.build_current_room_payload(instance, viewer),
+            current_room=self.visibility.build_current_room_payload(instance, viewer),  # compat alias — ADR-0069; do not remove
+            w5_player_view=resolved_w5,
+            feature_flags=resolved_flags,
             visible_occupants=self.visibility.visible_occupants(instance, viewer),
             available_actions=available_actions,
             transcript_tail=self.visibility.visible_transcript(instance, viewer),
             lobby=self.build_lobby_payload(instance),
-            metadata={
-                **self.visibility.public_metadata(instance),
-                "min_humans_to_start": self.template.min_humans_to_start,
-                "store_backend": instance.metadata.get("store_backend", "unknown"),
-            },
+            metadata=metadata,
         )
 
     def build_lobby_payload(self, instance: RuntimeInstance) -> dict[str, Any] | None:
@@ -420,3 +436,9 @@ class RuntimeEngine:
     @_npc_instance.setter
     def _npc_instance(self, instance: RuntimeInstance | None) -> None:
         setattr(self, "__npc_instance", instance)
+
+
+def _default_feature_flags() -> dict[str, Any]:
+    raw = (os.environ.get("W5_AST_FRONTEND_PLAYER_VIEW_ENABLED") or "").strip().lower()
+    enabled = raw not in {"0", "false", "no", "off"}
+    return {"W5_AST_FRONTEND_PLAYER_VIEW_ENABLED": enabled}

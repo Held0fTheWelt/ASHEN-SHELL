@@ -130,6 +130,26 @@ def _create_story_runtime_session(
     )
 
 
+def _bind_story_session_to_runtime_run(request: Request, session: Any) -> None:
+    provenance = session.content_provenance if isinstance(getattr(session, "content_provenance", None), dict) else {}
+    run_id = str(provenance.get("run_id") or provenance.get("play_run_id") or "").strip()
+    if not run_id:
+        return
+    runtime_manager = getattr(request.app.state, "manager", None)
+    bind = getattr(runtime_manager, "bind_story_session", None)
+    if not callable(bind):
+        return
+    try:
+        bind(run_id, session.session_id)
+    except Exception:
+        logger.debug(
+            "Could not bind story session %s to runtime run %s",
+            getattr(session, "session_id", ""),
+            run_id,
+            exc_info=True,
+        )
+
+
 def _session_opening_turn(session: Any) -> dict[str, Any] | None:
     return next(
         (
@@ -302,6 +322,7 @@ def create_story_session(
                 trace_id=trace_id if isinstance(trace_id, str) else None,
                 story_session_id=story_session_id,
             )
+            _bind_story_session_to_runtime_run(request, session)
             runtime_world = session.runtime_world if isinstance(session.runtime_world, dict) else {}
             opening_turn = _session_opening_turn(session)
             runtime_world_summary = _runtime_world_summary(runtime_world)

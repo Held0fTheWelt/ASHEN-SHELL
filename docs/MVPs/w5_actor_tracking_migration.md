@@ -1037,6 +1037,80 @@ WS viewer_room_id client upgrade, narrator-consequence W5-first builder).
 
 ---
 
+### Phase 6B-9 — W5 WS compat alias comments + world-engine UI W5-first (complete, 2026-05-29)
+
+**ADR:** ADR-0069 (Proposed → Accepted phase 6B-10)
+
+**Goal:** safe preparatory steps before wiring W5 into `RuntimeSnapshot`. No aliases removed.
+
+- [x] Added compat alias comments to `RuntimeSnapshot.viewer_room_id` and `RuntimeSnapshot.current_room` in both `backend/app/runtime/models.py` and `world-engine/app/runtime/models.py`.
+- [x] Upgraded `world-engine/app/web/static/app.js` `currentRoom()` to W5-first with legacy fallback.
+- [x] Added `viewer_room_id` and `w5_player_view` to inventory scanner surface list.
+- [x] Added gap-doc test (`test_ws_runtime_snapshot_w5_player_view_gap_is_documented`) as explicit tracker.
+- [x] All Phase 6B-9 tests pass; no public aliases removed.
+
+**WS gap documented:** `RuntimeSnapshot` did not yet carry `w5_player_view`. Tracked by gap-doc test; resolved in Phase 6B-10.
+
+---
+
+### Phase 6B-10 — Wire w5_player_view into RuntimeSnapshot and WS payloads (complete, 2026-05-29)
+
+**ADR:** ADR-0069 (covers both 6B-9 and 6B-10)
+
+**Goal:** WebSocket/live runtime payloads carry W5 player-view data while preserving viewer_room_id/current_room compat aliases.
+
+- [x] `RuntimeSnapshot.w5_player_view: dict[str, Any] | None = None` added to both model files.
+- [x] `RuntimeSnapshot.feature_flags: dict[str, Any] | None = None` added to both model files.
+- [x] `RuntimeEngine.build_snapshot()` (both `backend/` and `world-engine/`) updated with optional `w5_player_view` and `feature_flags` kwargs.
+- [x] `_default_feature_flags()` module-level helper reads `W5_AST_FRONTEND_PLAYER_VIEW_ENABLED` from env and always emits it in every WS snapshot.
+- [x] `RuntimeManager.build_snapshot()` exposes the kwargs for callers.
+- [x] WS `broadcast_snapshot()` emits new fields automatically via `model_dump(mode="json")`.
+- [x] Gap-doc test removed; replaced with 4 positive WS payload assertion tests:
+  - `test_ws_runtime_snapshot_carries_w5_player_view_when_enabled`
+  - `test_ws_runtime_snapshot_preserves_current_room_aliases`
+  - `test_ws_payload_current_room_helper_uses_w5_player_view_first`
+  - `test_ws_payload_falls_back_to_legacy_when_w5_missing`
+- [x] `viewer_room_id` and `current_room` compat aliases preserved — not removed.
+- [x] No ADR-0070 created: Phase 6B-10 implements the target state already described in ADR-0069 without a new architectural decision.
+
+**Privacy / truth level preserved:**
+- `w5_player_view` is `None` in the base WS path (RuntimeEngine has no story session access).
+- No raw W5 history emitted; no private NPC inferred Why leaks through this path.
+- `feature_flags` is always populated and carries `W5_AST_FRONTEND_PLAYER_VIEW_ENABLED`.
+
+**Next phase:** Phase 6B-11 — Public alias deprecation policy and client compatibility window.
+
+---
+
+### Phase 6B-11 — Populate production WS w5_player_view + deprecate public aliases (complete, 2026-05-29)
+
+**ADR:** ADR-0069 (covers 6B-9 through 6B-11 public alias migration)
+
+**Goal:** production WebSocket `RuntimeSnapshot` payloads carry a non-null
+`w5_player_view` whenever a valid player-scoped W5 projection exists, while
+`viewer_room_id` and `current_room` remain present as deprecated compatibility aliases.
+
+- [x] `RuntimeManager` attaches to `StoryRuntimeManager` during world-engine app bootstrap.
+- [x] Story-session creation binds `content_provenance.run_id` to
+  `RuntimeInstance.metadata["world_engine_story_session_id"]` / `["runtime_session_id"]`.
+- [x] `RuntimeManager.build_snapshot()` and `broadcast_snapshot()` resolve the bound
+  `StorySession`, build the existing player-shell W5 projection scoped to the connected
+  viewer's `role_id`, and pass it directly to `RuntimeEngine.build_snapshot()`.
+- [x] Direct per-viewer kwargs are the production bridge; `_w5_player_view` run metadata
+  remains a base-engine/test hook only.
+- [x] Compact diagnostics live under `RuntimeSnapshot.metadata.w5_player_view_diagnostics`,
+  including `ws_w5_player_view_source`, `current_room_legacy_value`,
+  `current_room_w5_value`, `current_room_mismatch`, and alias deprecation markers.
+- [x] Missing/malformed W5 falls back to `w5_player_view: null`; public aliases are not removed.
+- [x] How remains first-class; inferred Why remains soft truth; private NPC inferred Why and
+  raw W5 history are not emitted in WS payloads.
+
+**Next phase:** Phase 6B-12 — public alias removal readiness ADR after the client
+compatibility window has produced evidence that WS clients no longer consume
+`viewer_room_id` / `current_room`.
+
+---
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.

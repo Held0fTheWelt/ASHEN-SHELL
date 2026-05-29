@@ -37,6 +37,11 @@ def inventory_module():
     return _load_module()
 
 
+@pytest.fixture(scope="module")
+def inventory_report(inventory_module):
+    return inventory_module.scan(REPO_ROOT)
+
+
 def test_script_exists() -> None:
     assert SCRIPT_PATH.is_file(), f"missing script at {SCRIPT_PATH}"
 
@@ -64,22 +69,20 @@ def test_legacy_surfaces_are_declared(inventory_module) -> None:
     assert not missing, f"inventory script is missing surfaces: {sorted(missing)}"
 
 
-def test_scan_completes_and_finds_substrate_consumers(inventory_module) -> None:
-    report = inventory_module.scan(REPO_ROOT)
-    assert report.files_scanned > 0
-    counts = report.by_surface()
+def test_scan_completes_and_finds_substrate_consumers(inventory_report) -> None:
+    assert inventory_report.files_scanned > 0
+    counts = inventory_report.by_surface()
     # The substrate writer + dataclass + tests guarantee these are present.
     assert counts["current_room_id"] > 0
     assert counts["actor_locations"] > 0
 
 
-def test_no_forbidden_package_references(inventory_module) -> None:
+def test_no_forbidden_package_references(inventory_report) -> None:
     """Phase 6A guarantees: no active import of ``ai_stack/actor_situation``
     or ``ai_stack/w5_actor_situation`` exists."""
-    report = inventory_module.scan(REPO_ROOT)
     forbidden = [
         f
-        for f in report.findings
+        for f in inventory_report.findings
         if f.surface
         in {
             "forbidden_ai_stack_actor_situation",
@@ -101,14 +104,13 @@ def test_no_forbidden_package_references(inventory_module) -> None:
     )
 
 
-def test_stale_worktrees_excluded_from_scan(inventory_module) -> None:
+def test_stale_worktrees_excluded_from_scan(inventory_report) -> None:
     """Phase 6B-6A.5: .worktrees/ and .claude/worktrees/ are auxiliary git
     workspaces, not active source. The scanner must exclude them so stale
     historical symbols in those directories do not trigger forbidden-import or
     old-name violations against the active tree."""
-    report = inventory_module.scan(REPO_ROOT)
     worktree_findings = [
-        f for f in report.findings
+        f for f in inventory_report.findings
         if f.path.startswith(".worktrees/") or f.path.startswith(".claude/worktrees/")
     ]
     assert not worktree_findings, (
@@ -117,13 +119,12 @@ def test_stale_worktrees_excluded_from_scan(inventory_module) -> None:
     )
 
 
-def test_state_tmp_excluded_from_scan(inventory_module) -> None:
+def test_state_tmp_excluded_from_scan(inventory_report) -> None:
     """Phase 6B-6A.5: .state_tmp/ is a scratch/backup workspace, not active
     source. Excluding it prevents stale manager snapshots from triggering
     violations."""
-    report = inventory_module.scan(REPO_ROOT)
     state_tmp_findings = [
-        f for f in report.findings
+        f for f in inventory_report.findings
         if f.path.startswith(".state_tmp/")
     ]
     assert not state_tmp_findings, (
@@ -180,14 +181,13 @@ def test_old_validation_function_is_absent() -> None:
     assert "validate_w5_actor_situation" not in validation_module.__all__
 
 
-def test_no_production_callsite_references_old_validation_name() -> None:
+def test_no_production_callsite_references_old_validation_name(inventory_report) -> None:
     """R1: no production (non-test, non-doc, non-inventory) code references
     the old function name. The historical sentence in
     ``ai_stack/actor_tracking/__init__.py`` does not name the function."""
 
-    report = _load_module().scan(REPO_ROOT)
     findings = [
-        f for f in report.findings if f.surface == "validate_w5_actor_situation_old"
+        f for f in inventory_report.findings if f.surface == "validate_w5_actor_situation_old"
     ]
     allowed_paths = {
         # Inventory + planning surfaces are allowed to reference the old name.
@@ -217,14 +217,13 @@ def test_new_validation_failure_class_string_is_in_use() -> None:
     assert '"w5_actor_situation_validation"' not in src
 
 
-def test_no_production_callsite_references_old_failure_class_string() -> None:
+def test_no_production_callsite_references_old_failure_class_string(inventory_report) -> None:
     """R2: the old failure_class literal must not appear in production code.
     Inventory docs and the script may reference the historical name."""
 
-    report = _load_module().scan(REPO_ROOT)
     findings = [
         f
-        for f in report.findings
+        for f in inventory_report.findings
         if f.surface == "w5_actor_situation_validation_old"
     ]
     allowed_paths = {
@@ -303,19 +302,17 @@ def test_phase_6b9_taxonomy_extended(inventory_module) -> None:
     assert "still_needed_public_client_compatibility" in inventory_module.PHASE_6B4_TAXONOMY
 
 
-def test_scan_finds_viewer_room_id(inventory_module) -> None:
+def test_scan_finds_viewer_room_id(inventory_report) -> None:
     """viewer_room_id appears in both RuntimeSnapshot definitions."""
-    report = inventory_module.scan(REPO_ROOT)
-    counts = report.by_surface()
+    counts = inventory_report.by_surface()
     assert counts.get("viewer_room_id", 0) > 0, (
         "viewer_room_id must appear in scan results (present in RuntimeSnapshot model fields)"
     )
 
 
-def test_scan_finds_w5_player_view(inventory_module) -> None:
+def test_scan_finds_w5_player_view(inventory_report) -> None:
     """w5_player_view appears in the player-shell projection and session state view."""
-    report = inventory_module.scan(REPO_ROOT)
-    counts = report.by_surface()
+    counts = inventory_report.by_surface()
     assert counts.get("w5_player_view", 0) > 0, (
         "w5_player_view must appear in scan results (present in player_shell_state_projection.py "
         "and session_state_w5_view.py)"

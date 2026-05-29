@@ -223,9 +223,11 @@ def test_player_view_flag_enabled_adds_w5_projection_and_derives_location(
     assert diag["w5_player_view_source"] == "w5_projection"
     assert diag["current_room_source"] == "w5_player_view"
     assert diag["current_room_fallback_value"] == "fallback_salon"
+    assert diag["current_room_legacy_value"] == "fallback_salon"
     assert diag["current_room_w5_value"] == "salon_w5"
     assert diag["current_room_mismatch"] is True
     assert diag["w5_player_view_fallback_reason"] is None
+    assert diag["ws_w5_player_view_source"] == "w5_projection"
     assert diag["w5_player_view_has_how"] is True
     assert diag["w5_player_view_has_inferred_why"] is True
     assert state["committed_state"]["w5_player_view"]["where_summary"]["scene_location"]["value"] == "salon_w5"
@@ -253,8 +255,10 @@ def test_player_view_missing_snapshot_falls_back_to_fallback_current_room(
     diag = state["w5_player_view_diagnostics"]
     assert diag["w5_player_view_used"] is False
     assert diag["w5_player_view_fallback_reason"] == "missing_w5_latest_snapshot"
+    assert diag["ws_w5_player_view_source"] == "missing_w5"
     assert diag["current_room_source"] == "fallback_current_room"
     assert diag["current_room_fallback_value"] == "fallback_salon"
+    assert diag["current_room_legacy_value"] == "fallback_salon"
     assert diag["current_room_w5_value"] is None
     assert diag["current_room_mismatch"] is False
 
@@ -269,6 +273,7 @@ def test_player_view_malformed_snapshot_falls_back_to_fallback_current_room(
     diag = state["w5_player_view_diagnostics"]
     assert diag["w5_player_view_used"] is False
     assert diag["w5_player_view_source"] == "fallback"
+    assert diag["ws_w5_player_view_source"] == "malformed_w5"
     assert diag["current_room_source"] == "fallback_current_room"
     assert diag["w5_player_view_fallback_reason"]
     assert diag["current_room_fallback_value"] == "fallback_salon"

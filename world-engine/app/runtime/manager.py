@@ -61,6 +61,7 @@ class RuntimeManager:
         self.engines: dict[str, RuntimeEngine] = {}
         self.connections: dict[str, dict[str, WebSocket]] = defaultdict(dict)
         self.locks: dict[str, asyncio.Lock] = {}
+        self.story_manager: Any | None = None
         self.store: RunStore = build_run_store(
             root=store_root,
             backend=store_backend or RUN_STORE_BACKEND,
@@ -69,6 +70,40 @@ class RuntimeManager:
         self.sync_templates(force=True)
         self._load_persisted_instances()
         self._ensure_public_open_worlds()
+
+    def attach_story_manager(self, story_manager: Any | None) -> None:
+        self.story_manager = story_manager
+
+    def bind_story_session(self, run_id: str, story_session_id: str) -> dict[str, Any]:
+        instance = self.instances[run_id]
+        clean_session_id = str(story_session_id or "").strip()
+        if not clean_session_id:
+            raise ValueError("story_session_id is required")
+        instance.metadata["world_engine_story_session_id"] = clean_session_id
+        instance.metadata["runtime_session_id"] = clean_session_id
+        instance.updated_at = datetime.now(timezone.utc)
+        self.store.save(instance)
+        return {
+            "run_id": run_id,
+            "world_engine_story_session_id": clean_session_id,
+            "runtime_session_id": clean_session_id,
+        }
+
+    def _build_ws_w5_player_view(
+        self,
+        *,
+        instance: RuntimeInstance,
+        viewer: ParticipantState,
+    ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+        from app.story_runtime.manager.actor_tracking.ws_runtime_snapshot_w5_view import (
+            build_ws_runtime_snapshot_w5_player_view,
+        )
+
+        return build_ws_runtime_snapshot_w5_player_view(
+            story_manager=self.story_manager,
+            instance=instance,
+            viewer=viewer,
+        )
 
     def sync_templates(self, *, force: bool = False) -> None:
         if not self.backend_content_sync_enabled or not self.backend_content_feed_url:
@@ -434,9 +469,32 @@ class RuntimeManager:
     def get_instance(self, run_id: str) -> RuntimeInstance:
         return self.instances[run_id]
 
-    def build_snapshot(self, run_id: str, participant_id: str):
+    def build_snapshot(
+        self,
+        run_id: str,
+        participant_id: str,
+        *,
+        w5_player_view: dict[str, Any] | None = None,
+        feature_flags: dict[str, Any] | None = None,
+        w5_player_view_diagnostics: dict[str, Any] | None = None,
+    ):
         instance = self.instances[run_id]
-        return self.engines[run_id].build_snapshot(instance, participant_id)
+        if participant_id not in instance.participants:
+            raise KeyError(participant_id)
+        resolved_w5 = w5_player_view
+        resolved_w5_diagnostics = w5_player_view_diagnostics
+        if resolved_w5 is None and resolved_w5_diagnostics is None:
+            resolved_w5, resolved_w5_diagnostics = self._build_ws_w5_player_view(
+                instance=instance,
+                viewer=instance.participants[participant_id],
+            )
+        return self.engines[run_id].build_snapshot(
+            instance,
+            participant_id,
+            w5_player_view=resolved_w5,
+            feature_flags=feature_flags,
+            w5_player_view_diagnostics=resolved_w5_diagnostics,
+        )
 
     def get_run_details(self, run_id: str) -> dict[str, Any]:
         instance = self.instances[run_id]
@@ -701,7 +759,16 @@ class RuntimeManager:
         for participant_id, websocket in list(self.connections[run_id].items()):
             if participant_id not in instance.participants:
                 continue
-            snapshot = engine.build_snapshot(instance, participant_id)
+            w5_player_view, w5_player_view_diagnostics = self._build_ws_w5_player_view(
+                instance=instance,
+                viewer=instance.participants[participant_id],
+            )
+            snapshot = engine.build_snapshot(
+                instance,
+                participant_id,
+                w5_player_view=w5_player_view,
+                w5_player_view_diagnostics=w5_player_view_diagnostics,
+            )
             try:
                 await websocket.send_json({"type": "snapshot", "data": snapshot.model_dump(mode="json")})
             except Exception:

@@ -147,6 +147,8 @@ class RuntimeSnapshot(BaseModel):
     viewer_role_id: str
     viewer_display_name: str
     current_room: dict[str, Any] | None = None  # compat alias — W5 replacement: w5_player_view.where_summary (ADR-0069)
+    w5_player_view: dict[str, Any] | None = None  # ADR-0069/6B-10: W5 player-view projection; replaces current_room aliases when feature flag enabled
+    feature_flags: dict[str, Any] | None = None  # ADR-0069/6B-10: runtime feature flags for frontend (e.g. W5_AST_FRONTEND_PLAYER_VIEW_ENABLED)
     visible_occupants: list[dict[str, Any]] = Field(default_factory=list)
     rooms: list[dict[str, Any]] = Field(default_factory=list)
     room_occupants: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)

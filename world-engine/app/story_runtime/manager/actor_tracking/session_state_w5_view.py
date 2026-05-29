@@ -78,9 +78,11 @@ def _player_view_diagnostics(
     fallback_location: str | None,
     has_how: bool,
     has_inferred_why: bool,
+    ws_w5_player_view_source: str | None = None,
 ) -> dict[str, Any]:
     mismatch = bool(w5_location and fallback_location and w5_location != fallback_location)
     source = "w5_projection" if used else "fallback"
+    ws_source = ws_w5_player_view_source or ("w5_projection" if used else "legacy_only")
     current_room_source = "w5_player_view" if used else "fallback_current_room"
     diagnostic = {
         "w5_player_view_used": used,
@@ -88,29 +90,58 @@ def _player_view_diagnostics(
         "w5_player_view_fallback_reason": fallback_reason,
         "w5_snapshot_id": snapshot_id,
         "w5_player_view_source": source,
+        "ws_w5_player_view_source": ws_source,
         "w5_player_view_has_how": has_how,
         "w5_player_view_has_inferred_why": has_inferred_why,
         "current_room_source": current_room_source,
         "current_room_fallback_value": fallback_location,
+        "current_room_legacy_value": fallback_location,
         "current_room_w5_value": w5_location,
         "current_room_mismatch": mismatch,
     }
     return diagnostic
 
 
-def _maybe_build_w5_player_view_for_session(session: Any) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+def _fallback_source_for_reason(reason: str | None) -> str:
+    if reason == "frontend_player_view_disabled":
+        return "legacy_only"
+    if reason == "missing_w5_latest_snapshot":
+        return "missing_w5"
+    return "malformed_w5"
+
+
+def build_w5_player_view_for_session(
+    session: Any,
+    *,
+    player_actor_id: str | None = None,
+    fallback_current_room_id: str | None = None,
+    include_disabled_diagnostics: bool = True,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     if not _w5_ast_frontend_player_view_enabled():
-        return None, None
-    player_actor_id = _player_actor_id_from_projection(
+        if not include_disabled_diagnostics:
+            return None, None
+        legacy_location = fallback_current_room_id or _fallback_current_room_id(session)
+        return None, _player_view_diagnostics(
+            used=False,
+            failed=None,
+            fallback_reason="frontend_player_view_disabled",
+            snapshot_id=None,
+            w5_location=None,
+            fallback_location=legacy_location,
+            has_how=False,
+            has_inferred_why=False,
+            ws_w5_player_view_source="legacy_only",
+        )
+    resolved_player_actor_id = player_actor_id or _player_actor_id_from_projection(
         session.runtime_projection if isinstance(session.runtime_projection, dict) else None
     )
-    fallback_current_room_id = _fallback_current_room_id(session)
+    fallback_location = fallback_current_room_id or _fallback_current_room_id(session)
     try:
         if not isinstance(session.w5_latest_snapshot, dict):
             raise ValueError("missing_w5_latest_snapshot")
         projection = build_w5_projection_for_player_shell(
             session.w5_latest_snapshot,
-            player_actor_id=player_actor_id,
+            player_actor_id=resolved_player_actor_id,
         )
         view = projection.to_dict()
         location = _w5_player_view_location(view)
@@ -124,11 +155,12 @@ def _maybe_build_w5_player_view_for_session(session: Any) -> tuple[dict[str, Any
             if isinstance(projection.where_summary, dict)
             else None,
             w5_location=location,
-            fallback_location=fallback_current_room_id,
+            fallback_location=fallback_location,
             has_how=bool(projection.how_summary.get("facts"))
             if isinstance(projection.how_summary, dict)
             else False,
             has_inferred_why=_w5_projection_has_inferred_why(view),
+            ws_w5_player_view_source="w5_projection" if used else _fallback_source_for_reason(failed),
         )
         return view if used else None, diagnostics
     except Exception as exc:
@@ -139,7 +171,15 @@ def _maybe_build_w5_player_view_for_session(session: Any) -> tuple[dict[str, Any
             fallback_reason=reason,
             snapshot_id=None,
             w5_location=None,
-            fallback_location=fallback_current_room_id,
+            fallback_location=fallback_location,
             has_how=False,
             has_inferred_why=False,
+            ws_w5_player_view_source=_fallback_source_for_reason(reason),
         )
+
+
+def _maybe_build_w5_player_view_for_session(session: Any) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    return build_w5_player_view_for_session(
+        session,
+        include_disabled_diagnostics=False,
+    )

@@ -1060,3 +1060,81 @@ not narrator strict-off rollback.
 documentation language that describes retired narrator strict-off intermediate
 states as current behavior, then continue substrate/public payload compatibility
 consolidation under a separate ADR.
+
+---
+
+### Phase 6B-9 — W5 WS compat alias comments + world-engine UI W5-first (Complete, 2026-05-29)
+
+**ADR:** ADR-0069 (Accepted)
+
+Preparatory steps: compat alias comments added to `RuntimeSnapshot.viewer_room_id`
+and `RuntimeSnapshot.current_room`; `world-engine/app/web/static/app.js` `currentRoom()`
+upgraded to W5-first; inventory scanner extended with `viewer_room_id` surface;
+gap-doc test added. No aliases removed.
+
+**WS surface status (post 6B-9):** `viewer_room_id` and `current_room` are compat aliases.
+`w5_player_view` and `feature_flags` are absent from `RuntimeSnapshot` — gap documented.
+
+---
+
+### Phase 6B-10 — Wire w5_player_view into RuntimeSnapshot + WS payloads (Complete, 2026-05-29)
+
+**ADR:** ADR-0069 (Accepted)
+
+`RuntimeSnapshot` in both `backend/app/runtime/models.py` and
+`world-engine/app/runtime/models.py` now carries:
+
+- `w5_player_view: dict[str, Any] | None = None`
+- `feature_flags: dict[str, Any] | None = None`
+
+`RuntimeEngine.build_snapshot()` (both engines) always emits `feature_flags`
+(from env `W5_AST_FRONTEND_PLAYER_VIEW_ENABLED`). `w5_player_view` is `None`
+in the base WS path (RuntimeEngine has no story session access); it is populated
+when a caller passes it explicitly or via `instance.metadata["_w5_player_view"]`.
+
+**Gap closed:** `test_ws_runtime_snapshot_w5_player_view_gap_is_documented` removed.
+4 positive WS payload assertion tests added.
+
+**WS surface status (post 6B-10):**
+
+| Field | Status |
+|-------|--------|
+| `viewer_room_id` | compat alias — **keep** (ADR-0069; removal in 6B-12) |
+| `current_room` | compat alias — **keep** (ADR-0069; removal in 6B-12) |
+| `w5_player_view` | **present** — `None` in base WS path; callers may populate |
+| `feature_flags` | **present** — always emits `W5_AST_FRONTEND_PLAYER_VIEW_ENABLED` |
+
+**Next phase:** 6B-11 — Public alias deprecation policy and client compatibility window.
+Requires: confirmed `w5_player_view` population in production WS sessions, documented
+client upgrade window, separate ADR.
+
+---
+
+### Phase 6B-11 — Production WS w5_player_view population + alias deprecation (Complete, 2026-05-29)
+
+**ADR:** ADR-0069 (Accepted)
+
+`RuntimeManager.build_snapshot()` and `broadcast_snapshot()` now populate
+`RuntimeSnapshot.w5_player_view` from the bound `StorySession.w5_latest_snapshot`
+whenever a valid player-scoped projection exists. The production bridge is
+per-viewer direct kwargs into `RuntimeEngine.build_snapshot()`, not a run-scoped
+`instance.metadata["_w5_player_view"]` cache.
+
+`viewer_room_id`, `current_room`, and HTTP/player-shell `current_room_id` are now
+deprecated public aliases for the compatibility window. They remain present and
+must not be removed before Phase 6B-12 or later records a dedicated removal ADR
+and client migration evidence.
+
+**WS diagnostic status (post 6B-11):**
+
+| Field | Status |
+|-------|--------|
+| `w5_player_view` | present and non-null when valid W5 exists |
+| `feature_flags` | present on every WS RuntimeSnapshot |
+| `metadata.w5_player_view_diagnostics.ws_w5_player_view_source` | `w5_projection`, `missing_w5`, `malformed_w5`, or `legacy_only` |
+| `metadata.w5_player_view_diagnostics.ws_current_room_aliases_deprecated` | true |
+| `viewer_room_id` | deprecated compat alias — keep during migration window |
+| `current_room` | deprecated compat alias — keep during migration window |
+
+**Next phase:** 6B-12 readiness audit for public alias removal. Do not remove
+substrate fields, `actor_locations`, or `complete_actor_locations_for_gathering`.

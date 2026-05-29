@@ -189,37 +189,171 @@ def test_world_engine_static_currentroom_is_w5_first_with_fallback() -> None:
     )
 
 
-def test_ws_runtime_snapshot_w5_player_view_gap_is_documented() -> None:
-    """Phase 6B-9 gap tracker: the WS RuntimeSnapshot does NOT yet carry a
-    w5_player_view field declaration. This test documents the gap explicitly so
-    Phase 6B-10 can remove it once RuntimeEngine.build_snapshot() is wired.
-
-    The compat alias comments on viewer_room_id and current_room reference the
-    string 'w5_player_view' as the replacement surface — that is expected and
-    correct. This test checks for an actual field declaration line, not comments.
-
-    When Phase 6B-10 wires w5_player_view into RuntimeSnapshot, replace this
-    test with one that asserts the field IS present and correctly populated.
+def test_ws_runtime_snapshot_carries_w5_player_view_when_enabled() -> None:
+    """Phase 6B-10: RuntimeSnapshot carries w5_player_view and feature_flags and
+    model_dump (the WS serialization path) exposes them to connected clients.
     """
-    import re
+    from app.content.models import ExperienceKind, JoinPolicy
+    from app.runtime.models import RuntimeSnapshot, RunStatus
 
-    field_pattern = re.compile(r"^\s+w5_player_view\s*:", re.MULTILINE)
+    w5_view = {
+        "target_consumer": "player_shell",
+        "actor_id": "annette",
+        "where_summary": {
+            "current_visible_location": "salon_w5",
+            "scene_location": {"value": "salon_w5"},
+        },
+        "how_summary": {"facts": {"tone": "strained"}},
+        "what_summary": {"facts": {"current_action": "listens"}},
+    }
+    flags = {"W5_AST_FRONTEND_PLAYER_VIEW_ENABLED": True}
 
-    we_models = (
-        Path(__file__).resolve().parents[2]
-        / "world-engine/app/runtime/models.py"
-    ).read_text(encoding="utf-8")
-    snapshot_body = we_models.split("class RuntimeSnapshot")[1].split("\nclass ")[0]
-    assert not field_pattern.search(snapshot_body), (
-        "RuntimeSnapshot (world-engine) now has a w5_player_view field — Phase 6B-10 has landed. "
-        "Replace this test with one that asserts w5_player_view is correctly populated."
+    snap = RuntimeSnapshot(
+        run_id="run-ws-1",
+        template_id="goc",
+        template_title="God of Carnage",
+        kind=ExperienceKind.SOLO_STORY,
+        join_policy=JoinPolicy.OWNER_ONLY,
+        status=RunStatus.RUNNING,
+        beat_id="opening",
+        tension=0,
+        viewer_participant_id="p-1",
+        viewer_room_id="salon_w5",
+        viewer_role_id="annette",
+        viewer_display_name="Annette",
+        available_actions=[],
+        transcript_tail=[],
+        metadata={},
+        w5_player_view=w5_view,
+        feature_flags=flags,
     )
-    be_models = (
-        Path(__file__).resolve().parents[1]
-        / "app/runtime/models.py"
-    ).read_text(encoding="utf-8")
-    snapshot_body_be = be_models.split("class RuntimeSnapshot")[1].split("\nclass ")[0]
-    assert not field_pattern.search(snapshot_body_be), (
-        "RuntimeSnapshot (backend) now has a w5_player_view field — Phase 6B-10 has landed. "
-        "Replace this test with one that asserts w5_player_view is correctly populated."
+    payload = snap.model_dump(mode="json")  # what broadcast_snapshot sends over WS
+    assert payload["w5_player_view"]["target_consumer"] == "player_shell"
+    assert payload["w5_player_view"]["where_summary"]["current_visible_location"] == "salon_w5"
+    assert payload["w5_player_view"]["how_summary"]["facts"]["tone"] == "strained"
+    assert "why_summary" not in payload["w5_player_view"]
+    assert payload["feature_flags"]["W5_AST_FRONTEND_PLAYER_VIEW_ENABLED"] is True
+
+
+def test_ws_runtime_snapshot_preserves_current_room_aliases() -> None:
+    """Phase 6B-10: WS RuntimeSnapshot retains viewer_room_id and current_room
+    as compatibility aliases even when w5_player_view is also present (ADR-0069).
+    """
+    from app.content.models import ExperienceKind, JoinPolicy
+    from app.runtime.models import RuntimeSnapshot, RunStatus
+
+    snap = RuntimeSnapshot(
+        run_id="run-ws-2",
+        template_id="goc",
+        template_title="God of Carnage",
+        kind=ExperienceKind.SOLO_STORY,
+        join_policy=JoinPolicy.OWNER_ONLY,
+        status=RunStatus.RUNNING,
+        beat_id="opening",
+        tension=0,
+        viewer_participant_id="p-1",
+        viewer_room_id="legacy_salon",
+        viewer_role_id="annette",
+        viewer_display_name="Annette",
+        current_room={"id": "legacy_salon", "name": "Salon"},
+        available_actions=[],
+        transcript_tail=[],
+        metadata={},
+        w5_player_view={"target_consumer": "player_shell", "where_summary": {"current_visible_location": "salon_w5"}},
+        feature_flags={"W5_AST_FRONTEND_PLAYER_VIEW_ENABLED": True},
     )
+    payload = snap.model_dump(mode="json")
+    # compat aliases must survive alongside w5_player_view — ADR-0069 phase: no removal
+    assert payload["viewer_room_id"] == "legacy_salon"
+    assert payload["current_room"]["id"] == "legacy_salon"
+    # w5_player_view is also present
+    assert payload["w5_player_view"]["where_summary"]["current_visible_location"] == "salon_w5"
+
+
+def test_ws_payload_current_room_helper_uses_w5_player_view_first() -> None:
+    """Phase 6B-10: when the WS payload carries w5_player_view with a location
+    and feature_flags enables the W5 path, the JS roomFromSnapshot() helper
+    returns the W5 location (not the legacy current_room value).
+    This test verifies the payload carries the necessary keys for the
+    frontend helper to make the right choice without additional logic changes.
+    """
+    from app.content.models import ExperienceKind, JoinPolicy
+    from app.runtime.models import RuntimeSnapshot, RunStatus
+
+    snap = RuntimeSnapshot(
+        run_id="run-ws-3",
+        template_id="goc",
+        template_title="God of Carnage",
+        kind=ExperienceKind.SOLO_STORY,
+        join_policy=JoinPolicy.OWNER_ONLY,
+        status=RunStatus.RUNNING,
+        beat_id="opening",
+        tension=0,
+        viewer_participant_id="p-1",
+        viewer_room_id="fallback_salon",
+        viewer_role_id="annette",
+        viewer_display_name="Annette",
+        current_room={"id": "fallback_salon", "name": "Salon (legacy)"},
+        available_actions=[],
+        transcript_tail=[],
+        metadata={},
+        w5_player_view={
+            "target_consumer": "player_shell",
+            "where_summary": {
+                "current_visible_location": "salon_w5",
+                "scene_location": {"value": "salon_w5"},
+            },
+        },
+        feature_flags={"W5_AST_FRONTEND_PLAYER_VIEW_ENABLED": True},
+    )
+    payload = snap.model_dump(mode="json")
+    # Frontend helper reads: if w5FrontendPlayerViewEnabled(payload) → w5PlayerViewLocation(payload)
+    # Verify payload has all required keys for that branch
+    assert payload["feature_flags"]["W5_AST_FRONTEND_PLAYER_VIEW_ENABLED"] is True
+    w5 = payload["w5_player_view"]
+    assert w5 is not None
+    where = w5.get("where_summary", {})
+    w5_location = (
+        where.get("current_visible_location")
+        or where.get("current_location")
+        or (where.get("scene_location") or {}).get("value")
+    )
+    assert w5_location == "salon_w5", "Frontend helper can extract W5 location from WS payload"
+    # Legacy path still present as fallback — the helper prefers W5 but can fall back
+    assert payload["current_room"]["id"] == "fallback_salon"
+
+
+def test_ws_payload_falls_back_to_legacy_when_w5_missing() -> None:
+    """Phase 6B-10: when w5_player_view is None the WS payload still carries
+    viewer_room_id and current_room so legacy frontend logic continues to work.
+    """
+    from app.content.models import ExperienceKind, JoinPolicy
+    from app.runtime.models import RuntimeSnapshot, RunStatus
+
+    snap = RuntimeSnapshot(
+        run_id="run-ws-4",
+        template_id="goc",
+        template_title="God of Carnage",
+        kind=ExperienceKind.SOLO_STORY,
+        join_policy=JoinPolicy.OWNER_ONLY,
+        status=RunStatus.RUNNING,
+        beat_id="opening",
+        tension=0,
+        viewer_participant_id="p-1",
+        viewer_room_id="fallback_salon",
+        viewer_role_id="annette",
+        viewer_display_name="Annette",
+        current_room={"id": "fallback_salon", "name": "Salon"},
+        available_actions=[],
+        transcript_tail=[],
+        metadata={},
+        w5_player_view=None,
+        feature_flags={"W5_AST_FRONTEND_PLAYER_VIEW_ENABLED": True},
+    )
+    payload = snap.model_dump(mode="json")
+    assert payload["w5_player_view"] is None
+    # legacy aliases still present for frontend fallback path
+    assert payload["viewer_room_id"] == "fallback_salon"
+    assert payload["current_room"]["id"] == "fallback_salon"
+    # feature flag is still advertised even when W5 view is absent
+    assert payload["feature_flags"]["W5_AST_FRONTEND_PLAYER_VIEW_ENABLED"] is True
