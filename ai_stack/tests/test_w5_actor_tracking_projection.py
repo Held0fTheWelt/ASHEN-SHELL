@@ -34,10 +34,12 @@ from ai_stack.actor_tracking import (
     W5Source,
     W5TruthLevel,
     W5VisibilityScope,
+    build_deprecated_public_room_alias_usage,
     build_w5_projection_for_director,
     build_w5_projection_for_narrator,
     build_w5_projection_for_npc,
     build_w5_projection_for_player_shell,
+    w5_player_view_has_location_authority,
 )
 
 
@@ -817,6 +819,41 @@ def test_projection_does_not_leak_raw_ledger() -> None:
         flat = repr(section)
         assert "fact_id" not in flat
         assert "valid_from_turn" not in flat
+
+
+def test_deprecated_public_room_alias_usage_is_compact_and_w5_authoritative() -> None:
+    view = {
+        "target_consumer": "player_shell",
+        "where_summary": {
+            "current_visible_location": "salon_w5",
+            "scene_location": {"value": "salon_w5", "confidence": 1.0},
+        },
+        "how_summary": {"facts": {"tone": "strained"}},
+        "why_summary": {"facts": {"motive": "keep_the_peace"}},
+    }
+
+    usage = build_deprecated_public_room_alias_usage(w5_player_view=view)
+
+    assert usage == {
+        "room_aliases_emitted": True,
+        "w5_player_view_present": True,
+        "w5_player_view_authority": True,
+        "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+        "phase": "6B-13",
+        "removal_blocked_until": "client_readiness_evidence",
+    }
+    assert w5_player_view_has_location_authority(view) is True
+    assert "keep_the_peace" not in repr(usage)
+    assert "w5_history" not in repr(usage)
+
+
+def test_deprecated_public_room_alias_usage_reports_missing_w5_authority() -> None:
+    usage = build_deprecated_public_room_alias_usage(w5_player_view={"where_summary": {}})
+
+    assert usage["room_aliases_emitted"] is True
+    assert usage["w5_player_view_present"] is True
+    assert usage["w5_player_view_authority"] is False
+    assert usage["phase"] == "6B-13"
 
 
 def test_observed_why_remains_forbidden_centralized_policy() -> None:

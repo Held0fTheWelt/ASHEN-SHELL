@@ -349,3 +349,264 @@ def test_phase_6b12_public_alias_classifications(inventory_module) -> None:
         "substrate_keep_future_adr"
         in inventory_module.PHASE_6B4_CLASSIFICATION["complete_actor_locations_for_gathering"]
     )
+
+
+def test_phase_6b13_readiness_report_blocks_alias_removal(inventory_module) -> None:
+    """Phase 6B-13 gate is non-failing but explicitly not removal-ready."""
+
+    report = inventory_module.phase_6b13_readiness_report()
+
+    assert report["phase"] == "6B-13"
+    assert report["public_aliases_still_emitted"] is True
+    assert report["w5_player_view_authority_present"] is True
+    assert report["frontend_helpers_prefer_w5"] is True
+    assert report["legacy_fallback_still_tested"] is True
+    assert report["docs_describe_aliases_as_primary"] is False
+    assert report["removal_ready"] is False
+    assert report["reason"] == "client_readiness_window_active"
+    assert "required_evidence_before_removal_adr" in report
+
+
+def test_phase_6b13_readiness_report_is_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    readiness = payload["phase_6b13_readiness"]
+    assert readiness["public_aliases_still_emitted"] is True
+    assert readiness["w5_player_view_authority_present"] is True
+    assert readiness["removal_ready"] is False
+    assert readiness["reason"] == "client_readiness_window_active"
+
+
+# ---------------------------------------------------------------------------
+# Phase 6C-0 — narrator consequence / sensory location-framing inventory
+# ---------------------------------------------------------------------------
+
+
+def test_phase_6c0_surfaces_are_declared(inventory_module) -> None:
+    keys = {key for key, _ in inventory_module.LEGACY_SURFACES}
+    for key in {
+        "from_area",
+        "to_area",
+        "scene_changed",
+        "narrator_consequence",
+        "sensory_context",
+        "language_adapter",
+        "movement_framing",
+        "transition_framing",
+    }:
+        assert key in keys
+
+
+def test_phase_6c0_taxonomy_labels_are_available(inventory_module) -> None:
+    taxonomy = set(inventory_module.PHASE_6B4_TAXONOMY)
+    for label in {
+        "w5_first_migration_candidate",
+        "substrate_keep_future_adr",
+        "public_compatibility_keep",
+        "test_only_update",
+        "doc_only_update",
+        "unrelated_domain_use",
+        "needs_dedicated_adr",
+        "unknown_needs_runtime_trace",
+    }:
+        assert label in taxonomy
+
+
+def test_phase_6c0_location_framing_inventory_is_complete(inventory_module) -> None:
+    rows = inventory_module.phase_6c0_location_framing_inventory()
+    assert rows
+    required_keys = {
+        "file_path",
+        "line",
+        "symbol",
+        "classification",
+        "surface_kind",
+        "current_role",
+        "legacy_fields",
+        "w5_replacement_surface",
+        "migration_risk",
+        "tests_required",
+    }
+    for row in rows:
+        assert required_keys <= row.keys()
+        assert row["file_path"]
+        assert row["symbol"]
+        assert row["current_role"]
+        assert row["w5_replacement_surface"]
+        assert row["migration_risk"]
+        assert isinstance(row["tests_required"], list)
+        assert row["tests_required"]
+
+    by_symbol = {str(row["symbol"]): row for row in rows}
+    assert by_symbol["_current_context_area"]["classification"] == "w5_first_migration_candidate"
+    assert by_symbol["_base_local_context_transition"]["classification"] == "w5_first_migration_candidate"
+    assert by_symbol["_current_location_id"]["classification"] == "w5_first_migration_candidate"
+    assert by_symbol["_interaction_surface_cached"]["classification"] == "w5_first_migration_candidate"
+    assert (
+        by_symbol["_apply_environment_movement / apply_action_to_environment_state"]["classification"]
+        == "substrate_keep_future_adr"
+    )
+    assert by_symbol["RuntimeSnapshot.viewer_room_id/current_room"]["classification"] == "public_compatibility_keep"
+    assert by_symbol["ShortTermContext.build"]["classification"] == "unrelated_domain_use"
+    assert by_symbol["LocalContextTransition assertions"]["classification"] == "test_only_update"
+    assert by_symbol["ADR-0069"]["classification"] == "doc_only_update"
+
+
+def test_phase_6c0_inventory_mentions_required_runtime_files(inventory_module) -> None:
+    paths = {row["file_path"] for row in inventory_module.phase_6c0_location_framing_inventory()}
+    assert "ai_stack/contracts/narrator_consequence_contracts.py" in paths
+    assert "ai_stack/story_runtime/narrative/sensory_context_engine.py" in paths
+    assert "ai_stack/language_io/language_adapter.py" in paths
+    assert "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py" in paths
+    assert "ai_stack/langgraph/runtime_executor/executor_symbolic_meta_genre_derivation.py" in paths
+    assert "ai_stack/contracts/environment_state_contracts.py" in paths
+
+
+def test_phase_6c0_implementation_plan_defers_runtime_migration(inventory_module) -> None:
+    plan = inventory_module.phase_6c0_implementation_plan()
+    assert plan["phase"] == "6C-0"
+    assert plan["adr"] == "ADR-0070"
+    assert plan["runtime_implementation_in_phase_6c0"] is False
+    assert "LocalContextTransition" in plan["implementation_deferred_reason"]
+    assert plan["proposed_helper_module"] == "ai_stack/actor_tracking/location_framing.py"
+    assert "malformed-W5 safety fallback" in plan["fallback_posture"]
+    assert "public aliases" in plan["fallback_posture"]
+
+
+def test_phase_6c0_inventory_and_plan_are_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    assert payload["phase_6c0_location_framing_inventory"]
+    assert payload["phase_6c0_implementation_plan"]["adr"] == "ADR-0070"
+
+
+def test_phase_6c1_location_framing_report_records_helper_status(inventory_module) -> None:
+    report = inventory_module.phase_6c1_location_framing_report()
+
+    assert report["phase"] == "6C-1"
+    assert report["helper_module"] == "ai_stack/actor_tracking/location_framing.py"
+    assert report["helper_schema_version"] == "w5_location_framing.v1"
+    assert "build_w5_location_framing" in report["helper_functions"]
+    assert "location_framing_to_local_context_transition" in report["helper_functions"]
+    assert report["typed_coercion_required"] is True
+    assert report["raw_w5_history_emitted"] is False
+    assert report["how_first_class"] is True
+    assert report["inferred_why_soft_truth"] is True
+    assert report["legacy_fallback_retained"] is True
+    assert report["public_aliases_removed"] is False
+    assert report["substrate_fields_removed"] is False
+    assert report["default_graph_synthesizes_w5_location_framing"] is False
+
+
+def test_phase_6c1_location_framing_report_is_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    report = payload["phase_6c1_location_framing"]
+    assert report["phase"] == "6C-1"
+    assert report["helper_module"] == "ai_stack/actor_tracking/location_framing.py"
+    assert report["public_aliases_removed"] is False
+    assert report["default_graph_synthesizes_w5_location_framing"] is False
+
+
+def test_phase_6c2_location_framing_report_records_graph_synthesis(inventory_module) -> None:
+    report = inventory_module.phase_6c2_location_framing_report()
+
+    assert report["phase"] == "6C-2"
+    assert report["graph_owned_synthesis"] is True
+    assert report["synthesis_point"] == "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py"
+    assert report["synthesis_symbol"] == "_resolve_player_action SOURCE_LINES"
+    assert report["state_field"] == "w5_location_framing"
+    assert report["typed_coercion_required"] is True
+    assert report["raw_w5_history_emitted"] is False
+    assert report["committed_events_mutated"] is False
+    assert report["legacy_fallback_retained"] is True
+    assert report["current_area_from_area_to_area_removed"] is False
+    assert report["public_aliases_removed"] is False
+    assert report["substrate_fields_removed"] is False
+    assert report["default_authority_switch_complete"] is False
+    assert "w5_location_framing_used" in report["diagnostics"]
+    assert "sensory context same-location resolution matches legacy current_area resolution" in report["parity_evidence"]
+
+
+def test_phase_6c2_location_framing_report_is_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    report = payload["phase_6c2_location_framing"]
+    assert report["phase"] == "6C-2"
+    assert report["graph_owned_synthesis"] is True
+    assert report["synthesis_symbol"] == "_resolve_player_action SOURCE_LINES"
+    assert report["default_authority_switch_complete"] is False
+    assert report["committed_events_mutated"] is False
+
+
+def test_phase_6c3_location_framing_authority_report_records_w5_first_switch(inventory_module) -> None:
+    report = inventory_module.phase_6c3_location_framing_authority_report()
+
+    assert report["phase"] == "6C-3"
+    assert report["w5_first_authority_switch"] is True
+    assert report["authority_surface"] == "ai_stack/actor_tracking/location_framing.py"
+    assert report["legacy_fallback_retained"] is True
+    assert report["current_area_from_area_to_area_removed"] is False
+    assert report["public_aliases_removed"] is False
+    assert report["substrate_fields_removed"] is False
+    assert report["committed_events_mutated"] is False
+    assert "location_framing_authority" in report["diagnostics"]
+    assert "local_context_transition_source" in report["diagnostics"]
+    assert "missing_w5" in report["legacy_fallback_conditions"]
+    assert report["next_phase"] == "6C-4 fresh inventory and targeted cleanup planning only"
+
+
+def test_phase_6c3_location_framing_authority_report_is_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    report = payload["phase_6c3_location_framing_authority"]
+    assert report["phase"] == "6C-3"
+    assert report["w5_first_authority_switch"] is True
+    assert report["legacy_fallback_retained"] is True
+    assert report["current_area_from_area_to_area_removed"] is False
+
+
+def test_phase_6c0_adr_exists_and_records_decision() -> None:
+    adr_path = (
+        REPO_ROOT
+        / "docs"
+        / "ADR"
+        / "adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md"
+    )
+    assert adr_path.is_file()
+    text = adr_path.read_text(encoding="utf-8")
+    for phrase in (
+        "W5 Actor Tracking Replaces Narrator Consequence Location Framing",
+        "How remains first-class",
+        "inferred Why remains soft truth",
+        "public current_room/current_room_id/viewer_room_id aliases",
+        "build_w5_location_framing",
+        "location_changed",
+        "malformed-W5 safety fallback",
+    ):
+        assert phrase in text

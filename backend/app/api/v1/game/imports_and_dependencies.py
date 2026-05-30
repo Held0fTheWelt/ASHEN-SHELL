@@ -30,6 +30,7 @@ from ai_stack.story_runtime.player_narrative_cards import (
     player_shell_typewriter_start_index,
 )
 from ai_stack.contracts.visible_narrative_contract import polish_goc_scene_blocks_for_player_shell
+from ai_stack.actor_tracking import build_deprecated_public_room_alias_usage
 
 from app.api.v1 import api_v1_bp
 from app.auth.permissions import require_jwt_moderator_or_admin

@@ -49,6 +49,8 @@
     return legacyRoom;
   }
 
+  window.__wosLiveWsRoomFromSnapshot = roomFromSnapshot;
+
   function renderLiveSnapshot(root, snapshot) {
     if (!root || !snapshot) return;
     const room = roomFromSnapshot(snapshot);

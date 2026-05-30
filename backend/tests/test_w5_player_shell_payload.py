@@ -83,6 +83,14 @@ def test_shell_state_view_includes_w5_player_view_and_current_room_source_when_e
         "current_room",
         "current_room_id",
     ]
+    assert shell["deprecated_alias_usage"] == {
+        "room_aliases_emitted": True,
+        "w5_player_view_present": True,
+        "w5_player_view_authority": True,
+        "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+        "phase": "6B-13",
+        "removal_blocked_until": "client_readiness_evidence",
+    }
     assert "w5_history" not in shell
 
 
@@ -121,6 +129,10 @@ def test_shell_state_view_falls_back_to_fallback_current_room_when_w5_unused() -
     assert shell["w5_player_view_diagnostics"]["w5_player_view_fallback_reason"] == "missing_w5_latest_snapshot"
     assert shell["current_room_mismatch"] is False
     assert shell["deprecations"]["room_aliases"]["status"] == "deprecated_compatibility_aliases_active"
+    assert shell["deprecated_alias_usage"]["room_aliases_emitted"] is True
+    assert shell["deprecated_alias_usage"]["w5_player_view_present"] is False
+    assert shell["deprecated_alias_usage"]["w5_player_view_authority"] is False
+    assert shell["deprecated_alias_usage"]["phase"] == "6B-13"
 
 
 def test_backend_static_current_room_helper_is_w5_first_with_fallback() -> None:

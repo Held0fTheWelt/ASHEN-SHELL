@@ -1171,3 +1171,190 @@ while W5 is enabled. The W5-success path does not warn.
 
 **Next phase:** 6B-13 alias-usage telemetry and client-readiness gate. Public
 alias removal is still deferred and requires a future ADR.
+
+---
+
+### Phase 6B-13 — Alias usage telemetry + client-readiness gate (Complete, 2026-05-29)
+
+**ADR:** ADR-0069 (Accepted)
+
+Public room aliases remain deprecated compatibility aliases, and their continued
+emission is now observable:
+
+| Surface | Phase 6B-13 status |
+|---------|--------------------|
+| `w5_player_view` | public authority; W5 location authority present in production-like WS payload tests |
+| `viewer_room_id` | deprecated public alias; still emitted |
+| `current_room` | deprecated public alias; still emitted on WS payloads and retained for malformed-W5 fallback |
+| `current_room_id` | deprecated public alias on HTTP/player-shell payload; substrate fields remain out of removal scope |
+
+**Telemetry:** WS payloads emit
+`RuntimeSnapshot.metadata.deprecated_alias_usage`; HTTP/player-shell payloads emit
+`deprecated_alias_usage` when `current_room_id` is emitted. The object contains
+`room_aliases_emitted`, `w5_player_view_present`,
+`w5_player_view_authority`, `aliases`, `phase: "6B-13"`, and
+`removal_blocked_until: "client_readiness_evidence"`. It does not emit raw W5
+history or private facts.
+
+**Readiness gate:** `scripts/inventory_w5_legacy_consumers.py` now reports:
+
+| Field | Value |
+|-------|-------|
+| `public_aliases_still_emitted` | `true` |
+| `w5_player_view_authority_present` | `true` |
+| `frontend_helpers_prefer_w5` | `true` |
+| `legacy_fallback_still_tested` | `true` |
+| `removal_ready` | `false` |
+| `reason` | `client_readiness_window_active` |
+
+**Removal decision:** alias removal remains blocked. Evidence required before a
+future removal ADR: production-like WS payloads continue to show W5 authority,
+supported frontend/WS clients read W5 before aliases, fallback warning/telemetry
+shows no supported-client dependency, and docs describe aliases only as deprecated
+compatibility.
+
+**Next phase:** 6B-14 can prepare the public alias removal ADR only after the
+client-readiness evidence exists; it is not safe to remove aliases yet.
+
+---
+
+### Phase 6C-0 — Narrator consequence / sensory location-framing inventory (Complete, 2026-05-29)
+
+**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+
+Phase 6C-0 inventories internal narrative framing surfaces. It does not remove
+public aliases, substrate fields, malformed-W5 fallback, or committed events.
+
+| Surface | Classification | Runtime role | W5 replacement surface | Risk / required evidence |
+|---------|----------------|--------------|--------------------------|--------------------------|
+| `ai_stack/contracts/narrator_consequence_contracts.py::_current_context_area` | `w5_first_migration_candidate` | Reads `player_local_context.current_location_id/current_area` and `scene_affordances.current_area` as current narrative area | `W5Projection(target_consumer="narrator").where_summary.current_location` or `scene_location.value` | High; prove narrator consequence parity and retained malformed-W5 fallback |
+| `ai_stack/contracts/narrator_consequence_contracts.py::_base_local_context_transition` | `w5_first_migration_candidate` | Emits `from_area`, `to_area`, `from_location_id`, `to_location_id` | `w5_location_framing.v1` derived from narrator `where_summary.previous_location/current_location/location_changed` | High; compatibility fields must remain until downstream tests migrate |
+| `ai_stack/contracts/narrator_consequence_contracts.py::build_narrator_consequence_plan` | `w5_first_migration_candidate` | Chooses area-transition consequence from legacy transition plus authored scene-affordance detail | W5-first transition framing while authored detail remains text source | Medium-high; no committed output change without focused tests |
+| `ai_stack/contracts/narrator_consequence_contracts.py::build_updated_player_local_context` | `w5_first_migration_candidate` | Carries `current_area/current_location_id/previous_area` across turns | W5-derived compatibility local context after helper adoption | High; affects later turns |
+| `ai_stack/story_runtime/narrative/sensory_context_engine.py::_current_location_id` | `w5_first_migration_candidate` | Chooses sensory `location_id` from `to_area/current_area/from_area`, prior truth, scene id, or affordance fallback | W5-first `current_location_id` from location framing | Medium-high; sensory layer selection may change |
+| `ai_stack/story_runtime/narrative/sensory_context_engine.py::_append_location_layers` | `w5_first_migration_candidate` | Emits room ambient and entry sensory layers for selected location | W5 framing source decides movement/entry requiredness; authored palette remains text source | Medium; evidence refs and requiredness need tests |
+| `ai_stack/language_io/language_adapter.py::_interaction_surface_cached` | `w5_first_migration_candidate` | Seeds cached semantic interaction surface `current_area` from authored layout | Runtime overlay should prefer W5 framing without poisoning cached authored content | Medium; cache/runtime separation must be explicit |
+| `ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py::_resolve_player_action` | `w5_first_migration_candidate` | Calls narrator consequence contracts through SOURCE_LINES after action resolution inputs are available | Thread W5 location framing into contract inputs additively | High; graph state updates are committed turn metadata |
+| `ai_stack/langgraph/runtime_executor/executor_symbolic_meta_genre_derivation.py::_derive_sensory_context` | `w5_first_migration_candidate` | Passes `local_context_transition` into sensory derivation | Pass W5 location framing before legacy transition fallback | Medium-high; aspect ledger diagnostics need coverage |
+| `ai_stack/contracts/environment_state_contracts.py::_apply_environment_movement/apply_action_to_environment_state` | `substrate_keep_future_adr` | Writes `current_room_id/current_area/previous_room_id/previous_area` and `actor_locations` | Out of scope; remains W5 extraction substrate | Very high; future substrate ADR only |
+| `backend/app/runtime/models.py::RuntimeSnapshot.viewer_room_id/current_room` | `public_compatibility_keep` | Deprecated public WS aliases | `w5_player_view.where_summary.current_visible_location` | Removal blocked by Phase 6B-13 client-readiness gate |
+| `backend/app/api/v1/game/player_shell_state_projection.py::build_player_shell_state_view` | `public_compatibility_keep` | Deprecated HTTP/player-shell `current_room_id` alias and telemetry | `w5_player_view.where_summary.current_visible_location` | Removal blocked by ADR-0069 |
+| `world-engine/app/story_runtime/manager/dramatic_context_authority.py::_phase1_canonical_context_for_session` | `needs_dedicated_adr` | Reads `environment_state.current_room_id` for Director-Pause canonical context | Future Director/canonical-path W5 projection decision | High; not part of narrator/sensory migration |
+| `backend/app/runtime/narrative/short_term_context.py::ShortTermContext.build` | `unrelated_domain_use` | Backend session-history `scene_changed` flag | None for Phase 6C-0 | Low; not narrator consequence location framing |
+| `ai_stack/tests/test_narrator_consequence_contract.py` | `test_only_update` | Locks current `from_area/to_area/current_area` expectations | Update with W5 helper and compatibility assertions in implementation phase | Required before runtime migration |
+| ADR/docs references | `doc_only_update` | Describe prior/public alias migration | Reference ADR-0070 for internal narrator/sensory framing | Keep docs aligned |
+
+**Implementation plan summary:**
+
+- Add `ai_stack/actor_tracking/location_framing.py`.
+- Derive `current_location_id`, `previous_location_id`, `from_location_id`,
+  `to_location_id`, and `location_changed` from narrator W5 `where_summary`.
+- Preserve compatibility `from_area/to_area` outputs during the migration window.
+- Keep malformed-W5 safety fallback to legacy transition fields.
+- Keep public aliases and substrate writers untouched.
+- Keep How first-class and inferred Why soft truth through helper output and
+  tests.
+
+**Runtime implementation in 6C-0:** deferred. The affected code crosses committed
+consequence metadata, sensory-context targets, carried player local context, and
+LangGraph SOURCE_LINES. Phase 6C-1 should implement the helper first, then migrate
+contract callsites with parity fixtures.
+
+---
+
+### Phase 6C-1 — W5 location-framing helper added (Complete, 2026-05-30)
+
+**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+
+Phase 6C-1 adds the helper and optional additive input points. It does not remove
+legacy fields and does not make the default graph synthesize
+`w5_location_framing` yet.
+
+| Surface | Phase 6C-1 status | Notes |
+|---------|-------------------|-------|
+| `ai_stack/actor_tracking/location_framing.py` | `implemented_w5_first_helper` | `build_w5_location_framing()` coerces `W5Projection` / `W5Snapshot` / persisted dicts through typed W5 models and emits compact framing only |
+| `location_framing_to_local_context_transition()` | `implemented_compat_adapter` | Produces `from_area`, `to_area`, `current_area`, `location_changed`, and `scene_changed` compatibility fields from W5 framing |
+| `ai_stack/contracts/narrator_consequence_contracts.py` | `additive_input_ready` | Optional `w5_location_framing` can annotate transition/consequence diagnostics; callers without the field keep legacy behavior |
+| `ai_stack/story_runtime/narrative/sensory_context_engine.py` | `additive_input_ready` | Optional `w5_location_framing` is preferred for sensory `location_id` and emits compact diagnostics when provided |
+| LangGraph runtime executor SOURCE_LINES | `additive_passthrough_ready` | Pass through `state["w5_location_framing"]` only when already present; no default synthesis yet |
+| `ai_stack/language_io/language_adapter.py` | `deferred_to_6c2_or_later` | Cached authored `current_area` remains content fallback; runtime overlay must avoid poisoning module cache |
+| Public room aliases | `public_compatibility_keep` | Still governed by ADR-0069 and Phase 6B-13 client-readiness gate |
+| `environment_state` / `actor_locations` / `complete_actor_locations_for_gathering` | `substrate_keep_future_adr` | Not touched by Phase 6C-1 |
+
+**Helper output shape:** `w5_location_framing.v1` contains
+`current_location`, `previous_location`, `scene_location`,
+`location_changed`, `scene_changed`, compatibility `from_location/from_area`,
+`to_location/to_area`, `current_area`, `source`, `fallback_reason`,
+`source_attribution`, `truth_attribution`, `how_summary`, `why_summary`,
+`has_how`, `has_inferred_why`, and `warnings`.
+
+**Fallback behavior:** missing or malformed W5 returns `source:
+"legacy_fallback"` when fallback locations are supplied, otherwise
+`source: "missing_w5"` or `source: "malformed_w5"`. Fallbacks are diagnostics,
+not crashes.
+
+**Next removal decision:** no removal is authorized. Phase 6C-2 must prove graph
+construction of `w5_location_framing` and narrator consequence parity before any
+default-source switch. Public alias removal remains separately blocked by the
+ADR-0069 readiness gate.
+
+---
+
+### Phase 6C-2 — Graph-owned W5 location-framing synthesis (Complete, 2026-05-30)
+
+**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+
+Phase 6C-2 makes W5 location framing available by default inside the graph while
+preserving legacy fallback and output parity. It does not remove
+`current_area/from_area/to_area`, public room aliases, substrate fields,
+`actor_locations`, `complete_actor_locations_for_gathering`, or malformed-W5
+safety fallback.
+
+| Surface | Phase 6C-2 status | Notes |
+|---------|-------------------|-------|
+| `ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py::_resolve_player_action` | `graph_owned_synthesis` | Synthesizes `state["w5_location_framing"]` from `w5_latest_snapshot` through `build_w5_location_framing()` when no caller-provided framing exists |
+| `state["w5_location_framing"]` | `additive_graph_state` | Emits `w5_location_framing.v1` with source, current/previous/scene location, `location_changed`, compatibility `current_area/from_area/to_area`, attribution, How/Why summaries, and fallback reason |
+| `graph_diagnostics.w5_location_framing` | `compact_diagnostics` | Records source, fallback reason, `w5_location_changed`, `w5_current_location`, and `w5_previous_location`; no raw W5 history is emitted |
+| `ai_stack/contracts/narrator_consequence_contracts.py` | `parity_proven_additive_input` | Receives synthesized framing and retains legacy transition fallback; compatibility fields remain present |
+| `ai_stack/story_runtime/narrative/sensory_context_engine.py` | `parity_proven_additive_input` | Receives synthesized framing when present and retains legacy `current_area/current_room` fallback when W5 is missing |
+| `ai_stack/language_io/language_adapter.py` | `deferred_to_6c3_or_later` | Runtime overlay remains pending; cached authored `current_area` must not be overwritten by live W5 state |
+
+**Parity evidence:** focused tests prove W5 and legacy agree for current
+location, previous/current movement framing, `location_changed` /
+`scene_changed`, same-location sensory resolution, missing/malformed W5
+fallback, How as first-class state, and inferred Why as soft truth. Runtime tests
+also call `_resolve_player_action` directly to prove graph-owned synthesis and
+missing-W5 fallback execute, rather than merely checking field presence.
+
+**Next removal decision:** no removal is authorized. Phase 6C-3 may begin the
+W5-first authority switch for narrator consequence and sensory-context location
+decisions behind broader live-turn parity fixtures. Public alias removal remains
+blocked by ADR-0069.
+
+---
+
+### Phase 6C-3 — W5-first narrator/sensory location authority switch (Complete, 2026-05-30)
+
+**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+
+Phase 6C-3 changes authority order only: valid W5 location framing is now the
+primary source for narrator-consequence and sensory-context location decisions.
+It does not remove legacy fields or public aliases.
+
+| Surface | Phase 6C-3 status | Notes |
+|---------|-------------------|-------|
+| `ai_stack/actor_tracking/location_framing.py` | `w5_first_authority` | Defines valid W5 as `source == "w5_projection"` with a present current/scene/to location; legacy wins for missing, malformed, incomplete, or explicitly unsuitable W5 |
+| `location_framing_to_local_context_transition()` | `authority_switch_complete` | Emits compatibility `current_area/from_area/to_area` from W5 when valid; preserves legacy movement target when pre-commit W5 reports no location change |
+| `ai_stack/contracts/narrator_consequence_contracts.py` | `w5_first_authority` | `build_local_context_transition()` prefers valid W5 framing and reports `location_framing_authority` / `local_context_transition_source` diagnostics |
+| `ai_stack/story_runtime/narrative/sensory_context_engine.py` | `w5_first_authority` | Sensory `location_id` resolves from valid W5 first, with legacy transition/current-area fallback retained |
+| `ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py::_resolve_player_action` | `diagnostics_extended` | Graph diagnostics preserve W5 source/fallback fields and add authority/source labels from the resulting local transition |
+| Public room aliases | `public_compatibility_keep` | Still governed by ADR-0069; no alias removal |
+| `environment_state` / `actor_locations` / `complete_actor_locations_for_gathering` | `substrate_keep_future_adr` | Not touched by Phase 6C-3 |
+
+**Fallback conditions:** `missing_w5`, `malformed_w5`, incomplete W5 location,
+old payloads without `w5_location_framing`, and pre-commit W5 that reports
+`location_changed=false` while the current action has a fresh legacy movement
+target.
+
+**Next removal decision:** no removal is authorized. Phase 6C-4 should be a fresh
+inventory and targeted cleanup plan, not a deletion pass.

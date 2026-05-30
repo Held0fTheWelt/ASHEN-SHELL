@@ -218,6 +218,15 @@ def test_ws_runtime_snapshot_populates_w5_player_view_from_bound_story_session(
     assert deprecation["status"] == "deprecated_compatibility_aliases_active"
     assert deprecation["replacement"] == "w5_player_view"
     assert deprecation["aliases"] == ["viewer_room_id", "current_room", "current_room_id"]
+    usage = payload["metadata"]["deprecated_alias_usage"]
+    assert usage == {
+        "room_aliases_emitted": True,
+        "w5_player_view_present": True,
+        "w5_player_view_authority": True,
+        "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+        "phase": "6B-13",
+        "removal_blocked_until": "client_readiness_evidence",
+    }
 
 
 def test_ws_runtime_snapshot_falls_back_when_w5_snapshot_missing(
@@ -240,6 +249,11 @@ def test_ws_runtime_snapshot_falls_back_when_w5_snapshot_missing(
     assert diagnostics["ws_w5_player_view_source"] == "missing_w5"
     assert diagnostics["w5_player_view_fallback_reason"] == "missing_w5_latest_snapshot"
     assert diagnostics["current_room_source"] == "fallback_current_room"
+    usage = payload["metadata"]["deprecated_alias_usage"]
+    assert usage["room_aliases_emitted"] is True
+    assert usage["w5_player_view_present"] is False
+    assert usage["w5_player_view_authority"] is False
+    assert usage["phase"] == "6B-13"
 
 
 def test_ws_runtime_snapshot_falls_back_when_w5_snapshot_malformed(
@@ -259,6 +273,10 @@ def test_ws_runtime_snapshot_falls_back_when_w5_snapshot_malformed(
     assert diagnostics["w5_player_view_used"] is False
     assert diagnostics["ws_w5_player_view_source"] == "malformed_w5"
     assert diagnostics["current_room_legacy_value"] == "hallway"
+    usage = payload["metadata"]["deprecated_alias_usage"]
+    assert usage["room_aliases_emitted"] is True
+    assert usage["w5_player_view_present"] is False
+    assert usage["w5_player_view_authority"] is False
 
 
 def test_ws_runtime_snapshot_can_resolve_story_session_by_run_provenance_without_metadata_binding(

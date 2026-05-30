@@ -45,6 +45,17 @@ from ai_stack.actor_tracking.projection import (
     build_w5_projection_for_npc,
     build_w5_projection_for_player_shell,
 )
+from ai_stack.actor_tracking.public_alias_telemetry import (
+    PUBLIC_ROOM_ALIASES,
+    build_deprecated_public_room_alias_usage,
+    w5_player_view_has_location_authority,
+)
+from ai_stack.actor_tracking.location_framing import (
+    W5_LOCATION_FRAMING_SCHEMA_VERSION,
+    build_w5_location_framing,
+    location_framing_is_valid_w5,
+    location_framing_to_local_context_transition,
+)
 from ai_stack.actor_tracking.validation import (
     W5_VALIDATION_SCHEMA_VERSION,
     validate_w5_actor_tracking,
@@ -74,6 +85,7 @@ __all__ = [
     "W5_ADMIN_DIAGNOSTIC_SCHEMA_VERSION",
     "W5_RUNTIME_METADATA_SCHEMA_VERSION",
     "W5_VALIDATION_SCHEMA_VERSION",
+    "W5_LOCATION_FRAMING_SCHEMA_VERSION",
     "W5ActionState",
     "W5ActorSituation",
     "W5ActorType",
@@ -90,6 +102,9 @@ __all__ = [
     "W5TruthLevel",
     "W5ValidationFailureCode",
     "W5VisibilityScope",
+    "PUBLIC_ROOM_ALIASES",
+    "build_deprecated_public_room_alias_usage",
+    "build_w5_location_framing",
     "build_w5_projection_for_director",
     "build_w5_projection_for_narrator",
     "build_w5_projection_for_npc",
@@ -105,8 +120,11 @@ __all__ = [
     "build_w5_runtime_metadata",
     "coerce_w5_snapshot",
     "extract_w5_snapshot_from_committed_event",
+    "location_framing_is_valid_w5",
+    "location_framing_to_local_context_transition",
     "validate_w5_actor_tracking",
     "w5_ast_validation_enabled",
+    "w5_player_view_has_location_authority",
     "w5_projection_flag_states",
     "w5_validation_fallback",
     "why_truth_level_is_admitted",

@@ -218,6 +218,8 @@ class RuntimeTurnState(TypedDict, total=False):
     primary_attempt_evidence: dict[str, Any]
     # PLAYER-LOCAL-CONTEXT-AND-NARRATOR-CONSEQUENCE-01: spatial context after committed action.
     player_local_context: dict[str, Any]
+    # ADR-0070 Phase 6C: compact W5-first location framing synthesized by the graph.
+    w5_location_framing: dict[str, Any]
     local_context_transition: dict[str, Any]
     narrator_consequence_plan: dict[str, Any]
     narrator_consequence_realization: dict[str, Any]

@@ -12,8 +12,9 @@ Usage:
 
 The script is intentionally minimal: it greps the working tree for known
 substrings, deduplicates by ``(path, line_number)``, and groups by surface.
-It deliberately does not classify findings — classification belongs in the
-inventory doc, which is the authoritative artifact.
+Phase-specific planning helpers may add curated, non-failing readiness or
+inventory sections. The inventory doc remains the authoritative classification
+artifact.
 
 Excluded directories: ``.git``, ``__pycache__``, ``node_modules``,
 ``'fy'-suites/delagecy``, ``'fy'-suites/docify``, and every ``audit_*.json``
@@ -46,6 +47,17 @@ LEGACY_SURFACES: list[tuple[str, str]] = [
     ("derived_gathering_room_id", r"derived_gathering_room_id"),
     ("transition_from_previous", r"\btransition_from_previous\b"),
     ("location_changed", r"\blocation_changed\b"),
+    # Phase 6C-0 — narrator consequence / sensory-engine location framing
+    # surfaces. These are planning/inventory signals only; Phase 6C-0 does not
+    # migrate runtime behavior.
+    ("from_area", r"\bfrom_area\b"),
+    ("to_area", r"\bto_area\b"),
+    ("scene_changed", r"\bscene_changed\b"),
+    ("narrator_consequence", r"\bnarrator_consequence\b"),
+    ("sensory_context", r"\bsensory_context\b"),
+    ("language_adapter", r"\blanguage_adapter\b"),
+    ("movement_framing", r"\bmovement[_ -]framing\b"),
+    ("transition_framing", r"\btransition[_ -]framing\b"),
     ("forbidden_ai_stack_actor_situation", r"ai_stack[\\/]actor_situation\b"),
     ("forbidden_ai_stack_w5_actor_situation", r"ai_stack[\\/]w5_actor_situation\b"),
     ("w5_actor_situation_term", r"w5_actor_situation"),
@@ -98,6 +110,14 @@ PHASE_6B2_CLASSIFICATION: dict[str, str] = {
     "derived_gathering_room_id": "S — Director alias (also produced by F5)",
     "transition_from_previous": "removed_by_adr_0068 (Phase 6B-8) — strict-off rollback path removed; transition_from_previous no longer emitted by narrator source_facts; any remaining hits are doc/test/historical references only",
     "location_changed": "S — W5 where_summary location-shift signal; not a narrator strict-off rollback surface",
+    "from_area": "w5_first_migration_candidate — narrator consequence LocalContextTransition legacy movement-framing field",
+    "to_area": "w5_first_migration_candidate — narrator consequence LocalContextTransition legacy movement-framing field",
+    "scene_changed": "unrelated_domain_use / backend session-history signal unless tied to narrator location framing",
+    "narrator_consequence": "w5_first_migration_candidate — C7 consequence movement/location framing needs W5-first replacement",
+    "sensory_context": "w5_first_migration_candidate — C8 sensory location selection should consume W5 location framing",
+    "language_adapter": "w5_first_migration_candidate / doc_only_update depending on callsite — current_area seed remains a legacy framing source",
+    "movement_framing": "doc_only_update / planning term",
+    "transition_framing": "doc_only_update / planning term",
     "forbidden_ai_stack_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
     "forbidden_ai_stack_w5_actor_situation": "FORBIDDEN — must be zero outside inventory docs/scripts",
     "w5_actor_situation_term": "D/historical — only inventory/audit artifacts may mention this term",
@@ -205,6 +225,44 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "admin diagnostics read W5 history and do not consult "
         "transition_from_previous"
     ),
+    # Phase 6C-0 narrator consequence / sensory-engine location-framing surfaces.
+    "from_area": (
+        "w5_first_migration_candidate — LocalContextTransition legacy field; "
+        "future replacement is W5 narrator projection where_summary previous/"
+        "current location framing, with compatibility output staged separately"
+    ),
+    "to_area": (
+        "w5_first_migration_candidate — LocalContextTransition legacy field; "
+        "future replacement is W5 narrator projection where_summary current "
+        "location / location_changed framing"
+    ),
+    "scene_changed": (
+        "unrelated_domain_use unless tied to language-adapter or narrator "
+        "movement framing; backend session-history/presenter uses remain out "
+        "of Phase 6C-0 runtime migration"
+    ),
+    "narrator_consequence": (
+        "w5_first_migration_candidate — consequence movement/location framing "
+        "currently consumes current_area/from_area/to_area-compatible state"
+    ),
+    "sensory_context": (
+        "w5_first_migration_candidate — sensory_context_engine currently "
+        "derives room layers from LocalContextTransition and scene_affordances "
+        "before W5 location framing"
+    ),
+    "language_adapter": (
+        "w5_first_migration_candidate — interaction surface seeds current_area "
+        "from authored content; future runtime overlay should prefer W5 "
+        "location framing while preserving authored fallback"
+    ),
+    "movement_framing": (
+        "doc_only_update / planning term — use for Phase 6C-0 inventory "
+        "and ADR prose, not an active runtime symbol"
+    ),
+    "transition_framing": (
+        "doc_only_update / planning term — use for Phase 6C-0 inventory "
+        "and ADR prose, not an active runtime symbol"
+    ),
     "forbidden_ai_stack_actor_situation": (
         "FORBIDDEN — must be zero outside inventory docs/scripts/tests"
     ),
@@ -297,7 +355,572 @@ PHASE_6B4_TAXONOMY: tuple[str, ...] = (
     # Phase 6B-12 additions
     "deprecated_public_client_alias_keep",
     "public_authority",
+    # Phase 6C-0 additions
+    "w5_first_migration_candidate",
+    "public_compatibility_keep",
+    "unrelated_domain_use",
+    "needs_dedicated_adr",
 )
+
+
+PHASE_6B13_READINESS_REPORT: dict[str, object] = {
+    "phase": "6B-13",
+    "public_aliases_still_emitted": True,
+    "w5_player_view_authority_present": True,
+    "frontend_helpers_prefer_w5": True,
+    "legacy_fallback_still_tested": True,
+    "internal_alias_authority_consumers": "not_proven_zero_static_inventory_required",
+    "docs_describe_aliases_as_primary": False,
+    "removal_ready": False,
+    "reason": "client_readiness_window_active",
+    "required_evidence_before_removal_adr": [
+        "production_like_ws_payloads_include_w5_player_view",
+        "frontend_and_supported_clients_read_w5_before_aliases",
+        "alias_fallback_warning_or_telemetry_window_shows_no_supported_client_dependency",
+        "docs_describe_aliases_only_as_deprecated_compatibility",
+    ],
+}
+
+
+def phase_6b13_readiness_report() -> dict[str, object]:
+    """Return the non-failing public room alias readiness gate result."""
+
+    required_evidence = PHASE_6B13_READINESS_REPORT["required_evidence_before_removal_adr"]
+    return {
+        **PHASE_6B13_READINESS_REPORT,
+        "required_evidence_before_removal_adr": list(required_evidence)
+        if isinstance(required_evidence, list)
+        else [],
+    }
+
+
+PHASE_6C0_LOCATION_FRAMING_INVENTORY: tuple[dict[str, object], ...] = (
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "line": 106,
+        "symbol": "_current_context_area",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Selects the current narrative area from player_local_context.current_location_id, "
+            "player_local_context.current_area, or scene_affordances.current_area."
+        ),
+        "legacy_fields": ["current_area", "current_location_id"],
+        "w5_replacement_surface": (
+            "W5Projection(target_consumer='narrator').where_summary.current_location "
+            "or scene_location.value, with legacy local context only as fallback."
+        ),
+        "migration_risk": (
+            "High: feeds LocalContextTransition and can alter committed narrator "
+            "consequence metadata."
+        ),
+        "tests_required": [
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+            "ai_stack/tests/test_w5_actor_tracking_projection.py",
+            "world-engine/tests/test_story_runtime_w5_narrator_projection.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "line": 123,
+        "symbol": "_base_local_context_transition",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": "Emits from_area/to_area and from_location_id/to_location_id transition fields.",
+        "legacy_fields": ["from_area", "to_area", "current_area"],
+        "w5_replacement_surface": (
+            "A W5 location-framing helper derived from narrator where_summary "
+            "previous_location/current_location/location_changed."
+        ),
+        "migration_risk": (
+            "High: these keys are consumed by narrator_consequence_plan, sensory_context, "
+            "player_local_context, tests, and debug surfaces."
+        ),
+        "tests_required": [
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+            "ai_stack/tests/test_sensory_context_engine.py",
+            "ai_stack/tests/test_langgraph_runtime.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "line": 231,
+        "symbol": "build_narrator_consequence_plan",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Builds consequence_type and area-transition text from LocalContextTransition "
+            "plus authored scene-affordance detail."
+        ),
+        "legacy_fields": ["to_area", "transition_type"],
+        "w5_replacement_surface": (
+            "W5-first location framing for movement/transition selection, while authored "
+            "scene affordance detail remains the text source."
+        ),
+        "migration_risk": (
+            "Medium-high: should not change authored detail selection except where W5 "
+            "proves a different committed location authority."
+        ),
+        "tests_required": [
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+            "ai_stack/tests/test_pr_b_narrator_consequence_realization_contract.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "line": 308,
+        "symbol": "build_updated_player_local_context",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Persists current_area/current_location_id/previous_area after a committed "
+            "local context transition."
+        ),
+        "legacy_fields": ["current_area", "current_location_id", "previous_area"],
+        "w5_replacement_surface": (
+            "W5 location framing writes only compatibility local-context aliases after "
+            "the W5-derived authority is accepted by tests."
+        ),
+        "migration_risk": (
+            "High: touches carried player_local_context state and therefore later turns."
+        ),
+        "tests_required": [
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+            "tests/test_pr_b_live_effect_propagation.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+        "line": 136,
+        "symbol": "_current_location_id",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Selects sensory room location from LocalContextTransition to_area/current_area/"
+            "from_area, then prior sensory state, current scene id, then scene_affordances.current_area."
+        ),
+        "legacy_fields": ["to_area", "current_area", "from_area"],
+        "w5_replacement_surface": (
+            "W5-first location framing current_location_id with legacy transition and "
+            "scene-affordance fallbacks retained for malformed-W5 safety."
+        ),
+        "migration_risk": (
+            "Medium-high: changes selected sensory room layers and validation evidence."
+        ),
+        "tests_required": [
+            "ai_stack/tests/test_sensory_context_engine.py",
+            "tests/gates/test_goc_mvp04_observability_diagnostics_gate.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+        "line": 322,
+        "symbol": "_append_location_layers",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": "Builds room ambient and location-entry sensory layers for the selected location_id.",
+        "legacy_fields": ["local_context_transition"],
+        "w5_replacement_surface": (
+            "W5 location framing source attribution should decide whether entry layers "
+            "are movement-required; authored palette/detail remains the sensory text source."
+        ),
+        "migration_risk": "Medium: layer requiredness and evidence refs may change.",
+        "tests_required": [
+            "ai_stack/tests/test_sensory_context_engine.py",
+            "ai_stack/tests/test_runtime_aspect_ledger.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/language_io/language_adapter.py",
+        "line": 320,
+        "symbol": "_interaction_surface_cached",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Seeds semantic interaction surface current_area from authored layout "
+            "narrative_anchor_area_id/live_play_default_location_id."
+        ),
+        "legacy_fields": ["current_area"],
+        "w5_replacement_surface": (
+            "Runtime overlay should prefer W5 narrator/player location framing while "
+            "the cached authored surface remains content fallback."
+        ),
+        "migration_risk": (
+            "Medium: adapter cache is content-derived; runtime W5 data must not poison "
+            "module-level cached surfaces."
+        ),
+        "tests_required": [
+            "ai_stack/tests/test_free_player_action_resolution_contract.py",
+            "tests/smoke/test_template_module_structure_smoke.py",
+            "tests/smoke/test_goc_module_structure_smoke.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py",
+        "line": 153,
+        "symbol": "_resolve_player_action SOURCE_LINES",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": (
+            "LangGraph commit node calls build_local_context_transition and "
+            "build_narrator_consequence_plan with legacy scene affordance/local context inputs."
+        ),
+        "legacy_fields": ["local_context_transition", "current_area", "from_area", "to_area"],
+        "w5_replacement_surface": (
+            "Thread a W5 location-framing object into narrator consequence contracts "
+            "after W5 projection is available in RuntimeTurnState."
+        ),
+        "migration_risk": (
+            "High: graph state updates become committed turn metadata and must remain additive first."
+        ),
+        "tests_required": [
+            "ai_stack/tests/test_langgraph_runtime.py",
+            "tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/langgraph/runtime_executor/executor_symbolic_meta_genre_derivation.py",
+        "line": 152,
+        "symbol": "_derive_sensory_context SOURCE_LINES",
+        "classification": "w5_first_migration_candidate",
+        "surface_kind": "runtime",
+        "current_role": "Passes action_actual.local_context_transition into derive_sensory_context.",
+        "legacy_fields": ["local_context_transition"],
+        "w5_replacement_surface": (
+            "Pass W5 location framing to derive_sensory_context before falling back "
+            "to LocalContextTransition."
+        ),
+        "migration_risk": "Medium-high: affects sensory context target and aspect ledger diagnostics.",
+        "tests_required": [
+            "ai_stack/tests/test_sensory_context_engine.py",
+            "ai_stack/tests/test_runtime_aspect_ledger.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/environment_state_contracts.py",
+        "line": 414,
+        "symbol": "_apply_environment_movement / apply_action_to_environment_state",
+        "classification": "substrate_keep_future_adr",
+        "surface_kind": "substrate",
+        "current_role": (
+            "Writes current_room_id/current_area/previous_room_id/previous_area and "
+            "actor_locations after committed movement."
+        ),
+        "legacy_fields": ["current_room_id", "current_area", "previous_room_id", "previous_area", "actor_locations"],
+        "w5_replacement_surface": (
+            "Out of scope for Phase 6C-0; remains substrate input for W5 extraction "
+            "until a future substrate ADR."
+        ),
+        "migration_risk": "Very high: substrate writer, committed events, and W5 extractor input.",
+        "tests_required": [
+            "ai_stack/tests/test_w5_actor_tracking_validation.py",
+            "backend/tests/runtime/test_runtime_core.py",
+        ],
+    },
+    {
+        "file_path": "backend/app/runtime/models.py",
+        "line": 146,
+        "symbol": "RuntimeSnapshot.viewer_room_id/current_room",
+        "classification": "public_compatibility_keep",
+        "surface_kind": "public_api",
+        "current_role": "Deprecated public WS room aliases preserved by ADR-0069.",
+        "legacy_fields": ["viewer_room_id", "current_room"],
+        "w5_replacement_surface": "w5_player_view.where_summary.current_visible_location / where_summary",
+        "migration_risk": "Public compatibility risk; removal remains blocked by 6B-13 readiness gate.",
+        "tests_required": [
+            "world-engine/tests/test_story_runtime_w5_ws_snapshot_population.py",
+            "backend/tests/test_w5_player_shell_payload.py",
+        ],
+    },
+    {
+        "file_path": "backend/app/api/v1/game/player_shell_state_projection.py",
+        "line": 66,
+        "symbol": "build_player_shell_state_view",
+        "classification": "public_compatibility_keep",
+        "surface_kind": "public_api",
+        "current_role": "Emits deprecated HTTP/player-shell current_room_id alias and alias telemetry.",
+        "legacy_fields": ["current_room_id"],
+        "w5_replacement_surface": "w5_player_view.where_summary.current_visible_location",
+        "migration_risk": "Public compatibility risk; do not remove in narrator/sensory migration.",
+        "tests_required": ["backend/tests/test_w5_player_shell_payload.py"],
+    },
+    {
+        "file_path": "world-engine/app/story_runtime/manager/dramatic_context_authority.py",
+        "line": 213,
+        "symbol": "_phase1_canonical_context_for_session",
+        "classification": "needs_dedicated_adr",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Uses session.environment_state.current_room_id as live scene input for "
+            "Director-Pause canonical context."
+        ),
+        "legacy_fields": ["current_room_id"],
+        "w5_replacement_surface": (
+            "Future Director/canonical-path ADR should decide whether W5 director "
+            "projection replaces this substrate read."
+        ),
+        "migration_risk": "High: Director-Pause and canonical-path readiness semantics.",
+        "tests_required": ["world-engine/tests/test_runtime_manager.py"],
+    },
+    {
+        "file_path": "backend/app/runtime/narrative/short_term_context.py",
+        "line": 152,
+        "symbol": "ShortTermContext.build",
+        "classification": "unrelated_domain_use",
+        "surface_kind": "runtime",
+        "current_role": "Computes backend session-history scene_changed from prior and updated scene ids.",
+        "legacy_fields": ["scene_changed"],
+        "w5_replacement_surface": "None for Phase 6C-0; not narrator consequence/sensory location framing.",
+        "migration_risk": "Low for this phase; do not fold into W5 narrator migration.",
+        "tests_required": [
+            "backend/tests/runtime/test_short_term_context.py",
+            "backend/tests/runtime/test_session_history.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/tests/test_narrator_consequence_contract.py",
+        "line": 112,
+        "symbol": "LocalContextTransition assertions",
+        "classification": "test_only_update",
+        "surface_kind": "test",
+        "current_role": "Locks current from_area/to_area/current_area transition contract.",
+        "legacy_fields": ["from_area", "to_area", "current_area"],
+        "w5_replacement_surface": (
+            "Update in the implementation phase to assert W5-first helper output "
+            "and retained compatibility fields."
+        ),
+        "migration_risk": "Medium: tests reveal intended contract changes.",
+        "tests_required": ["ai_stack/tests/test_narrator_consequence_contract.py"],
+    },
+    {
+        "file_path": "docs/ADR/adr-0069-w5-player-view-replaces-current-room-aliases.md",
+        "line": 1,
+        "symbol": "ADR-0069",
+        "classification": "doc_only_update",
+        "surface_kind": "doc",
+        "current_role": "Documents public player-room alias compatibility window.",
+        "legacy_fields": ["current_room", "current_room_id", "viewer_room_id"],
+        "w5_replacement_surface": "ADR-0070 should reference ADR-0069 and keep public alias removal out of scope.",
+        "migration_risk": "Low documentation drift risk.",
+        "tests_required": ["tests/test_inventory_w5_legacy_consumers.py"],
+    },
+)
+
+
+PHASE_6C0_IMPLEMENTATION_PLAN: dict[str, object] = {
+    "phase": "6C-0",
+    "adr": "ADR-0070",
+    "runtime_implementation_in_phase_6c0": False,
+    "implementation_deferred_reason": (
+        "The migration touches committed LocalContextTransition/NarratorConsequencePlan "
+        "metadata, sensory_context target derivation, LangGraph SOURCE_LINES callsites, "
+        "and carried player_local_context. It should land as a dedicated implementation "
+        "phase with parity fixtures instead of changing runtime behavior inside the ADR/inventory task."
+    ),
+    "proposed_helper_module": "ai_stack/actor_tracking/location_framing.py",
+    "proposed_helper_functions": [
+        "build_w5_location_framing(projection, *, previous_projection=None, legacy_fallback=None)",
+        "location_framing_to_local_context_transition(framing, *, legacy_transition=None)",
+    ],
+    "input_contract": (
+        "W5Projection(target_consumer='narrator') or dict with where_summary/how_summary/"
+        "why_summary/source_attribution/truth_attribution plus optional legacy fallback."
+    ),
+    "output_contract": (
+        "w5_location_framing.v1 dict containing current_location_id, previous_location_id, "
+        "from_location_id, to_location_id, location_changed, transition_type, "
+        "how_summary, why_summary, truth_attribution, source_attribution, "
+        "legacy_fallback_used."
+    ),
+    "files_to_touch_next": [
+        "ai_stack/actor_tracking/location_framing.py",
+        "ai_stack/actor_tracking/__init__.py",
+        "ai_stack/contracts/narrator_consequence_contracts.py",
+        "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+        "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py",
+        "ai_stack/langgraph/runtime_executor/executor_symbolic_meta_genre_derivation.py",
+        "ai_stack/langgraph/langgraph_synthetic_action_resolution.py",
+        "ai_stack/tests/test_narrator_consequence_contract.py",
+        "ai_stack/tests/test_sensory_context_engine.py",
+    ],
+    "fallback_posture": (
+        "W5-first when valid narrator projection location exists; legacy current_area/"
+        "from_area/to_area remains malformed-W5 safety fallback; public aliases and "
+        "substrate writers are untouched."
+    ),
+    "feature_flag": (
+        "Prefer default-on diagnostic flag only if parity rollout needs live comparison; "
+        "do not add a strict-off runtime rollback unless a follow-up ADR requires it."
+    ),
+    "docs_to_update_next": [
+        "docs/MVPs/w5_actor_tracking_migration.md",
+        "docs/MVPs/w5_legacy_consumer_removal_inventory.md",
+        "docs/ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md",
+    ],
+}
+
+
+PHASE_6C1_LOCATION_FRAMING_REPORT: dict[str, object] = {
+    "phase": "6C-1",
+    "helper_module": "ai_stack/actor_tracking/location_framing.py",
+    "helper_schema_version": "w5_location_framing.v1",
+    "helper_functions": [
+        "build_w5_location_framing",
+        "location_framing_to_local_context_transition",
+    ],
+    "typed_coercion_required": True,
+    "raw_w5_history_emitted": False,
+    "how_first_class": True,
+    "inferred_why_soft_truth": True,
+    "legacy_fallback_retained": True,
+    "public_aliases_removed": False,
+    "substrate_fields_removed": False,
+    "default_graph_synthesizes_w5_location_framing": False,
+    "additive_integration_points": [
+        "ai_stack/contracts/narrator_consequence_contracts.py",
+        "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+        "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py",
+        "ai_stack/langgraph/runtime_executor/executor_symbolic_meta_genre_derivation.py",
+    ],
+    "deferred_to_phase_6c2": [
+        "graph-owned construction of state['w5_location_framing'] from narrator W5 projection",
+        "default W5 source switch for narrator consequence transition framing",
+        "language-adapter runtime overlay that does not poison cached authored current_area",
+    ],
+}
+
+
+PHASE_6C2_LOCATION_FRAMING_REPORT: dict[str, object] = {
+    "phase": "6C-2",
+    "graph_owned_synthesis": True,
+    "synthesis_point": "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py",
+    "synthesis_symbol": "_resolve_player_action SOURCE_LINES",
+    "state_field": "w5_location_framing",
+    "source": "w5_latest_snapshot via build_w5_location_framing",
+    "typed_coercion_required": True,
+    "raw_w5_history_emitted": False,
+    "committed_events_mutated": False,
+    "legacy_fallback_retained": True,
+    "current_area_from_area_to_area_removed": False,
+    "public_aliases_removed": False,
+    "substrate_fields_removed": False,
+    "default_authority_switch_complete": False,
+    "diagnostics": [
+        "w5_location_framing_used",
+        "w5_location_framing_failed",
+        "w5_location_framing_source",
+        "w5_location_framing_fallback_reason",
+        "w5_location_changed",
+        "w5_current_location",
+        "w5_previous_location",
+    ],
+    "parity_evidence": [
+        "legacy movement target is preserved when pre-commit W5 location has location_changed=false",
+        "W5 location_changed=true maps to scene_changed/location_changed compatibility fields",
+        "sensory context same-location resolution matches legacy current_area resolution",
+        "missing/malformed W5 remains fallback-compatible and non-crashing",
+    ],
+    "deferred_to_phase_6c3": [
+        "switch narrator consequence transition authority to W5-first by default",
+        "switch sensory-context location authority to graph-owned W5 framing by default",
+        "language-adapter runtime overlay for current_area without cache poisoning",
+    ],
+}
+
+
+PHASE_6C3_LOCATION_FRAMING_AUTHORITY_REPORT: dict[str, object] = {
+    "phase": "6C-3",
+    "w5_first_authority_switch": True,
+    "authority_surface": "ai_stack/actor_tracking/location_framing.py",
+    "narrator_consequence_surface": "ai_stack/contracts/narrator_consequence_contracts.py",
+    "sensory_context_surface": "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+    "valid_w5_authority_condition": "source == 'w5_projection' and a current/scene/to location is present",
+    "legacy_fallback_conditions": [
+        "missing_w5",
+        "malformed_w5",
+        "incomplete_w5_location",
+        "pre_commit_w5_no_location_change_with_fresh_legacy_movement_target",
+        "old_payload_without_w5_location_framing",
+    ],
+    "legacy_fallback_retained": True,
+    "current_area_from_area_to_area_removed": False,
+    "public_aliases_removed": False,
+    "substrate_fields_removed": False,
+    "committed_events_mutated": False,
+    "diagnostics": [
+        "w5_location_framing_used",
+        "w5_location_framing_source",
+        "w5_location_framing_fallback_reason",
+        "w5_location_changed",
+        "w5_current_location",
+        "w5_previous_location",
+        "location_framing_authority",
+        "local_context_transition_source",
+    ],
+    "parity_evidence": [
+        "valid W5 current location maps to current_area/current_room compatibility",
+        "valid W5 previous/current maps to from_area/to_area compatibility",
+        "W5 location_changed=true drives scene/location shift behavior",
+        "W5 location_changed=false does not force a shift",
+        "missing/malformed W5 and old payloads keep legacy fallback",
+        "sensory context resolves the same location_id when W5 and legacy agree",
+        "How remains first-class and inferred Why remains soft truth",
+    ],
+    "next_phase": "6C-4 fresh inventory and targeted cleanup planning only",
+}
+
+
+def phase_6c0_location_framing_inventory() -> list[dict[str, object]]:
+    """Return the curated Phase 6C-0 narrator/sensory location-framing inventory."""
+
+    out: list[dict[str, object]] = []
+    for row in PHASE_6C0_LOCATION_FRAMING_INVENTORY:
+        copied = dict(row)
+        for list_key in ("legacy_fields", "tests_required"):
+            value = copied.get(list_key)
+            copied[list_key] = list(value) if isinstance(value, list) else []
+        out.append(copied)
+    return out
+
+
+def phase_6c1_location_framing_report() -> dict[str, object]:
+    """Return the non-failing Phase 6C-1 helper/additive-integration report."""
+
+    out = dict(PHASE_6C1_LOCATION_FRAMING_REPORT)
+    for list_key in ("helper_functions", "additive_integration_points", "deferred_to_phase_6c2"):
+        value = out.get(list_key)
+        out[list_key] = list(value) if isinstance(value, list) else []
+    return out
+
+
+def phase_6c2_location_framing_report() -> dict[str, object]:
+    """Return the non-failing Phase 6C-2 graph-synthesis report."""
+
+    out = dict(PHASE_6C2_LOCATION_FRAMING_REPORT)
+    for list_key in ("diagnostics", "parity_evidence", "deferred_to_phase_6c3"):
+        value = out.get(list_key)
+        out[list_key] = list(value) if isinstance(value, list) else []
+    return out
+
+
+def phase_6c3_location_framing_authority_report() -> dict[str, object]:
+    """Return the non-failing Phase 6C-3 W5-first authority switch report."""
+
+    out = dict(PHASE_6C3_LOCATION_FRAMING_AUTHORITY_REPORT)
+    for list_key in ("legacy_fallback_conditions", "diagnostics", "parity_evidence"):
+        value = out.get(list_key)
+        out[list_key] = list(value) if isinstance(value, list) else []
+    return out
+
+
+def phase_6c0_implementation_plan() -> dict[str, object]:
+    """Return the non-runtime Phase 6C-0 implementation plan."""
+
+    out = dict(PHASE_6C0_IMPLEMENTATION_PLAN)
+    for list_key in ("proposed_helper_functions", "files_to_touch_next", "docs_to_update_next"):
+        value = out.get(list_key)
+        out[list_key] = list(value) if isinstance(value, list) else []
+    return out
 
 
 EXCLUDED_DIR_NAMES: set[str] = {
@@ -560,6 +1183,98 @@ def _format_human(report: ScanReport) -> str:
         label = PHASE_6B4_CLASSIFICATION.get(key, "—")
         out.append(f"  {key:48s} {count:3d}  {label[:70]}")
     out.append("")
+    out.append("Phase 6B-13 — alias usage telemetry + client-readiness gate:")
+    readiness = phase_6b13_readiness_report()
+    for key in (
+        "public_aliases_still_emitted",
+        "w5_player_view_authority_present",
+        "frontend_helpers_prefer_w5",
+        "legacy_fallback_still_tested",
+        "internal_alias_authority_consumers",
+        "docs_describe_aliases_as_primary",
+        "removal_ready",
+        "reason",
+    ):
+        out.append(f"  {key}: {readiness[key]}")
+    out.append("  removal gate: NON-FAILING — alias removal remains blocked pending client readiness evidence.")
+    out.append("")
+    out.append("Phase 6C-0 — narrator consequence / sensory location-framing inventory:")
+    phase_6c0_rows = phase_6c0_location_framing_inventory()
+    counts_by_classification: dict[str, int] = {}
+    for row in phase_6c0_rows:
+        classification = str(row.get("classification") or "unknown_needs_runtime_trace")
+        counts_by_classification[classification] = counts_by_classification.get(classification, 0) + 1
+    for classification, count in sorted(counts_by_classification.items()):
+        out.append(f"  {classification:36s} {count:3d}")
+    plan = phase_6c0_implementation_plan()
+    out.append(f"  ADR: {plan['adr']}")
+    out.append(
+        "  runtime implementation in 6C-0: "
+        f"{plan['runtime_implementation_in_phase_6c0']}"
+    )
+    out.append(f"  proposed helper module: {plan['proposed_helper_module']}")
+    out.append("  migration gate: NON-FAILING — implementation deferred to a dedicated phase.")
+    out.append("")
+    out.append("Phase 6C-1 — W5 location-framing helper + additive integration:")
+    phase_6c1 = phase_6c1_location_framing_report()
+    for key in (
+        "helper_module",
+        "helper_schema_version",
+        "typed_coercion_required",
+        "raw_w5_history_emitted",
+        "how_first_class",
+        "inferred_why_soft_truth",
+        "legacy_fallback_retained",
+        "public_aliases_removed",
+        "substrate_fields_removed",
+        "default_graph_synthesizes_w5_location_framing",
+    ):
+        out.append(f"  {key}: {phase_6c1[key]}")
+    out.append("  additive integration points:")
+    for path in phase_6c1["additive_integration_points"]:
+        out.append(f"    - {path}")
+    out.append("  removal gate: NON-FAILING — no current_area/from_area/to_area removal in 6C-1.")
+    out.append("")
+    out.append("Phase 6C-2 — graph-owned W5 location-framing synthesis:")
+    phase_6c2 = phase_6c2_location_framing_report()
+    for key in (
+        "graph_owned_synthesis",
+        "synthesis_point",
+        "synthesis_symbol",
+        "state_field",
+        "source",
+        "typed_coercion_required",
+        "raw_w5_history_emitted",
+        "committed_events_mutated",
+        "legacy_fallback_retained",
+        "current_area_from_area_to_area_removed",
+        "public_aliases_removed",
+        "substrate_fields_removed",
+        "default_authority_switch_complete",
+    ):
+        out.append(f"  {key}: {phase_6c2[key]}")
+    out.append("  diagnostics: " + ", ".join(phase_6c2["diagnostics"]))
+    out.append("  removal gate: NON-FAILING — parity proven for helper paths; authority switch deferred.")
+    out.append("")
+    out.append("Phase 6C-3 — W5-first location-framing authority switch:")
+    phase_6c3 = phase_6c3_location_framing_authority_report()
+    for key in (
+        "w5_first_authority_switch",
+        "authority_surface",
+        "narrator_consequence_surface",
+        "sensory_context_surface",
+        "valid_w5_authority_condition",
+        "legacy_fallback_retained",
+        "current_area_from_area_to_area_removed",
+        "public_aliases_removed",
+        "substrate_fields_removed",
+        "committed_events_mutated",
+        "next_phase",
+    ):
+        out.append(f"  {key}: {phase_6c3[key]}")
+    out.append("  diagnostics: " + ", ".join(phase_6c3["diagnostics"]))
+    out.append("  removal gate: NON-FAILING — no legacy field removal in 6C-3.")
+    out.append("")
     out.append("This report is informational; the authoritative inventory and")
     out.append("classification live in docs/MVPs/w5_legacy_consumer_removal_inventory.md.")
     return "\n".join(out)
@@ -600,6 +1315,12 @@ def main(argv: list[str] | None = None) -> int:
             "files_with_findings": report.files_with_findings(),
             "total_findings": len(report.findings),
             "counts_by_surface": report.by_surface(),
+            "phase_6b13_readiness": phase_6b13_readiness_report(),
+            "phase_6c0_location_framing_inventory": phase_6c0_location_framing_inventory(),
+            "phase_6c0_implementation_plan": phase_6c0_implementation_plan(),
+            "phase_6c1_location_framing": phase_6c1_location_framing_report(),
+            "phase_6c2_location_framing": phase_6c2_location_framing_report(),
+            "phase_6c3_location_framing_authority": phase_6c3_location_framing_authority_report(),
             "findings": [f.to_dict() for f in report.findings],
         }
         print(json.dumps(payload, indent=2, sort_keys=True))

@@ -141,6 +141,8 @@ function currentRoom() {
   return currentRoomFromSnapshot(state.snapshot);
 }
 
+window.__wosWorldEngineCurrentRoomFromSnapshot = currentRoomFromSnapshot;
+
 function renderLobby(snapshot) {
   const lobby = snapshot.lobby;
   if (!lobby) {

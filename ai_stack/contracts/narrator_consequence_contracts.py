@@ -12,6 +12,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_stack.actor_tracking.location_framing import (
+    location_framing_is_valid_w5,
+    location_framing_to_local_context_transition,
+)
+
 
 def normalize_scene_affordance_model_for_contracts(model: dict[str, Any] | None) -> dict[str, Any]:
     """Wrap flat resolver models so contracts see ``scene_affordances.{locations,objects}``."""
@@ -107,13 +112,19 @@ def _current_context_area(
     *,
     scene_affordance_model: dict[str, Any],
     current_player_local_context: dict[str, Any] | None,
+    w5_location_framing: dict[str, Any] | None = None,
 ) -> str:
+    framing = w5_location_framing if isinstance(w5_location_framing, dict) else {}
+    use_w5 = location_framing_is_valid_w5(framing)
     scene_af = (scene_affordance_model.get("scene_affordances") or {}) if isinstance(
         scene_affordance_model,
         dict,
     ) else {}
     return str(
-        (current_player_local_context or {}).get("current_location_id")
+        (framing.get("current_area") if use_w5 else None)
+        or (framing.get("current_location") if use_w5 else None)
+        or (framing.get("scene_location") if use_w5 else None)
+        or (current_player_local_context or {}).get("current_location_id")
         or (current_player_local_context or {}).get("current_area")
         or scene_af.get("current_area")
         or ""
@@ -173,6 +184,7 @@ def build_local_context_transition(
     affordance_resolution: dict[str, Any],
     scene_affordance_model: dict[str, Any],
     current_player_local_context: dict[str, Any] | None,
+    w5_location_framing: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compute a LocalContextTransition from action frame + scene affordances."""
     action_kind = str(player_action_frame.get("action_kind") or "").strip().lower()
@@ -181,6 +193,7 @@ def build_local_context_transition(
     current_area = _current_context_area(
         scene_affordance_model=scene_affordance_model,
         current_player_local_context=current_player_local_context,
+        w5_location_framing=w5_location_framing,
     )
 
     is_movement = action_kind == "movement"
@@ -225,6 +238,12 @@ def build_local_context_transition(
             transition_type="object_interaction",
         )
 
+    if isinstance(w5_location_framing, dict) and w5_location_framing:
+        transition = location_framing_to_local_context_transition(
+            w5_location_framing,
+            legacy_transition=transition,
+        )
+
     return transition
 
 
@@ -235,6 +254,7 @@ def build_narrator_consequence_plan(
     affordance_resolution: dict[str, Any],
     scene_affordance_model: dict[str, Any],
     local_context_transition: dict[str, Any],
+    w5_location_framing: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a NarratorConsequencePlan from scene affordance detail + transition."""
     rt = player_action_frame.get("resolved_target") if isinstance(player_action_frame.get("resolved_target"), dict) else {}
@@ -287,7 +307,7 @@ def build_narrator_consequence_plan(
         else:
             consequence_type = "object_state_change"
 
-    return {
+    out = {
         "consequence_text": consequence_text,
         "consequence_type": consequence_type,
         "source": source,
@@ -303,6 +323,33 @@ def build_narrator_consequence_plan(
         "affordances_available": affordances_available,
         "transition_type": transition_type,
     }
+    if isinstance(w5_location_framing, dict) and w5_location_framing:
+        _w5_fallback_reason = w5_location_framing.get("fallback_reason")
+        _framing_authority = (
+            local_context_transition.get("location_framing_authority")
+            or ("w5" if location_framing_is_valid_w5(w5_location_framing) else "legacy_fallback")
+        )
+        _transition_source = (
+            local_context_transition.get("local_context_transition_source")
+            or ("w5_location_framing" if _framing_authority == "w5" else "legacy")
+        )
+        out["w5_location_framing"] = {
+            "schema_version": w5_location_framing.get("schema_version"),
+            "source": w5_location_framing.get("source"),
+            "fallback_reason": w5_location_framing.get("fallback_reason"),
+            "w5_location_framing_used": w5_location_framing.get("source") == "w5_projection",
+            "w5_location_framing_failed": w5_location_framing.get("source")
+            in {"missing_w5", "malformed_w5"}
+            or _w5_fallback_reason in {"missing_w5", "malformed_w5"},
+            "w5_location_framing_source": w5_location_framing.get("source"),
+            "w5_location_framing_fallback_reason": w5_location_framing.get("fallback_reason"),
+            "w5_location_changed": bool(w5_location_framing.get("location_changed")),
+            "w5_current_location": w5_location_framing.get("current_location"),
+            "w5_previous_location": w5_location_framing.get("previous_location"),
+            "location_framing_authority": _framing_authority,
+            "local_context_transition_source": _transition_source,
+        }
+    return out
 
 
 def build_updated_player_local_context(

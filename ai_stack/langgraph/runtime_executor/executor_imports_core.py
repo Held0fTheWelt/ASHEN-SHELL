@@ -173,6 +173,7 @@ SOURCE_LINES = [
     '    should_suppress_mandatory_beat_consumption,\n',
     ')\n',
     'from ai_stack.actor_tracking import (\n',
+    '    build_w5_location_framing,\n',
     '    build_w5_projection_for_director,\n',
     '    build_w5_projection_for_npc,\n',
     ')\n',

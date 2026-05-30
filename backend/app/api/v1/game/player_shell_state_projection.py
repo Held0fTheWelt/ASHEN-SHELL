@@ -83,6 +83,10 @@ def _player_shell_state_view(
             view["w5_player_view"] = w5_player_view
         view["current_room_id"] = current_room_id
 
+        view["deprecated_alias_usage"] = build_deprecated_public_room_alias_usage(
+            w5_player_view=w5_player_view if isinstance(w5_player_view, dict) else None,
+            w5_player_view_authority=bool(w5_player_diag.get("w5_player_view_used")),
+        )
         view["current_room_source"] = w5_player_diag.get("current_room_source") or "fallback_current_room"
         view["current_room_fallback_value"] = w5_player_diag.get("current_room_fallback_value")
         view["current_room_w5_value"] = w5_player_diag.get("current_room_w5_value")

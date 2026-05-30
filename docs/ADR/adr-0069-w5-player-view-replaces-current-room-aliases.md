@@ -143,12 +143,27 @@ and observable; aliases remain present.
 6. Alias removal is explicitly deferred to a future ADR after telemetry proves
    clients have migrated.
 
-### Planned Phase 6B-13 (future): Alias Usage Telemetry / Readiness Gate
+### Phase 6B-13 (this ADR — Accepted): Alias Usage Telemetry / Readiness Gate
 
-Add explicit alias-usage telemetry and a client-readiness gate. Removal of
-`viewer_room_id`, `current_room`, or `current_room_id` remains out of scope until
-the gate proves no supported public client depends on them and a future ADR
-accepts the removal.
+**Implemented in Phase 6B-13:**
+
+1. Added compact alias-usage telemetry on public payload diagnostic surfaces:
+   `deprecated_alias_usage`.
+2. WS `RuntimeSnapshot.metadata.deprecated_alias_usage` records that room aliases
+   are still emitted, whether `w5_player_view` is present, whether it has a public
+   location authority value, the alias family, phase `6B-13`, and
+   `removal_blocked_until: "client_readiness_evidence"`.
+3. HTTP/player-shell payloads that emit `current_room_id` include the same compact
+   `deprecated_alias_usage` object.
+4. The inventory script now emits a non-failing Phase 6B-13 readiness report with
+   `public_aliases_still_emitted: true`, `w5_player_view_authority_present: true`,
+   `removal_ready: false`, and `reason: "client_readiness_window_active"`.
+5. Frontend evidence now covers W5-success paths as warning-free and malformed/missing
+   W5 fallback as one-time `console.warn`.
+
+Removal of `viewer_room_id`, `current_room`, or `current_room_id` remains out of
+scope until the gate proves no supported public client depends on them and a
+future removal ADR accepts the change.
 
 ## Current Public Payload Shape
 
@@ -164,6 +179,14 @@ accepts the removal.
   "current_room_fallback_value": "salon",
   "current_room_w5_value": "salon_w5",
   "current_room_mismatch": true,
+  "deprecated_alias_usage": {
+    "room_aliases_emitted": true,
+    "w5_player_view_present": true,
+    "w5_player_view_authority": true,
+    "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+    "phase": "6B-13",
+    "removal_blocked_until": "client_readiness_evidence"
+  },
   "feature_flags": { "W5_AST_FRONTEND_PLAYER_VIEW_ENABLED": true },
   "w5_player_view": {
     "target_consumer": "player_shell",
@@ -247,6 +270,14 @@ remained compat aliases.
       "current_room_w5_value": "salon_w5",
       "current_room_mismatch": true,
       "ws_current_room_aliases_deprecated": true
+    },
+    "deprecated_alias_usage": {
+      "room_aliases_emitted": true,
+      "w5_player_view_present": true,
+      "w5_player_view_authority": true,
+      "aliases": ["viewer_room_id", "current_room", "current_room_id"],
+      "phase": "6B-13",
+      "removal_blocked_until": "client_readiness_evidence"
     }
   }
 }
@@ -323,7 +354,7 @@ never emitted on the player-facing surface.
 | 6B-10 | Wire `w5_player_view` + `feature_flags` into `RuntimeSnapshot` + WS tests | 0069 | Complete |
 | 6B-11 | Populate production WS `w5_player_view`; begin compat window | 0069 | Complete |
 | 6B-12 | Add public deprecation metadata/warnings; classify aliases as deprecated keeps | 0069 | Complete |
-| 6B-13 | Add alias usage telemetry and client-readiness gate | future ADR | Pending |
+| 6B-13 | Add alias usage telemetry and client-readiness gate | 0069 | Complete |
 | future | Remove public room aliases only after readiness evidence | future ADR | Deferred |
 
 ## Feature Flag / Rollback Behavior
@@ -412,6 +443,7 @@ the WS path.
 | `w5_player_view_has_inferred_why` | Boolean — any Why facts are inferred |
 | `ws_current_room_aliases_deprecated` | Boolean — Phase 6B-12 deprecation marker for WS aliases |
 | `metadata.deprecations.room_aliases` | Public metadata proving alias status, replacement, alias list, and deferred removal policy |
+| `deprecated_alias_usage` | Phase 6B-13 compact telemetry proving aliases are still emitted and whether W5 authority is available |
 
 These diagnostics let engineers confirm W5 is active and detect `current_room_source`
 divergence without needing to read internal state.
@@ -462,6 +494,17 @@ divergence without needing to read internal state.
 - [x] W5-success path emits no client warning
 - [x] Inventory classifications updated: public aliases are `deprecated_public_client_alias_keep`; `w5_player_view` is `public_authority`
 - [x] Public aliases preserved — no removal in this phase
+
+### Phase 6B-13 (Complete)
+
+- [x] WS `RuntimeSnapshot.metadata.deprecated_alias_usage` added
+- [x] HTTP/player-shell payloads that emit `current_room_id` include `deprecated_alias_usage`
+- [x] Compatibility aliases remain present
+- [x] `w5_player_view` remains the public player-facing authority
+- [x] Frontend W5-success path is warning-free
+- [x] Frontend malformed/missing-W5 fallback emits one `console.warn`
+- [x] Inventory readiness report says `removal_ready: false`
+- [x] Alias removal remains blocked pending client readiness evidence and a future removal ADR
 
 ## Rejected Alternatives
 

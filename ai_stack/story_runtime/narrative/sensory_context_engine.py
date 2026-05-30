@@ -17,6 +17,10 @@ from ai_stack.contracts.sensory_context_contracts import (
     SensoryContextValidation,
     normalize_sensory_context_policy,
 )
+from ai_stack.actor_tracking.location_framing import (
+    location_framing_is_valid_w5,
+    location_framing_to_local_context_transition,
+)
 
 
 _DEFAULT_MOOD_BY_SCENE_ENERGY: dict[str, str] = {
@@ -139,7 +143,14 @@ def _current_location_id(
     scene_affordances: dict[str, Any] | None,
     local_context_transition: dict[str, Any] | None,
     prior_planner_truth: dict[str, Any] | None,
+    w5_location_framing: dict[str, Any] | None = None,
 ) -> str | None:
+    framing = w5_location_framing if isinstance(w5_location_framing, dict) else {}
+    if location_framing_is_valid_w5(framing):
+        for key in ("current_location", "current_area", "to_location", "to_area", "scene_location"):
+            value = _clean_text(framing.get(key))
+            if value:
+                return value
     transition = local_context_transition if isinstance(local_context_transition, dict) else {}
     for key in ("to_area", "current_area", "from_area"):
         value = _clean_text(transition.get(key))
@@ -469,6 +480,9 @@ def _sensory_context_payload(
     prior_planner_truth: dict[str, Any] | None,
     min_layers: int,
     max_layers: int,
+    w5_location_framing: dict[str, Any] | None = None,
+    location_framing_authority: str | None = None,
+    local_context_transition_source: str | None = None,
 ) -> dict[str, Any]:
     layer_ids = [layer.layer_id for layer in selected_layers]
     prior_layers = _prior_layer_ids(prior_planner_truth)
@@ -496,7 +510,7 @@ def _sensory_context_payload(
         intensity=intensity,  # type: ignore[arg-type]
         source_evidence=evidence,
     )
-    return {
+    out = {
         "schema_version": SENSORY_CONTEXT_SCHEMA_VERSION,
         "policy": policy,
         "state": state.to_runtime_dict(),
@@ -504,6 +518,29 @@ def _sensory_context_payload(
         "source_evidence": [row.to_runtime_dict() for row in evidence],
         "rationale_codes": list(dict.fromkeys(rationale)),
     }
+    if isinstance(w5_location_framing, dict) and w5_location_framing:
+        _w5_fallback_reason = w5_location_framing.get("fallback_reason")
+        _framing_authority = _clean_text(location_framing_authority) or (
+            "w5" if location_framing_is_valid_w5(w5_location_framing) else "legacy_fallback"
+        )
+        _transition_source = _clean_text(local_context_transition_source) or (
+            "w5_location_framing" if _framing_authority == "w5" else "legacy"
+        )
+        out["w5_location_framing_diagnostics"] = {
+            "schema_version": w5_location_framing.get("schema_version"),
+            "w5_location_framing_used": w5_location_framing.get("source") == "w5_projection",
+            "w5_location_framing_failed": w5_location_framing.get("source")
+            in {"missing_w5", "malformed_w5"}
+            or _w5_fallback_reason in {"missing_w5", "malformed_w5"},
+            "w5_location_framing_source": w5_location_framing.get("source"),
+            "w5_location_framing_fallback_reason": w5_location_framing.get("fallback_reason"),
+            "w5_location_changed": bool(w5_location_framing.get("location_changed")),
+            "w5_current_location": w5_location_framing.get("current_location"),
+            "w5_previous_location": w5_location_framing.get("previous_location"),
+            "location_framing_authority": _framing_authority,
+            "local_context_transition_source": _transition_source,
+        }
+    return out
 
 
 def derive_sensory_context(
@@ -520,6 +557,7 @@ def derive_sensory_context(
     prior_planner_truth: dict[str, Any] | None = None,
     module_runtime_policy: dict[str, Any] | None = None,
     session_output_language: str | None = None,
+    w5_location_framing: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Derive bounded sensory target from policy and authored source fields."""
 
@@ -535,11 +573,18 @@ def derive_sensory_context(
         }
 
     language = _output_language(session_output_language)
+    effective_transition = local_context_transition
+    if isinstance(w5_location_framing, dict) and w5_location_framing:
+        effective_transition = location_framing_to_local_context_transition(
+            w5_location_framing,
+            legacy_transition=local_context_transition,
+        )
     location_id = _current_location_id(
         current_scene_id=current_scene_id,
         scene_affordances=scene_affordances,
-        local_context_transition=local_context_transition,
+        local_context_transition=effective_transition,
         prior_planner_truth=prior_planner_truth,
+        w5_location_framing=w5_location_framing,
     )
     action_kind = _action_kind(player_action_frame)
     target_id = _target_id(player_action_frame)
@@ -573,7 +618,7 @@ def derive_sensory_context(
         rationale=rationale,
         narrator_sensory_palette=narrator_sensory_palette,
         scene_affordances=scene_affordances,
-        local_context_transition=local_context_transition,
+        local_context_transition=effective_transition,
         locations=locations,
         location_id=location_id,
         language=language,
@@ -605,6 +650,17 @@ def derive_sensory_context(
         prior_planner_truth=prior_planner_truth,
         min_layers=min_layers,
         max_layers=max_layers,
+        w5_location_framing=w5_location_framing,
+        location_framing_authority=(
+            effective_transition.get("location_framing_authority")
+            if isinstance(effective_transition, dict)
+            else None
+        ),
+        local_context_transition_source=(
+            effective_transition.get("local_context_transition_source")
+            if isinstance(effective_transition, dict)
+            else None
+        ),
     )
 
 

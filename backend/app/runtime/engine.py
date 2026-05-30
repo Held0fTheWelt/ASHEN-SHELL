@@ -23,6 +23,7 @@ from app.content.models import (
 from app.runtime.models import CommandResult, ParticipantState, RunStatus, RuntimeEvent, RuntimeInstance, RuntimeSnapshot, TranscriptEntry
 from app.runtime.narrative.npc_behaviors import RuntimeNpcDirector
 from app.runtime.visibility import RuntimeVisibilityPolicy
+from ai_stack.actor_tracking import build_deprecated_public_room_alias_usage
 
 
 def _room_alias_deprecation_metadata() -> dict[str, Any]:
@@ -67,6 +68,14 @@ class RuntimeEngine:
             "min_humans_to_start": self.template.min_humans_to_start,
             "store_backend": instance.metadata.get("store_backend", "unknown"),
             "deprecations": _room_alias_deprecation_metadata(),
+            "deprecated_alias_usage": build_deprecated_public_room_alias_usage(
+                w5_player_view=resolved_w5,
+                w5_player_view_authority=(
+                    bool(w5_player_view_diagnostics.get("w5_player_view_used"))
+                    if isinstance(w5_player_view_diagnostics, dict)
+                    else None
+                ),
+            ),
         }
         if w5_player_view_diagnostics is not None:
             metadata["w5_player_view_diagnostics"] = w5_player_view_diagnostics
