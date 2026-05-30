@@ -1,4 +1,4 @@
-"""Phase 6C-1 tests for W5 location framing (ADR-0070)."""
+"""Phase 6C tests for W5 location framing (ADR-0070)."""
 
 from __future__ import annotations
 
@@ -200,6 +200,28 @@ def test_valid_w5_current_location_is_primary_over_legacy_current_area() -> None
     assert transition["local_context_transition_source"] == "w5_location_framing"
 
 
+def test_phase_6c4_valid_w5_marks_legacy_area_fields_as_compatibility_not_authority() -> None:
+    framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
+    transition = location_framing_to_local_context_transition(
+        framing,
+        legacy_transition={
+            "from_area": "salon",
+            "from_location_id": "salon",
+            "to_area": "hallway",
+            "to_location_id": "hallway",
+            "transition_type": "movement",
+            "new_area_established": True,
+        },
+    )
+
+    assert transition["location_framing_authority"] == "w5"
+    assert transition["local_context_transition_source"] == "w5_location_framing"
+    assert transition["from_area"] == "salon"
+    assert transition["to_area"] == "kitchen"
+    assert transition["current_area"] == "kitchen"
+    assert transition["to_area"] != "hallway"
+
+
 def test_w5_location_changed_true_overrides_legacy_transition_target() -> None:
     framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
     transition = location_framing_to_local_context_transition(
@@ -325,7 +347,51 @@ def test_source_and_truth_attribution_are_preserved() -> None:
     assert framing["truth_attribution"]["where_summary.location_changed"] == "observed"
 
 
-def test_narrator_consequence_plan_accepts_additive_w5_location_framing() -> None:
+def test_phase_6c4_no_raw_w5_history_emitted_in_authority_diagnostics() -> None:
+    payload = _projection(current="kitchen", previous="salon", changed=True).to_dict()
+    payload["w5_history"] = [{"private_npc_fact": "do not leak"}]
+    framing = build_w5_location_framing(payload)
+    transition = location_framing_to_local_context_transition(framing)
+    plan = build_narrator_consequence_plan(
+        lang="en",
+        player_action_frame={"resolved_target": {"target_id": "kitchen"}},
+        affordance_resolution={"affordance_status": "allowed"},
+        scene_affordance_model={"scene_affordances": {"locations": []}},
+        local_context_transition=transition,
+        w5_location_framing=framing,
+    )
+    sensory = derive_sensory_context(
+        scene_plan_record={"selected_scene_function": "establish_pressure"},
+        local_context_transition=transition,
+        scene_affordances={"scene_affordances": {"locations": [{"id": "kitchen"}]}},
+        module_runtime_policy={
+            "runtime_governance_policy": {
+                "sensory_context": {
+                    "enabled": True,
+                    "min_layers_per_turn": 1,
+                    "max_layers_per_turn": 1,
+                    "require_structured_events": True,
+                },
+            },
+        },
+        session_output_language="en",
+        w5_location_framing=framing,
+    )
+
+    assert transition["location_framing_authority"] == "w5"
+    assert plan["w5_location_framing"]["location_framing_authority"] == "w5"
+    assert sensory["w5_location_framing_diagnostics"]["location_framing_authority"] == "w5"
+    for emitted in (
+        framing,
+        transition["w5_location_framing"],
+        plan["w5_location_framing"],
+        sensory["w5_location_framing_diagnostics"],
+    ):
+        assert "w5_history" not in emitted
+        assert "private_npc_fact" not in str(emitted)
+
+
+def test_narrator_consequence_plan_records_w5_first_location_framing() -> None:
     framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
     plan = build_narrator_consequence_plan(
         lang="en",
@@ -438,7 +504,7 @@ def test_hard_cut_scene_shift_framing_is_available_from_w5_where_summary() -> No
     assert transition["to_area"] == "kitchen"
 
 
-def test_sensory_context_prefers_additive_w5_location_framing() -> None:
+def test_sensory_context_prefers_w5_first_location_framing() -> None:
     framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
     result = derive_sensory_context(
         scene_plan_record={"selected_scene_function": "establish_pressure"},

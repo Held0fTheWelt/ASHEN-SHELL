@@ -870,6 +870,398 @@ PHASE_6C3_LOCATION_FRAMING_AUTHORITY_REPORT: dict[str, object] = {
 }
 
 
+PHASE_6C4_POST_AUTHORITY_INVENTORY: tuple[dict[str, object], ...] = (
+    {
+        "file_path": "ai_stack/actor_tracking/location_framing.py",
+        "symbol": "location_framing_is_valid_w5",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Defines valid W5 location authority as source == 'w5_projection' "
+            "with a usable current/scene/to location."
+        ),
+        "legacy_fields": [],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": False,
+        "recommended_action": "Keep as the central authority predicate.",
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/actor_tracking/location_framing.py",
+        "symbol": "location_framing_to_local_context_transition",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Projects valid W5 current/previous/location_changed into the "
+            "LocalContextTransition compatibility shape."
+        ),
+        "legacy_fields": ["current_area", "from_area", "to_area", "scene_changed"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep compatibility fields until a future ADR proves all consumers "
+            "read W5 authority diagnostics or W5-native fields."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+            "ai_stack/tests/test_sensory_context_engine.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "symbol": "_current_context_area",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Chooses valid W5 current/scene location before legacy "
+            "player_local_context or scene affordance current_area."
+        ),
+        "legacy_fields": ["current_area", "current_location_id"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep legacy reads as fallback; future removal requires old-payload "
+            "and malformed-W5 evidence."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "symbol": "build_local_context_transition",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Builds the transition through W5-first location framing when a "
+            "valid graph-owned framing object is present."
+        ),
+        "legacy_fields": ["current_area", "from_area", "to_area", "local_context_transition"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep transition compatibility keys; classify them as output "
+            "compatibility/fallback rather than location authority."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+            "ai_stack/tests/test_langgraph_runtime.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "symbol": "build_narrator_consequence_plan",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Records W5 location-framing diagnostics and consumes the effective "
+            "local_context_transition."
+        ),
+        "legacy_fields": ["to_area", "transition_type", "local_context_transition"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep legacy transition text inputs until consequence realization "
+            "has W5-native fixtures."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+            "ai_stack/tests/test_pr_b_narrator_consequence_realization_contract.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "symbol": "build_updated_player_local_context",
+        "classification": "legacy_fallback_keep",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Carries current_area/current_location_id compatibility context into "
+            "later turns after the W5-first transition has been resolved."
+        ),
+        "legacy_fields": ["current_area", "current_location_id", "previous_area"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": False,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep until a future ADR defines W5-native carried local context "
+            "and old-payload fallback behavior."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+            "tests/test_pr_b_live_effect_propagation.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+        "symbol": "_current_location_id",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Resolves sensory location_id from valid W5 location framing before "
+            "legacy transition/current-area fallbacks."
+        ),
+        "legacy_fields": ["to_area", "current_area", "from_area"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep legacy fallback order for malformed W5 and old payloads; do "
+            "not remove until sensory parity covers live graph fixtures."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+            "ai_stack/tests/test_sensory_context_engine.py",
+            "tests/gates/test_goc_mvp04_observability_diagnostics_gate.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+        "symbol": "_append_location_layers",
+        "classification": "legacy_fallback_keep",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Uses the already-resolved effective location transition to select "
+            "authored room/layer details."
+        ),
+        "legacy_fields": ["local_context_transition"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep authored detail selection stable; only migrate requiredness "
+            "after W5-native sensory fixtures exist."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_sensory_context_engine.py",
+            "ai_stack/tests/test_runtime_aspect_ledger.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py",
+        "symbol": "_resolve_player_action SOURCE_LINES",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Synthesizes state['w5_location_framing'] and threads it through "
+            "local context and narrator consequence planning."
+        ),
+        "legacy_fields": ["local_context_transition", "current_area", "from_area", "to_area"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep graph diagnostics and fallback values; next cleanup should "
+            "target stale docs/tests, not runtime deletion."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_langgraph_runtime.py",
+            "tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/langgraph/runtime_executor/executor_symbolic_meta_genre_derivation.py",
+        "symbol": "_derive_sensory_context SOURCE_LINES",
+        "classification": "w5_first_authority",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Passes graph-owned w5_location_framing into derive_sensory_context "
+            "alongside the legacy action_actual transition."
+        ),
+        "legacy_fields": ["local_context_transition"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep the legacy transition argument until sensory-context old-payload "
+            "fallback has a dedicated removal ADR."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_sensory_context_engine.py",
+            "ai_stack/tests/test_runtime_aspect_ledger.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/language_io/language_adapter.py",
+        "symbol": "_interaction_surface_cached",
+        "classification": "legacy_fallback_keep",
+        "surface_kind": "runtime",
+        "current_role": (
+            "Builds authored content fallback current_area from layout defaults; "
+            "runtime W5 data must not poison this cache."
+        ),
+        "legacy_fields": ["current_area"],
+        "w5_replacement_exists": False,
+        "used_in_default_happy_path": False,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep as content fallback. A runtime overlay, if needed, must be "
+            "separate from the cached authored surface."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_free_player_action_resolution_contract.py",
+            "tests/smoke/test_template_module_structure_smoke.py",
+            "tests/smoke/test_goc_module_structure_smoke.py",
+        ],
+    },
+    {
+        "file_path": "backend/app/runtime/models.py",
+        "symbol": "RuntimeSnapshot.viewer_room_id/current_room",
+        "classification": "public_alias_keep",
+        "surface_kind": "public_api",
+        "current_role": "Emits deprecated public WS room aliases under ADR-0069.",
+        "legacy_fields": ["viewer_room_id", "current_room"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": False,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Do not touch in 6C; public alias removal remains blocked by "
+            "client-readiness evidence."
+        ),
+        "tests_required_before_future_removal": [
+            "world-engine/tests/test_story_runtime_w5_ws_snapshot_population.py",
+            "frontend/tests/test_w5_room_alias_helpers.js",
+        ],
+    },
+    {
+        "file_path": "backend/app/api/v1/game/player_shell_state_projection.py",
+        "symbol": "build_player_shell_state_view",
+        "classification": "public_alias_keep",
+        "surface_kind": "public_api",
+        "current_role": "Emits deprecated HTTP/player-shell current_room_id alias and telemetry.",
+        "legacy_fields": ["current_room_id"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": False,
+        "removal_would_break_fallback": True,
+        "recommended_action": (
+            "Keep under ADR-0069 until the public alias readiness gate reports "
+            "removal_ready=true."
+        ),
+        "tests_required_before_future_removal": [
+            "backend/tests/test_w5_player_shell_payload.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/contracts/environment_state_contracts.py",
+        "symbol": "_apply_environment_movement / apply_action_to_environment_state",
+        "classification": "substrate_keep_future_adr",
+        "surface_kind": "substrate",
+        "current_role": (
+            "Writes current_room_id/current_area/actor_locations substrate used "
+            "by commits and W5 extraction."
+        ),
+        "legacy_fields": ["current_room_id", "current_area", "actor_locations"],
+        "w5_replacement_exists": False,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": True,
+        "recommended_action": "Keep; substrate changes require a future ADR.",
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_validation.py",
+            "backend/tests/runtime/test_runtime_core.py",
+        ],
+    },
+    {
+        "file_path": "backend/app/runtime/narrative/short_term_context.py",
+        "symbol": "ShortTermContext.build",
+        "classification": "unrelated_domain_use",
+        "surface_kind": "runtime",
+        "current_role": "Uses scene_changed for backend session-history scene-id comparison.",
+        "legacy_fields": ["scene_changed"],
+        "w5_replacement_exists": False,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": False,
+        "recommended_action": "Leave out of narrator/sensory W5 cleanup.",
+        "tests_required_before_future_removal": [
+            "backend/tests/runtime/test_short_term_context.py",
+            "backend/tests/runtime/test_session_history.py",
+        ],
+    },
+    {
+        "file_path": "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+        "symbol": "Phase 6C location-framing tests",
+        "classification": "test_only_update",
+        "surface_kind": "test",
+        "current_role": (
+            "Proves W5-first authority diagnostics, fallback authority, "
+            "compatibility fields, no raw W5 history, How, and soft inferred Why."
+        ),
+        "legacy_fields": ["current_area", "from_area", "to_area"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": False,
+        "recommended_action": (
+            "Keep and extend as the semantic proof set for any future removal ADR."
+        ),
+        "tests_required_before_future_removal": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+        ],
+    },
+    {
+        "file_path": "docs/MVPs/w5_legacy_consumer_removal_inventory.md",
+        "symbol": "Phase 6C-4 section",
+        "classification": "doc_only_update",
+        "surface_kind": "doc",
+        "current_role": "Documents post-6C-3 W5-first authority and fallback surfaces.",
+        "legacy_fields": ["current_area", "from_area", "to_area", "current_room", "current_room_id"],
+        "w5_replacement_exists": True,
+        "used_in_default_happy_path": True,
+        "removal_would_break_fallback": False,
+        "recommended_action": "Keep current; update after the next cleanup inventory.",
+        "tests_required_before_future_removal": [
+            "tests/test_inventory_w5_legacy_consumers.py",
+        ],
+    },
+)
+
+
+PHASE_6C4_CLEANUP_PLAN: dict[str, object] = {
+    "phase": "6C-4",
+    "inventory_method": (
+        "Static scan for current_area/from_area/to_area/current_room/current_room_id/"
+        "location_changed/scene_changed/local_context_transition/w5_location_framing/"
+        "location_framing_authority/local_context_transition_source plus curated "
+        "post-6C-3 runtime surface classification."
+    ),
+    "runtime_legacy_field_removal_in_phase_6c4": False,
+    "safe_cleanup_performed": [
+        "Updated stale Phase 6C location-framing test wording from additive-only to W5-first authority wording.",
+        "Added Phase 6C-4 inventory/report rows and JSON/human report output.",
+        "Updated MVP docs and ADR-0070 with post-6C-3 cleanup-plan status.",
+    ],
+    "cleanup_deliberately_not_performed": [
+        "No current_area/from_area/to_area runtime field removal.",
+        "No current_room/current_room_id/viewer_room_id public alias removal.",
+        "No substrate field or actor_locations removal.",
+        "No malformed-W5 or old-payload fallback removal.",
+        "No committed event or committed output mutation.",
+    ],
+    "future_removal_candidates": [
+        "LocalContextTransition current_area/from_area/to_area compatibility fields after W5-native consumers exist.",
+        "Narrator consequence reliance on transition compatibility text inputs after realization fixtures migrate.",
+        "Sensory-context legacy transition fallback after old-payload and malformed-W5 windows close.",
+        "Authored language-adapter current_area overlay only if a non-cached W5 runtime overlay is designed.",
+    ],
+    "required_evidence_before_removal_adr": [
+        "Default valid W5 path reports location_framing_authority='w5'.",
+        "Missing/malformed W5 reports location_framing_authority='legacy_fallback'.",
+        "local_context_transition_source reports w5_location_framing or legacy correctly.",
+        "Compatibility fields are proven fallback/compatibility rather than authority when W5 is valid.",
+        "No raw W5 history is emitted in narrator/sensory diagnostics.",
+        "How remains first-class and inferred Why remains soft truth.",
+        "MVP03 and MVP04 gates remain green.",
+    ],
+    "next_phase": "6C-5 targeted doc/test cleanup or removal-ADR drafting only after fresh parity evidence",
+}
+
+
 def phase_6c0_location_framing_inventory() -> list[dict[str, object]]:
     """Return the curated Phase 6C-0 narrator/sensory location-framing inventory."""
 
@@ -908,6 +1300,44 @@ def phase_6c3_location_framing_authority_report() -> dict[str, object]:
 
     out = dict(PHASE_6C3_LOCATION_FRAMING_AUTHORITY_REPORT)
     for list_key in ("legacy_fallback_conditions", "diagnostics", "parity_evidence"):
+        value = out.get(list_key)
+        out[list_key] = list(value) if isinstance(value, list) else []
+    return out
+
+
+def phase_6c4_post_authority_inventory() -> list[dict[str, object]]:
+    """Return the Phase 6C-4 post-authority inventory and cleanup plan rows."""
+
+    out: list[dict[str, object]] = []
+    for row in PHASE_6C4_POST_AUTHORITY_INVENTORY:
+        copied = dict(row)
+        for list_key in ("legacy_fields", "tests_required_before_future_removal"):
+            value = copied.get(list_key)
+            copied[list_key] = list(value) if isinstance(value, list) else []
+        out.append(copied)
+    return out
+
+
+def phase_6c4_classification_summary() -> dict[str, int]:
+    """Return counts by Phase 6C-4 classification."""
+
+    summary: dict[str, int] = {}
+    for row in PHASE_6C4_POST_AUTHORITY_INVENTORY:
+        classification = str(row.get("classification") or "unknown_needs_runtime_trace")
+        summary[classification] = summary.get(classification, 0) + 1
+    return dict(sorted(summary.items()))
+
+
+def phase_6c4_cleanup_plan() -> dict[str, object]:
+    """Return the non-removal Phase 6C-4 cleanup plan."""
+
+    out = dict(PHASE_6C4_CLEANUP_PLAN)
+    for list_key in (
+        "safe_cleanup_performed",
+        "cleanup_deliberately_not_performed",
+        "future_removal_candidates",
+        "required_evidence_before_removal_adr",
+    ):
         value = out.get(list_key)
         out[list_key] = list(value) if isinstance(value, list) else []
     return out
@@ -1275,6 +1705,22 @@ def _format_human(report: ScanReport) -> str:
     out.append("  diagnostics: " + ", ".join(phase_6c3["diagnostics"]))
     out.append("  removal gate: NON-FAILING — no legacy field removal in 6C-3.")
     out.append("")
+    out.append("Phase 6C-4 — post-authority inventory and cleanup plan:")
+    phase_6c4_plan = phase_6c4_cleanup_plan()
+    phase_6c4_summary = phase_6c4_classification_summary()
+    for classification, count in phase_6c4_summary.items():
+        out.append(f"  {classification:36s} {count:3d}")
+    for key in (
+        "runtime_legacy_field_removal_in_phase_6c4",
+        "next_phase",
+    ):
+        out.append(f"  {key}: {phase_6c4_plan[key]}")
+    out.append(
+        "  required evidence: "
+        + "; ".join(phase_6c4_plan["required_evidence_before_removal_adr"])
+    )
+    out.append("  removal gate: NON-FAILING — inventory and cleanup planning only.")
+    out.append("")
     out.append("This report is informational; the authoritative inventory and")
     out.append("classification live in docs/MVPs/w5_legacy_consumer_removal_inventory.md.")
     return "\n".join(out)
@@ -1321,6 +1767,9 @@ def main(argv: list[str] | None = None) -> int:
             "phase_6c1_location_framing": phase_6c1_location_framing_report(),
             "phase_6c2_location_framing": phase_6c2_location_framing_report(),
             "phase_6c3_location_framing_authority": phase_6c3_location_framing_authority_report(),
+            "phase_6c4_post_authority_inventory": phase_6c4_post_authority_inventory(),
+            "phase_6c4_classification_summary": phase_6c4_classification_summary(),
+            "phase_6c4_cleanup_plan": phase_6c4_cleanup_plan(),
             "findings": [f.to_dict() for f in report.findings],
         }
         print(json.dumps(payload, indent=2, sort_keys=True))

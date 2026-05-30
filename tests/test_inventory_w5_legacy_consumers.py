@@ -591,6 +591,65 @@ def test_phase_6c3_location_framing_authority_report_is_in_json_output(inventory
     assert report["current_area_from_area_to_area_removed"] is False
 
 
+def test_phase_6c4_post_authority_inventory_classifies_remaining_surfaces(inventory_module) -> None:
+    rows = inventory_module.phase_6c4_post_authority_inventory()
+    by_symbol = {str(row["symbol"]): row for row in rows}
+
+    assert by_symbol["location_framing_to_local_context_transition"]["classification"] == "w5_first_authority"
+    assert by_symbol["build_local_context_transition"]["classification"] == "w5_first_authority"
+    assert by_symbol["_current_location_id"]["classification"] == "w5_first_authority"
+    assert by_symbol["build_updated_player_local_context"]["classification"] == "legacy_fallback_keep"
+    assert by_symbol["_interaction_surface_cached"]["classification"] == "legacy_fallback_keep"
+    assert by_symbol["RuntimeSnapshot.viewer_room_id/current_room"]["classification"] == "public_alias_keep"
+    assert (
+        by_symbol["_apply_environment_movement / apply_action_to_environment_state"]["classification"]
+        == "substrate_keep_future_adr"
+    )
+    assert by_symbol["ShortTermContext.build"]["classification"] == "unrelated_domain_use"
+    assert by_symbol["Phase 6C-4 section"]["classification"] == "doc_only_update"
+
+    for row in rows:
+        assert "recommended_action" in row
+        assert "tests_required_before_future_removal" in row
+        assert "w5_replacement_exists" in row
+        assert "used_in_default_happy_path" in row
+        assert "removal_would_break_fallback" in row
+
+
+def test_phase_6c4_cleanup_plan_keeps_runtime_fields_until_adr(inventory_module) -> None:
+    plan = inventory_module.phase_6c4_cleanup_plan()
+    summary = inventory_module.phase_6c4_classification_summary()
+
+    assert plan["phase"] == "6C-4"
+    assert plan["runtime_legacy_field_removal_in_phase_6c4"] is False
+    assert summary["w5_first_authority"] >= 7
+    assert summary["legacy_fallback_keep"] >= 3
+    assert summary["public_alias_keep"] == 2
+    assert "No current_area/from_area/to_area runtime field removal." in plan[
+        "cleanup_deliberately_not_performed"
+    ]
+    assert "MVP03 and MVP04 gates remain green." in plan[
+        "required_evidence_before_removal_adr"
+    ]
+
+
+def test_phase_6c4_inventory_and_cleanup_plan_are_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    assert payload["phase_6c4_classification_summary"]["w5_first_authority"] >= 7
+    assert payload["phase_6c4_cleanup_plan"]["phase"] == "6C-4"
+    assert payload["phase_6c4_cleanup_plan"]["runtime_legacy_field_removal_in_phase_6c4"] is False
+    assert any(
+        row["classification"] == "public_alias_keep"
+        for row in payload["phase_6c4_post_authority_inventory"]
+    )
+
+
 def test_phase_6c0_adr_exists_and_records_decision() -> None:
     adr_path = (
         REPO_ROOT

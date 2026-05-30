@@ -292,6 +292,26 @@ fields:
   `complete_actor_locations_for_gathering`, or `current_area/from_area/to_area`
   compatibility fields are removed.
 
+## Phase 6C-4 Inventory Note
+
+Phase 6C-4 performs the first post-authority inventory. It confirms that the
+authority switch is complete for valid W5 framing, while cleanup/removal remains
+blocked by fallback and compatibility windows:
+
+- `current_area/from_area/to_area` are compatibility/fallback fields in the
+  local context transition shape. They are not authority when valid
+  `w5_location_framing` is present.
+- Missing, malformed, incomplete, and old-payload paths still require legacy
+  fallback.
+- Public `current_room/current_room_id/viewer_room_id` aliases remain governed
+  by ADR-0069 and are out of scope for this ADR's narrator/sensory cleanup.
+- `environment_state`, `actor_locations`, and
+  `complete_actor_locations_for_gathering` remain substrate/fallback surfaces
+  for future ADRs.
+- Future removal requires proof that no supported narrator-consequence,
+  sensory-context, public-client, old-payload, or malformed-W5 path depends on
+  the compatibility fields.
+
 ## Rejected Alternatives
 
 1. **Remove `from_area/to_area/current_area` immediately.**

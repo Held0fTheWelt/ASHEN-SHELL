@@ -1358,3 +1358,65 @@ target.
 
 **Next removal decision:** no removal is authorized. Phase 6C-4 should be a fresh
 inventory and targeted cleanup plan, not a deletion pass.
+
+---
+
+### Phase 6C-4 — post-authority inventory and cleanup plan (Complete, 2026-05-30)
+
+**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+
+Phase 6C-4 reclassifies the remaining narrator-consequence / sensory-context
+location references after the W5-first authority switch. This phase is inventory
+and cleanup planning only. It does not remove runtime legacy fields.
+
+| Surface | Phase 6C-4 classification | W5 replacement exists | Default happy path uses W5 | Removal would break fallback | Recommended action |
+|---------|---------------------------|-----------------------|----------------------------|------------------------------|--------------------|
+| `ai_stack/actor_tracking/location_framing.py::location_framing_is_valid_w5` | `w5_first_authority` | Yes | Yes | No | Keep as central authority predicate |
+| `location_framing_to_local_context_transition()` | `w5_first_authority` | Yes | Yes | Yes | Keep `current_area/from_area/to_area` as compatibility/fallback fields until a removal ADR |
+| `narrator_consequence_contracts.py::_current_context_area` | `w5_first_authority` | Yes | Yes | Yes | Keep legacy reads only as malformed-W5 / old-payload fallback |
+| `narrator_consequence_contracts.py::build_local_context_transition` | `w5_first_authority` | Yes | Yes | Yes | Keep transition compatibility keys; do not treat them as authority when W5 is valid |
+| `narrator_consequence_contracts.py::build_narrator_consequence_plan` | `w5_first_authority` | Yes | Yes | Yes | Keep compatibility transition inputs until consequence-realization fixtures migrate |
+| `narrator_consequence_contracts.py::build_updated_player_local_context` | `legacy_fallback_keep` | Yes | No | Yes | Keep carried local-context aliases until a W5-native carried-context ADR exists |
+| `sensory_context_engine.py::_current_location_id` | `w5_first_authority` | Yes | Yes | Yes | Keep legacy location fallback for malformed W5 and old payloads |
+| `sensory_context_engine.py::_append_location_layers` | `legacy_fallback_keep` | Yes | Yes | Yes | Keep authored detail selection stable; do not migrate requiredness yet |
+| `executor_action_resolution_commit.py::_resolve_player_action` | `w5_first_authority` | Yes | Yes | Yes | Keep graph-owned synthesis and diagnostics; no runtime deletion in 6C-4 |
+| `executor_symbolic_meta_genre_derivation.py::_derive_sensory_context` | `w5_first_authority` | Yes | Yes | Yes | Keep both W5 framing and legacy transition arguments |
+| `language_adapter.py::_interaction_surface_cached` | `legacy_fallback_keep` | No runtime overlay yet | No | Yes | Keep as authored content fallback; do not poison cached surface with runtime W5 |
+| `RuntimeSnapshot.viewer_room_id/current_room` | `public_alias_keep` | Yes | No | Yes | Governed by ADR-0069; public alias removal remains blocked |
+| `player_shell_state_projection.py::build_player_shell_state_view` | `public_alias_keep` | Yes | No | Yes | Keep `current_room_id` alias until readiness gate proves removal safe |
+| `environment_state_contracts.py` movement substrate | `substrate_keep_future_adr` | No | Yes as substrate | Yes | Keep substrate writers/readers for future ADR |
+| `ShortTermContext.build scene_changed` | `unrelated_domain_use` | No | Yes | No | Leave out of narrator/sensory W5 cleanup |
+
+**Safe cleanup performed:**
+
+- Updated stale location-framing test wording from additive-only to W5-first
+  authority wording.
+- Added Phase 6C-4 inventory/report output to
+  `scripts/inventory_w5_legacy_consumers.py`.
+- Added proof tests for compatibility-field authority, no raw W5 history
+  emission, and JSON/human inventory output.
+
+**Cleanup deliberately not performed:**
+
+- No `current_area/from_area/to_area` runtime field removal.
+- No `current_room/current_room_id/viewer_room_id` public alias removal.
+- No substrate field, `actor_locations`, or
+  `complete_actor_locations_for_gathering` removal.
+- No malformed-W5 or old-payload fallback removal.
+- No committed event or committed output mutation.
+
+**Required evidence before a future removal ADR:**
+
+- Default valid W5 path reports `location_framing_authority="w5"`.
+- Missing/malformed W5 reports `location_framing_authority="legacy_fallback"`.
+- `local_context_transition_source` reports `w5_location_framing` or `legacy`
+  correctly.
+- Compatibility fields are proven fallback/compatibility rather than authority
+  when W5 is valid.
+- No raw W5 history is emitted in narrator/sensory diagnostics.
+- How remains first-class and inferred Why remains soft truth.
+- MVP03 and MVP04 gates remain green.
+
+**Next removal decision:** no runtime removal is authorized by 6C-4. The next
+phase should be targeted doc/test cleanup or a removal-ADR draft only after
+fresh parity evidence proves fallback windows can close.

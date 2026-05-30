@@ -1320,6 +1320,39 @@ plan only. Any removal still needs new evidence and a dedicated decision.
 
 ---
 
+### Phase 6C-4 — post-authority inventory and cleanup plan (complete, 2026-05-30)
+
+**ADR:** ADR-0070
+
+**Goal:** classify remaining narrator-consequence and sensory-context location
+references after the Phase 6C-3 W5-first authority switch, and perform only safe
+doc/test cleanup.
+
+- [x] Fresh inventory confirms valid `w5_location_framing` is the default
+  authority for narrator consequence and sensory-context location decisions.
+- [x] `current_area/from_area/to_area` remain compatibility/fallback fields in
+  the local context transition shape, not authority when valid W5 is present.
+- [x] `current_room/current_room_id/viewer_room_id` remain public aliases owned
+  by ADR-0069 and are out of scope for narrator/sensory cleanup.
+- [x] `environment_state`, `actor_locations`, and
+  `complete_actor_locations_for_gathering` remain substrate/fallback surfaces
+  for a future ADR.
+- [x] Added/strengthened proof that W5 authority diagnostics are emitted on the
+  default valid path, legacy authority diagnostics are emitted on fallback
+  paths, raw W5 history is not emitted, How remains first-class, and inferred
+  Why remains soft truth.
+- [x] Updated stale test wording that still described W5 framing as
+  additive-only.
+- [x] No runtime legacy field, public alias, substrate, committed event, or
+  committed output removal.
+
+**Next phase:** Phase 6C-5 may perform targeted doc/test cleanup or draft a
+future removal ADR only after fresh parity evidence proves compatibility fields
+can be retired without breaking malformed-W5, old-payload, public-client, or
+substrate fallback paths.
+
+---
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.
