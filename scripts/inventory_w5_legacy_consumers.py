@@ -1262,6 +1262,192 @@ PHASE_6C4_CLEANUP_PLAN: dict[str, object] = {
 }
 
 
+PHASE_6C5_REMOVAL_READINESS_ADR: dict[str, object] = {
+    "phase": "6C-5",
+    "adr": "ADR-0071",
+    "adr_path": (
+        "docs/ADR/"
+        "adr-0071-retire-legacy-narrator-consequence-area-fields-after-w5-location-framing.md"
+    ),
+    "adr_status": "Proposed",
+    "decision_summary": (
+        "W5 location framing is authority, but current_area/from_area/to_area "
+        "runtime field removal is not approved until fallback and compatibility "
+        "windows are closed or replaced by a tested shim."
+    ),
+    "covered_legacy_fields": [
+        "current_area",
+        "from_area",
+        "to_area",
+        "legacy local_context_transition area fields",
+        "scene_changed/location_changed legacy framing where W5 location_framing is authority",
+    ],
+    "out_of_scope_fields": [
+        "public current_room/current_room_id/viewer_room_id aliases",
+        "runtime_world.current_room_id",
+        "environment_state.current_room_id",
+        "actor_locations",
+        "complete_actor_locations_for_gathering",
+        "NPC context bundle fallback",
+        "malformed-W5 fallback",
+        "old-payload fallback",
+        "substrate consolidation",
+    ],
+    "removal_ready": False,
+    "readiness_checklist": [
+        {
+            "criterion": "W5 location framing is synthesized in graph state on default path.",
+            "status": "pass",
+            "evidence": "Phase 6C-2 graph-owned synthesis in _resolve_player_action SOURCE_LINES.",
+        },
+        {
+            "criterion": "narrator_consequence uses W5 when valid.",
+            "status": "pass",
+            "evidence": "Phase 6C-3 build_local_context_transition and narrator diagnostics.",
+        },
+        {
+            "criterion": "sensory_context uses W5 when valid.",
+            "status": "pass",
+            "evidence": "Phase 6C-3 _current_location_id W5-first resolution.",
+        },
+        {
+            "criterion": "malformed/missing W5 fallback remains tested.",
+            "status": "pass",
+            "evidence": "test_w5_actor_tracking_location_framing malformed/missing fallback cases.",
+        },
+        {
+            "criterion": "old payload fallback remains tested.",
+            "status": "pass",
+            "evidence": "old-payload path without w5_location_framing uses legacy transition.",
+        },
+        {
+            "criterion": "parity tests prove output equivalence where W5 and legacy agree.",
+            "status": "pass",
+            "evidence": "narrator/sensory same-location parity tests.",
+        },
+        {
+            "criterion": (
+                "no production default path depends on legacy current_area/from_area/to_area "
+                "as authority."
+            ),
+            "status": "pass",
+            "evidence": "Phase 6C-4 classifies these fields as compatibility/fallback when W5 is valid.",
+        },
+        {
+            "criterion": "docs/tests no longer describe legacy fields as primary.",
+            "status": "pass",
+            "evidence": "Phase 6C-4/6C-5 docs classify area fields as compatibility/fallback.",
+        },
+        {
+            "criterion": "public aliases are unaffected.",
+            "status": "pass",
+            "evidence": "ADR-0069-owned public aliases remain out of scope.",
+        },
+        {
+            "criterion": "substrate fields are unaffected.",
+            "status": "pass",
+            "evidence": "environment_state/current_room_id/actor_locations remain substrate_keep_future_adr.",
+        },
+        {
+            "criterion": (
+                "downstream narrator/sensory consumers can run without area-field presence "
+                "except through an explicit compatibility shim."
+            ),
+            "status": "pass",
+            "evidence": (
+                "Phase 6C-6 proves W5-native narrator/sensory fixtures operate without "
+                "direct current_area/from_area/to_area input while the named shim supplies "
+                "compatibility values for legacy consumers."
+            ),
+        },
+        {
+            "criterion": "removal rollback plan exists and is test-backed.",
+            "status": "pass",
+            "evidence": (
+                "Phase 6C-6 adds w5_location_framing_to_legacy_area_fields() and "
+                "ensure_legacy_area_fields_for_compat() with non-mutating rollback tests."
+            ),
+        },
+        {
+            "criterion": "ADR-0071 is accepted for actual runtime field removal.",
+            "status": "blocked",
+            "evidence": "ADR-0071 remains Proposed; Phase 6C-6 implements a shim only.",
+        },
+        {
+            "criterion": "production-like downstream trace proves zero unsupported area-field dependency.",
+            "status": "blocked",
+            "evidence": (
+                "Static and unit evidence is present; a final removal phase still needs "
+                "production-like trace evidence before deleting runtime fields."
+            ),
+        },
+    ],
+    "remaining_blockers": [
+        "ADR-0071 remains Proposed; actual runtime field removal is not accepted.",
+        "No production-like runtime trace proves zero unsupported area-field dependency.",
+        "Malformed-W5 and old-payload fallback windows remain active and must be carried by the shim during any removal phase.",
+    ],
+    "safe_cleanup_performed": [
+        "Created Proposed ADR-0071 for removal readiness.",
+        "Added Phase 6C-5 removal-readiness checklist to inventory output.",
+        "Updated docs to state current_area/from_area/to_area are fallback-only, not authority.",
+    ],
+    "cleanup_deliberately_not_performed": [
+        "No current_area/from_area/to_area runtime field removal.",
+        "No malformed-W5 or old-payload fallback removal.",
+        "No public alias or substrate field removal.",
+        "No committed output or committed event mutation.",
+    ],
+    "next_phase": "6C-7 final removal-readiness audit; no runtime field deletion until ADR-0071 acceptance",
+}
+
+
+PHASE_6C6_COMPATIBILITY_SHIM_REPORT: dict[str, object] = {
+    "phase": "6C-6",
+    "shim_schema_version": "legacy_area_compat.v1",
+    "shim_functions": [
+        "w5_location_framing_to_legacy_area_fields",
+        "build_legacy_area_compat_from_w5_location_framing",
+        "ensure_legacy_area_fields_for_compat",
+    ],
+    "classification_updates": [
+        "w5_native_no_area_dependency",
+        "area_compat_shim",
+        "legacy_fallback_keep",
+        "malformed_w5_safety_keep",
+        "old_payload_compat_keep",
+        "removal_candidate_needs_final_adr",
+        "public_alias_keep",
+        "substrate_keep_future_adr",
+    ],
+    "w5_native_no_area_dependency_proven": True,
+    "area_compat_shim_implemented": True,
+    "runtime_legacy_fields_removed": False,
+    "committed_events_mutated": False,
+    "committed_output_changed": False,
+    "removal_ready": False,
+    "source_values": [
+        "w5_location_framing",
+        "legacy_fallback",
+        "malformed_w5_fallback",
+        "old_payload_fallback",
+    ],
+    "tests_added_or_updated": [
+        "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+        "tests/test_inventory_w5_legacy_consumers.py",
+    ],
+    "remaining_blockers": [
+        "ADR-0071 remains Proposed and must be explicitly accepted before runtime field removal.",
+        "A final production-like dependency trace is still required before deleting current_area/from_area/to_area fields.",
+        "Malformed-W5 and old-payload fallback windows remain supported and must keep shim coverage.",
+    ],
+    "next_phase": (
+        "6C-7 final removal-readiness audit or accepted removal phase; retain "
+        "current_area/from_area/to_area until then."
+    ),
+}
+
+
 def phase_6c0_location_framing_inventory() -> list[dict[str, object]]:
     """Return the curated Phase 6C-0 narrator/sensory location-framing inventory."""
 
@@ -1337,6 +1523,54 @@ def phase_6c4_cleanup_plan() -> dict[str, object]:
         "cleanup_deliberately_not_performed",
         "future_removal_candidates",
         "required_evidence_before_removal_adr",
+    ):
+        value = out.get(list_key)
+        out[list_key] = list(value) if isinstance(value, list) else []
+    return out
+
+
+def phase_6c5_removal_readiness_adr() -> dict[str, object]:
+    """Return the Phase 6C-5 proposed removal-readiness ADR checklist."""
+
+    out = dict(PHASE_6C5_REMOVAL_READINESS_ADR)
+    for list_key in (
+        "covered_legacy_fields",
+        "out_of_scope_fields",
+        "readiness_checklist",
+        "remaining_blockers",
+        "safe_cleanup_performed",
+        "cleanup_deliberately_not_performed",
+    ):
+        value = out.get(list_key)
+        if list_key == "readiness_checklist" and isinstance(value, list):
+            out[list_key] = [dict(row) for row in value if isinstance(row, dict)]
+        else:
+            out[list_key] = list(value) if isinstance(value, list) else []
+    return out
+
+
+def phase_6c5_readiness_summary() -> dict[str, int]:
+    """Return counts by readiness checklist status for Phase 6C-5."""
+
+    summary: dict[str, int] = {}
+    for row in PHASE_6C5_REMOVAL_READINESS_ADR["readiness_checklist"]:
+        if not isinstance(row, dict):
+            continue
+        status = str(row.get("status") or "unknown")
+        summary[status] = summary.get(status, 0) + 1
+    return dict(sorted(summary.items()))
+
+
+def phase_6c6_compatibility_shim_report() -> dict[str, object]:
+    """Return the Phase 6C-6 compatibility-shim proof report."""
+
+    out = dict(PHASE_6C6_COMPATIBILITY_SHIM_REPORT)
+    for list_key in (
+        "shim_functions",
+        "classification_updates",
+        "source_values",
+        "tests_added_or_updated",
+        "remaining_blockers",
     ):
         value = out.get(list_key)
         out[list_key] = list(value) if isinstance(value, list) else []
@@ -1721,6 +1955,37 @@ def _format_human(report: ScanReport) -> str:
     )
     out.append("  removal gate: NON-FAILING — inventory and cleanup planning only.")
     out.append("")
+    out.append("Phase 6C-5 — legacy area-field removal-readiness ADR:")
+    phase_6c5 = phase_6c5_removal_readiness_adr()
+    phase_6c5_summary = phase_6c5_readiness_summary()
+    for key in (
+        "adr",
+        "adr_status",
+        "removal_ready",
+        "next_phase",
+    ):
+        out.append(f"  {key}: {phase_6c5[key]}")
+    for status, count in phase_6c5_summary.items():
+        out.append(f"  checklist_{status}: {count}")
+    out.append("  blockers: " + "; ".join(phase_6c5["remaining_blockers"]))
+    out.append("  removal gate: BLOCKED — ADR proposed, runtime removal not approved.")
+    out.append("")
+    out.append("Phase 6C-6 — explicit legacy area compatibility shim:")
+    phase_6c6 = phase_6c6_compatibility_shim_report()
+    for key in (
+        "shim_schema_version",
+        "w5_native_no_area_dependency_proven",
+        "area_compat_shim_implemented",
+        "runtime_legacy_fields_removed",
+        "removal_ready",
+        "next_phase",
+    ):
+        out.append(f"  {key}: {phase_6c6[key]}")
+    out.append("  shim functions: " + ", ".join(phase_6c6["shim_functions"]))
+    out.append("  classifications: " + ", ".join(phase_6c6["classification_updates"]))
+    out.append("  blockers: " + "; ".join(phase_6c6["remaining_blockers"]))
+    out.append("  removal gate: BLOCKED — shim proof exists, field deletion still needs ADR acceptance.")
+    out.append("")
     out.append("This report is informational; the authoritative inventory and")
     out.append("classification live in docs/MVPs/w5_legacy_consumer_removal_inventory.md.")
     return "\n".join(out)
@@ -1770,6 +2035,9 @@ def main(argv: list[str] | None = None) -> int:
             "phase_6c4_post_authority_inventory": phase_6c4_post_authority_inventory(),
             "phase_6c4_classification_summary": phase_6c4_classification_summary(),
             "phase_6c4_cleanup_plan": phase_6c4_cleanup_plan(),
+            "phase_6c5_removal_readiness_adr": phase_6c5_removal_readiness_adr(),
+            "phase_6c5_readiness_summary": phase_6c5_readiness_summary(),
+            "phase_6c6_compatibility_shim": phase_6c6_compatibility_shim_report(),
             "findings": [f.to_dict() for f in report.findings],
         }
         print(json.dumps(payload, indent=2, sort_keys=True))

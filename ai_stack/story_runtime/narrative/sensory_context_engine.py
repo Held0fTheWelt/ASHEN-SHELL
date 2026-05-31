@@ -483,6 +483,8 @@ def _sensory_context_payload(
     w5_location_framing: dict[str, Any] | None = None,
     location_framing_authority: str | None = None,
     local_context_transition_source: str | None = None,
+    legacy_area_compat_source: str | None = None,
+    legacy_area_compat_reason: str | None = None,
 ) -> dict[str, Any]:
     layer_ids = [layer.layer_id for layer in selected_layers]
     prior_layers = _prior_layer_ids(prior_planner_truth)
@@ -539,6 +541,8 @@ def _sensory_context_payload(
             "w5_previous_location": w5_location_framing.get("previous_location"),
             "location_framing_authority": _framing_authority,
             "local_context_transition_source": _transition_source,
+            "legacy_area_compat_source": _clean_text(legacy_area_compat_source) or None,
+            "legacy_area_compat_reason": _clean_text(legacy_area_compat_reason) or None,
         }
     return out
 
@@ -658,6 +662,16 @@ def derive_sensory_context(
         ),
         local_context_transition_source=(
             effective_transition.get("local_context_transition_source")
+            if isinstance(effective_transition, dict)
+            else None
+        ),
+        legacy_area_compat_source=(
+            effective_transition.get("legacy_area_compat_source")
+            if isinstance(effective_transition, dict)
+            else None
+        ),
+        legacy_area_compat_reason=(
+            effective_transition.get("legacy_area_compat_reason")
             if isinstance(effective_transition, dict)
             else None
         ),

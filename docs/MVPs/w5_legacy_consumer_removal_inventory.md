@@ -1420,3 +1420,140 @@ and cleanup planning only. It does not remove runtime legacy fields.
 **Next removal decision:** no runtime removal is authorized by 6C-4. The next
 phase should be targeted doc/test cleanup or a removal-ADR draft only after
 fresh parity evidence proves fallback windows can close.
+
+---
+
+### Phase 6C-5 — removal-readiness ADR and targeted cleanup (Complete, 2026-05-30)
+
+**ADR:** [ADR-0071](../ADR/adr-0071-retire-legacy-narrator-consequence-area-fields-after-w5-location-framing.md)
+
+Phase 6C-5 creates the removal-readiness ADR for narrator-consequence and
+sensory-context legacy area fields. It does not remove runtime fields.
+
+**Covered legacy fields:**
+
+- `current_area`
+- `from_area`
+- `to_area`
+- legacy `local_context_transition` area fields where they are
+  compatibility/fallback values
+- `scene_changed` / `location_changed` legacy framing where
+  `w5_location_framing` already supplies authority
+
+**Out of scope:**
+
+- public `current_room/current_room_id/viewer_room_id` aliases
+- `runtime_world.current_room_id`
+- `environment_state.current_room_id`
+- `actor_locations`
+- `complete_actor_locations_for_gathering`
+- NPC context bundle fallback
+- malformed-W5 fallback
+- old-payload fallback
+- substrate consolidation
+
+**Removal-readiness checklist:**
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| W5 location framing is synthesized in graph state on default path | PASS | Phase 6C-2 graph-owned synthesis in `_resolve_player_action` |
+| Narrator consequence uses W5 when valid | PASS | Phase 6C-3 `build_local_context_transition()` authority switch |
+| Sensory context uses W5 when valid | PASS | Phase 6C-3 `_current_location_id()` W5-first resolution |
+| Malformed/missing W5 fallback remains tested | PASS | Location-framing fallback tests |
+| Old payload fallback remains tested | PASS | Old-payload path without `w5_location_framing` keeps legacy transition |
+| Parity tests prove output equivalence where W5 and legacy agree | PASS | Narrator/sensory same-location parity tests |
+| No production default path depends on legacy area fields as authority | PASS | Phase 6C-4 classifies area fields as compatibility/fallback |
+| Docs/tests no longer describe legacy fields as primary | PASS | Phase 6C-4/6C-5 doc/test cleanup |
+| Public aliases are unaffected | PASS | ADR-0069 remains owner |
+| Substrate fields are unaffected | PASS | Substrate fields remain future-ADR surfaces |
+| Downstream consumers can run without area-field presence except via explicit shim | BLOCKED | Transition compatibility fields still feed consequence realization, sensory layers, carried local context, and old-payload fallback |
+| Removal rollback plan is implemented and test-backed | BLOCKED | ADR-0071 defines rollback shape; no removal-phase shim test exists yet |
+
+**Result:** `removal_ready=false`.
+
+**Remaining blockers:**
+
+- Compatibility field presence is still required by downstream transition
+  consumers.
+- Malformed-W5 and old-payload fallback windows remain active.
+- No removal-phase compatibility shim has been implemented or tested.
+- No production-like runtime trace proves zero dependency on area-field
+  presence.
+
+**Targeted cleanup performed:**
+
+- Created Proposed ADR-0071.
+- Added Phase 6C-5 removal-readiness checklist to inventory JSON and human
+  output.
+- Updated docs/tests to state that `current_area/from_area/to_area` are
+  fallback/compatibility fields, not authority.
+
+**Cleanup deliberately not performed:**
+
+- No `current_area/from_area/to_area` runtime field removal.
+- No malformed-W5 or old-payload fallback removal.
+- No public alias or substrate field removal.
+- No committed output or committed event mutation.
+
+**Next removal decision:** actual area-field removal is not safe to begin.
+Phase 6C-6 should either prove a compatibility shim that makes area-field
+presence optional for W5-native consumers, or gather production-like dependency
+evidence before a removal phase.
+
+---
+
+### Phase 6C-6 — explicit legacy area compatibility shim (Complete, 2026-05-31)
+
+Phase 6C-6 implements the compatibility shim required by ADR-0071. It does not
+remove runtime fields.
+
+**Shim APIs:**
+
+- `w5_location_framing_to_legacy_area_fields()`
+- `build_legacy_area_compat_from_w5_location_framing()`
+- `ensure_legacy_area_fields_for_compat()`
+
+**Source labels:**
+
+- `w5_location_framing` — valid W5 framing derived the compatibility fields.
+- `legacy_fallback` — W5 was missing or incomplete and legacy values were kept.
+- `malformed_w5_fallback` — malformed W5 was ignored and legacy values were kept.
+- `old_payload_fallback` — no W5 framing field existed on the payload.
+
+**Updated classifications:**
+
+| Classification | Meaning |
+|---|---|
+| `w5_native_no_area_dependency` | W5-native narrator/sensory path can operate without direct `current_area/from_area/to_area` input |
+| `area_compat_shim` | Legacy fields are emitted through the named compatibility shim |
+| `legacy_fallback_keep` | Legacy values remain fallback for missing/incomplete W5 |
+| `malformed_w5_safety_keep` | Malformed-W5 safety path is retained |
+| `old_payload_compat_keep` | Old payloads without `w5_location_framing` remain supported |
+| `removal_candidate_needs_final_adr` | Candidate for a future accepted removal phase, not for this phase |
+| `public_alias_keep` | Public room aliases remain ADR-0069-owned |
+| `substrate_keep_future_adr` | Substrate fields remain future-ADR surfaces |
+
+**Readiness checklist update:**
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Downstream narrator/sensory consumers can run without area-field presence except through explicit shim | PASS | Phase 6C-6 W5-native tests run without direct area fields |
+| Removal rollback plan is implemented and test-backed | PASS | `ensure_legacy_area_fields_for_compat()` is non-mutating and test-backed |
+| ADR-0071 is accepted for actual runtime field removal | BLOCKED | ADR-0071 remains Proposed |
+| Production-like downstream trace proves zero unsupported area-field dependency | BLOCKED | Static/unit proof exists; final trace evidence is still pending |
+
+**Still not removed:**
+
+- `current_area`
+- `from_area`
+- `to_area`
+- public `current_room/current_room_id/viewer_room_id` aliases
+- substrate fields
+- actor-location substrate
+- malformed-W5 fallback
+- old-payload fallback
+- NPC context fallback
+
+**Result:** `removal_ready=false`. The shim makes actual removal closer, but a
+future accepted phase must still prove production-like dependency readiness
+before deleting runtime fields.

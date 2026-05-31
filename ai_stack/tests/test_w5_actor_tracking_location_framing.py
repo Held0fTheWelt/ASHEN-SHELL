@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ai_stack.actor_tracking import (
+    LEGACY_AREA_COMPAT_SCHEMA_VERSION,
     W5_LOCATION_FRAMING_SCHEMA_VERSION,
     W5ActorSituation,
     W5ActorType,
@@ -18,8 +19,10 @@ from ai_stack.actor_tracking import (
     W5Source,
     W5TruthLevel,
     W5VisibilityScope,
+    ensure_legacy_area_fields_for_compat,
     build_w5_location_framing,
     location_framing_to_local_context_transition,
+    w5_location_framing_to_legacy_area_fields,
 )
 from ai_stack.contracts.narrator_consequence_contracts import (
     build_local_context_transition,
@@ -347,6 +350,137 @@ def test_source_and_truth_attribution_are_preserved() -> None:
     assert framing["truth_attribution"]["where_summary.location_changed"] == "observed"
 
 
+def test_phase_6c6_compat_shim_derives_legacy_area_fields_from_valid_w5() -> None:
+    framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
+    compat = w5_location_framing_to_legacy_area_fields(
+        framing,
+        legacy_fields={"current_area": "legacy_salon", "to_area": "legacy_hall"},
+    )
+
+    assert compat["schema_version"] == LEGACY_AREA_COMPAT_SCHEMA_VERSION
+    assert compat["legacy_area_compat_source"] == "w5_location_framing"
+    assert compat["current_area"] == "kitchen"
+    assert compat["from_area"] == "salon"
+    assert compat["to_area"] == "kitchen"
+    assert compat["location_changed"] is True
+    assert compat["location_framing_authority"] == "w5"
+    assert compat["local_context_transition_source"] == "w5_location_framing"
+    assert compat["has_how"] is True
+    assert compat["has_inferred_why"] is True
+
+
+def test_phase_6c6_compat_shim_preserves_legacy_fields_when_w5_missing() -> None:
+    compat = w5_location_framing_to_legacy_area_fields(
+        None,
+        legacy_fields={
+            "current_area": "salon",
+            "from_area": "hallway",
+            "to_area": "kitchen",
+            "location_changed": True,
+        },
+    )
+
+    assert compat["legacy_area_compat_source"] == "old_payload_fallback"
+    assert compat["legacy_area_compat_reason"] == "old_payload_without_w5_location_framing"
+    assert compat["current_area"] == "salon"
+    assert compat["from_area"] == "hallway"
+    assert compat["to_area"] == "kitchen"
+    assert compat["location_framing_authority"] == "legacy_fallback"
+    assert compat["local_context_transition_source"] == "legacy"
+
+
+def test_phase_6c6_compat_shim_preserves_legacy_fields_when_w5_malformed() -> None:
+    framing = build_w5_location_framing(
+        {"target_consumer": "narrator", "schema_version": "invalid"},
+        legacy_fallback={"current_area": "kitchen", "from_area": "salon", "to_area": "kitchen"},
+    )
+    compat = w5_location_framing_to_legacy_area_fields(
+        framing,
+        legacy_fields={"current_area": "salon", "from_area": "salon", "to_area": "hallway"},
+    )
+
+    assert compat["legacy_area_compat_source"] == "malformed_w5_fallback"
+    assert compat["legacy_area_compat_reason"] == "malformed_w5"
+    assert compat["current_area"] == "salon"
+    assert compat["from_area"] == "salon"
+    assert compat["to_area"] == "hallway"
+    assert compat["location_framing_authority"] == "legacy_fallback"
+
+
+def test_phase_6c6_w5_native_transition_operates_without_direct_area_input() -> None:
+    framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
+    transition = build_local_context_transition(
+        player_action_frame={"action_kind": "posture_change"},
+        affordance_resolution={"affordance_status": "allowed"},
+        scene_affordance_model={"scene_affordances": {"locations": []}},
+        current_player_local_context={},
+        w5_location_framing=framing,
+    )
+
+    assert transition["from_area"] == "salon"
+    assert transition["to_area"] == "kitchen"
+    assert transition["current_area"] == "kitchen"
+    assert transition["legacy_area_compat_source"] == "w5_location_framing"
+    assert transition["location_framing_authority"] == "w5"
+    assert transition["local_context_transition_source"] == "w5_location_framing"
+    assert transition["w5_location_framing"]["legacy_area_compat_source"] == "w5_location_framing"
+
+
+def test_phase_6c6_ensure_legacy_area_fields_is_non_mutating_rollback_shim() -> None:
+    framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
+    payload = {"transition_type": "movement", "current_area": "legacy_salon"}
+    shimmed = ensure_legacy_area_fields_for_compat(payload, w5_location_framing=framing)
+
+    assert payload == {"transition_type": "movement", "current_area": "legacy_salon"}
+    assert shimmed["current_area"] == "kitchen"
+    assert shimmed["from_area"] == "salon"
+    assert shimmed["to_area"] == "kitchen"
+    assert shimmed["legacy_area_compat_source"] == "w5_location_framing"
+
+
+def test_phase_6c6_removing_direct_area_fields_from_w5_native_fixture_preserves_sensory_output() -> None:
+    scene_affordances = {
+        "scene_affordances": {
+            "locations": [
+                {"id": "salon", "entry_sensory_detail": {"en": "The salon air is tense."}},
+                {"id": "kitchen", "entry_sensory_detail": {"en": "The kitchen tiles feel cold."}},
+            ],
+        }
+    }
+    policy = {
+        "runtime_governance_policy": {
+            "sensory_context": {
+                "enabled": True,
+                "min_layers_per_turn": 1,
+                "max_layers_per_turn": 3,
+                "require_structured_events": True,
+            },
+        },
+    }
+    framing = build_w5_location_framing(_projection(current="kitchen", previous="salon", changed=True))
+    with_legacy_area_fields = derive_sensory_context(
+        scene_plan_record={"selected_scene_function": "establish_pressure"},
+        local_context_transition={"current_area": "salon", "to_area": "salon"},
+        scene_affordances=scene_affordances,
+        module_runtime_policy=policy,
+        session_output_language="en",
+        w5_location_framing=framing,
+    )
+    without_legacy_area_fields = derive_sensory_context(
+        scene_plan_record={"selected_scene_function": "establish_pressure"},
+        local_context_transition={},
+        scene_affordances=scene_affordances,
+        module_runtime_policy=policy,
+        session_output_language="en",
+        w5_location_framing=framing,
+    )
+
+    assert without_legacy_area_fields["target"]["location_id"] == "kitchen"
+    assert without_legacy_area_fields["target"]["location_id"] == with_legacy_area_fields["target"]["location_id"]
+    assert without_legacy_area_fields["target"]["selected_layers"] == with_legacy_area_fields["target"]["selected_layers"]
+    assert without_legacy_area_fields["w5_location_framing_diagnostics"]["legacy_area_compat_source"] == "w5_location_framing"
+
+
 def test_phase_6c4_no_raw_w5_history_emitted_in_authority_diagnostics() -> None:
     payload = _projection(current="kitchen", previous="salon", changed=True).to_dict()
     payload["w5_history"] = [{"private_npc_fact": "do not leak"}]
@@ -386,6 +520,7 @@ def test_phase_6c4_no_raw_w5_history_emitted_in_authority_diagnostics() -> None:
         transition["w5_location_framing"],
         plan["w5_location_framing"],
         sensory["w5_location_framing_diagnostics"],
+        w5_location_framing_to_legacy_area_fields(framing),
     ):
         assert "w5_history" not in emitted
         assert "private_npc_fact" not in str(emitted)
@@ -701,6 +836,7 @@ def test_graph_runtime_synthesizes_w5_location_framing_in_action_resolution_comm
     assert diagnostics["w5_current_location"] == "salon"
     assert diagnostics["location_framing_authority"] == "w5"
     assert diagnostics["local_context_transition_source"] == "w5_location_framing"
+    assert diagnostics["legacy_area_compat_source"] == "w5_location_framing"
     assert transition["w5_location_framing"]["w5_location_framing_source"] == "w5_projection"
     assert consequence["w5_location_framing"]["w5_location_framing_source"] == "w5_projection"
     assert "committed_result" not in update
@@ -745,6 +881,7 @@ def test_graph_runtime_missing_w5_keeps_legacy_location_fallback() -> None:
     assert diagnostics["w5_location_framing_fallback_reason"] == "missing_w5"
     assert diagnostics["location_framing_authority"] == "legacy_fallback"
     assert diagnostics["local_context_transition_source"] == "legacy"
+    assert diagnostics["legacy_area_compat_source"] == "legacy_fallback"
     assert update["local_context_transition"]["current_area"] == "salon"
 
 

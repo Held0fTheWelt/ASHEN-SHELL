@@ -1353,6 +1353,75 @@ substrate fallback paths.
 
 ---
 
+### Phase 6C-5 — legacy area-field removal-readiness ADR (complete, 2026-05-30)
+
+**ADR:** ADR-0071 (Proposed)
+
+**Goal:** define exact readiness conditions for retiring narrator-consequence
+and sensory-context `current_area/from_area/to_area` compatibility fields without
+removing those fields in this phase.
+
+- [x] Created ADR-0071:
+  `Retire Legacy Narrator Consequence Area Fields After W5 Location Framing`.
+- [x] Confirmed W5 location framing remains authority for valid default-path
+  narrator-consequence and sensory-context location decisions.
+- [x] Defined covered fields:
+  `current_area`, `from_area`, `to_area`, legacy local-context transition area
+  fields, and legacy `scene_changed/location_changed` framing where W5 already
+  supplies authority.
+- [x] Explicitly kept public aliases, runtime/world/environment substrate
+  fields, `actor_locations`, `complete_actor_locations_for_gathering`,
+  malformed-W5 fallback, old-payload fallback, and NPC context fallback out of
+  scope.
+- [x] Added a removal-readiness checklist to the inventory report.
+- [x] Removal readiness remains blocked: compatibility field presence is still
+  required by downstream transition consumers, malformed-W5 and old-payload
+  fallback windows are active, and no removal-phase compatibility shim has been
+  implemented.
+- [x] No runtime field removal, fallback removal, committed event mutation, or
+  committed output change.
+
+**Next phase:** Phase 6C-6 should either build a compatibility-shim proof that
+makes `current_area/from_area/to_area` presence optional for W5-native consumers
+or gather production-like dependency evidence. Actual removal is not safe yet.
+
+---
+
+### Phase 6C-6 — explicit legacy area compatibility shim (complete, 2026-05-31)
+
+**Goal:** isolate legacy narrator/sensory area-field presence behind a named
+compatibility shim while W5-native consumers read `w5_location_framing`
+directly.
+
+- [x] Added the compatibility shim APIs in `ai_stack.actor_tracking`:
+  `w5_location_framing_to_legacy_area_fields()`,
+  `build_legacy_area_compat_from_w5_location_framing()`, and
+  `ensure_legacy_area_fields_for_compat()`.
+- [x] The shim derives `current_area/from_area/to_area` from valid
+  `w5_location_framing.v1` and marks `legacy_area_compat_source` as
+  `w5_location_framing`.
+- [x] Missing, malformed, incomplete, and old-payload cases preserve legacy
+  values and report `legacy_fallback`, `malformed_w5_fallback`, or
+  `old_payload_fallback`.
+- [x] Narrator-consequence and sensory-context diagnostics now expose the
+  compatibility source alongside `location_framing_authority` and
+  `local_context_transition_source`.
+- [x] Added parity tests proving W5-native fixtures operate without direct
+  `current_area/from_area/to_area` input and that the shim is non-mutating.
+- [x] No runtime field removal, public alias removal, substrate removal,
+  fallback removal, committed event mutation, or committed output change.
+
+**Readiness update:** the compatibility-shim blocker in ADR-0071 is cleared,
+but `removal_ready=false` remains. Actual `current_area/from_area/to_area`
+removal still requires ADR-0071 acceptance and production-like downstream
+dependency evidence.
+
+**Next phase:** Phase 6C-7 should run a final removal-readiness audit and decide
+whether an accepted removal phase can be opened. Until then, keep the runtime
+fields and all fallback windows.
+
+---
+
 ### Phase 6B — Legacy localization decommission (planned)
 
 - Once all consumers read W5 projections, remove legacy localization / actor-location helpers that bypass W5.

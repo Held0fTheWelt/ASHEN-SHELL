@@ -51,10 +51,14 @@ from ai_stack.actor_tracking.public_alias_telemetry import (
     w5_player_view_has_location_authority,
 )
 from ai_stack.actor_tracking.location_framing import (
+    LEGACY_AREA_COMPAT_SCHEMA_VERSION,
     W5_LOCATION_FRAMING_SCHEMA_VERSION,
+    build_legacy_area_compat_from_w5_location_framing,
     build_w5_location_framing,
+    ensure_legacy_area_fields_for_compat,
     location_framing_is_valid_w5,
     location_framing_to_local_context_transition,
+    w5_location_framing_to_legacy_area_fields,
 )
 from ai_stack.actor_tracking.validation import (
     W5_VALIDATION_SCHEMA_VERSION,
@@ -86,6 +90,7 @@ __all__ = [
     "W5_RUNTIME_METADATA_SCHEMA_VERSION",
     "W5_VALIDATION_SCHEMA_VERSION",
     "W5_LOCATION_FRAMING_SCHEMA_VERSION",
+    "LEGACY_AREA_COMPAT_SCHEMA_VERSION",
     "W5ActionState",
     "W5ActorSituation",
     "W5ActorType",
@@ -104,6 +109,7 @@ __all__ = [
     "W5VisibilityScope",
     "PUBLIC_ROOM_ALIASES",
     "build_deprecated_public_room_alias_usage",
+    "build_legacy_area_compat_from_w5_location_framing",
     "build_w5_location_framing",
     "build_w5_projection_for_director",
     "build_w5_projection_for_narrator",
@@ -120,8 +126,10 @@ __all__ = [
     "build_w5_runtime_metadata",
     "coerce_w5_snapshot",
     "extract_w5_snapshot_from_committed_event",
+    "ensure_legacy_area_fields_for_compat",
     "location_framing_is_valid_w5",
     "location_framing_to_local_context_transition",
+    "w5_location_framing_to_legacy_area_fields",
     "validate_w5_actor_tracking",
     "w5_ast_validation_enabled",
     "w5_player_view_has_location_authority",

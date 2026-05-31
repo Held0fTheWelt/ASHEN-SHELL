@@ -80,6 +80,8 @@ For the **record shape** (optional sections, testing expectations), see [`adr-te
 | [ADR-0067](adr-0067-deprecate-narrator-strict-off-transition-rollback.md) | Deprecate narrator strict-off transition rollback surface | Accepted |
 | [ADR-0068](adr-0068-remove-narrator-strict-off-transition-rollback.md) | Remove narrator strict-off transition rollback surface | Accepted |
 | [ADR-0069](adr-0069-w5-player-view-replaces-current-room-aliases.md) | W5 player view replaces public current_room compatibility aliases | Accepted |
+| [ADR-0070](adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md) | W5 Actor Tracking Replaces Narrator Consequence Location Framing | Accepted |
+| [ADR-0071](adr-0071-retire-legacy-narrator-consequence-area-fields-after-w5-location-framing.md) | Retire Legacy Narrator Consequence Area Fields After W5 Location Framing | Proposed |
 
 _Status values mirror each file's `## Status` line; update the table when an ADR's status changes._
 

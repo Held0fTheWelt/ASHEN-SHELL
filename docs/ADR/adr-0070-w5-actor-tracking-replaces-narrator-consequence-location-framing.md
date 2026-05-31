@@ -312,6 +312,10 @@ blocked by fallback and compatibility windows:
   sensory-context, public-client, old-payload, or malformed-W5 path depends on
   the compatibility fields.
 
+ADR-0071 owns the removal-readiness decision for these compatibility fields.
+ADR-0070 remains the W5-first authority decision; ADR-0071 defines when, and
+only when, `current_area/from_area/to_area` runtime dependencies may be retired.
+
 ## Rejected Alternatives
 
 1. **Remove `from_area/to_area/current_area` immediately.**

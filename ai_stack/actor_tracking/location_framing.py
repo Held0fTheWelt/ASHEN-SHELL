@@ -19,6 +19,7 @@ from ai_stack.actor_tracking.projection import build_w5_projection_for_narrator
 
 
 W5_LOCATION_FRAMING_SCHEMA_VERSION = "w5_location_framing.v1"
+LEGACY_AREA_COMPAT_SCHEMA_VERSION = "legacy_area_compat.v1"
 
 _W5_PROJECTION_SOURCE = "w5_projection"
 _LEGACY_FALLBACK_SOURCE = "legacy_fallback"
@@ -28,6 +29,9 @@ _W5_AUTHORITY = "w5"
 _LEGACY_AUTHORITY = "legacy_fallback"
 _W5_TRANSITION_SOURCE = "w5_location_framing"
 _LEGACY_TRANSITION_SOURCE = "legacy"
+_W5_AREA_COMPAT_SOURCE = "w5_location_framing"
+_MALFORMED_AREA_COMPAT_SOURCE = "malformed_w5_fallback"
+_OLD_PAYLOAD_AREA_COMPAT_SOURCE = "old_payload_fallback"
 
 
 def _clean(value: Any) -> str | None:
@@ -240,6 +244,167 @@ def location_framing_is_valid_w5(framing: Mapping[str, Any] | None) -> bool:
     return frame.get("source") == _W5_PROJECTION_SOURCE and bool(_framing_location_value(frame))
 
 
+def _legacy_area_values(
+    legacy_fields: Mapping[str, Any] | None,
+) -> tuple[str | None, str | None, str | None, bool]:
+    legacy = dict(legacy_fields or {})
+    current = (
+        _clean(legacy.get("current_area"))
+        or _clean(legacy.get("current_location_id"))
+        or _clean(legacy.get("current_location"))
+        or _clean(legacy.get("to_area"))
+        or _clean(legacy.get("to_location_id"))
+        or _clean(legacy.get("to_location"))
+    )
+    previous = (
+        _clean(legacy.get("from_area"))
+        or _clean(legacy.get("from_location_id"))
+        or _clean(legacy.get("from_location"))
+        or _clean(legacy.get("previous_area"))
+        or _clean(legacy.get("previous_location_id"))
+        or _clean(legacy.get("previous_location"))
+    )
+    to_location = (
+        _clean(legacy.get("to_area"))
+        or _clean(legacy.get("to_location_id"))
+        or _clean(legacy.get("to_location"))
+        or current
+    )
+    changed = _bool_or_none(legacy.get("location_changed"))
+    if changed is None:
+        changed = _bool_or_none(legacy.get("scene_changed"))
+    if changed is None:
+        changed = bool(previous and to_location and previous != to_location)
+    return current, previous, to_location, bool(changed)
+
+
+def _compat_source_for_framing(
+    frame: Mapping[str, Any],
+    *,
+    valid_w5: bool,
+    force_legacy_fallback: bool,
+) -> tuple[str, str | None]:
+    if valid_w5 and not force_legacy_fallback:
+        return _W5_AREA_COMPAT_SOURCE, None
+    if not frame:
+        return _OLD_PAYLOAD_AREA_COMPAT_SOURCE, "old_payload_without_w5_location_framing"
+    source = str(frame.get("source") or "").strip()
+    reason = str(frame.get("fallback_reason") or "").strip() or None
+    if source == _MALFORMED_W5_SOURCE or reason == _MALFORMED_W5_SOURCE:
+        return _MALFORMED_AREA_COMPAT_SOURCE, reason or _MALFORMED_W5_SOURCE
+    return _LEGACY_FALLBACK_SOURCE, reason
+
+
+def w5_location_framing_to_legacy_area_fields(
+    framing: Mapping[str, Any] | None,
+    *,
+    legacy_fields: Mapping[str, Any] | None = None,
+    force_legacy_fallback: bool = False,
+    fallback_reason: str | None = None,
+) -> dict[str, Any]:
+    """Derive legacy area compatibility fields from W5 location framing.
+
+    W5-native consumers should read ``w5_location_framing`` directly. This shim
+    exists only for legacy consumers that still require ``current_area``,
+    ``from_area``, or ``to_area`` while the removal-readiness window is open.
+    """
+
+    frame = dict(framing or {})
+    valid_w5 = location_framing_is_valid_w5(frame)
+    source, source_reason = _compat_source_for_framing(
+        frame,
+        valid_w5=valid_w5,
+        force_legacy_fallback=force_legacy_fallback,
+    )
+    reason = fallback_reason or source_reason
+
+    if source == _W5_AREA_COMPAT_SOURCE:
+        current = _clean(frame.get("current_location")) or _clean(frame.get("scene_location"))
+        previous = _clean(frame.get("previous_location")) or _clean(frame.get("from_location"))
+        to_location = _clean(frame.get("to_location")) or current
+        changed = bool(frame.get("location_changed") or frame.get("scene_changed"))
+    else:
+        current, previous, to_location, changed = _legacy_area_values(legacy_fields)
+        if not (current or previous or to_location):
+            current, previous, to_location, changed = _legacy_area_values(frame)
+
+    authority = _W5_AUTHORITY if source == _W5_AREA_COMPAT_SOURCE else _LEGACY_AUTHORITY
+    transition_source = _W5_TRANSITION_SOURCE if authority == _W5_AUTHORITY else _LEGACY_TRANSITION_SOURCE
+    failed = frame.get("source") in {_MISSING_W5_SOURCE, _MALFORMED_W5_SOURCE} or frame.get(
+        "fallback_reason"
+    ) in {_MISSING_W5_SOURCE, _MALFORMED_W5_SOURCE}
+    return {
+        "schema_version": LEGACY_AREA_COMPAT_SCHEMA_VERSION,
+        "source": source,
+        "legacy_area_compat_source": source,
+        "legacy_area_compat_reason": reason,
+        "current_area": current,
+        "from_area": previous,
+        "to_area": to_location,
+        "current_location_id": current,
+        "from_location_id": previous,
+        "to_location_id": to_location,
+        "location_changed": bool(changed),
+        "scene_changed": bool(changed),
+        "location_framing_authority": authority,
+        "local_context_transition_source": transition_source,
+        "w5_location_framing_used": source == _W5_AREA_COMPAT_SOURCE,
+        "w5_location_framing_failed": failed,
+        "w5_location_framing_source": frame.get("source"),
+        "w5_location_framing_fallback_reason": frame.get("fallback_reason"),
+        "w5_location_changed": bool(changed),
+        "w5_current_location": current,
+        "w5_previous_location": previous,
+        "has_how": bool(frame.get("has_how")),
+        "has_inferred_why": bool(frame.get("has_inferred_why")),
+    }
+
+
+def build_legacy_area_compat_from_w5_location_framing(
+    framing: Mapping[str, Any] | None,
+    *,
+    legacy_fields: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Named rollback shim for ADR-0071 removal-readiness checks."""
+
+    return w5_location_framing_to_legacy_area_fields(
+        framing,
+        legacy_fields=legacy_fields,
+    )
+
+
+def ensure_legacy_area_fields_for_compat(
+    payload: Mapping[str, Any] | None,
+    *,
+    w5_location_framing: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return ``payload`` with legacy area fields supplied by the compat shim."""
+
+    out = dict(payload or {})
+    compat = w5_location_framing_to_legacy_area_fields(
+        w5_location_framing,
+        legacy_fields=out,
+    )
+    for key in (
+        "current_area",
+        "from_area",
+        "to_area",
+        "current_location_id",
+        "from_location_id",
+        "to_location_id",
+        "location_changed",
+        "scene_changed",
+    ):
+        value = compat.get(key)
+        if value is not None:
+            out[key] = value
+    out["legacy_area_compat_source"] = compat["legacy_area_compat_source"]
+    out["legacy_area_compat_reason"] = compat["legacy_area_compat_reason"]
+    out["location_framing_authority"] = compat["location_framing_authority"]
+    out["local_context_transition_source"] = compat["local_context_transition_source"]
+    return out
+
+
 def build_w5_location_framing(
     w5_value: W5Projection | W5Snapshot | Mapping[str, Any] | None,
     *,
@@ -386,6 +551,16 @@ def location_framing_to_local_context_transition(
     if authority == _LEGACY_AUTHORITY and legacy_current:
         current = legacy_current
 
+    compat = w5_location_framing_to_legacy_area_fields(
+        frame,
+        legacy_fields=out,
+        force_legacy_fallback=authority == _LEGACY_AUTHORITY,
+        fallback_reason="w5_unsuitable_for_transition_decision" if w5_unsuitable else None,
+    )
+    from_location = _clean(compat.get("from_area")) or from_location
+    to_location = _clean(compat.get("to_area")) or to_location
+    current = _clean(compat.get("current_area")) or current
+
     if from_location:
         out["from_location_id"] = from_location
         out["from_area"] = from_location
@@ -405,6 +580,8 @@ def location_framing_to_local_context_transition(
     out["scene_changed"] = effective_changed
     out["location_framing_authority"] = authority
     out["local_context_transition_source"] = transition_source
+    out["legacy_area_compat_source"] = compat["legacy_area_compat_source"]
+    out["legacy_area_compat_reason"] = compat["legacy_area_compat_reason"]
     failed = frame.get("source") in {_MISSING_W5_SOURCE, _MALFORMED_W5_SOURCE} or frame.get(
         "fallback_reason"
     ) in {_MISSING_W5_SOURCE, _MALFORMED_W5_SOURCE}
@@ -421,6 +598,8 @@ def location_framing_to_local_context_transition(
         "w5_previous_location": previous,
         "location_framing_authority": authority,
         "local_context_transition_source": transition_source,
+        "legacy_area_compat_source": compat["legacy_area_compat_source"],
+        "legacy_area_compat_reason": compat["legacy_area_compat_reason"],
         "has_how": bool(frame.get("has_how")),
         "has_inferred_why": bool(frame.get("has_inferred_why")),
     }
@@ -428,8 +607,12 @@ def location_framing_to_local_context_transition(
 
 
 __all__ = [
+    "LEGACY_AREA_COMPAT_SCHEMA_VERSION",
     "W5_LOCATION_FRAMING_SCHEMA_VERSION",
+    "build_legacy_area_compat_from_w5_location_framing",
     "build_w5_location_framing",
+    "ensure_legacy_area_fields_for_compat",
     "location_framing_is_valid_w5",
     "location_framing_to_local_context_transition",
+    "w5_location_framing_to_legacy_area_fields",
 ]

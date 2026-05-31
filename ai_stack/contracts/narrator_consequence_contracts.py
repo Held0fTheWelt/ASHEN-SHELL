@@ -348,6 +348,8 @@ def build_narrator_consequence_plan(
             "w5_previous_location": w5_location_framing.get("previous_location"),
             "location_framing_authority": _framing_authority,
             "local_context_transition_source": _transition_source,
+            "legacy_area_compat_source": local_context_transition.get("legacy_area_compat_source"),
+            "legacy_area_compat_reason": local_context_transition.get("legacy_area_compat_reason"),
         }
     return out
 

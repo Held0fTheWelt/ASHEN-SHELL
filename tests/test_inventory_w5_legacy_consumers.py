@@ -650,6 +650,111 @@ def test_phase_6c4_inventory_and_cleanup_plan_are_in_json_output(inventory_modul
     )
 
 
+def test_phase_6c5_removal_readiness_adr_blocks_runtime_field_removal(inventory_module) -> None:
+    report = inventory_module.phase_6c5_removal_readiness_adr()
+    summary = inventory_module.phase_6c5_readiness_summary()
+
+    assert report["phase"] == "6C-5"
+    assert report["adr"] == "ADR-0071"
+    assert report["adr_status"] == "Proposed"
+    assert report["removal_ready"] is False
+    assert "current_area" in report["covered_legacy_fields"]
+    assert "from_area" in report["covered_legacy_fields"]
+    assert "to_area" in report["covered_legacy_fields"]
+    assert "public current_room/current_room_id/viewer_room_id aliases" in report[
+        "out_of_scope_fields"
+    ]
+    assert "actor_locations" in report["out_of_scope_fields"]
+    assert summary["pass"] >= 10
+    assert summary["blocked"] >= 2
+    assert "No current_area/from_area/to_area runtime field removal." in report[
+        "cleanup_deliberately_not_performed"
+    ]
+
+
+def test_phase_6c5_removal_readiness_adr_is_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    report = payload["phase_6c5_removal_readiness_adr"]
+    assert report["phase"] == "6C-5"
+    assert report["removal_ready"] is False
+    assert payload["phase_6c5_readiness_summary"]["blocked"] >= 2
+    assert any(
+        row["status"] == "blocked"
+        for row in report["readiness_checklist"]
+    )
+
+
+def test_phase_6c6_compatibility_shim_report_marks_shim_implemented(inventory_module) -> None:
+    report = inventory_module.phase_6c6_compatibility_shim_report()
+    readiness = inventory_module.phase_6c5_removal_readiness_adr()
+    checklist = {row["criterion"]: row for row in readiness["readiness_checklist"]}
+
+    assert report["phase"] == "6C-6"
+    assert report["shim_schema_version"] == "legacy_area_compat.v1"
+    assert "w5_location_framing_to_legacy_area_fields" in report["shim_functions"]
+    assert "ensure_legacy_area_fields_for_compat" in report["shim_functions"]
+    assert "w5_native_no_area_dependency" in report["classification_updates"]
+    assert "area_compat_shim" in report["classification_updates"]
+    assert report["w5_native_no_area_dependency_proven"] is True
+    assert report["area_compat_shim_implemented"] is True
+    assert report["runtime_legacy_fields_removed"] is False
+    assert report["removal_ready"] is False
+    assert checklist[
+        "downstream narrator/sensory consumers can run without area-field presence "
+        "except through an explicit compatibility shim."
+    ]["status"] == "pass"
+    assert checklist["removal rollback plan exists and is test-backed."]["status"] == "pass"
+    assert any(row["status"] == "blocked" for row in readiness["readiness_checklist"])
+
+
+def test_phase_6c6_compatibility_shim_report_is_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    report = payload["phase_6c6_compatibility_shim"]
+    assert report["phase"] == "6C-6"
+    assert report["removal_ready"] is False
+    assert "malformed_w5_fallback" in report["source_values"]
+    assert "old_payload_fallback" in report["source_values"]
+
+
+def test_adr_0071_exists_and_keeps_removal_proposed() -> None:
+    adr_path = (
+        REPO_ROOT
+        / "docs"
+        / "ADR"
+        / "adr-0071-retire-legacy-narrator-consequence-area-fields-after-w5-location-framing.md"
+    )
+    assert adr_path.is_file()
+    text = adr_path.read_text(encoding="utf-8")
+    for phrase in (
+        "ADR-0071",
+        "status: Proposed",
+        "Removal is not approved yet.",
+        "current_area",
+        "from_area",
+        "to_area",
+        "public `current_room`, `current_room_id`, or `viewer_room_id` aliases",
+        "malformed-W5 fallback",
+        "old-payload fallback",
+        "compatibility shim",
+        "w5_location_framing_to_legacy_area_fields",
+        "How remains first-class",
+        "inferred Why remains soft truth",
+    ):
+        assert phrase in text
+
+
 def test_phase_6c0_adr_exists_and_records_decision() -> None:
     adr_path = (
         REPO_ROOT
