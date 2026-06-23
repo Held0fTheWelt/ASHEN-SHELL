@@ -628,7 +628,7 @@ def _storage_encryption_governance(settings: dict[str, Any]) -> dict[str, Any]:
         "status": status,
         "editable_from_admin": True,
         "evidence_doc": "docs/security/AT_REST_ENCRYPTION.md",
-        "adr": "docs/ADR/adr-0051-storage-layer-encryption-governance.md",
+        "adr": "docs/architecture/project/project/security-governance/architecture.md#d2-storage-encryption-governance",
         "api_endpoint": "/api/v1/admin/security/governance",
         "diagnosis_check": "storage_layer_encryption",
         "evidence_fields": [

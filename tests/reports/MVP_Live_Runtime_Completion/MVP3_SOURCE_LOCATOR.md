@@ -43,10 +43,10 @@
 | LDSS gate tests | `tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py` | `tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py` | 26 gate test functions | found | Start scene, response packaging, NPC agency, narrator validation |
 | integration tests | `world-engine/tests/test_mvp3_ldss_integration.py` | `world-engine/tests/test_mvp3_ldss_integration.py` | 6 integration test functions | found | Execute_turn live path through HTTP endpoint |
 | **Required ADRs** |
-| ADR-007 | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-007-minimum-agency-baseline-superseded.md` | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-007-minimum-agency-baseline-superseded.md` | Status: Accepted | found | Prior minimum agency superseded by LDSS gates |
-| ADR-011 | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-011-live-dramatic-scene-simulator.md` | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-011-live-dramatic-scene-simulator.md` | Status: Accepted | found | LDSS contract and live-path invocation |
-| ADR-012 | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-012-npc-free-dramatic-agency.md` | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-012-npc-free-dramatic-agency.md` | Status: Accepted | found | NPC autonomy, NPC-to-NPC dialogue, passivity guard |
-| ADR-013 | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-013-narrator-inner-voice-contract.md` | `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-013-narrator-inner-voice-contract.md` | Status: Accepted | found | Narrator as perception/orientation voice, not summary |
+| ADR-007 | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | Status: Accepted | found | Prior minimum agency superseded by LDSS gates |
+| ADR-011 | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | Status: Accepted | found | LDSS contract and live-path invocation |
+| ADR-012 | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | Status: Accepted | found | NPC autonomy, NPC-to-NPC dialogue, passivity guard |
+| ADR-013 | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` | Status: Accepted | found | Narrator as perception/orientation voice, not summary |
 
 ## Concrete Source Anchors for Each Patch
 

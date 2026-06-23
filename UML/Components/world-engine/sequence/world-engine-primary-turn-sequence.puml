@@ -1,0 +1,14 @@
+@startuml world-engine-primary-turn
+title Primary story turn
+actor Player
+participant backend
+participant "world-engine" as WE
+participant "ai_stack" as AI
+Player -> backend : input
+backend -> WE : execute turn
+WE -> AI : graph invoke
+AI --> WE : proposal
+WE -> WE : validate + commit
+WE --> backend : blocks + diagnostics
+backend --> Player : render
+@enduml

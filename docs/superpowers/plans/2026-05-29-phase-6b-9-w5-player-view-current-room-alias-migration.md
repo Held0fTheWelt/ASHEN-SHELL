@@ -42,7 +42,7 @@ All findings confirmed by reading actual source files.
 ## File Map
 
 **Create:**
-- `docs/ADR/adr-0069-w5-player-view-replaces-current-room-aliases.md` — primary ADR
+- `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` — primary ADR
 
 **Modify:**
 - `backend/app/runtime/models.py:146,149` — add compat alias comments to `RuntimeSnapshot`
@@ -57,7 +57,7 @@ All findings confirmed by reading actual source files.
 ## Task 1: Create ADR-0069
 
 **Files:**
-- Create: `docs/ADR/adr-0069-w5-player-view-replaces-current-room-aliases.md`
+- Create: `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`
 
 - [ ] **Step 1: Write the ADR**
 
@@ -335,7 +335,7 @@ These diagnostics let engineers confirm W5 is active and detect divergence.
 
 ## Acceptance Criteria
 
-- [ ] ADR-0069 exists as `docs/ADR/adr-0069-w5-player-view-replaces-current-room-aliases.md`
+- [ ] ADR-0069 exists as `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`
 - [ ] `RuntimeSnapshot.viewer_room_id` and `.current_room` carry compatibility alias comments in both model files
 - [ ] `world-engine/app/web/static/app.js` `currentRoom()` is W5-first with legacy fallback
 - [ ] Inventory scanner declares `viewer_room_id` and `w5_player_view` surfaces with Phase 6B-9 classification
@@ -383,7 +383,7 @@ model layer. Compatibility alias removal is cleaner via Phase 6B-11 direct field
 - [ ] **Step 2: Verify file was created**
 
 ```bash
-ls -la docs/ADR/adr-0069-w5-player-view-replaces-current-room-aliases.md
+ls -la docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view
 ```
 Expected: file exists, >4000 bytes
 
@@ -396,7 +396,7 @@ echo "ADR created"
 - [ ] **Step 4: Commit**
 
 ```bash
-git add docs/ADR/adr-0069-w5-player-view-replaces-current-room-aliases.md
+git add docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view
 git commit -m "doc(adr): ADR-0069 W5 player view replaces current_room aliases — Proposed"
 ```
 

@@ -52,8 +52,8 @@ High-level **operator and governance** view. Deep audits and code references liv
 - `docs/security/README.md`
 - `docs/security/AT_REST_ENCRYPTION.md`
 - `docs/admin/security-governance.md`
-- `docs/ADR/adr-0051-storage-layer-encryption-governance.md`
-- `docs/ADR/adr-0050-security-governance-browser-mutation-boundaries.md`
+- `docs/architecture/project/project/security-governance/architecture.md#d2-storage-encryption-governance`
+- `docs/architecture/project/project/security-governance/architecture.md#d1-browser-mutation-boundaries`
 - `docs/security/PROVIDER_CREDENTIAL_GOVERNANCE.md`
 - `docs/security/AUDIT_REPORT.md`
 - [Operations runbook](operations-runbook.md)

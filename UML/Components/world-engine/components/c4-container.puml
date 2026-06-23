@@ -1,0 +1,20 @@
+@startuml world-engine-c4-container
+title world-engine — Containers
+package "world-engine" {
+  [HTTP API] as http
+  [WebSocket API] as ws
+  [StoryRuntimeManager] as srm
+  [RuntimeManager] as rm
+  [TicketManager] as tickets
+}
+cloud "ai_stack" as ai
+database "JSON stores" as disk
+http --> srm
+ws --> rm
+ws --> srm
+srm --> ai
+srm --> disk
+rm --> disk
+http --> tickets
+ws --> tickets
+@enduml

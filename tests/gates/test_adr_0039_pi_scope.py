@@ -141,9 +141,8 @@ def test_production_runtime_vocabulary_has_no_active_pi_control_tokens() -> None
 
 
 def test_adr0039_links_current_matrix_and_live_gate_docs() -> None:
-    adr = (REPO_ROOT / "docs/ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md").read_text(
-        encoding="utf-8"
-    )
+    gov_sad = REPO_ROOT / "docs/architecture/project/governance/architecture.md"
+    adr = gov_sad.read_text(encoding="utf-8")
 
     assert "capability_matrix_status_and_adr_relations.md" in adr
     assert "capability_matrix_verification_log.md" in adr
@@ -155,13 +154,14 @@ def test_adr0039_links_current_matrix_and_live_gate_docs() -> None:
 
 def test_current_truth_docs_do_not_embed_machine_local_paths() -> None:
     docs = [
-        "docs/ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+        "docs/architecture/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses",
         "docs/MVPs/capability_matrix_status_and_adr_relations.md",
         "docs/MVPs/capability_matrix_live_claim_gates.md",
     ]
     violations: list[str] = []
     for rel in docs:
-        text = (REPO_ROOT / rel).read_text(encoding="utf-8")
+        path_part = rel.split("#", 1)[0]
+        text = (REPO_ROOT / path_part).read_text(encoding="utf-8")
         if MACHINE_ABSOLUTE_PATH_RE.search(text):
             violations.append(rel)
 

@@ -62,6 +62,7 @@ def test_legacy_surfaces_are_declared(inventory_module) -> None:
         "gathering_scene_id",
         "transition_from_previous",
         "location_changed",
+        "legacy_area_compat",
         "forbidden_ai_stack_actor_situation",
         "forbidden_ai_stack_w5_actor_situation",
     }
@@ -728,6 +729,57 @@ def test_phase_6c6_compatibility_shim_report_is_in_json_output(inventory_module)
     assert "old_payload_fallback" in report["source_values"]
 
 
+def test_phase_6c7_dependency_evidence_records_remaining_blockers(inventory_module) -> None:
+    rows = inventory_module.phase_6c7_dependency_evidence_inventory()
+    summary = inventory_module.phase_6c7_dependency_classification_summary()
+    report = inventory_module.phase_6c7_dependency_evidence_report()
+
+    assert rows
+    assert report["phase"] == "6C-7/6C-8"
+    assert report["removal_ready"] is False
+    assert report["adr"] == "ADR-0071"
+    assert report["adr_status"] == "Proposed"
+    assert summary["w5_native_no_area_dependency"] >= 1
+    assert summary["area_compat_shim"] >= 1
+    assert summary["shimmed_compatibility_dependency"] >= 1
+    assert summary["blocker_requires_refactor"] >= 2
+    assert "build_updated_player_local_context" in " ".join(report["unsafe_global_removal_reasons"])
+    assert "language_adapter._interaction_surface_cached" in " ".join(report["unsafe_global_removal_reasons"])
+    assert report["runtime_fields_removed"] is False
+    assert report["narrow_implementation_performed"] is False
+
+    by_symbol = {row["symbol"]: row for row in rows}
+    carried_context = by_symbol["build_updated_player_local_context"]
+    assert carried_context["classification"] == "blocker_requires_refactor"
+    assert carried_context["w5_primary_in_default_path"] is True
+    assert carried_context["removal_would_change_committed_output"] is True
+    assert carried_context["removal_would_break_old_payload_compatibility"] is True
+
+    shim = by_symbol["w5_location_framing_to_legacy_area_fields"]
+    assert shim["classification"] == "area_compat_shim"
+    assert shim["area_fields_only_shimmed_compatibility"] is True
+    assert "test_phase_6c6_compat_shim_derives_legacy_area_fields_from_valid_w5" in shim[
+        "tests_proving_classification"
+    ]
+
+
+def test_phase_6c7_dependency_evidence_is_in_json_output(inventory_module) -> None:
+    buffer = io.StringIO()
+
+    with redirect_stdout(buffer):
+        rc = inventory_module.main(["--root", str(REPO_ROOT), "--json"])
+
+    assert rc == 0
+    payload = json.loads(buffer.getvalue())
+    report = payload["phase_6c7_dependency_evidence_report"]
+    summary = payload["phase_6c7_dependency_classification_summary"]
+    rows = payload["phase_6c7_dependency_evidence_inventory"]
+    assert report["removal_ready"] is False
+    assert report["classification_summary"] == summary
+    assert any(row["classification"] == "blocker_requires_refactor" for row in rows)
+    assert any(row["symbol"] == "_current_location_id" for row in rows)
+
+
 def test_adr_0071_exists_and_keeps_removal_proposed() -> None:
     adr_path = (
         REPO_ROOT
@@ -749,6 +801,8 @@ def test_adr_0071_exists_and_keeps_removal_proposed() -> None:
         "old-payload fallback",
         "compatibility shim",
         "w5_location_framing_to_legacy_area_fields",
+        "Phase 6C-7/6C-8 Readiness Update",
+        "build_updated_player_local_context",
         "How remains first-class",
         "inferred Why remains soft truth",
     ):

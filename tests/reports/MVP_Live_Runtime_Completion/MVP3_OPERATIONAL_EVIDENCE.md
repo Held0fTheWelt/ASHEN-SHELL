@@ -272,10 +272,10 @@ assert envelope.diagnostics.live_dramatic_scene_simulator.legacy_blob_used is Fa
 
 All 4 required ADRs exist and are ACCEPTED:
 
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-007-minimum-agency-baseline-superseded.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-011-live-dramatic-scene-simulator.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-012-npc-free-dramatic-agency.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp3-013-narrator-inner-voice-contract.md` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
 
 Each ADR includes: context, decision, affected services/files, consequences, validation evidence, operational gate impact.
 

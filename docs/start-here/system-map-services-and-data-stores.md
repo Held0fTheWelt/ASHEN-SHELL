@@ -8,7 +8,7 @@
 >     - CTR-CANONICAL-RUNTIME-CONTRACT
 >   projection_weight: low
 
-This page explains **which programs run**, **how they talk**, and **where data lives**, at a **container** level suitable for newcomers, operators, and stakeholders. For code-level seams, see [Runtime authority and state flow](../technical/runtime/runtime-authority-and-state-flow.md) and the [developer seam note](../dev/architecture/runtime-authority-and-session-lifecycle.md).
+This page explains **which programs run**, **how they talk**, and **where data lives**, at a **container** level suitable for newcomers, operators, and stakeholders. For code-level seams, see [Runtime authority and state flow](../technical/runtime/runtime-authority-and-state-flow.md), the [developer seam note](../dev/architecture/runtime-authority-and-session-lifecycle.md), and the internal [architecture START-HERE](../architecture/START-HERE.md).
 
 ## Context (who touches the system)
 

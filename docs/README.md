@@ -17,7 +17,7 @@ Audience-first documentation entrypoint.
 - **Developers:** [`docs/dev/README.md`](dev/README.md)
 - **Technical system (architecture, AI, runtime):** [`docs/technical/README.md`](technical/README.md)
 - **Stakeholder slides:** [`docs/presentations/`](presentations/)
-- **ADRs:** [`docs/governance/README.md`](governance/README.md)
+- **ADRs:** [`docs/architecture/START-HERE.md`](architecture/START-HERE.md) (normative SADs) · [`docs/ADR/README.md`](ADR/README.md) (historical decisions)
 
 ## MVP canonical route
 
@@ -40,4 +40,4 @@ Build output is gitignored at `/site/` (see `mkdocs.yml`). CI builds on changes 
 
 ## Consolidation record
 
-See [`docs/archive/documentation-consolidation-2026/`](archive/documentation-consolidation-2026/) for topic maps, migration ledgers, and the final validation report from the 2026 documentation overhaul.
+See [`docs/archive/documentation-consolidation-2026/`](archive/documentation-consolidation-2026/) for the 2026 documentation overhaul archive index. Normative architecture: [`docs/architecture/START-HERE.md`](architecture/START-HERE.md).

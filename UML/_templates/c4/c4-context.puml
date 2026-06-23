@@ -1,0 +1,6 @@
+@startuml c4-context-template
+title <component> — System Context
+actor User
+component system as "<component>"
+User --> system
+@enduml

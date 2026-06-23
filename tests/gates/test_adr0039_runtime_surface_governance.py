@@ -13,7 +13,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INVENTORY = REPO_ROOT / "docs/MVPs/adr0039_runtime_surface_governance_inventory.md"
-ADR0039 = REPO_ROOT / "docs/ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md"
+ADR0039 = REPO_ROOT / "docs/architecture/project/governance/architecture.md"
 
 AUTHORITY_LEVELS = frozenset(
     {"canonical", "co_authority", "preview", "sidecar", "diagnostic", "display_only"}

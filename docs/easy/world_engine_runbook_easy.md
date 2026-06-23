@@ -26,7 +26,7 @@ Facts here follow this order:
 
 If something is not named exactly the same way in code as in product language, this document says so and points to the **nearest real seam** (a file or function where behavior is observable).
 
-**Repository anchors for this rule:** `docs/ADR/adr-0001-runtime-authority-in-world-engine.md`, `world-engine/app/main.py`.
+**Repository anchors for this rule:** `docs/architecture/project/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine`, `world-engine/app/main.py`.
 
 ---
 
@@ -436,7 +436,7 @@ flowchart LR
   AUTH -->|"publish_compile"| WE
 ```
 
-**Seams:** `docs/ADR/adr-0001-runtime-authority-in-world-engine.md`, `world-engine/app/story_runtime/commit_models.py`.
+**Seams:** `docs/architecture/project/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine`, `world-engine/app/story_runtime/commit_models.py`.
 
 **In plain words:** Suggestions can come from many places; **session truth** for authoritative play is **decided under engine contracts**.
 

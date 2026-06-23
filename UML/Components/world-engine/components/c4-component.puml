@@ -1,0 +1,18 @@
+@startuml world-engine-c4-component
+title world-engine — Story runtime components
+package "app/story_runtime" {
+  [StoryRuntimeManager] as mgr
+  [execute_turn] as turn
+  [commit_models] as commit
+}
+package "ai_stack" {
+  [RuntimeTurnGraphExecutor] as graph
+  [validate_seam] as val
+  [commit_seam] as cmt
+}
+mgr --> turn
+turn --> graph
+graph --> val
+val --> cmt
+cmt --> commit
+@enduml

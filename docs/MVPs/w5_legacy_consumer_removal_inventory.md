@@ -160,7 +160,7 @@ Naming-only items. They survive 6B but must be renamed for consistency with the 
 |---|--------|------|--------|----------|----------|------|
 | R1 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/validation.py` (definition) and `__init__.py` (re-export) | function `validate_w5_actor_situation` | `validate_w5_actor_situation` | `validate_w5_actor_tracking` | Function and re-export renamed. Production callsite in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py` and all 12 test callsites in `ai_stack/tests/test_w5_actor_tracking_validation.py` updated atomically. No backward alias retained. |
 | R2 | ✅ done (Phase 6B-0) | `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py` | string literal `failure_class = "w5_actor_situation_validation"` | `"w5_actor_situation_validation"` | `"w5_actor_tracking_validation"` | Diagnostic string surfaces through Langfuse metadata. No production consumer/filter asserts the old value. |
-| R3 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/models.py` | docstring | `docs/ADR/adr-0063-w5-actor-situation-tracker.md` | `docs/ADR/adr-0063-w5-actor-tracking.md` | Pure doc fix. |
+| R3 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/models.py` | docstring | `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` | `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` | Pure doc fix. |
 | R4 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/__init__.py` and `ai_stack/actor_tracking/extractor.py` | docstring | `docs/MVPs/w5_actor_situation_migration.md` | `docs/MVPs/w5_actor_tracking_migration.md` | Pure doc fix. `__init__.py` retains one historical sentence noting prior package names. |
 | R5 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/projection.py` | docstring | `docs/MVPs/w5_actor_situation_migration.md` | `docs/MVPs/w5_actor_tracking_migration.md` | Same as R4. |
 
@@ -192,9 +192,9 @@ Tests that assert legacy localization fields directly. They are valid as-is; the
 
 | # | File | Section | Action |
 |---|------|---------|--------|
-| D1 | `docs/ADR/adr-0063-w5-actor-tracking.md:84` | "Target architecture (later phases)" — already lists legacy fields. | **Keep** as historical reference. |
-| D2 | `docs/ADR/adr-0061-director-pause-mode-for-gathering-interruption.md:52,72-74,169,176` | Director-Pause input contract — references `actor_locations`. | **Keep** until Phase 6B re-publishes the Director input as the W5 projection map. |
-| D3 | `docs/ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference.md:131` | Resolver/director input. | **Keep**, footnote-link to W5 in Phase 6B. |
+| D1 | `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view:84` | "Target architecture (later phases)" — already lists legacy fields. | **Keep** as historical reference. |
+| D2 | `docs/architecture/project/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority:52,72-74,169,176` | Director-Pause input contract — references `actor_locations`. | **Keep** until Phase 6B re-publishes the Director input as the W5 projection map. |
+| D3 | `docs/architecture/project/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes:131` | Resolver/director input. | **Keep**, footnote-link to W5 in Phase 6B. |
 | D4 | `docs/MVPs/w5_actor_tracking_migration.md` | Add Phase 6A entry (this Phase). | **Update** with Phase 6A status (handled below). |
 | D5 | `docs/MVPs/MVP_World_Of_Shadows_Canonical_Implementation_Bundle/runtime_state_and_session_contracts.md:27-30,703-706` | Lists legacy substrate fields as canonical. | **Annotate** in 6B that these are substrate-only; higher-level consumers must read W5. |
 | D6 | `docs/implementation_logs/w5_actor_tracking_piv.md:8,13,18` | PIV log mentions legacy `actor_locations`. | **Keep** as history. |
@@ -1010,7 +1010,7 @@ ADR-0068 removes the following — and only the following:
 - `removed_by_6b5e_policy` and `legacy_compat_visible` are no longer emitted
   narrator admin values.
 
-**`docs/ADR/adr-0068-*.md`:**
+**`docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`:**
 - Written and marked Accepted under operator waiver.
 - References ADR-0067 and records criteria 1 and 2 as waived.
 - Includes the removal diff at function and branch level.
@@ -1557,3 +1557,70 @@ remove runtime fields.
 **Result:** `removal_ready=false`. The shim makes actual removal closer, but a
 future accepted phase must still prove production-like dependency readiness
 before deleting runtime fields.
+
+---
+
+### Phase 6C-7 / 6C-8 — dependency evidence and removal-readiness audit (Complete, 2026-05-31)
+
+Phase 6C-7/6C-8 performs the production-like dependency evidence pass requested
+by ADR-0071. It does not remove runtime fields.
+
+**Evidence method:**
+
+- Static grep for `current_area`, `from_area`, `to_area`,
+  `legacy_area_compat`, `w5_location_framing`, `location_framing_authority`,
+  `local_context_transition_source`, `scene_changed`, and `location_changed`.
+- Curated runtime-surface review for narrator consequence, sensory context,
+  LangGraph SOURCE_LINES, language adapter, semantic content-frame fallback,
+  tests, and docs.
+- Focused proof tests for W5-native no-area behavior, shimmed compatibility,
+  malformed-W5 fallback, old-payload fallback, no raw W5 history, How, and
+  inferred Why.
+
+**Dependency classification summary:**
+
+| Classification | Count | Meaning |
+|---|---:|---|
+| `area_compat_shim` | 1 | Explicit shim derives compatibility area fields |
+| `shimmed_compatibility_dependency` | 2 | Runtime emits area fields through the shimmed transition shape |
+| `malformed_w5_safety_dependency` | 2 | Legacy fields still protect malformed-W5 fallback |
+| `old_payload_compat_dependency` | 1 | Legacy fields still protect old payloads |
+| `w5_native_no_area_dependency` | 1 | W5-native path does not need direct area fields |
+| `blocker_requires_refactor` | 2 | Removal requires a dedicated refactor first |
+| `public_or_substrate_out_of_scope` | 1 | Outside ADR-0071 removal scope |
+| `test_only_legacy_dependency` | 1 | Test-only guard |
+| `doc_only_legacy_dependency` | 1 | Documentation only |
+
+**Blocking runtime dependencies:**
+
+| Surface | Classification | Why removal is blocked |
+|---|---|---|
+| `build_updated_player_local_context()` | `blocker_requires_refactor` | Carries `current_area/current_location_id/previous_area` between turns from `to_area` |
+| `_current_context_area()` | `malformed_w5_safety_dependency` | Needs legacy fallback when W5 is missing/malformed or old payloads arrive |
+| `sensory_context_engine._current_location_id()` | `old_payload_compat_dependency` | Uses `to_area/current_area/from_area` after W5 for sensory old-payload fallback |
+| LangGraph `_resolve_player_action` | `malformed_w5_safety_dependency` | Builds legacy fallback from player local context / environment state |
+| `language_adapter._interaction_surface_cached()` | `blocker_requires_refactor` | Still exposes content-derived `current_area` outside the shim |
+| semantic content-frame fallback | `public_or_substrate_out_of_scope` | Reads `environment_state.current_area/current_room_id`; future planner/substrate ADR |
+
+**Narrow safe scope:**
+
+- W5-native narrator/sensory consumers can run without direct
+  `current_area/from_area/to_area` input when valid `w5_location_framing` is
+  present.
+- Legacy compatibility consumers can receive area fields through
+  `legacy_area_compat.v1`.
+
+**Result:** `removal_ready=false`.
+
+**Safe cleanup performed:**
+
+- Added Phase 6C-7/8 dependency-evidence inventory and report output.
+- Updated ADR-0071 readiness with exact remaining blockers.
+- Kept compatibility fields, fallbacks, public aliases, substrate fields,
+  committed events, and committed output unchanged.
+
+**Next recommended work package:**
+
+Phase 6C-9 should add a W5-native carried-local-context helper, design a
+language-adapter runtime overlay that does not poison cached authored content,
+and rerun this dependency evidence before any accepted runtime field removal.

@@ -89,6 +89,30 @@ nav:
       - AI stack & GoC seams: dev/architecture/ai-stack-rag-langgraph-and-goc-seams.md
       - Content modules & compiler: dev/architecture/content-modules-and-compiler-pipeline.md
       - Normative contracts index: dev/contracts/normative-contracts-index.md
+      - Architecture (internal):
+          - Start here: architecture/START-HERE.md
+          - Capability catalog: architecture/README.md
+          - Quality standard: architecture/QUALITY-STANDARD.md
+          - Rollout status: architecture/project/ROLLOUT.md
+          - Decision registry: architecture/project/DECISION_REGISTRY.md
+          - Components:
+              - world-engine: architecture/components/world-engine/architecture.md
+              - backend: architecture/components/backend/architecture.md
+              - ai-stack: architecture/components/ai-stack/architecture.md
+              - story-runtime-core: architecture/components/story-runtime-core/architecture.md
+              - frontend: architecture/components/frontend/architecture.md
+              - administration-tool: architecture/components/administration-tool/architecture.md
+              - mcp-server: architecture/components/mcp-server/architecture.md
+              - content-authority: architecture/components/content-authority/architecture.md
+          - Project architecture:
+              - ecosystem-topology: architecture/project/ecosystem-topology/architecture.md
+              - governance: architecture/project/governance/architecture.md
+              - documentation-supply-chain: architecture/project/documentation-supply-chain/architecture.md
+              - quality-gates: architecture/project/quality-gates/architecture.md
+              - observability-traceability: architecture/project/observability-traceability/architecture.md
+              - security-governance: architecture/project/security-governance/architecture.md
+              - mvp-live-runtime-completion: architecture/project/mvp-live-runtime-completion/architecture.md
+          - Contracts hub: architecture/contracts/README.md
       - OpenAPI strategy: dev/api/openapi-and-api-explorer-strategy.md
       - Test pyramid: dev/testing/test-pyramid-and-suite-map.md
       - MCP developer guide: dev/tooling/mcp-server-developer-guide.md
@@ -118,12 +142,11 @@ nav:
       - Documentation registry: reference/documentation-registry.md
       - Baseline validation: reference/baseline-validation-note.md
       - Governance index: governance/README.md
-      - ADR 0001 Runtime authority: governance/adr-0001-runtime-authority-in-world-engine.md
-      - ADR 0047 At-rest encryption evidence: ADR/adr-0047-at-rest-encryption-evidence-boundary.md
-      - ADR 0050 Security governance: ADR/adr-0050-security-governance-browser-mutation-boundaries.md
-      - ADR 0051 Storage-layer encryption governance: ADR/adr-0051-storage-layer-encryption-governance.md
-      - ADR 0052 Security governance admin control plane: ADR/adr-0052-security-governance-admin-control-plane.md
-      - ADR template: governance/adr-template.md
+      - Decision registry: architecture/project/DECISION_REGISTRY.md
+      - World-engine runtime authority: architecture/components/world-engine/architecture.md
+      - Security governance: architecture/project/security-governance/architecture.md
+      - Quality gates: architecture/project/quality-gates/architecture.md
+      - ADR archive (read-only): archive/adr-retired-2026/README.md
   - Contracts (GoC):
       - Canonical turn contract: MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md
       - Vertical slice contract: MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md

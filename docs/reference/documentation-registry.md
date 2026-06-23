@@ -76,7 +76,11 @@ See [baseline-validation-note.md](baseline-validation-note.md) for Task 1A–4 a
 | [onboarding.md](../dev/onboarding.md) | Engineering lead | When contributor path changes |
 | [contributing.md](../dev/contributing.md) | Engineering lead | When repo topology changes |
 | [local-development-and-test-workflow.md](../dev/local-development-and-test-workflow.md) | Engineering lead | When local/Compose defaults change |
-| [architecture/runtime-authority-and-session-lifecycle.md](../dev/architecture/runtime-authority-and-session-lifecycle.md) | Runtime lead | When seam entry points change |
+| [architecture/START-HERE.md](../architecture/START-HERE.md) | Architecture council | When internal SAD entry changes |
+| [architecture/README.md](../architecture/README.md) | Architecture council | When capability catalog changes |
+| [architecture/project/ROLLOUT.md](../architecture/project/ROLLOUT.md) | Architecture council | When SAD/UML rollout status changes |
+| [architecture/contracts/README.md](../architecture/contracts/README.md) | Tech lead | When normative contracts move |
+| [architecture/runtime-authority-and-session-lifecycle.md](../dev/architecture/runtime-authority-and-session-lifecycle.md) | Runtime lead | When seam entry points change (canonical: world-engine SAD) |
 | [architecture/ai-stack-rag-langgraph-and-goc-seams.md](../dev/architecture/ai-stack-rag-langgraph-and-goc-seams.md) | AI/runtime lead | When graph or RAG seams change |
 | [architecture/content-modules-and-compiler-pipeline.md](../dev/architecture/content-modules-and-compiler-pipeline.md) | Platform/content lead | When compiler projections change |
 | [contracts/normative-contracts-index.md](../dev/contracts/normative-contracts-index.md) | Tech lead | When contracts are added/deprecated |
@@ -99,7 +103,9 @@ See [baseline-validation-note.md](baseline-validation-note.md) for Task 1A–4 a
 | Document | Owner (placeholder) | Update cadence |
 |----------|---------------------|----------------|
 | [technical/README.md](../technical/README.md) | Architecture council | When technical IA changes |
-| [technical/architecture/architecture-overview.md](../technical/architecture/architecture-overview.md) | Architecture council | When platform shape changes |
+| [architecture/START-HERE.md](../architecture/START-HERE.md) | Architecture council | Primary internal architecture entry |
+| [architecture/project/ecosystem-topology/architecture.md](../architecture/project/ecosystem-topology/architecture.md) | Architecture council | Canonical service map (replaces overview stub) |
+| [technical/architecture/architecture-overview.md](../technical/architecture/architecture-overview.md) | Architecture council | Redirect stub → ecosystem-topology SAD |
 | [technical/runtime/runtime-authority-and-state-flow.md](../technical/runtime/runtime-authority-and-state-flow.md) | Runtime lead | When authority or session flow changes |
 | [technical/ai/ai-stack-overview.md](../technical/ai/ai-stack-overview.md) | AI/runtime lead | When stack integration changes |
 | [technical/ai/RAG.md](../technical/ai/RAG.md) | AI/runtime lead | When retrieval behavior changes |
@@ -107,7 +113,7 @@ See [baseline-validation-note.md](baseline-validation-note.md) for Task 1A–4 a
 | [technical/integration/LangGraph.md](../technical/integration/LangGraph.md) | AI/runtime lead | When graph semantics change |
 | [technical/integration/LangChain.md](../technical/integration/LangChain.md) | AI/runtime lead | When LC integration changes |
 | [technical/content/writers-room-and-publishing-flow.md](../technical/content/writers-room-and-publishing-flow.md) | Platform/content lead | When review/publish flow changes |
-| [technical/architecture/service-boundaries.md](../technical/architecture/service-boundaries.md) | Backend + frontend leads | When service ownership changes |
+| [technical/architecture/service-boundaries.md](../technical/architecture/service-boundaries.md) | Backend + frontend leads | Redirect stub → ecosystem-topology SAD |
 | [technical/reference/test-strategy-and-suite-layout.md](../technical/reference/test-strategy-and-suite-layout.md) | QA or engineering lead | When suite strategy changes |
 
 ## Presentations / stakeholders

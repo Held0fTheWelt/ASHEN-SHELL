@@ -220,10 +220,10 @@ All MVP2 tests pass. No failures in engine or backend suites that affect MVP2 ga
 
 All 4 required ADRs exist and are ACCEPTED:
 
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-003-npc-coercion-state-delta.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-004-actor-lane-enforcement.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-015-environment-affordances.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-016-operational-gates.md` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
 
 Each ADR includes: context, decision, affected services, validation evidence, operational gate impact.
 

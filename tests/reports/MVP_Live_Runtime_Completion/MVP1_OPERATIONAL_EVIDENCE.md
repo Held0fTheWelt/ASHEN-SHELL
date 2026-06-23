@@ -272,12 +272,12 @@ All MVP1 tests pass. No failures in suites that affect MVP1 gates.
 
 All 6 required ADRs exist and are ACCEPTED:
 
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-001-experience-identity.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-002-runtime-profile-resolver.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-003-role-selection-actor-ownership.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-005-canonical-content-authority.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-006-evidence-gated-capabilities.md` — ACCEPTED  
-✅ `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp1-016-operational-gates.md` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
+✅ `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` — ACCEPTED  
 
 Each ADR includes: context, decision, affected services, validation evidence, operational gate impact.
 

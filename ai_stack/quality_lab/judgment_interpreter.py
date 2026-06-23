@@ -259,7 +259,7 @@ def interpret_judgments(
                 },
             ],
             evidence_refs=[
-                {"type": "adr", "ref": "docs/ADR/adr-0040-quality-lab-mcp-runtime-diagnostics.md"},
+                {"type": "adr", "ref": "docs/architecture/project/components/ai-stack/architecture.md#d2-quality-lab-mcp-diagnostics"},
                 {"type": "file", "ref": "ai_stack/langfuse/langfuse_evaluator_catalog.py"},
             ],
         )

@@ -152,34 +152,34 @@ _TEST_SUITE_PREFIXES = [
     ("tests", "Root gates & smoke tests"),
     ("'fy'-suites", "FY Testify/Governance tests"),
 ]
-_KEY_ADR_SUMMARIES = [
+_KEY_DECISION_SUMMARIES = [
     {
         "adr": "ADR-0030",
-        "path": "docs/ADR/adr-0030-docker-up-complete-bootstrap.md",
+        "path": "docs/architecture/project/ecosystem-topology/architecture.md",
         "topic": "Run-once Docker-Bootstrap",
         "explains": "Warum `docker-up.py up` Env-Erzeugung, Compose, Health, Admin-Bootstrap und Gate als einen lokalen Startpfad bündelt.",
     },
     {
         "adr": "ADR-0031",
-        "path": "docs/ADR/adr-0031-env-configuration-governance.md",
+        "path": "docs/architecture/project/governance/architecture.md",
         "topic": "Env- und Secret-Grenzen",
         "explains": "Welche Werte automatisch generiert werden, welche Provider-Keys manuell bleiben und warum Langfuse in Backend-Governance überführt wird.",
     },
     {
         "adr": "ADR-0037",
-        "path": "docs/ADR/adr-0037-backend-test-suite-split-runner.md",
+        "path": "docs/architecture/components/backend/architecture.md",
         "topic": "Testsuite-Schnitt",
         "explains": "Wie große Testbereiche in sinnvolle Runner/Gates aufgeteilt werden, damit Feedback schnell und nachvollziehbar bleibt.",
     },
     {
         "adr": "ADR-0039",
-        "path": "docs/ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+        "path": "docs/architecture/project/governance/architecture.md",
         "topic": "Keine Scheinbeweise",
         "explains": "Warum Tests, MCP-Resultate und Langfuse-Scores echte Vertragsfelder prüfen müssen und keine Labels als Beweis ausreichen.",
     },
     {
         "adr": "ADR-0041",
-        "path": "docs/ADR/adr-0041-semantic-capability-selection-and-runtime-capability-budgeting.md",
+        "path": "docs/architecture/components/ai-stack/architecture.md",
         "topic": "Runtime Capability Authority",
         "explains": "Wie Capabilities semantisch ausgewählt, budgetiert und als Co-Authority-Evidence dokumentiert werden.",
     },
@@ -472,7 +472,7 @@ def _build_project_management_overview() -> dict[str, Any]:
                 **adr,
                 "exists": (root / adr["path"]).is_file(),
             }
-            for adr in _KEY_ADR_SUMMARIES
+            for adr in _KEY_DECISION_SUMMARIES
         ],
     }
     cache["overview"] = overview

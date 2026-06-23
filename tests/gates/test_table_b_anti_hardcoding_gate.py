@@ -9,7 +9,7 @@ as explicit debt so the allowlist is visible and cannot grow accidentally.
 alongside ``ai_stack``, ``world-engine/app``, backend, and frontend so Table-B
 rules apply to the same governed runtime surface as
 ``docs/MVPs/adr0039_runtime_surface_governance_inventory.md`` and
-``docs/ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md`` § Runtime surface
+``docs/architecture/project/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses`` § Runtime surface
 governance.
 """
 

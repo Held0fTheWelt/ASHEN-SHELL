@@ -2,32 +2,32 @@
 
 ## ADR-001: Split bootstrap from normal operations
 
-Canonical ADR moved to [docs/ADR/adr-0001-runtime-authority-in-world-engine.md](docs/ADR/adr-0001-runtime-authority-in-world-engine.md).
+Canonical ADR moved to [docs/architecture/project/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine).
 
 ## ADR-002: Resolved Runtime Config is the MVP execution model
 
-Canonical ADR moved to [docs/ADR/adr-0002-backend-session-surface-quarantine.md](docs/ADR/adr-0002-backend-session-surface-quarantine.md).
+Canonical ADR moved to [docs/architecture/project/components/backend/architecture.md#d1-backend-session-quarantine).
 
 ## ADR-003: Credentials are backend-held and write-only from UI
 
-Canonical ADR moved to [docs/ADR/adr-0003-scene-identity-canonical-surface.md](docs/ADR/adr-0003-scene-identity-canonical-surface.md).
+Canonical ADR moved to [docs/architecture/project/components/world-engine/architecture.md#d7-scene-identity-canonical-surface).
 
 ## ADR-004: Mock / AI / Hybrid are explicit governed modes
 
-Canonical ADR moved to [docs/ADR/adr-0004-runtime-model-output-proposal-only-until-validator-approval.md](docs/ADR/adr-0004-runtime-model-output-proposal-only-until-validator-approval.md).
+Canonical ADR moved to [docs/architecture/project/components/world-engine/architecture.md#d2-proposal-only-ai-until-validator-approval).
 
 ## ADR-005: `docker-up.py` is the canonical bootstrap entry point
 
-Canonical ADR moved to [docs/ADR/adr-0005-research-may-draft-change-but-may-not-publish.md](docs/ADR/adr-0005-research-may-draft-change-but-may-not-publish.md).
+Canonical ADR moved to [docs/architecture/project/components/ai-stack/architecture.md#d10-research-may-draft-but-not-publish).
 
 ## ADR-006: Presets are first-class bootstrap helpers
 
-Canonical ADR moved to [docs/ADR/adr-0006-revision-review-uses-state-machine.md](docs/ADR/adr-0006-revision-review-uses-state-machine.md).
+Canonical ADR moved to [docs/architecture/project/project/governance/architecture.md#d6-revision-review-state-machine).
 
 ## ADR-007: Costs are part of governance, not a later add-on
 
-Canonical ADR moved to [docs/ADR/adr-0007-revision-conflicts-explicit-governance-objects.md](docs/ADR/adr-0007-revision-conflicts-explicit-governance-objects.md).
+Canonical ADR moved to [docs/architecture/project/project/governance/architecture.md#d7-revision-conflict-governance-objects).
 
 ## ADR-008: Some trust-root values remain outside normal admin operations
 
-Canonical ADR moved to [docs/ADR/adr-0008-validation-strategy-explicit-configurable.md](docs/ADR/adr-0008-validation-strategy-explicit-configurable.md).
+Canonical ADR moved to [docs/architecture/project/components/world-engine/architecture.md#d11-explicit-configurable-validation-strategy).

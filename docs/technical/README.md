@@ -25,4 +25,4 @@ High-change contracts remain discoverable from [`docs/dev/contracts/normative-co
 
 ## Legacy location
 
-Older files formerly under `docs/architecture/` are either **moved here**, **archived** under [`docs/archive/architecture-legacy/`](../archive/architecture-legacy/), or superseded by a single canonical page per topic (see [`../archive/documentation-consolidation-2026/TOPIC_CONSOLIDATION_MAP.md`](../archive/documentation-consolidation-2026/TOPIC_CONSOLIDATION_MAP.md)).
+Older files formerly under `docs/architecture/` are either **moved here**, **archived** under [`docs/archive/architecture-legacy/`](../archive/architecture-legacy/), or superseded by SADs under [`docs/architecture/`](../architecture/START-HERE.md). Historical consolidation notes: [`docs/archive/documentation-consolidation-2026/`](../archive/documentation-consolidation-2026/README.md).

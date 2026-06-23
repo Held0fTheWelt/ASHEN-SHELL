@@ -382,8 +382,8 @@ function saveStateDeltaBoundary() {
 
 - **MVP 2 Spec**: `02_runtime_state_actor_lanes_content_boundary.md`
 - **MVP 1 Handoff**: `tests/reports/MVP_Live_Runtime_Completion/MVP1_HANDOFF_RUNTIME_PROFILE.md`
-- **ADR-004 (Actor-Lane)**: `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-004-actor-lane-enforcement.md`
-- **ADR-003 (NPC Coercion)**: `docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-003-npc-coercion-state-delta.md`
+- **ADR-004 (Actor-Lane)**: `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions`
+- **ADR-003 (NPC Coercion)**: `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions`
 - **Admin Tool Patterns**: `docs/MVPs/MVP_Narrative_Governance_And_Revision_Foundation/05_admin_tool_governance_surface.md`
 
 ---

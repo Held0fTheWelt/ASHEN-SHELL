@@ -87,6 +87,8 @@ LEGACY_SURFACES: list[tuple[str, str]] = [
     # w5_player_view is the W5 player-shell projection surface (current authority).
     ("viewer_room_id", r"\bviewer_room_id\b"),
     ("w5_player_view", r"\bw5_player_view\b"),
+    # Phase 6C-6/7 — explicit narrator/sensory area compatibility shim.
+    ("legacy_area_compat", r"\blegacy_area_compat\b"),
 ]
 
 
@@ -325,6 +327,10 @@ PHASE_6B4_CLASSIFICATION: dict[str, str] = {
         "projection surface; wired in Phase 6B-1; public authority for "
         "player-facing actor-situation/location (ADR-0069)"
     ),
+    "legacy_area_compat": (
+        "area_compat_shim — Phase 6C-6 explicit compatibility shim for "
+        "current_area/from_area/to_area; not a location authority"
+    ),
 }
 
 
@@ -360,6 +366,17 @@ PHASE_6B4_TAXONOMY: tuple[str, ...] = (
     "public_compatibility_keep",
     "unrelated_domain_use",
     "needs_dedicated_adr",
+    # Phase 6C-7 additions
+    "w5_native_no_area_dependency",
+    "area_compat_shim",
+    "shimmed_compatibility_dependency",
+    "malformed_w5_safety_dependency",
+    "old_payload_compat_dependency",
+    "test_only_legacy_dependency",
+    "doc_only_legacy_dependency",
+    "public_or_substrate_out_of_scope",
+    "removal_candidate",
+    "blocker_requires_refactor",
 )
 
 
@@ -693,7 +710,7 @@ PHASE_6C0_LOCATION_FRAMING_INVENTORY: tuple[dict[str, object], ...] = (
         "tests_required": ["ai_stack/tests/test_narrator_consequence_contract.py"],
     },
     {
-        "file_path": "docs/ADR/adr-0069-w5-player-view-replaces-current-room-aliases.md",
+        "file_path": "docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view",
         "line": 1,
         "symbol": "ADR-0069",
         "classification": "doc_only_update",
@@ -755,7 +772,7 @@ PHASE_6C0_IMPLEMENTATION_PLAN: dict[str, object] = {
     "docs_to_update_next": [
         "docs/MVPs/w5_actor_tracking_migration.md",
         "docs/MVPs/w5_legacy_consumer_removal_inventory.md",
-        "docs/ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md",
+        "docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view",
     ],
 }
 
@@ -1369,6 +1386,14 @@ PHASE_6C5_REMOVAL_READINESS_ADR: dict[str, object] = {
             ),
         },
         {
+            "criterion": "production-like dependency evidence pass is complete.",
+            "status": "pass",
+            "evidence": (
+                "Phase 6C-7/8 static scan plus focused runtime tests classify "
+                "remaining current_area/from_area/to_area dependencies."
+            ),
+        },
+        {
             "criterion": "ADR-0071 is accepted for actual runtime field removal.",
             "status": "blocked",
             "evidence": "ADR-0071 remains Proposed; Phase 6C-6 implements a shim only.",
@@ -1377,14 +1402,18 @@ PHASE_6C5_REMOVAL_READINESS_ADR: dict[str, object] = {
             "criterion": "production-like downstream trace proves zero unsupported area-field dependency.",
             "status": "blocked",
             "evidence": (
-                "Static and unit evidence is present; a final removal phase still needs "
-                "production-like trace evidence before deleting runtime fields."
+                "Phase 6C-7/8 evidence found remaining unsupported dependencies in "
+                "carried local context, malformed-W5 fallback, old-payload fallback, "
+                "and language-adapter/content-frame surfaces."
             ),
         },
     ],
     "remaining_blockers": [
         "ADR-0071 remains Proposed; actual runtime field removal is not accepted.",
-        "No production-like runtime trace proves zero unsupported area-field dependency.",
+        "Phase 6C-7/8 evidence found nonzero unsupported area-field dependencies.",
+        "build_updated_player_local_context still reads to_area/current_area for carried player_local_context compatibility.",
+        "_current_context_area and _current_location_id still need legacy area fields for malformed-W5 and old-payload fallback.",
+        "language_adapter/content-frame current_area surfaces are not yet W5-native and remain outside the shim.",
         "Malformed-W5 and old-payload fallback windows remain active and must be carried by the shim during any removal phase.",
     ],
     "safe_cleanup_performed": [
@@ -1444,6 +1473,249 @@ PHASE_6C6_COMPATIBILITY_SHIM_REPORT: dict[str, object] = {
     "next_phase": (
         "6C-7 final removal-readiness audit or accepted removal phase; retain "
         "current_area/from_area/to_area until then."
+    ),
+}
+
+
+PHASE_6C7_DEPENDENCY_EVIDENCE: tuple[dict[str, object], ...] = (
+    {
+        "file_path": "ai_stack/actor_tracking/location_framing.py",
+        "symbol": "w5_location_framing_to_legacy_area_fields",
+        "classification": "area_compat_shim",
+        "surface_kind": "runtime",
+        "current_role": "Derives current_area/from_area/to_area compatibility fields from valid W5 framing or preserves legacy fallback values.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": True,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": True,
+        "tests_proving_classification": [
+            "test_phase_6c6_compat_shim_derives_legacy_area_fields_from_valid_w5",
+            "test_phase_6c6_compat_shim_preserves_legacy_fields_when_w5_missing",
+            "test_phase_6c6_compat_shim_preserves_legacy_fields_when_w5_malformed",
+        ],
+        "recommended_action": "Keep; this is the explicit rollback/compatibility shim required by ADR-0071.",
+    },
+    {
+        "file_path": "ai_stack/actor_tracking/location_framing.py",
+        "symbol": "location_framing_to_local_context_transition",
+        "classification": "shimmed_compatibility_dependency",
+        "surface_kind": "runtime",
+        "current_role": "Projects W5 location framing into the LocalContextTransition compatibility shape.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": True,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": True,
+        "tests_proving_classification": [
+            "test_phase_6c4_valid_w5_marks_legacy_area_fields_as_compatibility_not_authority",
+            "test_phase_6c6_w5_native_transition_operates_without_direct_area_input",
+        ],
+        "recommended_action": "Keep until every LocalContextTransition consumer accepts W5-native fields directly.",
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "symbol": "_current_context_area",
+        "classification": "malformed_w5_safety_dependency",
+        "surface_kind": "runtime",
+        "current_role": "Chooses W5 current location when valid, then falls back to player_local_context.current_area and scene_affordances.current_area.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": False,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": True,
+        "tests_proving_classification": [
+            "test_valid_w5_current_location_is_primary_over_legacy_current_area",
+            "test_old_payload_without_w5_uses_legacy_local_context_transition",
+            "test_graph_runtime_missing_w5_keeps_legacy_location_fallback",
+        ],
+        "recommended_action": "Refactor only after old-payload fallback gets an explicit W5-or-shim input contract.",
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "symbol": "build_local_context_transition",
+        "classification": "shimmed_compatibility_dependency",
+        "surface_kind": "runtime",
+        "current_role": "Builds the legacy transition shape, then overlays W5-derived compatibility values through the shim.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": True,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": True,
+        "tests_proving_classification": [
+            "test_phase_6c6_w5_native_transition_operates_without_direct_area_input",
+            "test_narrator_consequence_semantic_parity_when_w5_and_legacy_agree",
+        ],
+        "recommended_action": "Keep area keys as compatibility output until a separate accepted removal phase changes the transition contract.",
+    },
+    {
+        "file_path": "ai_stack/contracts/narrator_consequence_contracts.py",
+        "symbol": "build_updated_player_local_context",
+        "classification": "blocker_requires_refactor",
+        "surface_kind": "runtime",
+        "current_role": "Carries current_area/current_location_id/previous_area between turns from LocalContextTransition.to_area.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": False,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": True,
+        "tests_proving_classification": [
+            "ai_stack/tests/test_narrator_consequence_contract.py",
+            "test_phase_6c6_ensure_legacy_area_fields_is_non_mutating_rollback_shim",
+        ],
+        "recommended_action": "Next larger package should add a W5-native carried-local-context helper before removing area keys.",
+    },
+    {
+        "file_path": "ai_stack/story_runtime/narrative/sensory_context_engine.py",
+        "symbol": "_current_location_id",
+        "classification": "old_payload_compat_dependency",
+        "surface_kind": "runtime",
+        "current_role": "Uses W5 framing first, then falls back to to_area/current_area/from_area for old payloads and malformed-W5 safety.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": False,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": True,
+        "tests_proving_classification": [
+            "test_sensory_context_prefers_w5_first_location_framing",
+            "test_sensory_context_malformed_w5_uses_legacy_location_fallback",
+            "test_phase_6c6_removing_direct_area_fields_from_w5_native_fixture_preserves_sensory_output",
+        ],
+        "recommended_action": "Keep fallback reads until old-payload support is closed or a sensory-specific shim input is mandatory.",
+    },
+    {
+        "file_path": "ai_stack/langgraph/runtime_executor/executor_action_resolution_commit.py",
+        "symbol": "_resolve_player_action SOURCE_LINES",
+        "classification": "malformed_w5_safety_dependency",
+        "surface_kind": "runtime",
+        "current_role": "Synthesizes W5 framing and builds legacy fallback from player_local_context/environment_state current_area/current_room_id.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": False,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": False,
+        "tests_proving_classification": [
+            "test_graph_runtime_synthesizes_w5_location_framing_in_action_resolution_commit",
+            "test_graph_runtime_missing_w5_keeps_legacy_location_fallback",
+        ],
+        "recommended_action": "Keep fallback source until graph old-payload window is explicitly closed.",
+    },
+    {
+        "file_path": "ai_stack/langgraph/runtime_executor/executor_symbolic_meta_genre_derivation.py",
+        "symbol": "_derive_sensory_context SOURCE_LINES",
+        "classification": "w5_native_no_area_dependency",
+        "surface_kind": "runtime",
+        "current_role": "Threads graph-owned w5_location_framing into sensory_context; W5-native path can run without direct area fields.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": True,
+        "removal_would_break_malformed_w5_fallback": False,
+        "removal_would_break_old_payload_compatibility": False,
+        "removal_would_change_committed_output": False,
+        "tests_proving_classification": [
+            "test_graph_sensory_derivation_receives_synthesized_w5_location_framing",
+            "test_phase_6c6_removing_direct_area_fields_from_w5_native_fixture_preserves_sensory_output",
+        ],
+        "recommended_action": "No removal needed here; preserve W5 threading.",
+    },
+    {
+        "file_path": "ai_stack/language_io/language_adapter.py",
+        "symbol": "_interaction_surface_cached",
+        "classification": "blocker_requires_refactor",
+        "surface_kind": "runtime",
+        "current_role": "Builds content-derived interaction_surface.current_area; not yet backed by W5 runtime overlay.",
+        "w5_primary_in_default_path": False,
+        "area_fields_only_shimmed_compatibility": False,
+        "removal_would_break_malformed_w5_fallback": False,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": False,
+        "tests_proving_classification": [
+            "ai_stack/tests/test_langgraph_runtime.py",
+            "ai_stack/tests/test_free_player_action_resolution_contract.py",
+        ],
+        "recommended_action": "Design a non-cached W5 runtime overlay before treating adapter current_area as removable.",
+    },
+    {
+        "file_path": "ai_stack/story_runtime/semantic_planner/semantic_scene_plan/content_frame.py",
+        "symbol": "build_scene_content_frame",
+        "classification": "public_or_substrate_out_of_scope",
+        "surface_kind": "runtime",
+        "current_role": "Reads environment_state.current_room_id/current_area as planner content-frame fallback.",
+        "w5_primary_in_default_path": False,
+        "area_fields_only_shimmed_compatibility": False,
+        "removal_would_break_malformed_w5_fallback": True,
+        "removal_would_break_old_payload_compatibility": True,
+        "removal_would_change_committed_output": False,
+        "tests_proving_classification": [
+            "ai_stack/tests/test_runtime_aspect_ledger.py",
+        ],
+        "recommended_action": "Out of ADR-0071 runtime-area removal; defer to semantic planner/substrate ADR.",
+    },
+    {
+        "file_path": "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+        "symbol": "Phase 6C W5 location-framing proof tests",
+        "classification": "test_only_legacy_dependency",
+        "surface_kind": "test",
+        "current_role": "Asserts compatibility-field behavior, fallback preservation, no raw W5 history, How, and inferred Why.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": True,
+        "removal_would_break_malformed_w5_fallback": False,
+        "removal_would_break_old_payload_compatibility": False,
+        "removal_would_change_committed_output": False,
+        "tests_proving_classification": [
+            "ai_stack/tests/test_w5_actor_tracking_location_framing.py",
+        ],
+        "recommended_action": "Keep as removal guard; rename only if wording implies legacy authority.",
+    },
+    {
+        "file_path": "docs/MVPs/w5_legacy_consumer_removal_inventory.md",
+        "symbol": "Phase 6C-7/8 dependency-evidence section",
+        "classification": "doc_only_legacy_dependency",
+        "surface_kind": "doc",
+        "current_role": "Documents remaining area-field dependencies and why global removal is still blocked.",
+        "w5_primary_in_default_path": True,
+        "area_fields_only_shimmed_compatibility": True,
+        "removal_would_break_malformed_w5_fallback": False,
+        "removal_would_break_old_payload_compatibility": False,
+        "removal_would_change_committed_output": False,
+        "tests_proving_classification": [
+            "tests/test_inventory_w5_legacy_consumers.py",
+        ],
+        "recommended_action": "Keep documentation current with ADR-0071 readiness.",
+    },
+)
+
+
+PHASE_6C7_DEPENDENCY_EVIDENCE_REPORT: dict[str, object] = {
+    "phase": "6C-7/6C-8",
+    "evidence_method": (
+        "Static grep over narrator/sensory/LangGraph/language-adapter/local-context "
+        "surfaces plus curated dependency rows tied to focused W5 location-framing, "
+        "inventory, MVP03, MVP04, and discovered runtime tests."
+    ),
+    "removal_ready": False,
+    "adr": "ADR-0071",
+    "adr_status": "Proposed",
+    "safe_narrow_scope": [
+        "W5-native narrator/sensory consumers may run without direct current_area/from_area/to_area input.",
+        "Legacy area fields may be generated through legacy_area_compat.v1 for compatibility consumers.",
+    ],
+    "unsafe_global_removal_reasons": [
+        "build_updated_player_local_context still consumes to_area/current_area to carry local context.",
+        "_current_context_area still needs legacy area fallback for malformed-W5 and old payloads.",
+        "sensory_context_engine._current_location_id still needs to_area/current_area/from_area fallback.",
+        "language_adapter._interaction_surface_cached still exposes content-derived current_area outside the shim.",
+        "semantic planner content-frame reads environment_state.current_area/current_room_id and is out of ADR-0071 scope.",
+    ],
+    "safe_cleanup_performed": [
+        "Added Phase 6C-7/8 dependency-evidence inventory and JSON/human report output.",
+        "Updated ADR-0071 readiness to record evidence collected but removal still blocked.",
+        "Kept compatibility fields, malformed-W5 fallback, old-payload fallback, public aliases, substrate fields, and committed output unchanged.",
+    ],
+    "narrow_implementation_performed": False,
+    "runtime_fields_removed": False,
+    "next_recommended_package": (
+        "6C-9 W5-native carried-local-context helper plus language-adapter/runtime-overlay "
+        "design; then rerun dependency evidence before any accepted removal phase."
     ),
 }
 
@@ -1574,6 +1846,43 @@ def phase_6c6_compatibility_shim_report() -> dict[str, object]:
     ):
         value = out.get(list_key)
         out[list_key] = list(value) if isinstance(value, list) else []
+    return out
+
+
+def phase_6c7_dependency_evidence_inventory() -> list[dict[str, object]]:
+    """Return the Phase 6C-7/8 production-like dependency evidence rows."""
+
+    out: list[dict[str, object]] = []
+    for row in PHASE_6C7_DEPENDENCY_EVIDENCE:
+        copied = dict(row)
+        tests = copied.get("tests_proving_classification")
+        copied["tests_proving_classification"] = list(tests) if isinstance(tests, list) else []
+        out.append(copied)
+    return out
+
+
+def phase_6c7_dependency_classification_summary() -> dict[str, int]:
+    """Return counts by Phase 6C-7/8 dependency classification."""
+
+    summary: dict[str, int] = {}
+    for row in PHASE_6C7_DEPENDENCY_EVIDENCE:
+        classification = str(row.get("classification") or "unknown_needs_runtime_trace")
+        summary[classification] = summary.get(classification, 0) + 1
+    return dict(sorted(summary.items()))
+
+
+def phase_6c7_dependency_evidence_report() -> dict[str, object]:
+    """Return the Phase 6C-7/8 dependency-evidence readiness report."""
+
+    out = dict(PHASE_6C7_DEPENDENCY_EVIDENCE_REPORT)
+    for list_key in (
+        "safe_narrow_scope",
+        "unsafe_global_removal_reasons",
+        "safe_cleanup_performed",
+    ):
+        value = out.get(list_key)
+        out[list_key] = list(value) if isinstance(value, list) else []
+    out["classification_summary"] = phase_6c7_dependency_classification_summary()
     return out
 
 
@@ -1761,7 +2070,7 @@ def _format_human(report: ScanReport) -> str:
     )
     out.append("")
     out.append("Phase 6B-6A diagnostics flag retirement surface (informational; authoritative")
-    out.append("removal plan in docs/ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md):")
+    out.append("removal plan in docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view):")
     _6b6a_keys = (
         "narrator_legacy_compat_diag_flag",
         "narrator_legacy_compat_diag_fn",
@@ -1804,7 +2113,7 @@ def _format_human(report: ScanReport) -> str:
         " as removed_by_adr_0068."
     )
     out.append(
-        "  5. ADR-0068: ACCEPTED — see docs/ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md."
+        "  5. ADR-0068: ACCEPTED — see docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view."
     )
     out.append("")
     out.append("  OVERALL ADR-0068 STATUS: EXECUTED AND ACCEPTED.")
@@ -1986,6 +2295,22 @@ def _format_human(report: ScanReport) -> str:
     out.append("  blockers: " + "; ".join(phase_6c6["remaining_blockers"]))
     out.append("  removal gate: BLOCKED — shim proof exists, field deletion still needs ADR acceptance.")
     out.append("")
+    out.append("Phase 6C-7/6C-8 — dependency evidence + removal readiness:")
+    phase_6c7 = phase_6c7_dependency_evidence_report()
+    for classification, count in phase_6c7["classification_summary"].items():
+        out.append(f"  {classification:36s} {count:3d}")
+    for key in (
+        "adr",
+        "adr_status",
+        "removal_ready",
+        "narrow_implementation_performed",
+        "runtime_fields_removed",
+        "next_recommended_package",
+    ):
+        out.append(f"  {key}: {phase_6c7[key]}")
+    out.append("  unsafe global removal reasons: " + "; ".join(phase_6c7["unsafe_global_removal_reasons"]))
+    out.append("  removal gate: BLOCKED — evidence found nonzero unsupported area-field dependencies.")
+    out.append("")
     out.append("This report is informational; the authoritative inventory and")
     out.append("classification live in docs/MVPs/w5_legacy_consumer_removal_inventory.md.")
     return "\n".join(out)
@@ -2038,6 +2363,9 @@ def main(argv: list[str] | None = None) -> int:
             "phase_6c5_removal_readiness_adr": phase_6c5_removal_readiness_adr(),
             "phase_6c5_readiness_summary": phase_6c5_readiness_summary(),
             "phase_6c6_compatibility_shim": phase_6c6_compatibility_shim_report(),
+            "phase_6c7_dependency_evidence_inventory": phase_6c7_dependency_evidence_inventory(),
+            "phase_6c7_dependency_classification_summary": phase_6c7_dependency_classification_summary(),
+            "phase_6c7_dependency_evidence_report": phase_6c7_dependency_evidence_report(),
             "findings": [f.to_dict() for f in report.findings],
         }
         print(json.dumps(payload, indent=2, sort_keys=True))

@@ -1,110 +1,12 @@
-# Architecture decision records (ADR)
+# Architecture decisions (retired ADR directory)
 
-This directory holds **lightweight ADRs** for decisions that affect multiple services or long-lived boundaries. **Program audit** and **task closure** evidence remain under `docs/audit/` and `docs/governance/audit_resolution/`; they are not ADRs.
+**Normative architecture decisions** live only in Software Architecture Documents (SAD) §9 under
+[`docs/architecture/`](../architecture/START-HERE.md).
 
-For the **record shape** (optional sections, testing expectations), see [`adr-template.md`](adr-template.md). Migration notes from the 2026-04-17 consolidation live in [`migration_from_archive_2026-04-17.md`](migration_from_archive_2026-04-17.md).
+| Need | Go to |
+| --- | --- |
+| Decision index (ex-ADR → SAD anchor) | [`DECISION_REGISTRY.md`](../architecture/project/DECISION_REGISTRY.md) |
+| Governance policy (SAD-only) | [governance SAD D5](../architecture/project/governance/architecture.md#d5-sad-only-decision-retirement) |
+| Historical ADR files (read-only) | [`docs/archive/adr-retired-2026/`](../archive/adr-retired-2026/README.md) |
 
-**Legacy ADRs** (fully superseded by newer records) live in [`legacy/`](legacy/). Do not amend legacy files — create or amend active ADRs instead.
-
-## Status key
-
-| Status | Meaning |
-|--------|---------|
-| **Accepted** | Fully implemented; ADR matches current reality |
-| **Not Finished** | Partially implemented or implementation drifted from spec |
-| **Proposed** | Design intent documented; implementation not yet started |
-| **Legacy** | Entirely superseded by a newer ADR; moved to `legacy/` |
-
-## Active ADRs
-
-| ADR | Title | Status |
-|-----|--------|--------|
-| [ADR-0001](adr-0001-runtime-authority-in-world-engine.md) | Runtime authority in world-engine | Accepted |
-| [ADR-0002](adr-0002-backend-session-surface-quarantine.md) | Backend session / transitional runtime quarantine | Accepted |
-| [ADR-0003](adr-0003-scene-identity-canonical-surface.md) | Single canonical scene identity surface | Accepted |
-| [ADR-0004](adr-0004-runtime-model-output-proposal-only-until-validator-approval.md) | Runtime model output is proposal-only until validator approval | Accepted |
-| [ADR-0005](adr-0005-research-may-draft-change-but-may-not-publish.md) | Research may draft change, but may not publish change | Accepted |
-| [ADR-0006](adr-0006-revision-review-uses-state-machine.md) | Revision review uses a state machine | Not Finished |
-| [ADR-0007](adr-0007-revision-conflicts-explicit-governance-objects.md) | Revision conflicts are explicit governance objects | Not Finished |
-| [ADR-0008](adr-0008-validation-strategy-explicit-configurable.md) | Validation strategy must be explicit and configurable | Accepted |
-| [ADR-0009](adr-0009-evaluation-is-a-promotion-gate.md) | Evaluation is a promotion gate | Not Finished |
-| [ADR-0010](adr-0010-governance-workflows-event-driven.md) | Governance workflows are event-driven | Not Finished |
-| [ADR-0011](adr-0011-validation-failures-degrade-gracefully.md) | Validation failures in live play must degrade gracefully | Accepted |
-| [ADR-0012](adr-0012-corrective-retry-provide-actionable-feedback.md) | Corrective retry must provide actionable validation feedback | Accepted |
-| [ADR-0013](adr-0013-preview-sessions-isolated-from-active-runtime.md) | Preview sessions must be isolated from active runtime | Not Finished |
-| [ADR-0014](adr-0014-player-affect-enum-signals.md) | Player affect uses enum-based signals | Not Finished |
-| [ADR-0015](adr-0015-persist-turnexecutionresult-and-aidecisionlog.md) | Persist TurnExecutionResult and AIDecisionLog in SessionState | Accepted |
-| [ADR-0016](adr-0016-frontend-backend-restructure.md) | Frontend / backend restructure | Accepted |
-| [ADR-0017](adr-0017-durable-truth-migration-policy.md) | Durable-truth migration verification and archive policy | Accepted |
-| [ADR-0018](adr-0018-role-aware-aidecisionlog.md) | Role-aware AIDecisionLog and ParsedRoleAwareDecision | Accepted |
-| [ADR-0019](adr-0019-proposal-source-and-responder-gating.md) | ProposalSource enum and responder-only gating | Accepted |
-| [ADR-0020](adr-0020-debug-panel-ui.md) | Debug Panel UI — bounded diagnostics | Accepted |
-| [ADR-0022](adr-0022-mvp-expansion-decision-rule.md) | MVP expansion decision rule | Accepted |
-| [ADR-0023](adr-0023-decision-framework-for-risk-and-kill-criteria.md) | Decision framework — risk and kill criteria | Accepted |
-| [ADR-0024](adr-0024-decision-boundary-record-schema.md) | Decision boundary record schema | Not Finished |
-| [ADR-0025](adr-0025-canonical-authored-content-model.md) | Canonical authored content model | Accepted |
-| [ADR-0026](adr-0026-mcp-host-and-runtime-phase-a.md) | MCP Phase A — host and runtime defaults | Accepted |
-| [ADR-0027](adr-0027-mcp-transport-connectivity-phase-a.md) | MCP transport and connectivity — Phase A | Accepted |
-| [ADR-0028](adr-0028-mcp-security-baseline-phase-a.md) | MCP security baseline — Phase A | Accepted |
-| [ADR-0029](adr-0029-residue-removal-policy.md) | Residue removal policy | Accepted |
-| [ADR-0030](adr-0030-docker-up-complete-bootstrap.md) | `docker-up.py` as complete local bootstrap | Accepted |
-| [ADR-0031](adr-0031-env-configuration-governance.md) | Environment configuration governance | Accepted |
-| [ADR-0032](adr-0032-mvp4-live-runtime-setup-requirements.md) | MVP4 live runtime setup requirements | Accepted |
-| [ADR-0033](adr-0033-live-runtime-commit-semantics.md) | Live runtime commit semantics (real AI, mock, fallback, visible story) | Accepted |
-| [ADR-0034](adr-0034-player-facing-narrative-shell-contract.md) | Player-facing narrative shell contract (MVP5) | Accepted |
-| [ADR-0035](adr-0035-story-opening-economy-and-warmup.md) | Story opening economy, warmup, and phase alignment | Proposed |
-| [ADR-0036](adr-0036-player-session-output-language.md) | Player session output language (launch-time selection) | Accepted |
-| [ADR-0037](adr-0037-backend-test-suite-split-runner.md) | Backend test suite split in canonical orchestrator | Accepted |
-| [ADR-0038](adr-0038-canonical-turn-lifecycle-single-commit-path.md) | Canonical turn lifecycle and single commit / persist / project path | Proposed |
-| [ADR-0039](adr-0039-gate-tests-no-hardcoded-oracle-bypass.md) | Gate tests must not use hardcoded oracles (no example-shaped bypasses) | Accepted |
-| [ADR-0040](adr-0040-quality-lab-mcp-runtime-diagnostics.md) | Quality Lab MCP runtime diagnostics and judge-guided improvement | Accepted |
-| [ADR-0041](adr-0041-semantic-capability-selection-and-runtime-capability-budgeting.md) | Controlled Runtime Capability Authority | Not Finished |
-| [ADR-0042](adr-0042-meta-narrative-awareness-opt-in.md) | Opt-in Meta-Narrative Awareness Runtime Aspect | Accepted |
-| [ADR-0043](adr-0043-adaptive-meta-narrative-awareness.md) | Adaptive Meta-Narrative Awareness and Fourth-Wall Play | Accepted |
-| [ADR-0047](adr-0047-at-rest-encryption-evidence-boundary.md) | At-rest encryption evidence boundary | Not Finished |
-| [ADR-0048](adr-0048-central-route-and-mcp-rate-limit-inventory.md) | Central route and MCP rate-limit inventory | Accepted |
-| [ADR-0049](adr-0049-provider-credential-governance-and-local-evaluator-evidence.md) | Provider credential governance and local evaluator evidence | Accepted |
-| [ADR-0050](adr-0050-security-governance-browser-mutation-boundaries.md) | Security governance for browser mutation boundaries | Accepted |
-| [ADR-0051](adr-0051-storage-layer-encryption-governance.md) | Storage-layer encryption governance | Accepted |
-| [ADR-0052](adr-0052-security-governance-admin-control-plane.md) | Security Governance Admin Control Plane | Accepted |
-| [ADR-0053](adr-0053-bounded-semantic-scene-planner.md) | Bounded Semantic Scene Planner | Accepted |
-| [ADR-0054](adr-0054-session-input-language-english-internal-resolution.md) | Session input language and English internal resolution | Accepted |
-| [ADR-0055](adr-0055-semantic-player-input-translation-ingress.md) | Semantic Player Input Translation Ingress | Accepted |
-| [ADR-0056](adr-0056-souffleuse-player-guidance-lane.md) | Souffleuse player guidance lane | Accepted |
-| [ADR-0057](adr-0057-canon-safe-player-freedom-and-affordance-inference.md) | Canon-safe player freedom and affordance inference | Accepted |
-| [ADR-0062](adr-0062-director-realization-thin-path.md) | Director realization thin path (Resolver → Director → Narrator) | Accepted |
-| [ADR-0063](adr-0063-w5-actor-tracking.md) | W5 actor tracking | Proposed |
-| [ADR-0064](adr-0064-python-314-unified-interpreter-standard.md) | Unified Python 3.14 interpreter standard | Accepted |
-| [ADR-0065](adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md) | W5 narrator strict mode becomes the default actor-situation surface | Proposed |
-| [ADR-0066](adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) | Retire narrator legacy transition compatibility diagnostics flag | Accepted |
-| [ADR-0067](adr-0067-deprecate-narrator-strict-off-transition-rollback.md) | Deprecate narrator strict-off transition rollback surface | Accepted |
-| [ADR-0068](adr-0068-remove-narrator-strict-off-transition-rollback.md) | Remove narrator strict-off transition rollback surface | Accepted |
-| [ADR-0069](adr-0069-w5-player-view-replaces-current-room-aliases.md) | W5 player view replaces public current_room compatibility aliases | Accepted |
-| [ADR-0070](adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md) | W5 Actor Tracking Replaces Narrator Consequence Location Framing | Accepted |
-| [ADR-0071](adr-0071-retire-legacy-narrator-consequence-area-fields-after-w5-location-framing.md) | Retire Legacy Narrator Consequence Area Fields After W5 Location Framing | Proposed |
-
-_Status values mirror each file's `## Status` line; update the table when an ADR's status changes._
-
-## Legacy ADRs
-
-These ADRs are fully superseded by newer records. They live in [`legacy/`](legacy/) for historical reference only. Do not amend them.
-
-| ADR | Title | Superseded by |
-|-----|--------|---------------|
-| [ADR-0021](legacy/adr-0021-runtime-authority.md) | Runtime authority (early consolidation stub) | [ADR-0001](adr-0001-runtime-authority-in-world-engine.md) |
-
-## When to write an ADR
-
-- Changing **ownership** of session lifecycle, persistence, or turn commit authority.
-- Introducing a **second** runtime graph or duplicate content authority without removing the first.
-- Materially changing **security boundaries** between admin, player, MCP, and internal APIs.
-
-## Template
-
-Use [`adr-template.md`](adr-template.md) for new decisions.
-
-## Related
-
-- [Architecture overview](../architecture/README.md)
-- [Normative contracts index](../dev/contracts/normative-contracts-index.md)
-- [Audit resolution (master prompt, case input, living state)](../governance/audit_resolution/README.md) — closure governance for audit programs (not ADRs)
+Do not add new `adr-*.md` files here. Edit the owning component or project SAD §9 and register the decision in `DECISION_REGISTRY.md`.

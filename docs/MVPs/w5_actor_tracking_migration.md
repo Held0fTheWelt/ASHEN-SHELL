@@ -201,7 +201,7 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 - [x] R1 — Function renamed: `validate_w5_actor_situation` → `validate_w5_actor_tracking`. Definition in `ai_stack/actor_tracking/validation.py`, re-export from `ai_stack/actor_tracking/__init__.py`, production callsite in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py`, and all twelve test callsites in `ai_stack/tests/test_w5_actor_tracking_validation.py` updated atomically. No backward alias retained; the call graph is enumerated and small.
 - [x] R2 — Diagnostic string renamed: `failure_class = "w5_actor_situation_validation"` → `"w5_actor_tracking_validation"` in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py`. No downstream consumer/filter in production code asserts the old value.
-- [x] R3 — Docstring path updated in `ai_stack/actor_tracking/models.py` from `docs/ADR/adr-0063-w5-actor-situation-tracker.md` to `docs/ADR/adr-0063-w5-actor-tracking.md`.
+- [x] R3 — Docstring path updated in `ai_stack/actor_tracking/models.py` from `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` to `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`.
 - [x] R4 — Docstring paths updated in `ai_stack/actor_tracking/__init__.py` and `ai_stack/actor_tracking/extractor.py` from `docs/MVPs/w5_actor_situation_migration.md` to `docs/MVPs/w5_actor_tracking_migration.md`. `__init__.py` retains a single historical sentence noting the prior package names — historical context only, not a current-state claim.
 - [x] R5 — Docstring path updated in `ai_stack/actor_tracking/projection.py` from `docs/MVPs/w5_actor_situation_migration.md` to `docs/MVPs/w5_actor_tracking_migration.md`.
 - [x] Forbidden package scan still reports zero active imports of `ai_stack/actor_situation` or `ai_stack/w5_actor_situation`.
@@ -1419,6 +1419,47 @@ dependency evidence.
 **Next phase:** Phase 6C-7 should run a final removal-readiness audit and decide
 whether an accepted removal phase can be opened. Until then, keep the runtime
 fields and all fallback windows.
+
+---
+
+### Phase 6C-7 / 6C-8 — dependency evidence and removal-readiness audit (complete, 2026-05-31)
+
+**Goal:** collect production-like dependency evidence for
+`current_area/from_area/to_area` and decide whether actual runtime field removal
+is safe.
+
+- [x] Added a curated dependency-evidence inventory covering narrator
+  consequence, sensory context, LangGraph SOURCE_LINES, language-adapter
+  surfaces, semantic content-frame fallback, tests, and docs.
+- [x] Confirmed W5-native narrator/sensory paths can run without direct
+  `current_area/from_area/to_area` input when valid `w5_location_framing` is
+  present.
+- [x] Confirmed legacy compatibility consumers receive area fields through
+  `legacy_area_compat.v1` when W5 is valid.
+- [x] Confirmed malformed-W5 and old-payload fallbacks still preserve legacy
+  values.
+- [x] Updated ADR-0071 readiness with the dependency-evidence table.
+- [x] No runtime field removal, malformed-W5 fallback removal, old-payload
+  fallback removal, public alias removal, substrate removal, committed event
+  mutation, or committed output change.
+
+**Evidence result:** `removal_ready=false`.
+
+**Blocking dependencies:**
+
+- `build_updated_player_local_context()` still consumes `to_area/current_area`
+  for carried player-local context.
+- `_current_context_area()` and sensory `_current_location_id()` still require
+  legacy area fallback for malformed-W5 and old payloads.
+- `language_adapter._interaction_surface_cached()` still exposes content-derived
+  `current_area` outside the shim.
+- Semantic planner content-frame fallback reads `environment_state.current_area`
+  / `current_room_id` and is out of ADR-0071 scope.
+- ADR-0071 remains Proposed.
+
+**Next package:** Phase 6C-9 should design a W5-native carried-local-context
+helper and a language-adapter runtime overlay, then rerun the dependency
+evidence before any accepted removal phase.
 
 ---
 

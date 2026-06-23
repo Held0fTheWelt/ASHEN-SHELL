@@ -127,28 +127,49 @@ class TestActiveDocsRequiredContracts:
     """Active documentation must include current contracts."""
 
     def test_service_boundaries_doc_exists(self):
-        """docs/architecture/current_service_boundaries.md must exist and be substantial."""
-        path = _REPO_ROOT / "docs" / "architecture" / "current_service_boundaries.md"
-        assert path.exists(), f"current_service_boundaries.md not found at {path}"
-        assert path.stat().st_size > 500, "current_service_boundaries.md is too small"
+        """ecosystem-topology SAD must document canonical service boundaries."""
+        path = (
+            _REPO_ROOT
+            / "docs"
+            / "architecture"
+            / "project"
+            / "ecosystem-topology"
+            / "architecture.md"
+        )
+        assert path.exists(), f"ecosystem-topology SAD not found at {path}"
+        assert path.stat().st_size > 500, "ecosystem-topology SAD is too small"
 
     def test_god_of_carnage_contract_exists(self):
-        """docs/architecture/god_of_carnage_current_contract.md must exist and be substantial."""
-        path = _REPO_ROOT / "docs" / "architecture" / "god_of_carnage_current_contract.md"
-        assert path.exists(), f"god_of_carnage_current_contract.md not found at {path}"
-        assert path.stat().st_size > 500, "god_of_carnage_current_contract.md is too small"
+        """content-authority SAD must document GoC module authority."""
+        path = (
+            _REPO_ROOT
+            / "docs"
+            / "architecture"
+            / "components"
+            / "content-authority"
+            / "architecture.md"
+        )
+        assert path.exists(), f"content-authority SAD not found at {path}"
+        assert path.stat().st_size > 500, "content-authority SAD is too small"
 
     def test_runtime_profile_vs_content_contract_exists(self):
-        """docs/architecture/runtime_profile_vs_content_contract.md must exist."""
-        path = _REPO_ROOT / "docs" / "architecture" / "runtime_profile_vs_content_contract.md"
-        assert path.exists(), f"runtime_profile_vs_content_contract.md not found at {path}"
-        assert path.stat().st_size > 500, "runtime_profile_vs_content_contract.md is too small"
+        """content-vs-runtime-profile boundary doc must exist."""
+        path = _REPO_ROOT / "docs" / "architecture" / "boundaries" / "content-vs-runtime-profile.md"
+        assert path.exists(), f"content-vs-runtime-profile.md not found at {path}"
+        assert path.stat().st_size > 500, "content-vs-runtime-profile.md is too small"
 
     def test_observability_traceability_contract_exists(self):
-        """docs/architecture/observability_traceability_contract.md must exist."""
-        path = _REPO_ROOT / "docs" / "architecture" / "observability_traceability_contract.md"
-        assert path.exists(), f"observability_traceability_contract.md not found at {path}"
-        assert path.stat().st_size > 500, "observability_traceability_contract.md is too small"
+        """observability-traceability project SAD must exist."""
+        path = (
+            _REPO_ROOT
+            / "docs"
+            / "architecture"
+            / "project"
+            / "observability-traceability"
+            / "architecture.md"
+        )
+        assert path.exists(), f"observability-traceability SAD not found at {path}"
+        assert path.stat().st_size > 500, "observability-traceability SAD is too small"
 
     def test_test_suite_contract_exists(self):
         """docs/testing/TEST_SUITE_CONTRACT.md must exist."""
@@ -157,13 +178,19 @@ class TestActiveDocsRequiredContracts:
         assert path.stat().st_size > 500, "TEST_SUITE_CONTRACT.md is too small"
 
     def test_visitor_prohibition_is_documented(self):
-        """The visitor prohibition must be stated in active architecture docs."""
-        goc_contract = _REPO_ROOT / "docs" / "architecture" / "god_of_carnage_current_contract.md"
-        assert goc_contract.exists()
-        content = goc_contract.read_text(encoding="utf-8")
-        assert "visitor" in content.lower(), "GoC contract must document the visitor prohibition"
-        assert "FORBIDDEN" in content or "prohibited" in content.lower(), (
-            "GoC contract must explicitly prohibit visitor"
+        """The visitor prohibition must be stated in active MVP identity docs."""
+        mvp_identity = (
+            _REPO_ROOT
+            / "docs"
+            / "MVPs"
+            / "MVP_Live_Runtime_Completion"
+            / "01_experience_identity_and_session_start.md"
+        )
+        assert mvp_identity.exists()
+        content = mvp_identity.read_text(encoding="utf-8")
+        assert "visitor" in content.lower(), "MVP1 identity doc must document the visitor prohibition"
+        assert "FORBIDDEN" in content or "prohibited" in content.lower() or "reject" in content.lower(), (
+            "MVP1 identity doc must explicitly prohibit or reject visitor"
         )
 
     def test_canonical_runner_documented(self):

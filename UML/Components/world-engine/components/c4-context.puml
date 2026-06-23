@@ -1,0 +1,18 @@
+@startuml world-engine-c4-context
+title world-engine — System Context
+actor Player
+actor Operator
+rectangle "World of Shadows" {
+  component frontend as "frontend"
+  component backend as "backend"
+  component world_engine as "world-engine"
+  component ai_stack as "ai_stack"
+}
+database stores as "JSON stores"
+Player --> frontend : HTTPS
+frontend --> backend : REST
+backend --> world_engine : play proxy / internal API
+world_engine --> ai_stack : turn graph
+world_engine --> stores : persist sessions/runs
+Operator --> backend : admin APIs
+@enduml

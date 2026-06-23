@@ -1,6 +1,6 @@
 """W5 Actor Tracking — closed enums and record models.
 
-See ADR-0063 (``docs/ADR/adr-0063-w5-actor-tracking.md``).
+See ADR-0063 (``docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view``).
 
 All enum *values* are ``lower_snake_case`` strings (Python member names may be
 ``UPPER_CASE``). Records are frozen dataclasses with ``to_dict`` / ``from_dict``

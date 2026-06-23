@@ -2,31 +2,56 @@
 
 **When to read what** for implementers. These documents **bind** behavior for the GoC slice and runtime authority; they are **not** casual onboarding.
 
+**Architecture entry:** [`docs/architecture/START-HERE.md`](../../architecture/START-HERE.md) · **Contract folder:** [`docs/architecture/contracts/`](../../architecture/contracts/README.md)
+
 ## Runtime and platform authority
 
 | Document | Binding scope |
 |----------|----------------|
-| [`runtime-authority-and-state-flow.md`](../../technical/runtime/runtime-authority-and-state-flow.md) | Consolidated authority: world-engine owns live sessions; backend owns governance/publishing |
-| [`world_engine_authoritative_runtime_and_system_interactions.md`](../../technical/runtime/world_engine_authoritative_runtime_and_system_interactions.md) | Runtime/session interaction map, including runtime-aspect evidence such as voice consistency, tonal consistency, information disclosure, expectation variation, narrative momentum, social pressure, sensory context, genre awareness, improvisational coherence, meta-narrative awareness, environment state, memory, and commit authority |
-| [`runtime_state_and_session_contracts.md`](../../MVPs/MVP_World_Of_Shadows_Canonical_Implementation_Bundle/runtime_state_and_session_contracts.md) | Session-state invariants, continuity expectations, voice consistency, tonal consistency, environment-state, social-pressure, narrative-momentum, sensory-context, genre-awareness, symbolic-object-resonance, improvisational-coherence, expectation-variation, meta-narrative awareness, and information-disclosure contract boundaries |
-| [`runtime_authority_decision.md`](../../archive/architecture-legacy/runtime_authority_decision.md) | Archived original decision text (Milestones 0–5); prefer technical page for navigation |
-| [`ai-stack-overview.md`](../../technical/ai/ai-stack-overview.md) | Current AI stack — cross-check with vertical slice for implemented graph |
-| [`player_input_interpretation_contract.md`](../../technical/runtime/player_input_interpretation_contract.md) | Interpretation pipeline expectations |
-| [`active_listening_contract.md`](../../technical/runtime/active_listening_contract.md) | Bounded Pi34 active-listening surface: broad NLU listening, committed-memory refs, prompt authority, ledger diagnostics, and ADR-0039 oracle boundary |
-| [`callback_web_contract.md`](../../technical/runtime/callback_web_contract.md) | Bounded Pi17 callback-web index: schemas, sources, runtime propagation, operator endpoints, and ADR-0039 oracle boundary |
-| [`pacing_rhythm_contract.md`](../../technical/runtime/pacing_rhythm_contract.md) | Bounded Pi18 pacing-rhythm aspect: cadence target, structural validation, ledger/MCP propagation, and ADR-0039 oracle boundary |
-| [`subtext_interpretation_contract.md`](../../technical/runtime/subtext_interpretation_contract.md) | Bounded Pi19 surface-vs-intent contract, policy source, runtime propagation, and ADR-0039 oracle boundary |
-| [`consequence_cascade_contract.md`](../../technical/runtime/consequence_cascade_contract.md) | Bounded Pi21 consequence cascade: committed-truth derivation, branch-selection edges, graph feedback, operator endpoints, and ADR-0039 oracle boundary |
-| [`sensory_context_contract.md`](../../technical/runtime/sensory_context_contract.md) | Bounded Pi26 sensory-context aspect: authored layer selection, structured event validation, ledger/MCP propagation, and ADR-0039 oracle boundary |
-| [`temporal_control_contract.md`](../../technical/runtime/temporal_control_contract.md) | Bounded Pi28 temporal-control aspect: selected time operation, committed refs, structured event validation, ledger/MCP diagnostics, and ADR-0039 oracle boundary |
-| [`improvisational_coherence_contract.md`](../../technical/runtime/improvisational_coherence_contract.md) | Bounded Pi24 improvisational-coherence aspect: structured contribution acceptance, scene anchors, ledger/MCP diagnostics, and ADR-0039 oracle boundary |
-| [`expectation_variation_contract.md`](../../technical/runtime/expectation_variation_contract.md) | Bounded Pi29 expectation-variation aspect: selected surprise budget, setup refs, cooldown, structured event validation, ledger/MCP diagnostics, and ADR-0039 oracle boundary |
-| [`no_dead_end_recovery_contract.md`](../../technical/runtime/no_dead_end_recovery_contract.md) | Bounded Pi30 no-dead-end recovery: recovery classes, commit policy, next-step evidence, false-truth boundary, ledger diagnostics, and ADR-0039 oracle boundary |
-| [`narrative_momentum_contract.md`](../../technical/runtime/narrative_momentum_contract.md) | Bounded Pi31 narrative-momentum aspect: state-machine target, transition/progress/stall validation, planner-truth rehydration, ledger/MCP diagnostics, and ADR-0039 oracle boundary |
-| [`genre_awareness_contract.md`](../../technical/runtime/genre_awareness_contract.md) | Bounded Pi32 genre-awareness aspect: module-authored profile, registers, required conventions, structured event validation, ledger/MCP diagnostics, and ADR-0039 oracle boundary |
-| [`symbolic_object_resonance_contract.md`](../../technical/runtime/symbolic_object_resonance_contract.md) | Bounded Pi33 symbolic-object aspect: canonical object ids, resonance roles, source refs, structured event validation, ledger/MCP diagnostics, and ADR-0039 oracle boundary |
-| [`meta_narrative_awareness_contract.md`](../../technical/runtime/meta_narrative_awareness_contract.md) | Bounded Pi25 meta-narrative awareness aspect: full opt-in gating, adaptive/fourth-wall/cross-session v2 scope, structured event validation, ledger diagnostics, and ADR-0039 oracle boundary |
-| [`tonal_consistency_contract.md`](../../technical/runtime/tonal_consistency_contract.md) | Bounded Pi35 tonal-consistency aspect: tone target, structured classification, marker-class validation, ledger/MCP diagnostics, ADR-0039 oracle boundary, and local/partial promotion boundary |
+| [world-engine SAD](../../architecture/components/world-engine/architecture.md) | Authoritative play service architecture (replaces spine stub) |
+| [`runtime-authority-and-state-flow.md`](../../architecture/contracts/runtime/runtime-authority-and-state-flow.md) | Consolidated authority: world-engine owns live sessions; backend owns governance/publishing |
+| [`player_input_interpretation_contract.md`](../../architecture/contracts/runtime/player_input_interpretation_contract.md) | Interpretation pipeline expectations |
+
+## Runtime aspect contracts (Pi-scoped)
+
+Full table (25 contracts). Canonical folder: [`docs/architecture/contracts/runtime/`](../../architecture/contracts/runtime/).
+
+| Document | Owning SAD | Binding scope |
+| --- | --- | --- |
+| [`a1_free_input_primary_runtime_path.md`](../../architecture/contracts/runtime/a1_free_input_primary_runtime_path.md) | frontend + world-engine | Pi-scoped runtime aspect: a1 free input primary runtime path |
+| [`active_listening_contract.md`](../../architecture/contracts/runtime/active_listening_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: active listening contract |
+| [`callback_web_contract.md`](../../architecture/contracts/runtime/callback_web_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: callback web contract |
+| [`consequence_cascade_contract.md`](../../architecture/contracts/runtime/consequence_cascade_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: consequence cascade contract |
+| [`director_realization_thin_path_contract.md`](../../architecture/contracts/runtime/director_realization_thin_path_contract.md) | world-engine + ai-stack | Pi-scoped runtime aspect: director realization thin path contract |
+| [`expectation_variation_contract.md`](../../architecture/contracts/runtime/expectation_variation_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: expectation variation contract |
+| [`genre_awareness_contract.md`](../../architecture/contracts/runtime/genre_awareness_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: genre awareness contract |
+| [`improvisational_coherence_contract.md`](../../architecture/contracts/runtime/improvisational_coherence_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: improvisational coherence contract |
+| [`meta_narrative_awareness_contract.md`](../../architecture/contracts/runtime/meta_narrative_awareness_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: meta narrative awareness contract |
+| [`narrative_momentum_contract.md`](../../architecture/contracts/runtime/narrative_momentum_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: narrative momentum contract |
+| [`no_dead_end_recovery_contract.md`](../../architecture/contracts/runtime/no_dead_end_recovery_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: no dead end recovery contract |
+| [`pacing_rhythm_contract.md`](../../architecture/contracts/runtime/pacing_rhythm_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: pacing rhythm contract |
+| [`player_input_interpretation_contract.md`](../../architecture/contracts/runtime/player_input_interpretation_contract.md) | ai-stack | Pi-scoped runtime aspect: player input interpretation contract |
+| [`relationship_state_machine_contract.md`](../../architecture/contracts/runtime/relationship_state_machine_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: relationship state machine contract |
+| [`runtime-authority-and-state-flow.md`](../../architecture/contracts/runtime/runtime-authority-and-state-flow.md) | world-engine + backend | Pi-scoped runtime aspect: runtime authority and state flow |
+| [`runtime_diagnostic_snapshot_v1_contract.md`](../../architecture/contracts/runtime/runtime_diagnostic_snapshot_v1_contract.md) | observability project SAD | Pi-scoped runtime aspect: runtime diagnostic snapshot v1 contract |
+| [`sensory_context_contract.md`](../../architecture/contracts/runtime/sensory_context_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: sensory context contract |
+| [`social_pressure_contract.md`](../../architecture/contracts/runtime/social_pressure_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: social pressure contract |
+| [`story_runtime_complete_playable_mvp.md`](../../architecture/contracts/runtime/story_runtime_complete_playable_mvp.md) | world-engine | Pi-scoped runtime aspect: story runtime complete playable mvp |
+| [`subtext_interpretation_contract.md`](../../architecture/contracts/runtime/subtext_interpretation_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: subtext interpretation contract |
+| [`symbolic_object_resonance_contract.md`](../../architecture/contracts/runtime/symbolic_object_resonance_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: symbolic object resonance contract |
+| [`temporal_control_contract.md`](../../architecture/contracts/runtime/temporal_control_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: temporal control contract |
+| [`tonal_consistency_contract.md`](../../architecture/contracts/runtime/tonal_consistency_contract.md) | ai-stack + world-engine | Pi-scoped runtime aspect: tonal consistency contract |
+| [`world_engine_authoritative_narrative_commit.md`](../../architecture/contracts/runtime/world_engine_authoritative_narrative_commit.md) | world-engine | Pi-scoped runtime aspect: world engine authoritative narrative commit |
+| [`world_engine_authoritative_runtime_and_system_interactions.md`](../../architecture/contracts/runtime/world_engine_authoritative_runtime_and_system_interactions.md) | world-engine | Pi-scoped runtime aspect: world engine authoritative runtime and system interactions |
+
+### Top-level platform contracts
+
+| Document | Owning SAD | Binding scope |
+| --- | --- | --- |
+| [`turn_execution_contract.md`](../../architecture/contracts/turn_execution_contract.md) | world-engine + turn-execution-canonical UML | Canonical turn ingress → commit → project |
+| [`session_authority_contract.md`](../../architecture/contracts/session_authority_contract.md) | world-engine + backend | Session authority seam |
+
+Stubs remain at former `docs/technical/runtime/*.md` paths.
 
 ## God of Carnage (MVP vertical slice)
 

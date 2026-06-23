@@ -1,0 +1,11 @@
+@startuml world-engine-degraded-turn
+title Degraded adapter turn
+participant "world-engine" as WE
+participant "ai_stack" as AI
+participant "live_success_gate" as G
+WE -> AI : invoke
+AI --> WE : proposal
+WE -> G : evaluate
+G --> WE : live_success false
+WE -> WE : policy commit / block
+@enduml
