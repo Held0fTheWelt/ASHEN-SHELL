@@ -26,6 +26,8 @@ SOURCE_LINES = [
     'from story_runtime_core.model_registry import ModelRegistry, RoutingPolicy\n',
     'from story_runtime_core.player_input_intent_contract import (\n',
     '    SPEECH_PROJECTION_KINDS,\n',
+    '    STRUCTURAL_KIND_TO_INPUT_ROUTING,\n',
+    '    STRUCTURAL_KIND_TO_INTENT_FALLBACK,\n',
     '    is_action_like_player_input_kind,\n',
     '    is_mixed_player_input_kind,\n',
     '    is_narrator_only_player_input_kind,\n',

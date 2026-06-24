@@ -20,6 +20,10 @@ test = [
   "pytest-cov>=4.0,<6",
   "pytest-timeout>=2.1",
 ]
+# ``language`` marks installs that import ``story_runtime_core.language_adapter`` (re-export shim).
+# Requires ``ai_stack`` on PYTHONPATH — sibling package in this monorepo, not a separate PyPI wheel.
+# Repo dev/CI: run from repository root or set PYTHONPATH to include it. See SAD D2 / UML d4-language-adapter-compat-seam.
+language = []
 
 # Explicit layout: pyproject.toml lives next to package modules. Newer setuptools
 # rejects implicit "flat-layout" multi-module discovery; map the import package

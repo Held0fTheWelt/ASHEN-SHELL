@@ -7,6 +7,13 @@ from pydantic import BaseModel, Field
 
 
 class InterpretedInputKind(str, Enum):
+    """Thin structural preview kinds from ``input_interpreter`` only.
+
+    These eight values are *not* the authoritative player-input taxonomy. Semantic
+    classification and commit routing use ``player_input_intent_contract.PLAYER_INPUT_KINDS``
+    (22+ kinds). See ``STRUCTURAL_KIND_TO_INTENT_FALLBACK`` for the bridge table.
+    """
+
     SPEECH = "speech"
     ACTION = "action"
     REACTION = "reaction"

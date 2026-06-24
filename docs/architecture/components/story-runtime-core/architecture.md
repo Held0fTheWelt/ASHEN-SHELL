@@ -72,9 +72,9 @@ Despaghettify moved builtins out of `builtins.py` into explicit template modules
 
 **Context.** Content locale lookups were removed from runtime paths; shared core must not reintroduce authority while legacy imports still resolve during the W5 migration window.
 
-**Decision.** `story_runtime_core.language_adapter` remains a compatibility import surface only; canonical language I/O contract lives in `ai_stack.language_io.language_adapter`. No content-module locale lookup tables in shared core.
+**Decision.** `story_runtime_core.language_adapter` remains a compatibility import surface only; canonical language I/O contract lives in `ai_stack.language_io.language_adapter`. No content-module locale lookup tables in shared core. The `story-runtime-core` package declares an optional `[language]` extra in `pyproject.toml` documenting the runtime `ai_stack` peer dependency (monorepo: repo-root `PYTHONPATH`; no separate PyPI wheel). New code imports `ai_stack.language_io` directly; the shim stays until W5 migration completes.
 
-**Evidence.** [content-authority SAD D3](../content-authority/architecture.md#d3-remove-content-locale-runtime-lookups), [`ai_stack/language_io/`](../../../../ai_stack/language_io/).
+**Evidence.** [content-authority SAD D3](../content-authority/architecture.md#d3-remove-content-locale-runtime-lookups), [`ai_stack/language_io/`](../../../../ai_stack/language_io/), [`story_runtime_core/pyproject.toml`](../../../../story_runtime_core/pyproject.toml).
 
 ### D3: Aspect ledger contracts
 
@@ -114,7 +114,22 @@ Despaghettify moved builtins out of `builtins.py` into explicit template modules
 
 **Decision.** `story_runtime_core.player_input_intent_contract` is the single shared taxonomy: kind sets, family helpers, commit-flag defaults, and speech-projection guards. Runtime and tests import from this module instead of hardcoding kind strings; semantic resolution defers classification to AI ingress while using the contract for downstream routing.
 
-**Evidence.** [`story_runtime_core/player_input_intent_contract.py`](../../../../story_runtime_core/player_input_intent_contract.py), [`story_runtime_core/tests/test_player_input_intent_contract.py`](../../../../story_runtime_core/tests/test_player_input_intent_contract.py).
+`InterpretedInputKind` in `models.py` is a thin structural preview (eight values) produced by `input_interpreter` before AI ingress. It is not the authoritative taxonomy. When semantic resolution is unavailable, the executor falls back using:
+
+| Structural (`InterpretedInputKind`) | Intent fallback (`player_input_kind`) | Graph routing (`input_kind`) |
+| --- | --- | --- |
+| speech | speech | speech |
+| action | action | action |
+| mixed | mixed | mixed |
+| reaction | speech | speech |
+| intent_only | speech | speech |
+| ambiguous | ambiguous | action |
+| explicit_command | unclear | speech |
+| meta | meta | meta |
+
+Canonical mapping constants: `STRUCTURAL_KIND_TO_INTENT_FALLBACK` and `STRUCTURAL_KIND_TO_INPUT_ROUTING` in `player_input_intent_contract.py`.
+
+**Evidence.** [`story_runtime_core/player_input_intent_contract.py`](../../../../story_runtime_core/player_input_intent_contract.py), [`story_runtime_core/models.py`](../../../../story_runtime_core/models.py), [`story_runtime_core/tests/test_player_input_intent_contract.py`](../../../../story_runtime_core/tests/test_player_input_intent_contract.py).
 
 ### D7: Opening readiness
 

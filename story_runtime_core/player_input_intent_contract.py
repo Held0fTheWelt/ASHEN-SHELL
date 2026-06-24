@@ -11,6 +11,32 @@ from typing import Any
 
 INTENT_CONTRACT_VERSION = "player_input_intent_contract.v1"
 
+# Bridge: ``InterpretedInputKind`` (structural preview, models.py) → intent-contract kind
+# when AI semantic resolution is unavailable. ``input_kind`` routing in the LangGraph
+# executor uses ``STRUCTURAL_KIND_TO_INPUT_ROUTING`` (ambiguous → action, not speech).
+STRUCTURAL_KIND_TO_INTENT_FALLBACK: dict[str, str] = {
+    "speech": "speech",
+    "action": "action",
+    "mixed": "mixed",
+    "reaction": "speech",
+    "intent_only": "speech",
+    "ambiguous": "ambiguous",
+    "explicit_command": "unclear",
+    "meta": "meta",
+}
+
+STRUCTURAL_KIND_TO_INPUT_ROUTING: dict[str, str] = {
+    "speech": "speech",
+    "action": "action",
+    "mixed": "mixed",
+    "reaction": "speech",
+    "intent_only": "speech",
+    "ambiguous": "action",
+    "explicit_command": "speech",
+    "meta": "meta",
+    "unclear": "action",
+}
+
 PLAYER_INPUT_KINDS: frozenset[str] = frozenset(
     {
         "speech",

@@ -1,4 +1,10 @@
-from .language_adapter import (
+"""Shared canonical story runtime core for World of Shadows.
+
+Language I/O symbols imported from ``language_adapter`` are compatibility re-exports;
+new code should use ``ai_stack.language_io`` directly (see SAD D2).
+"""
+
+from .language_adapter import (  # deprecated shim — prefer ai_stack.language_io
     build_player_attributed_visible_line,
     clear_language_adapter_caches,
     default_player_intent_commit_flags,
