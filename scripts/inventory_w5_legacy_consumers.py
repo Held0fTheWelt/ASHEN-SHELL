@@ -710,7 +710,7 @@ PHASE_6C0_LOCATION_FRAMING_INVENTORY: tuple[dict[str, object], ...] = (
         "tests_required": ["ai_stack/tests/test_narrator_consequence_contract.py"],
     },
     {
-        "file_path": "docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view",
+        "file_path": "docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view",
         "line": 1,
         "symbol": "ADR-0069",
         "classification": "doc_only_update",
@@ -772,7 +772,7 @@ PHASE_6C0_IMPLEMENTATION_PLAN: dict[str, object] = {
     "docs_to_update_next": [
         "docs/MVPs/w5_actor_tracking_migration.md",
         "docs/MVPs/w5_legacy_consumer_removal_inventory.md",
-        "docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view",
+        "docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view",
     ],
 }
 
@@ -1283,7 +1283,7 @@ PHASE_6C5_REMOVAL_READINESS_ADR: dict[str, object] = {
     "phase": "6C-5",
     "adr": "ADR-0071",
     "adr_path": (
-        "docs/ADR/"
+        "docs/archive/adr-retired-2026/"
         "adr-0071-retire-legacy-narrator-consequence-area-fields-after-w5-location-framing.md"
     ),
     "adr_status": "Proposed",
@@ -2070,7 +2070,7 @@ def _format_human(report: ScanReport) -> str:
     )
     out.append("")
     out.append("Phase 6B-6A diagnostics flag retirement surface (informational; authoritative")
-    out.append("removal plan in docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view):")
+    out.append("removal plan in docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view):")
     _6b6a_keys = (
         "narrator_legacy_compat_diag_flag",
         "narrator_legacy_compat_diag_fn",
@@ -2113,7 +2113,7 @@ def _format_human(report: ScanReport) -> str:
         " as removed_by_adr_0068."
     )
     out.append(
-        "  5. ADR-0068: ACCEPTED — see docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view."
+        "  5. ADR-0068: ACCEPTED — see docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view."
     )
     out.append("")
     out.append("  OVERALL ADR-0068 STATUS: EXECUTED AND ACCEPTED.")

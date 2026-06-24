@@ -26,7 +26,7 @@ program status, guide order, and which evidence files prove live-runtime claims.
 
 ## 3. Context & Scope
 
-Guides under [`docs/MVPs/MVP_Live_Runtime_Completion/`](../../../MVPs/MVP_Live_Runtime_Completion/README.md); ADRs under `docs/ADR/MVP_Live_Runtime_Completion/`.
+Guides under [`docs/MVPs/MVP_Live_Runtime_Completion/`](../../../MVPs/MVP_Live_Runtime_Completion/README.md); normative MVP decisions in [§9 of this SAD](#9-architecture-decisions) and [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md).
 
 ## 4. Solution Strategy
 
@@ -74,7 +74,7 @@ MVP ADRs map to component SADs §9; this project SAD indexes them:
 
 ### ADR-0022: MVP Expansion Decision Rule — when not to expand the platform
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0022 (retired 2026-06-23)
 
 **Context.** During MVP validation we need clear exit and expansion criteria to avoid premature allocation of engineering effort. The `ROADMAP_MVP_WORLD_OF_SHADOWS.md` documents an evidence-driven rule describing when to expand the platform.
@@ -95,11 +95,11 @@ MVP ADRs map to component SADs §9; this project SAD indexes them:
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/mvp-live-runtime-completion/architecture.md#adr-0022-mvp-expansion-decision-rule-when-not-to-expand-the-platform` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#adr-0022-mvp-expansion-decision-rule-when-not-to-expand-the-platform` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### ADR-0032: MVP4 Live Runtime Setup Requirements
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0032 (retired 2026-06-23)
 
 **Context.** MVP4 is no longer defined by the original defect list alone. The live path has since been reworked across backend, frontend, play-service, observability, and governance storage.
@@ -223,7 +223,7 @@ In-process fallback remains acceptable outside Docker or as degraded local fallb
 6. Shared governance storage: Redis-backed JSON storage initialized in `backend/app/factory_app.py`; `REDIS_URL` in bootstrap environment.
 - `world-engine/app/story_runtime/manager/` and `world-engine/app/api/http.py` are the primary implementation files.
 
-**Evidence.** `docs/architecture/project/project/mvp-live-runtime-completion/architecture.md#adr-0032-mvp4-live-runtime-setup-requirements` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#adr-0032-mvp4-live-runtime-setup-requirements` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### MVP1-001: Experience Identity
 

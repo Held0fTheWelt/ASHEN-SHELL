@@ -2,7 +2,7 @@
 
 Canonical **developer** quick start for bare-metal runs. **Docker Compose** uses different published ports for some services—see [Deployment guide](../admin/deployment-guide.md).
 
-**Python:** **3.14.x** everywhere ([ADR-0064](../ADR/adr-0064-python-314-unified-interpreter-standard.md), `.python-version`).
+**Python:** **3.14.x** everywhere ([ADR-0064](docs/architecture/project/quality-gates/architecture), `.python-version`).
 
 ## Full detail
 

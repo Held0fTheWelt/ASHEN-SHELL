@@ -138,7 +138,7 @@ Before patching, fill this matrix in the implementation report. Do not continue 
 | administration-tool route/template/static | from patch map | fill during implementation | Narrative Gov route/template/static | found/not_present |
 | tests | from patch map | fill during implementation | test module | found/not_present |
 | reports | `tests/reports/` | fill during implementation | report artifact | found/not_present |
-| ADRs | `docs/ADR/` | fill during implementation | ADR filename | found/not_present |
+| SAD §9 | `docs/architecture/project/DECISION_REGISTRY.md` | fill during implementation | ex-ADR / MVP id | found/not_present |
 | docker-up.py | `docker-up.py` | fill during implementation | entrypoint | found/not_present |
 | tests/run_tests.py | `tests/run_tests.py` | fill during implementation | suite registry | found/not_present |
 | GitHub workflows | `.github/workflows/*.yml` | fill during implementation | job/matrix | found/not_present |
@@ -463,7 +463,7 @@ Required for this MVP:
 
 Complete package ADR map:
 
-No major architectural or behavior-changing repair is complete unless the matching ADR exists under `docs/ADR/` and matches the implemented repository state.
+No major architectural or behavior-changing repair is complete unless the matching SAD §9 decision is registered in [`DECISION_REGISTRY.md`](../../architecture/project/DECISION_REGISTRY.md) and matches the implemented repository state.
 
 | ADR | Required By | Purpose |
 |---|---|---|

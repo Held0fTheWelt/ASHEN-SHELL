@@ -53,7 +53,7 @@ Narrative gov operator truth ([mvp-live-runtime-completion MVP4-010](../../proje
 
 ### D1: Debug Panel UI — bounded diagnostics in session UI
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0020 (retired 2026-06-23)
 
 **Context.** Workstream W3 introduced a bounded debug panel for playable sessions that renders developer-facing diagnostics and player-visible summaries from canonical presenter output (`DebugPanelOutput`). The panel must be accessible, minimally invasive, and strictly driven by canonical data contracts.
@@ -77,15 +77,20 @@ Narrative gov operator truth ([mvp-live-runtime-completion MVP4-010](../../proje
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/administration-tool/architecture.md#d1-debug-panel-ui-bounds` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/administration-tool/architecture.md#d1-debug-panel-ui-bounds` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D2: Admin security control plane
 
-**Status:** Accepted · **Origin:** ADR-0052
+**Status:** Accepted
+**Origin:** ADR-0052 (retired 2026-06-23)
 
-**Decision.** Security governance mutations and operator security UI route through backend admin control plane only; administration-tool never mutates governance flags directly against world-engine.
+**Context.** Operator tooling historically risked mutating governance flags or runtime secrets against world-engine directly, bypassing audit trails and centralized authorization. Security governance must remain a backend-owned control plane with explicit admin routes and test coverage.
 
-**Evidence.** [security-governance SAD D3](../../project/security-governance/architecture.md#d3-security-governance-admin-control-plane), [`administration-tool/tests/test_manage_governance_console_and_runtime_config_truth.py`](../../../../administration-tool/tests/test_manage_governance_console_and_runtime_config_truth.py).
+**Decision.** Security governance mutations and operator security UI route through backend admin control plane only; administration-tool never mutates governance flags directly against world-engine. Manage templates call documented backend proxy endpoints; destructive actions require backend confirmation. Governance console surfaces read-only projections unless a backend mutation API explicitly allows the change.
+
+**Consequences.** Additional round-trips for operator actions but consistent authz, logging, and contract tests. New operator capabilities must land backend-first before manage UI exposes them.
+
+**Evidence.** [AT-M02](mechanism-catalog.md#at-m02) · [security-governance SAD D3](../../project/security-governance/architecture.md#d3-security-governance-admin-control-plane) · [`test_manage_governance_console_and_runtime_config_truth.py`](../../../../administration-tool/tests/test_manage_governance_console_and_runtime_config_truth.py) · [archive ADR-0052](../../../archive/adr-retired-2026/adr-0052-security-governance-admin-control-plane.md)
 
 ## 10. Quality Requirements
 

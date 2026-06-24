@@ -1,7 +1,7 @@
 # ecosystem-topology TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| c4-context | Multi-service map | ecosystem-topology SAD §5 | service boundary tests |
-| c4-container | Layered topology | ecosystem-topology SAD §5 | foundation gate |
-| SAD D1 | Canonical service map | ecosystem-topology SAD §9 D1 | `test_goc_mvp01_mvp02_foundation_gate.py` |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | D1 | Service map | see component SAD | `tests/gates/` |
+| c4-context | D2 | docker-up bootstrap | see component SAD | `tests/gates/` |
+| c4-context | D3 | Turn execution cross-cut | see component SAD | `tests/gates/` |

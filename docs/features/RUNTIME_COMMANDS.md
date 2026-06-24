@@ -170,4 +170,4 @@ Ensure `.claude/config.json` has the `/runtime` command registered and hook hand
 ## Related Documentation
 
 - `/mnt/d/ClaudeClockwork/.claude/OLLAMA_AGENT_PATTERNS.md` - Agent execution patterns and best practices
-- `/mnt/c/Users/YvesT/PycharmProjects/WorldOfShadows/docs/ADR/ADR-004-ollama-first-routing-architecture.md` - Routing architecture decisions
+- [ai-stack SAD §9](../../architecture/components/ai-stack/architecture.md#9-architecture-decisions) — routing and capability decisions (historical ADR-004 context)

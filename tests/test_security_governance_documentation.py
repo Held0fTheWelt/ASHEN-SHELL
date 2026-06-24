@@ -56,8 +56,8 @@ def test_csrf_matrix_links_security_governance_surface() -> None:
 
     assert "Security Governance" in text
     assert "../admin/security-governance.md" in text
-    assert "../ADR/adr-0050-security-governance-browser-mutation-boundaries.md" in text
-    assert "../ADR/adr-0052-security-governance-admin-control-plane.md" in text
+    assert "docs/architecture/project/security-governance/architecture" in text
+    assert "docs/architecture/project/security-governance/architecture" in text
 
 
 def test_primary_documentation_indexes_link_security_governance() -> None:

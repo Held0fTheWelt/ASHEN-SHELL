@@ -1,6 +1,6 @@
 # W5 Actor Tracking — Migration Plan
 
-**Authoritative ADR:** [ADR-0063](../ADR/adr-0063-w5-actor-tracking.md) — W5 Actor Tracking.
+**Authoritative ADR:** [ADR-0063](docs/architecture/components/world-engine/architecture) — W5 Actor Tracking.
 
 **Status:** Proposed (Phase 0/1 in progress).
 
@@ -10,7 +10,7 @@
 
 ## Cross-reference note (does not change ADR-0033 semantics)
 
-[ADR-0033](../ADR/adr-0033-live-runtime-commit-semantics.md) is the live-runtime commit-semantics authority. W5 is **downstream of** ADR-0033, not parallel to it:
+[ADR-0033](docs/architecture/components/world-engine/architecture) is the live-runtime commit-semantics authority. W5 is **downstream of** ADR-0033, not parallel to it:
 
 - W5 OBSERVED facts are only produced after a turn has reached the ADR-0033 committed/persisted lifecycle state.
 - The W5 extractor never participates in the live-commit decision and cannot promote uncommitted LLM output to OBSERVED.
@@ -201,7 +201,7 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 - [x] R1 — Function renamed: `validate_w5_actor_situation` → `validate_w5_actor_tracking`. Definition in `ai_stack/actor_tracking/validation.py`, re-export from `ai_stack/actor_tracking/__init__.py`, production callsite in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py`, and all twelve test callsites in `ai_stack/tests/test_w5_actor_tracking_validation.py` updated atomically. No backward alias retained; the call graph is enumerated and small.
 - [x] R2 — Diagnostic string renamed: `failure_class = "w5_actor_situation_validation"` → `"w5_actor_tracking_validation"` in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py`. No downstream consumer/filter in production code asserts the old value.
-- [x] R3 — Docstring path updated in `ai_stack/actor_tracking/models.py` from `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` to `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`.
+- [x] R3 — Docstring path updated in `ai_stack/actor_tracking/models.py` from `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` to `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`.
 - [x] R4 — Docstring paths updated in `ai_stack/actor_tracking/__init__.py` and `ai_stack/actor_tracking/extractor.py` from `docs/MVPs/w5_actor_situation_migration.md` to `docs/MVPs/w5_actor_tracking_migration.md`. `__init__.py` retains a single historical sentence noting the prior package names — historical context only, not a current-state claim.
 - [x] R5 — Docstring path updated in `ai_stack/actor_tracking/projection.py` from `docs/MVPs/w5_actor_situation_migration.md` to `docs/MVPs/w5_actor_tracking_migration.md`.
 - [x] Forbidden package scan still reports zero active imports of `ai_stack/actor_situation` or `ai_stack/w5_actor_situation`.
@@ -482,7 +482,7 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 **Goal:** Record the future safety contract for making W5 narrator strict mode default-on/permanent behavior. This phase is ADR and planning only.
 
-- [x] Authored [ADR-0065](../ADR/adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md) as **Proposed**.
+- [x] Authored [ADR-0065](docs/architecture/components/world-engine/architecture) as **Proposed**.
 - [x] Documented why `transition_from_previous` is no longer authoritative and why the W5 narrator projection becomes the actor-situation surface.
 - [x] Defined the future rollout sequence:
   - 6B-5B — strict-mode parity test rewrite.
@@ -696,7 +696,7 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 **Goal:** Create the ADR and dependency audit for retiring `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED`. No code removed in this phase.
 
-**ADR:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) — Retire Narrator Legacy Transition Compatibility Diagnostics Flag (Proposed).
+**ADR:** [ADR-0066](docs/architecture/components/world-engine/architecture) — Retire Narrator Legacy Transition Compatibility Diagnostics Flag (Proposed).
 
 **Summary:**
 
@@ -725,7 +725,7 @@ Phase 3B keeps W5 read-only for NPC planning. Actor Lane authority, commit/readi
 
 **Goal:** Execute all removals specified in ADR-0066 §Rollout Plan.
 
-**ADR:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) — status updated to **Accepted**.
+**ADR:** [ADR-0066](docs/architecture/components/world-engine/architecture) — status updated to **Accepted**.
 
 **Summary:**
 
@@ -771,7 +771,7 @@ shape recorded during Phase 6B-6B has been removed by Phase 6B-8.
 without removing it. Emit a structured once-per-process `NarratorStrictOffDeprecationWarning`
 on explicit opt-out. Author ADR-0067. Update inventory. Add semantic tests.
 
-**ADR:** [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) — status **Accepted**.
+**ADR:** [ADR-0067](docs/architecture/components/world-engine/architecture) — status **Accepted**.
 
 **Summary:**
 
@@ -820,7 +820,7 @@ operator waiver**, see below.
 **Goal:** Prove whether ADR-0068 final strict-off removal is safe to begin. Produce the exact
 implementation plan. No runtime behavior removed.
 
-**ADR:** None (audit phase). References [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) — Accepted.
+**ADR:** None (audit phase). References [ADR-0067](docs/architecture/components/world-engine/architecture) — Accepted.
 
 **Summary:**
 
@@ -861,7 +861,7 @@ document the exact implementation scope, record the stale worktree hygiene
 recommendation — without executing any runtime code removal. The runtime rollback
 path (`W5_AST_NARRATOR_STRICT_ENABLED=false`) remains intact.
 
-**ADR:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) — status **Accepted** under operator waiver.
+**ADR:** [ADR-0068](docs/architecture/components/world-engine/architecture) — status **Accepted** under operator waiver.
 
 **Summary:**
 
@@ -929,7 +929,7 @@ decision. Phase 6B-8 executes ADR-0068 below.
 **Goal:** Make W5 narrator strict mode permanent by removing the final
 `W5_AST_NARRATOR_STRICT_ENABLED=false` behavior-changing rollback path.
 
-**ADR:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) — status **Accepted**.
+**ADR:** [ADR-0068](docs/architecture/components/world-engine/architecture) — status **Accepted**.
 
 **Operator waiver recorded:** ADR-0067 criteria 1 and 2 were not fully
 satisfied from repository evidence. The operator explicitly accepted the

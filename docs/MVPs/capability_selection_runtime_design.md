@@ -3,7 +3,7 @@
 Last updated: 2026-05-16
 
 This document is the implementation-readiness companion for
-[ADR-0041: Controlled Runtime Capability Authority](../ADR/adr-0041-semantic-capability-selection-and-runtime-capability-budgeting.md).
+[ADR-0041: Controlled Runtime Capability Authority](docs/architecture/components/ai-stack/architecture).
 It is implementation guidance for the local selector core and future runtime
 integration. It does not change world-engine runtime behavior, promote
 Capability Matrix status, or create live/staging proof.

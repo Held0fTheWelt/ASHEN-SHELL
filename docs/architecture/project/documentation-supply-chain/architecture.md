@@ -97,7 +97,11 @@ N/A
 **Status:** Accepted
 **Origin:** documentation-supply-chain consolidation (retired 2026-06-23)
 
+**Context.** Internal contributors previously followed redirect-heavy README paths; component ownership was unclear and ADR stubs duplicated SAD prose. START-HERE now routes readers to owning component SADs first.
+
 **Decision.** `docs/architecture/components/*/architecture.md` replaces `docs/architecture/README.md` redirect-to-technical as the primary internal entry.
+
+**Consequences.** New architecture work must update the owning component SAD; README remains a thin index only.
 
 **Evidence.** [`docs/architecture/README.md`](../../README.md), [`START-HERE.md`](../../START-HERE.md).
 
@@ -107,7 +111,9 @@ N/A
 **Origin:** ADR-0017 evolution (retired 2026-06-23)
 **Supersedes:** ADR absorption-only workflow
 
-**Decision.** Normative decision text lives in owning SAD §9 and UML. [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) maps ex-ADR IDs to SAD anchors until `docs/ADR/` is archived and deleted.
+**Context.** Active ADR markdown files drifted from owning SAD §9 text; retirement required a single normative surface plus a manifest-backed registry for traceability and link-audit enforcement.
+
+**Decision.** Normative decision text lives in owning SAD §9 and UML. [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) maps ex-ADR IDs to SAD anchors after the ADR tree was archived under `docs/archive/adr-retired-2026/`.
 
 **Evidence.** [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md), [`scripts/adr_retirement_audit.py`](../../../../scripts/adr_retirement_audit.py).
 
@@ -116,7 +122,11 @@ N/A
 **Status:** Accepted
 **Origin:** QUALITY-STANDARD enforcement (retired 2026-06-23)
 
+**Context.** Link-only architecture pages passed review while failing operator needs; gates now require substantive prose so decisions remain auditable without opening every linked file or external wiki page.
+
 **Decision.** SADs must contain substantive prose (≥200 words outside tables) per QUALITY-STANDARD; link-only sections fail the documentation gate.
+
+**Consequences.** Documentation gates count words outside tables; reviewers reject bullet-only §9 stubs.
 
 **Evidence.** [`tests/gates/test_architecture_documentation_gate.py`](../../../../tests/gates/test_architecture_documentation_gate.py).
 

@@ -65,7 +65,7 @@ Flask app with alembic migrations; shares secrets with world-engine for tickets.
 
 ### D1: Backend session / transitional runtime surface - quarantine and retirement
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0002 (retired 2026-06-23)
 
 **Context.** The platform historically exposed backend-local session and runtime-shaped APIs. The world-engine is the **authoritative** live and story runtime for committed play state. A large transitional surface on the backend increases the risk that tools, tests, or new features attach to the wrong authority layer (audit finding class "backend transitional session drift").
@@ -90,11 +90,11 @@ Flask app with alembic migrations; shares secrets with world-engine for tickets.
 - **Review gate:** any new `backend/app/runtime/` or session API must declare retire | quarantine | compat per this ADR.
 - **Failure mode:** undocumented player-truth claims on backend paths or missing deprecation labels on transitional shims.
 
-**Evidence.** `docs/architecture/project/components/backend/architecture.md#d1-backend-session-quarantine` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/backend/architecture.md#d1-backend-session-quarantine` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D2: Frontend / Backend Restructure (separate Backend and administration-tool frontend)
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0016 (retired 2026-06-23)
 
 **Context.** An architectural decision was made to split the repository into a `Backend/` process (data, API, auth, dashboard, persistence, tests) and a lightweight `administration-tool/` frontend (public landing, news pages, static assets) that consumes the Backend API. This move preserves existing auth patterns and avoids duplicating business logic.
@@ -121,11 +121,11 @@ Flask app with alembic migrations; shares secrets with world-engine for tickets.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/backend/architecture.md#d2-frontendbackend-restructure` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/backend/architecture.md#d2-frontendbackend-restructure` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D3: Backend test suite split in canonical orchestrator
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0037 (retired 2026-06-23)
 
 **Context.** The backend pytest tree under `backend/tests/` grew to thousands of tests and long wall-clock times for `python tests/run_tests.py --suite backend`. Developers need **fast, scoped runs** without abandoning the single canonical entrypoint (`tests/run_tests.py` per project discipline). Cross-folder selection for flat top-level test files also required **explicit domain markers** in `backend/pytest.ini`. Optional **pytest-xdist** parallelization must remain **off by default** and must not break ordering-sensitive or timing-sensitive tests.
@@ -147,7 +147,7 @@ Flask app with alembic migrations; shares secrets with world-engine for tickets.
 - **Verify:** `python tests/run_tests.py --suite backend --quick --parallel auto` completes with the same pass/skip totals (two internal passes).
 - **Failure modes:** Drift between documented suite keys and `SUITE_CONFIGS` in `tests/run_tests.py`; missing marker registration in `backend/pytest.ini` breaking `--domain`.
 
-**Evidence.** `docs/architecture/project/components/backend/architecture.md#d3-test-suite-split-in-orchestrator` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/backend/architecture.md#d3-test-suite-split-in-orchestrator` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D4: Security governance admin plane
 
@@ -157,7 +157,7 @@ Flask app with alembic migrations; shares secrets with world-engine for tickets.
 
 **Evidence.** [`backend/app/services/governance/`](../../../../backend/app/services/governance/), [security-governance SAD D3](../../project/security-governance/architecture.md#d3-security-governance-admin-control-plane).
 
-## 10. Quality Requirements
+ Quality Requirements
 
 `backend/tests/`, `tests/gates/test_goc_mvp01_mvp02_foundation_gate.py`, `python tests/run_tests.py --suite backend`.
 

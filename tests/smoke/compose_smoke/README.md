@@ -40,7 +40,7 @@ With the stack up (`docker compose up` / `docker-up.py`):
 WOS_THIN_PATH_LIVE_SMOKE=1 python -m pytest tests/smoke/test_thin_path_pr_a_live_smoke.py -v
 ```
 
-Requires world-engine on `http://127.0.0.1:8001` (override with `WORLD_ENGINE_URL`). See [ADR-0062](../../docs/architecture/project/components/world-engine/architecture.md#d4-director-realization-thin-path).
+Requires world-engine on `http://127.0.0.1:8001` (override with `WORLD_ENGINE_URL`). See [ADR-0062](../../docs/architecture/components/world-engine/architecture.md#d4-director-realization-thin-path).
 
 ## Relationship to `run_tests.py`
 

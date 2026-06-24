@@ -17,7 +17,7 @@
 ## ADR duplicate resolution (Phase 0 decision)
 
 - **ADR-0058 canonical file:** `adr-0058-director-driven-pulse-block-stream-bus.md` (shorter slug matches code references). The variant `adr-0058-director-driven-pulse-and-block-stream-bus.md` is deprecated stub → canonical.
-- **ADR-0021:** `docs/ADR/legacy/adr-0021-runtime-authority.md` remains legacy; root `adr-0021-runtime-authority.md` redirects to ADR-0001 / world-engine SAD D1.
+- **ADR-0021:** archived legacy copy `adr-0021-runtime-authority.md` under `docs/archive/adr-retired-2026/`; canonical authority is ADR-0001 / world-engine SAD D1.
 
 ## Status
 

@@ -78,7 +78,7 @@ cd tests
 python run_tests.py --suite all
 ```
 
-**See:** [tests/TESTING.md](../../tests/TESTING.md) (runner contracts), [ADR-0037](../ADR/adr-0037-backend-test-suite-split-runner.md) (backend split / parallel policy). Prefer **`python tests/run_tests.py`** from the repository root; `cd tests && python run_tests.py` is equivalent.
+**See:** [tests/TESTING.md](../../tests/TESTING.md) (runner contracts), [ADR-0037](docs/architecture/components/backend/architecture) (backend split / parallel policy). Prefer **`python tests/run_tests.py`** from the repository root; `cd tests && python run_tests.py` is equivalent.
 
 ---
 

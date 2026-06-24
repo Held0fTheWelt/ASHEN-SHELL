@@ -151,7 +151,7 @@ A single "CSRF on/off" statement is too blunt for this topology. Operators need 
 
 Review this ADR if `/api/v1` begins accepting browser cookie authentication, if same-origin proxies forward cookies upstream, if admin governance settings become direct runtime enforcement switches, or if production security claims move from policy targets to automated evidence gates.
 
-**Evidence.** `docs/architecture/project/project/security-governance/architecture.md#d1-browser-mutation-boundaries` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/security-governance/architecture.md#d1-browser-mutation-boundaries` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D2: Storage-layer encryption governance
 
@@ -225,7 +225,7 @@ The application cannot encrypt a host disk or prove cloud KMS state by itself fr
 - `backend/tests/test_backend_info_routes.py::test_security_features_page_explains_local_evidence_boundary` verifies `/backend/security-features` exposes the Storage-Layer Governance path.
 - `tests/test_local_langfuse_docker_config.py` verifies the base compose exposes `RUN_STORE_BACKEND`, `RUN_STORE_URL`, and `WORLD_ENGINE_JSON_AEAD_KEY` without local AEAD key generation.
 
-**Evidence.** `docs/architecture/project/project/security-governance/architecture.md#d2-storage-encryption-governance` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/security-governance/architecture.md#d2-storage-encryption-governance` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D3: Security Governance Admin Control Plane
 
@@ -302,7 +302,7 @@ Operators need one visible place to inspect and record these policies. At the sa
 
 Review this ADR if the admin page begins storing raw secrets, triggering secret-provider mutations, changing Flask/route security behavior directly, or making local `docker-up.py` depend on production secret-store access.
 
-**Evidence.** `docs/architecture/project/project/security-governance/architecture.md#d3-security-governance-admin-control-plane` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/security-governance/architecture.md#d3-security-governance-admin-control-plane` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D4: At-rest encryption evidence boundary
 
@@ -379,7 +379,7 @@ These controls are useful, but they do not prove full database, volume, runtime-
 
 Review this ADR if a persisted surface is added, a local-only store becomes production-supported, or an operator-facing page claims full at-rest encryption without a matching evidence pack.
 
-**Evidence.** `docs/architecture/project/project/security-governance/architecture.md#d4-at-rest-encryption-evidence` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/security-governance/architecture.md#d4-at-rest-encryption-evidence` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D5: Provider credential governance and local evaluator evidence
 
@@ -449,7 +449,7 @@ The same boundary applies to evaluator evidence: local Langfuse traces, MCP evid
 
 Review this ADR if a service reintroduces direct provider-key environment fallback, a new provider bypasses backend governance, local judge evidence changes promotion/readiness state, or production docs claim provider-governance compliance without a secret-store or backend-governance evidence path.
 
-**Evidence.** `docs/architecture/project/project/security-governance/architecture.md#d5-provider-credential-governance` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/security-governance/architecture.md#d5-provider-credential-governance` (archived — see `docs/archive/adr-retired-2026/`)
 
 ## 10. Quality Requirements
 

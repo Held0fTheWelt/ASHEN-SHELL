@@ -4,7 +4,7 @@ This matrix is the explicit contract for browser-originated, mutating flows that
 
 ## Security Governance
 
-The operator surface for this matrix is [Security governance administration](../admin/security-governance.md). The normative architecture records are [ADR-0050: Security governance for browser mutation boundaries](../ADR/adr-0050-security-governance-browser-mutation-boundaries.md) and [ADR-0052: Security governance admin control plane](../ADR/adr-0052-security-governance-admin-control-plane.md). The administration page at `/manage/security-governance` exposes the matrix, target cookie policy, effective backend cookie posture, proxy boundaries, secret-store policy, Redis governance evidence, storage-layer encryption evidence, and the full `security_governance.v1` JSON payload.
+The operator surface for this matrix is [Security governance administration](../admin/security-governance.md). The normative architecture records are [ADR-0050: Security governance for browser mutation boundaries](docs/architecture/project/security-governance/architecture) and [ADR-0052: Security governance admin control plane](docs/architecture/project/security-governance/architecture). The administration page at `/manage/security-governance` exposes the matrix, target cookie policy, effective backend cookie posture, proxy boundaries, secret-store policy, Redis governance evidence, storage-layer encryption evidence, and the full `security_governance.v1` JSON payload.
 
 Security governance settings are policy and release evidence. They do not directly toggle the `/api/v1` CSRF exemption, route auth, proxy cookie stripping, or deployment secret/Redis materialization.
 

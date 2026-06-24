@@ -53,7 +53,7 @@ Primary thin player path does not list a separate `canonical_step_id` increment 
 - `world-engine/app/story_runtime/manager/diagnostics_api.py` — `get_runtime_diagnostic_snapshot`
 - `world-engine/app/api/http.py` — route
 - `world-engine/app/web/static/ui_narrative_systems.js` — structured sections
-- `docs/architecture/project/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority` — Status → Accepted
+- `docs/architecture/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority` — Status → Accepted
 
 ## 7. What this PR does not touch
 

@@ -129,13 +129,13 @@ See [baseline-validation-note.md](baseline-validation-note.md) for Task 1A–4 a
 |----------|---------------------|----------------|
 | [governance/README.md](../governance/README.md) | Tech lead | When ADR set changes |
 | [ADR/adr-template.md](../ADR/adr-template.md) | Tech lead | Rare |
-| [ADR/adr-0001-runtime-authority-in-world-engine.md](../ADR/adr-0001-runtime-authority-in-world-engine.md) | Architecture council | When superseding the decision |
-| [ADR/adr-0047-at-rest-encryption-evidence-boundary.md](../ADR/adr-0047-at-rest-encryption-evidence-boundary.md) | Security owner + Ops/SRE | When at-rest encryption claims, persisted surfaces, or evidence-pack requirements change |
-| [ADR/adr-0048-central-route-and-mcp-rate-limit-inventory.md](../ADR/adr-0048-central-route-and-mcp-rate-limit-inventory.md) | Security owner + Backend/MCP owners | When rate-limit inventory ownership, enforcement source, or info-surface requirements change |
-| [ADR/adr-0049-provider-credential-governance-and-local-evaluator-evidence.md](../ADR/adr-0049-provider-credential-governance-and-local-evaluator-evidence.md) | Security owner + AI/runtime lead | When provider credential governance or local evaluator evidence rules change |
-| [ADR/adr-0050-security-governance-browser-mutation-boundaries.md](../ADR/adr-0050-security-governance-browser-mutation-boundaries.md) | Security owner + Ops/SRE | When the admin governance control plane, browser mutation boundaries, or secret-store/Redis governance requirements change |
-| [ADR/adr-0051-storage-layer-encryption-governance.md](../ADR/adr-0051-storage-layer-encryption-governance.md) | Security owner + Ops/SRE | When storage-layer encryption evidence fields, diagnosis, or persisted surface coverage changes |
-| [ADR/adr-0052-security-governance-admin-control-plane.md](../ADR/adr-0052-security-governance-admin-control-plane.md) | Security owner + Ops/SRE | When the administration security governance control plane, editable policy fields, or Redis hardening gates change |
+| [ADR/adr-0001-runtime-authority-in-world-engine.md](docs/architecture/components/world-engine/architecture) | Architecture council | When superseding the decision |
+| [ADR/adr-0047-at-rest-encryption-evidence-boundary.md](docs/architecture/project/security-governance/architecture) | Security owner + Ops/SRE | When at-rest encryption claims, persisted surfaces, or evidence-pack requirements change |
+| [ADR/adr-0048-central-route-and-mcp-rate-limit-inventory.md](docs/architecture/components/mcp-server/architecture) | Security owner + Backend/MCP owners | When rate-limit inventory ownership, enforcement source, or info-surface requirements change |
+| [ADR/adr-0049-provider-credential-governance-and-local-evaluator-evidence.md](docs/architecture/project/security-governance/architecture) | Security owner + AI/runtime lead | When provider credential governance or local evaluator evidence rules change |
+| [ADR/adr-0050-security-governance-browser-mutation-boundaries.md](docs/architecture/project/security-governance/architecture) | Security owner + Ops/SRE | When the admin governance control plane, browser mutation boundaries, or secret-store/Redis governance requirements change |
+| [ADR/adr-0051-storage-layer-encryption-governance.md](docs/architecture/project/security-governance/architecture) | Security owner + Ops/SRE | When storage-layer encryption evidence fields, diagnosis, or persisted surface coverage changes |
+| [ADR/adr-0052-security-governance-admin-control-plane.md](docs/architecture/project/security-governance/architecture) | Security owner + Ops/SRE | When the administration security governance control plane, editable policy fields, or Redis hardening gates change |
 
 ## Reference
 

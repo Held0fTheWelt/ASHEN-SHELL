@@ -57,7 +57,7 @@ This roadmap assumes those assets are real and must be reused, not replaced.
 
 ### 3.1 Already implemented or materially present
 
-- **Authoritative runtime direction** documented in `docs/architecture/project/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine`
+- **Authoritative runtime direction** documented in `docs/architecture/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine`
 - **LangGraph-based turn runtime** in `ai_stack/langgraph/langgraph_runtime.py`
 - **Bounded dramatic slice contracts** in:
   - `docs/MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md`
@@ -575,7 +575,7 @@ The roadmap is intentionally front-loaded toward **learning before platform expa
 - if the difference is weak, do **not** expand the platform
 - first fix the experiential gap
 
-**Migrated Decision:** See canonical ADR: [ADR-0022: MVP Expansion Decision Rule — when not to expand the platform](../../ADR/adr-0022-mvp-expansion-decision-rule.md)
+**Migrated Decision:** See canonical ADR: [ADR-0022: MVP Expansion Decision Rule — when not to expand the platform](docs/architecture/project/mvp-live-runtime-completion/architecture)
 
 ---
 

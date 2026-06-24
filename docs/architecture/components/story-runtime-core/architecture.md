@@ -64,6 +64,8 @@ Despaghettify moved builtins out of `builtins.py` into explicit template modules
 
 **Status:** Accepted · **Origin:** ADR-0037-CONTENT (compat layer)
 
+**Context.** Content locale lookups were removed from runtime paths; shared core must not reintroduce authority while legacy imports still resolve during the W5 migration window.
+
 **Decision.** `story_runtime_core.language_adapter` remains a compatibility import surface only; canonical language I/O contract lives in `ai_stack.language_io.language_adapter`. No content-module locale lookup tables in shared core.
 
 **Evidence.** [content-authority SAD D3](../content-authority/architecture.md#d3-remove-content-locale-runtime-lookups), [`ai_stack/language_io/`](../../../../ai_stack/language_io/).

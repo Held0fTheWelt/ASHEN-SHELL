@@ -40,8 +40,8 @@ Without explicit **domains** and **governance lanes**, draft notes and evaluatio
 
 Normative rules for **capability-routed retrieval**, **Narrator/NPC audience scoping**, **ADR-0041 safe consumption** (retrieval as observation only for authority), **readiness/frontend boundaries**, and **memory-index write contracts** are recorded in:
 
-- [ADR-0044](../../ADR/adr-0044-runtime-rag-context-fabric-routing-and-authority-boundaries.md)
-- [ADR-0045](../../ADR/adr-0045-runtime-memory-indexes-and-retrieval-write-contracts.md)
+- [ADR-0044](docs/architecture/components/ai-stack/architecture)
+- [ADR-0045](docs/architecture/components/ai-stack/architecture)
 
 Implementation map and anchor index: [rag_runtime_integration.md](rag_runtime_integration.md).
 

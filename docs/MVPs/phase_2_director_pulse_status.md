@@ -4,8 +4,8 @@
 Documentation last refreshed 2026-05-20 (post Stage-M finalization and narrated-speech boundary update).
 **Last verified:** 2026-05-20
 **Roadmap source:** [`NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md`](../../NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md)
-**Primary governance:** [ADR-0058](../ADR/adr-0058-director-driven-pulse-block-stream-bus.md), [ADR-0059](../ADR/adr-0059-semantic-npc-motivation-score.md), [ADR-0060](../ADR/adr-0060-souffleuse-inner-voice-composition.md)
-**Vocabulary discipline:** [ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md) (no Pi/Π runtime keys)
+**Primary governance:** [ADR-0058](docs/architecture/components/ai-stack/architecture), [ADR-0059](docs/architecture/components/ai-stack/architecture), [ADR-0060](docs/architecture/components/ai-stack/architecture)
+**Vocabulary discipline:** [ADR-0039](docs/architecture/project/governance/architecture) (no Pi/Π runtime keys)
 
 ---
 
@@ -84,19 +84,19 @@ cut-kind semantics, and the `fallback_path`.
 
 | ADR | Title | Status | Implementation coverage |
 |---|---|---|---|
-| [ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md) | Gate tests: no hardcoded oracles; no Pi/Π runtime keys | **Accepted** | Enforced by `tests/gates/test_table_b_anti_hardcoding_gate.py` (18/18 passing, incl. Pi-scope and runtime-surface inventory tests). Stage-M additions to `SCENE_ENERGY_CANONICAL_SURFACES` and `INFORMATION_DISCLOSURE_CANONICAL_SURFACES` are scoped to `ai_stack/story_runtime/session_loop/` only and are commented as Stage M usage. |
-| [ADR-0058](../ADR/adr-0058-director-driven-pulse-block-stream-bus.md) | Director-Driven Pulse and Block-Stream-Bus | **Accepted** | Stages A–M plus a Completion Pass documented in the ADR body (refreshed 2026-05-20). Companion short conceptual ADR ([`adr-0058-director-driven-pulse-and-block-stream-bus.md`](../ADR/adr-0058-director-driven-pulse-and-block-stream-bus.md)) carries a Phase-2 completion banner that defers to the long file for the stage map. |
-| [ADR-0059](../ADR/adr-0059-semantic-npc-motivation-score.md) | Semantic NPC Motivation Score | **Accepted** | `ai_stack/story_runtime/npc_agency/npc_motivation_score_engine.py` + Stage-F three-tier source classification (`real_runtime_signal` / `module_policy_default` / `missing_signal`) surface via `stream_readiness.classify_motivation_component_sources` (now documented in ADR-0059 §9). |
-| [ADR-0060](../ADR/adr-0060-souffleuse-inner-voice-composition.md) | Souffleuse inner-voice composition | **Accepted** | Souffleuse block-type registered in `director_pulse_contracts.BLOCK_TYPE_SOUFFLEUSE` and the WS cut-kind map (`souffleuse → skip_to_end`). Stage-M NPC follow-up composition (template + safety-gated semantic dispatcher) documented in ADR-0060 §9–§12; live Director-composed Souffleuse pressure-escalation blocks remain explicit Future Work (§5.2). |
-| [ADR-0061](../ADR/adr-0061-director-pause-mode-for-gathering-interruption.md) | Director-Pause mode | Draft | Phase-1 contract; surfaced to Phase 2 via `gathering_paused` plumbing in the autonomous-tick coordinator. |
-| [ADR-0062](../ADR/adr-0062-director-realization-thin-path.md) | Resolver → Director → Narrator thin path | Accepted | Phase-1 thin path that Phase-2 Pulse rides on. |
+| [ADR-0039](docs/architecture/project/governance/architecture) | Gate tests: no hardcoded oracles; no Pi/Π runtime keys | **Accepted** | Enforced by `tests/gates/test_table_b_anti_hardcoding_gate.py` (18/18 passing, incl. Pi-scope and runtime-surface inventory tests). Stage-M additions to `SCENE_ENERGY_CANONICAL_SURFACES` and `INFORMATION_DISCLOSURE_CANONICAL_SURFACES` are scoped to `ai_stack/story_runtime/session_loop/` only and are commented as Stage M usage. |
+| [ADR-0058](docs/architecture/components/ai-stack/architecture) | Director-Driven Pulse and Block-Stream-Bus | **Accepted** | Stages A–M plus a Completion Pass documented in the ADR body (refreshed 2026-05-20). Companion short conceptual ADR ([`adr-0058-director-driven-pulse-and-block-stream-bus.md`](docs/architecture/components/ai-stack/architecture)) carries a Phase-2 completion banner that defers to the long file for the stage map. |
+| [ADR-0059](docs/architecture/components/ai-stack/architecture) | Semantic NPC Motivation Score | **Accepted** | `ai_stack/story_runtime/npc_agency/npc_motivation_score_engine.py` + Stage-F three-tier source classification (`real_runtime_signal` / `module_policy_default` / `missing_signal`) surface via `stream_readiness.classify_motivation_component_sources` (now documented in ADR-0059 §9). |
+| [ADR-0060](docs/architecture/components/ai-stack/architecture) | Souffleuse inner-voice composition | **Accepted** | Souffleuse block-type registered in `director_pulse_contracts.BLOCK_TYPE_SOUFFLEUSE` and the WS cut-kind map (`souffleuse → skip_to_end`). Stage-M NPC follow-up composition (template + safety-gated semantic dispatcher) documented in ADR-0060 §9–§12; live Director-composed Souffleuse pressure-escalation blocks remain explicit Future Work (§5.2). |
+| [ADR-0061](docs/architecture/components/ai-stack/architecture) | Director-Pause mode | Draft | Phase-1 contract; surfaced to Phase 2 via `gathering_paused` plumbing in the autonomous-tick coordinator. |
+| [ADR-0062](docs/architecture/components/world-engine/architecture) | Resolver → Director → Narrator thin path | Accepted | Phase-1 thin path that Phase-2 Pulse rides on. |
 
 ### 3.1 ADR-0058 documentation refresh (2026-05-20)
 
-Two files exist under `docs/ADR/` for ADR-0058:
+Two archived files exist for ADR-0058 under `docs/archive/adr-retired-2026/`:
 
-- [`adr-0058-director-driven-pulse-and-block-stream-bus.md`](../ADR/adr-0058-director-driven-pulse-and-block-stream-bus.md) — short conceptual ADR; the file other ADRs cross-link to.
-- [`adr-0058-director-driven-pulse-block-stream-bus.md`](../ADR/adr-0058-director-driven-pulse-block-stream-bus.md) — long implementation ADR with stage-by-stage detail.
+- [`adr-0058-director-driven-pulse-and-block-stream-bus.md`](docs/architecture/components/ai-stack/architecture) — short conceptual ADR; the file other ADRs cross-link to.
+- [`adr-0058-director-driven-pulse-block-stream-bus.md`](docs/architecture/components/ai-stack/architecture) — long implementation ADR with stage-by-stage detail.
 
 The 2026-05-20 documentation pass folded Stages G, H, I, K, L, and M
 plus a Completion Pass into the long file (added stage sections,

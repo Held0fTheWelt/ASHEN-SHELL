@@ -15,7 +15,7 @@
 - Backend HTTP timeout: **5s**
 - Retry: **1** (network errors only), no retry on 4xx
 
-**Migrated Decision:** See canonical ADR: [ADR-0027: MCP Transport & Connectivity — Phase A defaults](../ADR/adr-0027-mcp-transport-connectivity-phase-a.md)
+**Migrated Decision:** See canonical ADR: [ADR-0027: MCP Transport & Connectivity — Phase A defaults](docs/architecture/components/mcp-server/architecture)
 
 ## Trace/Headers
 

@@ -6,11 +6,11 @@ required actors are not co-present in the gathering.
 
 Authoritative governance:
 
-* :doc:`docs/ADR/adr-0061-director-pause-mode-for-gathering-interruption`
+* :doc:`docs/architecture/components/ai-stack/architecture`
   (defines the contract shape, composition rule, and beat-consumption gate).
-* :doc:`docs/ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference`
+* :doc:`docs/architecture/components/ai-stack/architecture`
   (Phase-1 amendment reserves the ``director_gathering_state.v1`` contract).
-* :doc:`docs/ADR/adr-0062-director-realization-thin-path` (composition path
+* :doc:`docs/architecture/components/world-engine/architecture` (composition path
   that the Director state rides on).
 * :doc:`docs/implementation_logs/pr_c_director_pause_mode_piv` (PR-C PIV
   artifact).

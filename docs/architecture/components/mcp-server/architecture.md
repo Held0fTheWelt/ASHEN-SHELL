@@ -56,7 +56,7 @@ Quality lab diagnostics ([ADR-0040](../../../archive/adr-retired-2026/adr-0040-q
 
 ### D1: MCP Phase A — Host & Runtime defaults
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0026 (retired 2026-06-23)
 
 **Context.** MCP (Model Context Protocol) usage during Phase A requires a safe, low-friction host and runtime contract for operator workflows and debugging.
@@ -78,11 +78,11 @@ Quality lab diagnostics ([ADR-0040](../../../archive/adr-retired-2026/adr-0040-q
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/mcp-server/architecture.md#d1-mcp-host-phase-a` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/mcp-server/architecture.md#d1-mcp-host-phase-a` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D2: MCP Transport & Connectivity — Phase A defaults
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0027 (retired 2026-06-23)
 
 **Context.** MCP transport and connectivity need stable defaults for Phase A operator/QA usage.
@@ -104,11 +104,11 @@ Quality lab diagnostics ([ADR-0040](../../../archive/adr-retired-2026/adr-0040-q
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/mcp-server/architecture.md#d2-transport-connectivity` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/mcp-server/architecture.md#d2-transport-connectivity` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D3: MCP Security Baseline — Phase A minimal policy
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0028 (retired 2026-06-23)
 
 **Context.** Phase A for MCP requires conservative security defaults to prevent accidental state changes and exposure of secrets during operator workflows.
@@ -132,11 +132,11 @@ Quality lab diagnostics ([ADR-0040](../../../archive/adr-retired-2026/adr-0040-q
 
 **Testing.** Contract / unit coverage as cited in **References**. Rate-limit drift is covered by `tools/mcp_server/tests/test_rate_limit.py` and the backend info inventory tests. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/mcp-server/architecture.md#d3-security-baseline` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/mcp-server/architecture.md#d3-security-baseline` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D4: Central route and MCP rate-limit inventory
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0048 (retired 2026-06-23)
 
 **Context.** The backend API, authentication routes, and MCP server already have rate-limit controls, but the evidence lived in different places:
@@ -213,9 +213,9 @@ Review this ADR if:
 - a route wrapper adds enforcement that the inventory cannot see
 - production docs claim tuned limits without telemetry baseline, shadow run, canary result, and rollback threshold
 
-**Evidence.** `docs/architecture/project/components/mcp-server/architecture.md#d4-rate-limit-inventory` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/mcp-server/architecture.md#d4-rate-limit-inventory` (archived — see `docs/archive/adr-retired-2026/`)
 
-## 10. Quality Requirements
+ Quality Requirements
 
 `ai_stack/tests/test_mcp_canonical_surface_extended.py`, MCP integration docs.
 

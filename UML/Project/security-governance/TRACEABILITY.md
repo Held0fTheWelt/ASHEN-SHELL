@@ -1,6 +1,9 @@
 # security-governance TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| control plane sequence | ADR-0052 admin plane | backend governance | operational governance tests |
-| SAD D1 | Browser mutation boundaries | csrf-matrix.md | security regression profile |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | D1 | Browser mutation boundaries | see component SAD | `tests/gates/` |
+| c4-context | D2 | Storage encryption | see component SAD | `tests/gates/` |
+| c4-context | D3 | Admin control plane | see component SAD | `tests/gates/` |
+| c4-context | D4 | At-rest encryption evidence | see component SAD | `tests/gates/` |
+| c4-context | D5 | Provider credentials | see component SAD | `tests/gates/` |

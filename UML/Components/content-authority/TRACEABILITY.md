@@ -1,6 +1,9 @@
 # content-authority TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| c4-context | Scope per SAD | docs/architecture/components/content-authority/architecture.md | component tests |
-| primary sequence | Runtime view §6 | SAD §6 | suite tests |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | D1 | Content compile authority | see component SAD | `tests/gates/` |
+| c4-context | D2 | Locale boundary | see component SAD | `tests/gates/` |
+| c4-context | D3 | Runtime locale removal | see component SAD | `tests/gates/` |
+| c4-context | D4 | Module packaging | see component SAD | `tests/gates/` |
+| c4-context | D5 | Publish handoff | see component SAD | `tests/gates/` |

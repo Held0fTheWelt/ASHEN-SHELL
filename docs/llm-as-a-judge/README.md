@@ -3,7 +3,7 @@
 This directory is the **canonical source of truth** for the World of Shadows
 LLM-as-a-Judge categorical evaluators that score Langfuse traces.
 
-Per [ADR-0040](../ADR/adr-0040-quality-lab-mcp-runtime-diagnostics.md), each
+Per [ADR-0040](docs/architecture/components/ai-stack/architecture), each
 evaluator lives in its own `<evaluator_name>.md` file with structured YAML
 frontmatter and a fixed body. Code mirrors are derived from this directory;
 the directory is not derived from code.
@@ -111,11 +111,11 @@ edit evaluator prompts, categories, or Langfuse configuration.
 
 ## Related
 
-- [ADR-0040](../ADR/adr-0040-quality-lab-mcp-runtime-diagnostics.md) —
+- [ADR-0040](docs/architecture/components/ai-stack/architecture) —
   Quality Lab MCP runtime diagnostics
-- [ADR-0009](../ADR/adr-0009-evaluation-is-a-promotion-gate.md) —
+- [ADR-0009](docs/architecture/project/governance/architecture) —
   evaluation as promotion gate (not "string-matched theatre")
-- [ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md) —
+- [ADR-0039](docs/architecture/project/governance/architecture) —
   no hardcoded oracles in gate tests
 - `ai_stack/langfuse/langfuse_evaluator_catalog.py` — code mirror
 - `tools/mcp_server/handlers/tools_registry_handlers_evaluators.py` —

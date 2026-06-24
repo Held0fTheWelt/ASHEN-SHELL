@@ -7,12 +7,12 @@ that ADR-0061 (Draft) and PR-B / PR-C will compose against.
 
 Authoritative governance:
 
-* :doc:`docs/ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference`
+* :doc:`docs/architecture/components/ai-stack/architecture`
   (Phase-1 amendment lists the eight required fields and their closed enums).
-* :doc:`docs/ADR/adr-0061-director-pause-mode-for-gathering-interruption`
+* :doc:`docs/architecture/components/ai-stack/architecture`
   (Draft -- Director derives ``presence_breaks_gathering`` from this contract's
   evidence; the resolver carries only a preliminary signal).
-* :doc:`docs/ADR/adr-0062-director-realization-thin-path` (composition path
+* :doc:`docs/architecture/components/world-engine/architecture` (composition path
   that the resolver output rides on).
 * :doc:`docs/implementation_logs/pr_a_resolver_contract_closure_piv` (PR-A PIV
   artifact -- enumerates the consumers and the guardrails).

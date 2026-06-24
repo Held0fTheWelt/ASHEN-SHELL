@@ -84,7 +84,11 @@ def test_each_surface_has_authority_and_paths() -> None:
         files = surf.get("primary_files")
         assert isinstance(files, list) and files, f"{sid}: primary_files required"
         for rel in files:
-            assert (REPO_ROOT / rel).is_file(), f"{sid}: missing file {rel}"
+            path = REPO_ROOT / rel
+            if str(rel).endswith("/"):
+                assert path.is_dir(), f"{sid}: missing directory {rel}"
+            else:
+                assert path.is_file(), f"{sid}: missing file {rel}"
 
 
 def test_frontend_play_shell_is_display_only_for_mutation_flags() -> None:

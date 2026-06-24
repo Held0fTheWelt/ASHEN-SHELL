@@ -1,6 +1,6 @@
 """Quality Lab — read-only MCP diagnostics for World of Shadows.
 
-See [ADR-0040](../../docs/architecture/project/components/ai-stack/architecture.md#d2-quality-lab-mcp-diagnostics).
+See [ADR-0040](../../docs/architecture/components/ai-stack/architecture.md#d2-quality-lab-mcp-diagnostics).
 
 Phase 1 exposes evaluator catalog loading and judgment interpretation; later
 phases add trace analysis, problem clustering, repair planning, and content

@@ -56,7 +56,7 @@ MVP5 modular block rendering ([ADR MVP5-001](../../../archive/adr-retired-2026/M
 
 ### D1: Player-Facing Narrative Shell Contract (MVP5)
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0034 (retired 2026-06-23)
 
 **Context.** MVP4 establishes truthful runtime, diagnostics, and canonical HTTP bundles for the play path. MVP5 adds modular block rendering and typewriter delivery in the player shell (`frontend/static/play_shell.js`, `play_blocks_orchestrator.js`, `play_typewriter_engine.js`, `play_block_renderer.js`).
@@ -176,11 +176,11 @@ Separately, ADR-0033 now requires **non-PII player-input correlation** on Backen
 - Backend cumulative `scene_blocks` / `typewriter_slice_start_index` propagation from turn responses: partially implemented (verified in `tests/test_mvp4_contract_playability.py`).
 - **Staging correctness** (e.g. which character may “welcome” guests) remains **model / prompt / content** responsibility; this ADR does not hard-code dialogue rewrites beyond structural de-duplication and lane split.
 
-**Evidence.** `docs/architecture/project/components/frontend/architecture.md#d1-player-narrative-shell-contract` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/frontend/architecture.md#d1-player-narrative-shell-contract` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D2: Typewriter Cinematic Direction
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0046 (retired 2026-06-23)
 
 **Context.** **As of 2026-05-19** the player-shell typewriter is **no longer** a flat `textContent.substring` stream. `play_typewriter_engine.js` reveals per-character spans, drives a live `play-cursor`, and resolves tempo from `TYPEWRITER_BEAT_PROFILES` keyed by each block's `narration_beat` (unknown values → `default`). `play_blocks_orchestrator.js` applies profile-based gaps between slices; `play_cinematic.js` wires composing pulse, player-echo fade, and typing/stream surface classes.
@@ -273,7 +273,7 @@ The product goal remains: the typewriter should feel **live-directed** — punct
 
 Gate and promotion-style tests must comply with **[ADR-0039](../../../archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md)** (no hardcoded primary oracles); the typewriter is a display surface and never an oracle — no compliance change required.
 
-**Evidence.** `docs/architecture/project/components/frontend/architecture.md#d2-typewriter-cinematic-direction` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/frontend/architecture.md#d2-typewriter-cinematic-direction` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D3: Modular block rendering
 
@@ -285,7 +285,7 @@ Gate and promotion-style tests must comply with **[ADR-0039](../../../archive/ad
 
 **Evidence.** [`frontend/static/play_block_renderer.js`](../../../../frontend/static/play_block_renderer.js), [`frontend/tests/test_block_renderer.js`](../../../../frontend/tests/test_block_renderer.js), [ADR MVP5-001](../../../archive/adr-retired-2026/MVP_Live_Runtime_Completion/adr-mvp5-001-modular-block-rendering-architecture.md).
 
-## 10. Quality Requirements
+ Quality Requirements
 
 `frontend/tests/`, MVP5 gate evidence when present.
 

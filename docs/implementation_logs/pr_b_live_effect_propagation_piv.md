@@ -6,7 +6,7 @@
 **Roadmap section:** Phase 1 §3.0 / §3.1 / §3.6 of [`NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md`](../../NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md); sub-phase **1.d.1** (Live-Effekt-Propagation).
 **Roadmap index entry:** [`docs/MVPs/npc_interactivity_piv_log.md`](../MVPs/npc_interactivity_piv_log.md)
 **Supersedes / extends:** [PR-A PIV](pr_a_resolver_contract_closure_piv.md), [PR-0 PIV](pr_0_npc_interactivity_contracts_piv.md)
-**Governance:** [ADR-0057 Phase-1 amendment](../ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference.md), [ADR-0061 (Draft)](../ADR/adr-0061-director-pause-mode-for-gathering-interruption.md), [ADR-0062](../ADR/adr-0062-director-realization-thin-path.md), [ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md).
+**Governance:** [ADR-0057 Phase-1 amendment](docs/architecture/components/ai-stack/architecture), [ADR-0061 (Draft)](docs/architecture/components/ai-stack/architecture), [ADR-0062](docs/architecture/components/world-engine/architecture), [ADR-0039](docs/architecture/project/governance/architecture).
 
 **Reviewer rule (binding):** Every `file:line` reference in this artifact was verified against repository HEAD on 2026-05-19 prior to writing code. False or invented `file:line` references are reject-worthy. Where a PR-A anchor has shifted, the discrepancy is recorded in §6 explicitly.
 

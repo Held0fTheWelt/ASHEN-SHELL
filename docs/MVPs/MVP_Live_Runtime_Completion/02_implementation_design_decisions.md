@@ -358,7 +358,7 @@ function saveStateDeltaBoundary() {
 
 - [ ] MVP 1 handoff verified (MVP1_HANDOFF_RUNTIME_PROFILE.md readable, contracts match)
 - [ ] Source Locator Matrix filled for all 7 patches
-- [ ] All required ADR files created in `docs/ADR/MVP_Live_Runtime_Completion/`
+- [x] MVP decisions absorbed in [`mvp-live-runtime-completion` SAD §9](../../architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions)
 - [ ] Langgraph node signatures surveyed (understand where to thread actor_lane_context)
 - [ ] `run_validation_seam()` and `run_commit_seam()` signatures understood
 - [ ] Object admission danger list defined (`_is_dangerous_or_major()` rules)

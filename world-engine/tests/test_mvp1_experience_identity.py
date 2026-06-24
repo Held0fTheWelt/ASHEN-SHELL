@@ -627,48 +627,8 @@ class TestGitHubWorkflowCoverage:
 
 
 # ---------------------------------------------------------------------------
-# FIX-012: Required MVP1 ADRs present
+# FIX-012: Required MVP1 decisions in SAD §9 (post-ADR-retirement)
 # ---------------------------------------------------------------------------
-
-class TestRequiredMvp1ADRs:
-    """All required MVP1 ADRs must exist (FIX-012)."""
-
-    REQUIRED_ADR_FILES = [
-        "adr-mvp1-001-experience-identity.md",
-        "adr-mvp1-002-runtime-profile-resolver.md",
-        "adr-mvp1-003-role-selection-actor-ownership.md",
-        "adr-mvp1-005-canonical-content-authority.md",
-        "adr-mvp1-006-evidence-gated-capabilities.md",
-        "adr-mvp1-016-operational-gates.md",
-    ]
-
-    def test_required_mvp1_adrs_present(self):
-        """All required MVP1 ADRs must exist in docs/ADR/MVP_Live_Runtime_Completion/ (FIX-012)."""
-        adr_dir = REPO_ROOT / "docs" / "ADR" / "MVP_Live_Runtime_Completion"
-        assert adr_dir.is_dir(), f"ADR directory missing at {adr_dir}"
-        for adr_file in self.REQUIRED_ADR_FILES:
-            path = adr_dir / adr_file
-            assert path.is_file(), (
-                f"Required ADR missing: {path}. "
-                f"All of {self.REQUIRED_ADR_FILES} must exist."
-            )
-
-    def test_mvp1_adrs_include_validation_and_operational_evidence(self):
-        """Each required ADR must contain validation evidence and operational gate impact (FIX-012)."""
-        adr_dir = REPO_ROOT / "docs" / "ADR" / "MVP_Live_Runtime_Completion"
-        for adr_file in self.REQUIRED_ADR_FILES:
-            path = adr_dir / adr_file
-            if not path.is_file():
-                continue
-            content = path.read_text(encoding="utf-8")
-            assert "Validation Evidence" in content, (
-                f"{adr_file} must include a 'Validation Evidence' section"
-            )
-            assert "Operational Gate Impact" in content, (
-                f"{adr_file} must include an 'Operational Gate Impact' section"
-            )
-
-
 # ---------------------------------------------------------------------------
 # FIX-002: Runtime module story truth removal
 # ---------------------------------------------------------------------------

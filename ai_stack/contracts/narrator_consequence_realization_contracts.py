@@ -12,11 +12,11 @@ block.
 
 Authoritative governance:
 
-* :doc:`docs/ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference`
+* :doc:`docs/architecture/components/ai-stack/architecture`
   (Phase-1 amendment names ``narrator_consequence_realization.v1`` and
   prescribes the ``safety`` triple ``no_new_people`` / ``no_new_rooms`` /
   ``no_plot_facts``).
-* :doc:`docs/ADR/adr-0062-director-realization-thin-path` (composition path
+* :doc:`docs/architecture/components/world-engine/architecture` (composition path
   PR-B rides on; the existing thin-path narrator fold lives in the manager
   per ADR-0062).
 * :doc:`docs/implementation_logs/pr_b_live_effect_propagation_piv` (PR-B PIV

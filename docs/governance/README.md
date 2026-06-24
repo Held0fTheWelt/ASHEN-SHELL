@@ -7,7 +7,7 @@ architecture maintenance routes.
 
 | Need | Read |
 | --- | --- |
-| Architecture decisions (historical) | [`docs/ADR/README.md`](../ADR/README.md) |
+| Architecture decisions (historical) | [`docs/archive/adr-retired-2026/README.md`](../archive/adr-retired-2026/README.md) |
 | Normative architecture (current) | [`docs/architecture/START-HERE.md`](../architecture/START-HERE.md) |
 | Gate oracle inventory | [`gate_oracle_tightness_inventory.md`](gate_oracle_tightness_inventory.md) |
 | Audit resolution program | [`docs/governance/audit_resolution/`](../governance/audit_resolution/) — if present |

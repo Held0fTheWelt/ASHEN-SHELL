@@ -297,7 +297,7 @@ Track quarterly:
 - Fundamental technical impossibility discovered
 - Market shifts away from narrative entirely
 
-**Migrated Decision:** See canonical ADR: [ADR-0023: Decision Framework — risk framing and kill criteria](../../ADR/adr-0023-decision-framework-for-risk-and-kill-criteria.md)
+**Migrated Decision:** See canonical ADR: [ADR-0023: Decision Framework — risk framing and kill criteria](docs/architecture/project/governance/architecture)
 
 ---
 

@@ -1,7 +1,8 @@
 # documentation-supply-chain TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| pipeline sequence | SAD → gate → evidence | documentation-supply-chain SAD | `test_architecture_documentation_gate.py` |
-| SAD D1 | SAD-first entry | START-HERE.md | doc gate |
-| SAD D2 | ADR absorption | ADR README | link audit |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | D1 | Internal architecture corpus | see component SAD | `tests/gates/` |
+| c4-context | D2 | SAD-only supply chain | see component SAD | `tests/gates/` |
+| c4-context | D3 | Link audit | see component SAD | `tests/gates/` |
+| c4-context | D4 | Evidence reports | see component SAD | `tests/gates/` |

@@ -1,9 +1,9 @@
 # ai-stack TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| c4-context | In-process from world-engine only | `world-engine/app/story_runtime/manager/` | `test_goc_mvp01_mvp02_foundation_gate.py` |
-| c4-container | Graph executor + GoC seams | `ai_stack/langgraph/langgraph_runtime.py` | `ai_stack/tests/` |
-| primary sequence | Proposal → validate seam | `god_of_carnage_turn_seams.py` | GoC integration tests |
-| SAD D1 | Proposal-only outputs | ai-stack SAD §9 D1 | ADR-0004 gate paths |
-| SAD D5 | Director thin path | `director_realization_composer.py` | ADR-0062 tests |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | D1 | Proposal-only boundary to world-engine | `ai_stack/langgraph/langgraph_runtime.py` | `tests/gates/test_goc_mvp01_mvp02_foundation_gate.py` |
+| c4-container | D3, D4 | RAG and memory fabric blocks | `ai_stack/rag/` | `ai_stack/tests/` |
+| primary sequence | D5, D7 | Turn graph orchestration | `ai_stack/langgraph/` | `tests/gates/test_goc_mvp03_*` |
+| d12-capability-authority | D12 | Capability selection projection | `ai_stack/capabilities/capability_selector.py` | `ai_stack/tests/test_capability_selector.py` |
+| d16-director-pulse | D16 | Block stream parity | `ai_stack/story_runtime/director/` | `tests/gates/test_phase2_block_stream_gate.py` |

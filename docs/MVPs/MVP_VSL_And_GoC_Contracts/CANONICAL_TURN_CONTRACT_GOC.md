@@ -1,5 +1,5 @@
 # CANONICAL_TURN_CONTRACT_GOC.md
-**Migrated Decision:** See canonical ADR: [ADR-0001: Runtime authority in world-engine](../../ADR/adr-0001-runtime-authority-in-world-engine.md)
+**Migrated Decision:** See canonical ADR: [ADR-0001: Runtime authority in world-engine](docs/architecture/components/world-engine/architecture)
 
 
 

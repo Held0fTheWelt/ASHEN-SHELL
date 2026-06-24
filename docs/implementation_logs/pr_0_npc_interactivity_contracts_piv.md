@@ -45,7 +45,7 @@ Phase 1 illustrates four action classes (§3.4 of the plan). For each, the exist
 | Evidence channel | Today | After PR-A/B/C |
 |---|---|---|
 | Langfuse spans for `resolve_player_action` | Yes (via existing thin-path summary in ADR-0062). | PR-A adds `resolved_target_type`, `resolved_target_id`, `presence_breaks_gathering`, `affordance_status`, `canon_safety`, `canonical_risk`, `action_commit_policy` as structured span fields. |
-| Operator endpoint exposing per-turn evidence | `GET /api/story/sessions/{session_id}/thin-path-summary` (per [ADR-0062](../ADR/adr-0062-director-realization-thin-path.md)). | PR-A/B/C add the same fields to the existing endpoint's payload — no new endpoint family for PR-0. |
+| Operator endpoint exposing per-turn evidence | `GET /api/story/sessions/{session_id}/thin-path-summary` (per [ADR-0062](docs/architecture/components/world-engine/architecture)). | PR-A/B/C add the same fields to the existing endpoint's payload — no new endpoint family for PR-0. |
 | Runtime aspect ledger row for Director-Pause | None. Aspect keys today (`ai_stack/story_runtime/runtime_aspect_ledger/__init__.py:128-163`) do not include a Director-Pause row. | PR-C decides whether to add a row or attach `gathering_paused` to an existing aspect; ADR-0061 records that decision. |
 | Diagnostic UI surface | `world-engine/app/web/templates/ui/narrative_systems.html` is the natural home per plan §3.5; today it shows thin-path evidence only. | PR-A/B/C add structured fields to the existing page through the operator endpoint above. PR-0 introduces **no** UI page; the snapshot envelope stub is contract-only. |
 | Live-smoke session ("smoke link") | `WOS_THIN_PATH_LIVE_SMOKE=1 python -m pytest tests/smoke/test_thin_path_pr_a_live_smoke.py` (per ADR-0062). | PR-A extends this smoke; PR-B/PR-C add their own live smokes against the same model. |
@@ -124,8 +124,8 @@ PR-0 must satisfy:
 
 1. `docs/MVPs/npc_interactivity_piv_log.md` exists and lists PR-0 with a link to this PIV artifact.
 2. This PIV artifact exists at `docs/implementation_logs/pr_0_npc_interactivity_contracts_piv.md` and contains every required section (1 through 8).
-3. [ADR-0057](../ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference.md) has a Phase-1 contracts amendment naming exactly four contracts: `free_player_action_resolution.v1`, `director_gathering_state.v1`, `canonical_path_hold_effect.v1`, `narrator_consequence_realization.v1`.
-4. [ADR-0061](../ADR/adr-0061-director-pause-mode-for-gathering-interruption.md) exists with `Status: Draft` and defines `director_gathering_state.v1`, `compute_gathering_state`, the named-character presence predicate, the beat-consumption pause, the player-freedom invariant, the return-clears-pause condition, the optional narrator transition reaction, and the explicit non-goals (no Phase-2 pulse, no pointer repair, no `step.mode` switch).
+3. [ADR-0057](docs/architecture/components/ai-stack/architecture) has a Phase-1 contracts amendment naming exactly four contracts: `free_player_action_resolution.v1`, `director_gathering_state.v1`, `canonical_path_hold_effect.v1`, `narrator_consequence_realization.v1`.
+4. [ADR-0061](docs/architecture/components/ai-stack/architecture) exists with `Status: Draft` and defines `director_gathering_state.v1`, `compute_gathering_state`, the named-character presence predicate, the beat-consumption pause, the player-freedom invariant, the return-clears-pause condition, the optional narrator transition reaction, and the explicit non-goals (no Phase-2 pulse, no pointer repair, no `step.mode` switch).
 5. The `runtime_diagnostic_snapshot.v1` envelope stub exists as a contract definition with the placeholder fields enumerated in §3.5 of the plan.
 6. The acceptance tests in `tests/test_npc_interactivity_piv_baseline.py` pass and verify that no PR-A/B/C runtime symbols were introduced.
 

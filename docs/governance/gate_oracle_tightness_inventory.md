@@ -1,7 +1,7 @@
 # Gate Oracle Tightness Inventory
 
 **Phase:** inventory + completed refactor waves 1-6 (gates must stay contract-strict per ADR-0039).
-**Normative guidance:** [ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md), [ADR-0033](../ADR/adr-0033-live-runtime-commit-semantics.md).  
+**Normative guidance:** [ADR-0039](docs/architecture/project/governance/architecture), [ADR-0033](docs/architecture/components/world-engine/architecture).  
 **Path:** `docs/governance/gate_oracle_tightness_inventory.md` (confirmed per plan).
 
 ## 1. Purpose and classification

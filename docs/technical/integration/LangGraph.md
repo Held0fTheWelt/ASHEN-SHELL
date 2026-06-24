@@ -91,7 +91,7 @@ flowchart LR
 
 **What this clarifies:** Default player turns use the **thin path** (ADR-0062): Resolver output is composed by the Director, realized via named capabilities, then routed to a single model invocation before validation and commit. LDSS/dramatic-pipeline nodes remain in the codebase but are not on this edge list. Meta/OOC control input is explicit: it packages structured control diagnostics without story retrieval, model invocation, `validate_seam`, or `commit_seam`. Fallback is an **explicit** branch after `invoke_model`, not a silent retry inside validation.
 
-**Removed (2026-05-19):** `authoritative_action_resolution` and `_route_after_resolve_player_action` — see [ADR-0062](../../ADR/adr-0062-director-realization-thin-path.md).
+**Removed (2026-05-19):** `authoritative_action_resolution` and `_route_after_resolve_player_action` — see [ADR-0062](docs/architecture/components/world-engine/architecture).
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Python
 
-Use **Python 3.14.x** only — see [ADR-0064](../ADR/adr-0064-python-314-unified-interpreter-standard.md) and repo root `.python-version`. Create a venv with `py -3.14 -m venv .venv` before installing requirements.
+Use **Python 3.14.x** only — see [ADR-0064](docs/architecture/project/quality-gates/architecture) and repo root `.python-version`. Create a venv with `py -3.14 -m venv .venv` before installing requirements.
 
 This project runs with separated services:
 - `frontend/` for player/public pages

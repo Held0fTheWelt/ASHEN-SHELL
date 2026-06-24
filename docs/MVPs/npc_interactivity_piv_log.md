@@ -51,17 +51,17 @@ Every PIV artifact under [`docs/implementation_logs/`](../implementation_logs/) 
 
 PIV artifacts and the ADRs they reference use **semantic capability names** (e.g. `npc_agency`, `scene_energy`, `social_pressure`, `relationship_state`, `pacing_rhythm`, `silence_negative_space`, `voice_consistency`, `narrative_momentum`, `subtext`, `dramatic_irony`, `hierarchical_memory`, `agency_preservation`, `branching_simulation`). Π / Pi labels remain index-only in the [Capability Matrix](capability_matrix_status_and_adr_relations.md); they must not appear as active runtime keys, contract identifiers, MCP payload fields, Langfuse score names, or UI routing keys.
 
-This is the same vocabulary discipline enforced by [ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md) and the production scans in `tests/gates/test_adr_0039_pi_scope.py` and `tests/gates/test_table_b_anti_hardcoding_gate.py`.
+This is the same vocabulary discipline enforced by [ADR-0039](docs/architecture/project/governance/architecture) and the production scans in `tests/gates/test_adr_0039_pi_scope.py` and `tests/gates/test_table_b_anti_hardcoding_gate.py`.
 
 ## 5. Related governance
 
 - [`capability_matrix_status_and_adr_relations.md`](capability_matrix_status_and_adr_relations.md) — current capability truth map and ADR ownership.
 - [`capability_matrix_live_claim_gates.md`](capability_matrix_live_claim_gates.md) — promotion rules; live/staging/Langfuse/MCP claim gates.
 - [`capability_matrix_verification_log.md`](capability_matrix_verification_log.md) — dated verification runs and limitations.
-- [ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md) — gate-test oracle policy.
-- [ADR-0057](../ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference.md) — canon-safe player freedom contract surface (Phase 1 amendment lives here).
-- [ADR-0061 (Draft)](../ADR/adr-0061-director-pause-mode-for-gathering-interruption.md) — Director-Pause mode contract (delivered with PR-C).
-- [ADR-0062](../ADR/adr-0062-director-realization-thin-path.md) — Resolver → Director → Narrator thin path; PR-A movement realization rides on this composition path.
+- [ADR-0039](docs/architecture/project/governance/architecture) — gate-test oracle policy.
+- [ADR-0057](docs/architecture/components/ai-stack/architecture) — canon-safe player freedom contract surface (Phase 1 amendment lives here).
+- [ADR-0061 (Draft)](docs/architecture/components/ai-stack/architecture) — Director-Pause mode contract (delivered with PR-C).
+- [ADR-0062](docs/architecture/components/world-engine/architecture) — Resolver → Director → Narrator thin path; PR-A movement realization rides on this composition path.
 
 ## 6. Update protocol
 

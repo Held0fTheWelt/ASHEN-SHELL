@@ -373,8 +373,8 @@ def main() -> int:
 
     if args.apply:
         obs = REPO_ROOT / "docs/architecture/project/observability-traceability/architecture.md"
-        lf = REPO_ROOT / "docs/architecture/project/project/observability-traceability/architecture.md#d6-langfuse-canonical-observability-provider"
-        rp = REPO_ROOT / "docs/architecture/project/project/observability-traceability/architecture.md#d7-observability-redaction-policy"
+        lf = REPO_ROOT / "docs/architecture/project/observability-traceability/architecture.md#d6-langfuse-canonical-observability-provider"
+        rp = REPO_ROOT / "docs/architecture/project/observability-traceability/architecture.md#d7-observability-redaction-policy"
         if lf.is_file() and rp.is_file() and obs.is_file():
             enrich_langfuse_section8(
                 obs,

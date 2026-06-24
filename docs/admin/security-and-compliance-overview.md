@@ -20,7 +20,7 @@ High-level **operator and governance** view. Deep audits and code references liv
 - The backend governance API is `/api/v1/admin/security/governance` and persists policy in `site_settings.security_governance_config`.
 - Governance policy is not a hidden enforcement switch: CSRF exemption, proxy cookie stripping, route authentication, cookie config, secret-store materialization, Redis TLS/ACL files, and storage-layer encryption materialization remain code/deployment-owned boundaries.
 - Storage-layer evidence is governed through the same page and is surfaced in system diagnosis as `storage_layer_encryption`.
-- Architecture decision: [ADR-0050: Security governance for browser mutation boundaries](../ADR/adr-0050-security-governance-browser-mutation-boundaries.md).
+- Architecture decision: [ADR-0050: Security governance for browser mutation boundaries](docs/architecture/project/security-governance/architecture).
 
 ## Secrets management
 
@@ -52,8 +52,8 @@ High-level **operator and governance** view. Deep audits and code references liv
 - `docs/security/README.md`
 - `docs/security/AT_REST_ENCRYPTION.md`
 - `docs/admin/security-governance.md`
-- `docs/architecture/project/project/security-governance/architecture.md#d2-storage-encryption-governance`
-- `docs/architecture/project/project/security-governance/architecture.md#d1-browser-mutation-boundaries`
+- `docs/architecture/project/security-governance/architecture.md#d2-storage-encryption-governance`
+- `docs/architecture/project/security-governance/architecture.md#d1-browser-mutation-boundaries`
 - `docs/security/PROVIDER_CREDENTIAL_GOVERNANCE.md`
 - `docs/security/AUDIT_REPORT.md`
 - [Operations runbook](operations-runbook.md)

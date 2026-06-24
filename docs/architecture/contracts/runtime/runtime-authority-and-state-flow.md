@@ -70,7 +70,7 @@ For **in-process** operator/MCP/test flows, the backend keeps a **process-local*
 
 ## Related
 
-- [`docs/ADR/README.md`](../../ADR/README.md) — Architecture Decision Records (ADR) index
+- [`DECISION_REGISTRY.md`](../../project/DECISION_REGISTRY.md) — ex-ADR → SAD §9 index
 - [`world_engine_authoritative_runtime_and_system_interactions.md`](world_engine_authoritative_runtime_and_system_interactions.md) — canonical World Engine spine (two play-service faces, integration, diagrams)
 - [`player_input_interpretation_contract.md`](player_input_interpretation_contract.md) — structured interpretation contract
 - [`callback_web_contract.md`](callback_web_contract.md) — bounded Pi17 callback web index and operator evidence
@@ -87,4 +87,4 @@ For **in-process** operator/MCP/test flows, the backend keeps a **process-local*
 - [`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md) — commit semantics
 - [`../integration/LangGraph.md`](../integration/LangGraph.md) — turn graph orchestration
 - [`../ai/RAG.md`](../ai/RAG.md) — retrieval in the turn path
-- ADR: [`docs/architecture/project/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine)
+- ADR: [`docs/architecture/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine)

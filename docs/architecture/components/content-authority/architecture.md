@@ -53,7 +53,7 @@ Writers-room drafts are not production truth.
 
 ### D1: Canonical Authored Content Model
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0025 (retired 2026-06-23)
 
 **Context.** Content authoring in the repository uses structured content modules under
@@ -92,11 +92,13 @@ reference.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/content-authority/architecture.md#d1-canonical-authored-content-model` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/content-authority/architecture.md#d1-canonical-authored-content-model` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D2: Canonical content authority (MVP)
 
 **Status:** Accepted · **Origin:** MVP1-005
+
+**Context.** MVP1 required a hard boundary between authored story modules and runtime templates so AI stages cannot invent canon at load or turn time; violations fail closed at compile and session bootstrap.
 
 **Decision.** MVP content authority flows through compile/publish pipeline before engine load; AI may not invent canon ([mvp-live-runtime-completion SAD §2](../../project/mvp-live-runtime-completion/architecture.md#2-constraints)).
 
@@ -104,7 +106,7 @@ reference.
 
 ### D3: Remove Content Locale Runtime Lookups
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0037-CONTENT (retired 2026-06-23)
 
 **Context.** The earlier story-runtime shell treated player language as a module-owned
@@ -155,9 +157,9 @@ the engine.
 - Player-visible German can still be tested, but the provenance must identify
   the output module rather than a content-locale lookup.
 
-**Evidence.** `docs/architecture/project/components/backend/architecture.md#d3-test-suite-split-in-orchestrator` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/backend/architecture.md#d3-test-suite-split-in-orchestrator` (archived — see `docs/archive/adr-retired-2026/`)
 
-## 10. Quality Requirements
+ Quality Requirements
 
 `tests/smoke/test_goc_module_structure_smoke.py`, content validators, GoC gate tests.
 

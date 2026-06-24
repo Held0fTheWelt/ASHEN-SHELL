@@ -262,7 +262,7 @@ tests/reports/MVP_Live_Runtime_Completion/
 
 ## Next Steps
 
-1. **Create ADRs** (architectural decision records) in `docs/ADR/MVP_Live_Runtime_Completion/`
+1. **Register MVP5 decisions** in [`DECISION_REGISTRY.md`](../../../docs/architecture/project/DECISION_REGISTRY.md) and [`mvp-live-runtime-completion` SAD §9](../../../docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions)
 2. **Generate MVP5_HANDOFF_TO_MVP6.md** specifying frontend contracts for next MVP
 3. **Mark MVP5 COMPLETE** after ADR review and approval
 

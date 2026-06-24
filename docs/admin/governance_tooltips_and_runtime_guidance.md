@@ -47,7 +47,7 @@ Primary sources:
 
 - `ai_stack/story_runtime/runtime_readiness_consumer.py`
 - `ai_stack/story_runtime/runtime_aspect_ledger/__init__.py`
-- `docs/architecture/project/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority`
+- `docs/architecture/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority`
 
 ## AI Runtime recommended combinations
 

@@ -17,11 +17,11 @@ will read from once PR-A/B/C land. The contract guarantees:
 
 Authoritative governance:
 
-* `docs/architecture/project/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes`
+* `docs/architecture/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes`
   (Phase-1 amendment names the four contracts this envelope wraps).
-* `docs/architecture/project/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority`
+* `docs/architecture/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority`
   (Draft -- Director-Pause shape).
-* `docs/architecture/project/components/world-engine/architecture.md#d4-director-realization-thin-path` (composition path
+* `docs/architecture/components/world-engine/architecture.md#d4-director-realization-thin-path` (composition path
   that PR-A movement realization rides on).
 * `docs/MVPs/npc_interactivity_piv_log.md` (roadmap PIV index).
 * `docs/implementation_logs/pr_0_npc_interactivity_contracts_piv.md`

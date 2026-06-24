@@ -34,7 +34,7 @@ Orientation for **developers** working across World of Shadows services. For pla
 
 ## Python runtime standard
 
-**Canonical interpreter:** **Python 3.14.x** on host, CI, Dev Container, and all first-party Compose images. Record: [ADR-0064](../ADR/adr-0064-python-314-unified-interpreter-standard.md).
+**Canonical interpreter:** **Python 3.14.x** on host, CI, Dev Container, and all first-party Compose images. Record: [ADR-0064](docs/architecture/project/quality-gates/architecture).
 
 | Surface | Pin |
 |---------|-----|

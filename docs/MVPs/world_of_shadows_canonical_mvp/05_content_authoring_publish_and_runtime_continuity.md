@@ -91,9 +91,9 @@ This is consistent with the broader WoS rule that support layers assist but do n
 
 ## Test continuity and gate oracles (ADR-0039)
 
-Continuity is not only **data** (authored module → publish → runtime) but also **proof**: automated gates must not introduce a **parallel dramatic truth** by hardcoding expected prose, scores, or payloads that only matched one failing ticket. **[ADR-0039](../../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md)** requires that gate and promotion-style tests derive pass/fail from the same declared surfaces this document privileges—canonical module YAML, compiled projections, schemas, or versioned evaluation baselines—not from copy-pasted example output.
+Continuity is not only **data** (authored module → publish → runtime) but also **proof**: automated gates must not introduce a **parallel dramatic truth** by hardcoding expected prose, scores, or payloads that only matched one failing ticket. **[ADR-0039](docs/architecture/project/governance/architecture)** requires that gate and promotion-style tests derive pass/fail from the same declared surfaces this document privileges—canonical module YAML, compiled projections, schemas, or versioned evaluation baselines—not from copy-pasted example output.
 
-This aligns **validation strategy** tests with **[ADR-0008](../../ADR/adr-0008-validation-strategy-explicit-configurable.md)** and future **evaluation-as-promotion** enforcement with **[ADR-0009](../../ADR/adr-0009-evaluation-is-a-promotion-gate.md)**: the gate proves the ladder holds, not that the test author’s favorite string survived refactor.
+This aligns **validation strategy** tests with **[ADR-0008](docs/architecture/components/world-engine/architecture)** and future **evaluation-as-promotion** enforcement with **[ADR-0009](docs/architecture/project/governance/architecture)**: the gate proves the ladder holds, not that the test author’s favorite string survived refactor.
 
 ## Canonical continuity reading
 

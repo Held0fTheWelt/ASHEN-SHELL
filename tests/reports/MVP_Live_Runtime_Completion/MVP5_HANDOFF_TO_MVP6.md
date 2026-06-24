@@ -253,7 +253,7 @@ document.addEventListener('narrator-block-received', (event) => {
 All artifacts delivered and verified:
 
 ```
-docs/ADR/MVP_Live_Runtime_Completion/
+docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions
 ├── adr-mvp5-001-modular-block-rendering-architecture.md (✅ ACCEPTED)
 ├── adr-mvp5-002-virtual-clock-deterministic-testing.md (✅ ACCEPTED)
 ├── adr-mvp5-003-accessibility-mode-implementation.md (✅ ACCEPTED)

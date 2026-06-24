@@ -18,6 +18,9 @@ NORMATIVE_INDEX = REPO_ROOT / "docs" / "dev" / "contracts" / "normative-contract
 RUNTIME_CONTRACTS = ARCH / "contracts" / "runtime"
 LINK_AUDIT = REPO_ROOT / "scripts" / "architecture_link_audit.py"
 CONTRACT_PLACEMENT_AUDIT = REPO_ROOT / "scripts" / "contract_placement_audit.py"
+ADR_RETIREMENT_AUDIT = REPO_ROOT / "scripts" / "adr_retirement_audit.py"
+
+DECISION_PROSE_MIN_WORDS = 50
 
 ARCHITECTURE_ROOT_ALLOWLIST = frozenset(
     {"README.md", "START-HERE.md", "QUALITY-STANDARD.md", "DOC-HEALTH.md"}
@@ -220,7 +223,7 @@ def test_decision_registry_exists() -> None:
 
 
 def test_no_active_adr_files() -> None:
-    """After retirement, docs/ADR/ contains only README stub (no adr-*.md)."""
+    """After retirement, the ADR stub directory contains only README (no adr-*.md)."""
     adr_dir = REPO_ROOT / "docs" / "ADR"
     if not adr_dir.is_dir():
         pytest.skip("ADR directory removed")
@@ -232,8 +235,20 @@ def test_no_active_adr_files() -> None:
     assert not active, f"active ADR files remain: {[p.relative_to(REPO_ROOT) for p in active[:10]]}"
 
 
+def _decision_body_word_count(block: str) -> int:
+    """Count substantive words; strip heading and metadata lines only (keep bold prose)."""
+    body = re.sub(r"^###[^\n]+\n", "", block)
+    body = re.sub(
+        r"^\*\*(Status|Origin|Migrated from|Supersedes):\*\*.*$",
+        "",
+        body,
+        flags=re.M,
+    )
+    return len(body.split())
+
+
 def test_sad_decision_prose_minimum() -> None:
-    """§9 decision blocks must include Status, Origin, and substantive body."""
+    """§9 decision blocks must include Status, Origin, and substantive body (≥50 words)."""
     for sad_path in COMPLETE_SADS:
         text = sad_path.read_text(encoding="utf-8")
         if "## 9. Architecture Decisions" not in text:
@@ -245,13 +260,142 @@ def test_sad_decision_prose_minimum() -> None:
             assert "**Origin:**" in block or "**Migrated from:**" in block, (
                 f"{sad_path.name}: decision missing Origin"
             )
-            body = re.sub(r"\*\*[^*]+\*\*", "", block)
-            assert len(body.split()) >= 15, f"{sad_path.name}: decision block too thin"
+            words = _decision_body_word_count(block)
+            assert words >= DECISION_PROSE_MIN_WORDS, (
+                f"{sad_path.name}: decision block too thin ({words} < {DECISION_PROSE_MIN_WORDS} words)"
+            )
+
+
+def test_adr_retirement_audit_clean() -> None:
+    """Retired ADR registry coverage and SAD prose parity must pass audit --check."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ADR_RETIREMENT_AUDIT),
+            "--check",
+            "--parity-threshold",
+            "0.70",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+MVP1_REQUIRED_IDS = (
+    "MVP1-001",
+    "MVP1-002",
+    "MVP1-003",
+    "MVP1-005",
+    "MVP1-006",
+    "MVP1-016",
+)
+
+MVP_SAD = ARCH / "project" / "mvp-live-runtime-completion" / "architecture.md"
+
+
+def test_mvp1_required_sad_blocks_present() -> None:
+    """FIX-012: each required MVP1 decision has a ### MVP1-xxx block in MVP SAD §9."""
+    text = MVP_SAD.read_text(encoding="utf-8")
+    section = text.split("## 9. Architecture Decisions", 1)[1].split("## 10.", 1)[0]
+    for mvp_id in MVP1_REQUIRED_IDS:
+        assert f"### {mvp_id}:" in section, f"Missing SAD §9 block for {mvp_id}"
+
+
+def test_mvp1_decisions_registered() -> None:
+    """FIX-012: required MVP1 ids map to SAD anchors in DECISION_REGISTRY."""
+    registry = DECISION_REGISTRY.read_text(encoding="utf-8")
+    for mvp_id in MVP1_REQUIRED_IDS:
+        assert f"| {mvp_id} |" in registry, f"{mvp_id} missing from DECISION_REGISTRY"
+
+
+def test_mvp1_sad_blocks_include_evidence() -> None:
+    """FIX-012: required MVP1 SAD blocks include Decision and Evidence sections."""
+    text = MVP_SAD.read_text(encoding="utf-8")
+    section = text.split("## 9. Architecture Decisions", 1)[1].split("## 10.", 1)[0]
+    for mvp_id in MVP1_REQUIRED_IDS:
+        start = section.index(f"### {mvp_id}:")
+        end = section.find("\n### ", start + 1)
+        block = section[start:] if end == -1 else section[start:end]
+        assert "**Evidence.**" in block, f"{mvp_id} missing Evidence"
+        assert "**Decision.**" in block, f"{mvp_id} missing Decision"
 
 
 def test_architecture_link_audit_clean() -> None:
     result = subprocess.run(
         [sys.executable, str(LINK_AUDIT), "--check"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+PILOT_COMPONENTS = ("world-engine", "ai-stack")
+
+FULL_CATALOG_COMPONENTS = frozenset(
+    {"world-engine", "ai-stack", "backend", "story-runtime-core", "mcp-server"}
+)
+
+LIGHT_CATALOG_COMPONENTS = frozenset(
+    {"frontend", "content-authority", "administration-tool"}
+)
+
+
+def _section9_headings(text: str) -> list[str]:
+    if "## 9. Architecture Decisions" not in text:
+        return []
+    section = text.split("## 9. Architecture Decisions", 1)[1].split("## 10.", 1)[0]
+    return re.findall(r"^### (D\d+):", section, re.M)
+
+
+@pytest.mark.parametrize("slug", PILOT_COMPONENTS)
+def test_pilot_has_mechanism_catalog(slug: str) -> None:
+    catalog = ARCH / "components" / slug / "mechanism-catalog.md"
+    matrix = ARCH / "components" / slug / "evidence-matrix.md"
+    assert catalog.is_file(), f"missing mechanism-catalog for {slug}"
+    assert matrix.is_file(), f"missing evidence-matrix for {slug}"
+    rows = [ln for ln in catalog.read_text(encoding="utf-8").splitlines() if ln.startswith("|") and "---" not in ln]
+    assert len(rows) >= 10, f"{slug} mechanism-catalog needs >=10 rows, got {len(rows)}"
+
+
+@pytest.mark.parametrize("slug", PILOT_COMPONENTS)
+def test_no_duplicate_section9_headings(slug: str) -> None:
+    sad = ARCH / "components" / slug / "architecture.md"
+    headings = _section9_headings(sad.read_text(encoding="utf-8"))
+    dups = [h for h in headings if headings.count(h) > 1]
+    assert not dups, f"{slug}: duplicate §9 headings {sorted(set(dups))}"
+
+
+@pytest.mark.parametrize("slug", sorted(FULL_CATALOG_COMPONENTS | LIGHT_CATALOG_COMPONENTS))
+def test_mechanism_catalog_for_complete_components(slug: str) -> None:
+    catalog = ARCH / "components" / slug / "mechanism-catalog.md"
+    assert catalog.is_file(), f"missing mechanism-catalog for {slug}"
+    rows = [ln for ln in catalog.read_text(encoding="utf-8").splitlines() if re.search(r"\|\s*[A-Z]{2,3}-M\d+", ln)]
+    min_rows = 5 if slug in LIGHT_CATALOG_COMPONENTS else 8
+    assert len(rows) >= min_rows, f"{slug} catalog needs >={min_rows} mechanism rows"
+
+
+def test_decision_registry_complete() -> None:
+    registry = DECISION_REGISTRY.read_text(encoding="utf-8")
+    empty: list[str] = []
+    for line in registry.splitlines():
+        if not line.startswith("|") or "---" in line or "ex-ADR-ID" in line:
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) < 4:
+            continue
+        adr_id, anchor = parts[1], parts[3]
+        if anchor in ("—", "", "-"):
+            empty.append(adr_id)
+    assert not empty, f"registry rows missing SAD anchor: {empty[:15]}{'...' if len(empty)>15 else ''}"
+
+
+def test_sad_section9_hygiene_clean() -> None:
+    hygiene = REPO_ROOT / "scripts" / "sad_section9_hygiene.py"
+    result = subprocess.run(
+        [sys.executable, str(hygiene), "--check"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,

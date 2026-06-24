@@ -1,8 +1,9 @@
 # backend TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| c4-context | No direct player → world-engine auth on primary path | `backend/app/api/v1/` | foundation gate |
-| c4-container | game_service sole play proxy | `game_service.py` | `backend/tests/` |
-| session proxy sequence | Turn forwarding only | `game_routes` | `test_goc_mvp01_mvp02_foundation_gate.py` |
-| SAD D1 | Session quarantine | backend SAD §9 D1 | ADR-0002 |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | D1 | Session surface quarantine | see component SAD | `tests/gates/` |
+| c4-context | D2 | Player session bundle | see component SAD | `tests/gates/` |
+| c4-context | D3 | Story API proxy | see component SAD | `tests/gates/` |
+| c4-context | D4 | ADR-0041 readiness consumer | see component SAD | `tests/gates/` |
+| c4-context | D5 | WebSocket ticket bridge | see component SAD | `tests/gates/` |

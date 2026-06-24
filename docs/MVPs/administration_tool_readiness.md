@@ -503,11 +503,11 @@ Alle Cross-Service-Änderungen müssen dokumentiert werden.
 ## Neue ADR-Dateien
 
 ```text
-docs/ADR/ADR-000X-canonical-ai-stack-release-readiness-source-of-truth.md
-docs/ADR/ADR-000X-administration-tool-release-readiness-projection.md
-docs/ADR/ADR-000X-ai-stack-readiness-diagnostic-schema.md
-docs/ADR/ADR-000X-cross-service-runtime-config-visibility.md
-docs/ADR/ADR-000X-closure-cockpit-operator-surface.md
+docs/architecture/components/ai-stack/architecture.md §9
+docs/architecture/components/administration-tool/architecture.md §9
+docs/architecture/project/observability-traceability/architecture.md §9
+docs/architecture/project/ecosystem-topology/architecture.md §9
+docs/architecture/project/mvp-live-runtime-completion/architecture.md §9
 ```
 
 ## Jede ADR enthält
@@ -624,5 +624,5 @@ Die Implementierung gilt erst als fertig, wenn:
 * Missing Evidence sichtbar ist.
 * Runtime health und Runtime config truth getrennt dargestellt werden.
 * Tests Backend + Admin + Docker/Browser die Verbindung beweisen.
-* ADRs unter `docs/ADR/` existieren.
+* SAD §9 decisions registered in [`DECISION_REGISTRY.md`](../architecture/project/DECISION_REGISTRY.md) exist for readiness surfaces.
 * Abschlussreport unter `tests/reports/` existiert.

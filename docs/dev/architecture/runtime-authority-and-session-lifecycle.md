@@ -1,5 +1,5 @@
 # Runtime authority and session lifecycle (developer seam)
-**Migrated Decision:** See canonical ADR: [ADR-0001: Runtime authority in world-engine](../../ADR/adr-0001-runtime-authority-in-world-engine.md)
+**Migrated Decision:** See canonical ADR: [ADR-0001: Runtime authority in world-engine](docs/architecture/components/world-engine/architecture)
 
 
 
@@ -16,6 +16,6 @@ This page keeps a **short developer anchor** only:
 
 - **First code read:** `world-engine/app/story_runtime/manager/` — `StoryRuntimeManager`.
 - **Normative product decision** (archived original): [`docs/archive/architecture-legacy/runtime_authority_decision.md`](../../archive/architecture-legacy/runtime_authority_decision.md)
-- **ADR:** [`docs/architecture/project/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine) — see also [`docs/ADR/README.md`](../../ADR/README.md) for the full ADR index
+- **ADR:** [`world-engine SAD D1`](../../architecture/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine) — see also [`DECISION_REGISTRY.md`](../../architecture/project/DECISION_REGISTRY.md) for the ex-ADR index
 
 Update the technical document when behavior changes; update this stub only when entry paths change.

@@ -9,7 +9,7 @@ as explicit debt so the allowlist is visible and cannot grow accidentally.
 alongside ``ai_stack``, ``world-engine/app``, backend, and frontend so Table-B
 rules apply to the same governed runtime surface as
 ``docs/MVPs/adr0039_runtime_surface_governance_inventory.md`` and
-``docs/architecture/project/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses`` § Runtime surface
+``docs/architecture/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses`` § Runtime surface
 governance.
 """
 
@@ -305,6 +305,7 @@ CONSEQUENCE_CASCADE_CANONICAL_SURFACES = {
     "story_runtime_core/consequences/consequence_cascade.py",
     "tools/mcp_server/handlers/langfuse_verify/",
     "world-engine/app/api/http.py",
+    "world-engine/app/api/http_routes/narrative_web_routes.py",
     "world-engine/app/config.py",
     "world-engine/app/main.py",
     "world-engine/app/story_runtime/consequence_cascade_store.py",
@@ -387,11 +388,25 @@ TONAL_CONSISTENCY_CANONICAL_SURFACES = {
 }
 
 
+# LangGraph validation + ledger projection surfaces shared by all Table-B runtime aspects.
+RUNTIME_ASPECT_SHARED_CANONICAL_PREFIXES = (
+    "ai_stack/langgraph/runtime_executor/",
+    "ai_stack/langgraph/validation/",
+    "ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/",
+)
+RUNTIME_ASPECT_SHARED_CANONICAL_FILES = frozenset(
+    {
+        "ai_stack/story_runtime/runtime_aspect_ledger/constants.py",
+        "world-engine/app/story_runtime/planner_truth_projection.py",
+    }
+)
+
+
 # These are not exemptions for new Table B work. They document current
 # module-specific legacy seams that must be modularized before Table B rows can
 # honestly move beyond partial/proven status.
 KNOWN_MODULE_LITERAL_DEBT: dict[str, str] = {
-    "ai_stack/story_runtime/legacy_actor_lane_hydration.py": (
+    "ai_stack/story_runtime/actor_lane_hydration.py": (
         "GoC-only legacy compatibility shim: hydrates narrative-only model output into "
         "spoken_lines/action_lines when validator floors require actor lanes; not a generic "
         "runtime surface."
@@ -410,13 +425,13 @@ KNOWN_MODULE_LITERAL_DEBT: dict[str, str] = {
     "backend/app/content/builtins.py": "Built-in content registry exposes the GoC profile.",
     "backend/app/content/module_loader.py": "Template-to-module compatibility maps GoC solo.",
     "backend/app/content/module_service.py": "Content service doc examples still use GoC.",
-    "backend/app/models/game_experience_template.py": "Seed-template compatibility still knows GoC solo.",
+    "backend/app/models/world_engine/game_experience_template.py": "Seed-template compatibility still knows GoC solo.",
     "backend/app/observability/langfuse_adapter.py": "Observability docstring example still uses GoC.",
     "backend/app/runtime/engine.py": "Legacy mini-engine still uses fixed room flags.",
     "backend/app/runtime/narrative/npc_behaviors.py": "Legacy mini-engine NPC behavior is GoC-specific.",
     "backend/app/runtime/runtime_models.py": "Runtime model docstring example still uses GoC.",
     "backend/app/runtime/session/session_start.py": "Session-start docstring example still uses GoC.",
-    "backend/app/services/game_content_service.py": "Game content service still maps the GoC solo seed.",
+    "backend/app/services/game/game_content_service.py": "Game content service still maps the GoC solo seed.",
     "frontend/app/routes_play.py": "Play launcher still validates GoC role/profile locally.",
     "frontend/templates/session_start.html": "Play launcher still renders GoC role choices locally.",
     "story_runtime_core/builtin_experience_templates.py": "Built-in template registry includes GoC compatibility.",
@@ -452,6 +467,36 @@ def _known_module_literal_debt_reason(rel: str) -> str | None:
             "Shell readout package still contains GoC-specific pressure prose that "
             "was previously isolated in story_runtime_shell_readout.py."
         )
+    if rel.startswith("ai_stack/story_runtime/god_of_carnage/"):
+        return "GoC-specific story_runtime module; generic Table B code must not depend on it."
+    if rel.startswith("ai_stack/story_runtime/narrator/god_of_carnage_"):
+        return "GoC-specific narrator path module."
+    if rel.startswith("ai_stack/story_runtime/director/god_of_carnage_"):
+        return "GoC-specific director path module."
+    if rel.startswith("ai_stack/story_runtime/turn/god_of_carnage_"):
+        return "GoC turn seam compatibility path."
+    if rel.startswith("ai_stack/story_runtime/semantic_planner/"):
+        return "Semantic planner still includes GoC roadmap and move interpretation surfaces."
+    if rel.startswith("ai_stack/story_runtime/director/"):
+        return "Director surfaces still include GoC scene-direction compatibility wiring."
+    if rel.startswith("ai_stack/story_runtime/dramatic_effect/"):
+        return "Dramatic effect gates still reference GoC branch evaluation surfaces."
+    if rel.startswith("ai_stack/story_runtime/narrator/"):
+        return "Narrator validation surfaces still reference GoC authority paths."
+    if rel.startswith("ai_stack/story_runtime/npc_agency/"):
+        return "NPC agency surfaces include GoC character voice and mind compatibility paths."
+    if rel == "ai_stack/story_runtime/player_narrative_cards.py":
+        return "Player narrative cards still reference the GoC module for the live pilot."
+    if rel.startswith("ai_stack/contracts/"):
+        return "Contract surfaces may reference canonical god_of_carnage module constants for the live pilot."
+    if rel.startswith("ai_stack/langgraph/"):
+        return "LangGraph runtime package still embeds GoC module wiring for the live pilot path."
+    if rel.startswith("backend/app/api/v1/game/"):
+        return "Backend game routes still know the GoC solo profile and player roles."
+    if rel == "world-engine/app/api/http_routes/play_run_routes.py":
+        return "World-engine play routes still validate GoC solo roles at the HTTP boundary."
+    if "god_of_carnage" in rel:
+        return "GoC-named implementation surface; not a generic Table B expansion path."
     filename = Path(rel).name
     if rel.startswith("ai_stack/goc_") or (
         rel.startswith("ai_stack/story_runtime/") and filename.startswith("goc_")
@@ -465,7 +510,13 @@ def _known_module_literal_debt_reason(rel: str) -> str | None:
 
 
 def _is_reviewed_surface(rel: str, reviewed: set[str]) -> bool:
-    return rel in reviewed or any(surface.endswith("/") and rel.startswith(surface) for surface in reviewed)
+    if rel in reviewed:
+        return True
+    if rel in RUNTIME_ASPECT_SHARED_CANONICAL_FILES:
+        return True
+    if any(rel.startswith(prefix) for prefix in RUNTIME_ASPECT_SHARED_CANONICAL_PREFIXES):
+        return True
+    return any(surface.endswith("/") and rel.startswith(surface) for surface in reviewed)
 
 
 def _iter_source_files() -> Iterable[Path]:

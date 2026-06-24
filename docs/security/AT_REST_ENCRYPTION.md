@@ -4,8 +4,8 @@ Status date: 2026-05-17
 
 Normative decision records:
 
-- [ADR-0047: At-rest encryption evidence boundary](../ADR/adr-0047-at-rest-encryption-evidence-boundary.md)
-- [ADR-0051: Storage-layer encryption governance](../ADR/adr-0051-storage-layer-encryption-governance.md)
+- [ADR-0047: At-rest encryption evidence boundary](docs/architecture/project/security-governance/architecture)
+- [ADR-0051: Storage-layer encryption governance](docs/architecture/project/security-governance/architecture)
 
 ## Conclusion
 

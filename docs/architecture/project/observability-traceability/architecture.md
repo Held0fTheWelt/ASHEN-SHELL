@@ -129,7 +129,11 @@ Player input observability fields on spans (ADR-0033 §13.6).
 
 **Status:** Accepted · **Migrated from:** MVP4-001
 
+**Context.** MVP4 live runtime required operator-visible diagnostics beyond pytest green; turn failures needed structured evidence for support, regression triage, and narrative governance review without raw log diving.
+
 **Decision.** MVP4 requires operational diagnostics evidence beyond unit test pass/fail.
+
+**Consequences.** MVP4 gates and operator surfaces must expose diagnostics envelopes on live turns.
 
 **Evidence.** [`tests/gates/test_goc_mvp04_observability_diagnostics_gate.py`](../../../../tests/gates/test_goc_mvp04_observability_diagnostics_gate.py).
 
@@ -137,7 +141,11 @@ Player input observability fields on spans (ADR-0033 §13.6).
 
 **Status:** Accepted · **Migrated from:** MVP4-002
 
+**Context.** Without correlated traces, AI/runtime failures could not be tied to a single turn, adapter stage, or visible player output during live sessions or Langfuse-backed quality reviews.
+
 **Decision.** Langfuse spans correlate turns, adapters, and visible output signals when configured.
+
+**Consequences.** Trace middleware and adapters must propagate trace ids without claiming success when Langfuse is disabled.
 
 **Evidence.** [`world-engine/app/middleware/trace_middleware.py`](../../../../world-engine/app/middleware/trace_middleware.py).
 
@@ -145,7 +153,11 @@ Player input observability fields on spans (ADR-0033 §13.6).
 
 **Status:** Accepted · **Migrated from:** MVP4-009
 
+**Context.** Operators auditing narrative governance need links from runtime decisions to traces and logs without reconstructing context from raw engine state dumps or ad-hoc spreadsheet exports.
+
 **Decision.** Decision logs and traces must be linkable for operator audit.
+
+**Consequences.** Narrative governance APIs must return stable correlation ids for the last committed turn.
 
 **Evidence.** MVP4 ADR evidence under `tests/reports/MVP_Live_Runtime_Completion/`.
 
@@ -153,7 +165,11 @@ Player input observability fields on spans (ADR-0033 §13.6).
 
 **Status:** Accepted · **Migrated from:** MVP4-008
 
+**Context.** Degraded adapter paths previously looked like success to clients; explicit diagnostics must surface partial failure without claiming live_success or hiding blocked-turn semantics from operators.
+
 **Decision.** Degraded adapter paths expose explicit diagnostics without false live_success.
+
+**Consequences.** Clients and operators must see degradation reasons in diagnostics envelopes and UML degraded sequences.
 
 **Evidence.** [world-engine degraded sequence](../../../../UML/Components/world-engine/sequence/world-engine-degraded-turn-sequence.md).
 
@@ -161,7 +177,11 @@ Player input observability fields on spans (ADR-0033 §13.6).
 
 **Status:** Accepted · **Migrated from:** ADR-0040
 
+**Context.** Quality Lab MCP must expose judge-guided diagnostics within the same redaction and trace policy as production Langfuse spans so local experiments do not leak PII or bypass governance.
+
 **Decision.** Quality Lab MCP exposes bounded judge-guided diagnostics aligned with trace policy.
+
+**Consequences.** MCP diagnostic tools must not bypass redaction rules defined in observability D7.
 
 **Evidence.** [ai-stack SAD D2](../../components/ai-stack/architecture.md#d2-quality-lab-mcp-runtime-diagnostics-and-judge-guided-improvement).
 
@@ -261,7 +281,7 @@ Operators need to answer:
 
 ---
 
-**Evidence.** `docs/architecture/project/project/observability-traceability/architecture.md#d6-langfuse-as-canonical-airuntime-observability-provider` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/observability-traceability/architecture.md#d6-langfuse-as-canonical-airuntime-observability-provider` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D7: Observability Redaction and Trace Correlation Policy
 
@@ -329,7 +349,7 @@ With LANGFUSE_CAPTURE_RETRIEVAL=true (default false):
 
 ---
 
-**Evidence.** `docs/architecture/project/project/observability-traceability/architecture.md#d7-observability-redaction-and-trace-correlation-policy` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/observability-traceability/architecture.md#d7-observability-redaction-and-trace-correlation-policy` (archived — see `docs/archive/adr-retired-2026/`)
 ## 10. Quality Requirements
 
 `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py`, `world-engine/tests/test_trace_middleware.py`.

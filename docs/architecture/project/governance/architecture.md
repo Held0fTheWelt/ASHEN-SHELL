@@ -5,7 +5,7 @@ type: project-sad
 owns-adrs: [ADR-0017, ADR-0029, ADR-0039]
 uml-package: UML/Project/ecosystem-topology
 links:
-  - docs/ADR/README.md
+  - docs/architecture/project/DECISION_REGISTRY.md
   - docs/governance/gate_oracle_tightness_inventory.md
 ---
 # Governance — Software Architecture (arc42, project-wide)
@@ -28,7 +28,7 @@ DECISION_REGISTRY traceability, and gate tests that must not bypass oracles.
 
 ## 2. Constraints
 
-- **Architecture decisions live only in SAD §9** (plus UML); `docs/ADR/` is being retired to `docs/archive/adr-retired-2026/`.
+- **Architecture decisions live only in SAD §9** (plus UML); retired ADRs live under `docs/archive/adr-retired-2026/`.
 - Audience docs do not become architecture owners.
 - Despaghettify execution governance (`'fy'-suites/despaghettify/state/`) is parallel evidence for code structure.
 
@@ -48,7 +48,7 @@ Maintainers, agents, and CI consume this SAD when changing boundaries, contracts
 | --- | --- |
 | `docs/architecture/` | Normative SADs, contracts, gates |
 | [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) | ex-ADR → SAD §9 traceability during retirement |
-| `docs/ADR/` | Historical (retiring to archive) |
+| `docs/archive/adr-retired-2026/` | Historical ADR files (read-only) |
 | `tests/gates/` | Architecture enforcement |
 | `docs/governance/` | Oracle inventory, audit programs |
 
@@ -86,27 +86,25 @@ N/A
 
 **Context.** During a documentation consolidation effort, many source documents were merged into canonical technical pages, while historical plans and specs were moved to `docs/archive/` for evidence preservation. The consolidation requires a clear, auditable policy for where decisions live and how archival sources are referenced.
 
-**Decision.** - Canonical Architecture Decision Records live under `docs/ADR/` and are the single source of truth for architecture decisions and long-lived boundaries.
-- Migration verification tables and consolidation ledgers remain in `docs/archive/documentation-consolidation-2026/` as evidence, but any explicit decision text discovered in those sources must be migrated into a new or existing ADR.
-- Archived files that contained decisions must be updated with a short "Migrated Decision" pointer line referencing the canonical ADR (e.g., `Migrated Decision: See ADR-XXXX`) and left in archive for historical context.
-- Where migration moves a decision into an existing ADR, append a `Migrated Decision (...)` section into the ADR to preserve provenance and source file references.
-- Evidence-only archival materials (gate tables, test matrices, historical plans) may remain in `docs/archive/` without ADR counterparts, provided their role is explicitly documented in the migration verification table.
+**Decision.** Historical (2026-04-17): consolidation migrated decisions into ADRs under the former ADR tree. **Superseded by [D5](#d5-sad-only-decision-retirement)** (2026-06-23): normative decisions now live only in SAD §9 + UML; ADRs archived to `docs/archive/adr-retired-2026/`.
 
-**Consequences.** - Some archive files will be edited to include pointer lines; CI tests that reference archived paths must be updated to expect pointers or canonical ADR paths.
-- Contractify discovery should be configured to prefer `docs/ADR/` while allowing archive evidence to remain discoverable for audit purposes.
+Legacy consolidation rules retained for audit:
+- Migration verification tables remain in `docs/archive/documentation-consolidation-2026/` as evidence.
 
-**Implementation status.** **Implemented — migration policy was executed and is in force.**
+**Consequences.** - Some archive files were edited to include pointer lines; CI tests that reference archived paths must expect pointers or canonical SAD paths.
+- Contractify discovery should prefer owning SAD §9 and [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) while archive evidence remains discoverable for audit.
 
-- `docs/ADR/` is the canonical location for all architecture decisions; migration from archive completed 2026-04-17 (see `docs/ADR/migration_from_archive_2026-04-17.md`).
-- Archived files updated with "Migrated Decision: See ADR-XXXX" pointer lines (observed in `docs/dev/architecture/runtime-authority-and-session-lifecycle.md`, `docs/technical/runtime/runtime-authority-and-state-flow.md`, etc.).
+**Implementation status.** **Superseded implementation narrative (2026-04-17 ADR phase) — normative surface is now SAD-only per [D5](#d5-sad-only-decision-retirement).**
+
+- Retired ADR files live under `docs/archive/adr-retired-2026/`; [ADR README](../../../ADR/README.md) is a redirect stub only.
+- Archived files retain "Migrated Decision" pointer lines (observed in `docs/dev/architecture/runtime-authority-and-session-lifecycle.md`, runtime contracts, etc.).
 - `docs/archive/documentation-consolidation-2026/` holds migration ledgers as evidence.
-- ADRs 0001–0029 were created through this policy; the process is complete for the initial consolidation pass.
-- Ongoing: new decisions must be written as ADRs; this policy is self-referential and governs future ADR creation.
-- Status promoted from "Proposed" because the migration was executed and the governance rule is active.
+- ADRs 0001–0029 and MVP decisions were absorbed into SAD §9 during the 2026-06 retirement pass.
+- Ongoing: new decisions must be written in owning SAD §9 + UML and registered in `DECISION_REGISTRY.md`.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d1-durable-truth-migration-policy` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d1-durable-truth-migration-policy` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D2: Residue Removal Policy — operational criteria and handling
 
@@ -149,7 +147,7 @@ PYTHONPATH="'fy'-suites" python -m delagecy.tools check --scan-json "'fy'-suites
 
 Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d2-residue-removal-policy` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d2-residue-removal-policy` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D3: Gate Tests Must Not Use Hardcoded Oracles (No “Example-Shaped” Bypasses)
 
@@ -256,17 +254,19 @@ ADR-0039 governs **runtime behavior and decision surfaces**, not only tests and 
 
 ---
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D4: ADR duplicate resolution
 
 **Status:** Accepted
 **Origin:** ADR retirement hygiene (retired 2026-06-23)
 
+**Context.** Retired ADR filenames collided (ADR-0058 pulse bus, ADR-0021 authority stub); registry and SAD anchors must point to one canonical decision each.
+
 **Decision.**
 
 - **ADR-0058 canonical:** `adr-0058-director-driven-pulse-block-stream-bus.md`. Deprecated duplicate: `adr-0058-director-driven-pulse-and-block-stream-bus.md` (stub only).
-- **ADR-0021:** legacy file in `docs/ADR/legacy/`; root `adr-0021-runtime-authority.md` is stub → ADR-0001 / world-engine SAD D1.
+- **ADR-0021:** legacy file in `docs/archive/adr-retired-2026/legacy/`; root stub redirected → ADR-0001 / world-engine SAD D1.
 
 **Evidence.** [2026-06-23 migration baseline audit](../../evidence/2026-06-23-migration-baseline-audit.md).
 
@@ -276,7 +276,7 @@ ADR-0039 governs **runtime behavior and decision surfaces**, not only tests and 
 
 **Context.** Parallel ADR files and SAD §9 summaries drift; gates and agents cannot rely on a single normative path.
 
-**Decision.** Normative architecture decisions live only in SAD §9 and UML. Register every ex-ADR in [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md). Do not create new `docs/ADR/adr-*.md` files. After audit readiness, archive ADRs under `docs/archive/adr-retired-2026/` and delete active copies.
+**Decision.** Normative architecture decisions live only in SAD §9 and UML. Register every ex-ADR in [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md). Do not create new active `adr-*.md` files. After audit readiness, archive ADRs under `docs/archive/adr-retired-2026/` and delete active copies.
 
 **Consequences.** Link migration in main repo (excluding `'fy'-suites/`); gates read SAD paths; ADR README becomes a stub.
 
@@ -303,7 +303,7 @@ ADR-0039 governs **runtime behavior and decision surfaces**, not only tests and 
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d6-revision-review-state-machine` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d6-revision-review-state-machine` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D7: Revision conflicts are explicit governance objects
 
@@ -326,7 +326,7 @@ ADR-0039 governs **runtime behavior and decision surfaces**, not only tests and 
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d7-revision-conflict-governance-objects` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d7-revision-conflict-governance-objects` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D8: Evaluation is a promotion gate
 
@@ -362,7 +362,7 @@ Langfuse/MCP evidence, and explicit readiness coupling.
 
 **Promotion / evaluation gate tests** (when implemented) must prove that failed scores or failed regression checks **block** promotion—or that approved overrides are explicit—not that a magic string in the test file matches last week’s output. Follow [ADR-0039](../../../archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md): derive expected evaluation artifacts from versioned baselines, published scoring contracts, or fixture generators tied to the same pipeline as production evaluation.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d8-evaluation-as-promotion-gate` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d8-evaluation-as-promotion-gate` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D9: Governance workflows are event-driven
 
@@ -385,7 +385,7 @@ Langfuse/MCP evidence, and explicit readiness coupling.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d9-event-driven-governance-workflows` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d9-event-driven-governance-workflows` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D10: Decision Boundary Record — minimum schema for decision boundary recording
 
@@ -419,7 +419,7 @@ Langfuse/MCP evidence, and explicit readiness coupling.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d10-decision-boundary-record-schema` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d10-decision-boundary-record-schema` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D11: Decision Framework — risk framing and kill criteria
 
@@ -444,7 +444,7 @@ Langfuse/MCP evidence, and explicit readiness coupling.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d11-decision-framework-risk-and-kill-criteria` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d11-decision-framework-risk-and-kill-criteria` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D12: Environment Configuration Governance
 
@@ -629,7 +629,7 @@ For production, `.env` files are not the recommended long-term secret source. Pr
 - [ ] Langfuse connection checks read `service_id="langfuse"` backend config and active `secret_name` credentials before any network probe
 - [ ] Docker path uses shared Redis-backed governance storage rather than worker-local state
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d12-env-configuration-governance` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d12-env-configuration-governance` (archived — see `docs/archive/adr-retired-2026/`)
 ## 10. Quality Requirements
 
 `tests/gates/test_adr0039_runtime_surface_governance.py`, `test_table_b_anti_hardcoding_gate.py`.

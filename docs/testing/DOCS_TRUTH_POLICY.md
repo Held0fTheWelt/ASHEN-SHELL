@@ -19,7 +19,7 @@ The following paths are authoritative active documentation:
 |------|---------|
 | `docs/architecture/` | Current service boundaries and contracts |
 | `docs/testing/` | Test suite contracts and policies |
-| `docs/ADR/` | Architecture decision records |
+| `docs/architecture/project/DECISION_REGISTRY.md` | ex-ADR → SAD §9 decision index |
 | `docs/admin/` | Operational runbooks |
 | `docs/MVPs/` | Current MVP specifications |
 

@@ -9,15 +9,15 @@ the hold fired without inspecting the raw frame literal.
 
 Authoritative governance:
 
-* :doc:`docs/ADR/adr-0057-canon-safe-player-freedom-and-affordance-inference`
+* :doc:`docs/architecture/components/ai-stack/architecture`
   (Phase-1 amendment names ``canonical_path_hold_effect.v1`` as a Phase-1
   contract; the hold is defined by ``player_freedom_policy``,
   ``canon_safety``, ``canonical_risk``, ``action_commit_policy``, and
   ``affordance_status`` only -- never by verb / room / actor whitelists).
-* :doc:`docs/ADR/adr-0061-director-pause-mode-for-gathering-interruption`
+* :doc:`docs/architecture/components/ai-stack/architecture`
   (Draft -- PR-C will consume the hold-effect dict to drive
   ``compute_gathering_state``).
-* :doc:`docs/ADR/adr-0062-director-realization-thin-path` (composition path
+* :doc:`docs/architecture/components/world-engine/architecture` (composition path
   PR-B rides on).
 * :doc:`docs/implementation_logs/pr_b_live_effect_propagation_piv` (PR-B
   PIV artifact -- enumerates consumers and guardrails).

@@ -1,6 +1,9 @@
 # frontend TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| c4-context | Scope per SAD | docs/architecture/components/frontend/architecture.md | component tests |
-| primary sequence | Runtime view §6 | SAD §6 | suite tests |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | D1 | Play WebSocket client | see component SAD | `tests/gates/` |
+| c4-context | D2 | Typewriter cinematic | see component SAD | `tests/gates/` |
+| c4-context | D3 | Block stream orchestrator | see component SAD | `tests/gates/` |
+| c4-context | D4 | Session bootstrap UI | see component SAD | `tests/gates/` |
+| c4-context | D5 | Degraded mode display | see component SAD | `tests/gates/` |

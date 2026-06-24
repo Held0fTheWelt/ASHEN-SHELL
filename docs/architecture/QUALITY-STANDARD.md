@@ -67,6 +67,30 @@ During ADR retirement, register every ex-ADR in [`project/DECISION_REGISTRY.md`]
 
 Project SADs use frontmatter per [`project/FRONTMATTER.md`](project/FRONTMATTER.md).
 
+### 3.1 Mechanism catalog
+
+Complex deployable components and runtime-critical project SADs maintain a companion
+[`mechanism-catalog.md`](components/_template/mechanism-catalog.template.md) next to the SAD.
+
+| Column | Required |
+| --- | --- |
+| ID | Stable mechanism id (`WE-M01`, `AI-M01`, `GOV-M01`) |
+| Mechanism | Short name |
+| Definition | One-paragraph normative behavior |
+| Normative sources | Links to SAD `### Dn:` blocks and contracts |
+| UML / evidence | Diagram or test/gate links |
+| Proof state | `Implemented` / `Partial` / `Target` |
+
+Required when: pilot components (world-engine, ai-stack), any component with ≥8 §9
+decisions, or backend / story-runtime-core / mcp-server. Light catalogs (≥5 rows) suffice
+for frontend, content-authority, administration-tool.
+
+### 3.2 Evidence matrix
+
+High-risk mechanisms also maintain [`evidence-matrix.md`](components/_template/evidence-matrix.template.md):
+claim → source path → test or gate → proof state. One row per mechanism that affects
+runtime authority, commit, readiness, or security boundaries.
+
 ## 4. Evidence and traceability
 
 | Status | Meaning |

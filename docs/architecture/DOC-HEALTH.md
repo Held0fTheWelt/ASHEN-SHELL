@@ -1,28 +1,25 @@
 # Documentation health (architecture migration)
 
-Last updated: 2026-06-23 (ADR retirement complete)
+Last updated: 2026-06-23 (SAD restructure complete)
 
 | Package | SAD | UML | Links | Gate |
 | --- | --- | --- | --- | --- |
 | world-engine | ok | ok | ok | ok |
 | project SADs (7) | ok | ok | ok | ok |
-| component SADs (7) | ok | ok | ok | ok |
+| component SADs (8) | ok | ok | ok | ok |
 | contracts migration | ok | — | ok | ok |
-| ADR absorption | **retired** | — | ok | ok |
+| SAD restructure | **complete** | decisions/ | ok | ok |
 
 Verification:
 
 ```powershell
 python -m pytest tests/gates/test_architecture_documentation_gate.py -v --tb=short --no-cov
-```
-
-```powershell
-python scripts/adr_retirement_audit.py --check
-python scripts/architecture_link_audit.py --check
+python scripts/sad_section9_hygiene.py --check
+python scripts/rebuild_decision_registry.py --apply
 ```
 
 Evidence:
 
-- [2026-06-23 ADR retirement complete](evidence/2026-06-23-adr-retirement-complete.md)
-- [ADR retirement audit](evidence/adr-retirement-audit.md)
-- [Archive manifest](../archive/adr-retired-2026/manifest.json)
+- [2026-06-23 SAD restructure complete](evidence/2026-06-23-sad-restructure-complete.md)
+- [2026-06-23 world-engine restructure](evidence/2026-06-23-world-engine-restructure.md)
+- [ADR retirement complete](evidence/2026-06-23-adr-retirement-complete.md)

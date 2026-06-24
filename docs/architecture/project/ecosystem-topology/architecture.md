@@ -110,7 +110,11 @@ Run frontend, backend, administration-tool, and world-engine as separate process
 **Status:** Accepted
 **Origin:** architecture-overview consolidation (retired 2026-06-23)
 
+**Context.** Service boundaries were scattered across contract stubs; operators needed one canonical map tying backend, world-engine, ai-stack, and frontend responsibilities for onboarding and incident response.
+
 **Decision.** The table in §5 is the canonical service map; legacy `current_service_boundaries` contract stubs were retired in favor of this SAD.
+
+**Consequences.** Incident runbooks and onboarding cite §5; contract stubs must not be reintroduced as parallel truth.
 
 **Evidence.** [`docs/technical/architecture/service-boundaries.md`](../../../technical/architecture/service-boundaries.md).
 
@@ -284,7 +288,7 @@ Validation is explicit: `python docker-up.py validate-production-redis` fails if
 - `tests/test_production_redis_docker_config.py`
 - Compose validation via `docker compose -f docker-compose.yml config`
 
-**Evidence.** `docs/architecture/project/project/ecosystem-topology/architecture.md#d2-docker-up-complete-bootstrap` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/ecosystem-topology/architecture.md#d2-docker-up-complete-bootstrap` (archived — see `docs/archive/adr-retired-2026/`)
 ## 10. Quality Requirements
 
 | Requirement | Verification |

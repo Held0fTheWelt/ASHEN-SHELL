@@ -2,7 +2,7 @@
 
 Status date: 2026-05-17
 
-Normative decision record: [ADR-0049: Provider credential governance and local evaluator evidence](../ADR/adr-0049-provider-credential-governance-and-local-evaluator-evidence.md)
+Normative decision record: [ADR-0049: Provider credential governance and local evaluator evidence](docs/architecture/project/security-governance/architecture)
 
 ## Conclusion
 
@@ -91,7 +91,7 @@ Local-only evidence must not:
 2. Add an encrypted credential lookup path through backend governance or secret-manager integration.
 3. Ensure adapter construction fails closed when the credential is absent.
 4. Add tests proving Compose does not inherit the raw key and routing filters unavailable adapters.
-5. Extend this document and [ADR-0049](../ADR/adr-0049-provider-credential-governance-and-local-evaluator-evidence.md) if the provider changes the boundary.
+5. Extend this document and [ADR-0049](docs/architecture/project/security-governance/architecture) if the provider changes the boundary.
 
 ## Verification commands
 
@@ -130,7 +130,7 @@ Do not include raw API keys in the evidence pack.
 
 ## Related documentation
 
-- [ADR-0049: Provider credential governance and local evaluator evidence](../ADR/adr-0049-provider-credential-governance-and-local-evaluator-evidence.md)
+- [ADR-0049: Provider credential governance and local evaluator evidence](docs/architecture/project/security-governance/architecture)
 - [Security documentation](README.md)
 - [At-rest encryption evidence and completion plan](AT_REST_ENCRYPTION.md)
 - [Security and compliance overview](../admin/security-and-compliance-overview.md)

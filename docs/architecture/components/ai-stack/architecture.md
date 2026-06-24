@@ -4,8 +4,12 @@
 
 ## 1. Introduction & Goals
 
-AI orchestration layer: LangGraph turn execution, RAG, LangChain adapters, GoC YAML seams, runtime-aspect
-engines, research/canon-improvement pipeline, and MCP canonical surface—**without** commit authority.
+The ai-stack package orchestrates LangGraph turn execution, RAG retrieval, runtime aspect engines,
+research pipelines, and MCP diagnostics. It produces **proposals and structured diagnostics only**;
+world-engine owns validate/commit authority for live canon.
+
+See [mechanism catalog](mechanism-catalog.md) for mechanism-level traceability and
+[evidence matrix](evidence-matrix.md) for gate-backed claims.
 
 ### 1.1 Quality goals
 
@@ -14,21 +18,49 @@ engines, research/canon-improvement pipeline, and MCP canonical surface—**with
 | Proposal-only | Graph output reaches engine validate/commit seams unchanged |
 | Bounded aspects | Each Pi contract has explicit validation and ledger rules |
 | Mode-gated capabilities | Writers-room/research/improvement modes enforced |
+| Observable intelligence | Capability selection and validator plans are locally auditable |
+
+### 1.2 Stakeholders
+
+| Stakeholder | Concern |
+| --- | --- |
+| Runtime engineer | Stable seams into world-engine without commit leakage |
+| AI engineer | Predictable graph stages and aspect contracts |
+| Operator | Langfuse traces, MCP quality lab, governance projections |
 
 ## 2. Constraints
 
 - world-engine owns validate/commit ([boundary](../../boundaries/ai-proposal-runtime-commit.md)).
 - Research output is non-authoritative for live canon ([ai-stack SAD D10](#d10-research-may-draft-change-but-may-not-publish-change)).
+- Semantic capability authority (D12) must not override `validation_outcome` without explicit governed flags.
 
 ## 3. Context & Scope
 
-In scope: `langgraph/`, `rag/`, `story_runtime/`, `capabilities/`, `research/`, `mcp/`. Out of scope: HTTP servers, session stores.
+```mermaid
+flowchart TD
+  WE[world-engine execute_turn] --> Graph[RuntimeTurnGraphExecutor]
+  Graph --> RAG[rag fabric]
+  Graph --> Director[director and aspects]
+  Graph --> ValidateSeam[validate seam proposal]
+  ValidateSeam --> WE
+```
+
+Authoritative: [C4 context](../../../../UML/Components/ai-stack/components/c4-context.md) · [Mechanism catalog](mechanism-catalog.md)
+
+### 3.1 In / out of scope
+
+| In scope | Out of scope |
+| --- | --- |
+| `langgraph/`, `rag/`, `story_runtime/`, `capabilities/` | HTTP session stores, account auth |
+| `research/`, `mcp/` diagnostics | Backend publish routes for canon |
+| Runtime aspect ledger projections | Direct player-facing HTML |
 
 ## 4. Solution Strategy
 
 - `RuntimeTurnGraphExecutor` implements interpret → retrieve → resolve → director → model → validate/commit hooks.
 - GoC seams in `god_of_carnage_turn_seams.py` wire slice authority.
 - Runtime aspect engines write structured events consumed by world-engine ledger.
+- Capability selector and validator dispatch remain opt-in under ADR-0041 flags.
 
 ## 5. Building Block View
 
@@ -38,22 +70,40 @@ In scope: `langgraph/`, `rag/`, `story_runtime/`, `capabilities/`, `research/`, 
 | GoC authority | `ai_stack/story_runtime/god_of_carnage/` |
 | RAG | `ai_stack/rag/` |
 | Director | `ai_stack/story_runtime/director/` |
+| Capabilities | `ai_stack/capabilities/` |
 | Contracts | `ai_stack/contracts/` |
 | Research | `ai_stack/research/` |
 | MCP surface | `ai_stack/mcp/mcp_canonical_surface.py` |
 
+Authoritative: [C4 container](../../../../UML/Components/ai-stack/components/c4-container.md) · [Mechanism catalog](mechanism-catalog.md)
+
 ## 6. Runtime View
 
-Invoked in-process from world-engine `execute_turn`; graph stages call validators before commit seam returns.
+### 6.1 Story turn graph
+
+Invoked in-process from world-engine `execute_turn`; graph stages call validators before the commit seam returns proposals.
+
+Authoritative: [primary sequence](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md)
+
+### 6.2 Capability authority sidecar
+
+When `ADR0041_VALIDATOR_DISPATCH_MODE=plan_enforced`, graph validate seam attaches local-only dispatch context merged into `runtime_intelligence_projection` without mutating commit.
+
+### 6.3 Director pulse (dual mode)
+
+Shadow/dual-mode pulse emits `block_stream_events` parallel to canonical bundle blocks; frontend may consume event stream when feature flags allow.
 
 ## 7. Deployment View
 
-Installed as repo-root package; world-engine `requirements-dev.txt` includes LangChain/LangGraph deps.
+- Imported as Python package from repo root alongside world-engine.
+- Feature flags for ADR-0041 dispatch, pulse dual-mode, and block-stream WS loop are env-driven.
+- Tests: `ai_stack/tests/`, `tests/gates/test_goc_mvp03_*`.
 
 ## 8. Crosscutting Concepts
 
-- Capability budgeting ([ai-stack SAD D12](#d3-runtime-rag-context-fabric-routing-and-authority-boundaries)) — partial.
+- Capability budgeting ([ai-stack SAD D12](#d12-controlled-runtime-capability-authority)) — partial.
 - RAG domains: runtime, writers_room, improvement, research ([RAG.md](../../../technical/ai/RAG.md)).
+- Meta-narrative aspects (D13/D14) remain opt-in and validator-gated.
 
 ## 9. Architecture Decisions
 
@@ -71,10 +121,16 @@ Installed as repo-root package; world-engine `requirements-dev.txt` includes Lan
 | D10 | Research may draft but not publish | Accepted | ADR-0005 |
 | D11 | Player affect enum signals | Not Finished | ADR-0014 |
 | D12 | Controlled runtime capability authority | Not Finished | ADR-0041 |
+| D13 | Opt-in meta-narrative awareness | Accepted | ADR-0042 |
+| D14 | Adaptive meta-narrative awareness | Accepted | ADR-0043 |
+| D15 | Director-pause gathering mode | Proposed | ADR-0061 |
+| D16 | Director pulse and block-stream bus | Accepted | ADR-0058, ADR-0059 |
 
 ### D1: Proposal-only outputs
 
 **Status:** Accepted · **Origin:** ADR-0004
+
+**Context.** Before this decision, model output could be treated as committed story truth. That bypassed validator authority and made blocked or degraded turns hard to reason about in production.
 
 **Decision.** LangGraph and model stages emit proposals only; world-engine validate/commit seams gate all canon mutations. Blocked turns are first-class with degradation markers.
 
@@ -82,7 +138,7 @@ Installed as repo-root package; world-engine `requirements-dev.txt` includes Lan
 
 ### D2: Quality Lab MCP Runtime Diagnostics and Judge-Guided Improvement
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0040 (retired 2026-06-23)
 
 **Context.** World of Shadows / Better Tomorrow now uses multiple layers of runtime
@@ -212,11 +268,11 @@ All implemented surfaces are read-only and registered in
 `ai_stack/mcp/mcp_canonical_surface.py` with `McpToolClass.read_only`,
 `McpSuite.wos_runtime_read`, and `AUTH_QUALITY_LAB_ANALYSIS`.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d2-quality-lab-mcp-runtime-diagnostics-and-judge-guided-improvement` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d2-quality-lab-mcp-runtime-diagnostics-and-judge-guided-improvement` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D3: Runtime RAG Context Fabric — Routing and Authority Boundaries
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0044 (retired 2026-06-23)
 
 **Context.** Retrieval-augmented generation (RAG) is wired into runtime turns via `RetrievalDomain.RUNTIME`, context packs, and LangGraph `retrieve_context` / synthesis paths. Without explicit **routing**, **audience scoping**, and **authority metadata**, teams risk:
@@ -268,11 +324,11 @@ The codebase already separates **authored canon**, **committed runtime state**, 
 - Readiness tests: frontend bundle fields unchanged when RAG disabled vs enabled (readiness may only tighten with ADR-0041 veto rules, never from chunk text).
 - Comply with [ADR-0039](../../../archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md): assert on schema, enums, and policy constants — not generated prose.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d3-rag-fabric-routing` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d3-rag-fabric-routing` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D4: Runtime Memory Indexes and Retrieval Write Contracts
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0045 (retired 2026-06-23)
 
 **Context.** Several runtime surfaces already persist **committed-truth-derived** structures (for example callback web and consequence cascade records, hierarchical memory aspects, relationship state in ledger and planner truth). The **corpus RAG** store (`.wos/rag/`) ingests repository paths and selected transcripts; that is a **different** write contract from **session-scoped memory indexes** optimized for per-turn retrieval.
@@ -318,11 +374,13 @@ Without explicit **write contracts**, a memory index could be populated from **p
 - Leak tests: `npc_self` lane never returns other NPC private fields; `player_visible` never returns withheld disclosure units.
 - ADR-0039 compliant oracles for schema and policy constants.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d4-memory-indexes-retrieval-writes` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d4-memory-indexes-retrieval-writes` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D5: Director thin path realization
 
 **Status:** Accepted · **Origin:** ADR-0062
+
+**Context.** Turn realization needed a single thin orchestration path so resolver, director, and narrator stages share contracts with world-engine commit seams without duplicating authority or bypassing validate gates.
 
 **Decision.** Resolver → Director → Narrator thin path produces realization proposals consumed by validate/commit seams; shared with world-engine D4.
 
@@ -330,7 +388,7 @@ Without explicit **write contracts**, a memory index could be populated from **p
 
 ### D6: Bounded Semantic Scene Planner
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0053 (retired 2026-06-23)
 
 **Context.** The God of Carnage runtime already had director nodes in the single LangGraph turn path:
@@ -517,11 +575,11 @@ Failure modes that require ADR review:
 
 All tests must comply with [ADR-0039](../../../archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md): assert structured fields, contract constants, and deterministic policy behavior rather than copied example prose.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d6-semantic-scene-planner` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d6-semantic-scene-planner` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D7: Souffleuse Inner Voice Composition
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0060 (retired 2026-06-23)
 
 **Context.** The existing `god_of_carnage_souffleuse.py` generates opening-phase Souffleuse blocks from
@@ -661,7 +719,7 @@ Template-path placeholders are restricted to a closed allowlist:
 `voice_hint`. An unrecognised placeholder rejects the render with
 `unsupported_follow_up_template_placeholder`.
 
-### 10. Stage M safety gates (closed enum, applied to template AND semantic output)
+# Stage M safety gates (closed enum, applied to template AND semantic output)
 
 Every gate runs on whichever text reaches the rendered stage. Any
 single `reject` fails the composition; the dispatcher records the first
@@ -735,11 +793,11 @@ explicit future work and are not part of Phase 2 closure.
 - Character voice profile being mandatory means any missing profile immediately
   surfaces as a diagnostic gap (intended behavior, but may require content work).
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D10: Research may draft change, but may not publish change
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0005 (retired 2026-06-23)
 
 **Decision.** Research outputs may create findings, revision candidates, and draft patch bundles. Research may never directly modify canonical runtime packages.
@@ -758,11 +816,11 @@ explicit future work and are not part of Phase 2 closure.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d10-research-may-draft-but-not-publish` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d10-research-may-draft-but-not-publish` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D11: Player affect uses enum-based signals, not one-off frustration booleans
 
-**Status:** 
+**Status:** Not Finished
 **Origin:** ADR-0014 (retired 2026-06-23)
 
 **Decision.** Any player-state interpretation seam should use a general affect model with enums and confidence values. Frustration is one possible affect, not the architecture itself.
@@ -780,11 +838,11 @@ explicit future work and are not part of Phase 2 closure.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d11-player-affect-enum-signals` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d11-player-affect-enum-signals` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D8: Role-aware `AIDecisionLog` and `ParsedRoleAwareDecision`
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0018 (retired 2026-06-23)
 
 **Context.** Workstream W2/W3 introduced role-structured decision artifacts (interpreter, director, responder) and a need to record role-aware decision diagnostics in a canonical, machine-readable form for auditing and debugging.
@@ -808,11 +866,11 @@ explicit future work and are not part of Phase 2 closure.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d8-role-aware-aidecisionlog` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d8-role-aware-aidecisionlog` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D9: ProposalSource enum and responder-only gating
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0019 (retired 2026-06-23)
 
 **Context.** Certain AI-produced proposals should be classified by origin (e.g., `MOCK`, `RESPONDER_DERIVED`, `DIRECTOR`, `MODEL_PROPOSAL`) to allow enforcement of "responder-only" execution modes and to ensure that proposals from non-authoritative sources are handled appropriately by runtime filters and validators.
@@ -835,11 +893,24 @@ explicit future work and are not part of Phase 2 closure.
 
 **Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d9-proposalsource-and-responder-gating` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d9-proposalsource-and-responder-gating` (archived — see `docs/archive/adr-retired-2026/`)
 
-### D12: Director-Pause Mode for Gathering Interruption
+### D12: Controlled Runtime Capability Authority
 
-**Status:** 
+**Status:** Not Finished
+**Origin:** ADR-0041 (retired 2026-06-23)
+
+**Context.** Runtime turns need semantic capability selection, validator routing, and bounded co-authority previews without ADR-0041 owning commit or `validation_outcome`.
+
+**Decision.** ADR-0041 is **Controlled Runtime Capability Authority**: classify runtime situation, select semantic capabilities, project validator plans, and emit local-only co-authority previews under explicit feature flags. `run_validation_seam` remains canonical for commit gates.
+
+**Consequences.** Positive: reduced validation cost and drift visibility. Risks: flag discipline and proof-level honesty (`local_only` must not imply live readiness).
+
+**Evidence.** [`ai_stack/capabilities/capability_selector.py`](../../../../ai_stack/capabilities/capability_selector.py), [`ai_stack/tests/test_capability_selector.py`](../../../../ai_stack/tests/test_capability_selector.py), [mechanism catalog](mechanism-catalog.md) AI-M12.
+
+### D15: Director-Pause Mode for Gathering Interruption
+
+**Status:** Proposed
 **Origin:** ADR-0061 (retired 2026-06-23)
 
 **Context.** The roadmap [`NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md`](../../../../NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md) §3.4 corrects a conceptual error in earlier plan versions: when the player interrupts a gathering — by leaving the apartment, walking to another room, drifting to the window mid-conversation — the runtime today either (a) holds the player ("you can't leave now") or (b) lets the canonical step advance even though `named_characters[current_step]` is no longer co-present in the scene.
@@ -954,11 +1025,11 @@ On `paused: true → false` the narrator transition reaction is optional and fol
 
 Per [ADR-0039](../../../archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md), all PR-C tests assert structured contract fields and path properties, not the player input string or example prose.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d3-runtime-rag-context-fabric-routing-and-authority-boundaries` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d3-runtime-rag-context-fabric-routing-and-authority-boundaries` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D13: Opt-in Meta-Narrative Awareness Runtime Aspect
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0042 (retired 2026-06-23)
 
 **Context.** Capability Matrix index Π25 historically grouped two different ideas under
@@ -1016,11 +1087,11 @@ The first accepted production slice is deliberately narrow:
   Story Runtime Experience opt-in are active. Broad authoring cognition,
   prompt/tool/model disclosure, and player-control claims remain out of scope.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d13-meta-narrative-awareness-opt-in` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/components/ai-stack/architecture.md#d13-meta-narrative-awareness-opt-in` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D14: Adaptive Meta-Narrative Awareness and Fourth-Wall Play
 
-**Status:** 
+**Status:** Accepted
 **Origin:** ADR-0043 (retired 2026-06-23)
 
 **Context.** ADR-0042 introduced the first safe `meta_narrative_awareness` slice: opt-in,
@@ -1069,416 +1140,21 @@ data.
 - `RuntimeAspectLedger.meta_narrative_awareness` records tier, adaptive signal
   codes, direct-address counts, memory refs, and failure codes.
 
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d14-adaptive-meta-narrative-awareness` (archived — see `docs/archive/adr-retired-2026/`)
-## 10. Stage M safety gates (closed enum, applied to template AND semantic output)
+**Evidence.** [UML d14](../../../../UML/Components/ai-stack/decisions/d14-adaptive-meta-narrative.md), [mechanism catalog](mechanism-catalog.md) AI-M11.
 
-Every gate runs on whichever text reaches the rendered stage. Any
-single `reject` fails the composition; the dispatcher records the first
-failing gate's reason and stays on the deterministic template (or, if
-the template path also fails, emits a no-follow-up event with a
-closed-enum reason).
+### D16: Director-Driven Pulse and Block-Stream Bus
 
-| Gate | What it checks |
-|---|---|
-| `length` | Non-empty and ≤ `MAX_COMPOSED_FOLLOW_UP_CHARS` (280 chars). |
-| `actor_lane` | Actor ID is not in the AI-forbidden actor lane (human player, `ai_forbidden_actor_ids`, or `actor_lane_context.ai_forbidden_actor_ids`). |
-| `voice_forbidden_markers` | Output contains no `voice_consistency.forbidden_language_markers` declared on the actor's voice profile. |
-| `no_new_people` | Output contains no token in `forbidden_new_person_tokens`. |
-| `no_new_rooms` | Output contains no token in `forbidden_new_room_tokens`. |
-| `no_forbidden_plot_facts` | Output contains no token in `forbidden_plot_fact_tokens`. |
-| `information_disclosure` | Output contains no `forbidden_disclosure_tokens` from `information_disclosure_target.withheld_units`. |
+**Status:** Accepted
+**Origin:** ADR-0058, ADR-0059 (retired 2026-06-23)
 
-Each gate returns `pass` / `reject` / `not_applicable` deterministically.
-The provider's `success` flag is *advisory*; the gates own the final
-decision.
+**Context.** Scene output historically used a flat `visible_scene_output.blocks` bundle. Phase 2 adds parallel `block_stream_events` and Director Pulse motivation scoring without changing commit semantics.
 
-### 11. Inherited invariants — no generic assistant phrasing, no hardcoded NPC lines
+**Decision.** Director tick emits shadow/dual-mode pulse contracts (`director_tick_decision.v1`, `block_stream_event.v1`, `npc_motivation_score.v1`). Bundle remains canonical fallback until readiness gates promote the event stream.
 
-The Stage M follow-up composition inherits §1, §2, §3, and §5 of this
-ADR:
+**Consequences.** Positive: structured NPC initiative and frontend event-stream rendering. Risks: parity drift between bundle and stream requires diagnostics.
 
-- The voice profile is the mandatory primary source of text. Without
-  a voice profile the dispatcher returns `composition_mode="not_applicable"`
-  with `reason="voice_profile_unavailable"`; it never substitutes
-  generic copy.
-- No hardcoded NPC lines. Template strings live in the authored voice
-  profile YAML, not in Python. Tests that exercise the dispatcher
-  drive it with fixture profiles built from policy/contract constants,
-  not from authored prose.
-- No generic assistant phrasing ("You might want to...",
-  "Consider...") and no generic narrator phrasing ("The room is
-  tense."). These would fail either the `voice_forbidden_markers`
-  gate (when the voice profile lists them) or trip the
-  `actor_lane`/`no_new_people` gates on lane-breaking content.
+**Evidence.** [`ai_stack/story_runtime/director/`](../../../../ai_stack/story_runtime/director/), [UML d16](../../../../UML/Components/ai-stack/decisions/d16-director-pulse-block-stream.md), [mechanism catalog](mechanism-catalog.md) AI-M13.
 
-### 12. Stage M ≠ live Souffleuse pipeline
-
-Stage M composes an NPC reply (e.g. an `actor_line` follow-up); it does
-*not* compose new Souffleuse blocks. Live Director-composed Souffleuse
-blocks (pressure-escalation inner-voice cues outside the opening
-canonical_path cues) remain deferred — see §3 and §4 above. Phase 2
-ships:
-
-- The Souffleuse block-type / lane / cut-kind contract surface
-  (`director_pulse_contracts.BLOCK_TYPE_SOUFFLEUSE`,
-  `LANE_PLAYER_HINT`, `CUT_KIND_SKIP_TO_END`).
-- The opening Souffleuse path via `god_of_carnage_souffleuse.py` (unchanged).
-- The Stage M follow-up composition for NPC replies, sharing the
-  voice-profile discipline and safety-gate vocabulary above.
-
-Live Director-composed Souffleuse pressure-escalation blocks are
-explicit future work and are not part of Phase 2 closure.
-
-**Consequences.** **Positive:**
-
-- Souffleuse voice is defined precisely; future implementations cannot drift into
-  generic assistant phrasing without violating this ADR.
-- Semantic composition removes the need for a mode-lookup table.
-- Shadow path compatibility means Souffleuse pressure escalation is diagnosable
-  in Phase 2 without live delivery risk.
-
-**Negative / Trade-offs:**
-
-- Live Director-composed Souffleuse (non-cue) is deferred to a future phase; Phase 2
-  only covers the contract and existing cue-based path.
-- Character voice profile being mandatory means any missing profile immediately
-  surfaces as a diagnostic gap (intended behavior, but may require content work).
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes` (archived — see `docs/archive/adr-retired-2026/`)
-
-### D8: Role-aware `AIDecisionLog` and `ParsedRoleAwareDecision`
-
-**Status:** 
-**Origin:** ADR-0018 (retired 2026-06-23)
-
-**Context.** Workstream W2/W3 introduced role-structured decision artifacts (interpreter, director, responder) and a need to record role-aware decision diagnostics in a canonical, machine-readable form for auditing and debugging.
-
-**Decision.** - Extend the `AIDecisionLog` to include: `parsed_decision` (the canonical `ParsedAIDecision`), role fields (interpreter, director, responder summaries), and `parsed_output` as a serialisable representation of the canonical decision.
-- Introduce `ParsedRoleAwareDecision` as a schema that normalizes role-aware fields into `parsed_decision` when present.
-- Implement helper `construct_ai_decision_log()` to populate these fields deterministically from the parsing layer.
-
-**Consequences.** - Logging schema changes; consumers must read `parsed_decision` from `AIDecisionLog` rather than inferring decisions from raw outputs.
-- Tests and evidence builders should assert canonicalization invariants (parsed_decision identity).
-- Backward compatibility: when role-aware fields are absent, systems fall back to legacy raw outputs.
-
-**Implementation status.** **Implemented — `AIDecisionLog` with role-aware fields and `construct_ai_decision_log()` in place.**
-
-- `backend/app/runtime/ai/ai_decision_logging.py`: `construct_ai_decision_log()` populates `AIDecisionLog` with `parsed_decision`, `interpreter_output`, `director_output`, `responder_output` from `ParsedRoleAwareDecision` when present; falls back to `None` for legacy paths.
-- `ParsedRoleAwareDecision` schema exists with `InterpreterSection`, `DirectorSection`, `ResponderSection` — normalizes role-aware fields into `parsed_decision`.
-- `AIDecisionLog` includes `interpreter_output` (→ `InterpreterDiagnosticSummary`), `director_output` (→ `DirectorDiagnosticSummary`), `responder_output`, `validation_outcome`, `guard_outcome`.
-- Backward compatibility maintained: when `role_aware_decision=None`, role fields are `None` and legacy `raw_output` path is used.
-- Comprehensive tests in `backend/tests/runtime/test_ai_decision_logging.py`.
-- Status promoted from "Proposed" because the decision and implementation are complete and tested.
-
-**Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d8-role-aware-aidecisionlog` (archived — see `docs/archive/adr-retired-2026/`)
-
-### D9: ProposalSource enum and responder-only gating
-
-**Status:** 
-**Origin:** ADR-0019 (retired 2026-06-23)
-
-**Context.** Certain AI-produced proposals should be classified by origin (e.g., `MOCK`, `RESPONDER_DERIVED`, `DIRECTOR`, `MODEL_PROPOSAL`) to allow enforcement of "responder-only" execution modes and to ensure that proposals from non-authoritative sources are handled appropriately by runtime filters and validators.
-
-**Decision.** - Add a `ProposalSource` enum to decision/model types to tag the origin of a proposal.
-- Extend `MockDecision` and other test helpers to support `proposal_source` for explicit test cases.
-- Enforce `responder-only` gating in execution paths where `enforce_responder_only=True` so that only proposals with the correct source are applied as state changes.
-- Ensure parsing converts director/interpreter content to `ParsedAIDecision.rationale` (diagnostic) and that state changes only come from validated proposals.
-
-**Consequences.** - Minor schema changes; tests updated to set `proposal_source` when required.
-- Execution code must check `proposal_source` when `enforce_responder_only` is enabled.
-
-**Implementation status.** **Implemented and tested.**
-
-- `ProposalSource` enum exists with values: `RESPONDER_DERIVED`, `MOCK`, `ENGINE`, `OPERATOR`.
-- `MockDecision` defaults `proposal_source=ProposalSource.MOCK` (conservative default, not responder-authoritative).
-- `execute_turn()` with `enforce_responder_only=True` rejects proposals from non-responder sources before state changes apply.
-- `backend/tests/runtime/test_responder_gating.py`: comprehensive test coverage including `test_proposal_source_enum_has_all_values`, `test_mock_decision_requires_proposal_source`, and enforcement tests.
-- `GuardOutcome.REJECTED` is the result for non-responder proposals when enforcement is enabled; existing guard pipeline remains authoritative for content validation after source gate passes.
-
-**Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d9-proposalsource-and-responder-gating` (archived — see `docs/archive/adr-retired-2026/`)
-
-### D10: Research may draft change, but may not publish change
-
-**Status:** 
-**Origin:** ADR-0005 (retired 2026-06-23)
-
-**Decision.** Research outputs may create findings, revision candidates, and draft patch bundles. Research may never directly modify canonical runtime packages.
-
-**Consequences.** - no AI-to-AI uncontrolled publish loop
-- review and evaluation remain mandatory
-- writers-room and admin stay meaningful in the content chain
-
-**Implementation status.** **Implemented at the process level; enforcement is structural (path separation), not code-gated.**
-
-- Writers-room (`writers-room/`) produces recommendation artifacts only; publishing authority stays in backend/admin processes.
-- `backend/app/content/compiler/` is the sole publish path; writers-room content does not reach runtime until approved through backend publish routes.
-- `docs/technical/content/writers-room-and-publishing-flow.md` documents the production/publish separation.
-- No automated CI test enforces this boundary; it is maintained by structural path separation and code review convention.
-- Status promoted from "Proposed" because the structural decision is in force and the pattern is stable.
-
-**Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d10-research-may-draft-but-not-publish` (archived — see `docs/archive/adr-retired-2026/`)
-
-### D11: Player affect uses enum-based signals, not one-off frustration booleans
-
-**Status:** 
-**Origin:** ADR-0014 (retired 2026-06-23)
-
-**Decision.** Any player-state interpretation seam should use a general affect model with enums and confidence values. Frustration is one possible affect, not the architecture itself.
-
-**Consequences.** - future adaptive assistance remains extensible
-- operators and evaluators can inspect broader player-state signals
-- player adaptation can stay bounded by policy instead of ad hoc heuristics
-
-**Implementation status.** **Decision stated; no player affect model implementation found in codebase.**
-
-- No `PlayerAffect` enum, affect model, or confidence-scored player-state interpretation seam was found in `backend/`, `world-engine/`, or `ai_stack/`.
-- The principle (general enum-based affect model instead of one-off frustration booleans) is correct and would enable future adaptive assistance.
-- Required before: player-state-driven adaptive behavior, operator inspection of affect signals, or policy-bounded player adaptation.
-- This ADR describes future-oriented design; it has not been prioritized ahead of MVP4 runtime concerns.
-
-**Testing.** Contract / unit coverage as cited in **References**; extend this section when a dedicated gate exists. Revisit this ADR if enforcement drifts or the decision is bypassed in code review.
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d11-player-affect-enum-signals` (archived — see `docs/archive/adr-retired-2026/`)
-
-### D12: Director-Pause Mode for Gathering Interruption
-
-**Status:** 
-**Origin:** ADR-0061 (retired 2026-06-23)
-
-**Context.** The roadmap [`NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md`](../../../../NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md) §3.4 corrects a conceptual error in earlier plan versions: when the player interrupts a gathering — by leaving the apartment, walking to another room, drifting to the window mid-conversation — the runtime today either (a) holds the player ("you can't leave now") or (b) lets the canonical step advance even though `named_characters[current_step]` is no longer co-present in the scene.
-
-Both behaviors are wrong. The correct behavior is the inversion: the **gathering** waits while the **player** remains free. The Director switches into a `gathering_paused` mode. The player may freely pursue mundane actions; NPCs may freely pursue their own mundane actions; mandatory-beat consumption pauses; canonical-step advance pauses; the narrator may emit at most one transition reaction block on entry.
-
-This requires a contract for the Director-Pause state and a deterministic composition function that decides whether the pause is on, derived from the resolver's semantic output and the current actor topology. It must **not** be a verb whitelist, a room enum, or a `step.mode` switch.
-
-PR-0 of the roadmap (the contracts + PIV baseline PR) names this contract by reserving `director_gathering_state.v1` in ADR-0057's Phase-1 amendment. This ADR-0061 Draft fixes the contract shape and the composition rule. The PR that delivers the implementation is PR-C of Phase 1; ADR-0061 transitions from Draft to Accepted with PR-C.
-
-**Decision.** ### 1. Contract — `director_gathering_state.v1`
-
-A per-tick atomic snapshot emitted by the Director. Required fields:
-
-- `paused` — boolean.
-- When `paused == true`:
-  - `step_id` — canonical step at the entry to the pause.
-  - `missing_actor_ids` — list of actor ids that should be co-present per `named_characters[current_step]` but are not.
-  - `since_turn` — turn number at which the pause entered.
-  - `presence_required_for_step` — snapshot of `named_characters` for that step, captured at entry time. Subsequent edits to canonical content do not retroactively alter this snapshot for an ongoing pause.
-
-Transitions `paused: false → true` and `paused: true → false` each emit exactly one state-change event in the per-turn evidence stream so a transition can be observed without polling.
-
-### 2. Composition function — `compute_gathering_state`
-
-Pure function in the Director (the canonical surface will live in `ai_stack/story_runtime/director/god_of_carnage_scene_director.py`; the function is introduced by PR-C, not PR-0).
-
-Signature (informal):
-
-```
-compute_gathering_state(
-    actor_locations: dict[actor_id, location_id],
-    current_step_named_characters: list[actor_id],
-    current_step_scene_id: location_id,
-    participation_relevance: enum,
-    visibility_audibility: enum,
-) -> { paused: bool, missing: list[actor_id] }
-```
-
-Composition rule (semantic, not lexical):
-
-- `paused == true` iff at least one actor in `current_step_named_characters` is **either** not at `current_step_scene_id` **or** has lost participation-relevance (e.g. the player turns demonstratively away in the same room) **or** has lost visibility / audibility relative to the gathering.
-- `missing` is the subset of `current_step_named_characters` failing any of those conditions.
-- The function is **pure** — it reads its inputs and returns a value. No mutation of session state, no side effects.
-
-The contract field `presence_breaks_gathering` in `free_player_action_resolution.v1` (see ADR-0057 amendment) is the resolver-side input that lets `compute_gathering_state` decide; the resolver delivers it, the Director composes the final state.
-
-### 3. Required presence from `named_characters`
-
-`current_step_named_characters` is sourced from the canonical content. For God-of-Carnage step 005 the field declares the four named actors at the meeting; future module content declares its own equivalent. The Director **never** edits or paraphrases `named_characters`; it reads it as a content snapshot.
-
-### 4. `actor_locations`, `participation_relevance`, `visibility / audibility` inputs
-
-- `actor_locations` is the existing runtime-world projection (see `ai_stack/contracts/environment_state_contracts.py` and `RuntimeAspectLedger` adjacent surfaces). No new mechanism is added.
-- `participation_relevance` and `visibility / audibility` are semantic signals emitted by the resolver's classification of the player action (e.g. "demonstratively turns toward the window away from the conversation" yields `participation_relevance == "broken"`; "kurzer Toilettengang" yields `visibility / audibility == "still_audible"`).
-- These signals are part of the `free_player_action_resolution.v1` contract (per ADR-0057 amendment) and are populated by PR-A; ADR-0061 only consumes them.
-
-### 5. Gathering pauses Mandatory-Beat consumption
-
-When `paused == true`:
-
-- The NPC-agency / mandatory-beat-consumption path (canonical surface around `ai_stack/story_runtime/director/god_of_carnage_scene_director.py:655` `_build_responder_set()` and `ai_stack/langgraph/langgraph_runtime_executor.py:3996` `_build_npc_agency_plan_projection()`) is consulted with a `gathering_paused` gate. The gate **does not** suppress NPC mundane action; it only suppresses mandatory-beat consumption tied to the missing co-presence.
-- The canonical-step pointer does **not** advance while paused. This is observable at `world-engine/app/story_runtime/manager/` (`_turn_holds_canonical_path_for_free_player_action`) and at `:8746` (the gate against `session.canonical_step_id` advance).
-
-### 6. Player remains free
-
-The player's freedom in `gathering_paused` mode is identical to the freedom defined in [ADR-0057](../../../archive/adr-retired-2026/adr-0057-canon-safe-player-freedom-and-affordance-inference.md): any possible (physically plausible) and morally acceptable (not criminal / not evil) action commits through the same `resolve_player_action` path. The pause does not gate the player. There is no "you must come back" coercion.
-
-### 7. Return clears the pause
-
-Transition `paused: true → false` fires when `current_step_named_characters ⊆ scene-presence` is restored — i.e. all required actors are again at `current_step_scene_id` with intact participation-relevance and visibility / audibility. The Director clears `gathering_paused` atomically; the next LDSS-driven turn resumes mandatory-beat consumption.
-
-### 8. Optional narrator transition reaction
-
-On `paused: false → true` the narrator **may** emit a single block describing the gathering's reaction ("a pause settles over the table; Veronique sets down the paper"). Required properties of the optional block:
-
-- One block, not a stream. PR-0 (this commit) deliberately limits Phase-1 to **one summary block**; per-NPC reaction blocks are a Phase-2 (Pulse) responsibility (see ADR-0058 draft).
-- Content-led from `characters/details/actor_pressure_profiles.yaml` and `characters/details/interaction_patterns.yaml`. No hardcoded text snippets in the Director.
-- The block is a `narrator` block under the existing `visible_scene_output.blocks.v1` contract. No new block type is added.
-- Absence is allowed and observable. The Director records `transition_reaction_emitted: false` when no block was generated.
-
-On `paused: true → false` the narrator transition reaction is optional and follows the same constraints. Phase 1 may ship without it; Phase 2 may add structured continuity callbacks.
-
-### 9. Non-goals
-
-- **No Phase-2 Pulse logic.** ADR-0061 does not introduce a tick, a motivation score, a block-stream-bus, or any of the Pulse-MVP contracts. Those belong to ADR-0058 / ADR-0059 / ADR-0060.
-- **No pointer repair.** ADR-0061 does not modify `_execute_opening_locked` or any of the Turn-0 narrator-path handling. Steps 001-005 of the GoC opening remain as the gameplay testpoint defined in the plan §0.
-- **No `step.mode` switch.** ADR-0061 does not branch on `step.mode` enum values. The pause decision is a semantic composition over actor topology and resolver signals; reading `step.mode` to gate behavior is explicitly out of scope and prohibited.
-- **No new runtime aspect ledger row in PR-0.** PR-C decides whether `gathering_paused` rides on an existing aspect (likely as an `npc_agency` companion field) or warrants its own row; PR-0 only names the contract.
-- **No verb / room / actor whitelist.** All discrimination is semantic, derived from inputs the resolver and runtime-world already provide.
-
-**Consequences.** **Positive:**
-
-- The player gains canon-safe freedom to interrupt a gathering, including by leaving the apartment, without the runtime declaring a violation or silently advancing past missing co-presence.
-- Mandatory-beat consumption is gated by a single, semantic predicate (`gathering_paused`), making "did the canonical step advance this turn?" a question with a structured per-turn answer.
-- The Resolver / Director split stays clean: resolver = world physics + morality + target; director = story-mechanic implication.
-- Phase-2 Pulse can land later without renegotiating the gathering predicate — `compute_gathering_state` is the same in Phase 1 and Phase 2.
-
-**Negative / trade-offs:**
-
-- PR-C must deliver `compute_gathering_state` and the beat-consumption gate. Until then, "leave the apartment" continues to misbehave (the gap is documented in PR-0's PIV artifact §3).
-- `presence_breaks_gathering` requires the resolver to emit `participation_relevance` and `visibility / audibility` reliably (PR-A). Until PR-A ships, PR-C cannot fully drive the composition.
-
-**Testing.** Tests for PR-0 verify only that this ADR exists, has `Status: Draft`, and names the required surface terms. Live behavior tests belong to PR-C.
-
-| Layer | Test | Expectation |
-|---|---|---|
-| ADR presence | `tests/test_npc_interactivity_piv_baseline.py::test_adr_0061_draft_exists_and_defines_director_pause` | File exists, status `Draft`, defines `director_gathering_state.v1`, `compute_gathering_state`, `named_characters`-presence predicate, beat-consumption pause, player-freedom invariant, return-clears-pause condition, narrator transition reaction, and the four non-goals above. |
-| ADR-0057 amendment | `tests/test_npc_interactivity_piv_baseline.py::test_adr_0057_phase_1_amendment_names_four_contracts` | `director_gathering_state.v1` appears in ADR-0057's Phase-1 amendment with the same shape declared here. |
-| Live composition function | (PR-C) `compute_gathering_state` unit tests with paraphrased movement / participation / visibility inputs; assertions on path properties, not input strings. | Pure function returns expected `{paused, missing}` for documented input combinations. |
-| Live beat-consumption gate | (PR-C) live smoke against the LDSS / NPC agency path; assertions on `mandatory_beat_consumed_during_pause: false` invariant. | Mandatory beats do not consume during pause; canonical step pointer does not advance. |
-
-Per [ADR-0039](../../../archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md), all PR-C tests assert structured contract fields and path properties, not the player input string or example prose.
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d3-runtime-rag-context-fabric-routing-and-authority-boundaries` (archived — see `docs/archive/adr-retired-2026/`)
-
-### D13: Opt-in Meta-Narrative Awareness Runtime Aspect
-
-**Status:** 
-**Origin:** ADR-0042 (retired 2026-06-23)
-
-**Context.** Capability Matrix index Π25 historically grouped two different ideas under
-"meta-awareness":
-
-- Out-of-world player control input, now implemented as `player_input_kind=meta`
-  and LangGraph `meta_control_turn`.
-- In-world, character-level awareness of dramatic structure, which is higher
-  risk because it can easily disclose prompts, tools, model mechanics, hidden
-  facts, or seize control of player intention.
-
-ADR-0039 also requires that legacy Pi / Π labels remain historical index
-vocabulary only. Runtime code must use semantic names, contract fields,
-validators, and ledger evidence.
-
-**Decision.** World of Shadows implements the first active in-world slice as
-`meta_narrative_awareness`, a separate opt-in runtime aspect.
-
-The aspect is distinct from `meta_control_turn`:
-
-- `meta_control_turn` handles out-of-character control input and skips the
-  story path.
-- `meta_narrative_awareness` is a story-play runtime aspect derived on the full
-  graph path before context synthesis and model routing.
-
-Activation requires both module support and resolved Story Runtime Experience
-opt-in:
-
-- Module policy: `runtime_intelligence.meta_narrative_awareness`.
-- Session/operator settings:
-  `meta_narrative_awareness_enabled`,
-  `meta_narrative_awareness_intensity`,
-  `meta_narrative_trigger_frequency`,
-  `meta_narrative_characters_with_awareness`.
-- Actor eligibility: selected actors must be configured, module-supported, and
-  not in the human/forbidden actor lane.
-
-The first accepted production slice is deliberately narrow:
-
-- Allowed intensity for the GoC module is `subtle`.
-- Allowed frequency is `rare`.
-- Supported actor set is module policy data, not runtime hardcoding.
-- Structured output evidence uses `meta_narrative_awareness_events`.
-- Validation rejects unauthorized actors, forbidden modes, system/tool/model
-  disclosure, direct full fourth-wall address in subtle mode, and unbounded
-  rewrite/player-control claims.
-
-**Consequences.** - The dramatic packet may expose bounded opt-in context under
-  `meta_narrative_awareness`.
-- `RuntimeAspectLedger` owns the per-turn projection as
-  `meta_narrative_awareness`.
-- Validation can reject and retry recoverable violations before commit.
-- Adaptive fourth-wall dialogue, narrator negotiation, and bounded
-  cross-session self-awareness are governed by ADR-0043 when the v2 policy and
-  Story Runtime Experience opt-in are active. Broad authoring cognition,
-  prompt/tool/model disclosure, and player-control claims remain out of scope.
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d13-meta-narrative-awareness-opt-in` (archived — see `docs/archive/adr-retired-2026/`)
-
-### D14: Adaptive Meta-Narrative Awareness and Fourth-Wall Play
-
-**Status:** 
-**Origin:** ADR-0043 (retired 2026-06-23)
-
-**Context.** ADR-0042 introduced the first safe `meta_narrative_awareness` slice: opt-in,
-actor-lane-gated, subtle, rare, and structurally validated. This ADR adds
-adaptive in-world meta-awareness, broad fourth-wall play, and cross-session
-self-awareness without turning meta-awareness into prompt/tool disclosure,
-player-control claims, or invented memory.
-
-ADR-0039 still applies: Pi / Π labels remain Capability Matrix index language
-only. Runtime behavior must use semantic contracts, policy, structured events,
-ledger evidence, and bounded memory references.
-
-**Decision.** World of Shadows extends `meta_narrative_awareness` with a v2 contract:
-
-- `meta_narrative_awareness.v2`
-- `meta_narrative_awareness_policy.v2`
-- Story Runtime Experience gates:
-  `meta_narrative_awareness_tier`,
-  `meta_narrative_allow_direct_player_address`,
-  `meta_narrative_allow_narrator_negotiation`,
-  `meta_narrative_allow_cross_session_memory`,
-  `meta_narrative_memory_retention_scope`, and
-  `meta_narrative_max_direct_addresses_per_turn`.
-
-The v2 aspect remains separate from `meta_control_turn`. It is a story-play
-runtime aspect and only activates when module policy, Story Runtime Experience
-settings, selected actor lanes, event budgets, and consent scope all align.
-
-Adaptive awareness may use structured runtime signals such as social pressure,
-dramatic irony, relationship state, semantic move records, and bounded
-hierarchical memory references. It must not read raw prompts, tool names, model
-names, hidden internal machinery, or raw private player text.
-
-Cross-session self-awareness is represented through verified memory reference
-ids supplied by bounded memory context. The model may reference only selected
-memory ids; it must not invent remembered sessions or expose private player
-data.
-
-**Consequences.** - The GoC module policy can allow `subtle`, `adaptive`, and `full` tiers while
-  keeping `subtle` as the default.
-- Direct player address is allowed only in the `full` tier and within the
-  per-turn direct-address budget.
-- Cross-session references require `selected_memory_ref_ids`; missing,
-  unowned, fabricated, or private memory claims are recoverable validation
-  failures before commit.
-- `RuntimeAspectLedger.meta_narrative_awareness` records tier, adaptive signal
-  codes, direct-address counts, memory refs, and failure codes.
-
-**Evidence.** `docs/architecture/project/components/ai-stack/architecture.md#d14-adaptive-meta-narrative-awareness` (archived — see `docs/archive/adr-retired-2026/`)
 ## 10. Quality Requirements
 
 `ai_stack/tests/`, `tests/gates/test_goc_mvp03_*`, aspect contract tests per `docs/architecture/contracts/runtime/`.

@@ -279,7 +279,7 @@ surfaces:
 
 # ADR-0039 — Runtime surface governance inventory
 
-Normative companion to [ADR-0039: Gate tests and runtime evidence discipline](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md).
+Normative companion to [ADR-0039: Gate tests and runtime evidence discipline](docs/architecture/project/governance/architecture).
 
 This inventory names **decision surfaces** where runtime truth, readiness, commit, or player-visible state can be distorted. **Source code is authoritative** over prose here.
 

@@ -4,15 +4,15 @@
 
 **Phase 6B-0 status:** R1–R5 (the rename items) are **complete**. The function `validate_w5_actor_situation` is now `validate_w5_actor_tracking`, the `failure_class` string is now `"w5_actor_tracking_validation"`, and the four docstring/ADR/migration-doc references now point at the renamed-current files. No runtime behavior, fallback, substrate writer, or W5 flag was touched. The rest of this inventory (S, C, A, T, D, U entries) remains as written: Phase 6B-1 may now proceed to default-on flag rollout.
 
-**Phase 6B-5A status:** [ADR-0065](../ADR/adr-0065-w5-narrator-strict-mode-default-actor-situation-surface.md) is authored as the narrator strict default-on ADR and test plan. Phase 6B-5A changes documentation only: no runtime behavior changed, no flags were flipped, no legacy branches were removed, and the next executable step is the Phase 6B-5B strict-mode parity-test rewrite.
+**Phase 6B-5A status:** [ADR-0065](docs/architecture/components/world-engine/architecture) is authored as the narrator strict default-on ADR and test plan. Phase 6B-5A changes documentation only: no runtime behavior changed, no flags were flipped, no legacy branches were removed, and the next executable step is the Phase 6B-5B strict-mode parity-test rewrite.
 
 **Phase 6B-6A status:** ADR-0066 authored (Proposed). Full dependency audit completed. No code changed. Phase was the audit/planning step for Phase 6B-6B removal.
 
-**Phase 6B-8 status:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) is **Accepted under operator waiver** (2026-05-28). Runtime removal is executed: `w5_ast_narrator_strict_enabled()`, `NarratorStrictOffDeprecationWarning`, `_strict_off_deprecation_warned`, `_emit_strict_off_deprecation_warning()`, `_transition_facts()`, the strict-off `source_facts["transition_from_previous"]` insertion, and narrator strict/parity admin metadata are removed. `W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off` no longer changes narrator behavior because the narrator runtime no longer reads it. The operator explicitly waived ADR-0067 criteria 1 and 2: repo-local config evidence is accepted as sufficient, and the release-cycle waiting period is waived.
+**Phase 6B-8 status:** [ADR-0068](docs/architecture/components/world-engine/architecture) is **Accepted under operator waiver** (2026-05-28). Runtime removal is executed: `w5_ast_narrator_strict_enabled()`, `NarratorStrictOffDeprecationWarning`, `_strict_off_deprecation_warned`, `_emit_strict_off_deprecation_warning()`, `_transition_facts()`, the strict-off `source_facts["transition_from_previous"]` insertion, and narrator strict/parity admin metadata are removed. `W5_AST_NARRATOR_STRICT_ENABLED=false/0/no/off` no longer changes narrator behavior because the narrator runtime no longer reads it. The operator explicitly waived ADR-0067 criteria 1 and 2: repo-local config evidence is accepted as sufficient, and the release-cycle waiting period is waived.
 
 **Phase 6B-8.1 status:** No-legacy audit and stale documentation cleanup **complete** (2026-05-28). Stale references to `transition_from_previous`, `_legacy_compat`, `narrator_strict`, and `legacy_transition_parity` as current behavior are updated with historical markers. Production docstrings, test function names, and inventory table rows updated; ADR historical sections unchanged. See `docs/MVPs/w5_actor_tracking_migration.md §Phase 6B-8.1` for the full audit classification list.
 
-**Phase 6B-6B status:** `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` **retired** (2026-05-23). All runtime references removed: flag resolver function deleted, `_legacy_compat` insertion branch deleted, `w5.narrator_legacy_compat_diagnostics_enabled` metadata key deleted, `demoted_to_legacy_compat` parity label retired. ADR-0068 later removed `w5.legacy_transition_parity` and `removed_by_6b5e_policy` from current narrator admin metadata. Inventory script updated to exclude `.worktrees/`, `.claude/worktrees/`, `.state_tmp/` auxiliary workspaces. ADR-0066 status: **Accepted**. See [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md).
+**Phase 6B-6B status:** `W5_AST_NARRATOR_LEGACY_COMPAT_DIAGNOSTICS_ENABLED` **retired** (2026-05-23). All runtime references removed: flag resolver function deleted, `_legacy_compat` insertion branch deleted, `w5.narrator_legacy_compat_diagnostics_enabled` metadata key deleted, `demoted_to_legacy_compat` parity label retired. ADR-0068 later removed `w5.legacy_transition_parity` and `removed_by_6b5e_policy` from current narrator admin metadata. Inventory script updated to exclude `.worktrees/`, `.claude/worktrees/`, `.state_tmp/` auxiliary workspaces. ADR-0066 status: **Accepted**. See [ADR-0066](docs/architecture/components/world-engine/architecture).
 
 **Phase 6B-5B status:** Strict-mode parity tests are rewritten as semantic W5-authority contracts rather than legacy field-presence checks. Two new test files prove the strict-off / strict-on contract end-to-end: `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py` and `ai_stack/tests/test_w5_actor_tracking_phase_6b5b_parity.py`. Both postures continue to work: strict-off keeps `transition_from_previous` first-class with the legacy fallback prompt paragraph and `legacy_compat_visible` admin label; strict-on demotes the same payload to `source_facts._legacy_compat["transition_from_previous"]` with `authority = "w5_projection"`, removes top-level `transition_from_previous`, names `source_facts.w5_projection` as the sole actor-situation authority in the narrator prompt, mentions all five W5 summaries, uses `where_summary.location_changed` as the scene-shift signal, keeps How first-class with the full attribute list, and marks inferred Why as soft / never-spoken-as-fact. Admin diagnostics always read W5 history first and switch only the legacy-parity label by posture. Phase 6B-5B is a test-contract phase: no runtime behavior changed, `W5_AST_NARRATOR_STRICT_ENABLED` remains opt-in / default-off, `transition_from_previous` and `_legacy_compat` are not removed, malformed-W5 and explicit-opt-out safety fallbacks remain testable, and no committed event is mutated. Required gates re-verified: MVP03 LDSS gate, MVP04 observability gate, langfuse docker config, the strict-migration tests from Phase 6B-3B, the narrator-projection wiring tests from Phase 6B-1, the W5 inventory test, and the new Phase 6B-5B parity files all pass with zero failures. The next executable step is the Phase 6B-5C default-on flip.
 
@@ -20,7 +20,7 @@
 
 **Phase 6B-5D status:** The strict-off narrator prompt fallback paragraph has been **removed**. `source_facts.w5_projection` is now the actor-situation authority in **all** prompt postures. The strict-off (`W5_AST_NARRATOR_STRICT_ENABLED=false`) prompt branch no longer instructs the narrator to use `transition_from_previous` as a fallback; any `transition_from_previous` or `_legacy_compat` data present in source_facts is explicitly labelled as "legacy compatibility information only and is not authoritative narrator guidance." The strict-on prompt is unchanged (sole authority + explicit "Do not consult" prohibition). No data surface was removed: `source_facts["transition_from_previous"]` is still emitted under explicit opt-out (data-level compatibility preserved), `_legacy_compat` breadcrumbs still exist under strict-on, malformed-W5 safety fallbacks are intact, and no committed event is mutated. Affected test files: `world-engine/tests/test_story_runtime_w5_narrator_strict_migration.py` (two tests renamed/rewritten), `world-engine/tests/test_story_runtime_w5_narrator_strict_phase_6b5b_parity.py` (one test rewritten). The next step is Phase 6B-5E: decide whether `_legacy_compat["transition_from_previous"]` is removed or further demoted (separate ADR required before removal).
 
-**Authoritative ADR:** [ADR-0063 — W5 Actor Tracking](../ADR/adr-0063-w5-actor-tracking.md).
+**Authoritative ADR:** [ADR-0063 — W5 Actor Tracking](docs/architecture/components/world-engine/architecture).
 
 **Migration plan:** [w5_actor_tracking_migration.md](./w5_actor_tracking_migration.md).
 
@@ -160,7 +160,7 @@ Naming-only items. They survive 6B but must be renamed for consistency with the 
 |---|--------|------|--------|----------|----------|------|
 | R1 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/validation.py` (definition) and `__init__.py` (re-export) | function `validate_w5_actor_situation` | `validate_w5_actor_situation` | `validate_w5_actor_tracking` | Function and re-export renamed. Production callsite in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py` and all 12 test callsites in `ai_stack/tests/test_w5_actor_tracking_validation.py` updated atomically. No backward alias retained. |
 | R2 | ✅ done (Phase 6B-0) | `ai_stack/story_runtime/turn/god_of_carnage_turn_seams_validation.py` | string literal `failure_class = "w5_actor_situation_validation"` | `"w5_actor_situation_validation"` | `"w5_actor_tracking_validation"` | Diagnostic string surfaces through Langfuse metadata. No production consumer/filter asserts the old value. |
-| R3 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/models.py` | docstring | `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` | `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` | Pure doc fix. |
+| R3 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/models.py` | docstring | `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` | `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` | Pure doc fix. |
 | R4 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/__init__.py` and `ai_stack/actor_tracking/extractor.py` | docstring | `docs/MVPs/w5_actor_situation_migration.md` | `docs/MVPs/w5_actor_tracking_migration.md` | Pure doc fix. `__init__.py` retains one historical sentence noting prior package names. |
 | R5 | ✅ done (Phase 6B-0) | `ai_stack/actor_tracking/projection.py` | docstring | `docs/MVPs/w5_actor_situation_migration.md` | `docs/MVPs/w5_actor_tracking_migration.md` | Same as R4. |
 
@@ -192,9 +192,9 @@ Tests that assert legacy localization fields directly. They are valid as-is; the
 
 | # | File | Section | Action |
 |---|------|---------|--------|
-| D1 | `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view:84` | "Target architecture (later phases)" — already lists legacy fields. | **Keep** as historical reference. |
-| D2 | `docs/architecture/project/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority:52,72-74,169,176` | Director-Pause input contract — references `actor_locations`. | **Keep** until Phase 6B re-publishes the Director input as the W5 projection map. |
-| D3 | `docs/architecture/project/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes:131` | Resolver/director input. | **Keep**, footnote-link to W5 in Phase 6B. |
+| D1 | `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view:84` | "Target architecture (later phases)" — already lists legacy fields. | **Keep** as historical reference. |
+| D2 | `docs/architecture/components/ai-stack/architecture.md#d12-controlled-runtime-capability-authority:52,72-74,169,176` | Director-Pause input contract — references `actor_locations`. | **Keep** until Phase 6B re-publishes the Director input as the W5 projection map. |
+| D3 | `docs/architecture/components/ai-stack/architecture.md#d7-player-guidance-and-souffleuse-lanes:131` | Resolver/director input. | **Keep**, footnote-link to W5 in Phase 6B. |
 | D4 | `docs/MVPs/w5_actor_tracking_migration.md` | Add Phase 6A entry (this Phase). | **Update** with Phase 6A status (handled below). |
 | D5 | `docs/MVPs/MVP_World_Of_Shadows_Canonical_Implementation_Bundle/runtime_state_and_session_contracts.md:27-30,703-706` | Lists legacy substrate fields as canonical. | **Annotate** in 6B that these are substrate-only; higher-level consumers must read W5. |
 | D6 | `docs/implementation_logs/w5_actor_tracking_piv.md:8,13,18` | PIV log mentions legacy `actor_locations`. | **Keep** as history. |
@@ -825,7 +825,7 @@ The following surfaces still exist and require classification in the Phase 6B-5F
   `removed_by_6b5e_policy` are no longer current narrator admin metadata.
 - Malformed-W5 safety fallback is unchanged.
 
-**See:** [ADR-0066](../ADR/adr-0066-retire-narrator-legacy-compat-diagnostics-flag.md) (Accepted).
+**See:** [ADR-0066](docs/architecture/components/world-engine/architecture) (Accepted).
 
 ---
 
@@ -862,10 +862,10 @@ The following surfaces still exist and require classification in the Phase 6B-5F
 - Substrate writers/readers and public compatibility aliases.
 
 **Removal criteria for final strict-off removal:** Superseded by
-[ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md),
+[ADR-0068](docs/architecture/components/world-engine/architecture),
 Accepted under operator waiver on 2026-05-28.
 
-**See:** [ADR-0067](../ADR/adr-0067-deprecate-narrator-strict-off-transition-rollback.md) (Accepted).
+**See:** [ADR-0067](docs/architecture/components/world-engine/architecture) (Accepted).
 
 ---
 
@@ -909,7 +909,7 @@ sets `W5_AST_NARRATOR_STRICT_ENABLED` to any value. The flag name appears only i
 - `ai_stack/actor_tracking/diagnostics.py` — runtime resolver (expected)
 - `ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py` — comment (expected)
 - `ai_stack/tests/` and `world-engine/tests/` — `monkeypatch.setenv` in tests (expected)
-- `docs/ADR/`, `docs/MVPs/` — documentation references (expected)
+- `docs/archive/adr-retired-2026/`, `docs/MVPs/` — documentation references (expected)
 
 **Conclusion:** Repo-local operator config is **clean**. Live/staging/cloud
 config is not available from the repository; ADR-0068 records the operator
@@ -1010,7 +1010,7 @@ ADR-0068 removes the following — and only the following:
 - `removed_by_6b5e_policy` and `legacy_compat_visible` are no longer emitted
   narrator admin values.
 
-**`docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`:**
+**`docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`:**
 - Written and marked Accepted under operator waiver.
 - References ADR-0067 and records criteria 1 and 2 as waived.
 - Includes the removal diff at function and branch level.
@@ -1039,7 +1039,7 @@ ADR-0068 changes only the narrator strict-off rollback path:
 - Substrate writers/readers, public compatibility aliases, committed events, and
   committed output remain unchanged.
 
-**See:** [ADR-0068](../ADR/adr-0068-remove-narrator-strict-off-transition-rollback.md) (Accepted).
+**See:** [ADR-0068](docs/architecture/components/world-engine/architecture) (Accepted).
 
 ---
 
@@ -1220,7 +1220,7 @@ client-readiness evidence exists; it is not safe to remove aliases yet.
 
 ### Phase 6C-0 — Narrator consequence / sensory location-framing inventory (Complete, 2026-05-29)
 
-**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+**ADR:** [ADR-0070](docs/architecture/components/world-engine/architecture)
 
 Phase 6C-0 inventories internal narrative framing surfaces. It does not remove
 public aliases, substrate fields, malformed-W5 fallback, or committed events.
@@ -1264,7 +1264,7 @@ contract callsites with parity fixtures.
 
 ### Phase 6C-1 — W5 location-framing helper added (Complete, 2026-05-30)
 
-**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+**ADR:** [ADR-0070](docs/architecture/components/world-engine/architecture)
 
 Phase 6C-1 adds the helper and optional additive input points. It does not remove
 legacy fields and does not make the default graph synthesize
@@ -1302,7 +1302,7 @@ ADR-0069 readiness gate.
 
 ### Phase 6C-2 — Graph-owned W5 location-framing synthesis (Complete, 2026-05-30)
 
-**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+**ADR:** [ADR-0070](docs/architecture/components/world-engine/architecture)
 
 Phase 6C-2 makes W5 location framing available by default inside the graph while
 preserving legacy fallback and output parity. It does not remove
@@ -1335,7 +1335,7 @@ blocked by ADR-0069.
 
 ### Phase 6C-3 — W5-first narrator/sensory location authority switch (Complete, 2026-05-30)
 
-**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+**ADR:** [ADR-0070](docs/architecture/components/world-engine/architecture)
 
 Phase 6C-3 changes authority order only: valid W5 location framing is now the
 primary source for narrator-consequence and sensory-context location decisions.
@@ -1363,7 +1363,7 @@ inventory and targeted cleanup plan, not a deletion pass.
 
 ### Phase 6C-4 — post-authority inventory and cleanup plan (Complete, 2026-05-30)
 
-**ADR:** [ADR-0070](../ADR/adr-0070-w5-actor-tracking-replaces-narrator-consequence-location-framing.md)
+**ADR:** [ADR-0070](docs/architecture/components/world-engine/architecture)
 
 Phase 6C-4 reclassifies the remaining narrator-consequence / sensory-context
 location references after the W5-first authority switch. This phase is inventory
@@ -1425,7 +1425,7 @@ fresh parity evidence proves fallback windows can close.
 
 ### Phase 6C-5 — removal-readiness ADR and targeted cleanup (Complete, 2026-05-30)
 
-**ADR:** [ADR-0071](../ADR/adr-0071-retire-legacy-narrator-consequence-area-fields-after-w5-location-framing.md)
+**ADR:** [ADR-0071](docs/architecture/components/world-engine/architecture)
 
 Phase 6C-5 creates the removal-readiness ADR for narrator-consequence and
 sensory-context legacy area fields. It does not remove runtime fields.

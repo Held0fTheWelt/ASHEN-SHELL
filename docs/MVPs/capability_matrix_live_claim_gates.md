@@ -6,9 +6,9 @@ This document defines promotion evidence for Capability Matrix claims that depen
 
 The Capability Matrix is not a wishlist and not a historical idea list. It is a governed truth map connecting runtime capabilities, stable semantic implementation names, Pi / Π legacy labels, ADR ownership, implementation maturity, runtime contracts, tests, Langfuse/MCP/staging evidence where required, and known blockers. A capability is only implemented when the code, tests, runtime wiring, and required evidence support that claim.
 
-[ADR-0039](../ADR/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md) is an active governance source for these gates. It governs hardcoded-oracle prevention, Pi / Π vocabulary boundaries, MCP/Langfuse verification quality, repository-root portability, local-vs-live evidence separation, and false-green prevention.
+[ADR-0039](docs/architecture/project/governance/architecture) is an active governance source for these gates. It governs hardcoded-oracle prevention, Pi / Π vocabulary boundaries, MCP/Langfuse verification quality, repository-root portability, local-vs-live evidence separation, and false-green prevention.
 
-[ADR-0041](../ADR/adr-0041-semantic-capability-selection-and-runtime-capability-budgeting.md) adds the Runtime Capability Authority boundary. Selection evidence can explain why a capability was `off`, `observe`, `enforce`, or `judge` for a turn, and scoped co-authority decision preview can explain why bounded concerns are locally ready, but neither is live/staging proof or promotion evidence by itself.
+[ADR-0041](docs/architecture/components/ai-stack/architecture) adds the Runtime Capability Authority boundary. Selection evidence can explain why a capability was `off`, `observe`, `enforce`, or `judge` for a turn, and scoped co-authority decision preview can explain why bounded concerns are locally ready, but neither is live/staging proof or promotion evidence by itself.
 
 ### ADR-0039 runtime surface inventory (authority boundaries)
 

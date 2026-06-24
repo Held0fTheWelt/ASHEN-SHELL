@@ -3,7 +3,7 @@
 **Status:** Phase-1 Live Wiring Complete (2026-05-19)
 **Created:** 2026-05-19
 **Roadmap source:** [`NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md`](../../NPC_INTERACTION_AND_INTERACTIVITY_PLAN.md) §3.4
-**ADR:** [`adr-0061-director-pause-mode-for-gathering-interruption.md`](../ADR/adr-0061-director-pause-mode-for-gathering-interruption.md)
+**ADR:** [`adr-0061-director-pause-mode-for-gathering-interruption.md`](docs/architecture/components/ai-stack/architecture)
 
 ---
 

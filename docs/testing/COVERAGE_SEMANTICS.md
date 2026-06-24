@@ -6,7 +6,7 @@ This document explains **what** repository coverage numbers mean, **which files 
 
 | Location | Role |
 |----------|------|
-| [`tests/run_tests.py`](../../tests/run_tests.py) | `BACKEND_APP_ROOT`, …, `_cov_fail_under_for_suite()`, `_cov_sources_for_suite()`, `_append_cov_flags()`. Backend **sub-suites** (`backend_runtime`, `backend_observability`, …) set `supports_coverage=False` so partial runs do not apply the full-backend fail-under. See [ADR-0037](../ADR/adr-0037-backend-test-suite-split-runner.md). |
+| [`tests/run_tests.py`](../../tests/run_tests.py) | `BACKEND_APP_ROOT`, …, `_cov_fail_under_for_suite()`, `_cov_sources_for_suite()`, `_append_cov_flags()`. Backend **sub-suites** (`backend_runtime`, `backend_observability`, …) set `supports_coverage=False` so partial runs do not apply the full-backend fail-under. See [ADR-0037](docs/architecture/components/backend/architecture). |
 | [`administration-tool/pytest.ini`](../../administration-tool/pytest.ini) + [`.coveragerc`](../../administration-tool/.coveragerc) | **`--cov=.`** + **`--cov-fail-under=80`** — same as runner **administration** suite (avoids multiple `--cov=module` Coverage.py 7.x warnings). |
 | [`world-engine/pytest.ini`](../../world-engine/pytest.ini) | **`--cov=app`** + **`--cov-fail-under=80`** + term-missing report (matches runner **engine** suite). |
 | [`database/pytest.ini`](../../database/pytest.ini) | **`--cov=app`** (backend ORM tree) + term-missing **without** **`--cov-fail-under`** — same roots as runner **database** suite; no percentage gate (see below). |

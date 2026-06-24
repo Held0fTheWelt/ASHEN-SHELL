@@ -17,7 +17,7 @@ Audience-first documentation entrypoint.
 - **Developers:** [`docs/dev/README.md`](dev/README.md)
 - **Technical system (architecture, AI, runtime):** [`docs/technical/README.md`](technical/README.md)
 - **Stakeholder slides:** [`docs/presentations/`](presentations/)
-- **ADRs:** [`docs/architecture/START-HERE.md`](architecture/START-HERE.md) (normative SADs) · [`docs/ADR/README.md`](ADR/README.md) (historical decisions)
+- **ADRs:** [`docs/architecture/START-HERE.md`](architecture/START-HERE.md) (normative SADs) · [`DECISION_REGISTRY.md`](architecture/project/DECISION_REGISTRY.md) (ex-ADR index) · [`docs/archive/adr-retired-2026/`](archive/adr-retired-2026/README.md) (historical files)
 
 ## MVP canonical route
 

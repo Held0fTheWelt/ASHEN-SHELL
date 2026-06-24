@@ -419,6 +419,6 @@ For **full** orchestrator parity (including `engine` + `ai_stack` graph lane), u
 
 ## References
 
-- [ADR-0037 — Backend test suite split](../docs/architecture/project/components/backend/architecture.md#d3-test-suite-split-in-orchestrator)
+- [ADR-0037 — Backend test suite split](../docs/architecture/components/backend/architecture.md#d3-test-suite-split-in-orchestrator)
 - [pytest](https://docs.pytest.org/)
 - [Coverage.py](https://coverage.readthedocs.io/)

@@ -65,7 +65,7 @@ ADR0039_PI_TEST_SCOPE = {
     "ai_stack/tests/test_relationship_state_machine.py": "Π27 relationship-state assertions cover schema constants, policy-derived axes, ledger projection, and structured transition fields.",
     "ai_stack/tests/test_wave3_multi_actor_vitality.py": "Pi19/Pi7 wave assertions assert bounded subtext and simulation contract surfaces.",
     "tests/gates/test_table_b_anti_hardcoding_gate.py": "Legacy Pi control ids are scanned as forbidden production control-flow vocabulary.",
-    "tools/mcp_server/tests/test_langfuse_verify_tools.py": "Π12 fixture metadata is verified through RuntimeAspectLedger/MCP matrix extraction fields.",
+    "tools/mcp_server/tests/langfuse_verify_runtime_aspect_fixture.py": "Π12/Π29 fixture rows assert structured runtime-aspect matrix fields for MCP Langfuse verify tools.",
     "world-engine/tests/test_story_runtime_aspect_ledger.py": "Π12 fixture metadata is verified through RuntimeAspectLedger projection fields.",
     "world-engine/tests/test_story_runtime_callback_web.py": "Π17 continuity tests assert schema constants, bounds, graph export, and ledger projection.",
     "world-engine/tests/test_story_runtime_consequence_cascade.py": "Π21 continuity tests assert schema constants, bounds, graph export, and ledger projection.",

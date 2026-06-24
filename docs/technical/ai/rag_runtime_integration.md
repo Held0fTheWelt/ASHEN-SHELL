@@ -2,7 +2,7 @@
 
 This page ties **retrieval** to the **live turn path**, **ADR-0041**, **Narrator/NPC** context, and **authority boundaries**. It complements [RAG.md](RAG.md) (mechanics, domains, governance) with **integration rules** and ADR ownership.
 
-**Normative governance:** [ADR-0044](../../ADR/adr-0044-runtime-rag-context-fabric-routing-and-authority-boundaries.md) (routing, authority metadata, ADR-0041 and frontend boundaries), [ADR-0045](../../ADR/adr-0045-runtime-memory-indexes-and-retrieval-write-contracts.md) (memory indexes, write contracts, audience filters).
+**Normative governance:** [ADR-0044](docs/architecture/components/ai-stack/architecture) (routing, authority metadata, ADR-0041 and frontend boundaries), [ADR-0045](docs/architecture/components/ai-stack/architecture) (memory indexes, write contracts, audience filters).
 
 ## What RAG should become
 

@@ -311,7 +311,7 @@ Every executed turn yields exactly one canonical dramatic turn record.
 - `failure_seam_used`
 - `notes_code`
 
-**Migrated Decision:** See canonical ADR: [ADR-0024: Decision Boundary Record — minimum schema for decision boundary recording](../../ADR/adr-0024-decision-boundary-record-schema.md)
+**Migrated Decision:** See canonical ADR: [ADR-0024: Decision Boundary Record — minimum schema for decision boundary recording](docs/architecture/project/governance/architecture)
 
 ##### Routing Record
 - all fields required by Gate G2

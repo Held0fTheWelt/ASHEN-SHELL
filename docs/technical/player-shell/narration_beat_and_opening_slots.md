@@ -1,7 +1,7 @@
 # narration_beat and opening slots (player shell)
 
 **Last updated:** 2026-05-20
-**Normative ADRs:** [ADR-0034](../../ADR/adr-0034-player-facing-narrative-shell-contract.md) (shell contract), [ADR-0046](../../ADR/adr-0046-typewriter-cinematic-direction.md) (typewriter), [ADR-0035](../../ADR/adr-0035-story-opening-economy-and-warmup.md) (opening economy)
+**Normative ADRs:** [ADR-0034](docs/architecture/components/frontend/architecture) (shell contract), [ADR-0046](docs/architecture/components/frontend/architecture) (typewriter), [ADR-0035](docs/architecture/components/world-engine/architecture) (opening economy)
 
 This page exists so engineers do not reintroduce a removed pattern: **forcing literary opening slot names onto `scene_blocks[].narration_beat` by card index**.
 

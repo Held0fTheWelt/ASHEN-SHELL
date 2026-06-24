@@ -171,7 +171,7 @@ ADR-0039 governs **runtime behavior and decision surfaces**, not only tests and 
 
 ---
 
-**Evidence.** `docs/architecture/project/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/governance/architecture.md#d3-gate-tests-must-not-hardcode-oracle-bypasses` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### D3: Unified Python 3.14 interpreter standard
 
@@ -209,14 +209,14 @@ The team chose **one** minor version for host, CI, Dev Container, and all first-
 
 Gate tests remain subject to [ADR-0039](../../../archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md).
 
-**Evidence.** `docs/architecture/project/project/quality-gates/architecture.md#d3-python-314-unified-interpreter-standard` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** `docs/architecture/project/quality-gates/architecture.md#d3-python-314-unified-interpreter-standard` (archived — see `docs/archive/adr-retired-2026/`)
 
 ### MVP4-TEST-GATE-PLAN: MVP4 Test Gate Plan — 5 Core Contracts
 
 **Status:** Accepted
 **Origin:** MVP4-TEST-GATE-PLAN (retired 2026-06-23)
 
-**Evidence.** `docs/ADR/MVP4_TEST_GATE_PLAN.md` (archived — see `docs/archive/adr-retired-2026/`)
+**Evidence.** [mvp-live-runtime-completion SAD §9](../mvp-live-runtime-completion/architecture.md#9-architecture-decisions) (archived MVP4 gate plan — see `docs/archive/adr-retired-2026/`)
 ## 10. Quality Requirements
 
 | Command | Purpose |

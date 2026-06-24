@@ -5,7 +5,7 @@
 | Item | Count |
 | --- | ---: |
 | ADRs archived | 102 |
-| `docs/ADR/` active files | 1 (README stub) |
+| ADR stub dir active files | 1 (README stub) |
 | DECISION_REGISTRY rows | 98 |
 | SAD files bulk-enriched | 10 |
 | Reference files rewritten | 54 |
@@ -33,7 +33,7 @@ Link audit: `python scripts/architecture_link_audit.py --check` → OK.
 - Decisions: `docs/architecture/**/architecture.md` §9
 - Index: `docs/architecture/project/DECISION_REGISTRY.md`
 - Archive: `docs/archive/adr-retired-2026/manifest.json`
-- Stub: `docs/ADR/README.md` → START-HERE + DECISION_REGISTRY
+- Stub: [ADR README](../../../ADR/README.md) → START-HERE + DECISION_REGISTRY
 
 ## Open exceptions (Not Finished / Proposed)
 

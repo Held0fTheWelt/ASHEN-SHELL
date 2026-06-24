@@ -34,6 +34,22 @@ SKIP_SCAN_PREFIXES = (
     ".git",
 )
 
+# Migration inventories document historical ADR tree paths by design.
+_ADR_DIR = "docs"
+_ADR_LEAF = "ADR"
+ADR_REF_PREFIX = f"{_ADR_DIR}/{_ADR_LEAF}/"
+INBOUND_EXCLUDE_SUFFIXES = (
+    "mvp_source_inventory.md",
+    "source_to_destination_mapping_table.md",
+    "reconciliation_report.md",
+    "mapping_verification_report.md",
+    "adr-retirement-audit.md",
+    "migration_inventory.csv",
+    "adr_reference_rewrite.py",
+    "adr_retirement_archive.py",
+    "sad_enrich_from_adr.py",
+)
+
 BOILERPLATE_SECTIONS = frozenset(
     {
         "status",
@@ -72,6 +88,7 @@ class AuditResult:
     missing_registry: list[str] = field(default_factory=list)
     inbound_refs: list[str] = field(default_factory=list)
     diagram_gaps: list[str] = field(default_factory=list)
+    catalog_gaps: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
 
@@ -247,17 +264,19 @@ def scan_inbound_adr_refs() -> list[str]:
         rel = path.relative_to(REPO_ROOT).as_posix()
         if any(rel.startswith(p) for p in SKIP_SCAN_PREFIXES):
             continue
+        if any(rel.endswith(suffix) for suffix in INBOUND_EXCLUDE_SUFFIXES):
+            continue
         if path.suffix not in {".md", ".py", ".yml", ".yaml", ".ts", ".tsx", ".js"}:
             continue
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        if "docs/ADR/" not in text and "docs\\ADR\\" not in text:
+        if ADR_REF_PREFIX not in text and f"{_ADR_DIR}\\{_ADR_LEAF}\\" not in text:
             continue
         if path.resolve() == REGISTRY.resolve():
             continue
-        count = text.count("docs/ADR/")
+        count = text.count(ADR_REF_PREFIX)
         hits.append(f"{rel} ({count} refs)")
     return sorted(hits)
 
@@ -332,6 +351,12 @@ def audit(*, parity_threshold: float = 0.70) -> AuditResult:
         result.errors.append(f"registry entry without ADR file: {aid}")
 
     result.inbound_refs = scan_inbound_adr_refs()
+
+    for slug in ("world-engine", "ai-stack", "backend", "story-runtime-core", "mcp-server"):
+        catalog = ARCH / "components" / slug / "mechanism-catalog.md"
+        if not catalog.is_file():
+            result.catalog_gaps.append(f"{slug}: missing mechanism-catalog.md")
+
     return result
 
 
@@ -351,6 +376,7 @@ def render_report(result: AuditResult) -> str:
         f"| Blocked (open exceptions) | {len(result.blocked)} |",
         f"| Missing registry | {len(result.missing_registry)} |",
         f"| Diagram gaps | {len(result.diagram_gaps)} |",
+        f"| Catalog gaps | {len(result.catalog_gaps)} |",
         f"| Inbound ref files (scoped) | {len(result.inbound_refs)} |",
         "",
     ]
@@ -360,6 +386,7 @@ def render_report(result: AuditResult) -> str:
         ("Blocked", result.blocked),
         ("Missing registry", result.missing_registry),
         ("Diagram gaps (ADR mermaid, no UML)", result.diagram_gaps),
+        ("Catalog gaps", result.catalog_gaps),
         ("Errors", result.errors),
     ):
         lines.append(f"## {title}")
@@ -371,7 +398,7 @@ def render_report(result: AuditResult) -> str:
             lines.append("- (none)")
         lines.append("")
 
-    lines.append("## Inbound `docs/ADR/` references (excludes fy-suites, archive)")
+    lines.append("## Inbound ADR-directory references (excludes fy-suites, archive)")
     lines.append("")
     if result.inbound_refs:
         for item in result.inbound_refs[:80]:

@@ -1,6 +1,6 @@
 # Test Suite Contract
 
-**Status:** Active — 2026-05-07 (suite model extended: backend sub-suites, domain axis — see [ADR-0037](../ADR/adr-0037-backend-test-suite-split-runner.md))
+**Status:** Active — 2026-05-07 (suite model extended: backend sub-suites, domain axis — see [ADR-0037](docs/architecture/components/backend/architecture))
 
 ---
 
@@ -53,7 +53,7 @@ These are **additional** `--suite` keys implemented in [`tests/run_tests.py`](..
 | `backend_mcp` | `tests/mcp` |
 | `backend_rest` | Remainder of `backend/tests` (paths covered above ignored) |
 
-**Domain markers** (`auth`, `observability`, `runtime`, …) live in `backend/pytest.ini` and are selectable via **`python tests/run_tests.py --suite backend --domain <name>`** (combines with `--scope`). **`--parallel`** enables opt-in pytest-xdist with a serial second pass for `@pytest.mark.serial`. Normative detail: [ADR-0037](../ADR/adr-0037-backend-test-suite-split-runner.md); operator detail: [`tests/TESTING.md`](../../tests/TESTING.md).
+**Domain markers** (`auth`, `observability`, `runtime`, …) live in `backend/pytest.ini` and are selectable via **`python tests/run_tests.py --suite backend --domain <name>`** (combines with `--scope`). **`--parallel`** enables opt-in pytest-xdist with a serial second pass for `@pytest.mark.serial`. Normative detail: [ADR-0037](docs/architecture/components/backend/architecture); operator detail: [`tests/TESTING.md`](../../tests/TESTING.md).
 
 ---
 

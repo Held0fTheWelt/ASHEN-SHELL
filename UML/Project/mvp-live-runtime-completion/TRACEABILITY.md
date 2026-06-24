@@ -1,6 +1,7 @@
 # mvp-live-runtime-completion TRACEABILITY
 
-| Diagram | Claim | Source | Test / gate |
-| --- | --- | --- | --- |
-| gate flow | Locator → evidence | mvp-live-runtime-completion SAD | `--mvp1` … `--mvp4` |
-| SAD §9 | MVP ADR index | component SADs §9 | MVP ADR folder |
+| Diagram | Decision | Claim | Source | Test / gate |
+| --- | --- | --- | --- | --- |
+| c4-context | §9 | MVP expansion rule | see component SAD | `tests/gates/` |
+| c4-context | §9 | MVP4 live setup | see component SAD | `tests/gates/` |
+| c4-context | §9 | MVP ADR corpus | see component SAD | `tests/gates/` |

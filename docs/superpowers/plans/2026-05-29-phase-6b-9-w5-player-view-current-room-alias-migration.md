@@ -27,9 +27,9 @@ All findings confirmed by reading actual source files.
 | `world-engine/app/story_runtime/manager/actor_tracking/session_state_w5_view.py` | `_maybe_build_w5_player_view_for_session()` | 101–145 | DONE |
 | `world-engine/app/runtime/engine.py` | `build_snapshot()` | 30–59 | WS snapshot — no `w5_player_view` yet (gap to document in ADR) |
 | `scripts/inventory_w5_legacy_consumers.py` | `LEGACY_SURFACES` | 35–72 | missing `viewer_room_id`, `w5_player_view` surfaces |
-| `docs/ADR/adr-0069-*` | — | — | DOES NOT EXIST — primary deliverable |
+| `docs/architecture/components/world-engine/architecture*` | — | — | DOES NOT EXIST — primary deliverable |
 
-**ADR number:** 0069 (0068 is the highest existing ADR in `docs/ADR/`).
+**ADR number:** 0069 (0068 was the highest numbered ADR before SAD-only retirement; see `docs/archive/adr-retired-2026/`).
 
 **Existing test files that are complete and must not be broken:**
 - `world-engine/tests/test_story_runtime_w5_player_view.py`
@@ -42,7 +42,7 @@ All findings confirmed by reading actual source files.
 ## File Map
 
 **Create:**
-- `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` — primary ADR
+- `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view` — primary ADR
 
 **Modify:**
 - `backend/app/runtime/models.py:146,149` — add compat alias comments to `RuntimeSnapshot`
@@ -57,7 +57,7 @@ All findings confirmed by reading actual source files.
 ## Task 1: Create ADR-0069
 
 **Files:**
-- Create: `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`
+- Create: `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`
 
 - [ ] **Step 1: Write the ADR**
 
@@ -335,7 +335,7 @@ These diagnostics let engineers confirm W5 is active and detect divergence.
 
 ## Acceptance Criteria
 
-- [ ] ADR-0069 exists as `docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`
+- [ ] ADR-0069 exists as `docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view`
 - [ ] `RuntimeSnapshot.viewer_room_id` and `.current_room` carry compatibility alias comments in both model files
 - [ ] `world-engine/app/web/static/app.js` `currentRoom()` is W5-first with legacy fallback
 - [ ] Inventory scanner declares `viewer_room_id` and `w5_player_view` surfaces with Phase 6B-9 classification
@@ -383,7 +383,7 @@ model layer. Compatibility alias removal is cleaner via Phase 6B-11 direct field
 - [ ] **Step 2: Verify file was created**
 
 ```bash
-ls -la docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view
+ls -la docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view
 ```
 Expected: file exists, >4000 bytes
 
@@ -396,7 +396,7 @@ echo "ADR created"
 - [ ] **Step 4: Commit**
 
 ```bash
-git add docs/architecture/project/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view
+git add docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking-and-player-view
 git commit -m "doc(adr): ADR-0069 W5 player view replaces current_room aliases — Proposed"
 ```
 
