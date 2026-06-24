@@ -416,6 +416,7 @@ def prepare_player_input_semantic_resolution(
             session_output_language=output_language,
         ),
         "semantic_catalog_available": bool(surface),
+        "interaction_surface": surface,
         **flags,
     }
 

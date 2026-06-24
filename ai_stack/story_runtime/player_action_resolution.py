@@ -132,8 +132,13 @@ def build_scene_affordance_model(
     content_modules_root: Path | None = None,
     environment_state: dict[str, Any] | None = None,
     environment_model: dict[str, Any] | None = None,
+    interaction_surface: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    surface = _load_interaction_surface(module_id, content_modules_root=content_modules_root)
+    surface = (
+        interaction_surface
+        if isinstance(interaction_surface, dict) and interaction_surface
+        else _load_interaction_surface(module_id, content_modules_root=content_modules_root)
+    )
     raw_actors = _actor_rows_from_runtime_projection(runtime_projection)
     actors = _enrich_actor_aliases(raw_actors, module_id=module_id, content_modules_root=content_modules_root)
     model: dict[str, Any] = {
@@ -1144,6 +1149,7 @@ def resolve_player_action(
     player_local_context: dict[str, Any] | None = None,
     environment_state: dict[str, Any] | None = None,
     environment_model: dict[str, Any] | None = None,
+    interaction_surface: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     del player_local_context
     pik, actor_id, selected_actor_id = _player_action_input_context(
@@ -1166,6 +1172,7 @@ def resolve_player_action(
         content_modules_root=content_modules_root,
         environment_state=environment_state,
         environment_model=environment_model,
+        interaction_surface=interaction_surface,
     )
     semantic = _semantic_payload(interpreted_input)
     contract = interpreted_input.get("semantic_resolution_contract")
