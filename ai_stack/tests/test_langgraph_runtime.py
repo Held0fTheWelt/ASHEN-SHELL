@@ -78,8 +78,8 @@ class SemanticTranslationAdapter(BaseModelAdapter):
         self.prompts.append(prompt)
         if _is_semantic_translation_prompt(prompt):
             assert timeout_seconds == 30.0
-            assert "content_catalog" not in prompt
-            assert "semantic_resolution_contract" not in prompt
+            assert "content_catalog" in prompt
+            assert "semantic_resolution_contract" in prompt
             payload = {"semantic_action": dict(self.semantic_action)}
             if self.semantic_move:
                 payload["semantic_move"] = dict(self.semantic_move)
@@ -149,8 +149,8 @@ class SemanticTranslationNarrationAdapter(BaseModelAdapter):
         self.prompts.append(prompt)
         if _is_semantic_translation_prompt(prompt):
             assert timeout_seconds == 30.0
-            assert "content_catalog" not in prompt
-            assert "semantic_resolution_contract" not in prompt
+            assert "content_catalog" in prompt
+            assert "semantic_resolution_contract" in prompt
             return ModelCallResult(
                 content=json.dumps({"semantic_action": dict(self.semantic_action)}),
                 success=True,

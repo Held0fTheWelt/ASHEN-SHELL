@@ -7,7 +7,7 @@ SOURCE_LINES = [
     '    def _translate_output(self, state: RuntimeTurnState) -> RuntimeTurnState:\n',
     '        """Translate visible_output_bundle text fields to session_output_language."""\n',
     '        update = _track(state, node_name="translate_output")\n',
-    '        output_lang = str(state.get("session_output_language") or "en").strip().lower()[:2] or "en"\n',
+    '        output_lang = str(state.get("session_output_language") or "de").strip().lower()[:2] or "de"\n',
     '\n',
     '        if output_lang == "en":\n',
     '            update["output_translation"] = {"status": "skipped_same_language"}\n',
