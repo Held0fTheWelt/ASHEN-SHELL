@@ -1,0 +1,203 @@
+{
+  "name": "architectural_knowledge_db",
+  "version": "0.3.0",
+  "description": "Multi-project architecture knowledge service with ADR, UML, rules, definitions, source areas, and linked Git provenance.",
+  "tools": [
+    {
+      "name": "architectural_knowledge_db_search",
+      "description": "Search project-local and imported shared architecture knowledge.",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "query"
+        ],
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "include_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "default": 20
+          }
+        }
+      }
+    },
+    {
+      "name": "architectural_knowledge_db_get_context_pack",
+      "description": "Build an authority-aware context pack for a coding or modeling task.",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "task"
+        ],
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "task": {
+            "type": "string"
+          },
+          "source_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "include_git_provenance": {
+            "type": "boolean",
+            "default": true
+          },
+          "include_staleness": {
+            "type": "boolean",
+            "default": true
+          },
+          "max_items": {
+            "type": "integer",
+            "default": 20
+          }
+        }
+      }
+    },
+    {
+      "name": "architectural_knowledge_db_explain_origin",
+      "description": "Explain why a source path, ADR, rule, or UML element exists and how it evolved.",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "target"
+        ],
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "target_type": {
+            "type": "string",
+            "enum": [
+              "source_path",
+              "knowledge_item",
+              "uml_element",
+              "rule",
+              "adr"
+            ]
+          },
+          "include": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "architectural_knowledge_db_get_rules_for_path",
+      "description": "Return active project and shared rules that apply to a source path.",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "path"
+        ],
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "include_git_evidence": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "architectural_knowledge_db_get_git_provenance",
+      "description": "Return Git file history and co-change evidence for a source path or knowledge item.",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "target"
+        ],
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "limit_commits": {
+            "type": "integer",
+            "default": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "architectural_knowledge_db_get_staleness_report",
+      "description": "Return staleness and drift hints for ADRs, UML diagrams, rules, or source areas.",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "project_id"
+        ],
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "status_filter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "architectural_knowledge_db_validate_task_context",
+      "description": "Check whether a proposed task appears to conflict with known ADRs, rules, or definitions.",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "project_id",
+          "task"
+        ],
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "task": {
+            "type": "string"
+          },
+          "source_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+flowchart TD
+    A[UML Editor] -->|API / MCP| S[ArchitecturalKnowledgeDB Service]
+    B[Coding Agent] -->|MCP Tools| S
+    C[Admin UI] -->|HTTP API| S
+    D[CLI] -->|local commands| S
+
+    S --> K[Knowledge Core]
+    K --> P[Project Registry]
+    K --> M[Multi-Project Knowledge Model]
+    K --> CP[Context Pack Builder]
+    K --> AR[Authority Resolver]
+    K --> GE[Git Provenance Analyzer]
+
+    M --> DB[(SQLite + FTS5)]
+    GE --> DB
+    CP --> DB
+
+    R1[Repository A] -. read only .-> GE
+    R2[Repository B] -. read only .-> GE
+    R3[Repository C] -. read only .-> GE
+
+    F1[Markdown ADRs] -. import/export .-> M
+    F2[PlantUML / Mermaid] -. import/export .-> M
+    F3[Rules JSON/YAML] -. import/export .-> M
+
+    GE -. references only .-> GIT[.git repositories]
