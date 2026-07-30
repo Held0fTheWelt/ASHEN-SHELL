@@ -676,7 +676,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 10,
+        "line": 12,
         "object": "tools/architecture_assurance/config.json#canon_manifest",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -687,7 +687,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 11,
+        "line": 13,
         "object": "tools/architecture_assurance/config.json#canonical_files",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -698,7 +698,29 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
+        "line": 9,
+        "object": "tools/architecture_assurance/config.json#drift_baseline_label",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#drift_baseline_label",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
         "line": 8,
+        "object": "tools/architecture_assurance/config.json#drift_baseline_revision",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#drift_baseline_revision",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 10,
         "object": "tools/architecture_assurance/config.json#drift_claim_catalog",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -731,7 +753,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 9,
+        "line": 11,
         "object": "tools/architecture_assurance/config.json#drift_reconciliation",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -742,7 +764,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 31,
+        "line": 33,
         "object": "tools/architecture_assurance/config.json#gate",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -797,7 +819,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 34,
+        "line": 36,
         "object": "tools/architecture_assurance/config.json#subsystems",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -812,6 +834,8 @@
   "out_of_scope": {
     "content:tools/architecture_assurance/config.json#canon_manifest": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#canonical_files": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#drift_baseline_label": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#drift_baseline_revision": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_claim_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_evidence_json": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_evidence_markdown": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",

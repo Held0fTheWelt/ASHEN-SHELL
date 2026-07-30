@@ -45,6 +45,8 @@ def _parser() -> argparse.ArgumentParser:
 
     drift = subcommands.add_parser("drift-evidence")
     drift.add_argument("--archive-root")
+    drift.add_argument("--git-revision")
+    drift.add_argument("--branch-label")
     drift.add_argument("--history-window", type=int, default=300)
     drift.add_argument("--dry-run", action="store_true")
 
@@ -113,6 +115,10 @@ def main(argv: list[str] | None = None) -> int:
             repo_root,
             repo_root / str(config["model_catalog"]),
             archive_root=_path(args.archive_root, repo_root),
+            git_revision=args.git_revision
+            or str(config.get("drift_baseline_revision", "HEAD")),
+            branch_label=args.branch_label
+            or config.get("drift_baseline_label"),
             history_window=args.history_window,
         )
         result = write_drift_evidence(

@@ -466,7 +466,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/cli.py",
         "kind": "python",
-        "line": 77,
+        "line": 79,
         "module": "tools.architecture_assurance.cli",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "main"
@@ -646,7 +646,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/drift_evidence.py",
         "kind": "python",
-        "line": 282,
+        "line": 293,
         "module": "tools.architecture_assurance.drift_evidence",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_drift_evidence"
@@ -658,7 +658,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/drift_evidence.py",
         "kind": "python",
-        "line": 337,
+        "line": 359,
         "module": "tools.architecture_assurance.drift_evidence",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_drift_evidence"
@@ -670,7 +670,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/drift_evidence.py",
         "kind": "python",
-        "line": 425,
+        "line": 447,
         "module": "tools.architecture_assurance.drift_evidence",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "write_drift_evidence"

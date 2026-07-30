@@ -60,4 +60,7 @@ but does not write.
 
 The archive root is an optional, read-only archaeology input. Durable evidence
 stores hashes, headings and repository-relative comparisons, never an operational
-dependency on that external folder.
+dependency on that external folder. The committed drift baseline pins its Git
+revision and label in `config.json`; `--git-revision` and `--branch-label` allow
+an explicit alternative analysis without making the current working branch part
+of the evidence by accident.

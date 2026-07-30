@@ -130,8 +130,12 @@ def test_git_evidence_dry_run_does_not_write(tmp_path: Path) -> None:
         ROOT,
         MODEL_CATALOG,
         archive_root=None,
+        git_revision="HEAD",
+        branch_label="test-current-head",
         history_window=5,
     )
+    assert evidence["repository"]["branch"] == "test-current-head"
+    assert evidence["repository"]["requested_revision"] == "HEAD"
     json_path = tmp_path / "evidence" / "drift.json"
     markdown_path = tmp_path / "evidence" / "drift.md"
     result = write_drift_evidence(

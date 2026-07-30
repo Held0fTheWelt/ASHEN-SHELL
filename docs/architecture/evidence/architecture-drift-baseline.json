@@ -717,15 +717,16 @@
     "top_level_artifact_count": 85
   },
   "repository": {
-    "branch": "codex/better-tomorrow-akdb-modernization",
+    "branch": "master before semantic-depth implementation",
     "commit_count": 1957,
     "first_commit": {
       "commit": "a688b4aad7d880b8868fd6179e057e8febebb7a4",
       "date": "2026-03-10",
       "subject": "Initial Commit"
     },
-    "head": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
-    "history_window": 300
+    "head": "7466b485ab7c4c35e569750809dfe0f172ecf25a",
+    "history_window": 300,
+    "requested_revision": "7466b485ab7c4c35e569750809dfe0f172ecf25a"
   },
   "schema_version": "bt.architecture_drift_evidence.v1",
   "source_precedence": [
@@ -919,35 +920,35 @@
         "commit_count": 87,
         "latest_commits": [
           {
-            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "commit": "7466b485ab7c4c35e569750809dfe0f172ecf25a",
             "date": "2026-07-30",
             "paths": 6,
             "renames": 0,
             "subject": "fix: exclude ignored files from architecture evidence"
           },
           {
-            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "commit": "aa2ed3e1d11e32a7a6d5e221f13eb80b9e675ba7",
             "date": "2026-07-30",
             "paths": 10,
             "renames": 0,
             "subject": "fix: make architecture canon workspace portable"
           },
           {
-            "commit": "6864ffed58734459848a97f2da67279ddbe3893f",
+            "commit": "c3695e8ce973fc5f55e09ab6ce42b12d5db1c6f9",
             "date": "2026-07-30",
             "paths": 4,
             "renames": 0,
             "subject": "fix: keep retired AKDB runtime state ignored"
           },
           {
-            "commit": "1080038743ab475e55d3554a47051754d668ff39",
+            "commit": "ef7e982bb0541bbd5c0b54d07bd676c00a43fcb7",
             "date": "2026-07-30",
             "paths": 2,
             "renames": 0,
             "subject": "fix: resolve AKDB checkout from primary workspace"
           },
           {
-            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "commit": "5bb589e99d764c4577094401aeac123404c58322",
             "date": "2026-07-30",
             "paths": 108,
             "renames": 0,
@@ -1183,35 +1184,35 @@
         "commit_count": 300,
         "latest_commits": [
           {
-            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "commit": "7466b485ab7c4c35e569750809dfe0f172ecf25a",
             "date": "2026-07-30",
             "paths": 4,
             "renames": 0,
             "subject": "fix: exclude ignored files from architecture evidence"
           },
           {
-            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "commit": "aa2ed3e1d11e32a7a6d5e221f13eb80b9e675ba7",
             "date": "2026-07-30",
             "paths": 4,
             "renames": 0,
             "subject": "fix: make architecture canon workspace portable"
           },
           {
-            "commit": "6864ffed58734459848a97f2da67279ddbe3893f",
+            "commit": "c3695e8ce973fc5f55e09ab6ce42b12d5db1c6f9",
             "date": "2026-07-30",
             "paths": 3,
             "renames": 0,
             "subject": "fix: keep retired AKDB runtime state ignored"
           },
           {
-            "commit": "1080038743ab475e55d3554a47051754d668ff39",
+            "commit": "ef7e982bb0541bbd5c0b54d07bd676c00a43fcb7",
             "date": "2026-07-30",
             "paths": 1,
             "renames": 0,
             "subject": "fix: resolve AKDB checkout from primary workspace"
           },
           {
-            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "commit": "5bb589e99d764c4577094401aeac123404c58322",
             "date": "2026-07-30",
             "paths": 27,
             "renames": 0,
@@ -1450,28 +1451,28 @@
         "commit_count": 72,
         "latest_commits": [
           {
-            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "commit": "7466b485ab7c4c35e569750809dfe0f172ecf25a",
             "date": "2026-07-30",
             "paths": 2,
             "renames": 0,
             "subject": "fix: exclude ignored files from architecture evidence"
           },
           {
-            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "commit": "aa2ed3e1d11e32a7a6d5e221f13eb80b9e675ba7",
             "date": "2026-07-30",
             "paths": 2,
             "renames": 0,
             "subject": "fix: make architecture canon workspace portable"
           },
           {
-            "commit": "6864ffed58734459848a97f2da67279ddbe3893f",
+            "commit": "c3695e8ce973fc5f55e09ab6ce42b12d5db1c6f9",
             "date": "2026-07-30",
             "paths": 2,
             "renames": 0,
             "subject": "fix: keep retired AKDB runtime state ignored"
           },
           {
-            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "commit": "5bb589e99d764c4577094401aeac123404c58322",
             "date": "2026-07-30",
             "paths": 11,
             "renames": 0,
@@ -1806,28 +1807,28 @@
         "commit_count": 260,
         "latest_commits": [
           {
-            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "commit": "7466b485ab7c4c35e569750809dfe0f172ecf25a",
             "date": "2026-07-30",
             "paths": 1,
             "renames": 0,
             "subject": "fix: exclude ignored files from architecture evidence"
           },
           {
-            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "commit": "aa2ed3e1d11e32a7a6d5e221f13eb80b9e675ba7",
             "date": "2026-07-30",
             "paths": 1,
             "renames": 0,
             "subject": "fix: make architecture canon workspace portable"
           },
           {
-            "commit": "1080038743ab475e55d3554a47051754d668ff39",
+            "commit": "ef7e982bb0541bbd5c0b54d07bd676c00a43fcb7",
             "date": "2026-07-30",
             "paths": 1,
             "renames": 0,
             "subject": "fix: resolve AKDB checkout from primary workspace"
           },
           {
-            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "commit": "5bb589e99d764c4577094401aeac123404c58322",
             "date": "2026-07-30",
             "paths": 10,
             "renames": 0,

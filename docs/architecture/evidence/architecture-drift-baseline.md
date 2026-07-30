@@ -4,8 +4,8 @@ This baseline correlates current source, Git evolution and a read-only historica
 
 ## Repository chronology
 
-- Analyzed branch: `codex/better-tomorrow-akdb-modernization`
-- Analyzed HEAD: `ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c`
+- Git baseline label: `master before semantic-depth implementation`
+- Git baseline revision: `7466b485ab7c4c35e569750809dfe0f172ecf25a`
 - Repository commits: 1957
 - First commit: `a688b4aad7d880b8868fd6179e057e8febebb7a4` (2026-03-10)
 

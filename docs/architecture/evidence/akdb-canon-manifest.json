@@ -1071,9 +1071,9 @@
       "sha256": "e17aa034526a89af0b37fed5b032acff9928e94917659c428703b889cf72aeb9"
     },
     {
-      "bytes": 3084,
+      "bytes": 3316,
       "path": "docs/architecture/AKDB-AUTHORITY.md",
-      "sha256": "89864be262798cb7290d3776490d054e47e436a92f795df5b43472331b1dd008"
+      "sha256": "32e2a399dba73af24ea608c18441f1230015bb3f62a2b99efff89efb1ef116b6"
     },
     {
       "bytes": 2331,
@@ -1181,14 +1181,14 @@
       "sha256": "2d1e4bd7f7d064110fc94e73e4d2582a68e2a5e4f044e832a8eeac35e92987d2"
     },
     {
-      "bytes": 80325,
+      "bytes": 80398,
       "path": "docs/architecture/evidence/architecture-drift-baseline.json",
-      "sha256": "cea3f2d62180290ea9efa33f6f0c121925f9caa5b4ca57626a7da02cd254396d"
+      "sha256": "5ff86cc7c2866e8adf94b5dba3fa57da03d6d242c1e599db6cfff8d2907ce5e4"
     },
     {
-      "bytes": 2232,
+      "bytes": 2246,
       "path": "docs/architecture/evidence/architecture-drift-baseline.md",
-      "sha256": "35dc40fe8cdb487beecf801368b1e40553e04084d90992b2aa060566222bc1bc"
+      "sha256": "ecbc1d0e012bf949bb8f25877c2b3f14cb845e08108a21608032f90c2ad9cab1"
     },
     {
       "bytes": 20253,
@@ -1201,9 +1201,9 @@
       "sha256": "ec4cba01d3707e547658b80cf4e94e8bc027dd4a239ea5d94b0bfd79300a52d0"
     },
     {
-      "bytes": 51905,
+      "bytes": 53134,
       "path": "docs/architecture/project/architecture-assurance/architecture.bindings.json",
-      "sha256": "f24ed0471e342682ff208cc8b4122b04f1f1ef1ee72203cf7c740570fef91309"
+      "sha256": "093f3969f53d8c0350aee33e54601bd5b181059644bb3b2ffdc3156d127eae0b"
     },
     {
       "bytes": 19698,
@@ -1231,9 +1231,9 @@
       "sha256": "9f87fea5755442549785b5974c3a3895611eccf04a179cb051cbafb2bb869ae6"
     },
     {
-      "bytes": 34630,
+      "bytes": 35859,
       "path": "docs/architecture/project/governance/architecture.bindings.json",
-      "sha256": "0657dd2015dc4ad0db5f94122631e7e41a5dfee4ab546295d5372e729d1d9004"
+      "sha256": "e36721c9b96d281c48616fc37cb62dfd2f8c9dea90c9764e749e0d7206c474e3"
     },
     {
       "bytes": 54690,
@@ -1263,7 +1263,7 @@
     {
       "bytes": 48717,
       "path": "docs/architecture/project/quality-gates/architecture.bindings.json",
-      "sha256": "f06e1fd96d41502569520dcb59ff63150695c5e3b658a130baad22694f6cec2b"
+      "sha256": "efd5d269d68dd8aa97a854d2c20279bd82191966b546e1904cdaf73975b5102e"
     },
     {
       "bytes": 28065,
@@ -1306,9 +1306,9 @@
       "sha256": "5d399bb10b05d5489479a04154539e50996d3645b1fe6e385d360dab207855e6"
     },
     {
-      "bytes": 5215,
+      "bytes": 5419,
       "path": "tests/architecture_assurance/test_semantic_models_and_drift.py",
-      "sha256": "134411a533e309df9d2415b43bc5ac20acf800aa3bea7153eb8e4dcd91950781"
+      "sha256": "0699022ed1bfb56ae00d026bb60adbc1197a76834c179a880018b39590c35709"
     },
     {
       "bytes": 459,
@@ -1341,14 +1341,14 @@
       "sha256": "8012196a8250b3d7c88f8d1fa20ce94e886a586b6101f59a6c3de3082612113a"
     },
     {
-      "bytes": 6621,
+      "bytes": 6907,
       "path": "tools/architecture_assurance/cli.py",
-      "sha256": "9c7addbae7ccb8de5f04cb008462c5fddac6d20ebc3df8a487a4ce0b8e423886"
+      "sha256": "a55baae870fbe98f300e43a2ab8b8a8487c830a93db59e9a70851ee300aab174"
     },
     {
-      "bytes": 11439,
+      "bytes": 11585,
       "path": "tools/architecture_assurance/config.json",
-      "sha256": "c966d82d2bdac316dfee3863734af92b464cdf9e7a79b953f7c4412a69272759"
+      "sha256": "968c48af51023de4c6a20d3fb4f00714e5a64c212149e124fe748ae28b8c51e0"
     },
     {
       "bytes": 18389,
@@ -1366,9 +1366,9 @@
       "sha256": "efe678fa30f0ecff11480848f7a716e145b6d3e1c9597eadc4f22284a302f4ce"
     },
     {
-      "bytes": 14177,
+      "bytes": 14703,
       "path": "tools/architecture_assurance/drift_evidence.py",
-      "sha256": "cbdc5b5c2dd99a9713b84c027875f05792f7a94a61f2914c7b7649f6548e5a3c"
+      "sha256": "0e817f14cd80b61fe742a995cc542fa14707423fd89a2b4eaabb3841d83a8443"
     },
     {
       "bytes": 8766,

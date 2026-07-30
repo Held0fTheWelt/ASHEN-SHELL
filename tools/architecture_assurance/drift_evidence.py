@@ -80,6 +80,7 @@ def _recent_history(
     repo_root: Path,
     roots: list[str],
     *,
+    revision: str,
     window: int,
 ) -> dict[str, Any]:
     raw = _git(
@@ -89,6 +90,7 @@ def _recent_history(
         "--date=short",
         "--format=@@%H%x09%ad%x09%s",
         "--name-status",
+        revision,
         *_paths_argument(roots),
     )
     commits: list[dict[str, Any]] = []
@@ -128,6 +130,7 @@ def _subsystem_git_evidence(
     subsystem_id: str,
     model: Mapping[str, Any],
     *,
+    revision: str,
     window: int,
 ) -> dict[str, Any]:
     roots = [str(value) for value in model.get("history_roots", [])]
@@ -135,7 +138,10 @@ def _subsystem_git_evidence(
         line
         for line in _git(
             repo_root,
-            "ls-files",
+            "ls-tree",
+            "-r",
+            "--name-only",
+            revision,
             *_paths_argument(roots),
         ).splitlines()
         if line
@@ -145,7 +151,7 @@ def _subsystem_git_evidence(
             repo_root,
             "rev-list",
             "--count",
-            "HEAD",
+            revision,
             *_paths_argument(roots),
         ).strip()
         or "0"
@@ -155,7 +161,12 @@ def _subsystem_git_evidence(
         "history_roots": roots,
         "tracked_file_count": len(tracked),
         "lifetime_commit_count": lifetime,
-        "recent": _recent_history(repo_root, roots, window=window),
+        "recent": _recent_history(
+            repo_root,
+            roots,
+            revision=revision,
+            window=window,
+        ),
     }
 
 
@@ -284,6 +295,8 @@ def build_drift_evidence(
     model_catalog_path: Path,
     *,
     archive_root: Path | None = None,
+    git_revision: str = "HEAD",
+    branch_label: str | None = None,
     history_window: int = 300,
 ) -> dict[str, Any]:
     """Build deterministic evidence without mutating repository or archive."""
@@ -294,6 +307,7 @@ def build_drift_evidence(
         "--reverse",
         "--format=%H%x09%ad%x09%s",
         "--date=short",
+        git_revision,
     ).splitlines()[0]
     first_parts = first.split("\t", 2)
     subsystems = [
@@ -301,6 +315,7 @@ def build_drift_evidence(
             repo_root,
             subsystem_id,
             model,
+            revision=git_revision,
             window=history_window,
         )
         for subsystem_id, model in sorted(catalog["subsystems"].items())
@@ -314,10 +329,17 @@ def build_drift_evidence(
             "historical MVPs and work orders as non-authoritative intent evidence",
         ],
         "repository": {
-            "head": _git(repo_root, "rev-parse", "HEAD").strip(),
-            "branch": _git(repo_root, "branch", "--show-current").strip(),
+            "head": _git(repo_root, "rev-parse", git_revision).strip(),
+            "branch": branch_label
+            or _git(repo_root, "branch", "--show-current").strip(),
+            "requested_revision": git_revision,
             "commit_count": int(
-                _git(repo_root, "rev-list", "--count", "HEAD").strip()
+                _git(
+                    repo_root,
+                    "rev-list",
+                    "--count",
+                    git_revision,
+                ).strip()
             ),
             "first_commit": {
                 "commit": first_parts[0],
@@ -346,8 +368,8 @@ def render_drift_evidence(evidence: Mapping[str, Any]) -> str:
         "",
         "## Repository chronology",
         "",
-        f"- Analyzed branch: `{repository['branch']}`",
-        f"- Analyzed HEAD: `{repository['head']}`",
+        f"- Git baseline label: `{repository['branch']}`",
+        f"- Git baseline revision: `{repository['head']}`",
         f"- Repository commits: {repository['commit_count']}",
         "- First commit: "
         f"`{repository['first_commit']['commit']}` "

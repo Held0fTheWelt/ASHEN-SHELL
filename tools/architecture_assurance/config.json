@@ -5,6 +5,8 @@
   "model_catalog": "tools/architecture_assurance/model_catalog.json",
   "drift_evidence_json": "docs/architecture/evidence/architecture-drift-baseline.json",
   "drift_evidence_markdown": "docs/architecture/evidence/architecture-drift-baseline.md",
+  "drift_baseline_revision": "7466b485ab7c4c35e569750809dfe0f172ecf25a",
+  "drift_baseline_label": "master before semantic-depth implementation",
   "drift_claim_catalog": "tools/architecture_assurance/drift_claim_catalog.json",
   "drift_reconciliation": "docs/architecture/evidence/architecture-drift-reconciliation.md",
   "canon_manifest": "docs/architecture/evidence/akdb-canon-manifest.json",
