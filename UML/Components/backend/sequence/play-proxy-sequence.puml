@@ -1,0 +1,37 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: backend:play-proxy
+title Backend — Player Turn Proxy
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: player
+' bt-element-id: backend
+' bt-element-id: services
+' bt-element-id: game_api
+' bt-element-id: game_service
+' bt-element-id: world
+' bt-element-id: observability
+
+actor "Player\nResponsibility: Authenticate, browse community and start or continue play\nContract: Browser/API session\n[[../../../../docs/architecture/components/backend/architecture.md source]]" as player
+participant "Backend\nResponsibility: Own platform data and governed control-plane operations\nContract: Flask /api/v1\n[[../../../../backend/app/factory_app.py source]]\n[[../components/c4-container.puml drill-down]]" as backend
+participant "Domain Services\nResponsibility: Implement platform and governance use cases\nContract: Transaction-scoped service operations\n[[../../../../backend/app/services/__init__.py source]]" as services
+participant "Game API\nResponsibility: Create run bindings and proxy live play operations\nContract: No backend-local narrative commit\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]" as game_api
+participant "Game Service\nResponsibility: Call world-engine and map service responses\nContract: Internal HTTP and signed ticket\n[[../../../../backend/app/services/game/game_service.py source]]" as game_service
+participant "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/app/main.py source]]" as world
+participant "Observability\nResponsibility: Record platform traces, metrics and diagnostic evidence\nContract: Trace correlation with redaction\n[[../../../../backend/app/observability/__init__.py source]]" as observability
+
+services -> observability : "emits evidence\ncontract: redacted trace correlation\n[[../../../../backend/app/observability/trace.py source]]"
+player -> backend : "uses platform API\ncontract: authenticated HTTP\n[[../../../../backend/app/api/v1/auth_routes.py source]]"
+game_api -> game_service : "delegates live operation\ncontract: proxy-only service seam\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+game_service -> world : "calls story API\ncontract: ticketed HTTP request\n[[../../../../backend/app/services/game/game_service.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: How backend creates trace/ticket context and delegates the live turn
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

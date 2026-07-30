@@ -1,0 +1,24 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: observability-traceability:observability-context
+title Observability - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: operator
+' bt-element-id: trace_system
+
+actor "Operator\nResponsibility: Diagnose a player turn across services\nContract: Authorized redacted view\n[[../../../../administration-tool/templates/manage/diagnosis.html source]]" as operator
+rectangle "Turn Observability\nResponsibility: Correlate execution evidence without owning domain truth\nContract: Trace id and redaction policy\n[[../../../../docs/architecture/project/observability-traceability/architecture.md source]]" as trace_system
+
+operator ..> trace_system : "inspects\ncontract: authorized diagnostic query"
+
+legend bottom
+Viewpoint: context
+Concern: Operator evidence without displacement of domain truth
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

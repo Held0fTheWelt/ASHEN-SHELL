@@ -1,0 +1,27 @@
+@startuml
+' bt-view-kind: deployment
+' bt-view-id: frontend:deployment
+title Frontend - Deployment
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: browser
+' bt-element-id: frontend_node
+' bt-element-id: backend_node
+
+node "Browser\nResponsibility: Execute player shell\nContract: HTML/CSS/JavaScript\n[[../../../../frontend/Dockerfile source]]" as browser
+node "Frontend Process\nResponsibility: Serve routes and assets\nContract: Flask HTTP\n[[../../../../frontend/run.py source]]" as frontend_node
+node "Backend Process\nResponsibility: Serve identity and play proxy\nContract: Internal/public HTTP\n[[../../../../backend/Dockerfile source]]" as backend_node
+
+browser --> frontend_node : "HTTPS\ncontract: page and asset delivery"
+frontend_node --> backend_node : "HTTP\ncontract: backend API client\n[[../../../../frontend/app/api_client.py source]]"
+
+legend bottom
+Viewpoint: deployment
+Concern: Browser, frontend process and backend API boundary
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

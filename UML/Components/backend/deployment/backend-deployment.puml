@@ -1,0 +1,33 @@
+@startuml
+' bt-view-kind: deployment
+' bt-view-id: backend:deployment
+title Backend — Deployment
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: browser
+' bt-element-id: backend_node
+' bt-element-id: database
+' bt-element-id: redis
+' bt-element-id: world_node
+
+node "Browser Clients\nResponsibility: Host player and operator sessions\nContract: HTTPS\n[[../../../../frontend/app/routes.py source]]" as browser
+node "Backend Process\nResponsibility: Serve Flask API and platform pages\nContract: Port 5000\n[[../../../../backend/Dockerfile source]]" as backend_node
+database "Backend Database\nResponsibility: Persist platform and governance truth\nContract: SQLAlchemy/Alembic\n[[../../../../backend/app/extensions.py source]]" as database
+database "Redis\nResponsibility: Share governed runtime configuration and rate-limit state\nContract: Explicit bootstrap and health policy\n[[../../../../docker-compose.yml source]]" as redis
+node "World Engine Process\nResponsibility: Execute authoritative play\nContract: Internal HTTP\n[[../../../../world-engine/Dockerfile source]]" as world_node
+
+backend_node --> database : "SQL\ncontract: transactional persistence\n[[../../../../backend/app/extensions.py source]]"
+backend_node --> redis : "runtime governance\ncontract: shared configured state\n[[../../../../backend/app/services/governance/runtime_config_truth_service.py source]]"
+backend_node --> world_node : "internal HTTP\ncontract: play proxy boundary\n[[../../../../backend/app/services/game/game_service.py source]]"
+browser --> backend_node : "HTTPS\ncontract: public API boundary"
+
+legend bottom
+Viewpoint: deployment
+Concern: Backend process, persistence, shared governance store and world-engine boundary
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

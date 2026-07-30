@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: story-runtime-core:domain-components
+title Story Runtime Core - Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: core
+' bt-element-id: models
+' bt-element-id: intent
+' bt-element-id: truth
+' bt-element-id: consequences
+' bt-element-id: branching
+' bt-element-id: delivery
+' bt-element-id: adapters
+
+rectangle "Story Runtime Core\nResponsibility: Provide portable domain contracts and deterministic algorithms\nContract: Python package without service authority\n[[../../../../story_runtime_core/__init__.py source]]" as core
+component "Domain Models\nResponsibility: Define actions, scenes, actors and outcomes\nContract: Serializable value objects\n[[../../../../story_runtime_core/models.py source]]" as models
+component "Input Intent\nResponsibility: Normalize player language into semantic intent\nContract: Locale-independent intent contract\n[[../../../../story_runtime_core/player_input_intent_contract.py source]]" as intent
+component "Committed Truth\nResponsibility: Represent authoritative facts supplied by a runtime\nContract: Immutable snapshot/value semantics\n[[../../../../story_runtime_core/committed_truth.py source]]" as truth
+component "Consequence Cascade\nResponsibility: Compute deterministic downstream effects\nContract: Pure input/output transform\n[[../../../../story_runtime_core/consequences/consequence_cascade.py source]]" as consequences
+component "Branching\nResponsibility: Forecast alternatives without committing them\nContract: Explicit hypothetical state\n[[../../../../story_runtime_core/branching/forecast.py source]]" as branching
+component "Runtime Delivery\nResponsibility: Adapt portable outcomes to callbacks and web delivery\nContract: No ownership transfer\n[[../../../../story_runtime_core/runtime_delivery.py source]]" as delivery
+component "Boundary Adapters\nResponsibility: Map host-specific data to shared contracts\nContract: Anti-corruption mapping\n[[../../../../story_runtime_core/adapters.py source]]" as adapters
+
+core ..> models : "exports\ncontract: stable public values\n[[../../../../story_runtime_core/__init__.py source]]"
+models ..> intent : "constrains\ncontract: semantic action vocabulary\n[[../../../../story_runtime_core/player_input_intent_contract.py source]]"
+adapters ..> models : "maps host values\ncontract: explicit anti-corruption layer\n[[../../../../story_runtime_core/adapters.py source]]"
+intent ..> truth : "is evaluated against\ncontract: confirmed facts only\n[[../../../../story_runtime_core/input_interpreter.py source]]"
+truth ..> consequences : "bounds cascade\ncontract: pure deterministic input\n[[../../../../story_runtime_core/consequences/consequence_cascade.py source]]"
+consequences ..> branching : "feeds alternatives\ncontract: hypothetical only\n[[../../../../story_runtime_core/branching/forecast.py source]]"
+branching ..> delivery : "returns outcome\ncontract: host decides commit\n[[../../../../story_runtime_core/runtime_delivery.py source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Pure model, intent, truth, consequence, branching and delivery seams
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

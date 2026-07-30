@@ -1,0 +1,44 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: world-engine:primary-turn
+title World Engine - Primary Turn
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: player
+' bt-element-id: backend
+' bt-element-id: turn
+' bt-element-id: lifecycle
+' bt-element-id: governance
+' bt-element-id: ai_bridge
+' bt-element-id: validation
+' bt-element-id: store
+' bt-element-id: delivery
+
+actor "Player\nResponsibility: Submit semantic intent and observe committed narrative\nContract: Ticket-bound session\n[[../../../../world-engine/app/api/story_ws.py source]]" as player
+participant "Backend\nResponsibility: Authenticate and proxy play operations\nContract: Signed internal request\n[[../../../../backend/app/services/game/game_service.py source]]" as backend
+participant "Turn Execution\nResponsibility: Run the canonical lifecycle for one player command\nContract: Exactly one commit or explicit rejection\n[[../../../../world-engine/app/story_runtime/manager/turn_execution.py source]]" as turn
+participant "Canonical Turn Lifecycle\nResponsibility: Enforce interpret, propose, validate, commit ordering\nContract: No render before commit\n[[../../../../world-engine/app/story_runtime/canonical_turn_lifecycle.py source]]" as lifecycle
+participant "Live Governance\nResponsibility: Apply runtime policy and authority guards\nContract: Fail-closed mutation policy\n[[../../../../world-engine/app/story_runtime/live_governance.py source]]" as governance
+participant "AI Proposal Bridge\nResponsibility: Request and normalize AI proposal packets\nContract: Proposal-only anti-corruption layer\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]" as ai_bridge
+participant "Commit Resolution\nResponsibility: Validate proposal against world truth and policy\nContract: Accepted/rejected decision with evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]" as validation
+participant "Story Session Store\nResponsibility: Persist committed state and monotonic revision\nContract: Atomic session update\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]" as store
+participant "Delivery Surfaces\nResponsibility: Publish committed blocks and state\nContract: Post-commit events only\n[[../../../../world-engine/app/api/story_ws.py source]]" as delivery
+
+player -> backend : "submits intent\ncontract: authenticated player request\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+turn -> lifecycle : "executes canonical phases\ncontract: ordered lifecycle\n[[../../../../world-engine/app/story_runtime/canonical_turn_lifecycle.py source]]"
+lifecycle -> governance : "checks authority and policy\ncontract: fail closed\n[[../../../../world-engine/app/story_runtime/live_governance.py source]]"
+governance -> ai_bridge : "requests bounded proposal\ncontract: proposal-only\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
+ai_bridge -> validation : "returns candidate\ncontract: proposal plus evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]"
+validation -> store : "commits accepted delta\ncontract: atomic revision or no write\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]"
+store -> delivery : "publishes committed result\ncontract: post-commit only\n[[../../../../world-engine/app/api/story_ws.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: End-to-end authoritative turn from player intent to committed event
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -1,0 +1,32 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: frontend:shell-lifecycle
+title Frontend - Shell Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: idle
+' bt-element-id: launching
+' bt-element-id: live
+' bt-element-id: reconnecting
+
+state "Idle\nResponsibility: Await session selection\nContract: No live binding\n[[../../../../frontend/static/play_session_start.js source]]" as idle
+state "Launching\nResponsibility: Obtain session and ticket\nContract: Single pending launch\n[[../../../../frontend/static/play_session_start.js source]]" as launching
+state "Live\nResponsibility: Accept input and render stream\nContract: Bound session id\n[[../../../../frontend/static/play_shell.js source]]" as live
+state "Reconnecting\nResponsibility: Restore event stream without duplicate rendering\nContract: Resume cursor\n[[../../../../frontend/static/play_live_ws.js source]]" as reconnecting
+
+idle --> launching : "experience selected\ncontract: launch request\n[[../../../../frontend/static/play_session_start.js source]]"
+[*] --> idle : "page ready\ncontract: shell initialized"
+launching --> live : "bootstrap accepted\ncontract: session and stream bound\n[[../../../../frontend/static/play_runtime_bootstrap.js source]]"
+live --> reconnecting : "stream lost\ncontract: retain last cursor\n[[../../../../frontend/static/play_live_ws.js source]]"
+reconnecting --> live : "resume succeeds\ncontract: no duplicate blocks\n[[../../../../frontend/static/play_live_ws.js source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Launch, live and reconnect behavior without local truth drift
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

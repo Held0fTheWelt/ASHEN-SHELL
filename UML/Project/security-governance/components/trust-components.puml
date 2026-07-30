@@ -1,0 +1,39 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: security-governance:trust-components
+title Security Governance - Trust Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: frontend
+' bt-element-id: routes
+' bt-element-id: service
+' bt-element-id: credentials
+' bt-element-id: runtime_secret
+' bt-element-id: audit
+' bt-element-id: mcp
+
+component "Frontend Auth\nResponsibility: Maintain browser session and CSRF policy\nContract: No credential authority\n[[../../../../frontend/app/auth.py source]]" as frontend
+component "Security Governance API\nResponsibility: Authenticate and authorize privileged requests\nContract: Role and CSRF guarded endpoints\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]" as routes
+component "Security Governance Service\nResponsibility: Validate policy and credential operations\nContract: Fail-closed domain service\n[[../../../../backend/app/services/governance/security_governance_service.py source]]" as service
+component "Provider Credential Service\nResponsibility: Seal, rotate and resolve provider secrets\nContract: No plaintext persistence or response\n[[../../../../backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py source]]" as credentials
+component "Runtime Secret Resolver\nResponsibility: Provide ephemeral secret material to authorized calls\nContract: Scoped in-memory use\n[[../../../../backend/app/services/governance/governance_runtime/28_operational_activity_and_runtime_secret.py source]]" as runtime_secret
+component "Security Audit\nResponsibility: Record privileged action without secret content\nContract: Actor, scope and outcome\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]" as audit
+component "MCP Boundary\nResponsibility: Validate local tool scope and delegate privileged operations\nContract: No direct credential mutation\n[[../../../../tools/mcp_server/server.py source]]" as mcp
+
+mcp ..> routes : "delegates governed operation\ncontract: same authorization policy\n[[../../../../tools/mcp_server/backend_client.py source]]"
+frontend ..> routes : "submits authenticated intent\ncontract: session, CSRF and role\n[[../../../../frontend/app/auth.py source]]"
+routes ..> service : "delegates authorized operation\ncontract: validated request\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]"
+service ..> credentials : "seals or rotates credential\ncontract: plaintext ephemeral only\n[[../../../../backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py source]]"
+credentials ..> runtime_secret : "resolves for provider call\ncontract: scoped in-memory secret\n[[../../../../backend/app/services/governance/governance_runtime/28_operational_activity_and_runtime_secret.py source]]"
+service ..> audit : "records outcome\ncontract: redacted security event\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Frontend, API, service, credential, runtime-secret, audit and MCP boundaries
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

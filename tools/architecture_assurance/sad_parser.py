@@ -22,6 +22,11 @@ _PATHISH = re.compile(
     r"(?i)(?:^|[\s(])(?P<path>[A-Za-z0-9_' -]+(?:/[A-Za-z0-9_.?*' -]+)+"
     r"\.(?:py|sql|ya?ml|json|html|js|css|toml|ini|md))(?=$|[\s),.;])"
 )
+_SEMANTIC_OVERLAY = re.compile(
+    r"<!-- BEGIN BT-SEMANTIC-DEPTH:\d+ -->.*?"
+    r"<!-- END BT-SEMANTIC-DEPTH:\d+ -->",
+    re.DOTALL,
+)
 
 
 @dataclass(frozen=True)
@@ -74,6 +79,7 @@ def evidence_paths(text: str) -> tuple[str, ...]:
 
 
 def _parse_blocks(section: str) -> tuple[Declaration, ...]:
+    section = _SEMANTIC_OVERLAY.sub("", section)
     blocks: dict[str, Declaration] = {}
     for match in _TABLE_ROW.finditer(section):
         title = match.group("block").strip()
@@ -122,7 +128,10 @@ def parse_sad(markdown: str) -> SadDocument:
     )
     blocks = _parse_blocks(_section_text(markdown, 5))
     decisions: list[Declaration] = []
-    decision_section = _section_text(markdown, 9)
+    decision_section = _SEMANTIC_OVERLAY.sub(
+        "",
+        _section_text(markdown, 9),
+    )
     for match in _DECISION.finditer(decision_section):
         body = match.group("body")
         status_match = _STATUS.search(body)

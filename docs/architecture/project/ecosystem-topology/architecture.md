@@ -65,6 +65,22 @@ Authoritative: [UML ecosystem context](../../../../UML/Project/ecosystem-topolog
 | Service responsibilities, URLs, proxy paths | Module-level Python layout inside each service |
 | Capability catalog | Player marketing copy |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Whole-system topology, authority map and architecture archaeology for Better Tomorrow.
+
+**Authority rule:** Current executable code and accepted decisions define present truth; Git and archived MVP material are evidence of evolution and intent, not automatic authority.
+
+**Git/archaeology scope:** `backend`, `frontend`, `world-engine`, `ai_stack`, `content`, `tools/mcp_server`, `administration-tool`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Players, operators and bounded systems with explicit authority | [Better Tomorrow - System Context](../../../../UML/Project/ecosystem-topology/context/system-context.md) | Current executable code and accepted decisions define present truth; Git and archived MVP material are evidence of evolution and intent, not automatic authority. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 - Separate deployables per process/container; align secrets between backend and world-engine.
@@ -85,19 +101,96 @@ Authoritative: [UML ecosystem context](../../../../UML/Project/ecosystem-topolog
 | Content | `content/modules/` | YAML modules |
 | MCP | `tools/mcp_server/` | Operator/dev tools |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Operator (`operator`) | `actor` | Inspect and govern the platform | Privileged audited operation | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
+| Player (`player`) | `actor` | Experience and influence a live dramatic scene | Authenticated semantic interaction | [`frontend/templates/session_shell.html`](../../../../frontend/templates/session_shell.html) |
+| Current Code (`current_code`) | `artifact` | Show executable present structures | HEAD plus source anchors | [`README.md`](../../../../README.md) |
+| Git History (`git_history`) | `artifact` | Show movement, replacement and hotspot chronology | Commit and rename evidence | [`.git`](../../../../.git) |
+| Historical MVP Corpus (`archive`) | `artifact` | Preserve earlier goals, audits, snapshots and work orders | Non-authoritative read-only archaeology snapshot | [`docs/architecture/evidence/README.md`](../../evidence/README.md) |
+| Target Architecture (`target`) | `artifact` | State the best coherent solution selected from evidence | Accepted decisions and implementable deltas | [`docs/architecture/project/ecosystem-topology/architecture.md`](architecture.md) |
+| Architecture Reconciliation (`reconciliation`) | `component` | Classify claims and expose contradictions | confirmed, obsolete, conflicting or open | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
+| Authored Truth (`authored_truth`) | `container` | Supply experience identity and policy | Immutable bound module version | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
+| Identity and Platform (`identity`) | `container` | Authenticate users and serve platform data | Backend ownership | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
+| Live Runtime (`live_runtime`) | `container` | Coordinate and commit canonical turns | World-engine ownership | [`world-engine/app/story_runtime/manager/runtime_manager.py`](../../../../world-engine/app/story_runtime/manager/runtime_manager.py) |
+| Play Proxy (`play_proxy`) | `container` | Bridge player requests to live authority | No local story commit | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
+| Proposal Runtime (`proposal_runtime`) | `container` | Interpret, retrieve, plan, realize and validate candidates | AI proposal only | [`ai_stack/langgraph/langgraph_runtime_executor.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor.py) |
+| Confirmed Current (`confirmed`) | `state` | Match current code and accepted decision | Live source anchors | [`docs/architecture/project/ecosystem-topology/evidence-matrix.md`](evidence-matrix.md) |
+| Conflicting (`conflicting`) | `state` | Expose concurrent incompatible truths | Decision required | [`docs/architecture/project/ecosystem-topology/architecture.md`](architecture.md) |
+| Obsolete (`obsolete`) | `state` | Explain superseded historical material | Replacement evidence | [`docs/architecture/project/ecosystem-topology/evidence-matrix.md`](evidence-matrix.md) |
+| Open Target Question (`open`) | `state` | Preserve valuable intent not yet implemented | Explicit option and acceptance evidence | [`docs/architecture/project/ecosystem-topology/mechanism-catalog.md`](mechanism-catalog.md) |
+| Unclassified Claim (`unclassified`) | `state` | Hold an archaeological assertion before verification | Source and date recorded | [`docs/architecture/project/ecosystem-topology/evidence-matrix.md`](evidence-matrix.md) |
+| AI Stack (`ai`) | `system` | Propose dramatically informed outcomes | Proposal-only runtime | [`ai_stack/langgraph/langgraph_runtime_executor.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor.py) |
+| Administration Tool (`admin`) | `system` | Present governed operator workflows | Backend-delegated mutations | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
+| Backend (`backend`) | `system` | Own identity, community and control-plane truth | Flask API | [`backend/app/factory_app.py`](../../../../backend/app/factory_app.py) |
+| Content Authority (`content`) | `system` | Own authored experience facts and policy | Versioned YAML modules | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
+| Frontend (`frontend`) | `system` | Present player interaction and transient UI state | Browser shell | [`frontend/app/__init__.py`](../../../../frontend/app/__init__.py) |
+| MCP Server (`mcp`) | `system` | Expose bounded local automation capabilities | JSON-RPC adapter | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
+| World Engine (`world`) | `system` | Own live sessions and commit story truth | Story HTTP/WebSocket API | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Typical player turn: browser → frontend → backend game routes → world-engine story API → ai_stack graph → validate/commit in engine → response chain back. See [turn-execution-canonical UML](../../../../UML/Project/turn-execution-canonical/README.md).
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Whole-system player turn across all authority boundaries | `sequence` | [Better Tomorrow - Canonical Turn](../../../../UML/Project/ecosystem-topology/sequence/canonical-turn-sequence.md) | 6 |
+| Historical claims become confirmed, obsolete, conflicting or open target options | `state` | [Better Tomorrow - Historical Claim Classification](../../../../UML/Project/ecosystem-topology/states/claim-classification.md) | 6 |
+| Player experience, operator governance and automated inspection remain separated | `usecase` | [Better Tomorrow - Authority Use Cases](../../../../UML/Project/ecosystem-topology/usecases/authority-use-cases.md) | 4 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
+
 ## 7. Deployment View
 
 Run frontend, backend, administration-tool, and world-engine as separate processes. Use `docker-up.py` for local bootstrap. CORS must include frontend origins on backend.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `backend`
+- `frontend`
+- `world-engine`
+- `ai_stack`
+- `content`
+- `tools/mcp_server`
+- `administration-tool`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
 
 ## 8. Crosscutting Concepts
 
 - Ticket bridge: `PLAY_SERVICE_SHARED_SECRET` / `PLAY_SERVICE_SECRET` ([world-engine README](../../../../world-engine/README.md)).
 - Internal API key optional hardening for join-context and termination endpoints.
 - Writers-room is optional demo UI over backend APIs—not production truth.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Historical MVP Corpus | Architecture Reconciliation | supplies historical claims | read-only dated provenance | Contract-only boundary |
+| Current Code | Architecture Reconciliation | supplies present structure | source anchors | Contract-only boundary |
+| Git History | Architecture Reconciliation | supplies evolution | commit/rename chronology | Contract-only boundary |
+| Identity and Platform | Play Proxy | authorizes launch | player and run binding | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
+| Proposal Runtime | Live Runtime | returns candidate | validation evidence and no commit | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| Play Proxy | Live Runtime | forwards command | signed ticket | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
+| Architecture Reconciliation | Target Architecture | justifies target options | accepted decision and delta | Contract-only boundary |
+| Live Runtime | Proposal Runtime | requests candidate | proposal-only call | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| Authored Truth | Live Runtime | bounds session | immutable module version | [`world-engine/app/content/backend_loader.py`](../../../../world-engine/app/content/backend_loader.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -289,6 +382,22 @@ Validation is explicit: `python docker-up.py validate-production-redis` fails if
 - Compose validation via `docker compose -f docker-compose.yml config`
 
 **Evidence.** `docs/architecture/project/ecosystem-topology/architecture.md#d2-docker-up-complete-bootstrap` (archived — see `docs/archive/adr-retired-2026/`)
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1`, `D2` | Players, operators and bounded systems with explicit authority | `context` | [Better Tomorrow - System Context](../../../../UML/Project/ecosystem-topology/context/system-context.md) |
+| `D1`, `D2` | Identity, proxy, authored truth, live commit and proposal runtime boundaries | `container` | [Better Tomorrow - Canonical Runtime Containers](../../../../UML/Project/ecosystem-topology/components/runtime-containers.md) |
+| `D1` | Whole-system player turn across all authority boundaries | `sequence` | [Better Tomorrow - Canonical Turn](../../../../UML/Project/ecosystem-topology/sequence/canonical-turn-sequence.md) |
+| `D2` | Current code, Git evolution and historical MVP corpus drive target selection | `component` | [Better Tomorrow - Architecture Archaeology](../../../../UML/Project/ecosystem-topology/components/architecture-archaeology.md) |
+| `D2` | Historical claims become confirmed, obsolete, conflicting or open target options | `state` | [Better Tomorrow - Historical Claim Classification](../../../../UML/Project/ecosystem-topology/states/claim-classification.md) |
+| `D1` | Player experience, operator governance and automated inspection remain separated | `usecase` | [Better Tomorrow - Authority Use Cases](../../../../UML/Project/ecosystem-topology/usecases/authority-use-cases.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 | Requirement | Verification |
@@ -302,6 +411,31 @@ Validation is explicit: `python docker-up.py validate-production-redis` fails if
 | --- | --- |
 | Backend/runtime shim confusion | backend SAD + classification doc |
 | Duplicate docs in `docs/architecture/` stubs | documentation-supply-chain migration |
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Multiple Vibe-Coding waves produced plausible local solutions, snapshots and repair prompts. The topology classifies current, historical and target models before selecting a coherent architecture.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 2501 | 1142 | 6476 | 757 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-001` | `conflicting` | Competing live-runtime structures | Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth. |
+| `DRIFT-002` | `conflicting` | Proposal finalization is named and shaped like a second commit | Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine. |
+| `DRIFT-003` | `open_target` | Dramatic planner state survival through authoritative commit | Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested. |
+| `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
+| `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
+| `DRIFT-006` | `conflicting` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
+| `DRIFT-007` | `open_target` | Player surface can flatten upstream runtime intelligence | Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields. |
+| `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

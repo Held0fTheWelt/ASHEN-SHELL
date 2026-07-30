@@ -15632,24 +15632,103 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "administration-tool/templates/manage/diagnosis.html",
+        "docs/architecture/project/observability-traceability/architecture.md"
+      ],
+      "concern": "Operator evidence without displacement of domain truth",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 2,
+      "id": "observability-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Project/observability-traceability/depth/c4-context.puml"
+      "path": "UML/Project/observability-traceability/context/observability-context.puml",
+      "relationship_count": 1,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
-      "level": "container",
-      "path": "UML/Project/observability-traceability/depth/c4-container.puml"
-    },
-    {
-      "id": "component",
+      "anchors": [
+        "ai_stack/langfuse/langfuse_evidence.py",
+        "backend/app/api/v1/game/player_turn_trace_start.py",
+        "backend/app/api/v1/game/trace_identity_and_auth_helpers.py",
+        "tools/mcp_server/langfuse_tracing.py",
+        "world-engine/app/observability/trace.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/web/static/ui_traces.js"
+      ],
+      "concern": "Backend, world, AI, MCP and operator projection span ownership",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "trace-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Project/observability-traceability/depth/c4-component.puml"
+      "path": "UML/Project/observability-traceability/components/trace-components.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
+      "anchors": [
+        "ai_stack/langfuse/langfuse_evidence.py",
+        "backend/app/api/v1/game/player_turn_trace_start.py",
+        "backend/app/api/v1/game/trace_identity_and_auth_helpers.py",
+        "world-engine/app/observability/trace.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/web/static/ui_traces.js"
+      ],
+      "concern": "Trace identity and evidence cross the canonical turn boundaries",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 4,
+      "id": "turn-trace",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Project/observability-traceability/sequence/turn-trace.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "ai_stack/langfuse/langfuse_evidence.py",
+        "world-engine/app/observability/audit_log.py",
+        "world-engine/app/observability/trace.py"
+      ],
+      "concern": "Turn trace, owned spans and explainable decisions",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 3,
+      "id": "trace-data-model",
+      "kind": "class",
       "level": "class",
-      "path": "UML/Project/observability-traceability/depth/class-model.puml"
+      "path": "UML/Project/observability-traceability/classes/trace-data-model.puml",
+      "relationship_count": 2,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/api/v1/game/player_turn_trace_start.py",
+        "world-engine/app/middleware/trace_middleware.py",
+        "world-engine/app/observability/langfuse_adapter.py",
+        "world-engine/app/observability/trace.py",
+        "world-engine/app/web/static/ui_traces.js"
+      ],
+      "concern": "Complete and partial telemetry both disclose their evidence quality",
+      "decisions": [
+        "D3"
+      ],
+      "element_count": 5,
+      "id": "trace-lifecycle",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Project/observability-traceability/states/trace-lifecycle.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/project/observability-traceability/architecture.md",

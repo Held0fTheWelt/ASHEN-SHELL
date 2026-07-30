@@ -55,6 +55,22 @@ Authoritative: [C4 context](../../../../UML/Components/ai-stack/components/c4-co
 | `research/`, `mcp/` diagnostics | Backend publish routes for canon |
 | Runtime aspect ledger projections | Direct player-facing HTML |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Proposal-producing narrative intelligence layer: semantic ingress, retrieval, director planning, realization, validation and runtime evidence.
+
+**Authority rule:** AI output is a proposal. World-engine validation and commit remain the only live-story authority.
+
+**Git/archaeology scope:** `ai_stack`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Proposal authority and external collaborators | [AI Stack — System Context](../../../../UML/Components/ai-stack/components/c4-context.md) | AI output is a proposal. World-engine validation and commit remain the only live-story authority. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 - `RuntimeTurnGraphExecutor` implements interpret → retrieve → resolve → director → model → validate/commit hooks.
@@ -77,6 +93,37 @@ Authoritative: [C4 context](../../../../UML/Components/ai-stack/components/c4-co
 
 Authoritative: [C4 container](../../../../UML/Components/ai-stack/components/c4-container.md) · [Mechanism catalog](mechanism-catalog.md)
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| RetrievalContextBundle (`context_pack`) | `class` | Carry bounded retrieval results | Provenance-preserving ranked context | [`ai_stack/rag/retrieval_context_bundles.py`](../../../../ai_stack/rag/retrieval_context_bundles.py) |
+| Runtime Proposal (`proposal`) | `class` | Carry visible blocks and state-delta proposal | Must pass world-engine validation before commit | [`ai_stack/langgraph/langgraph_runtime_package_output.py`](../../../../ai_stack/langgraph/langgraph_runtime_package_output.py) |
+| RuntimeAspectRecord (`aspect`) | `class` | Carry one grounded runtime aspect | Typed source, status and evidence | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
+| SemanticScenePlan (`plan`) | `class` | Carry intended scene target, beats and directives | Immutable proposal structure | [`ai_stack/story_runtime/semantic_planner/semantic_scene_plan/__init__.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/__init__.py) |
+| Capability Registry (`capabilities`) | `component` | Select allowed runtime capabilities | Evidence-gated capability plan | [`ai_stack/capabilities/capability_selector.py`](../../../../ai_stack/capabilities/capability_selector.py) |
+| Director (`director`) | `component` | Select dramatic direction and capability plan | Scene plan and ordered actor directives | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
+| Narrator (`narrator`) | `component` | Realize visible narrative blocks | Proposal-only block stream | [`ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py`](../../../../ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py) |
+| Proposal Validator (`validator`) | `component` | Evaluate seams, capabilities and retry feedback | Accepted proposal or actionable rejection | [`ai_stack/langgraph/validation/builder.py`](../../../../ai_stack/langgraph/validation/builder.py) |
+| Quality Lab (`quality`) | `component` | Score traces and narrative output | Evaluation evidence, never runtime authority | [`ai_stack/quality_lab/evaluation_pipeline.py`](../../../../ai_stack/quality_lab/evaluation_pipeline.py) |
+| RAG Context Fabric (`retrieval`) | `component` | Assemble governed continuity and knowledge context | Bounded context pack with provenance | [`ai_stack/rag/rag_context_pack_build.py`](../../../../ai_stack/rag/rag_context_pack_build.py) |
+| Research Lane (`research`) | `component` | Explore and draft bounded canon improvements | Draft-only findings; cannot publish canon | [`ai_stack/research/canon_improvement_engine.py`](../../../../ai_stack/research/canon_improvement_engine.py) |
+| Runtime Aspect Ledger (`ledger`) | `component` | Project aspect evidence and decision metadata | Typed, non-authoritative evidence records | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
+| Semantic Input Translation (`ingress`) | `component` | Translate player text into bounded intent evidence | Semantic input record without invented state | [`ai_stack/langgraph/runtime_executor/semantic_input_translation.py`](../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py) |
+| LangGraph Runtime Executor (`executor`) | `container` | Coordinate the proposal pipeline | Prepared state in; proposal package out | [`ai_stack/langgraph/runtime_executor/public.py`](../../../../ai_stack/langgraph/runtime_executor/public.py) |
+| Gathering Paused (`paused`) | `state` | Suspend mandatory beat consumption while player remains free | No forced actor return | [`ai_stack/story_runtime/session_loop/replanning.py`](../../../../ai_stack/story_runtime/session_loop/replanning.py) |
+| Idle (`idle`) | `state` | No director pulse is active | No background state mutation | [`ai_stack/story_runtime/director/director_pulse_shadow.py`](../../../../ai_stack/story_runtime/director/director_pulse_shadow.py) |
+| Live Proposal (`live`) | `state` | Produce ordered visible blocks | Proposal-only output | [`ai_stack/story_runtime/block_stream_dual_mode.py`](../../../../ai_stack/story_runtime/block_stream_dual_mode.py) |
+| Shadow Evaluation (`shadow`) | `state` | Evaluate pulse without visible delivery | Evidence only | [`ai_stack/story_runtime/block_stream_dual_mode.py`](../../../../ai_stack/story_runtime/block_stream_dual_mode.py) |
+| AI Stack (`ai`) | `system` | Produce bounded narrative proposals and evidence | No direct authoritative session write | [`ai_stack/__init__.py`](../../../../ai_stack/__init__.py) |
+| Content Authority (`content`) | `system` | Supply canonical scenes, actors and policies | Compiled immutable content inputs | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
+| Model Provider (`provider`) | `system` | Generate model completion | Governed route, budget and timeout | [`ai_stack/operational_profile.py`](../../../../ai_stack/operational_profile.py) |
+| World Engine (`world`) | `system` | Provide authoritative session context and accept or reject proposals | Turn request and validated proposal boundary | [`world-engine/app/story_runtime/manager/runtime_manager.py`](../../../../world-engine/app/story_runtime/manager/runtime_manager.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 ### 6.1 Story turn graph
@@ -93,17 +140,60 @@ When `ADR0041_VALIDATOR_DISPATCH_MODE=plan_enforced`, graph validate seam attach
 
 Shadow/dual-mode pulse emits `block_stream_events` parallel to canonical bundle blocks; frontend may consume event stream when feature flags allow.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) | 10 |
+| How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) | 4 |
+| Shadow/live dual mode and gathering pause semantics | `state` | [AI Stack — Director Pulse Lifecycle](../../../../UML/Components/ai-stack/states/director-pulse-lifecycle.md) | 7 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
+
 ## 7. Deployment View
 
 - Imported as Python package from repo root alongside world-engine.
 - Feature flags for ADR-0041 dispatch, pulse dual-mode, and block-stream WS loop are env-driven.
 - Tests: `ai_stack/tests/`, `tests/gates/test_goc_mvp03_*`.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `ai_stack`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 - Capability budgeting ([ai-stack SAD D12](#d12-controlled-runtime-capability-authority)) — partial.
 - RAG domains: runtime, writers_room, improvement, research ([RAG.md](../../../technical/ai/RAG.md)).
 - Meta-narrative aspects (D13/D14) remain opt-in and validator-gated.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Director | Capability Registry | requests capability plan | evidence-gated selection | [`ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py`](../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py) |
+| Director | Narrator | requests realization | scene plan and actor directives | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
+| Director | SemanticScenePlan | creates | bounded semantic scene plan | [`ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py) |
+| LangGraph Runtime Executor | Semantic Input Translation | interprets input | semantic intent envelope | [`ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py`](../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py) |
+| Semantic Input Translation | RAG Context Fabric | queries grounded context | bounded retrieval query | [`ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py`](../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py) |
+| Runtime Aspect Ledger | RuntimeAspectRecord | aggregates | one record per supported aspect | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
+| Runtime Aspect Ledger | LangGraph Runtime Executor | returns evidence projection | proposal package metadata | [`ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py) |
+| Narrator | Proposal Validator | submits proposal | visible blocks plus proposed delta | [`ai_stack/langgraph/runtime_executor/executor_validation_commit.py`](../../../../ai_stack/langgraph/runtime_executor/executor_validation_commit.py) |
+| SemanticScenePlan | Narrator | guides | realization constraints | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
+| Quality Lab | Runtime Aspect Ledger | reads trace aspects | evaluation-only projection | [`ai_stack/quality_lab/trace_interpreter.py`](../../../../ai_stack/quality_lab/trace_interpreter.py) |
+| Research Lane | Quality Lab | uses evaluation evidence | draft improvement finding | [`ai_stack/research/research_validation.py`](../../../../ai_stack/research/research_validation.py) |
+| RAG Context Fabric | Director | provides context pack | citations and continuity facts | [`ai_stack/langgraph/runtime_executor/executor_director_selection_context.py`](../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py) |
+| Proposal Validator | Runtime Aspect Ledger | records validation evidence | typed aspect status | [`ai_stack/langgraph/validation/result.py`](../../../../ai_stack/langgraph/validation/result.py) |
+| Proposal Validator | Runtime Proposal | annotates | validation result and retry feedback | [`ai_stack/langgraph/validation/result.py`](../../../../ai_stack/langgraph/validation/result.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -1155,6 +1245,22 @@ data.
 
 **Evidence.** [`ai_stack/story_runtime/director/`](../../../../ai_stack/story_runtime/director/), [UML d16](../../../../UML/Components/ai-stack/decisions/d16-director-pulse-block-stream.md), [mechanism catalog](mechanism-catalog.md) AI-M13.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1`, `D10` | Proposal authority and external collaborators | `context` | [AI Stack — System Context](../../../../UML/Components/ai-stack/components/c4-context.md) |
+| `D2`, `D3`, `D5`, `D10` | Major execution, retrieval, planning, validation and evidence seams | `container` | [AI Stack — Runtime Containers](../../../../UML/Components/ai-stack/components/c4-container.md) |
+| `D1`, `D5`, `D6`, `D12` | Internal responsibilities and contracts on the canonical proposal path | `component` | [AI Stack — Proposal Pipeline Components](../../../../UML/Components/ai-stack/components/c4-component.md) |
+| `D1`, `D5`, `D6` | Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) |
+| `D3`, `D4` | How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) |
+| `D3`, `D4`, `D6`, `D12` | Data contracts carried between retrieval, planning, realization and validation | `class` | [AI Stack — Runtime Proposal Data Model](../../../../UML/Components/ai-stack/classes/runtime-proposal-data-model.md) |
+| `D15`, `D16` | Shadow/live dual mode and gathering pause semantics | `state` | [AI Stack — Director Pulse Lifecycle](../../../../UML/Components/ai-stack/states/director-pulse-lifecycle.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 `ai_stack/tests/`, `tests/gates/test_goc_mvp03_*`, aspect contract tests per `docs/architecture/contracts/runtime/`.
@@ -1162,6 +1268,26 @@ data.
 ## 11. Risks & Technical Debt
 
 Despaghettify DS-045/048 hotspots in narrative and authority modules.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+The May refactor moved hundreds of modules into langgraph, story_runtime, RAG and capability packages. Models expose those seams and the still-hot runtime_executor split rather than treating ai_stack as one box.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 630 | 321 | 3321 | 423 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-002` | `conflicting` | Proposal finalization is named and shaped like a second commit | Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine. |
+| `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
+| `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

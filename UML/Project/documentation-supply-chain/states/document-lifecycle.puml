@@ -1,0 +1,32 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: documentation-supply-chain:document-lifecycle
+title Documentation Supply Chain - Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: draft
+' bt-element-id: validated
+' bt-element-id: published
+' bt-element-id: stale
+
+state "Draft\nResponsibility: Accept author changes\nContract: Not yet trusted\n[[../../../../docs/architecture/project/FRONTMATTER.md source]]" as draft
+state "Validated\nResponsibility: Pass structure, links and correspondence checks\nContract: No blocking finding\n[[../../../../tests/gates/test_architecture_documentation_gate.py source]]" as validated
+state "Published\nResponsibility: Appear in navigation and canon\nContract: Role and owner visible\n[[../../../../mkdocs.yml source]]" as published
+state "Stale\nResponsibility: Record detected code or decision drift\nContract: Must be reconciled or archived\n[[../../../../docs/architecture/DOC-HEALTH.md source]]" as stale
+
+draft --> validated : "checks pass\ncontract: links and correspondence valid\n[[../../../../tests/gates/test_architecture_documentation_gate.py source]]"
+[*] --> draft : "document created\ncontract: declared role"
+published --> stale : "code or decision drifts\ncontract: drift finding linked\n[[../../../../docs/architecture/DOC-HEALTH.md source]]"
+stale --> draft : "reconciliation starts\ncontract: owner assigned"
+validated --> published : "navigation includes source\ncontract: discoverable canonical path\n[[../../../../mkdocs.yml source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Draft, validated, published and stale documentation
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

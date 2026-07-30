@@ -1,0 +1,33 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: documentation-supply-chain:publication-components
+title Documentation Supply Chain - Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: source
+' bt-element-id: models
+' bt-element-id: links
+' bt-element-id: gate
+' bt-element-id: site
+
+component "Authoritative Sources\nResponsibility: Hold SAD, decision, contract and runbook truth\nContract: Declared document role\n[[../../../../docs/architecture/project/FRONTMATTER.md source]]" as source
+component "Generated Model Companions\nResponsibility: Project semantic catalog content for navigation\nContract: Regenerated, never hand-divergent\n[[../../../../tools/architecture_assurance/view_builder.py source]]" as models
+component "Link Audit\nResponsibility: Detect missing and stale references\nContract: Repository-relative target resolution\n[[../../../../scripts/architecture_link_audit.py source]]" as links
+component "Documentation Gate\nResponsibility: Enforce required sections, roles and navigation\nContract: Blocking CI findings\n[[../../../../tests/gates/test_architecture_documentation_gate.py source]]" as gate
+component "MkDocs Projection\nResponsibility: Publish navigable documentation\nContract: mkdocs.yml navigation\n[[../../../../mkdocs.yml source]]" as site
+
+source ..> models : "drives projections\ncontract: semantic catalog and SAD intent\n[[../../../../tools/architecture_assurance/view_builder.py source]]"
+models ..> links : "is checked by\ncontract: all generated links resolve\n[[../../../../scripts/architecture_link_audit.py source]]"
+links ..> gate : "supplies findings\ncontract: stable failing paths\n[[../../../../tests/gates/test_architecture_documentation_gate.py source]]"
+gate ..> site : "permits publication\ncontract: all blocking gates pass\n[[../../../../mkdocs.yml source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Source, generated models, validation and publication seams
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

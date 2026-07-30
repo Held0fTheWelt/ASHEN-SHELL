@@ -1,0 +1,30 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: backend:governed-admin-mutation
+title Backend — Governed Admin Mutation
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: operator
+' bt-element-id: governance
+' bt-element-id: models
+' bt-element-id: observability
+
+actor "Operator\nResponsibility: Manage content, providers, policies and diagnostics\nContract: Privileged authenticated request\n[[../../../../docs/architecture/project/security-governance/architecture.md source]]" as operator
+participant "Governance Services\nResponsibility: Validate provider, route, security and runtime settings\nContract: Audit-producing admin mutation boundary\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]" as governance
+participant "Persistence Models\nResponsibility: Represent backend and narrative-governance durable truth\nContract: SQLAlchemy models and Alembic schema\n[[../../../../backend/app/models/__init__.py source]]" as models
+participant "Observability\nResponsibility: Record platform traces, metrics and diagnostic evidence\nContract: Trace correlation with redaction\n[[../../../../backend/app/observability/__init__.py source]]" as observability
+
+governance -> models : "persists settings and audit\ncontract: validated governance transaction\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]"
+operator -> governance : "requests change\ncontract: authenticated intent\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]"
+governance -> observability : "records decision\ncontract: auditable outcome\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Authorization, validation, persistence and audit of operator changes
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

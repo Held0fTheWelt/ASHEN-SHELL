@@ -318,7 +318,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 5,
+        "line": 10,
         "object": "tools/architecture_assurance/config.json#canon_manifest",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -329,7 +329,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 6,
+        "line": 11,
         "object": "tools/architecture_assurance/config.json#canonical_files",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -340,11 +340,66 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 20,
+        "line": 8,
+        "object": "tools/architecture_assurance/config.json#drift_claim_catalog",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#drift_claim_catalog",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 6,
+        "object": "tools/architecture_assurance/config.json#drift_evidence_json",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#drift_evidence_json",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 7,
+        "object": "tools/architecture_assurance/config.json#drift_evidence_markdown",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#drift_evidence_markdown",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 9,
+        "object": "tools/architecture_assurance/config.json#drift_reconciliation",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#drift_reconciliation",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 31,
         "object": "tools/architecture_assurance/config.json#gate",
         "schema_version": "bt.source_anchor.v1"
       },
       "id": "content:tools/architecture_assurance/config.json#gate",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 5,
+        "object": "tools/architecture_assurance/config.json#model_catalog",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#model_catalog",
       "kind": "content"
     },
     {
@@ -384,7 +439,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 23,
+        "line": 34,
         "object": "tools/architecture_assurance/config.json#subsystems",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -395,7 +450,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/audit.py",
         "kind": "python",
-        "line": 304,
+        "line": 366,
         "module": "tools.architecture_assurance.audit",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_report"
@@ -407,7 +462,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/audit.py",
         "kind": "python",
-        "line": 342,
+        "line": 471,
         "module": "tools.architecture_assurance.audit",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "evaluate_gate"
@@ -419,7 +474,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 70,
+        "line": 85,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_canon_manifest"
@@ -455,7 +510,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 158,
+        "line": 173,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "export_canon"
@@ -467,7 +522,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 90,
+        "line": 105,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_canon_manifest"
@@ -491,7 +546,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 197,
+        "line": 212,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "tree_digest"
@@ -503,7 +558,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 94,
+        "line": 109,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "verify_canon_manifest"
@@ -515,7 +570,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 127,
+        "line": 142,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "write_canon_manifest"
@@ -527,7 +582,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/cli.py",
         "kind": "python",
-        "line": 63,
+        "line": 77,
         "module": "tools.architecture_assurance.cli",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "main"
@@ -657,9 +712,93 @@
     },
     {
       "anchor": {
+        "file": "tools/architecture_assurance/drift_claims.py",
+        "kind": "python",
+        "line": 21,
+        "module": "tools.architecture_assurance.drift_claims",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_claim_catalog"
+      },
+      "id": "python:tools.architecture_assurance.drift_claims:load_claim_catalog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_claims.py",
+        "kind": "python",
+        "line": 117,
+        "module": "tools.architecture_assurance.drift_claims",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "project_claim_reconciliation"
+      },
+      "id": "python:tools.architecture_assurance.drift_claims:project_claim_reconciliation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_claims.py",
+        "kind": "python",
+        "line": 58,
+        "module": "tools.architecture_assurance.drift_claims",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_claim_reconciliation"
+      },
+      "id": "python:tools.architecture_assurance.drift_claims:render_claim_reconciliation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_claims.py",
+        "kind": "python",
+        "line": 28,
+        "module": "tools.architecture_assurance.drift_claims",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_claim_catalog"
+      },
+      "id": "python:tools.architecture_assurance.drift_claims:validate_claim_catalog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_evidence.py",
+        "kind": "python",
+        "line": 282,
+        "module": "tools.architecture_assurance.drift_evidence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_drift_evidence"
+      },
+      "id": "python:tools.architecture_assurance.drift_evidence:build_drift_evidence",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_evidence.py",
+        "kind": "python",
+        "line": 337,
+        "module": "tools.architecture_assurance.drift_evidence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_drift_evidence"
+      },
+      "id": "python:tools.architecture_assurance.drift_evidence:render_drift_evidence",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_evidence.py",
+        "kind": "python",
+        "line": 425,
+        "module": "tools.architecture_assurance.drift_evidence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "write_drift_evidence"
+      },
+      "id": "python:tools.architecture_assurance.drift_evidence:write_drift_evidence",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "tools/architecture_assurance/manifest_builder.py",
         "kind": "python",
-        "line": 136,
+        "line": 137,
         "module": "tools.architecture_assurance.manifest_builder",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_manifest"
@@ -671,7 +810,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/manifest_builder.py",
         "kind": "python",
-        "line": 206,
+        "line": 213,
         "module": "tools.architecture_assurance.manifest_builder",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "generate_manifests"
@@ -683,7 +822,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/manifest_builder.py",
         "kind": "python",
-        "line": 22,
+        "line": 23,
         "module": "tools.architecture_assurance.manifest_builder",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "load_config"
@@ -695,7 +834,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/manifest_builder.py",
         "kind": "python",
-        "line": 202,
+        "line": 209,
         "module": "tools.architecture_assurance.manifest_builder",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_manifest"
@@ -753,9 +892,21 @@
     },
     {
       "anchor": {
+        "file": "tools/architecture_assurance/sad_enricher.py",
+        "kind": "python",
+        "line": 400,
+        "module": "tools.architecture_assurance.sad_enricher",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "enrich_sads"
+      },
+      "id": "python:tools.architecture_assurance.sad_enricher:enrich_sads",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "tools/architecture_assurance/sad_parser.py",
         "kind": "python",
-        "line": 28,
+        "line": 33,
         "module": "tools.architecture_assurance.sad_parser",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "Declaration"
@@ -767,7 +918,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/sad_parser.py",
         "kind": "python",
-        "line": 36,
+        "line": 41,
         "module": "tools.architecture_assurance.sad_parser",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "SadDocument"
@@ -779,7 +930,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/sad_parser.py",
         "kind": "python",
-        "line": 58,
+        "line": 63,
         "module": "tools.architecture_assurance.sad_parser",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "evidence_paths"
@@ -791,7 +942,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/sad_parser.py",
         "kind": "python",
-        "line": 119,
+        "line": 125,
         "module": "tools.architecture_assurance.sad_parser",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "parse_sad"
@@ -837,26 +988,110 @@
     },
     {
       "anchor": {
-        "file": "tools/architecture_assurance/view_builder.py",
+        "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 145,
-        "module": "tools.architecture_assurance.view_builder",
+        "line": 30,
+        "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
-        "symbol": "generate_views"
+        "symbol": "SemanticModelError"
       },
-      "id": "python:tools.architecture_assurance.view_builder:generate_views",
+      "id": "python:tools.architecture_assurance.semantic_models:SemanticModelError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/semantic_models.py",
+        "kind": "python",
+        "line": 34,
+        "module": "tools.architecture_assurance.semantic_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_model_catalog"
+      },
+      "id": "python:tools.architecture_assurance.semantic_models:load_model_catalog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/semantic_models.py",
+        "kind": "python",
+        "line": 602,
+        "module": "tools.architecture_assurance.semantic_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_package_readme"
+      },
+      "id": "python:tools.architecture_assurance.semantic_models:render_package_readme",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/semantic_models.py",
+        "kind": "python",
+        "line": 453,
+        "module": "tools.architecture_assurance.semantic_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_semantic_view"
+      },
+      "id": "python:tools.architecture_assurance.semantic_models:render_semantic_view",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/semantic_models.py",
+        "kind": "python",
+        "line": 642,
+        "module": "tools.architecture_assurance.semantic_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_traceability"
+      },
+      "id": "python:tools.architecture_assurance.semantic_models:render_traceability",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/semantic_models.py",
+        "kind": "python",
+        "line": 523,
+        "module": "tools.architecture_assurance.semantic_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_view_companion"
+      },
+      "id": "python:tools.architecture_assurance.semantic_models:render_view_companion",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/semantic_models.py",
+        "kind": "python",
+        "line": 90,
+        "module": "tools.architecture_assurance.semantic_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_model_catalog"
+      },
+      "id": "python:tools.architecture_assurance.semantic_models:validate_model_catalog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/semantic_models.py",
+        "kind": "python",
+        "line": 218,
+        "module": "tools.architecture_assurance.semantic_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "view_requirements"
+      },
+      "id": "python:tools.architecture_assurance.semantic_models:view_requirements",
       "kind": "python"
     },
     {
       "anchor": {
         "file": "tools/architecture_assurance/view_builder.py",
         "kind": "python",
-        "line": 87,
+        "line": 52,
         "module": "tools.architecture_assurance.view_builder",
         "schema_version": "bt.source_anchor.v1",
-        "symbol": "render_view"
+        "symbol": "generate_views"
       },
-      "id": "python:tools.architecture_assurance.view_builder:render_view",
+      "id": "python:tools.architecture_assurance.view_builder:generate_views",
       "kind": "python"
     }
   ],
@@ -875,13 +1110,33 @@
     "content:tools/architecture_assurance/akdb.lock.json#version": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#canon_manifest": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#canonical_files": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#drift_claim_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#drift_evidence_json": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#drift_evidence_markdown": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#drift_reconciliation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#model_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#project_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#repository_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#schema_version": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#subsystems": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:tools.architecture_assurance.view_builder:generate_views": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:tools.architecture_assurance.view_builder:render_view": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+    "python:tools.architecture_assurance.drift_claims:load_claim_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_claims:project_claim_reconciliation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_claims:render_claim_reconciliation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_claims:validate_claim_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_evidence:build_drift_evidence": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_evidence:render_drift_evidence": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_evidence:write_drift_evidence": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.sad_enricher:enrich_sads": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:SemanticModelError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:load_model_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:render_package_readme": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:render_semantic_view": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:render_traceability": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:render_view_companion": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:validate_model_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.semantic_models:view_requirements": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.view_builder:generate_views": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
   },
   "representation_map": {
     "python:tools.architecture_assurance.audit:build_report": "B-depth-audit",
@@ -924,24 +1179,135 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        ".git",
+        "docs/architecture/project/architecture-assurance/architecture.md",
+        "tests/architecture_assurance/test_disposable_akdb_integration.py",
+        "tools/architecture_assurance/cli.py",
+        "tools/architecture_assurance/discovery.py"
+      ],
+      "concern": "Human intent, repository truth and disposable external AKDB",
+      "decisions": [
+        "D1",
+        "D4"
+      ],
+      "element_count": 4,
+      "id": "system-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Project/architecture-assurance/depth/c4-context.puml"
+      "path": "UML/Project/architecture-assurance/context/assurance-context.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
-      "level": "container",
-      "path": "UML/Project/architecture-assurance/depth/c4-container.puml"
-    },
-    {
-      "id": "component",
+      "anchors": [
+        "tools/architecture_assurance/audit.py",
+        "tools/architecture_assurance/canon.py",
+        "tools/architecture_assurance/discovery.py",
+        "tools/architecture_assurance/manifest_builder.py",
+        "tools/architecture_assurance/model_catalog.json",
+        "tools/architecture_assurance/reporters.py",
+        "tools/architecture_assurance/semantic_models.py",
+        "tools/architecture_assurance/view_builder.py"
+      ],
+      "concern": "Discovery, correspondence, semantic projection, audit, reporting and canon seams",
+      "decisions": [
+        "D1",
+        "D2",
+        "D3"
+      ],
+      "element_count": 7,
+      "id": "assurance-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Project/architecture-assurance/depth/c4-component.puml"
+      "path": "UML/Project/architecture-assurance/components/assurance-components.puml",
+      "relationship_count": 7,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
+      "anchors": [
+        "tools/architecture_assurance/audit.py",
+        "tools/architecture_assurance/discovery.py",
+        "tools/architecture_assurance/manifest_builder.py",
+        "tools/architecture_assurance/model_catalog.json",
+        "tools/architecture_assurance/reporters.py",
+        "tools/architecture_assurance/semantic_models.py",
+        "tools/architecture_assurance/view_builder.py"
+      ],
+      "concern": "From authored intent and source discovery to classified evidence",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 6,
+      "id": "audit-flow",
+      "kind": "activity",
+      "level": "activity",
+      "path": "UML/Project/architecture-assurance/activity/audit-flow.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "docs/architecture/project/architecture-assurance/architecture.md",
+        "tests/architecture_assurance/test_disposable_akdb_integration.py",
+        "tools/architecture_assurance/audit.py",
+        "tools/architecture_assurance/canon.py",
+        "tools/architecture_assurance/cli.py",
+        "tools/architecture_assurance/reporters.py"
+      ],
+      "concern": "Audit, multi-format reporting, canonical export and external validation",
+      "decisions": [
+        "D3",
+        "D4"
+      ],
+      "element_count": 6,
+      "id": "export-sequence",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Project/architecture-assurance/sequence/export-sequence.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "tools/architecture_assurance/audit.py",
+        "tools/architecture_assurance/manifest_builder.py",
+        "tools/architecture_assurance/reporters.py",
+        "tools/architecture_assurance/sad_parser.py"
+      ],
+      "concern": "Declarations, correspondence bindings and explainable findings",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 3,
+      "id": "evidence-model",
+      "kind": "class",
       "level": "class",
-      "path": "UML/Project/architecture-assurance/depth/class-model.puml"
+      "path": "UML/Project/architecture-assurance/classes/evidence-model.puml",
+      "relationship_count": 2,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "tools/architecture_assurance/audit.py",
+        "tools/architecture_assurance/canon.py",
+        "tools/architecture_assurance/manifest_builder.py",
+        "tools/architecture_assurance/model_catalog.json",
+        "tools/architecture_assurance/reporters.py"
+      ],
+      "concern": "Intent, correlation, evaluation, export and later drift",
+      "decisions": [
+        "D2",
+        "D3"
+      ],
+      "element_count": 4,
+      "id": "evidence-lifecycle",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Project/architecture-assurance/states/evidence-lifecycle.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/project/architecture-assurance/architecture.md",

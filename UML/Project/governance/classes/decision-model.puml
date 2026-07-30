@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: governance:decision-model
+title Architecture Governance - Decision Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: proposal
+' bt-element-id: decision
+' bt-element-id: exception
+
+class "Decision Proposal\nResponsibility: Frame problem, options and evidence\nContract: Owner and affected scopes\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as proposal {
+  problem
+  options
+  evidence
+  owner
+}
+class "Accepted Decision\nResponsibility: State selected option and consequences\nContract: Stable id and acceptance date\n[[../../../../docs/architecture/project/ADR_ABSORPTION_MATRIX.md source]]" as decision {
+  id
+  status
+  rationale
+  consequences
+}
+class "Governed Exception\nResponsibility: Bound temporary deviation\nContract: Expiry, owner and compensating control\n[[../../../../docs/architecture/project/governance/mechanism-catalog.md source]]" as exception {
+  scope
+  expiry
+  owner
+  control
+}
+
+decision ..> exception : "may bound\ncontract: temporary explicit deviation\n[[../../../../docs/architecture/project/governance/mechanism-catalog.md source]]"
+proposal ..> decision : "is accepted as\ncontract: reviewed rationale\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Proposals, accepted decisions and bounded exceptions
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

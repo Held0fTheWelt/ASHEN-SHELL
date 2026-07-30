@@ -60,6 +60,21 @@ def canonical_paths(
         paths.add((sad_path.parent / "architecture.bindings.json").as_posix())
         for view in subsystem.get("required_views", []):
             paths.add(str(view["path"]).replace("\\", "/"))
+    model_catalog_value = config.get("model_catalog")
+    if model_catalog_value:
+        model_catalog_path = repo_root / str(model_catalog_value)
+        if model_catalog_path.is_file():
+            model_catalog = json.loads(
+                model_catalog_path.read_text(encoding="utf-8-sig")
+            )
+            for model in model_catalog.get("subsystems", {}).values():
+                package_path = Path(str(model["package_path"]))
+                paths.add((package_path / "README.md").as_posix())
+                paths.add((package_path / "TRACEABILITY.md").as_posix())
+                for view in model.get("views", []):
+                    view_path = Path(str(view["path"]))
+                    paths.add(view_path.as_posix())
+                    paths.add(view_path.with_suffix(".md").as_posix())
     return sorted(
         path
         for path in paths

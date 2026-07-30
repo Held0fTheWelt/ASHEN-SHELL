@@ -1,0 +1,30 @@
+@startuml
+' bt-view-kind: deployment
+' bt-view-id: administration-tool:deployment
+title Administration Tool — Deployment
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: operator
+' bt-element-id: browser
+' bt-element-id: admin_process
+' bt-element-id: backend_process
+
+actor "Operator\nResponsibility: Inspect health and request governed changes\nContract: Authenticated browser session with explicit confirmation\n[[../../../../docs/architecture/components/administration-tool/architecture.md source]]" as operator
+node "Browser\nResponsibility: Host the operator session\nContract: HTTPS, cookies and CSRF token\n[[../../../../administration-tool/templates/manage/dashboard.html source]]" as browser
+node "Administration Flask Process\nResponsibility: Serve pages and proxy requests\nContract: Port 5002 in local Compose\n[[../../../../administration-tool/Dockerfile source]]" as admin_process
+node "Backend Flask Process\nResponsibility: Provide authoritative control-plane APIs\nContract: Internal HTTP service\n[[../../../../backend/Dockerfile source]]" as backend_process
+
+operator --> browser : "uses\ncontract: browser session"
+browser --> admin_process : "HTTPS\ncontract: public administration endpoint"
+admin_process --> backend_process : "internal HTTP\ncontract: BACKEND_URL and service credentials"
+
+legend bottom
+Viewpoint: deployment
+Concern: Browser, administration process and backend trust boundary
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

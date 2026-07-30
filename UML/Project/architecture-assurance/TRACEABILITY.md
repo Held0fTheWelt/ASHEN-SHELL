@@ -1,0 +1,12 @@
+# Architecture Assurance UML traceability
+
+| View | Kind | Decisions | Source anchors |
+| --- | --- | --- | --- |
+| [Architecture Assurance - Context](context/assurance-context.md) | `context` | D1, D4 | `.git`, `docs/architecture/project/architecture-assurance/architecture.md`, `tests/architecture_assurance/test_disposable_akdb_integration.py`, `tools/architecture_assurance/cli.py`, `tools/architecture_assurance/discovery.py` |
+| [Architecture Assurance - Components](components/assurance-components.md) | `component` | D1, D2, D3 | `tools/architecture_assurance/audit.py`, `tools/architecture_assurance/canon.py`, `tools/architecture_assurance/discovery.py`, `tools/architecture_assurance/manifest_builder.py`, `tools/architecture_assurance/model_catalog.json`, `tools/architecture_assurance/reporters.py`, `tools/architecture_assurance/semantic_models.py`, `tools/architecture_assurance/view_builder.py` |
+| [Architecture Assurance - Audit Flow](activity/audit-flow.md) | `activity` | D1, D2 | `tools/architecture_assurance/audit.py`, `tools/architecture_assurance/discovery.py`, `tools/architecture_assurance/manifest_builder.py`, `tools/architecture_assurance/model_catalog.json`, `tools/architecture_assurance/reporters.py`, `tools/architecture_assurance/semantic_models.py`, `tools/architecture_assurance/view_builder.py` |
+| [Architecture Assurance - Export Sequence](sequence/export-sequence.md) | `sequence` | D3, D4 | `docs/architecture/project/architecture-assurance/architecture.md`, `tests/architecture_assurance/test_disposable_akdb_integration.py`, `tools/architecture_assurance/audit.py`, `tools/architecture_assurance/canon.py`, `tools/architecture_assurance/cli.py`, `tools/architecture_assurance/reporters.py` |
+| [Architecture Assurance - Evidence Model](classes/evidence-model.md) | `class` | D1 | `tools/architecture_assurance/audit.py`, `tools/architecture_assurance/manifest_builder.py`, `tools/architecture_assurance/reporters.py`, `tools/architecture_assurance/sad_parser.py` |
+| [Architecture Assurance - Evidence Lifecycle](states/evidence-lifecycle.md) | `state` | D2, D3 | `tools/architecture_assurance/audit.py`, `tools/architecture_assurance/canon.py`, `tools/architecture_assurance/manifest_builder.py`, `tools/architecture_assurance/model_catalog.json`, `tools/architecture_assurance/reporters.py` |
+
+The table is a generated correspondence view. Source paths are validated before projection.

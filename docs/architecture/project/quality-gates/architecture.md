@@ -35,6 +35,22 @@ not cosmetic tests.
 
 Covers `tests/gates/`, suite flags, GitHub `architecture-gates` jobs, and MVP locator/evidence artifacts.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Layered test discovery, execution, evidence and CI policy for repository, subsystem, contract, architecture and end-to-end quality.
+
+**Authority rule:** The central runner and declared CI matrix define executed scope; presence-only tests and isolated green suites are not proof of system quality.
+
+**Git/archaeology scope:** `tests`, `scripts/run-quality-gates.sh`, `.github/workflows`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Developer verification through one authoritative gate system | [Quality Gates - Context](../../../../UML/Project/quality-gates/context/quality-context.md) | The central runner and declared CI matrix define executed scope; presence-only tests and isolated green suites are not proof of system quality. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 - Each gate file names the contract/ADR it protects.
@@ -52,17 +68,80 @@ Covers `tests/gates/`, suite flags, GitHub `architecture-gates` jobs, and MVP lo
 | `test_adr0039_*` | Oracle governance |
 | `test_architecture_documentation_gate.py` | SAD/UML completeness |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Developer (`developer`) | `actor` | Run focused and complete verification | Central runner profile | [`tests/TESTING.md`](../../../../tests/TESTING.md) |
+| Quality Finding (`finding`) | `class` | Explain failure or coverage omission | Actionable source location | [`tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md`](../../../../tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md) |
+| Suite Definition (`suite`) | `class` | Declare scope, prerequisites and owner | Stable suite id | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+| Test Execution (`execution`) | `class` | Record exact selected and observed result | Command and environment evidence | [`tests/reports/RUNNER_CI_TRUTH_MATRIX.md`](../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md) |
+| Architecture and Contract Gates (`gates`) | `component` | Enforce boundaries and anti-hardcoding policy | Behavioral assertions | [`tests/gates/test_table_b_anti_hardcoding_gate.py`](../../../../tests/gates/test_table_b_anti_hardcoding_gate.py) |
+| CI Policy (`ci`) | `component` | Apply required gates to repository changes | Blocking workflow matrix | [`.github/workflows/quality-gate.yml`](../../../../.github/workflows/quality-gate.yml) |
+| Central Runner (`runner`) | `component` | Execute subsystem and cross-system suites | One authoritative orchestration path | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+| Evidence Reporter (`report`) | `component` | Expose selected, executed, skipped and failed scope | Machine-readable and human summary | [`tests/reports/RUNNER_CI_TRUTH_MATRIX.md`](../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md) |
+| Integration and E2E (`integration`) | `component` | Prove real authority boundaries and user paths | Disposable dependencies and production path | [`tests/integration/test_story_runtime_experience.py`](../../../../tests/integration/test_story_runtime_experience.py) |
+| Test Selector (`selector`) | `component` | Map changes and profiles to declared suites | No silent omission | [`scripts/test_changed.py`](../../../../scripts/test_changed.py) |
+| Accepted (`accepted`) | `state` | Permit promotion | All required gates pass | [`.github/workflows/quality-gate.yml`](../../../../.github/workflows/quality-gate.yml) |
+| Declared (`declared`) | `state` | Register suite and purpose | Discoverable by central runner | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+| Executed (`executed`) | `state` | Run all selected tests | No hidden skip | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+| Failed (`failed`) | `state` | Block promotion with evidence | Actionable finding | [`tests/reports/RUNNER_CI_TRUTH_MATRIX.md`](../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md) |
+| Selected (`selected`) | `state` | Include suite for current scope | Selection reason visible | [`scripts/test_changed.py`](../../../../scripts/test_changed.py) |
+| Quality Gate System (`quality`) | `system` | Select, execute and report proportionate verification | Stable suite and exit semantics | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 CI workflow invokes `pytest tests/gates` on engine/pre-deployment paths ([gate oracle inventory](../../../governance/gate_oracle_tightness_inventory.md)).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Every selected suite is executed and reported before promotion | `activity` | [Quality Gates - Validation Flow](../../../../UML/Project/quality-gates/activity/validation-flow.md) | 6 |
+| Declared and selected suites cannot silently bypass execution | `state` | [Quality Gates - Lifecycle](../../../../UML/Project/quality-gates/states/gate-lifecycle.md) | 5 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Gates run in GitHub Actions and locally from repo root with venv + deps installed.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `tests`
+- `scripts/run-quality-gates.sh`
+- `.github/workflows`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 MVP reports: `tests/reports/MVP_Live_Runtime_Completion/MVP*_OPERATIONAL_EVIDENCE.md`.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Test Execution | Quality Finding | may emit | source-located evidence | [`tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md`](../../../../tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md) |
+| Architecture and Contract Gates | Evidence Reporter | emits findings | selected/executed truth | [`tests/reports/RUNNER_CI_TRUTH_MATRIX.md`](../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md) |
+| Integration and E2E | Evidence Reporter | emits evidence | production-path outcome | [`tests/integration/test_story_runtime_experience.py`](../../../../tests/integration/test_story_runtime_experience.py) |
+| Evidence Reporter | CI Policy | controls promotion | exit status and artifacts | [`.github/workflows/quality-gate.yml`](../../../../.github/workflows/quality-gate.yml) |
+| Central Runner | Architecture and Contract Gates | executes static and contract gates | blocking assertions | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+| Central Runner | Integration and E2E | executes boundary proof | disposable test environment | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+| Test Selector | Central Runner | supplies selected suites | selection rationale | [`scripts/test_changed.py`](../../../../scripts/test_changed.py) |
+| Suite Definition | Test Execution | produces | exact environment and command | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -217,6 +296,21 @@ Gate tests remain subject to [ADR-0039](../../../archive/adr-retired-2026/adr-00
 **Origin:** MVP4-TEST-GATE-PLAN (retired 2026-06-23)
 
 **Evidence.** [mvp-live-runtime-completion SAD §9](../mvp-live-runtime-completion/architecture.md#9-architecture-decisions) (archived MVP4 gate plan — see `docs/archive/adr-retired-2026/`)
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1` | Developer verification through one authoritative gate system | `context` | [Quality Gates - Context](../../../../UML/Project/quality-gates/context/quality-context.md) |
+| `D1`, `D2` | Selection, execution, boundary proof, evidence and CI promotion | `component` | [Quality Gates - Components](../../../../UML/Project/quality-gates/components/quality-components.md) |
+| `D1` | Every selected suite is executed and reported before promotion | `activity` | [Quality Gates - Validation Flow](../../../../UML/Project/quality-gates/activity/validation-flow.md) |
+| `D2` | Suite definitions, exact executions and actionable findings | `class` | [Quality Gates - Evidence Model](../../../../UML/Project/quality-gates/classes/evidence-model.md) |
+| `D2` | Declared and selected suites cannot silently bypass execution | `state` | [Quality Gates - Lifecycle](../../../../UML/Project/quality-gates/states/gate-lifecycle.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 | Command | Purpose |
@@ -228,6 +322,25 @@ Gate tests remain subject to [ADR-0039](../../../archive/adr-retired-2026/adr-00
 ## 11. Risks & Technical Debt
 
 Some ADRs marked Not Finished lack dedicated gates—listed as open in owning SADs.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Historical audits repeatedly found undiscovered tests, mock-only integration and runner divergence. Models expose suite ownership, promotion and evidence semantics.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 147 | 260 | 1624 | 6 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-003` | `open_target` | Dramatic planner state survival through authoritative commit | Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested. |
+| `DRIFT-009` | `open_target` | Test presence and archived green runs can overstate proof | Generate the CI/test matrix from one suite catalog. Gate orphan test files, hidden skips, mock-only integration labels and profile/CI divergence. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

@@ -28,6 +28,22 @@ program status, guide order, and which evidence files prove live-runtime claims.
 
 Guides under [`docs/MVPs/MVP_Live_Runtime_Completion/`](../../../MVPs/MVP_Live_Runtime_Completion/README.md); normative MVP decisions in [§9 of this SAD](#9-architecture-decisions) and [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md).
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Evidence-backed capability closure for one complete Better Tomorrow live dramatic experience.
+
+**Authority rule:** A capability is complete only when its production path, runtime behavior, user-visible outcome and durable evidence agree; task documents alone confer no completion.
+
+**Git/archaeology scope:** `tests/reports/MVP_Live_Runtime_Completion`, `tests/e2e`, `tests/smoke`, `frontend`, `world-engine`, `ai_stack/story_runtime`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Player-visible experience as the completion boundary | [MVP Completion - Experience Context](../../../../UML/Project/mvp-live-runtime-completion/context/experience-context.md) | A capability is complete only when its production path, runtime behavior, user-visible outcome and durable evidence agree; task documents alone confer no completion. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 Each MVP completes SOURCE_LOCATOR and OPERATIONAL_EVIDENCE artifacts before closure.
@@ -42,17 +58,82 @@ Each MVP completes SOURCE_LOCATOR and OPERATIONAL_EVIDENCE artifacts before clos
 | MVP4 observability | observability-traceability |
 | MVP5 frontend blocks | frontend |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Player (`player`) | `actor` | Launch and play the God of Carnage experience | Real browser/runtime path | [`tests/e2e/test_final_goc_annette_alain_e2e.py`](../../../../tests/e2e/test_final_goc_annette_alain_e2e.py) |
+| Capability Claim (`claim`) | `class` | State user-observable outcome | Stable capability id | [`docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`](evidence-matrix.md) |
+| Capability Proof (`proof`) | `class` | Bind code, test, trace and demonstration | Production-path evidence | [`tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`](../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md) |
+| Residual Gap (`gap`) | `class` | Explain incomplete cross-link or degraded behavior | Owner and closure criterion | [`docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`](mechanism-catalog.md) |
+| Authoritative Commit (`commit`) | `component` | Apply accepted dramatic outcome to live truth | World-engine-only commit | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| Experience Launch (`launch`) | `component` | Bind module, role, run and session | Correct experience identity | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
+| NPC Agency (`agency`) | `component` | Produce motivated autonomous reactions | Character knowledge and goal bounds | [`ai_stack/story_runtime/npc_agency/npc_agency_planner.py`](../../../../ai_stack/story_runtime/npc_agency/npc_agency_planner.py) |
+| Operational Evidence (`evidence`) | `component` | Prove the same path through tests and trace artifacts | Reproducible source-located evidence | [`tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`](../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md) |
+| Player Rendering (`render`) | `component` | Expose speaker, action and dramatic blocks | Committed typed blocks | [`frontend/static/play_block_renderer.js`](../../../../frontend/static/play_block_renderer.js) |
+| Player Semantics (`semantics`) | `component` | Preserve free player intent beyond canned choices | Semantic action intent | [`ai_stack/story_runtime/player_action_resolution.py`](../../../../ai_stack/story_runtime/player_action_resolution.py) |
+| Implemented (`implemented`) | `state` | Provide production code path | Source-located behavior | [`docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`](evidence-matrix.md) |
+| Integrated (`integrated`) | `state` | Survive all authority boundaries | End-to-end path | [`tests/integration/test_story_runtime_experience.py`](../../../../tests/integration/test_story_runtime_experience.py) |
+| Proposed (`proposed`) | `state` | Define capability and acceptance | No completion claim | [`docs/architecture/project/mvp-live-runtime-completion/architecture.md`](architecture.md) |
+| Proven (`proven`) | `state` | Pass user-visible and operational evidence | Repeatable acceptance | [`tests/e2e/test_final_goc_annette_alain_e2e.py`](../../../../tests/e2e/test_final_goc_annette_alain_e2e.py) |
+| Regressed (`regressed`) | `state` | Record later drift from proven behavior | Finding and reproduction | [`docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`](mechanism-catalog.md) |
+| Live Dramatic Experience (`experience`) | `system` | Deliver a responsive, stateful, role-sensitive scene | End-to-end acceptance contract | [`docs/architecture/project/mvp-live-runtime-completion/architecture.md`](architecture.md) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 See [mvp-live-runtime-completion UML](../../../../UML/Project/mvp-live-runtime-completion/README.md).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| One real turn preserves semantics and evidence to the player surface | `sequence` | [MVP Completion - End-to-End Turn](../../../../UML/Project/mvp-live-runtime-completion/sequence/end-to-end-turn.md) | 5 |
+| Implementation is not completion until integrated and proven | `state` | [MVP Completion - Capability Lifecycle](../../../../UML/Project/mvp-live-runtime-completion/states/capability-lifecycle.md) | 5 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Documented in MVP guides and admin setup docs.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `tests/reports/MVP_Live_Runtime_Completion`
+- `tests/e2e`
+- `tests/smoke`
+- `frontend`
+- `world-engine`
+- `ai_stack/story_runtime`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 MVP scope and anti-creep policy (formerly `mvp_definition`) are defined in §2 Constraints and the live-runtime guides.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| NPC Agency | Authoritative Commit | proposes outcome | uncommitted candidate | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| Capability Claim | Capability Proof | requires | all evidence dimensions | [`docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`](evidence-matrix.md) |
+| Authoritative Commit | Player Rendering | publishes blocks | accepted result only | [`world-engine/app/api/story_ws.py`](../../../../world-engine/app/api/story_ws.py) |
+| Experience Launch | Player Semantics | opens interaction | bound role and session | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
+| Capability Proof | Residual Gap | exposes missing evidence as | no false completion | [`docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`](mechanism-catalog.md) |
+| Player Rendering | Operational Evidence | is proven by | observable assertion and trace | [`tests/e2e/test_final_goc_annette_alain_e2e.py`](../../../../tests/e2e/test_final_goc_annette_alain_e2e.py) |
+| Player Semantics | NPC Agency | triggers dramatic response | interpreted intent and context | [`ai_stack/story_runtime/player_action_resolution.py`](../../../../ai_stack/story_runtime/player_action_resolution.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -2180,6 +2261,21 @@ if (a11yBtn) {
 ---
 
 **Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` (archived — see `docs/archive/adr-retired-2026/`)
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1` | Player-visible experience as the completion boundary | `context` | [MVP Completion - Experience Context](../../../../UML/Project/mvp-live-runtime-completion/context/experience-context.md) |
+| `D1`, `D2` | Launch, semantics, agency, commit, rendering and evidence must all connect | `component` | [MVP Completion - Capability Chain](../../../../UML/Project/mvp-live-runtime-completion/components/capability-components.md) |
+| `D1` | One real turn preserves semantics and evidence to the player surface | `sequence` | [MVP Completion - End-to-End Turn](../../../../UML/Project/mvp-live-runtime-completion/sequence/end-to-end-turn.md) |
+| `D2` | Claims require multidimensional proof and explicit residual gaps | `class` | [MVP Completion - Evidence Model](../../../../UML/Project/mvp-live-runtime-completion/classes/capability-evidence-model.md) |
+| `D2` | Implementation is not completion until integrated and proven | `state` | [MVP Completion - Capability Lifecycle](../../../../UML/Project/mvp-live-runtime-completion/states/capability-lifecycle.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 `python tests/run_tests.py --mvp1` … `--mvp4`; MVP evidence files under `tests/reports/`.
@@ -2187,6 +2283,31 @@ if (a11yBtn) {
 ## 11. Risks & Technical Debt
 
 Some MVP ADRs overlap main-series ADRs—component SAD is normative for technical truth.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Many historical MVP waves declared local completion while later audits found broken handoffs. Models keep capability claims tied to the end-to-end turn and classify evidence maturity.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 663 | 408 | 2001 | 24 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-001` | `conflicting` | Competing live-runtime structures | Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth. |
+| `DRIFT-002` | `conflicting` | Proposal finalization is named and shaped like a second commit | Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine. |
+| `DRIFT-003` | `open_target` | Dramatic planner state survival through authoritative commit | Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested. |
+| `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
+| `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
+| `DRIFT-006` | `conflicting` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
+| `DRIFT-007` | `open_target` | Player surface can flatten upstream runtime intelligence | Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields. |
+| `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

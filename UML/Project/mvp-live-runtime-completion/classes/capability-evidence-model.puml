@@ -1,0 +1,41 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: mvp-live-runtime-completion:capability-evidence-model
+title MVP Completion - Evidence Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: claim
+' bt-element-id: proof
+' bt-element-id: gap
+
+class "Capability Claim\nResponsibility: State user-observable outcome\nContract: Stable capability id\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md source]]" as claim {
+  capability
+  observable outcome
+  owner
+}
+class "Capability Proof\nResponsibility: Bind code, test, trace and demonstration\nContract: Production-path evidence\n[[../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md source]]" as proof {
+  source
+  test
+  trace
+  artifact
+}
+class "Residual Gap\nResponsibility: Explain incomplete cross-link or degraded behavior\nContract: Owner and closure criterion\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md source]]" as gap {
+  symptom
+  seam
+  risk
+  closure
+}
+
+claim ..> proof : "requires\ncontract: all evidence dimensions\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md source]]"
+proof ..> gap : "exposes missing evidence as\ncontract: no false completion\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Claims require multidimensional proof and explicit residual gaps
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

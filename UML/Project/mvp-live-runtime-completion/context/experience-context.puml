@@ -1,0 +1,24 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: mvp-live-runtime-completion:experience-context
+title MVP Completion - Experience Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: player
+' bt-element-id: experience
+
+actor "Player\nResponsibility: Launch and play the God of Carnage experience\nContract: Real browser/runtime path\n[[../../../../tests/e2e/test_final_goc_annette_alain_e2e.py source]]" as player
+rectangle "Live Dramatic Experience\nResponsibility: Deliver a responsive, stateful, role-sensitive scene\nContract: End-to-end acceptance contract\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/architecture.md source]]" as experience
+
+player ..> experience : "plays and evaluates\ncontract: real runtime path"
+
+legend bottom
+Viewpoint: context
+Concern: Player-visible experience as the completion boundary
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

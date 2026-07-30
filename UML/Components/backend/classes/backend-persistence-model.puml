@@ -1,0 +1,49 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: backend:persistence-model
+title Backend — Persistence Ownership Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: platform_models
+' bt-element-id: narrative_models
+' bt-element-id: migration
+' bt-element-id: models
+
+class "Platform Models\nResponsibility: Persist identity, community and site state\nContract: Backend database ownership\n[[../../../../backend/app/models/backend/user.py source]]" as platform_models {
+  User
+  Role
+  NewsArticle
+  WikiPage
+  Forum
+  SiteSetting
+}
+class "Narrative Governance Models\nResponsibility: Persist packages, revisions, evaluations and runtime read models\nContract: Governance truth, not live session authority\n[[../../../../backend/app/models/world_engine/narrative_contracts.py source]]" as narrative_models {
+  NarrativePackage
+  RevisionCandidate
+  EvaluationRun
+  RuntimeHealth
+  RuntimeSession
+}
+class "Alembic Schema\nResponsibility: Version backend persistence\nContract: Forward migration sequence\n[[../../../../backend/migrations/env.py source]]" as migration {
+  48 tracked revisions
+  backend tables
+  governance tables
+}
+class "Persistence Models\nResponsibility: Represent backend and narrative-governance durable truth\nContract: SQLAlchemy models and Alembic schema\n[[../../../../backend/app/models/__init__.py source]]" as models {
+
+}
+
+migration ..> models : "versions\ncontract: Alembic migration history\n[[../../../../backend/migrations/env.py source]]"
+models ..> narrative_models : "contains\ncontract: governance read model ownership\n[[../../../../backend/app/models/world_engine/__init__.py source]]"
+models ..> platform_models : "contains\ncontract: platform ownership\n[[../../../../backend/app/models/backend/__init__.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Separation of platform truth, narrative governance read models and schema evolution
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

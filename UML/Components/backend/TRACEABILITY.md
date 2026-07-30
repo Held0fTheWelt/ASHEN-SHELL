@@ -1,9 +1,13 @@
-# backend TRACEABILITY
+# Backend UML traceability
 
-| Diagram | Decision | Claim | Source | Test / gate |
-| --- | --- | --- | --- | --- |
-| c4-context | D1 | Session surface quarantine | see component SAD | `tests/gates/` |
-| c4-context | D2 | Player session bundle | see component SAD | `tests/gates/` |
-| c4-context | D3 | Story API proxy | see component SAD | `tests/gates/` |
-| c4-context | D4 | ADR-0041 readiness consumer | see component SAD | `tests/gates/` |
-| c4-context | D5 | WebSocket ticket bridge | see component SAD | `tests/gates/` |
+| View | Kind | Decisions | Source anchors |
+| --- | --- | --- | --- |
+| [Backend — System Context](components/c4-context.md) | `context` | D1, D2, D4 | `administration-tool/app.py`, `administration-tool/route_registration_manage_sections.py`, `backend/app/api/v1/auth_routes.py`, `backend/app/api/v1/security_governance_routes.py`, `backend/app/factory_app.py`, `backend/app/services/game/game_service.py`, `docs/architecture/components/backend/architecture.md`, `docs/architecture/project/security-governance/architecture.md`, `world-engine/app/main.py` |
+| [Backend — Runtime Containers](components/c4-container.md) | `container` | D1, D2 | `backend/app/api/v1/__init__.py`, `backend/app/extensions.py`, `backend/app/models/__init__.py`, `backend/app/observability/__init__.py`, `backend/app/observability/trace.py`, `backend/app/runtime/__init__.py`, `backend/app/services/__init__.py` |
+| [Backend — Core Components](components/c4-component.md) | `component` | D1, D4 | `backend/app/api/v1/auth_routes.py`, `backend/app/api/v1/game/player_turn_execution_and_flush.py`, `backend/app/models/__init__.py`, `backend/app/observability/__init__.py`, `backend/app/observability/trace.py`, `backend/app/services/__init__.py`, `backend/app/services/game/game_content_service.py`, `backend/app/services/game/game_service.py`, `backend/app/services/governance/governance_runtime_service.py`, `world-engine/app/main.py` |
+| [Backend — Player Turn Proxy](sequence/play-proxy-sequence.md) | `sequence` | D1 | `backend/app/api/v1/auth_routes.py`, `backend/app/api/v1/game/player_turn_execution_and_flush.py`, `backend/app/factory_app.py`, `backend/app/observability/__init__.py`, `backend/app/observability/trace.py`, `backend/app/services/__init__.py`, `backend/app/services/game/game_service.py`, `docs/architecture/components/backend/architecture.md`, `world-engine/app/main.py` |
+| [Backend — Governed Admin Mutation](sequence/governed-admin-mutation-sequence.md) | `sequence` | D4 | `backend/app/api/v1/security_governance_routes.py`, `backend/app/models/__init__.py`, `backend/app/observability/__init__.py`, `backend/app/services/governance/governance_runtime_service.py`, `backend/app/services/governance/observability_governance_service.py`, `docs/architecture/project/security-governance/architecture.md` |
+| [Backend — Persistence Ownership Model](classes/backend-persistence-model.md) | `class` | D1, D2 | `backend/app/models/__init__.py`, `backend/app/models/backend/__init__.py`, `backend/app/models/backend/user.py`, `backend/app/models/world_engine/__init__.py`, `backend/app/models/world_engine/narrative_contracts.py`, `backend/migrations/env.py` |
+| [Backend — Deployment](deployment/backend-deployment.md) | `deployment` | D2, D4 | `backend/Dockerfile`, `backend/app/extensions.py`, `backend/app/services/game/game_service.py`, `backend/app/services/governance/runtime_config_truth_service.py`, `docker-compose.yml`, `frontend/app/routes.py`, `world-engine/Dockerfile` |
+
+The table is a generated correspondence view. Source paths are validated before projection.

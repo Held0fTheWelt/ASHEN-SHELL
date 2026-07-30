@@ -1,0 +1,29 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: story-runtime-core:value-lifecycle
+title Story Runtime Core - Value Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: candidate
+' bt-element-id: validated
+' bt-element-id: adapted
+
+state "Candidate\nResponsibility: Represent unvalidated shared-domain value\nContract: No host commitment\n[[../../../../story_runtime_core/models.py source]]" as candidate
+state "Validated\nResponsibility: Meet portable invariants\nContract: Safe to return to host\n[[../../../../story_runtime_core/model_registry.py source]]" as validated
+state "Adapted\nResponsibility: Map into host contract\nContract: Authority remains with caller\n[[../../../../story_runtime_core/adapters.py source]]" as adapted
+
+adapted --> [*] : "returned\ncontract: caller retains authority"
+candidate --> validated : "invariants pass\ncontract: portable contract valid\n[[../../../../story_runtime_core/model_registry.py source]]"
+[*] --> candidate : "value created\ncontract: uncommitted"
+validated --> adapted : "host mapping succeeds\ncontract: explicit adapter\n[[../../../../story_runtime_core/adapters.py source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Validation and host adaptation of uncommitted shared values
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

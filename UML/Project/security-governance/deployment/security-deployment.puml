@@ -1,0 +1,30 @@
+@startuml
+' bt-view-kind: deployment
+' bt-view-id: security-governance:security-deployment
+title Security Governance - Deployment
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: browser_node
+' bt-element-id: backend_node
+' bt-element-id: store_node
+' bt-element-id: provider_node
+
+node "Browser\nResponsibility: Hold protected user session\nContract: Secure cookie and CSRF\n[[../../../../frontend/app/auth.py source]]" as browser_node
+node "Backend Security Boundary\nResponsibility: Authorize and manage encrypted secrets\nContract: Private application process\n[[../../../../backend/Dockerfile source]]" as backend_node
+database "Encrypted Governance Store\nResponsibility: Persist ciphertext and audit events\nContract: Encryption at rest\n[[../../../../backend/app/extensions.py source]]" as store_node
+node "External Model Provider\nResponsibility: Accept authenticated inference call\nContract: TLS and scoped provider key\n[[../../../../backend/app/services/governance/governance_runtime/03_provider_contracts_remote_and_mock.py source]]" as provider_node
+
+backend_node --> provider_node : "TLS inference call\ncontract: ephemeral scoped secret\n[[../../../../backend/app/services/governance/governance_runtime/05_provider_probe_http.py source]]"
+backend_node --> store_node : "encrypted persistence\ncontract: ciphertext and audit\n[[../../../../backend/app/extensions.py source]]"
+browser_node --> backend_node : "HTTPS\ncontract: secure session and CSRF"
+
+legend bottom
+Viewpoint: deployment
+Concern: Browser trust boundary, backend secret authority, encrypted store and provider call
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -1,0 +1,35 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: ecosystem-topology:claim-classification
+title Better Tomorrow - Historical Claim Classification
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: unclassified
+' bt-element-id: confirmed
+' bt-element-id: obsolete
+' bt-element-id: conflicting
+' bt-element-id: open
+
+state "Unclassified Claim\nResponsibility: Hold an archaeological assertion before verification\nContract: Source and date recorded\n[[../../../../docs/architecture/project/ecosystem-topology/evidence-matrix.md source]]" as unclassified
+state "Confirmed Current\nResponsibility: Match current code and accepted decision\nContract: Live source anchors\n[[../../../../docs/architecture/project/ecosystem-topology/evidence-matrix.md source]]" as confirmed
+state "Obsolete\nResponsibility: Explain superseded historical material\nContract: Replacement evidence\n[[../../../../docs/architecture/project/ecosystem-topology/evidence-matrix.md source]]" as obsolete
+state "Conflicting\nResponsibility: Expose concurrent incompatible truths\nContract: Decision required\n[[../../../../docs/architecture/project/ecosystem-topology/architecture.md source]]" as conflicting
+state "Open Target Question\nResponsibility: Preserve valuable intent not yet implemented\nContract: Explicit option and acceptance evidence\n[[../../../../docs/architecture/project/ecosystem-topology/mechanism-catalog.md source]]" as open
+
+conflicting --> open : "decision framed\ncontract: trade-offs and acceptance criteria"
+[*] --> unclassified : "claim harvested\ncontract: provenance recorded"
+unclassified --> confirmed : "matches current code\ncontract: source and test proof"
+unclassified --> conflicting : "multiple truths remain\ncontract: conflict evidence"
+unclassified --> obsolete : "superseded\ncontract: replacement commit or decision"
+unclassified --> open : "valuable intent unimplemented\ncontract: target option retained"
+
+legend bottom
+Viewpoint: state
+Concern: Historical claims become confirmed, obsolete, conflicting or open target options
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

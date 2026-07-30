@@ -1,9 +1,11 @@
-# quality-gates TRACEABILITY
+# Quality Gates UML traceability
 
-| Diagram | Decision | Claim | Source | Test / gate |
-| --- | --- | --- | --- | --- |
-| c4-context | D1 | Canonical test runner | see component SAD | `tests/gates/` |
-| c4-context | D2 | Suite presets | see component SAD | `tests/gates/` |
-| c4-context | D3 | Python 3.14 standard | see component SAD | `tests/gates/` |
-| c4-context | D4 | Architecture doc gate | see component SAD | `tests/gates/` |
-| c4-context | §9 | MVP4 test gate plan | see component SAD | `tests/gates/` |
+| View | Kind | Decisions | Source anchors |
+| --- | --- | --- | --- |
+| [Quality Gates - Context](context/quality-context.md) | `context` | D1 | `tests/TESTING.md`, `tests/run_tests.py` |
+| [Quality Gates - Components](components/quality-components.md) | `component` | D1, D2 | `.github/workflows/quality-gate.yml`, `scripts/test_changed.py`, `tests/gates/test_table_b_anti_hardcoding_gate.py`, `tests/integration/test_story_runtime_experience.py`, `tests/reports/RUNNER_CI_TRUTH_MATRIX.md`, `tests/run_tests.py` |
+| [Quality Gates - Validation Flow](activity/validation-flow.md) | `activity` | D1 | `.github/workflows/quality-gate.yml`, `scripts/test_changed.py`, `tests/gates/test_table_b_anti_hardcoding_gate.py`, `tests/integration/test_story_runtime_experience.py`, `tests/reports/RUNNER_CI_TRUTH_MATRIX.md`, `tests/run_tests.py` |
+| [Quality Gates - Evidence Model](classes/evidence-model.md) | `class` | D2 | `tests/reports/RUNNER_CI_TRUTH_MATRIX.md`, `tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md`, `tests/run_tests.py` |
+| [Quality Gates - Lifecycle](states/gate-lifecycle.md) | `state` | D2 | `.github/workflows/quality-gate.yml`, `scripts/test_changed.py`, `tests/reports/RUNNER_CI_TRUTH_MATRIX.md`, `tests/run_tests.py` |
+
+The table is a generated correspondence view. Source paths are validated before projection.

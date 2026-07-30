@@ -19,6 +19,22 @@ Phase-A security baseline ([ADR-0028](../../../archive/adr-retired-2026/adr-0028
 
 In scope: handlers, diagnostics, backend session factories. Out of scope: live turn commit.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Local MCP protocol adapter exposing explicit filesystem, backend-session, governance, evaluation, research and observability tools.
+
+**Authority rule:** The MCP server owns protocol validation and tool routing only; domain mutations remain with backend or world-engine authorities.
+
+**Git/archaeology scope:** `tools/mcp_server`, `scripts/wos_mcp_stdio_launcher.py`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Protocol adapter boundary against domain authorities | [MCP Server - Context](../../../../UML/Components/mcp-server/context/mcp-context.md) | The MCP server owns protocol validation and tool routing only; domain mutations remain with backend or world-engine authorities. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 Canonical surface defines tool names and authorization; server implements transport.
@@ -33,17 +49,75 @@ session shapes. Rate-limit inventory from ADR-0048 is checked when adding new pu
 | Session factories | `backend_session_mcp_handler_factories.py` |
 | Tests | `tools/mcp_server/tests/` |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| MCP Client (`client`) | `actor` | Discover and invoke Better Tomorrow tools | JSON-RPC over stdio | [`tools/mcp_server/README.md`](../../../../tools/mcp_server/README.md) |
+| Backend Client (`backend_client`) | `component` | Delegate governed session and platform operations | Authenticated HTTP with normalized errors | [`tools/mcp_server/backend_client.py`](../../../../tools/mcp_server/backend_client.py) |
+| Capability Registry (`registry`) | `component` | Publish stable tool, resource and prompt metadata | Unique names and schemas | [`tools/mcp_server/registry.py`](../../../../tools/mcp_server/registry.py) |
+| Filesystem Tools (`fs`) | `component` | Inspect explicitly allowed repository paths | Resolved-root containment | [`tools/mcp_server/handlers/tools_registry_handlers_filesystem.py`](../../../../tools/mcp_server/handlers/tools_registry_handlers_filesystem.py) |
+| Handler Families (`handlers`) | `component` | Implement bounded capability groups | Validated arguments and structured result | [`tools/mcp_server/handlers/__init__.py`](../../../../tools/mcp_server/handlers/__init__.py) |
+| Langfuse Tracing (`observability`) | `component` | Correlate MCP calls without leaking credentials | Redacted trace events | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
+| RPC Router (`router`) | `component` | Decode methods and produce protocol errors | JSON-RPC request/response | [`tools/mcp_server/rpc_method_router.py`](../../../../tools/mcp_server/rpc_method_router.py) |
+| Rate Limiter (`rate_limit`) | `component` | Bound expensive or mutating calls | Per-operation policy | [`tools/mcp_server/rate_limiter.py`](../../../../tools/mcp_server/rate_limiter.py) |
+| Backend Process (`backend_node`) | `node` | Execute governed remote actions | HTTP | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
+| Local Stdio Process (`stdio`) | `node` | Host MCP protocol adapter | One client transport | [`scripts/wos_mcp_stdio_launcher.py`](../../../../scripts/wos_mcp_stdio_launcher.py) |
+| Repository Workspace (`repo`) | `node` | Provide scoped read/write targets | Configured root containment | [`tools/mcp_server/repo_dotenv.py`](../../../../tools/mcp_server/repo_dotenv.py) |
+| Backend (`backend`) | `system` | Authorize and execute platform mutations | Authenticated backend API | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
+| MCP Server (`server`) | `system` | Validate protocol and dispatch registered capabilities | MCP JSON-RPC | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
+| World Engine (`world`) | `system` | Expose safe session inspection and commands | Runtime API | [`world-engine/app/api/http.py`](../../../../world-engine/app/api/http.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Operator/dev invokes MCP → server → backend/world-engine read surfaces per tool contract.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Protocol validation through bounded handler execution | `sequence` | [MCP Server - JSON-RPC Call](../../../../UML/Components/mcp-server/sequence/json-rpc-call-sequence.md) | 6 |
+| Mutation requests remain under backend authority | `sequence` | [MCP Server - Governed Delegation](../../../../UML/Components/mcp-server/sequence/governed-delegation-sequence.md) | 5 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Run as stdio MCP alongside configured backend; see [`MCP.md`](../../../technical/integration/MCP.md).
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+| Concern | Model | Nodes / stores |
+| --- | --- | --- |
+| Local stdio process, scoped repository and backend boundary | [MCP Server - Deployment](../../../../UML/Components/mcp-server/deployment/mcp-deployment.md) | Local Stdio Process, Repository Workspace, Backend Process |
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 Quality lab diagnostics ([ADR-0040](../../../archive/adr-retired-2026/adr-0040-quality-lab-mcp-runtime-diagnostics.md)).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Handler Families | Backend Client | delegates remote operation | normalized backend request | [`tools/mcp_server/backend_client.py`](../../../../tools/mcp_server/backend_client.py) |
+| Handler Families | Filesystem Tools | delegates local operation | scoped filesystem request | [`tools/mcp_server/handlers/tools_registry_handlers_filesystem.py`](../../../../tools/mcp_server/handlers/tools_registry_handlers_filesystem.py) |
+| Handler Families | Rate Limiter | checks policy | budget before execution | [`tools/mcp_server/rate_limiter.py`](../../../../tools/mcp_server/rate_limiter.py) |
+| Handler Families | Langfuse Tracing | emits call evidence | redacted trace | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
+| Capability Registry | Handler Families | binds handler | schema-compatible callable | [`tools/mcp_server/tools_registry.py`](../../../../tools/mcp_server/tools_registry.py) |
+| RPC Router | Capability Registry | resolves capability | registered canonical name | [`tools/mcp_server/registry.py`](../../../../tools/mcp_server/registry.py) |
+| MCP Server | RPC Router | dispatches method | protocol envelope | [`tools/mcp_server/rpc_method_router.py`](../../../../tools/mcp_server/rpc_method_router.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -219,6 +293,20 @@ Review this ADR if:
 
 `ai_stack/tests/test_mcp_canonical_surface_extended.py`, MCP integration docs.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1` | Protocol adapter boundary against domain authorities | `context` | [MCP Server - Context](../../../../UML/Components/mcp-server/context/mcp-context.md) |
+| `D1`, `D2`, `D3` | Routing, registry, handler, safety and observability seams | `component` | [MCP Server - Components](../../../../UML/Components/mcp-server/components/mcp-components.md) |
+| `D1`, `D3` | Protocol validation through bounded handler execution | `sequence` | [MCP Server - JSON-RPC Call](../../../../UML/Components/mcp-server/sequence/json-rpc-call-sequence.md) |
+| `D2` | Mutation requests remain under backend authority | `sequence` | [MCP Server - Governed Delegation](../../../../UML/Components/mcp-server/sequence/governed-delegation-sequence.md) |
+| `D4` | Local stdio process, scoped repository and backend boundary | `deployment` | [MCP Server - Deployment](../../../../UML/Components/mcp-server/deployment/mcp-deployment.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 - Public handlers, session factories and transport routes must be discoverable.
@@ -228,6 +316,24 @@ Review this ADR if:
 ## 11. Risks & Technical Debt
 
 Tool surface must stay aligned with canonical registry.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+A formerly broad tools module has split into registries, routers and handler families. Models make aliases, deferred tools, filesystem scope and mutation delegation explicit.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 107 | 86 | 358 | 13 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

@@ -1,0 +1,33 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: ecosystem-topology:architecture-archaeology
+title Better Tomorrow - Architecture Archaeology
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: current_code
+' bt-element-id: git_history
+' bt-element-id: archive
+' bt-element-id: reconciliation
+' bt-element-id: target
+
+artifact "Current Code\nResponsibility: Show executable present structures\nContract: HEAD plus source anchors\n[[../../../../README.md source]]" as current_code
+artifact "Git History\nResponsibility: Show movement, replacement and hotspot chronology\nContract: Commit and rename evidence\n[[../../../../.git source]]" as git_history
+artifact "Historical MVP Corpus\nResponsibility: Preserve earlier goals, audits, snapshots and work orders\nContract: Non-authoritative read-only archaeology snapshot\n[[../../../../docs/architecture/evidence/README.md source]]" as archive
+component "Architecture Reconciliation\nResponsibility: Classify claims and expose contradictions\nContract: confirmed, obsolete, conflicting or open\n[[../../../../tools/architecture_assurance/model_catalog.json source]]" as reconciliation
+artifact "Target Architecture\nResponsibility: State the best coherent solution selected from evidence\nContract: Accepted decisions and implementable deltas\n[[../../../../docs/architecture/project/ecosystem-topology/architecture.md source]]" as target
+
+archive ..> reconciliation : "supplies historical claims\ncontract: read-only dated provenance"
+current_code ..> reconciliation : "supplies present structure\ncontract: source anchors"
+git_history ..> reconciliation : "supplies evolution\ncontract: commit/rename chronology"
+reconciliation ..> target : "justifies target options\ncontract: accepted decision and delta"
+
+legend bottom
+Viewpoint: component
+Concern: Current code, Git evolution and historical MVP corpus drive target selection
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

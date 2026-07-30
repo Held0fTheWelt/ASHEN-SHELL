@@ -1,0 +1,27 @@
+@startuml
+' bt-view-kind: deployment
+' bt-view-id: mcp-server:deployment
+title MCP Server - Deployment
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: stdio
+' bt-element-id: repo
+' bt-element-id: backend_node
+
+node "Local Stdio Process\nResponsibility: Host MCP protocol adapter\nContract: One client transport\n[[../../../../scripts/wos_mcp_stdio_launcher.py source]]" as stdio
+node "Repository Workspace\nResponsibility: Provide scoped read/write targets\nContract: Configured root containment\n[[../../../../tools/mcp_server/repo_dotenv.py source]]" as repo
+node "Backend Process\nResponsibility: Execute governed remote actions\nContract: HTTP\n[[../../../../backend/Dockerfile source]]" as backend_node
+
+stdio --> backend_node : "HTTP\ncontract: governed delegation\n[[../../../../tools/mcp_server/backend_client.py source]]"
+stdio --> repo : "scoped filesystem access\ncontract: configured root\n[[../../../../tools/mcp_server/repo_dotenv.py source]]"
+
+legend bottom
+Viewpoint: deployment
+Concern: Local stdio process, scoped repository and backend boundary
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

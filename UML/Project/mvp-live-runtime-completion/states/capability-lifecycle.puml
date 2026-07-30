@@ -1,0 +1,34 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: mvp-live-runtime-completion:capability-lifecycle
+title MVP Completion - Capability Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: proposed
+' bt-element-id: implemented
+' bt-element-id: integrated
+' bt-element-id: proven
+' bt-element-id: regressed
+
+state "Proposed\nResponsibility: Define capability and acceptance\nContract: No completion claim\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/architecture.md source]]" as proposed
+state "Implemented\nResponsibility: Provide production code path\nContract: Source-located behavior\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md source]]" as implemented
+state "Integrated\nResponsibility: Survive all authority boundaries\nContract: End-to-end path\n[[../../../../tests/integration/test_story_runtime_experience.py source]]" as integrated
+state "Proven\nResponsibility: Pass user-visible and operational evidence\nContract: Repeatable acceptance\n[[../../../../tests/e2e/test_final_goc_annette_alain_e2e.py source]]" as proven
+state "Regressed\nResponsibility: Record later drift from proven behavior\nContract: Finding and reproduction\n[[../../../../docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md source]]" as regressed
+
+implemented --> integrated : "boundaries agree\ncontract: integration proof\n[[../../../../tests/integration/test_story_runtime_experience.py source]]"
+[*] --> proposed : "capability framed\ncontract: acceptance stated"
+integrated --> proven : "acceptance passes\ncontract: E2E and operational evidence\n[[../../../../tests/e2e/test_final_goc_annette_alain_e2e.py source]]"
+proposed --> implemented : "production path exists\ncontract: source proof"
+proven --> regressed : "later evidence fails\ncontract: drift finding"
+
+legend bottom
+Viewpoint: state
+Concern: Implementation is not completion until integrated and proven
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

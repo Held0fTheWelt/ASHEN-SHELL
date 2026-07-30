@@ -19,6 +19,22 @@ Must not host HTTP or turn commit logic ([world-engine D1](../world-engine/archi
 
 In scope: reusable models/adapters. Out of scope: FastAPI apps, LangGraph executor.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Dependency-light shared contracts for semantic player input, committed truth, consequence propagation, branching and delivery adapters.
+
+**Authority rule:** The package owns portable domain contracts and pure algorithms; it does not own a live session, transport or persistence.
+
+**Git/archaeology scope:** `story_runtime_core`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Portable contracts versus live and proposal authorities | [Story Runtime Core - Authority Context](../../../../UML/Components/story-runtime-core/context/story-runtime-core-context.md) | The package owns portable domain contracts and pure algorithms; it does not own a live session, transport or persistence. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 Extract shared shapes from deprecated backend runtime toward importable package (`story_runtime_core`).
@@ -31,17 +47,79 @@ Extract shared shapes from deprecated backend runtime toward importable package 
 | GoC builtin template | `goc_solo_builtin_template.py`, catalog/roles modules |
 | Tests | `story_runtime_core/tests/` |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| CommittedTruth (`snapshot`) | `class` | Carry confirmed story facts | Runtime-supplied immutable snapshot | [`story_runtime_core/committed_truth.py`](../../../../story_runtime_core/committed_truth.py) |
+| ConsequenceOutcome (`outcome`) | `class` | Describe calculated effects | Deterministic ordered effects | [`story_runtime_core/consequences/consequence_cascade.py`](../../../../story_runtime_core/consequences/consequence_cascade.py) |
+| PlayerActionIntent (`action`) | `class` | Carry semantic player intent | Validated intent fields | [`story_runtime_core/player_input_intent_contract.py`](../../../../story_runtime_core/player_input_intent_contract.py) |
+| Boundary Adapters (`adapters`) | `component` | Map host-specific data to shared contracts | Anti-corruption mapping | [`story_runtime_core/adapters.py`](../../../../story_runtime_core/adapters.py) |
+| Branching (`branching`) | `component` | Forecast alternatives without committing them | Explicit hypothetical state | [`story_runtime_core/branching/forecast.py`](../../../../story_runtime_core/branching/forecast.py) |
+| Committed Truth (`truth`) | `component` | Represent authoritative facts supplied by a runtime | Immutable snapshot/value semantics | [`story_runtime_core/committed_truth.py`](../../../../story_runtime_core/committed_truth.py) |
+| Consequence Cascade (`consequences`) | `component` | Compute deterministic downstream effects | Pure input/output transform | [`story_runtime_core/consequences/consequence_cascade.py`](../../../../story_runtime_core/consequences/consequence_cascade.py) |
+| Domain Models (`models`) | `component` | Define actions, scenes, actors and outcomes | Serializable value objects | [`story_runtime_core/models.py`](../../../../story_runtime_core/models.py) |
+| Input Intent (`intent`) | `component` | Normalize player language into semantic intent | Locale-independent intent contract | [`story_runtime_core/player_input_intent_contract.py`](../../../../story_runtime_core/player_input_intent_contract.py) |
+| Runtime Delivery (`delivery`) | `component` | Adapt portable outcomes to callbacks and web delivery | No ownership transfer | [`story_runtime_core/runtime_delivery.py`](../../../../story_runtime_core/runtime_delivery.py) |
+| Adapted (`adapted`) | `state` | Map into host contract | Authority remains with caller | [`story_runtime_core/adapters.py`](../../../../story_runtime_core/adapters.py) |
+| Candidate (`candidate`) | `state` | Represent unvalidated shared-domain value | No host commitment | [`story_runtime_core/models.py`](../../../../story_runtime_core/models.py) |
+| Validated (`validated`) | `state` | Meet portable invariants | Safe to return to host | [`story_runtime_core/model_registry.py`](../../../../story_runtime_core/model_registry.py) |
+| AI Stack (`ai`) | `system` | Produce proposals using shared semantic contracts | Proposal-only integration | [`ai_stack/story_runtime/player_action_resolution.py`](../../../../ai_stack/story_runtime/player_action_resolution.py) |
+| Story Runtime Core (`core`) | `system` | Provide portable domain contracts and deterministic algorithms | Python package without service authority | [`story_runtime_core/__init__.py`](../../../../story_runtime_core/__init__.py) |
+| World Engine (`world`) | `system` | Own and commit live story state | Calls pure shared contracts | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Imported by world-engine tests and runtime; provides template/catalog data, not live orchestration.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Host data crosses portable algorithms and returns without authority transfer | `sequence` | [Story Runtime Core - Host Adapter Flow](../../../../UML/Components/story-runtime-core/sequence/host-adapter-flow.md) | 7 |
+| Validation and host adaptation of uncommitted shared values | `state` | [Story Runtime Core - Value Lifecycle](../../../../UML/Components/story-runtime-core/states/value-lifecycle.md) | 4 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Python package at repo root on `PYTHONPATH`.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `story_runtime_core`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 Despaghettify moved builtins out of `builtins.py` into explicit template modules.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| PlayerActionIntent | CommittedTruth | evaluated against | revision-bound semantics | [`story_runtime_core/input_interpreter.py`](../../../../story_runtime_core/input_interpreter.py) |
+| Boundary Adapters | Domain Models | maps host values | explicit anti-corruption layer | [`story_runtime_core/adapters.py`](../../../../story_runtime_core/adapters.py) |
+| Branching | Runtime Delivery | returns outcome | host decides commit | [`story_runtime_core/runtime_delivery.py`](../../../../story_runtime_core/runtime_delivery.py) |
+| Consequence Cascade | Branching | feeds alternatives | hypothetical only | [`story_runtime_core/branching/forecast.py`](../../../../story_runtime_core/branching/forecast.py) |
+| Story Runtime Core | Domain Models | exports | stable public values | [`story_runtime_core/__init__.py`](../../../../story_runtime_core/__init__.py) |
+| Input Intent | Committed Truth | is evaluated against | confirmed facts only | [`story_runtime_core/input_interpreter.py`](../../../../story_runtime_core/input_interpreter.py) |
+| Domain Models | Input Intent | constrains | semantic action vocabulary | [`story_runtime_core/player_input_intent_contract.py`](../../../../story_runtime_core/player_input_intent_contract.py) |
+| CommittedTruth | ConsequenceOutcome | produces | ordered explainable effects | [`story_runtime_core/consequences/consequence_cascade.py`](../../../../story_runtime_core/consequences/consequence_cascade.py) |
+| Committed Truth | Consequence Cascade | bounds cascade | pure deterministic input | [`story_runtime_core/consequences/consequence_cascade.py`](../../../../story_runtime_core/consequences/consequence_cascade.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -151,6 +229,20 @@ Canonical mapping constants: `STRUCTURAL_KIND_TO_INTENT_FALLBACK` and `STRUCTURA
 
 **Evidence.** [`story_runtime_core/evidence_projection_helpers.py`](../../../../story_runtime_core/evidence_projection_helpers.py), [`story_runtime_core/observability_tree_policy.py`](../../../../story_runtime_core/observability_tree_policy.py), [`story_runtime_core/tests/test_observability_tree_policy.py`](../../../../story_runtime_core/tests/test_observability_tree_policy.py).
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1` | Portable contracts versus live and proposal authorities | `context` | [Story Runtime Core - Authority Context](../../../../UML/Components/story-runtime-core/context/story-runtime-core-context.md) |
+| `D1`, `D2` | Pure model, intent, truth, consequence, branching and delivery seams | `component` | [Story Runtime Core - Components](../../../../UML/Components/story-runtime-core/components/domain-components.md) |
+| `D1`, `D3` | Host data crosses portable algorithms and returns without authority transfer | `sequence` | [Story Runtime Core - Host Adapter Flow](../../../../UML/Components/story-runtime-core/sequence/host-adapter-flow.md) |
+| `D2` | Intent, committed truth and calculated outcomes | `class` | [Story Runtime Core - Contract Data Model](../../../../UML/Components/story-runtime-core/classes/contract-data-model.md) |
+| `D3` | Validation and host adaptation of uncommitted shared values | `state` | [Story Runtime Core - Value Lifecycle](../../../../UML/Components/story-runtime-core/states/value-lifecycle.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 `story_runtime_core/tests/`, importers must not reintroduce authority.
@@ -158,6 +250,24 @@ Canonical mapping constants: `STRUCTURAL_KIND_TO_INTENT_FALLBACK` and `STRUCTURA
 ## 11. Risks & Technical Debt
 
 Consumers must not treat helpers as commit owners.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Shared code risks becoming a second runtime. Models separate pure contracts from world-engine ownership and reveal adapters that have accumulated product-specific behavior.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 54 | 76 | 194 | 0 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| Scope-specific watch | `open_target` | No global claim currently maps to this root. | Keep source-bound views and review on structural Git changes. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

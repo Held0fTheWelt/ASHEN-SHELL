@@ -1,0 +1,35 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: architecture-assurance:export-sequence
+title Architecture Assurance - Export Sequence
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: architect
+' bt-element-id: assurance
+' bt-element-id: audit
+' bt-element-id: reports
+' bt-element-id: canon
+' bt-element-id: akdb
+
+actor "Architect / Maintainer\nResponsibility: State decisions, classify drift and approve target architecture\nContract: Reviewed SAD and model-catalog changes\n[[../../../../docs/architecture/project/architecture-assurance/architecture.md source]]" as architect
+participant "Architecture Assurance\nResponsibility: Discover, correlate, validate and export architecture evidence\nContract: Deterministic CLI and report schemas\n[[../../../../tools/architecture_assurance/cli.py source]]" as assurance
+participant "Audit Engine\nResponsibility: Evaluate correspondence and model semantics\nContract: Stable findings and exit policy\n[[../../../../tools/architecture_assurance/audit.py source]]" as audit
+participant "Report Exporters\nResponsibility: Emit human, JSON, JUnit and SARIF evidence\nContract: Schema-stable deterministic serialization\n[[../../../../tools/architecture_assurance/reporters.py source]]" as reports
+participant "Canon Exporter\nResponsibility: Create idempotent AKDB source projection\nContract: Hash-stable destination manifest\n[[../../../../tools/architecture_assurance/canon.py source]]" as canon
+participant "External AKDB\nResponsibility: Validate and export canonical architecture knowledge\nContract: Pinned disposable checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]" as akdb
+
+architect -> assurance : "authors intent and runs audit\ncontract: reviewed invocation\n[[../../../../tools/architecture_assurance/cli.py source]]"
+assurance -> akdb : "validates disposable export\ncontract: pinned external checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]"
+audit -> reports : "emits findings\ncontract: normalized result model\n[[../../../../tools/architecture_assurance/reporters.py source]]"
+reports -> canon : "joins canonical evidence\ncontract: accepted report state\n[[../../../../tools/architecture_assurance/canon.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Audit, multi-format reporting, canonical export and external validation
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

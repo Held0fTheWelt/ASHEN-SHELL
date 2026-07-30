@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: administration-tool:internal-components
+title Administration Tool — Internal Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: admin
+' bt-element-id: pages
+' bt-element-id: manage
+' bt-element-id: templates
+' bt-element-id: security
+' bt-element-id: proxy
+' bt-element-id: policy
+' bt-element-id: backend
+
+rectangle "Administration Tool\nResponsibility: Render operator workbenches and translate intent into backend requests\nContract: Flask routes; no direct domain persistence\n[[../../../../administration-tool/app.py source]]\n[[c4-component.puml drill-down]]" as admin
+component "Page Routes\nResponsibility: Route public and manage page requests to bounded templates\nContract: GET-only page composition\n[[../../../../administration-tool/route_registration_pages.py source]]" as pages
+component "Manage Route Catalog\nResponsibility: Expose named operator workbench surfaces\nContract: Stable /manage route vocabulary\n[[../../../../administration-tool/route_registration_manage_sections.py source]]" as manage
+rectangle "Manage Templates\nResponsibility: Present backend-derived read models and mutation forms\nContract: Escaped HTML and explicit form intent\n[[../../../../administration-tool/templates/manage/dashboard.html source]]" as templates
+component "Security Routes\nResponsibility: Apply session and operator security checks\nContract: Authenticated, CSRF-aware browser mutation boundary\n[[../../../../administration-tool/route_registration_security.py source]]" as security
+component "Backend Proxy\nResponsibility: Forward allow-listed reads and mutations to backend\nContract: Method, path, timeout and response policy\n[[../../../../administration-tool/route_registration_proxy.py source]]" as proxy
+component "Proxy Policy\nResponsibility: Classify mutation endpoints and confirmation requirements\nContract: Default-deny unsafe or undeclared proxy operations\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]" as policy
+rectangle "Backend Admin API\nResponsibility: Authorize and execute governed mutations\nContract: HTTP /api/v1/admin and operator endpoints\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]" as backend
+
+admin ..> manage : "dispatches manage pages\ncontract: named manage route registration\n[[../../../../administration-tool/route_registration_manage.py source]]"
+admin ..> pages : "dispatches public pages\ncontract: page route registration\n[[../../../../administration-tool/route_registration.py source]]"
+manage ..> proxy : "submits requested operation\ncontract: normalized proxy request\n[[../../../../administration-tool/route_registration_proxy.py source]]"
+manage ..> security : "requires operator session\ncontract: authorization before rendering or mutation\n[[../../../../administration-tool/route_registration_security.py source]]"
+manage ..> templates : "renders workbench\ncontract: template plus backend read model\n[[../../../../administration-tool/route_registration_manage_sections.py source]]"
+policy ..> backend : "forwards approved operation\ncontract: service key and operator evidence\n[[../../../../administration-tool/route_registration_proxy.py source]]"
+proxy ..> policy : "classifies request\ncontract: default-deny mutation policy\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]"
+
+legend bottom
+Viewpoint: component
+Concern: How routes, policy, security and templates collaborate without owning domain state
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

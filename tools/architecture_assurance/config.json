@@ -2,20 +2,31 @@
   "schema_version": "bt.architecture_assurance_config.v1",
   "project_id": "better-tomorrow",
   "repository_id": "better-tomorrow-main",
+  "model_catalog": "tools/architecture_assurance/model_catalog.json",
+  "drift_evidence_json": "docs/architecture/evidence/architecture-drift-baseline.json",
+  "drift_evidence_markdown": "docs/architecture/evidence/architecture-drift-baseline.md",
+  "drift_claim_catalog": "tools/architecture_assurance/drift_claim_catalog.json",
+  "drift_reconciliation": "docs/architecture/evidence/architecture-drift-reconciliation.md",
   "canon_manifest": "docs/architecture/evidence/akdb-canon-manifest.json",
   "canonical_files": [
     ".gitignore",
     "docs/architecture/AKDB-AUTHORITY.md",
     "docs/architecture/AKDB-MIGRATION.md",
     "docs/architecture/akdb-project.yaml",
+    "docs/architecture/START-HERE.md",
+    "docs/architecture/evidence/README.md",
+    "docs/architecture/project/README.md",
     "docs/architecture/evidence/2026-07-30-legacy-akdb-retirement-manifest.json",
+    "UML/README.md",
     "ArchitecturalKnowledgeDB/README.md",
     ".github/workflows/architecture-assurance.yml",
     "tests/architecture_assurance/*.py",
     "tests/gates/test_better_tomorrow_architecture_assurance.py",
     "tools/architecture_assurance/*.py",
-    "tools/architecture_assurance/akdb.lock.json",
-    "tools/architecture_assurance/config.json"
+    "tools/architecture_assurance/*.json",
+    "docs/architecture/evidence/architecture-drift-baseline.json",
+    "docs/architecture/evidence/architecture-drift-baseline.md",
+    "docs/architecture/evidence/architecture-drift-reconciliation.md"
   ],
   "gate": {
     "schema_version": "bt.architecture_depth_gate.v1",
@@ -29,7 +40,7 @@
       "accepted_bound": 174,
       "discovered": 7451,
       "represented": 7451,
-      "views": 64
+      "views": 89
     },
     "critical_floor": {
       "structure_complete": true,
@@ -39,7 +50,8 @@
       "correspondence_consistency": true,
       "lane_reach": true
     },
-    "require_canon": true
+    "require_canon": true,
+    "fail_on_findings": true
   },
   "subsystems": [
     {
@@ -56,13 +68,7 @@
       "binding_overrides": {
         "B-manage-ui": ["administration-tool/templates/manage/dashboard.html"],
         "B-routes": ["administration-tool/route_registration.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/administration-tool/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/administration-tool/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/administration-tool/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/administration-tool/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "ai-stack",
@@ -73,13 +79,7 @@
       "lane_roots": {
         "python": ["ai_stack"],
         "api": ["ai_stack"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/ai-stack/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/ai-stack/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/ai-stack/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/ai-stack/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "backend",
@@ -91,13 +91,7 @@
         "python": ["backend/app"],
         "api": ["backend/app"],
         "schema": ["backend/migrations", "backend/alembic"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/backend/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/backend/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/backend/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/backend/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "content-authority",
@@ -111,13 +105,7 @@
       },
       "binding_overrides": {
         "B-canonical-path": ["content/modules/god_of_carnage/canonical_path/001_parc_montsouris_edge.yaml"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/content-authority/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/content-authority/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/content-authority/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/content-authority/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "frontend",
@@ -129,13 +117,7 @@
         "python": ["frontend/app"],
         "api": ["frontend/app"],
         "web": ["frontend/templates", "frontend/static"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/frontend/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/frontend/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/frontend/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/frontend/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "mcp-server",
@@ -146,13 +128,7 @@
       "lane_roots": {
         "python": ["tools/mcp_server"],
         "api": ["tools/mcp_server"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/mcp-server/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/mcp-server/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/mcp-server/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/mcp-server/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "story-runtime-core",
@@ -163,13 +139,7 @@
       "lane_roots": {"python": ["story_runtime_core"]},
       "binding_overrides": {
         "B-tests": ["story_runtime_core/tests/test_adapters.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/story-runtime-core/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/story-runtime-core/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/story-runtime-core/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/story-runtime-core/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "world-engine",
@@ -189,13 +159,7 @@
         "B-story-runtime-manager": ["world-engine/app/story_runtime/manager"],
         "B-trace-middleware": ["world-engine/app/middleware/trace_middleware.py"],
         "B-websocket-api": ["world-engine/app/api/ws.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Components/world-engine/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Components/world-engine/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Components/world-engine/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Components/world-engine/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "documentation-supply-chain",
@@ -208,13 +172,7 @@
         "B-quality-bar": ["docs/architecture/QUALITY-STANDARD.md"],
         "B-rollout": ["docs/architecture/project/ROLLOUT.md"],
         "B-templates": ["docs/architecture/components/_template/architecture.template.md"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/documentation-supply-chain/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/documentation-supply-chain/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/documentation-supply-chain/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/documentation-supply-chain/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "ecosystem-topology",
@@ -225,13 +183,7 @@
       "lane_roots": {
         "deployment": ["docker-compose.yml"],
         "python": ["docker-up.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/ecosystem-topology/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/ecosystem-topology/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/ecosystem-topology/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/ecosystem-topology/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "governance",
@@ -246,13 +198,7 @@
         "B-docs-archive-adr-retired-2026": ["docs/archive/adr-retired-2026/README.md"],
         "B-docs-governance": ["docs/governance/README.md"],
         "B-tests-gates": ["tests/gates/test_architecture_documentation_gate.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/governance/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/governance/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/governance/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/governance/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "mvp-live-runtime-completion",
@@ -269,13 +215,7 @@
         "B-mvp3-ldss": ["ai_stack/live_dramatic_scene_simulator.py"],
         "B-mvp4-observability": ["world-engine/app/observability/trace.py"],
         "B-mvp5-frontend-blocks": ["frontend/static/play_block_renderer.js"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/mvp-live-runtime-completion/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/mvp-live-runtime-completion/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/mvp-live-runtime-completion/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/mvp-live-runtime-completion/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "observability-traceability",
@@ -288,13 +228,7 @@
       },
       "binding_overrides": {
         "D3": ["world-engine/app/observability/trace.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/observability-traceability/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/observability-traceability/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/observability-traceability/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/observability-traceability/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "quality-gates",
@@ -310,13 +244,7 @@
         "B-test-goc-mvp01-mvp02-foundation-gate-py": ["tests/gates/test_goc_mvp01_mvp02_foundation_gate.py"],
         "B-test-goc-mvp03-live-dramatic-scene-simulator-gate-py": ["tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py"],
         "B-test-goc-mvp04-observability-diagnostics-gate-py": ["tests/gates/test_goc_mvp04_observability_diagnostics_gate.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/quality-gates/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/quality-gates/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/quality-gates/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/quality-gates/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "security-governance",
@@ -333,13 +261,7 @@
         "B-browser-mutations": ["frontend/app/auth.py"],
         "B-mcp-auth": ["tools/mcp_server/server.py"],
         "B-provider-credentials": ["backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/security-governance/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/security-governance/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/security-governance/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/security-governance/depth/class-model.puml"}
-      ]
+      }
     },
     {
       "id": "architecture-assurance",
@@ -358,13 +280,7 @@
         "D4": ["tools/architecture_assurance/cli.py"],
         "D5": ["tools/architecture_assurance/canon.py"],
         "D6": ["tests/architecture_assurance/test_disposable_akdb_integration.py"]
-      },
-      "required_views": [
-        {"id": "context", "level": "context", "path": "UML/Project/architecture-assurance/depth/c4-context.puml"},
-        {"id": "container", "level": "container", "path": "UML/Project/architecture-assurance/depth/c4-container.puml"},
-        {"id": "component", "level": "component", "path": "UML/Project/architecture-assurance/depth/c4-component.puml"},
-        {"id": "class", "level": "class", "path": "UML/Project/architecture-assurance/depth/class-model.puml"}
-      ]
+      }
     }
   ]
 }

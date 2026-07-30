@@ -1,0 +1,46 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: content-authority:content-data-model
+title Content Authority - Data Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: module
+' bt-element-id: scene_graph
+' bt-element-id: canonical_path
+' bt-element-id: policies
+
+class "Authored Module\nResponsibility: Hold canonical versioned content truth\nContract: module.yaml plus referenced YAML documents\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as module {
+
+}
+class "Scene Graph\nResponsibility: Describe spaces, actors, objects and connections\nContract: Stable identifiers and references\n[[../../../../content/modules/god_of_carnage/scene_graph.yaml source]]" as scene_graph {
+  locations
+  actors
+  objects
+  connections
+}
+class "Canonical Path\nResponsibility: Express authored dramatic invariants without scripting player choice\nContract: Schema-governed beats and alternatives\n[[../../../../content/modules/god_of_carnage/canonical_path/_schema.yaml source]]" as canonical_path {
+  phases
+  beats
+  constraints
+  alternatives
+}
+class "Narrative Policies\nResponsibility: Bound memory, aspects, beats and phase behavior\nContract: Declarative policy YAML\n[[../../../../content/modules/god_of_carnage/narrative_aspect_policy.yaml source]]" as policies {
+  memory
+  aspects
+  phase beats
+}
+
+module ..> canonical_path : "contains\ncontract: dramatic invariants only\n[[../../../../content/modules/god_of_carnage/canonical_path/_schema.yaml source]]"
+module ..> policies : "contains\ncontract: declarative runtime bounds\n[[../../../../content/modules/god_of_carnage/module.yaml source]]"
+module ..> scene_graph : "contains\ncontract: referentially complete scene graph\n[[../../../../content/modules/god_of_carnage/scene_graph.yaml source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Relationships among scene truth, canonical path and narrative policies
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

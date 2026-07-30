@@ -1,0 +1,24 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: governance:governance-context
+title Architecture Governance - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: maintainer
+' bt-element-id: governance
+
+actor "Maintainer\nResponsibility: Propose, review and accept architecture decisions\nContract: Evidence-backed review\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as maintainer
+rectangle "Governance System\nResponsibility: Control decision lifecycle and runtime policy changes\nContract: Recorded decision and audit evidence\n[[../../../../docs/architecture/project/governance/architecture.md source]]" as governance
+
+maintainer ..> governance : "proposes and reviews\ncontract: evidence-backed change"
+
+legend bottom
+Viewpoint: context
+Concern: Maintainer interaction with decision and runtime governance
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

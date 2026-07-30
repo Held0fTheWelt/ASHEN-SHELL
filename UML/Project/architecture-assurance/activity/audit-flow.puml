@@ -1,0 +1,51 @@
+@startuml
+' bt-view-kind: activity
+' bt-view-id: architecture-assurance:audit-flow
+title Architecture Assurance - Audit Flow
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: catalog
+' bt-element-id: discovery
+' bt-element-id: manifest
+' bt-element-id: views
+' bt-element-id: audit
+' bt-element-id: reports
+
+(*) --> "Semantic Model Catalog\nResponsibility: Define individualized elements, contracts, relations and viewpoints\nContract: Validated source-bound JSON\n[[../../../../tools/architecture_assurance/model_catalog.json source]]" as catalog
+catalog -->[scopes evidence\ncontract: history roots and source anchors] "Repository Discovery\nResponsibility: Enumerate implementation and document evidence\nContract: Ignored/local evidence excluded\n[[../../../../tools/architecture_assurance/discovery.py source]]" as discovery
+note on link
+[[../../../../tools/architecture_assurance/model_catalog.json relationship source]]
+end note
+discovery -->[supplies inventory\ncontract: normalized repository paths] "Binding Manifest Builder\nResponsibility: Bind SAD declarations to source, tests and views\nContract: One deterministic manifest per scope\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]" as manifest
+note on link
+[[../../../../tools/architecture_assurance/discovery.py relationship source]]
+end note
+catalog -->[projects viewpoints\ncontract: semantic elements and edge contracts] "Semantic View Builder\nResponsibility: Project catalog models into PlantUML and companion documents\nContract: No generic inferred star graphs\n[[../../../../tools/architecture_assurance/view_builder.py source]]" as views
+note on link
+[[../../../../tools/architecture_assurance/semantic_models.py relationship source]]
+end note
+manifest -->[supplies declared correspondence\ncontract: binding schema] "Audit Engine\nResponsibility: Evaluate correspondence and model semantics\nContract: Stable findings and exit policy\n[[../../../../tools/architecture_assurance/audit.py source]]" as audit
+note on link
+[[../../../../tools/architecture_assurance/audit.py relationship source]]
+end note
+views -->[supplies analyzable models\ncontract: view requirements and source links] audit
+note on link
+[[../../../../tools/architecture_assurance/semantic_models.py relationship source]]
+end note
+audit -->[emits findings\ncontract: normalized result model] "Report Exporters\nResponsibility: Emit human, JSON, JUnit and SARIF evidence\nContract: Schema-stable deterministic serialization\n[[../../../../tools/architecture_assurance/reporters.py source]]" as reports
+note on link
+[[../../../../tools/architecture_assurance/reporters.py relationship source]]
+end note
+reports --> (*)
+
+
+legend bottom
+Viewpoint: activity
+Concern: From authored intent and source discovery to classified evidence
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

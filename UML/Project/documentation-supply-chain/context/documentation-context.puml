@@ -1,0 +1,24 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: documentation-supply-chain:supply-context
+title Documentation Supply Chain - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: author
+' bt-element-id: docs
+
+actor "Document Author\nResponsibility: Maintain architecture intent and operating knowledge\nContract: Role-correct Markdown source\n[[../../../../docs/architecture/START-HERE.md source]]" as author
+rectangle "Documentation Corpus\nResponsibility: Expose current architecture, contracts and evidence\nContract: Navigable versioned Markdown\n[[../../../../docs/architecture/README.md source]]" as docs
+
+author ..> docs : "authors and reviews\ncontract: versioned change"
+
+legend bottom
+Viewpoint: context
+Concern: Human author and authoritative documentation corpus
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -19,6 +19,22 @@ No direct world-engine commit path for operators unless via documented backend p
 
 In scope: `route_registration*.py`, manage templates/static. Out of scope: player play UX.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Operator-facing Flask application for read models, governed mutations, moderation and runtime diagnostics.
+
+**Authority rule:** The tool owns presentation and operator intent only; backend governance services remain mutation authority.
+
+**Git/archaeology scope:** `administration-tool`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Who operates the tool and where mutation authority resides | [Administration Tool — System Context](../../../../UML/Components/administration-tool/components/c4-context.md) | The tool owns presentation and operator intent only; backend governance services remain mutation authority. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 Split route registration into proxy/pages/manage/security modules (despaghettify DS-004 pattern).
@@ -32,17 +48,72 @@ Every destructive operator action routes through backend confirmation endpoints.
 | Routes | `route_registration.py`, `route_registration_*.py` |
 | Manage UI | `templates/`, `static/manage_*.js` |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Operator (`operator`) | `actor` | Inspect health and request governed changes | Authenticated browser session with explicit confirmation | [`docs/architecture/components/administration-tool/architecture.md`](architecture.md) |
+| Backend Proxy (`proxy`) | `component` | Forward allow-listed reads and mutations to backend | Method, path, timeout and response policy | [`administration-tool/route_registration_proxy.py`](../../../../administration-tool/route_registration_proxy.py) |
+| Manage Route Catalog (`manage`) | `component` | Expose named operator workbench surfaces | Stable /manage route vocabulary | [`administration-tool/route_registration_manage_sections.py`](../../../../administration-tool/route_registration_manage_sections.py) |
+| Page Routes (`pages`) | `component` | Route public and manage page requests to bounded templates | GET-only page composition | [`administration-tool/route_registration_pages.py`](../../../../administration-tool/route_registration_pages.py) |
+| Proxy Policy (`policy`) | `component` | Classify mutation endpoints and confirmation requirements | Default-deny unsafe or undeclared proxy operations | [`administration-tool/route_registration_proxy_policy.py`](../../../../administration-tool/route_registration_proxy_policy.py) |
+| Security Routes (`security`) | `component` | Apply session and operator security checks | Authenticated, CSRF-aware browser mutation boundary | [`administration-tool/route_registration_security.py`](../../../../administration-tool/route_registration_security.py) |
+| Manage Templates (`templates`) | `container` | Present backend-derived read models and mutation forms | Escaped HTML and explicit form intent | [`administration-tool/templates/manage/dashboard.html`](../../../../administration-tool/templates/manage/dashboard.html) |
+| Administration Flask Process (`admin_process`) | `node` | Serve pages and proxy requests | Port 5002 in local Compose | [`administration-tool/Dockerfile`](../../../../administration-tool/Dockerfile) |
+| Backend Flask Process (`backend_process`) | `node` | Provide authoritative control-plane APIs | Internal HTTP service | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
+| Browser (`browser`) | `node` | Host the operator session | HTTPS, cookies and CSRF token | [`administration-tool/templates/manage/dashboard.html`](../../../../administration-tool/templates/manage/dashboard.html) |
+| Administration Tool (`admin`) | `system` | Render operator workbenches and translate intent into backend requests | Flask routes; no direct domain persistence | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
+| Backend Admin API (`backend`) | `system` | Authorize and execute governed mutations | HTTP /api/v1/admin and operator endpoints | [`backend/app/api/v1/security_governance_routes.py`](../../../../backend/app/api/v1/security_governance_routes.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Operator browser → administration-tool → backend governance routes → optional read of play diagnostics.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| End-to-end authorization and delegation of an operator mutation | `sequence` | [Administration Tool — Governed Mutation](../../../../UML/Components/administration-tool/sequence/governed-mutation-sequence.md) | 5 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Separate Flask app; backend URL configuration.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+| Concern | Model | Nodes / stores |
+| --- | --- | --- |
+| Browser, administration process and backend trust boundary | [Administration Tool — Deployment](../../../../UML/Components/administration-tool/deployment/administration-tool-deployment.md) | Operator, Browser, Administration Flask Process, Backend Flask Process |
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 Narrative gov operator truth ([mvp-live-runtime-completion MVP4-010](../../project/mvp-live-runtime-completion/architecture.md#mvp4-010-narrative-gov-operator-truth-surface)).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Administration Tool | Manage Route Catalog | dispatches manage pages | named manage route registration | [`administration-tool/route_registration_manage.py`](../../../../administration-tool/route_registration_manage.py) |
+| Administration Tool | Page Routes | dispatches public pages | page route registration | [`administration-tool/route_registration.py`](../../../../administration-tool/route_registration.py) |
+| Manage Route Catalog | Backend Proxy | submits requested operation | normalized proxy request | [`administration-tool/route_registration_proxy.py`](../../../../administration-tool/route_registration_proxy.py) |
+| Manage Route Catalog | Security Routes | requires operator session | authorization before rendering or mutation | [`administration-tool/route_registration_security.py`](../../../../administration-tool/route_registration_security.py) |
+| Manage Route Catalog | Manage Templates | renders workbench | template plus backend read model | [`administration-tool/route_registration_manage_sections.py`](../../../../administration-tool/route_registration_manage_sections.py) |
+| Proxy Policy | Backend Admin API | forwards approved operation | service key and operator evidence | [`administration-tool/route_registration_proxy.py`](../../../../administration-tool/route_registration_proxy.py) |
+| Backend Proxy | Proxy Policy | classifies request | default-deny mutation policy | [`administration-tool/route_registration_proxy_policy.py`](../../../../administration-tool/route_registration_proxy_policy.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -92,6 +163,19 @@ Narrative gov operator truth ([mvp-live-runtime-completion MVP4-010](../../proje
 
 **Evidence.** [AT-M02](mechanism-catalog.md#at-m02) · [security-governance SAD D3](../../project/security-governance/architecture.md#d3-security-governance-admin-control-plane) · [`test_manage_governance_console_and_runtime_config_truth.py`](../../../../administration-tool/tests/test_manage_governance_console_and_runtime_config_truth.py) · [archive ADR-0052](../../../archive/adr-retired-2026/adr-0052-security-governance-admin-control-plane.md)
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D2` | Who operates the tool and where mutation authority resides | `context` | [Administration Tool — System Context](../../../../UML/Components/administration-tool/components/c4-context.md) |
+| `D1`, `D2` | How routes, policy, security and templates collaborate without owning domain state | `component` | [Administration Tool — Internal Components](../../../../UML/Components/administration-tool/components/c4-component.md) |
+| `D2` | End-to-end authorization and delegation of an operator mutation | `sequence` | [Administration Tool — Governed Mutation](../../../../UML/Components/administration-tool/sequence/governed-mutation-sequence.md) |
+| `D2` | Browser, administration process and backend trust boundary | `deployment` | [Administration Tool — Deployment](../../../../UML/Components/administration-tool/deployment/administration-tool-deployment.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 `administration-tool/tests/`, admin test matrix docs.
@@ -99,6 +183,24 @@ Narrative gov operator truth ([mvp-live-runtime-completion MVP4-010](../../proje
 ## 11. Risks & Technical Debt
 
 Large static JS surfaces need alignment with backend route contracts.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Git history shows rapid expansion of manage templates and route-registration splits. Models separate page routing, proxy policy and backend mutation authority so presentation growth cannot become an accidental control plane.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 187 | 145 | 829 | 1 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| Scope-specific watch | `open_target` | No global claim currently maps to this root. | Keep source-bound views and review on structural Git changes. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

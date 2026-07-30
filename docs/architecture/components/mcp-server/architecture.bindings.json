@@ -1403,24 +1403,117 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "backend/app/api/v1/__init__.py",
+        "tools/mcp_server/README.md",
+        "tools/mcp_server/backend_client.py",
+        "tools/mcp_server/handlers/tools_registry_handlers_backend_session.py",
+        "tools/mcp_server/server.py",
+        "world-engine/app/api/http.py"
+      ],
+      "concern": "Protocol adapter boundary against domain authorities",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 4,
+      "id": "system-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Components/mcp-server/depth/c4-context.puml"
+      "path": "UML/Components/mcp-server/context/mcp-context.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
-      "level": "container",
-      "path": "UML/Components/mcp-server/depth/c4-container.puml"
-    },
-    {
-      "id": "component",
+      "anchors": [
+        "tools/mcp_server/backend_client.py",
+        "tools/mcp_server/handlers/__init__.py",
+        "tools/mcp_server/handlers/tools_registry_handlers_filesystem.py",
+        "tools/mcp_server/langfuse_tracing.py",
+        "tools/mcp_server/rate_limiter.py",
+        "tools/mcp_server/registry.py",
+        "tools/mcp_server/rpc_method_router.py",
+        "tools/mcp_server/server.py",
+        "tools/mcp_server/tools_registry.py"
+      ],
+      "concern": "Routing, registry, handler, safety and observability seams",
+      "decisions": [
+        "D1",
+        "D2",
+        "D3"
+      ],
+      "element_count": 8,
+      "id": "handler-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Components/mcp-server/depth/c4-component.puml"
+      "path": "UML/Components/mcp-server/components/mcp-components.puml",
+      "relationship_count": 7,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
-      "level": "class",
-      "path": "UML/Components/mcp-server/depth/class-model.puml"
+      "anchors": [
+        "tools/mcp_server/README.md",
+        "tools/mcp_server/handlers/__init__.py",
+        "tools/mcp_server/langfuse_tracing.py",
+        "tools/mcp_server/rate_limiter.py",
+        "tools/mcp_server/registry.py",
+        "tools/mcp_server/rpc_method_router.py",
+        "tools/mcp_server/server.py",
+        "tools/mcp_server/tools_registry.py"
+      ],
+      "concern": "Protocol validation through bounded handler execution",
+      "decisions": [
+        "D1",
+        "D3"
+      ],
+      "element_count": 7,
+      "id": "json-rpc-call",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/mcp-server/sequence/json-rpc-call-sequence.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/api/v1/__init__.py",
+        "tools/mcp_server/README.md",
+        "tools/mcp_server/backend_client.py",
+        "tools/mcp_server/handlers/__init__.py",
+        "tools/mcp_server/langfuse_tracing.py",
+        "tools/mcp_server/registry.py",
+        "tools/mcp_server/server.py",
+        "tools/mcp_server/tools_registry.py"
+      ],
+      "concern": "Mutation requests remain under backend authority",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 7,
+      "id": "governed-delegation",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/mcp-server/sequence/governed-delegation-sequence.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/Dockerfile",
+        "scripts/wos_mcp_stdio_launcher.py",
+        "tools/mcp_server/backend_client.py",
+        "tools/mcp_server/repo_dotenv.py"
+      ],
+      "concern": "Local stdio process, scoped repository and backend boundary",
+      "decisions": [
+        "D4"
+      ],
+      "element_count": 3,
+      "id": "deployment",
+      "kind": "deployment",
+      "level": "deployment",
+      "path": "UML/Components/mcp-server/deployment/mcp-deployment.puml",
+      "relationship_count": 2,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/components/mcp-server/architecture.md",

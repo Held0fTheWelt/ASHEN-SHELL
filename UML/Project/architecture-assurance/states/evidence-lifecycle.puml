@@ -1,0 +1,32 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: architecture-assurance:evidence-lifecycle
+title Architecture Assurance - Evidence Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: authored
+' bt-element-id: correlated
+' bt-element-id: evaluated
+' bt-element-id: exported
+
+state "Authored Intent\nResponsibility: Hold human-reviewed architecture intent\nContract: SAD and catalog valid\n[[../../../../tools/architecture_assurance/model_catalog.json source]]" as authored
+state "Correlated\nResponsibility: Bind intent to code, Git and archaeology evidence\nContract: No unresolved source anchors\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]" as correlated
+state "Evaluated\nResponsibility: Classify correspondence and drift\nContract: Deterministic findings\n[[../../../../tools/architecture_assurance/audit.py source]]" as evaluated
+state "Exported\nResponsibility: Publish reports and AKDB canon\nContract: Idempotent artifacts\n[[../../../../tools/architecture_assurance/canon.py source]]" as exported
+
+authored --> correlated : "sources and Git resolve\ncontract: no fabricated anchor\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]"
+correlated --> evaluated : "gates execute\ncontract: complete audit result\n[[../../../../tools/architecture_assurance/audit.py source]]"
+evaluated --> exported : "formats and canon written\ncontract: deterministic output\n[[../../../../tools/architecture_assurance/reporters.py source]]"
+exported --> evaluated : "drift detected later\ncontract: rerun from current source"
+[*] --> authored : "intent accepted\ncontract: catalog and SAD parse"
+
+legend bottom
+Viewpoint: state
+Concern: Intent, correlation, evaluation, export and later drift
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

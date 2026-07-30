@@ -64,6 +64,22 @@ Authoritative diagrams: [C4 context](../../../../UML/Components/world-engine/com
 | Ticket verification, trace middleware | Admin UI rendering |
 | Internal `/api/story/*` story session API | Direct player marketing HTML |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Authoritative live story runtime coordinating sessions, content, AI proposals, validation, commit, persistence and delivery.
+
+**Authority rule:** World Engine exclusively owns live session state and commit decisions; AI, backend and frontend are collaborators with narrower authority.
+
+**Git/archaeology scope:** `world-engine`, `story_runtime_core`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Live authority among player, backend, content and AI proposal collaborators | [World Engine - System Context](../../../../UML/Components/world-engine/components/c4-context.md) | World Engine exclusively owns live session state and commit decisions; AI, backend and frontend are collaborators with narrower authority. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 - Host both run and story managers in one FastAPI lifespan ([`world-engine/app/main.py`](../../../../world-engine/app/main.py)).
@@ -85,6 +101,44 @@ Authoritative diagrams: [C4 context](../../../../UML/Components/world-engine/com
 | Trace middleware | `app/middleware/trace_middleware.py` | Request/turn correlation |
 
 Authoritative: [C4 container](../../../../UML/Components/world-engine/components/c4-container.md) · [C4 component](../../../../UML/Components/world-engine/components/c4-component.md) · [Mechanism catalog](mechanism-catalog.md)
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Player (`player`) | `actor` | Submit semantic intent and observe committed narrative | Ticket-bound session | [`world-engine/app/api/story_ws.py`](../../../../world-engine/app/api/story_ws.py) |
+| CommitDecision (`commit`) | `class` | Explain accepted or rejected mutation | Validation and policy evidence | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| NarrativeProposal (`proposal`) | `class` | Carry uncommitted AI result and evidence | No authoritative mutations | [`world-engine/app/story_runtime/commit_models.py`](../../../../world-engine/app/story_runtime/commit_models.py) |
+| StorySession (`session`) | `class` | Aggregate live story truth and bindings | Monotonic revision and bound content | [`world-engine/app/story_runtime/commit_models.py`](../../../../world-engine/app/story_runtime/commit_models.py) |
+| AI Proposal Bridge (`ai_bridge`) | `component` | Request and normalize AI proposal packets | Proposal-only anti-corruption layer | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| Canonical Turn Lifecycle (`lifecycle`) | `component` | Enforce interpret, propose, validate, commit ordering | No render before commit | [`world-engine/app/story_runtime/canonical_turn_lifecycle.py`](../../../../world-engine/app/story_runtime/canonical_turn_lifecycle.py) |
+| Commit Resolution (`validation`) | `component` | Validate proposal against world truth and policy | Accepted/rejected decision with evidence | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| Delivery Surfaces (`delivery`) | `component` | Publish committed blocks and state | Post-commit events only | [`world-engine/app/api/story_ws.py`](../../../../world-engine/app/api/story_ws.py) |
+| Live Governance (`governance`) | `component` | Apply runtime policy and authority guards | Fail-closed mutation policy | [`world-engine/app/story_runtime/live_governance.py`](../../../../world-engine/app/story_runtime/live_governance.py) |
+| Story Session Store (`store`) | `component` | Persist committed state and monotonic revision | Atomic session update | [`world-engine/app/story_runtime/story_session_store.py`](../../../../world-engine/app/story_runtime/story_session_store.py) |
+| Turn Execution (`turn`) | `component` | Run the canonical lifecycle for one player command | Exactly one commit or explicit rejection | [`world-engine/app/story_runtime/manager/turn_execution.py`](../../../../world-engine/app/story_runtime/manager/turn_execution.py) |
+| Compatibility Runtime (`runtime`) | `container` | Host legacy engine profiles and transitional behavior | Explicitly non-canonical where overlapped | [`world-engine/app/runtime/manager.py`](../../../../world-engine/app/runtime/manager.py) |
+| Runtime Observability (`observability`) | `container` | Correlate turn lifecycle and failures | Redacted trace tree | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
+| Session Stores (`persistence`) | `container` | Persist committed session, branches and callbacks | Commit-versioned state | [`world-engine/app/story_runtime/story_session_store.py`](../../../../world-engine/app/story_runtime/story_session_store.py) |
+| Story API (`api`) | `container` | Expose health, package, session, turn and branching routes | Validated HTTP/WS envelopes | [`world-engine/app/api/http.py`](../../../../world-engine/app/api/http.py) |
+| Story Runtime Manager (`manager`) | `container` | Coordinate canonical sessions and turns | Single live authority | [`world-engine/app/story_runtime/manager/runtime_manager.py`](../../../../world-engine/app/story_runtime/manager/runtime_manager.py) |
+| Session Persistence (`store_node`) | `database` | Persist committed state and evidence | Atomic revision storage | [`world-engine/app/story_runtime/story_session_store.py`](../../../../world-engine/app/story_runtime/story_session_store.py) |
+| AI Runtime (`ai_node`) | `node` | Produce proposals | In-process/service adapter | [`ai_stack/langgraph/langgraph_runtime_executor.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor.py) |
+| Backend/Browser Clients (`client_node`) | `node` | Call story endpoints and consume events | HTTP/WebSocket | [`world-engine/app/api/http.py`](../../../../world-engine/app/api/http.py) |
+| World Engine Process (`world_node`) | `node` | Host authoritative runtime | Python service | [`world-engine/Dockerfile`](../../../../world-engine/Dockerfile) |
+| Active (`active`) | `state` | Accept canonical turns | Bound content and actor | [`world-engine/app/story_runtime/manager/runtime_manager.py`](../../../../world-engine/app/story_runtime/manager/runtime_manager.py) |
+| Closed (`closed`) | `state` | Reject further turns and retain evidence | Final persisted revision | [`world-engine/app/api/http_routes/story_session_lifecycle_routes.py`](../../../../world-engine/app/api/http_routes/story_session_lifecycle_routes.py) |
+| Degraded (`degraded`) | `state` | Preserve session during provider or validation failure | No fabricated commit | [`world-engine/app/narrative/fallback_generator.py`](../../../../world-engine/app/narrative/fallback_generator.py) |
+| Executing Turn (`executing`) | `state` | Hold one in-flight command | Serialized session mutation | [`world-engine/app/story_runtime/manager/turn_execution.py`](../../../../world-engine/app/story_runtime/manager/turn_execution.py) |
+| New (`new`) | `state` | Await initial content/session binding | No player turn | [`world-engine/app/api/http_routes/story_session_lifecycle_routes.py`](../../../../world-engine/app/api/http_routes/story_session_lifecycle_routes.py) |
+| AI Stack (`ai`) | `system` | Produce bounded narrative proposals | Proposal and evidence, never commit | [`ai_stack/langgraph/langgraph_runtime_executor.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor.py) |
+| Backend (`backend`) | `system` | Authenticate and proxy play operations | Signed internal request | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
+| Content Authority (`content`) | `system` | Supply versioned authored facts and policy | Immutable bound content version | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
+| World Engine (`world`) | `system` | Own sessions, validate proposals and commit story truth | HTTP/WebSocket story API | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
 
@@ -110,6 +164,19 @@ according to manager policies.
 
 Authoritative: [Story session states](../../../../UML/Components/world-engine/states/world-engine-story-session-states.md)
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| End-to-end authoritative turn from player intent to committed event | `sequence` | [World Engine - Primary Turn](../../../../UML/Components/world-engine/sequence/primary-turn-sequence.md) | 7 |
+| Provider or validation failure preserves committed truth | `sequence` | [World Engine - Degraded Turn](../../../../UML/Components/world-engine/sequence/degraded-turn-sequence.md) | 6 |
+| Decision points between proposal, rejection, commit and delivery | `activity` | [World Engine - Canonical Turn Activity](../../../../UML/Components/world-engine/activity/canonical-turn-activity.md) | 6 |
+| Session creation, serialized turns, degradation, recovery and closure | `state` | [World Engine - Session Lifecycle](../../../../UML/Components/world-engine/states/session-lifecycle.md) | 8 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
+
 ## 7. Deployment View
 
 - Process: `uvicorn app.main:app` from `world-engine/` (see README).
@@ -117,12 +184,42 @@ Authoritative: [Story session states](../../../../UML/Components/world-engine/st
 - CI: `pip install -r world-engine/requirements-dev.txt`; tests import repo-root `ai_stack`.
 - Docker: composed with backend via `docker-up.py` ([ADR-0030](../../../archive/adr-retired-2026/adr-0030-docker-up-complete-bootstrap.md)).
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+| Concern | Model | Nodes / stores |
+| --- | --- | --- |
+| Client boundary, authoritative service, AI collaborator and session persistence | [World Engine - Deployment](../../../../UML/Components/world-engine/deployment/world-engine-deployment.md) | Backend/Browser Clients, World Engine Process, AI Runtime, Session Persistence |
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 - **Tracing:** Langfuse spans on turn execute; player input length/hash on spans ([ADR-0033](../../../archive/adr-retired-2026/adr-0033-live-runtime-commit-semantics.md)).
 - **Validation strategies:** `OutputValidatorConfig` / `ValidationStrategy` in narrative package loader path.
 - **Preview isolation:** `PreviewIsolationRegistry` keeps preview sessions off active runtime ([ADR-0013](../../../archive/adr-retired-2026/adr-0013-preview-sessions-isolated-from-active-runtime.md) — partial).
 - **Locale:** Session output language drives visible realization ([ADR-0036](../../../archive/adr-retired-2026/adr-0036-player-session-output-language.md)).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| AI Proposal Bridge | Commit Resolution | returns candidate | proposal plus evidence | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| Story API | Story Runtime Manager | delegates story operation | validated command | [`world-engine/app/api/http_routes/story_turn_routes.py`](../../../../world-engine/app/api/http_routes/story_turn_routes.py) |
+| CommitDecision | StorySession | advances when accepted | monotonic revision | [`world-engine/app/story_runtime/story_session_store.py`](../../../../world-engine/app/story_runtime/story_session_store.py) |
+| Live Governance | AI Proposal Bridge | requests bounded proposal | proposal-only | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| Canonical Turn Lifecycle | Live Governance | checks authority and policy | fail closed | [`world-engine/app/story_runtime/live_governance.py`](../../../../world-engine/app/story_runtime/live_governance.py) |
+| Story Runtime Manager | Runtime Observability | emits lifecycle evidence | trace-correlated spans | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
+| Story Runtime Manager | Session Stores | loads and stores session | revision-safe transaction | [`world-engine/app/story_runtime/story_session_store.py`](../../../../world-engine/app/story_runtime/story_session_store.py) |
+| NarrativeProposal | CommitDecision | is resolved as | validation evidence | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| Compatibility Runtime | Story Runtime Manager | adapts supported legacy paths | explicit compatibility seam | [`world-engine/app/runtime/manager.py`](../../../../world-engine/app/runtime/manager.py) |
+| StorySession | NarrativeProposal | bounds evaluation | base revision | [`world-engine/app/story_runtime/commit_models.py`](../../../../world-engine/app/story_runtime/commit_models.py) |
+| Story Session Store | Delivery Surfaces | publishes committed result | post-commit only | [`world-engine/app/api/story_ws.py`](../../../../world-engine/app/api/story_ws.py) |
+| Turn Execution | Canonical Turn Lifecycle | executes canonical phases | ordered lifecycle | [`world-engine/app/story_runtime/canonical_turn_lifecycle.py`](../../../../world-engine/app/story_runtime/canonical_turn_lifecycle.py) |
+| Commit Resolution | Story Session Store | commits accepted delta | atomic revision or no write | [`world-engine/app/story_runtime/story_session_store.py`](../../../../world-engine/app/story_runtime/story_session_store.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -542,6 +639,25 @@ Legacy fields are allowed only as:
 - historical test/doc references clearly marked as such
 
 **Evidence.** `docs/architecture/components/world-engine/architecture.md#d16-retire-legacy-narrator-consequence-area-fields` (archived — see `docs/archive/adr-retired-2026/`)
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1`, `D4` | Live authority among player, backend, content and AI proposal collaborators | `context` | [World Engine - System Context](../../../../UML/Components/world-engine/components/c4-context.md) |
+| `D1`, `D5` | API, canonical manager, compatibility runtime, persistence and observability | `container` | [World Engine - Runtime Containers](../../../../UML/Components/world-engine/components/c4-container.md) |
+| `D1`, `D4`, `D6` | Canonical interpret, govern, propose, validate, commit and delivery seams | `component` | [World Engine - Turn Components](../../../../UML/Components/world-engine/components/c4-component.md) |
+| `D1`, `D4` | End-to-end authoritative turn from player intent to committed event | `sequence` | [World Engine - Primary Turn](../../../../UML/Components/world-engine/sequence/primary-turn-sequence.md) |
+| `D5`, `D14` | Provider or validation failure preserves committed truth | `sequence` | [World Engine - Degraded Turn](../../../../UML/Components/world-engine/sequence/degraded-turn-sequence.md) |
+| `D1`, `D4`, `D6` | Decision points between proposal, rejection, commit and delivery | `activity` | [World Engine - Canonical Turn Activity](../../../../UML/Components/world-engine/activity/canonical-turn-activity.md) |
+| `D5`, `D6` | Session creation, serialized turns, degradation, recovery and closure | `state` | [World Engine - Session Lifecycle](../../../../UML/Components/world-engine/states/session-lifecycle.md) |
+| `D1`, `D4` | Session truth, uncommitted proposal and explicit commit decision | `class` | [World Engine - Commit Data Model](../../../../UML/Components/world-engine/classes/commit-data-model.md) |
+| `D1`, `D5` | Client boundary, authoritative service, AI collaborator and session persistence | `deployment` | [World Engine - Deployment](../../../../UML/Components/world-engine/deployment/world-engine-deployment.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 | Requirement | Verification |
@@ -561,6 +677,31 @@ Legacy fields are allowed only as:
 | ADR-0038 partial closure | D5 tracks phases A–C; shell alignment pending |
 | W5 open ADRs (0063, 0065, 0071) | D6 lists proposed follow-ups; inventory gates enforce removal |
 | Preview isolation (ADR-0013) | D12 Not Finished — do not archive until implemented |
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+The engine contains both app/story_runtime and app/runtime generations plus manager decompositions and legacy surfaces. Models make the canonical turn path, compatibility seams and commit authority testable.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 430 | 353 | 1595 | 13 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-001` | `conflicting` | Competing live-runtime structures | Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth. |
+| `DRIFT-002` | `conflicting` | Proposal finalization is named and shaped like a second commit | Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine. |
+| `DRIFT-003` | `open_target` | Dramatic planner state survival through authoritative commit | Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested. |
+| `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
+| `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
+| `DRIFT-006` | `conflicting` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
+| `DRIFT-007` | `open_target` | Player surface can flatten upstream runtime intelligence | Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields. |
+| `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

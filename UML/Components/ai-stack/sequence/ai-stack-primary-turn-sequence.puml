@@ -1,0 +1,49 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: ai-stack:primary-turn
+title AI Stack — Primary Turn Proposal
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: world
+' bt-element-id: ai
+' bt-element-id: executor
+' bt-element-id: ingress
+' bt-element-id: retrieval
+' bt-element-id: director
+' bt-element-id: capabilities
+' bt-element-id: narrator
+' bt-element-id: validator
+' bt-element-id: ledger
+
+participant "World Engine\nResponsibility: Provide authoritative session context and accept or reject proposals\nContract: Turn request and validated proposal boundary\n[[../../../../world-engine/app/story_runtime/manager/runtime_manager.py source]]" as world
+participant "AI Stack\nResponsibility: Produce bounded narrative proposals and evidence\nContract: No direct authoritative session write\n[[../../../../ai_stack/__init__.py source]]\n[[../components/c4-container.puml drill-down]]" as ai
+participant "LangGraph Runtime Executor\nResponsibility: Coordinate the proposal pipeline\nContract: Prepared state in; proposal package out\n[[../../../../ai_stack/langgraph/runtime_executor/public.py source]]\n[[../components/c4-component.puml drill-down]]" as executor
+participant "Semantic Input Translation\nResponsibility: Translate player text into bounded intent evidence\nContract: Semantic input record without invented state\n[[../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py source]]" as ingress
+participant "RAG Context Fabric\nResponsibility: Assemble governed continuity and knowledge context\nContract: Bounded context pack with provenance\n[[../../../../ai_stack/rag/rag_context_pack_build.py source]]" as retrieval
+participant "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director
+participant "Capability Registry\nResponsibility: Select allowed runtime capabilities\nContract: Evidence-gated capability plan\n[[../../../../ai_stack/capabilities/capability_selector.py source]]" as capabilities
+participant "Narrator\nResponsibility: Realize visible narrative blocks\nContract: Proposal-only block stream\n[[../../../../ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py source]]" as narrator
+participant "Proposal Validator\nResponsibility: Evaluate seams, capabilities and retry feedback\nContract: Accepted proposal or actionable rejection\n[[../../../../ai_stack/langgraph/validation/builder.py source]]" as validator
+participant "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and decision metadata\nContract: Typed, non-authoritative evidence records\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]" as ledger
+
+executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py source]]"
+world -> ai : "requests narrative proposal\ncontract: session context plus semantic input\n[[../../../../world-engine/app/story_runtime/manager/turn_execution.py source]]"
+ingress -> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py source]]"
+retrieval -> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
+director -> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py source]]"
+director -> narrator : "requests realization\ncontract: scene plan and actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"
+narrator -> validator : "submits proposal\ncontract: visible blocks plus proposed delta\n[[../../../../ai_stack/langgraph/runtime_executor/executor_validation_commit.py source]]"
+validator -> ledger : "records validation evidence\ncontract: typed aspect status\n[[../../../../ai_stack/langgraph/validation/result.py source]]"
+ledger -> executor : "returns evidence projection\ncontract: proposal package metadata\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py source]]"
+ai -> world : "returns proposal and evidence\ncontract: uncommitted runtime package\n[[../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Ordered proposal production from semantic input to validation evidence
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

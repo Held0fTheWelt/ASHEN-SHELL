@@ -41,6 +41,12 @@ the Better Tomorrow architecture gate.
 - the tombstone is the only tracked file below `ArchitecturalKnowledgeDB/`;
 - external AKDB revision and capabilities are locked;
 - all integration state is rooted in the test temporary directory;
+- Git history and the read-only historical corpus are reconciled into explicit
+  current, superseded, conflicting and open-target claims;
+- every component and project SAD exposes individualized building-block,
+  runtime, deployment, decision and drift correspondence;
+- semantic UML selection is concern-driven, source-bound and not a fixed
+  diagram-count profile;
 - generation and exports are idempotent and dry-run is non-writing;
 - JSON, JUnit and SARIF derive from one audit;
 - the Better Tomorrow architecture gate and existing documentation gate pass.

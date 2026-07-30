@@ -25,6 +25,22 @@ load/compile, governance routes, and **proxy** integration with world-engine for
 
 In scope: API, auth, DB, content compile, play bootstrap. Out of scope: turn graph, narrative commit.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Flask platform and control plane for identity, community, content governance, persistence and the proxy boundary to world-engine.
+
+**Authority rule:** Backend owns platform data and governed operator state; world-engine owns live narrative state.
+
+**Git/archaeology scope:** `backend`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Platform ownership, operator delegation and live-runtime authority | [Backend — System Context](../../../../UML/Components/backend/components/c4-context.md) | Backend owns platform data and governed operator state; world-engine owns live narrative state. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 - HTTP client to `PLAY_SERVICE_INTERNAL_URL` for story operations.
@@ -41,18 +57,90 @@ In scope: API, auth, DB, content compile, play bootstrap. Out of scope: turn gra
 | Governance | `backend/app/services/governance/` |
 | Transitional runtime | `backend/app/runtime/` (deprecated for live play) |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Operator (`operator`) | `actor` | Manage content, providers, policies and diagnostics | Privileged authenticated request | [`docs/architecture/project/security-governance/architecture.md`](../../project/security-governance/architecture.md) |
+| Player (`player`) | `actor` | Authenticate, browse community and start or continue play | Browser/API session | [`docs/architecture/components/backend/architecture.md`](architecture.md) |
+| Alembic Schema (`migration`) | `class` | Version backend persistence | Forward migration sequence | [`backend/migrations/env.py`](../../../../backend/migrations/env.py) |
+| Narrative Governance Models (`narrative_models`) | `class` | Persist packages, revisions, evaluations and runtime read models | Governance truth, not live session authority | [`backend/app/models/world_engine/narrative_contracts.py`](../../../../backend/app/models/world_engine/narrative_contracts.py) |
+| Platform Models (`platform_models`) | `class` | Persist identity, community and site state | Backend database ownership | [`backend/app/models/backend/user.py`](../../../../backend/app/models/backend/user.py) |
+| Authentication API (`auth`) | `component` | Issue and revoke platform sessions and tokens | Password/session/refresh-token policy | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
+| Content Services (`content_service`) | `component` | Compile, review and publish authored content versions | Immutable version plus active pointer | [`backend/app/services/game/game_content_service.py`](../../../../backend/app/services/game/game_content_service.py) |
+| Game API (`game_api`) | `component` | Create run bindings and proxy live play operations | No backend-local narrative commit | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
+| Game Service (`game_service`) | `component` | Call world-engine and map service responses | Internal HTTP and signed ticket | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
+| Governance Services (`governance`) | `component` | Validate provider, route, security and runtime settings | Audit-producing admin mutation boundary | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
+| API v1 (`api`) | `container` | Expose platform, play-proxy and admin HTTP contracts | Blueprint routes with auth and rate limits | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
+| Domain Services (`services`) | `container` | Implement platform and governance use cases | Transaction-scoped service operations | [`backend/app/services/__init__.py`](../../../../backend/app/services/__init__.py) |
+| Observability (`observability`) | `container` | Record platform traces, metrics and diagnostic evidence | Trace correlation with redaction | [`backend/app/observability/__init__.py`](../../../../backend/app/observability/__init__.py) |
+| Persistence Models (`models`) | `container` | Represent backend and narrative-governance durable truth | SQLAlchemy models and Alembic schema | [`backend/app/models/__init__.py`](../../../../backend/app/models/__init__.py) |
+| Transitional Runtime (`compat`) | `container` | Retain explicitly non-authoritative compatibility functions | Quarantined; never player truth authority | [`backend/app/runtime/__init__.py`](../../../../backend/app/runtime/__init__.py) |
+| Backend Database (`database`) | `database` | Persist platform and governance truth | SQLAlchemy/Alembic | [`backend/app/extensions.py`](../../../../backend/app/extensions.py) |
+| Redis (`redis`) | `database` | Share governed runtime configuration and rate-limit state | Explicit bootstrap and health policy | [`docker-compose.yml`](../../../../docker-compose.yml) |
+| Backend Process (`backend_node`) | `node` | Serve Flask API and platform pages | Port 5000 | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
+| Browser Clients (`browser`) | `node` | Host player and operator sessions | HTTPS | [`frontend/app/routes.py`](../../../../frontend/app/routes.py) |
+| World Engine Process (`world_node`) | `node` | Execute authoritative play | Internal HTTP | [`world-engine/Dockerfile`](../../../../world-engine/Dockerfile) |
+| Administration Tool (`admin`) | `system` | Present operator intent | Backend proxy only | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
+| Backend (`backend`) | `system` | Own platform data and governed control-plane operations | Flask /api/v1 | [`backend/app/factory_app.py`](../../../../backend/app/factory_app.py) |
+| World Engine (`world`) | `system` | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Player turn: frontend → `game_routes` → `game_service` HTTP → world-engine → response mapping.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| How backend creates trace/ticket context and delegates the live turn | `sequence` | [Backend — Player Turn Proxy](../../../../UML/Components/backend/sequence/play-proxy-sequence.md) | 4 |
+| Authorization, validation, persistence and audit of operator changes | `sequence` | [Backend — Governed Admin Mutation](../../../../UML/Components/backend/sequence/governed-admin-mutation-sequence.md) | 3 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Flask app with alembic migrations; shares secrets with world-engine for tickets.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+| Concern | Model | Nodes / stores |
+| --- | --- | --- |
+| Backend process, persistence, shared governance store and world-engine boundary | [Backend — Deployment](../../../../UML/Components/backend/deployment/backend-deployment.md) | Browser Clients, Backend Process, Backend Database, Redis, World Engine Process |
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 - Model routing: `backend/app/runtime/model_routing.py` (adapter choice, traces).
 - Operational governance routes tested in `backend/tests/test_operational_governance_*.py`.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| API v1 | Transitional Runtime | uses explicit compatibility paths | quarantined non-authoritative behavior | [`backend/app/runtime/__init__.py`](../../../../backend/app/runtime/__init__.py) |
+| API v1 | Domain Services | invokes use cases | validated request DTOs | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
+| Authentication API | Domain Services | authenticates | identity and token services | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
+| Content Services | Persistence Models | persists package lifecycle | immutable versions and events | [`backend/app/services/game/game_content_service.py`](../../../../backend/app/services/game/game_content_service.py) |
+| Game API | Game Service | delegates live operation | proxy-only service seam | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
+| Game Service | World Engine | calls story API | ticketed HTTP request | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
+| Governance Services | Persistence Models | persists settings and audit | validated governance transaction | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
+| Alembic Schema | Persistence Models | versions | Alembic migration history | [`backend/migrations/env.py`](../../../../backend/migrations/env.py) |
+| Persistence Models | Narrative Governance Models | contains | governance read model ownership | [`backend/app/models/world_engine/__init__.py`](../../../../backend/app/models/world_engine/__init__.py) |
+| Persistence Models | Platform Models | contains | platform ownership | [`backend/app/models/backend/__init__.py`](../../../../backend/app/models/backend/__init__.py) |
+| Domain Services | Persistence Models | reads/writes durable truth | transaction boundary | [`backend/app/extensions.py`](../../../../backend/app/extensions.py) |
+| Domain Services | Observability | emits evidence | redacted trace correlation | [`backend/app/observability/trace.py`](../../../../backend/app/observability/trace.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -163,6 +251,22 @@ enforceable location for denial, confirmation and evidence behavior.
 
 **Evidence.** [`backend/app/services/governance/`](../../../../backend/app/services/governance/), [security-governance SAD D3](../../project/security-governance/architecture.md#d3-security-governance-admin-control-plane).
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1`, `D2`, `D4` | Platform ownership, operator delegation and live-runtime authority | `context` | [Backend — System Context](../../../../UML/Components/backend/components/c4-context.md) |
+| `D1`, `D2` | API, service, persistence, compatibility and observability boundaries | `container` | [Backend — Runtime Containers](../../../../UML/Components/backend/components/c4-container.md) |
+| `D1`, `D4` | Identity, play proxy, content and governance collaborations | `component` | [Backend — Core Components](../../../../UML/Components/backend/components/c4-component.md) |
+| `D1` | How backend creates trace/ticket context and delegates the live turn | `sequence` | [Backend — Player Turn Proxy](../../../../UML/Components/backend/sequence/play-proxy-sequence.md) |
+| `D4` | Authorization, validation, persistence and audit of operator changes | `sequence` | [Backend — Governed Admin Mutation](../../../../UML/Components/backend/sequence/governed-admin-mutation-sequence.md) |
+| `D1`, `D2` | Separation of platform truth, narrative governance read models and schema evolution | `class` | [Backend — Persistence Ownership Model](../../../../UML/Components/backend/classes/backend-persistence-model.md) |
+| `D2`, `D4` | Backend process, persistence, shared governance store and world-engine boundary | `deployment` | [Backend — Deployment](../../../../UML/Components/backend/deployment/backend-deployment.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 - Accepted decisions must resolve to executable backend source or an explicit
@@ -178,6 +282,25 @@ enforceable location for denial, confirmation and evidence behavior.
 ## 11. Risks & Technical Debt
 
 Transitional `SessionState` paths still in tree for tests—must not be mounted as live API.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Backend is the largest tracked area and changed heavily in services, API and runtime. Models distinguish durable platform ownership, proxy-only play paths and quarantined compatibility runtime.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 936 | 791 | 2409 | 278 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
+| `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

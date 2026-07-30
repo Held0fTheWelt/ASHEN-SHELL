@@ -1,0 +1,34 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: ai-stack:director-pulse-lifecycle
+title AI Stack — Director Pulse Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: idle
+' bt-element-id: shadow
+' bt-element-id: live
+' bt-element-id: paused
+
+state "Idle\nResponsibility: No director pulse is active\nContract: No background state mutation\n[[../../../../ai_stack/story_runtime/director/director_pulse_shadow.py source]]" as idle
+state "Shadow Evaluation\nResponsibility: Evaluate pulse without visible delivery\nContract: Evidence only\n[[../../../../ai_stack/story_runtime/block_stream_dual_mode.py source]]" as shadow
+state "Live Proposal\nResponsibility: Produce ordered visible blocks\nContract: Proposal-only output\n[[../../../../ai_stack/story_runtime/block_stream_dual_mode.py source]]" as live
+state "Gathering Paused\nResponsibility: Suspend mandatory beat consumption while player remains free\nContract: No forced actor return\n[[../../../../ai_stack/story_runtime/session_loop/replanning.py source]]" as paused
+
+idle --> live : "live trigger\ncontract: proposal generation enabled\n[[../../../../ai_stack/story_runtime/block_stream_dual_mode.py source]]"
+idle --> shadow : "shadow trigger\ncontract: dual-mode evidence only\n[[../../../../ai_stack/story_runtime/director/director_pulse_shadow.py source]]"
+[*] --> idle : "session ready\ncontract: pulse disabled until trigger"
+live --> idle : "proposal delivered\ncontract: world-engine decides commit\n[[../../../../ai_stack/story_runtime/block_stream_dual_mode.py source]]"
+live --> paused : "required actors absent\ncontract: pause mandatory beat consumption\n[[../../../../ai_stack/story_runtime/session_loop/replanning.py source]]"
+paused --> live : "co-presence restored\ncontract: resume without forced action\n[[../../../../ai_stack/story_runtime/session_loop/replanning.py source]]"
+shadow --> idle : "evidence emitted\ncontract: no visible blocks committed\n[[../../../../ai_stack/story_runtime/director/director_pulse_shadow.py source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Shadow/live dual mode and gathering pause semantics
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

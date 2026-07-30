@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: architecture-assurance:evidence-model
+title Architecture Assurance - Evidence Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: declarations
+' bt-element-id: bindings
+' bt-element-id: findings
+
+class "Architecture Declarations\nResponsibility: Capture decisions, qualities and constraints\nContract: Stable SAD identifiers\n[[../../../../tools/architecture_assurance/sad_parser.py source]]" as declarations {
+  decisions
+  quality scenarios
+  constraints
+  risks
+}
+class "Correspondence Bindings\nResponsibility: Relate declarations to implementation evidence\nContract: Existing paths and explicit kinds\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]" as bindings {
+  source
+  test
+  document
+  view
+}
+class "Audit Findings\nResponsibility: Explain drift with stable identifiers\nContract: severity, scope, evidence and remediation\n[[../../../../tools/architecture_assurance/reporters.py source]]" as findings {
+  code
+  severity
+  message
+  locations
+}
+
+bindings ..> findings : "produce gaps or proof\ncontract: traceable evidence locations\n[[../../../../tools/architecture_assurance/audit.py source]]"
+declarations ..> bindings : "are grounded by\ncontract: stable declaration ids\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Declarations, correspondence bindings and explainable findings
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -100,6 +100,7 @@ def test_external_akdb_round_trip_is_strictly_disposable(tmp_path: Path) -> None
         text=True,
     ).stdout.strip()
     assert revision == LOCK["commit"]
+    before_tree = _tree_state(akdb_root)
     before_tracked = _tracked_state(akdb_root)
     before_persistent = _persistent_state(akdb_root)
 
@@ -130,6 +131,7 @@ def test_external_akdb_round_trip_is_strictly_disposable(tmp_path: Path) -> None
             "AKDB_AUTO_EXPORT": "0",
             "AKDB_QDRANT_URL": "",
             "AKDB_DB_URL": "",
+            "PYTHONDONTWRITEBYTECODE": "1",
         }
     )
 
@@ -183,5 +185,6 @@ def test_external_akdb_round_trip_is_strictly_disposable(tmp_path: Path) -> None
 
     assert (data_root / "integration.sqlite").is_file()
     assert all(path.is_relative_to(tmp_path) for path in data_root.rglob("*"))
+    assert _tree_state(akdb_root) == before_tree
     assert _tracked_state(akdb_root) == before_tracked
     assert _persistent_state(akdb_root) == before_persistent

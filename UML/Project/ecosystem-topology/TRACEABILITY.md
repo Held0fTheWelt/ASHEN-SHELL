@@ -1,7 +1,12 @@
-# ecosystem-topology TRACEABILITY
+# Ecosystem Topology UML traceability
 
-| Diagram | Decision | Claim | Source | Test / gate |
-| --- | --- | --- | --- | --- |
-| c4-context | D1 | Service map | see component SAD | `tests/gates/` |
-| c4-context | D2 | docker-up bootstrap | see component SAD | `tests/gates/` |
-| c4-context | D3 | Turn execution cross-cut | see component SAD | `tests/gates/` |
+| View | Kind | Decisions | Source anchors |
+| --- | --- | --- | --- |
+| [Better Tomorrow - System Context](context/system-context.md) | `context` | D1, D2 | `administration-tool/app.py`, `ai_stack/langgraph/langgraph_runtime_executor.py`, `backend/app/factory_app.py`, `backend/app/services/game/game_service.py`, `backend/app/services/governance/governance_runtime_service.py`, `content/modules/god_of_carnage/module.yaml`, `frontend/app/__init__.py`, `frontend/app/api_client.py`, `frontend/app/routes_play.py`, `frontend/templates/session_shell.html`, `tools/mcp_server/backend_client.py`, `tools/mcp_server/server.py`, `world-engine/app/api/story_ws.py`, `world-engine/app/content/backend_loader.py`, `world-engine/app/main.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py` |
+| [Better Tomorrow - Canonical Runtime Containers](components/runtime-containers.md) | `container` | D1, D2 | `ai_stack/langgraph/langgraph_runtime_executor.py`, `backend/app/api/v1/auth_routes.py`, `backend/app/api/v1/game/player_turn_execution_and_flush.py`, `backend/app/services/game/game_service.py`, `content/modules/god_of_carnage/module.yaml`, `world-engine/app/content/backend_loader.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py`, `world-engine/app/story_runtime/manager/runtime_manager.py`, `world-engine/app/story_runtime/narrative_commit_resolution.py` |
+| [Better Tomorrow - Canonical Turn](sequence/canonical-turn-sequence.md) | `sequence` | D1 | `ai_stack/langgraph/langgraph_runtime_executor.py`, `backend/app/factory_app.py`, `backend/app/services/game/game_service.py`, `content/modules/god_of_carnage/module.yaml`, `frontend/app/__init__.py`, `frontend/app/api_client.py`, `frontend/app/routes_play.py`, `frontend/templates/session_shell.html`, `world-engine/app/api/story_ws.py`, `world-engine/app/content/backend_loader.py`, `world-engine/app/main.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py` |
+| [Better Tomorrow - Architecture Archaeology](components/architecture-archaeology.md) | `component` | D2 | `.git`, `README.md`, `docs/architecture/evidence/README.md`, `docs/architecture/project/ecosystem-topology/architecture.md`, `tools/architecture_assurance/model_catalog.json` |
+| [Better Tomorrow - Historical Claim Classification](states/claim-classification.md) | `state` | D2 | `docs/architecture/project/ecosystem-topology/architecture.md`, `docs/architecture/project/ecosystem-topology/evidence-matrix.md`, `docs/architecture/project/ecosystem-topology/mechanism-catalog.md` |
+| [Better Tomorrow - Authority Use Cases](usecases/authority-use-cases.md) | `usecase` | D1 | `administration-tool/app.py`, `backend/app/factory_app.py`, `backend/app/services/game/game_service.py`, `frontend/app/__init__.py`, `frontend/app/routes_play.py`, `frontend/templates/session_shell.html`, `tools/mcp_server/backend_client.py`, `tools/mcp_server/server.py`, `world-engine/app/main.py` |
+
+The table is a generated correspondence view. Source paths are validated before projection.

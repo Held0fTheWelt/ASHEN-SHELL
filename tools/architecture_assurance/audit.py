@@ -11,8 +11,10 @@ from typing import Any
 
 from .canon import build_canon_manifest, verify_canon_manifest
 from .discovery import discover_subsystem
+from .drift_claims import load_claim_catalog, validate_claim_catalog
 from .manifest_builder import load_config
 from .sad_parser import parse_sad
+from .semantic_models import load_model_catalog, validate_model_catalog
 from .schemas import (
     GATE_RESULT_SCHEMA_VERSION,
     GATE_SCHEMA_VERSION,
@@ -23,18 +25,19 @@ from .schemas import (
 
 
 _ELEMENT = re.compile(
-    r"(?im)^\s*(?:Person|System|Container|Component|"
-    r"rectangle|component|class|interface|database|participant|actor|node)"
-    r"(?:_Ext|Db|Queue)?\s*(?:\(|\b)"
+    r'(?im)^\s*(?:rectangle|component|class|interface|database|'
+    r'participant|actor|node|activity|artifact|queue|state|usecase)\s+"'
 )
-_LEGIBILITY_BANDS = {
-    "context": (2, 12),
-    "container": (3, 20),
-    "component": (4, 30),
-    "class": (3, 40),
-    "runtime": (3, 40),
-    "data": (3, 40),
-    "deployment": (2, 30),
+_KIND_NOTATION = {
+    "class": "class",
+    "component": "component",
+    "container": "rectangle",
+    "context": "rectangle",
+    "data": "class",
+    "deployment": "node",
+    "sequence": "participant",
+    "state": "state",
+    "usecase": "usecase",
 }
 _ACCEPTED = ("accepted", "partially implemented", "implemented")
 
@@ -42,21 +45,77 @@ _ACCEPTED = ("accepted", "partially implemented", "implemented")
 def _view_status(view: Mapping[str, Any], repo_root: Path) -> dict[str, Any]:
     path = repo_root / str(view["path"])
     if not path.is_file():
-        return {"status": "missing", "elements": 0, "path": view["path"]}
+        return {
+            "status": "missing",
+            "elements": 0,
+            "relationships": 0,
+            "reasons": ["model file is missing"],
+            "path": view["path"],
+        }
     text = path.read_text(encoding="utf-8-sig")
-    elements = len(_ELEMENT.findall(text))
-    minimum, maximum = _LEGIBILITY_BANDS.get(str(view["level"]), (3, 30))
-    if elements < minimum:
-        status = "sketch"
-    elif elements > maximum:
-        status = "hairball"
-    elif "[[" not in text:
-        status = "sketch"
-    elif not any(token in text.lower() for token in ("responsibility", "contract", "owns")):
-        status = "sketch"
-    else:
-        status = "model"
-    return {"status": status, "elements": elements, "path": view["path"]}
+    marker_elements = len(
+        re.findall(r"(?im)^\s*'\s*bt-element-id:\s*\S+", text)
+    )
+    elements = marker_elements or len(_ELEMENT.findall(text))
+    relationships = text.count("contract:")
+    expected_elements = int(view.get("element_count", 0))
+    expected_relationships = int(view.get("relationship_count", 0))
+    kind = str(view.get("kind") or view.get("level"))
+    reasons: list[str] = []
+    if f"' bt-view-kind: {kind}" not in text:
+        reasons.append("semantic viewpoint marker is missing or wrong")
+    if expected_elements and elements != expected_elements:
+        reasons.append(
+            f"modeled elements {elements} != declared {expected_elements}"
+        )
+    if relationships != expected_relationships:
+        reasons.append(
+            "semantic relationships "
+            f"{relationships} != declared {expected_relationships}"
+        )
+    if text.count("Responsibility:") < expected_elements:
+        reasons.append("one or more elements lack an explicit responsibility")
+    if text.count("Contract:") < expected_elements:
+        reasons.append("one or more elements lack an explicit contract")
+    if text.count("[[") < expected_elements:
+        reasons.append("one or more elements lack a navigable source anchor")
+    if kind == "activity" and ("(*)" not in text or "-->" not in text):
+        reasons.append("view does not use activity start/flow notation")
+    notation = _KIND_NOTATION.get(kind)
+    if notation and not re.search(
+        rf"(?im)^\s*{re.escape(notation)}\b",
+        text,
+    ):
+        if not (
+            kind == "sequence"
+            and re.search(r"(?im)^\s*actor\b", text)
+            and " -> " in text
+        ):
+            reasons.append(f"view does not use {kind} notation")
+    if kind == "state" and "[*]" not in text:
+        reasons.append("state model has no initial or final transition")
+    if kind == "sequence" and " -> " not in text:
+        reasons.append("sequence model has no ordered messages")
+    if "evidence for boundary" in text.lower():
+        reasons.append("generic evidence-star relationship detected")
+    relation_lines = [
+        line.strip()
+        for line in text.splitlines()
+        if "contract:" in line
+    ]
+    if len(relation_lines) > 1 and len(set(relation_lines)) == 1:
+        reasons.append("all relationship semantics are identical")
+    return {
+        "status": "model" if not reasons else "sketch",
+        "elements": elements,
+        "expected_elements": expected_elements,
+        "relationships": relationships,
+        "expected_relationships": expected_relationships,
+        "kind": kind,
+        "concern": view.get("concern", ""),
+        "reasons": reasons,
+        "path": view["path"],
+    }
 
 
 def _anchor_signature(unit: Mapping[str, Any]) -> tuple[Any, ...]:
@@ -207,7 +266,10 @@ def _subsystem_report(
                 {
                     "rule_id": "BT-VIEW-DEPTH",
                     "unit": f"{subsystem['id']}:{view_id}",
-                    "message": f"required view is {result['status']}",
+                    "message": (
+                        f"required view is {result['status']}: "
+                        + "; ".join(result.get("reasons", []))
+                    ),
                     "path": result["path"],
                 }
             )
@@ -303,6 +365,73 @@ def _rollup(subsystems: list[dict[str, Any]]) -> dict[str, Any]:
 
 def build_report(config_path: Path, repo_root: Path) -> dict[str, Any]:
     config = load_config(config_path)
+    global_findings: list[dict[str, Any]] = []
+    model_catalog = load_model_catalog(
+        repo_root / str(config["model_catalog"])
+    )
+    for finding in validate_model_catalog(model_catalog, repo_root):
+        global_findings.append(
+            {
+                "rule_id": "BT-SEMANTIC-CATALOG",
+                "unit": (
+                    f"{finding['subsystem']}:{finding['view']}"
+                ),
+                "message": finding["error"],
+                "path": config["model_catalog"],
+            }
+        )
+    claim_catalog = load_claim_catalog(
+        repo_root / str(config["drift_claim_catalog"])
+    )
+    for message in validate_claim_catalog(claim_catalog, repo_root):
+        global_findings.append(
+            {
+                "rule_id": "BT-DRIFT-CLAIM",
+                "unit": config["project_id"],
+                "message": message,
+                "path": config["drift_claim_catalog"],
+            }
+        )
+    view_profiles = {
+        subsystem_id: tuple(
+            str(view["kind"]) for view in model["views"]
+        )
+        for subsystem_id, model in model_catalog["subsystems"].items()
+    }
+    if len(set(view_profiles.values())) == 1:
+        global_findings.append(
+            {
+                "rule_id": "BT-FIXED-VIEW-PROFILE",
+                "unit": config["project_id"],
+                "message": "all subsystems use one fixed viewpoint profile",
+                "path": config["model_catalog"],
+            }
+        )
+    for subsystem_id, model in model_catalog["subsystems"].items():
+        for view in model["views"]:
+            if "/depth/" in str(view["path"]).replace("\\", "/"):
+                global_findings.append(
+                    {
+                        "rule_id": "BT-LEGACY-DEPTH-VIEW",
+                        "unit": f"{subsystem_id}:{view['id']}",
+                        "message": "legacy fixed-depth projection remains required",
+                        "path": view["path"],
+                    }
+                )
+    for required_path, rule_id in (
+        (config["drift_evidence_json"], "BT-DRIFT-EVIDENCE"),
+        (config["drift_evidence_markdown"], "BT-DRIFT-EVIDENCE"),
+        (config["drift_reconciliation"], "BT-DRIFT-RECONCILIATION"),
+    ):
+        if not (repo_root / str(required_path)).is_file():
+            global_findings.append(
+                {
+                    "rule_id": rule_id,
+                    "unit": config["project_id"],
+                    "message": "required Git/archaeology evidence is missing",
+                    "path": required_path,
+                }
+            )
     subsystems = [
         _subsystem_report(subsystem, repo_root)
         for subsystem in config["subsystems"]
@@ -313,7 +442,7 @@ def build_report(config_path: Path, repo_root: Path) -> dict[str, Any]:
         repo_root,
         build_canon_manifest(config, repo_root),
     )
-    findings = [
+    findings = global_findings + [
         finding
         for subsystem in subsystems
         for finding in subsystem["findings"]
@@ -385,6 +514,30 @@ def evaluate_gate(
                 "message": "canon projection does not match its manifest",
             }
         )
+    if gate_config.get("fail_on_findings"):
+        existing = {
+            (
+                failure["rule_id"],
+                failure["unit"],
+                failure["message"],
+            )
+            for failure in failures
+        }
+        for finding in report.get("findings", []):
+            signature = (
+                finding["rule_id"],
+                finding["unit"],
+                finding["message"],
+            )
+            if signature not in existing:
+                failures.append(
+                    {
+                        "rule_id": finding["rule_id"],
+                        "unit": finding["unit"],
+                        "message": finding["message"],
+                    }
+                )
+                existing.add(signature)
     return {
         "schema_version": GATE_RESULT_SCHEMA_VERSION,
         "status": "PASS" if not failures else "FAIL",

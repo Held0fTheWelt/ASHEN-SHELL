@@ -5761,24 +5761,209 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "ai_stack/langgraph/langgraph_runtime_executor.py",
+        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/services/game/game_service.py",
+        "content/modules/god_of_carnage/module.yaml",
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/content/backend_loader.py",
+        "world-engine/app/main.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py"
+      ],
+      "concern": "Live authority among player, backend, content and AI proposal collaborators",
+      "decisions": [
+        "D1",
+        "D4"
+      ],
+      "element_count": 5,
+      "id": "system-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Components/world-engine/depth/c4-context.puml"
+      "path": "UML/Components/world-engine/components/c4-context.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
+      "anchors": [
+        "world-engine/app/api/http.py",
+        "world-engine/app/api/http_routes/story_turn_routes.py",
+        "world-engine/app/observability/trace.py",
+        "world-engine/app/runtime/manager.py",
+        "world-engine/app/story_runtime/manager/runtime_manager.py",
+        "world-engine/app/story_runtime/story_session_store.py"
+      ],
+      "concern": "API, canonical manager, compatibility runtime, persistence and observability",
+      "decisions": [
+        "D1",
+        "D5"
+      ],
+      "element_count": 5,
+      "id": "runtime-containers",
+      "kind": "container",
       "level": "container",
-      "path": "UML/Components/world-engine/depth/c4-container.puml"
+      "path": "UML/Components/world-engine/components/c4-container.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "component",
+      "anchors": [
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/story_runtime/canonical_turn_lifecycle.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/live_governance.py",
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py",
+        "world-engine/app/story_runtime/story_session_store.py"
+      ],
+      "concern": "Canonical interpret, govern, propose, validate, commit and delivery seams",
+      "decisions": [
+        "D1",
+        "D4",
+        "D6"
+      ],
+      "element_count": 7,
+      "id": "turn-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Components/world-engine/depth/c4-component.puml"
+      "path": "UML/Components/world-engine/components/c4-component.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
+      "anchors": [
+        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/services/game/game_service.py",
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/story_runtime/canonical_turn_lifecycle.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/live_governance.py",
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py",
+        "world-engine/app/story_runtime/story_session_store.py"
+      ],
+      "concern": "End-to-end authoritative turn from player intent to committed event",
+      "decisions": [
+        "D1",
+        "D4"
+      ],
+      "element_count": 9,
+      "id": "primary-turn",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/world-engine/sequence/primary-turn-sequence.puml",
+      "relationship_count": 7,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "world-engine/app/observability/trace.py",
+        "world-engine/app/story_runtime/canonical_turn_lifecycle.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/live_governance.py",
+        "world-engine/app/story_runtime/manager/runtime_manager.py",
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py",
+        "world-engine/app/story_runtime/story_session_store.py"
+      ],
+      "concern": "Provider or validation failure preserves committed truth",
+      "decisions": [
+        "D5",
+        "D14"
+      ],
+      "element_count": 8,
+      "id": "degraded-turn",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/world-engine/sequence/degraded-turn-sequence.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/story_runtime/canonical_turn_lifecycle.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/live_governance.py",
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py",
+        "world-engine/app/story_runtime/story_session_store.py"
+      ],
+      "concern": "Decision points between proposal, rejection, commit and delivery",
+      "decisions": [
+        "D1",
+        "D4",
+        "D6"
+      ],
+      "element_count": 7,
+      "id": "turn-activity",
+      "kind": "activity",
+      "level": "activity",
+      "path": "UML/Components/world-engine/activity/canonical-turn-activity.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "world-engine/app/api/http_routes/story_session_lifecycle_routes.py",
+        "world-engine/app/narrative/fallback_generator.py",
+        "world-engine/app/runtime/engine.py",
+        "world-engine/app/story_runtime/manager/runtime_manager.py",
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py"
+      ],
+      "concern": "Session creation, serialized turns, degradation, recovery and closure",
+      "decisions": [
+        "D5",
+        "D6"
+      ],
+      "element_count": 5,
+      "id": "session-lifecycle",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Components/world-engine/states/session-lifecycle.puml",
+      "relationship_count": 8,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "world-engine/app/story_runtime/commit_models.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py",
+        "world-engine/app/story_runtime/story_session_store.py"
+      ],
+      "concern": "Session truth, uncommitted proposal and explicit commit decision",
+      "decisions": [
+        "D1",
+        "D4"
+      ],
+      "element_count": 3,
+      "id": "commit-data-model",
+      "kind": "class",
       "level": "class",
-      "path": "UML/Components/world-engine/depth/class-model.puml"
+      "path": "UML/Components/world-engine/classes/commit-data-model.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "ai_stack/langgraph/langgraph_runtime_executor.py",
+        "world-engine/Dockerfile",
+        "world-engine/app/api/http.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/story_session_store.py"
+      ],
+      "concern": "Client boundary, authoritative service, AI collaborator and session persistence",
+      "decisions": [
+        "D1",
+        "D5"
+      ],
+      "element_count": 4,
+      "id": "deployment",
+      "kind": "deployment",
+      "level": "deployment",
+      "path": "UML/Components/world-engine/deployment/world-engine-deployment.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/components/world-engine/architecture.md",

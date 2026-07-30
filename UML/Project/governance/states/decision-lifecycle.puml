@@ -1,0 +1,31 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: governance:decision-lifecycle
+title Architecture Governance - Decision Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: draft
+' bt-element-id: proposed
+' bt-element-id: accepted
+' bt-element-id: superseded
+
+state "Draft\nResponsibility: Collect problem and options\nContract: No authority yet\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as draft
+state "Proposed\nResponsibility: Expose reviewable evidence\nContract: Owner and scope complete\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as proposed
+state "Accepted\nResponsibility: Govern implementation and models\nContract: Decision registry entry\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as accepted
+state "Superseded\nResponsibility: Retain lineage without current authority\nContract: Replacement decision linked\n[[../../../../docs/adr/legacy/README.md source]]" as superseded
+
+accepted --> superseded : "replacement accepted\ncontract: lineage preserved\n[[../../../../docs/adr/legacy/README.md source]]"
+draft --> proposed : "options and evidence complete\ncontract: review ready"
+[*] --> draft : "problem recorded\ncontract: scope named"
+proposed --> accepted : "approved\ncontract: decision registry updated\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Draft, proposal, acceptance and supersession with preserved lineage
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

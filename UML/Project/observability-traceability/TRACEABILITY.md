@@ -1,8 +1,11 @@
-# observability-traceability TRACEABILITY
+# Observability and Traceability UML traceability
 
-| Diagram | Decision | Claim | Source | Test / gate |
-| --- | --- | --- | --- | --- |
-| c4-context | D1 | Turn trace correlation | see component SAD | `tests/gates/` |
-| c4-context | D6 | Langfuse provider | see component SAD | `tests/gates/` |
-| c4-context | D7 | Redaction policy | see component SAD | `tests/gates/` |
-| c4-context | D5 | Diagnostics HTTP | see component SAD | `tests/gates/` |
+| View | Kind | Decisions | Source anchors |
+| --- | --- | --- | --- |
+| [Observability - Context](context/observability-context.md) | `context` | D1 | `administration-tool/templates/manage/diagnosis.html`, `docs/architecture/project/observability-traceability/architecture.md` |
+| [Observability - Components](components/trace-components.md) | `component` | D1, D2 | `ai_stack/langfuse/langfuse_evidence.py`, `backend/app/api/v1/game/player_turn_trace_start.py`, `backend/app/api/v1/game/trace_identity_and_auth_helpers.py`, `tools/mcp_server/langfuse_tracing.py`, `world-engine/app/observability/trace.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py`, `world-engine/app/web/static/ui_traces.js` |
+| [Observability - Turn Trace](sequence/turn-trace.md) | `sequence` | D1 | `ai_stack/langfuse/langfuse_evidence.py`, `backend/app/api/v1/game/player_turn_trace_start.py`, `backend/app/api/v1/game/trace_identity_and_auth_helpers.py`, `world-engine/app/observability/trace.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py`, `world-engine/app/web/static/ui_traces.js` |
+| [Observability - Data Model](classes/trace-data-model.md) | `class` | D2 | `ai_stack/langfuse/langfuse_evidence.py`, `world-engine/app/observability/audit_log.py`, `world-engine/app/observability/trace.py` |
+| [Observability - Trace Lifecycle](states/trace-lifecycle.md) | `state` | D3 | `backend/app/api/v1/game/player_turn_trace_start.py`, `world-engine/app/middleware/trace_middleware.py`, `world-engine/app/observability/langfuse_adapter.py`, `world-engine/app/observability/trace.py`, `world-engine/app/web/static/ui_traces.js` |
+
+The table is a generated correspondence view. Source paths are validated before projection.

@@ -30389,24 +30389,169 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "administration-tool/app.py",
+        "administration-tool/route_registration_manage_sections.py",
+        "backend/app/api/v1/auth_routes.py",
+        "backend/app/api/v1/security_governance_routes.py",
+        "backend/app/factory_app.py",
+        "backend/app/services/game/game_service.py",
+        "docs/architecture/components/backend/architecture.md",
+        "docs/architecture/project/security-governance/architecture.md",
+        "world-engine/app/main.py"
+      ],
+      "concern": "Platform ownership, operator delegation and live-runtime authority",
+      "decisions": [
+        "D1",
+        "D2",
+        "D4"
+      ],
+      "element_count": 5,
+      "id": "system-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Components/backend/depth/c4-context.puml"
+      "path": "UML/Components/backend/components/c4-context.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
+      "anchors": [
+        "backend/app/api/v1/__init__.py",
+        "backend/app/extensions.py",
+        "backend/app/models/__init__.py",
+        "backend/app/observability/__init__.py",
+        "backend/app/observability/trace.py",
+        "backend/app/runtime/__init__.py",
+        "backend/app/services/__init__.py"
+      ],
+      "concern": "API, service, persistence, compatibility and observability boundaries",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "runtime-containers",
+      "kind": "container",
       "level": "container",
-      "path": "UML/Components/backend/depth/c4-container.puml"
+      "path": "UML/Components/backend/components/c4-container.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "component",
+      "anchors": [
+        "backend/app/api/v1/auth_routes.py",
+        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/models/__init__.py",
+        "backend/app/observability/__init__.py",
+        "backend/app/observability/trace.py",
+        "backend/app/services/__init__.py",
+        "backend/app/services/game/game_content_service.py",
+        "backend/app/services/game/game_service.py",
+        "backend/app/services/governance/governance_runtime_service.py",
+        "world-engine/app/main.py"
+      ],
+      "concern": "Identity, play proxy, content and governance collaborations",
+      "decisions": [
+        "D1",
+        "D4"
+      ],
+      "element_count": 9,
+      "id": "core-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Components/backend/depth/c4-component.puml"
+      "path": "UML/Components/backend/components/c4-component.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
+      "anchors": [
+        "backend/app/api/v1/auth_routes.py",
+        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/factory_app.py",
+        "backend/app/observability/__init__.py",
+        "backend/app/observability/trace.py",
+        "backend/app/services/__init__.py",
+        "backend/app/services/game/game_service.py",
+        "docs/architecture/components/backend/architecture.md",
+        "world-engine/app/main.py"
+      ],
+      "concern": "How backend creates trace/ticket context and delegates the live turn",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 7,
+      "id": "play-proxy",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/backend/sequence/play-proxy-sequence.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/api/v1/security_governance_routes.py",
+        "backend/app/models/__init__.py",
+        "backend/app/observability/__init__.py",
+        "backend/app/services/governance/governance_runtime_service.py",
+        "backend/app/services/governance/observability_governance_service.py",
+        "docs/architecture/project/security-governance/architecture.md"
+      ],
+      "concern": "Authorization, validation, persistence and audit of operator changes",
+      "decisions": [
+        "D4"
+      ],
+      "element_count": 4,
+      "id": "governed-admin-mutation",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/backend/sequence/governed-admin-mutation-sequence.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/models/__init__.py",
+        "backend/app/models/backend/__init__.py",
+        "backend/app/models/backend/user.py",
+        "backend/app/models/world_engine/__init__.py",
+        "backend/app/models/world_engine/narrative_contracts.py",
+        "backend/migrations/env.py"
+      ],
+      "concern": "Separation of platform truth, narrative governance read models and schema evolution",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 4,
+      "id": "persistence-model",
+      "kind": "class",
       "level": "class",
-      "path": "UML/Components/backend/depth/class-model.puml"
+      "path": "UML/Components/backend/classes/backend-persistence-model.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/Dockerfile",
+        "backend/app/extensions.py",
+        "backend/app/services/game/game_service.py",
+        "backend/app/services/governance/runtime_config_truth_service.py",
+        "docker-compose.yml",
+        "frontend/app/routes.py",
+        "world-engine/Dockerfile"
+      ],
+      "concern": "Backend process, persistence, shared governance store and world-engine boundary",
+      "decisions": [
+        "D2",
+        "D4"
+      ],
+      "element_count": 5,
+      "id": "deployment",
+      "kind": "deployment",
+      "level": "deployment",
+      "path": "UML/Components/backend/deployment/backend-deployment.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/components/backend/architecture.md",

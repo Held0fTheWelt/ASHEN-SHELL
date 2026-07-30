@@ -1,0 +1,39 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: mcp-server:json-rpc-call
+title MCP Server - JSON-RPC Call
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: client
+' bt-element-id: server
+' bt-element-id: router
+' bt-element-id: registry
+' bt-element-id: handlers
+' bt-element-id: rate_limit
+' bt-element-id: observability
+
+actor "MCP Client\nResponsibility: Discover and invoke Better Tomorrow tools\nContract: JSON-RPC over stdio\n[[../../../../tools/mcp_server/README.md source]]" as client
+participant "MCP Server\nResponsibility: Validate protocol and dispatch registered capabilities\nContract: MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]" as server
+participant "RPC Router\nResponsibility: Decode methods and produce protocol errors\nContract: JSON-RPC request/response\n[[../../../../tools/mcp_server/rpc_method_router.py source]]" as router
+participant "Capability Registry\nResponsibility: Publish stable tool, resource and prompt metadata\nContract: Unique names and schemas\n[[../../../../tools/mcp_server/registry.py source]]" as registry
+participant "Handler Families\nResponsibility: Implement bounded capability groups\nContract: Validated arguments and structured result\n[[../../../../tools/mcp_server/handlers/__init__.py source]]" as handlers
+participant "Rate Limiter\nResponsibility: Bound expensive or mutating calls\nContract: Per-operation policy\n[[../../../../tools/mcp_server/rate_limiter.py source]]" as rate_limit
+participant "Langfuse Tracing\nResponsibility: Correlate MCP calls without leaking credentials\nContract: Redacted trace events\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]" as observability
+
+client -> server : "invokes capability\ncontract: valid MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]"
+server -> router : "dispatches method\ncontract: protocol envelope\n[[../../../../tools/mcp_server/rpc_method_router.py source]]"
+router -> registry : "resolves capability\ncontract: registered canonical name\n[[../../../../tools/mcp_server/registry.py source]]"
+registry -> handlers : "binds handler\ncontract: schema-compatible callable\n[[../../../../tools/mcp_server/tools_registry.py source]]"
+handlers -> rate_limit : "checks policy\ncontract: budget before execution\n[[../../../../tools/mcp_server/rate_limiter.py source]]"
+handlers -> observability : "emits call evidence\ncontract: redacted trace\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Protocol validation through bounded handler execution
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -1,0 +1,30 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: architecture-assurance:system-context
+title Architecture Assurance - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: architect
+' bt-element-id: assurance
+' bt-element-id: repo
+' bt-element-id: akdb
+
+actor "Architect / Maintainer\nResponsibility: State decisions, classify drift and approve target architecture\nContract: Reviewed SAD and model-catalog changes\n[[../../../../docs/architecture/project/architecture-assurance/architecture.md source]]" as architect
+rectangle "Architecture Assurance\nResponsibility: Discover, correlate, validate and export architecture evidence\nContract: Deterministic CLI and report schemas\n[[../../../../tools/architecture_assurance/cli.py source]]" as assurance
+rectangle "Better Tomorrow Repository\nResponsibility: Provide current code, documents and Git history\nContract: Read-only discovery except generated architecture artifacts\n[[../../../../.git source]]" as repo
+rectangle "External AKDB\nResponsibility: Validate and export canonical architecture knowledge\nContract: Pinned disposable checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]" as akdb
+
+architect ..> assurance : "authors intent and runs audit\ncontract: reviewed invocation\n[[../../../../tools/architecture_assurance/cli.py source]]"
+assurance ..> akdb : "validates disposable export\ncontract: pinned external checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]"
+assurance ..> repo : "discovers and correlates\ncontract: source and Git evidence\n[[../../../../tools/architecture_assurance/discovery.py source]]"
+
+legend bottom
+Viewpoint: context
+Concern: Human intent, repository truth and disposable external AKDB
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

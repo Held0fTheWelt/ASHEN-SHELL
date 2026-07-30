@@ -1,0 +1,45 @@
+@startuml
+' bt-view-kind: container
+' bt-view-id: ai-stack:runtime-containers
+title AI Stack — Runtime Containers
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: executor
+' bt-element-id: ingress
+' bt-element-id: retrieval
+' bt-element-id: director
+' bt-element-id: narrator
+' bt-element-id: validator
+' bt-element-id: ledger
+' bt-element-id: quality
+' bt-element-id: research
+
+rectangle "LangGraph Runtime Executor\nResponsibility: Coordinate the proposal pipeline\nContract: Prepared state in; proposal package out\n[[../../../../ai_stack/langgraph/runtime_executor/public.py source]]\n[[c4-component.puml drill-down]]" as executor
+component "Semantic Input Translation\nResponsibility: Translate player text into bounded intent evidence\nContract: Semantic input record without invented state\n[[../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py source]]" as ingress
+component "RAG Context Fabric\nResponsibility: Assemble governed continuity and knowledge context\nContract: Bounded context pack with provenance\n[[../../../../ai_stack/rag/rag_context_pack_build.py source]]" as retrieval
+component "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director
+component "Narrator\nResponsibility: Realize visible narrative blocks\nContract: Proposal-only block stream\n[[../../../../ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py source]]" as narrator
+component "Proposal Validator\nResponsibility: Evaluate seams, capabilities and retry feedback\nContract: Accepted proposal or actionable rejection\n[[../../../../ai_stack/langgraph/validation/builder.py source]]" as validator
+component "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and decision metadata\nContract: Typed, non-authoritative evidence records\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]" as ledger
+component "Quality Lab\nResponsibility: Score traces and narrative output\nContract: Evaluation evidence, never runtime authority\n[[../../../../ai_stack/quality_lab/evaluation_pipeline.py source]]" as quality
+component "Research Lane\nResponsibility: Explore and draft bounded canon improvements\nContract: Draft-only findings; cannot publish canon\n[[../../../../ai_stack/research/canon_improvement_engine.py source]]" as research
+
+quality ..> ledger : "reads trace aspects\ncontract: evaluation-only projection\n[[../../../../ai_stack/quality_lab/trace_interpreter.py source]]"
+research ..> quality : "uses evaluation evidence\ncontract: draft improvement finding\n[[../../../../ai_stack/research/research_validation.py source]]"
+ingress ..> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py source]]"
+retrieval ..> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
+director ..> narrator : "requests realization\ncontract: scene plan and actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"
+narrator ..> validator : "submits proposal\ncontract: visible blocks plus proposed delta\n[[../../../../ai_stack/langgraph/runtime_executor/executor_validation_commit.py source]]"
+validator ..> ledger : "records validation evidence\ncontract: typed aspect status\n[[../../../../ai_stack/langgraph/validation/result.py source]]"
+ledger ..> executor : "returns evidence projection\ncontract: proposal package metadata\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py source]]"
+
+legend bottom
+Viewpoint: container
+Concern: Major execution, retrieval, planning, validation and evidence seams
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

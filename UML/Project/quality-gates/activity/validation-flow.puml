@@ -1,0 +1,51 @@
+@startuml
+' bt-view-kind: activity
+' bt-view-id: quality-gates:validation-flow
+title Quality Gates - Validation Flow
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: selector
+' bt-element-id: runner
+' bt-element-id: gates
+' bt-element-id: integration
+' bt-element-id: report
+' bt-element-id: ci
+
+(*) --> "Test Selector\nResponsibility: Map changes and profiles to declared suites\nContract: No silent omission\n[[../../../../scripts/test_changed.py source]]" as selector
+selector -->[supplies selected suites\ncontract: selection rationale] "Central Runner\nResponsibility: Execute subsystem and cross-system suites\nContract: One authoritative orchestration path\n[[../../../../tests/run_tests.py source]]" as runner
+note on link
+[[../../../../scripts/test_changed.py relationship source]]
+end note
+runner -->[executes static and contract gates\ncontract: blocking assertions] "Architecture and Contract Gates\nResponsibility: Enforce boundaries and anti-hardcoding policy\nContract: Behavioral assertions\n[[../../../../tests/gates/test_table_b_anti_hardcoding_gate.py source]]" as gates
+note on link
+[[../../../../tests/run_tests.py relationship source]]
+end note
+runner -->[executes boundary proof\ncontract: disposable test environment] "Integration and E2E\nResponsibility: Prove real authority boundaries and user paths\nContract: Disposable dependencies and production path\n[[../../../../tests/integration/test_story_runtime_experience.py source]]" as integration
+note on link
+[[../../../../tests/run_tests.py relationship source]]
+end note
+gates -->[emits findings\ncontract: selected/executed truth] "Evidence Reporter\nResponsibility: Expose selected, executed, skipped and failed scope\nContract: Machine-readable and human summary\n[[../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md source]]" as report
+note on link
+[[../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md relationship source]]
+end note
+integration -->[emits evidence\ncontract: production-path outcome] report
+note on link
+[[../../../../tests/integration/test_story_runtime_experience.py relationship source]]
+end note
+report -->[controls promotion\ncontract: exit status and artifacts] "CI Policy\nResponsibility: Apply required gates to repository changes\nContract: Blocking workflow matrix\n[[../../../../.github/workflows/quality-gate.yml source]]" as ci
+note on link
+[[../../../../.github/workflows/quality-gate.yml relationship source]]
+end note
+ci --> (*)
+
+
+legend bottom
+Viewpoint: activity
+Concern: Every selected suite is executed and reported before promotion
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

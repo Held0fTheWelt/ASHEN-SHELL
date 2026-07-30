@@ -164,4 +164,30 @@ def validate_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
             raise SchemaValidationError(
                 "required views require non-empty id, level, and path"
             )
+        if view.get("schema_version") == "bt.semantic_view_requirement.v1":
+            if not all(
+                _text(view.get(key)) for key in ("kind", "concern")
+            ):
+                raise SchemaValidationError(
+                    "semantic views require kind and concern"
+                )
+            if (
+                not isinstance(view.get("element_count"), int)
+                or int(view["element_count"]) < 1
+                or not isinstance(view.get("relationship_count"), int)
+                or int(view["relationship_count"]) < 1
+            ):
+                raise SchemaValidationError(
+                    "semantic views require positive element and "
+                    "relationship counts"
+                )
+            anchors = view.get("anchors")
+            if (
+                not isinstance(anchors, list)
+                or not anchors
+                or not all(_text(anchor) for anchor in anchors)
+            ):
+                raise SchemaValidationError(
+                    "semantic views require source anchors"
+                )
     return deepcopy(dict(manifest))

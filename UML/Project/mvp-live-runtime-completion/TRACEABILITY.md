@@ -1,7 +1,11 @@
-# mvp-live-runtime-completion TRACEABILITY
+# MVP Live Runtime Completion UML traceability
 
-| Diagram | Decision | Claim | Source | Test / gate |
-| --- | --- | --- | --- | --- |
-| c4-context | §9 | MVP expansion rule | see component SAD | `tests/gates/` |
-| c4-context | §9 | MVP4 live setup | see component SAD | `tests/gates/` |
-| c4-context | §9 | MVP ADR corpus | see component SAD | `tests/gates/` |
+| View | Kind | Decisions | Source anchors |
+| --- | --- | --- | --- |
+| [MVP Completion - Experience Context](context/experience-context.md) | `context` | D1 | `docs/architecture/project/mvp-live-runtime-completion/architecture.md`, `tests/e2e/test_final_goc_annette_alain_e2e.py` |
+| [MVP Completion - Capability Chain](components/capability-components.md) | `component` | D1, D2 | `ai_stack/story_runtime/npc_agency/npc_agency_planner.py`, `ai_stack/story_runtime/player_action_resolution.py`, `frontend/static/play_block_renderer.js`, `frontend/static/play_session_start.js`, `tests/e2e/test_final_goc_annette_alain_e2e.py`, `tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`, `world-engine/app/api/story_ws.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py`, `world-engine/app/story_runtime/narrative_commit_resolution.py` |
+| [MVP Completion - End-to-End Turn](sequence/end-to-end-turn.md) | `sequence` | D1 | `ai_stack/story_runtime/npc_agency/npc_agency_planner.py`, `ai_stack/story_runtime/player_action_resolution.py`, `frontend/static/play_block_renderer.js`, `frontend/static/play_session_start.js`, `tests/e2e/test_final_goc_annette_alain_e2e.py`, `tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`, `world-engine/app/api/story_ws.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py`, `world-engine/app/story_runtime/narrative_commit_resolution.py` |
+| [MVP Completion - Evidence Model](classes/capability-evidence-model.md) | `class` | D2 | `docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`, `docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`, `tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md` |
+| [MVP Completion - Capability Lifecycle](states/capability-lifecycle.md) | `state` | D2 | `docs/architecture/project/mvp-live-runtime-completion/architecture.md`, `docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`, `docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`, `tests/e2e/test_final_goc_annette_alain_e2e.py`, `tests/integration/test_story_runtime_experience.py` |
+
+The table is a generated correspondence view. Source paths are validated before projection.

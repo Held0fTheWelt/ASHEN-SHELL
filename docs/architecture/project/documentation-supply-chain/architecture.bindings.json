@@ -295,24 +295,81 @@
   "representation_map": {},
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "docs/architecture/README.md",
+        "docs/architecture/START-HERE.md"
+      ],
+      "concern": "Human author and authoritative documentation corpus",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 2,
+      "id": "supply-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Project/documentation-supply-chain/depth/c4-context.puml"
+      "path": "UML/Project/documentation-supply-chain/context/documentation-context.puml",
+      "relationship_count": 1,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
-      "level": "container",
-      "path": "UML/Project/documentation-supply-chain/depth/c4-container.puml"
-    },
-    {
-      "id": "component",
+      "anchors": [
+        "docs/architecture/project/FRONTMATTER.md",
+        "mkdocs.yml",
+        "scripts/architecture_link_audit.py",
+        "tests/gates/test_architecture_documentation_gate.py",
+        "tools/architecture_assurance/view_builder.py"
+      ],
+      "concern": "Source, generated models, validation and publication seams",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "publication-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Project/documentation-supply-chain/depth/c4-component.puml"
+      "path": "UML/Project/documentation-supply-chain/components/publication-components.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
-      "level": "class",
-      "path": "UML/Project/documentation-supply-chain/depth/class-model.puml"
+      "anchors": [
+        "docs/architecture/project/FRONTMATTER.md",
+        "mkdocs.yml",
+        "scripts/architecture_link_audit.py",
+        "tests/gates/test_architecture_documentation_gate.py",
+        "tools/architecture_assurance/view_builder.py"
+      ],
+      "concern": "Deterministic authoring-to-publication validation",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "publication-flow",
+      "kind": "activity",
+      "level": "activity",
+      "path": "UML/Project/documentation-supply-chain/activity/publication-flow.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "docs/architecture/DOC-HEALTH.md",
+        "docs/architecture/project/FRONTMATTER.md",
+        "mkdocs.yml",
+        "tests/gates/test_architecture_documentation_gate.py"
+      ],
+      "concern": "Draft, validated, published and stale documentation",
+      "decisions": [
+        "D3"
+      ],
+      "element_count": 4,
+      "id": "document-lifecycle",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Project/documentation-supply-chain/states/document-lifecycle.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/project/documentation-supply-chain/architecture.md",

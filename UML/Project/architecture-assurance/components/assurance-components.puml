@@ -1,0 +1,40 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: architecture-assurance:assurance-components
+title Architecture Assurance - Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: catalog
+' bt-element-id: discovery
+' bt-element-id: manifest
+' bt-element-id: views
+' bt-element-id: audit
+' bt-element-id: reports
+' bt-element-id: canon
+
+component "Semantic Model Catalog\nResponsibility: Define individualized elements, contracts, relations and viewpoints\nContract: Validated source-bound JSON\n[[../../../../tools/architecture_assurance/model_catalog.json source]]" as catalog
+component "Repository Discovery\nResponsibility: Enumerate implementation and document evidence\nContract: Ignored/local evidence excluded\n[[../../../../tools/architecture_assurance/discovery.py source]]" as discovery
+component "Binding Manifest Builder\nResponsibility: Bind SAD declarations to source, tests and views\nContract: One deterministic manifest per scope\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]" as manifest
+component "Semantic View Builder\nResponsibility: Project catalog models into PlantUML and companion documents\nContract: No generic inferred star graphs\n[[../../../../tools/architecture_assurance/view_builder.py source]]" as views
+component "Audit Engine\nResponsibility: Evaluate correspondence and model semantics\nContract: Stable findings and exit policy\n[[../../../../tools/architecture_assurance/audit.py source]]" as audit
+component "Report Exporters\nResponsibility: Emit human, JSON, JUnit and SARIF evidence\nContract: Schema-stable deterministic serialization\n[[../../../../tools/architecture_assurance/reporters.py source]]" as reports
+component "Canon Exporter\nResponsibility: Create idempotent AKDB source projection\nContract: Hash-stable destination manifest\n[[../../../../tools/architecture_assurance/canon.py source]]" as canon
+
+catalog ..> discovery : "scopes evidence\ncontract: history roots and source anchors\n[[../../../../tools/architecture_assurance/model_catalog.json source]]"
+discovery ..> manifest : "supplies inventory\ncontract: normalized repository paths\n[[../../../../tools/architecture_assurance/discovery.py source]]"
+catalog ..> views : "projects viewpoints\ncontract: semantic elements and edge contracts\n[[../../../../tools/architecture_assurance/semantic_models.py source]]"
+manifest ..> audit : "supplies declared correspondence\ncontract: binding schema\n[[../../../../tools/architecture_assurance/audit.py source]]"
+views ..> audit : "supplies analyzable models\ncontract: view requirements and source links\n[[../../../../tools/architecture_assurance/semantic_models.py source]]"
+audit ..> reports : "emits findings\ncontract: normalized result model\n[[../../../../tools/architecture_assurance/reporters.py source]]"
+reports ..> canon : "joins canonical evidence\ncontract: accepted report state\n[[../../../../tools/architecture_assurance/canon.py source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Discovery, correspondence, semantic projection, audit, reporting and canon seams
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

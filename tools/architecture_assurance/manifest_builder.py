@@ -14,6 +14,7 @@ from .discovery import (
 )
 from .sad_parser import Declaration, evidence_paths, parse_sad
 from .schemas import BINDINGS_SCHEMA_VERSION, validate_manifest
+from .semantic_models import load_model_catalog, view_requirements
 
 
 GENERATOR_VERSION = "bt-architecture-assurance/1"
@@ -136,6 +137,8 @@ def _ownership_for_unit(
 def build_manifest(
     subsystem: Mapping[str, Any],
     repo_root: Path,
+    *,
+    required_views: Iterable[Mapping[str, Any]] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     sad_path = repo_root / str(subsystem["sad_path"])
     sad = parse_sad(sad_path.read_text(encoding="utf-8-sig"))
@@ -194,7 +197,11 @@ def build_manifest(
         "discovered_units": discovered_units,
         "representation_map": dict(sorted(representation.items())),
         "out_of_scope": dict(sorted(out_of_scope.items())),
-        "required_views": list(subsystem.get("required_views", [])),
+        "required_views": list(
+            required_views
+            if required_views is not None
+            else subsystem.get("required_views", [])
+        ),
     }
     return validate_manifest(manifest), errors
 
@@ -210,10 +217,18 @@ def generate_manifests(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     config = load_config(config_path)
+    catalog = load_model_catalog(repo_root / str(config["model_catalog"]))
     actions: list[dict[str, Any]] = []
     parse_errors: list[dict[str, str]] = []
     for subsystem in config["subsystems"]:
-        manifest, errors = build_manifest(subsystem, repo_root)
+        manifest, errors = build_manifest(
+            subsystem,
+            repo_root,
+            required_views=view_requirements(
+                catalog,
+                str(subsystem["id"]),
+            ),
+        )
         parse_errors.extend(
             {"subsystem": subsystem["id"], **error} for error in errors
         )

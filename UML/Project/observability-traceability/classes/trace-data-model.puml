@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: observability-traceability:trace-data-model
+title Observability - Data Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: trace
+' bt-element-id: span
+' bt-element-id: decision
+
+class "TurnTrace\nResponsibility: Identify one end-to-end player turn\nContract: Globally propagated trace id\n[[../../../../world-engine/app/observability/trace.py source]]" as trace {
+  trace_id
+  session_id
+  turn_id
+  revision
+}
+class "SubsystemSpan\nResponsibility: Record bounded operation and ownership\nContract: Parent relation and timing\n[[../../../../ai_stack/langfuse/langfuse_evidence.py source]]" as span {
+  span_id
+  parent_id
+  component
+  status
+}
+class "DecisionEvidence\nResponsibility: Explain validation, routing or commit outcome\nContract: Redacted inputs and explicit result\n[[../../../../world-engine/app/observability/audit_log.py source]]" as decision {
+  decision_type
+  outcome
+  reasons
+  source
+}
+
+span ..> decision : "records\ncontract: explainable outcome\n[[../../../../world-engine/app/observability/audit_log.py source]]"
+trace ..> span : "contains\ncontract: parented operation tree\n[[../../../../world-engine/app/observability/trace.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Turn trace, owned spans and explainable decisions
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

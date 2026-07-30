@@ -1,0 +1,24 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: quality-gates:quality-context
+title Quality Gates - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: developer
+' bt-element-id: quality
+
+actor "Developer\nResponsibility: Run focused and complete verification\nContract: Central runner profile\n[[../../../../tests/TESTING.md source]]" as developer
+rectangle "Quality Gate System\nResponsibility: Select, execute and report proportionate verification\nContract: Stable suite and exit semantics\n[[../../../../tests/run_tests.py source]]" as quality
+
+developer ..> quality : "requests verification\ncontract: declared profile"
+
+legend bottom
+Viewpoint: context
+Concern: Developer verification through one authoritative gate system
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -1,0 +1,41 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: story-runtime-core:contract-data-model
+title Story Runtime Core - Contract Data Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: action
+' bt-element-id: snapshot
+' bt-element-id: outcome
+
+class "PlayerActionIntent\nResponsibility: Carry semantic player intent\nContract: Validated intent fields\n[[../../../../story_runtime_core/player_input_intent_contract.py source]]" as action {
+  action
+  targets
+  modifiers
+  language
+}
+class "CommittedTruth\nResponsibility: Carry confirmed story facts\nContract: Runtime-supplied immutable snapshot\n[[../../../../story_runtime_core/committed_truth.py source]]" as snapshot {
+  facts
+  actors
+  locations
+  revision
+}
+class "ConsequenceOutcome\nResponsibility: Describe calculated effects\nContract: Deterministic ordered effects\n[[../../../../story_runtime_core/consequences/consequence_cascade.py source]]" as outcome {
+  effects
+  evidence
+  warnings
+}
+
+action ..> snapshot : "evaluated against\ncontract: revision-bound semantics\n[[../../../../story_runtime_core/input_interpreter.py source]]"
+snapshot ..> outcome : "produces\ncontract: ordered explainable effects\n[[../../../../story_runtime_core/consequences/consequence_cascade.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Intent, committed truth and calculated outcomes
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

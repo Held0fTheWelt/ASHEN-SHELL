@@ -23,4 +23,4 @@ def test_better_tomorrow_architecture_depth_gate_passes() -> None:
     report = build_report(CONFIG, ROOT)
     assert report["gate"]["status"] == "PASS", report["gate"]["failures"]
     assert report["corpus_rollup"]["subsystems"] == 16
-    assert report["corpus_rollup"]["view_counts"] == {"model": 64}
+    assert report["corpus_rollup"]["view_counts"] == {"model": 89}

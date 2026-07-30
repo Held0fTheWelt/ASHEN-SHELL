@@ -1,0 +1,35 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: content-authority:authority-context
+title Content Authority - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: author
+' bt-element-id: module
+' bt-element-id: compiler
+' bt-element-id: validator
+' bt-element-id: world_loader
+' bt-element-id: ai_adapter
+
+actor "Content Author\nResponsibility: Define experience facts, locations, objects and dramatic policy\nContract: Schema-conforming module changes\n[[../../../../content/modules/_template/README.md source]]" as author
+rectangle "Authored Module\nResponsibility: Hold canonical versioned content truth\nContract: module.yaml plus referenced YAML documents\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as module
+component "Backend Module Compiler\nResponsibility: Load, validate and normalize authored documents\nContract: Deterministic module model or diagnostics\n[[../../../../backend/app/content/module_loader.py source]]" as compiler
+component "Module Validator\nResponsibility: Enforce schemas and cross-document references\nContract: Fail-closed validation findings\n[[../../../../backend/app/content/module_validator.py source]]" as validator
+component "World Content Loader\nResponsibility: Materialize published content for live sessions\nContract: Read-only runtime projection\n[[../../../../world-engine/app/content/backend_loader.py source]]" as world_loader
+component "AI Content Adapter\nResponsibility: Translate canonical content into proposal context\nContract: Provenance-preserving read model\n[[../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py source]]" as ai_adapter
+
+author ..> module : "authors\ncontract: reviewable YAML change\n[[../../../../content/modules/god_of_carnage/module.yaml source]]"
+module ..> compiler : "is compiled by\ncontract: complete referenced document set\n[[../../../../backend/app/content/module_loader_documents.py source]]"
+validator ..> world_loader : "releases version\ncontract: validation success only\n[[../../../../backend/app/content/module_service.py source]]"
+world_loader ..> ai_adapter : "supplies bounded facts\ncontract: session-bound content projection\n[[../../../../world-engine/app/content/backend_loader.py source]]"
+
+legend bottom
+Viewpoint: context
+Concern: Authored truth and its validating and consuming systems
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

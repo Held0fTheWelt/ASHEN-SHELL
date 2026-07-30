@@ -1,0 +1,33 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: governance:governance-components
+title Architecture Governance - Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: decision_registry
+' bt-element-id: sad
+' bt-element-id: runtime_policy
+' bt-element-id: audit
+' bt-element-id: gates
+
+component "Decision Registry\nResponsibility: Index accepted and retired decisions\nContract: Stable identifiers and status\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as decision_registry
+component "SAD Decision Sections\nResponsibility: Explain decisions in architecture context\nContract: Traceable rationale and consequences\n[[../../../../docs/architecture/project/ecosystem-topology/architecture.md source]]" as sad
+component "Runtime Governance Services\nResponsibility: Validate and apply operational policy\nContract: Authorized audited mutation\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]" as runtime_policy
+component "Governance Evidence\nResponsibility: Record actor, before/after and outcome\nContract: Immutable audit event\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]" as audit
+component "Policy Gates\nResponsibility: Block invalid authority and decision drift\nContract: Executable CI checks\n[[../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py source]]" as gates
+
+decision_registry ..> sad : "indexes contextual decision\ncontract: stable decision id\n[[../../../../docs/architecture/project/ADR_ABSORPTION_MATRIX.md source]]"
+sad ..> runtime_policy : "constrains implementation\ncontract: accepted policy semantics\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]"
+runtime_policy ..> audit : "records mutation outcome\ncontract: actor and before/after evidence\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
+audit ..> gates : "supports verification\ncontract: machine-checkable evidence\n[[../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Decision registry, SAD, runtime policy, evidence and gate chain
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

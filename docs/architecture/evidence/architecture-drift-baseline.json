@@ -1,0 +1,2150 @@
+{
+  "architecture_archaeology": {
+    "artifacts": [
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ah_role_sensitive_readout_LEAN.zip",
+        "sha256": "bb45979300fe6d713c8be21221a67020fca4dcabf77180c5b9c7bea71631ccfc",
+        "size": 31944
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ai_FULL_MVP_DIRECTORY.zip",
+        "sha256": "b36899aaaf0793a3a610a456260230680e4096ce4704d18a7aa0d58a138e2c15",
+        "size": 24996870
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ai_social_geometry_LEAN.zip",
+        "sha256": "d1a0562e0b223b6f1e6b9f2369c3c18a4f135c8cdc6c99ae0846dfe1973a8650",
+        "size": 35224
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_aj_contextual_readout_LEAN.zip",
+        "sha256": "104a4d781b62f0c7951b0a586d1f83f5a1ae4945f9fe987481d24145fbdc9d93",
+        "size": 35980
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_aj_FULL_MVP_DIRECTORY.zip",
+        "sha256": "7286a403613e09fbae5778b2da2ce98cf0577f32cd66906c9ba5e5e7105fa818",
+        "size": 24836119
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ak_delta_readout_LEAN.zip",
+        "sha256": "393670be7f0b79ce05e8f2f82513c89db19e7181b8e228627537b8d8f9d4c43d",
+        "size": 37735
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ak_FULL_MVP_DIRECTORY.zip",
+        "sha256": "061d7d5706ab2d09191d6e4f90f1c9c9985553ce353470d93ed7c19e56a54ef2",
+        "size": 25003247
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_al_FULL_MVP_DIRECTORY.zip",
+        "sha256": "1364970f09e5921dfb933050fb77052972559ef5cab9440c8e0b4873be850ef4",
+        "size": 24638091
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_al_turn_framing_LEAN.zip",
+        "sha256": "d610cc79fda3826ebef5c07cf0429d638ab7734a6213913176f5391e28e95400",
+        "size": 37993
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_am_character_addressed_response_LEAN.zip",
+        "sha256": "4c2c36dfafbfcb03c348bc7552b7247191b2d1a145cafb7ff6070c15a8629f07",
+        "size": 36925
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_am_FULL_MVP_DIRECTORY.zip",
+        "sha256": "9a5d53df36cb2e5517d5583a73fa965ff33b77741674a3eac6af5a9a74eb3a5f",
+        "size": 24805363
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_an2_character_addressed_runtime_response_LEAN (1).zip",
+        "sha256": "3b0fa2824f79d345a4c257f5581655e0da69e74fa460b93bd7de2c59d079bd4e",
+        "size": 75566
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_an2_character_addressed_runtime_response_LEAN (2).zip",
+        "sha256": "3b0fa2824f79d345a4c257f5581655e0da69e74fa460b93bd7de2c59d079bd4e",
+        "size": 75566
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_an2_character_addressed_runtime_response_LEAN (3).zip",
+        "sha256": "3b0fa2824f79d345a4c257f5581655e0da69e74fa460b93bd7de2c59d079bd4e",
+        "size": 75566
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_an2_character_addressed_runtime_response_LEAN.zip",
+        "sha256": "3b0fa2824f79d345a4c257f5581655e0da69e74fa460b93bd7de2c59d079bd4e",
+        "size": 75566
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_an2_FULL_MVP_DIRECTORY.zip",
+        "sha256": "68bb1ecee4a9ff84c0f049ddb149dec717815e4d6850877d7d8a71f47509d754",
+        "size": 24927756
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_an_character_addressed_runtime_response_LEAN.zip",
+        "sha256": "138822a729947d4fefcb38576f30f487f35b47db77e0d25dbf1344e16d39bd63",
+        "size": 32086
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_an_FULL_MVP_DIRECTORY.zip",
+        "sha256": "c855ddc90d9ba9b337d9162fa8f5392ad93efe7ce9043d3a24179380ec2f9eb8",
+        "size": 24807905
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ao_FULL_MVP_DIRECTORY.zip",
+        "sha256": "f0db8d780fd0d034a8c58570c1501f6068d4586a91d59a3832606f4d17f4c4f6",
+        "size": 24922642
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ao_pair_side_voice_LEAN.zip",
+        "sha256": "03114ddc702060ea7927be86ad9b71e6e4081a3e5134bedaead30a239f70ab5a",
+        "size": 28089
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ap_exchange_type_differentiation_LEAN.zip",
+        "sha256": "a7c539c0768c0050df8ddfbbc837146d7a04c84441bfcce0d3542d04ede681ff",
+        "size": 36251
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ap_FULL_MVP_DIRECTORY.zip",
+        "sha256": "b1e75584234163fa4adaa0776bcdc15de7a047a395ee88cb44e1f9b0694bfdc7",
+        "size": 24559274
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_aq_carryover_in_response_LEAN.zip",
+        "sha256": "63382f90cfe06ea626bc891fd03926978082671bd185538b5e464b1556df6e43",
+        "size": 37426
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_aq_FULL_MVP_DIRECTORY (1).zip",
+        "sha256": "e8eaa3e1aa2fbfce94078a827e0880aa567e7ecf3fd2132198f29a3a88186d0a",
+        "size": 25567669
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_aq_FULL_MVP_DIRECTORY.zip",
+        "sha256": "e8eaa3e1aa2fbfce94078a827e0880aa567e7ecf3fd2132198f29a3a88186d0a",
+        "size": 25567669
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_arp_reconciled_FULL_MVP_DIRECTORY.zip",
+        "sha256": "7ae11d0daa335dfc2858cec468d9c4b387e606fab8a556b279a207e746640fdf",
+        "size": 24776604
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_arp_reconciled_LEAN.zip",
+        "sha256": "c25622936822778116cc6a8f2262ca2b440894a5659566e80696f33cd2651736",
+        "size": 83412
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_as_FULL_MVP_DIRECTORY.zip",
+        "sha256": "72dcd5654d6c90a328395d21886d73a317192edeee86054ec0ac8971c0c31bf1",
+        "size": 24781477
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_as_room_object_response_anchoring_LEAN.zip",
+        "sha256": "5cfcc1db4608934d569d2165887876502183bf137246a8737b60f4a1a6452b55",
+        "size": 25025
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_at_domestic_surface_heat_LEAN.zip",
+        "sha256": "7c22ec1ee2f987529d78ae10d183afc3066ddb86f36e6f8ebabdf9861da7043e",
+        "size": 31261
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_at_FULL_MVP_DIRECTORY.zip",
+        "sha256": "72de46639d91919136d8b45e4808cd63097741cf3fb1e0a5b221ba7b2d657c5f",
+        "size": 24781914
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_au_FULL_MVP_DIRECTORY.zip",
+        "sha256": "6d78b330f581062d008e057a0520569d7dd234af8d72d4881a59159ab44f686f",
+        "size": 25798821
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_ba_FULL_MVP_DIRECTORY.zip",
+        "sha256": "8fbb22499aa5a39d2779dbd0821498acb183bfbb2f2e3edf16f5b7d355a9abcb",
+        "size": 25810192
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_wave_c1_FULL_MVP_DIRECTORY.zip",
+        "sha256": "7c94d53c913bad6f627b2460c7817337966613be8a84731ffdb6faa5a1b7cc39",
+        "size": 26017710
+      },
+      {
+        "path": "world_of_shadows_mvp_v24_writers_room_rag_overlap_clarified.zip",
+        "sha256": "24025d010027293e557fff3340d0e763ab03a5fa135182cf61ca48ed8c25d02b",
+        "size": 23333643
+      },
+      {
+        "path": "world_of_shadows_narrative_system_audit_2026-04-22.md",
+        "sha256": "be944f870b72d5c504bee552e1f23bb03b4b4f5b825fe0120749b807d92c72bb",
+        "size": 37597
+      },
+      {
+        "path": "world_of_shadows_p_line_changed_files.txt",
+        "sha256": "f9ecc50a4093ee569d52aa9aaea334cfb7bba7025cdf848b0507634882dde8c9",
+        "size": 622
+      },
+      {
+        "path": "world_of_shadows_p_line_patches.patch",
+        "sha256": "a23c9e18d63d4cb662882e43bc4730f2eb0cc020f906e14f1ec66bf47c0a7401",
+        "size": 155137
+      },
+      {
+        "path": "world_of_shadows_post_repair_reaudit_2026-04-21.zip",
+        "sha256": "e6e61c1ae982827c59000e5de181b22f737c54c14ff4d23a52138d1c894fd710",
+        "size": 26940
+      },
+      {
+        "path": "world_of_shadows_repaired_package_2026-04-21.zip",
+        "sha256": "33b23eca00e9efc7644e4651b7e51e5593a1340511f8b9f176d21ad9460e5a64",
+        "size": 52127731
+      },
+      {
+        "path": "world_of_shadows_repo_overhaul_changed_files_2026-04-21.zip",
+        "sha256": "d983bad407992b92483f5e44d7ef0d5aebe69bed32397114d052d2979a69d434",
+        "size": 27529
+      },
+      {
+        "path": "world_of_shadows_restpoint_repaired_package_2026-04-21 (1).zip",
+        "sha256": "9dcc5a39d7c7a50b2ba935a23641fae77160a2f5e601dfe2433de40d9568c657",
+        "size": 53127178
+      },
+      {
+        "path": "world_of_shadows_restpoint_repaired_package_2026-04-21.zip",
+        "sha256": "9dcc5a39d7c7a50b2ba935a23641fae77160a2f5e601dfe2433de40d9568c657",
+        "size": 53127178
+      },
+      {
+        "path": "world_of_shadows_runtime_proof_closure_audit_prompt_2026-04-21.md",
+        "sha256": "1a1f369da6538545e84061924f6222faaa756aadf822c21123d4e544d84120b7",
+        "size": 16999
+      },
+      {
+        "path": "world_of_shadows_runtime_proof_closure_continued2_2026-04-21.zip",
+        "sha256": "5f284b4fa88125be3a2d9675da0c31e984266e9220bd05042194fb4f4f03a679",
+        "size": 54961818
+      },
+      {
+        "path": "world_of_shadows_runtime_proof_closure_continued3_2026-04-21.zip",
+        "sha256": "e15d2d2d462af6acc80e729bcbe51dea2104ec5e5a8830126eecd22955823a60",
+        "size": 54433898
+      },
+      {
+        "path": "world_of_shadows_runtime_proof_closure_continued4_2026-04-21.zip",
+        "sha256": "e8f2b2e436b9acc87220450f2c29832012bead7d622ee9a7203a2434bb9a5d33",
+        "size": 79591139
+      },
+      {
+        "path": "world_of_shadows_runtime_proof_closure_continued_2026-04-21.zip",
+        "sha256": "7be7cd00f043185213cde791f584848d211496ce5e4a6060b32eb047f41d0207",
+        "size": 54599213
+      },
+      {
+        "path": "world_of_shadows_runtime_proof_closure_current_2026-04-21.zip",
+        "sha256": "052e8ab0938501ed03a04df0fe77774b946ec98a542c8ca63ad6575a477b1904",
+        "size": 54115835
+      },
+      {
+        "path": "WOS_COMBINED_FOUNDATION_REPAIR_100_READINESS_PROMPT.md",
+        "sha256": "56caa343d83b26a3e714bc706587973951f8d1f9fbf63c3192870319335cbeda",
+        "size": 30976
+      },
+      {
+        "path": "WOS_COMBINED_FOUNDATION_REPAIR_AND_REPLACEMENT_BUNDLE_TASK.md",
+        "sha256": "fa12b0dbeadcb3ab89627769adc4b4ff7238c7bb35f347206846ed4db06fb603",
+        "size": 25445
+      },
+      {
+        "path": "WOS_COMPLETE_DOCS_AND_TESTS_CLEANUP_PROMPT_V2.md",
+        "sha256": "de43487a78dda96a85d0a102d9fac599a8c703fa9563e0f9452d1fbf7b6def5c",
+        "size": 23773
+      },
+      {
+        "path": "WOS_COMPLETE_DOCS_AND_TESTS_CLEANUP_PROMPT_V4.md",
+        "sha256": "420afe0ac4086b6970e86438e7902fb9aadd154293cf1b85e9085458f3bc015b",
+        "size": 27853
+      },
+      {
+        "path": "WOS_FOUNDATION_STABILIZATION_REPAIR_PROMPT.md",
+        "sha256": "6e2292416ffe25ffd2a3273e9501cc7b6f87224d0a63f4a0398d79622fe3b576",
+        "size": 23197
+      },
+      {
+        "path": "WOS_GLOBAL_TEST_INTEGRITY_AUDIT_PROMPT.md",
+        "sha256": "5d3a519a3f3cf4cbca66d51dfc53530d7e5b86f3ddeb542657246fda60d513b3",
+        "size": 15342
+      },
+      {
+        "path": "wos_goc_5_part_mvp_split.zip",
+        "sha256": "51c46d814d650cb511fa0d275da7a0277c6f935a5c91fdf8fde7ccc303c193bf",
+        "size": 38574
+      },
+      {
+        "path": "wos_goc_5_part_mvp_split_EXPANDED_NO_LOSS.zip",
+        "sha256": "bf998bd1bb544930c019b95a4cc046214852bff30bcb1a10d5f9483ece959652",
+        "size": 66594
+      },
+      {
+        "path": "WOS_GOC_AUDIT_AWARE_IMPLEMENTATION_LOCATOR_PROMPT.md",
+        "sha256": "9faf55da613aa525ee0bb39d8746f1e6ef4e275050d493ae2335f4f65a5beb95",
+        "size": 19945
+      },
+      {
+        "path": "WOS_GOC_AUDIT_AWARE_IMPLEMENTATION_LOCATOR_PROMPT_V2.md",
+        "sha256": "7a9c766fc68535160c6b785ef5c1d90491b9ce7b199c2267c742886495a94884",
+        "size": 22627
+      },
+      {
+        "path": "WOS_GOC_AUDIT_TO_WAVE_PREPARATION_PROMPT.md",
+        "sha256": "964d333c5117299a2ed318eb71149ee615a5e0191999320973f87d8af18c191b",
+        "size": 12963
+      },
+      {
+        "path": "wos_goc_complete_mvp_document_set (1).zip",
+        "sha256": "232ecc08f40806dfc744477586aade4192d1087928473beae38ee1c488bfef07",
+        "size": 40089
+      },
+      {
+        "path": "wos_goc_complete_mvp_document_set (2).zip",
+        "sha256": "232ecc08f40806dfc744477586aade4192d1087928473beae38ee1c488bfef07",
+        "size": 40089
+      },
+      {
+        "path": "wos_goc_complete_mvp_document_set.zip",
+        "sha256": "232ecc08f40806dfc744477586aade4192d1087928473beae38ee1c488bfef07",
+        "size": 40089
+      },
+      {
+        "path": "wos_goc_full_experience_mvp.zip",
+        "sha256": "1c3e8261f1485350afbf3d9a91a8293c51b80feaad3bfe10de9b2fd0034692d1",
+        "size": 33465
+      },
+      {
+        "path": "wos_goc_mvp_v2_implementation_ready_docs.zip",
+        "sha256": "a9f0a369caaef9d3bbc515c2f244eddf2bfa11d38982b5b927203e728faa513b",
+        "size": 31309
+      },
+      {
+        "path": "WOS_GOC_MVP_V3_LOGIC_AUDIT_PROMPT.md",
+        "sha256": "1712fb5de3be2e0721e8c8f45f80039ff1f78a7040910e8a67f97c067c1e85d8",
+        "size": 16017
+      },
+      {
+        "path": "wos_goc_one_experience_mvp_docs (1).zip",
+        "sha256": "d74786d5c72265b17d97e8cf716b90130e7f9ef9948fbcc72420a16685ba9d1a",
+        "size": 22233
+      },
+      {
+        "path": "wos_goc_one_experience_mvp_docs.zip",
+        "sha256": "d74786d5c72265b17d97e8cf716b90130e7f9ef9948fbcc72420a16685ba9d1a",
+        "size": 22233
+      },
+      {
+        "path": "wos_goc_one_experience_mvp_findable_docs.zip",
+        "sha256": "6f2b9c25bade6e7baf16c239640f3d00b58111eea376f9c4b9ab1cbf098d4c10",
+        "size": 13390
+      },
+      {
+        "path": "WOS_GOC_SELF_CONTAINED_ONE_EXPERIENCE_MVP.md",
+        "sha256": "9ab269fca831502fce3baeb73589f09e0aff4321ede130638738616f573ac725",
+        "size": 56321
+      },
+      {
+        "path": "WOS_GOC_SELF_CONTAINED_ONE_EXPERIENCE_MVP_V2.md",
+        "sha256": "4e15a20d8db570e82b4baaacda84cc3e32cd38943720cb72bc94372fe75feffd",
+        "size": 62534
+      },
+      {
+        "path": "WOS_GOC_SELF_CONTAINED_ONE_EXPERIENCE_MVP_V3 (1).md",
+        "sha256": "cdfcded2e0ddb4adf82b696fedf77fad3df743c4d5c5e570f65c02ba3a68a7fe",
+        "size": 87388
+      },
+      {
+        "path": "WOS_GOC_SELF_CONTAINED_ONE_EXPERIENCE_MVP_V3.md",
+        "sha256": "cdfcded2e0ddb4adf82b696fedf77fad3df743c4d5c5e570f65c02ba3a68a7fe",
+        "size": 87388
+      },
+      {
+        "path": "wos_goc_technical_5_mvp_guides.zip",
+        "sha256": "1dc0f9a64bae76ab66aa9c6354bcb47c312b73db68ac8485885be73a5be0c305",
+        "size": 16180
+      },
+      {
+        "path": "WOS_GOC_TECHNICAL_5_MVP_GUIDES_QUALITY_AUDIT_PROMPT.md",
+        "sha256": "d7624d6c8a3692b784d11795408433b92044eefee644516d3301fff13f55d9de",
+        "size": 16482
+      },
+      {
+        "path": "wos_goc_technical_5_mvp_guides_with_operational_gates.zip",
+        "sha256": "ecf9db3327db2ea280b75cc7b6118c82dd95d8205f5672555fea53930a7aee93",
+        "size": 27085
+      },
+      {
+        "path": "WOS_GOC_WAVE_IMPLEMENTATION_PROMPT.md",
+        "sha256": "db4db586528e187d4607c8da9b0b6bc47cec097ca3dc250746f057c217aaec29",
+        "size": 15793
+      },
+      {
+        "path": "WOS_LEGACY_DEBT_AND_TEST_TRUTH_AUDIT_PROMPT.md",
+        "sha256": "073ee09a51bff2d58632648c95965ce77bba88f04330f90127153e4c3584d073",
+        "size": 23647
+      },
+      {
+        "path": "WOS_MVP01_MVP04_HARD_AUDIT_PROMPT.md",
+        "sha256": "7ad568b6cf3e0eeaefc0208cb37f5b361f2aca5d42d235220756a96b6a0d0221",
+        "size": 17683
+      },
+      {
+        "path": "WOS_MVP03_LIVE_DRAMATIC_SCENE_SIMULATOR_IMPLEMENTATION_PROMPT (1).md",
+        "sha256": "3c83b3e8c6fd02200287f6e5cf0fd0732c4d2f6712e2a4033fce068add104aa6",
+        "size": 18503
+      },
+      {
+        "path": "WOS_MVP03_LIVE_DRAMATIC_SCENE_SIMULATOR_IMPLEMENTATION_PROMPT.md",
+        "sha256": "3c83b3e8c6fd02200287f6e5cf0fd0732c4d2f6712e2a4033fce068add104aa6",
+        "size": 18503
+      },
+      {
+        "path": "WOS_MVP04_OBSERVABILITY_DIAGNOSTICS_LANGFUSE_IMPLEMENTATION_PROMPT.md",
+        "sha256": "24c93e60f827cb652aa3a48aa71a792ca3c1e0db6cd55282c005f6c7c7db2e05",
+        "size": 18245
+      },
+      {
+        "path": "WOS_MVP04_WAVE_IMPLEMENTATION_PROMPT.md",
+        "sha256": "eb1e86a5d548815926782ced3e183b32de1d0ba5f73a44ed386c3ddfc6b7d04f",
+        "size": 20594
+      },
+      {
+        "path": "WOS_REPAIR_PROMPT_QUALITY_AUDIT_PROMPT.md",
+        "sha256": "dfbc021715f425c31f8d05310211f3a2bb58a1898447ab5f0f90c48abd84ed14",
+        "size": 12036
+      },
+      {
+        "path": "WOS_RUN_TESTS_FULL_SUITE_REPAIR_PROMPT.md",
+        "sha256": "6b646e1da9e2433889fddf528f1ed8470f00b26ca717ff0ead5fc3b4c06edd7c",
+        "size": 22867
+      }
+    ],
+    "available": true,
+    "curated_documents": [
+      {
+        "claim_headings": [
+          "Leak L-01 — Planner state computed after prompt assembly",
+          "Leak L-02 — Responder key mismatch",
+          "Leak L-03 — Authoritative session commit ignores most dramatic planner state",
+          "Leak L-04 — Validation knows more than authoritative commit",
+          "Leak L-05 — Player shell underrepresents runtime intelligence",
+          "I-01 — Beat system exists, but canonical player path does not use explicit beat state",
+          "I-02 — “Single truth surface” is more true for operator diagnostics than for player runtime experience",
+          "I-03 — Docs describe dramatic integration more strongly than the final commit path actually preserves",
+          "R-01. Move final prompt assembly to after dramatic selection",
+          "R-02. Normalize responder field shape everywhere",
+          "R-03. Replace or extend `resolve_narrative_commit(...)`",
+          "R-04. Unify graph commit and session commit",
+          "R-05. Decide the beat architecture explicitly",
+          "R-06. Enrich early interpretation",
+          "R-07. Split retrieval into two layers",
+          "R-08. Expand the canonical turn commit schema",
+          "R-09. Reduce unnecessary narrowing in normalization",
+          "R-10. Add a player-safe dramatic state surface",
+          "R-11. Make story-window entries preserve who is responding",
+          "R-12. Update contracts and runbooks after runtime truth is fixed",
+          "R-13. Add whole-system regression tests that prove cross-link survival"
+        ],
+        "path": "world_of_shadows_narrative_system_audit_2026-04-22.md",
+        "sha256": "be944f870b72d5c504bee552e1f23bb03b4b4f5b825fe0120749b807d92c72bb",
+        "size": 37597
+      },
+      {
+        "claim_headings": [
+          "ADR-011 — Live Dramatic Scene Simulator",
+          "ADR-012 — NPC Free Dramatic Agency",
+          "ADR-013 — Narrator Inner Voice Contract",
+          "ADR-014 — Interactive Text-Adventure Frontend",
+          "ADR-015 — Canonical, Typical, and Similar Environment Affordances",
+          "Goal E0 — Evidence Gates Before Scope Classification",
+          "Goal 0 — Freeze the Experience Contract",
+          "Goal 1 — Start the Correct Experience",
+          "Goal 2 — Run the Correct Actor Model",
+          "Goal 3 — Use Canonical Content Only",
+          "Goal 4 — Make the Scene Alive",
+          "Goal 5 — Make Runtime Truth Inspectable",
+          "Goal 6 — Lock It With Tests",
+          "ADR-001 — God of Carnage Experience Identity",
+          "ADR-002 — Runtime Profile Resolver",
+          "ADR-003 — Role Selection and Actor Ownership",
+          "ADR-004 — Actor-Lane Enforcement",
+          "ADR-005 — Canonical Content Authority",
+          "ADR-006 — Evidence-Gated Architecture Capabilities",
+          "ADR-007 — Live NPC Agency MVP",
+          "ADR-008 — Diagnostics and Degradation Semantics",
+          "ADR-009 — Langfuse and Traceable Decisions",
+          "ADR-010 — Narrative Gov Operator Truth Surface"
+        ],
+        "path": "WOS_GOC_SELF_CONTAINED_ONE_EXPERIENCE_MVP_V3.md",
+        "sha256": "cdfcded2e0ddb4adf82b696fedf77fad3df743c4d5c5e570f65c02ba3a68a7fe",
+        "size": 87388
+      },
+      {
+        "claim_headings": [],
+        "path": "WOS_COMBINED_FOUNDATION_REPAIR_AND_REPLACEMENT_BUNDLE_TASK.md",
+        "sha256": "fa12b0dbeadcb3ab89627769adc4b4ff7238c7bb35f347206846ed4db06fb603",
+        "size": 25445
+      },
+      {
+        "claim_headings": [],
+        "path": "WOS_LEGACY_DEBT_AND_TEST_TRUTH_AUDIT_PROMPT.md",
+        "sha256": "073ee09a51bff2d58632648c95965ce77bba88f04330f90127153e4c3584d073",
+        "size": 23647
+      }
+    ],
+    "handling": "read-only, non-authoritative architecture archaeology",
+    "root_label": "New folder",
+    "snapshot_comparison": {
+      "common_paths": 811,
+      "current_only_paths": 2471,
+      "current_only_sample": [
+        "administration-tool/route_registration.py",
+        "administration-tool/route_registration_manage.py",
+        "administration-tool/route_registration_manage_sections.py",
+        "administration-tool/route_registration_pages.py",
+        "administration-tool/route_registration_proxy.py",
+        "administration-tool/route_registration_proxy_policy.py",
+        "administration-tool/route_registration_security.py",
+        "administration-tool/static/governance_health_panels.js",
+        "administration-tool/static/governance_object_admission_overrides.js",
+        "administration-tool/static/governance_state_delta_boundary_overrides.js",
+        "administration-tool/static/manage_ai_orchestration.js",
+        "administration-tool/static/manage_ai_stack_release_readiness.css",
+        "administration-tool/static/manage_ai_stack_release_readiness.js",
+        "administration-tool/static/manage_ai_stack_release_readiness_deck.js",
+        "administration-tool/static/manage_diagnosis_deck.js",
+        "administration-tool/static/manage_forum.css",
+        "administration-tool/static/manage_forum_deck.js",
+        "administration-tool/static/manage_governance_console.js",
+        "administration-tool/static/manage_mcp_operations.js",
+        "administration-tool/static/manage_mcp_operations_deck.js",
+        "administration-tool/static/manage_observability_settings.js",
+        "administration-tool/static/manage_observability_settings_deck.js",
+        "administration-tool/static/manage_operational_governance.js",
+        "administration-tool/static/manage_operational_governance_deck.js",
+        "administration-tool/static/manage_play_service_control_deck.js",
+        "administration-tool/static/manage_prompt_store.js",
+        "administration-tool/static/manage_rag_operations.js",
+        "administration-tool/static/manage_research_governance.js",
+        "administration-tool/static/manage_runtime_config_truth.js",
+        "administration-tool/static/manage_runtime_dashboard.js",
+        "administration-tool/static/manage_runtime_dashboard_deck.js",
+        "administration-tool/static/manage_runtime_settings.js",
+        "administration-tool/static/manage_runtime_settings_deck.js",
+        "administration-tool/static/manage_security_governance.js",
+        "administration-tool/static/manage_story_runtime_experience.js",
+        "administration-tool/static/manage_ui.js",
+        "administration-tool/static/manage_world_engine_console.js",
+        "administration-tool/static/manage_world_engine_control_center.js",
+        "administration-tool/static/manage_world_engine_control_center_deck.js",
+        "administration-tool/static/narrative_governance.css",
+        "administration-tool/static/narrative_governance.js",
+        "administration-tool/static/narrative_governance_runtime.js",
+        "administration-tool/templates/manage/ai_orchestration.html",
+        "administration-tool/templates/manage/ai_stack_release_readiness.html",
+        "administration-tool/templates/manage/governance_console.html",
+        "administration-tool/templates/manage/mcp_operations.html",
+        "administration-tool/templates/manage/narrative_governance/_subnav.html",
+        "administration-tool/templates/manage/narrative_governance/evaluations.html",
+        "administration-tool/templates/manage/narrative_governance/findings.html",
+        "administration-tool/templates/manage/narrative_governance/governance_health_panels.html",
+        "administration-tool/templates/manage/narrative_governance/governance_object_admission_overrides.html",
+        "administration-tool/templates/manage/narrative_governance/governance_state_delta_boundary_overrides.html",
+        "administration-tool/templates/manage/narrative_governance/notifications.html",
+        "administration-tool/templates/manage/narrative_governance/overview.html",
+        "administration-tool/templates/manage/narrative_governance/packages.html",
+        "administration-tool/templates/manage/narrative_governance/policies.html",
+        "administration-tool/templates/manage/narrative_governance/revisions.html",
+        "administration-tool/templates/manage/narrative_governance/runtime.html",
+        "administration-tool/templates/manage/narrative_governance/runtime_health.html",
+        "administration-tool/templates/manage/observability_settings.html",
+        "administration-tool/templates/manage/operational_governance.html",
+        "administration-tool/templates/manage/prompt_store.html",
+        "administration-tool/templates/manage/rag_operations.html",
+        "administration-tool/templates/manage/research_governance/_subnav.html",
+        "administration-tool/templates/manage/research_governance/canonical_truth.html",
+        "administration-tool/templates/manage/research_governance/extraction_tuning.html",
+        "administration-tool/templates/manage/research_governance/findings.html",
+        "administration-tool/templates/manage/research_governance/mcp_workbench.html",
+        "administration-tool/templates/manage/research_governance/overview.html",
+        "administration-tool/templates/manage/research_governance/source_intake.html",
+        "administration-tool/templates/manage/runtime_config_truth.html",
+        "administration-tool/templates/manage/runtime_dashboard.html",
+        "administration-tool/templates/manage/runtime_settings.html",
+        "administration-tool/templates/manage/security_governance.html",
+        "administration-tool/templates/manage/world_engine_console.html",
+        "administration-tool/templates/manage/world_engine_control_center.html",
+        "administration-tool/tests/test_manage_ai_engineer_suite.py",
+        "administration-tool/tests/test_manage_governance_console_and_runtime_config_truth.py",
+        "administration-tool/tests/test_manage_mcp_operations.py",
+        "administration-tool/tests/test_manage_observability_settings.py",
+        "administration-tool/tests/test_manage_operational_governance.py",
+        "administration-tool/tests/test_manage_operator_defaults_rendered.py",
+        "administration-tool/tests/test_manage_research_governance.py",
+        "administration-tool/tests/test_manage_security_governance.py",
+        "administration-tool/tests/test_manage_world_engine_console.py",
+        "administration-tool/tests/test_manage_world_engine_control_center.py",
+        "administration-tool/tests/test_operator_site_defaults_fetch.py",
+        "ai_stack/actor_tracking/__init__.py",
+        "ai_stack/actor_tracking/diagnostics.py",
+        "ai_stack/actor_tracking/extractor.py",
+        "ai_stack/actor_tracking/location_framing.py",
+        "ai_stack/actor_tracking/models.py",
+        "ai_stack/actor_tracking/projection.py",
+        "ai_stack/actor_tracking/public_alias_telemetry.py",
+        "ai_stack/actor_tracking/validation.py",
+        "ai_stack/ai_config.py",
+        "ai_stack/canonical_step_renderer.py",
+        "ai_stack/capabilities/__init__.py",
+        "ai_stack/capabilities/capabilities.py",
+        "ai_stack/capabilities/capabilities_default_registry.py"
+      ],
+      "current_source_files": 3282,
+      "historical_only_paths": 1169,
+      "historical_only_sample": [
+        "ai_stack/RETRIEVAL_QUALITY_TASK2.md",
+        "ai_stack/canon_improvement_contract.py",
+        "ai_stack/canon_improvement_engine.py",
+        "ai_stack/capabilities.py",
+        "ai_stack/character_mind_contract.py",
+        "ai_stack/character_mind_goc.py",
+        "ai_stack/dramatic_effect_contract.py",
+        "ai_stack/dramatic_effect_gate.py",
+        "ai_stack/goc_dramatic_alignment.py",
+        "ai_stack/goc_field_initialization_envelope.py",
+        "ai_stack/goc_frozen_vocab.py",
+        "ai_stack/goc_g9_roadmap_scenarios.py",
+        "ai_stack/goc_gate_evaluation.py",
+        "ai_stack/goc_roadmap_semantic_surface.py",
+        "ai_stack/goc_s4_misinterpretation_scenario.py",
+        "ai_stack/goc_scene_identity.py",
+        "ai_stack/goc_turn_seams.py",
+        "ai_stack/goc_yaml_authority.py",
+        "ai_stack/langchain_integration/__init__.py",
+        "ai_stack/langchain_integration/bridges.py",
+        "ai_stack/langgraph_runtime.py",
+        "ai_stack/mcp_canonical_surface.py",
+        "ai_stack/rag.py",
+        "ai_stack/research_aspect_extraction.py",
+        "ai_stack/research_claims.py",
+        "ai_stack/research_contract.py",
+        "ai_stack/research_exploration.py",
+        "ai_stack/research_fixtures.py",
+        "ai_stack/research_golden_cases.py",
+        "ai_stack/research_ingestion.py",
+        "ai_stack/research_langgraph.py",
+        "ai_stack/research_perspectives.py",
+        "ai_stack/research_store.py",
+        "ai_stack/research_validation.py",
+        "ai_stack/retrieval_governance_summary.py",
+        "ai_stack/runtime_turn_contracts.py",
+        "ai_stack/scene_direction_subdecision_matrix.py",
+        "ai_stack/scene_director_goc.py",
+        "ai_stack/scene_plan_contract.py",
+        "ai_stack/semantic_embedding.py",
+        "ai_stack/semantic_move_contract.py",
+        "ai_stack/semantic_move_interpretation_goc.py",
+        "ai_stack/semantic_planner_effect_surface.py",
+        "ai_stack/social_state_contract.py",
+        "ai_stack/social_state_goc.py",
+        "ai_stack/tests/test_character_mind_goc.py",
+        "ai_stack/tests/test_goc_closure_residuals.py",
+        "ai_stack/tests/test_goc_field_initialization_envelope.py",
+        "ai_stack/tests/test_goc_frozen_vocab.py",
+        "ai_stack/tests/test_goc_g9_roadmap_scenarios.py",
+        "ai_stack/tests/test_goc_multi_turn_experience_quality.py",
+        "ai_stack/tests/test_goc_mvp_breadth_playability_regression.py",
+        "ai_stack/tests/test_goc_reliability_longrun_operator_readiness.py",
+        "ai_stack/tests/test_goc_retrieval_heavy_scenario.py",
+        "ai_stack/tests/test_goc_roadmap_s4_misinterpretation_correction.py",
+        "ai_stack/tests/test_goc_roadmap_semantic_surface.py",
+        "ai_stack/tests/test_goc_runtime_breadth_continuity_diagnostics.py",
+        "ai_stack/tests/test_goc_runtime_graph_seams_and_diagnostics.py",
+        "ai_stack/tests/test_goc_scene_identity.py",
+        "ai_stack/tests/test_semantic_move_interpretation_goc.py",
+        "ai_stack/tests/test_semantic_planner_golden_cases.py",
+        "ai_stack/tests/test_social_state_goc.py",
+        "backend/.wos/rag/runtime_corpus.json",
+        "backend/app/api/v1/session_routes.py",
+        "backend/app/models/activity_log.py",
+        "backend/app/models/area.py",
+        "backend/app/models/email_verification_token.py",
+        "backend/app/models/feature_area.py",
+        "backend/app/models/forum.py",
+        "backend/app/models/game_character.py",
+        "backend/app/models/game_experience.py",
+        "backend/app/models/game_experience_template.py",
+        "backend/app/models/game_save_slot.py",
+        "backend/app/models/news_article.py",
+        "backend/app/models/notification.py",
+        "backend/app/models/password_reset_token.py",
+        "backend/app/models/refresh_token.py",
+        "backend/app/models/role.py",
+        "backend/app/models/site_setting.py",
+        "backend/app/models/slogan.py",
+        "backend/app/models/token_blacklist.py",
+        "backend/app/models/user.py",
+        "backend/app/models/wiki_page.py",
+        "backend/app/runtime/ai_decision.py",
+        "backend/app/runtime/ai_decision_logging.py",
+        "backend/app/runtime/ai_failure_recovery.py",
+        "backend/app/runtime/ai_output.py",
+        "backend/app/runtime/ai_turn_executor.py",
+        "backend/app/runtime/area2_operational_state.py",
+        "backend/app/runtime/area2_operator_truth.py",
+        "backend/app/runtime/area2_routing_authority.py",
+        "backend/app/runtime/area2_startup_profiles.py",
+        "backend/app/runtime/area2_validation_commands.py",
+        "backend/app/runtime/debug_presenter.py",
+        "backend/app/runtime/decision_policy.py",
+        "backend/app/runtime/history_presenter.py",
+        "backend/app/runtime/lore_direction_context.py",
+        "backend/app/runtime/model_inventory_contract.py",
+        "backend/app/runtime/model_inventory_report.py",
+        "backend/app/runtime/model_routing_evidence.py"
+      ],
+      "historical_source_files": 1980,
+      "snapshot_label": "world_of_shadows_repaired_package_2026-04-21/MVP_repaired_2026-04-21"
+    },
+    "top_level_artifact_count": 85
+  },
+  "repository": {
+    "branch": "codex/better-tomorrow-akdb-modernization",
+    "commit_count": 1957,
+    "first_commit": {
+      "commit": "a688b4aad7d880b8868fd6179e057e8febebb7a4",
+      "date": "2026-03-10",
+      "subject": "Initial Commit"
+    },
+    "head": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+    "history_window": 300
+  },
+  "schema_version": "bt.architecture_drift_evidence.v1",
+  "source_precedence": [
+    "accepted architecture decisions and explicit authority contracts",
+    "current executable code and behavioral tests",
+    "Git history as evolution evidence",
+    "historical MVPs and work orders as non-authoritative intent evidence"
+  ],
+  "subsystems": [
+    {
+      "history_roots": [
+        "administration-tool"
+      ],
+      "lifetime_commit_count": 145,
+      "recent": {
+        "commit_count": 145,
+        "latest_commits": [
+          {
+            "commit": "8fb1baf33568196c30d51a4b75a6c0304078ddd9",
+            "date": "2026-05-23",
+            "paths": 2,
+            "renames": 0,
+            "subject": " Phase 6B-5F / Despaghettify"
+          },
+          {
+            "commit": "63dd1c1b5962b2290fccc66395f91c51ccef773e",
+            "date": "2026-05-20",
+            "paths": 45,
+            "renames": 0,
+            "subject": "delagecy & despaghettify"
+          },
+          {
+            "commit": "96b0a9f362e0d8adb2ebd2336faac0b939f3f832",
+            "date": "2026-05-20",
+            "paths": 2,
+            "renames": 0,
+            "subject": "unified python"
+          },
+          {
+            "commit": "4609204bc9fc2252fe69208085a0c10e6ab56993",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "11a2dfeef152dd84afaf231294fdff4f5132f2b9",
+            "date": "2026-05-20",
+            "paths": 3,
+            "renames": 0,
+            "subject": "More Refactoring"
+          },
+          {
+            "commit": "ea48b2eb807c8ed45004554f243ee0ba376217f1",
+            "date": "2026-05-19",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Fixupdate"
+          },
+          {
+            "commit": "2b5e286d88aaa6de69c15d913cbdec750ff718a0",
+            "date": "2026-05-19",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Update"
+          },
+          {
+            "commit": "98ab8b149fcf2d42032dcb22359e65db63d5f307",
+            "date": "2026-05-17",
+            "paths": 11,
+            "renames": 0,
+            "subject": "Prompt Store"
+          },
+          {
+            "commit": "629a094009e4c95a9cee40d5aa0487878e8b29b5",
+            "date": "2026-05-17",
+            "paths": 5,
+            "renames": 0,
+            "subject": "Update Governance"
+          },
+          {
+            "commit": "033f1e6fee1ecd28651e728461f062f2a98cb181",
+            "date": "2026-05-17",
+            "paths": 24,
+            "renames": 0,
+            "subject": "UI Updates"
+          }
+        ],
+        "path_touches": 829,
+        "renames": 1,
+        "window": 300
+      },
+      "subsystem": "administration-tool",
+      "tracked_file_count": 187
+    },
+    {
+      "history_roots": [
+        "ai_stack"
+      ],
+      "lifetime_commit_count": 321,
+      "recent": {
+        "commit_count": 300,
+        "latest_commits": [
+          {
+            "commit": "3fbfe786f7ed3b30daf31a451a9bfe6ba486c4b3",
+            "date": "2026-06-24",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Document story-runtime-core ai_stack dependency and clarify input taxonomy."
+          },
+          {
+            "commit": "2cc4527339ac59226aad1b57b78b7269460aaa2e",
+            "date": "2026-06-24",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Reduce per-turn language duplication and reconcile story-runtime-core SAD catalog."
+          },
+          {
+            "commit": "ee477e923acac40c6cf35d35409f18ee9c9a659f",
+            "date": "2026-06-24",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Fix P0 language defaults and ingress semantic resolution for ADR D14."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 8,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "8ef52842f2fc4d982bf30c31f1618fa98f51c777",
+            "date": "2026-05-31",
+            "paths": 6,
+            "renames": 0,
+            "subject": "W5 Update"
+          },
+          {
+            "commit": "0060c5a5d451d78769044d643294c25a66dd93b3",
+            "date": "2026-05-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "\"Inventory W5 location framing legacy surfaces\""
+          },
+          {
+            "commit": "26afadb41cfbff0aa86de38dabf2e41dc0eaa415",
+            "date": "2026-05-30",
+            "paths": 11,
+            "renames": 0,
+            "subject": "Multi W5-Update"
+          },
+          {
+            "commit": "f95dcac05e52ec81d9cb8063ee8ad7969d2e8455",
+            "date": "2026-05-29",
+            "paths": 1,
+            "renames": 0,
+            "subject": "test update"
+          },
+          {
+            "commit": "6a45385b34398481ac182589858e1fce01511fc5",
+            "date": "2026-05-29",
+            "paths": 16,
+            "renames": 0,
+            "subject": "Phase 6B-8.1: No-Legacy Audit + stale narrator documentation cleanup /  Language Gateway Sprint"
+          }
+        ],
+        "path_touches": 3321,
+        "renames": 423,
+        "window": 300
+      },
+      "subsystem": "ai-stack",
+      "tracked_file_count": 630
+    },
+    {
+      "history_roots": [
+        "tools/architecture_assurance",
+        "tests/architecture_assurance",
+        "docs/architecture",
+        "UML"
+      ],
+      "lifetime_commit_count": 87,
+      "recent": {
+        "commit_count": 87,
+        "latest_commits": [
+          {
+            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "date": "2026-07-30",
+            "paths": 6,
+            "renames": 0,
+            "subject": "fix: exclude ignored files from architecture evidence"
+          },
+          {
+            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "date": "2026-07-30",
+            "paths": 10,
+            "renames": 0,
+            "subject": "fix: make architecture canon workspace portable"
+          },
+          {
+            "commit": "6864ffed58734459848a97f2da67279ddbe3893f",
+            "date": "2026-07-30",
+            "paths": 4,
+            "renames": 0,
+            "subject": "fix: keep retired AKDB runtime state ignored"
+          },
+          {
+            "commit": "1080038743ab475e55d3554a47051754d668ff39",
+            "date": "2026-07-30",
+            "paths": 2,
+            "renames": 0,
+            "subject": "fix: resolve AKDB checkout from primary workspace"
+          },
+          {
+            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "date": "2026-07-30",
+            "paths": 108,
+            "renames": 0,
+            "subject": "feat: modernize Better Tomorrow architecture assurance"
+          },
+          {
+            "commit": "3fbfe786f7ed3b30daf31a451a9bfe6ba486c4b3",
+            "date": "2026-06-24",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Document story-runtime-core ai_stack dependency and clarify input taxonomy."
+          },
+          {
+            "commit": "2cc4527339ac59226aad1b57b78b7269460aaa2e",
+            "date": "2026-06-24",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Reduce per-turn language duplication and reconcile story-runtime-core SAD catalog."
+          },
+          {
+            "commit": "40b5ec99df2976d31998e738e4755cac7c7cc7fd",
+            "date": "2026-06-24",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Add story-runtime-core language resolution UML from audit."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 121,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 170,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          }
+        ],
+        "path_touches": 636,
+        "renames": 0,
+        "window": 300
+      },
+      "subsystem": "architecture-assurance",
+      "tracked_file_count": 353
+    },
+    {
+      "history_roots": [
+        "backend"
+      ],
+      "lifetime_commit_count": 791,
+      "recent": {
+        "commit_count": 300,
+        "latest_commits": [
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "26afadb41cfbff0aa86de38dabf2e41dc0eaa415",
+            "date": "2026-05-30",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Multi W5-Update"
+          },
+          {
+            "commit": "c0db38f1d855ddf88b6593942e26832d199b0738",
+            "date": "2026-05-29",
+            "paths": 5,
+            "renames": 0,
+            "subject": "Phase-6B"
+          },
+          {
+            "commit": "51dde10989ab53d3175aee3dcf0e2fd8522f20e3",
+            "date": "2026-05-29",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Phase 6B-9: Public Player-Shell / WebSocket current_room compatibility ADR + W5-first migration plan"
+          },
+          {
+            "commit": "7afaeca56c92dc1813666bf6c7a4322e6d03cd5c",
+            "date": "2026-05-29",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Phase 6B-8.1: No-Legacy Audit + stale narrator documentation cleanup"
+          },
+          {
+            "commit": "27c74f5a43d027e9ef4fbd7008000511b6fa9bbc",
+            "date": "2026-05-28",
+            "paths": 4,
+            "renames": 0,
+            "subject": "feat(language-gateway): add SLM-first translation foundation / fix(runtime-governance): seed turn routes and cost-aware preset / Remove remaining strict-off API/tombstones and admin metadata"
+          },
+          {
+            "commit": "4c1a7c014a68482dc5333838bd2f2bb6f0a5f242",
+            "date": "2026-05-28",
+            "paths": 1,
+            "renames": 0,
+            "subject": "despaghettify DS-041-044 runtime authority tails"
+          },
+          {
+            "commit": "8ca3dfc433dfa5473b542e2accff86bea17a360f",
+            "date": "2026-05-28",
+            "paths": 1,
+            "renames": 0,
+            "subject": "despaghettify DS-037-040 runtime leaders"
+          },
+          {
+            "commit": "6707dba2c3163bf2fa8dcc30ffe5c77d0d9d5d84",
+            "date": "2026-05-28",
+            "paths": 2,
+            "renames": 0,
+            "subject": "despaghettify DS-033-036 runtime hotspots"
+          }
+        ],
+        "path_touches": 2409,
+        "renames": 278,
+        "window": 300
+      },
+      "subsystem": "backend",
+      "tracked_file_count": 936
+    },
+    {
+      "history_roots": [
+        "content",
+        "backend/app/content",
+        "world-engine/app/content",
+        "ai_stack/story_runtime/god_of_carnage"
+      ],
+      "lifetime_commit_count": 85,
+      "recent": {
+        "commit_count": 85,
+        "latest_commits": [
+          {
+            "commit": "6707dba2c3163bf2fa8dcc30ffe5c77d0d9d5d84",
+            "date": "2026-05-28",
+            "paths": 2,
+            "renames": 0,
+            "subject": "despaghettify DS-033-036 runtime hotspots"
+          },
+          {
+            "commit": "a60dfde6667f49f0ab910ca1d115c4d455ac2562",
+            "date": "2026-05-23",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Despaghettify Code"
+          },
+          {
+            "commit": "0f2a412397c329a68f4208f01dc02cc67beeead9",
+            "date": "2026-05-20",
+            "paths": 12,
+            "renames": 0,
+            "subject": "Despaghettify / Delagecy"
+          },
+          {
+            "commit": "63dd1c1b5962b2290fccc66395f91c51ccef773e",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "delagecy & despaghettify"
+          },
+          {
+            "commit": "ea5847a7f39a601a25e37b41231779bba1ad0aef",
+            "date": "2026-05-20",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Refactoring Update"
+          },
+          {
+            "commit": "f3719336dc0a373dc152191453e57f1827f3804a",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "f9a120f1bb76df322a4d717fafcd77d5e0aa003c",
+            "date": "2026-05-19",
+            "paths": 2,
+            "renames": 0,
+            "subject": "update"
+          },
+          {
+            "commit": "b45a3a10ae16a062d5b68f642c329221c23a51da",
+            "date": "2026-05-19",
+            "paths": 1,
+            "renames": 0,
+            "subject": "update"
+          },
+          {
+            "commit": "d24734b73369423010d11aed3824d2cebf18162b",
+            "date": "2026-05-19",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Update"
+          },
+          {
+            "commit": "5b3175233ff30bdc0a512921e5e8a6f6052e4103",
+            "date": "2026-05-19",
+            "paths": 17,
+            "renames": 0,
+            "subject": "Update"
+          }
+        ],
+        "path_touches": 713,
+        "renames": 59,
+        "window": 300
+      },
+      "subsystem": "content-authority",
+      "tracked_file_count": 219
+    },
+    {
+      "history_roots": [
+        "docs",
+        "mkdocs.yml",
+        "scripts/architecture_link_audit.py",
+        "tests/gates/test_architecture_documentation_gate.py"
+      ],
+      "lifetime_commit_count": 588,
+      "recent": {
+        "commit_count": 300,
+        "latest_commits": [
+          {
+            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "date": "2026-07-30",
+            "paths": 4,
+            "renames": 0,
+            "subject": "fix: exclude ignored files from architecture evidence"
+          },
+          {
+            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "date": "2026-07-30",
+            "paths": 4,
+            "renames": 0,
+            "subject": "fix: make architecture canon workspace portable"
+          },
+          {
+            "commit": "6864ffed58734459848a97f2da67279ddbe3893f",
+            "date": "2026-07-30",
+            "paths": 3,
+            "renames": 0,
+            "subject": "fix: keep retired AKDB runtime state ignored"
+          },
+          {
+            "commit": "1080038743ab475e55d3554a47051754d668ff39",
+            "date": "2026-07-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "fix: resolve AKDB checkout from primary workspace"
+          },
+          {
+            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "date": "2026-07-30",
+            "paths": 27,
+            "renames": 0,
+            "subject": "feat: modernize Better Tomorrow architecture assurance"
+          },
+          {
+            "commit": "3fbfe786f7ed3b30daf31a451a9bfe6ba486c4b3",
+            "date": "2026-06-24",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Document story-runtime-core ai_stack dependency and clarify input taxonomy."
+          },
+          {
+            "commit": "2cc4527339ac59226aad1b57b78b7269460aaa2e",
+            "date": "2026-06-24",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Reduce per-turn language duplication and reconcile story-runtime-core SAD catalog."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 125,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 267,
+            "renames": 100,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "8ef52842f2fc4d982bf30c31f1618fa98f51c777",
+            "date": "2026-05-31",
+            "paths": 5,
+            "renames": 0,
+            "subject": "W5 Update"
+          }
+        ],
+        "path_touches": 3869,
+        "renames": 243,
+        "window": 300
+      },
+      "subsystem": "documentation-supply-chain",
+      "tracked_file_count": 652
+    },
+    {
+      "history_roots": [
+        "backend",
+        "frontend",
+        "world-engine",
+        "ai_stack",
+        "content",
+        "tools/mcp_server",
+        "administration-tool"
+      ],
+      "lifetime_commit_count": 1142,
+      "recent": {
+        "commit_count": 300,
+        "latest_commits": [
+          {
+            "commit": "3fbfe786f7ed3b30daf31a451a9bfe6ba486c4b3",
+            "date": "2026-06-24",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Document story-runtime-core ai_stack dependency and clarify input taxonomy."
+          },
+          {
+            "commit": "2cc4527339ac59226aad1b57b78b7269460aaa2e",
+            "date": "2026-06-24",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Reduce per-turn language duplication and reconcile story-runtime-core SAD catalog."
+          },
+          {
+            "commit": "ee477e923acac40c6cf35d35409f18ee9c9a659f",
+            "date": "2026-06-24",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Fix P0 language defaults and ingress semantic resolution for ADR D14."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 10,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 6,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "8ef52842f2fc4d982bf30c31f1618fa98f51c777",
+            "date": "2026-05-31",
+            "paths": 6,
+            "renames": 0,
+            "subject": "W5 Update"
+          },
+          {
+            "commit": "0060c5a5d451d78769044d643294c25a66dd93b3",
+            "date": "2026-05-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "\"Inventory W5 location framing legacy surfaces\""
+          },
+          {
+            "commit": "26afadb41cfbff0aa86de38dabf2e41dc0eaa415",
+            "date": "2026-05-30",
+            "paths": 20,
+            "renames": 0,
+            "subject": "Multi W5-Update"
+          },
+          {
+            "commit": "c0db38f1d855ddf88b6593942e26832d199b0738",
+            "date": "2026-05-29",
+            "paths": 10,
+            "renames": 0,
+            "subject": "Phase-6B"
+          },
+          {
+            "commit": "51dde10989ab53d3175aee3dcf0e2fd8522f20e3",
+            "date": "2026-05-29",
+            "paths": 12,
+            "renames": 0,
+            "subject": "Phase 6B-9: Public Player-Shell / WebSocket current_room compatibility ADR + W5-first migration plan"
+          }
+        ],
+        "path_touches": 6476,
+        "renames": 757,
+        "window": 300
+      },
+      "subsystem": "ecosystem-topology",
+      "tracked_file_count": 2501
+    },
+    {
+      "history_roots": [
+        "frontend"
+      ],
+      "lifetime_commit_count": 86,
+      "recent": {
+        "commit_count": 86,
+        "latest_commits": [
+          {
+            "commit": "26afadb41cfbff0aa86de38dabf2e41dc0eaa415",
+            "date": "2026-05-30",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Multi W5-Update"
+          },
+          {
+            "commit": "c0db38f1d855ddf88b6593942e26832d199b0738",
+            "date": "2026-05-29",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Phase-6B"
+          },
+          {
+            "commit": "63dd1c1b5962b2290fccc66395f91c51ccef773e",
+            "date": "2026-05-20",
+            "paths": 8,
+            "renames": 0,
+            "subject": "delagecy & despaghettify"
+          },
+          {
+            "commit": "ea5847a7f39a601a25e37b41231779bba1ad0aef",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Refactoring Update"
+          },
+          {
+            "commit": "96b0a9f362e0d8adb2ebd2336faac0b939f3f832",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "unified python"
+          },
+          {
+            "commit": "4609204bc9fc2252fe69208085a0c10e6ab56993",
+            "date": "2026-05-20",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "daf030d666513296e29a4164ad87cd85f9689a0a",
+            "date": "2026-05-19",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Stage L Phase 2"
+          },
+          {
+            "commit": "f9a120f1bb76df322a4d717fafcd77d5e0aa003c",
+            "date": "2026-05-19",
+            "paths": 3,
+            "renames": 0,
+            "subject": "update"
+          },
+          {
+            "commit": "f395a291c3fee7454be7222b9c98dee51a010d88",
+            "date": "2026-05-19",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Final Stage F"
+          },
+          {
+            "commit": "7ee00fa7a9eac3673056eaf2526005cd0ac37e72",
+            "date": "2026-05-19",
+            "paths": 2,
+            "renames": 0,
+            "subject": "update"
+          }
+        ],
+        "path_touches": 365,
+        "renames": 0,
+        "window": 300
+      },
+      "subsystem": "frontend",
+      "tracked_file_count": 77
+    },
+    {
+      "history_roots": [
+        "docs/architecture/project",
+        "docs/adr",
+        "backend/app/services/governance",
+        "tests/gates"
+      ],
+      "lifetime_commit_count": 72,
+      "recent": {
+        "commit_count": 72,
+        "latest_commits": [
+          {
+            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "date": "2026-07-30",
+            "paths": 2,
+            "renames": 0,
+            "subject": "fix: exclude ignored files from architecture evidence"
+          },
+          {
+            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "date": "2026-07-30",
+            "paths": 2,
+            "renames": 0,
+            "subject": "fix: make architecture canon workspace portable"
+          },
+          {
+            "commit": "6864ffed58734459848a97f2da67279ddbe3893f",
+            "date": "2026-07-30",
+            "paths": 2,
+            "renames": 0,
+            "subject": "fix: keep retired AKDB runtime state ignored"
+          },
+          {
+            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "date": "2026-07-30",
+            "paths": 11,
+            "renames": 0,
+            "subject": "feat: modernize Better Tomorrow architecture assurance"
+          },
+          {
+            "commit": "ee477e923acac40c6cf35d35409f18ee9c9a659f",
+            "date": "2026-06-24",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Fix P0 language defaults and ingress semantic resolution for ADR D14."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 27,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 19,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "27c74f5a43d027e9ef4fbd7008000511b6fa9bbc",
+            "date": "2026-05-28",
+            "paths": 1,
+            "renames": 0,
+            "subject": "feat(language-gateway): add SLM-first translation foundation / fix(runtime-governance): seed turn routes and cost-aware preset / Remove remaining strict-off API/tombstones and admin metadata"
+          },
+          {
+            "commit": "a60dfde6667f49f0ab910ca1d115c4d455ac2562",
+            "date": "2026-05-23",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Despaghettify Code"
+          },
+          {
+            "commit": "2d5181e3d29c66b05ee01c7b17f982c8d4a11cac",
+            "date": "2026-05-21",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Phase 6B-5A Narrator-Strict Permanent-Flip"
+          }
+        ],
+        "path_touches": 255,
+        "renames": 0,
+        "window": 300
+      },
+      "subsystem": "governance",
+      "tracked_file_count": 116
+    },
+    {
+      "history_roots": [
+        "tools/mcp_server",
+        "scripts/wos_mcp_stdio_launcher.py"
+      ],
+      "lifetime_commit_count": 86,
+      "recent": {
+        "commit_count": 86,
+        "latest_commits": [
+          {
+            "commit": "c024dae4c4c69173d774b5e1716f66842592a030",
+            "date": "2026-05-23",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Despaghettify"
+          },
+          {
+            "commit": "8fb1baf33568196c30d51a4b75a6c0304078ddd9",
+            "date": "2026-05-23",
+            "paths": 2,
+            "renames": 0,
+            "subject": " Phase 6B-5F / Despaghettify"
+          },
+          {
+            "commit": "ed520510d00f2498258c6edc5fcf705d43a440d1",
+            "date": "2026-05-21",
+            "paths": 50,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "e2b99e7e760c9f13426bd8b861f0f4cc07690988",
+            "date": "2026-05-21",
+            "paths": 14,
+            "renames": 11,
+            "subject": "Refactoring - W5"
+          },
+          {
+            "commit": "c47fb293a02dfbfba9515d9af911eeee3d219be6",
+            "date": "2026-05-21",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Refactoring / W5 System"
+          },
+          {
+            "commit": "3f56c9588e0d183e69b5208bbe126c3ef3856060",
+            "date": "2026-05-21",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "0f2a412397c329a68f4208f01dc02cc67beeead9",
+            "date": "2026-05-20",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Despaghettify / Delagecy"
+          },
+          {
+            "commit": "63dd1c1b5962b2290fccc66395f91c51ccef773e",
+            "date": "2026-05-20",
+            "paths": 2,
+            "renames": 0,
+            "subject": "delagecy & despaghettify"
+          },
+          {
+            "commit": "ea5847a7f39a601a25e37b41231779bba1ad0aef",
+            "date": "2026-05-20",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Refactoring Update"
+          },
+          {
+            "commit": "f3719336dc0a373dc152191453e57f1827f3804a",
+            "date": "2026-05-20",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Refactoring"
+          }
+        ],
+        "path_touches": 358,
+        "renames": 13,
+        "window": 300
+      },
+      "subsystem": "mcp-server",
+      "tracked_file_count": 107
+    },
+    {
+      "history_roots": [
+        "tests/reports/MVP_Live_Runtime_Completion",
+        "tests/e2e",
+        "tests/smoke",
+        "frontend",
+        "world-engine",
+        "ai_stack/story_runtime"
+      ],
+      "lifetime_commit_count": 408,
+      "recent": {
+        "commit_count": 300,
+        "latest_commits": [
+          {
+            "commit": "2cc4527339ac59226aad1b57b78b7269460aaa2e",
+            "date": "2026-06-24",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Reduce per-turn language duplication and reconcile story-runtime-core SAD catalog."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 6,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "8ef52842f2fc4d982bf30c31f1618fa98f51c777",
+            "date": "2026-05-31",
+            "paths": 1,
+            "renames": 0,
+            "subject": "W5 Update"
+          },
+          {
+            "commit": "26afadb41cfbff0aa86de38dabf2e41dc0eaa415",
+            "date": "2026-05-30",
+            "paths": 6,
+            "renames": 0,
+            "subject": "Multi W5-Update"
+          },
+          {
+            "commit": "c0db38f1d855ddf88b6593942e26832d199b0738",
+            "date": "2026-05-29",
+            "paths": 5,
+            "renames": 0,
+            "subject": "Phase-6B"
+          },
+          {
+            "commit": "51dde10989ab53d3175aee3dcf0e2fd8522f20e3",
+            "date": "2026-05-29",
+            "paths": 9,
+            "renames": 0,
+            "subject": "Phase 6B-9: Public Player-Shell / WebSocket current_room compatibility ADR + W5-first migration plan"
+          },
+          {
+            "commit": "7afaeca56c92dc1813666bf6c7a4322e6d03cd5c",
+            "date": "2026-05-29",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Phase 6B-8.1: No-Legacy Audit + stale narrator documentation cleanup"
+          },
+          {
+            "commit": "27c74f5a43d027e9ef4fbd7008000511b6fa9bbc",
+            "date": "2026-05-28",
+            "paths": 9,
+            "renames": 0,
+            "subject": "feat(language-gateway): add SLM-first translation foundation / fix(runtime-governance): seed turn routes and cost-aware preset / Remove remaining strict-off API/tombstones and admin metadata"
+          },
+          {
+            "commit": "4c1a7c014a68482dc5333838bd2f2bb6f0a5f242",
+            "date": "2026-05-28",
+            "paths": 5,
+            "renames": 0,
+            "subject": "despaghettify DS-041-044 runtime authority tails"
+          }
+        ],
+        "path_touches": 2001,
+        "renames": 24,
+        "window": 300
+      },
+      "subsystem": "mvp-live-runtime-completion",
+      "tracked_file_count": 663
+    },
+    {
+      "history_roots": [
+        "backend/app/observability",
+        "world-engine/app/observability",
+        "ai_stack/langfuse",
+        "tools/mcp_server/langfuse_tracing.py",
+        "tests/test_langfuse_story_turn_trace.py"
+      ],
+      "lifetime_commit_count": 58,
+      "recent": {
+        "commit_count": 58,
+        "latest_commits": [
+          {
+            "commit": "2b49558a6f97013e27a30133747839346c38daaf",
+            "date": "2026-05-21",
+            "paths": 1,
+            "renames": 0,
+            "subject": "W5-System / Refactoring"
+          },
+          {
+            "commit": "0f2a412397c329a68f4208f01dc02cc67beeead9",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Despaghettify / Delagecy"
+          },
+          {
+            "commit": "63dd1c1b5962b2290fccc66395f91c51ccef773e",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "delagecy & despaghettify"
+          },
+          {
+            "commit": "ea5847a7f39a601a25e37b41231779bba1ad0aef",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Refactoring Update"
+          },
+          {
+            "commit": "f3719336dc0a373dc152191453e57f1827f3804a",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "f24cece99b456457c62e502d68a6c02ae2586542",
+            "date": "2026-05-20",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Refactoring commit"
+          },
+          {
+            "commit": "0b811fe3d3ff2e16f5a0ce5fec651afcd4448f7a",
+            "date": "2026-05-17",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Multi UI Updates"
+          },
+          {
+            "commit": "61ad27cbd044f4f9155a393dba7e63121b50aaef",
+            "date": "2026-05-16",
+            "paths": 1,
+            "renames": 0,
+            "subject": "mcp langfuse update"
+          },
+          {
+            "commit": "4ab96545ad41932d0393a4d13da8ca5e9a4e8777",
+            "date": "2026-05-16",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Local Langfuse Integration"
+          },
+          {
+            "commit": "24adb2e1babf6fec1c4001770c1e987ec5d2cb0d",
+            "date": "2026-05-16",
+            "paths": 2,
+            "renames": 0,
+            "subject": "fix opening graph"
+          }
+        ],
+        "path_touches": 82,
+        "renames": 0,
+        "window": 300
+      },
+      "subsystem": "observability-traceability",
+      "tracked_file_count": 15
+    },
+    {
+      "history_roots": [
+        "tests",
+        "scripts/run-quality-gates.sh",
+        ".github/workflows"
+      ],
+      "lifetime_commit_count": 260,
+      "recent": {
+        "commit_count": 260,
+        "latest_commits": [
+          {
+            "commit": "ed8a8f8a52e9e926ad884aca1ceb5da0bf1c518c",
+            "date": "2026-07-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "fix: exclude ignored files from architecture evidence"
+          },
+          {
+            "commit": "f48c53356f753340370e32ada4204613da3075d4",
+            "date": "2026-07-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "fix: make architecture canon workspace portable"
+          },
+          {
+            "commit": "1080038743ab475e55d3554a47051754d668ff39",
+            "date": "2026-07-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "fix: resolve AKDB checkout from primary workspace"
+          },
+          {
+            "commit": "3b463cccf9466a0a349a1f4af633abc22529ee48",
+            "date": "2026-07-30",
+            "paths": 10,
+            "renames": 0,
+            "subject": "feat: modernize Better Tomorrow architecture assurance"
+          },
+          {
+            "commit": "ee477e923acac40c6cf35d35409f18ee9c9a659f",
+            "date": "2026-06-24",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Fix P0 language defaults and ingress semantic resolution for ADR D14."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 9,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 12,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "8ef52842f2fc4d982bf30c31f1618fa98f51c777",
+            "date": "2026-05-31",
+            "paths": 1,
+            "renames": 0,
+            "subject": "W5 Update"
+          },
+          {
+            "commit": "0060c5a5d451d78769044d643294c25a66dd93b3",
+            "date": "2026-05-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "\"Inventory W5 location framing legacy surfaces\""
+          },
+          {
+            "commit": "26afadb41cfbff0aa86de38dabf2e41dc0eaa415",
+            "date": "2026-05-30",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Multi W5-Update"
+          }
+        ],
+        "path_touches": 1624,
+        "renames": 6,
+        "window": 300
+      },
+      "subsystem": "quality-gates",
+      "tracked_file_count": 147
+    },
+    {
+      "history_roots": [
+        "backend/app/services/governance/security_governance_service.py",
+        "backend/app/services/governance/governance_runtime",
+        "backend/app/api/v1/security_governance_routes.py",
+        "frontend/app/auth.py",
+        "tools/mcp_server"
+      ],
+      "lifetime_commit_count": 94,
+      "recent": {
+        "commit_count": 94,
+        "latest_commits": [
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "5f036699accbc29169626ac7669795c95fee87da",
+            "date": "2026-06-23",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Retire active ADRs into SAD §9 and read-only archive."
+          },
+          {
+            "commit": "27c74f5a43d027e9ef4fbd7008000511b6fa9bbc",
+            "date": "2026-05-28",
+            "paths": 1,
+            "renames": 0,
+            "subject": "feat(language-gateway): add SLM-first translation foundation / fix(runtime-governance): seed turn routes and cost-aware preset / Remove remaining strict-off API/tombstones and admin metadata"
+          },
+          {
+            "commit": "c024dae4c4c69173d774b5e1716f66842592a030",
+            "date": "2026-05-23",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Despaghettify"
+          },
+          {
+            "commit": "8fb1baf33568196c30d51a4b75a6c0304078ddd9",
+            "date": "2026-05-23",
+            "paths": 2,
+            "renames": 0,
+            "subject": " Phase 6B-5F / Despaghettify"
+          },
+          {
+            "commit": "341a309f2f08ad17483460f900f204c275f2ed77",
+            "date": "2026-05-21",
+            "paths": 38,
+            "renames": 0,
+            "subject": "Refactoring / 5W"
+          },
+          {
+            "commit": "ed520510d00f2498258c6edc5fcf705d43a440d1",
+            "date": "2026-05-21",
+            "paths": 50,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "e2b99e7e760c9f13426bd8b861f0f4cc07690988",
+            "date": "2026-05-21",
+            "paths": 14,
+            "renames": 11,
+            "subject": "Refactoring - W5"
+          },
+          {
+            "commit": "2b49558a6f97013e27a30133747839346c38daaf",
+            "date": "2026-05-21",
+            "paths": 1,
+            "renames": 0,
+            "subject": "W5-System / Refactoring"
+          },
+          {
+            "commit": "c47fb293a02dfbfba9515d9af911eeee3d219be6",
+            "date": "2026-05-21",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Refactoring / W5 System"
+          }
+        ],
+        "path_touches": 406,
+        "renames": 13,
+        "window": 300
+      },
+      "subsystem": "security-governance",
+      "tracked_file_count": 147
+    },
+    {
+      "history_roots": [
+        "story_runtime_core"
+      ],
+      "lifetime_commit_count": 76,
+      "recent": {
+        "commit_count": 76,
+        "latest_commits": [
+          {
+            "commit": "3fbfe786f7ed3b30daf31a451a9bfe6ba486c4b3",
+            "date": "2026-06-24",
+            "paths": 5,
+            "renames": 0,
+            "subject": "Document story-runtime-core ai_stack dependency and clarify input taxonomy."
+          },
+          {
+            "commit": "7174207dabad1f23f91be08e2becf65ffb74dcec",
+            "date": "2026-05-28",
+            "paths": 3,
+            "renames": 0,
+            "subject": "DS-029 - DS.032 Despaghettify"
+          },
+          {
+            "commit": "8186fb789a1b4a46ab5e1700378d6b927781f009",
+            "date": "2026-05-23",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Despaghettify / Phase 6B-7: Strict-off rollback deprecation + removal readiness ADR / Despaghettify"
+          },
+          {
+            "commit": "149de9fe291240b1b5b13d9e75b0777cd44bb5b3",
+            "date": "2026-05-23",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Despaghettify / Phase 6B-6A.5 / 6B-6B: Preflight, stale worktree cleanup, then retire narrator legacy-compat diagnostics flag"
+          },
+          {
+            "commit": "8fb1baf33568196c30d51a4b75a6c0304078ddd9",
+            "date": "2026-05-23",
+            "paths": 1,
+            "renames": 0,
+            "subject": " Phase 6B-5F / Despaghettify"
+          },
+          {
+            "commit": "a60dfde6667f49f0ab910ca1d115c4d455ac2562",
+            "date": "2026-05-23",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Despaghettify Code"
+          },
+          {
+            "commit": "95271c183125c0b1a795e9f09e9cfa6545d984b5",
+            "date": "2026-05-22",
+            "paths": 7,
+            "renames": 0,
+            "subject": "Refactoring / Phase 6B-5B: Narrator-strict parity-test rewrite"
+          },
+          {
+            "commit": "ea5847a7f39a601a25e37b41231779bba1ad0aef",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Refactoring Update"
+          },
+          {
+            "commit": "f3719336dc0a373dc152191453e57f1827f3804a",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Refactoring"
+          },
+          {
+            "commit": "96b0a9f362e0d8adb2ebd2336faac0b939f3f832",
+            "date": "2026-05-20",
+            "paths": 1,
+            "renames": 0,
+            "subject": "unified python"
+          }
+        ],
+        "path_touches": 194,
+        "renames": 0,
+        "window": 300
+      },
+      "subsystem": "story-runtime-core",
+      "tracked_file_count": 54
+    },
+    {
+      "history_roots": [
+        "world-engine",
+        "story_runtime_core"
+      ],
+      "lifetime_commit_count": 353,
+      "recent": {
+        "commit_count": 300,
+        "latest_commits": [
+          {
+            "commit": "3fbfe786f7ed3b30daf31a451a9bfe6ba486c4b3",
+            "date": "2026-06-24",
+            "paths": 5,
+            "renames": 0,
+            "subject": "Document story-runtime-core ai_stack dependency and clarify input taxonomy."
+          },
+          {
+            "commit": "e8695b5f2a1a9d9238cdf3fb53be53a838e46fc3",
+            "date": "2026-06-24",
+            "paths": 1,
+            "renames": 0,
+            "subject": "Complete SAD restructure: gates, world-engine §9 condensation, zero inbound ADR refs."
+          },
+          {
+            "commit": "26afadb41cfbff0aa86de38dabf2e41dc0eaa415",
+            "date": "2026-05-30",
+            "paths": 3,
+            "renames": 0,
+            "subject": "Multi W5-Update"
+          },
+          {
+            "commit": "c0db38f1d855ddf88b6593942e26832d199b0738",
+            "date": "2026-05-29",
+            "paths": 4,
+            "renames": 0,
+            "subject": "Phase-6B"
+          },
+          {
+            "commit": "51dde10989ab53d3175aee3dcf0e2fd8522f20e3",
+            "date": "2026-05-29",
+            "paths": 9,
+            "renames": 0,
+            "subject": "Phase 6B-9: Public Player-Shell / WebSocket current_room compatibility ADR + W5-first migration plan"
+          },
+          {
+            "commit": "7afaeca56c92dc1813666bf6c7a4322e6d03cd5c",
+            "date": "2026-05-29",
+            "paths": 2,
+            "renames": 0,
+            "subject": "Phase 6B-8.1: No-Legacy Audit + stale narrator documentation cleanup"
+          },
+          {
+            "commit": "27c74f5a43d027e9ef4fbd7008000511b6fa9bbc",
+            "date": "2026-05-28",
+            "paths": 8,
+            "renames": 0,
+            "subject": "feat(language-gateway): add SLM-first translation foundation / fix(runtime-governance): seed turn routes and cost-aware preset / Remove remaining strict-off API/tombstones and admin metadata"
+          },
+          {
+            "commit": "4c1a7c014a68482dc5333838bd2f2bb6f0a5f242",
+            "date": "2026-05-28",
+            "paths": 2,
+            "renames": 0,
+            "subject": "despaghettify DS-041-044 runtime authority tails"
+          },
+          {
+            "commit": "8ca3dfc433dfa5473b542e2accff86bea17a360f",
+            "date": "2026-05-28",
+            "paths": 4,
+            "renames": 0,
+            "subject": "despaghettify DS-037-040 runtime leaders"
+          },
+          {
+            "commit": "6707dba2c3163bf2fa8dcc30ffe5c77d0d9d5d84",
+            "date": "2026-05-28",
+            "paths": 2,
+            "renames": 0,
+            "subject": "despaghettify DS-033-036 runtime hotspots"
+          }
+        ],
+        "path_touches": 1595,
+        "renames": 13,
+        "window": 300
+      },
+      "subsystem": "world-engine",
+      "tracked_file_count": 430
+    }
+  ]
+}

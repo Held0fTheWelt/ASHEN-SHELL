@@ -19,6 +19,22 @@ Cannot be sole enforcement layer for backend/runtime rules ([service-boundaries]
 
 In scope: templates, static JS, play shell. Out of scope: admin, narrative commit.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Player-facing Flask shell and browser runtime for authentication, session launch, streaming narrative blocks and controls.
+
+**Authority rule:** Frontend owns presentation and transient browser interaction state; it never owns platform identity or live narrative truth.
+
+**Git/archaeology scope:** `frontend`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Presentation boundary across player, backend and world-engine | [Frontend - System Context](../../../../UML/Components/frontend/context/frontend-context.md) | Frontend owns presentation and transient browser interaction state; it never owns platform identity or live narrative truth. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 Call backend APIs; use browser-reachable play URL from backend bootstrap for runtime connection.
@@ -34,17 +50,77 @@ retry guidance rather than silent fallback to stale state.
 | Block renderer | `frontend/static/`, `frontend/tests/test_block_renderer.js` |
 | Player backend bridge | `frontend/app/player_backend.py` |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Player (`player`) | `actor` | Launch and interact with a story session | Authenticated browser interaction | [`frontend/templates/session_shell.html`](../../../../frontend/templates/session_shell.html) |
+| Backend API Client (`api_client`) | `component` | Apply authentication and transport policy | Bounded HTTP client | [`frontend/app/api_client.py`](../../../../frontend/app/api_client.py) |
+| Block Renderer (`renderer`) | `component` | Render typed narrative blocks safely | Escaped block display model | [`frontend/static/play_block_renderer.js`](../../../../frontend/static/play_block_renderer.js) |
+| Narrative Stream (`stream`) | `component` | Receive ordered live events | Reconnect-aware WebSocket stream | [`frontend/static/play_narrative_stream.js`](../../../../frontend/static/play_narrative_stream.js) |
+| Page Routes (`routes`) | `component` | Serve account, community and shell pages | Server-rendered Flask routes | [`frontend/app/routes.py`](../../../../frontend/app/routes.py) |
+| Play Controls (`controls`) | `component` | Capture player intent and accessibility controls | Semantic input command | [`frontend/static/play_controls.js`](../../../../frontend/static/play_controls.js) |
+| Play Routes (`play_routes`) | `component` | Launch session and proxy play requests | No local narrative decisions | [`frontend/app/routes_play.py`](../../../../frontend/app/routes_play.py) |
+| Runtime Bootstrap (`bootstrap`) | `component` | Hydrate browser shell from launch payload | Validated bootstrap JSON | [`frontend/static/play_runtime_bootstrap.js`](../../../../frontend/static/play_runtime_bootstrap.js) |
+| Backend Process (`backend_node`) | `node` | Serve identity and play proxy | Internal/public HTTP | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
+| Browser (`browser`) | `node` | Execute player shell | HTML/CSS/JavaScript | [`frontend/Dockerfile`](../../../../frontend/Dockerfile) |
+| Frontend Process (`frontend_node`) | `node` | Serve routes and assets | Flask HTTP | [`frontend/run.py`](../../../../frontend/run.py) |
+| Idle (`idle`) | `state` | Await session selection | No live binding | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
+| Launching (`launching`) | `state` | Obtain session and ticket | Single pending launch | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
+| Live (`live`) | `state` | Accept input and render stream | Bound session id | [`frontend/static/play_shell.js`](../../../../frontend/static/play_shell.js) |
+| Reconnecting (`reconnecting`) | `state` | Restore event stream without duplicate rendering | Resume cursor | [`frontend/static/play_live_ws.js`](../../../../frontend/static/play_live_ws.js) |
+| Backend (`backend`) | `system` | Own identity and proxy play operations | HTTP API | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
+| Frontend (`frontend`) | `system` | Render platform pages and live play shell | Flask blueprint plus browser assets | [`frontend/app/__init__.py`](../../../../frontend/app/__init__.py) |
+| World Engine (`world`) | `system` | Stream authoritative session updates | Ticketed WebSocket/HTTP via backend | [`world-engine/app/api/story_ws.py`](../../../../world-engine/app/api/story_ws.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 A1 free-input path documented in [`a1_free_input_primary_runtime_path.md`](../../../technical/runtime/a1_free_input_primary_runtime_path.md).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Ordered input submission and streamed block rendering | `sequence` | [Frontend - Player Turn](../../../../UML/Components/frontend/sequence/player-turn-sequence.md) | 4 |
+| Launch, live and reconnect behavior without local truth drift | `state` | [Frontend - Shell Lifecycle](../../../../UML/Components/frontend/states/shell-lifecycle.md) | 5 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Separate process from backend; configured `FRONTEND_URL` for redirects.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+| Concern | Model | Nodes / stores |
+| --- | --- | --- |
+| Browser, frontend process and backend API boundary | [Frontend - Deployment](../../../../UML/Components/frontend/deployment/frontend-deployment.md) | Browser, Frontend Process, Backend Process |
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 MVP5 modular block rendering ([ADR MVP5-001](../../../archive/adr-retired-2026/MVP_Live_Runtime_Completion/adr-mvp5-001-modular-block-rendering-architecture.md)).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Runtime Bootstrap | Narrative Stream | opens event channel | session ticket and cursor | [`frontend/static/play_runtime_bootstrap.js`](../../../../frontend/static/play_runtime_bootstrap.js) |
+| Play Controls | Play Routes | submits semantic input | one command per turn | [`frontend/static/play_controls.js`](../../../../frontend/static/play_controls.js) |
+| Play Routes | Backend API Client | launches session | validated launch payload | [`frontend/app/routes_play.py`](../../../../frontend/app/routes_play.py) |
+| Page Routes | Backend API Client | loads platform data | HTTP response mapping | [`frontend/app/routes.py`](../../../../frontend/app/routes.py) |
+| Narrative Stream | Block Renderer | delivers typed block | monotonic event order | [`frontend/static/play_narrative_stream.js`](../../../../frontend/static/play_narrative_stream.js) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -289,6 +365,20 @@ Gate and promotion-style tests must comply with **[ADR-0039](../../../archive/ad
 
 `frontend/tests/`, MVP5 gate evidence when present.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1` | Presentation boundary across player, backend and world-engine | `context` | [Frontend - System Context](../../../../UML/Components/frontend/context/frontend-context.md) |
+| `D1`, `D2` | Canonical route, bootstrap, stream, rendering and input seams | `component` | [Frontend - Browser and Route Components](../../../../UML/Components/frontend/components/frontend-components.md) |
+| `D1` | Ordered input submission and streamed block rendering | `sequence` | [Frontend - Player Turn](../../../../UML/Components/frontend/sequence/player-turn-sequence.md) |
+| `D2`, `D3` | Launch, live and reconnect behavior without local truth drift | `state` | [Frontend - Shell Lifecycle](../../../../UML/Components/frontend/states/shell-lifecycle.md) |
+| `D1` | Browser, frontend process and backend API boundary | `deployment` | [Frontend - Deployment](../../../../UML/Components/frontend/deployment/frontend-deployment.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 - Player routes and rendered web surfaces must remain inside the declared
@@ -299,6 +389,25 @@ Gate and promotion-style tests must comply with **[ADR-0039](../../../archive/ad
 ## 11. Risks & Technical Debt
 
 ADR-0033 frontend readiness states partially implemented.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+The player shell is split across Python routes and many JavaScript modules while legacy pages remain. Models identify the canonical launch/stream path and browser-only state.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 77 | 86 | 365 | 0 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
+| `DRIFT-007` | `open_target` | Player surface can flatten upstream runtime intelligence | Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

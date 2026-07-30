@@ -1,0 +1,37 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: quality-gates:quality-components
+title Quality Gates - Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: selector
+' bt-element-id: runner
+' bt-element-id: gates
+' bt-element-id: integration
+' bt-element-id: report
+' bt-element-id: ci
+
+component "Test Selector\nResponsibility: Map changes and profiles to declared suites\nContract: No silent omission\n[[../../../../scripts/test_changed.py source]]" as selector
+component "Central Runner\nResponsibility: Execute subsystem and cross-system suites\nContract: One authoritative orchestration path\n[[../../../../tests/run_tests.py source]]" as runner
+component "Architecture and Contract Gates\nResponsibility: Enforce boundaries and anti-hardcoding policy\nContract: Behavioral assertions\n[[../../../../tests/gates/test_table_b_anti_hardcoding_gate.py source]]" as gates
+component "Integration and E2E\nResponsibility: Prove real authority boundaries and user paths\nContract: Disposable dependencies and production path\n[[../../../../tests/integration/test_story_runtime_experience.py source]]" as integration
+component "Evidence Reporter\nResponsibility: Expose selected, executed, skipped and failed scope\nContract: Machine-readable and human summary\n[[../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md source]]" as report
+component "CI Policy\nResponsibility: Apply required gates to repository changes\nContract: Blocking workflow matrix\n[[../../../../.github/workflows/quality-gate.yml source]]" as ci
+
+selector ..> runner : "supplies selected suites\ncontract: selection rationale\n[[../../../../scripts/test_changed.py source]]"
+runner ..> gates : "executes static and contract gates\ncontract: blocking assertions\n[[../../../../tests/run_tests.py source]]"
+runner ..> integration : "executes boundary proof\ncontract: disposable test environment\n[[../../../../tests/run_tests.py source]]"
+gates ..> report : "emits findings\ncontract: selected/executed truth\n[[../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md source]]"
+integration ..> report : "emits evidence\ncontract: production-path outcome\n[[../../../../tests/integration/test_story_runtime_experience.py source]]"
+report ..> ci : "controls promotion\ncontract: exit status and artifacts\n[[../../../../.github/workflows/quality-gate.yml source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Selection, execution, boundary proof, evidence and CI promotion
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

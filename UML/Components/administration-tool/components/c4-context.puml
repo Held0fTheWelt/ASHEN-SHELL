@@ -1,0 +1,27 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: administration-tool:system-context
+title Administration Tool — System Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: operator
+' bt-element-id: admin
+' bt-element-id: backend
+
+actor "Operator\nResponsibility: Inspect health and request governed changes\nContract: Authenticated browser session with explicit confirmation\n[[../../../../docs/architecture/components/administration-tool/architecture.md source]]" as operator
+rectangle "Administration Tool\nResponsibility: Render operator workbenches and translate intent into backend requests\nContract: Flask routes; no direct domain persistence\n[[../../../../administration-tool/app.py source]]\n[[c4-component.puml drill-down]]" as admin
+rectangle "Backend Admin API\nResponsibility: Authorize and execute governed mutations\nContract: HTTP /api/v1/admin and operator endpoints\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]" as backend
+
+operator ..> admin : "opens workbench\ncontract: authenticated browser navigation\n[[../../../../administration-tool/route_registration_manage_sections.py source]]"
+admin ..> backend : "queries and requests mutation\ncontract: allow-listed backend API\n[[../../../../administration-tool/route_registration_proxy.py source]]"
+
+legend bottom
+Viewpoint: context
+Concern: Who operates the tool and where mutation authority resides
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

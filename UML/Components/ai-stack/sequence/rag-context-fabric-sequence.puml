@@ -1,0 +1,33 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: ai-stack:retrieval-fabric
+title AI Stack — RAG Context Fabric
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: executor
+' bt-element-id: ingress
+' bt-element-id: retrieval
+' bt-element-id: context_pack
+' bt-element-id: director
+
+participant "LangGraph Runtime Executor\nResponsibility: Coordinate the proposal pipeline\nContract: Prepared state in; proposal package out\n[[../../../../ai_stack/langgraph/runtime_executor/public.py source]]\n[[../components/c4-component.puml drill-down]]" as executor
+participant "Semantic Input Translation\nResponsibility: Translate player text into bounded intent evidence\nContract: Semantic input record without invented state\n[[../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py source]]" as ingress
+participant "RAG Context Fabric\nResponsibility: Assemble governed continuity and knowledge context\nContract: Bounded context pack with provenance\n[[../../../../ai_stack/rag/rag_context_pack_build.py source]]" as retrieval
+participant "RetrievalContextBundle\nResponsibility: Carry bounded retrieval results\nContract: Provenance-preserving ranked context\n[[../../../../ai_stack/rag/retrieval_context_bundles.py source]]" as context_pack
+participant "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director
+
+retrieval -> context_pack : "builds\ncontract: ranked and budgeted context\n[[../../../../ai_stack/rag/rag_context_pack_assembler.py source]]"
+executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py source]]"
+ingress -> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py source]]"
+retrieval -> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: How a runtime query becomes a bounded provenance-preserving context pack
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

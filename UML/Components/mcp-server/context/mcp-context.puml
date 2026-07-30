@@ -1,0 +1,30 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: mcp-server:system-context
+title MCP Server - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: client
+' bt-element-id: server
+' bt-element-id: backend
+' bt-element-id: world
+
+actor "MCP Client\nResponsibility: Discover and invoke Better Tomorrow tools\nContract: JSON-RPC over stdio\n[[../../../../tools/mcp_server/README.md source]]" as client
+rectangle "MCP Server\nResponsibility: Validate protocol and dispatch registered capabilities\nContract: MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]" as server
+rectangle "Backend\nResponsibility: Authorize and execute platform mutations\nContract: Authenticated backend API\n[[../../../../backend/app/api/v1/__init__.py source]]" as backend
+rectangle "World Engine\nResponsibility: Expose safe session inspection and commands\nContract: Runtime API\n[[../../../../world-engine/app/api/http.py source]]" as world
+
+server ..> backend : "delegates mutation\ncontract: backend authority and audit\n[[../../../../tools/mcp_server/backend_client.py source]]"
+server ..> world : "inspects session\ncontract: safe runtime surface\n[[../../../../tools/mcp_server/handlers/tools_registry_handlers_backend_session.py source]]"
+client ..> server : "invokes capability\ncontract: valid MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]"
+
+legend bottom
+Viewpoint: context
+Concern: Protocol adapter boundary against domain authorities
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

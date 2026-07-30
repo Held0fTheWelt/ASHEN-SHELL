@@ -510,24 +510,150 @@
   "representation_map": {},
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "administration-tool/app.py",
+        "ai_stack/langgraph/langgraph_runtime_executor.py",
+        "backend/app/factory_app.py",
+        "backend/app/services/game/game_service.py",
+        "backend/app/services/governance/governance_runtime_service.py",
+        "content/modules/god_of_carnage/module.yaml",
+        "frontend/app/__init__.py",
+        "frontend/app/api_client.py",
+        "frontend/app/routes_play.py",
+        "frontend/templates/session_shell.html",
+        "tools/mcp_server/backend_client.py",
+        "tools/mcp_server/server.py",
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/content/backend_loader.py",
+        "world-engine/app/main.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py"
+      ],
+      "concern": "Players, operators and bounded systems with explicit authority",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 9,
+      "id": "system-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Project/ecosystem-topology/depth/c4-context.puml"
+      "path": "UML/Project/ecosystem-topology/context/system-context.puml",
+      "relationship_count": 9,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
+      "anchors": [
+        "ai_stack/langgraph/langgraph_runtime_executor.py",
+        "backend/app/api/v1/auth_routes.py",
+        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/services/game/game_service.py",
+        "content/modules/god_of_carnage/module.yaml",
+        "world-engine/app/content/backend_loader.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/manager/runtime_manager.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py"
+      ],
+      "concern": "Identity, proxy, authored truth, live commit and proposal runtime boundaries",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "runtime-containers",
+      "kind": "container",
       "level": "container",
-      "path": "UML/Project/ecosystem-topology/depth/c4-container.puml"
+      "path": "UML/Project/ecosystem-topology/components/runtime-containers.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "component",
+      "anchors": [
+        "ai_stack/langgraph/langgraph_runtime_executor.py",
+        "backend/app/factory_app.py",
+        "backend/app/services/game/game_service.py",
+        "content/modules/god_of_carnage/module.yaml",
+        "frontend/app/__init__.py",
+        "frontend/app/api_client.py",
+        "frontend/app/routes_play.py",
+        "frontend/templates/session_shell.html",
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/content/backend_loader.py",
+        "world-engine/app/main.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py"
+      ],
+      "concern": "Whole-system player turn across all authority boundaries",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 6,
+      "id": "canonical-turn",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Project/ecosystem-topology/sequence/canonical-turn-sequence.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        ".git",
+        "README.md",
+        "docs/architecture/evidence/README.md",
+        "docs/architecture/project/ecosystem-topology/architecture.md",
+        "tools/architecture_assurance/model_catalog.json"
+      ],
+      "concern": "Current code, Git evolution and historical MVP corpus drive target selection",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "architecture-archaeology",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Project/ecosystem-topology/depth/c4-component.puml"
+      "path": "UML/Project/ecosystem-topology/components/architecture-archaeology.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
-      "level": "class",
-      "path": "UML/Project/ecosystem-topology/depth/class-model.puml"
+      "anchors": [
+        "docs/architecture/project/ecosystem-topology/architecture.md",
+        "docs/architecture/project/ecosystem-topology/evidence-matrix.md",
+        "docs/architecture/project/ecosystem-topology/mechanism-catalog.md"
+      ],
+      "concern": "Historical claims become confirmed, obsolete, conflicting or open target options",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "claim-classification",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Project/ecosystem-topology/states/claim-classification.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "administration-tool/app.py",
+        "backend/app/factory_app.py",
+        "backend/app/services/game/game_service.py",
+        "frontend/app/__init__.py",
+        "frontend/app/routes_play.py",
+        "frontend/templates/session_shell.html",
+        "tools/mcp_server/backend_client.py",
+        "tools/mcp_server/server.py",
+        "world-engine/app/main.py"
+      ],
+      "concern": "Player experience, operator governance and automated inspection remain separated",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 7,
+      "id": "authority-use-cases",
+      "kind": "usecase",
+      "level": "usecase",
+      "path": "UML/Project/ecosystem-topology/usecases/authority-use-cases.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/project/ecosystem-topology/architecture.md",

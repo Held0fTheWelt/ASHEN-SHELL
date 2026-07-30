@@ -3049,24 +3049,91 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "administration-tool/app.py",
+        "administration-tool/route_registration_manage_sections.py",
+        "administration-tool/route_registration_proxy.py",
+        "backend/app/api/v1/security_governance_routes.py",
+        "docs/architecture/components/administration-tool/architecture.md"
+      ],
+      "concern": "Who operates the tool and where mutation authority resides",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 3,
+      "id": "system-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Components/administration-tool/depth/c4-context.puml"
+      "path": "UML/Components/administration-tool/components/c4-context.puml",
+      "relationship_count": 2,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
-      "level": "container",
-      "path": "UML/Components/administration-tool/depth/c4-container.puml"
-    },
-    {
-      "id": "component",
+      "anchors": [
+        "administration-tool/app.py",
+        "administration-tool/route_registration.py",
+        "administration-tool/route_registration_manage.py",
+        "administration-tool/route_registration_manage_sections.py",
+        "administration-tool/route_registration_pages.py",
+        "administration-tool/route_registration_proxy.py",
+        "administration-tool/route_registration_proxy_policy.py",
+        "administration-tool/route_registration_security.py",
+        "administration-tool/templates/manage/dashboard.html",
+        "backend/app/api/v1/security_governance_routes.py"
+      ],
+      "concern": "How routes, policy, security and templates collaborate without owning domain state",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 8,
+      "id": "internal-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Components/administration-tool/depth/c4-component.puml"
+      "path": "UML/Components/administration-tool/components/c4-component.puml",
+      "relationship_count": 7,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
-      "level": "class",
-      "path": "UML/Components/administration-tool/depth/class-model.puml"
+      "anchors": [
+        "administration-tool/app.py",
+        "administration-tool/route_registration_manage_sections.py",
+        "administration-tool/route_registration_proxy.py",
+        "administration-tool/route_registration_proxy_policy.py",
+        "administration-tool/route_registration_security.py",
+        "backend/app/api/v1/security_governance_routes.py",
+        "docs/architecture/components/administration-tool/architecture.md"
+      ],
+      "concern": "End-to-end authorization and delegation of an operator mutation",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 7,
+      "id": "governed-mutation",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/administration-tool/sequence/governed-mutation-sequence.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "administration-tool/Dockerfile",
+        "administration-tool/templates/manage/dashboard.html",
+        "backend/Dockerfile",
+        "docs/architecture/components/administration-tool/architecture.md"
+      ],
+      "concern": "Browser, administration process and backend trust boundary",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 4,
+      "id": "deployment",
+      "kind": "deployment",
+      "level": "deployment",
+      "path": "UML/Components/administration-tool/deployment/administration-tool-deployment.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/components/administration-tool/architecture.md",

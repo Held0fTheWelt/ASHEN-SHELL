@@ -1,0 +1,35 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: governance:runtime-policy-change
+title Architecture Governance - Runtime Policy Change
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: maintainer
+' bt-element-id: governance
+' bt-element-id: sad
+' bt-element-id: runtime_policy
+' bt-element-id: audit
+' bt-element-id: gates
+
+actor "Maintainer\nResponsibility: Propose, review and accept architecture decisions\nContract: Evidence-backed review\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as maintainer
+participant "Governance System\nResponsibility: Control decision lifecycle and runtime policy changes\nContract: Recorded decision and audit evidence\n[[../../../../docs/architecture/project/governance/architecture.md source]]" as governance
+participant "SAD Decision Sections\nResponsibility: Explain decisions in architecture context\nContract: Traceable rationale and consequences\n[[../../../../docs/architecture/project/ecosystem-topology/architecture.md source]]" as sad
+participant "Runtime Governance Services\nResponsibility: Validate and apply operational policy\nContract: Authorized audited mutation\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]" as runtime_policy
+participant "Governance Evidence\nResponsibility: Record actor, before/after and outcome\nContract: Immutable audit event\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]" as audit
+participant "Policy Gates\nResponsibility: Block invalid authority and decision drift\nContract: Executable CI checks\n[[../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py source]]" as gates
+
+maintainer -> governance : "proposes and reviews\ncontract: evidence-backed change"
+sad -> runtime_policy : "constrains implementation\ncontract: accepted policy semantics\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]"
+runtime_policy -> audit : "records mutation outcome\ncontract: actor and before/after evidence\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
+audit -> gates : "supports verification\ncontract: machine-checkable evidence\n[[../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Accepted policy becomes audited runtime configuration and gate evidence
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

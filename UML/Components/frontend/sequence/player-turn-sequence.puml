@@ -1,0 +1,37 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: frontend:player-turn
+title Frontend - Player Turn
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: player
+' bt-element-id: controls
+' bt-element-id: play_routes
+' bt-element-id: api_client
+' bt-element-id: bootstrap
+' bt-element-id: stream
+' bt-element-id: renderer
+
+actor "Player\nResponsibility: Launch and interact with a story session\nContract: Authenticated browser interaction\n[[../../../../frontend/templates/session_shell.html source]]" as player
+participant "Play Controls\nResponsibility: Capture player intent and accessibility controls\nContract: Semantic input command\n[[../../../../frontend/static/play_controls.js source]]" as controls
+participant "Play Routes\nResponsibility: Launch session and proxy play requests\nContract: No local narrative decisions\n[[../../../../frontend/app/routes_play.py source]]" as play_routes
+participant "Backend API Client\nResponsibility: Apply authentication and transport policy\nContract: Bounded HTTP client\n[[../../../../frontend/app/api_client.py source]]" as api_client
+participant "Runtime Bootstrap\nResponsibility: Hydrate browser shell from launch payload\nContract: Validated bootstrap JSON\n[[../../../../frontend/static/play_runtime_bootstrap.js source]]" as bootstrap
+participant "Narrative Stream\nResponsibility: Receive ordered live events\nContract: Reconnect-aware WebSocket stream\n[[../../../../frontend/static/play_narrative_stream.js source]]" as stream
+participant "Block Renderer\nResponsibility: Render typed narrative blocks safely\nContract: Escaped block display model\n[[../../../../frontend/static/play_block_renderer.js source]]" as renderer
+
+controls -> play_routes : "submits semantic input\ncontract: one command per turn\n[[../../../../frontend/static/play_controls.js source]]"
+play_routes -> api_client : "launches session\ncontract: validated launch payload\n[[../../../../frontend/app/routes_play.py source]]"
+bootstrap -> stream : "opens event channel\ncontract: session ticket and cursor\n[[../../../../frontend/static/play_runtime_bootstrap.js source]]"
+stream -> renderer : "delivers typed block\ncontract: monotonic event order\n[[../../../../frontend/static/play_narrative_stream.js source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Ordered input submission and streamed block rendering
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

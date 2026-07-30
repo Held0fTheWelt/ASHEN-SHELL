@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: activity
+' bt-view-id: documentation-supply-chain:publication-flow
+title Documentation Supply Chain - Publication Flow
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: source
+' bt-element-id: models
+' bt-element-id: links
+' bt-element-id: gate
+' bt-element-id: site
+
+(*) --> "Authoritative Sources\nResponsibility: Hold SAD, decision, contract and runbook truth\nContract: Declared document role\n[[../../../../docs/architecture/project/FRONTMATTER.md source]]" as source
+source -->[drives projections\ncontract: semantic catalog and SAD intent] "Generated Model Companions\nResponsibility: Project semantic catalog content for navigation\nContract: Regenerated, never hand-divergent\n[[../../../../tools/architecture_assurance/view_builder.py source]]" as models
+note on link
+[[../../../../tools/architecture_assurance/view_builder.py relationship source]]
+end note
+models -->[is checked by\ncontract: all generated links resolve] "Link Audit\nResponsibility: Detect missing and stale references\nContract: Repository-relative target resolution\n[[../../../../scripts/architecture_link_audit.py source]]" as links
+note on link
+[[../../../../scripts/architecture_link_audit.py relationship source]]
+end note
+links -->[supplies findings\ncontract: stable failing paths] "Documentation Gate\nResponsibility: Enforce required sections, roles and navigation\nContract: Blocking CI findings\n[[../../../../tests/gates/test_architecture_documentation_gate.py source]]" as gate
+note on link
+[[../../../../tests/gates/test_architecture_documentation_gate.py relationship source]]
+end note
+gate -->[permits publication\ncontract: all blocking gates pass] "MkDocs Projection\nResponsibility: Publish navigable documentation\nContract: mkdocs.yml navigation\n[[../../../../mkdocs.yml source]]" as site
+note on link
+[[../../../../mkdocs.yml relationship source]]
+end note
+site --> (*)
+
+
+legend bottom
+Viewpoint: activity
+Concern: Deterministic authoring-to-publication validation
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

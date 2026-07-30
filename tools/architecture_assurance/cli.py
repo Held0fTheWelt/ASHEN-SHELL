@@ -9,8 +9,11 @@ from typing import Any
 
 from .audit import build_report
 from .canon import export_canon, write_canon_manifest
+from .drift_claims import project_claim_reconciliation
+from .drift_evidence import build_drift_evidence, write_drift_evidence
 from .manifest_builder import generate_manifests, load_config
 from .reporters import write_reports
+from .sad_enricher import enrich_sads
 from .view_builder import generate_views
 
 
@@ -40,6 +43,17 @@ def _parser() -> argparse.ArgumentParser:
     generate = subcommands.add_parser("generate")
     generate.add_argument("--dry-run", action="store_true")
 
+    drift = subcommands.add_parser("drift-evidence")
+    drift.add_argument("--archive-root")
+    drift.add_argument("--history-window", type=int, default=300)
+    drift.add_argument("--dry-run", action="store_true")
+
+    reconcile = subcommands.add_parser("reconcile-drift")
+    reconcile.add_argument("--dry-run", action="store_true")
+
+    enrich = subcommands.add_parser("enrich-sads")
+    enrich.add_argument("--dry-run", action="store_true")
+
     canon_manifest = subcommands.add_parser("canon-manifest")
     canon_manifest.add_argument("--dry-run", action="store_true")
 
@@ -68,6 +82,17 @@ def main(argv: list[str] | None = None) -> int:
     config = load_config(config_path)
 
     if args.command == "generate":
+        reconciliation = project_claim_reconciliation(
+            repo_root / str(config["drift_claim_catalog"]),
+            repo_root / str(config["drift_reconciliation"]),
+            repo_root,
+            dry_run=args.dry_run,
+        )
+        sads = enrich_sads(
+            config_path,
+            repo_root,
+            dry_run=args.dry_run,
+        )
         manifests = generate_manifests(
             config_path, repo_root, dry_run=args.dry_run
         )
@@ -75,11 +100,61 @@ def main(argv: list[str] | None = None) -> int:
         result = {
             "schema_version": "bt.architecture_generation_result.v1",
             "dry_run": args.dry_run,
+            "drift_reconciliation": reconciliation,
+            "sads": sads,
             "manifests": manifests,
             "views": views,
         }
         _emit(result)
         return 1 if manifests["parse_errors"] else 0
+
+    if args.command == "drift-evidence":
+        evidence = build_drift_evidence(
+            repo_root,
+            repo_root / str(config["model_catalog"]),
+            archive_root=_path(args.archive_root, repo_root),
+            history_window=args.history_window,
+        )
+        result = write_drift_evidence(
+            evidence,
+            repo_root / str(config["drift_evidence_json"]),
+            repo_root / str(config["drift_evidence_markdown"]),
+            dry_run=args.dry_run,
+        )
+        _emit(
+            {
+                **result,
+                "repository": evidence["repository"],
+                "architecture_archaeology": {
+                    "available": evidence["architecture_archaeology"][
+                        "available"
+                    ],
+                    "root_label": evidence["architecture_archaeology"].get(
+                        "root_label"
+                    ),
+                },
+            }
+        )
+        return 0
+
+    if args.command == "reconcile-drift":
+        result = project_claim_reconciliation(
+            repo_root / str(config["drift_claim_catalog"]),
+            repo_root / str(config["drift_reconciliation"]),
+            repo_root,
+            dry_run=args.dry_run,
+        )
+        _emit(result)
+        return 0
+
+    if args.command == "enrich-sads":
+        result = enrich_sads(
+            config_path,
+            repo_root,
+            dry_run=args.dry_run,
+        )
+        _emit(result)
+        return 0
 
     manifest_path = repo_root / str(config["canon_manifest"])
     if args.command == "canon-manifest":

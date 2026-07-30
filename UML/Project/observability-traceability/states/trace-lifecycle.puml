@@ -1,0 +1,35 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: observability-traceability:trace-lifecycle
+title Observability - Trace Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: started
+' bt-element-id: propagating
+' bt-element-id: complete
+' bt-element-id: partial
+' bt-element-id: redacted
+
+state "Started\nResponsibility: Establish trace identity\nContract: Trace id present\n[[../../../../backend/app/api/v1/game/player_turn_trace_start.py source]]" as started
+state "Propagating\nResponsibility: Carry identity across service boundaries\nContract: Parent context retained\n[[../../../../world-engine/app/middleware/trace_middleware.py source]]" as propagating
+state "Complete\nResponsibility: Close all required spans\nContract: Terminal outcome recorded\n[[../../../../world-engine/app/observability/trace.py source]]" as complete
+state "Partial\nResponsibility: Retain useful evidence after telemetry failure\nContract: Domain flow not failed solely by telemetry\n[[../../../../world-engine/app/observability/langfuse_adapter.py source]]" as partial
+state "Redacted\nResponsibility: Publish safe operator evidence\nContract: Secrets and sensitive text removed\n[[../../../../world-engine/app/web/static/ui_traces.js source]]" as redacted
+
+complete --> redacted : "operator view generated\ncontract: safe evidence projection"
+[*] --> started : "request accepted\ncontract: trace id"
+partial --> redacted : "partial view generated\ncontract: missing spans disclosed"
+propagating --> complete : "all terminal spans close\ncontract: turn outcome"
+propagating --> partial : "telemetry degrades\ncontract: domain flow preserved\n[[../../../../world-engine/app/observability/langfuse_adapter.py source]]"
+started --> propagating : "boundary crossed\ncontract: parent context\n[[../../../../world-engine/app/middleware/trace_middleware.py source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Complete and partial telemetry both disclose their evidence quality
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

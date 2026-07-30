@@ -1,0 +1,38 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: frontend:browser-components
+title Frontend - Browser and Route Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: routes
+' bt-element-id: play_routes
+' bt-element-id: api_client
+' bt-element-id: bootstrap
+' bt-element-id: stream
+' bt-element-id: renderer
+' bt-element-id: controls
+
+component "Page Routes\nResponsibility: Serve account, community and shell pages\nContract: Server-rendered Flask routes\n[[../../../../frontend/app/routes.py source]]" as routes
+component "Play Routes\nResponsibility: Launch session and proxy play requests\nContract: No local narrative decisions\n[[../../../../frontend/app/routes_play.py source]]" as play_routes
+component "Backend API Client\nResponsibility: Apply authentication and transport policy\nContract: Bounded HTTP client\n[[../../../../frontend/app/api_client.py source]]" as api_client
+component "Runtime Bootstrap\nResponsibility: Hydrate browser shell from launch payload\nContract: Validated bootstrap JSON\n[[../../../../frontend/static/play_runtime_bootstrap.js source]]" as bootstrap
+component "Narrative Stream\nResponsibility: Receive ordered live events\nContract: Reconnect-aware WebSocket stream\n[[../../../../frontend/static/play_narrative_stream.js source]]" as stream
+component "Block Renderer\nResponsibility: Render typed narrative blocks safely\nContract: Escaped block display model\n[[../../../../frontend/static/play_block_renderer.js source]]" as renderer
+component "Play Controls\nResponsibility: Capture player intent and accessibility controls\nContract: Semantic input command\n[[../../../../frontend/static/play_controls.js source]]" as controls
+
+routes ..> api_client : "loads platform data\ncontract: HTTP response mapping\n[[../../../../frontend/app/routes.py source]]"
+controls ..> play_routes : "submits semantic input\ncontract: one command per turn\n[[../../../../frontend/static/play_controls.js source]]"
+play_routes ..> api_client : "launches session\ncontract: validated launch payload\n[[../../../../frontend/app/routes_play.py source]]"
+bootstrap ..> stream : "opens event channel\ncontract: session ticket and cursor\n[[../../../../frontend/static/play_runtime_bootstrap.js source]]"
+stream ..> renderer : "delivers typed block\ncontract: monotonic event order\n[[../../../../frontend/static/play_narrative_stream.js source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Canonical route, bootstrap, stream, rendering and input seams
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

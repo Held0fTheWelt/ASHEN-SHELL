@@ -1,0 +1,305 @@
+{
+  "schema_version": "bt.architecture_drift_claim_catalog.v1",
+  "statuses": [
+    "confirmed_current",
+    "superseded",
+    "conflicting",
+    "open_target"
+  ],
+  "claims": [
+    {
+      "id": "DRIFT-001",
+      "concern": "Competing live-runtime structures",
+      "historical_claims": [
+        "The canonical player path and the explicit runtime/beat path were not the same path.",
+        "Runtime tests expected story truth in a runtime profile."
+      ],
+      "historical_sources": [
+        "world_of_shadows_narrative_system_audit_2026-04-22.md",
+        "WOS_COMBINED_FOUNDATION_REPAIR_AND_REPLACEMENT_BUNDLE_TASK.md"
+      ],
+      "current_evidence": [
+        "world-engine/app/story_runtime/manager/runtime_manager.py",
+        "world-engine/app/runtime/manager.py",
+        "world-engine/app/story_runtime/manager/_legacy_methods.py"
+      ],
+      "status": "conflicting",
+      "diagnosis": "Two runtime package generations and an explicit legacy-method seam remain in executable source. Their allowed responsibilities are not yet enforced as one dependency direction.",
+      "target": "Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth.",
+      "acceptance_evidence": [
+        "A dependency gate rejects app/story_runtime imports of overlapping app/runtime behavior.",
+        "Every player turn enters one manager and one authoritative commit path.",
+        "Compatibility calls are inventoried, named and covered by retirement tests."
+      ]
+    },
+    {
+      "id": "DRIFT-002",
+      "concern": "Proposal finalization is named and shaped like a second commit",
+      "historical_claims": [
+        "Graph commit and authoritative session commit were separate seams.",
+        "Validation knew more than the authoritative commit."
+      ],
+      "historical_sources": [
+        "world_of_shadows_narrative_system_audit_2026-04-22.md"
+      ],
+      "current_evidence": [
+        "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py",
+        "world-engine/app/story_runtime/canonical_turn_lifecycle.py"
+      ],
+      "status": "conflicting",
+      "diagnosis": "AI validation/finalization still uses commit terminology while world-engine is the declared commit authority. Even when behavior is proposal-only, naming and payload semantics invite authority drift.",
+      "target": "Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine.",
+      "acceptance_evidence": [
+        "Static architecture checks reject AI writes to live session stores.",
+        "The cross-system sequence contains one authoritative committed transition.",
+        "Contract tests prove rejected proposals leave the world revision unchanged."
+      ]
+    },
+    {
+      "id": "DRIFT-003",
+      "concern": "Dramatic planner state survival through authoritative commit",
+      "historical_claims": [
+        "Planner state was computed after prompt assembly.",
+        "Authoritative session commit ignored most dramatic planner state.",
+        "Validation-to-commit asymmetry suppressed richer behavior."
+      ],
+      "historical_sources": [
+        "world_of_shadows_narrative_system_audit_2026-04-22.md"
+      ],
+      "current_evidence": [
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
+        "world-engine/app/story_runtime/manager/committed_dramatic_context_parts.py",
+        "tests/test_pr_b_live_effect_propagation.py"
+      ],
+      "status": "open_target",
+      "diagnosis": "Current source explicitly projects planner truth, beat progression and responder context after commit, which is evidence of repair. Source presence alone does not prove every selected dramatic dimension survives the production turn.",
+      "target": "Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested.",
+      "acceptance_evidence": [
+        "A production-path test seeds distinctive planner values and observes them after commit.",
+        "A correspondence table maps every envelope field to validator, commit and renderer handling.",
+        "SARIF reports any modeled field that loses all downstream consumers."
+      ]
+    },
+    {
+      "id": "DRIFT-004",
+      "concern": "Authored content truth has several executable projections",
+      "historical_claims": [
+        "Canonical YAML resolution and the active path were only partially aligned.",
+        "Tests expected story truth in god_of_carnage_solo runtime code."
+      ],
+      "historical_sources": [
+        "world_of_shadows_narrative_system_audit_2026-04-22.md",
+        "WOS_LEGACY_DEBT_AND_TEST_TRUTH_AUDIT_PROMPT.md"
+      ],
+      "current_evidence": [
+        "content/modules/god_of_carnage/module.yaml",
+        "backend/app/content/module_loader.py",
+        "world-engine/app/content/backend_loader.py",
+        "ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py"
+      ],
+      "status": "conflicting",
+      "diagnosis": "The intended YAML authority is surrounded by backend, world-engine and AI-specific projections. The projection contracts are real, but duplicated vocabularies and God-of-Carnage-specific Python remain a high-risk second-truth surface.",
+      "target": "Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters.",
+      "acceptance_evidence": [
+        "A content provenance test traces each runtime fact to module path and version.",
+        "No product-specific Python constant can override a supplied authored fact.",
+        "Compilation is deterministic and identical across repeated exports."
+      ]
+    },
+    {
+      "id": "DRIFT-005",
+      "concern": "Beat and canonical-path authority in the live turn",
+      "historical_claims": [
+        "The beat system existed, but the canonical player path did not carry explicit beat state.",
+        "Beat influence partly survived while commitment and rendering lost parts."
+      ],
+      "historical_sources": [
+        "world_of_shadows_narrative_system_audit_2026-04-22.md"
+      ],
+      "current_evidence": [
+        "content/modules/god_of_carnage/canonical_path/_schema.yaml",
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
+        "frontend/static/play_block_renderer.js"
+      ],
+      "status": "open_target",
+      "diagnosis": "Current code reads a prior beat, projects beat progression into committed context and renders narration-beat metadata. The exact authoritative beat state and how canonical constraints avoid scripting the player remain architectural decisions requiring behavioral proof.",
+      "target": "Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections.",
+      "acceptance_evidence": [
+        "A state-machine test proves legal, rejected and deferred beat transitions.",
+        "Free player actions remain valid when they do not match a canonical example.",
+        "The rendered beat marker matches the committed revision and speaker."
+      ]
+    },
+    {
+      "id": "DRIFT-006",
+      "concern": "Manager decomposition contains generated-looking and legacy shards",
+      "historical_claims": [
+        "Whole-system repair waves repeatedly split and reconciled the runtime manager."
+      ],
+      "historical_sources": [
+        "world_of_shadows_repaired_package_2026-04-21",
+        "WOS_FOUNDATION_STABILIZATION_REPAIR_PROMPT.md"
+      ],
+      "current_evidence": [
+        "world-engine/app/story_runtime/manager/_legacy_sources/manifest.py",
+        "world-engine/app/story_runtime/manager/_legacy_loader.py",
+        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/app/story_runtime/manager/runtime_manager.py"
+      ],
+      "status": "conflicting",
+      "diagnosis": "The manager is decomposed, but executable legacy loaders and numbered source shards obscure ownership and make static comprehension difficult. This is a characteristic Vibe-Coding accretion seam.",
+      "target": "Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion.",
+      "acceptance_evidence": [
+        "No runtime import executes _legacy_loader or numbered _legacy_sources.",
+        "The manager dependency graph is acyclic and documented.",
+        "Primary and degraded turn traces remain behaviorally equivalent."
+      ]
+    },
+    {
+      "id": "DRIFT-007",
+      "concern": "Player surface can flatten upstream runtime intelligence",
+      "historical_claims": [
+        "The player shell underrepresented runtime intelligence.",
+        "Story-window entries lost responder identity and dramatic context."
+      ],
+      "historical_sources": [
+        "world_of_shadows_narrative_system_audit_2026-04-22.md"
+      ],
+      "current_evidence": [
+        "world-engine/app/story_runtime/manager/story_window_entries.py",
+        "world-engine/app/story_runtime/manager/player_visible_canonical_record.py",
+        "frontend/static/play_block_renderer.js",
+        "frontend/static/play_narrative_stream.js"
+      ],
+      "status": "open_target",
+      "diagnosis": "Current renderer supports speaker labels and narration beats, and world-engine has explicit player-visible records. The modeled contract still needs proof that responder, action, narration and revision survive every delivery mode.",
+      "target": "Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields.",
+      "acceptance_evidence": [
+        "Contract tests cover every block variant and unknown-version behavior.",
+        "Reconnect tests prove no duplicate or reordered visible blocks.",
+        "Two role-sensitive E2E scenarios preserve speaker and dramatic metadata."
+      ]
+    },
+    {
+      "id": "DRIFT-008",
+      "concern": "Observability contracts are fragmented across services",
+      "historical_claims": [
+        "Operator diagnostics were more coherent than the actual player runtime path.",
+        "Langfuse evidence needed end-to-end traceable decisions."
+      ],
+      "historical_sources": [
+        "world_of_shadows_narrative_system_audit_2026-04-22.md",
+        "WOS_MVP04_OBSERVABILITY_DIAGNOSTICS_LANGFUSE_IMPLEMENTATION_PROMPT.md"
+      ],
+      "current_evidence": [
+        "backend/app/api/v1/game/player_turn_trace_start.py",
+        "world-engine/app/observability/trace.py",
+        "ai_stack/langfuse/langfuse_evidence.py",
+        "tools/mcp_server/langfuse_tracing.py"
+      ],
+      "status": "open_target",
+      "diagnosis": "Four trace implementations are legitimate local adapters but lack one modeled cross-system envelope and completeness rule. A rich operator screen can therefore hide a missing production span.",
+      "target": "Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree.",
+      "acceptance_evidence": [
+        "One integration test asserts parent/child continuity across backend, world and AI.",
+        "Telemetry failure leaves domain behavior intact and marks the trace partial.",
+        "Credential and sensitive-text redaction is tested on every exporter."
+      ]
+    },
+    {
+      "id": "DRIFT-009",
+      "concern": "Test presence and archived green runs can overstate proof",
+      "historical_claims": [
+        "Undiscovered tests, weak presence assertions and mock-only integration existed.",
+        "Runner and CI truth needed a single explicit matrix."
+      ],
+      "historical_sources": [
+        "WOS_LEGACY_DEBT_AND_TEST_TRUTH_AUDIT_PROMPT.md",
+        "WOS_GLOBAL_TEST_INTEGRITY_AUDIT_PROMPT.md"
+      ],
+      "current_evidence": [
+        "tests/run_tests.py",
+        "scripts/test_changed.py",
+        "tests/reports/RUNNER_CI_TRUTH_MATRIX.md",
+        ".github/workflows/quality-gate.yml"
+      ],
+      "status": "open_target",
+      "diagnosis": "A central runner, changed-test selector and CI matrix now exist. Completeness still depends on proving that every declared test root is discoverable and that integration labels represent disposable real boundaries.",
+      "target": "Generate the CI/test matrix from one suite catalog. Gate orphan test files, hidden skips, mock-only integration labels and profile/CI divergence.",
+      "acceptance_evidence": [
+        "Every test file maps to exactly one declared suite or documented exception.",
+        "The suite catalog deterministically generates local and CI commands.",
+        "Disposable integration tests assert before/after external state equality."
+      ]
+    },
+    {
+      "id": "DRIFT-010",
+      "concern": "Historical snapshots contain paths that no longer map to current architecture",
+      "historical_claims": [
+        "April repair packages represented their own canonical MVP directory."
+      ],
+      "historical_sources": [
+        "world_of_shadows_repaired_package_2026-04-21"
+      ],
+      "current_evidence": [
+        "docs/architecture/evidence/architecture-drift-baseline.json"
+      ],
+      "status": "superseded",
+      "diagnosis": "The read-only April snapshot and current repository have large historical-only and current-only path sets. Snapshot structure is useful chronology but cannot be imported as present topology.",
+      "target": "Retain hashes, claim headings and path-diff evidence. Port only a claim or behavior after current-source reconciliation; never copy a full old package over HEAD.",
+      "acceptance_evidence": [
+        "Every harvested claim records provenance and one of four statuses.",
+        "No build or test path depends on E:\\New folder.",
+        "The evidence snapshot can be regenerated without modifying the archive."
+      ]
+    },
+    {
+      "id": "DRIFT-011",
+      "concern": "MVP completion labels are not architecture authority",
+      "historical_claims": [
+        "Many wave packages and repair bundles used final, complete or canonical in their filenames."
+      ],
+      "historical_sources": [
+        "E:\\New folder top-level artifact inventory"
+      ],
+      "current_evidence": [
+        "docs/architecture/evidence/architecture-drift-baseline.json",
+        "docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md"
+      ],
+      "status": "superseded",
+      "diagnosis": "Artifact names demonstrate iterative intent and local closure, not current production-path completion. Later audits explicitly contradicted some earlier closure claims.",
+      "target": "Use capability lifecycle states proposed, implemented, integrated, proven and regressed. Only production-path evidence advances a capability to proven.",
+      "acceptance_evidence": [
+        "Completion reports link source, behavioral test, runtime trace and user-visible outcome.",
+        "A later failing proof moves the capability to regressed.",
+        "Historical filenames never set current status automatically."
+      ]
+    },
+    {
+      "id": "DRIFT-012",
+      "concern": "Architecture coverage metrics can hide shallow semantics",
+      "historical_claims": [
+        "Architecture exports reported complete file and view coverage."
+      ],
+      "historical_sources": [
+        "Previous Better Tomorrow AKDB modernization pass"
+      ],
+      "current_evidence": [
+        "tools/architecture_assurance/model_catalog.json",
+        "tools/architecture_assurance/semantic_models.py",
+        "docs/architecture/project/architecture-assurance/architecture.md"
+      ],
+      "status": "confirmed_current",
+      "diagnosis": "The former fixed four-view generator has been replaced by individualized semantic views whose elements expose responsibility, contract and source anchor and whose edges state interaction contracts.",
+      "target": "Keep model selection concern-driven and source-bound. Coverage remains supporting evidence; semantic analyzability, drill-down and correspondence determine acceptance.",
+      "acceptance_evidence": [
+        "All catalog source anchors resolve.",
+        "Every view declares its concern and semantic relationships.",
+        "A gate rejects generic evidence-star diagrams and fixed identical view profiles."
+      ]
+    }
+  ]
+}

@@ -18088,24 +18088,108 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "docs/architecture/project/mvp-live-runtime-completion/architecture.md",
+        "tests/e2e/test_final_goc_annette_alain_e2e.py"
+      ],
+      "concern": "Player-visible experience as the completion boundary",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 2,
+      "id": "experience-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Project/mvp-live-runtime-completion/depth/c4-context.puml"
+      "path": "UML/Project/mvp-live-runtime-completion/context/experience-context.puml",
+      "relationship_count": 1,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
-      "level": "container",
-      "path": "UML/Project/mvp-live-runtime-completion/depth/c4-container.puml"
-    },
-    {
-      "id": "component",
+      "anchors": [
+        "ai_stack/story_runtime/npc_agency/npc_agency_planner.py",
+        "ai_stack/story_runtime/player_action_resolution.py",
+        "frontend/static/play_block_renderer.js",
+        "frontend/static/play_session_start.js",
+        "tests/e2e/test_final_goc_annette_alain_e2e.py",
+        "tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md",
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py"
+      ],
+      "concern": "Launch, semantics, agency, commit, rendering and evidence must all connect",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 6,
+      "id": "capability-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Project/mvp-live-runtime-completion/depth/c4-component.puml"
+      "path": "UML/Project/mvp-live-runtime-completion/components/capability-components.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
+      "anchors": [
+        "ai_stack/story_runtime/npc_agency/npc_agency_planner.py",
+        "ai_stack/story_runtime/player_action_resolution.py",
+        "frontend/static/play_block_renderer.js",
+        "frontend/static/play_session_start.js",
+        "tests/e2e/test_final_goc_annette_alain_e2e.py",
+        "tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md",
+        "world-engine/app/api/story_ws.py",
+        "world-engine/app/story_runtime/governed_runtime_adapters.py",
+        "world-engine/app/story_runtime/narrative_commit_resolution.py"
+      ],
+      "concern": "One real turn preserves semantics and evidence to the player surface",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 7,
+      "id": "end-to-end-turn",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Project/mvp-live-runtime-completion/sequence/end-to-end-turn.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md",
+        "docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md",
+        "tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md"
+      ],
+      "concern": "Claims require multidimensional proof and explicit residual gaps",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 3,
+      "id": "capability-evidence-model",
+      "kind": "class",
       "level": "class",
-      "path": "UML/Project/mvp-live-runtime-completion/depth/class-model.puml"
+      "path": "UML/Project/mvp-live-runtime-completion/classes/capability-evidence-model.puml",
+      "relationship_count": 2,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "docs/architecture/project/mvp-live-runtime-completion/architecture.md",
+        "docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md",
+        "docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md",
+        "tests/e2e/test_final_goc_annette_alain_e2e.py",
+        "tests/integration/test_story_runtime_experience.py"
+      ],
+      "concern": "Implementation is not completion until integrated and proven",
+      "decisions": [
+        "D2"
+      ],
+      "element_count": 5,
+      "id": "capability-lifecycle",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Project/mvp-live-runtime-completion/states/capability-lifecycle.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/project/mvp-live-runtime-completion/architecture.md",

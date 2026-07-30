@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: security-governance:security-data-model
+title Security Governance - Data Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: grant
+' bt-element-id: secret
+' bt-element-id: event
+
+class "Authorization Grant\nResponsibility: Bind actor, scope and allowed operation\nContract: Least privilege and expiry\n[[../../../../backend/app/services/governance/security_governance_service.py source]]" as grant {
+  subject
+  roles
+  scope
+  expires
+}
+class "Provider Secret\nResponsibility: Represent encrypted provider credential material\nContract: Ciphertext at rest\n[[../../../../backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py source]]" as secret {
+  provider_id
+  ciphertext
+  key_version
+  rotated_at
+}
+class "Security Audit Event\nResponsibility: Record safe mutation evidence\nContract: No secret payload\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]" as event {
+  actor
+  action
+  scope
+  outcome
+}
+
+grant ..> secret : "permits scoped resolution\ncontract: least privilege\n[[../../../../backend/app/services/governance/security_governance_service.py source]]"
+secret ..> event : "changes emit\ncontract: no plaintext\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Authorization grant, encrypted secret and redacted audit event
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: story-runtime-core:authority-context
+title Story Runtime Core - Authority Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: world
+' bt-element-id: core
+' bt-element-id: ai
+
+rectangle "World Engine\nResponsibility: Own and commit live story state\nContract: Calls pure shared contracts\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]" as world
+rectangle "Story Runtime Core\nResponsibility: Provide portable domain contracts and deterministic algorithms\nContract: Python package without service authority\n[[../../../../story_runtime_core/__init__.py source]]" as core
+rectangle "AI Stack\nResponsibility: Produce proposals using shared semantic contracts\nContract: Proposal-only integration\n[[../../../../ai_stack/story_runtime/player_action_resolution.py source]]" as ai
+
+ai ..> core : "uses semantic models\ncontract: proposal-only values\n[[../../../../ai_stack/story_runtime/player_action_resolution.py source]]"
+world ..> core : "uses contracts\ncontract: host retains authority\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
+
+legend bottom
+Viewpoint: context
+Concern: Portable contracts versus live and proposal authorities
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

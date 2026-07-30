@@ -26,6 +26,22 @@ Redaction policy: [observability SAD D7](#d7-observability-redaction-and-trace-c
 
 Spans world-engine middleware, backend routes, ai_stack adapters, frontend readiness (partial).
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Cross-system trace identity, spans, evidence projections, redaction and degradation semantics for a story turn.
+
+**Authority rule:** Each subsystem emits its own facts under one propagated trace identity; observability records execution but does not become business or narrative truth.
+
+**Git/archaeology scope:** `backend/app/observability`, `world-engine/app/observability`, `ai_stack/langfuse`, `tools/mcp_server/langfuse_tracing.py`, `tests/test_langfuse_story_turn_trace.py`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Operator evidence without displacement of domain truth | [Observability - Context](../../../../UML/Project/observability-traceability/context/observability-context.md) | Each subsystem emits its own facts under one propagated trace identity; observability records execution but does not become business or narrative truth. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 - Trace turn execute with adapter kind and visible output signals (ADR-0033).
@@ -39,13 +55,62 @@ Spans world-engine middleware, backend routes, ai_stack adapters, frontend readi
 | Langfuse adapters | `ai_stack/langfuse/` |
 | Evaluator catalog | `ai_stack/quality_lab/` |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Operator (`operator`) | `actor` | Diagnose a player turn across services | Authorized redacted view | [`administration-tool/templates/manage/diagnosis.html`](../../../../administration-tool/templates/manage/diagnosis.html) |
+| DecisionEvidence (`decision`) | `class` | Explain validation, routing or commit outcome | Redacted inputs and explicit result | [`world-engine/app/observability/audit_log.py`](../../../../world-engine/app/observability/audit_log.py) |
+| SubsystemSpan (`span`) | `class` | Record bounded operation and ownership | Parent relation and timing | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
+| TurnTrace (`trace`) | `class` | Identify one end-to-end player turn | Globally propagated trace id | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
+| AI Langfuse Evidence (`ai`) | `component` | Record retrieval, planning, generation and validation spans | Proposal trace under parent turn | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
+| Backend Trace Start (`backend`) | `component` | Create or propagate player request identity | Stable trace and request ids | [`backend/app/api/v1/game/player_turn_trace_start.py`](../../../../backend/app/api/v1/game/player_turn_trace_start.py) |
+| MCP Trace Adapter (`mcp`) | `component` | Record tool execution with redaction | No secret payloads | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
+| Operator Projection (`projection`) | `component` | Present cross-service trace tree and diagnostics | Read-only evidence view | [`world-engine/app/web/static/ui_traces.js`](../../../../world-engine/app/web/static/ui_traces.js) |
+| World Runtime Trace (`world`) | `component` | Record authoritative lifecycle spans | Session and revision correlation | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
+| Complete (`complete`) | `state` | Close all required spans | Terminal outcome recorded | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
+| Partial (`partial`) | `state` | Retain useful evidence after telemetry failure | Domain flow not failed solely by telemetry | [`world-engine/app/observability/langfuse_adapter.py`](../../../../world-engine/app/observability/langfuse_adapter.py) |
+| Propagating (`propagating`) | `state` | Carry identity across service boundaries | Parent context retained | [`world-engine/app/middleware/trace_middleware.py`](../../../../world-engine/app/middleware/trace_middleware.py) |
+| Redacted (`redacted`) | `state` | Publish safe operator evidence | Secrets and sensitive text removed | [`world-engine/app/web/static/ui_traces.js`](../../../../world-engine/app/web/static/ui_traces.js) |
+| Started (`started`) | `state` | Establish trace identity | Trace id present | [`backend/app/api/v1/game/player_turn_trace_start.py`](../../../../backend/app/api/v1/game/player_turn_trace_start.py) |
+| Turn Observability (`trace_system`) | `system` | Correlate execution evidence without owning domain truth | Trace id and redaction policy | [`docs/architecture/project/observability-traceability/architecture.md`](architecture.md) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 `world-engine.turn.execute` span → scores at observation and trace level.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Trace identity and evidence cross the canonical turn boundaries | `sequence` | [Observability - Turn Trace](../../../../UML/Project/observability-traceability/sequence/turn-trace.md) | 4 |
+| Complete and partial telemetry both disclose their evidence quality | `state` | [Observability - Trace Lifecycle](../../../../UML/Project/observability-traceability/states/trace-lifecycle.md) | 6 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
+
 ## 7. Deployment View
 
 Langfuse optional via env; deterministic export paths for CI.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `backend/app/observability`
+- `world-engine/app/observability`
+- `ai_stack/langfuse`
+- `tools/mcp_server/langfuse_tracing.py`
+- `tests/test_langfuse_story_turn_trace.py`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
 
 ## 8. Crosscutting Concepts
 
@@ -114,6 +179,20 @@ Operators need to answer:
 ---
 
 Player input observability fields on spans (ADR-0033 §13.6).
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| AI Langfuse Evidence | World Runtime Trace | returns evidence references | proposal span linkage | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
+| Backend Trace Start | World Runtime Trace | propagates trace context | trace and request ids | [`backend/app/api/v1/game/trace_identity_and_auth_helpers.py`](../../../../backend/app/api/v1/game/trace_identity_and_auth_helpers.py) |
+| MCP Trace Adapter | Operator Projection | adds tool evidence | redacted MCP span | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
+| SubsystemSpan | DecisionEvidence | records | explainable outcome | [`world-engine/app/observability/audit_log.py`](../../../../world-engine/app/observability/audit_log.py) |
+| TurnTrace | SubsystemSpan | contains | parented operation tree | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
+| World Runtime Trace | AI Langfuse Evidence | parents proposal trace | turn trace context | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| World Runtime Trace | Operator Projection | publishes lifecycle evidence | redacted trace DTO | [`world-engine/app/web/static/ui_traces.js`](../../../../world-engine/app/web/static/ui_traces.js) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -350,6 +429,21 @@ With LANGFUSE_CAPTURE_RETRIEVAL=true (default false):
 ---
 
 **Evidence.** `docs/architecture/project/observability-traceability/architecture.md#d7-observability-redaction-and-trace-correlation-policy` (archived — see `docs/archive/adr-retired-2026/`)
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1` | Operator evidence without displacement of domain truth | `context` | [Observability - Context](../../../../UML/Project/observability-traceability/context/observability-context.md) |
+| `D1`, `D2` | Backend, world, AI, MCP and operator projection span ownership | `component` | [Observability - Components](../../../../UML/Project/observability-traceability/components/trace-components.md) |
+| `D1` | Trace identity and evidence cross the canonical turn boundaries | `sequence` | [Observability - Turn Trace](../../../../UML/Project/observability-traceability/sequence/turn-trace.md) |
+| `D2` | Turn trace, owned spans and explainable decisions | `class` | [Observability - Data Model](../../../../UML/Project/observability-traceability/classes/trace-data-model.md) |
+| `D3` | Complete and partial telemetry both disclose their evidence quality | `state` | [Observability - Trace Lifecycle](../../../../UML/Project/observability-traceability/states/trace-lifecycle.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py`, `world-engine/tests/test_trace_middleware.py`.
@@ -357,6 +451,24 @@ With LANGFUSE_CAPTURE_RETRIEVAL=true (default false):
 ## 11. Risks & Technical Debt
 
 Not all diagnostic fields on every adapter path.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Tracing exists in backend, world-engine, AI and MCP with different helpers and envelopes. Models expose propagation gaps, span ownership and places where diagnostics overstate runtime integration.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 15 | 58 | 82 | 0 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

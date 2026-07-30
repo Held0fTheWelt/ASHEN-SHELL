@@ -1,0 +1,38 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: mcp-server:governed-delegation
+title MCP Server - Governed Delegation
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: client
+' bt-element-id: server
+' bt-element-id: registry
+' bt-element-id: handlers
+' bt-element-id: backend_client
+' bt-element-id: backend
+' bt-element-id: observability
+
+actor "MCP Client\nResponsibility: Discover and invoke Better Tomorrow tools\nContract: JSON-RPC over stdio\n[[../../../../tools/mcp_server/README.md source]]" as client
+participant "MCP Server\nResponsibility: Validate protocol and dispatch registered capabilities\nContract: MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]" as server
+participant "Capability Registry\nResponsibility: Publish stable tool, resource and prompt metadata\nContract: Unique names and schemas\n[[../../../../tools/mcp_server/registry.py source]]" as registry
+participant "Handler Families\nResponsibility: Implement bounded capability groups\nContract: Validated arguments and structured result\n[[../../../../tools/mcp_server/handlers/__init__.py source]]" as handlers
+participant "Backend Client\nResponsibility: Delegate governed session and platform operations\nContract: Authenticated HTTP with normalized errors\n[[../../../../tools/mcp_server/backend_client.py source]]" as backend_client
+participant "Backend\nResponsibility: Authorize and execute platform mutations\nContract: Authenticated backend API\n[[../../../../backend/app/api/v1/__init__.py source]]" as backend
+participant "Langfuse Tracing\nResponsibility: Correlate MCP calls without leaking credentials\nContract: Redacted trace events\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]" as observability
+
+server -> backend : "delegates mutation\ncontract: backend authority and audit\n[[../../../../tools/mcp_server/backend_client.py source]]"
+client -> server : "invokes capability\ncontract: valid MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]"
+registry -> handlers : "binds handler\ncontract: schema-compatible callable\n[[../../../../tools/mcp_server/tools_registry.py source]]"
+handlers -> backend_client : "delegates remote operation\ncontract: normalized backend request\n[[../../../../tools/mcp_server/backend_client.py source]]"
+handlers -> observability : "emits call evidence\ncontract: redacted trace\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Mutation requests remain under backend authority
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

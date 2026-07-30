@@ -1,0 +1,38 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: administration-tool:governed-mutation
+title Administration Tool — Governed Mutation
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: operator
+' bt-element-id: admin
+' bt-element-id: manage
+' bt-element-id: security
+' bt-element-id: proxy
+' bt-element-id: policy
+' bt-element-id: backend
+
+actor "Operator\nResponsibility: Inspect health and request governed changes\nContract: Authenticated browser session with explicit confirmation\n[[../../../../docs/architecture/components/administration-tool/architecture.md source]]" as operator
+participant "Administration Tool\nResponsibility: Render operator workbenches and translate intent into backend requests\nContract: Flask routes; no direct domain persistence\n[[../../../../administration-tool/app.py source]]\n[[../components/c4-component.puml drill-down]]" as admin
+participant "Manage Route Catalog\nResponsibility: Expose named operator workbench surfaces\nContract: Stable /manage route vocabulary\n[[../../../../administration-tool/route_registration_manage_sections.py source]]" as manage
+participant "Security Routes\nResponsibility: Apply session and operator security checks\nContract: Authenticated, CSRF-aware browser mutation boundary\n[[../../../../administration-tool/route_registration_security.py source]]" as security
+participant "Backend Proxy\nResponsibility: Forward allow-listed reads and mutations to backend\nContract: Method, path, timeout and response policy\n[[../../../../administration-tool/route_registration_proxy.py source]]" as proxy
+participant "Proxy Policy\nResponsibility: Classify mutation endpoints and confirmation requirements\nContract: Default-deny unsafe or undeclared proxy operations\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]" as policy
+participant "Backend Admin API\nResponsibility: Authorize and execute governed mutations\nContract: HTTP /api/v1/admin and operator endpoints\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]" as backend
+
+manage -> proxy : "submits requested operation\ncontract: normalized proxy request\n[[../../../../administration-tool/route_registration_proxy.py source]]"
+manage -> security : "requires operator session\ncontract: authorization before rendering or mutation\n[[../../../../administration-tool/route_registration_security.py source]]"
+policy -> backend : "forwards approved operation\ncontract: service key and operator evidence\n[[../../../../administration-tool/route_registration_proxy.py source]]"
+proxy -> policy : "classifies request\ncontract: default-deny mutation policy\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]"
+operator -> admin : "opens workbench\ncontract: authenticated browser navigation\n[[../../../../administration-tool/route_registration_manage_sections.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: End-to-end authorization and delegation of an operator mutation
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -1,0 +1,67 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: ai-stack:runtime-data
+title AI Stack — Runtime Proposal Data Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: director
+' bt-element-id: narrator
+' bt-element-id: validator
+' bt-element-id: ledger
+' bt-element-id: context_pack
+' bt-element-id: plan
+' bt-element-id: proposal
+' bt-element-id: aspect
+
+class "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director {
+
+}
+class "Narrator\nResponsibility: Realize visible narrative blocks\nContract: Proposal-only block stream\n[[../../../../ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py source]]" as narrator {
+
+}
+class "Proposal Validator\nResponsibility: Evaluate seams, capabilities and retry feedback\nContract: Accepted proposal or actionable rejection\n[[../../../../ai_stack/langgraph/validation/builder.py source]]" as validator {
+
+}
+class "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and decision metadata\nContract: Typed, non-authoritative evidence records\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]" as ledger {
+
+}
+class "RetrievalContextBundle\nResponsibility: Carry bounded retrieval results\nContract: Provenance-preserving ranked context\n[[../../../../ai_stack/rag/retrieval_context_bundles.py source]]" as context_pack {
+  query
+  sections[]
+  citations[]
+  budget
+}
+class "SemanticScenePlan\nResponsibility: Carry intended scene target, beats and directives\nContract: Immutable proposal structure\n[[../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/__init__.py source]]" as plan {
+  scene_target
+  dramatic_beats[]
+  actor_directives[]
+  capability_plan
+}
+class "Runtime Proposal\nResponsibility: Carry visible blocks and state-delta proposal\nContract: Must pass world-engine validation before commit\n[[../../../../ai_stack/langgraph/langgraph_runtime_package_output.py source]]" as proposal {
+  visible_blocks[]
+  state_delta
+  validation
+  trace
+}
+class "RuntimeAspectRecord\nResponsibility: Carry one grounded runtime aspect\nContract: Typed source, status and evidence\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]" as aspect {
+  aspect_id
+  status
+  source
+  evidence
+}
+
+director ..> plan : "creates\ncontract: bounded semantic scene plan\n[[../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py source]]"
+ledger ..> aspect : "aggregates\ncontract: one record per supported aspect\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]"
+plan ..> narrator : "guides\ncontract: realization constraints\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"
+validator ..> proposal : "annotates\ncontract: validation result and retry feedback\n[[../../../../ai_stack/langgraph/validation/result.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Data contracts carried between retrieval, planning, realization and validation
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

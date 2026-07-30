@@ -1,0 +1,27 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: security-governance:security-context
+title Security Governance - Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: player
+' bt-element-id: operator
+' bt-element-id: security
+
+actor "Player\nResponsibility: Authenticate and access owned sessions\nContract: Least-privilege user session\n[[../../../../frontend/app/auth.py source]]" as player
+actor "Operator\nResponsibility: Manage providers, policies and security settings\nContract: Privileged authenticated action\n[[../../../../administration-tool/app.py source]]" as operator
+rectangle "Security Governance\nResponsibility: Authorize, protect and audit sensitive operations\nContract: Backend-owned policy boundary\n[[../../../../backend/app/services/governance/security_governance_service.py source]]" as security
+
+operator ..> security : "requests privileged mutation\ncontract: role and CSRF checks"
+player ..> security : "authenticates\ncontract: user session"
+
+legend bottom
+Viewpoint: context
+Concern: Player and operator trust relationships with backend security authority
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

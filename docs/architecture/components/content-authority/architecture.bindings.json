@@ -4193,24 +4193,113 @@
   },
   "required_views": [
     {
-      "id": "context",
+      "anchors": [
+        "ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py",
+        "backend/app/content/module_loader.py",
+        "backend/app/content/module_loader_documents.py",
+        "backend/app/content/module_service.py",
+        "backend/app/content/module_validator.py",
+        "content/modules/_template/README.md",
+        "content/modules/god_of_carnage/module.yaml",
+        "world-engine/app/content/backend_loader.py"
+      ],
+      "concern": "Authored truth and its validating and consuming systems",
+      "decisions": [
+        "D1",
+        "D2"
+      ],
+      "element_count": 6,
+      "id": "authority-context",
+      "kind": "context",
       "level": "context",
-      "path": "UML/Components/content-authority/depth/c4-context.puml"
+      "path": "UML/Components/content-authority/context/content-authority-context.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "container",
-      "level": "container",
-      "path": "UML/Components/content-authority/depth/c4-container.puml"
-    },
-    {
-      "id": "component",
+      "anchors": [
+        "ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py",
+        "backend/app/content/module_loader.py",
+        "backend/app/content/module_loader_documents.py",
+        "backend/app/content/module_service.py",
+        "backend/app/content/module_validator.py",
+        "content/modules/god_of_carnage/module.yaml",
+        "world-engine/app/content/backend_loader.py"
+      ],
+      "concern": "Validation and projection seams from YAML to runtime",
+      "decisions": [
+        "D1",
+        "D3"
+      ],
+      "element_count": 5,
+      "id": "compilation-components",
+      "kind": "component",
       "level": "component",
-      "path": "UML/Components/content-authority/depth/c4-component.puml"
+      "path": "UML/Components/content-authority/components/content-compilation-components.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
-      "id": "class",
+      "anchors": [
+        "backend/app/content/module_loader.py",
+        "backend/app/content/module_loader_documents.py",
+        "backend/app/content/module_service.py",
+        "backend/app/content/module_validator.py",
+        "content/modules/_template/README.md",
+        "content/modules/god_of_carnage/module.yaml",
+        "world-engine/app/content/backend_loader.py"
+      ],
+      "concern": "Fail-closed path from author change to runtime-readable version",
+      "decisions": [
+        "D2",
+        "D3"
+      ],
+      "element_count": 5,
+      "id": "publication-flow",
+      "kind": "activity",
+      "level": "activity",
+      "path": "UML/Components/content-authority/activity/content-publication-flow.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "content/modules/god_of_carnage/canonical_path/_schema.yaml",
+        "content/modules/god_of_carnage/module.yaml",
+        "content/modules/god_of_carnage/narrative_aspect_policy.yaml",
+        "content/modules/god_of_carnage/scene_graph.yaml"
+      ],
+      "concern": "Relationships among scene truth, canonical path and narrative policies",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 4,
+      "id": "content-data-model",
+      "kind": "class",
       "level": "class",
-      "path": "UML/Components/content-authority/depth/class-model.puml"
+      "path": "UML/Components/content-authority/classes/content-data-model.puml",
+      "relationship_count": 3,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/content/module_models.py",
+        "backend/app/content/module_service.py",
+        "backend/app/content/module_validator.py",
+        "world-engine/app/content/backend_source.py"
+      ],
+      "concern": "Validation, publication and runtime binding states",
+      "decisions": [
+        "D2",
+        "D3"
+      ],
+      "element_count": 4,
+      "id": "content-lifecycle",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Components/content-authority/states/content-lifecycle.puml",
+      "relationship_count": 6,
+      "schema_version": "bt.semantic_view_requirement.v1"
     }
   ],
   "sad_path": "docs/architecture/components/content-authority/architecture.md",

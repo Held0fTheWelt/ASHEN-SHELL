@@ -1,0 +1,43 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: world-engine:commit-data-model
+title World Engine - Commit Data Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: session
+' bt-element-id: proposal
+' bt-element-id: commit
+
+class "StorySession\nResponsibility: Aggregate live story truth and bindings\nContract: Monotonic revision and bound content\n[[../../../../world-engine/app/story_runtime/commit_models.py source]]" as session {
+  session_id
+  content_version
+  revision
+  world_state
+}
+class "NarrativeProposal\nResponsibility: Carry uncommitted AI result and evidence\nContract: No authoritative mutations\n[[../../../../world-engine/app/story_runtime/commit_models.py source]]" as proposal {
+  blocks
+  delta
+  aspects
+  evidence
+}
+class "CommitDecision\nResponsibility: Explain accepted or rejected mutation\nContract: Validation and policy evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]" as commit {
+  status
+  accepted_delta
+  findings
+  revision
+}
+
+commit ..> session : "advances when accepted\ncontract: monotonic revision\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]"
+proposal ..> commit : "is resolved as\ncontract: validation evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]"
+session ..> proposal : "bounds evaluation\ncontract: base revision\n[[../../../../world-engine/app/story_runtime/commit_models.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Session truth, uncommitted proposal and explicit commit decision
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

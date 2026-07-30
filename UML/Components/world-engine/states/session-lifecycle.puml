@@ -1,0 +1,37 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: world-engine:session-lifecycle
+title World Engine - Session Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: new
+' bt-element-id: active
+' bt-element-id: executing
+' bt-element-id: degraded
+' bt-element-id: closed
+
+state "New\nResponsibility: Await initial content/session binding\nContract: No player turn\n[[../../../../world-engine/app/api/http_routes/story_session_lifecycle_routes.py source]]" as new
+state "Active\nResponsibility: Accept canonical turns\nContract: Bound content and actor\n[[../../../../world-engine/app/story_runtime/manager/runtime_manager.py source]]" as active
+state "Executing Turn\nResponsibility: Hold one in-flight command\nContract: Serialized session mutation\n[[../../../../world-engine/app/story_runtime/manager/turn_execution.py source]]" as executing
+state "Degraded\nResponsibility: Preserve session during provider or validation failure\nContract: No fabricated commit\n[[../../../../world-engine/app/narrative/fallback_generator.py source]]" as degraded
+state "Closed\nResponsibility: Reject further turns and retain evidence\nContract: Final persisted revision\n[[../../../../world-engine/app/api/http_routes/story_session_lifecycle_routes.py source]]" as closed
+
+active --> closed : "session closed\ncontract: final revision retained\n[[../../../../world-engine/app/api/http_routes/story_session_lifecycle_routes.py source]]"
+active --> executing : "turn accepted\ncontract: session lock\n[[../../../../world-engine/app/story_runtime/manager/turn_execution.py source]]"
+closed --> [*] : "retention complete\ncontract: immutable evidence"
+degraded --> active : "safe recovery\ncontract: same committed revision\n[[../../../../world-engine/app/runtime/engine.py source]]"
+executing --> active : "commit or rejection completes\ncontract: evidence persisted\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]"
+executing --> degraded : "dependency failure\ncontract: no speculative commit\n[[../../../../world-engine/app/narrative/fallback_generator.py source]]"
+[*] --> new : "session created\ncontract: unique id"
+new --> active : "content and actor bound\ncontract: valid launch\n[[../../../../world-engine/app/api/http_routes/story_session_lifecycle_routes.py source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Session creation, serialized turns, degradation, recovery and closure
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

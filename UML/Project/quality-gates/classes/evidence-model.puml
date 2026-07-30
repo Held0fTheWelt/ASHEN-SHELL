@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: quality-gates:evidence-model
+title Quality Gates - Evidence Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: suite
+' bt-element-id: execution
+' bt-element-id: finding
+
+class "Suite Definition\nResponsibility: Declare scope, prerequisites and owner\nContract: Stable suite id\n[[../../../../tests/run_tests.py source]]" as suite {
+  id
+  paths
+  dependencies
+  timeout
+}
+class "Test Execution\nResponsibility: Record exact selected and observed result\nContract: Command and environment evidence\n[[../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md source]]" as execution {
+  suite
+  command
+  status
+  duration
+}
+class "Quality Finding\nResponsibility: Explain failure or coverage omission\nContract: Actionable source location\n[[../../../../tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md source]]" as finding {
+  code
+  severity
+  location
+  remediation
+}
+
+execution ..> finding : "may emit\ncontract: source-located evidence\n[[../../../../tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md source]]"
+suite ..> execution : "produces\ncontract: exact environment and command\n[[../../../../tests/run_tests.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Suite definitions, exact executions and actionable findings
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

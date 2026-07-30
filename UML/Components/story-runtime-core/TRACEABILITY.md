@@ -1,11 +1,11 @@
-# story-runtime-core TRACEABILITY
+# Story Runtime Core UML traceability
 
-| Diagram | Decision | Claim | Source | Test / gate |
-| --- | --- | --- | --- | --- |
-| c4-context | D1 | Shared runtime types | see component SAD | `story_runtime_core/tests/` |
-| c4-container | D1 | Branching, templates, delivery helpers | `story_runtime_core/` | `story_runtime_core/tests/` |
-| d2-turn-envelope | D2 | Turn envelope (partial; contracts in ai_stack) | mechanism catalog SR-M02 | `tests/gates/` (partial) |
-| d3-aspect-ledger-contracts | D3 | Aspect ledger vocabulary | mechanism catalog SR-M03 | `tests/gates/` (partial) |
-| d4-language-adapter-compat-seam | D4 | Language shim → ai_stack.language_io | SAD D2 | `story_runtime_core/tests/test_language_adapter.py` |
-| language-resolution-chain | D4 | Ingress/egress language chain vs executor | world-engine D10/D14 | `ai_stack/tests/test_langgraph_runtime.py` |
-| story-runtime-core-shared-import-sequence | D1 | Import-only; no commit authority | SAD §3 | `tests/gates/` |
+| View | Kind | Decisions | Source anchors |
+| --- | --- | --- | --- |
+| [Story Runtime Core - Authority Context](context/story-runtime-core-context.md) | `context` | D1 | `ai_stack/story_runtime/player_action_resolution.py`, `story_runtime_core/__init__.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py` |
+| [Story Runtime Core - Components](components/domain-components.md) | `component` | D1, D2 | `story_runtime_core/__init__.py`, `story_runtime_core/adapters.py`, `story_runtime_core/branching/forecast.py`, `story_runtime_core/committed_truth.py`, `story_runtime_core/consequences/consequence_cascade.py`, `story_runtime_core/input_interpreter.py`, `story_runtime_core/models.py`, `story_runtime_core/player_input_intent_contract.py`, `story_runtime_core/runtime_delivery.py` |
+| [Story Runtime Core - Host Adapter Flow](sequence/host-adapter-flow.md) | `sequence` | D1, D3 | `story_runtime_core/__init__.py`, `story_runtime_core/adapters.py`, `story_runtime_core/branching/forecast.py`, `story_runtime_core/committed_truth.py`, `story_runtime_core/consequences/consequence_cascade.py`, `story_runtime_core/input_interpreter.py`, `story_runtime_core/models.py`, `story_runtime_core/player_input_intent_contract.py`, `story_runtime_core/runtime_delivery.py`, `world-engine/app/story_runtime/governed_runtime_adapters.py` |
+| [Story Runtime Core - Contract Data Model](classes/contract-data-model.md) | `class` | D2 | `story_runtime_core/committed_truth.py`, `story_runtime_core/consequences/consequence_cascade.py`, `story_runtime_core/input_interpreter.py`, `story_runtime_core/player_input_intent_contract.py` |
+| [Story Runtime Core - Value Lifecycle](states/value-lifecycle.md) | `state` | D3 | `story_runtime_core/adapters.py`, `story_runtime_core/model_registry.py`, `story_runtime_core/models.py` |
+
+The table is a generated correspondence view. Source paths are validated before projection.

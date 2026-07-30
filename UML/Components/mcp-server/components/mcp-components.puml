@@ -1,0 +1,42 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: mcp-server:handler-components
+title MCP Server - Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: server
+' bt-element-id: router
+' bt-element-id: registry
+' bt-element-id: handlers
+' bt-element-id: rate_limit
+' bt-element-id: fs
+' bt-element-id: backend_client
+' bt-element-id: observability
+
+rectangle "MCP Server\nResponsibility: Validate protocol and dispatch registered capabilities\nContract: MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]" as server
+component "RPC Router\nResponsibility: Decode methods and produce protocol errors\nContract: JSON-RPC request/response\n[[../../../../tools/mcp_server/rpc_method_router.py source]]" as router
+component "Capability Registry\nResponsibility: Publish stable tool, resource and prompt metadata\nContract: Unique names and schemas\n[[../../../../tools/mcp_server/registry.py source]]" as registry
+component "Handler Families\nResponsibility: Implement bounded capability groups\nContract: Validated arguments and structured result\n[[../../../../tools/mcp_server/handlers/__init__.py source]]" as handlers
+component "Rate Limiter\nResponsibility: Bound expensive or mutating calls\nContract: Per-operation policy\n[[../../../../tools/mcp_server/rate_limiter.py source]]" as rate_limit
+component "Filesystem Tools\nResponsibility: Inspect explicitly allowed repository paths\nContract: Resolved-root containment\n[[../../../../tools/mcp_server/handlers/tools_registry_handlers_filesystem.py source]]" as fs
+component "Backend Client\nResponsibility: Delegate governed session and platform operations\nContract: Authenticated HTTP with normalized errors\n[[../../../../tools/mcp_server/backend_client.py source]]" as backend_client
+component "Langfuse Tracing\nResponsibility: Correlate MCP calls without leaking credentials\nContract: Redacted trace events\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]" as observability
+
+handlers ..> fs : "delegates local operation\ncontract: scoped filesystem request\n[[../../../../tools/mcp_server/handlers/tools_registry_handlers_filesystem.py source]]"
+server ..> router : "dispatches method\ncontract: protocol envelope\n[[../../../../tools/mcp_server/rpc_method_router.py source]]"
+router ..> registry : "resolves capability\ncontract: registered canonical name\n[[../../../../tools/mcp_server/registry.py source]]"
+registry ..> handlers : "binds handler\ncontract: schema-compatible callable\n[[../../../../tools/mcp_server/tools_registry.py source]]"
+handlers ..> rate_limit : "checks policy\ncontract: budget before execution\n[[../../../../tools/mcp_server/rate_limiter.py source]]"
+handlers ..> backend_client : "delegates remote operation\ncontract: normalized backend request\n[[../../../../tools/mcp_server/backend_client.py source]]"
+handlers ..> observability : "emits call evidence\ncontract: redacted trace\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Routing, registry, handler, safety and observability seams
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

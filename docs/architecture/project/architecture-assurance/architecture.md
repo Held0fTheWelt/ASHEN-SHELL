@@ -17,6 +17,22 @@ state. Documentation claims may never invent a source binding.
 The assurance tool reads Better Tomorrow SADs and implementation surfaces,
 generates bindings and depth views, verifies canon drift and emits CI evidence.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Executable architecture correspondence system for declarations, source bindings, semantic views, drift evidence, reports and canonical AKDB export.
+
+**Authority rule:** Human-authored SAD decisions and the semantic model catalog define intent; source anchors and Git evidence establish implementation correspondence; generated evidence never invents authority.
+
+**Git/archaeology scope:** `tools/architecture_assurance`, `tests/architecture_assurance`, `docs/architecture`, `UML`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Human intent, repository truth and disposable external AKDB | [Architecture Assurance - Context](../../../../UML/Project/architecture-assurance/context/assurance-context.md) | Human-authored SAD decisions and the semantic model catalog define intent; source anchors and Git evidence establish implementation correspondence; generated evidence never invents authority. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 Use deterministic standard-library tooling, versioned schemas and a single audit
@@ -35,21 +51,89 @@ result rendered to human-readable JSON, JUnit and SARIF.
 | Canon projection | `tools/architecture_assurance/canon.py` |
 | Command line | `tools/architecture_assurance/cli.py` |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Architect / Maintainer (`architect`) | `actor` | State decisions, classify drift and approve target architecture | Reviewed SAD and model-catalog changes | [`docs/architecture/project/architecture-assurance/architecture.md`](architecture.md) |
+| Architecture Declarations (`declarations`) | `class` | Capture decisions, qualities and constraints | Stable SAD identifiers | [`tools/architecture_assurance/sad_parser.py`](../../../../tools/architecture_assurance/sad_parser.py) |
+| Audit Findings (`findings`) | `class` | Explain drift with stable identifiers | severity, scope, evidence and remediation | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
+| Correspondence Bindings (`bindings`) | `class` | Relate declarations to implementation evidence | Existing paths and explicit kinds | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
+| Audit Engine (`audit`) | `component` | Evaluate correspondence and model semantics | Stable findings and exit policy | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
+| Binding Manifest Builder (`manifest`) | `component` | Bind SAD declarations to source, tests and views | One deterministic manifest per scope | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
+| Canon Exporter (`canon`) | `component` | Create idempotent AKDB source projection | Hash-stable destination manifest | [`tools/architecture_assurance/canon.py`](../../../../tools/architecture_assurance/canon.py) |
+| Report Exporters (`reports`) | `component` | Emit human, JSON, JUnit and SARIF evidence | Schema-stable deterministic serialization | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
+| Repository Discovery (`discovery`) | `component` | Enumerate implementation and document evidence | Ignored/local evidence excluded | [`tools/architecture_assurance/discovery.py`](../../../../tools/architecture_assurance/discovery.py) |
+| Semantic Model Catalog (`catalog`) | `component` | Define individualized elements, contracts, relations and viewpoints | Validated source-bound JSON | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
+| Semantic View Builder (`views`) | `component` | Project catalog models into PlantUML and companion documents | No generic inferred star graphs | [`tools/architecture_assurance/view_builder.py`](../../../../tools/architecture_assurance/view_builder.py) |
+| Authored Intent (`authored`) | `state` | Hold human-reviewed architecture intent | SAD and catalog valid | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
+| Correlated (`correlated`) | `state` | Bind intent to code, Git and archaeology evidence | No unresolved source anchors | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
+| Evaluated (`evaluated`) | `state` | Classify correspondence and drift | Deterministic findings | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
+| Exported (`exported`) | `state` | Publish reports and AKDB canon | Idempotent artifacts | [`tools/architecture_assurance/canon.py`](../../../../tools/architecture_assurance/canon.py) |
+| Architecture Assurance (`assurance`) | `system` | Discover, correlate, validate and export architecture evidence | Deterministic CLI and report schemas | [`tools/architecture_assurance/cli.py`](../../../../tools/architecture_assurance/cli.py) |
+| Better Tomorrow Repository (`repo`) | `system` | Provide current code, documents and Git history | Read-only discovery except generated architecture artifacts | [`.git`](../../../../.git) |
+| External AKDB (`akdb`) | `system` | Validate and export canonical architecture knowledge | Pinned disposable checkout | [`tests/architecture_assurance/test_disposable_akdb_integration.py`](../../../../tests/architecture_assurance/test_disposable_akdb_integration.py) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Generate discovers source units and writes idempotent bindings and views. Audit
 re-discovers the same units, compares their anchors, evaluates five depth axes
 and renders the single result to requested formats.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| From authored intent and source discovery to classified evidence | `activity` | [Architecture Assurance - Audit Flow](../../../../UML/Project/architecture-assurance/activity/audit-flow.md) | 6 |
+| Audit, multi-format reporting, canonical export and external validation | `sequence` | [Architecture Assurance - Export Sequence](../../../../UML/Project/architecture-assurance/sequence/export-sequence.md) | 4 |
+| Intent, correlation, evaluation, export and later drift | `state` | [Architecture Assurance - Evidence Lifecycle](../../../../UML/Project/architecture-assurance/states/evidence-lifecycle.md) | 5 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
+
 ## 7. Deployment View
 
 The package runs from the repository in local quality gates and CI. CI checks
 the locked AKDB revision into a separate directory only for disposable tests.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `tools/architecture_assurance`
+- `tests/architecture_assurance`
+- `docs/architecture`
+- `UML`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 All paths are repository-relative; all JSON is key-sorted; every claimed
 implemented or accepted declaration needs a real anchor; dry-run never writes.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Audit Engine | Report Exporters | emits findings | normalized result model | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
+| Correspondence Bindings | Audit Findings | produce gaps or proof | traceable evidence locations | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
+| Semantic Model Catalog | Repository Discovery | scopes evidence | history roots and source anchors | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
+| Semantic Model Catalog | Semantic View Builder | projects viewpoints | semantic elements and edge contracts | [`tools/architecture_assurance/semantic_models.py`](../../../../tools/architecture_assurance/semantic_models.py) |
+| Architecture Declarations | Correspondence Bindings | are grounded by | stable declaration ids | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
+| Repository Discovery | Binding Manifest Builder | supplies inventory | normalized repository paths | [`tools/architecture_assurance/discovery.py`](../../../../tools/architecture_assurance/discovery.py) |
+| Binding Manifest Builder | Audit Engine | supplies declared correspondence | binding schema | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
+| Report Exporters | Canon Exporter | joins canonical evidence | accepted report state | [`tools/architecture_assurance/canon.py`](../../../../tools/architecture_assurance/canon.py) |
+| Semantic View Builder | Audit Engine | supplies analyzable models | view requirements and source links | [`tools/architecture_assurance/semantic_models.py`](../../../../tools/architecture_assurance/semantic_models.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -138,16 +222,53 @@ No production or developer database is discovered, opened, copied or cleaned
 by this test. Evidence:
 `tests/architecture_assurance/test_disposable_akdb_integration.py`.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1`, `D4` | Human intent, repository truth and disposable external AKDB | `context` | [Architecture Assurance - Context](../../../../UML/Project/architecture-assurance/context/assurance-context.md) |
+| `D1`, `D2`, `D3` | Discovery, correspondence, semantic projection, audit, reporting and canon seams | `component` | [Architecture Assurance - Components](../../../../UML/Project/architecture-assurance/components/assurance-components.md) |
+| `D1`, `D2` | From authored intent and source discovery to classified evidence | `activity` | [Architecture Assurance - Audit Flow](../../../../UML/Project/architecture-assurance/activity/audit-flow.md) |
+| `D3`, `D4` | Audit, multi-format reporting, canonical export and external validation | `sequence` | [Architecture Assurance - Export Sequence](../../../../UML/Project/architecture-assurance/sequence/export-sequence.md) |
+| `D1` | Declarations, correspondence bindings and explainable findings | `class` | [Architecture Assurance - Evidence Model](../../../../UML/Project/architecture-assurance/classes/evidence-model.md) |
+| `D2`, `D3` | Intent, correlation, evaluation, export and later drift | `state` | [Architecture Assurance - Evidence Lifecycle](../../../../UML/Project/architecture-assurance/states/evidence-lifecycle.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 Critical subsystems require complete arc42 structure, full accepted binding and
-representation coverage, four model-depth views, reproducible discovery and a
-matching canon projection. Pinned census values prevent silent regression.
+representation coverage, a concern-complete individualized viewpoint suite,
+reproducible discovery and a matching canon projection. Pinned census values
+prevent silent regression, while the semantic gate prevents a high file count
+from masking shallow or generic diagrams.
 
 ## 11. Risks & Technical Debt
 
 Static discovery intentionally sees only supported source lanes. New languages
 or generated surfaces require an explicit scanner before they can count.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+The previous migration proved file coverage while shallow star diagrams hid semantic gaps. This model separates discovery, correspondence, interpretation, projection and export.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 353 | 87 | 636 | 0 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-010` | `superseded` | Historical snapshots contain paths that no longer map to current architecture | Retain hashes, claim headings and path-diff evidence. Port only a claim or behavior after current-source reconciliation; never copy a full old package over HEAD. |
+| `DRIFT-011` | `superseded` | MVP completion labels are not architecture authority | Use capability lifecycle states proposed, implemented, integrated, proven and regressed. Only production-path evidence advances a capability to proven. |
+| `DRIFT-012` | `confirmed_current` | Architecture coverage metrics can hide shallow semantics | Keep model selection concern-driven and source-bound. Coverage remains supporting evidence; semantic analyzability, drill-down and correspondence determine acceptance. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

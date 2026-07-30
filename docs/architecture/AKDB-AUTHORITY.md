@@ -9,13 +9,20 @@ runtime behavior.
 
 1. Runtime source and executable contracts are implementation truth.
 2. The component and project SADs express intended architecture and decisions.
-3. `architecture.bindings.json` binds declarations to discoverable source anchors.
-4. Source-linked PlantUML views are derived projections, not independent claims.
-5. `akdb-canon-manifest.json` pins the exact file projection exported to AKDB.
+3. Git history and reconciled historical artifacts expose drift; they do not
+   silently override current source or accepted decisions.
+4. `architecture.bindings.json` binds declarations to discoverable source anchors.
+5. `model_catalog.json` defines the individualized semantic viewpoints required
+   to analyze each subsystem's own structure, behavior, data, state and deployment
+   concerns.
+6. Source-linked PlantUML views are deterministic projections, not independent claims.
+7. `akdb-canon-manifest.json` pins the exact file projection exported to AKDB.
 
 The Better Tomorrow audit rejects accepted claims without anchors, undisclosed
-discovered units, shallow required views, file drift and canon drift. JSON, JUnit
-and SARIF are equivalent renderings of the same audit result.
+discovered units, shallow or generic required views, missing relationship
+contracts, invalid source anchors, file drift and canon drift. It also rejects a
+single fixed viewpoint profile applied to every subsystem. JSON, JUnit and SARIF
+are equivalent renderings of the same audit result.
 Source anchors are restricted to files visible to Git (tracked or non-ignored
 new files), so local secrets, databases, caches and nested worktrees cannot
 become architectural evidence.
@@ -33,6 +40,9 @@ never mutated by integration tests.
 ```bash
 python -m tools.architecture_assurance generate --dry-run
 python -m tools.architecture_assurance generate
+python -m tools.architecture_assurance drift-evidence \
+  --archive-root "<read-only historical artifact root>" --dry-run
+python -m tools.architecture_assurance reconcile-drift --dry-run
 python -m tools.architecture_assurance canon-manifest
 python -m tools.architecture_assurance audit \
   --json reports/architecture.json \
@@ -47,3 +57,7 @@ unchanged inputs produces byte-identical output and reports `unchanged`.
 Text fingerprints normalize CRLF and LF before hashing, so the same Git content
 has one canon on Windows and Linux. `--dry-run` computes the same action plan
 but does not write.
+
+The archive root is an optional, read-only archaeology input. Durable evidence
+stores hashes, headings and repository-relative comparisons, never an operational
+dependency on that external folder.

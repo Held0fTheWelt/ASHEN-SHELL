@@ -1,145 +1,52 @@
-"""Generate compact, deterministic and source-linked PlantUML depth views."""
+"""Generate Better Tomorrow's tailored semantic UML landscape."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-import json
-import os
 from pathlib import Path
-import re
 from typing import Any
 
 from .manifest_builder import load_config
+from .semantic_models import (
+    load_model_catalog,
+    render_package_readme,
+    render_semantic_view,
+    render_traceability,
+    render_view_companion,
+    validate_model_catalog,
+)
 
 
-_TARGETS = {"context": 4, "container": 6, "component": 8, "class": 6}
-
-
-def _safe(value: str) -> str:
-    return re.sub(r"[^A-Za-z0-9_]", "_", value)
-
-
-def _short(value: str, limit: int = 54) -> str:
-    compact = re.sub(r"\s+", " ", value).strip()
-    return compact if len(compact) <= limit else compact[: limit - 1] + "…"
-
-
-def _candidates(manifest: Mapping[str, Any]) -> list[dict[str, str]]:
-    values: list[dict[str, str]] = []
-    for entry in manifest.get("building_blocks", []):
-        anchors = entry.get("anchors", [])
-        if anchors:
-            values.append(
-                {
-                    "id": str(entry["id"]),
-                    "title": str(entry["title"]),
-                    "path": str(anchors[0]["file"]),
-                    "kind": "declared building block",
-                    "category": "declared",
-                }
-            )
-    for unit in manifest.get("discovered_units", []):
-        anchor = unit["anchor"]
-        title = (
-            anchor.get("symbol")
-            or anchor.get("object")
-            or anchor.get("route")
-            or str(unit["id"]).split(":")[-1]
-        )
-        values.append(
-            {
-                "id": str(unit["id"]),
-                "title": str(title),
-                "path": str(anchor["file"]),
-                "kind": str(unit["kind"]),
-                "category": str(unit["kind"]),
-            }
-        )
-    unique: dict[tuple[str, str], dict[str, str]] = {}
-    for value in values:
-        unique[(value["title"], value["path"])] = value
-    return [unique[key] for key in sorted(unique)]
-
-
-def _selected_candidates(
-    candidates: list[dict[str, str]],
-    level: str,
-) -> list[dict[str, str]]:
-    preferences = {
-        "context": ("declared", "deployment", "api", "python"),
-        "container": ("declared", "deployment", "api", "content", "python"),
-        "component": ("api", "python", "web", "schema", "content", "declared"),
-        "class": ("python", "schema", "api", "content", "web", "declared"),
-    }
-    order = preferences.get(level, tuple())
-    rank = {category: index for index, category in enumerate(order)}
-    ordered = sorted(
-        candidates,
-        key=lambda item: (
-            rank.get(item["category"], len(rank)),
-            item["title"],
-            item["path"],
-        ),
-    )
-    return ordered[: _TARGETS.get(level, 6)]
-
-
-def render_view(
-    manifest: Mapping[str, Any],
-    view: Mapping[str, Any],
+def _project(
+    path: Path,
+    rendered: str,
     repo_root: Path,
-) -> str:
-    level = str(view["level"])
-    destination = repo_root / str(view["path"])
-    candidates = _candidates(manifest)
-    selected = _selected_candidates(candidates, level)
-    sad_relative = Path(
-        os.path.relpath(repo_root / str(manifest["sad_path"]), destination.parent)
-    ).as_posix()
-    lines = [
-        "@startuml",
-        f"title {_short(str(manifest['subsystem']))} — {level.title()} View",
-        "left to right direction",
-        "skinparam shadowing false",
-        "skinparam rectangle {",
-        "  BackgroundColor #F7F9FC",
-        "  BorderColor #34495E",
-        "}",
-        "",
-        (
-            f'rectangle "{_short(str(manifest["subsystem"]))}\\n'
-            "Responsibility: architecture boundary\\n"
-            "Owns: declarations and implementation evidence\\n"
-            f'[[{sad_relative} SAD]]" as ROOT'
-        ),
-        "",
-    ]
-    for index, item in enumerate(selected, start=1):
-        relative = Path(
-            os.path.relpath(repo_root / item["path"], destination.parent)
-        ).as_posix()
-        label = (
-            f"{_short(item['title'])}\\n"
-            f"Responsibility: {_short(item['kind'])}\\n"
-            f"Evidence contract: source anchor\\n"
-            f"[[{relative} source]]"
-        )
-        lines.append(f'rectangle "{label}" as E{index}')
-    lines.append("")
-    for index in range(1, len(selected) + 1):
-        lines.append(f'E{index} ..> ROOT : "evidence for boundary"')
-    lines.extend(
-        [
-            "",
-            "legend bottom",
-            "Every element links to its implementation anchor.",
-            "Generated from architecture.bindings.json; do not hand-edit.",
-            "endlegend",
-            "@enduml",
-            "",
-        ]
+    *,
+    dry_run: bool,
+    subsystem: str,
+    view: str,
+    artifact: str,
+) -> dict[str, Any]:
+    current = (
+        path.read_text(encoding="utf-8-sig") if path.is_file() else None
     )
-    return "\n".join(lines)
+    changed = current != rendered
+    if changed and not dry_run:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rendered, encoding="utf-8", newline="\n")
+    return {
+        "subsystem": subsystem,
+        "view": view,
+        "artifact": artifact,
+        "path": path.relative_to(repo_root).as_posix(),
+        "action": (
+            "would_write"
+            if dry_run and changed
+            else "write"
+            if changed
+            else "unchanged"
+        ),
+    }
 
 
 def generate_views(
@@ -149,40 +56,84 @@ def generate_views(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     config = load_config(config_path)
+    catalog_path = repo_root / str(config["model_catalog"])
+    catalog = load_model_catalog(catalog_path)
+    findings = validate_model_catalog(catalog, repo_root)
+    if findings:
+        joined = "\n".join(
+            f"{item['subsystem']}:{item['view']}: {item['error']}"
+            for item in findings
+        )
+        raise ValueError(f"semantic model catalog is invalid:\n{joined}")
+
     actions: list[dict[str, Any]] = []
-    for subsystem in config["subsystems"]:
-        manifest_path = (
-            repo_root / str(subsystem["sad_path"])
-        ).parent / "architecture.bindings.json"
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
-        for view in subsystem.get("required_views", []):
+    configured = {str(item["id"]) for item in config["subsystems"]}
+    modeled = set(catalog["subsystems"])
+    if configured != modeled:
+        raise ValueError(
+            "semantic catalog/config subsystem mismatch: "
+            f"missing={sorted(configured - modeled)}, "
+            f"extra={sorted(modeled - configured)}"
+        )
+
+    for subsystem_id, raw_model in catalog["subsystems"].items():
+        model: Mapping[str, Any] = raw_model
+        for view in model["views"]:
             destination = repo_root / str(view["path"])
-            rendered = render_view(manifest, view, repo_root)
-            current = (
-                destination.read_text(encoding="utf-8-sig")
-                if destination.is_file()
-                else None
-            )
-            changed = current != rendered
-            if changed and not dry_run:
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_text(rendered, encoding="utf-8", newline="\n")
             actions.append(
-                {
-                    "subsystem": subsystem["id"],
-                    "view": view["id"],
-                    "path": view["path"],
-                    "action": (
-                        "would_write"
-                        if dry_run and changed
-                        else "write"
-                        if changed
-                        else "unchanged"
+                _project(
+                    destination,
+                    render_semantic_view(
+                        subsystem_id,
+                        model,
+                        view,
+                        repo_root,
                     ),
-                }
+                    repo_root,
+                    dry_run=dry_run,
+                    subsystem=subsystem_id,
+                    view=str(view["id"]),
+                    artifact="plantuml",
+                )
             )
+            companion = destination.with_suffix(".md")
+            actions.append(
+                _project(
+                    companion,
+                    render_view_companion(subsystem_id, model, view),
+                    repo_root,
+                    dry_run=dry_run,
+                    subsystem=subsystem_id,
+                    view=str(view["id"]),
+                    artifact="companion",
+                )
+            )
+        package_path = repo_root / str(model["package_path"])
+        actions.append(
+            _project(
+                package_path / "README.md",
+                render_package_readme(subsystem_id, model),
+                repo_root,
+                dry_run=dry_run,
+                subsystem=subsystem_id,
+                view="package",
+                artifact="readme",
+            )
+        )
+        actions.append(
+            _project(
+                package_path / "TRACEABILITY.md",
+                render_traceability(subsystem_id, model),
+                repo_root,
+                dry_run=dry_run,
+                subsystem=subsystem_id,
+                view="package",
+                artifact="traceability",
+            )
+        )
     return {
-        "schema_version": "bt.architecture_view_generation_result.v1",
+        "schema_version": "bt.semantic_view_generation_result.v1",
         "dry_run": dry_run,
+        "catalog": str(config["model_catalog"]),
         "actions": actions,
     }

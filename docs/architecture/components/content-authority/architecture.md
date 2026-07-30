@@ -19,6 +19,22 @@ AI may not invent canon ([mvp-live-runtime-completion SAD §2](../../project/mvp
 
 In scope: `content/modules/god_of_carnage/**`, `_template/`. Out of scope: live session execution.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Authored module truth, schemas, compilation and runtime consumption for Better Tomorrow experiences.
+
+**Authority rule:** Versioned YAML modules own authored facts; compilers and runtimes may validate and project them but may not create competing content truth.
+
+**Git/archaeology scope:** `content`, `backend/app/content`, `world-engine/app/content`, `ai_stack/story_runtime/god_of_carnage`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Authored truth and its validating and consuming systems | [Content Authority - Context](../../../../UML/Components/content-authority/context/content-authority-context.md) | Versioned YAML modules own authored facts; compilers and runtimes may validate and project them but may not create competing content truth. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 Module.yaml + canonical_path + locations/characters/objects/knowledge/direction trees; backend compiles for engine consumption.
@@ -31,17 +47,77 @@ Module.yaml + canonical_path + locations/characters/objects/knowledge/direction 
 | Canonical path | `canonical_path/*.yaml` |
 | Template | `content/modules/_template/` |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Content Author (`author`) | `actor` | Define experience facts, locations, objects and dramatic policy | Schema-conforming module changes | [`content/modules/_template/README.md`](../../../../content/modules/_template/README.md) |
+| Canonical Path (`canonical_path`) | `class` | Express authored dramatic invariants without scripting player choice | Schema-governed beats and alternatives | [`content/modules/god_of_carnage/canonical_path/_schema.yaml`](../../../../content/modules/god_of_carnage/canonical_path/_schema.yaml) |
+| Narrative Policies (`policies`) | `class` | Bound memory, aspects, beats and phase behavior | Declarative policy YAML | [`content/modules/god_of_carnage/narrative_aspect_policy.yaml`](../../../../content/modules/god_of_carnage/narrative_aspect_policy.yaml) |
+| Scene Graph (`scene_graph`) | `class` | Describe spaces, actors, objects and connections | Stable identifiers and references | [`content/modules/god_of_carnage/scene_graph.yaml`](../../../../content/modules/god_of_carnage/scene_graph.yaml) |
+| AI Content Adapter (`ai_adapter`) | `component` | Translate canonical content into proposal context | Provenance-preserving read model | [`ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py`](../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py) |
+| Backend Module Compiler (`compiler`) | `component` | Load, validate and normalize authored documents | Deterministic module model or diagnostics | [`backend/app/content/module_loader.py`](../../../../backend/app/content/module_loader.py) |
+| Module Validator (`validator`) | `component` | Enforce schemas and cross-document references | Fail-closed validation findings | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
+| World Content Loader (`world_loader`) | `component` | Materialize published content for live sessions | Read-only runtime projection | [`world-engine/app/content/backend_loader.py`](../../../../world-engine/app/content/backend_loader.py) |
+| Draft (`draft`) | `state` | Accept author changes | Not runtime-consumable | [`backend/app/content/module_models.py`](../../../../backend/app/content/module_models.py) |
+| Published (`published`) | `state` | Expose immutable content version | Active version pointer | [`backend/app/content/module_service.py`](../../../../backend/app/content/module_service.py) |
+| Runtime Projection (`consumed`) | `state` | Serve content to a bound session | No mutation of authored truth | [`world-engine/app/content/backend_source.py`](../../../../world-engine/app/content/backend_source.py) |
+| Validated (`validated`) | `state` | Record successful structural checks | All references resolve | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
+| Authored Module (`module`) | `system` | Hold canonical versioned content truth | module.yaml plus referenced YAML documents | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Publish/compile pipeline (backend) → runtime projection loaded by world-engine for play.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Fail-closed path from author change to runtime-readable version | `activity` | [Content Authority - Publication Flow](../../../../UML/Components/content-authority/activity/content-publication-flow.md) | 4 |
+| Validation, publication and runtime binding states | `state` | [Content Authority - Lifecycle](../../../../UML/Components/content-authority/states/content-lifecycle.md) | 6 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 Content ships in repo; not a separate deployable process.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `content`
+- `backend/app/content`
+- `world-engine/app/content`
+- `ai_stack/story_runtime/god_of_carnage`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 Writers-room drafts are not production truth.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Backend Module Compiler | Module Validator | requests validation | normalized module candidate | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
+| Authored Module | Backend Module Compiler | is compiled by | complete referenced document set | [`backend/app/content/module_loader_documents.py`](../../../../backend/app/content/module_loader_documents.py) |
+| Authored Module | Canonical Path | contains | dramatic invariants only | [`content/modules/god_of_carnage/canonical_path/_schema.yaml`](../../../../content/modules/god_of_carnage/canonical_path/_schema.yaml) |
+| Authored Module | Narrative Policies | contains | declarative runtime bounds | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
+| Authored Module | Scene Graph | contains | referentially complete scene graph | [`content/modules/god_of_carnage/scene_graph.yaml`](../../../../content/modules/god_of_carnage/scene_graph.yaml) |
+| Module Validator | World Content Loader | releases version | validation success only | [`backend/app/content/module_service.py`](../../../../backend/app/content/module_service.py) |
+| World Content Loader | AI Content Adapter | supplies bounded facts | session-bound content projection | [`world-engine/app/content/backend_loader.py`](../../../../world-engine/app/content/backend_loader.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -163,6 +239,20 @@ the engine.
 
 `tests/smoke/test_goc_module_structure_smoke.py`, content validators, GoC gate tests.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1`, `D2` | Authored truth and its validating and consuming systems | `context` | [Content Authority - Context](../../../../UML/Components/content-authority/context/content-authority-context.md) |
+| `D1`, `D3` | Validation and projection seams from YAML to runtime | `component` | [Content Authority - Compilation Components](../../../../UML/Components/content-authority/components/content-compilation-components.md) |
+| `D2`, `D3` | Fail-closed path from author change to runtime-readable version | `activity` | [Content Authority - Publication Flow](../../../../UML/Components/content-authority/activity/content-publication-flow.md) |
+| `D1` | Relationships among scene truth, canonical path and narrative policies | `class` | [Content Authority - Data Model](../../../../UML/Components/content-authority/classes/content-data-model.md) |
+| `D2`, `D3` | Validation, publication and runtime binding states | `state` | [Content Authority - Lifecycle](../../../../UML/Components/content-authority/states/content-lifecycle.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 - Canonical content roots and runtime template adapters must be discoverable.
@@ -173,6 +263,25 @@ the engine.
 ## 11. Risks & Technical Debt
 
 No second module in MVP scope—engine must stay generic per mvp-live-runtime-completion anti-creep policy.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+Content has moved between generic templates, God of Carnage specializations, backend compilation, world-engine loading and AI adapters. The models expose duplicate vocabularies and projection seams.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 219 | 85 | 713 | 59 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
+| `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 

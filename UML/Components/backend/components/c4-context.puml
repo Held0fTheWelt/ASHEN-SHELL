@@ -1,0 +1,33 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: backend:system-context
+title Backend — System Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: player
+' bt-element-id: operator
+' bt-element-id: admin
+' bt-element-id: backend
+' bt-element-id: world
+
+actor "Player\nResponsibility: Authenticate, browse community and start or continue play\nContract: Browser/API session\n[[../../../../docs/architecture/components/backend/architecture.md source]]" as player
+actor "Operator\nResponsibility: Manage content, providers, policies and diagnostics\nContract: Privileged authenticated request\n[[../../../../docs/architecture/project/security-governance/architecture.md source]]" as operator
+rectangle "Administration Tool\nResponsibility: Present operator intent\nContract: Backend proxy only\n[[../../../../administration-tool/app.py source]]" as admin
+rectangle "Backend\nResponsibility: Own platform data and governed control-plane operations\nContract: Flask /api/v1\n[[../../../../backend/app/factory_app.py source]]\n[[c4-container.puml drill-down]]" as backend
+rectangle "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/app/main.py source]]" as world
+
+admin ..> backend : "delegates mutations\ncontract: privileged backend API\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]"
+operator ..> admin : "operates\ncontract: browser control plane\n[[../../../../administration-tool/route_registration_manage_sections.py source]]"
+player ..> backend : "uses platform API\ncontract: authenticated HTTP\n[[../../../../backend/app/api/v1/auth_routes.py source]]"
+backend ..> world : "proxies live play\ncontract: signed internal story request\n[[../../../../backend/app/services/game/game_service.py source]]"
+
+legend bottom
+Viewpoint: context
+Concern: Platform ownership, operator delegation and live-runtime authority
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

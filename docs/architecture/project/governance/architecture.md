@@ -36,6 +36,22 @@ DECISION_REGISTRY traceability, and gate tests that must not bypass oracles.
 
 Maintainers, agents, and CI consume this SAD when changing boundaries, contracts, or documentation.
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
+### Evidence-grounded scope and authority
+
+Decision, authority, exception and promotion governance spanning architecture documents and runtime control-plane policies.
+
+**Authority rule:** Accepted decisions and explicit runtime governance services own policy; archives and reports are evidence, not parallel decision authority.
+
+**Git/archaeology scope:** `docs/architecture/project`, `docs/adr`, `backend/app/services/governance`, `tests/gates`
+
+| Context concern | Model | Boundary statement |
+| --- | --- | --- |
+| Maintainer interaction with decision and runtime governance | [Architecture Governance - Context](../../../../UML/Project/governance/context/governance-context.md) | Accepted decisions and explicit runtime governance services own policy; archives and reports are evidence, not parallel decision authority. |
+
+Historical MVP and work-order material is classified evidence, not an authority source. Current code and accepted decisions win; conflicts remain explicit until a target decision is accepted.
+<!-- END BT-SEMANTIC-DEPTH:3 -->
+
 ## 4. Solution Strategy
 
 - **New decisions:** edit owning SAD §9 + UML + [`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md); optional short note in `evidence/`.
@@ -52,17 +68,77 @@ Maintainers, agents, and CI consume this SAD when changing boundaries, contracts
 | `tests/gates/` | Architecture enforcement |
 | `docs/governance/` | Oracle inventory, audit programs |
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
+### Source-bound building-block catalog
+
+Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+
+| Block | Kind | Responsibility | Contract | Source |
+| --- | --- | --- | --- | --- |
+| Maintainer (`maintainer`) | `actor` | Propose, review and accept architecture decisions | Evidence-backed review | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
+| Accepted Decision (`decision`) | `class` | State selected option and consequences | Stable id and acceptance date | [`docs/architecture/project/ADR_ABSORPTION_MATRIX.md`](../ADR_ABSORPTION_MATRIX.md) |
+| Decision Proposal (`proposal`) | `class` | Frame problem, options and evidence | Owner and affected scopes | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
+| Governed Exception (`exception`) | `class` | Bound temporary deviation | Expiry, owner and compensating control | [`docs/architecture/project/governance/mechanism-catalog.md`](mechanism-catalog.md) |
+| Decision Registry (`decision_registry`) | `component` | Index accepted and retired decisions | Stable identifiers and status | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
+| Governance Evidence (`audit`) | `component` | Record actor, before/after and outcome | Immutable audit event | [`backend/app/services/governance/observability_governance_service.py`](../../../../backend/app/services/governance/observability_governance_service.py) |
+| Policy Gates (`gates`) | `component` | Block invalid authority and decision drift | Executable CI checks | [`tests/gates/test_adr_live_runtime_commit_semantics_gate.py`](../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py) |
+| Runtime Governance Services (`runtime_policy`) | `component` | Validate and apply operational policy | Authorized audited mutation | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
+| SAD Decision Sections (`sad`) | `component` | Explain decisions in architecture context | Traceable rationale and consequences | [`docs/architecture/project/ecosystem-topology/architecture.md`](../ecosystem-topology/architecture.md) |
+| Accepted (`accepted`) | `state` | Govern implementation and models | Decision registry entry | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
+| Draft (`draft`) | `state` | Collect problem and options | No authority yet | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
+| Proposed (`proposed`) | `state` | Expose reviewable evidence | Owner and scope complete | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
+| Superseded (`superseded`) | `state` | Retain lineage without current authority | Replacement decision linked | [`docs/adr/legacy/README.md`](../../../adr/legacy/README.md) |
+| Governance System (`governance`) | `system` | Control decision lifecycle and runtime policy changes | Recorded decision and audit evidence | [`docs/architecture/project/governance/architecture.md`](architecture.md) |
+<!-- END BT-SEMANTIC-DEPTH:5 -->
+
 ## 6. Runtime View
 
 Not a runtime system—governance applies at PR/CI time via pytest gates and human review against QUALITY-STANDARD.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:6 -->
+### Dynamic viewpoint suite
+
+| Runtime concern | Viewpoint | Model | Modeled interactions |
+| --- | --- | --- | ---: |
+| Draft, proposal, acceptance and supersession with preserved lineage | `state` | [Architecture Governance - Decision Lifecycle](../../../../UML/Project/governance/states/decision-lifecycle.md) | 4 |
+| Accepted policy becomes audited runtime configuration and gate evidence | `sequence` | [Architecture Governance - Runtime Policy Change](../../../../UML/Project/governance/sequence/runtime-policy-change.md) | 4 |
+
+The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+<!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
 
 N/A
 
+<!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
+### Deployment and operational boundary evidence
+
+This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
+
+- `docs/architecture/project`
+- `docs/adr`
+- `backend/app/services/governance`
+- `tests/gates`
+
+A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
+<!-- END BT-SEMANTIC-DEPTH:7 -->
+
 ## 8. Crosscutting Concepts
 
 - MVP locator/evidence artifacts under `tests/reports/MVP_Live_Runtime_Completion/` are program evidence, not ADRs.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
+### Explicit interaction and dependency contracts
+
+| From | To | Semantics | Contract | Evidence |
+| --- | --- | --- | --- | --- |
+| Governance Evidence | Policy Gates | supports verification | machine-checkable evidence | [`tests/gates/test_adr_live_runtime_commit_semantics_gate.py`](../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py) |
+| Accepted Decision | Governed Exception | may bound | temporary explicit deviation | [`docs/architecture/project/governance/mechanism-catalog.md`](mechanism-catalog.md) |
+| Runtime Governance Services | Governance Evidence | records mutation outcome | actor and before/after evidence | [`backend/app/services/governance/observability_governance_service.py`](../../../../backend/app/services/governance/observability_governance_service.py) |
+| Decision Proposal | Accepted Decision | is accepted as | reviewed rationale | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
+| Decision Registry | SAD Decision Sections | indexes contextual decision | stable decision id | [`docs/architecture/project/ADR_ABSORPTION_MATRIX.md`](../ADR_ABSORPTION_MATRIX.md) |
+| SAD Decision Sections | Runtime Governance Services | constrains implementation | accepted policy semantics | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
+<!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
 
@@ -630,6 +706,21 @@ For production, `.env` files are not the recommended long-term secret source. Pr
 - [ ] Docker path uses shared Redis-backed governance storage rather than worker-local state
 
 **Evidence.** `docs/architecture/project/governance/architecture.md#d12-env-configuration-governance` (archived — see `docs/archive/adr-retired-2026/`)
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
+### Decision-to-view correspondence
+
+| Decision(s) | Concern | Viewpoint | Model |
+| --- | --- | --- | --- |
+| `D1` | Maintainer interaction with decision and runtime governance | `context` | [Architecture Governance - Context](../../../../UML/Project/governance/context/governance-context.md) |
+| `D1`, `D2` | Decision registry, SAD, runtime policy, evidence and gate chain | `component` | [Architecture Governance - Components](../../../../UML/Project/governance/components/governance-components.md) |
+| `D2` | Proposals, accepted decisions and bounded exceptions | `class` | [Architecture Governance - Decision Model](../../../../UML/Project/governance/classes/decision-model.md) |
+| `D3` | Draft, proposal, acceptance and supersession with preserved lineage | `state` | [Architecture Governance - Decision Lifecycle](../../../../UML/Project/governance/states/decision-lifecycle.md) |
+| `D1`, `D2` | Accepted policy becomes audited runtime configuration and gate evidence | `sequence` | [Architecture Governance - Runtime Policy Change](../../../../UML/Project/governance/sequence/runtime-policy-change.md) |
+
+The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
+<!-- END BT-SEMANTIC-DEPTH:9 -->
+
 ## 10. Quality Requirements
 
 `tests/gates/test_adr0039_runtime_surface_governance.py`, `test_table_b_anti_hardcoding_gate.py`.
@@ -637,6 +728,25 @@ For production, `.env` files are not the recommended long-term secret source. Pr
 ## 11. Risks & Technical Debt
 
 Incomplete DECISION_REGISTRY vs filesystem—run [`scripts/adr_retirement_audit.py`](../../../../scripts/adr_retirement_audit.py) before bulk delete.
+
+<!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
+### Git-grounded drift profile
+
+ADRs were absorbed and archived while runtime policy services expanded. Models preserve decision lineage and prevent archive text or operator projections from becoming a second truth.
+
+| Tracked files | Lifetime commits | Recent path touches | Recent renames |
+| ---: | ---: | ---: | ---: |
+| 116 | 72 | 255 | 0 |
+
+| Drift claim | Status | Concern | Target direction |
+| --- | --- | --- | --- |
+| `DRIFT-011` | `superseded` | MVP completion labels are not architecture authority | Use capability lifecycle states proposed, implemented, integrated, proven and regressed. Only production-path evidence advances a capability to proven. |
+| `DRIFT-012` | `confirmed_current` | Architecture coverage metrics can hide shallow semantics | Keep model selection concern-driven and source-bound. Coverage remains supporting evidence; semantic analyzability, drill-down and correspondence determine acceptance. |
+
+[Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)
+
+These entries are review inputs, not automatic design decisions. Conflicting/open items close only through accepted target decisions and the listed behavioral evidence.
+<!-- END BT-SEMANTIC-DEPTH:11 -->
 
 ## 12. Glossary
 
