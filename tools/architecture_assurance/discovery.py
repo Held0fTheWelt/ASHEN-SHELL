@@ -425,8 +425,8 @@ def resolve_declared_path(
                         path
                         for path in candidate.rglob("*")
                         if (
-                            path.is_file()
-                            and not _is_transient(path)
+                            not _is_transient(path)
+                            and path.is_file()
                             and path.suffix.lower() in _SUPPORTED_FILES
                         )
                     )

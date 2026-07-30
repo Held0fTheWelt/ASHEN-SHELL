@@ -41,4 +41,6 @@ python -m tools.architecture_assurance canon-export \
 
 Repeating `generate`, `canon-manifest`, report emission or `canon-export` with
 unchanged inputs produces byte-identical output and reports `unchanged`.
-`--dry-run` computes the same action plan but does not write.
+Text fingerprints normalize CRLF and LF before hashing, so the same Git content
+has one canon on Windows and Linux. `--dry-run` computes the same action plan
+but does not write.

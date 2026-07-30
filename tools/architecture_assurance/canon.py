@@ -6,19 +6,37 @@ from collections.abc import Iterable, Mapping
 import hashlib
 import json
 from pathlib import Path
-import shutil
 from typing import Any
 
 
 CANON_SCHEMA_VERSION = "bt.akdb_canon_manifest.v1"
+_TEXT_SUFFIXES = {
+    ".css",
+    ".html",
+    ".ini",
+    ".js",
+    ".json",
+    ".md",
+    ".puml",
+    ".py",
+    ".sql",
+    ".toml",
+    ".xml",
+    ".yaml",
+    ".yml",
+}
+_TEXT_FILENAMES = {".gitignore"}
+
+
+def canonical_file_bytes(path: Path) -> bytes:
+    content = path.read_bytes()
+    if path.suffix.lower() in _TEXT_SUFFIXES or path.name.lower() in _TEXT_FILENAMES:
+        return content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return content
 
 
 def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    return hashlib.sha256(canonical_file_bytes(path)).hexdigest()
 
 
 def canonical_paths(
@@ -57,7 +75,7 @@ def build_canon_manifest(
         {
             "path": relative,
             "sha256": sha256_file(repo_root / relative),
-            "bytes": (repo_root / relative).stat().st_size,
+            "bytes": len(canonical_file_bytes(repo_root / relative)),
         }
         for relative in canonical_paths(config, repo_root)
     ]
@@ -151,7 +169,8 @@ def export_canon(
     for item in manifest["files"]:
         source = repo_root / item["path"]
         target = destination / item["path"]
-        changed = not target.is_file() or sha256_file(target) != item["sha256"]
+        canonical_content = canonical_file_bytes(source)
+        changed = not target.is_file() or target.read_bytes() != canonical_content
         actions.append(
             {
                 "path": item["path"],
@@ -166,7 +185,7 @@ def export_canon(
         )
         if changed and not dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source, target)
+            target.write_bytes(canonical_content)
     return {
         "schema_version": "bt.akdb_canon_export_result.v1",
         "dry_run": dry_run,
@@ -181,6 +200,6 @@ def tree_digest(root: Path, paths: Iterable[str]) -> str:
         path = root / relative
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        digest.update(canonical_file_bytes(path))
         digest.update(b"\0")
     return digest.hexdigest()

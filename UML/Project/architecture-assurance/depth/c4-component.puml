@@ -16,7 +16,7 @@ rectangle "anchor_for_declared_path\nResponsibility: python\nEvidence contract: 
 rectangle "build_canon_manifest\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../tools/architecture_assurance/canon.py source]]" as E5
 rectangle "build_manifest\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]" as E6
 rectangle "build_report\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../tools/architecture_assurance/audit.py source]]" as E7
-rectangle "canonical_paths\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../tools/architecture_assurance/canon.py source]]" as E8
+rectangle "canonical_file_bytes\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../tools/architecture_assurance/canon.py source]]" as E8
 
 E1 ..> ROOT : "evidence for boundary"
 E2 ..> ROOT : "evidence for boundary"

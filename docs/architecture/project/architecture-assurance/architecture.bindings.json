@@ -419,7 +419,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 52,
+        "line": 70,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_canon_manifest"
@@ -431,7 +431,19 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 24,
+        "line": 31,
+        "module": "tools.architecture_assurance.canon",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "canonical_file_bytes"
+      },
+      "id": "python:tools.architecture_assurance.canon:canonical_file_bytes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/canon.py",
+        "kind": "python",
+        "line": 42,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "canonical_paths"
@@ -443,7 +455,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 140,
+        "line": 158,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "export_canon"
@@ -455,7 +467,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 72,
+        "line": 90,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_canon_manifest"
@@ -467,7 +479,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 16,
+        "line": 38,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "sha256_file"
@@ -479,7 +491,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 178,
+        "line": 197,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "tree_digest"
@@ -491,7 +503,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 76,
+        "line": 94,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "verify_canon_manifest"
@@ -503,7 +515,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/canon.py",
         "kind": "python",
-        "line": 109,
+        "line": 127,
         "module": "tools.architecture_assurance.canon",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "write_canon_manifest"
@@ -875,6 +887,7 @@
     "python:tools.architecture_assurance.audit:build_report": "B-depth-audit",
     "python:tools.architecture_assurance.audit:evaluate_gate": "B-depth-audit",
     "python:tools.architecture_assurance.canon:build_canon_manifest": "B-canon-projection",
+    "python:tools.architecture_assurance.canon:canonical_file_bytes": "B-canon-projection",
     "python:tools.architecture_assurance.canon:canonical_paths": "B-canon-projection",
     "python:tools.architecture_assurance.canon:export_canon": "B-canon-projection",
     "python:tools.architecture_assurance.canon:render_canon_manifest": "B-canon-projection",
