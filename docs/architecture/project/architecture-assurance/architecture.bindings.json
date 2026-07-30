@@ -340,7 +340,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 19,
+        "line": 20,
         "object": "tools/architecture_assurance/config.json#gate",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -384,7 +384,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 22,
+        "line": 23,
         "object": "tools/architecture_assurance/config.json#subsystems",
         "schema_version": "bt.source_anchor.v1"
       },

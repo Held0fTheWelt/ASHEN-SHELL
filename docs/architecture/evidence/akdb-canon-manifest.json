@@ -6,6 +6,11 @@
       "sha256": "ab2fb996cb66c9b2cbe27f0992350293ed16aba41c2dbe7e5e2808c53e25467e"
     },
     {
+      "bytes": 2605,
+      "path": ".gitignore",
+      "sha256": "b7da55ed35eb9f19211d9712148bf8e8c89fe2b49f16362b34cf2aa697bcbeb2"
+    },
+    {
       "bytes": 647,
       "path": "ArchitecturalKnowledgeDB/README.md",
       "sha256": "17463e531bd3dab2a4f2af2158a686076edc4fd2da45af6e54bc3755a6c2c73d"
@@ -433,7 +438,7 @@
     {
       "bytes": 34558,
       "path": "docs/architecture/project/architecture-assurance/architecture.bindings.json",
-      "sha256": "67cb4b348652a92e9a79527f9f18d1629a72b81cac7be0dc506c8d45aafc58dc"
+      "sha256": "12a7c68aa55c516af3b521800466571524d5e3cd54e16d55121dd264edc42eaa"
     },
     {
       "bytes": 6895,
@@ -463,7 +468,7 @@
     {
       "bytes": 28641,
       "path": "docs/architecture/project/governance/architecture.bindings.json",
-      "sha256": "05477335da8a6d0a336e29bd4e7dac7dca4e3d8901afdacbf1f720d3d2df2a15"
+      "sha256": "c15b0ab0e2c5f3c3bb720de053fe425237788d49d5db80a2096b0289538c3405"
     },
     {
       "bytes": 45401,
@@ -571,9 +576,9 @@
       "sha256": "6a502586922cb21ef91498e037f9b403b17fc27cbffa36c8aad88904f4f90a4a"
     },
     {
-      "bytes": 18450,
+      "bytes": 18468,
       "path": "tools/architecture_assurance/config.json",
-      "sha256": "43495ea3e41ddb0e7071ad653231a826dacef2081e50f84713ea9d971d3c02c9"
+      "sha256": "79285d731af77ed8cf22d0cc75239eae3cc97a537a0b2b1065e3fdf1b809f89a"
     },
     {
       "bytes": 16272,

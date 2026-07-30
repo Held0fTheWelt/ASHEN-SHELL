@@ -4,6 +4,7 @@
   "repository_id": "better-tomorrow-main",
   "canon_manifest": "docs/architecture/evidence/akdb-canon-manifest.json",
   "canonical_files": [
+    ".gitignore",
     "docs/architecture/AKDB-AUTHORITY.md",
     "docs/architecture/AKDB-MIGRATION.md",
     "docs/architecture/akdb-project.yaml",
