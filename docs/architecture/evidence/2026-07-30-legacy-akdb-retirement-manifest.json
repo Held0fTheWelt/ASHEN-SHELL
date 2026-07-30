@@ -1,0 +1,690 @@
+﻿{
+    "schema_version":  "bt.legacy_akdb_retirement_manifest.v1",
+    "project_id":  "better-tomorrow",
+    "retired_on":  "2026-07-30",
+    "embedded_version":  "0.1.0",
+    "replacement":  {
+                        "integration":  "external-read-only",
+                        "lock_file":  "tools/architecture_assurance/akdb.lock.json",
+                        "version":  "0.3.0",
+                        "commit":  "63eaf90a4ddf9e837aa51ffdc62c31178b90aa68"
+                    },
+    "policy":  {
+                   "tracked_copy":  "removed-after-hash-inventory",
+                   "runtime_state":  "retained-in-original-working-copy-for-manual-rollback-only",
+                   "automatic_migration":  false,
+                   "reason":  "Legacy databases are not trusted as canonical Better Tomorrow architecture evidence."
+               },
+    "tracked_file_count":  126,
+    "tracked_files":  [
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/.gitignore",
+                              "bytes":  94,
+                              "sha256":  "c1f7a85a4b35ebe6aff443e54536807c0d259f97d19192e901e8a35d0259c921"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/Dockerfile",
+                              "bytes":  609,
+                              "sha256":  "fee4abd92eba4c6ebfbd52cb6c44160b2af94c1a388ce13e567611cb917555ef"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/README.md",
+                              "bytes":  5221,
+                              "sha256":  "9adaea4f7c3f85a424af1a9ab425e2cc189dc36b78f61f6744faa2daf59c1e70"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/__init__.py",
+                              "bytes":  95,
+                              "sha256":  "be4c46fea229b78f534633ee435c1b9cd4cbd5aae70f24a10164e5f157eb2612"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/api/__init__.py",
+                              "bytes":  36,
+                              "sha256":  "ada82d96f31584e717a9d8733590728a1f9f4d2e0238c92c90923aa6aa2cb332"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/api/app.py",
+                              "bytes":  26968,
+                              "sha256":  "5f9c6d1a7a9d5ce07278434d92bf3539dec174d54f72a8e14fd80fbde405495e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/cli.py",
+                              "bytes":  26377,
+                              "sha256":  "d53c60b93085770c76e04b7d052319b18893df30d7018bc9fe3b76aa47b540bd"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/completeness/__init__.py",
+                              "bytes":  0,
+                              "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/completeness/archetype_requirements.yml",
+                              "bytes":  438,
+                              "sha256":  "17c05bfa32482852c848366b28a1bd97ea6a6d77001877e1497c078d69035785"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/config.py",
+                              "bytes":  1711,
+                              "sha256":  "e2142a1d23c37389aab1811a7ceb21990dfe7c858864ed22ae05c8a903ef0cbf"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/__init__.py",
+                              "bytes":  25,
+                              "sha256":  "1c89cd95457e1c8630c9c939d4a1c2e51396d14476a3b014e7d5f12ecbf4302d"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/connection.py",
+                              "bytes":  1190,
+                              "sha256":  "df699ba7313312a2b799fe6ae4762de46ca7e50dc1a857815b948c0dc9296157"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/migrations.py",
+                              "bytes":  955,
+                              "sha256":  "4c2c4262c78f25160820110f8340edc2007d18b0ebb41eb98bdaeccfd5333ecf"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/schema/001_initial.sql",
+                              "bytes":  8957,
+                              "sha256":  "3454efb196a6616b050a846537acda106894f3b18a159fb123e4ac22f551751e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/schema/002_full_plan.sql",
+                              "bytes":  772,
+                              "sha256":  "95491d6f92314d1efc1921c3bfa405fb5c13b6ed45c606ec189a22ccc794c4f7"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/schema/003_cognition.sql",
+                              "bytes":  336,
+                              "sha256":  "9e28763fcd68b2f81ec5058d5f61051630478387a3def8ee83aab0e03f7dbec2"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/schema/004_entities.sql",
+                              "bytes":  1390,
+                              "sha256":  "798847dc537831778314cb7252b10c1f7379b0cd56cb4b38801feaedcd9ee090"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/schema/005_item_memory.sql",
+                              "bytes":  287,
+                              "sha256":  "185b32101ee97d5c39ea181ffab81d109807e1686f0b02ed0e206babe149e71b"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/db/schema/006_embeddings.sql",
+                              "bytes":  218,
+                              "sha256":  "a9e750671101a3a0bef1cc82d4df0108026d79dbf5508790c053e004c193449c"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/ids.py",
+                              "bytes":  706,
+                              "sha256":  "5d20ae428a3b45e509cd620b339c6dc1c54141769ae79b350dce6d9f9d0e0d9f"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/mcp.py",
+                              "bytes":  52760,
+                              "sha256":  "b2a60417f02492fa7f934a5cff8d56bd07489682cac4dcf8f0dc9fb7532a80d8"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/mcp_stdio.py",
+                              "bytes":  3864,
+                              "sha256":  "7ac28dbe1c9a64c76f92a47be9c78f6de255311df5da51d4213ee5155f0be373"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/models.py",
+                              "bytes":  7386,
+                              "sha256":  "1bfb0c89a9c44f6e1a0ecbd53eb81f0ad2aefd1da2d4100cae657543b7034952"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/__init__.py",
+                              "bytes":  29,
+                              "sha256":  "ba9a6b7d97164bdb9877eea9af7857923784c555ef8f8c0b1a82d3bfbfddfd29"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/authoring.py",
+                              "bytes":  9263,
+                              "sha256":  "53a47e55e5f722960ea9334aca036650077a4351c27c18da3976aaad756549b0"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/cognition.py",
+                              "bytes":  11353,
+                              "sha256":  "594411e59d80579384892eacb9917f02972cafa6dfd591c65a9da1fd00d4b5a1"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/completeness.py",
+                              "bytes":  7372,
+                              "sha256":  "844479ce9f2deba14f48b057d2cdb7a45a49e516ca0080a34452506354bb6fd0"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/consistency.py",
+                              "bytes":  20261,
+                              "sha256":  "4107ebc6ee4761c2ea18e93a067c12e770bfce04d361860d2421fbf7d0580db2"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/context.py",
+                              "bytes":  12378,
+                              "sha256":  "7d75c688a2e0ece77e4e862448285ebac0207eb56ecd8876fe51d6b648bc13a8"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/git_scanner.py",
+                              "bytes":  15927,
+                              "sha256":  "5ecf8b9a5091285adea11d24077af9f4ce443c5b0c47b299a2bee6931d045454"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/guardrail.py",
+                              "bytes":  1651,
+                              "sha256":  "15611ccb18f74fa42937d8bc31da9f49242a2164d808034d0c33ede7e67a1f4e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/import_export.py",
+                              "bytes":  42942,
+                              "sha256":  "cdc21dfcdc4c5d52c556e62ed019cd7d1ae4fe4416297fd0af9afcbbb394ecb0"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/jsonutil.py",
+                              "bytes":  414,
+                              "sha256":  "62972262dd1106da1fba0e82624f86dd8b55cc279785b2daca875af0148d0e5e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/knowledge.py",
+                              "bytes":  32126,
+                              "sha256":  "6c26a4c59628bb75e02eb14422c62b2a0a2a66f9850451d4fd1cf1ae3d927e83"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/memory.py",
+                              "bytes":  2501,
+                              "sha256":  "8e681c3f4d1883e2456adc5800e43eac69e563f8576bb9862616d3810e684e2a"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/origin.py",
+                              "bytes":  9068,
+                              "sha256":  "773dc2ccb8e493e8b31bdbbd302f8a549a5f94f460e419d7d1d3c8d3ed567dcf"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/projects.py",
+                              "bytes":  6917,
+                              "sha256":  "2c2e9c1aea918477a2a2419ba711444567f2c9e3a49625d293d06d7557cdaade"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/reasoning.py",
+                              "bytes":  12334,
+                              "sha256":  "671104e19ce8a0189d6dab6468612b9e4a6c931328ced90ccb4021a48f0e88f4"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/recall_backend.py",
+                              "bytes":  5483,
+                              "sha256":  "d27cde67f2e0c940e9499f55e4748b5c4e47a1d6c7aa862284496b1beaade121"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/reingest.py",
+                              "bytes":  3689,
+                              "sha256":  "979dd8f6bc3dccecc132414c9d2b8ec821a3de4de0b7386a9e2a6b20d63ebb66"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/repositories.py",
+                              "bytes":  5438,
+                              "sha256":  "2e68e30cec18adc63a3a1d7387d1a3f4d1ed9b840edcd4b3c1f2082aedec0848"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/review.py",
+                              "bytes":  2737,
+                              "sha256":  "ffd27cc1dce1069a0c3b5bb66ff35bc68803364005f15035b814415908547ecd"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/roadmap.py",
+                              "bytes":  4106,
+                              "sha256":  "9bd050496fed6203454284b19adb32b5d6aa1e4d470057f87cd6508e09dd418c"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/search.py",
+                              "bytes":  4933,
+                              "sha256":  "b48ea4e745b17d47c552410db83a0dabab5ca52fcfcc16e19bc8643fe4d02f3e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/setup.py",
+                              "bytes":  4126,
+                              "sha256":  "0bf689c52235efc0fc064cee8178e0e807cd6f7e812210577e53a590047630c9"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/staleness.py",
+                              "bytes":  46322,
+                              "sha256":  "865582324b6eb40cc81c887a13eaf358bff2fd57b02adfbb5a8646677ebefc1f"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/survey.py",
+                              "bytes":  8042,
+                              "sha256":  "f5d55ff6754580c7a11c84fa413245a10e2b23086cea7f286fa4c8f9e75c6958"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/services/uml.py",
+                              "bytes":  33117,
+                              "sha256":  "888d113d020f625df74db3fad97965b9a83f18bbf4c43af8e95db892b049d80a"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/templates/starter/README.md",
+                              "bytes":  555,
+                              "sha256":  "82df443a9da0b3ee05c68f35b8823f664dcdaeb78b95128949a94e5b3399e43b"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/templates/starter/adr/ADR-0001-bootstrap-architecture-knowledge-base.md",
+                              "bytes":  1495,
+                              "sha256":  "2905f65ad778688d08db64c34afaa5cbbda370e762398b55938268fc62aa65ee"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/templates/starter/adr/ADR-0002-keep-adr-uml-and-specs-linked.md",
+                              "bytes":  1179,
+                              "sha256":  "2e7c17030f44a14cc73b3db7cfdabafef0ef7d111178753a793f496796feb5f6"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/templates/starter/specs/ARCHITECTURE_SPEC.md",
+                              "bytes":  960,
+                              "sha256":  "02e240f225e3ebccbdffd4effe212e4a8eaa1403adf670dcba2e021104222f00"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/templates/starter/uml/knowledge-refresh-flow.mmd",
+                              "bytes":  249,
+                              "sha256":  "75371ca2d0d0665059b25c7109ee1641a60be464c7f0ef1abe64cb4e3229b8d0"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/architectural_knowledge_db/templates/starter/uml/system-context.puml",
+                              "bytes":  624,
+                              "sha256":  "444264bd58362dc9f20f4e1660ee646609a748aa9ccca17f159065485ce108c6"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docker-compose.yml",
+                              "bytes":  323,
+                              "sha256":  "800af1d2c6229a580770a2531091015e5f87fc657a360d939f8c8bf2653a1c26"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/README.md",
+                              "bytes":  2857,
+                              "sha256":  "fdf1b221c9035264c2f2899bc46a20e764ac2c32602e91442c0e37ec6ae6fd81"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/architecture/ArchitecturalKnowledgeDB_Knowledge_DB_Git_Provenance_Spec.docx",
+                              "bytes":  38477,
+                              "sha256":  "fb30524ab544273d4f3a165ec262c21c299a16be3e8c00a24626e5808f097a78"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/architecture/GIT_PROVENANCE_AND_EVOLUTION_SPEC.md",
+                              "bytes":  3882,
+                              "sha256":  "f4d13fab971223efcbe7bb881385577f3b74a6a4bfcf0a8ed04dce3ac2d5f4eb"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/architecture/MULTI_PROJECT_MODEL_SPEC.md",
+                              "bytes":  2333,
+                              "sha256":  "060703e5ffa14e654d768e2f7f7e607ac542609a2eb54539c54e803b38119482"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/architecture/README.md",
+                              "bytes":  990,
+                              "sha256":  "c79d05439e54df97cc24c79e3c2fd7838bfd547642a597b31b4cae72905028ec"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/architecture/SPEC_ArchitecturalKnowledgeDB_Knowledge_DB_Git_Provenance.md",
+                              "bytes":  10210,
+                              "sha256":  "ed2be884f024bad72f0efa4d786c0264c8c3e96ffa4705c8ea43e6a17e9d23bc"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/architecture/diagrams/architectural_knowledge_db_architecture.mmd",
+                              "bytes":  798,
+                              "sha256":  "32f3f24f6338559ed2975d21740744cb16308827c2bd12d7b02f5c2cc9452842"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/contracts/API_CONTRACT_OPENAPI.yaml",
+                              "bytes":  5558,
+                              "sha256":  "0ba744a1bd89803cc0e92e601fe77f9446248e61ec5c6c9d6a51916b145c92a0"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/contracts/MCP_TOOLS_MANIFEST.json",
+                              "bytes":  5241,
+                              "sha256":  "99cd81b846b7ba2fd1091047316346f41eb823017dff1b8fa89768573fa3f0eb"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/contracts/README.md",
+                              "bytes":  389,
+                              "sha256":  "da53ccd2f93c7f167f3a062c4495656bb793553b3b9c9a07fdcfa34f47bfca58"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/decisions/ADR-0003-git-provenance-evolution-layer.md",
+                              "bytes":  2789,
+                              "sha256":  "3a69e9ac5268fe0502fc2e9fa8d9cb0f308df514eede2666a4341119af648a96"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/decisions/ADR-0004-multi-project-knowledge-spaces.md",
+                              "bytes":  1994,
+                              "sha256":  "963a1312fc32577e686386d77fd1a67ad76398b7bed655a7a5b07ce3eb4a31d8"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/decisions/README.md",
+                              "bytes":  495,
+                              "sha256":  "bf14566117f573320e0dc877f854eec5cff9194830c4345318d819ea45c543de"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/README.md",
+                              "bytes":  485,
+                              "sha256":  "9a10c5c870de9aa2aecec0fea337cc34bb7e8bce23e6209de6e873527797a3ea"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/architectural-knowledge-db.projects.yaml",
+                              "bytes":  1974,
+                              "sha256":  "d0b4f616ad1f2f94d201b1f8013fc38c2b9cd52284b73fad6bae812251d77649"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/docker-compose.yml",
+                              "bytes":  774,
+                              "sha256":  "bd06fb1f19148c4d9fa75ef6e01fd7a2a8433254575efd777d0040d4b002fe2b"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/standalone-sample/README.md",
+                              "bytes":  1272,
+                              "sha256":  "a6c69894b899ab89c39649ede8c7ce96b178ced3e672a37e94e2f51903b4b9d7"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/standalone-sample/adr/ADR-0001-folder-first-knowledge.md",
+                              "bytes":  399,
+                              "sha256":  "fb172cb6a76bc06815e3b16e2561b5b91daec6603dad970f9e4803505132b056"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/standalone-sample/docs/CURRENT_REALITY.md",
+                              "bytes":  314,
+                              "sha256":  "fa3a229d99e82e66a525de49bde5c304b341797cdb5d6f89fbb045ed54544855"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/standalone-sample/knowledge/definitions.json",
+                              "bytes":  280,
+                              "sha256":  "79b1f2196f1f33bbf3bcf9b47a7d740faa581ff108da0141d55b9fbc9b7ea32c"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/standalone-sample/knowledge/rules.json",
+                              "bytes":  253,
+                              "sha256":  "ea5d74d23a8172415e5287f243bc9e30eb419f91b4825e078b01f51f380a1f82"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/standalone-sample/knowledge/source_areas.json",
+                              "bytes":  256,
+                              "sha256":  "7d51d4dc35db722e88d096876c395f0e56209a9609aa78f2a7bf62ebc5286467"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/examples/standalone-sample/uml/tool-map.mmd",
+                              "bytes":  195,
+                              "sha256":  "097a9709f9d95aa74d2694ce6da71ea7b62aafe548573ef1b50e8cc66019d794"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/operations/MCP.md",
+                              "bytes":  4636,
+                              "sha256":  "632db72d1599ef7002b59b2bf9a2c146646b38c7f4a07e1e4e9749902e5144e5"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/operations/README.md",
+                              "bytes":  391,
+                              "sha256":  "ca7407d6853c93137b010fc72cb59f5da76dae496fe76ce837fe1ad0fb410027"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/operations/RUNBOOK.md",
+                              "bytes":  1968,
+                              "sha256":  "c8ef48e5a1a05cd56a8aa10555c0409180722186bc5a7a3a202a0cda11b6bb2e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/planning/AGENT_IMPLEMENTATION_PROMPT.md",
+                              "bytes":  1884,
+                              "sha256":  "f459e89237507171d87b35320f42e2ac145ec0812551cd443c060f2d90740219"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/planning/IMPLEMENTATION_BACKLOG.md",
+                              "bytes":  2537,
+                              "sha256":  "52514819c08c67d31f05bd55517e34ce6aa6edac4166c280d8bffed2c95081c4"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/planning/MVP_Roadmap.md",
+                              "bytes":  3257,
+                              "sha256":  "ff7d5faaee08511cd65adc365688a4438e3a2ecc96bc9e63db68cedfdcb5fbb9"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/planning/README.md",
+                              "bytes":  447,
+                              "sha256":  "2ad39829f106eaab78f849c2db71cf0fde3c6b226d6bb8afe6e0e5a65c497523"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/schema/DATA_MODEL_SQLITE_MULTI_PROJECT.sql",
+                              "bytes":  8717,
+                              "sha256":  "cb6c08492d43a99feb05e51462adb71a6bc7b400f509bbed35afb24eea2f7f2c"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/schema/README.md",
+                              "bytes":  385,
+                              "sha256":  "6b4160e31ffe09b973a8f352e956b2e3abedc28bda4955c02b0d5a59a2d14b7c"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/specs/README.md",
+                              "bytes":  2323,
+                              "sha256":  "c5c79f9bfcea3294384ed17447919f84b22335c49b4ac186384a53540d62b294"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/specs/SPEC_01_ADR_ROUNDTRIP_AND_AUTHORING.md",
+                              "bytes":  9011,
+                              "sha256":  "41b40e77effa18df0a874685173636150ea4e480e4b50290887befce5093d2d5"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/specs/SPEC_02_STRUCTURED_UML_ROUNDTRIP.md",
+                              "bytes":  7289,
+                              "sha256":  "16a6a021d183cab9259dc7ae90c0e42ead333288336bce3887f8f010c2797e65"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/specs/SPEC_03_CONSISTENCY_AND_CROSSLINK_INTEGRITY.md",
+                              "bytes":  4259,
+                              "sha256":  "4c222c7a73651442b9127207c6bbc72ca5c7eaf35b149307368edcbdd62cb92e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/specs/SPEC_04_GIT_PROVENANCE_AND_STALENESS.md",
+                              "bytes":  4007,
+                              "sha256":  "ec6573e80e2ad66abd2ab4693ad17d990515557c204e5c846507bfd1f6ee8b5b"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/specs/SPEC_05_RETRIEVAL_AND_CONTEXT_PACKS.md",
+                              "bytes":  4077,
+                              "sha256":  "0b3b008eb6c6bd5d7959427f9ab169bc184987e7095bbc029694827ed8229022"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/specs/SPEC_06_ADMIN_UI.md",
+                              "bytes":  2348,
+                              "sha256":  "869742b3d0afbcb5d91d80d7b01f55f0167771df84e93f4ec0834183f8e50207"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/user/FAQ.md",
+                              "bytes":  1441,
+                              "sha256":  "af21f96b39fe9e433fca53cc854b465cebddf7238cf950dde4662ab1e54bbae5"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/user/QUICKSTART.md",
+                              "bytes":  1941,
+                              "sha256":  "2b6cf7872ca69fc04404d242525becf5603adf2ceb8a0846f345e2e71272a860"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/user/SETTINGS_REFERENCE.md",
+                              "bytes":  2995,
+                              "sha256":  "34852e0cee16fad0c491c46af4698ea04da2435b0a5e183dc193cf2a4201cb0b"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/user/THIRD_PARTY_SOFTWARE.md",
+                              "bytes":  932,
+                              "sha256":  "34de905891acca36f92aba0f2884a36fcf4103056cc17ea6e6e53a618a5c6fbe"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/user/TROUBLESHOOTING.md",
+                              "bytes":  2664,
+                              "sha256":  "f47ab587568377568b85603eef4f8e35594c0964968f36547dcc3b51ad6e6b94"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/docs/user/USER_MANUAL.md",
+                              "bytes":  3922,
+                              "sha256":  "e59cf8ee246bb4c157b6b9c511897aa0067cd38a4a584d799f505bda47f77912"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/pyproject.toml",
+                              "bytes":  1105,
+                              "sha256":  "d31ec391674b3cd11578226f6760d25f84cf5e0d6c83ba82a7a040273e1a93dc"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/scripts/refresh_akdb_db.bat",
+                              "bytes":  3303,
+                              "sha256":  "61f82dee36cdfd8d6537cd55c10d148a01acdcc5bd65a85103b2b156715c2cb5"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/conftest.py",
+                              "bytes":  740,
+                              "sha256":  "d7f9de90f80224e1b52423984a6dbaebca5c70e3fe69afead1cc18640431a529"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_adaptive.py",
+                              "bytes":  4544,
+                              "sha256":  "c1bb067e3db65ff4ea312a5c508245e7846a6b5229c24cb6aa61a1a770e926f7"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_api.py",
+                              "bytes":  2890,
+                              "sha256":  "40773c991fe1f70abcdfbbcb0b8264a55962ecc57eeaa7c55607392f3fc38234"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_authoring.py",
+                              "bytes":  5735,
+                              "sha256":  "c021968c5210796725287bcadee1c6c3df3dbd4ca4b0ec3948ff2a0afa0ac819"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_cognition.py",
+                              "bytes":  5983,
+                              "sha256":  "e1fdee283cbc9a87385db10e80556ec41f769111c62a020ba96a43043521ec8c"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_completeness.py",
+                              "bytes":  3773,
+                              "sha256":  "d92acd103357187bb650fd9d1019421a243a14f52587fe075b62a7412e9537cc"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_consistency.py",
+                              "bytes":  3512,
+                              "sha256":  "350770e997b3fad4cabb0448cd7884838ee4662dbe0d1f34cea7d92b06a24356"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_context_pack.py",
+                              "bytes":  4901,
+                              "sha256":  "d528cd0c80c3ca7c7ed9521197457f91663d81fa81d25d65485aed6f971a03da"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_entities.py",
+                              "bytes":  1861,
+                              "sha256":  "61425f6c0f28d7137956f0aead573819c895f54c1d09d8bfc12e36f06ae0481a"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_export_proof.py",
+                              "bytes":  5307,
+                              "sha256":  "b7a26156593034f8feddb55c1afb14965289c32c3a8e8e4170dc9b21ebc94ed5"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_git_scanner.py",
+                              "bytes":  3370,
+                              "sha256":  "e2b7dfa12e8a719935722a9b4dc13da2c8c942179be9e0bbd0caea5f84770770"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_guardrail.py",
+                              "bytes":  1552,
+                              "sha256":  "334bc22f34f79534181cc37f5cb34f9076941c0fb11029e5e959ecc291f3936b"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_import_export.py",
+                              "bytes":  4963,
+                              "sha256":  "31c49e912b411485ffaacf550daaa293886481f5dc186f0a8a0b51fe28156f28"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_mcp_compact.py",
+                              "bytes":  3057,
+                              "sha256":  "c59e8cc6757ba280264962a6fe63135f226dca6c1fd9a0a728c45527fb5a5487"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_mcp_stdio.py",
+                              "bytes":  3906,
+                              "sha256":  "3a03144c6002c9507701863deecc94607c6f98f53082870dcc389ba84e8a214d"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_project_isolation.py",
+                              "bytes":  2173,
+                              "sha256":  "e4ec2eb927138331327d2fa9d5c7d67017f2e888beba881c980c27b30251757e"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_reasoning.py",
+                              "bytes":  3511,
+                              "sha256":  "81c31002771cde4b9ffa4a6de42baa61b51ab6ef1f4c6f39d245fd07a2ad4ec6"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_reingest.py",
+                              "bytes":  3086,
+                              "sha256":  "531948861864637739a9ca48831b16d8389f7b2daddb9aa1f62c29522847f879"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_roadmap.py",
+                              "bytes":  557,
+                              "sha256":  "bfbd429a6203536c3700a447528657e9d4655d0720ed2433da78edc074ab51b8"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_semantic.py",
+                              "bytes":  3446,
+                              "sha256":  "b2a0706f1b84ceeccb89352ffc51c5d20c153ed939550bf61b9b3007920352ad"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_setup.py",
+                              "bytes":  1877,
+                              "sha256":  "8567370befcd737f3d946ffc1ddc4033f964faf4a1c9d1f547b792d20c42a9d3"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_staleness.py",
+                              "bytes":  12035,
+                              "sha256":  "4ddbb00a1e41b9603bf01136669fbf134070136a8fa7055af5119ac991c0b7ff"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_survey.py",
+                              "bytes":  1297,
+                              "sha256":  "ae108d26b0cdd0d6b61b14a384a72f0cf2426ac9f5cf0e1257f217ab6ac621bf"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/tests/test_uml.py",
+                              "bytes":  5500,
+                              "sha256":  "33c5439159080da4951ed40f74f2708b0848774893199091db6f5766036dac50"
+                          }
+                      ],
+    "runtime_file_count":  6,
+    "runtime_state":  [
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/.akdb/architectural_knowledge_db.sqlite",
+                              "bytes":  34193408,
+                              "sha256":  "7d0dcb11274da94d5f75214f2bb73375605d5a677d1c040012ef5a7489b5c1ec",
+                              "disposition":  "retained-in-place-not-ingested"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/.akdb/architectural_knowledge_db.sqlite-shm",
+                              "bytes":  32768,
+                              "sha256":  "e6e22a3016feb617e552789fa8114a26fea02ca521ee2c77464807f13ab68f45",
+                              "disposition":  "retained-in-place-not-ingested"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/.akdb/architectural_knowledge_db.sqlite-wal",
+                              "bytes":  515032,
+                              "sha256":  "13b9e2bc3fc5efa3f400bca078b1aa4c7dc3dddbba4219c9dc688416cd07d3e9",
+                              "disposition":  "retained-in-place-not-ingested"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/.akdb/backup-20260622-111112.sqlite",
+                              "bytes":  220807168,
+                              "sha256":  "684ef2f711ed063f5c526ce192efa2638f67380b48028bfcca34fb8b84cad381",
+                              "disposition":  "retained-in-place-not-ingested"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/.akdb/server.err.log",
+                              "bytes":  404,
+                              "sha256":  "fd2891d06d875ba1248f0f8dde52ca6714502008e0c60a42c41322885e629af8",
+                              "disposition":  "retained-in-place-not-ingested"
+                          },
+                          {
+                              "path":  "ArchitecturalKnowledgeDB/.akdb/server.out.log",
+                              "bytes":  572,
+                              "sha256":  "143613c13bdd690d50220a5ebb8e90b2c37b39af7d1632a9bb34a59e765a21bd",
+                              "disposition":  "retained-in-place-not-ingested"
+                          }
+                      ]
+}

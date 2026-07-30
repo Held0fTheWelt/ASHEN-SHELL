@@ -1,0 +1,793 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/project/DECISION_REGISTRY.md",
+          "file": "docs/architecture/project/DECISION_REGISTRY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-decision-registry-md-decision-registry-md",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "[`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md)"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/README.md",
+          "file": "docs/architecture/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-docs-architecture",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "`docs/architecture/`"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/archive/adr-retired-2026/README.md",
+          "file": "docs/archive/adr-retired-2026/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-docs-archive-adr-retired-2026",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "`docs/archive/adr-retired-2026/`"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/governance/README.md",
+          "file": "docs/governance/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-docs-governance",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "`docs/governance/`"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "tests/gates/test_architecture_documentation_gate.py",
+          "file": "tests/gates/test_architecture_documentation_gate.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "`tests/gates/`"
+        }
+      ],
+      "id": "B-tests-gates",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "`tests/gates/`"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/ADR/README.md",
+          "file": "docs/ADR/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/project/DECISION_REGISTRY.md",
+          "file": "docs/architecture/project/DECISION_REGISTRY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/documentation-consolidation-2026/",
+          "file": "docs/archive/documentation-consolidation-2026/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/dev/architecture/runtime-authority-and-session-lifecycle.md",
+          "file": "docs/dev/architecture/runtime-authority-and-session-lifecycle.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Durable-truth migration verification and archive policy"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "ai_stack/",
+          "file": "ai_stack/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Decision Boundary Record — minimum schema for decision boundary recording"
+        },
+        {
+          "declared_path": "ai_stack/story_runtime/live_runtime_commit_semantics.py",
+          "file": "ai_stack/story_runtime/live_runtime_commit_semantics.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Decision Boundary Record — minimum schema for decision boundary recording"
+        },
+        {
+          "declared_path": "backend/",
+          "file": "backend/alembic/env.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Decision Boundary Record — minimum schema for decision boundary recording"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "world-engine/",
+          "file": "world-engine/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Decision Boundary Record — minimum schema for decision boundary recording"
+        }
+      ],
+      "id": "D10",
+      "state": "bound",
+      "status": "**Origin:** ADR-0024 (retired 2026-06-23)",
+      "title": "Decision Boundary Record — minimum schema for decision boundary recording"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/MVPs/",
+          "file": "docs/MVPs/administration_tool_readiness.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D11",
+      "state": "bound",
+      "status": "**Origin:** ADR-0023 (retired 2026-06-23)",
+      "title": "Decision Framework — risk framing and kill criteria"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": ".env.example",
+          "file": ".env.example",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "backend/app/config.py",
+          "file": "backend/app/config.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Environment Configuration Governance"
+        },
+        {
+          "declared_path": "backend/app/services/governance/observability_governance_service.py",
+          "file": "backend/app/services/governance/observability_governance_service.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Environment Configuration Governance"
+        },
+        {
+          "declared_path": "docker-up.py",
+          "file": "docker-up.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Environment Configuration Governance"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D12",
+      "state": "bound",
+      "status": "**Origin:** ADR-0031 (retired 2026-06-23)",
+      "title": "Environment Configuration Governance"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/documentation-consolidation-2026/",
+          "file": "docs/archive/documentation-consolidation-2026/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Residue Removal Policy — operational criteria and handling"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "**/test_*gate*",
+          "file": "ai_stack/tests/test_dramatic_effect_gate.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Gate Tests Must Not Use Hardcoded Oracles (No “Example-Shaped” Bypasses)"
+        },
+        {
+          "declared_path": "docs/MVPs/adr0039_runtime_surface_governance_inventory.md",
+          "file": "docs/MVPs/adr0039_runtime_surface_governance_inventory.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/MVPs/capability_matrix_live_claim_gates.md",
+          "file": "docs/MVPs/capability_matrix_live_claim_gates.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/MVPs/capability_matrix_status_and_adr_relations.md",
+          "file": "docs/MVPs/capability_matrix_status_and_adr_relations.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/MVPs/capability_matrix_verification_log.md",
+          "file": "docs/MVPs/capability_matrix_verification_log.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0008-validation-strategy-explicit-configurable.md",
+          "file": "docs/archive/adr-retired-2026/adr-0008-validation-strategy-explicit-configurable.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0009-evaluation-is-a-promotion-gate.md",
+          "file": "docs/archive/adr-retired-2026/adr-0009-evaluation-is-a-promotion-gate.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tests/",
+          "file": "tests/architecture_assurance/test_canon.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Gate Tests Must Not Use Hardcoded Oracles (No “Example-Shaped” Bypasses)"
+        },
+        {
+          "declared_path": "tests/gates/test_adr_0039_pi_scope.py",
+          "file": "tests/gates/test_adr_0039_pi_scope.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Gate Tests Must Not Use Hardcoded Oracles (No “Example-Shaped” Bypasses)"
+        },
+        {
+          "declared_path": "tests/gates/test_table_b_anti_hardcoding_gate.py",
+          "file": "tests/gates/test_table_b_anti_hardcoding_gate.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Gate Tests Must Not Use Hardcoded Oracles (No “Example-Shaped” Bypasses)"
+        }
+      ],
+      "id": "D3",
+      "state": "bound",
+      "status": "** Accepted",
+      "title": "Gate Tests Must Not Use Hardcoded Oracles (No “Example-Shaped” Bypasses)"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/evidence/2026-06-23-migration-baseline-audit.md",
+          "file": "docs/architecture/evidence/2026-06-23-migration-baseline-audit.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/legacy/",
+          "file": "docs/archive/adr-retired-2026/legacy/adr-0021-runtime-authority.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D4",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "ADR duplicate resolution"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "'fy'-suites/",
+          "file": "'fy'-suites/'fy'-suites/documentify/generated/roles/admin/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/evidence/adr-retirement-audit.md",
+          "file": "docs/architecture/evidence/adr-retirement-audit.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/project/DECISION_REGISTRY.md",
+          "file": "docs/architecture/project/DECISION_REGISTRY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "scripts/adr_retirement_audit.py",
+          "file": "scripts/adr_retirement_audit.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "SAD-only decision retirement"
+        }
+      ],
+      "id": "D5",
+      "state": "bound",
+      "status": "Accepted · **Origin:** ADR-0017 evolution · **Supersedes:** ADR-first authoring for new decisions",
+      "title": "SAD-only decision retirement"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "backend/",
+          "file": "backend/alembic/env.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Revision review uses a state machine, not loose status strings"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "world-engine/",
+          "file": "world-engine/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Revision review uses a state machine, not loose status strings"
+        }
+      ],
+      "id": "D6",
+      "state": "bound",
+      "status": "**Origin:** ADR-0006 (retired 2026-06-23)",
+      "title": "Revision review uses a state machine, not loose status strings"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "backend/",
+          "file": "backend/alembic/env.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Revision conflicts are explicit governance objects"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "world-engine/",
+          "file": "world-engine/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Revision conflicts are explicit governance objects"
+        }
+      ],
+      "id": "D7",
+      "state": "bound",
+      "status": "**Origin:** ADR-0007 (retired 2026-06-23)",
+      "title": "Revision conflicts are explicit governance objects"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "ai_stack/quality_lab/evaluation_pipeline.py",
+          "file": "ai_stack/quality_lab/evaluation_pipeline.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Evaluation is a promotion gate"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+          "file": "docs/archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D8",
+      "state": "bound",
+      "status": "**Origin:** ADR-0009 (retired 2026-06-23)",
+      "title": "Evaluation is a promotion gate"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/governance/TRACEABILITY.md",
+          "file": "UML/Project/governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "backend/",
+          "file": "backend/alembic/env.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Governance workflows are event-driven"
+        },
+        {
+          "declared_path": "docs/architecture/project/governance/architecture.md",
+          "file": "docs/architecture/project/governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "world-engine/",
+          "file": "world-engine/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Governance workflows are event-driven"
+        }
+      ],
+      "id": "D9",
+      "state": "bound",
+      "status": "**Origin:** ADR-0010 (retired 2026-06-23)",
+      "title": "Governance workflows are event-driven"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 5,
+        "object": "tools/architecture_assurance/config.json#canon_manifest",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#canon_manifest",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 6,
+        "object": "tools/architecture_assurance/config.json#canonical_files",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#canonical_files",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 19,
+        "object": "tools/architecture_assurance/config.json#gate",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#gate",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 3,
+        "object": "tools/architecture_assurance/config.json#project_id",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#project_id",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 4,
+        "object": "tools/architecture_assurance/config.json#repository_id",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#repository_id",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 2,
+        "object": "tools/architecture_assurance/config.json#schema_version",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#schema_version",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
+        "line": 22,
+        "object": "tools/architecture_assurance/config.json#subsystems",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#subsystems",
+      "kind": "content"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "content"
+  ],
+  "out_of_scope": {
+    "content:tools/architecture_assurance/config.json#canon_manifest": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#canonical_files": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#project_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#repository_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#schema_version": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#subsystems": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {},
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Project/governance/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Project/governance/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Project/governance/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Project/governance/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/project/governance/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "project",
+  "subsystem": "governance"
+}

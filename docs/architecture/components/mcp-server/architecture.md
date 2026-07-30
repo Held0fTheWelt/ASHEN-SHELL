@@ -219,6 +219,12 @@ Review this ADR if:
 
 `ai_stack/tests/test_mcp_canonical_surface_extended.py`, MCP integration docs.
 
+## 10. Quality Requirements
+
+- Public handlers, session factories and transport routes must be discoverable.
+- Accepted MCP security and connectivity decisions require source anchors.
+- Required context, container, component and class views remain source-linked.
+
 ## 11. Risks & Technical Debt
 
 Tool surface must stay aligned with canonical registry.

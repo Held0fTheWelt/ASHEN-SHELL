@@ -163,6 +163,13 @@ the engine.
 
 `tests/smoke/test_goc_module_structure_smoke.py`, content validators, GoC gate tests.
 
+## 10. Quality Requirements
+
+- Canonical content roots and runtime template adapters must be discoverable.
+- Accepted authority decisions require bindings to the content compiler,
+  resolver or canonical source tree.
+- Required depth views must link their modeled elements to those anchors.
+
 ## 11. Risks & Technical Debt
 
 No second module in MVP scope—engine must stay generic per mvp-live-runtime-completion anti-creep policy.

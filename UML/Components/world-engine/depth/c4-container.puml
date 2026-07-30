@@ -1,0 +1,30 @@
+@startuml
+title world-engine — Container View
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F7F9FC
+  BorderColor #34495E
+}
+
+rectangle "world-engine\nResponsibility: architecture boundary\nOwns: declarations and implementation evidence\n[[../../../../docs/architecture/components/world-engine/architecture.md SAD]]" as ROOT
+
+rectangle "Auth tickets\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../world-engine/app/auth/tickets.py source]]" as E1
+rectangle "Commit models\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../world-engine/app/story_runtime/commit_models.py source]]" as E2
+rectangle "HTTP API\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../world-engine/app/api/http.py source]]" as E3
+rectangle "Run runtime\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../world-engine/app/runtime/manager.py source]]" as E4
+rectangle "Story runtime manager\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../world-engine/app/story_runtime/manager/__init__.py source]]" as E5
+rectangle "Trace middleware\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../world-engine/app/middleware/trace_middleware.py source]]" as E6
+
+E1 ..> ROOT : "evidence for boundary"
+E2 ..> ROOT : "evidence for boundary"
+E3 ..> ROOT : "evidence for boundary"
+E4 ..> ROOT : "evidence for boundary"
+E5 ..> ROOT : "evidence for boundary"
+E6 ..> ROOT : "evidence for boundary"
+
+legend bottom
+Every element links to its implementation anchor.
+Generated from architecture.bindings.json; do not hand-edit.
+endlegend
+@enduml

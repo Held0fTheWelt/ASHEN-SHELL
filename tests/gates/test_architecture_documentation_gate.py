@@ -57,6 +57,7 @@ COMPLETE_SADS = [
     ARCH / "project" / "observability-traceability" / "architecture.md",
     ARCH / "project" / "security-governance" / "architecture.md",
     ARCH / "project" / "mvp-live-runtime-completion" / "architecture.md",
+    ARCH / "project" / "architecture-assurance" / "architecture.md",
 ]
 
 WORLD_ENGINE_UML = [

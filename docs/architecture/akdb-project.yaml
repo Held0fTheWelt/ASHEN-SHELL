@@ -1,0 +1,20 @@
+schema_version: akdb.project.v1
+project:
+  id: better-tomorrow
+  name: Better Tomorrow
+  repository_id: better-tomorrow-main
+  source_mount: /sources/better-tomorrow
+  integration_mode: external-read-only
+ingestion:
+  include:
+    - docs/architecture/**/*.md
+    - docs/architecture/**/architecture.bindings.json
+    - UML/**/*.puml
+    - tools/architecture_assurance/**/*.json
+  exclude:
+    - ArchitecturalKnowledgeDB/**
+authority:
+  sad: docs/architecture/**/architecture.md
+  bindings: docs/architecture/**/architecture.bindings.json
+  canon_manifest: docs/architecture/evidence/akdb-canon-manifest.json
+  gate_config: tools/architecture_assurance/config.json

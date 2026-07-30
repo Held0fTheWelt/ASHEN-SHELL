@@ -1,0 +1,612 @@
+{
+  "files": [
+    {
+      "bytes": 2313,
+      "path": ".github/workflows/architecture-assurance.yml",
+      "sha256": "ab2fb996cb66c9b2cbe27f0992350293ed16aba41c2dbe7e5e2808c53e25467e"
+    },
+    {
+      "bytes": 647,
+      "path": "ArchitecturalKnowledgeDB/README.md",
+      "sha256": "17463e531bd3dab2a4f2af2158a686076edc4fd2da45af6e54bc3755a6c2c73d"
+    },
+    {
+      "bytes": 2091,
+      "path": "UML/Components/administration-tool/depth/c4-component.puml",
+      "sha256": "6a9511105dcb80ccca4e2d27f7899f550dd008dd8f64d71c2eefc19d83ad7644"
+    },
+    {
+      "bytes": 1724,
+      "path": "UML/Components/administration-tool/depth/c4-container.puml",
+      "sha256": "58a960ea383e73bcca945a5d1e37c996871ab7bc3b8ac2bbf4cf246441864c49"
+    },
+    {
+      "bytes": 1324,
+      "path": "UML/Components/administration-tool/depth/c4-context.puml",
+      "sha256": "b29d0494f1ecd5d97f7bb37f2f1998e9cdf2809f89f4f1cf0e784f4aaa958b56"
+    },
+    {
+      "bytes": 1750,
+      "path": "UML/Components/administration-tool/depth/class-model.puml",
+      "sha256": "137fb4c8b5fa1f56f277a3f829b2cdb9149ab2fde098366640b08ed8ae338dfa"
+    },
+    {
+      "bytes": 2066,
+      "path": "UML/Components/ai-stack/depth/c4-component.puml",
+      "sha256": "2ed72c192504c331322a45c233205b87ab3ddaf2acc8e555a88b5b9a3cd12f14"
+    },
+    {
+      "bytes": 1718,
+      "path": "UML/Components/ai-stack/depth/c4-container.puml",
+      "sha256": "154b9c70065ad1d654ff49437d1b0f8db7f54edb88a518faf52c394b8b61889d"
+    },
+    {
+      "bytes": 1327,
+      "path": "UML/Components/ai-stack/depth/c4-context.puml",
+      "sha256": "81919b28155b348a4ae6bde75a63e4fa1216eaa313c2f0bcae3bcb6ee8db32a1"
+    },
+    {
+      "bytes": 1666,
+      "path": "UML/Components/ai-stack/depth/class-model.puml",
+      "sha256": "1ed2dbb0e97c6e30fb92732c0bcf41efbb0b3ed2e828ad1b2106df7a6f75fea1"
+    },
+    {
+      "bytes": 2174,
+      "path": "UML/Components/backend/depth/c4-component.puml",
+      "sha256": "2f47dd43f6ce48a7f0643b095afa429d61b9a3f238809f2f207e27399334ebee"
+    },
+    {
+      "bytes": 1731,
+      "path": "UML/Components/backend/depth/c4-container.puml",
+      "sha256": "b886a4a9d3309ea5b28d84844dfee1a21df3f4a3ca14700c672a4b3f49254bcd"
+    },
+    {
+      "bytes": 1305,
+      "path": "UML/Components/backend/depth/c4-context.puml",
+      "sha256": "0cadafc14625b7c1d31732ea0187728276dd45eed356adf37413695c230bfeba"
+    },
+    {
+      "bytes": 1683,
+      "path": "UML/Components/backend/depth/class-model.puml",
+      "sha256": "e5ce63d55a1a31d964bd8cf5c87f7a5e70d302cdc2a7b32072f06996757fc23f"
+    },
+    {
+      "bytes": 2112,
+      "path": "UML/Components/content-authority/depth/c4-component.puml",
+      "sha256": "14d5a51e3b8cc9c0369c5802df133651789671c6e0d4af9bdb0b02f7dec6e537"
+    },
+    {
+      "bytes": 2000,
+      "path": "UML/Components/content-authority/depth/c4-container.puml",
+      "sha256": "0c06caba59362c4b0d2278dc1ad854adec679f0c122ae52d43845c819acfcb3d"
+    },
+    {
+      "bytes": 1414,
+      "path": "UML/Components/content-authority/depth/c4-context.puml",
+      "sha256": "7ec50db92b3c7f2177b6c7ce2719407a212673149c14ab8ec0ab8517fa792574"
+    },
+    {
+      "bytes": 1708,
+      "path": "UML/Components/content-authority/depth/class-model.puml",
+      "sha256": "c1b921c27e72d42c62f39430eb4462ee9d9987a8c5bb619b888f1d89e6df441a"
+    },
+    {
+      "bytes": 1883,
+      "path": "UML/Components/frontend/depth/c4-component.puml",
+      "sha256": "d9fb601c79ab01a262e62b67d63dffd3c09cd0bfe81be54efa6c6d66e55739c8"
+    },
+    {
+      "bytes": 1619,
+      "path": "UML/Components/frontend/depth/c4-container.puml",
+      "sha256": "294ab8958275dc0b4c12b3c2fa54b94a7f114c9fa38a68f50591542fd8b5c97d"
+    },
+    {
+      "bytes": 1268,
+      "path": "UML/Components/frontend/depth/c4-context.puml",
+      "sha256": "7458bad25ff08964f4be89f6f1d3fd11c3dbdf6036b7589ff1b7fb54d647b002"
+    },
+    {
+      "bytes": 1540,
+      "path": "UML/Components/frontend/depth/class-model.puml",
+      "sha256": "4a997d6920c116b66f34689b0897eb22887c5a5c76910456adc907cf56272574"
+    },
+    {
+      "bytes": 1997,
+      "path": "UML/Components/mcp-server/depth/c4-component.puml",
+      "sha256": "2ac6f626ba07f1f1ad77bfbb00803a65c1598147209a130ce97c3a0c311ae101"
+    },
+    {
+      "bytes": 1731,
+      "path": "UML/Components/mcp-server/depth/c4-container.puml",
+      "sha256": "b32d8fca78db9e862c1c31c74d9ffeef283bdb15a1a30783b1bdbaf41f12a66e"
+    },
+    {
+      "bytes": 1324,
+      "path": "UML/Components/mcp-server/depth/c4-context.puml",
+      "sha256": "20d94bf707a3f2573a2b5ff84c227907a2e32b1c37bb90bfe2800c6aa212db0e"
+    },
+    {
+      "bytes": 1636,
+      "path": "UML/Components/mcp-server/depth/class-model.puml",
+      "sha256": "92cb9729a07c12ee86c1d6295aaece11cc6ba4ec5e81c7f0c8456874c4a2ee5b"
+    },
+    {
+      "bytes": 2132,
+      "path": "UML/Components/story-runtime-core/depth/c4-component.puml",
+      "sha256": "fc5063f7b8b2c5a3ba48be1644776cc55c46fe5cbcda92a49fc5d580cfc038c6"
+    },
+    {
+      "bytes": 1755,
+      "path": "UML/Components/story-runtime-core/depth/c4-container.puml",
+      "sha256": "0d1341d382c764d3aacde1c528300c78bafd359d5f500bdea6a6d9ba1a8ccb50"
+    },
+    {
+      "bytes": 1367,
+      "path": "UML/Components/story-runtime-core/depth/c4-context.puml",
+      "sha256": "f983a40270ffeac879bdb02f1caa946e7cd8870d7848f8fa77f350a7dc9a2cc0"
+    },
+    {
+      "bytes": 1721,
+      "path": "UML/Components/story-runtime-core/depth/class-model.puml",
+      "sha256": "7c932de34171833a9060330d3ec5f1f3865235fee9a253fe029b70e84cd50f8b"
+    },
+    {
+      "bytes": 1907,
+      "path": "UML/Components/world-engine/depth/c4-component.puml",
+      "sha256": "b008f0709f490e56815d48371fd204422504c0bab9b87579b1425e91172559dc"
+    },
+    {
+      "bytes": 1778,
+      "path": "UML/Components/world-engine/depth/c4-container.puml",
+      "sha256": "8d817ae557af44ba24cdb16ecf4eca180071791950d7b8847c0c5bd4562de36e"
+    },
+    {
+      "bytes": 1328,
+      "path": "UML/Components/world-engine/depth/c4-context.puml",
+      "sha256": "0912db8e8c1b478dc4c12be507ad58faa5215086fdaa36a6a06bae6350a1f553"
+    },
+    {
+      "bytes": 1729,
+      "path": "UML/Components/world-engine/depth/class-model.puml",
+      "sha256": "51fb7d60a3d7b6679035bd2d394a897cc27fcb1286ebfeab28f1852ba8ecb802"
+    },
+    {
+      "bytes": 2114,
+      "path": "UML/Project/architecture-assurance/depth/c4-component.puml",
+      "sha256": "90af0eed5d655f47ec40e663f51ef97ace5835e3bc0469a6b5c5ad582e2f833f"
+    },
+    {
+      "bytes": 1807,
+      "path": "UML/Project/architecture-assurance/depth/c4-container.puml",
+      "sha256": "d094267b775d08fd84f6470d13820941380df7ee46e5c3735a9306c8a4418feb"
+    },
+    {
+      "bytes": 1382,
+      "path": "UML/Project/architecture-assurance/depth/c4-context.puml",
+      "sha256": "b2c8f09ebd02877d76751dd52d25d38dfafc33d61f45d98df3c61e9593b225a6"
+    },
+    {
+      "bytes": 1729,
+      "path": "UML/Project/architecture-assurance/depth/class-model.puml",
+      "sha256": "f6fc2bbd743fea11b3d68dce50f015e159dbf906068b39e87d040ff0eebea7b3"
+    },
+    {
+      "bytes": 1915,
+      "path": "UML/Project/documentation-supply-chain/depth/c4-component.puml",
+      "sha256": "008ffc9ced706e4ffc3ea00cdfd4826883efe7beb94c16ca804b810c7647e0dc"
+    },
+    {
+      "bytes": 1761,
+      "path": "UML/Project/documentation-supply-chain/depth/c4-container.puml",
+      "sha256": "67d188f3c6912d538bad2fdf516952485e1539492c974cbe9f2c2ddda40b5189"
+    },
+    {
+      "bytes": 1360,
+      "path": "UML/Project/documentation-supply-chain/depth/c4-context.puml",
+      "sha256": "a3d5fe979037d9de608e9ab48e0285daa76641e88cd0d81c22eaebbe303b4de1"
+    },
+    {
+      "bytes": 1573,
+      "path": "UML/Project/documentation-supply-chain/depth/class-model.puml",
+      "sha256": "5f596c51f8fc301de1a5f14a48b3b77e3035f11e1fdd096f06c0c9796fe0fefc"
+    },
+    {
+      "bytes": 1849,
+      "path": "UML/Project/ecosystem-topology/depth/c4-component.puml",
+      "sha256": "777ddede1ea7c134f77fc5cc37f59b84c32e57e51a1c0cfa8a0189683d6a9dca"
+    },
+    {
+      "bytes": 1706,
+      "path": "UML/Project/ecosystem-topology/depth/c4-container.puml",
+      "sha256": "8094e9b95d16e75c04120e7d209f56112f7f6cb9f8f4e7b5b626ae5237612fe0"
+    },
+    {
+      "bytes": 1319,
+      "path": "UML/Project/ecosystem-topology/depth/c4-context.puml",
+      "sha256": "8ae5bed069817576ef0f43f3d3b26abfac4e7564109642e0a8f02b104ded457b"
+    },
+    {
+      "bytes": 1501,
+      "path": "UML/Project/ecosystem-topology/depth/class-model.puml",
+      "sha256": "976d765313f376fb99569faa234176838942aaf491cb7c0420e7488700707f4f"
+    },
+    {
+      "bytes": 2395,
+      "path": "UML/Project/governance/depth/c4-component.puml",
+      "sha256": "a0cf6dc39710db6d3a718edafdc99a82492b9405c9d7843bdc59f9c34eb41889"
+    },
+    {
+      "bytes": 1850,
+      "path": "UML/Project/governance/depth/c4-container.puml",
+      "sha256": "49df0fca722769914c4df0f4e2154030d9578746a7ea0a4dd46ce3879d5e8597"
+    },
+    {
+      "bytes": 1389,
+      "path": "UML/Project/governance/depth/c4-context.puml",
+      "sha256": "47f433bb1051eb58cfeaeb200aac7d1099ca616e6b03b8c0cd241fbcbbf8f272"
+    },
+    {
+      "bytes": 1907,
+      "path": "UML/Project/governance/depth/class-model.puml",
+      "sha256": "32b1178d14d2b952e6eff62b946843ff12e622e75a124c82a88e4423d4616759"
+    },
+    {
+      "bytes": 2113,
+      "path": "UML/Project/mvp-live-runtime-completion/depth/c4-component.puml",
+      "sha256": "850bf9e91b3b1b3d023af797934027c67650f2307a15ee50470f5f2d443448e3"
+    },
+    {
+      "bytes": 1780,
+      "path": "UML/Project/mvp-live-runtime-completion/depth/c4-container.puml",
+      "sha256": "c3976230f93b8a2a796d7dd18d69d2c6a815ff67fa48868495c4902c3917313d"
+    },
+    {
+      "bytes": 1394,
+      "path": "UML/Project/mvp-live-runtime-completion/depth/c4-context.puml",
+      "sha256": "ae37b430e8996a9c1af262471bf059d4b2f8cbcbda7b5376a4d921086986c096"
+    },
+    {
+      "bytes": 1725,
+      "path": "UML/Project/mvp-live-runtime-completion/depth/class-model.puml",
+      "sha256": "226125b58f77a48a7546774f7d31a7567a9a366dfe3418ce3dd155c24f891c9c"
+    },
+    {
+      "bytes": 2134,
+      "path": "UML/Project/observability-traceability/depth/c4-component.puml",
+      "sha256": "8f0edd4d75b3a5cc8a6a794cb8851ea5ed50b345f2f3e2989b43390cc0e25381"
+    },
+    {
+      "bytes": 1749,
+      "path": "UML/Project/observability-traceability/depth/c4-container.puml",
+      "sha256": "a8fd6597b7178613e5372c740d3760a66e047cfe05aff875dbe62b8373d6c425"
+    },
+    {
+      "bytes": 1351,
+      "path": "UML/Project/observability-traceability/depth/c4-context.puml",
+      "sha256": "ba95d8fa18248b22afbcf0d13918b2562663510ebfb6d1d0301b31b82351b2d0"
+    },
+    {
+      "bytes": 1717,
+      "path": "UML/Project/observability-traceability/depth/class-model.puml",
+      "sha256": "849ce296579740e989c7703ce8453a7eeeb4b3723410ca81b6321b52123fd592"
+    },
+    {
+      "bytes": 2087,
+      "path": "UML/Project/quality-gates/depth/c4-component.puml",
+      "sha256": "ed985a7635bff146c0c4c8d6bd8a34eab01eb5f54e7033277ebf7d536ed4048d"
+    },
+    {
+      "bytes": 2028,
+      "path": "UML/Project/quality-gates/depth/c4-container.puml",
+      "sha256": "31fd4e0eaec3a768447db32c7a541265bc2b5a154d7bfe96a3e4f2dc25030b3e"
+    },
+    {
+      "bytes": 1484,
+      "path": "UML/Project/quality-gates/depth/c4-context.puml",
+      "sha256": "b05d1c8b607e557dac92be87ccabaacc689118ec2f7db7e34954dc457cfb1368"
+    },
+    {
+      "bytes": 1702,
+      "path": "UML/Project/quality-gates/depth/class-model.puml",
+      "sha256": "234711401309979d42fd0190c48a98ea8d1bc0b87afa26d871b947cad1fefd39"
+    },
+    {
+      "bytes": 2187,
+      "path": "UML/Project/security-governance/depth/c4-component.puml",
+      "sha256": "81afe8296a5bddcf5a5eda9a733320e0c0ac29bc0d58e1ca689e63a40780a545"
+    },
+    {
+      "bytes": 1810,
+      "path": "UML/Project/security-governance/depth/c4-container.puml",
+      "sha256": "2e0d0aecd072c48ea4981b334828ee0c2c8fd5351568c4596e13d30d73a89220"
+    },
+    {
+      "bytes": 1420,
+      "path": "UML/Project/security-governance/depth/c4-context.puml",
+      "sha256": "9cd303a288ae38ead33c28c4e5f39502b98fbae830ca7e061b4c6082edcffaf5"
+    },
+    {
+      "bytes": 1732,
+      "path": "UML/Project/security-governance/depth/class-model.puml",
+      "sha256": "33bc815ba9b014e6633f9de6dfb4f694b1ad58c3f7c5a3c49bb79893f19a937d"
+    },
+    {
+      "bytes": 1936,
+      "path": "docs/architecture/AKDB-AUTHORITY.md",
+      "sha256": "608f439c4d601fe663484fb2b636f173afe3fdd0397d8e9a03540ae96536ab2e"
+    },
+    {
+      "bytes": 1964,
+      "path": "docs/architecture/AKDB-MIGRATION.md",
+      "sha256": "68842c0a5329a78f78e02578f4b5ba86a6eafef25312b3b26e7608284583a4e5"
+    },
+    {
+      "bytes": 664,
+      "path": "docs/architecture/akdb-project.yaml",
+      "sha256": "0ad095f507ebbddd33b99ec49f0a239c27150bed27a42a54a20980c801bea031"
+    },
+    {
+      "bytes": 145233,
+      "path": "docs/architecture/components/administration-tool/architecture.bindings.json",
+      "sha256": "5e77d9dbeeec06017359be1858ed1dcee5535b07a7a2e944bb09e9de92b91869"
+    },
+    {
+      "bytes": 6273,
+      "path": "docs/architecture/components/administration-tool/architecture.md",
+      "sha256": "73a478cc9b3ab034c89b3145c790c3494166788061d6d35bced473f7239eec3d"
+    },
+    {
+      "bytes": 756058,
+      "path": "docs/architecture/components/ai-stack/architecture.bindings.json",
+      "sha256": "8c7d09ecdb216c427079593c534977f44000c94b517fd9fcaa58f5aecdb96f6f"
+    },
+    {
+      "bytes": 79158,
+      "path": "docs/architecture/components/ai-stack/architecture.md",
+      "sha256": "530186859c7aa198551aa8b1880c43927417690f0bd3e08d2ea47e848559427b"
+    },
+    {
+      "bytes": 1356752,
+      "path": "docs/architecture/components/backend/architecture.bindings.json",
+      "sha256": "f707ce8469663af4dcd101de3e9acb85c9d1aa1e6ca3b76d3267dab645973738"
+    },
+    {
+      "bytes": 13686,
+      "path": "docs/architecture/components/backend/architecture.md",
+      "sha256": "6f6679e4a1467e9f7510274113b650b4297d4ce35b77aa35a40fb870d8459ec6"
+    },
+    {
+      "bytes": 226624,
+      "path": "docs/architecture/components/content-authority/architecture.bindings.json",
+      "sha256": "a4a30e81a7ae0f34f25f9f152b94d7c6e0fdb095ca233275130f4cc2f34ec059"
+    },
+    {
+      "bytes": 9586,
+      "path": "docs/architecture/components/content-authority/architecture.md",
+      "sha256": "c22ffde16854830dadffea68436bdfea63da39967584091e1c59434a5d2f0059"
+    },
+    {
+      "bytes": 54437,
+      "path": "docs/architecture/components/frontend/architecture.bindings.json",
+      "sha256": "3aebc50cafbeec182e93635bff7e33d126d50245720d366cbe3ea6d529ee0920"
+    },
+    {
+      "bytes": 41385,
+      "path": "docs/architecture/components/frontend/architecture.md",
+      "sha256": "4ea9273b4cc9ae31e23ebe7a14320adb2b4a067f2b71bfc8c27dd9ebd6bdbd5b"
+    },
+    {
+      "bytes": 61649,
+      "path": "docs/architecture/components/mcp-server/architecture.bindings.json",
+      "sha256": "56334ccabd21d460fc6bba1177c45d78a6c65f85cb75c03f4c64c90c0d2cecbc"
+    },
+    {
+      "bytes": 13783,
+      "path": "docs/architecture/components/mcp-server/architecture.md",
+      "sha256": "8db85cf13c511d99c9f8f95c25f3433db4ef933f410e981141e2b9e4b490d8f0"
+    },
+    {
+      "bytes": 98161,
+      "path": "docs/architecture/components/story-runtime-core/architecture.bindings.json",
+      "sha256": "37b6ffe99675a63130637b16e3d4efd1ea1349cd0c9dd1dff831677d9eed1a6f"
+    },
+    {
+      "bytes": 11588,
+      "path": "docs/architecture/components/story-runtime-core/architecture.md",
+      "sha256": "42db80231564659f0d7a8effdd2d764fd0631be736486526cb51edf31af6efa6"
+    },
+    {
+      "bytes": 276131,
+      "path": "docs/architecture/components/world-engine/architecture.bindings.json",
+      "sha256": "4a740cd46be2e0a7b57cd2287dd0b6ac4773c896374a9a8fe12137fbbd4b96c3"
+    },
+    {
+      "bytes": 45471,
+      "path": "docs/architecture/components/world-engine/architecture.md",
+      "sha256": "ce26d19dbd7644785833b0cbdc3ec091864db50af4a1ddcf9d6dbb8a921fa039"
+    },
+    {
+      "bytes": 44199,
+      "path": "docs/architecture/evidence/2026-07-30-legacy-akdb-retirement-manifest.json",
+      "sha256": "40a9d83bc2fc03b2567a03ee70653fa227e360dc7942b771637521a8c7d646fb"
+    },
+    {
+      "bytes": 34558,
+      "path": "docs/architecture/project/architecture-assurance/architecture.bindings.json",
+      "sha256": "67cb4b348652a92e9a79527f9f18d1629a72b81cac7be0dc506c8d45aafc58dc"
+    },
+    {
+      "bytes": 6895,
+      "path": "docs/architecture/project/architecture-assurance/architecture.md",
+      "sha256": "6acb2a5f52f21c4b267903ac8a01d5672e4729a581142c729a8e0da5700ea71e"
+    },
+    {
+      "bytes": 10376,
+      "path": "docs/architecture/project/documentation-supply-chain/architecture.bindings.json",
+      "sha256": "d1f3fbf2b43c68f4a84a563c3ae86c33432487c8da17c6b561732fb91996ddb6"
+    },
+    {
+      "bytes": 6039,
+      "path": "docs/architecture/project/documentation-supply-chain/architecture.md",
+      "sha256": "ed3667bc9c0dc348024367989f99485a8e6398c6e7d3ab7243a962c731caad96"
+    },
+    {
+      "bytes": 17918,
+      "path": "docs/architecture/project/ecosystem-topology/architecture.bindings.json",
+      "sha256": "fc2bc1db274c5609f2c7121bbfe9d43ec09d86fbb44654b0dd2be411cd35f2c6"
+    },
+    {
+      "bytes": 16195,
+      "path": "docs/architecture/project/ecosystem-topology/architecture.md",
+      "sha256": "eb8f5264fb5961df48831b649198e46450a51bf4812ce1666e924209363569a7"
+    },
+    {
+      "bytes": 28641,
+      "path": "docs/architecture/project/governance/architecture.bindings.json",
+      "sha256": "05477335da8a6d0a336e29bd4e7dac7dca4e3d8901afdacbf1f720d3d2df2a15"
+    },
+    {
+      "bytes": 45401,
+      "path": "docs/architecture/project/governance/architecture.md",
+      "sha256": "8aa9c3420bd84ececcae5f486706befa87d4a156ba61a975a8312ecf30c68056"
+    },
+    {
+      "bytes": 924141,
+      "path": "docs/architecture/project/mvp-live-runtime-completion/architecture.bindings.json",
+      "sha256": "6206c825c260d5ce8a7f56f6b6dab14973c17aa1db6a250c3c2eb75945ffb874"
+    },
+    {
+      "bytes": 122500,
+      "path": "docs/architecture/project/mvp-live-runtime-completion/architecture.md",
+      "sha256": "a9706efcc7bb71af03750d0b74fd141e35ab127b63e9f21803129888d9591162"
+    },
+    {
+      "bytes": 822174,
+      "path": "docs/architecture/project/observability-traceability/architecture.bindings.json",
+      "sha256": "79c718625664fed2ada250b898d1cd35868e0f772e795190cb34edecb0ca4f9d"
+    },
+    {
+      "bytes": 14723,
+      "path": "docs/architecture/project/observability-traceability/architecture.md",
+      "sha256": "a8670ab4ef51063deedb44fc030d088ff7a05b3adcbe85330a5e03ff09ebef60"
+    },
+    {
+      "bytes": 35835,
+      "path": "docs/architecture/project/quality-gates/architecture.bindings.json",
+      "sha256": "518fe172dd660a68594acd3f151cf2ae137006ffe0e294e04bf84c22309e5697"
+    },
+    {
+      "bytes": 18288,
+      "path": "docs/architecture/project/quality-gates/architecture.md",
+      "sha256": "99255c5aa81d8b3322fc7bfb3362ab972f0e661f0e62db7beed4be70c6dbed27"
+    },
+    {
+      "bytes": 143389,
+      "path": "docs/architecture/project/security-governance/architecture.bindings.json",
+      "sha256": "31dae8a2641427f6e8d146e68b1d3843ae319af4e1f7eeb30880a50ccda0c418"
+    },
+    {
+      "bytes": 35804,
+      "path": "docs/architecture/project/security-governance/architecture.md",
+      "sha256": "4d9b6f60c2c93e0d2bdc8a57ec9fca986294bd1f68df05c0b3f524367226d153"
+    },
+    {
+      "bytes": 1492,
+      "path": "tests/architecture_assurance/test_canon.py",
+      "sha256": "8c1bbbfc63e8b2718392e0c1c1a5087f84205e05bccf85c8388886900af00bb5"
+    },
+    {
+      "bytes": 5334,
+      "path": "tests/architecture_assurance/test_disposable_akdb_integration.py",
+      "sha256": "fdc9c67642c63696a63440ed9e0457c3c5e6519b092e99c9ba9b53ce13615aeb"
+    },
+    {
+      "bytes": 2665,
+      "path": "tests/architecture_assurance/test_reporters.py",
+      "sha256": "3bcf072cda2b5046508c0e04e95b8a6f87d8ab1bd74bdd665abeeec7d059b057"
+    },
+    {
+      "bytes": 1065,
+      "path": "tests/architecture_assurance/test_repository_gate.py",
+      "sha256": "bcfc8b3027cbfb91bfe6206b77718c8625b798165bdd3c6184ef5f0e613deb33"
+    },
+    {
+      "bytes": 2826,
+      "path": "tests/architecture_assurance/test_schemas_and_parser.py",
+      "sha256": "964f4c68a78d6ef551748c776f4c1fad8c6185b215e8de6fb557d92bdf256934"
+    },
+    {
+      "bytes": 459,
+      "path": "tests/gates/test_better_tomorrow_architecture_assurance.py",
+      "sha256": "e80b8b80a70ce06e1837cdee7a6388c4642eb9f49105ca997287ac9ad1d235c4"
+    },
+    {
+      "bytes": 364,
+      "path": "tools/architecture_assurance/__init__.py",
+      "sha256": "0b6f9b8b41be14ff532146e74bebf79cd2e5d2710d2e3270dc12382734b85bef"
+    },
+    {
+      "bytes": 49,
+      "path": "tools/architecture_assurance/__main__.py",
+      "sha256": "0f7d54f3fbb1f79a85eb8110f11793db99da6f3c61ee979de5abe9a1b5f3fdb3"
+    },
+    {
+      "bytes": 440,
+      "path": "tools/architecture_assurance/akdb.lock.json",
+      "sha256": "43572b3706da3a4f194e5386c1bf2e1ac83741c7d7ae0e19e8d3acf3a915b422"
+    },
+    {
+      "bytes": 13653,
+      "path": "tools/architecture_assurance/audit.py",
+      "sha256": "49bddfe54e41981a8ab2b6e45bde4824c06bf46cdc124883d06fa22b589a1e8f"
+    },
+    {
+      "bytes": 5784,
+      "path": "tools/architecture_assurance/canon.py",
+      "sha256": "742c4e4b8e68756beab03916a50a0d7d28b6c300bf780172e84a4f693f8fc1d9"
+    },
+    {
+      "bytes": 4061,
+      "path": "tools/architecture_assurance/cli.py",
+      "sha256": "6a502586922cb21ef91498e037f9b403b17fc27cbffa36c8aad88904f4f90a4a"
+    },
+    {
+      "bytes": 18450,
+      "path": "tools/architecture_assurance/config.json",
+      "sha256": "43495ea3e41ddb0e7071ad653231a826dacef2081e50f84713ea9d971d3c02c9"
+    },
+    {
+      "bytes": 16272,
+      "path": "tools/architecture_assurance/discovery.py",
+      "sha256": "c2376b1116ccd2e49e262ab15b023aa52c2c512ed272079e3b4276f82be955cb"
+    },
+    {
+      "bytes": 8299,
+      "path": "tools/architecture_assurance/manifest_builder.py",
+      "sha256": "8173faeaf7344fc96c27e76382f06fdfcdb24c1f4e27b73f4732c5129daec215"
+    },
+    {
+      "bytes": 7160,
+      "path": "tools/architecture_assurance/reporters.py",
+      "sha256": "efe96526649f647f200c03e787774ac14e5e4768402e15c10427806c3f922669"
+    },
+    {
+      "bytes": 4761,
+      "path": "tools/architecture_assurance/sad_parser.py",
+      "sha256": "2d9959a39006adbee235b0983c7689679773e23a644eb15820a0cb8f1ae8db4e"
+    },
+    {
+      "bytes": 6680,
+      "path": "tools/architecture_assurance/schemas.py",
+      "sha256": "c55b40157aae0971797c299c11e38a5aefd4f2eb1b2811f9b0a833105a88728a"
+    },
+    {
+      "bytes": 6180,
+      "path": "tools/architecture_assurance/view_builder.py",
+      "sha256": "af77756346f73fc4c4adb9657700e921663f97494fb0e4a25c0106c075a32a02"
+    }
+  ],
+  "project_id": "better-tomorrow",
+  "repository_id": "better-tomorrow-main",
+  "schema_version": "bt.akdb_canon_manifest.v1"
+}

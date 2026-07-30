@@ -1,0 +1,30 @@
+@startuml
+title backend — Container View
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F7F9FC
+  BorderColor #34495E
+}
+
+rectangle "backend\nResponsibility: architecture boundary\nOwns: declarations and implementation evidence\n[[../../../../docs/architecture/components/backend/architecture.md SAD]]" as ROOT
+
+rectangle "API v1\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../backend/app/api/v1/__init__.py source]]" as E1
+rectangle "Content\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../backend/app/content/builtins.py source]]" as E2
+rectangle "Game proxy\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../backend/app/services/game/game_service.py source]]" as E3
+rectangle "Governance\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../backend/app/services/governance/__init__.py source]]" as E4
+rectangle "Transitional runtime\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../backend/app/runtime/__init__.py source]]" as E5
+rectangle "game_bootstrap\nResponsibility: api\nEvidence contract: source anchor\n[[../../../../backend/app/api/v1/game/bootstrap_template_and_run_list_routes.py source]]" as E6
+
+E1 ..> ROOT : "evidence for boundary"
+E2 ..> ROOT : "evidence for boundary"
+E3 ..> ROOT : "evidence for boundary"
+E4 ..> ROOT : "evidence for boundary"
+E5 ..> ROOT : "evidence for boundary"
+E6 ..> ROOT : "evidence for boundary"
+
+legend bottom
+Every element links to its implementation anchor.
+Generated from architecture.bindings.json; do not hand-edit.
+endlegend
+@enduml

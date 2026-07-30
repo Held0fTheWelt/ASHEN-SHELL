@@ -289,6 +289,13 @@ Gate and promotion-style tests must comply with **[ADR-0039](../../../archive/ad
 
 `frontend/tests/`, MVP5 gate evidence when present.
 
+## 10. Quality Requirements
+
+- Player routes and rendered web surfaces must remain inside the declared
+  discovery lanes.
+- Accepted presentation decisions require executable source anchors.
+- Four bounded, source-linked depth views are mandatory for the component.
+
 ## 11. Risks & Technical Debt
 
 ADR-0033 frontend readiness states partially implemented.

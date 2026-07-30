@@ -1,0 +1,30 @@
+@startuml
+title administration-tool — Class View
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F7F9FC
+  BorderColor #34495E
+}
+
+rectangle "administration-tool\nResponsibility: architecture boundary\nOwns: declarations and implementation evidence\n[[../../../../docs/architecture/components/administration-tool/architecture.md SAD]]" as ROOT
+
+rectangle "build_proxy_target\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]" as E1
+rectangle "build_upstream_proxy_request\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]" as E2
+rectangle "create_app\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../administration-tool/app.py source]]" as E3
+rectangle "forwarded_proxy_headers\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]" as E4
+rectangle "inject_config\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../administration-tool/app.py source]]" as E5
+rectangle "log_proxy_request\nResponsibility: python\nEvidence contract: source anchor\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]" as E6
+
+E1 ..> ROOT : "evidence for boundary"
+E2 ..> ROOT : "evidence for boundary"
+E3 ..> ROOT : "evidence for boundary"
+E4 ..> ROOT : "evidence for boundary"
+E5 ..> ROOT : "evidence for boundary"
+E6 ..> ROOT : "evidence for boundary"
+
+legend bottom
+Every element links to its implementation anchor.
+Generated from architecture.bindings.json; do not hand-edit.
+endlegend
+@enduml

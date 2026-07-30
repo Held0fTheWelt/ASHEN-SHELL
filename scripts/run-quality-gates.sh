@@ -22,6 +22,7 @@
 #   security          - Security-marked tests only
 #   contracts         - Contract-marked tests only
 #   bridge            - Backend-engine bridge contract tests
+#   architecture      - Architecture depth, reports, canon, disposable AKDB test
 #
 #   smoke             - Production-like smoke test
 #   pre-commit        - Fast profile suitable for pre-commit hook
@@ -244,6 +245,24 @@ run_bridge() {
     print_success "Bridge contract tests passed!"
 }
 
+run_architecture() {
+    print_header "PROFILE: Better Tomorrow Architecture Assurance"
+    print_info "Source-bound depth, drift, canon, report formats, and disposable AKDB roundtrip"
+    echo ""
+
+    print_command "python -m tools.architecture_assurance generate --dry-run"
+    python -m tools.architecture_assurance generate --dry-run
+    print_command "python -m tools.architecture_assurance canon-manifest --dry-run"
+    python -m tools.architecture_assurance canon-manifest --dry-run
+    print_command "python -m tools.architecture_assurance audit --json reports/architecture/architecture.json --junit reports/architecture/architecture.junit.xml --sarif reports/architecture/architecture.sarif"
+    python -m tools.architecture_assurance audit \
+        --json reports/architecture/architecture.json \
+        --junit reports/architecture/architecture.junit.xml \
+        --sarif reports/architecture/architecture.sarif
+    python -m pytest tests/architecture_assurance -v --tb=short
+    print_success "Architecture assurance passed!"
+}
+
 run_smoke() {
     print_header "PROFILE: Production-Like Smoke Test"
     print_info "Fast unit tests + contract/security tests"
@@ -318,6 +337,9 @@ case "$PROFILE" in
         ;;
     bridge)
         run_bridge
+        ;;
+    architecture)
+        run_architecture
         ;;
     smoke)
         run_smoke

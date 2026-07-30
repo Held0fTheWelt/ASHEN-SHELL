@@ -1,0 +1,1430 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "tools/mcp_server/handlers/",
+          "file": "tools/mcp_server/handlers/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Handlers"
+        }
+      ],
+      "id": "B-handlers",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Handlers"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend_session_mcp_handler_factories.py",
+          "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Session factories"
+        }
+      ],
+      "id": "B-session-factories",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Session factories"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "tools/mcp_server/tests/",
+          "file": "tools/mcp_server/tests/__init__.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Tests"
+        }
+      ],
+      "id": "B-tests",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Tests"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/mcp-server/TRACEABILITY.md",
+          "file": "UML/Components/mcp-server/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/components/mcp-server/architecture.md",
+          "file": "docs/architecture/components/mcp-server/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/mcp/01_M0_host_and_runtime.md",
+          "file": "docs/mcp/01_M0_host_and_runtime.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tools/mcp_server/",
+          "file": "tools/mcp_server/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP Phase A — Host & Runtime defaults"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "MCP Phase A — Host & Runtime defaults"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/mcp-server/TRACEABILITY.md",
+          "file": "UML/Components/mcp-server/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/components/mcp-server/architecture.md",
+          "file": "docs/architecture/components/mcp-server/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/mcp/02_M0_transport_connectivity.md",
+          "file": "docs/mcp/02_M0_transport_connectivity.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tools/mcp_server/",
+          "file": "tools/mcp_server/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP Transport & Connectivity — Phase A defaults"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "MCP Transport & Connectivity — Phase A defaults"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/mcp-server/TRACEABILITY.md",
+          "file": "UML/Components/mcp-server/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "ai_stack/quality_lab/limit_inventory.py",
+          "file": "ai_stack/quality_lab/limit_inventory.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP Security Baseline — Phase A minimal policy"
+        },
+        {
+          "declared_path": "docs/architecture/components/mcp-server/architecture.md",
+          "file": "docs/architecture/components/mcp-server/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tools/mcp_server/",
+          "file": "tools/mcp_server/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP Security Baseline — Phase A minimal policy"
+        },
+        {
+          "declared_path": "tools/mcp_server/server.py",
+          "file": "tools/mcp_server/server.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP Security Baseline — Phase A minimal policy"
+        },
+        {
+          "declared_path": "tools/mcp_server/tests/test_rate_limit.py",
+          "file": "tools/mcp_server/tests/test_rate_limit.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP Security Baseline — Phase A minimal policy"
+        }
+      ],
+      "id": "D3",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "MCP Security Baseline — Phase A minimal policy"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/mcp-server/TRACEABILITY.md",
+          "file": "UML/Components/mcp-server/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "ai_stack/quality_lab/limit_inventory.py",
+          "file": "ai_stack/quality_lab/limit_inventory.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Central route and MCP rate-limit inventory"
+        },
+        {
+          "declared_path": "ai_stack/tests/test_mcp_canonical_surface_extended.py",
+          "file": "ai_stack/tests/test_mcp_canonical_surface_extended.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Central route and MCP rate-limit inventory"
+        },
+        {
+          "declared_path": "docs/architecture/components/mcp-server/architecture.md",
+          "file": "docs/architecture/components/mcp-server/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D4",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Central route and MCP rate-limit inventory"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_client.py",
+        "kind": "python",
+        "line": 10,
+        "module": "tools.mcp_server.backend_client",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "BackendClient"
+      },
+      "id": "python:tools.mcp_server.backend_client:BackendClient",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 24,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_create"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_create",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 90,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_diag"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_diag",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 179,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_execute_turn"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_execute_turn",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 69,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_get"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_get",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 122,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_logs"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_logs",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 153,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_state"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_state",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 12,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_system_health"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_system_health",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/call_tool_result.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.call_tool_result",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "unwrap_call_tool_result"
+      },
+      "id": "python:tools.mcp_server.call_tool_result:unwrap_call_tool_result",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/call_tool_result.py",
+        "kind": "python",
+        "line": 16,
+        "module": "tools.mcp_server.call_tool_result",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wrap_call_tool_result"
+      },
+      "id": "python:tools.mcp_server.call_tool_result:wrap_call_tool_result",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/config.py",
+        "kind": "python",
+        "line": 7,
+        "module": "tools.mcp_server.config",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Config"
+      },
+      "id": "python:tools.mcp_server.config:Config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/config.py",
+        "kind": "python",
+        "line": 30,
+        "module": "tools.mcp_server.config",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_repo_root"
+      },
+      "id": "python:tools.mcp_server.config:get_repo_root",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/__main__.py",
+        "kind": "python",
+        "line": 81,
+        "module": "tools.mcp_server.diagnostics.__main__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:tools.mcp_server.diagnostics.__main__:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 59,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Classification"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:Classification",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 72,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ClassificationRow"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:ClassificationRow",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 87,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OpeningQualityReport"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:OpeningQualityReport",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 605,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "run_opening_quality_probe"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:run_opening_quality_probe",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 50,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InvalidInputError"
+      },
+      "id": "python:tools.mcp_server.errors:InvalidInputError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 21,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "JsonRpcError"
+      },
+      "id": "python:tools.mcp_server.errors:JsonRpcError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 45,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PermissionDeniedError"
+      },
+      "id": "python:tools.mcp_server.errors:PermissionDeniedError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 40,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RateLimitedError"
+      },
+      "id": "python:tools.mcp_server.errors:RateLimitedError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 35,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolNotFoundError"
+      },
+      "id": "python:tools.mcp_server.errors:ToolNotFoundError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 72,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "FileSystemTools"
+      },
+      "id": "python:tools.mcp_server.fs_tools:FileSystemTools",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 23,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_module"
+      },
+      "id": "python:tools.mcp_server.fs_tools:get_module",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 9,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_modules"
+      },
+      "id": "python:tools.mcp_server.fs_tools:list_modules",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 47,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "search_content"
+      },
+      "id": "python:tools.mcp_server.fs_tools:search_content",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools_search_content.py",
+        "kind": "python",
+        "line": 47,
+        "module": "tools.mcp_server.fs_tools_search_content",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "run_content_regex_search"
+      },
+      "id": "python:tools.mcp_server.fs_tools_search_content:run_content_regex_search",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 47,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_diag_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_diag_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 61,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_execute_turn_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_execute_turn_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 6,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_get_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_get_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 34,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_logs_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_logs_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_state_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_state_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/langfuse_verify/loader.py",
+        "kind": "python",
+        "line": 56,
+        "module": "tools.mcp_server.handlers.langfuse_verify.loader",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_into"
+      },
+      "id": "python:tools.mcp_server.handlers.langfuse_verify.loader:load_into",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers.py",
+        "kind": "python",
+        "line": 26,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_default_mcp_tool_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers:build_default_mcp_tool_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_backend_session.py",
+        "kind": "python",
+        "line": 19,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_backend_session",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_backend_session_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_backend_session:build_backend_session_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_deferred.py",
+        "kind": "python",
+        "line": 10,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_deferred",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "deferred_stub_handler_factory"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_deferred:deferred_stub_handler_factory",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_evaluators.py",
+        "kind": "python",
+        "line": 32,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_evaluators",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_evaluators_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_evaluators:build_evaluators_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_filesystem.py",
+        "kind": "python",
+        "line": 10,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_filesystem",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_filesystem_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_filesystem:build_filesystem_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_governance.py",
+        "kind": "python",
+        "line": 17,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_governance",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_governance_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_governance:build_governance_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_protocol.py",
+        "kind": "python",
+        "line": 8,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_protocol",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RegistryListToolNames"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_protocol:RegistryListToolNames",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 280,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_quality_lab_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:build_quality_lab_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 216,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_find_patterns"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_find_patterns",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 268,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_plan_content_revision"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_content_revision",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 245,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_plan_repair_wave"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_repair_wave",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 256,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_refine_judge_set"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_refine_judge_set",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 163,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_review_judgments"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_judgments",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 204,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_review_mcp_exchange"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_mcp_exchange",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 181,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_review_trace"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_trace",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 229,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_suggest_investigation"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_suggest_investigation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_research.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_research",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_research_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_research:build_research_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/langfuse_tracing.py",
+        "kind": "python",
+        "line": 136,
+        "module": "tools.mcp_server.langfuse_tracing",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "McpLangfuseTracer"
+      },
+      "id": "python:tools.mcp_server.langfuse_tracing:McpLangfuseTracer",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 20,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "begin_telemetry_capture"
+      },
+      "id": "python:tools.mcp_server.logging_utils:begin_telemetry_capture",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 26,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "end_telemetry_capture"
+      },
+      "id": "python:tools.mcp_server.logging_utils:end_telemetry_capture",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 42,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "flush_telemetry_to_backend"
+      },
+      "id": "python:tools.mcp_server.logging_utils:flush_telemetry_to_backend",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 15,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "generate_trace_id"
+      },
+      "id": "python:tools.mcp_server.logging_utils:generate_trace_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 67,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "log_request"
+      },
+      "id": "python:tools.mcp_server.logging_utils:log_request",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 80,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "log_response"
+      },
+      "id": "python:tools.mcp_server.logging_utils:log_response",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 98,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "log_tool_call"
+      },
+      "id": "python:tools.mcp_server.logging_utils:log_tool_call",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/operating_profile.py",
+        "kind": "python",
+        "line": 7,
+        "module": "tools.mcp_server.operating_profile",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OperatingProfile"
+      },
+      "id": "python:tools.mcp_server.operating_profile:OperatingProfile",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/operating_profile.py",
+        "kind": "python",
+        "line": 28,
+        "module": "tools.mcp_server.operating_profile",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "check_session_binding"
+      },
+      "id": "python:tools.mcp_server.operating_profile:check_session_binding",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/operating_profile.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.operating_profile",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "check_tool_access"
+      },
+      "id": "python:tools.mcp_server.operating_profile:check_tool_access",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rate_limiter.py",
+        "kind": "python",
+        "line": 7,
+        "module": "tools.mcp_server.rate_limiter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RateLimiter"
+      },
+      "id": "python:tools.mcp_server.rate_limiter:RateLimiter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/registry.py",
+        "kind": "python",
+        "line": 17,
+        "module": "tools.mcp_server.registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "MCPRegistry"
+      },
+      "id": "python:tools.mcp_server.registry:MCPRegistry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/registry.py",
+        "kind": "python",
+        "line": 8,
+        "module": "tools.mcp_server.registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolSpec"
+      },
+      "id": "python:tools.mcp_server.registry:ToolSpec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/repo_dotenv.py",
+        "kind": "python",
+        "line": 35,
+        "module": "tools.mcp_server.repo_dotenv",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "bootstrap_repo_environment"
+      },
+      "id": "python:tools.mcp_server.repo_dotenv:bootstrap_repo_environment",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 153,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_canon_improvement_preview"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_preview",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 143,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_canon_improvement_propose"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_propose",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 71,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_canon_issue_inspect"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_issue_inspect",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 31,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_aspect_extract"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_aspect_extract",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 133,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_bundle_build"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_bundle_build",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 44,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_claim_list"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_claim_list",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 61,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_exploration_graph"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_exploration_graph",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 78,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_explore"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_explore",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 51,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_run_get"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_run_get",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 21,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_source_inspect"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_source_inspect",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 114,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_validate"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_validate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 105,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "McpResourceReader"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:McpResourceReader",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 83,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_prompt_messages"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:get_prompt_messages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 44,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_prompt_descriptors"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:list_prompt_descriptors",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 27,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_resource_descriptors"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:list_resource_descriptors",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rpc_error_response.py",
+        "kind": "python",
+        "line": 38,
+        "module": "tools.mcp_server.rpc_error_response",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "exception_to_jsonrpc_response"
+      },
+      "id": "python:tools.mcp_server.rpc_error_response:exception_to_jsonrpc_response",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rpc_error_response.py",
+        "kind": "python",
+        "line": 24,
+        "module": "tools.mcp_server.rpc_error_response",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "jsonrpc_error_response"
+      },
+      "id": "python:tools.mcp_server.rpc_error_response:jsonrpc_error_response",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rpc_method_router.py",
+        "kind": "python",
+        "line": 11,
+        "module": "tools.mcp_server.rpc_method_router",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "route_mcp_method"
+      },
+      "id": "python:tools.mcp_server.rpc_method_router:route_mcp_method",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/server.py",
+        "kind": "python",
+        "line": 57,
+        "module": "tools.mcp_server.server",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "McpServer"
+      },
+      "id": "python:tools.mcp_server.server:McpServer",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 51,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolDefinition"
+      },
+      "id": "python:tools.mcp_server.tools_registry:ToolDefinition",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 89,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolRegistry"
+      },
+      "id": "python:tools.mcp_server.tools_registry:ToolRegistry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 124,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_default_registry"
+      },
+      "id": "python:tools.mcp_server.tools_registry:create_default_registry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 39,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cursor_safe_name"
+      },
+      "id": "python:tools.mcp_server.tools_registry:cursor_safe_name",
+      "kind": "python"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "python",
+    "api"
+  ],
+  "out_of_scope": {
+    "python:tools.mcp_server.backend_client:BackendClient": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.call_tool_result:unwrap_call_tool_result": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.call_tool_result:wrap_call_tool_result": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.config:Config": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.config:get_repo_root": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.__main__:main": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:Classification": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:ClassificationRow": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:OpeningQualityReport": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:run_opening_quality_probe": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:InvalidInputError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:JsonRpcError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:PermissionDeniedError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:RateLimitedError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:ToolNotFoundError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:FileSystemTools": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:get_module": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:list_modules": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:search_content": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools_search_content:run_content_regex_search": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.langfuse_tracing:McpLangfuseTracer": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:begin_telemetry_capture": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:end_telemetry_capture": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:flush_telemetry_to_backend": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:generate_trace_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:log_request": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:log_response": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:log_tool_call": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.operating_profile:OperatingProfile": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.operating_profile:check_session_binding": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.operating_profile:check_tool_access": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rate_limiter:RateLimiter": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.registry:MCPRegistry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.registry:ToolSpec": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.repo_dotenv:bootstrap_repo_environment": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_preview": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_propose": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_issue_inspect": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_aspect_extract": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_bundle_build": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_claim_list": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_exploration_graph": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_explore": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_run_get": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_source_inspect": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_validate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:McpResourceReader": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:get_prompt_messages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:list_prompt_descriptors": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:list_resource_descriptors": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rpc_error_response:exception_to_jsonrpc_response": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rpc_error_response:jsonrpc_error_response": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rpc_method_router:route_mcp_method": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.server:McpServer": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:ToolDefinition": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:ToolRegistry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:create_default_registry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:cursor_safe_name": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_create": "B-session-factories",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_diag": "B-session-factories",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_execute_turn": "B-session-factories",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_get": "B-session-factories",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_logs": "B-session-factories",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_state": "B-session-factories",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_system_health": "B-session-factories",
+    "python:tools.mcp_server.handlers.__init__:session_diag_handler": "B-handlers",
+    "python:tools.mcp_server.handlers.__init__:session_execute_turn_handler": "B-handlers",
+    "python:tools.mcp_server.handlers.__init__:session_get_handler": "B-handlers",
+    "python:tools.mcp_server.handlers.__init__:session_logs_handler": "B-handlers",
+    "python:tools.mcp_server.handlers.__init__:session_state_handler": "B-handlers",
+    "python:tools.mcp_server.handlers.langfuse_verify.loader:load_into": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers:build_default_mcp_tool_handlers": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_backend_session:build_backend_session_mcp_handlers": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_deferred:deferred_stub_handler_factory": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_evaluators:build_evaluators_mcp_handlers": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_filesystem:build_filesystem_mcp_handlers": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_governance:build_governance_mcp_handlers": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_protocol:RegistryListToolNames": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:build_quality_lab_mcp_handlers": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_find_patterns": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_content_revision": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_repair_wave": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_refine_judge_set": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_judgments": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_mcp_exchange": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_trace": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_suggest_investigation": "B-handlers",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_research:build_research_mcp_handlers": "B-handlers"
+  },
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Components/mcp-server/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Components/mcp-server/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Components/mcp-server/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Components/mcp-server/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/components/mcp-server/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "component",
+  "subsystem": "mcp-server"
+}

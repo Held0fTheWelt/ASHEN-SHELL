@@ -1,0 +1,30 @@
+@startuml
+title quality-gates — Container View
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F7F9FC
+  BorderColor #34495E
+}
+
+rectangle "quality-gates\nResponsibility: architecture boundary\nOwns: declarations and implementation evidence\n[[../../../../docs/architecture/project/quality-gates/architecture.md SAD]]" as ROOT
+
+rectangle "`test_adr0039_*`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../tests/gates/test_adr0039_pi_scope.py source]]" as E1
+rectangle "`test_adr_live_runtime_commit_semantics_gate.py`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py source]]" as E2
+rectangle "`test_architecture_documentation_gate.py`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../tests/gates/test_architecture_documentation_gate.py source]]" as E3
+rectangle "`test_goc_mvp01_mvp02_foundation_gate.py`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../tests/gates/test_goc_mvp01_mvp02_foundation_gate.py source]]" as E4
+rectangle "`test_goc_mvp03_live_dramatic_scene_simulator_gate.py`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py source]]" as E5
+rectangle "`test_goc_mvp04_observability_diagnostics_gate.py`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../tests/gates/test_goc_mvp04_observability_diagnostics_gate.py source]]" as E6
+
+E1 ..> ROOT : "evidence for boundary"
+E2 ..> ROOT : "evidence for boundary"
+E3 ..> ROOT : "evidence for boundary"
+E4 ..> ROOT : "evidence for boundary"
+E5 ..> ROOT : "evidence for boundary"
+E6 ..> ROOT : "evidence for boundary"
+
+legend bottom
+Every element links to its implementation anchor.
+Generated from architecture.bindings.json; do not hand-edit.
+endlegend
+@enduml

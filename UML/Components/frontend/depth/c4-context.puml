@@ -1,0 +1,26 @@
+@startuml
+title frontend — Context View
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F7F9FC
+  BorderColor #34495E
+}
+
+rectangle "frontend\nResponsibility: architecture boundary\nOwns: declarations and implementation evidence\n[[../../../../docs/architecture/components/frontend/architecture.md SAD]]" as ROOT
+
+rectangle "App routes\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../frontend/app/__init__.py source]]" as E1
+rectangle "Block renderer\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../frontend/static/dashboard.js source]]" as E2
+rectangle "Player backend bridge\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../frontend/app/player_backend.py source]]" as E3
+rectangle "favicon\nResponsibility: api\nEvidence contract: source anchor\n[[../../../../frontend/app/__init__.py source]]" as E4
+
+E1 ..> ROOT : "evidence for boundary"
+E2 ..> ROOT : "evidence for boundary"
+E3 ..> ROOT : "evidence for boundary"
+E4 ..> ROOT : "evidence for boundary"
+
+legend bottom
+Every element links to its implementation anchor.
+Generated from architecture.bindings.json; do not hand-edit.
+endlegend
+@enduml

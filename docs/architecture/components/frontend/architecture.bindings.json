@@ -1,0 +1,1650 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "frontend/app/",
+          "file": "frontend/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "App routes"
+        }
+      ],
+      "id": "B-app-routes",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "App routes"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "frontend/static/",
+          "file": "frontend/static/dashboard.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Block renderer"
+        },
+        {
+          "declared_path": "frontend/tests/test_block_renderer.js",
+          "file": "frontend/tests/test_block_renderer.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Block renderer"
+        }
+      ],
+      "id": "B-block-renderer",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Block renderer"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "frontend/app/player_backend.py",
+          "file": "frontend/app/player_backend.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player backend bridge"
+        }
+      ],
+      "id": "B-player-backend-bridge",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Player backend bridge"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/frontend/TRACEABILITY.md",
+          "file": "UML/Components/frontend/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "ai_stack/story_runtime/god_of_carnage/god_of_carnage_opening_transition.py",
+          "file": "ai_stack/story_runtime/god_of_carnage/god_of_carnage_opening_transition.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py",
+          "file": "ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "ai_stack/story_runtime/npc_agency/god_of_carnage_npc_transcript_projection.py",
+          "file": "ai_stack/story_runtime/npc_agency/god_of_carnage_npc_transcript_projection.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "ai_stack/story_runtime/opening_shape_normalizer.py",
+          "file": "ai_stack/story_runtime/opening_shape_normalizer.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "ai_stack/story_runtime/story_runtime_experience.py",
+          "file": "ai_stack/story_runtime/story_runtime_experience.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "ai_stack/tests/test_god_of_carnage_npc_transcript_projection.py",
+          "file": "ai_stack/tests/test_god_of_carnage_npc_transcript_projection.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "ai_stack/tests/test_wave3_multi_actor_vitality.py",
+          "file": "ai_stack/tests/test_wave3_multi_actor_vitality.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "backend/app/api/v1/game_routes.py",
+          "file": "backend/app/api/v1/game_routes.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "docs/architecture/components/frontend/architecture.md",
+          "file": "docs/architecture/components/frontend/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "frontend/static/play_block_display_text.js",
+          "file": "frontend/static/play_block_display_text.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "play_block_renderer.js",
+          "file": "frontend/static/play_block_renderer.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "play_blocks_orchestrator.js",
+          "file": "frontend/static/play_blocks_orchestrator.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "play_runtime_bootstrap.js",
+          "file": "frontend/static/play_runtime_bootstrap.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "frontend/static/play_shell.js",
+          "file": "frontend/static/play_shell.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "play_typewriter_engine.js",
+          "file": "frontend/static/play_typewriter_engine.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "frontend/static/style.css",
+          "file": "frontend/static/style.css",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "frontend/tests/test_block_renderer.js",
+          "file": "frontend/tests/test_block_renderer.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "frontend/tests/test_blocks_orchestrator.js",
+          "file": "frontend/tests/test_blocks_orchestrator.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "frontend/tests/test_runtime_bootstrap.js",
+          "file": "frontend/tests/test_runtime_bootstrap.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "frontend/tests/test_typewriter_engine.js",
+          "file": "frontend/tests/test_typewriter_engine.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "world-engine/app/story_runtime/manager/",
+          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "world-engine/tests/test_goc_multi_speaker_actor_line_split.py",
+          "file": "world-engine/tests/test_goc_multi_speaker_actor_line_split.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "world-engine/tests/test_goc_player_input_greeting_imperative.py",
+          "file": "world-engine/tests/test_goc_player_input_greeting_imperative.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Player-Facing Narrative Shell Contract (MVP5)"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/frontend/TRACEABILITY.md",
+          "file": "UML/Components/frontend/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py",
+          "file": "ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "docs/architecture/components/frontend/architecture.md",
+          "file": "docs/architecture/components/frontend/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0034-player-facing-narrative-shell-contract.md",
+          "file": "docs/archive/adr-retired-2026/adr-0034-player-facing-narrative-shell-contract.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+          "file": "docs/archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "play_block_renderer.js",
+          "file": "frontend/static/play_block_renderer.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "play_blocks_orchestrator.js",
+          "file": "frontend/static/play_blocks_orchestrator.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "play_cinematic.js",
+          "file": "frontend/static/play_cinematic.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "play_runtime_bootstrap.js",
+          "file": "frontend/static/play_runtime_bootstrap.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "play_shell.js",
+          "file": "frontend/static/play_shell.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "play_typewriter_engine.js",
+          "file": "frontend/static/play_typewriter_engine.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "style.css",
+          "file": "frontend/static/style.css",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        },
+        {
+          "declared_path": "frontend/tests/test_typewriter_engine.js",
+          "file": "frontend/tests/test_typewriter_engine.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Typewriter Cinematic Direction"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Typewriter Cinematic Direction"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/frontend/TRACEABILITY.md",
+          "file": "UML/Components/frontend/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/MVP_Live_Runtime_Completion/adr-mvp5-001-modular-block-rendering-architecture.md",
+          "file": "docs/archive/adr-retired-2026/MVP_Live_Runtime_Completion/adr-mvp5-001-modular-block-rendering-architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "frontend/static/play_block_renderer.js",
+          "file": "frontend/static/play_block_renderer.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Modular block rendering"
+        },
+        {
+          "declared_path": "frontend/tests/",
+          "file": "frontend/tests/conftest.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Modular block rendering"
+        },
+        {
+          "declared_path": "frontend/tests/test_block_renderer.js",
+          "file": "frontend/tests/test_block_renderer.js",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Modular block rendering"
+        }
+      ],
+      "id": "D3",
+      "state": "bound",
+      "status": "Accepted · **Origin:** MVP5-001",
+      "title": "Modular block rendering"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 63,
+        "method": "ANY",
+        "route": "/",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "home"
+      },
+      "id": "api:ANY:/:frontend/app/routes.py:63",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "api",
+        "line": 875,
+        "method": "ANY",
+        "route": "/api/story/sessions/<session_id>/stream-narrator",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stream_narrator_proxy"
+      },
+      "id": "api:ANY:/api/story/sessions/<session_id>/stream-narrator:frontend/app/routes_play.py:875",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 271,
+        "method": "ANY",
+        "route": "/api/v1/<path:subpath>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "api_proxy"
+      },
+      "id": "api:ANY:/api/v1/<path:subpath>:frontend/app/routes.py:271",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 249,
+        "method": "ANY",
+        "route": "/community",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "community"
+      },
+      "id": "api:ANY:/community:frontend/app/routes.py:249",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 212,
+        "method": "ANY",
+        "route": "/dashboard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "dashboard"
+      },
+      "id": "api:ANY:/dashboard:frontend/app/routes.py:212",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 168,
+        "method": "ANY",
+        "route": "/forgot-password",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forgot_password"
+      },
+      "id": "api:ANY:/forgot-password:frontend/app/routes.py:168",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 259,
+        "method": "ANY",
+        "route": "/game-menu",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "game_menu"
+      },
+      "id": "api:ANY:/game-menu:frontend/app/routes.py:259",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 25,
+        "method": "ANY",
+        "route": "/health",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "health"
+      },
+      "id": "api:ANY:/health:frontend/app/routes.py:25",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 68,
+        "method": "ANY",
+        "route": "/login",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "login"
+      },
+      "id": "api:ANY:/login:frontend/app/routes.py:68",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 101,
+        "method": "ANY",
+        "route": "/logout",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "logout"
+      },
+      "id": "api:ANY:/logout:frontend/app/routes.py:101",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 230,
+        "method": "ANY",
+        "route": "/news",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news"
+      },
+      "id": "api:ANY:/news:frontend/app/routes.py:230",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "api",
+        "line": 802,
+        "method": "ANY",
+        "route": "/play/<session_id>/execute",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_execute"
+      },
+      "id": "api:ANY:/play/<session_id>/execute:frontend/app/routes_play.py:802",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "api",
+        "line": 753,
+        "method": "ANY",
+        "route": "/play/<session_id>/opening",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_opening"
+      },
+      "id": "api:ANY:/play/<session_id>/opening:frontend/app/routes_play.py:753",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "api",
+        "line": 675,
+        "method": "ANY",
+        "route": "/play/<session_id>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_shell"
+      },
+      "id": "api:ANY:/play/<session_id>:frontend/app/routes_play.py:675",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "api",
+        "line": 586,
+        "method": "ANY",
+        "route": "/play/start",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_create"
+      },
+      "id": "api:ANY:/play/start:frontend/app/routes_play.py:586",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "api",
+        "line": 574,
+        "method": "ANY",
+        "route": "/play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_start"
+      },
+      "id": "api:ANY:/play:frontend/app/routes_play.py:574",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 143,
+        "method": "ANY",
+        "route": "/register/pending",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_pending"
+      },
+      "id": "api:ANY:/register/pending:frontend/app/routes.py:143",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 110,
+        "method": "ANY",
+        "route": "/register",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register"
+      },
+      "id": "api:ANY:/register:frontend/app/routes.py:110",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 148,
+        "method": "ANY",
+        "route": "/resend-verification",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resend_verification"
+      },
+      "id": "api:ANY:/resend-verification:frontend/app/routes.py:148",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 188,
+        "method": "ANY",
+        "route": "/reset-password/<token>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "reset_password"
+      },
+      "id": "api:ANY:/reset-password/<token>:frontend/app/routes.py:188",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 243,
+        "method": "ANY",
+        "route": "/wiki/<path:slug>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki"
+      },
+      "id": "api:ANY:/wiki/<path:slug>:frontend/app/routes.py:243",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "api",
+        "line": 240,
+        "method": "ANY",
+        "route": "/wiki",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki"
+      },
+      "id": "api:ANY:/wiki:frontend/app/routes.py:240",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/__init__.py",
+        "kind": "api",
+        "line": 32,
+        "method": "GET",
+        "route": "/favicon.ico",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "favicon"
+      },
+      "id": "api:GET:/favicon.ico:frontend/app/__init__.py:32",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/__init__.py",
+        "kind": "python",
+        "line": 17,
+        "module": "frontend.app.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_app"
+      },
+      "id": "python:frontend.app.__init__:create_app",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/api_client.py",
+        "kind": "python",
+        "line": 10,
+        "module": "frontend.app.api_client",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "BackendApiError"
+      },
+      "id": "python:frontend.app.api_client:BackendApiError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/api_client.py",
+        "kind": "python",
+        "line": 51,
+        "module": "frontend.app.api_client",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "request_backend"
+      },
+      "id": "python:frontend.app.api_client:request_backend",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/api_client.py",
+        "kind": "python",
+        "line": 103,
+        "module": "frontend.app.api_client",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "require_success"
+      },
+      "id": "python:frontend.app.api_client:require_success",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/auth.py",
+        "kind": "python",
+        "line": 9,
+        "module": "frontend.app.auth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_logged_in"
+      },
+      "id": "python:frontend.app.auth:is_logged_in",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/auth.py",
+        "kind": "python",
+        "line": 13,
+        "module": "frontend.app.auth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "require_login"
+      },
+      "id": "python:frontend.app.auth:require_login",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/config.py",
+        "kind": "python",
+        "line": 27,
+        "module": "frontend.app.config",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Config"
+      },
+      "id": "python:frontend.app.config:Config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/config.py",
+        "kind": "python",
+        "line": 49,
+        "module": "frontend.app.config",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TestingConfig"
+      },
+      "id": "python:frontend.app.config:TestingConfig",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/config.py",
+        "kind": "python",
+        "line": 20,
+        "module": "frontend.app.config",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "env_bool"
+      },
+      "id": "python:frontend.app.config:env_bool",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 274,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "api_proxy"
+      },
+      "id": "python:frontend.app.routes:api_proxy",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 252,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "community"
+      },
+      "id": "python:frontend.app.routes:community",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 216,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "dashboard"
+      },
+      "id": "python:frontend.app.routes:dashboard",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 171,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forgot_password"
+      },
+      "id": "python:frontend.app.routes:forgot_password",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 263,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "game_menu"
+      },
+      "id": "python:frontend.app.routes:game_menu",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 311,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "handle_backend_error"
+      },
+      "id": "python:frontend.app.routes:handle_backend_error",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 319,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "handle_request_exception"
+      },
+      "id": "python:frontend.app.routes:handle_request_exception",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 28,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "health"
+      },
+      "id": "python:frontend.app.routes:health",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 66,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "home"
+      },
+      "id": "python:frontend.app.routes:home",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 71,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "login"
+      },
+      "id": "python:frontend.app.routes:login",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 104,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "logout"
+      },
+      "id": "python:frontend.app.routes:logout",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 233,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news"
+      },
+      "id": "python:frontend.app.routes:news",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 113,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register"
+      },
+      "id": "python:frontend.app.routes:register",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 146,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_pending"
+      },
+      "id": "python:frontend.app.routes:register_pending",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 151,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resend_verification"
+      },
+      "id": "python:frontend.app.routes:resend_verification",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 191,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "reset_password"
+      },
+      "id": "python:frontend.app.routes:reset_password",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes.py",
+        "kind": "python",
+        "line": 244,
+        "module": "frontend.app.routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki"
+      },
+      "id": "python:frontend.app.routes:wiki",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "python",
+        "line": 590,
+        "module": "frontend.app.routes_play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_create"
+      },
+      "id": "python:frontend.app.routes_play:play_create",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "python",
+        "line": 806,
+        "module": "frontend.app.routes_play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_execute"
+      },
+      "id": "python:frontend.app.routes_play:play_execute",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "python",
+        "line": 757,
+        "module": "frontend.app.routes_play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_opening"
+      },
+      "id": "python:frontend.app.routes_play:play_opening",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "python",
+        "line": 679,
+        "module": "frontend.app.routes_play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_shell"
+      },
+      "id": "python:frontend.app.routes_play:play_shell",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "python",
+        "line": 578,
+        "module": "frontend.app.routes_play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_start"
+      },
+      "id": "python:frontend.app.routes_play:play_start",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "python",
+        "line": 491,
+        "module": "frontend.app.routes_play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_template_to_content_module_id"
+      },
+      "id": "python:frontend.app.routes_play:play_template_to_content_module_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/app/routes_play.py",
+        "kind": "python",
+        "line": 879,
+        "module": "frontend.app.routes_play",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stream_narrator_proxy"
+      },
+      "id": "python:frontend.app.routes_play:stream_narrator_proxy",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/dashboard.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "dashboard"
+      },
+      "id": "web:frontend/static/dashboard.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/fr-shell.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "fr-shell"
+      },
+      "id": "web:frontend/static/fr-shell.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/landing.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "landing"
+      },
+      "id": "web:frontend/static/landing.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/lightbox.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "lightbox"
+      },
+      "id": "web:frontend/static/lightbox.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/matrix-layer.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "matrix-layer"
+      },
+      "id": "web:frontend/static/matrix-layer.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_block_display_text.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_block_display_text"
+      },
+      "id": "web:frontend/static/play_block_display_text.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_block_renderer.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_block_renderer"
+      },
+      "id": "web:frontend/static/play_block_renderer.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_blocks_orchestrator.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_blocks_orchestrator"
+      },
+      "id": "web:frontend/static/play_blocks_orchestrator.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_cinematic.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_cinematic"
+      },
+      "id": "web:frontend/static/play_cinematic.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_controls.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_controls"
+      },
+      "id": "web:frontend/static/play_controls.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_live_ws.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_live_ws"
+      },
+      "id": "web:frontend/static/play_live_ws.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_narrative_stream.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_narrative_stream"
+      },
+      "id": "web:frontend/static/play_narrative_stream.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_runtime_bootstrap.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_runtime_bootstrap"
+      },
+      "id": "web:frontend/static/play_runtime_bootstrap.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_session_start.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_session_start"
+      },
+      "id": "web:frontend/static/play_session_start.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_shell.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_shell"
+      },
+      "id": "web:frontend/static/play_shell.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/play_typewriter_engine.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_typewriter_engine"
+      },
+      "id": "web:frontend/static/play_typewriter_engine.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/slogan-rotator.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "slogan-rotator"
+      },
+      "id": "web:frontend/static/slogan-rotator.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/splitting-init.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "splitting-init"
+      },
+      "id": "web:frontend/static/splitting-init.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/splitting.min.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "splitting.min"
+      },
+      "id": "web:frontend/static/splitting.min.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/style.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "style"
+      },
+      "id": "web:frontend/static/style.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/static/void-slogan-rotator.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "void-slogan-rotator"
+      },
+      "id": "web:frontend/static/void-slogan-rotator.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/base.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "base"
+      },
+      "id": "web:frontend/templates/base.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/community.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "community"
+      },
+      "id": "web:frontend/templates/community.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/dashboard.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "dashboard"
+      },
+      "id": "web:frontend/templates/dashboard.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/forgot_password.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forgot_password"
+      },
+      "id": "web:frontend/templates/forgot_password.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/game_menu.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "game_menu"
+      },
+      "id": "web:frontend/templates/game_menu.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/home.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "home"
+      },
+      "id": "web:frontend/templates/home.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/login.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "login"
+      },
+      "id": "web:frontend/templates/login.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/news.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news"
+      },
+      "id": "web:frontend/templates/news.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/register.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register"
+      },
+      "id": "web:frontend/templates/register.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/register_pending.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_pending"
+      },
+      "id": "web:frontend/templates/register_pending.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/resend_verification.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resend_verification"
+      },
+      "id": "web:frontend/templates/resend_verification.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/reset_password.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "reset_password"
+      },
+      "id": "web:frontend/templates/reset_password.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/session_shell.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_shell"
+      },
+      "id": "web:frontend/templates/session_shell.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/session_start.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_start"
+      },
+      "id": "web:frontend/templates/session_start.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "frontend/templates/wiki.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki"
+      },
+      "id": "web:frontend/templates/wiki.html",
+      "kind": "web"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "python",
+    "api",
+    "web"
+  ],
+  "out_of_scope": {
+    "web:frontend/templates/base.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/community.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/dashboard.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/forgot_password.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/game_menu.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/home.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/login.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/news.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/register.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/register_pending.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/resend_verification.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/reset_password.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/session_shell.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/session_start.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:frontend/templates/wiki.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {
+    "api:ANY:/:frontend/app/routes.py:63": "B-app-routes",
+    "api:ANY:/api/story/sessions/<session_id>/stream-narrator:frontend/app/routes_play.py:875": "B-app-routes",
+    "api:ANY:/api/v1/<path:subpath>:frontend/app/routes.py:271": "B-app-routes",
+    "api:ANY:/community:frontend/app/routes.py:249": "B-app-routes",
+    "api:ANY:/dashboard:frontend/app/routes.py:212": "B-app-routes",
+    "api:ANY:/forgot-password:frontend/app/routes.py:168": "B-app-routes",
+    "api:ANY:/game-menu:frontend/app/routes.py:259": "B-app-routes",
+    "api:ANY:/health:frontend/app/routes.py:25": "B-app-routes",
+    "api:ANY:/login:frontend/app/routes.py:68": "B-app-routes",
+    "api:ANY:/logout:frontend/app/routes.py:101": "B-app-routes",
+    "api:ANY:/news:frontend/app/routes.py:230": "B-app-routes",
+    "api:ANY:/play/<session_id>/execute:frontend/app/routes_play.py:802": "B-app-routes",
+    "api:ANY:/play/<session_id>/opening:frontend/app/routes_play.py:753": "B-app-routes",
+    "api:ANY:/play/<session_id>:frontend/app/routes_play.py:675": "B-app-routes",
+    "api:ANY:/play/start:frontend/app/routes_play.py:586": "B-app-routes",
+    "api:ANY:/play:frontend/app/routes_play.py:574": "B-app-routes",
+    "api:ANY:/register/pending:frontend/app/routes.py:143": "B-app-routes",
+    "api:ANY:/register:frontend/app/routes.py:110": "B-app-routes",
+    "api:ANY:/resend-verification:frontend/app/routes.py:148": "B-app-routes",
+    "api:ANY:/reset-password/<token>:frontend/app/routes.py:188": "B-app-routes",
+    "api:ANY:/wiki/<path:slug>:frontend/app/routes.py:243": "B-app-routes",
+    "api:ANY:/wiki:frontend/app/routes.py:240": "B-app-routes",
+    "api:GET:/favicon.ico:frontend/app/__init__.py:32": "B-app-routes",
+    "python:frontend.app.__init__:create_app": "B-app-routes",
+    "python:frontend.app.api_client:BackendApiError": "B-app-routes",
+    "python:frontend.app.api_client:request_backend": "B-app-routes",
+    "python:frontend.app.api_client:require_success": "B-app-routes",
+    "python:frontend.app.auth:is_logged_in": "B-app-routes",
+    "python:frontend.app.auth:require_login": "B-app-routes",
+    "python:frontend.app.config:Config": "B-app-routes",
+    "python:frontend.app.config:TestingConfig": "B-app-routes",
+    "python:frontend.app.config:env_bool": "B-app-routes",
+    "python:frontend.app.routes:api_proxy": "B-app-routes",
+    "python:frontend.app.routes:community": "B-app-routes",
+    "python:frontend.app.routes:dashboard": "B-app-routes",
+    "python:frontend.app.routes:forgot_password": "B-app-routes",
+    "python:frontend.app.routes:game_menu": "B-app-routes",
+    "python:frontend.app.routes:handle_backend_error": "B-app-routes",
+    "python:frontend.app.routes:handle_request_exception": "B-app-routes",
+    "python:frontend.app.routes:health": "B-app-routes",
+    "python:frontend.app.routes:home": "B-app-routes",
+    "python:frontend.app.routes:login": "B-app-routes",
+    "python:frontend.app.routes:logout": "B-app-routes",
+    "python:frontend.app.routes:news": "B-app-routes",
+    "python:frontend.app.routes:register": "B-app-routes",
+    "python:frontend.app.routes:register_pending": "B-app-routes",
+    "python:frontend.app.routes:resend_verification": "B-app-routes",
+    "python:frontend.app.routes:reset_password": "B-app-routes",
+    "python:frontend.app.routes:wiki": "B-app-routes",
+    "python:frontend.app.routes_play:play_create": "B-app-routes",
+    "python:frontend.app.routes_play:play_execute": "B-app-routes",
+    "python:frontend.app.routes_play:play_opening": "B-app-routes",
+    "python:frontend.app.routes_play:play_shell": "B-app-routes",
+    "python:frontend.app.routes_play:play_start": "B-app-routes",
+    "python:frontend.app.routes_play:play_template_to_content_module_id": "B-app-routes",
+    "python:frontend.app.routes_play:stream_narrator_proxy": "B-app-routes",
+    "web:frontend/static/dashboard.js": "B-block-renderer",
+    "web:frontend/static/fr-shell.js": "B-block-renderer",
+    "web:frontend/static/landing.js": "B-block-renderer",
+    "web:frontend/static/lightbox.js": "B-block-renderer",
+    "web:frontend/static/matrix-layer.js": "B-block-renderer",
+    "web:frontend/static/play_block_display_text.js": "B-block-renderer",
+    "web:frontend/static/play_block_renderer.js": "B-block-renderer",
+    "web:frontend/static/play_blocks_orchestrator.js": "B-block-renderer",
+    "web:frontend/static/play_cinematic.js": "B-block-renderer",
+    "web:frontend/static/play_controls.js": "B-block-renderer",
+    "web:frontend/static/play_live_ws.js": "B-block-renderer",
+    "web:frontend/static/play_narrative_stream.js": "B-block-renderer",
+    "web:frontend/static/play_runtime_bootstrap.js": "B-block-renderer",
+    "web:frontend/static/play_session_start.js": "B-block-renderer",
+    "web:frontend/static/play_shell.js": "B-block-renderer",
+    "web:frontend/static/play_typewriter_engine.js": "B-block-renderer",
+    "web:frontend/static/slogan-rotator.js": "B-block-renderer",
+    "web:frontend/static/splitting-init.js": "B-block-renderer",
+    "web:frontend/static/splitting.min.js": "B-block-renderer",
+    "web:frontend/static/style.css": "B-block-renderer",
+    "web:frontend/static/void-slogan-rotator.js": "B-block-renderer"
+  },
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Components/frontend/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Components/frontend/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Components/frontend/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Components/frontend/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/components/frontend/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "component",
+  "subsystem": "frontend"
+}

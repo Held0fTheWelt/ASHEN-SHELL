@@ -849,6 +849,7 @@ SUITE_DISPLAY_NAMES: dict[str, str] = {
     "ai_stack": "WOS AI stack (LangGraph runtime, RAG, Writers-Room / improvement seed graphs)",
     "story_runtime_core": "Story-runtime core (adapters, builtin templates, delivery)",
     "gates": "MVP foundation gates (architecture enforcement)",
+    "architecture_assurance": "Better Tomorrow architecture depth, canon, and disposable AKDB integration",
     "root_core": "Repository root core tests",
     "root_integration": "Repository integration tests",
     "root_branching": "Repository branching tests",
@@ -1128,6 +1129,12 @@ SUITE_CONFIGS: dict[str, SuiteConfig] = {
     # Gates tests import from world-engine app (app.governance.*) and story_runtime_core; the
     # gates/conftest.py adds world-engine to sys.path automatically.
     "gates": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="tests/gates", supports_coverage=False),
+    "architecture_assurance": SuiteConfig(
+        kind="pytest",
+        cwd=PROJECT_ROOT,
+        target="tests/architecture_assurance",
+        supports_coverage=False,
+    ),
     # Root-level Python suites
     "root_core": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="tests/test_agency_capability_matrix_truth.py", supports_coverage=False),
     "root_integration": SuiteConfig(kind="pytest", cwd=PROJECT_ROOT, target="tests/integration", supports_coverage=False),
@@ -1415,6 +1422,7 @@ ALL_SUITE_SEQUENCE: tuple[str, ...] = (
     "ai_stack",
     "story_runtime_core",
     "gates",
+    "architecture_assurance",
     "root_core",
     "root_integration",
     "root_branching",

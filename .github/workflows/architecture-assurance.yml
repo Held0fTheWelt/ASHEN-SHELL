@@ -1,0 +1,71 @@
+name: Better Tomorrow Architecture Assurance
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  architecture-assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Better Tomorrow
+        uses: actions/checkout@v4
+
+      - name: Check out pinned ArchitecturalKnowledgeDB
+        uses: actions/checkout@v4
+        with:
+          repository: Held0fTheWelt/ArchitecturalKnowledgeDB
+          ref: 63eaf90a4ddf9e837aa51ffdc62c31178b90aa68
+          path: .external/ArchitecturalKnowledgeDB
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            .external/ArchitecturalKnowledgeDB/pyproject.toml
+
+      - name: Install architecture assurance dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          python -m pip install -e ".external/ArchitecturalKnowledgeDB[test]"
+
+      - name: Verify generated architecture is current
+        run: |
+          python -m tools.architecture_assurance generate --dry-run
+          python -m tools.architecture_assurance canon-manifest --dry-run
+
+      - name: Emit JSON, JUnit, and SARIF
+        run: |
+          python -m tools.architecture_assurance audit \
+            --json reports/architecture/architecture.json \
+            --junit reports/architecture/architecture.junit.xml \
+            --sarif reports/architecture/architecture.sarif
+
+      - name: Run Better Tomorrow architecture test set
+        env:
+          AKDB_SOURCE_ROOT: ${{ github.workspace }}/.external/ArchitecturalKnowledgeDB
+        run: |
+          python -m pytest tests/architecture_assurance -v --tb=short
+
+      - name: Upload architecture evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: better-tomorrow-architecture-evidence
+          path: reports/architecture/
+
+      - name: Upload architecture SARIF
+        if: always() && hashFiles('reports/architecture/architecture.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/architecture/architecture.sarif

@@ -1,0 +1,15 @@
+{
+  "schema_version": "bt.akdb_dependency_lock.v1",
+  "name": "ArchitecturalKnowledgeDB",
+  "repository": "https://github.com/Held0fTheWelt/ArchitecturalKnowledgeDB.git",
+  "version": "0.3.0",
+  "commit": "63eaf90a4ddf9e837aa51ffdc62c31178b90aa68",
+  "integration": "external-read-only",
+  "capabilities": [
+    "project-registry",
+    "database-native-sad-uml",
+    "canon-export",
+    "canon-verify",
+    "architecture-depth-audit"
+  ]
+}

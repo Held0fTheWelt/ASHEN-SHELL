@@ -153,13 +153,27 @@ Flask app with alembic migrations; shares secrets with world-engine for tickets.
 
 **Status:** Accepted · **Migrated from:** ADR-0052
 
-**Decision.** Security governance mutations route through backend admin control plane with documented browser mutation boundaries.
+**Decision.** Security governance mutations route through the backend admin
+control plane with documented browser mutation boundaries. The service layer
+owns policy validation, credential handling and audit semantics; browser and
+administration-tool routes may only invoke that boundary. This prevents
+presentation code from becoming an alternative authority, keeps mutation
+authorization consistent across operator surfaces and gives tests one
+enforceable location for denial, confirmation and evidence behavior.
 
 **Evidence.** [`backend/app/services/governance/`](../../../../backend/app/services/governance/), [security-governance SAD D3](../../project/security-governance/architecture.md#d3-security-governance-admin-control-plane).
 
- Quality Requirements
+## 10. Quality Requirements
 
-`backend/tests/`, `tests/gates/test_goc_mvp01_mvp02_foundation_gate.py`, `python tests/run_tests.py --suite backend`.
+- Accepted decisions must resolve to executable backend source or an explicit
+  gate contract.
+- Public API and schema units inside the declared scan boundary must remain
+  represented by a building block.
+- Context, container, component and class views must stay source-linked and
+  within the legibility bounds enforced by architecture assurance.
+- Verification includes `backend/tests/`,
+  `tests/gates/test_goc_mvp01_mvp02_foundation_gate.py`, and
+  `python tests/run_tests.py --suite backend`.
 
 ## 11. Risks & Technical Debt
 

@@ -1,0 +1,537 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "administration-tool/",
+          "file": "administration-tool/app.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Admin UI"
+        }
+      ],
+      "id": "B-admin-ui",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Admin UI"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "ai_stack/",
+          "file": "ai_stack/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "AI stack"
+        }
+      ],
+      "id": "B-ai-stack",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "AI stack"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/",
+          "file": "backend/alembic/env.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Backend"
+        }
+      ],
+      "id": "B-backend",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Backend"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "content/modules/",
+          "file": "content/modules/_template/canonical_path/001_opening_anchor.yaml",
+          "kind": "content",
+          "line": 1,
+          "object": "Content",
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-content",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Content"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "tools/mcp_server/",
+          "file": "tools/mcp_server/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP"
+        }
+      ],
+      "id": "B-mcp",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "MCP"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "world-engine/",
+          "file": "world-engine/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Play service"
+        }
+      ],
+      "id": "B-play-service",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Play service"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "frontend/",
+          "file": "frontend/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player UI"
+        }
+      ],
+      "id": "B-player-ui",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Player UI"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "story_runtime_core/",
+          "file": "story_runtime_core/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Shared models"
+        }
+      ],
+      "id": "B-shared-models",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Shared models"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/ecosystem-topology/TRACEABILITY.md",
+          "file": "UML/Project/ecosystem-topology/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/technical/architecture/service-boundaries.md",
+          "file": "docs/technical/architecture/service-boundaries.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Layered multi-service map"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/ecosystem-topology/TRACEABILITY.md",
+          "file": "UML/Project/ecosystem-topology/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-compose.redis-production.yml",
+          "file": "docker-compose.redis-production.yml",
+          "kind": "content",
+          "line": 1,
+          "object": "`docker-up.py` as Complete Local Bootstrap",
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-compose.yml",
+          "file": "docker-compose.yml",
+          "kind": "content",
+          "line": 1,
+          "object": "`docker-up.py` as Complete Local Bootstrap",
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-up.py",
+          "file": "docker-up.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "`docker-up.py` as Complete Local Bootstrap"
+        },
+        {
+          "declared_path": "docs/architecture/project/ecosystem-topology/architecture.md",
+          "file": "docs/architecture/project/ecosystem-topology/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0064-python-314-unified-interpreter-standard.md",
+          "file": "docs/archive/adr-retired-2026/adr-0064-python-314-unified-interpreter-standard.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tests/test_docker_up_complete_bootstrap.py",
+          "file": "tests/test_docker_up_complete_bootstrap.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "`docker-up.py` as Complete Local Bootstrap"
+        },
+        {
+          "declared_path": "tests/test_production_redis_docker_config.py",
+          "file": "tests/test_production_redis_docker_config.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "`docker-up.py` as Complete Local Bootstrap"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "**Origin:** ADR-0030 (retired 2026-06-23)",
+      "title": "`docker-up.py` as Complete Local Bootstrap"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "docker-compose.yml",
+        "kind": "deployment",
+        "line": 126,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "administration-tool"
+      },
+      "id": "deployment:docker-compose.yml:administration-tool",
+      "kind": "deployment"
+    },
+    {
+      "anchor": {
+        "file": "docker-compose.yml",
+        "kind": "deployment",
+        "line": 43,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "backend"
+      },
+      "id": "deployment:docker-compose.yml:backend",
+      "kind": "deployment"
+    },
+    {
+      "anchor": {
+        "file": "docker-compose.yml",
+        "kind": "deployment",
+        "line": 106,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "frontend"
+      },
+      "id": "deployment:docker-compose.yml:frontend",
+      "kind": "deployment"
+    },
+    {
+      "anchor": {
+        "file": "docker-compose.yml",
+        "kind": "deployment",
+        "line": 139,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play-service"
+      },
+      "id": "deployment:docker-compose.yml:play-service",
+      "kind": "deployment"
+    },
+    {
+      "anchor": {
+        "file": "docker-compose.yml",
+        "kind": "deployment",
+        "line": 31,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "redis"
+      },
+      "id": "deployment:docker-compose.yml:redis",
+      "kind": "deployment"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 984,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_build"
+      },
+      "id": "python:docker-up:cmd_build",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 963,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_default"
+      },
+      "id": "python:docker-up:cmd_default",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1001,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_down"
+      },
+      "id": "python:docker-up:cmd_down",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1084,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_ensure_env"
+      },
+      "id": "python:docker-up:cmd_ensure_env",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1089,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_gate"
+      },
+      "id": "python:docker-up:cmd_gate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1013,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_init_env"
+      },
+      "id": "python:docker-up:cmd_init_env",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1032,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_init_production_redis"
+      },
+      "id": "python:docker-up:cmd_init_production_redis",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 971,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_langfuse_up"
+      },
+      "id": "python:docker-up:cmd_langfuse_up",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 977,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_production_redis_up"
+      },
+      "id": "python:docker-up:cmd_production_redis_up",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1141,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_reset"
+      },
+      "id": "python:docker-up:cmd_reset",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 993,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_restart"
+      },
+      "id": "python:docker-up:cmd_restart",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 997,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_stop"
+      },
+      "id": "python:docker-up:cmd_stop",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 967,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_up"
+      },
+      "id": "python:docker-up:cmd_up",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1055,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cmd_validate_production_redis"
+      },
+      "id": "python:docker-up:cmd_validate_production_redis",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 1170,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:docker-up:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "docker-up.py",
+        "kind": "python",
+        "line": 942,
+        "module": "docker-up",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "shlex_quote"
+      },
+      "id": "python:docker-up:shlex_quote",
+      "kind": "python"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "deployment",
+    "python"
+  ],
+  "out_of_scope": {
+    "deployment:docker-compose.yml:administration-tool": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "deployment:docker-compose.yml:backend": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "deployment:docker-compose.yml:frontend": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "deployment:docker-compose.yml:play-service": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "deployment:docker-compose.yml:redis": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_build": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_default": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_down": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_ensure_env": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_init_env": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_init_production_redis": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_langfuse_up": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_production_redis_up": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_reset": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_restart": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_stop": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_up": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:cmd_validate_production_redis": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:main": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:docker-up:shlex_quote": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {},
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Project/ecosystem-topology/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Project/ecosystem-topology/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Project/ecosystem-topology/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Project/ecosystem-topology/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/project/ecosystem-topology/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "project",
+  "subsystem": "ecosystem-topology"
+}

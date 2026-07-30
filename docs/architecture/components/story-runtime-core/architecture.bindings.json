@@ -1,0 +1,2228 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "story_runtime_core/branching/",
+          "file": "story_runtime_core/branching/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Branching"
+        }
+      ],
+      "id": "B-branching",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Branching"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "goc_solo_builtin_template.py",
+          "file": "story_runtime_core/goc_solo_builtin_template.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "GoC builtin template"
+        }
+      ],
+      "id": "B-goc-builtin-template",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "GoC builtin template"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "story_runtime_core/tests/test_adapters.py",
+          "file": "story_runtime_core/tests/test_adapters.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Tests"
+        }
+      ],
+      "id": "B-tests",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Tests"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "file": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/components/world-engine/architecture.md",
+          "file": "docs/architecture/components/world-engine/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/technical/architecture/backend-runtime-classification.md",
+          "file": "docs/technical/architecture/backend-runtime-classification.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core",
+          "file": "story_runtime_core/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Shared extraction direction"
+        },
+        {
+          "declared_path": "story_runtime_core/tests/test_input_interpreter.py",
+          "file": "story_runtime_core/tests/test_input_interpreter.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Shared extraction direction"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted · **Origin:** backend-runtime-classification",
+      "title": "Shared extraction direction"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "ai_stack/language_io",
+          "file": "ai_stack/language_io/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Language adapter compatibility seam"
+        },
+        {
+          "declared_path": "docs/architecture/components/content-authority/architecture.md",
+          "file": "docs/architecture/components/content-authority/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "pyproject.toml",
+          "file": "pyproject.toml",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core/pyproject.toml",
+          "file": "story_runtime_core/pyproject.toml",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "Accepted · **Origin:** ADR-0037-CONTENT (compat layer)",
+      "title": "Language adapter compatibility seam"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "file": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "UML/Components/story-runtime-core/decisions/d3-aspect-ledger-contracts.md",
+          "file": "UML/Components/story-runtime-core/decisions/d3-aspect-ledger-contracts.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "ai_stack/contracts/",
+          "file": "ai_stack/contracts/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Aspect ledger contracts"
+        },
+        {
+          "declared_path": "story_runtime_core/evidence_projection_helpers.py",
+          "file": "story_runtime_core/evidence_projection_helpers.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Aspect ledger contracts"
+        },
+        {
+          "declared_path": "story_runtime_core/serialization.py",
+          "file": "story_runtime_core/serialization.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Aspect ledger contracts"
+        },
+        {
+          "declared_path": "story_runtime_core/tests/test_observability_tree_policy.py",
+          "file": "story_runtime_core/tests/test_observability_tree_policy.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Aspect ledger contracts"
+        }
+      ],
+      "id": "D3",
+      "state": "bound",
+      "status": "Accepted · **Origin:** UML d3-aspect-ledger-contracts",
+      "title": "Aspect ledger contracts"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "file": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core/committed_truth.py",
+          "file": "story_runtime_core/committed_truth.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Commit semantics helpers"
+        },
+        {
+          "declared_path": "story_runtime_core/recovery/no_dead_end.py",
+          "file": "story_runtime_core/recovery/no_dead_end.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Commit semantics helpers"
+        },
+        {
+          "declared_path": "story_runtime_core/tests/test_no_dead_end_recovery.py",
+          "file": "story_runtime_core/tests/test_no_dead_end_recovery.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Commit semantics helpers"
+        }
+      ],
+      "id": "D4",
+      "state": "bound",
+      "status": "Accepted · **Origin:** ADR-0039 committed-truth boundary",
+      "title": "Commit semantics helpers"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "file": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/contracts/session_authority_contract.md",
+          "file": "docs/architecture/contracts/session_authority_contract.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core/experience_template_models.py",
+          "file": "story_runtime_core/experience_template_models.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Session authority types"
+        }
+      ],
+      "id": "D5",
+      "state": "bound",
+      "status": "Accepted · **Origin:** session_authority_contract",
+      "title": "Session authority types"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "file": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core/models.py",
+          "file": "story_runtime_core/models.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Pi contract vocabulary"
+        },
+        {
+          "declared_path": "story_runtime_core/player_input_intent_contract.py",
+          "file": "story_runtime_core/player_input_intent_contract.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Pi contract vocabulary"
+        },
+        {
+          "declared_path": "story_runtime_core/tests/test_player_input_intent_contract.py",
+          "file": "story_runtime_core/tests/test_player_input_intent_contract.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Pi contract vocabulary"
+        }
+      ],
+      "id": "D6",
+      "state": "bound",
+      "status": "Accepted · **Origin:** ADR-0039 intent taxonomy",
+      "title": "Pi contract vocabulary"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "file": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core/branching/forecast.py",
+          "file": "story_runtime_core/branching/forecast.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Opening readiness"
+        },
+        {
+          "declared_path": "story_runtime_core/director_surface_hints.py",
+          "file": "story_runtime_core/director_surface_hints.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Opening readiness"
+        },
+        {
+          "declared_path": "story_runtime_core/player_input_intent_contract.py",
+          "file": "story_runtime_core/player_input_intent_contract.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Opening readiness"
+        },
+        {
+          "declared_path": "story_runtime_core/tests/test_runtime_delivery.py",
+          "file": "story_runtime_core/tests/test_runtime_delivery.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Opening readiness"
+        }
+      ],
+      "id": "D7",
+      "state": "bound",
+      "status": "Accepted · **Origin:** branching forecast opening lane",
+      "title": "Opening readiness"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "file": "UML/Components/story-runtime-core/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core/evidence_projection_helpers.py",
+          "file": "story_runtime_core/evidence_projection_helpers.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Environment state contracts"
+        },
+        {
+          "declared_path": "story_runtime_core/observability_tree_policy.py",
+          "file": "story_runtime_core/observability_tree_policy.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Environment state contracts"
+        },
+        {
+          "declared_path": "story_runtime_core/tests/test_observability_tree_policy.py",
+          "file": "story_runtime_core/tests/test_observability_tree_policy.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Environment state contracts"
+        }
+      ],
+      "id": "D8",
+      "state": "bound",
+      "status": "Accepted · **Origin:** evidence projection helpers",
+      "title": "Environment state contracts"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "story_runtime_core/adapters.py",
+        "kind": "python",
+        "line": 135,
+        "module": "story_runtime_core.adapters",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "BaseModelAdapter"
+      },
+      "id": "python:story_runtime_core.adapters:BaseModelAdapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/adapters.py",
+        "kind": "python",
+        "line": 157,
+        "module": "story_runtime_core.adapters",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "MockModelAdapter"
+      },
+      "id": "python:story_runtime_core.adapters:MockModelAdapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/adapters.py",
+        "kind": "python",
+        "line": 129,
+        "module": "story_runtime_core.adapters",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ModelCallResult"
+      },
+      "id": "python:story_runtime_core.adapters:ModelCallResult",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/adapters.py",
+        "kind": "python",
+        "line": 546,
+        "module": "story_runtime_core.adapters",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OllamaAdapter"
+      },
+      "id": "python:story_runtime_core.adapters:OllamaAdapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/adapters.py",
+        "kind": "python",
+        "line": 182,
+        "module": "story_runtime_core.adapters",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OpenAIChatAdapter"
+      },
+      "id": "python:story_runtime_core.adapters:OpenAIChatAdapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/adapters.py",
+        "kind": "python",
+        "line": 603,
+        "module": "story_runtime_core.adapters",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_default_model_adapters"
+      },
+      "id": "python:story_runtime_core.adapters:build_default_model_adapters",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/adapters.py",
+        "kind": "python",
+        "line": 20,
+        "module": "story_runtime_core.adapters",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "openai_http_error_excerpt"
+      },
+      "id": "python:story_runtime_core.adapters:openai_http_error_excerpt",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 197,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "append_branch_timeline_event"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:append_branch_timeline_event",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 277,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "archive_branch_timeline"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:archive_branch_timeline",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 352,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_branch_timeline_snapshot"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:build_branch_timeline_snapshot",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 222,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "compact_branch_timeline"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:compact_branch_timeline",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 79,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "default_branch_timeline_bounds"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:default_branch_timeline_bounds",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 162,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_branch_timeline_event"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:make_branch_timeline_event",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 120,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_branch_timeline_record"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:make_branch_timeline_record",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 87,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "normalize_branch_timeline_bounds"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:normalize_branch_timeline_bounds",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_timeline.py",
+        "kind": "python",
+        "line": 102,
+        "module": "story_runtime_core.branching.branch_timeline",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stable_branch_timeline_id"
+      },
+      "id": "python:story_runtime_core.branching.branch_timeline:stable_branch_timeline_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 187,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "branch_tree_is_fresh"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:branch_tree_is_fresh",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 169,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "branch_tree_path_nodes"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:branch_tree_path_nodes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 143,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "branch_tree_summary_from_simulation"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:branch_tree_summary_from_simulation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 158,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "find_branch_tree_node"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:find_branch_tree_node",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 74,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_branch_tree_record"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:make_branch_tree_record",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 217,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "mark_branch_tree_committed"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:mark_branch_tree_committed",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 208,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "mark_branch_tree_expired"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:mark_branch_tree_expired",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 194,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "mark_branch_tree_stale"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:mark_branch_tree_stale",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 54,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "selectable_simulation_nodes"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:selectable_simulation_nodes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/branch_tree.py",
+        "kind": "python",
+        "line": 33,
+        "module": "story_runtime_core.branching.branch_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stable_branch_tree_id"
+      },
+      "id": "python:story_runtime_core.branching.branch_tree:stable_branch_tree_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/consequence_filter.py",
+        "kind": "python",
+        "line": 10,
+        "module": "story_runtime_core.branching.consequence_filter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ConsequenceFact"
+      },
+      "id": "python:story_runtime_core.branching.consequence_filter:ConsequenceFact",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/consequence_filter.py",
+        "kind": "python",
+        "line": 26,
+        "module": "story_runtime_core.branching.consequence_filter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ConsequenceFilter"
+      },
+      "id": "python:story_runtime_core.branching.consequence_filter:ConsequenceFilter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/decision_point.py",
+        "kind": "python",
+        "line": 23,
+        "module": "story_runtime_core.branching.decision_point",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DecisionOption"
+      },
+      "id": "python:story_runtime_core.branching.decision_point:DecisionOption",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/decision_point.py",
+        "kind": "python",
+        "line": 34,
+        "module": "story_runtime_core.branching.decision_point",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DecisionPoint"
+      },
+      "id": "python:story_runtime_core.branching.decision_point:DecisionPoint",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/decision_point.py",
+        "kind": "python",
+        "line": 88,
+        "module": "story_runtime_core.branching.decision_point",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DecisionPointRegistry"
+      },
+      "id": "python:story_runtime_core.branching.decision_point:DecisionPointRegistry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/decision_point.py",
+        "kind": "python",
+        "line": 13,
+        "module": "story_runtime_core.branching.decision_point",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DecisionPointType"
+      },
+      "id": "python:story_runtime_core.branching.decision_point:DecisionPointType",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/enhanced_consequences.py",
+        "kind": "python",
+        "line": 102,
+        "module": "story_runtime_core.branching.enhanced_consequences",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_enhanced_registry"
+      },
+      "id": "python:story_runtime_core.branching.enhanced_consequences:create_enhanced_registry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/enhanced_consequences.py",
+        "kind": "python",
+        "line": 42,
+        "module": "story_runtime_core.branching.enhanced_consequences",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_enhanced_divide_facts"
+      },
+      "id": "python:story_runtime_core.branching.enhanced_consequences:get_enhanced_divide_facts",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/enhanced_consequences.py",
+        "kind": "python",
+        "line": 12,
+        "module": "story_runtime_core.branching.enhanced_consequences",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_enhanced_escalation_facts"
+      },
+      "id": "python:story_runtime_core.branching.enhanced_consequences:get_enhanced_escalation_facts",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/enhanced_consequences.py",
+        "kind": "python",
+        "line": 72,
+        "module": "story_runtime_core.branching.enhanced_consequences",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_enhanced_understanding_facts"
+      },
+      "id": "python:story_runtime_core.branching.enhanced_consequences:get_enhanced_understanding_facts",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/forecast.py",
+        "kind": "python",
+        "line": 400,
+        "module": "story_runtime_core.branching.forecast",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_branching_forecast"
+      },
+      "id": "python:story_runtime_core.branching.forecast:build_branching_forecast",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/outcome_divergence.py",
+        "kind": "python",
+        "line": 10,
+        "module": "story_runtime_core.branching.outcome_divergence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DivergenceMetric"
+      },
+      "id": "python:story_runtime_core.branching.outcome_divergence:DivergenceMetric",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/outcome_divergence.py",
+        "kind": "python",
+        "line": 21,
+        "module": "story_runtime_core.branching.outcome_divergence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DivergenceScore"
+      },
+      "id": "python:story_runtime_core.branching.outcome_divergence:DivergenceScore",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/outcome_divergence.py",
+        "kind": "python",
+        "line": 31,
+        "module": "story_runtime_core.branching.outcome_divergence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OutcomeDivergence"
+      },
+      "id": "python:story_runtime_core.branching.outcome_divergence:OutcomeDivergence",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/path_state.py",
+        "kind": "python",
+        "line": 12,
+        "module": "story_runtime_core.branching.path_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PathNode"
+      },
+      "id": "python:story_runtime_core.branching.path_state:PathNode",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/path_state.py",
+        "kind": "python",
+        "line": 25,
+        "module": "story_runtime_core.branching.path_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PathState"
+      },
+      "id": "python:story_runtime_core.branching.path_state:PathState",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/path_state.py",
+        "kind": "python",
+        "line": 111,
+        "module": "story_runtime_core.branching.path_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PathStateManager"
+      },
+      "id": "python:story_runtime_core.branching.path_state:PathStateManager",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/phase5_scenario_definitions.py",
+        "kind": "python",
+        "line": 196,
+        "module": "story_runtime_core.branching.phase5_scenario_definitions",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_scenario_c_registry"
+      },
+      "id": "python:story_runtime_core.branching.phase5_scenario_definitions:build_scenario_c_registry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/phase5_scenario_definitions.py",
+        "kind": "python",
+        "line": 220,
+        "module": "story_runtime_core.branching.phase5_scenario_definitions",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_scenario_e_registry"
+      },
+      "id": "python:story_runtime_core.branching.phase5_scenario_definitions:build_scenario_e_registry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/phase5_scenario_definitions.py",
+        "kind": "python",
+        "line": 231,
+        "module": "story_runtime_core.branching.phase5_scenario_definitions",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_scenario_paths"
+      },
+      "id": "python:story_runtime_core.branching.phase5_scenario_definitions:get_scenario_paths",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 220,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "append_simulation_node"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:append_simulation_node",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 41,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "clamp_simulation_limits"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:clamp_simulation_limits",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 233,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "finalize_simulation_tree"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:finalize_simulation_tree",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 78,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forecast_has_options"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:forecast_has_options",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 154,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_simulated_turn_node"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:make_simulated_turn_node",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 98,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_simulation_tree"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:make_simulation_tree",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 66,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "simulated_input_for_branch_option"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:simulated_input_for_branch_option",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/branching/simulation_tree.py",
+        "kind": "python",
+        "line": 60,
+        "module": "story_runtime_core.branching.simulation_tree",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stable_simulation_id"
+      },
+      "id": "python:story_runtime_core.branching.simulation_tree:stable_simulation_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/builtin_experience_templates.py",
+        "kind": "python",
+        "line": 60,
+        "module": "story_runtime_core.builtin_experience_templates",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_apartment_confrontation_group"
+      },
+      "id": "python:story_runtime_core.builtin_experience_templates:build_apartment_confrontation_group",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/builtin_experience_templates.py",
+        "kind": "python",
+        "line": 116,
+        "module": "story_runtime_core.builtin_experience_templates",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_better_tomorrow_district_open_world"
+      },
+      "id": "python:story_runtime_core.builtin_experience_templates:build_better_tomorrow_district_open_world",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/builtin_experience_templates.py",
+        "kind": "python",
+        "line": 25,
+        "module": "story_runtime_core.builtin_experience_templates",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_god_of_carnage_content_template"
+      },
+      "id": "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_content_template",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/builtin_experience_templates.py",
+        "kind": "python",
+        "line": 47,
+        "module": "story_runtime_core.builtin_experience_templates",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_builtin_templates"
+      },
+      "id": "python:story_runtime_core.builtin_experience_templates:load_builtin_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/callbacks/callback_web.py",
+        "kind": "python",
+        "line": 534,
+        "module": "story_runtime_core.callbacks.callback_web",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_callback_web_record"
+      },
+      "id": "python:story_runtime_core.callbacks.callback_web:build_callback_web_record",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/callbacks/callback_web.py",
+        "kind": "python",
+        "line": 418,
+        "module": "story_runtime_core.callbacks.callback_web",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_callback_web_snapshot"
+      },
+      "id": "python:story_runtime_core.callbacks.callback_web:build_callback_web_snapshot",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/callbacks/callback_web.py",
+        "kind": "python",
+        "line": 460,
+        "module": "story_runtime_core.callbacks.callback_web",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_graph_callback_web_export"
+      },
+      "id": "python:story_runtime_core.callbacks.callback_web:build_graph_callback_web_export",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/callbacks/callback_web.py",
+        "kind": "python",
+        "line": 63,
+        "module": "story_runtime_core.callbacks.callback_web",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "default_callback_web_bounds"
+      },
+      "id": "python:story_runtime_core.callbacks.callback_web:default_callback_web_bounds",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/callbacks/callback_web.py",
+        "kind": "python",
+        "line": 71,
+        "module": "story_runtime_core.callbacks.callback_web",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "normalize_callback_web_bounds"
+      },
+      "id": "python:story_runtime_core.callbacks.callback_web:normalize_callback_web_bounds",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/callbacks/callback_web.py",
+        "kind": "python",
+        "line": 86,
+        "module": "story_runtime_core.callbacks.callback_web",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stable_callback_web_id"
+      },
+      "id": "python:story_runtime_core.callbacks.callback_web:stable_callback_web_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/committed_truth.py",
+        "kind": "python",
+        "line": 88,
+        "module": "story_runtime_core.committed_truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "committed_story_truth_rows"
+      },
+      "id": "python:story_runtime_core.committed_truth:committed_story_truth_rows",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/committed_truth.py",
+        "kind": "python",
+        "line": 44,
+        "module": "story_runtime_core.committed_truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_committed_story_truth_row"
+      },
+      "id": "python:story_runtime_core.committed_truth:is_committed_story_truth_row",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/consequences/consequence_cascade.py",
+        "kind": "python",
+        "line": 452,
+        "module": "story_runtime_core.consequences.consequence_cascade",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_consequence_cascade_record"
+      },
+      "id": "python:story_runtime_core.consequences.consequence_cascade:build_consequence_cascade_record",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/consequences/consequence_cascade.py",
+        "kind": "python",
+        "line": 528,
+        "module": "story_runtime_core.consequences.consequence_cascade",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_graph_consequence_cascade_export"
+      },
+      "id": "python:story_runtime_core.consequences.consequence_cascade:build_graph_consequence_cascade_export",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/consequences/consequence_cascade.py",
+        "kind": "python",
+        "line": 76,
+        "module": "story_runtime_core.consequences.consequence_cascade",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "default_consequence_cascade_bounds"
+      },
+      "id": "python:story_runtime_core.consequences.consequence_cascade:default_consequence_cascade_bounds",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/consequences/consequence_cascade.py",
+        "kind": "python",
+        "line": 85,
+        "module": "story_runtime_core.consequences.consequence_cascade",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "normalize_consequence_cascade_bounds"
+      },
+      "id": "python:story_runtime_core.consequences.consequence_cascade:normalize_consequence_cascade_bounds",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/consequences/consequence_cascade.py",
+        "kind": "python",
+        "line": 101,
+        "module": "story_runtime_core.consequences.consequence_cascade",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stable_consequence_cascade_id"
+      },
+      "id": "python:story_runtime_core.consequences.consequence_cascade:stable_consequence_cascade_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/director_surface_hints.py",
+        "kind": "python",
+        "line": 71,
+        "module": "story_runtime_core.director_surface_hints",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_module_director_surface_hints"
+      },
+      "id": "python:story_runtime_core.director_surface_hints:load_module_director_surface_hints",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/director_surface_hints.py",
+        "kind": "python",
+        "line": 116,
+        "module": "story_runtime_core.director_surface_hints",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "select_director_surface_hints"
+      },
+      "id": "python:story_runtime_core.director_surface_hints:select_director_surface_hints",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/evidence_projection_helpers.py",
+        "kind": "python",
+        "line": 35,
+        "module": "story_runtime_core.evidence_projection_helpers",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "compact_evidence_text"
+      },
+      "id": "python:story_runtime_core.evidence_projection_helpers:compact_evidence_text",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/evidence_projection_helpers.py",
+        "kind": "python",
+        "line": 21,
+        "module": "story_runtime_core.evidence_projection_helpers",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "dedupe_sorted_evidence_text"
+      },
+      "id": "python:story_runtime_core.evidence_projection_helpers:dedupe_sorted_evidence_text",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/evidence_projection_helpers.py",
+        "kind": "python",
+        "line": 15,
+        "module": "story_runtime_core.evidence_projection_helpers",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stable_evidence_hash"
+      },
+      "id": "python:story_runtime_core.evidence_projection_helpers:stable_evidence_hash",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 59,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ActionTemplate"
+      },
+      "id": "python:story_runtime_core.experience_template_models:ActionTemplate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 105,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "BeatTemplate"
+      },
+      "id": "python:story_runtime_core.experience_template_models:BeatTemplate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 53,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Condition"
+      },
+      "id": "python:story_runtime_core.experience_template_models:Condition",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 26,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ConditionType"
+      },
+      "id": "python:story_runtime_core.experience_template_models:ConditionType",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 45,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Effect"
+      },
+      "id": "python:story_runtime_core.experience_template_models:Effect",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 35,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "EffectType"
+      },
+      "id": "python:story_runtime_core.experience_template_models:EffectType",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 71,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ExitTemplate"
+      },
+      "id": "python:story_runtime_core.experience_template_models:ExitTemplate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 9,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ExperienceKind"
+      },
+      "id": "python:story_runtime_core.experience_template_models:ExperienceKind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 112,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ExperienceTemplate"
+      },
+      "id": "python:story_runtime_core.experience_template_models:ExperienceTemplate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 15,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "JoinPolicy"
+      },
+      "id": "python:story_runtime_core.experience_template_models:JoinPolicy",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 21,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ParticipantMode"
+      },
+      "id": "python:story_runtime_core.experience_template_models:ParticipantMode",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 77,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PropTemplate"
+      },
+      "id": "python:story_runtime_core.experience_template_models:PropTemplate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 95,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RoleTemplate"
+      },
+      "id": "python:story_runtime_core.experience_template_models:RoleTemplate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/experience_template_models.py",
+        "kind": "python",
+        "line": 85,
+        "module": "story_runtime_core.experience_template_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RoomTemplate"
+      },
+      "id": "python:story_runtime_core.experience_template_models:RoomTemplate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_catalog.py",
+        "kind": "python",
+        "line": 55,
+        "module": "story_runtime_core.goc_solo_builtin_catalog",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "goc_solo_action_templates"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_action_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_catalog.py",
+        "kind": "python",
+        "line": 61,
+        "module": "story_runtime_core.goc_solo_builtin_catalog",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "goc_solo_beat_templates"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_beat_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_catalog.py",
+        "kind": "python",
+        "line": 8,
+        "module": "story_runtime_core.goc_solo_builtin_catalog",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "goc_solo_prop_templates"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_prop_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_catalog_actions.py",
+        "kind": "python",
+        "line": 306,
+        "module": "story_runtime_core.goc_solo_builtin_catalog_actions",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_goc_solo_action_templates"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_catalog_actions:build_goc_solo_action_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
+        "kind": "python",
+        "line": 13,
+        "module": "story_runtime_core.goc_solo_builtin_roles_rooms",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "goc_solo_role_templates"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_role_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
+        "kind": "python",
+        "line": 117,
+        "module": "story_runtime_core.goc_solo_builtin_roles_rooms",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "goc_solo_room_templates"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
+        "kind": "python",
+        "line": 57,
+        "module": "story_runtime_core.goc_solo_builtin_roles_rooms",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "goc_solo_room_templates_with_content"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates_with_content",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/goc_solo_builtin_template.py",
+        "kind": "python",
+        "line": 17,
+        "module": "story_runtime_core.goc_solo_builtin_template",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_god_of_carnage_solo"
+      },
+      "id": "python:story_runtime_core.goc_solo_builtin_template:build_god_of_carnage_solo",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/input_interpreter.py",
+        "kind": "python",
+        "line": 72,
+        "module": "story_runtime_core.input_interpreter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "interpret_player_input"
+      },
+      "id": "python:story_runtime_core.input_interpreter:interpret_player_input",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/langfuse_tracing_environment.py",
+        "kind": "python",
+        "line": 140,
+        "module": "story_runtime_core.langfuse_tracing_environment",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_local_langfuse_evidence_context"
+      },
+      "id": "python:story_runtime_core.langfuse_tracing_environment:is_local_langfuse_evidence_context",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/langfuse_tracing_environment.py",
+        "kind": "python",
+        "line": 168,
+        "module": "story_runtime_core.langfuse_tracing_environment",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "local_langfuse_evidence_metadata"
+      },
+      "id": "python:story_runtime_core.langfuse_tracing_environment:local_langfuse_evidence_metadata",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/langfuse_tracing_environment.py",
+        "kind": "python",
+        "line": 113,
+        "module": "story_runtime_core.langfuse_tracing_environment",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_langfuse_environment"
+      },
+      "id": "python:story_runtime_core.langfuse_tracing_environment:resolve_langfuse_environment",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/langfuse_tracing_environment.py",
+        "kind": "python",
+        "line": 75,
+        "module": "story_runtime_core.langfuse_tracing_environment",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_runtime_langfuse_base_url"
+      },
+      "id": "python:story_runtime_core.langfuse_tracing_environment:resolve_runtime_langfuse_base_url",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_registry.py",
+        "kind": "python",
+        "line": 57,
+        "module": "story_runtime_core.model_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ModelRegistry"
+      },
+      "id": "python:story_runtime_core.model_registry:ModelRegistry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_registry.py",
+        "kind": "python",
+        "line": 36,
+        "module": "story_runtime_core.model_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ModelSpec"
+      },
+      "id": "python:story_runtime_core.model_registry:ModelSpec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_registry.py",
+        "kind": "python",
+        "line": 50,
+        "module": "story_runtime_core.model_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RoutingDecision"
+      },
+      "id": "python:story_runtime_core.model_registry:RoutingDecision",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_registry.py",
+        "kind": "python",
+        "line": 71,
+        "module": "story_runtime_core.model_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RoutingPolicy"
+      },
+      "id": "python:story_runtime_core.model_registry:RoutingPolicy",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_registry.py",
+        "kind": "python",
+        "line": 111,
+        "module": "story_runtime_core.model_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_default_registry"
+      },
+      "id": "python:story_runtime_core.model_registry:build_default_registry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/models.py",
+        "kind": "python",
+        "line": 9,
+        "module": "story_runtime_core.models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InterpretedInputKind"
+      },
+      "id": "python:story_runtime_core.models:InterpretedInputKind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/models.py",
+        "kind": "python",
+        "line": 35,
+        "module": "story_runtime_core.models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PlayerInputInterpretation"
+      },
+      "id": "python:story_runtime_core.models:PlayerInputInterpretation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/models.py",
+        "kind": "python",
+        "line": 27,
+        "module": "story_runtime_core.models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RuntimeDeliveryHint"
+      },
+      "id": "python:story_runtime_core.models:RuntimeDeliveryHint",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/observability_tree_policy.py",
+        "kind": "python",
+        "line": 133,
+        "module": "story_runtime_core.observability_tree_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "classify_observation_tree"
+      },
+      "id": "python:story_runtime_core.observability_tree_policy:classify_observation_tree",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/observability_tree_policy.py",
+        "kind": "python",
+        "line": 94,
+        "module": "story_runtime_core.observability_tree_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "normalize_enabled_observation_trees"
+      },
+      "id": "python:story_runtime_core.observability_tree_policy:normalize_enabled_observation_trees",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/observability_tree_policy.py",
+        "kind": "python",
+        "line": 89,
+        "module": "story_runtime_core.observability_tree_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "observation_tree_catalog"
+      },
+      "id": "python:story_runtime_core.observability_tree_policy:observation_tree_catalog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/observability_tree_policy.py",
+        "kind": "python",
+        "line": 220,
+        "module": "story_runtime_core.observability_tree_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "should_emit_observation"
+      },
+      "id": "python:story_runtime_core.observability_tree_policy:should_emit_observation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 210,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "default_commit_flags_for_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:default_commit_flags_for_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 155,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_action_like_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_action_like_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 151,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_known_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_known_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 171,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_mixed_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_mixed_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 183,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_narrator_only_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_narrator_only_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 167,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_non_story_control_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_non_story_control_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 159,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_perception_like_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_perception_like_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 179,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_question_punctuation_probe_guarded"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_question_punctuation_probe_guarded",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 163,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_speech_like_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:is_speech_like_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 144,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "normalize_for_intent_matching"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:normalize_for_intent_matching",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 140,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "normalize_player_input_kind"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:normalize_player_input_kind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 187,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "player_input_kind_family"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:player_input_kind_family",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/player_input_intent_contract.py",
+        "kind": "python",
+        "line": 175,
+        "module": "story_runtime_core.player_input_intent_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "question_shape_may_probe"
+      },
+      "id": "python:story_runtime_core.player_input_intent_contract:question_shape_may_probe",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/recovery/no_dead_end.py",
+        "kind": "python",
+        "line": 248,
+        "module": "story_runtime_core.recovery.no_dead_end",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_no_dead_end_recovery_record"
+      },
+      "id": "python:story_runtime_core.recovery.no_dead_end:build_no_dead_end_recovery_record",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/recovery/no_dead_end.py",
+        "kind": "python",
+        "line": 127,
+        "module": "story_runtime_core.recovery.no_dead_end",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "classify_recovery"
+      },
+      "id": "python:story_runtime_core.recovery.no_dead_end:classify_recovery",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/recovery/no_dead_end.py",
+        "kind": "python",
+        "line": 120,
+        "module": "story_runtime_core.recovery.no_dead_end",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "detect_technical_leak_absent"
+      },
+      "id": "python:story_runtime_core.recovery.no_dead_end:detect_technical_leak_absent",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/recovery/no_dead_end.py",
+        "kind": "python",
+        "line": 71,
+        "module": "story_runtime_core.recovery.no_dead_end",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stable_recovery_id"
+      },
+      "id": "python:story_runtime_core.recovery.no_dead_end:stable_recovery_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/recovery/no_dead_end.py",
+        "kind": "python",
+        "line": 340,
+        "module": "story_runtime_core.recovery.no_dead_end",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_no_dead_end_recovery_record"
+      },
+      "id": "python:story_runtime_core.recovery.no_dead_end:validate_no_dead_end_recovery_record",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/runtime_delivery.py",
+        "kind": "python",
+        "line": 9,
+        "module": "story_runtime_core.runtime_delivery",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "extract_spoken_text_for_delivery"
+      },
+      "id": "python:story_runtime_core.runtime_delivery:extract_spoken_text_for_delivery",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/runtime_delivery.py",
+        "kind": "python",
+        "line": 30,
+        "module": "story_runtime_core.runtime_delivery",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "natural_input_to_room_command"
+      },
+      "id": "python:story_runtime_core.runtime_delivery:natural_input_to_room_command",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/serialization.py",
+        "kind": "python",
+        "line": 21,
+        "module": "story_runtime_core.serialization",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "as_list"
+      },
+      "id": "python:story_runtime_core.serialization:as_list",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/serialization.py",
+        "kind": "python",
+        "line": 32,
+        "module": "story_runtime_core.serialization",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "clean_text"
+      },
+      "id": "python:story_runtime_core.serialization:clean_text",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/serialization.py",
+        "kind": "python",
+        "line": 8,
+        "module": "story_runtime_core.serialization",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "json_safe"
+      },
+      "id": "python:story_runtime_core.serialization:json_safe",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/serialization.py",
+        "kind": "python",
+        "line": 37,
+        "module": "story_runtime_core.serialization",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "sequence_list"
+      },
+      "id": "python:story_runtime_core.serialization:sequence_list",
+      "kind": "python"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "python"
+  ],
+  "out_of_scope": {
+    "python:story_runtime_core.adapters:BaseModelAdapter": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.adapters:MockModelAdapter": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.adapters:ModelCallResult": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.adapters:OllamaAdapter": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.adapters:OpenAIChatAdapter": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.adapters:build_default_model_adapters": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.adapters:openai_http_error_excerpt": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.builtin_experience_templates:build_apartment_confrontation_group": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.builtin_experience_templates:build_better_tomorrow_district_open_world": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_content_template": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.builtin_experience_templates:load_builtin_templates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.callbacks.callback_web:build_callback_web_record": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.callbacks.callback_web:build_callback_web_snapshot": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.callbacks.callback_web:build_graph_callback_web_export": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.callbacks.callback_web:default_callback_web_bounds": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.callbacks.callback_web:normalize_callback_web_bounds": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.callbacks.callback_web:stable_callback_web_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.committed_truth:committed_story_truth_rows": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.committed_truth:is_committed_story_truth_row": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.consequences.consequence_cascade:build_consequence_cascade_record": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.consequences.consequence_cascade:build_graph_consequence_cascade_export": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.consequences.consequence_cascade:default_consequence_cascade_bounds": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.consequences.consequence_cascade:normalize_consequence_cascade_bounds": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.consequences.consequence_cascade:stable_consequence_cascade_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.director_surface_hints:load_module_director_surface_hints": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.director_surface_hints:select_director_surface_hints": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.evidence_projection_helpers:compact_evidence_text": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.evidence_projection_helpers:dedupe_sorted_evidence_text": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.evidence_projection_helpers:stable_evidence_hash": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:ActionTemplate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:BeatTemplate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:Condition": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:ConditionType": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:Effect": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:EffectType": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:ExitTemplate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:ExperienceKind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:ExperienceTemplate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:JoinPolicy": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:ParticipantMode": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:PropTemplate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:RoleTemplate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.experience_template_models:RoomTemplate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_action_templates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_beat_templates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_prop_templates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.goc_solo_builtin_catalog_actions:build_goc_solo_action_templates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_role_templates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates_with_content": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.input_interpreter:interpret_player_input": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.langfuse_tracing_environment:is_local_langfuse_evidence_context": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.langfuse_tracing_environment:local_langfuse_evidence_metadata": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.langfuse_tracing_environment:resolve_langfuse_environment": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.langfuse_tracing_environment:resolve_runtime_langfuse_base_url": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_registry:ModelRegistry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_registry:ModelSpec": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_registry:RoutingDecision": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_registry:RoutingPolicy": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_registry:build_default_registry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.models:InterpretedInputKind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.models:PlayerInputInterpretation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.models:RuntimeDeliveryHint": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.observability_tree_policy:classify_observation_tree": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.observability_tree_policy:normalize_enabled_observation_trees": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.observability_tree_policy:observation_tree_catalog": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.observability_tree_policy:should_emit_observation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:default_commit_flags_for_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_action_like_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_known_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_mixed_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_narrator_only_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_non_story_control_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_perception_like_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_question_punctuation_probe_guarded": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:is_speech_like_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:normalize_for_intent_matching": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:normalize_player_input_kind": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:player_input_kind_family": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.player_input_intent_contract:question_shape_may_probe": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.recovery.no_dead_end:build_no_dead_end_recovery_record": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.recovery.no_dead_end:classify_recovery": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.recovery.no_dead_end:detect_technical_leak_absent": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.recovery.no_dead_end:stable_recovery_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.recovery.no_dead_end:validate_no_dead_end_recovery_record": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.runtime_delivery:extract_spoken_text_for_delivery": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.runtime_delivery:natural_input_to_room_command": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.serialization:as_list": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.serialization:clean_text": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.serialization:json_safe": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.serialization:sequence_list": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {
+    "python:story_runtime_core.branching.branch_timeline:append_branch_timeline_event": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:archive_branch_timeline": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:build_branch_timeline_snapshot": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:compact_branch_timeline": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:default_branch_timeline_bounds": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:make_branch_timeline_event": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:make_branch_timeline_record": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:normalize_branch_timeline_bounds": "B-branching",
+    "python:story_runtime_core.branching.branch_timeline:stable_branch_timeline_id": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:branch_tree_is_fresh": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:branch_tree_path_nodes": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:branch_tree_summary_from_simulation": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:find_branch_tree_node": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:make_branch_tree_record": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:mark_branch_tree_committed": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:mark_branch_tree_expired": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:mark_branch_tree_stale": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:selectable_simulation_nodes": "B-branching",
+    "python:story_runtime_core.branching.branch_tree:stable_branch_tree_id": "B-branching",
+    "python:story_runtime_core.branching.consequence_filter:ConsequenceFact": "B-branching",
+    "python:story_runtime_core.branching.consequence_filter:ConsequenceFilter": "B-branching",
+    "python:story_runtime_core.branching.decision_point:DecisionOption": "B-branching",
+    "python:story_runtime_core.branching.decision_point:DecisionPoint": "B-branching",
+    "python:story_runtime_core.branching.decision_point:DecisionPointRegistry": "B-branching",
+    "python:story_runtime_core.branching.decision_point:DecisionPointType": "B-branching",
+    "python:story_runtime_core.branching.enhanced_consequences:create_enhanced_registry": "B-branching",
+    "python:story_runtime_core.branching.enhanced_consequences:get_enhanced_divide_facts": "B-branching",
+    "python:story_runtime_core.branching.enhanced_consequences:get_enhanced_escalation_facts": "B-branching",
+    "python:story_runtime_core.branching.enhanced_consequences:get_enhanced_understanding_facts": "B-branching",
+    "python:story_runtime_core.branching.forecast:build_branching_forecast": "B-branching",
+    "python:story_runtime_core.branching.outcome_divergence:DivergenceMetric": "B-branching",
+    "python:story_runtime_core.branching.outcome_divergence:DivergenceScore": "B-branching",
+    "python:story_runtime_core.branching.outcome_divergence:OutcomeDivergence": "B-branching",
+    "python:story_runtime_core.branching.path_state:PathNode": "B-branching",
+    "python:story_runtime_core.branching.path_state:PathState": "B-branching",
+    "python:story_runtime_core.branching.path_state:PathStateManager": "B-branching",
+    "python:story_runtime_core.branching.phase5_scenario_definitions:build_scenario_c_registry": "B-branching",
+    "python:story_runtime_core.branching.phase5_scenario_definitions:build_scenario_e_registry": "B-branching",
+    "python:story_runtime_core.branching.phase5_scenario_definitions:get_scenario_paths": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:append_simulation_node": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:clamp_simulation_limits": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:finalize_simulation_tree": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:forecast_has_options": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:make_simulated_turn_node": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:make_simulation_tree": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:simulated_input_for_branch_option": "B-branching",
+    "python:story_runtime_core.branching.simulation_tree:stable_simulation_id": "B-branching",
+    "python:story_runtime_core.goc_solo_builtin_template:build_god_of_carnage_solo": "B-goc-builtin-template"
+  },
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Components/story-runtime-core/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Components/story-runtime-core/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Components/story-runtime-core/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Components/story-runtime-core/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/components/story-runtime-core/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "component",
+  "subsystem": "story-runtime-core"
+}

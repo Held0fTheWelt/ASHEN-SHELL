@@ -1,0 +1,2887 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/services/governance/security_governance_service.py",
+          "file": "backend/app/services/governance/security_governance_service.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Admin control plane"
+        }
+      ],
+      "id": "B-admin-control-plane",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Admin control plane"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "frontend/app/auth.py",
+          "file": "frontend/app/auth.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Browser mutations"
+        }
+      ],
+      "id": "B-browser-mutations",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Browser mutations"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "tools/mcp_server/server.py",
+          "file": "tools/mcp_server/server.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "MCP auth"
+        }
+      ],
+      "id": "B-mcp-auth",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "MCP auth"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py",
+          "file": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Provider credentials"
+        }
+      ],
+      "id": "B-provider-credentials",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Provider credentials"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/security-governance/TRACEABILITY.md",
+          "file": "UML/Project/security-governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "administration-tool/tests/test_manage_security_governance.py",
+          "file": "administration-tool/tests/test_manage_security_governance.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        },
+        {
+          "declared_path": "administration-tool/tests/test_proxy_contract.py",
+          "file": "administration-tool/tests/test_proxy_contract.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        },
+        {
+          "declared_path": "backend/tests/test_csrf_protection.py",
+          "file": "backend/tests/test_csrf_protection.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        },
+        {
+          "declared_path": "backend/tests/test_security_governance_routes.py",
+          "file": "backend/tests/test_security_governance_routes.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        },
+        {
+          "declared_path": "docker-compose.redis-production.yml",
+          "file": "docker-compose.redis-production.yml",
+          "kind": "content",
+          "line": 1,
+          "object": "Security governance for browser mutation boundaries",
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-up.py",
+          "file": "docker-up.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        },
+        {
+          "declared_path": "docs/architecture/project/security-governance/architecture.md",
+          "file": "docs/architecture/project/security-governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/security/csrf-matrix.md",
+          "file": "docs/security/csrf-matrix.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "frontend/tests/test_api_client.py",
+          "file": "frontend/tests/test_api_client.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        },
+        {
+          "declared_path": "frontend/tests/test_csrf_matrix.py",
+          "file": "frontend/tests/test_csrf_matrix.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        },
+        {
+          "declared_path": "tests/test_security_governance_documentation.py",
+          "file": "tests/test_security_governance_documentation.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security governance for browser mutation boundaries"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "**Origin:** ADR-0050 (retired 2026-06-23)",
+      "title": "Security governance for browser mutation boundaries"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/security-governance/TRACEABILITY.md",
+          "file": "UML/Project/security-governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "administration-tool/tests/test_manage_security_governance.py",
+          "file": "administration-tool/tests/test_manage_security_governance.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Storage-layer encryption governance"
+        },
+        {
+          "declared_path": "backend/tests/test_security_governance_routes.py",
+          "file": "backend/tests/test_security_governance_routes.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Storage-layer encryption governance"
+        },
+        {
+          "declared_path": "backend/tests/test_system_diagnosis.py",
+          "file": "backend/tests/test_system_diagnosis.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Storage-layer encryption governance"
+        },
+        {
+          "declared_path": "docker-compose.redis-production.yml",
+          "file": "docker-compose.redis-production.yml",
+          "kind": "content",
+          "line": 1,
+          "object": "Storage-layer encryption governance",
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-compose.yml",
+          "file": "docker-compose.yml",
+          "kind": "content",
+          "line": 1,
+          "object": "Storage-layer encryption governance",
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/project/security-governance/architecture.md",
+          "file": "docs/architecture/project/security-governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tests/test_at_rest_encryption_documentation.py",
+          "file": "tests/test_at_rest_encryption_documentation.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Storage-layer encryption governance"
+        },
+        {
+          "declared_path": "tests/test_local_langfuse_docker_config.py",
+          "file": "tests/test_local_langfuse_docker_config.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Storage-layer encryption governance"
+        },
+        {
+          "declared_path": "world-engine/tests/test_aead_json_persistence.py",
+          "file": "world-engine/tests/test_aead_json_persistence.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Storage-layer encryption governance"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "**Origin:** ADR-0051 (retired 2026-06-23)",
+      "title": "Storage-layer encryption governance"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/security-governance/TRACEABILITY.md",
+          "file": "UML/Project/security-governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "administration-tool/tests/test_manage_security_governance.py",
+          "file": "administration-tool/tests/test_manage_security_governance.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security Governance Admin Control Plane"
+        },
+        {
+          "declared_path": "backend/tests/test_security_governance_routes.py",
+          "file": "backend/tests/test_security_governance_routes.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security Governance Admin Control Plane"
+        },
+        {
+          "declared_path": "docker-up.py",
+          "file": "docker-up.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security Governance Admin Control Plane"
+        },
+        {
+          "declared_path": "docs/architecture/project/security-governance/architecture.md",
+          "file": "docs/architecture/project/security-governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+          "file": "docs/archive/adr-retired-2026/adr-0039-gate-tests-no-hardcoded-oracle-bypass.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tests/test_security_governance_documentation.py",
+          "file": "tests/test_security_governance_documentation.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Security Governance Admin Control Plane"
+        }
+      ],
+      "id": "D3",
+      "state": "bound",
+      "status": "**Origin:** ADR-0052 (retired 2026-06-23)",
+      "title": "Security Governance Admin Control Plane"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/security-governance/TRACEABILITY.md",
+          "file": "UML/Project/security-governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-up.py",
+          "file": "docker-up.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "At-rest encryption evidence boundary"
+        },
+        {
+          "declared_path": "docs/architecture/project/security-governance/architecture.md",
+          "file": "docs/architecture/project/security-governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/security/AT_REST_ENCRYPTION.md",
+          "file": "docs/security/AT_REST_ENCRYPTION.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tests/test_at_rest_encryption_documentation.py",
+          "file": "tests/test_at_rest_encryption_documentation.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "At-rest encryption evidence boundary"
+        }
+      ],
+      "id": "D4",
+      "state": "bound",
+      "status": "**Origin:** ADR-0047 (retired 2026-06-23)",
+      "title": "At-rest encryption evidence boundary"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/security-governance/TRACEABILITY.md",
+          "file": "UML/Project/security-governance/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-up.py",
+          "file": "docker-up.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Provider credential governance and local evaluator evidence"
+        },
+        {
+          "declared_path": "docs/architecture/project/security-governance/architecture.md",
+          "file": "docs/architecture/project/security-governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tests/test_local_langfuse_docker_config.py",
+          "file": "tests/test_local_langfuse_docker_config.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Provider credential governance and local evaluator evidence"
+        },
+        {
+          "declared_path": "tests/test_provider_credential_governance_documentation.py",
+          "file": "tests/test_provider_credential_governance_documentation.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Provider credential governance and local evaluator evidence"
+        }
+      ],
+      "id": "D5",
+      "state": "bound",
+      "status": "**Origin:** ADR-0049 (retired 2026-06-23)",
+      "title": "Provider credential governance and local evaluator evidence"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/diagnosis_gates_mapping_service.py",
+        "kind": "python",
+        "line": 134,
+        "module": "backend.app.services.governance.diagnosis_gates_mapping_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "enrich_diagnosis_with_gates"
+      },
+      "id": "python:backend.app.services.governance.diagnosis_gates_mapping_service:enrich_diagnosis_with_gates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/diagnosis_gates_mapping_service.py",
+        "kind": "python",
+        "line": 166,
+        "module": "backend.app.services.governance.diagnosis_gates_mapping_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ensure_all_gates_exist"
+      },
+      "id": "python:backend.app.services.governance.diagnosis_gates_mapping_service:ensure_all_gates_exist",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/diagnosis_gates_mapping_service.py",
+        "kind": "python",
+        "line": 79,
+        "module": "backend.app.services.governance.diagnosis_gates_mapping_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_check_id_for_gate"
+      },
+      "id": "python:backend.app.services.governance.diagnosis_gates_mapping_service:get_check_id_for_gate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/diagnosis_gates_mapping_service.py",
+        "kind": "python",
+        "line": 74,
+        "module": "backend.app.services.governance.diagnosis_gates_mapping_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_gate_id_for_check"
+      },
+      "id": "python:backend.app.services.governance.diagnosis_gates_mapping_service:get_gate_id_for_check",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/diagnosis_gates_mapping_service.py",
+        "kind": "python",
+        "line": 97,
+        "module": "backend.app.services.governance.diagnosis_gates_mapping_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "map_check_to_gate"
+      },
+      "id": "python:backend.app.services.governance.diagnosis_gates_mapping_service:map_check_to_gate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 202,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_adr0041_authority_state"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_adr0041_authority_state",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 268,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_capability_matrix_status"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_capability_matrix_status",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 489,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_feature_flag_governance"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_feature_flag_governance",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 366,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_langfuse_mcp_evidence_status"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_langfuse_mcp_evidence_status",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 443,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_narrative_systems_governance"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_narrative_systems_governance",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 415,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_runtime_aspect_ledger_view"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_runtime_aspect_ledger_view",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 157,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_runtime_readiness_authority"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_runtime_readiness_authority",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_console_service.py",
+        "kind": "python",
+        "line": 322,
+        "module": "backend.app.services.governance.governance_console_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_validator_registry_status"
+      },
+      "id": "python:backend.app.services.governance.governance_console_service:get_validator_registry_status",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_secret_crypto_service.py",
+        "kind": "python",
+        "line": 17,
+        "module": "backend.app.services.governance.governance_secret_crypto_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "EncryptedSecretRecord"
+      },
+      "id": "python:backend.app.services.governance.governance_secret_crypto_service:EncryptedSecretRecord",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_secret_crypto_service.py",
+        "kind": "python",
+        "line": 103,
+        "module": "backend.app.services.governance.governance_secret_crypto_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "decrypt_secret"
+      },
+      "id": "python:backend.app.services.governance.governance_secret_crypto_service:decrypt_secret",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_secret_crypto_service.py",
+        "kind": "python",
+        "line": 76,
+        "module": "backend.app.services.governance.governance_secret_crypto_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "encrypt_secret"
+      },
+      "id": "python:backend.app.services.governance.governance_secret_crypto_service:encrypt_secret",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_secret_crypto_service.py",
+        "kind": "python",
+        "line": 71,
+        "module": "backend.app.services.governance.governance_secret_crypto_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "fingerprint_secret"
+      },
+      "id": "python:backend.app.services.governance.governance_secret_crypto_service:fingerprint_secret",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governed_provider_adapter_service.py",
+        "kind": "python",
+        "line": 27,
+        "module": "backend.app.services.governance.governed_provider_adapter_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_governed_provider_adapters"
+      },
+      "id": "python:backend.app.services.governance.governed_provider_adapter_service:build_governed_provider_adapters",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/hf_hub_governance_service.py",
+        "kind": "python",
+        "line": 131,
+        "module": "backend.app.services.governance.hf_hub_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "clear_hf_hub_token"
+      },
+      "id": "python:backend.app.services.governance.hf_hub_governance_service:clear_hf_hub_token",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/hf_hub_governance_service.py",
+        "kind": "python",
+        "line": 55,
+        "module": "backend.app.services.governance.hf_hub_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_hf_hub_status"
+      },
+      "id": "python:backend.app.services.governance.hf_hub_governance_service:get_hf_hub_status",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/hf_hub_governance_service.py",
+        "kind": "python",
+        "line": 50,
+        "module": "backend.app.services.governance.hf_hub_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_hf_hub_token_for_runtime"
+      },
+      "id": "python:backend.app.services.governance.hf_hub_governance_service:get_hf_hub_token_for_runtime",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/hf_hub_governance_service.py",
+        "kind": "python",
+        "line": 212,
+        "module": "backend.app.services.governance.hf_hub_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "sync_hf_token_from_store_to_os_environ"
+      },
+      "id": "python:backend.app.services.governance.hf_hub_governance_service:sync_hf_token_from_store_to_os_environ",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/hf_hub_governance_service.py",
+        "kind": "python",
+        "line": 152,
+        "module": "backend.app.services.governance.hf_hub_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "test_hf_hub_connection"
+      },
+      "id": "python:backend.app.services.governance.hf_hub_governance_service:test_hf_hub_connection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/hf_hub_governance_service.py",
+        "kind": "python",
+        "line": 76,
+        "module": "backend.app.services.governance.hf_hub_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "write_hf_hub_token"
+      },
+      "id": "python:backend.app.services.governance.hf_hub_governance_service:write_hf_hub_token",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_condition_matching.py",
+        "kind": "python",
+        "line": 20,
+        "module": "backend.app.services.governance.narrative_condition_matching",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "is_condition_match"
+      },
+      "id": "python:backend.app.services.governance.narrative_condition_matching:is_condition_match",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 51,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "NarrativeGovernanceError"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:NarrativeGovernanceError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 264,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PreviewBuildResult"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:PreviewBuildResult",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 910,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "acknowledge_notification"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:acknowledge_notification",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 469,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "apply_revision_bundle_to_draft"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:apply_revision_bundle_to_draft",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 271,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_preview"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:build_preview",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 601,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "complete_evaluation_run"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:complete_evaluation_run",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 412,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "detect_conflicts_for_module"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:detect_conflicts_for_module",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 210,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "emit_narrative_event"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:emit_narrative_event",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1133,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "end_preview_runtime_session"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:end_preview_runtime_session",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 998,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "fallback_events"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:fallback_events",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 922,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ingest_runtime_health_event"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:ingest_runtime_health_event",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 902,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_notification_feed"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:list_notification_feed",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1018,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_packages"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:list_packages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1055,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_revision_candidates"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:list_revision_candidates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1085,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_preview_into_runtime"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:load_preview_into_runtime",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1040,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "package_history"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:package_history",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 689,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "promote_preview_to_active"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:promote_preview_to_active",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 524,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "record_evaluation_run"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:record_evaluation_run",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 777,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_conflict"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:resolve_conflict",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1075,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_validation_feedback_for_retry"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:resolve_validation_feedback_for_retry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 636,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "rollback_to_version"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:rollback_to_version",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1144,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_diagnostics"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:runtime_diagnostics",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1163,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_gov_summary"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:runtime_gov_summary",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 986,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_health_summary"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:runtime_health_summary",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1111,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "start_preview_runtime_session"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:start_preview_runtime_session",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1178,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "sync_runtime_health_from_world_engine"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:sync_runtime_health_from_world_engine",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 334,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "transition_revision"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:transition_revision",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 1100,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "unload_preview_from_runtime"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:unload_preview_from_runtime",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 568,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "upsert_evaluation_coverage"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:upsert_evaluation_coverage",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_governance_service.py",
+        "kind": "python",
+        "line": 868,
+        "module": "backend.app.services.governance.narrative_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "upsert_notification_rule"
+      },
+      "id": "python:backend.app.services.governance.narrative_governance_service:upsert_notification_rule",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_runtime_health.py",
+        "kind": "python",
+        "line": 12,
+        "module": "backend.app.services.governance.narrative_runtime_health",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_runtime_health_event"
+      },
+      "id": "python:backend.app.services.governance.narrative_runtime_health:build_runtime_health_event",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_runtime_health.py",
+        "kind": "python",
+        "line": 51,
+        "module": "backend.app.services.governance.narrative_runtime_health",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_runtime_health_rollup"
+      },
+      "id": "python:backend.app.services.governance.narrative_runtime_health:build_runtime_health_rollup",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_runtime_health.py",
+        "kind": "python",
+        "line": 77,
+        "module": "backend.app.services.governance.narrative_runtime_health",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "fallback_alert_settings"
+      },
+      "id": "python:backend.app.services.governance.narrative_runtime_health:fallback_alert_settings",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_runtime_health.py",
+        "kind": "python",
+        "line": 37,
+        "module": "backend.app.services.governance.narrative_runtime_health",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_health_counts"
+      },
+      "id": "python:backend.app.services.governance.narrative_runtime_health:runtime_health_counts",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/narrative_runtime_health.py",
+        "kind": "python",
+        "line": 94,
+        "module": "backend.app.services.governance.narrative_runtime_health",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "should_emit_fallback_threshold_alert"
+      },
+      "id": "python:backend.app.services.governance.narrative_runtime_health:should_emit_fallback_threshold_alert",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 338,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "CostDashboard"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:CostDashboard",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 286,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "CostSummary"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:CostSummary",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 128,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DegradationLevel"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:DegradationLevel",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 29,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InMemoryObservabilityStorage"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:InMemoryObservabilityStorage",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 45,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RedisJsonObservabilityStorage"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:RedisJsonObservabilityStorage",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 136,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TokenBudgetConfig"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:TokenBudgetConfig",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 173,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TokenBudgetService"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:TokenBudgetService",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 1284,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "disable_observability"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:disable_observability",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 562,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_observability_config"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:get_observability_config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 710,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_observability_credential_for_runtime"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:get_observability_credential_for_runtime",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 105,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_runtime_governance_storage"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:get_runtime_governance_storage",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 535,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ingest_runtime_turn_cost"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:ingest_runtime_turn_cost",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 86,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "init_runtime_governance_storage"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:init_runtime_governance_storage",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 1178,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "persist_observability_health_probe"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:persist_observability_health_probe",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 1224,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "run_startup_observability_health_check"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:run_startup_observability_health_check",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 1204,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "test_observability_connection"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:test_observability_connection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 1241,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_observability_config"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:update_observability_config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 933,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "verify_langfuse_runtime_connectivity"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:verify_langfuse_runtime_connectivity",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/observability_governance_service.py",
+        "kind": "python",
+        "line": 632,
+        "module": "backend.app.services.governance.observability_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "write_observability_credential"
+      },
+      "id": "python:backend.app.services.governance.observability_governance_service:write_observability_credential",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 53,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_or_update_gate"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:create_or_update_gate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 183,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "delete_gate"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:delete_gate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 14,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_all_gates"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:get_all_gates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 40,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_gate"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:get_gate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 34,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_gates_by_service"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:get_gates_by_service",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 20,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_gates_by_status"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:get_gates_by_status",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 167,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_summary"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:get_summary",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/readiness_gates_service.py",
+        "kind": "python",
+        "line": 119,
+        "module": "backend.app.services.governance.readiness_gates_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_gate_status"
+      },
+      "id": "python:backend.app.services.governance.readiness_gates_service:update_gate_status",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/research_domain_governance_service.py",
+        "kind": "python",
+        "line": 338,
+        "module": "backend.app.services.governance.research_domain_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_research_domain_overview"
+      },
+      "id": "python:backend.app.services.governance.research_domain_governance_service:build_research_domain_overview",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/research_domain_governance_service.py",
+        "kind": "python",
+        "line": 366,
+        "module": "backend.app.services.governance.research_domain_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_research_layer_payload"
+      },
+      "id": "python:backend.app.services.governance.research_domain_governance_service:build_research_layer_payload",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/research_domain_governance_service.py",
+        "kind": "python",
+        "line": 39,
+        "module": "backend.app.services.governance.research_domain_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_principles"
+      },
+      "id": "python:backend.app.services.governance.research_domain_governance_service:governance_principles",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/runtime_config_truth_service.py",
+        "kind": "python",
+        "line": 13,
+        "module": "backend.app.services.governance.runtime_config_truth_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_backend_configured_state"
+      },
+      "id": "python:backend.app.services.governance.runtime_config_truth_service:get_backend_configured_state",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/runtime_config_truth_service.py",
+        "kind": "python",
+        "line": 43,
+        "module": "backend.app.services.governance.runtime_config_truth_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_backend_effective_config"
+      },
+      "id": "python:backend.app.services.governance.runtime_config_truth_service:get_backend_effective_config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/runtime_config_truth_service.py",
+        "kind": "python",
+        "line": 110,
+        "module": "backend.app.services.governance.runtime_config_truth_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_play_service_reachability"
+      },
+      "id": "python:backend.app.services.governance.runtime_config_truth_service:get_play_service_reachability",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/runtime_config_truth_service.py",
+        "kind": "python",
+        "line": 137,
+        "module": "backend.app.services.governance.runtime_config_truth_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_runtime_config_truth"
+      },
+      "id": "python:backend.app.services.governance.runtime_config_truth_service:get_runtime_config_truth",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/runtime_config_truth_service.py",
+        "kind": "python",
+        "line": 67,
+        "module": "backend.app.services.governance.runtime_config_truth_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_world_engine_loaded_state"
+      },
+      "id": "python:backend.app.services.governance.runtime_config_truth_service:get_world_engine_loaded_state",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/security_governance_service.py",
+        "kind": "python",
+        "line": 765,
+        "module": "backend.app.services.governance.security_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_security_governance"
+      },
+      "id": "python:backend.app.services.governance.security_governance_service:get_security_governance",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/security_governance_service.py",
+        "kind": "python",
+        "line": 838,
+        "module": "backend.app.services.governance.security_governance_service",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_security_governance"
+      },
+      "id": "python:backend.app.services.governance.security_governance_service:update_security_governance",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_client.py",
+        "kind": "python",
+        "line": 10,
+        "module": "tools.mcp_server.backend_client",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "BackendClient"
+      },
+      "id": "python:tools.mcp_server.backend_client:BackendClient",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 24,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_create"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_create",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 90,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_diag"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_diag",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 179,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_execute_turn"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_execute_turn",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 69,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_get"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_get",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 122,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_logs"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_logs",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 153,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_session_state"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_state",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/backend_session_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 12,
+        "module": "tools.mcp_server.backend_session_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_system_health"
+      },
+      "id": "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_system_health",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/call_tool_result.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.call_tool_result",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "unwrap_call_tool_result"
+      },
+      "id": "python:tools.mcp_server.call_tool_result:unwrap_call_tool_result",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/call_tool_result.py",
+        "kind": "python",
+        "line": 16,
+        "module": "tools.mcp_server.call_tool_result",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wrap_call_tool_result"
+      },
+      "id": "python:tools.mcp_server.call_tool_result:wrap_call_tool_result",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/config.py",
+        "kind": "python",
+        "line": 7,
+        "module": "tools.mcp_server.config",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Config"
+      },
+      "id": "python:tools.mcp_server.config:Config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/config.py",
+        "kind": "python",
+        "line": 30,
+        "module": "tools.mcp_server.config",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_repo_root"
+      },
+      "id": "python:tools.mcp_server.config:get_repo_root",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/__main__.py",
+        "kind": "python",
+        "line": 81,
+        "module": "tools.mcp_server.diagnostics.__main__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:tools.mcp_server.diagnostics.__main__:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 59,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Classification"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:Classification",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 72,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ClassificationRow"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:ClassificationRow",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 87,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OpeningQualityReport"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:OpeningQualityReport",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/diagnostics/opening_quality.py",
+        "kind": "python",
+        "line": 605,
+        "module": "tools.mcp_server.diagnostics.opening_quality",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "run_opening_quality_probe"
+      },
+      "id": "python:tools.mcp_server.diagnostics.opening_quality:run_opening_quality_probe",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 50,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InvalidInputError"
+      },
+      "id": "python:tools.mcp_server.errors:InvalidInputError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 21,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "JsonRpcError"
+      },
+      "id": "python:tools.mcp_server.errors:JsonRpcError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 45,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "PermissionDeniedError"
+      },
+      "id": "python:tools.mcp_server.errors:PermissionDeniedError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 40,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RateLimitedError"
+      },
+      "id": "python:tools.mcp_server.errors:RateLimitedError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/errors.py",
+        "kind": "python",
+        "line": 35,
+        "module": "tools.mcp_server.errors",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolNotFoundError"
+      },
+      "id": "python:tools.mcp_server.errors:ToolNotFoundError",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 72,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "FileSystemTools"
+      },
+      "id": "python:tools.mcp_server.fs_tools:FileSystemTools",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 23,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_module"
+      },
+      "id": "python:tools.mcp_server.fs_tools:get_module",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 9,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_modules"
+      },
+      "id": "python:tools.mcp_server.fs_tools:list_modules",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools.py",
+        "kind": "python",
+        "line": 47,
+        "module": "tools.mcp_server.fs_tools",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "search_content"
+      },
+      "id": "python:tools.mcp_server.fs_tools:search_content",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/fs_tools_search_content.py",
+        "kind": "python",
+        "line": 47,
+        "module": "tools.mcp_server.fs_tools_search_content",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "run_content_regex_search"
+      },
+      "id": "python:tools.mcp_server.fs_tools_search_content:run_content_regex_search",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 47,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_diag_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_diag_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 61,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_execute_turn_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_execute_turn_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 6,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_get_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_get_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 34,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_logs_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_logs_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/__init__.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.handlers.__init__",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "session_state_handler"
+      },
+      "id": "python:tools.mcp_server.handlers.__init__:session_state_handler",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/langfuse_verify/loader.py",
+        "kind": "python",
+        "line": 56,
+        "module": "tools.mcp_server.handlers.langfuse_verify.loader",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_into"
+      },
+      "id": "python:tools.mcp_server.handlers.langfuse_verify.loader:load_into",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers.py",
+        "kind": "python",
+        "line": 26,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_default_mcp_tool_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers:build_default_mcp_tool_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_backend_session.py",
+        "kind": "python",
+        "line": 19,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_backend_session",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_backend_session_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_backend_session:build_backend_session_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_deferred.py",
+        "kind": "python",
+        "line": 10,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_deferred",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "deferred_stub_handler_factory"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_deferred:deferred_stub_handler_factory",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_evaluators.py",
+        "kind": "python",
+        "line": 32,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_evaluators",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_evaluators_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_evaluators:build_evaluators_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_filesystem.py",
+        "kind": "python",
+        "line": 10,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_filesystem",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_filesystem_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_filesystem:build_filesystem_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_governance.py",
+        "kind": "python",
+        "line": 17,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_governance",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_governance_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_governance:build_governance_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_protocol.py",
+        "kind": "python",
+        "line": 8,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_protocol",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RegistryListToolNames"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_protocol:RegistryListToolNames",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 280,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_quality_lab_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:build_quality_lab_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 216,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_find_patterns"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_find_patterns",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 268,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_plan_content_revision"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_content_revision",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 245,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_plan_repair_wave"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_repair_wave",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 256,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_refine_judge_set"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_refine_judge_set",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 163,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_review_judgments"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_judgments",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 204,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_review_mcp_exchange"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_mcp_exchange",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 181,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_review_trace"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_trace",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_quality_lab.py",
+        "kind": "python",
+        "line": 229,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_quality_lab",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wos_quality_lab_suggest_investigation"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_suggest_investigation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/handlers/tools_registry_handlers_research.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.handlers.tools_registry_handlers_research",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_research_mcp_handlers"
+      },
+      "id": "python:tools.mcp_server.handlers.tools_registry_handlers_research:build_research_mcp_handlers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/langfuse_tracing.py",
+        "kind": "python",
+        "line": 136,
+        "module": "tools.mcp_server.langfuse_tracing",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "McpLangfuseTracer"
+      },
+      "id": "python:tools.mcp_server.langfuse_tracing:McpLangfuseTracer",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 20,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "begin_telemetry_capture"
+      },
+      "id": "python:tools.mcp_server.logging_utils:begin_telemetry_capture",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 26,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "end_telemetry_capture"
+      },
+      "id": "python:tools.mcp_server.logging_utils:end_telemetry_capture",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 42,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "flush_telemetry_to_backend"
+      },
+      "id": "python:tools.mcp_server.logging_utils:flush_telemetry_to_backend",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 15,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "generate_trace_id"
+      },
+      "id": "python:tools.mcp_server.logging_utils:generate_trace_id",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 67,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "log_request"
+      },
+      "id": "python:tools.mcp_server.logging_utils:log_request",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 80,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "log_response"
+      },
+      "id": "python:tools.mcp_server.logging_utils:log_response",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/logging_utils.py",
+        "kind": "python",
+        "line": 98,
+        "module": "tools.mcp_server.logging_utils",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "log_tool_call"
+      },
+      "id": "python:tools.mcp_server.logging_utils:log_tool_call",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/operating_profile.py",
+        "kind": "python",
+        "line": 7,
+        "module": "tools.mcp_server.operating_profile",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OperatingProfile"
+      },
+      "id": "python:tools.mcp_server.operating_profile:OperatingProfile",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/operating_profile.py",
+        "kind": "python",
+        "line": 28,
+        "module": "tools.mcp_server.operating_profile",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "check_session_binding"
+      },
+      "id": "python:tools.mcp_server.operating_profile:check_session_binding",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/operating_profile.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.mcp_server.operating_profile",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "check_tool_access"
+      },
+      "id": "python:tools.mcp_server.operating_profile:check_tool_access",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rate_limiter.py",
+        "kind": "python",
+        "line": 7,
+        "module": "tools.mcp_server.rate_limiter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RateLimiter"
+      },
+      "id": "python:tools.mcp_server.rate_limiter:RateLimiter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/registry.py",
+        "kind": "python",
+        "line": 17,
+        "module": "tools.mcp_server.registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "MCPRegistry"
+      },
+      "id": "python:tools.mcp_server.registry:MCPRegistry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/registry.py",
+        "kind": "python",
+        "line": 8,
+        "module": "tools.mcp_server.registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolSpec"
+      },
+      "id": "python:tools.mcp_server.registry:ToolSpec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/repo_dotenv.py",
+        "kind": "python",
+        "line": 35,
+        "module": "tools.mcp_server.repo_dotenv",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "bootstrap_repo_environment"
+      },
+      "id": "python:tools.mcp_server.repo_dotenv:bootstrap_repo_environment",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 153,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_canon_improvement_preview"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_preview",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 143,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_canon_improvement_propose"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_propose",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 71,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_canon_issue_inspect"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_issue_inspect",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 31,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_aspect_extract"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_aspect_extract",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 133,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_bundle_build"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_bundle_build",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 44,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_claim_list"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_claim_list",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 61,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_exploration_graph"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_exploration_graph",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 78,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_explore"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_explore",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 51,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_run_get"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_run_get",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 21,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_source_inspect"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_source_inspect",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/research_mcp_handler_factories.py",
+        "kind": "python",
+        "line": 114,
+        "module": "tools.mcp_server.research_mcp_handler_factories",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "make_handle_research_validate"
+      },
+      "id": "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_validate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 105,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "McpResourceReader"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:McpResourceReader",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 83,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_prompt_messages"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:get_prompt_messages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 44,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_prompt_descriptors"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:list_prompt_descriptors",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/resource_prompt_support.py",
+        "kind": "python",
+        "line": 27,
+        "module": "tools.mcp_server.resource_prompt_support",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_resource_descriptors"
+      },
+      "id": "python:tools.mcp_server.resource_prompt_support:list_resource_descriptors",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rpc_error_response.py",
+        "kind": "python",
+        "line": 38,
+        "module": "tools.mcp_server.rpc_error_response",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "exception_to_jsonrpc_response"
+      },
+      "id": "python:tools.mcp_server.rpc_error_response:exception_to_jsonrpc_response",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rpc_error_response.py",
+        "kind": "python",
+        "line": 24,
+        "module": "tools.mcp_server.rpc_error_response",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "jsonrpc_error_response"
+      },
+      "id": "python:tools.mcp_server.rpc_error_response:jsonrpc_error_response",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/rpc_method_router.py",
+        "kind": "python",
+        "line": 11,
+        "module": "tools.mcp_server.rpc_method_router",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "route_mcp_method"
+      },
+      "id": "python:tools.mcp_server.rpc_method_router:route_mcp_method",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/server.py",
+        "kind": "python",
+        "line": 57,
+        "module": "tools.mcp_server.server",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "McpServer"
+      },
+      "id": "python:tools.mcp_server.server:McpServer",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 51,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolDefinition"
+      },
+      "id": "python:tools.mcp_server.tools_registry:ToolDefinition",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 89,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ToolRegistry"
+      },
+      "id": "python:tools.mcp_server.tools_registry:ToolRegistry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 124,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_default_registry"
+      },
+      "id": "python:tools.mcp_server.tools_registry:create_default_registry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/mcp_server/tools_registry.py",
+        "kind": "python",
+        "line": 39,
+        "module": "tools.mcp_server.tools_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "cursor_safe_name"
+      },
+      "id": "python:tools.mcp_server.tools_registry:cursor_safe_name",
+      "kind": "python"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "python",
+    "api"
+  ],
+  "out_of_scope": {
+    "python:backend.app.services.governance.diagnosis_gates_mapping_service:enrich_diagnosis_with_gates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.diagnosis_gates_mapping_service:ensure_all_gates_exist": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.diagnosis_gates_mapping_service:get_check_id_for_gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.diagnosis_gates_mapping_service:get_gate_id_for_check": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.diagnosis_gates_mapping_service:map_check_to_gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_adr0041_authority_state": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_capability_matrix_status": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_feature_flag_governance": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_langfuse_mcp_evidence_status": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_narrative_systems_governance": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_runtime_aspect_ledger_view": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_runtime_readiness_authority": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_console_service:get_validator_registry_status": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_secret_crypto_service:EncryptedSecretRecord": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_secret_crypto_service:decrypt_secret": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_secret_crypto_service:encrypt_secret": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_secret_crypto_service:fingerprint_secret": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governed_provider_adapter_service:build_governed_provider_adapters": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.hf_hub_governance_service:clear_hf_hub_token": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.hf_hub_governance_service:get_hf_hub_status": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.hf_hub_governance_service:get_hf_hub_token_for_runtime": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.hf_hub_governance_service:sync_hf_token_from_store_to_os_environ": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.hf_hub_governance_service:test_hf_hub_connection": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.hf_hub_governance_service:write_hf_hub_token": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_condition_matching:is_condition_match": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:NarrativeGovernanceError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:PreviewBuildResult": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:acknowledge_notification": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:apply_revision_bundle_to_draft": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:build_preview": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:complete_evaluation_run": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:detect_conflicts_for_module": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:emit_narrative_event": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:end_preview_runtime_session": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:fallback_events": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:ingest_runtime_health_event": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:list_notification_feed": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:list_packages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:list_revision_candidates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:load_preview_into_runtime": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:package_history": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:promote_preview_to_active": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:record_evaluation_run": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:resolve_conflict": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:resolve_validation_feedback_for_retry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:rollback_to_version": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:runtime_diagnostics": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:runtime_gov_summary": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:runtime_health_summary": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:start_preview_runtime_session": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:sync_runtime_health_from_world_engine": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:transition_revision": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:unload_preview_from_runtime": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:upsert_evaluation_coverage": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_governance_service:upsert_notification_rule": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_runtime_health:build_runtime_health_event": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_runtime_health:build_runtime_health_rollup": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_runtime_health:fallback_alert_settings": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_runtime_health:runtime_health_counts": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.narrative_runtime_health:should_emit_fallback_threshold_alert": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:CostDashboard": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:CostSummary": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:DegradationLevel": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:InMemoryObservabilityStorage": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:RedisJsonObservabilityStorage": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:TokenBudgetConfig": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:TokenBudgetService": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:disable_observability": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:get_observability_config": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:get_observability_credential_for_runtime": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:get_runtime_governance_storage": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:ingest_runtime_turn_cost": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:init_runtime_governance_storage": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:persist_observability_health_probe": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:run_startup_observability_health_check": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:test_observability_connection": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:update_observability_config": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:verify_langfuse_runtime_connectivity": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.observability_governance_service:write_observability_credential": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:create_or_update_gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:delete_gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:get_all_gates": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:get_gate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:get_gates_by_service": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:get_gates_by_status": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:get_summary": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.readiness_gates_service:update_gate_status": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.research_domain_governance_service:build_research_domain_overview": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.research_domain_governance_service:build_research_layer_payload": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.research_domain_governance_service:governance_principles": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.runtime_config_truth_service:get_backend_configured_state": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.runtime_config_truth_service:get_backend_effective_config": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.runtime_config_truth_service:get_play_service_reachability": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.runtime_config_truth_service:get_runtime_config_truth": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.runtime_config_truth_service:get_world_engine_loaded_state": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_client:BackendClient": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_create": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_diag": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_execute_turn": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_get": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_logs": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_session_state": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.backend_session_mcp_handler_factories:make_handle_system_health": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.call_tool_result:unwrap_call_tool_result": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.call_tool_result:wrap_call_tool_result": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.config:Config": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.config:get_repo_root": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.__main__:main": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:Classification": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:ClassificationRow": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:OpeningQualityReport": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.diagnostics.opening_quality:run_opening_quality_probe": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:InvalidInputError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:JsonRpcError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:PermissionDeniedError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:RateLimitedError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.errors:ToolNotFoundError": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:FileSystemTools": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:get_module": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:list_modules": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools:search_content": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.fs_tools_search_content:run_content_regex_search": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.__init__:session_diag_handler": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.__init__:session_execute_turn_handler": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.__init__:session_get_handler": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.__init__:session_logs_handler": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.__init__:session_state_handler": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.langfuse_verify.loader:load_into": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers:build_default_mcp_tool_handlers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_backend_session:build_backend_session_mcp_handlers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_deferred:deferred_stub_handler_factory": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_evaluators:build_evaluators_mcp_handlers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_filesystem:build_filesystem_mcp_handlers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_governance:build_governance_mcp_handlers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_protocol:RegistryListToolNames": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:build_quality_lab_mcp_handlers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_find_patterns": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_content_revision": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_plan_repair_wave": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_refine_judge_set": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_judgments": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_mcp_exchange": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_review_trace": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_quality_lab:wos_quality_lab_suggest_investigation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.handlers.tools_registry_handlers_research:build_research_mcp_handlers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.langfuse_tracing:McpLangfuseTracer": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:begin_telemetry_capture": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:end_telemetry_capture": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:flush_telemetry_to_backend": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:generate_trace_id": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:log_request": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:log_response": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.logging_utils:log_tool_call": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.operating_profile:OperatingProfile": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.operating_profile:check_session_binding": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.operating_profile:check_tool_access": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rate_limiter:RateLimiter": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.registry:MCPRegistry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.registry:ToolSpec": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.repo_dotenv:bootstrap_repo_environment": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_preview": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_improvement_propose": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_canon_issue_inspect": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_aspect_extract": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_bundle_build": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_claim_list": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_exploration_graph": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_explore": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_run_get": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_source_inspect": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.research_mcp_handler_factories:make_handle_research_validate": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:McpResourceReader": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:get_prompt_messages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:list_prompt_descriptors": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.resource_prompt_support:list_resource_descriptors": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rpc_error_response:exception_to_jsonrpc_response": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rpc_error_response:jsonrpc_error_response": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.rpc_method_router:route_mcp_method": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:ToolDefinition": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:ToolRegistry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:create_default_registry": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.mcp_server.tools_registry:cursor_safe_name": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {
+    "python:backend.app.services.governance.security_governance_service:get_security_governance": "B-admin-control-plane",
+    "python:backend.app.services.governance.security_governance_service:update_security_governance": "B-admin-control-plane",
+    "python:tools.mcp_server.server:McpServer": "B-mcp-auth"
+  },
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Project/security-governance/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Project/security-governance/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Project/security-governance/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Project/security-governance/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/project/security-governance/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "project",
+  "subsystem": "security-governance"
+}

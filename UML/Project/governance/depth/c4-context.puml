@@ -1,0 +1,26 @@
+@startuml
+title governance — Context View
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F7F9FC
+  BorderColor #34495E
+}
+
+rectangle "governance\nResponsibility: architecture boundary\nOwns: declarations and implementation evidence\n[[../../../../docs/architecture/project/governance/architecture.md SAD]]" as ROOT
+
+rectangle "[`DECISION_REGISTRY.md`](../DECISION_REGISTRY.md)\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../docs/architecture/project/DECISION_REGISTRY.md source]]" as E1
+rectangle "`docs/architecture/`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../docs/architecture/README.md source]]" as E2
+rectangle "`docs/archive/adr-retired-2026/`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../docs/archive/adr-retired-2026/README.md source]]" as E3
+rectangle "`docs/governance/`\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../docs/governance/README.md source]]" as E4
+
+E1 ..> ROOT : "evidence for boundary"
+E2 ..> ROOT : "evidence for boundary"
+E3 ..> ROOT : "evidence for boundary"
+E4 ..> ROOT : "evidence for boundary"
+
+legend bottom
+Every element links to its implementation anchor.
+Generated from architecture.bindings.json; do not hand-edit.
+endlegend
+@enduml

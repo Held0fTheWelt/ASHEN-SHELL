@@ -1,0 +1,26 @@
+@startuml
+title security-governance — Context View
+left to right direction
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F7F9FC
+  BorderColor #34495E
+}
+
+rectangle "security-governance\nResponsibility: architecture boundary\nOwns: declarations and implementation evidence\n[[../../../../docs/architecture/project/security-governance/architecture.md SAD]]" as ROOT
+
+rectangle "Admin control plane\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../backend/app/services/governance/security_governance_service.py source]]" as E1
+rectangle "Browser mutations\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../frontend/app/auth.py source]]" as E2
+rectangle "MCP auth\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../tools/mcp_server/server.py source]]" as E3
+rectangle "Provider credentials\nResponsibility: declared building block\nEvidence contract: source anchor\n[[../../../../backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py source]]" as E4
+
+E1 ..> ROOT : "evidence for boundary"
+E2 ..> ROOT : "evidence for boundary"
+E3 ..> ROOT : "evidence for boundary"
+E4 ..> ROOT : "evidence for boundary"
+
+legend bottom
+Every element links to its implementation anchor.
+Generated from architecture.bindings.json; do not hand-edit.
+endlegend
+@enduml

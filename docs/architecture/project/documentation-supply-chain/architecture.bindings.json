@@ -1,0 +1,322 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "scripts/architecture_migration_inventory.py",
+          "file": "scripts/architecture_migration_inventory.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Inventory"
+        }
+      ],
+      "id": "B-inventory",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Inventory"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/QUALITY-STANDARD.md",
+          "file": "docs/architecture/QUALITY-STANDARD.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-quality-bar",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Quality bar"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/project/ROLLOUT.md",
+          "file": "docs/architecture/project/ROLLOUT.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-rollout",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Rollout"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/README.md",
+          "file": "docs/architecture/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-sad-index",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "SAD index"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "docs/architecture/components/_template/architecture.template.md",
+          "file": "docs/architecture/components/_template/architecture.template.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-templates",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Templates"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/documentation-supply-chain/TRACEABILITY.md",
+          "file": "UML/Project/documentation-supply-chain/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/README.md",
+          "file": "docs/architecture/README.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/START-HERE.md",
+          "file": "docs/architecture/START-HERE.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/components/*/architecture.md",
+          "file": "docs/architecture/components/administration-tool/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "SAD-first internal architecture"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/documentation-supply-chain/TRACEABILITY.md",
+          "file": "UML/Project/documentation-supply-chain/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/project/DECISION_REGISTRY.md",
+          "file": "docs/architecture/project/DECISION_REGISTRY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "scripts/adr_retirement_audit.py",
+          "file": "scripts/adr_retirement_audit.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "SAD-only decisions (ADR directory retiring)"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "SAD-only decisions (ADR directory retiring)"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/documentation-supply-chain/TRACEABILITY.md",
+          "file": "UML/Project/documentation-supply-chain/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "tests/gates/test_architecture_documentation_gate.py",
+          "file": "tests/gates/test_architecture_documentation_gate.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Anti-linklist SAD rule"
+        }
+      ],
+      "id": "D3",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Anti-linklist SAD rule"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 6,
+        "object": "mkdocs.yml#docs_dir",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#docs_dir",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 153,
+        "object": "mkdocs.yml#extra",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#extra",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 26,
+        "object": "mkdocs.yml#markdown_extensions",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#markdown_extensions",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 43,
+        "object": "mkdocs.yml#nav",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#nav",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 38,
+        "object": "mkdocs.yml#plugins",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#plugins",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 7,
+        "object": "mkdocs.yml#site_dir",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#site_dir",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 4,
+        "object": "mkdocs.yml#site_name",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#site_name",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 8,
+        "object": "mkdocs.yml#theme",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#theme",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "mkdocs.yml",
+        "kind": "content",
+        "line": 41,
+        "object": "mkdocs.yml#validation",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:mkdocs.yml#validation",
+      "kind": "content"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "content"
+  ],
+  "out_of_scope": {
+    "content:mkdocs.yml#docs_dir": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#extra": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#markdown_extensions": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#nav": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#plugins": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#site_dir": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#site_name": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#theme": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#validation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {},
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Project/documentation-supply-chain/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Project/documentation-supply-chain/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Project/documentation-supply-chain/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Project/documentation-supply-chain/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/project/documentation-supply-chain/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "project",
+  "subsystem": "documentation-supply-chain"
+}

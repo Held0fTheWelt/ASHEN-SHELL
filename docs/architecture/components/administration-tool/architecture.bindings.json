@@ -1,0 +1,3076 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "administration-tool/templates/manage/dashboard.html",
+          "file": "administration-tool/templates/manage/dashboard.html",
+          "kind": "web",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Manage UI"
+        }
+      ],
+      "id": "B-manage-ui",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Manage UI"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "administration-tool/route_registration.py",
+          "file": "administration-tool/route_registration.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Routes"
+        }
+      ],
+      "id": "B-routes",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Routes"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/administration-tool/TRACEABILITY.md",
+          "file": "UML/Components/administration-tool/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "backend/app/runtime/presentation/debug_presenter.py",
+          "file": "backend/app/runtime/presentation/debug_presenter.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Debug Panel UI — bounded diagnostics in session UI"
+        },
+        {
+          "declared_path": "backend/tests/runtime/test_debug_presenter.py",
+          "file": "backend/tests/runtime/test_debug_presenter.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Debug Panel UI — bounded diagnostics in session UI"
+        },
+        {
+          "declared_path": "docs/architecture/components/administration-tool/architecture.md",
+          "file": "docs/architecture/components/administration-tool/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/",
+          "file": "docs/archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Debug Panel UI — bounded diagnostics in session UI"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "administration-tool/tests/test_manage_governance_console_and_runtime_config_truth.py",
+          "file": "administration-tool/tests/test_manage_governance_console_and_runtime_config_truth.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Admin security control plane"
+        },
+        {
+          "declared_path": "docs/architecture/project/security-governance/architecture.md",
+          "file": "docs/architecture/project/security-governance/architecture.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/archive/adr-retired-2026/adr-0052-security-governance-admin-control-plane.md",
+          "file": "docs/archive/adr-retired-2026/adr-0052-security-governance-admin-control-plane.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D2",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Admin security control plane"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 9,
+        "method": "ANY",
+        "route": "/",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "index"
+      },
+      "id": "api:ANY:/:administration-tool/route_registration_pages.py:9",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy.py",
+        "kind": "api",
+        "line": 35,
+        "method": "ANY",
+        "route": "/_proxy/<path:subpath>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "proxy_api"
+      },
+      "id": "api:ANY:/_proxy/<path:subpath>:administration-tool/route_registration_proxy.py:35",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 34,
+        "method": "ANY",
+        "route": "/forum/categories/<slug>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum_category"
+      },
+      "id": "api:ANY:/forum/categories/<slug>:administration-tool/route_registration_pages.py:34",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 44,
+        "method": "ANY",
+        "route": "/forum/notifications",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum_notifications"
+      },
+      "id": "api:ANY:/forum/notifications:administration-tool/route_registration_pages.py:44",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 49,
+        "method": "ANY",
+        "route": "/forum/saved",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum_saved_threads"
+      },
+      "id": "api:ANY:/forum/saved:administration-tool/route_registration_pages.py:49",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 59,
+        "method": "ANY",
+        "route": "/forum/tags/<slug>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum_tag_detail"
+      },
+      "id": "api:ANY:/forum/tags/<slug>:administration-tool/route_registration_pages.py:59",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 39,
+        "method": "ANY",
+        "route": "/forum/threads/<slug>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum_thread"
+      },
+      "id": "api:ANY:/forum/threads/<slug>:administration-tool/route_registration_pages.py:39",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 29,
+        "method": "ANY",
+        "route": "/forum",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum_index"
+      },
+      "id": "api:ANY:/forum:administration-tool/route_registration_pages.py:29",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 276,
+        "method": "ANY",
+        "route": "/manage/ai-orchestration",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ai_orchestration"
+      },
+      "id": "api:ANY:/manage/ai-orchestration:administration-tool/route_registration_manage_sections.py:276",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 222,
+        "method": "ANY",
+        "route": "/manage/ai-runtime-governance",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ai_runtime_governance"
+      },
+      "id": "api:ANY:/manage/ai-runtime-governance:administration-tool/route_registration_manage_sections.py:222",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 261,
+        "method": "ANY",
+        "route": "/manage/ai-stack/release-readiness",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ai_stack_release_readiness"
+      },
+      "id": "api:ANY:/manage/ai-stack/release-readiness:administration-tool/route_registration_manage_sections.py:261",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 156,
+        "method": "ANY",
+        "route": "/manage/analytics",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_analytics"
+      },
+      "id": "api:ANY:/manage/analytics:administration-tool/route_registration_manage_sections.py:156",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 33,
+        "method": "ANY",
+        "route": "/manage/areas",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_areas"
+      },
+      "id": "api:ANY:/manage/areas:administration-tool/route_registration_manage_sections.py:33",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 147,
+        "method": "ANY",
+        "route": "/manage/data",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_data"
+      },
+      "id": "api:ANY:/manage/data:administration-tool/route_registration_manage_sections.py:147",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 166,
+        "method": "ANY",
+        "route": "/manage/diagnosis",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_diagnosis"
+      },
+      "id": "api:ANY:/manage/diagnosis:administration-tool/route_registration_manage_sections.py:166",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 38,
+        "method": "ANY",
+        "route": "/manage/feature-areas",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_feature_areas"
+      },
+      "id": "api:ANY:/manage/feature-areas:administration-tool/route_registration_manage_sections.py:38",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 151,
+        "method": "ANY",
+        "route": "/manage/forum",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_forum"
+      },
+      "id": "api:ANY:/manage/forum:administration-tool/route_registration_manage_sections.py:151",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 60,
+        "method": "ANY",
+        "route": "/manage/game-content",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_game_content_alt"
+      },
+      "id": "api:ANY:/manage/game-content:administration-tool/route_registration_manage_sections.py:60",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 70,
+        "method": "ANY",
+        "route": "/manage/game-operations",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_game_operations_alt"
+      },
+      "id": "api:ANY:/manage/game-operations:administration-tool/route_registration_manage_sections.py:70",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 55,
+        "method": "ANY",
+        "route": "/manage/game/content",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_game_content"
+      },
+      "id": "api:ANY:/manage/game/content:administration-tool/route_registration_manage_sections.py:55",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 65,
+        "method": "ANY",
+        "route": "/manage/game/operations",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_game_operations"
+      },
+      "id": "api:ANY:/manage/game/operations:administration-tool/route_registration_manage_sections.py:65",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 296,
+        "method": "ANY",
+        "route": "/manage/governance-console",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_governance_console"
+      },
+      "id": "api:ANY:/manage/governance-console:administration-tool/route_registration_manage_sections.py:296",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 78,
+        "method": "ANY",
+        "route": "/manage/inspector-workbench",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_inspector_workbench"
+      },
+      "id": "api:ANY:/manage/inspector-workbench:administration-tool/route_registration_manage_sections.py:78",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 13,
+        "method": "ANY",
+        "route": "/manage/login",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_login"
+      },
+      "id": "api:ANY:/manage/login:administration-tool/route_registration_manage_sections.py:13",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 186,
+        "method": "ANY",
+        "route": "/manage/mcp-operations",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_mcp_operations"
+      },
+      "id": "api:ANY:/manage/mcp-operations:administration-tool/route_registration_manage_sections.py:186",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 161,
+        "method": "ANY",
+        "route": "/manage/moderator-dashboard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_moderator_dashboard"
+      },
+      "id": "api:ANY:/manage/moderator-dashboard:administration-tool/route_registration_manage_sections.py:161",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 119,
+        "method": "ANY",
+        "route": "/manage/narrative/evaluations",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_evaluations"
+      },
+      "id": "api:ANY:/manage/narrative/evaluations:administration-tool/route_registration_manage_sections.py:119",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 109,
+        "method": "ANY",
+        "route": "/manage/narrative/findings",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_findings"
+      },
+      "id": "api:ANY:/manage/narrative/findings:administration-tool/route_registration_manage_sections.py:109",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 129,
+        "method": "ANY",
+        "route": "/manage/narrative/governance-health-panels",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_governance_health_panels"
+      },
+      "id": "api:ANY:/manage/narrative/governance-health-panels:administration-tool/route_registration_manage_sections.py:129",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 134,
+        "method": "ANY",
+        "route": "/manage/narrative/governance-object-admission-overrides",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_governance_object_admission_overrides"
+      },
+      "id": "api:ANY:/manage/narrative/governance-object-admission-overrides:administration-tool/route_registration_manage_sections.py:134",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 139,
+        "method": "ANY",
+        "route": "/manage/narrative/governance-state-delta-boundary-overrides",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_governance_state_delta_boundary_overrides"
+      },
+      "id": "api:ANY:/manage/narrative/governance-state-delta-boundary-overrides:administration-tool/route_registration_manage_sections.py:139",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 124,
+        "method": "ANY",
+        "route": "/manage/narrative/notifications",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_notifications"
+      },
+      "id": "api:ANY:/manage/narrative/notifications:administration-tool/route_registration_manage_sections.py:124",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 85,
+        "method": "ANY",
+        "route": "/manage/narrative/overview",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_overview"
+      },
+      "id": "api:ANY:/manage/narrative/overview:administration-tool/route_registration_manage_sections.py:85",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 99,
+        "method": "ANY",
+        "route": "/manage/narrative/packages",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_packages"
+      },
+      "id": "api:ANY:/manage/narrative/packages:administration-tool/route_registration_manage_sections.py:99",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 104,
+        "method": "ANY",
+        "route": "/manage/narrative/policies",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_policies"
+      },
+      "id": "api:ANY:/manage/narrative/policies:administration-tool/route_registration_manage_sections.py:104",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 114,
+        "method": "ANY",
+        "route": "/manage/narrative/revisions",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_revisions"
+      },
+      "id": "api:ANY:/manage/narrative/revisions:administration-tool/route_registration_manage_sections.py:114",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 94,
+        "method": "ANY",
+        "route": "/manage/narrative/runtime-health",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_runtime_health"
+      },
+      "id": "api:ANY:/manage/narrative/runtime-health:administration-tool/route_registration_manage_sections.py:94",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 89,
+        "method": "ANY",
+        "route": "/manage/narrative/runtime",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_narrative_runtime"
+      },
+      "id": "api:ANY:/manage/narrative/runtime:administration-tool/route_registration_manage_sections.py:89",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 18,
+        "method": "ANY",
+        "route": "/manage/news",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_news"
+      },
+      "id": "api:ANY:/manage/news:administration-tool/route_registration_manage_sections.py:18",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 313,
+        "method": "ANY",
+        "route": "/manage/observability-settings/langfuse",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_observability_langfuse"
+      },
+      "id": "api:ANY:/manage/observability-settings/langfuse:administration-tool/route_registration_manage_sections.py:313",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 309,
+        "method": "ANY",
+        "route": "/manage/observability-settings",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_observability_settings"
+      },
+      "id": "api:ANY:/manage/observability-settings:administration-tool/route_registration_manage_sections.py:309",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 231,
+        "method": "ANY",
+        "route": "/manage/operational-governance/bootstrap",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance_bootstrap"
+      },
+      "id": "api:ANY:/manage/operational-governance/bootstrap:administration-tool/route_registration_manage_sections.py:231",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 256,
+        "method": "ANY",
+        "route": "/manage/operational-governance/costs",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance_costs"
+      },
+      "id": "api:ANY:/manage/operational-governance/costs:administration-tool/route_registration_manage_sections.py:256",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 241,
+        "method": "ANY",
+        "route": "/manage/operational-governance/models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance_models"
+      },
+      "id": "api:ANY:/manage/operational-governance/models:administration-tool/route_registration_manage_sections.py:241",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 236,
+        "method": "ANY",
+        "route": "/manage/operational-governance/providers",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance_providers"
+      },
+      "id": "api:ANY:/manage/operational-governance/providers:administration-tool/route_registration_manage_sections.py:236",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 246,
+        "method": "ANY",
+        "route": "/manage/operational-governance/routes",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance_routes"
+      },
+      "id": "api:ANY:/manage/operational-governance/routes:administration-tool/route_registration_manage_sections.py:246",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 251,
+        "method": "ANY",
+        "route": "/manage/operational-governance/runtime",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance_runtime"
+      },
+      "id": "api:ANY:/manage/operational-governance/runtime:administration-tool/route_registration_manage_sections.py:251",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 226,
+        "method": "ANY",
+        "route": "/manage/operational-governance",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance"
+      },
+      "id": "api:ANY:/manage/operational-governance:administration-tool/route_registration_manage_sections.py:226",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 171,
+        "method": "ANY",
+        "route": "/manage/play-service-control",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_play_service_control"
+      },
+      "id": "api:ANY:/manage/play-service-control:administration-tool/route_registration_manage_sections.py:171",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 281,
+        "method": "ANY",
+        "route": "/manage/prompt-store",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_prompt_store"
+      },
+      "id": "api:ANY:/manage/prompt-store:administration-tool/route_registration_manage_sections.py:281",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 271,
+        "method": "ANY",
+        "route": "/manage/rag-operations",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_rag_operations"
+      },
+      "id": "api:ANY:/manage/rag-operations:administration-tool/route_registration_manage_sections.py:271",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 211,
+        "method": "ANY",
+        "route": "/manage/research/canonical-truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_research_canonical_truth"
+      },
+      "id": "api:ANY:/manage/research/canonical-truth:administration-tool/route_registration_manage_sections.py:211",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 203,
+        "method": "ANY",
+        "route": "/manage/research/extraction-tuning",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_research_extraction_tuning"
+      },
+      "id": "api:ANY:/manage/research/extraction-tuning:administration-tool/route_registration_manage_sections.py:203",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 207,
+        "method": "ANY",
+        "route": "/manage/research/findings",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_research_findings"
+      },
+      "id": "api:ANY:/manage/research/findings:administration-tool/route_registration_manage_sections.py:207",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 215,
+        "method": "ANY",
+        "route": "/manage/research/mcp-workbench",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_research_mcp_workbench"
+      },
+      "id": "api:ANY:/manage/research/mcp-workbench:administration-tool/route_registration_manage_sections.py:215",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 195,
+        "method": "ANY",
+        "route": "/manage/research/overview",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_research_overview"
+      },
+      "id": "api:ANY:/manage/research/overview:administration-tool/route_registration_manage_sections.py:195",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 199,
+        "method": "ANY",
+        "route": "/manage/research/source-intake",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_research_source_intake"
+      },
+      "id": "api:ANY:/manage/research/source-intake:administration-tool/route_registration_manage_sections.py:199",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 28,
+        "method": "ANY",
+        "route": "/manage/roles",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_roles"
+      },
+      "id": "api:ANY:/manage/roles:administration-tool/route_registration_manage_sections.py:28",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 266,
+        "method": "ANY",
+        "route": "/manage/runtime-dashboard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_dashboard"
+      },
+      "id": "api:ANY:/manage/runtime-dashboard:administration-tool/route_registration_manage_sections.py:266",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 286,
+        "method": "ANY",
+        "route": "/manage/runtime-settings",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_settings"
+      },
+      "id": "api:ANY:/manage/runtime-settings:administration-tool/route_registration_manage_sections.py:286",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 291,
+        "method": "ANY",
+        "route": "/manage/runtime/config-truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_config_truth"
+      },
+      "id": "api:ANY:/manage/runtime/config-truth:administration-tool/route_registration_manage_sections.py:291",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 301,
+        "method": "ANY",
+        "route": "/manage/security-governance",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_security_governance"
+      },
+      "id": "api:ANY:/manage/security-governance:administration-tool/route_registration_manage_sections.py:301",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 51,
+        "method": "ANY",
+        "route": "/manage/slogans",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_slogans"
+      },
+      "id": "api:ANY:/manage/slogans:administration-tool/route_registration_manage_sections.py:51",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 23,
+        "method": "ANY",
+        "route": "/manage/users",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_users"
+      },
+      "id": "api:ANY:/manage/users:administration-tool/route_registration_manage_sections.py:23",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 43,
+        "method": "ANY",
+        "route": "/manage/wiki",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_wiki"
+      },
+      "id": "api:ANY:/manage/wiki:administration-tool/route_registration_manage_sections.py:43",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 176,
+        "method": "ANY",
+        "route": "/manage/world-engine-console",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_world_engine_console"
+      },
+      "id": "api:ANY:/manage/world-engine-console:administration-tool/route_registration_manage_sections.py:176",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 181,
+        "method": "ANY",
+        "route": "/manage/world-engine-control-center",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_world_engine_control_center"
+      },
+      "id": "api:ANY:/manage/world-engine-control-center:administration-tool/route_registration_manage_sections.py:181",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "api",
+        "line": 9,
+        "method": "ANY",
+        "route": "/manage",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_index"
+      },
+      "id": "api:ANY:/manage:administration-tool/route_registration_manage_sections.py:9",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 18,
+        "method": "ANY",
+        "route": "/news/<int:news_id>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news_detail"
+      },
+      "id": "api:ANY:/news/<int:news_id>:administration-tool/route_registration_pages.py:18",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 13,
+        "method": "ANY",
+        "route": "/news",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news_list"
+      },
+      "id": "api:ANY:/news:administration-tool/route_registration_pages.py:13",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 54,
+        "method": "ANY",
+        "route": "/users/<int:user_id>/profile",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "user_profile"
+      },
+      "id": "api:ANY:/users/<int:user_id>/profile:administration-tool/route_registration_pages.py:54",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 25,
+        "method": "ANY",
+        "route": "/wiki/<path:slug>",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki_index"
+      },
+      "id": "api:ANY:/wiki/<path:slug>:administration-tool/route_registration_pages.py:25",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "api",
+        "line": 23,
+        "method": "ANY",
+        "route": "/wiki",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki_index"
+      },
+      "id": "api:ANY:/wiki:administration-tool/route_registration_pages.py:23",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/app.py",
+        "kind": "api",
+        "line": 324,
+        "method": "GET",
+        "route": "/favicon.ico",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "favicon"
+      },
+      "id": "api:GET:/favicon.ico:administration-tool/app.py:324",
+      "kind": "api"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/app.py",
+        "kind": "python",
+        "line": 221,
+        "module": "administration-tool.app",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_app"
+      },
+      "id": "python:administration-tool.app:create_app",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/app.py",
+        "kind": "python",
+        "line": 142,
+        "module": "administration-tool.app",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "inject_config"
+      },
+      "id": "python:administration-tool.app:inject_config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/app.py",
+        "kind": "python",
+        "line": 101,
+        "module": "administration-tool.app",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "reset_operator_defaults_remote_cache"
+      },
+      "id": "python:administration-tool.app:reset_operator_defaults_remote_cache",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/app.py",
+        "kind": "python",
+        "line": 26,
+        "module": "administration-tool.app",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_secret_key"
+      },
+      "id": "python:administration-tool.app:validate_secret_key",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/app.py",
+        "kind": "python",
+        "line": 34,
+        "module": "administration-tool.app",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_service_url"
+      },
+      "id": "python:administration-tool.app:validate_service_url",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration.py",
+        "kind": "python",
+        "line": 37,
+        "module": "administration-tool.route_registration",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_routes"
+      },
+      "id": "python:administration-tool.route_registration:register_routes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage.py",
+        "kind": "python",
+        "line": 19,
+        "module": "administration-tool.route_registration_manage",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_routes"
+      },
+      "id": "python:administration-tool.route_registration_manage:register_manage_routes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 146,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_data_ops_and_platform_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_data_ops_and_platform_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 8,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_entry_and_core_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_entry_and_core_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 77,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_inspector_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_inspector_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 84,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_narrative_governance_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_narrative_governance_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 308,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_observability_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_observability_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 221,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_operational_governance_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_operational_governance_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 193,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_research_governance_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_research_governance_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_manage_sections.py",
+        "kind": "python",
+        "line": 50,
+        "module": "administration-tool.route_registration_manage_sections",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_manage_slogans_and_game_pages"
+      },
+      "id": "python:administration-tool.route_registration_manage_sections:register_manage_slogans_and_game_pages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_pages.py",
+        "kind": "python",
+        "line": 8,
+        "module": "administration-tool.route_registration_pages",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_public_and_forum_routes"
+      },
+      "id": "python:administration-tool.route_registration_pages:register_public_and_forum_routes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy.py",
+        "kind": "python",
+        "line": 34,
+        "module": "administration-tool.route_registration_proxy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_proxy_routes"
+      },
+      "id": "python:administration-tool.route_registration_proxy:register_proxy_routes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 51,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_proxy_target"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:build_proxy_target",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 93,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_upstream_proxy_request"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:build_upstream_proxy_request",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 62,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forwarded_proxy_headers"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:forwarded_proxy_headers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 81,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "log_proxy_request"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:log_proxy_request",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 58,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "proxy_request_body"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:proxy_request_body",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 45,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "proxy_subpath_allowed"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:proxy_subpath_allowed",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 73,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "redacted_proxy_headers"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:redacted_proxy_headers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 104,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "response_from_http_error"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:response_from_http_error",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 97,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "response_from_upstream"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:response_from_upstream",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_proxy_policy.py",
+        "kind": "python",
+        "line": 112,
+        "module": "administration-tool.route_registration_proxy_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "response_from_url_error"
+      },
+      "id": "python:administration-tool.route_registration_proxy_policy:response_from_url_error",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/route_registration_security.py",
+        "kind": "python",
+        "line": 10,
+        "module": "administration-tool.route_registration_security",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_security_hooks"
+      },
+      "id": "python:administration-tool.route_registration_security:register_security_hooks",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/css/manage_analytics.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_analytics"
+      },
+      "id": "web:administration-tool/static/css/manage_analytics.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/css/manage_moderator_dashboard.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_moderator_dashboard"
+      },
+      "id": "web:administration-tool/static/css/manage_moderator_dashboard.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/forum.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum"
+      },
+      "id": "web:administration-tool/static/forum.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/governance_health_panels.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_health_panels"
+      },
+      "id": "web:administration-tool/static/governance_health_panels.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/governance_object_admission_overrides.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_object_admission_overrides"
+      },
+      "id": "web:administration-tool/static/governance_object_admission_overrides.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/governance_state_delta_boundary_overrides.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_state_delta_boundary_overrides"
+      },
+      "id": "web:administration-tool/static/governance_state_delta_boundary_overrides.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/main.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "web:administration-tool/static/main.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage"
+      },
+      "id": "web:administration-tool/static/manage.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_ai_orchestration.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ai_orchestration"
+      },
+      "id": "web:administration-tool/static/manage_ai_orchestration.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_ai_stack_release_readiness.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ai_stack_release_readiness"
+      },
+      "id": "web:administration-tool/static/manage_ai_stack_release_readiness.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_ai_stack_release_readiness.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ai_stack_release_readiness"
+      },
+      "id": "web:administration-tool/static/manage_ai_stack_release_readiness.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_ai_stack_release_readiness_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ai_stack_release_readiness_deck"
+      },
+      "id": "web:administration-tool/static/manage_ai_stack_release_readiness_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_analytics.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_analytics"
+      },
+      "id": "web:administration-tool/static/manage_analytics.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_areas.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_areas"
+      },
+      "id": "web:administration-tool/static/manage_areas.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_auth.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_auth"
+      },
+      "id": "web:administration-tool/static/manage_auth.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_dashboard.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_dashboard"
+      },
+      "id": "web:administration-tool/static/manage_dashboard.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_data.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_data"
+      },
+      "id": "web:administration-tool/static/manage_data.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_diagnosis.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_diagnosis"
+      },
+      "id": "web:administration-tool/static/manage_diagnosis.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_diagnosis_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_diagnosis_deck"
+      },
+      "id": "web:administration-tool/static/manage_diagnosis_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_feature_areas.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_feature_areas"
+      },
+      "id": "web:administration-tool/static/manage_feature_areas.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_forum.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_forum"
+      },
+      "id": "web:administration-tool/static/manage_forum.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_forum.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_forum"
+      },
+      "id": "web:administration-tool/static/manage_forum.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_forum_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_forum_deck"
+      },
+      "id": "web:administration-tool/static/manage_forum_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_game_content.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_game_content"
+      },
+      "id": "web:administration-tool/static/manage_game_content.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_game_operations.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_game_operations"
+      },
+      "id": "web:administration-tool/static/manage_game_operations.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_governance_console.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_governance_console"
+      },
+      "id": "web:administration-tool/static/manage_governance_console.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_inspector_workbench.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_inspector_workbench"
+      },
+      "id": "web:administration-tool/static/manage_inspector_workbench.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_login.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_login"
+      },
+      "id": "web:administration-tool/static/manage_login.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_mcp_operations.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_mcp_operations"
+      },
+      "id": "web:administration-tool/static/manage_mcp_operations.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_mcp_operations_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_mcp_operations_deck"
+      },
+      "id": "web:administration-tool/static/manage_mcp_operations_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_moderator_dashboard.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_moderator_dashboard"
+      },
+      "id": "web:administration-tool/static/manage_moderator_dashboard.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_news.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_news"
+      },
+      "id": "web:administration-tool/static/manage_news.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_observability_settings.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_observability_settings"
+      },
+      "id": "web:administration-tool/static/manage_observability_settings.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_observability_settings_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_observability_settings_deck"
+      },
+      "id": "web:administration-tool/static/manage_observability_settings_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_operational_governance.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance"
+      },
+      "id": "web:administration-tool/static/manage_operational_governance.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_operational_governance_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_operational_governance_deck"
+      },
+      "id": "web:administration-tool/static/manage_operational_governance_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_play_service_control.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_play_service_control"
+      },
+      "id": "web:administration-tool/static/manage_play_service_control.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_play_service_control_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_play_service_control_deck"
+      },
+      "id": "web:administration-tool/static/manage_play_service_control_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_prompt_store.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_prompt_store"
+      },
+      "id": "web:administration-tool/static/manage_prompt_store.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_rag_operations.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_rag_operations"
+      },
+      "id": "web:administration-tool/static/manage_rag_operations.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_research_governance.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_research_governance"
+      },
+      "id": "web:administration-tool/static/manage_research_governance.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_roles.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_roles"
+      },
+      "id": "web:administration-tool/static/manage_roles.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_runtime_config_truth.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_config_truth"
+      },
+      "id": "web:administration-tool/static/manage_runtime_config_truth.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_runtime_dashboard.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_dashboard"
+      },
+      "id": "web:administration-tool/static/manage_runtime_dashboard.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_runtime_dashboard_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_dashboard_deck"
+      },
+      "id": "web:administration-tool/static/manage_runtime_dashboard_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_runtime_settings.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_settings"
+      },
+      "id": "web:administration-tool/static/manage_runtime_settings.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_runtime_settings_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_runtime_settings_deck"
+      },
+      "id": "web:administration-tool/static/manage_runtime_settings_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_security_governance.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_security_governance"
+      },
+      "id": "web:administration-tool/static/manage_security_governance.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_slogans.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_slogans"
+      },
+      "id": "web:administration-tool/static/manage_slogans.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_story_runtime_experience.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_story_runtime_experience"
+      },
+      "id": "web:administration-tool/static/manage_story_runtime_experience.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_ui.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_ui"
+      },
+      "id": "web:administration-tool/static/manage_ui.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_users.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_users"
+      },
+      "id": "web:administration-tool/static/manage_users.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_wiki.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_wiki"
+      },
+      "id": "web:administration-tool/static/manage_wiki.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_world_engine_console.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_world_engine_console"
+      },
+      "id": "web:administration-tool/static/manage_world_engine_console.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_world_engine_control_center.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_world_engine_control_center"
+      },
+      "id": "web:administration-tool/static/manage_world_engine_control_center.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/manage_world_engine_control_center_deck.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_world_engine_control_center_deck"
+      },
+      "id": "web:administration-tool/static/manage_world_engine_control_center_deck.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/narrative_governance.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "narrative_governance"
+      },
+      "id": "web:administration-tool/static/narrative_governance.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/narrative_governance.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "narrative_governance"
+      },
+      "id": "web:administration-tool/static/narrative_governance.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/narrative_governance_runtime.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "narrative_governance_runtime"
+      },
+      "id": "web:administration-tool/static/narrative_governance_runtime.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/news.js",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news"
+      },
+      "id": "web:administration-tool/static/news.js",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/static/styles.css",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "styles"
+      },
+      "id": "web:administration-tool/static/styles.css",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/base.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "base"
+      },
+      "id": "web:administration-tool/templates/base.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/base_manage.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "base_manage"
+      },
+      "id": "web:administration-tool/templates/base_manage.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/forum/category.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "category"
+      },
+      "id": "web:administration-tool/templates/forum/category.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/forum/index.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "index"
+      },
+      "id": "web:administration-tool/templates/forum/index.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/forum/notifications.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "notifications"
+      },
+      "id": "web:administration-tool/templates/forum/notifications.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/forum/saved_threads.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "saved_threads"
+      },
+      "id": "web:administration-tool/templates/forum/saved_threads.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/forum/tag_detail.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "tag_detail"
+      },
+      "id": "web:administration-tool/templates/forum/tag_detail.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/forum/thread.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "thread"
+      },
+      "id": "web:administration-tool/templates/forum/thread.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/index.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "index"
+      },
+      "id": "web:administration-tool/templates/index.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/ai_orchestration.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ai_orchestration"
+      },
+      "id": "web:administration-tool/templates/manage/ai_orchestration.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/ai_stack_release_readiness.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ai_stack_release_readiness"
+      },
+      "id": "web:administration-tool/templates/manage/ai_stack_release_readiness.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/areas.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "areas"
+      },
+      "id": "web:administration-tool/templates/manage/areas.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/base.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "base"
+      },
+      "id": "web:administration-tool/templates/manage/base.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/dashboard.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "dashboard"
+      },
+      "id": "web:administration-tool/templates/manage/dashboard.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/data.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "data"
+      },
+      "id": "web:administration-tool/templates/manage/data.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/diagnosis.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "diagnosis"
+      },
+      "id": "web:administration-tool/templates/manage/diagnosis.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/feature_areas.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "feature_areas"
+      },
+      "id": "web:administration-tool/templates/manage/feature_areas.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/forum.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "forum"
+      },
+      "id": "web:administration-tool/templates/manage/forum.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/game_content.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "game_content"
+      },
+      "id": "web:administration-tool/templates/manage/game_content.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/game_operations.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "game_operations"
+      },
+      "id": "web:administration-tool/templates/manage/game_operations.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/governance_console.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_console"
+      },
+      "id": "web:administration-tool/templates/manage/governance_console.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/inspector_workbench.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "inspector_workbench"
+      },
+      "id": "web:administration-tool/templates/manage/inspector_workbench.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/login.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "login"
+      },
+      "id": "web:administration-tool/templates/manage/login.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/mcp_operations.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "mcp_operations"
+      },
+      "id": "web:administration-tool/templates/manage/mcp_operations.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/_subnav.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "_subnav"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/_subnav.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/evaluations.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "evaluations"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/evaluations.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/findings.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "findings"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/findings.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/governance_health_panels.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_health_panels"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/governance_health_panels.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/governance_object_admission_overrides.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_object_admission_overrides"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/governance_object_admission_overrides.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/governance_state_delta_boundary_overrides.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "governance_state_delta_boundary_overrides"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/governance_state_delta_boundary_overrides.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/notifications.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "notifications"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/notifications.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/overview.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "overview"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/overview.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/packages.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "packages"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/packages.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/policies.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "policies"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/policies.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/revisions.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "revisions"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/revisions.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/runtime.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/runtime.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/narrative_governance/runtime_health.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_health"
+      },
+      "id": "web:administration-tool/templates/manage/narrative_governance/runtime_health.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/news.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news"
+      },
+      "id": "web:administration-tool/templates/manage/news.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/observability_settings.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "observability_settings"
+      },
+      "id": "web:administration-tool/templates/manage/observability_settings.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/operational_governance.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "operational_governance"
+      },
+      "id": "web:administration-tool/templates/manage/operational_governance.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/play_service_control.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "play_service_control"
+      },
+      "id": "web:administration-tool/templates/manage/play_service_control.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/prompt_store.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "prompt_store"
+      },
+      "id": "web:administration-tool/templates/manage/prompt_store.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/rag_operations.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "rag_operations"
+      },
+      "id": "web:administration-tool/templates/manage/rag_operations.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/research_governance/_subnav.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "_subnav"
+      },
+      "id": "web:administration-tool/templates/manage/research_governance/_subnav.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/research_governance/canonical_truth.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "canonical_truth"
+      },
+      "id": "web:administration-tool/templates/manage/research_governance/canonical_truth.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/research_governance/extraction_tuning.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "extraction_tuning"
+      },
+      "id": "web:administration-tool/templates/manage/research_governance/extraction_tuning.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/research_governance/findings.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "findings"
+      },
+      "id": "web:administration-tool/templates/manage/research_governance/findings.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/research_governance/mcp_workbench.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "mcp_workbench"
+      },
+      "id": "web:administration-tool/templates/manage/research_governance/mcp_workbench.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/research_governance/overview.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "overview"
+      },
+      "id": "web:administration-tool/templates/manage/research_governance/overview.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/research_governance/source_intake.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "source_intake"
+      },
+      "id": "web:administration-tool/templates/manage/research_governance/source_intake.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/roles.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "roles"
+      },
+      "id": "web:administration-tool/templates/manage/roles.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/runtime_config_truth.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_config_truth"
+      },
+      "id": "web:administration-tool/templates/manage/runtime_config_truth.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/runtime_dashboard.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_dashboard"
+      },
+      "id": "web:administration-tool/templates/manage/runtime_dashboard.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/runtime_settings.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_settings"
+      },
+      "id": "web:administration-tool/templates/manage/runtime_settings.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/security_governance.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "security_governance"
+      },
+      "id": "web:administration-tool/templates/manage/security_governance.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/slogans.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "slogans"
+      },
+      "id": "web:administration-tool/templates/manage/slogans.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/users.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "users"
+      },
+      "id": "web:administration-tool/templates/manage/users.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/wiki.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki"
+      },
+      "id": "web:administration-tool/templates/manage/wiki.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/world_engine_console.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "world_engine_console"
+      },
+      "id": "web:administration-tool/templates/manage/world_engine_console.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage/world_engine_control_center.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "world_engine_control_center"
+      },
+      "id": "web:administration-tool/templates/manage/world_engine_control_center.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage_analytics.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_analytics"
+      },
+      "id": "web:administration-tool/templates/manage_analytics.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/manage_moderator_dashboard.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "manage_moderator_dashboard"
+      },
+      "id": "web:administration-tool/templates/manage_moderator_dashboard.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/news.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news"
+      },
+      "id": "web:administration-tool/templates/news.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/news_detail.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "news_detail"
+      },
+      "id": "web:administration-tool/templates/news_detail.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/user/profile.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "profile"
+      },
+      "id": "web:administration-tool/templates/user/profile.html",
+      "kind": "web"
+    },
+    {
+      "anchor": {
+        "file": "administration-tool/templates/wiki_public.html",
+        "kind": "web",
+        "line": 1,
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wiki_public"
+      },
+      "id": "web:administration-tool/templates/wiki_public.html",
+      "kind": "web"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "python",
+    "api",
+    "web"
+  ],
+  "out_of_scope": {
+    "api:ANY:/:administration-tool/route_registration_pages.py:9": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/_proxy/<path:subpath>:administration-tool/route_registration_proxy.py:35": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/forum/categories/<slug>:administration-tool/route_registration_pages.py:34": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/forum/notifications:administration-tool/route_registration_pages.py:44": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/forum/saved:administration-tool/route_registration_pages.py:49": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/forum/tags/<slug>:administration-tool/route_registration_pages.py:59": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/forum/threads/<slug>:administration-tool/route_registration_pages.py:39": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/forum:administration-tool/route_registration_pages.py:29": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/ai-orchestration:administration-tool/route_registration_manage_sections.py:276": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/ai-runtime-governance:administration-tool/route_registration_manage_sections.py:222": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/ai-stack/release-readiness:administration-tool/route_registration_manage_sections.py:261": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/analytics:administration-tool/route_registration_manage_sections.py:156": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/areas:administration-tool/route_registration_manage_sections.py:33": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/data:administration-tool/route_registration_manage_sections.py:147": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/diagnosis:administration-tool/route_registration_manage_sections.py:166": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/feature-areas:administration-tool/route_registration_manage_sections.py:38": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/forum:administration-tool/route_registration_manage_sections.py:151": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/game-content:administration-tool/route_registration_manage_sections.py:60": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/game-operations:administration-tool/route_registration_manage_sections.py:70": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/game/content:administration-tool/route_registration_manage_sections.py:55": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/game/operations:administration-tool/route_registration_manage_sections.py:65": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/governance-console:administration-tool/route_registration_manage_sections.py:296": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/inspector-workbench:administration-tool/route_registration_manage_sections.py:78": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/login:administration-tool/route_registration_manage_sections.py:13": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/mcp-operations:administration-tool/route_registration_manage_sections.py:186": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/moderator-dashboard:administration-tool/route_registration_manage_sections.py:161": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/evaluations:administration-tool/route_registration_manage_sections.py:119": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/findings:administration-tool/route_registration_manage_sections.py:109": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/governance-health-panels:administration-tool/route_registration_manage_sections.py:129": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/governance-object-admission-overrides:administration-tool/route_registration_manage_sections.py:134": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/governance-state-delta-boundary-overrides:administration-tool/route_registration_manage_sections.py:139": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/notifications:administration-tool/route_registration_manage_sections.py:124": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/overview:administration-tool/route_registration_manage_sections.py:85": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/packages:administration-tool/route_registration_manage_sections.py:99": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/policies:administration-tool/route_registration_manage_sections.py:104": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/revisions:administration-tool/route_registration_manage_sections.py:114": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/runtime-health:administration-tool/route_registration_manage_sections.py:94": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/narrative/runtime:administration-tool/route_registration_manage_sections.py:89": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/news:administration-tool/route_registration_manage_sections.py:18": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/observability-settings/langfuse:administration-tool/route_registration_manage_sections.py:313": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/observability-settings:administration-tool/route_registration_manage_sections.py:309": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/operational-governance/bootstrap:administration-tool/route_registration_manage_sections.py:231": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/operational-governance/costs:administration-tool/route_registration_manage_sections.py:256": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/operational-governance/models:administration-tool/route_registration_manage_sections.py:241": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/operational-governance/providers:administration-tool/route_registration_manage_sections.py:236": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/operational-governance/routes:administration-tool/route_registration_manage_sections.py:246": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/operational-governance/runtime:administration-tool/route_registration_manage_sections.py:251": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/operational-governance:administration-tool/route_registration_manage_sections.py:226": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/play-service-control:administration-tool/route_registration_manage_sections.py:171": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/prompt-store:administration-tool/route_registration_manage_sections.py:281": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/rag-operations:administration-tool/route_registration_manage_sections.py:271": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/research/canonical-truth:administration-tool/route_registration_manage_sections.py:211": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/research/extraction-tuning:administration-tool/route_registration_manage_sections.py:203": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/research/findings:administration-tool/route_registration_manage_sections.py:207": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/research/mcp-workbench:administration-tool/route_registration_manage_sections.py:215": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/research/overview:administration-tool/route_registration_manage_sections.py:195": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/research/source-intake:administration-tool/route_registration_manage_sections.py:199": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/roles:administration-tool/route_registration_manage_sections.py:28": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/runtime-dashboard:administration-tool/route_registration_manage_sections.py:266": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/runtime-settings:administration-tool/route_registration_manage_sections.py:286": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/runtime/config-truth:administration-tool/route_registration_manage_sections.py:291": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/security-governance:administration-tool/route_registration_manage_sections.py:301": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/slogans:administration-tool/route_registration_manage_sections.py:51": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/users:administration-tool/route_registration_manage_sections.py:23": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/wiki:administration-tool/route_registration_manage_sections.py:43": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/world-engine-console:administration-tool/route_registration_manage_sections.py:176": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage/world-engine-control-center:administration-tool/route_registration_manage_sections.py:181": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/manage:administration-tool/route_registration_manage_sections.py:9": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/news/<int:news_id>:administration-tool/route_registration_pages.py:18": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/news:administration-tool/route_registration_pages.py:13": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/users/<int:user_id>/profile:administration-tool/route_registration_pages.py:54": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/wiki/<path:slug>:administration-tool/route_registration_pages.py:25": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:ANY:/wiki:administration-tool/route_registration_pages.py:23": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "api:GET:/favicon.ico:administration-tool/app.py:324": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.app:create_app": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.app:inject_config": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.app:reset_operator_defaults_remote_cache": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.app:validate_secret_key": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.app:validate_service_url": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage:register_manage_routes": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_data_ops_and_platform_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_entry_and_core_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_inspector_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_narrative_governance_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_observability_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_operational_governance_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_research_governance_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_manage_sections:register_manage_slogans_and_game_pages": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_pages:register_public_and_forum_routes": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy:register_proxy_routes": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:build_proxy_target": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:build_upstream_proxy_request": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:forwarded_proxy_headers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:log_proxy_request": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:proxy_request_body": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:proxy_subpath_allowed": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:redacted_proxy_headers": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:response_from_http_error": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:response_from_upstream": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_proxy_policy:response_from_url_error": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:administration-tool.route_registration_security:register_security_hooks": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/css/manage_analytics.css": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/css/manage_moderator_dashboard.css": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/forum.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/governance_health_panels.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/governance_object_admission_overrides.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/governance_state_delta_boundary_overrides.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/main.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage.css": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_ai_orchestration.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_ai_stack_release_readiness.css": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_ai_stack_release_readiness.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_ai_stack_release_readiness_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_analytics.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_areas.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_auth.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_dashboard.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_data.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_diagnosis.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_diagnosis_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_feature_areas.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_forum.css": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_forum.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_forum_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_game_content.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_game_operations.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_governance_console.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_inspector_workbench.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_login.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_mcp_operations.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_mcp_operations_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_moderator_dashboard.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_news.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_observability_settings.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_observability_settings_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_operational_governance.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_operational_governance_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_play_service_control.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_play_service_control_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_prompt_store.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_rag_operations.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_research_governance.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_roles.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_runtime_config_truth.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_runtime_dashboard.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_runtime_dashboard_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_runtime_settings.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_runtime_settings_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_security_governance.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_slogans.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_story_runtime_experience.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_ui.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_users.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_wiki.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_world_engine_console.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_world_engine_control_center.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/manage_world_engine_control_center_deck.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/narrative_governance.css": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/narrative_governance.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/narrative_governance_runtime.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/news.js": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/static/styles.css": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/base.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/base_manage.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/forum/category.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/forum/index.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/forum/notifications.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/forum/saved_threads.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/forum/tag_detail.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/forum/thread.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/index.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/ai_orchestration.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/ai_stack_release_readiness.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/areas.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/base.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/data.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/diagnosis.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/feature_areas.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/forum.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/game_content.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/game_operations.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/governance_console.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/inspector_workbench.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/login.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/mcp_operations.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/_subnav.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/evaluations.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/findings.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/governance_health_panels.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/governance_object_admission_overrides.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/governance_state_delta_boundary_overrides.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/notifications.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/overview.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/packages.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/policies.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/revisions.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/runtime.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/narrative_governance/runtime_health.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/news.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/observability_settings.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/operational_governance.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/play_service_control.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/prompt_store.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/rag_operations.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/research_governance/_subnav.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/research_governance/canonical_truth.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/research_governance/extraction_tuning.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/research_governance/findings.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/research_governance/mcp_workbench.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/research_governance/overview.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/research_governance/source_intake.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/roles.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/runtime_config_truth.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/runtime_dashboard.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/runtime_settings.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/security_governance.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/slogans.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/users.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/wiki.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/world_engine_console.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage/world_engine_control_center.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage_analytics.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/manage_moderator_dashboard.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/news.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/news_detail.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/user/profile.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "web:administration-tool/templates/wiki_public.html": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {
+    "python:administration-tool.route_registration:register_routes": "B-routes",
+    "web:administration-tool/templates/manage/dashboard.html": "B-manage-ui"
+  },
+  "required_views": [
+    {
+      "id": "context",
+      "level": "context",
+      "path": "UML/Components/administration-tool/depth/c4-context.puml"
+    },
+    {
+      "id": "container",
+      "level": "container",
+      "path": "UML/Components/administration-tool/depth/c4-container.puml"
+    },
+    {
+      "id": "component",
+      "level": "component",
+      "path": "UML/Components/administration-tool/depth/c4-component.puml"
+    },
+    {
+      "id": "class",
+      "level": "class",
+      "path": "UML/Components/administration-tool/depth/class-model.puml"
+    }
+  ],
+  "sad_path": "docs/architecture/components/administration-tool/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "component",
+  "subsystem": "administration-tool"
+}
