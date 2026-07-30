@@ -185,14 +185,26 @@ def build_unavailable_phase_cost(
 
 
 def aggregate_phase_costs(phase_costs: dict[str, Any] | None) -> dict[str, Any]:
-    """Aggregate phase cost records while preserving detailed cost truth."""
+    """Aggregate phase cost records while preserving detailed cost truth.
+
+    Wave 0 extensions: ``call_count``, ``attributed_call_count``,
+    ``unattributed_call_count``. Ledger summaries under ``_ledger_summary``
+    are preferred when present.
+    """
     normalized: dict[str, dict[str, Any]] = {}
     total_input_tokens = 0
     total_output_tokens = 0
     total_cost_usd = 0.0
     cost_breakdown: dict[str, float] = {}
+    call_count = 0
+    attributed_call_count = 0
+    unattributed_call_count = 0
+    ledger_summary = None
 
     for phase_name, raw_record in (phase_costs or {}).items():
+        if phase_name == "_ledger_summary" and isinstance(raw_record, dict):
+            ledger_summary = dict(raw_record)
+            continue
         if not isinstance(raw_record, dict):
             continue
         phase_key = str(raw_record.get("phase") or phase_name)
@@ -201,11 +213,37 @@ def aggregate_phase_costs(phase_costs: dict[str, Any] | None) -> dict[str, Any]:
         record["input_tokens"] = _non_negative_int(record.get("input_tokens"))
         record["output_tokens"] = _non_negative_int(record.get("output_tokens"))
         record["cost_usd"] = round(_non_negative_float(record.get("cost_usd")), 6)
+        phase_calls = _non_negative_int(record.get("call_count"))
+        if phase_calls <= 0:
+            nested = record.get("calls")
+            if isinstance(nested, list) and nested:
+                phase_calls = len(nested)
+            else:
+                phase_calls = 1
+        record["call_count"] = phase_calls
+        if "attempt_index" in record:
+            record["attempt_index"] = _non_negative_int(record.get("attempt_index"))
+        if record.get("trigger") is not None:
+            record["trigger"] = str(record.get("trigger") or "")
         normalized[phase_key] = record
         total_input_tokens += record["input_tokens"]
         total_output_tokens += record["output_tokens"]
         total_cost_usd += record["cost_usd"]
         cost_breakdown[phase_key] = record["cost_usd"]
+        call_count += phase_calls
+        if phase_key == "unattributed":
+            unattributed_call_count += phase_calls
+        else:
+            attributed_call_count += phase_calls
+
+    if isinstance(ledger_summary, dict):
+        call_count = _non_negative_int(ledger_summary.get("call_count", call_count))
+        attributed_call_count = _non_negative_int(
+            ledger_summary.get("attributed_call_count", attributed_call_count)
+        )
+        unattributed_call_count = _non_negative_int(
+            ledger_summary.get("unattributed_call_count", unattributed_call_count)
+        )
 
     return {
         "input_tokens": total_input_tokens,
@@ -213,4 +251,8 @@ def aggregate_phase_costs(phase_costs: dict[str, Any] | None) -> dict[str, Any]:
         "cost_usd": round(total_cost_usd, 6),
         "cost_breakdown": cost_breakdown,
         "phase_costs": normalized,
+        "call_count": call_count,
+        "attributed_call_count": attributed_call_count,
+        "unattributed_call_count": unattributed_call_count,
+        "ledger_summary": ledger_summary,
     }

@@ -1,0 +1,31 @@
+@startuml turn-cost-ledger
+title Turn cost ledger (Wave 0) — adapter seam → ledger → phase_costs / trace
+
+actor "Turn entry" as Turn
+participant "bind_turn_call_ledger" as Bind
+participant "CountingModelAdapter" as Count
+participant "Inner BaseModelAdapter" as Inner
+participant "TurnCallLedger" as Ledger
+participant "phase_costs / aggregate" as Costs
+participant "Langfuse emitter (W0-C)" as LF
+
+Turn -> Bind : open turn context
+Bind -> Ledger : create TurnCallLedger(soft, hard)
+Turn -> Count : generate(prompt) [phase context / stack hint]
+Count -> Ledger : soft warn / hard abort check
+alt hard budget exceeded
+  Count -> Ledger : record aborted row
+  Count --> Turn : raise HardBudgetExceeded
+else allow call
+  Count -> Inner : generate(...)
+  Inner --> Count : ModelCallResult
+  Count -> Ledger : record(phase, attempt_index, tokens, ms)
+end
+Turn -> Costs : merge_ledger_into_phase_costs
+Costs --> Turn : call_count / attributed / unattributed
+note right of LF
+  W0-C: one generation observation per ledger row
+  (deferred until emitter unshard in Wave 1 if needed)
+end note
+
+@enduml

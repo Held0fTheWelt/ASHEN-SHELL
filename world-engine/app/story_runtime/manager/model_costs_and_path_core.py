@@ -195,10 +195,23 @@ def _build_model_generation_phase_cost(graph_state: dict[str, Any]) -> dict[str,
     )
 
 def _ensure_model_generation_phase_cost(graph_state: dict[str, Any]) -> None:
+    """Ensure model_generation phase cost exists; prefer ledger merge when present."""
+    phase_costs = graph_state.setdefault("phase_costs", {})
+    if not isinstance(phase_costs, dict):
+        graph_state["phase_costs"] = {}
+        phase_costs = graph_state["phase_costs"]
+
+    ledger_summary = phase_costs.get("_ledger_summary")
+    if isinstance(ledger_summary, dict) and int(ledger_summary.get("call_count") or 0) > 0:
+        # Ledger already seeded phase rows (including model_generation / translation / …).
+        # Keep legacy single-row builder only when model_generation is still missing.
+        if "model_generation" in phase_costs:
+            return
+
     phase_cost = _build_model_generation_phase_cost(graph_state)
     if not phase_cost:
         return
-    graph_state.setdefault("phase_costs", {})["model_generation"] = phase_cost
+    phase_costs["model_generation"] = phase_cost
 
 def _langfuse_level_for_output(output: dict[str, Any]) -> str:
     error = str(output.get("error") or output.get("generation_error") or "").strip()

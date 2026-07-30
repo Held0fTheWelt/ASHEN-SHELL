@@ -206,16 +206,39 @@ class _TurnExecutionMixin:
             else None
         )
         try:
-            graph_state, prior_ci = _run_turn_graph_for_session(
-                self,
-                session,
-                player_input=player_input,
-                trace_id=trace_id,
-                commit_turn_number=commit_turn_number,
-                graph_threads=graph_threads,
-                graph_summary=graph_summary,
-                host_experience_template=host_experience_template,
+            soft_budget, hard_budget = self._turn_call_budgets()
+        except Exception:
+            from story_runtime_core.model_call_accounting import (
+                DEFAULT_TURN_CALL_BUDGET_HARD,
+                DEFAULT_TURN_CALL_BUDGET_SOFT,
             )
+
+            soft_budget, hard_budget = DEFAULT_TURN_CALL_BUDGET_SOFT, DEFAULT_TURN_CALL_BUDGET_HARD
+        from story_runtime_core.model_call_accounting import (
+            TurnCallLedger,
+            bind_turn_call_ledger,
+            merge_ledger_into_phase_costs,
+        )
+
+        turn_ledger = TurnCallLedger(soft_budget=soft_budget, hard_budget=hard_budget)
+        try:
+            with bind_turn_call_ledger(turn_ledger):
+                graph_state, prior_ci = _run_turn_graph_for_session(
+                    self,
+                    session,
+                    player_input=player_input,
+                    trace_id=trace_id,
+                    commit_turn_number=commit_turn_number,
+                    graph_threads=graph_threads,
+                    graph_summary=graph_summary,
+                    host_experience_template=host_experience_template,
+                )
+            if isinstance(graph_state, dict):
+                graph_state["phase_costs"] = merge_ledger_into_phase_costs(
+                    graph_state.get("phase_costs") if isinstance(graph_state.get("phase_costs"), dict) else {},
+                    turn_ledger,
+                )
+                graph_state["turn_call_ledger"] = turn_ledger.summary()
         except Exception as exc:
             if not _is_recoverable_graph_execution_exception(exc):
                 session.turn_counter -= 1

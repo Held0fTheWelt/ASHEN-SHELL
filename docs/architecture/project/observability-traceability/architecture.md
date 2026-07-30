@@ -54,6 +54,7 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | Trace middleware | `world-engine/app/middleware/trace_middleware.py` |
 | Langfuse adapters | `ai_stack/langfuse/` |
 | Evaluator catalog | `ai_stack/quality_lab/` |
+| Turn cost ledger (Wave 0) | `story_runtime_core/model_call_accounting.py` — every `BaseModelAdapter.generate` is ledgered at the adapter seam (`CountingModelAdapter`); soft/hard turn-call budgets; `aggregate_phase_costs` exposes `call_count` / `attributed_call_count` / `unattributed_call_count`. UML: `UML/Project/architecture-drift/turn-cost-ledger.puml`. |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
 ### Source-bound building-block catalog

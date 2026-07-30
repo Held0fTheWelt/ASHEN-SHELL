@@ -1,0 +1,771 @@
+{
+  "schema_version": "bt.architecture_drift_edge_catalog.v1",
+  "projection": {
+    "puml_path": "UML/Project/architecture-drift/runtime-authority-and-envelope.puml",
+    "markdown_path": "UML/Project/architecture-drift/runtime-authority-and-envelope.md"
+  },
+  "edges": [
+    {
+      "id": "runtime-compatibility-delegation",
+      "claim_ids": [
+        "DRIFT-001",
+        "DRIFT-006"
+      ],
+      "from": "world-engine:runtime",
+      "to": "world-engine:manager",
+      "effect": "compatibility_delegate",
+      "label": "delegates legacy entry without owning truth",
+      "contract": "Compatibility paths may translate and delegate but never persist live-session state.",
+      "anchor": "world-engine/app/runtime/manager.py",
+      "carries": [
+        "validated_command"
+      ]
+    },
+    {
+      "id": "authored-module-to-compiler",
+      "claim_ids": [
+        "DRIFT-004"
+      ],
+      "from": "content-authority:module",
+      "to": "content-authority:compiler",
+      "effect": "content_projection",
+      "label": "compiles authored content",
+      "contract": "YAML remains authored truth and compilation is deterministic.",
+      "anchor": "backend/app/content/module_loader.py",
+      "carries": [
+        "content_version",
+        "source_provenance"
+      ]
+    },
+    {
+      "id": "compiler-to-module-validator",
+      "claim_ids": [
+        "DRIFT-004"
+      ],
+      "from": "content-authority:compiler",
+      "to": "content-authority:validator",
+      "effect": "content_projection",
+      "label": "validates compiled content contract",
+      "contract": "Validation cannot invent or override authored facts.",
+      "anchor": "backend/app/content/module_validator.py",
+      "carries": [
+        "content_version",
+        "source_provenance"
+      ]
+    },
+    {
+      "id": "validated-content-to-world-loader",
+      "claim_ids": [
+        "DRIFT-004"
+      ],
+      "from": "content-authority:validator",
+      "to": "content-authority:world_loader",
+      "effect": "content_projection",
+      "label": "publishes immutable runtime projection",
+      "contract": "World Engine receives a version-bound compiled projection.",
+      "anchor": "world-engine/app/content/backend_loader.py",
+      "carries": [
+        "content_version",
+        "source_provenance"
+      ]
+    },
+    {
+      "id": "world-content-to-ai-adapter",
+      "claim_ids": [
+        "DRIFT-004"
+      ],
+      "from": "content-authority:world_loader",
+      "to": "content-authority:ai_adapter",
+      "effect": "content_projection",
+      "label": "adapts immutable content for proposal generation",
+      "contract": "AI adapter is an anti-corruption projection and cannot become authored truth.",
+      "anchor": "ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py",
+      "carries": [
+        "content_version",
+        "source_provenance"
+      ]
+    },
+    {
+      "id": "canonical-constraints-to-runtime",
+      "claim_ids": [
+        "DRIFT-005"
+      ],
+      "from": "content-authority:canonical_path",
+      "to": "world-engine:manager",
+      "effect": "read_only_constraint",
+      "label": "constrains but does not script live progression",
+      "contract": "Authored canonical constraints are read-only; World Engine owns actual beat progression.",
+      "anchor": "content/modules/god_of_carnage/canonical_path/_schema.yaml",
+      "carries": [
+        "canonical_constraints",
+        "content_version"
+      ]
+    },
+    {
+      "id": "planner-to-runtime-proposal",
+      "claim_ids": [
+        "DRIFT-002",
+        "DRIFT-003"
+      ],
+      "from": "ai-stack:director",
+      "to": "ai-stack:proposal",
+      "effect": "proposal_flow",
+      "label": "packages dramatic plan as uncommitted proposal",
+      "contract": "Planner output remains proposal-only and preserves modeled dramatic fields.",
+      "anchor": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
+      "carries": [
+        "selected_scene_function",
+        "primary_responder_id",
+        "continuity_impacts",
+        "dramatic_effect_gate"
+      ]
+    },
+    {
+      "id": "proposal-to-ai-validation",
+      "claim_ids": [
+        "DRIFT-002",
+        "DRIFT-003"
+      ],
+      "from": "ai-stack:proposal",
+      "to": "ai-stack:validator",
+      "effect": "proposal_flow",
+      "label": "validates proposal without session write",
+      "contract": "Validation produces evidence and retry feedback only.",
+      "anchor": "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
+      "carries": [
+        "selected_scene_function",
+        "primary_responder_id",
+        "continuity_impacts",
+        "dramatic_effect_gate"
+      ]
+    },
+    {
+      "id": "ai-validation-to-proposal-finalization",
+      "claim_ids": [
+        "DRIFT-002"
+      ],
+      "from": "ai-stack:validator",
+      "to": "ai-stack:proposal",
+      "effect": "proposal_finalize",
+      "label": "finalizes proposal package",
+      "contract": "Finalization cannot write live-session truth or advance its revision.",
+      "anchor": "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
+      "carries": [
+        "selected_scene_function",
+        "primary_responder_id",
+        "continuity_impacts",
+        "dramatic_effect_gate"
+      ]
+    },
+    {
+      "id": "runtime-proposal-to-world-bridge",
+      "claim_ids": [
+        "DRIFT-002",
+        "DRIFT-003"
+      ],
+      "from": "ai-stack:proposal",
+      "to": "world-engine:ai_bridge",
+      "effect": "proposal_flow",
+      "label": "returns uncommitted proposal and evidence",
+      "contract": "The cross-process payload has no authoritative write capability.",
+      "anchor": "world-engine/app/story_runtime/governed_runtime_adapters.py",
+      "carries": [
+        "selected_scene_function",
+        "primary_responder_id",
+        "continuity_impacts",
+        "dramatic_effect_gate"
+      ]
+    },
+    {
+      "id": "world-bridge-to-commit-validation",
+      "claim_ids": [
+        "DRIFT-002",
+        "DRIFT-003",
+        "DRIFT-005"
+      ],
+      "from": "world-engine:ai_bridge",
+      "to": "world-engine:validation",
+      "effect": "proposal_flow",
+      "label": "resolves proposal against live authority",
+      "contract": "World-owned validation produces a CommitDecision or a no-write rejection.",
+      "anchor": "world-engine/app/story_runtime/narrative_commit_resolution.py",
+      "carries": [
+        "selected_scene_function",
+        "primary_responder_id",
+        "continuity_impacts",
+        "dramatic_effect_gate"
+      ]
+    },
+    {
+      "id": "world-validation-authoritative-write",
+      "claim_ids": [
+        "DRIFT-001",
+        "DRIFT-002",
+        "DRIFT-003",
+        "DRIFT-005"
+      ],
+      "from": "world-engine:validation",
+      "to": "world-engine:store",
+      "effect": "authoritative_write",
+      "write_resource": "live_story_session",
+      "label": "commits one revision-safe transition",
+      "contract": "Exactly one atomic session write occurs after an accepted CommitDecision; rejection performs no write.",
+      "anchor": "world-engine/app/story_runtime/story_session_store.py",
+      "carries": [
+        "selected_scene_function",
+        "primary_responder_id",
+        "continuity_impacts",
+        "dramatic_effect_gate",
+        "beat_progression",
+        "commit_contract_version"
+      ]
+    },
+    {
+      "id": "committed-state-to-delivery",
+      "claim_ids": [
+        "DRIFT-003",
+        "DRIFT-005",
+        "DRIFT-007"
+      ],
+      "from": "world-engine:store",
+      "to": "world-engine:delivery",
+      "effect": "visible_projection",
+      "label": "projects post-commit player-visible state",
+      "contract": "Delivery is derived from committed state and cannot infer a new authoritative outcome.",
+      "anchor": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+      "carries": [
+        "selected_scene_function",
+        "primary_responder_id",
+        "beat_progression",
+        "visible_blocks",
+        "speaker_identity"
+      ]
+    },
+    {
+      "id": "delivery-to-frontend-stream",
+      "claim_ids": [
+        "DRIFT-007"
+      ],
+      "from": "world-engine:delivery",
+      "to": "frontend:stream",
+      "effect": "visible_projection",
+      "label": "delivers committed visible blocks",
+      "contract": "Transport preserves block order and speaker identity.",
+      "anchor": "world-engine/app/api/story_ws.py",
+      "carries": [
+        "visible_blocks",
+        "speaker_identity"
+      ]
+    },
+    {
+      "id": "frontend-stream-to-renderer",
+      "claim_ids": [
+        "DRIFT-007"
+      ],
+      "from": "frontend:stream",
+      "to": "frontend:renderer",
+      "effect": "visible_projection",
+      "label": "renders every supported block variant",
+      "contract": "Renderer consumes committed fields without reconstructing authority.",
+      "anchor": "frontend/static/play_block_renderer.js",
+      "carries": [
+        "visible_blocks",
+        "speaker_identity"
+      ]
+    },
+    {
+      "id": "trace-backend-to-world",
+      "claim_ids": [
+        "DRIFT-008"
+      ],
+      "from": "observability-traceability:backend",
+      "to": "observability-traceability:world",
+      "effect": "evidence_flow",
+      "label": "propagates turn trace identity",
+      "contract": "Trace identity crosses the backend/world boundary with redaction.",
+      "anchor": "backend/app/api/v1/game/player_turn_trace_start.py",
+      "carries": [
+        "trace_id",
+        "session_id"
+      ]
+    },
+    {
+      "id": "trace-world-to-ai",
+      "claim_ids": [
+        "DRIFT-008"
+      ],
+      "from": "observability-traceability:world",
+      "to": "observability-traceability:ai",
+      "effect": "evidence_flow",
+      "label": "continues trace through proposal execution",
+      "contract": "AI spans remain children of the live turn trace.",
+      "anchor": "ai_stack/langfuse/langfuse_evidence.py",
+      "carries": [
+        "trace_id",
+        "session_id"
+      ]
+    },
+    {
+      "id": "trace-ai-to-operator-projection",
+      "claim_ids": [
+        "DRIFT-008"
+      ],
+      "from": "observability-traceability:ai",
+      "to": "observability-traceability:projection",
+      "effect": "evidence_flow",
+      "label": "projects complete or explicitly partial trace",
+      "contract": "Missing spans are visible as gaps and never presented as complete evidence.",
+      "anchor": "world-engine/app/web/static/ui_traces.js",
+      "carries": [
+        "trace_id",
+        "completeness",
+        "redaction_status"
+      ]
+    },
+    {
+      "id": "integration-evidence-to-report",
+      "claim_ids": [
+        "DRIFT-009"
+      ],
+      "from": "quality-gates:integration",
+      "to": "quality-gates:report",
+      "effect": "evidence_flow",
+      "label": "reports real-boundary integration evidence",
+      "contract": "Integration classification requires disposable external-state equality checks.",
+      "anchor": "tests/architecture_assurance/test_disposable_akdb_integration.py",
+      "carries": [
+        "suite_id",
+        "execution_result",
+        "disposable_state_proof"
+      ]
+    },
+    {
+      "id": "quality-report-to-ci",
+      "claim_ids": [
+        "DRIFT-009"
+      ],
+      "from": "quality-gates:report",
+      "to": "quality-gates:ci",
+      "effect": "evidence_flow",
+      "label": "publishes deterministic gate result",
+      "contract": "CI status and JSON, JUnit, and SARIF derive from one result.",
+      "anchor": ".github/workflows/architecture-assurance.yml",
+      "carries": [
+        "suite_id",
+        "execution_result",
+        "disposable_state_proof"
+      ]
+    },
+    {
+      "id": "model-call-to-cost-ledger",
+      "claim_ids": [
+        "DRIFT-008"
+      ],
+      "from": "story-runtime-core:adapters",
+      "to": "ai-stack:ledger",
+      "effect": "evidence_flow",
+      "label": "every adapter.generate is ledgered at the seam",
+      "contract": "Cost attribution happens at CountingModelAdapter; unattributed is a visible state.",
+      "anchor": "story_runtime_core/model_call_accounting.py",
+      "carries": [
+        "phase",
+        "attempt_index",
+        "input_tokens",
+        "output_tokens"
+      ]
+    },
+    {
+      "id": "ledger-to-langfuse-observation",
+      "claim_ids": [
+        "DRIFT-008"
+      ],
+      "from": "ai-stack:ledger",
+      "to": "observability-traceability:ai",
+      "effect": "evidence_flow",
+      "label": "ledger rows become per-call generation observations (W0-C)",
+      "contract": "One generation observation per ledger row; path_summary is not the sole cost source.",
+      "anchor": "story_runtime_core/model_call_accounting.py",
+      "carries": [
+        "phase",
+        "attempt_index",
+        "call_count"
+      ]
+    }
+  ],
+  "authority_invariants": [
+    {
+      "id": "single-live-story-session-writer",
+      "resource": "live_story_session",
+      "expected_writer": "world-engine:validation",
+      "expected_sink": "world-engine:store",
+      "forbidden_writers": [
+        "world-engine:runtime",
+        "ai-stack:executor",
+        "backend:compat"
+      ]
+    }
+  ],
+  "write_surfaces": [
+    {
+      "id": "live-story-session-json-save-callsite",
+      "resource": "live_story_session",
+      "language": "python",
+      "call": "self._session_store.save",
+      "scan_roots": [
+        "world-engine/app",
+        "ai_stack",
+        "backend/app"
+      ],
+      "allowed_callsites": [
+        {
+          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "symbol": "_persist_session"
+        }
+      ],
+      "minimum_calls": 1,
+      "maximum_calls": 1
+    }
+  ],
+  "envelope_invariants": [
+    {
+      "id": "dramatic-turn-envelope-v1",
+      "path": [
+        "planner-to-runtime-proposal",
+        "runtime-proposal-to-world-bridge",
+        "world-bridge-to-commit-validation",
+        "world-validation-authoritative-write",
+        "committed-state-to-delivery"
+      ],
+      "fields": [
+        {
+          "name": "selected_scene_function",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
+              "token": "selected_scene_function"
+            },
+            {
+              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "token": "selected_scene_function"
+            }
+          ]
+        },
+        {
+          "name": "primary_responder_id",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
+              "token": "primary_responder_id"
+            },
+            {
+              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "token": "primary_responder_id"
+            }
+          ]
+        },
+        {
+          "name": "continuity_impacts",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "world-validation-authoritative-write",
+          "source_proofs": [
+            {
+              "path": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
+              "token": "continuity_impacts"
+            },
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "continuity_impacts"
+            }
+          ]
+        },
+        {
+          "name": "dramatic_effect_gate",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "world-validation-authoritative-write",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/planner_truth_projection.py",
+              "token": "dramatic_effect_gate"
+            },
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "dramatic_effect_gate"
+            }
+          ]
+        },
+        {
+          "name": "beat_progression",
+          "introduced_at": "world-validation-authoritative-write",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "beat_progression"
+            },
+            {
+              "path": "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
+              "token": "beat_progression"
+            }
+          ]
+        },
+        {
+          "name": "commit_contract_version",
+          "introduced_at": "world-validation-authoritative-write",
+          "required_through": "world-validation-authoritative-write",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "commit_contract_version"
+            },
+            {
+              "path": "world-engine/app/story_runtime/manager/session/session_loop_governance.py",
+              "token": "commit_contract_version"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "player-visible-block-envelope-v1",
+      "path": [
+        "committed-state-to-delivery",
+        "delivery-to-frontend-stream",
+        "frontend-stream-to-renderer"
+      ],
+      "fields": [
+        {
+          "name": "visible_blocks",
+          "introduced_at": "committed-state-to-delivery",
+          "required_through": "frontend-stream-to-renderer",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "token": "scene_blocks"
+            },
+            {
+              "path": "frontend/static/play_block_renderer.js",
+              "token": "block"
+            }
+          ]
+        },
+        {
+          "name": "speaker_identity",
+          "introduced_at": "committed-state-to-delivery",
+          "required_through": "frontend-stream-to-renderer",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "token": "\"speaker\""
+            },
+            {
+              "path": "frontend/static/play_block_renderer.js",
+              "token": "speaker_label"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "envelopes": [
+    {
+      "id": "dramatic-turn-envelope-v1",
+      "path": [
+        "planner-to-runtime-proposal",
+        "runtime-proposal-to-world-bridge",
+        "world-bridge-to-commit-validation",
+        "world-validation-authoritative-write",
+        "committed-state-to-delivery"
+      ],
+      "fields": [
+        {
+          "name": "selected_scene_function",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
+              "token": "selected_scene_function"
+            },
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "selected_scene_function"
+            }
+          ]
+        },
+        {
+          "name": "primary_responder_id",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
+              "token": "primary_responder_id"
+            },
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "primary_responder_id"
+            }
+          ]
+        },
+        {
+          "name": "continuity_impacts",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "world-validation-authoritative-write",
+          "source_proofs": [
+            {
+              "path": "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
+              "token": "continuity_impacts"
+            },
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "continuity_impacts"
+            }
+          ]
+        },
+        {
+          "name": "dramatic_effect_gate",
+          "introduced_at": "planner-to-runtime-proposal",
+          "required_through": "world-validation-authoritative-write",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/planner_truth_projection.py",
+              "token": "dramatic_effect_gate"
+            },
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "dramatic_effect_gate"
+            }
+          ]
+        },
+        {
+          "name": "beat_progression",
+          "introduced_at": "world-validation-authoritative-write",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "beat_progression"
+            },
+            {
+              "path": "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
+              "token": "beat_progression"
+            }
+          ]
+        },
+        {
+          "name": "commit_contract_version",
+          "introduced_at": "world-validation-authoritative-write",
+          "required_through": "world-validation-authoritative-write",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "commit_contract_version"
+            },
+            {
+              "path": "world-engine/app/story_runtime/manager/session/session_loop_governance.py",
+              "token": "commit_contract_version"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "player-visible-block-envelope-v1",
+      "path": [
+        "committed-state-to-delivery",
+        "delivery-to-frontend-stream",
+        "frontend-stream-to-renderer"
+      ],
+      "fields": [
+        {
+          "name": "visible_blocks",
+          "introduced_at": "committed-state-to-delivery",
+          "required_through": "frontend-stream-to-renderer",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "token": "scene_blocks"
+            },
+            {
+              "path": "frontend/static/play_block_renderer.js",
+              "token": "block"
+            }
+          ]
+        },
+        {
+          "name": "speaker_identity",
+          "introduced_at": "committed-state-to-delivery",
+          "required_through": "frontend-stream-to-renderer",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "token": "\"speaker\""
+            },
+            {
+              "path": "frontend/static/play_block_renderer.js",
+              "token": "speaker_label"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "turn-cost-envelope-v1",
+      "path": [
+        "model-call-to-cost-ledger",
+        "ledger-to-langfuse-observation"
+      ],
+      "fields": [
+        {
+          "name": "call_count",
+          "introduced_at": "model-call-to-cost-ledger",
+          "required_through": "ledger-to-langfuse-observation",
+          "source_proofs": [
+            {
+              "path": "story_runtime_core/model_call_accounting.py",
+              "token": "call_count"
+            },
+            {
+              "path": "ai_stack/telemetry/runtime_cost_attribution.py",
+              "token": "call_count"
+            }
+          ]
+        },
+        {
+          "name": "attributed_call_count",
+          "introduced_at": "model-call-to-cost-ledger",
+          "required_through": "ledger-to-langfuse-observation",
+          "source_proofs": [
+            {
+              "path": "story_runtime_core/model_call_accounting.py",
+              "token": "attributed_call_count"
+            },
+            {
+              "path": "ai_stack/telemetry/runtime_cost_attribution.py",
+              "token": "attributed_call_count"
+            }
+          ]
+        },
+        {
+          "name": "quality_class",
+          "introduced_at": "model-call-to-cost-ledger",
+          "required_through": "ledger-to-langfuse-observation",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "token": "quality_class"
+            },
+            {
+              "path": "world-engine/tests/test_quality_class_delivery.py",
+              "token": "quality_class"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

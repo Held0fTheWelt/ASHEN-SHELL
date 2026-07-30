@@ -1,0 +1,17 @@
+{
+  "total_items": null,
+  "fetched": 0,
+  "names": {},
+  "oldest": null,
+  "newest": null,
+  "prompt_n": 0,
+  "prompt_median": null,
+  "prompt_p95": null,
+  "adapters": {},
+  "modes": {},
+  "opening": {},
+  "tokens_in_median": null,
+  "tokens_out_median": null,
+  "latency_median": null,
+  "note": "call_count_per_turn NOT available from history (max 2 generations/turn)"
+}

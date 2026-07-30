@@ -15,6 +15,34 @@ class _RuntimeConfigMixin:
         )
         return bool(settings.get("allow_degraded_commit_after_retries", True))
 
+    def _turn_call_budgets(self) -> tuple[int, int]:
+        """Return (soft, hard) per-turn model-call budgets.
+
+        Soft budget warns; hard budget aborts further generates (E8).
+        Defaults are generous until Wave-0 measurement replaces them (A10).
+        """
+        from story_runtime_core.model_call_accounting import (
+            DEFAULT_TURN_CALL_BUDGET_HARD,
+            DEFAULT_TURN_CALL_BUDGET_SOFT,
+        )
+
+        settings = (
+            (self._governed_runtime_config or {}).get("world_engine_settings") or {}
+            if isinstance(self._governed_runtime_config, dict)
+            else {}
+        )
+        try:
+            soft = int(settings.get("turn_call_budget_soft", DEFAULT_TURN_CALL_BUDGET_SOFT))
+        except (TypeError, ValueError):
+            soft = DEFAULT_TURN_CALL_BUDGET_SOFT
+        try:
+            hard = int(settings.get("turn_call_budget_hard", DEFAULT_TURN_CALL_BUDGET_HARD))
+        except (TypeError, ValueError):
+            hard = DEFAULT_TURN_CALL_BUDGET_HARD
+        soft = max(1, soft)
+        hard = max(soft, hard)
+        return soft, hard
+
     def _validation_execution_mode(self) -> str:
         settings = (
             (self._governed_runtime_config or {}).get("world_engine_settings") or {}

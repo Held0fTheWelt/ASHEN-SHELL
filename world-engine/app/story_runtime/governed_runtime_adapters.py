@@ -12,6 +12,7 @@ from story_runtime_core.adapters import (
     OllamaAdapter,
     OpenAIChatAdapter,
 )
+from story_runtime_core.model_call_accounting import wrap_adapters_with_counting
 
 
 def _fetch_provider_api_key(
@@ -72,7 +73,8 @@ def build_governed_model_adapters(config: dict[str, Any]) -> dict[str, BaseModel
         elif provider_type == "mock":
             adapters[provider_id] = MockModelAdapter()
 
-    return adapters
+    # Wave 0: ledger every productive generate at the adapter seam (D27).
+    return wrap_adapters_with_counting(adapters)
 
 
 __all__ = ["build_governed_model_adapters"]
