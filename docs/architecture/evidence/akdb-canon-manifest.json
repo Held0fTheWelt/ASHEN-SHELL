@@ -516,9 +516,9 @@
       "sha256": "8c1bbbfc63e8b2718392e0c1c1a5087f84205e05bccf85c8388886900af00bb5"
     },
     {
-      "bytes": 5334,
+      "bytes": 5517,
       "path": "tests/architecture_assurance/test_disposable_akdb_integration.py",
-      "sha256": "fdc9c67642c63696a63440ed9e0457c3c5e6519b092e99c9ba9b53ce13615aeb"
+      "sha256": "6574d7201e6612c723180e8779f78a08c533b6e4b4e530e23be863bfcb0cd01c"
     },
     {
       "bytes": 2665,

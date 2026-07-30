@@ -19,12 +19,17 @@ LOCK = json.loads(
 
 
 def _akdb_root() -> Path | None:
-    candidates = [
+    environment_root = (
         Path(os.environ["AKDB_SOURCE_ROOT"])
         if os.environ.get("AKDB_SOURCE_ROOT")
-        else None,
+        else None
+    )
+    candidates = [
+        environment_root,
         ROOT / ".external" / "ArchitecturalKnowledgeDB",
-        ROOT.parents[1] / "ArchitecturalKnowledgeDB",
+        ROOT.parent / "ArchitecturalKnowledgeDB",
+        ROOT.parent / "TinyToolDevelopment" / "ArchitecturalKnowledgeDB",
+        ROOT.parent.parent / "ArchitecturalKnowledgeDB",
     ]
     return next(
         (
